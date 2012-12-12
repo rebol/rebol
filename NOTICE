@@ -1,0 +1,31 @@
+REBOL [R3] Language Interpreter and Run-time Environment
+Copyright 2012 REBOL Technologies
+REBOL is a trademark of REBOL Technologies
+Licensed under the Apache License, Version 2.0
+See included LICENSE file for details
+
+
+Credits for Non-REBOL orginated C files and modules
+---------------------------------------------------
+
+Unicode encoding/decoding functions:
+Copyright 2001-2004 Unicode, Inc.
+
+MD5: 
+This software contains code derived from the RSA Data Security
+Inc. MD5 Message-Digest Algorithm, including various
+modifications by Spyglass Inc., Carnegie Mellon University, and
+Bell Communications Research, Inc (Bellcore).
+
+SHA1:
+Copyright 1995-1998 Eric Young (eay@cryptsoft.com)
+All rights reserved.
+
+ZLIB general purpose compression library:
+Version 1.1.2, March 19th, 1998
+Copyright 1995-1998 Jean-loup Gailly and Mark Adler
+
+JPEG decoder:
+Copyright 1994-1996, Thomas G. Lane.
+This file is part of the Independent JPEG Group's software.
+

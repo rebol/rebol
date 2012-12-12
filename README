@@ -1,0 +1,69 @@
+REBOL [R3] Source Code Distribution
+Date: 12-Dec-2012
+Version: 2.101.0
+From: Carl Sassenrath
+Web: www.rebol.com
+
+
+Build Target:
+
+This first release is intended for non-Windows systems like Linux, Mac, BSD,
+Android, etc. However, it will build for Windows, but I've not included the
+typical MSVC project files. I'll try to get that added, but it's not that
+tough to create one yourself. You will need to set struct align to 4 bytes.
+
+
+About the Makefile:
+
+You might notice that the makefile is a bit old-fashioned. That's because I
+still support REBOL on some very old systems that don't offer newer makefile
+features. So, please keep that in mind and stick with this simple format.
+
+Also, the makefile is built by REBOL. Typing "make make" will rebuild it,
+and you can also select a different platform target the same way by providing
+the REBOL platform identifiers (the last two parts of the version string).
+
+
+Build Instructions:
+
+Parts of REBOL are built by REBOL. So, to build it, you'll need to download a
+running binary into the local make directory. Call it r3-make.
+
+The build happens in the make directory. It will create an obj sub-dir for
+storing the object files. I prefer this over mixing the source and object
+files into the same directory.
+
+The biggest step is to do the "make prep" which will use REBOL to configure
+and build a number of important C header files.
+
+If you are building for a new platform that has no existing REBOL, you can use
+"make prep" to build all the files you need on an existing platform and copy
+them to the new platform.
+
+After the prep, just run "make" and the rest of the system will build.
+
+
+Toolchain Note:
+
+REBOL builds on many different compilers over a range of systems. Although
+the C source doesn't strictly follow any one standard, it's quite portable
+and I've yet to find a toolchain that won't build it. You can even cross
+compile it for embedded systems quite easily. If you run into a problem,
+it's probably something fairly simple. Don't over complicate it.
+
+
+Note to Contributors:
+
+I welcome your help with porting REBOL to many more devices and making various
+improvements. I just ask that you:
+
+1. Keep code clear and simple.
+2. Document unusual code, reasoning, or gotchas.
+3. Use same style for code, vars, indent(4), comments, etc.
+4. Keep in mind Linux, OS X, BSD, big/little endian CPUs.
+5. Test everything, then test it again.
+
+Enjoy your new REBOL freedom,
+
+-Carl
+
