@@ -29,7 +29,7 @@ Build Instructions:
 Parts of REBOL are built by REBOL. So, to build it, you'll need to download a
 running binary into the local make directory. Call it r3-make.
 
-The build happens in the make directory. It will create an obj sub-dir for
+The build happens in the make directory. It will need an objs sub-dir for
 storing the object files. I prefer this over mixing the source and object
 files into the same directory.
 
