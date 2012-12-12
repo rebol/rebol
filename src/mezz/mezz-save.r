@@ -43,7 +43,7 @@ save: funct [
 		any [file? where url? where]
 		type: file-type? where
 	][ ; We have a codec:
-		return write where encode type value ; will check for valid type
+		return write where encode type :value ; will check for valid type
 	]
 
 	;-- Compressed scripts and script lengths require a header:
@@ -58,18 +58,18 @@ save: funct [
 		if header-data = true [
 			header-data: any [
 				lib/all [
-					block? value
+					block? :value
 					first+ value ; the header (do not use TAKE)
 				]
 				[] ; empty header
 			]
 		]
 
-		; Make it an object (ok to ignore overhead):
-		header-data: either block? header-data [
-			construct header-data ; standard/header intentionally not used
+		; Make it an object if it's not already (ok to ignore overhead):
+		header-data: either object? :header-data [
+			trim :header-data ; clean out the words set to none
 		][
-			trim header-data
+			construct :header-data ; standard/header intentionally not used
 		]
 
 		if compress [ ; Make the header option match
