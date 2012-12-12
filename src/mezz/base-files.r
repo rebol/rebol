@@ -130,7 +130,7 @@ script?: func [
 ][
 	switch type?/word source [
 		file! url! [source: read source]
-		string! [source: to-binary source] ; Remove this line if FIND-SCRIPT changed to accept string!
+		string! [source: to binary! source] ; Remove this line if FIND-SCRIPT changed to accept string!
 	]
 	find-script source ; Returns binary!
 ]
