@@ -19,7 +19,10 @@
 **
 ************************************************************************
 **
-**  Description: Implements REBOL's series concept.
+**  Module:  m-series.c
+**  Summary: implements REBOL's series concept
+**  Section: memory
+**  Author:  Carl Sassenrath
 **
 ***********************************************************************/
 
