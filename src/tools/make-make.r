@@ -88,7 +88,7 @@ make:
 	$(REBOL) $T/make-make.r $(OS_ID)
 
 clean:
-	@-rm objs/* libr3.so
+	@-rm -rf libr3.so objs/
 
 all:
 	make clean
