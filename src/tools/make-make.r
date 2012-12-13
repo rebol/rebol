@@ -140,14 +140,14 @@ check:
 
 makefile-link: {
 # Directly linked r3 executable:
-r3:	objs-dir $(OBJS) $(HOST)
+r3:	objs $(OBJS) $(HOST)
 	$(CC) -o r3 $(OBJS) $(HOST) $(CLIB)
 	$(STRIP) r3
 	-$(NM) -a r3
 	ls -l r3
 
-objs-dir:
-	mkdir objs
+objs:
+	mkdir -p objs
 }
 
 makefile-so: {
