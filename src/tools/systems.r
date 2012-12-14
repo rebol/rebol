@@ -23,7 +23,7 @@ systems: [
 	[0.1.03 "amiga"      posix  [HID NPS +SC CMT COP -SP]]
 	[0.2.04 "osx"        posix  [+OS NCM]]			; no shared lib possible
 	[0.2.05 "osxi"       posix  [ARC +O1 NPS PIC NCM HID STX]]
-	[0.3.01 "win32"      win32  [+O2 UNI W32 WIN]]
+	[0.3.01 "win32"      win32  [+O2 UNI W32 WIN S4M]]
 	[0.4.02 "linux"      posix  [+O2 LDL ST1]]		; libc 2.3
 	[0.4.03 "linux"      posix  [+O2 HID LDL ST1]]	; libc 2.5
 	[0.4.04 "linux"      posix  [+O2 HID LDL ST1 M32]]	; libc 2.11
@@ -60,6 +60,7 @@ linker-flags: [
 	M32: "-m32"       ; use 32-bit memory model (Linux x64)
 	W32: "-lwsock32 -lcomdlg32"
 	WIN: "-mwindows"; build as Windows GUI binary
+	S4M: "-Wl,--stack=4194300"
 ]
 
 other-flags: [
