@@ -244,6 +244,10 @@ append plat-id os-plat/3
 ; Create TO-OSNAME to indicate target OS:
 to-def: join "TO_" uppercase copy os-name
 
+; Collect OS-specific host files:
+os-specific-objs: select fb to word! join "os-" os-base
+os-specific-dir: dirize to file! join %os/ os-base
+
 outdir: path-make
 make-dir outdir
 make-dir outdir/objs
@@ -349,13 +353,13 @@ macro++ RAPI_FLAGS compile-flags
 macro++ HOST_FLAGS make compile-flags [PIC: NCM: none]
 macro+  HOST_FLAGS compile-flags/f64 ; default for all
 
-if flag? +SC [remove find fb/os-posix 'host-readline.c]
+if flag? +SC [remove find fb/os-specific-objs 'host-readline.c]
 
 emit makefile-head
 emit ["OBJS =" tab]
 emit-obj-files fb/core
 emit ["HOST =" tab]
-emit-obj-files append copy fb/os fb/os-posix
+emit-obj-files append copy fb/os os-specific-objs
 emit makefile-link
 emit get pick [makefile-dyn makefile-so] os-plat/2 = 2
 emit {
@@ -366,7 +370,7 @@ b-boot.c: $(SRC)/boot/boot.r
 emit newline
 emit-file-deps fb/core
 emit-file-deps/dir fb/os %os/
-emit-file-deps/dir fb/os-posix %os/posix/
+emit-file-deps/dir os-specific-objs os-specific-dir
 
 ;print copy/part output 300 halt
 print ["Created:" outdir/makefile]
