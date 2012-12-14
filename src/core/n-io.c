@@ -666,7 +666,7 @@ chk_neg:
 	// First is a dir path or full file path:
 	str = start;
 	n = LEN_STR(str);
-	dir = To_REBOL_Path(str, n, -1, 0);
+	dir = To_REBOL_Path(str, n, -1, TRUE);
 
 	if (len == 1) {
 		Set_Series(REB_FILE, Append_Value(blk), dir);
