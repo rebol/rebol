@@ -666,12 +666,13 @@ chk_neg:
 	// First is a dir path or full file path:
 	str = start;
 	n = LEN_STR(str);
-	dir = To_REBOL_Path(str, n, -1, TRUE);
 
-	if (len == 1) {
+	if (len == 1) {  // First is full file path
+		dir = To_REBOL_Path(str, n, -1, 0);
 		Set_Series(REB_FILE, Append_Value(blk), dir);
 	}
-	else {
+	else {  // First is dir path for the rest of the files
+		dir = To_REBOL_Path(str, n, -1, TRUE);
 		str += n + 1; // next
 		len = dir->tail;
 		while (n = LEN_STR(str)) {
