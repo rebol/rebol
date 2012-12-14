@@ -67,8 +67,13 @@ export-words: func [
 	words [block! none!] "The exports words block of the module"
 ][
 	if words [
-		resolve/extend/only lib ctx words  ; words already set in lib are not overriden
-		resolve/extend/only system/contexts/user lib words  ; lib, because of above
+		;resolve/extend/only lib ctx words  ; words already set in lib are not overriden
+		;resolve/extend/only system/contexts/user lib words  ; lib, because of above
+		
+		; Temporary workaround for resolve/extend/only crash #1865
+		words: bind/new/only bind/new/only/copy words lib system/contexts/user
+		resolve/only lib ctx words
+		resolve/only system/contexts/user lib words
 	]
 ]
 
@@ -235,7 +240,10 @@ load-boot-exts: funct [
 			not block? select hdr 'exports none
 			empty? hdr/exports none
 			find hdr/options 'private [
-				resolve/extend/only system/contexts/user mod hdr/exports ; full export to user
+				;resolve/extend/only system/contexts/user mod hdr/exports ; full export to user
+				
+				; Temporary workaround for resolve/extend/only crash #1865
+				resolve/only system/contexts/user mod bind/new/only/copy hdr/exports system/contexts/user
 			]
 			'else [export-words mod hdr/exports]
 		]
@@ -404,7 +412,12 @@ do-needs: funct [
 		; Import the module
 		mod: apply :import [name true? vers vers true? hash hash no-share no-lib no-user]
 		; Collect any mixins into the object (if we are doing that)
-		if all [mixins mixin? mod] [resolve/extend/only mixins mod select spec-of mod 'exports]
+		if all [mixins mixin? mod] [
+			;resolve/extend/only mixins mod select spec-of mod 'exports
+			
+			; Temporary workaround for resolve/extend/only crash #1865
+			resolve/only mixins mod bind/new/only/copy select spec-of mod 'exports mixins
+		]
 		mod
 	]
 
@@ -617,7 +630,10 @@ load-module: funct [
 				pos [pos/2: mod pos/3: modsum] ; replace delayed module
 				not pos [reduce/into [name mod modsum] system/modules]
 				all [module? mod not mixin? hdr block? select hdr 'exports] [
-					resolve/extend/only lib mod hdr/exports ; no-op if empty
+					;resolve/extend/only lib mod hdr/exports ; no-op if empty
+					
+					; Temporary workaround for resolve/extend/only crash #1865
+					resolve/only lib mod bind/new/only/copy hdr/exports lib
 				]
 			]
 		]
@@ -673,7 +689,10 @@ import: funct [
 		empty? exports  none
 		; If it's a private module (mixin), we must add *all* of its exports to user.
 		any [no-lib find select hdr 'options 'private] [ ; /no-lib causes private
-			resolve/extend/only system/contexts/user mod exports
+			;resolve/extend/only system/contexts/user mod exports
+			
+			; Temporary workaround for resolve/extend/only crash #1865
+			resolve/only system/contexts/user mod bind/new/only/copy exports system/contexts/user
 		]
 		; Unless /no-lib its exports are in lib already, so just import what we need.
 		not no-lib [resolve/only system/contexts/user lib exports]
