@@ -22,11 +22,11 @@ systems: [
 	[plat  os-name   os-base  build-flags]
 	[0.1.03 "amiga"      posix  [HID NPS +SC CMT COP -SP]]
 	[0.2.04 "osx"        posix  [+OS NCM]]			; no shared lib possible
-	[0.2.05 "osxi"       posix  [ARC +O1 NPS PIC NCM HID STX]]
+	[0.2.05 "osxi"       posix  [ARC +O1 ARC NPS PIC NCM HID STX]]
 	[0.3.01 "win32"      win32  [+O2 UNI]]
 	[0.4.02 "linux"      posix  [+O2 LDL ST1]]		; libc 2.3
 	[0.4.03 "linux"      posix  [+O2 HID LDL ST1]]	; libc 2.5
-	[0.4.04 "linux"      posix  [+O2 HID LDL ST1]]	; libc 2.11
+	[0.4.04 "linux"      posix  [+O2 HID LDL ST1 M32]]	; libc 2.11
 	[0.4.10 "linux_ppc"  posix  [+O1 HID LDL ST1]]
 	[0.4.20 "linux_arm"  posix  [+O2 HID LDL ST1]]
 	[0.4.30 "linux_mips" posix  [+O2 HID LDL ST1]]  ; glibc does not need C++
@@ -48,6 +48,7 @@ compile-flags: [
 	NCM: "-fno-common"            ; lib cannot have common vars
 	PAK: "-fpack-struct"          ; pack structures
 	ARC: "-arch i386"             ; x86 32 bit architecture (OSX)
+	M32: "-m32"                   ; use 32-bit memory model
 ]
 
 linker-flags: [
