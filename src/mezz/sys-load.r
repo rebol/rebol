@@ -98,22 +98,38 @@ load-header: funct/with [
 	/required "Script header is required"
 ][
 	; This function decodes the script header from the script body.
-	; It checks the header 'checksum and 'compress and 'content options.
+	; It checks the header 'checksum and 'compress and 'content options,
+	; and supports length-specified or script-in-a-block embedding.
+	;
 	; It will set the 'content field to the binary source if 'content is true.
+	; The 'content will be set to the source at the position of the beginning
+	; of the script header, skipping anything before it. For multi-scripts it
+	; doesn't copy the portion of the content that relates to the current
+	; script, or at all, so be careful with the source data you get.
+	;
 	; If the 'compress option is set then the body will be decompressed.
 	; Binary vs. script encoded compression will be autodetected. The
 	; header 'checksum is compared to the checksum of the decompressed binary.
-	; Normally, returns the header object and the body text (as binary).
-	; If not /only and the script is embedded and not compressed
-	; then the body text will be a decoded block instead of binary.
-	; Checksum not supported for embedded uncompressed scripts (for now?).
+	;
+	; Normally, returns the header object, the body text (as binary), and the
+	; the end of the script or script-in-a-block. The end position can be used
+	; to determine where to stop decoding the body text. After the end is the
+	; rest of the binary data, which can contain anything you like. This can
+	; support multiple scripts in the same binary data, multi-scripts.
+	;
+	; If not /only and the script is embedded in a block and not compressed
+	; then the body text will be a decoded block instead of binary, to avoid
+	; the overhead of decoding the body twice.
+	;
 	; Syntax errors are returned as words:
 	;    no-header
 	;    bad-header
 	;    bad-checksum
 	;    bad-compress
+	;
 	; Note: set/any and :var used - prevent malicious code errors.
 	; Commented assert statements are for documentation and testing.
+	;
 	case/all [
 		binary? source [tmp: assert-utf8 source]
 		string? source [tmp: to binary! source]
