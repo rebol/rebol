@@ -63,7 +63,7 @@ I= -I$(INCL) -I$S/include/
 TO_OS=	
 OS_ID=	
 RAPI_FLAGS=	
-HOST_FLAGS=	
+HOST_FLAGS=	-DREB_EXE
 RLIB_FLAGS=	
 
 # Flags for core and for host:
