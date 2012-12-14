@@ -150,7 +150,7 @@ static BOOL Seek_File_64(REBREQ *file)
 	}
 
 	// Skip over the . and .. dir cases:
-	while (cp == 0 || (cp[0] == '.' && (cp[1] == 0 || cp[1] == '.'))) {
+	while (cp == 0 || (cp[0] == '.' && (cp[1] == 0 || (cp[1] == '.' && cp[2] == 0)))) {
 
 		// Read next file entry, or error:
 		if (!FindNextFile(h, &info)) {
