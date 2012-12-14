@@ -142,6 +142,8 @@ start: func [
 	;-- Evaluate script argument?
 	either file? script [
 		; !!! Would be nice to use DO for this section. !!!
+		; NOTE: We can't use DO here because it calls the code it does with CATCH/quit
+		;   and we shouldn't catch QUIT in the top-level script, we should just quit.
 		; script-path holds: [dir file] for script
 		assert/type [script-path [block!] script-path/1 [file!] script-path/2 [file!]]
 		; /path dir is where our script gets started.
