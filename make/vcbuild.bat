@@ -24,5 +24,5 @@ ECHO Visual Studio 2012, 2010, or 2008 doesn't seem to be installed
 EXIT /B 1
 
 :BUILD
-nmake -f makefile.vc r3.exe
+nmake -f makefile.vc all
 
