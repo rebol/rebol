@@ -47,6 +47,8 @@ STRIP=	$(TOOLS)strip
 
 # CP allows different copy progs:
 CP=	
+# LS allows different ls progs:
+LS=	
 # UP - some systems do not use ../
 UP=	
 # CD - some systems do not use ./
@@ -133,7 +135,7 @@ check:
 	$(STRIP) -s -o r3.s r3$(BIN_SUFFIX)
 	$(STRIP) -x -o r3.x r3$(BIN_SUFFIX)
 	$(STRIP) -X -o r3.X r3$(BIN_SUFFIX)
-	ls -l r3*
+	$(LS) r3*
 
 }
 
@@ -145,7 +147,7 @@ r3$(BIN_SUFFIX):	objs $(OBJS) $(HOST)
 	$(CC) -o r3$(BIN_SUFFIX) $(OBJS) $(HOST) $(CLIB)
 	$(STRIP) r3$(BIN_SUFFIX)
 	-$(NM) -a r3$(BIN_SUFFIX)
-	ls -l r3$(BIN_SUFFIX)
+	$(LS) r3$(BIN_SUFFIX)
 
 objs:
 	mkdir -p objs
@@ -161,13 +163,13 @@ libr3.so:	$(OBJS)
 	$(STRIP) libr3.so
 	-$(NM) -D libr3.so
 	-$(NM) -a libr3.so | grep "Do_"
-	ls -l libr3.so
+	$(LS) libr3.so
 
 # PUBLIC: Host using the shared lib:
 host$(BIN_SUFFIX):	$(HOST)
 	$(CC) -o host$(BIN_SUFFIX) $(HOST) libr3.so $(CLIB)
 	$(STRIP) host$(BIN_SUFFIX)
-	ls -l host$(BIN_SUFFIX)
+	$(LS) host$(BIN_SUFFIX)
 	echo "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"
 }
 
@@ -181,13 +183,13 @@ libr3.dylib:	$(OBJS)
 	$(STRIP) -x libr3.dylib
 	-$(NM) -D libr3.dylib
 	-$(NM) -a libr3.dylib | grep "Do_"
-	ls -l libr3.dylib
+	$(LS) libr3.dylib
 
 # PUBLIC: Host using the shared lib:
 host$(BIN_SUFFIX):	$(HOST)
 	$(CC) -o host$(BIN_SUFFIX) $(HOST) libr3.dylib $(CLIB)
 	$(STRIP) host$(BIN_SUFFIX)
-	ls -l host$(BIN_SUFFIX)
+	$(LS) host$(BIN_SUFFIX)
 	echo "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"
 }
 
@@ -197,7 +199,7 @@ libr3.lib:	r3.o
 	ld -static -r -o libr3.lib r3.o
 	$(STRIP) libr3.lib
 	-$(NM) -a libr3.lib | grep "Do_"
-	ls -l libr3.lib
+	$(LS) libr3.lib
 }
 
 ;******************************************************************************
@@ -266,7 +268,7 @@ macro+: func [
 	'name
 	value
 ][
-	name: find find makefile-head join name "=" newline
+	name: find find/tail makefile-head join newline join name "=" newline
 	if name/-1 != space [name: insert name space]
 	insert name value
 ]
@@ -343,6 +345,7 @@ replace makefile-head "!date" now
 
 macro+ TO_OS to-def
 macro+ OS_ID os-plat
+macro+ LS pick ["dir" "ls -l"] flag? DIR
 macro+ CP pick [copy cp] flag? COP
 unless flag? -SP [ ; Use standard paths:
 	macro+ UP ".."
