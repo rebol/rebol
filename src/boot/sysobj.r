@@ -23,7 +23,11 @@ version:  0.0.0
 build:    1
 platform: none
 
-license: "Alpha prototype version. For testing only. Use at your own risk. Do not distribute."
+license: {Copyright 2012 REBOL Technologies
+REBOL is a trademark of REBOL Technologies
+Licensed under the Apache License, Version 2.0.
+See: http://www.apache.org/licenses/LICENSE-2.0
+}
 
 catalog: context [
 	; Static (non-changing) values, blocks, objects
