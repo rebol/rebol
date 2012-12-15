@@ -62,6 +62,7 @@ I= -I$(INCL) -I$S/include/
 
 TO_OS=	
 OS_ID=	
+BIN_SUFFIX=	
 RAPI_FLAGS=	
 HOST_FLAGS=	-DREB_EXE
 RLIB_FLAGS=	
@@ -75,11 +76,11 @@ CLIB=   -lm
 REBOL=	$(CD)r3-make -qs
 
 # For running tests, ship, build, etc.
-R3=	$(CD)r3 -qs
+R3=	$(CD)r3$(BIN_SUFFIX) -qs
 
 ### Build targets:
 top:
-	make r3
+	make r3$(BIN_SUFFIX)
 
 update:
 	-cd $(UP)/; cvs -q update src
@@ -93,9 +94,9 @@ clean:
 all:
 	make clean
 	make prep
-	make r3
+	make r3$(BIN_SUFFIX)
 	make lib
-	make host
+	make host$(BIN_SUFFIX)
 
 prep:
 	$(REBOL) $T/make-headers.r
@@ -108,16 +109,16 @@ prep:
 ### Post build actions
 purge:
 	-rm libr3.*
-	-rm host
+	-rm host$(BIN_SUFFIX)
 	make lib
-	make host
+	make host$(BIN_SUFFIX)
 
 test:
-	$(CP) r3 $(UP)/src/tests/
+	$(CP) r3$(BIN_SUFFIX) $(UP)/src/tests/
 	$(R3) $S/tests/test.r
 
 install:
-	sudo cp r3 /usr/local/bin
+	sudo cp r3$(BIN_SUFFIX) /usr/local/bin
 
 ship:
 	$(R3) $S/tools/upload.r
@@ -129,9 +130,9 @@ cln:
 	rm libr3.* r3.o
 
 check:
-	$(STRIP) -s -o r3.s r3
-	$(STRIP) -x -o r3.x r3
-	$(STRIP) -X -o r3.X r3
+	$(STRIP) -s -o r3.s r3$(BIN_SUFFIX)
+	$(STRIP) -x -o r3.x r3$(BIN_SUFFIX)
+	$(STRIP) -X -o r3.X r3$(BIN_SUFFIX)
 	ls -l r3*
 
 }
@@ -140,11 +141,11 @@ check:
 
 makefile-link: {
 # Directly linked r3 executable:
-r3:	objs $(OBJS) $(HOST)
-	$(CC) -o r3 $(OBJS) $(HOST) $(CLIB)
-	$(STRIP) r3
-	-$(NM) -a r3
-	ls -l r3
+r3$(BIN_SUFFIX):	objs $(OBJS) $(HOST)
+	$(CC) -o r3$(BIN_SUFFIX) $(OBJS) $(HOST) $(CLIB)
+	$(STRIP) r3$(BIN_SUFFIX)
+	-$(NM) -a r3$(BIN_SUFFIX)
+	ls -l r3$(BIN_SUFFIX)
 
 objs:
 	mkdir -p objs
@@ -163,11 +164,10 @@ libr3.so:	$(OBJS)
 	ls -l libr3.so
 
 # PUBLIC: Host using the shared lib:
-host:	$(HOST)
-	$(CC) -o host $(HOST) libr3.so $(CLIB)
-	$(STRIP) libr3.lib
-	$(STRIP) host
-	ls -l host
+host$(BIN_SUFFIX):	$(HOST)
+	$(CC) -o host$(BIN_SUFFIX) $(HOST) libr3.so $(CLIB)
+	$(STRIP) host$(BIN_SUFFIX)
+	ls -l host$(BIN_SUFFIX)
 	echo "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"
 }
 
@@ -184,10 +184,10 @@ libr3.dylib:	$(OBJS)
 	ls -l libr3.dylib
 
 # PUBLIC: Host using the shared lib:
-host:	$(HOST)
-	$(CC) -o host $(HOST) libr3.dylib $(CLIB)
-	$(STRIP) host
-	ls -l host
+host$(BIN_SUFFIX):	$(HOST)
+	$(CC) -o host$(BIN_SUFFIX) $(HOST) libr3.dylib $(CLIB)
+	$(STRIP) host$(BIN_SUFFIX)
+	ls -l host$(BIN_SUFFIX)
 	echo "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"
 }
 
@@ -348,6 +348,7 @@ unless flag? -SP [ ; Use standard paths:
 	macro+ UP ".."
 	macro+ CD "./"
 ]
+if flag? EXE [macro+ BIN_SUFFIX %.exe]
 macro++ CLIB linker-flags
 macro++ RAPI_FLAGS compile-flags
 macro++ HOST_FLAGS make compile-flags [PIC: NCM: none]
