@@ -268,6 +268,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 			n = Do_Callback(cbi->obj, cbi->word, cbi->args, &(cbi->result));
 		}
 	}
+	else R_NONE; // A no-op. (another choice would be to trap)
 
 	SET_FLAG(cbi->flags, RXC_DONE);
 
