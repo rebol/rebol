@@ -1,0 +1,82 @@
+# Makefile for Visual Studio's nmake
+# TODO: this should be automatically generated, like Makefile
+
+CC= cl.exe
+LD= link.exe
+
+UP=	 ..
+T=	$(UP)\src\tools
+CD=	 ./
+
+I= /I..\src\include
+TO_OS= TO_WIN32
+OS_ID= 0.4.4
+
+CFLAGS=/c /Os /D "UNICODE" /D "WIN32" /W3 /GR- /Zi /GS /Gy /GF /EHs-c- /GL /D "NDEBUG" /D "_CRT_SECURE_NO_WARNINGS"
+
+RAPI_FLAGS= $(CFLAGS)
+HOST_FLAGS= $(CFLAGS)
+RLIB_FLAGS=
+
+RFLAGS= $(RAPI_FLAGS) $(I) /D$(TO_OS) /DREB_API
+HFLAGS= $(HOST_FLAGS) $(I) /D$(TO_OS) /DREB_CORE
+
+LIBS= user32.lib ws2_32.lib advapi32.lib shell32.lib comdlg32.lib
+LDFLAGS = /nologo /DEBUG /RELEASE /opt:ref /opt:icf /LTCG
+
+REBOL=	r3-make.exe -qs
+
+all: prep r3.exe
+
+prep:
+	$(REBOL) $T/make-headers.r
+	$(REBOL) $T/make-boot.r $(OS_ID)
+	$(REBOL) $T/make-host-init.r
+	$(REBOL) $T/make-os-ext.r # ok, but not always
+	$(REBOL) $T/make-host-ext.r
+	$(REBOL) $T/make-reb-lib.r
+
+objs:
+	mkdir objs
+
+OBJS =	objs/a-constants.obj objs/a-globals.obj objs/a-lib.obj objs/b-boot.obj \
+	objs/b-init.obj objs/c-do.obj objs/c-error.obj objs/c-frame.obj \
+	objs/c-function.obj objs/c-port.obj objs/c-task.obj objs/c-word.obj \
+	objs/d-crash.obj objs/d-dump.obj objs/d-print.obj objs/f-blocks.obj \
+	objs/f-deci.obj objs/f-enbase.obj objs/f-extension.obj objs/f-math.obj \
+	objs/f-modify.obj objs/f-random.obj objs/f-round.obj objs/f-series.obj \
+	objs/f-stubs.obj objs/l-scan.obj objs/l-types.obj objs/m-gc.obj \
+	objs/m-pools.obj objs/m-series.obj objs/n-control.obj objs/n-data.obj \
+	objs/n-io.obj objs/n-loop.obj objs/n-math.obj objs/n-sets.obj \
+	objs/n-strings.obj objs/n-system.obj objs/p-clipboard.obj objs/p-console.obj \
+	objs/p-dir.obj objs/p-dns.obj objs/p-event.obj objs/p-file.obj \
+	objs/p-net.obj objs/s-cases.obj objs/s-crc.obj objs/s-file.obj \
+	objs/s-find.obj objs/s-make.obj objs/s-mold.obj objs/s-ops.obj \
+	objs/s-trim.obj objs/s-unicode.obj objs/t-bitset.obj objs/t-block.obj \
+	objs/t-char.obj objs/t-datatype.obj objs/t-date.obj objs/t-decimal.obj \
+	objs/t-event.obj objs/t-function.obj objs/t-gob.obj objs/t-image.obj \
+	objs/t-integer.obj objs/t-logic.obj objs/t-map.obj objs/t-money.obj \
+	objs/t-none.obj objs/t-object.obj objs/t-pair.obj objs/t-port.obj \
+	objs/t-string.obj objs/t-time.obj objs/t-tuple.obj objs/t-typeset.obj \
+	objs/t-utype.obj objs/t-vector.obj objs/t-word.obj objs/u-bmp.obj \
+	objs/u-compress.obj objs/u-dialect.obj objs/u-gif.obj objs/u-jpg.obj \
+	objs/u-md5.obj objs/u-parse.obj objs/u-png.obj objs/u-sha1.obj \
+	objs/u-zlib.obj
+
+HOST =	objs/host-main.obj objs/host-args.obj objs/host-device.obj objs/host-stdio.obj \
+	objs/dev-net.obj objs/dev-dns.obj objs/host-lib.obj \
+	objs/dev-stdio.obj objs/dev-event.obj objs/dev-file.obj \
+	objs/dev-clipboard.obj
+
+# Directly linked r3 executable:
+r3.exe: objs $(OBJS) $(HOST)
+	$(LD) $(LDFLAGS) $(OBJS) $(HOST) $(LIBS) /PDB:$*.pdb /OUT:r3.exe /SUBSYSTEM:WINDOWS
+
+{..\src\core}.c{objs}.obj::
+	$(CC) $(RFLAGS) /Foobjs\ /Fdobjs\vc80.pdb $<
+
+{..\src\os}.c{objs}.obj::
+	$(CC) $(HFLAGS) /Foobjs\ /Fdobjs\vc80.pdb $<
+
+{..\src\os\win32}.c{objs}.obj::
+	$(CC) $(HFLAGS) /Foobjs\ /Fdobjs\vc80.pdb $<
