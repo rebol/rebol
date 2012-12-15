@@ -351,6 +351,7 @@ unless flag? -SP [ ; Use standard paths:
 	macro+ UP ".."
 	macro+ CD "./"
 ]
+if os-plat/2 = 3 [macro+ REBOL ">NUL:"] ; Temporary workaround for R3 on Win7.
 if flag? EXE [macro+ BIN_SUFFIX %.exe]
 macro++ CLIB linker-flags
 macro++ RAPI_FLAGS compile-flags
