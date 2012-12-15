@@ -78,10 +78,11 @@ void *Term_IO;
 #define FLUSH()		fflush(stdout)
 */
 
-
 static void Handle_Signal(int sig)
 {
-	Put_Str("[escape]");
+	char *buf = strdup("[escape]");
+	Put_Str(buf);
+	free(buf);
 	RL_Escape(0);
 }
 
