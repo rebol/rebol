@@ -102,7 +102,9 @@ These are now obsolete (as of A107) and should be removed:
 #define INLINE __inline			// name used for it
 
 #ifdef THREADED
+#ifndef __MINGW32__
 #define THREAD __declspec(thread)
+#endif
 #endif
 
 // Used when we build REBOL as a DLL:
