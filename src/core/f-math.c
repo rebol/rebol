@@ -409,7 +409,11 @@ REBYTE *Ecvt(REBDEC value, int ndig, REBINT *dec, REBINT *sign) {
 		return buf;
 	}
 	*sign = (value < 0.0) ? 1 : 0;
-	e = floor(log10(value)); // accurate enough? A96: log10l() creates problems
+#ifdef HAS_LOG10L
+	e = floorl(log10l(value)); /* log10 is not accurate enough */
+#else
+	e = floorl(logl(value) * 0.43429448190325182765112891891660508229439700580366656611445378316586464920887L);
+#endif 
 	s = value * powl(10.0l, ndig - 1 - e) + 0.5l; // Needs powl()
 	*dec = e + 1;
 	INT_TO_STR(s, buf);
