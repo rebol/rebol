@@ -125,12 +125,13 @@
 {
 #ifdef OS_WIDE_CHAR
 	REBSER *dst;
-	if (Is_Wide((REBUNI*)src, len)) {
+	REBUNI *str = (REBUNI*)src;	
+	if (Is_Wide(str, len)) {
 		REBUNI *up;
 		dst = Make_Unicode(len);
 		SERIES_TAIL(dst) = len;
 		up = UNI_HEAD(dst);
-		while (len-- > 0) *up++ = *((REBUNI*)src)++;
+		while (len-- > 0) *up++ = *str++;
 		*up = 0;
 	}
 	else {
@@ -138,7 +139,7 @@
 		dst = Make_Binary(len);
 		SERIES_TAIL(dst) = len;
 		bp = BIN_HEAD(dst);
-		while (len-- > 0) *bp++ = (REBYTE)*((REBUNI*)src)++;
+		while (len-- > 0) *bp++ = (REBYTE)*str++;
 		*bp = 0;
 	}
 	return dst;
