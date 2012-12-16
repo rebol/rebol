@@ -241,7 +241,8 @@ typedef void(*CFUNC)(void *);
 
 // Byte string functions:
 #define COPY_BYTES(t,f,l)   strncpy((char*)t, (char*)f, l)
-#define APPEND_BYTES(t,f,l) strncat((char*)t, (char*)f, l)
+// For APPEND_BYTES, l is the max-size allocated for t (dest)
+#define APPEND_BYTES(t,f,l) strncat((char*)t, (char*)f, MAX((l)-strlen(t)-1, 0))
 #define LEN_BYTES(s)        strlen((char*)s)
 #define CMP_BYTES(s,t)      strcmp((char*)s, (char*)t)
 #define BYTES(s) (REBYTE*)(s)
