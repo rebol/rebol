@@ -1,4 +1,22 @@
 #################
+## REBOL R3
+#################
+
+make/r3*
+make/objs/
+src/boot/boot-code.r
+src/core/b-boot.c
+src/include/ext-types.h
+src/include/host-*
+src/include/reb-dialect.h
+src/include/reb-evtypes.h
+src/include/reb-lib-lib.h
+src/include/reb-lib.h
+src/include/reb-types.h
+src/include/tmp-*
+src/tools/reb-lib-doc.txt
+
+#################
 ## Eclipse
 #################
 
