@@ -263,12 +263,11 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	REBVAL *event = D_ARG(1);
 	REBCNT n;
 
-	if (VAL_EVENT_TYPE(event) == EVT_CALLBACK) {
-		if (cbi = VAL_EVENT_SER(event)) {
-			n = Do_Callback(cbi->obj, cbi->word, cbi->args, &(cbi->result));
-		}
-	}
-	else R_NONE; // A no-op. (another choice would be to trap)
+	// Sanity check:
+	if (VAL_EVENT_TYPE(event) != EVT_CALLBACK || !(cbi = VAL_EVENT_SER(event)))
+		return R_NONE;
+
+	n = Do_Callback(cbi->obj, cbi->word, cbi->args, &(cbi->result));
 
 	SET_FLAG(cbi->flags, RXC_DONE);
 
