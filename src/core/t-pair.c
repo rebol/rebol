@@ -200,6 +200,8 @@
 		else if (n == REB_DECIMAL || n == REB_PERCENT) {
 			x2 = y2 = (REBD32)VAL_DECIMAL(arg);
 		}
+		else
+			Trap_Math_Args(REB_PAIR, action);
 
 		switch (action) {
 
