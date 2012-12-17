@@ -231,7 +231,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **
 */	RL_API void RL_Escape(REBINT reserved)
 /*
-**	Signal that code ecaluation needs to be interrupted.
+**	Signal that code evaluation needs to be interrupted.
 **
 **	Returns:
 **		nothing
