@@ -651,7 +651,7 @@ transcode: native [
 	source [binary!] "Must be Unicode UTF-8 encoded"
 	/next "Translate next complete value (blocks as single value)"
 	/only "Translate only a single value (blocks dissected)"
-	/error "Do not throw errors - return error object as value"
+	/error "Do not throw errors - return error object as value in place"
 ]
 
 echo: native [
