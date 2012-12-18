@@ -15,6 +15,7 @@ src/include/reb-lib.h
 src/include/reb-types.h
 src/include/tmp-*
 src/tools/reb-lib-doc.txt
+src/reb-lib-doc.txt
 
 #################
 ## Eclipse
