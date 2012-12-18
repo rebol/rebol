@@ -728,7 +728,7 @@
 		for (words = FRM_WORD(target, 1); NOT_END(words); words++)
 			if (binds[VAL_BIND_CANON(words)]) n--;
 		// Expand frame by the amount required:
-		if (n > 0) Expand_Frame(source, n, 0);
+		if (n > 0) Expand_Frame(target, n, 0);
 		else expand = 0;
 	}
 
