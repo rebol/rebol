@@ -833,9 +833,9 @@ zero_blk:
 		if (D_REF(2)) Trap0(RE_BAD_REFINES); // seed
 		if (D_REF(4)) { // /only
 			if (index >= tail) goto is_none;
-			index += (REBCNT)Random_Int(D_REF(3)) % (tail - index);  // /secure
+			len = (REBCNT)Random_Int(D_REF(3)) % (tail - index);  // /secure
 			arg = D_ARG(2); // pass to pick
-			SET_INTEGER(arg, index+1);
+			SET_INTEGER(arg, len+1);
 			action = A_PICK;
 			goto repick;
 		}
