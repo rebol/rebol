@@ -518,10 +518,11 @@ bad_target:
 					i = Find_Str_Str(series, 0, index, series->tail, 1, ser, 0, ser->tail, HAS_CASE(parse));
 					if (i != NOT_FOUND && is_thru) i += ser->tail;
 				}
-				else
+				else {
 					i = Find_Str_Str(series, 0, index, series->tail, 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), HAS_CASE(parse));
+					if (is_thru) i += VAL_LEN(item);
+				}
 				if (i >= series->tail) i = NOT_FOUND;
-				else if (is_thru) i += VAL_LEN(item);
 			}
 			// #"A"
 			else if (IS_CHAR(item)) {
