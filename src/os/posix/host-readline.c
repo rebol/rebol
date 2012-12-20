@@ -482,6 +482,12 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 		}
 		else {
 			switch (*++cp) {
+			case 'H':	// home
+				Home_Line(term);
+				break;
+			case 'F':	// end
+				End_Line(term);
+				break;
 			default:
 				// Q: what other keys do we want to support ?!
 				WRITE_STR("[ESC]");
