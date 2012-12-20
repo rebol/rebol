@@ -509,6 +509,9 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 		case 2:	// CTRL-B
 			Move_Cursor(term, -1);
 			break;
+		case 4:	// CTRL-D
+			Delete_Char(term, FALSE);
+			break;
 		case 5:	// CTRL-E
 			End_Line(term);
 			break;
