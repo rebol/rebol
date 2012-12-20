@@ -369,6 +369,8 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 {
 	int len;
 
+	if ( (term->pos == term->end) && back == 0) return; //Ctrl-D at EOL
+   
 	if (back) term->pos--;
 
 	len = 1 + term->end - term->pos;
