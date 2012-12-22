@@ -369,6 +369,8 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 {
 	int len;
 
+	if ( (term->pos == term->end) && back == 0) return; //Ctrl-D at EOL
+   
 	if (back) term->pos--;
 
 	len = 1 + term->end - term->pos;
@@ -465,6 +467,14 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 				Delete_Char(term, FALSE);
 				cp++; // remove ~
 				break;
+
+			case 'H':	// home
+				Home_Line(term);
+				break;
+			case 'F':	// end
+				End_Line(term);
+				break;
+
 			default:
 				WRITE_STR("[ESC]");
 				cp--;
@@ -506,6 +516,9 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 			break;
 		case 2:	// CTRL-B
 			Move_Cursor(term, -1);
+			break;
+		case 4:	// CTRL-D
+			Delete_Char(term, FALSE);
 			break;
 		case 5:	// CTRL-E
 			End_Line(term);
