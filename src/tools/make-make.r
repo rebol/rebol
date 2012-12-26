@@ -72,7 +72,7 @@ RLIB_FLAGS=
 # Flags for core and for host:
 RFLAGS= -c -D$(TO_OS) -DREB_API  $(RAPI_FLAGS) $I
 HFLAGS= -c -D$(TO_OS) -DREB_CORE $(HOST_FLAGS) $I
-CLIB=   -lm
+CLIB=
 
 # REBOL builds various include files:
 REBOL=	$(CD)r3-make -qs
