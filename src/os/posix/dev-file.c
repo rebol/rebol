@@ -63,6 +63,31 @@
 **
 ***********************************************************************/
 
+#ifndef DT_DIR
+// dirent.d_type is a BSD extension, actually not part of POSIX
+// reformatted from: http://ports.haiku-files.org/wiki/CommonProblems
+static int Is_Dir(const char *path, const char *name)
+{
+	int len1 = strlen(path);
+	int len2 = strlen(name);
+	struct stat st;
+
+	char pathname[len1 + 1 + len2 + 1 + 13];
+	strcpy(pathname, path);
+
+	/* Avoid UNC-path "//name" on Cygwin.  */
+	if (len1 > 0 && pathname[len1 - 1] != '/')
+		strcat(pathname, "/");
+
+	strcat(pathname, name);
+
+	if (stat(pathname, &st))
+		return 0;
+
+	return S_ISDIR(st.st_mode);
+}
+#endif
+
 static REBOOL Seek_File_64(REBREQ *file)
 {
 	// Performs seek and updates index value. TRUE on success.
@@ -197,12 +222,16 @@ static int Get_File_Info(REBREQ *file)
 	file->modes = 0;
 	COPY_BYTES(file->file.path, cp, MAX_FILE_NAME);
 
+#ifdef DT_DIR
 	// NOTE: not all posix filesystems support this (mainly
 	// the Linux and BSD support it.) If this fails to build, a
 	// different mechanism must be used. However, this is the
 	// most efficient, because it does not require a separate
 	// file system call for determining directories.
 	if (d->d_type == DT_DIR) SET_FLAG(file->modes, RFM_DIR);
+#else
+	if (Is_Dir(dir->file.path, file->file.path)) SET_FLAG(file->modes, RFM_DIR);
+#endif
 
 	// Line below DOES NOT WORK -- because we need full path.
 	//Get_File_Info(file); // updates modes, size, time
