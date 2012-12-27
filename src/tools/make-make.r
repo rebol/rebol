@@ -55,18 +55,18 @@ NM=	$(TOOLS)nm
 STRIP=	$(TOOLS)strip
 
 # CP allows different copy progs:
-CP=	
+CP=
 # LS allows different ls progs:
-LS=	
+LS=
 # UP - some systems do not use ../
-UP=	
+UP=
 # CD - some systems do not use ./
-CD=	
+CD=
 # Special tools:
-T=	$(UP)/src/tools
+T= $(UP)/src/tools
 # Paths used by make:
-S=	../src
-R=	$S/core
+S= ../src
+R= $S/core
 
 INCL ?= .
 I= -I$(INCL) -I$S/include/
@@ -276,15 +276,16 @@ macro+: func [
 	"Appends value to end of macro= line"
 	'name
 	value
-	/local str
+	/local n a
 ][
-	; (this should use parse!)
-	str: any [
-		find find/tail makefile-head join newline join name "=" newline
-		find find/tail makefile-head join newline join name "?=" newline
+	n: join newline name
+	value: form value
+	unless parse makefile-head [
+		thru n any space ["=" | "?="] to newline  ; over simplified
+		insert #" " insert value to end
+	][
+		print ajoin ["Cannot find " name "= definition"]
 	]
-	unless str [print ajoin ["Cannot find " name "= definition"] exit]
-	insert insert str space value
 ]
 
 macro++: funct ['name obj [object!]] [
