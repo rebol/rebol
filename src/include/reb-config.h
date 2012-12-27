@@ -136,7 +136,14 @@ These are now obsolete (as of A107) and should be removed:
 #define AGG_FREETYPE            //use freetype2 library for fonts by default
 #define FINITE finite
 #define INLINE
+
+#ifndef TO_HAIKU
+// Unsupported by gcc 2.95.3-haiku-121101
 #define API_EXPORT __attribute__((visibility("default")))
+#else
+#define API_EXPORT
+#endif 
+
 #define API_IMPORT
 #endif
 
@@ -160,6 +167,12 @@ These are now obsolete (as of A107) and should be removed:
 #ifdef TO_LINUX_MIPS
 #define ENDIAN_LITTLE
 #define HAS_LONG_DOUBLE
+#endif
+
+#ifdef TO_HAIKU					// same as Linux/Intel seems to work
+#define ENDIAN_LITTLE
+#define HAS_LONG_DOUBLE
+#define HAS_LOG10L
 #endif
 
 #ifdef TO_OSXI					// OSX/Intel

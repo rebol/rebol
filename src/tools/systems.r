@@ -20,18 +20,19 @@ REBOL [
 
 systems: [
 	[plat  os-name   os-base  build-flags]
-	[0.1.03 "amiga"      posix  [HID NPS +SC CMT COP -SP]]
-	[0.2.04 "osx"        posix  [+OS NCM]]			; no shared lib possible
-	[0.2.05 "osxi"       posix  [ARC +O1 NPS PIC NCM HID STX]]
-	[0.3.01 "win32"      win32  [+O2 UNI W32 WIN S4M EXE DIR]]
-	[0.4.02 "linux"      posix  [+O2 LDL ST1]]		; libc 2.3
-	[0.4.03 "linux"      posix  [+O2 HID LDL ST1]]	; libc 2.5
-	[0.4.04 "linux"      posix  [+O2 HID LDL ST1 M32]]	; libc 2.11
-	[0.4.10 "linux_ppc"  posix  [+O1 HID LDL ST1]]
-	[0.4.20 "linux_arm"  posix  [+O2 HID LDL ST1]]
-	[0.4.30 "linux_mips" posix  [+O2 HID LDL ST1]]  ; glibc does not need C++
-	[0.7.02 "freebsd"    posix  [+O1 C++ ST1]]
-	[0.9.04 "openbsd"    posix  [+O1 C++ ST1]]
+	[0.1.03 "amiga"      posix  [HID NPS +SC CMT COP -SP -LM]]
+	[0.2.04 "osx"        posix  [+OS NCM -LM]]			; no shared lib possible
+	[0.2.05 "osxi"       posix  [ARC +O1 NPS PIC NCM HID STX -LM]]
+	[0.3.01 "win32"      win32  [+O2 UNI W32 WIN S4M EXE DIR -LM]]
+	[0.4.02 "linux"      posix  [+O2 LDL ST1 -LM]]		; libc 2.3
+	[0.4.03 "linux"      posix  [+O2 HID LDL ST1 -LM]]	; libc 2.5
+	[0.4.04 "linux"      posix  [+O2 HID LDL ST1 M32 -LM]]	; libc 2.11
+	[0.4.10 "linux_ppc"  posix  [+O1 HID LDL ST1 -LM]]
+	[0.4.20 "linux_arm"  posix  [+O2 HID LDL ST1 -LM]]
+	[0.4.30 "linux_mips" posix  [+O2 HID LDL ST1 -LM]]  ; glibc does not need C++
+	[0.5.75 "haiku"      posix  [+O2 ST1 NWK]]
+	[0.7.02 "freebsd"    posix  [+O1 C++ ST1 -LM]]
+	[0.9.04 "openbsd"    posix  [+O1 C++ ST1 -LM]]
 ]
 
 compile-flags: [
@@ -61,6 +62,8 @@ linker-flags: [
 	W32: "-lwsock32 -lcomdlg32"
 	WIN: "-mwindows"; build as Windows GUI binary
 	S4M: "-Wl,--stack=4194300"
+	-LM: "-lm" ; HaikuOS has math in libroot, for instance
+	NWK: "-lnetwork" ; Needed by HaikuOS
 ]
 
 other-flags: [
