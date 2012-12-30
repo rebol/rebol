@@ -757,18 +757,67 @@ chk_neg:
 ***********************************************************************/
 {
 	REBCHR *cmd;
-	REBCHR *result;
+	REBINT lenplus;
+	REBCHR *buf;
 	REBVAL *arg = D_ARG(1);
 
 	Check_Security(SYM_ENVR, POL_READ, arg);
 
 	if (ANY_WORD(arg)) Set_String(arg, Copy_Form_Value(arg, 0));
 	cmd = Val_Str_To_OS(arg);
-	result = OS_GET_ENV(cmd, 0);
-	if (result == 0) return R_NONE;
-	Set_String(D_RET, Copy_OS_Str(result, LEN_STR(result)));
+
+	lenplus = OS_GET_ENV(cmd, (REBCHR*)0, 0);
+	if (lenplus == 0) return R_NONE;
+	if (lenplus < 0) return R_UNSET;
+
+	// Two copies...is there a better way?
+	buf = MAKE_STR(lenplus);
+	OS_GET_ENV(cmd, buf, lenplus);
+	Set_String(D_RET, Copy_OS_Str(buf, lenplus - 1));
+	FREE_MEM(buf);
 
 	return R_RET;
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(set_env)
+/*
+***********************************************************************/
+{
+	REBCHR *cmd;
+	REBVAL *arg1 = D_ARG(1);
+	REBVAL *arg2 = D_ARG(2);
+	REBOOL success;
+
+	Check_Security(SYM_ENVR, POL_WRITE, arg1);
+
+	if (ANY_WORD(arg1)) Set_String(arg1, Copy_Form_Value(arg1, 0));
+	cmd = Val_Str_To_OS(arg1);
+	
+	if (ANY_STR(arg2)) {
+		REBCHR *value = Val_Str_To_OS(arg2);
+		success = OS_SET_ENV(cmd, value);
+		if (success) {
+			// What function could reuse arg2 as-is?
+			Set_String(D_RET, Copy_OS_Str(value, LEN_STR(value)));
+			return R_RET;
+		}
+		return R_UNSET;
+	}
+
+	if (IS_NONE(arg2)) {
+		success = OS_SET_ENV(cmd, 0);
+		if (success)
+			return R_NONE;
+		return R_UNSET;
+	}
+
+	// is there any checking that native interface has not changed
+	// out from under the expectations of the code?
+
+	return R_UNSET;
 }
 
 
