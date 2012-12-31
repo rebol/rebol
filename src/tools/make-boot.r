@@ -206,7 +206,7 @@ binary-to-c: either system/version/4 = 3 [
 	]
 ][
 	; Other formats (Linux, OpenBSD, etc.):
-	func [comp-data /local out] [
+	func [comp-data /local out data] [
 		out: make string! 4 * (length? comp-data)
 		forall comp-data [
 			data: copy/part comp-data 16
