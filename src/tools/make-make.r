@@ -117,6 +117,10 @@ prep:
 	$(REBOL) $T/make-host-ext.r
 	$(REBOL) $T/make-reb-lib.r
 
+### Pre-commit tests for contributing Rebol devs
+commit:
+	$(REBOL) $T/make-commit.r
+
 ### Post build actions
 purge:
 	-rm libr3.*
