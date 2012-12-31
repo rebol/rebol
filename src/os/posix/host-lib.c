@@ -268,12 +268,12 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/      REBINT OS_Get_Env(REBCHR *envname, REBCHR* envval, REBINT valsize)
+*/	REBINT OS_Get_Env(REBCHR *envname, REBCHR* envval, REBINT valsize)
 /*
-**              Get a value from the environment.
-**              Returns size of retrieved value for success or zero if missing.
-**              If return size is greater than valsize then value contents
-**              are undefined, and size includes null terminator of needed buf
+**		Get a value from the environment.
+**		Returns size of retrieved value for success or zero if missing.
+**		If return size is greater than valsize then value contents
+**		are undefined, and size includes null terminator of needed buf
 **
 ***********************************************************************/
 {
@@ -297,10 +297,10 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/      REBOOL OS_Set_Env(REBCHR *envname, REBCHR *envval)
+*/	REBOOL OS_Set_Env(REBCHR *envname, REBCHR *envval)
 /*
-**              Set a value from the environment.
-**              Returns >0 for success and 0 for errors.
+**		Set a value from the environment.
+**		Returns >0 for success and 0 for errors.
 **
 ***********************************************************************/
 {
