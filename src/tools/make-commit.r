@@ -10,8 +10,8 @@ REBOL [
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
 	Purpose: {
-		Run pre-commit tests on the codebase for any violations of coding standards.
-		This includes cosmetic issues like spaces instead of tabs.
+		Run pre-commit tests on the codebase for any violations of coding
+		standards.  This includes cosmetic issues like spaces instead of tabs.
 	}
 	Note: [
 		"This runs relative to ../tools directory."
@@ -19,36 +19,36 @@ REBOL [
 ]
 
 
-; While the coding style and checkin rules should be documented at length in a wiki
-; somewhere, the "success" message should evolve to bring to mind whatever mistakes
-; turn out to be the most common that the tests don't catch
+; While the coding style and checkin rules should be documented at length in a
+; wiki somewhere, the "success" message should evolve to bring to mind whatever
+; mistakes turn out to be the most common that the tests don't catch
 
 success-message: {
-The source files passed what the pre-commit suite currently tests for!  But also be
-sure that:
+The source files passed what the pre-commit suite currently tests for!  But
+also be sure that:
 
 * A clean build (make clean, make make, make prep, make) succeeds with zero
   compiler warnings
 
-* You tested your changes on your operating platform to make sure they do what you think
+* You test changes on your operating platform to make sure they work
 
-* You have considered the impact of your changes on platforms you have NOT tested them
-  on.  If it seems likely that impact will be there, then make sure either you (or
-  someone else) does those tests on your branch before you send a pull request to
-  the master.
+* You have considered the impact of your changes on platforms you have NOT
+  tested them on.  If it seems likely that impact will be there, then make sure
+  either you (or someone else) does those tests on your branch before you send
+  a pull request to the master.
 }
 
 
-; The failure message shouldn't have to say much, because the alerts delivered by the
-; check should speak for themselves...
+; The failure message shouldn't have to say much, because the alerts delivered
+; by the check should speak for themselves...
 
 failure-message: {
-The source files did not pass what the pre-commit suite currently tests for.  Please
-fix these issues before submitting a pull request for your commit!
+The source files did not pass what the pre-commit suite currently tests for.
+Please fix these issues before submitting a pull request for your commit!
 
-(Alternatively: if you believe the tests *themselves* are in error, take a look in
-%/src/tools/make-commit.r and present a suggested modification to the tests along
-with your grievance.)
+(Alternatively: if you believe the tests *themselves* are in error, take a look
+in %/src/tools/make-commit.r and present a suggested modification to the tests
+along with your grievance.)
 }
 
 
@@ -56,8 +56,8 @@ with your grievance.)
 ; however this needs to check header files and other things not mentioned there
 ; so easiest for now is to just enumerate directories looking for [.c .r .h]
 
-; BUT in case people have some miscellaneous directories not related to the
-; current Rebol /src/ files, we only scan the "known" toplevel ones in the repository
+; BUT in case people have miscellaneous directories not related to the current
+; Rebol /src/ files, we only scan the "known" toplevel ones in the repository
 
 toplevel-dirs: [%boot/ %core/ %include/ %mezz/ %os/ %tools/]
 
@@ -88,7 +88,7 @@ check-basic-indent: func [lines [block!]] [
 
 		unless parse line [any tab non-whitespace to end] [
 			append/only errors rejoin [
-				line-number {:} space {Indentation of line not done with pure tabs.}
+				line-number {:} space {Line not indented with pure tabs.}
 			]
 		]
 	]
@@ -102,10 +102,11 @@ check-embedded-documentation: func [lines [block!]] [
 	; just a stub for the moment...this has an indentation convention also
 	; See: http://www.rebol.com/article/0515.html
 
-	; (one could argue the embedded documentation script should be the place where bad
-	; whitespace is caught.  But then again, complaining about the whitespace on every
-	; edit (even possibly an intermediate one) could create a beaurocratic headache.
-	; Such checks may be better here, although it creates more work to "find them twice")
+	; (one could argue the embedded documentation script should be the place
+	; where bad whitespace is caught.  But then again, complaining about the
+	; whitespace on every edit (even possibly an intermediate one) could create
+	; a beaurocratic headache.  Such checks may be better here, although it
+	; creates more work to "find them twice")
 
 	return errors
 ]
@@ -157,7 +158,7 @@ check-file: func [file [file!]] [
 check-directory: func [dir [file!]] [
 	foreach entry load dir [
 		either dir? entry [
-			; REVIEW: catch recursive symlinks, if someone happened to make them?
+			; REVIEW: catch recursive symlinks, if someone is using those?
 			check-directory rejoin [dir entry]
 		] [
 			check-file rejoin [dir entry]
