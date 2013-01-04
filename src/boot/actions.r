@@ -134,7 +134,7 @@ tail: action [
 ]
 
 head?: action [
-	{Returns TRUE if a series is at its beginnint.}
+	{Returns TRUE if a series is at its beginning.}
 	series [series! gob! port!]
 ]
 
