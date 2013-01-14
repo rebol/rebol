@@ -880,6 +880,7 @@ eval_func2:
 	case ET_OPERATOR:
 		// An operator can be native or function, so its true evaluation
 		// datatype is stored in the extended flags part of the value.
+		if (!word) word = ROOT_NONAME;
 		if (DSP <= 0 || index == 0) Trap1(RE_NO_OP_ARG, word);
 		ftype = VAL_GET_EXT(value) - REB_NATIVE;
 		dsf = Push_Func(TRUE, block, index, VAL_WORD_SYM(word), value); // TOS has first arg
