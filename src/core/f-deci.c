@@ -548,25 +548,7 @@ REBDEC deci_to_decimal (const deci a) {
 /* using the ecvt function */
 deci decimal_to_deci (REBDEC a) {
 
-#ifdef HAS_LONG_DOUBLE
-	/* use long double */
-
-	deci result;
-	REBI64 d; /* the decimal significand */
-	REBINT e; /* the decimal exponent */
-	
-	/* handle zero */
-	if (a == 0.0) return deci_zero;
-	
-	/* handle sign */
-	if (0.0 <= a) result.s = 0; else {result.s = 1; a = -a;}
-
-	/* compute exponent e to get d with the required accuracy */
-	e = (REBINT)floorl(log10l(a)) - DOUBLE_DIGITS + 1;
-
-	d = (REBU64)(powl(10.0l, -e) * a + 0.5l);
-#else
-#ifdef HAS_ECVT
+#if (defined HAS_ECVT) || (defined HAS_DTOA)
 	deci result;
 	REBI64 d; /* the decimal significand */
 	REBINT e; /* the decimal exponent */
@@ -584,6 +566,24 @@ deci decimal_to_deci (REBDEC a) {
 	e -= DOUBLE_DIGITS;
 
 	d = CHR_TO_INT(c);
+#else
+#ifdef HAS_LONG_DOUBLE
+	/* use long double */
+
+	deci result;
+	REBI64 d; /* the decimal significand */
+	REBINT e; /* the decimal exponent */
+	
+	/* handle zero */
+	if (a == 0.0) return deci_zero;
+	
+	/* handle sign */
+	if (0.0 <= a) result.s = 0; else {result.s = 1; a = -a;}
+
+	/* compute exponent e to get d with the required accuracy */
+	e = (REBINT)floorl(log10l(a)) - DOUBLE_DIGITS + 1;
+
+	d = (REBU64)(powl(10.0l, -e) * a + 0.5l);
 #else
 #error we need to emulate long double arithmetic
 #endif

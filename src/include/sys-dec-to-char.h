@@ -28,7 +28,7 @@
 #ifdef HAS_ECVT
 #define ECVT(value, ndig, dec, sign) ecvt(value, ndig, dec, sign)
 #else
-#ifdef HAS_LONG_DOUBLE
+#if (defined HAS_DTOA) || (defined HAS_LONG_DOUBLE)
 REBYTE *Ecvt(REBDEC value, int ndig, REBINT *dec, REBINT *sign);
 #define ECVT(value, ndig, dec, sign) Ecvt(value, ndig, dec, sign)
 #else

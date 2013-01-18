@@ -149,6 +149,7 @@ These are now obsolete (as of A107) and should be removed:
 
 #ifdef TO_LINUX					// Linux/Intel
 #define ENDIAN_LITTLE
+#define HAS_ECVT
 #define HAS_LONG_DOUBLE
 #define HAS_LOG10L
 #endif
@@ -161,7 +162,7 @@ These are now obsolete (as of A107) and should be removed:
 
 #ifdef TO_LINUX_ARM				// Linux/ARM
 #define ENDIAN_LITTLE
-#define HAS_LONG_DOUBLE
+#define HAS_DTOA
 #endif
 
 #ifdef TO_LINUX_MIPS

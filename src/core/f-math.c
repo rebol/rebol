@@ -391,8 +391,12 @@ static int Convert_Decimal(REBDEC d, REBI64 *sig, REBINT *point)
 #define MAX_DIGITS 17
 
 #ifndef HAS_ECVT
-#ifdef HAS_LONG_DOUBLE
-
+#ifdef HAS_DTOA
+REBYTE *Ecvt(REBDEC value, int ndig, REBINT *dec, REBINT *sign) {
+	char *rve;
+	return __dtoa (value, 0, ndig, dec, sign, &rve);
+}
+#elif defined HAS_LONG_DOUBLE
 static REBYTE buf[MAX_DIGITS + 1];
 
 REBYTE *Ecvt(REBDEC value, int ndig, REBINT *dec, REBINT *sign) {
