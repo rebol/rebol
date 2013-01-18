@@ -24,24 +24,18 @@
 **  Section: functional
 **  Author:  Ladislav Mecir for REBOL Technologies
 **  Notes:
+**    Deci significands are 87-bit long, unsigned, unnormalized, stored in
+**    little endian order. (Maximal deci significand is 1e26 - 1, i.e. 26
+**    nines)
+**
+**    Sign is one-bit, 1 means nonpositive, 0 means nonnegative.
+**
+**    Exponent is 8-bit, unbiased.
+**
+**    Functions may be inlined (especially the ones marked by INLINE).
+**    64-bit and/or double arithmetic used where they bring advantage.
 **
 ***********************************************************************/
-/*
-	    Deci significands are 87-bit long, unsigned, unnormalized,
-        stored in little endian order.
-        (Maximal deci significand is 1e26 - 1, i.e. 26 nines)
-
-	    Sign is one-bit, 1 means nonpositive, 0 means nonnegative.
-	    Exponent is 8-bit, unbiased.
-
-        Functions may be inlined (especially the ones marked by INLINE).
-        
-        64-bit and/or double arithmetic used where they bring advantage.
-
-		Conversions deci_to_decimal and decimal_to_deci use either
-		the long double datatype, or the ecvt function, depending on
-		the availability
-*/
 
 #include "sys-core.h"
 #include "sys-deci-funcs.h"
@@ -530,68 +524,35 @@ REBI64 deci_to_int (const deci a) {
 }
 
 REBDEC deci_to_decimal (const deci a) {
-#ifdef HAS_LONG_DOUBLE
-	/* use long double */
-	REBDCL significand;
-	significand = (a.m2 * two_to_32l + a.m1) * two_to_32l + a.m0;
-	if (a.s) significand = -significand;
-	return (REBDEC)(significand * powl(10.0l, a.e));
-#else
 	/* use atof */
     REBYTE b [34];
 	deci_to_string(b, a, 0, '.');
 	return atof(b);
-#endif
 }
 
 #define DOUBLE_DIGITS 17
-/* using the ecvt function */
+/* using the dtoa function */
 deci decimal_to_deci (REBDEC a) {
-
-#ifdef HAS_LONG_DOUBLE
-	/* use long double */
-
 	deci result;
-	REBI64 d; /* the decimal significand */
-	REBINT e; /* the decimal exponent */
-	
-	/* handle zero */
-	if (a == 0.0) return deci_zero;
-	
-	/* handle sign */
-	if (0.0 <= a) result.s = 0; else {result.s = 1; a = -a;}
-
-	/* compute exponent e to get d with the required accuracy */
-	e = (REBINT)floorl(log10l(a)) - DOUBLE_DIGITS + 1;
-
-	d = (REBU64)(powl(10.0l, -e) * a + 0.5l);
-#else
-#ifdef HAS_ECVT
-	deci result;
-	REBI64 d; /* the decimal significand */
-	REBINT e; /* the decimal exponent */
+	REBI64 d; /* decimal significand */
+	REBINT e; /* decimal exponent */
 	REBINT s; /* sign */
 	REBYTE *c;
-
-	/* handle zero */
-	if (a == 0.0) return deci_zero;
-
-	/* handle sign */
-	if (0.0 <= a) result.s = 0; else {result.s = 1; a = -a;}
+	REBYTE *rve;
 
     /* convert a to string */
-	c = ECVT(a, DOUBLE_DIGITS, &e, &s);
-	e -= DOUBLE_DIGITS;
+	c = (REBYTE *) dtoa (a, 0, DOUBLE_DIGITS, &e, &s, (char **) &rve);
+
+	e -= (rve - c);
 
 	d = CHR_TO_INT(c);
-#else
-#error we need to emulate long double arithmetic
-#endif
-#endif
+
+	result.s = s;
 	result.m2 = 0;
 	result.m1 = (REBCNT)(d >> 32);
 	result.m0 = (REBCNT)d;
 	result.e = 0;
+
 	return deci_ldexp(result, e);
 }
 
@@ -1029,7 +990,17 @@ deci deci_divide (deci a, deci b) {
 	REBINT shift, na, nb, tc;
 
 	if (deci_is_zero (b)) DIVIDE_BY_ZERO_ERROR;
-	if (deci_is_zero (a)) return deci_zero;
+
+	/* compute sign */
+	c.s = (!a.s && b.s) || (a.s && !b.s);
+
+	if (deci_is_zero (a)) {
+		c.m0 = 0;
+		c.m1 = 0;
+		c.m2 = 0;
+		c.e = 0;
+		return c;
+	}
 
 	/* compute decimal shift needed to obtain the highest accuracy */	
 	a_dbl = (a.m2 * two_to_32 + a.m1) * two_to_32 + a.m0;
@@ -1066,7 +1037,6 @@ deci deci_divide (deci a, deci b) {
 	c.m0 = q[0];
 	c.m1 = q[1];
 	c.m2 = q[2];
-	c.s = (!a.s && b.s) || (a.s && !b.s);
 	c.e = f; 
 	return c;
 }
@@ -1106,19 +1076,17 @@ REBINT deci_to_string(REBYTE *string, const deci a, const REBYTE symbol, const R
 	REBCNT sa[] = {a.m0, a.m1, a.m2};
 	REBINT j, e;
 	
+	/* sign */
+	if (a.s) *s++ = '-';
+
+	if (symbol) *s++ = symbol;
+
 	if (deci_is_zero (a)) {
-		if (symbol) *s++ = symbol;
 		*s++ = '0';
 		*s = '\0';
 		return s-string;
 	}
 
-	/* sign */
-	if (a.s) *s++ = '-';
-
-
-	if (symbol) *s++ = symbol;
-	
 	j = m_to_string(s, 3, sa);
 	e = j + a.e;
 	

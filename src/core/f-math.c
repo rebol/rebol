@@ -390,111 +390,79 @@ static int Convert_Decimal(REBDEC d, REBI64 *sig, REBINT *point)
 /* this is appropriate for 64-bit IEEE754 binary floating point format */
 #define MAX_DIGITS 17
 
-#ifndef HAS_ECVT
-#ifdef HAS_LONG_DOUBLE
-
-static REBYTE buf[MAX_DIGITS + 1];
-
-REBYTE *Ecvt(REBDEC value, int ndig, REBINT *dec, REBINT *sign) {
-	REBINT e;
-	REBI64 s;
-	if (ndig < MIN_DIGITS) ndig = MIN_DIGITS;
-	else if (ndig > MAX_DIGITS) ndig = MAX_DIGITS;
-	/* zero treated specially */
-	if (value == 0.0 || value == -0.0) {
-		*sign = 0;
-		*dec = 0;
-		memset(buf, '0', ndig);
-		buf[ndig] = '\0';
-		return buf;
-	}
-	*sign = (value < 0.0) ? 1 : 0;
-#ifdef HAS_LOG10L
-	e = floorl(log10l(value)); /* log10 is not accurate enough */
-#else
-	e = floorl(logl(value) * 0.43429448190325182765112891891660508229439700580366656611445378316586464920887L);
-#endif 
-	s = value * powl(10.0l, ndig - 1 - e) + 0.5l; // Needs powl()
-	*dec = e + 1;
-	INT_TO_STR(s, buf);
-	return buf;
-}
-#endif
-// For the else case, error will occur in .h file
-#endif
-
 REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT decimal_digits) {
-	REBYTE *start = cp, *sig;
-	REBINT e, sgn;
+	REBYTE *start = cp, *sig, *rve;
+	REBINT e, sgn, digits_obtained;
 
-	/* Deal with 0 as a special case */
-	if (d == 0.0) {
-		/* negative 0 ? */
-		if (signbit (d)) *cp++ = '-';
-		*cp++ = '0';
-		if (!trim) {
-			*cp++ = point;
-			*cp++ = '0';
-		}
-	} else {
-		/* sanity checks */
-		if (decimal_digits < MIN_DIGITS) decimal_digits = MIN_DIGITS;
-		else if (decimal_digits > MAX_DIGITS) decimal_digits = MAX_DIGITS;
+	/* sanity checks */
+	if (decimal_digits < MIN_DIGITS) decimal_digits = MIN_DIGITS;
+	else if (decimal_digits > MAX_DIGITS) decimal_digits = MAX_DIGITS;
 
-		/* handle sign */
-		if (d < 0.0) {
-			*cp++ = '-';
-			d = -d;
-		}
+	sig = (REBYTE *) dtoa (d, 0, decimal_digits, &e, &sgn, (char **) &rve);
 
-		/* use DEC_TO_STR */
-		sig = ECVT(d, decimal_digits, &e, &sgn);
+	digits_obtained = rve - sig;
 
-		if (trim == DEC_MOLD_PERCENT) e += 2;
+	/* handle sign */
+	if (sgn) *cp++ = '-';
 
-		if (e > decimal_digits || e <= -6) {
-			/* e-format */
-			*cp++ = *sig++;
+	if (trim == DEC_MOLD_PERCENT) e += 2;
 
-			/* insert the radix point */
-			*cp++ = point;
+	if ((e > decimal_digits) || (e <= -6)) {
+		/* e-format */
+		*cp++ = *sig++;
 
-			/* insert the rest */
-			memcpy(cp, sig, decimal_digits - 1);
-			cp += decimal_digits - 1;
-		} else if (e > 0) {
-			memcpy(cp, sig, e);
+		/* insert the radix point */
+		*cp++ = point;
+
+		/* insert the rest */
+		memcpy(cp, sig, digits_obtained - 1);
+		cp += digits_obtained - 1;
+	} else if (e > 0) {
+		if (e <= digits_obtained) {
+			/* insert digits preceding point */
+			memcpy (cp, sig, e);
 			cp += e;
 			sig += e;
+
 			*cp++ = point;
-			memcpy(cp, sig, decimal_digits -  e);
-			cp += decimal_digits - e;
-			e = 0;
+
+			/* insert digits following point */
+			memcpy(cp, sig, digits_obtained -  e);
+			cp += digits_obtained - e;
 		} else {
-			*cp++ = '0';
+			/* insert all digits obtained */
+			memcpy (cp, sig, digits_obtained);
+			cp += digits_obtained;
+
+			/* insert zeros preceding point */
+			memset (cp, '0', e - digits_obtained);
+			cp += e - digits_obtained;
+
 			*cp++ = point;
-			memset(cp, '0', -e);
-			cp -= e;
-			memcpy(cp, sig, decimal_digits);
-			cp += decimal_digits;
-			e = 0;
 		}
+		e = 0;
+	} else {
+		*cp++ = '0';
 
-		// Remove trailing zeros:
-		while (*--cp == '0'); // limited by '.'
+		*cp++ = point;
 
-		// Add at least one zero after point (unless percent or pair):
-		if (*cp == point) {
-			if (!trim) {*++cp = '0'; cp++;}
-		}
-		else cp++;
+		memset(cp, '0', -e);
+		cp -= e;
 
-		// Add E part if needed:
-		if (e) {
-			*cp++ = 'e';
-			INT_TO_STR(e - 1, cp);
-			cp = strchr(cp, 0);
-		}
+		memcpy(cp, sig, digits_obtained);
+		cp += digits_obtained;
+
+		e = 0;
+	}
+
+	// Add at least one zero after point (unless percent or pair):
+	if (*(cp - 1) == point) {if (trim) cp--; else *cp++ = '0';}
+
+	// Add E part if needed:
+	if (e) {
+		*cp++ = 'e';
+		INT_TO_STR(e - 1, cp);
+		cp = strchr(cp, 0);
 	}
 
  	if (trim == DEC_MOLD_PERCENT) *cp++ = '%';
