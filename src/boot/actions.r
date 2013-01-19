@@ -172,7 +172,7 @@ at: action [
 
 index?: action [
 	{Returns the current position (index) of the series.}
-	series [series! gob! port!]
+	series [none! series! gob! port!]
 	/xy {Returns index as an XY pair offset}
 ]
 
