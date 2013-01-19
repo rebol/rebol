@@ -392,9 +392,17 @@ static int Convert_Decimal(REBDEC d, REBI64 *sig, REBINT *point)
 
 #ifndef HAS_ECVT
 #ifdef HAS_DTOA
+char *__dtoa (double dd, int mode, int ndigits, int *decpt, int *sign, char **rve);
+static char buf [MAX_DIGITS + 1];
 REBYTE *Ecvt(REBDEC value, int ndig, REBINT *dec, REBINT *sign) {
-	char *rve;
-	return __dtoa (value, 0, ndig, dec, sign, &rve);
+	char *rve, *result;
+	if (ndig < MIN_DIGITS) ndig = MIN_DIGITS;
+	else if (ndig > MAX_DIGITS) ndig = MAX_DIGITS;
+	result = __dtoa (value, 0, ndig, dec, sign, &rve);
+    memcpy (buf, result, (rve - result) + 1);
+	for (rve = buf + (rve - result); ++rve < buf +  ndig;) *rve = '0';
+	*rve = '\0';
+	return (REBYTE *) buf;
 }
 #elif defined HAS_LONG_DOUBLE
 static REBYTE buf[MAX_DIGITS + 1];

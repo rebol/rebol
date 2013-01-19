@@ -548,7 +548,7 @@ REBDEC deci_to_decimal (const deci a) {
 /* using the ecvt function */
 deci decimal_to_deci (REBDEC a) {
 
-#if (defined HAS_ECVT) || (defined HAS_DTOA)
+#ifdef ECVT
 	deci result;
 	REBI64 d; /* the decimal significand */
 	REBINT e; /* the decimal exponent */
@@ -566,8 +566,7 @@ deci decimal_to_deci (REBDEC a) {
 	e -= DOUBLE_DIGITS;
 
 	d = CHR_TO_INT(c);
-#else
-#ifdef HAS_LONG_DOUBLE
+#elif defined HAS_LONG_DOUBLE
 	/* use long double */
 
 	deci result;
@@ -585,8 +584,7 @@ deci decimal_to_deci (REBDEC a) {
 
 	d = (REBU64)(powl(10.0l, -e) * a + 0.5l);
 #else
-#error we need to emulate long double arithmetic
-#endif
+#error neither ECVT nor LONG_DOUBLE arithmetic available
 #endif
 	result.m2 = 0;
 	result.m1 = (REBCNT)(d >> 32);

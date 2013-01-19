@@ -163,6 +163,7 @@ These are now obsolete (as of A107) and should be removed:
 #ifdef TO_LINUX_ARM				// Linux/ARM
 #define ENDIAN_LITTLE
 #define HAS_DTOA
+#define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_LINUX_MIPS
