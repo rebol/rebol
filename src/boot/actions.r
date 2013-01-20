@@ -172,13 +172,13 @@ at: action [
 
 index?: action [
 	{Returns the current position (index) of the series.}
-	series [none! series! gob! port!]
+	series [series! gob! port! none!]
 	/xy {Returns index as an XY pair offset}
 ]
 
 length?: action [
 	{Returns the length (from the current position for series.)}
-	series [none! series! port! map! tuple! bitset! object! gob! struct! any-word!]
+	series [series! port! map! tuple! bitset! object! gob! struct! any-word! none!]
 ]
 
 ;-- Series Extraction
