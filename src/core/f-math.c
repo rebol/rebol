@@ -400,7 +400,7 @@ REBYTE *Ecvt(REBDEC value, int ndig, REBINT *dec, REBINT *sign) {
 	else if (ndig > MAX_DIGITS) ndig = MAX_DIGITS;
 	result = __dtoa (value, 0, ndig, dec, sign, &rve);
     memcpy (buf, result, rve - result);
-	for (rve = buf + (rve - result); rve++ < buf +  ndig;) *rve = '0';
+	for (rve = buf + (rve - result) - 1; rve++ < buf +  ndig;) *rve = '0';
 	*rve = '\0';
 	return (REBYTE *) buf;
 }
