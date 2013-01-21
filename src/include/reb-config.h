@@ -96,7 +96,8 @@ These are now obsolete (as of A107) and should be removed:
 #define ATOI					// supports it
 #define ATOI64					// supports it
 #define ITOA64					// supports it
-#define HAS_ECVT				// supports ecvt()
+// #define HAS_ECVT				// supports ecvt()
+#define HAS_DTOA
 #define NO_TTY_ATTRIBUTES		// used in read-line.c
 #define FINITE _finite			// name used for it
 #define INLINE __inline			// name used for it
