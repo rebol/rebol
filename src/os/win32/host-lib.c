@@ -302,36 +302,38 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	REBCHR *OS_Get_Env(REBCHR *var, int mode)
+*/	REBINT OS_Get_Env(REBCHR *envname, REBCHR* envval, REBINT valsize)
 /*
 **		Get a value from the environment.
-**		Returns string for success or zero if missing.
-**		Return string should be copied not stored or changed.
+**		Returns size of retrieved value for success or zero if missing.
+**		If return size is greater than valsize then value contents
+**		are undefined, and size includes null terminator of needed buf
 **
 ***********************************************************************/
 {
-#ifdef UNICODE
-	return _wgetenv(var);
-#else
-	return getenv(var);
-#endif
+	// Note: The Windows variant of this API is NOT case-sensitive
+
+	REBINT result = GetEnvironmentVariable(envname, envval, valsize);
+	if (result == 0) { // some failure...
+		if (GetLastError() == ERROR_ENVVAR_NOT_FOUND) {
+			return 0; // not found
+		}
+		return -1; // other error
+	}
+	return result;
 }
 
 
 /***********************************************************************
 **
-*/	int OS_Set_Env(REBCHR *expr, int mode)
+*/	REBOOL OS_Set_Env(REBCHR *envname, REBCHR *envval)
 /*
 **		Set a value from the environment.
-**		Returns 0 for success and <0 for errors.
+**		Returns >0 for success and 0 for errors.
 **
 ***********************************************************************/
 {
-#ifdef UNICODE
-	return _wputenv(expr);
-#else
-	return putenv(expr);
-#endif
+	return SetEnvironmentVariable(envname, envval);
 }
 
 

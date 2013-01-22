@@ -872,6 +872,12 @@ get-env: native [
 	var [any-string! any-word!]
 ]
 
+set-env: native [
+	{Sets the value of an operating system environment variable (for current process).} 
+	var [any-string! any-word!] "Variable to set" 
+	value [string!  none!] "Value to set, or NONE to unset it"
+]
+
 list-env: native [
 	{Returns a map of OS environment variables (for current process).}
 ]
