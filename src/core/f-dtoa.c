@@ -1,5 +1,8 @@
 #include "reb-dtoa.h"
 
+/* This file was downloaded from
+ * http://www.netlib.org/fp/dtoa.c */
+
 /****************************************************************
  *
  * The author of this software is David M. Gay.
