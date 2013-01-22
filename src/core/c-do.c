@@ -880,6 +880,7 @@ eval_func2:
 	case ET_OPERATOR:
 		// An operator can be native or function, so its true evaluation
 		// datatype is stored in the extended flags part of the value.
+		if (!word) word = ROOT_NONAME;
 		if (DSP <= 0 || index == 0) Trap1(RE_NO_OP_ARG, word);
 		ftype = VAL_GET_EXT(value) - REB_NATIVE;
 		dsf = Push_Func(TRUE, block, index, VAL_WORD_SYM(word), value); // TOS has first arg
@@ -1813,7 +1814,8 @@ push_arg:
 
 	// Copy values to prior location:
 	inew--;
-	memcpy(DS_ARG(1), DS_TOP-(inew-1), inew * sizeof(REBVAL));
+	// memory areas may overlap, so use memmove and not memcpy!
+	memmove(DS_ARG(1), DS_TOP-(inew-1), inew * sizeof(REBVAL));
 	DSP = DS_ARG_BASE + inew; // new TOS
 	//Dump_Block(DS_ARG(1), inew);
 	VAL_WORD_FRAME(DSF_WORD(DSF)) = VAL_FUNC_BODY(func_val);

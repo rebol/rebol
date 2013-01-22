@@ -58,7 +58,7 @@ typedef unsigned short  u16;
 typedef long            i32;
 typedef unsigned long   u32;
 
-#ifdef DEF_UINT		// some systems define it, don't define it again
+#ifndef DEF_UINT		// some systems define it, don't define it again
 typedef unsigned int    uint;
 #endif
 

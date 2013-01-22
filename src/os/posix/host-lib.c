@@ -268,30 +268,96 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	REBCHR *OS_Get_Env(REBCHR *var, int mode)
+*/	REBINT OS_Get_Env(REBCHR *envname, REBCHR* envval, REBINT valsize)
 /*
 **		Get a value from the environment.
-**		(Mode will allow for unicode later.)
-**		Resturns string for success or zero if missing.
-**		Return string should be copied not stored or changed.
+**		Returns size of retrieved value for success or zero if missing.
+**		If return size is greater than valsize then value contents
+**		are undefined, and size includes null terminator of needed buf
 **
 ***********************************************************************/
 {
-	return getenv(var);
+	// Note: The Posix variant of this API is case-sensitive
+
+	REBINT len;
+	const REBCHR* value = getenv(envname);
+	if (value == 0) return 0;
+
+	len = LEN_STR(value);
+	if (len == 0) return -1; // shouldn't have saved an empty env string
+
+	if (len + 1 > valsize) {
+		return len + 1;
+	}
+
+	COPY_STR(envval, value, len);
+	return len;
 }
 
 
 /***********************************************************************
 **
-*/	int OS_Set_Env(REBCHR *expr, int mode)
+*/	REBOOL OS_Set_Env(REBCHR *envname, REBCHR *envval)
 /*
-**		Set a value to the environment.
-**		(Modes will allow for unicode later.)
-**		Returns 0 for success and <0 for errors.
+**		Set a value from the environment.
+**		Returns >0 for success and 0 for errors.
 **
 ***********************************************************************/
 {
-	return putenv(expr);
+	if (envval) {
+#ifdef setenv
+		// we pass 1 for overwrite (make call to OS_Get_Env if you 
+		// want to check if already exists)
+
+		if (setenv(envname, envval, 1) == -1)
+			return FALSE;
+#else
+		// WARNING: KNOWN MEMORY LEAK!
+
+		// putenv is *fatally flawed*, and was obsoleted by setenv
+		// and unsetenv System V...
+
+		// http://stackoverflow.com/a/5876818/211160
+
+		// once you have passed a string to it you never know when that
+		// string will no longer be needed.  Thus it may either not be
+		// dynamic or you must leak it, or track a local copy of the 
+		// environment yourself.
+
+		// If you're stuck without setenv on some old platform, but
+		// really need to set an environment variable, here's a way
+		// that just leaks a string each time you call.  
+
+		char* expr = MAKE_STR(LEN_STR(envname) + 1 + LEN_STR(envval) + 1);
+
+		strcpy(expr, envname);
+		strcat(expr, "=");
+		strcat(expr, envval);
+
+		if (putenv(expr) == -1)
+			return FALSE;
+#endif
+		return TRUE;
+	}
+
+#ifdef unsetenv
+	if (unsetenv(envname) == -1)
+		return FALSE;
+#else
+	// WARNING: KNOWN PORTABILITY ISSUE
+
+	// Simply saying putenv("FOO") will delete FOO from
+	// the environment, but it's not consistent...does
+	// nothing on NetBSD for instance.  But not all
+	// other systems have unsetenv...
+	//
+	// http://julipedia.meroh.net/2004/10/portability-unsetenvfoo-vs-putenvfoo.html 
+
+	// going to hope this case doesn't hold onto the string...
+	if (putenv((char*)envname) == -1)
+		return FALSE;
+#endif
+	return TRUE;
 }
 
 

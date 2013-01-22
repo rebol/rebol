@@ -417,6 +417,8 @@
 			if ((err = Check_Error(ds)) >= 0) break;
 			// else CONTINUE:
 			if (mode == 1) SET_FALSE(ds); // keep the value (for mode == 1)
+		} else {
+			err = 0; // prevent later test against uninitialized value
 		}
 
 		if (mode > 0) {
@@ -426,7 +428,8 @@
 			if (mode == 1) {  // remove-each
 				if (IS_FALSE(ds)) {
 					REBCNT wide = SERIES_WIDE(series);
-					memcpy(series->data + (windex * wide), series->data + (rindex * wide), (index - rindex) * wide);
+					// memory areas may overlap, so use memmove and not memcpy!
+					memmove(series->data + (windex * wide), series->data + (rindex * wide), (index - rindex) * wide);
 					windex += index - rindex;
 					// old: while (rindex < index) *BLK_SKIP(series, windex++) = *BLK_SKIP(series, rindex++);
 				}
