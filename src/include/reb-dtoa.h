@@ -18,6 +18,7 @@
 
 /* #define Long int on machines with 32-bit ints and 64-bit longs. */
 #define Long REBINT
+#define ULong REBCNT
 
 /* #define IBM for IBM mainframe-style floating-point arithmetic. */
 
