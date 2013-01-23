@@ -3,7 +3,7 @@
 #include "sys-core.h"
 
 /* this renames the strtod function to suppress possible conflicts
- * with the definition in stdlib.h */
+ * with some overly aggressive definitions in stdlib.h */
 #define strtod STRTOD
 
 /* #define IEEE_8087 for IEEE-arithmetic machines where the least
@@ -17,6 +17,7 @@
 #endif
 
 /* #define Long int on machines with 32-bit ints and 64-bit longs. */
+#define Long REBINT
 
 /* #define IBM for IBM mainframe-style floating-point arithmetic. */
 

@@ -148,7 +148,6 @@ These are now obsolete (as of A107) and should be removed:
 #ifdef TO_LINUX					// Linux/Intel
 #define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
-#define Long int				/* for dtoa */
 #endif
 
 #ifdef TO_LINUX_PPC				// Linux/PPC
