@@ -1,6 +1,10 @@
+/* This file contains settings for the f-dtoa.c file. */ 
+
 #include "sys-core.h"
 
-/* This file contains settings for the f-dtoa.c file. */ 
+/* this renames the strtod function to suppress possible conflicts
+ * with the definition in stdlib.h */
+#define strtod STRTOD
 
 /* #define IEEE_8087 for IEEE-arithmetic machines where the least
  *	significant byte has the lowest address.

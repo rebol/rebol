@@ -25,7 +25,6 @@
 **  Notes:
 **      Various configuration defines (from reb-config.h):
 **
-**      HAS_LONG_DOUBLE - larger than 64 bit floats
 **      HAS_LL_CONSTS - compiler allows 1234LL constants
 **      INT_64_MODE - int size is 64 bits
 **      ODD_INT_64 - old MSVC typedef for 64 bit int
