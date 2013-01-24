@@ -1,5 +1,9 @@
-/* This file contains settings for the f-dtoa.c file. */ 
+/* This file contains settings for the f-dtoa.c file. */
+
+/* dtoa needs float.h */ 
 #include <float.h>
+
+/* Rebol 3 definitions */
 #include "sys-core.h"
 
 /* this renames the strtod function to suppress possible conflicts
