@@ -82,10 +82,10 @@ extern void Init_Ext_Test(void);	// see: host-ext-test.c
 
 // Host bare-bones stdio functs:
 extern void Open_StdIO(void);
-extern void Put_Str(char *buf);
+extern void Put_Str(const REBYTE *buf);
 extern REBYTE *Get_Str();
 
-void Host_Crash(REBYTE *reason) {
+void Host_Crash(const REBYTE *reason) {
 	OS_Crash("REBOL Host Failure", reason);
 }
 

@@ -53,7 +53,7 @@ enum {
 
 static REBINT Delect_Debug = 0;
 static REBINT Total_Missed = 0;
-static char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
+static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 
 
 /***********************************************************************

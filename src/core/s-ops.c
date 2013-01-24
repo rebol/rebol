@@ -33,7 +33,7 @@
 
 /*********************************************************************
 **
-*/	REBOOL Is_Not_ASCII(REBYTE *bp, REBCNT len)
+*/	REBOOL Is_Not_ASCII(const REBYTE *bp, REBCNT len)
 /*
 **		Returns TRUE if byte string uses upper code page.
 **
@@ -48,7 +48,7 @@
 
 /*********************************************************************
 **
-*/	REBOOL Is_Wide(REBUNI *up, REBCNT len)
+*/	REBOOL Is_Wide(const REBUNI *up, REBCNT len)
 /*
 **		Returns TRUE if uni string needs 16 bits.
 **

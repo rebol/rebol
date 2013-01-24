@@ -83,7 +83,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	static void Prin_OS_String(REBYTE *bp, REBINT len, REBOOL uni)
+*/	static void Prin_OS_String(const REBYTE *bp, REBINT len, REBOOL uni)
 /*
 **		Print a string, but no line terminator or space.
 **
@@ -141,7 +141,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	void Out_Str(REBYTE *bp, REBINT lines)
+*/	void Out_Str(const REBYTE *bp, REBINT lines)
 /*
 ***********************************************************************/
 {
@@ -213,7 +213,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	void Debug_String(REBYTE *bp, REBINT len, REBOOL uni, REBINT lines)
+*/	void Debug_String(const REBYTE *bp, REBINT len, REBOOL uni, REBINT lines)
 /*
 ***********************************************************************/
 {
@@ -251,7 +251,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	void Debug_Str(REBYTE *str)
+*/	void Debug_Str(const REBYTE *str)
 /*
 **		Print a string followed by a newline.
 **
@@ -299,7 +299,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	void Debug_Num(REBYTE *str, REBINT num)
+*/	void Debug_Num(const REBYTE *str, REBINT num)
 /*
 **		Print a string followed by a number.
 **
@@ -452,7 +452,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	void Debug_Fmt_(REBYTE *fmt, ...)
+*/	void Debug_Fmt_(const REBYTE *fmt, ...)
 /*
 **		Print using a format string and variable number
 **		of arguments.  All args must be long word aligned

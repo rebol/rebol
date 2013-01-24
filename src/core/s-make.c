@@ -63,7 +63,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *Copy_Bytes(REBYTE *src, REBINT len)
+*/	REBSER *Copy_Bytes(const REBYTE *src, REBINT len)
 /*
 **		Create a string series from the given bytes.
 **		Source is always latin-1 valid. Result is always 8bit.
@@ -85,7 +85,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *Copy_Bytes_To_Unicode(REBYTE *src, REBINT len)
+*/	REBSER *Copy_Bytes_To_Unicode(const REBYTE *src, REBINT len)
 /*
 **		Convert a byte string to a unicode string. This can
 **		be used for ASCII or LATIN-8 strings.
@@ -111,7 +111,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *Copy_OS_Str(void *src, REBINT len)
+*/	REBSER *Copy_OS_Str(const void *src, REBINT len)
 /*
 **		Create a REBOL string series from an OS native string.
 **
@@ -125,7 +125,7 @@
 {
 #ifdef OS_WIDE_CHAR
 	REBSER *dst;
-	REBUNI *str = (REBUNI*)src;	
+	const REBUNI *str = (const REBUNI*)src;	
 	if (Is_Wide(str, len)) {
 		REBUNI *up;
 		dst = Make_Unicode(len);
@@ -144,7 +144,7 @@
 	}
 	return dst;
 #else
-	return Decode_UTF_String((REBYTE*)src, len, 8);
+	return Decode_UTF_String((const REBYTE*)src, len, 8);
 #endif
 }
 
@@ -378,7 +378,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 
 /***********************************************************************
 **
-*/	REBSER *Append_Bytes_Len(REBSER *dst, REBYTE *src, REBCNT len)
+*/	REBSER *Append_Bytes_Len(REBSER *dst, const REBYTE *src, REBCNT len)
 /*
 **		Optimized function to append a non-encoded byte string.
 **
@@ -415,7 +415,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 
 /***********************************************************************
 **
-*/	REBSER *Append_Bytes(REBSER *dst, REBYTE *src)
+*/	REBSER *Append_Bytes(REBSER *dst, const REBYTE *src)
 /*
 **		Optimized function to append a non-encoded byte string.
 **		If dst is null, it will be created and returned.
@@ -566,7 +566,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 
 /***********************************************************************
 **
-*/	REBSER *Append_UTF8(REBSER *dst, REBYTE *src, REBINT len)
+*/	REBSER *Append_UTF8(REBSER *dst, const REBYTE *src, REBINT len)
 /*
 **		Append (or create) decoded UTF8 to a string. OPTIMIZED.
 **

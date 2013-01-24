@@ -37,7 +37,7 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Grab_Int(REBYTE *cp, REBINT *val)
+*/	const REBYTE *Grab_Int(const REBYTE *cp, REBINT *val)
 /*
 **		Grab an integer value from the string.
 **
@@ -70,7 +70,7 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Grab_Int_Scale(REBYTE *cp, REBINT *val, REBCNT scale)
+*/	const REBYTE *Grab_Int_Scale(const REBYTE *cp, REBINT *val, REBCNT scale)
 /*
 **		Return integer scaled to the number of digits specified.
 **		Used for the decimal part of numbers (e.g. times).

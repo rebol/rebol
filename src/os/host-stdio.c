@@ -46,7 +46,7 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
-void Host_Crash(REBYTE *reason);
+void Host_Crash(const REBYTE *reason);
 
 // Temporary globals: (either move or remove?!)
 REBREQ Std_IO_Req;
@@ -151,7 +151,7 @@ static int Fetch_Buf()
 
 /***********************************************************************
 **
-*/	void Put_Str(REBYTE *buf)
+*/	void Put_Str(const REBYTE *buf)
 /*
 **		Outputs a null terminated UTF-8 string.
 **		If buf is larger than StdIO Device allows, error out.

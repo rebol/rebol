@@ -1211,8 +1211,8 @@ deci deci_mod (deci a, deci b) {
 }
 
 /* in case of error the function returns deci_zero and *endptr = s */
-deci string_to_deci (REBYTE *s, REBYTE **endptr) {
-	REBYTE *a = s;
+deci string_to_deci (const REBYTE *s, const REBYTE **endptr) {
+	const REBYTE *a = s;
 	deci b = {0, 0, 0, 0, 0};
 	REBCNT sb[] = {0, 0, 0, 0}; /* significand */
 	REBINT f = 0, e = 0; /* exponents */
@@ -1312,7 +1312,7 @@ REBFLG deci_is_same (deci a, deci b) {
 	return (a.m0 == b.m0) && (a.m1 == b.m1) && (a.m2 == b.m2) && (a.s == b.s) && (a.e == b.e);
 }
 
-deci binary_to_deci(REBYTE s[12]) {
+deci binary_to_deci(const REBYTE s[12]) {
 	deci d;
 	/* this looks like the only way, since the order of bits in bitsets is compiler-dependent */
 	d.s = s[0] >> 7;

@@ -658,7 +658,7 @@ struct ihdrchunk {
 };
 
 
-static void emitchunk(unsigned char **cpp,char *type,char *data,int length) {
+static void emitchunk(unsigned char **cpp,const char *type,const char *data,int length) {
 	REBCNT tmplen;
 	unsigned char *cp=*cpp,*crcp;
 

@@ -170,7 +170,7 @@
 	return R_RET;
 }
 
-REBYTE *evoke_help = "Evoke values:\n"
+const REBYTE *evoke_help = "Evoke values:\n"
 	"[stack-size n] crash-dump delect\n"
 	"watch-recycle watch-obj-copy crash\n"
 	"1: watch expand\n"

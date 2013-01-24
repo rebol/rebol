@@ -130,7 +130,7 @@
 	
 		case REB_BINARY:
 		{
-			REBYTE *bp = VAL_BIN(val);
+			const REBYTE *bp = VAL_BIN(val);
 			arg = VAL_LEN(val);
 			if (arg == 0) goto bad_make;
 			if (*bp > 0x80) {

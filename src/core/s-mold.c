@@ -75,7 +75,7 @@ enum {
 
 /***********************************************************************
 **
-*/  REBSER *Emit(REB_MOLD *mold, REBYTE *fmt, ...)
+*/  REBSER *Emit(REB_MOLD *mold, const REBYTE *fmt, ...)
 /*
 ***********************************************************************/
 {
@@ -585,7 +585,7 @@ STOID Mold_All_String(REBVAL *value, REB_MOLD *mold)
 ************************************************************************
 ***********************************************************************/
 
-STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *sep)
+STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, const REBYTE *sep)
 {
 	REBSER *out = mold->series;
 	REBOOL line_flag = FALSE; // newline was part of block
@@ -639,7 +639,7 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 
 STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 {
-	REBYTE *sep;
+	const REBYTE *sep;
 	REBOOL all = GET_MOPT(mold, MOPT_MOLD_ALL);
 	REBSER *series = mold->series;
 	REBFLG over = FALSE;
@@ -1413,7 +1413,7 @@ append:
 {
 	REBYTE *cp;
 	REBYTE c;
-	REBYTE *dc;
+	const REBYTE *dc;
 
 	Set_Root_Series(TASK_MOLD_LOOP, Make_Block(size/10)); // "Mold Loop");
 	Set_Root_Series(TASK_BUF_MOLD, Make_Unicode(size));	 // "Mold Buffer");

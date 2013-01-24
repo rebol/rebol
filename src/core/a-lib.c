@@ -404,7 +404,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
-*/	RL_API void RL_Print_TOS(REBCNT flags, REBYTE *marker)
+*/	RL_API void RL_Print_TOS(REBCNT flags, const REBYTE *marker)
 /*
 **	Print top REBOL stack value to the console. (pending changes)
 **

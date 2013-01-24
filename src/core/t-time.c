@@ -68,13 +68,13 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Scan_Time(REBYTE *cp, REBCNT len, REBVAL *value)
+*/	const REBYTE *Scan_Time(const REBYTE *cp, REBCNT len, REBVAL *value)
 /*
 **		Scan string and convert to time.  Return zero if error.
 **
 ***********************************************************************/
 {
-	REBYTE  *sp;
+	const REBYTE  *sp;
 	REBYTE	merid = FALSE;
 	REBOOL	neg = FALSE;
 	REBINT	part1, part2, part3 = -1;
@@ -140,7 +140,7 @@
 ***********************************************************************/
 {
 	REB_TIMEF tf;
-	REBYTE *fmt;
+	const REBYTE *fmt;
 
 	Split_Time(VAL_TIME(value), &tf); // loses sign
 
