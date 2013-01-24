@@ -64,9 +64,8 @@
  *	something other than "long long", #define Llong to be the name,
  *	and if "unsigned Llong" does not work as an unsigned version of
  *	Llong, #define #ULLong to be the corresponding unsigned type. */
-#ifdef ODD_INT_64       // Windows VC6 nonstandard typing for 64 bits
-#define Llong i64
-#endif
+#define Llong REBI64
+#define ULLong REBU64
 
 /* #define KR_headers for old-style C function headers. */
 
