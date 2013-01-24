@@ -1,5 +1,5 @@
 /* This file contains settings for the f-dtoa.c file. */ 
-
+#include <float.h>
 #include "sys-core.h"
 
 /* this renames the strtod function to suppress possible conflicts
@@ -72,6 +72,10 @@
 /* #define Bad_float_h if your system lacks a float.h or if it does not
  *	define some or all of DBL_DIG, DBL_MAX_10_EXP, DBL_MAX_EXP,
  *	FLT_RADIX, FLT_ROUNDS, and DBL_MAX. */
+#if !defined DBL_DIG || !defined DBL_MAX_10_EXP || !defined DBL_MAX_EXP || \
+	! defined FLT_RADIX || !defined FLT_ROUNDS || !defined DBL_MAX
+#define Bad_float_h
+#endif
 
 /* #define MALLOC your_malloc, where your_malloc(n) acts like malloc(n)
  *	if memory is available and otherwise does something you deem
