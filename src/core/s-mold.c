@@ -1313,6 +1313,9 @@ append:
 **
 */	REBSER *Form_Reduce(REBSER *block, REBCNT index)
 /*
+**		Reduce a block and then form each value into a string. Return the
+**		string or NULL if an unwind triggered while reducing.
+**
 ***********************************************************************/
 {
 	REBINT start = DSP + 1;
@@ -1321,6 +1324,11 @@ append:
 
 	while (index < BLK_LEN(block)) {
 		index = Do_Next(block, index, 0);
+		if (THROWN(DS_TOP)) {
+			*DS_VALUE(start) = *DS_TOP;
+			DSP = start;
+			return NULL;
+		}
 	}
 
 	Reset_Mold(&mo);
