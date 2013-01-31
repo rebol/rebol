@@ -1072,6 +1072,7 @@ eval_func2:
 
 	while (index < BLK_LEN(block)) {
 		index = Do_Next(block, index, 0);
+		if (THROWN(DS_TOP)) return;
 	}
 
 	Copy_Stack_Values(start, into);
@@ -1122,6 +1123,8 @@ eval_func2:
 			Do_Path(&v, 0); // pushes val on stack
 		}
 		else DS_PUSH(val);
+		// No need to check for unwinds (THROWN) here, because unwinds should
+		// never be accessible via words or paths.
 	}
 
 	Copy_Stack_Values(start, into);
@@ -1143,6 +1146,7 @@ eval_func2:
 			index++;
 		} else
 			index = Do_Next(block, index, 0);
+		if (THROWN(DS_TOP)) return;
 	}
 
 	Copy_Stack_Values(start, into);
