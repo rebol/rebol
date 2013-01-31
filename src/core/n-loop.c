@@ -677,7 +677,7 @@ utop:
 	do {
 		ds = Do_Blk(b1, i1);
 		if (IS_UNSET(ds) || IS_ERROR(ds)) {	// Unset, break, throw, error.
-			if (Check_Error(ds)) return R_TOS1;
+			if (Check_Error(ds) >= 0) return R_TOS1;
 		}
 		if (!IS_TRUE(ds)) return R_RET;
 		ds = Do_Blk(b2, i2);
