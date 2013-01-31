@@ -661,6 +661,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 
 		case REB_WORD:		// WORD - Evaluate next value
 			index = Do_Next(block, index, IS_OP(func));
+			// THROWN is handled after the switch.
 			if (index == END_FLAG) Trap2(RE_NO_ARG, Func_Word(dsf), args);
 			DS_Base[ds] = *DS_POP;
 			break;
@@ -670,6 +671,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 				value = BLK_SKIP(block, index);
 				if (IS_PAREN(value) || IS_GET_WORD(value) || IS_GET_PATH(value)) {
 					index = Do_Next(block, index, IS_OP(func));
+					// THROWN is handled after the switch.
 					DS_Base[ds] = *DS_POP;
 				}
 				else {
@@ -845,6 +847,7 @@ reval:
 		word = value;
 		//if (!VAL_WORD_FRAME(word)) Trap1(RE_NOT_DEFINED, word); (checked in set_var)
 		index = Do_Next(block, index+1, 0);
+		// THROWN is handled in Set_Var.
 		if (index == END_FLAG || VAL_TYPE(DS_TOP) <= REB_UNSET) Trap1(RE_NEED_VALUE, word);
 		Set_Var(word, DS_TOP);
 		//Set_Word(word, DS_TOP); // (value stays on stack)
@@ -908,6 +911,7 @@ eval_func2:
 		//Debug_Fmt("t: %r", value);
 		if (ftype == REB_SET_PATH) {
 			index = Do_Next(block, index+1, 0);
+			// THROWN is handled in Do_Path.
 			if (index == END_FLAG || VAL_TYPE(DS_TOP) <= REB_UNSET) Trap1(RE_NEED_VALUE, word);
 			Do_Path(&word, DS_TOP);
 		} else {
