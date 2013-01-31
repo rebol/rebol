@@ -1314,6 +1314,7 @@ eval_func2:
 		n = 0;
 		while (index < BLK_LEN(block)) {
 			index = Do_Next(block, index, 0);
+			if (THROWN(DS_TOP)) return;
 			n++;
 		}
 		if (n > len) DSP = start + len;
