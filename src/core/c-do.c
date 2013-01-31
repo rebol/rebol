@@ -440,6 +440,12 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 {
 	REBPVS pvs;
 
+	if (val && THROWN(val)) {
+		// If unwind/throw value is not coming from TOS, push it.
+		if (val != DS_TOP) DS_PUSH(val);
+		return 0;
+	}
+
 	pvs.setval = val;		// Set to this new value
 	DS_PUSH_NONE;
 	pvs.store = DS_TOP;		// Temp space for constructed results
