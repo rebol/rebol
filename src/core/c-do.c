@@ -719,6 +719,8 @@ more_path:
 			Trap_Arg(args);
 		}
 
+		if (THROWN(DS_VALUE(ds))) return index;
+
 		// If word is typed, verify correct argument datatype:
 		if (!TYPE_CHECK(args, VAL_TYPE(DS_VALUE(ds))))
 			Trap3(RE_EXPECT_ARG, Func_Word(dsf), args, Of_Type(DS_VALUE(ds)));
@@ -858,8 +860,13 @@ eval_func:
 eval_func2:
 		// Evaluate the function:
 		DSF = dsf;	// Set new DSF
-		if (Trace_Flags) Trace_Func(word, value);
-		Func_Dispatch[ftype](value);
+		if (!THROWN(DS_TOP)) {
+			if (Trace_Flags) Trace_Func(word, value);
+			Func_Dispatch[ftype](value);
+		}
+		else {
+			*DS_RETURN = *DS_TOP;
+		}
 
 		// Reset the stack to prior function frame, but keep the
 		// return value (function result) on the top of the stack.
