@@ -196,76 +196,79 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 
 /***********************************************************************
 **
-*/	static void trim_head_tail(REBSER *ser, REBCNT index, REBCNT tail, REBFLG h, REBFLG t)
+*/	static void trim_head_tail(REBSER *ser, REBCNT index, REBCNT tail, REBFLG const H, REBFLG const T)
 /*
 **		Trim from head and tail of each line, trim any leading or
 **		trailing lines as well, leaving one at the end if present
 **
+**	2012.02.02 CCX: Fixed the trim bug. Changed some var names and
+**		the function declaration to make easier to understand the
+**		algorithm.
+**
 ***********************************************************************/
 {
-	REBCNT start = index;
 	REBCNT out = index;
+	REBOOL alf = FALSE; // append line feed
 	REBUNI uc;
 
 	// Skip head lines if required:
-	if (h || !t) {
-		for (; index < tail; index++) {
+	if (H || !T) {
+		for (; index < tail; ++index) {
 			uc = GET_ANY_CHAR(ser, index);
 			if (!IS_WHITE(uc)) break;
 		}
 	}
-
-	// Trim the head and tail parts of a line:
-	if (!h && !t) {
-		REBINT hf = 1; // head space flag
-		REBINT tf = 0; // tail space flag and index
-
-		// Trim lines:
-		for (; index < tail; index++) {
-
+	
+	// Skip tail lines if required:
+	if (T || !H) {
+		for (; index < tail; --tail) {
+			uc = GET_ANY_CHAR(ser, tail -1);
+			if (uc == LF) alf = TRUE;
+			if (!IS_WHITE(uc)) break;
+		}
+	}
+	
+	// Trim head and tail of innner lines if required:
+	if (!H && !T) {
+		REBOOL outside = FALSE; // inside an inner line
+		REBCNT left = 0; // index of leftmost space (in output)
+		
+		for (; index < tail; ++index) {
+			
 			uc = GET_ANY_CHAR(ser, index);
-
+			
 			if (IS_SPACE(uc)) {
-				if (hf) continue; // trim from head
-				tf = index;       // tailing spaces?
+				if (outside) continue;
+				if (!left) left = out;
 			}
 			else if (uc == LF) {
-				hf = 1;
-				if (tf) out = tf;
-				tf = 0;
+				outside = TRUE;
+				if (left) out = left;
+				left = 0;
 			}
-			else
-				hf = tf = 0;
-
+			else {
+				outside = FALSE;
+				left = 0;
+			}
+			
 			SET_ANY_CHAR(ser, out, uc);
-			out++;
+			++out;
 		}
 	}
 	else {
-		for (; index < tail; index++) {
+		for (; index < tail; ++index) {
 			uc = GET_ANY_CHAR(ser, index);
 			SET_ANY_CHAR(ser, out, uc);
-			out++;
+			++out;
 		}
 	}
 
-	// Trim tail lines if required:
-	if (t || !h) {
-		REBOOL flag = FALSE; // found newline
-
-		for (out--; out >= start; out--) {
-			uc = GET_ANY_CHAR(ser, out);
-			if (!IS_WHITE(uc)) break;
-			if (uc == LF) flag = TRUE;
-		}
-
-		out++;
-		if (!t && flag) {
-			SET_ANY_CHAR(ser, out, LF);
-			out++;
-		}
+	// Append line feed if necessary
+	if (alf && !T) {
+		SET_ANY_CHAR(ser, out, LF);
+		++out;
 	}
-
+	
 	SET_ANY_CHAR(ser, out, 0);
 	SERIES_TAIL(ser) = out;
 }
