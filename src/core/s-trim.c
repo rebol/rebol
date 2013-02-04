@@ -196,14 +196,10 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 
 /***********************************************************************
 **
-*/	static void trim_head_tail(REBSER *ser, REBCNT index, REBCNT tail, REBFLG const H, REBFLG const T)
+*/	static void trim_head_tail(REBSER *ser, REBCNT index, REBCNT tail, REBFLG h, REBFLG t)
 /*
 **		Trim from head and tail of each line, trim any leading or
 **		trailing lines as well, leaving one at the end if present
-**
-**	2012.02.02 CCX: Fixed the trim bug. Changed some var names and
-**		the function declaration to make easier to understand the
-**		algorithm.
 **
 ***********************************************************************/
 {
@@ -212,7 +208,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 	REBUNI uc;
 
 	// Skip head lines if required:
-	if (H || !T) {
+	if (h || !t) {
 		for (; index < tail; ++index) {
 			uc = GET_ANY_CHAR(ser, index);
 			if (!IS_WHITE(uc)) break;
@@ -220,7 +216,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 	}
 	
 	// Skip tail lines if required:
-	if (T || !H) {
+	if (t || !h) {
 		for (; index < tail; --tail) {
 			uc = GET_ANY_CHAR(ser, tail -1);
 			if (uc == LF) alf = TRUE;
@@ -229,7 +225,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 	}
 	
 	// Trim head and tail of innner lines if required:
-	if (!H && !T) {
+	if (!h && !t) {
 		REBOOL outside = FALSE; // inside an inner line
 		REBCNT left = 0; // index of leftmost space (in output)
 		
@@ -264,7 +260,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 	}
 
 	// Append line feed if necessary
-	if (alf && !T) {
+	if (alf && !t) {
 		SET_ANY_CHAR(ser, out, LF);
 		++out;
 	}
