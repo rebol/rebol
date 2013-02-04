@@ -239,8 +239,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 			}
 			else if (uc == LF) {
 				outside = TRUE;
-				if (left) out = left;
-				left = 0;
+				if (left) out = left, left = 0;
 			}
 			else {
 				outside = FALSE;
