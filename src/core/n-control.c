@@ -293,6 +293,7 @@ enum {
 ***********************************************************************/
 {
 	Apply_Block(D_ARG(1), D_ARG(2), !D_REF(3)); // stack volatile
+	VAL_CLR_OPT(DS_TOP, OPTS_REVAL); // secure against return/redo
 	return R_TOS;
 }
 
