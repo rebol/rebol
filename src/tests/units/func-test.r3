@@ -8,6 +8,12 @@ Rebol [
 
 ~~~start-file~~~ "Function"
 
+===start-group=== "Apply"
+
+--test-- "apply :do [:func]"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1950
+	--assert 2 = try [apply :do [:add 1 1]]
+
 ===start-group=== "body-of"
 
 --test-- "body-of NATIVE or ACTION"
