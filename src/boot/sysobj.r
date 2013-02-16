@@ -40,8 +40,8 @@ catalog: context [
 	; Must match host reb-args.h enum!
 	boot-flags: [
 		script args do import version debug secure
-		help vers quiet verbose no-boot
-		secure-min secure-max trace halt cgi boot-level
+		help vers quiet verbose
+		secure-min secure-max trace halt cgi boot-level no-window
 	]
 ]
 
