@@ -42,7 +42,7 @@ last?: single?: func [
 
 extend: func [
 	"Extend an object, map, or block type with word and value pair."
-	obj [object! map! block! paren!]
+	obj [object! map! block! paren!] {object to extend (modified)}
 	word [any-word!]
 	val
 ][
@@ -198,7 +198,7 @@ reword: func [
 
 move: func [
 	"Move a value or span of values in a series."
-	source [series!] "Source series"
+	source [series!] "Source series (modified)"
 	offset [integer!] "Offset to move by, or index to move to"
 	/part "Move part of a series"
 	length [integer!] "The length of the part to move"
