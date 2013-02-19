@@ -47,7 +47,7 @@ apply: native [
 ]
 
 assert: native [
-	"Assert that condition is true, else throw an assertion error."
+	"Assert that condition is true, else cause an assertion error."
 	conditions [block!]
 	/type "Safely check datatypes of variables (words and paths)"
 ]
@@ -651,7 +651,7 @@ transcode: native [
 	source [binary!] "Must be Unicode UTF-8 encoded"
 	/next "Translate next complete value (blocks as single value)"
 	/only "Translate only a single value (blocks dissected)"
-	/error "Do not throw errors - return error object as value in place"
+	/error "Do not cause errors - return error object as value in place"
 ]
 
 echo: native [
