@@ -788,7 +788,7 @@ arctangent: native [
 ]
 
 exp: native [
-	{Raises E (natural number) to the power specified.}
+	{Raises E (the base of natural logarithm) to the power specified}
 	power [number!]
 ]
 
@@ -803,7 +803,7 @@ log-2: native [
 ]
 
 log-e: native [
-	{Returns the base-E (natural number) logarithm.}
+	{Returns the natural (base-E) logarithm of the given value} 
 	value [number!]
 ]
 
