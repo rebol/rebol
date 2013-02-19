@@ -343,18 +343,18 @@ while: native [
 
 bind: native [
 	{Binds words to the specified context.}
-	word [block! any-word!] {A word or block of words (modified) (returned)}
+	word [block! any-word!] {A word or block (modified) (returned)}
 	context [any-word! any-object!] {A reference to the target context}
-	/copy {Deep copy block before binding it}
+	/copy {Bind and return a deep copy of a block, don't modify original}
 	/only {Bind only first block (not deep)}
 	/new {Add to context any new words found}
 	/set {Add to context any new set-words found}
 ]
 
 unbind: native [
-	{Unbinds words from context. (Modifies)}
-	word [block! any-word!] {A word or block of words (modified) (returned)}
-	/deep "Include nested blocks"
+	{Unbinds words from context.}
+	word [block! any-word!] {A word or block (modified) (returned)}
+	/deep "Process nested blocks"
 ]
 
 bound?: native [
