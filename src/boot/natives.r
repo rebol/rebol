@@ -575,7 +575,7 @@ type?: native [
 ]
 
 unset: native [
-	{Unsets the value of a word (in it's current context.)}
+	{Unsets the value of a word (in its current context.)}
 	word [word! block!] {Word or block of words}
 ]
 
