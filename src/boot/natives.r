@@ -612,7 +612,7 @@ mold: native [
 	{Converts a value to a REBOL-readable string.}
 	value [any-type!] {The value to mold}
 	/only {For a block value, mold only its contents, no outer []}
-	/all  {Mold in serialized format}
+	/all  {Use construction syntax}
 	/flat {No indentation}
 ]
 
