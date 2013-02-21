@@ -506,8 +506,7 @@ bad_target:
 			}
 			///i = Find_Value(series, index, tail-index, item, 1, (REBOOL)(PF_CASE & flags), FALSE, 1);
 			i = Find_Block(series, index, series->tail, item, 1, HAS_CASE(parse)?AM_FIND_CASE:0, 1);
-			if (i >= series->tail) i = NOT_FOUND;
-			else if (is_thru) i++;
+			if (i != NOT_FOUND && is_thru) i++;
 		}
 		else {
 			// "str"
