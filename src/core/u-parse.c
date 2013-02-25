@@ -486,7 +486,7 @@ bad_target:
 
 	// TO a specific index position.
 	if (IS_INTEGER(item)) {
-		i = (REBCNT)Int32(item) - 1;
+		i = (REBCNT)Int32(item) - (is_thru ? 0 : 1);
 		if (i > series->tail) i = series->tail;
 	}
 	// END
