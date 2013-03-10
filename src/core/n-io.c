@@ -506,14 +506,16 @@ chk_neg:
 
 	Check_Security(SYM_BROWSE, POL_EXEC, arg);
 
-	if (!IS_NONE(arg))
-		url = Val_Str_To_OS(arg);
+	if (IS_NONE(arg))
+		return R_UNSET;
+
+	url = Val_Str_To_OS(arg);
 
 	r = OS_BROWSE(url, 0);
 
 	if (r == 0) Trap1(RE_CALL_FAIL, Make_OS_Error());
 
-	return R_NONE;
+	return R_UNSET;
 }
 
 
