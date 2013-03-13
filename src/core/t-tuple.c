@@ -232,7 +232,7 @@
 			case A_DIVIDE:
 				if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
 					if (dec == 0.0) Trap0(RE_ZERO_DIVIDE);
-					v=(REBINT)(v/dec);
+					v=(REBINT)round(v/dec);
 				} else {
 					if (a == 0) Trap0(RE_ZERO_DIVIDE);
 					v /= a;
