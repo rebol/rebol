@@ -97,12 +97,11 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 
 	// Add absent words to frame and update values
 	for (arg = VAL_BLK_DATA(start); NOT_END(arg); arg += 2) {
-		if (!Bind_Word(obj, arg)) {
+		if (i = Find_Word_Index(obj, VAL_WORD_SYM(arg), TRUE)) {
+			val = FRM_VALUE(obj, i);
+		} else {
 			i = BLK_LEN(obj);
 			val = Append_Frame(obj, arg, 0); // word not in frame, so add it.
-		} else {
-			i = Find_Word_Index(obj, VAL_WORD_SYM(arg), TRUE);
-			val = FRM_VALUE(obj, i);
 		}
 
 		if (GET_FLAGS(VAL_OPTS(FRM_WORD(obj, i)), OPTS_HIDE, OPTS_LOCK)) {
