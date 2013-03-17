@@ -92,6 +92,14 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 	// Verify word/value argument block:
 	for (arg = VAL_BLK_DATA(arg); NOT_END(arg); arg += 2) {
 		if (!IS_WORD(arg) && !IS_SET_WORD(arg)) Trap_Arg(arg);
+		// If this word is already in the target object, check that it's not protected.
+		if (i = Find_Word_Index(obj, VAL_WORD_SYM(arg), TRUE)) {
+			if (GET_FLAGS(VAL_OPTS(FRM_WORD(obj, i)), OPTS_HIDE, OPTS_LOCK)) {
+				// Back out...
+				if (VAL_PROTECTED(FRM_WORD(obj, i))) Trap1(RE_LOCKED_WORD, FRM_WORD(obj, i));
+				Trap0(RE_HIDDEN);
+			}
+		}
 		if (IS_END(arg+1)) break;
 	}
 
@@ -104,11 +112,6 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 			val = Append_Frame(obj, arg, 0); // word not in frame, so add it.
 		}
 
-		if (GET_FLAGS(VAL_OPTS(FRM_WORD(obj, i)), OPTS_HIDE, OPTS_LOCK)) {
-			// Back out...
-			if (VAL_PROTECTED(FRM_WORD(obj, i))) Trap1(RE_LOCKED_WORD, FRM_WORD(obj, i));
-			Trap0(RE_HIDDEN);
-		}
 		// Problem above: what about prior OPTS_FLAGS? Ok to leave them as is?
 		if (IS_END(arg+1)) SET_NONE(val);
 		else *val = arg[1];
