@@ -204,7 +204,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 ***********************************************************************/
 {
 	REBCNT out = index;
-	REBOOL alf = FALSE; // append line feed
+	REBOOL append_line_feed = FALSE;
 	REBUNI uc;
 
 	// Skip head lines if required:
@@ -219,7 +219,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 	if (t || !h) {
 		for (; index < tail; --tail) {
 			uc = GET_ANY_CHAR(ser, tail -1);
-			if (uc == LF) alf = TRUE;
+			if (uc == LF) append_line_feed = TRUE;
 			if (!IS_WHITE(uc)) break;
 		}
 	}
@@ -259,7 +259,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 	}
 
 	// Append line feed if necessary
-	if (alf && !t) {
+	if (append_line_feed && !t) {
 		SET_ANY_CHAR(ser, out, LF);
 		++out;
 	}
