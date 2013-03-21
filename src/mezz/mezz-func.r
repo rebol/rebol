@@ -19,15 +19,6 @@ closure: func [
 	make closure! copy/deep reduce [spec body]
 ]
 
-function: func [
-	{Defines a user function with local words.}
-	spec [block!] {Optional help info followed by arg words (and optional type and string)}
-	vars [block!] {List of words that are local to the function}
-	body [block!] {The body block of the function}
-][
-	make function! copy/deep reduce [compose [(spec) /local (vars)] body]
-]
-
 has: func [
 	{A shortcut to define a function that has local variables but no arguments.}
 	vars [block!] {List of words that are local to the function}
