@@ -157,7 +157,7 @@ split-path: func [
 	reduce [dir pos]
 ]
 
-intern: funct [
+intern: function [
 	"Imports (internalize) words and their values from the lib into the user context."
 	data [block! any-word!] "Word or block of words to be added (deeply)"
 ][
@@ -167,7 +167,7 @@ intern: funct [
 	:data
 ]
 
-load: funct [
+load: function [
 	{Simple load of a file, URL, or string/binary - minimal boot version.}
 	source [file! url! string! binary!]
 	/header  {Includes REBOL header object if present}
