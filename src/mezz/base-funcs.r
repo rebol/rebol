@@ -32,6 +32,7 @@ funct: func [
 	/with {Define or use a persistent object (self)}
 	object [object! block! map!] {The object or spec}
 	/extern words [block!] {These words are not local}
+	/closure {Create a closure}
 ][
 	; Copy the spec and add /local to the end if not found
 	unless find spec: copy/deep spec /local [append spec [
@@ -52,7 +53,7 @@ funct: func [
 		; Don't include the words in the spec, or any extern words.
 		either extern [append copy spec words] [spec]
 	]
-	make function! reduce [spec body]
+	make either closure [closure!] [function!] reduce [spec body]
 ]
 
 does: func [
