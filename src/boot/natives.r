@@ -402,7 +402,7 @@ decompress: native [
 
 construct: native [
 	{Creates an object with scant (safe) evaluation.}
-	block [block! string! binary!] "Specification"
+	block [block! string! binary!] "Specification (modified)"
 	/with "Default object" object [object!]
 	/only "Values are kept as-is"
 ]
@@ -464,7 +464,7 @@ delect: native [
 	"Parses a common form of dialects. Returns updated input block."
 	 dialect [object!] "Describes the words and datatypes of the dialect"
 	 input [block!] "Input stream to parse"
-	 output [block!] "Resulting values, ordered as defined"
+	 output [block!] "Resulting values, ordered as defined (modified)"
 	 /in "Search for var words in specific objects (contexts)"
 	 where [block!] "Block of objects to search (non objects ignored)"
 	 /all "Parse entire block, not just one command at a time"
@@ -555,7 +555,7 @@ parse: native [
 
 set: native [
 	{Sets a word, path, block of words, or object to specified value(s).}
-	word [any-word! any-path! block! object!] {Word, block of words, path, or object to be set}
+	word [any-word! any-path! block! object!] {Word, block of words, path, or object to be set (modified)}
 	value [any-type!] {Value or block of values}
 	/any {Allows setting words to any value, including unset}
 	/pad {For objects, if block is too short, remaining words are set to NONE}
@@ -855,7 +855,7 @@ stack: native [
 
 resolve: native [
 	{Copy context by setting values in the target from those in the source.}
-	target [any-object!]
+	target [any-object!] {(modified)}
 	source [any-object!]
 	/only from [block! integer!] "Only specific words (exports) or new words in target (index to tail)"
 	/all "Set all words, even those in the target that already have a value"
