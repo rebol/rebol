@@ -102,16 +102,14 @@ sections: [
 
 include-protocols: false      ; include protocols in build
 
-system/options/args: [">"]
-
 ;-- Error handler:
 error: func [msg arg] [print ["*** Make-boot error:" msg arg] halt]
 
 ;-- Args passed: platform, product
 if none? args: system/options/args [error "No platform specified." ""]
+
 if args/1 = ">" [args: ["Win32" "VIEW-PRO"]] ; for debugging only
-platform: to-word args/1
-product:  to-word args/2
+product: to-word any [args/2  "core"]
 
 platform-data: context [type: 'windows]
 build: context [features: [help-strings]]
@@ -786,9 +784,15 @@ when: now
 when: when - when/zone
 when/zone: 0:00
 change at-value build when
+change at-value product to lit-word! product
+
 
 plats: load %platforms.r
-change/only at-value platform reduce [pick plats version/4 * 2 - 1 pick pick plats version/4 * 2 version/5]
+
+change/only at-value platform reduce [
+	any [pick plats version/4 * 2 - 1 "Unknown"]
+	any [select pick plats version/4 * 2 version/5 ""]
+]
 
 ob: context boot-sysobj
 
