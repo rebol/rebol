@@ -115,7 +115,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	REBGOB **pane;
 	REBCNT i;
 
-	if (GOB_PANE(gob)) {
+	if (GOB_PANE(gob) && !IS_MARK_SERIES(GOB_PANE(gob))) {
 		MARK_SERIES(GOB_PANE(gob));
 		pane = GOB_HEAD(gob);
 		for (i = 0; i < GOB_TAIL(gob); i++, pane++) {
@@ -123,7 +123,8 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 		}
 	}
 
-	//if (GOB_PARENT(gob)) Mark_Gob(GOB_PARENT(gob));
+	if (GOB_PARENT(gob)) Mark_Gob(GOB_PARENT(gob), depth);
+
 	if (GOB_CONTENT(gob)) {
 		if (GOB_TYPE(gob) >= GOBT_IMAGE && GOB_TYPE(gob) <= GOBT_STRING) {
 			MARK_SERIES(GOB_CONTENT(gob));
