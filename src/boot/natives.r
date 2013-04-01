@@ -47,7 +47,7 @@ apply: native [
 ]
 
 assert: native [
-	"Assert that condition is true, else throw an assertion error."
+	"Assert that condition is true, else cause an assertion error."
 	conditions [block!]
 	/type "Safely check datatypes of variables (words and paths)"
 ]
@@ -343,18 +343,18 @@ while: native [
 
 bind: native [
 	{Binds words to the specified context.}
-	word [block! any-word!] {A word or block of words (modified) (returned)}
+	word [block! any-word!] {A word or block (modified) (returned)}
 	context [any-word! any-object!] {A reference to the target context}
-	/copy {Deep copy block before binding it}
+	/copy {Bind and return a deep copy of a block, don't modify original}
 	/only {Bind only first block (not deep)}
 	/new {Add to context any new words found}
 	/set {Add to context any new set-words found}
 ]
 
 unbind: native [
-	{Unbinds words from context. (Modifies)}
-	word [block! any-word!] {A word or block of words (modified) (returned)}
-	/deep "Include nested blocks"
+	{Unbinds words from context.}
+	word [block! any-word!] {A word or block (modified) (returned)}
+	/deep "Process nested blocks"
 ]
 
 bound?: native [
@@ -402,7 +402,7 @@ decompress: native [
 
 construct: native [
 	{Creates an object with scant (safe) evaluation.}
-	block [block! string! binary!] "Specification"
+	block [block! string! binary!] "Specification (modified)"
 	/with "Default object" object [object!]
 	/only "Values are kept as-is"
 ]
@@ -464,7 +464,7 @@ delect: native [
 	"Parses a common form of dialects. Returns updated input block."
 	 dialect [object!] "Describes the words and datatypes of the dialect"
 	 input [block!] "Input stream to parse"
-	 output [block!] "Resulting values, ordered as defined"
+	 output [block!] "Resulting values, ordered as defined (modified)"
 	 /in "Search for var words in specific objects (contexts)"
 	 where [block!] "Block of objects to search (non objects ignored)"
 	 /all "Parse entire block, not just one command at a time"
@@ -555,7 +555,7 @@ parse: native [
 
 set: native [
 	{Sets a word, path, block of words, or object to specified value(s).}
-	word [any-word! any-path! block! object!] {Word, block of words, path, or object to be set}
+	word [any-word! any-path! block! object!] {Word, block of words, path, or object to be set (modified)}
 	value [any-type!] {Value or block of values}
 	/any {Allows setting words to any value, including unset}
 	/pad {For objects, if block is too short, remaining words are set to NONE}
@@ -575,7 +575,7 @@ type?: native [
 ]
 
 unset: native [
-	{Unsets the value of a word (in it's current context.)}
+	{Unsets the value of a word (in its current context.)}
 	word [word! block!] {Word or block of words}
 ]
 
@@ -612,7 +612,7 @@ mold: native [
 	{Converts a value to a REBOL-readable string.}
 	value [any-type!] {The value to mold}
 	/only {For a block value, mold only its contents, no outer []}
-	/all  {Mold in serialized format}
+	/all  {Use construction syntax}
 	/flat {No indentation}
 ]
 
@@ -651,7 +651,7 @@ transcode: native [
 	source [binary!] "Must be Unicode UTF-8 encoded"
 	/next "Translate next complete value (blocks as single value)"
 	/only "Translate only a single value (blocks dissected)"
-	/error "Do not throw errors - return error object as value in place"
+	/error "Do not cause errors - return error object as value in place"
 ]
 
 echo: native [
@@ -788,7 +788,7 @@ arctangent: native [
 ]
 
 exp: native [
-	{Raises E (natural number) to the power specified.}
+	{Raises E (the base of natural logarithm) to the power specified}
 	power [number!]
 ]
 
@@ -803,7 +803,7 @@ log-2: native [
 ]
 
 log-e: native [
-	{Returns the base-E (natural number) logarithm.}
+	{Returns the natural (base-E) logarithm of the given value} 
 	value [number!]
 ]
 
@@ -837,8 +837,8 @@ shift: native [
 ]
 
 first+: native [
-	{Return FIRST of series, and increment the series index.}
-	'word [word!] "Word must be a series"
+	{Return the FIRST of a series then increment the series index.}
+	'word [word!] "Word must refer to a series"
 ]
 
 stack: native [
@@ -855,7 +855,7 @@ stack: native [
 
 resolve: native [
 	{Copy context by setting values in the target from those in the source.}
-	target [any-object!]
+	target [any-object!] {(modified)}
 	source [any-object!]
 	/only from [block! integer!] "Only specific words (exports) or new words in target (index to tail)"
 	/all "Set all words, even those in the target that already have a value"

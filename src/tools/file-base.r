@@ -33,6 +33,7 @@ core: [
 	d-print.c
 	f-blocks.c
 	f-deci.c
+	f-dtoa.c
 	f-enbase.c
 	f-extension.c
 	f-math.c
