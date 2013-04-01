@@ -334,6 +334,9 @@ http-response-headers: context [
 do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state] [
 	spec: port/spec
 	state: port/state
+	if #"/" = first new-uri [
+		new-uri: to url! rejoin [ spec/scheme "://" spec/host new-uri]
+	]
 	new-uri: construct/with decode-url new-uri port/scheme/spec
 	if new-uri/scheme <> 'http [
 		state/error: make-http-error {Redirect to a protocol different from HTTP not supported}
