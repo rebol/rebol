@@ -209,7 +209,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 
 	// Skip head lines if required:
 	if (h || !t) {
-		for (; index < tail; ++index) {
+		for (; index < tail; index++) {
 			uc = GET_ANY_CHAR(ser, index);
 			if (!IS_WHITE(uc)) break;
 		}
@@ -247,14 +247,14 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 			}
 			
 			SET_ANY_CHAR(ser, out, uc);
-			++out;
+			out++;
 		}
 	}
 	else {
-		for (; index < tail; ++index) {
+		for (; index < tail; index++) {
 			uc = GET_ANY_CHAR(ser, index);
 			SET_ANY_CHAR(ser, out, uc);
-			++out;
+			out++;
 		}
 	}
 
