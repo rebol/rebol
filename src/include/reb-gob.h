@@ -174,4 +174,17 @@ struct rebol_gob {		// size: 64 bytes!
 #define IS_GOB_STRING(g) (GOB_CONTENT(g) && GOB_TYPE(g) == GOBT_STRING)
 #define IS_GOB_TEXT(g)   (GOB_CONTENT(g) && GOB_TYPE(g) == GOBT_TEXT)
 
+// GC Flags:
+enum {
+	GOB_MARK = 1,		// Gob was found during GC mark scan.
+	GOB_USED = 1<<1		// Gob is used (not free).
+};
+
+#define IS_GOB_MARK(g)	((g)->resv & GOB_MARK)
+#define MARK_GOB(g)		((g)->resv |= GOB_MARK)
+#define UNMARK_GOB(g)	((g)->resv &= ~GOB_MARK)
+#define IS_GOB_USED(g)	((g)->resv & GOB_USED)
+#define USE_GOB(g)		((g)->resv |= GOB_USED)
+#define FREE_GOB(g)		((g)->resv &= ~GOB_USED)
+
 extern REBGOB *Gob_Root; // Top level GOB (the screen)
