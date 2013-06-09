@@ -5,6 +5,7 @@
 make/r3*
 make/objs/
 src/boot/boot-code.r
+src/boot/host-init.r
 src/core/b-boot.c
 src/include/ext-types.h
 src/include/host-*
