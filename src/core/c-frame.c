@@ -145,10 +145,14 @@
 	REBSER *words = FRM_WORD_SERIES(frame);
 
 	Extend_Series(frame, delta);
+	BLK_TERM(frame);
 
 	// Expand or copy WORDS block:
 	if (copy) FRM_WORD_SERIES(frame) = Copy_Expand_Block(words, delta);
-	else Extend_Series(words, delta);
+	else {
+		Extend_Series(words, delta);
+		BLK_TERM(words);
+	}
 }
 
 

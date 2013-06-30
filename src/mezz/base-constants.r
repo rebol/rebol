@@ -19,7 +19,7 @@ REBOL [
 ; NOTE: The system is not fully booted at this point, so only simple
 ; expressions are allowed. Anything else will crash the boot.
 
-;-- Stanard constants:
+;-- Standard constants:
 on:  true
 off: false
 yes: true
@@ -31,7 +31,7 @@ REBOL: system
 sys: system/contexts/sys
 lib: system/contexts/lib
 
-;-- Char contstants:
+;-- Char constants:
 null:      #"^(NULL)"
 space:     #" "
 sp:        space

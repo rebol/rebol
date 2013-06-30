@@ -42,7 +42,7 @@ Syntax: [
 	no-header:          [{script is missing a REBOL header:} :arg1]
 	bad-header:         [{script header is not valid:} :arg1]
 	bad-checksum:       [{script checksum failed:} :arg1]
-	malconstruct:       [{invalid constructor:} :arg1]
+	malconstruct:       [{invalid construction spec:} :arg1]
 	bad-char:           [{invalid character in:} :arg1]
 	needs:              [{this script needs} :arg1 :arg2 {or better to run correctly}]
 ]

@@ -118,9 +118,9 @@
 	if (!hash) Trap_Type(key);
 
 	// Determine skip and first index:
-	skip  = (hash & 0x0000FFFF) % len;
+	skip  = (len == 0) ? 0 : (hash & 0x0000FFFF) % len;
 	if (skip == 0) skip = 1;
-	hash = (hash & 0x00FFFF00) % len;
+	hash = (len == 0) ? 0 : (hash & 0x00FFFF00) % len;
 
 	// Scan hash table for match:
 	hashes = (REBCNT*)hser->data;

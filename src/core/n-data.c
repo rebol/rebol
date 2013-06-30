@@ -507,12 +507,14 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 **
 ***********************************************************************/
 {
-	REBVAL *word = D_ARG(1);
-	REBVAL *val  = D_ARG(2);
-	REBOOL is_blk = FALSE;
+	REBVAL *word   = D_ARG(1);
+	REBVAL *val    = D_ARG(2);
+	REBVAL *tmp    = NULL;
+	REBOOL not_any = !D_REF(3);
+	REBOOL is_blk  = FALSE;
 
-	if (!D_REF(3) && !IS_SET(val))
-		Trap1(RE_NEED_VALUE, D_ARG(1));
+	if (not_any && !IS_SET(val))
+		Trap1(RE_NEED_VALUE, word);
 
 	if (ANY_WORD(word)) {
 		Set_Var(word, val);
@@ -534,10 +536,16 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	// Is target an object?
 	if (IS_OBJECT(word)) {
 		Assert_Public_Object(word);
-		for (word = VAL_OBJ_WORD(word, 1); NOT_END(word); word++) { // skip self
+		// Check for protected or unset before setting anything.
+		for (tmp = val, word = VAL_OBJ_WORD(word, 1); NOT_END(word); word++) { // skip self
 			if (VAL_PROTECTED(word)) Trap1(RE_LOCKED_WORD, word);
+			if (not_any && is_blk && !IS_END(tmp) && IS_UNSET(tmp++)) // won't advance past end
+				Trap1(RE_NEED_VALUE, word);
 		}
 		for (word = VAL_OBJ_VALUES(D_ARG(1)) + 1; NOT_END(word); word++) { // skip self
+			// WARNING: Unwinds that make it here are assigned. All unwinds
+			// should be screened earlier (as is done in e.g. REDUCE, or for
+			// function arguments) so they don't even get into this function.
 			*word = *val;
 			if (is_blk) {
 				val++;
@@ -549,7 +557,20 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			}
 		}
 	} else { // Set block of words:
-		for (word = VAL_BLK_DATA(word); NOT_END(word); word++) {
+		if (not_any && is_blk) { // Check for unset before setting anything.
+			for (tmp = val, word = VAL_BLK_DATA(word); NOT_END(word) && NOT_END(tmp); word++, tmp++) {
+				switch (VAL_TYPE(word)) {
+				case REB_WORD:
+				case REB_SET_WORD:
+				case REB_LIT_WORD:
+					if (!IS_SET(tmp)) Trap1(RE_NEED_VALUE, word);
+					break;
+				case REB_GET_WORD:
+					if (!IS_SET(IS_WORD(tmp) ? Get_Var(tmp) : tmp)) Trap1(RE_NEED_VALUE, word);
+				}
+			}
+		}
+		for (word = VAL_BLK_DATA(D_ARG(1)); NOT_END(word); word++) {
 			if (IS_WORD(word) || IS_SET_WORD(word) || IS_LIT_WORD(word)) Set_Var(word, val);
 			else if (IS_GET_WORD(word))
 				Set_Var(word, IS_WORD(val) ? Get_Var(val) : val);
