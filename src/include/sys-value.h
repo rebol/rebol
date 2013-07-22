@@ -1114,6 +1114,9 @@ typedef struct Reb_All {
 		REBHAN  handle;
 		REBALL  all;
 	} data;
+#ifdef __LP64__
+	REBINT	padding; //make it 32-bit
+#endif
 };
 
 #define ANY_SERIES(v)		(VAL_TYPE(v) >= REB_BINARY && VAL_TYPE(v) <= REB_LIT_PATH)
