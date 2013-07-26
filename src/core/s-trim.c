@@ -230,9 +230,9 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 		REBCNT left = 0; // index of leftmost space (in output)
 
 		for (; index < tail; ++index) {
-			
+
 			uc = GET_ANY_CHAR(ser, index);
-			
+
 			if (IS_SPACE(uc)) {
 				if (outside) continue;
 				if (!left) left = out;
