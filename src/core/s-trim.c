@@ -214,7 +214,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 			if (!IS_WHITE(uc)) break;
 		}
 	}
-	
+
 	// Skip tail lines if required:
 	if (t || !h) {
 		for (; index < tail; --tail) {
@@ -223,12 +223,12 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 			if (!IS_WHITE(uc)) break;
 		}
 	}
-	
+
 	// Trim head and tail of innner lines if required:
 	if (!h && !t) {
 		REBOOL outside = FALSE; // inside an inner line
 		REBCNT left = 0; // index of leftmost space (in output)
-		
+
 		for (; index < tail; ++index) {
 			
 			uc = GET_ANY_CHAR(ser, index);
@@ -245,7 +245,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 				outside = FALSE;
 				left = 0;
 			}
-			
+
 			SET_ANY_CHAR(ser, out, uc);
 			out++;
 		}
@@ -263,7 +263,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 		SET_ANY_CHAR(ser, out, LF);
 		++out;
 	}
-	
+
 	SET_ANY_CHAR(ser, out, 0);
 	SERIES_TAIL(ser) = out;
 }
