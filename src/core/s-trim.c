@@ -217,7 +217,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 
 	// Skip tail lines if required:
 	if (t || !h) {
-		for (; index < tail; --tail) {
+		for (; index < tail; tail--) {
 			uc = GET_ANY_CHAR(ser, tail -1);
 			if (uc == LF) append_line_feed = TRUE;
 			if (!IS_WHITE(uc)) break;
@@ -229,7 +229,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 		REBOOL outside = FALSE; // inside an inner line
 		REBCNT left = 0; // index of leftmost space (in output)
 
-		for (; index < tail; ++index) {
+		for (; index < tail; index++) {
 
 			uc = GET_ANY_CHAR(ser, index);
 
@@ -261,7 +261,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 	// Append line feed if necessary
 	if (append_line_feed && !t) {
 		SET_ANY_CHAR(ser, out, LF);
-		++out;
+		out++;
 	}
 
 	SET_ANY_CHAR(ser, out, 0);
