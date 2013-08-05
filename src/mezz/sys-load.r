@@ -291,17 +291,16 @@ load: funct [
 	; argument can be used to control how the raw source is converted.
 	; Pass a /type of none or 'unbound if you want embedded code or data.
 	; Scripts are normally bound to the user context, but no binding will
-	; happen for a module or if the /type is unbound. This allows the result
+	; happen for a module or if the /type is 'unbound. This allows the result
 	; to be handled properly by DO (keeping it out of user context.)
-	; Extensions will be still be loaded properly if /type 'unbound.
-	; Note that IMPORT has it's own loader, and does not use LOAD directly.
+	; Extensions will still be loaded properly if /type is 'unbound.
+	; Note that IMPORT has its own loader, and does not use LOAD directly.
 	; /type with anything other than 'extension disables extension loading.
 
 	assert/type [local none!] ; easiest way to protect against /local hacks
 
 	case/all [
 		next [
-			print "LOAD/next removed. Use TRANSCODE."
 			cause-error 'script 'no-refine [load next] ;!! bug#1711
 		]
 		header [all: none]
