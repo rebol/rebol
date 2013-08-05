@@ -471,7 +471,7 @@
 		// Rebind functions:
 		for (val = BLK_SKIP(obj, 1); NOT_END(val); val++) {
 			if (IS_FUNCTION(val)) {
-				Bind_Relative(VAL_FUNC_ARGS(val), VAL_FUNC_BODY(val), VAL_FUNC_BODY(val));
+				Bind_Relative(VAL_FUNC_ARGS(val), VAL_FUNC_ARGS(val), VAL_FUNC_BODY(val));
 			}
 			else if (IS_CLOSURE(val)) {
 			}
@@ -935,7 +935,7 @@
 /*
 **      Recursive function for relative function word binding.
 **
-**      Note: body arg points to an identifying series of the function,
+**      Note: frame arg points to an identifying series of the function,
 **      not a normal frame. This will be used to verify the word fetch.
 **
 ***********************************************************************/
@@ -960,14 +960,14 @@
 
 /***********************************************************************
 **
-*/  void Bind_Relative(REBSER *words, REBSER *body, REBSER *block)
+*/  void Bind_Relative(REBSER *words, REBSER *frame, REBSER *block)
 /*
 **      Bind the words of a function block to a stack frame.
 **      To indicate the relative nature of the index, it is set to
 **		a negative offset.
 **
 **		words: VAL_FUNC_ARGS(func)
-**		body:  VAL_FUNC_BODY(func) - used as frame
+**		frame: VAL_FUNC_ARGS(func)
 **		block: block to bind
 **
 ***********************************************************************/
@@ -986,7 +986,7 @@
 	for (index = 1; NOT_END(args); args++, index++)
 		binds[VAL_BIND_CANON(args)] = -index;
 
-	Bind_Relative_Words(body, block);
+	Bind_Relative_Words(frame, block);
 
 	// Reset binding table:
 	for (args = BLK_SKIP(words, 1); NOT_END(args); args++)
@@ -996,43 +996,43 @@
 
 /***********************************************************************
 **
-*/  void Bind_Stack_Block(REBSER *body, REBSER *block)
+*/  void Bind_Stack_Block(REBSER *frame, REBSER *block)
 /*
 ***********************************************************************/
 {
 	REBINT dsf = DSF;
 
-	// Find body (frame) on stack:
-	while (body != VAL_WORD_FRAME(DSF_WORD(dsf))) {
+	// Find frame on stack:
+	while (frame != VAL_WORD_FRAME(DSF_WORD(dsf))) {
 		dsf = PRIOR_DSF(dsf);
 		if (dsf <= 0) Trap0(RE_NOT_DEFINED);  // better message !!!!
 	}
 
 	if (IS_FUNCTION(DSF_FUNC(dsf))) {
-		Bind_Relative(VAL_FUNC_ARGS(DSF_FUNC(dsf)), body, block);
+		Bind_Relative(VAL_FUNC_ARGS(DSF_FUNC(dsf)), frame, block);
 	}
 }
 
 
 /***********************************************************************
 **
-*/  void Bind_Stack_Word(REBSER *body, REBVAL *word)
+*/  void Bind_Stack_Word(REBSER *frame, REBVAL *word)
 /*
 ***********************************************************************/
 {
 	REBINT dsf = DSF;
 	REBINT index;
 
-	// Find body (frame) on stack:
-	while (body != VAL_WORD_FRAME(DSF_WORD(dsf))) {
-		dsf = PRIOR_DSF(dsf);
-		if (dsf <= 0) Trap1(RE_NOT_IN_CONTEXT, word);
+	// Find frame on stack:
+	while (frame != VAL_WORD_FRAME(DSF_WORD(dsf))) {
+	 	dsf = PRIOR_DSF(dsf);
+	 	if (dsf <= 0) Trap1(RE_NOT_IN_CONTEXT, word);
 	}
 
 	if (IS_FUNCTION(DSF_FUNC(dsf))) {
 		index = Find_Arg_Index(VAL_FUNC_ARGS(DSF_FUNC(dsf)), VAL_WORD_SYM(word));
 		if (!index) Trap1(RE_NOT_IN_CONTEXT, word);
-		VAL_WORD_FRAME(word) = body;
+		VAL_WORD_FRAME(word) = frame;
 		VAL_WORD_INDEX(word) = -index;
 	} else
 		Crash(9100); // !!!  function is not there!
