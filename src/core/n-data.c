@@ -616,10 +616,26 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 ***********************************************************************/
 {
 	REBVAL	*value = D_ARG(1);
+	REBINT index;
+	REBSER *frame;
+	REBINT dsf;
 
 	if (ANY_WORD(value)) {
 		if (!VAL_WORD_FRAME(value)) return R_FALSE;
-		value = Get_Var(value);
+
+		index = VAL_WORD_INDEX(value);
+		if (index < 0) {
+			// A negative index indicates that the value is in a frame on
+			// the data stack, so now we must find it by walking back the
+			// stack looking for the function that the word is bound to.
+			dsf = DSF;
+			frame = VAL_WORD_FRAME(value);
+			while (frame != VAL_WORD_FRAME(DSF_WORD(dsf))) {
+				dsf = PRIOR_DSF(dsf);
+				if (dsf <= 0) return R_FALSE;
+			}
+			value = DSF_ARGS(dsf, -index);
+		} else {value = Get_Var(value);}
 	}
 	if (IS_UNSET(value)) return R_FALSE;
 	return R_TRUE;
