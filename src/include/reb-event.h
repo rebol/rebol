@@ -26,7 +26,7 @@
 **
 ***********************************************************************/
 
-// Note: size must be 12 bytes!
+// Note: size must be 12 bytes on 32-bit or 16 on 64-bit!
 
 #pragma pack(4)
 typedef struct rebol_event {
