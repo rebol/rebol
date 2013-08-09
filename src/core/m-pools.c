@@ -639,7 +639,7 @@ clear_header:
 			count++;
 			// The node better belong to one of the pool's segments:
 			for (seg = Mem_Pools[pool_num].segs; seg; seg = seg->next) {
-				if ((int)node > (int)seg && (int)node < (int)seg + (int)seg->size) break;
+				if ((intptr_t)node > (intptr_t)seg && (intptr_t)node < (intptr_t)seg + (intptr_t)seg->size) break;
 			}
 			if (!seg) goto crash;
 			pnode = node; // for debugger
