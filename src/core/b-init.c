@@ -325,7 +325,7 @@ extern const REBYTE Str_Banner[];
 {
 	Action_Count++;
 	if (Action_Count >= A_MAX_ACTION) Crash(RP_ACTION_OVERFLOW);
-	Make_Native(ds, VAL_SERIES(D_ARG(1)), (REBFUN)Action_Count, REB_ACTION);
+	Make_Native(ds, VAL_SERIES(D_ARG(1)), (REBFUN)(uintptr_t)Action_Count, REB_ACTION);
 	return R_RET;
 }
 
