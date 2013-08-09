@@ -57,7 +57,7 @@ REBINT deci_to_string(REBYTE *string, const deci a, const REBYTE symbol, const R
 REBYTE *deci_to_binary(REBYTE binary[12], const deci a);
 
 /* math functions */
-deci deci_ldexp (deci a, int e);
+deci deci_ldexp (deci a, REBINT e);
 deci deci_truncate (deci a, deci b);
 deci deci_away (deci a, deci b);
 deci deci_floor (deci a, deci b);
