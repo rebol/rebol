@@ -708,7 +708,7 @@ RL_API u32 RL_Find_Word(u32 *words, u32 word)
 	return 0;
 }
 
-RL_API int RL_Series(REBSER *series, REBCNT what)
+RL_API uintptr_t RL_Series(REBSER *series, REBCNT what)
 /*
 **	Get series information.
 **
@@ -722,7 +722,7 @@ RL_API int RL_Series(REBSER *series, REBCNT what)
 */
 {
 	switch (what) {
-	case RXI_SER_DATA: return (int)SERIES_DATA(series); // problem for 64 bit !!
+	case RXI_SER_DATA: return (uintptr_t)SERIES_DATA(series);
 	case RXI_SER_TAIL: return SERIES_TAIL(series);
 	case RXI_SER_LEFT: return SERIES_AVAIL(series);
 	case RXI_SER_SIZE: return SERIES_REST(series);
