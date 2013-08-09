@@ -81,7 +81,14 @@ typedef unsigned int	u32;
 #else
 typedef long				i32;
 typedef unsigned long	u32;
- #endif
+#endif
+#ifdef __LP64__
+typedef long			intptr_t;
+typedef unsigned long	uintptr_t;
+#else
+typedef int				intptr_t;
+typedef unsigned int	uintptr_t;
+#endif
 #ifdef ODD_INT_64       // Windows VC6 nonstandard typing for 64 bits
 typedef _int64          i64;
 typedef unsigned _int64 u64;
