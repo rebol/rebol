@@ -420,7 +420,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	memset((REBYTE *)node, 0xff, length);
 #endif
 	series->tail = series->size = 0;
-	SERIES_REST(series) = length / wide;
+	SERIES_REST(series) = length / wide; //FIXME: This is based on the assumption that length is multiple of wide
 	series->data = (REBYTE *)node;
 	series->info = wide; // also clears flags
 	LABEL_SERIES(series, "make");
