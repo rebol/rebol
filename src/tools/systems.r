@@ -30,6 +30,7 @@ systems: [
 	[0.4.10 "linux_ppc"  posix  [+O1 HID LDL ST1 -LM]]
 	[0.4.20 "linux_arm"  posix  [+O2 HID LDL ST1 -LM]]
 	[0.4.30 "linux_mips" posix  [+O2 HID LDL ST1 -LM]]  ; glibc does not need C++
+	[0.4.40 "linux_x64"  posix  [+O2 HID LDL ST1 -LM]]
 	[0.5.75 "haiku"      posix  [+O2 ST1 NWK]]
 	[0.7.02 "freebsd"    posix  [+O1 C++ ST1 -LM]]
 	[0.9.04 "openbsd"    posix  [+O1 C++ ST1 -LM]]
