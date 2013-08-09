@@ -104,21 +104,21 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 ***********************************************************************/
 {
 	int marker;
-	REBCNT bounds;
+	uintptr_t bounds;
 
 	Host_Lib = lib;
 
 	if (Host_Lib->size < HOST_LIB_SIZE) return 1;
 	if (((HOST_LIB_VER << 16) + HOST_LIB_SUM) != Host_Lib->ver_sum) return 2;
 
-	bounds = OS_CONFIG(1, 0);
-	if (bounds == 0) bounds = STACK_BOUNDS;
+	bounds = (uintptr_t)OS_CONFIG(1, 0);
+	if (bounds == 0) bounds = (uintptr_t)STACK_BOUNDS;
 
 #ifdef OS_STACK_GROWS_UP
-	Stack_Limit = (REBCNT)(&marker) + bounds;
+	Stack_Limit = (uintptr_t)(&marker) + bounds;
 #else
-	if (bounds > (REBCNT)(&marker)) Stack_Limit = 100;
-	else Stack_Limit = (REBCNT)(&marker) - bounds;
+	if (bounds > (uintptr_t) &marker) Stack_Limit = 100;
+	else Stack_Limit = (uintptr_t)&marker - bounds;
 #endif
 
 	Init_Core(rargs);
