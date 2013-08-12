@@ -253,7 +253,7 @@ xx*/	REBSER *Make_Func_Words(REBSER *spec)
 	VAL_SET(value, type);
 
 	if (type == REB_FUNCTION)
-		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value), VAL_FUNC_BODY(value));
+		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value));
 
 	return TRUE;
 }
@@ -290,7 +290,7 @@ xx*/	REBSER *Make_Func_Words(REBSER *spec)
 
 	// Rebind function words:
 	if (IS_FUNCTION(value))
-		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value), VAL_FUNC_BODY(value));
+		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value));
 
 	return TRUE;
 }
@@ -303,7 +303,7 @@ xx*/	REBSER *Make_Func_Words(REBSER *spec)
 ***********************************************************************/
 {
 	VAL_FUNC_SPEC(value) = VAL_FUNC_SPEC(func);
-	VAL_FUNC_ARGS(value) = VAL_FUNC_ARGS(func);
+	VAL_FUNC_ARGS(value) = Copy_Block(VAL_FUNC_ARGS(func), 0);
 	VAL_FUNC_BODY(value) = Clone_Block(VAL_FUNC_BODY(func));
 }
 
