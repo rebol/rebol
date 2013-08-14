@@ -1000,17 +1000,7 @@
 /*
 ***********************************************************************/
 {
-	REBINT dsf = DSF;
-
-	// Find frame on stack:
-	while (frame != VAL_WORD_FRAME(DSF_WORD(dsf))) {
-		dsf = PRIOR_DSF(dsf);
-		if (dsf <= 0) Trap0(RE_NOT_DEFINED);  // better message !!!!
-	}
-
-	if (IS_FUNCTION(DSF_FUNC(dsf))) {
-		Bind_Relative(VAL_FUNC_ARGS(DSF_FUNC(dsf)), frame, block);
-	}
+	Bind_Relative(frame, frame, block);
 }
 
 
@@ -1020,22 +1010,12 @@
 /*
 ***********************************************************************/
 {
-	REBINT dsf = DSF;
 	REBINT index;
 
-	// Find frame on stack:
-	while (frame != VAL_WORD_FRAME(DSF_WORD(dsf))) {
-	 	dsf = PRIOR_DSF(dsf);
-	 	if (dsf <= 0) Trap1(RE_NOT_IN_CONTEXT, word);
-	}
-
-	if (IS_FUNCTION(DSF_FUNC(dsf))) {
-		index = Find_Arg_Index(VAL_FUNC_ARGS(DSF_FUNC(dsf)), VAL_WORD_SYM(word));
-		if (!index) Trap1(RE_NOT_IN_CONTEXT, word);
-		VAL_WORD_FRAME(word) = frame;
-		VAL_WORD_INDEX(word) = -index;
-	} else
-		Crash(9100); // !!!  function is not there!
+	index = Find_Arg_Index(frame, VAL_WORD_SYM(word));
+	if (!index) Trap1(RE_NOT_IN_CONTEXT, word);
+	VAL_WORD_FRAME(word) = frame;
+	VAL_WORD_INDEX(word) = -index;
 }
 
 
