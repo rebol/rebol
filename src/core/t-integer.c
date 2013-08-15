@@ -121,10 +121,15 @@
 		break;
 
 	case A_MULTIPLY:
-		anum = num * arg;
-		if (((num != 0) && (anum / num != arg)) || ((anum == arg) && (arg != 0) && (num != 1)))
+		if ((num > 0 && arg < 0 && arg < MIN_I64 / num)
+			|| (num > 0 && arg > 0 && num > MAX_I64 / arg)
+			|| (num < 0 && arg < 0 && num < MAX_I64 / arg)
+			|| (num < 0 && arg > 0 && num < MIN_I64 / arg)){
 			Trap0(RE_OVERFLOW);
-		num = anum;
+		} else {
+			num *= arg;
+		}
+
 		break;
 
 	case A_DIVIDE:
