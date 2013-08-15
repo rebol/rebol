@@ -206,7 +206,9 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 	REBCNT out = index;
 	REBOOL append_line_feed = FALSE;
 	REBUNI uc;
-
+	if (tail == index){
+		return;
+	}
 	// Skip head lines if required:
 	if (h || !t) {
 		for (; index < tail; index++) {
