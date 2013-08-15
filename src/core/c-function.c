@@ -46,6 +46,7 @@
 		4. used for debugging tools (stack dumps)
 		5. not used for MOLD (spec is used)
 		6. used as a (pseudo) frame of function variables
+
 */
 
 #include "sys-core.h"
@@ -191,7 +192,6 @@
 
 	body = VAL_BLK_SKIP(def, 1);
 
-	//	Print("Make_Func"); //: %s spec %d", Get_Sym_Name(type+1), SERIES_TAIL(spec));
 	VAL_FUNC_SPEC(value) = VAL_SERIES(spec);
 	VAL_FUNC_ARGS(value) = Check_Func_Spec(VAL_SERIES(spec));
 
@@ -204,7 +204,7 @@
 
 	VAL_SET(value, type);
 
-	if (type == REB_FUNCTION)
+	if (type == REB_FUNCTION || type == REB_CLOSURE)
 		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value));
 
 	return TRUE;
@@ -222,7 +222,8 @@
 
 	if (!args || ((spec = VAL_BLK(args)) && IS_END(spec))) {
 		body = 0;
-		if (IS_FUNCTION(value)) VAL_FUNC_ARGS(value) = Copy_Block(VAL_FUNC_ARGS(value), 0);
+		if (IS_FUNCTION(value) || IS_CLOSURE(value))
+			VAL_FUNC_ARGS(value) = Copy_Block(VAL_FUNC_ARGS(value), 0);
 	} else {
 		body = VAL_BLK_SKIP(args, 1);
 		// Spec given, must be block or *
@@ -246,7 +247,7 @@
 		VAL_FUNC_BODY(value) = Clone_Block(VAL_FUNC_BODY(value));
 
 	// Rebind function words:
-	if (IS_FUNCTION(value))
+	if (IS_FUNCTION(value) || IS_CLOSURE(value))
 		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value));
 
 	return TRUE;
@@ -425,11 +426,8 @@
 **
 */	void Do_Closure(REBVAL *func)
 /*
-**		Do a closure by cloning its body and binding it to
+**		Do a closure by cloning its body and rebinding it to
 **		a new frame of words/values.
-**
-**		This could be made faster by pre-binding the body,
-**		then using Rebind_Block to rebind the words in it.
 **
 ***********************************************************************/
 {
@@ -449,8 +447,7 @@
 	SET_FRAME(BLK_HEAD(frame), 0, VAL_FUNC_ARGS(func));
 
 	// Rebind the body to the new context (deeply):
-	//Rebind_Block(VAL_FUNC_ARGS(func), frame, body);
-	Bind_Block(frame, BLK_HEAD(body), BIND_DEEP); // | BIND_NO_SELF);
+	Rebind_Block(VAL_FUNC_ARGS(func), frame, body, TRUE);
 
 	ds = DS_RETURN;
 	SET_OBJECT(ds, body); // keep it GC safe

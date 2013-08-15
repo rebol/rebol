@@ -1021,19 +1021,25 @@
 
 /***********************************************************************
 **
-*/  void Rebind_Block(REBSER *frame_src, REBSER *frame_dst, REBSER *block)
+*/  void Rebind_Block(REBSER *frame_src, REBSER *frame_dst, REBSER *block, REBFLG change_type)
 /*
 **      Rebind all words that reference src frame to dst frame.
 **      Rebind is always deep.
+**
+**		There are two types of frames: relative frames and normal frames.
+**		When frame_src type and frame_dst type differ,
+**		the change_type flag must be TRUE.
 **
 ***********************************************************************/
 {
 	REBVAL *value;
 
 	for (value = BLK_HEAD(block); NOT_END(value); value++) {
-		if (ANY_BLOCK(value)) Rebind_Block(frame_src, frame_dst, VAL_SERIES(value));
+		if (ANY_BLOCK(value)) Rebind_Block(frame_src, frame_dst, VAL_SERIES(value), change_type);
 		else if (ANY_WORD(value) && VAL_WORD_FRAME(value) == frame_src) {
 			VAL_WORD_FRAME(value) = frame_dst;
+			// changing frame type?
+			if (change_type) VAL_WORD_INDEX(value) = - VAL_WORD_INDEX(value);
 		}
 	}
 }
