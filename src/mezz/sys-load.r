@@ -23,7 +23,7 @@ REBOL [
 ; BASICS:
 ; Code gets loaded in two ways:
 ;   1. As user code/data - residing in user context
-;   2. As module code/data - residing in it's own context
+;   2. As module code/data - residing in its own context
 ; Module loading can be delayed. This allows special modules like CGI, protocols,
 ; or HTML formatters to be available, but not require extra space.
 ; The system/modules list holds modules for fully init'd modules, otherwise it
@@ -47,19 +47,6 @@ bind-lib: func [
 	bind block lib
 	block
 ]
-
-;REMOVE this after A108 tests out ok:
-;append-context: func [
-;	"Temp function to fix bogus pattern...."
-;	target
-;	source
-;	words
-;][
-;	; this is a bogus pattern -- should be within the native layer
-;	unless words [words: words-of source] ; gets the words from source context
-;	words: bind/new/copy/only words target  ; adds the words to the target
-;	resolve/only target source words ; copies top level values from source to target
-;]
 
 export-words: func [
 	"Exports the words of a context into both the system lib and user contexts."
