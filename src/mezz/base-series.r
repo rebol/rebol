@@ -18,7 +18,7 @@ REBOL [
 
 repend: func [
 	"Appends a reduced value to a series and returns the series head."
-	series [series! port! map! gob! object! bitset!] {Series at point to insert}
+	series [series! port! map! gob! object! bitset!] {Series at point to insert (modified)}
 	value {The value to insert}
 	/part {Limits to a given length or position}
 	length [number! series! pair!]
