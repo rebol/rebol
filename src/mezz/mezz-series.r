@@ -389,10 +389,10 @@ split: func [	; Gabriele, Gregg
 ]
 
 find-all: funct [
-    "Find all occurances of the value within the series (allows modification)."
+    "Find all occurrences of a value within a series (allows modification)."
     'series [word!] "Variable for block, string, or other series"
     value
-    body [block!] "Evaluated for each occurance"
+    body [block!] "Evaluated for each occurrence"
 ][
     assert [series? orig: get series]
     while [any [set series find get series :value (set series orig false)]] [
