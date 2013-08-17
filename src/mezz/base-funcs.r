@@ -72,7 +72,7 @@ use: func [
 
 object: func [
 	{Defines a unique object.}
-	blk [block!] {Object words and values.}
+	blk [block!] {Object words and values (modified)}
 ][
 	make object! append blk none
 ]

@@ -240,7 +240,7 @@ reflect: action [
 make: action [
 	{Constructs or allocates the specified datatype.}
 	type [any-type!] {The datatype or an example value}
-	spec [any-type!] {Attributes or size of the new value}
+	spec [any-type!] {Attributes or size of the new value (modified)}
 ]
 
 to: action [
