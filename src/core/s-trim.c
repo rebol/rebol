@@ -203,8 +203,8 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 **
 ***********************************************************************/
 {
-	REBCNT start = index;
 	REBCNT out = index;
+	REBOOL append_line_feed = FALSE;
 	REBUNI uc;
 
 	// Skip head lines if required:
@@ -215,27 +215,36 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 		}
 	}
 
-	// Trim the head and tail parts of a line:
-	if (!h && !t) {
-		REBINT hf = 1; // head space flag
-		REBINT tf = 0; // tail space flag and index
+	// Skip tail lines if required:
+	if (t || !h) {
+		for (; index < tail; tail--) {
+			uc = GET_ANY_CHAR(ser, tail -1);
+			if (uc == LF) append_line_feed = TRUE;
+			if (!IS_WHITE(uc)) break;
+		}
+	}
 
-		// Trim lines:
+	// Trim head and tail of innner lines if required:
+	if (!h && !t) {
+		REBOOL outside = FALSE; // inside an inner line
+		REBCNT left = 0; // index of leftmost space (in output)
+
 		for (; index < tail; index++) {
 
 			uc = GET_ANY_CHAR(ser, index);
 
 			if (IS_SPACE(uc)) {
-				if (hf) continue; // trim from head
-				tf = index;       // tailing spaces?
+				if (outside) continue;
+				if (!left) left = out;
 			}
 			else if (uc == LF) {
-				hf = 1;
-				if (tf) out = tf;
-				tf = 0;
+				outside = TRUE;
+				if (left) out = left, left = 0;
 			}
-			else
-				hf = tf = 0;
+			else {
+				outside = FALSE;
+				left = 0;
+			}
 
 			SET_ANY_CHAR(ser, out, uc);
 			out++;
@@ -249,21 +258,10 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 		}
 	}
 
-	// Trim tail lines if required:
-	if (t || !h) {
-		REBOOL flag = FALSE; // found newline
-
-		for (out--; out >= start; out--) {
-			uc = GET_ANY_CHAR(ser, out);
-			if (!IS_WHITE(uc)) break;
-			if (uc == LF) flag = TRUE;
-		}
-
+	// Append line feed if necessary
+	if (append_line_feed && !t) {
+		SET_ANY_CHAR(ser, out, LF);
 		out++;
-		if (!t && flag) {
-			SET_ANY_CHAR(ser, out, LF);
-			out++;
-		}
 	}
 
 	SET_ANY_CHAR(ser, out, 0);
