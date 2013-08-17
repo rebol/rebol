@@ -726,7 +726,7 @@ zero_blk:
 			VAL_INDEX(value) = ret;
 		}
 		else {
-			ret++;
+			ret += len;
 			if (ret >= (REBCNT)tail) goto is_none;
 			value = BLK_SKIP(ser, ret);
 		}
