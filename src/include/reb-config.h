@@ -82,7 +82,6 @@ These are now obsolete (as of A107) and should be removed:
 #endif
 #endif
 
-
 //* MS Windows 32 ******************************************************
 
 #ifdef TO_WIN32					// Win32/Intel
@@ -96,7 +95,6 @@ These are now obsolete (as of A107) and should be removed:
 #define ATOI					// supports it
 #define ATOI64					// supports it
 #define ITOA64					// supports it
-#define HAS_ECVT				// supports ecvt()
 #define NO_TTY_ATTRIBUTES		// used in read-line.c
 #define FINITE _finite			// name used for it
 #define INLINE __inline			// name used for it
@@ -115,7 +113,7 @@ These are now obsolete (as of A107) and should be removed:
 #if (defined(_MSC_VER) && (_MSC_VER <= 1200))
 #define ODD_INT_64
 #else
-#define HAS_LONG_DOUBLE
+#define HAS_LL_CONSTS
 #endif
 
 // Disable various warnings
@@ -149,54 +147,48 @@ These are now obsolete (as of A107) and should be removed:
 
 #ifdef TO_LINUX					// Linux/Intel
 #define ENDIAN_LITTLE
-#define HAS_LONG_DOUBLE
-#define HAS_LOG10L
+#define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_LINUX_PPC				// Linux/PPC
 #define ENDIAN_BIG
-#define HAS_ECVT
-#define HAS_LONG_DOUBLE
+#define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_LINUX_ARM				// Linux/ARM
 #define ENDIAN_LITTLE
-#define HAS_LONG_DOUBLE
+#define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_LINUX_MIPS
 #define ENDIAN_LITTLE
-#define HAS_LONG_DOUBLE
+#define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_HAIKU					// same as Linux/Intel seems to work
 #define ENDIAN_LITTLE
-#define HAS_LONG_DOUBLE
-#define HAS_LOG10L
+#define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_OSXI					// OSX/Intel
 #define ENDIAN_LITTLE
-#define HAS_ECVT
-#define HAS_LONG_DOUBLE
+#define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_OSX					// OSX/PPC
 #define ENDIAN_BIG
-#define HAS_ECVT
 #define HAS_LL_CONSTS
 #define OLD_COMPILER
 #endif
 
 #ifdef TO_FREEBSD
 #define ENDIAN_LITTLE
-#define HAS_LONG_DOUBLE
+#define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_OPENBSD
 #define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
-#define HAS_ECVT
 #endif
 
 #ifdef TO_OBSD					// OpenBSD
@@ -207,7 +199,6 @@ These are now obsolete (as of A107) and should be removed:
 #ifdef TO_AMIGA					// Target for OS4
 #define ENDIAN_BIG
 #define HAS_BOOL
-#define HAS_ECVT
 #define HAS_LL_CONSTS
 #define HAS_SMART_CONSOLE
 #define NO_DL_LIB
@@ -215,10 +206,6 @@ These are now obsolete (as of A107) and should be removed:
 
 
 //* Defaults ***********************************************************
-
-#ifdef HAS_LONG_DOUBLE
-#define HAS_LL_CONSTS
-#endif
 
 #ifndef THREAD
 #define THREAD
