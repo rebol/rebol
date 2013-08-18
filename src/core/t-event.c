@@ -127,6 +127,15 @@
 		} else return FALSE;
 		break;
 
+	case SYM_WINDOW:
+	case SYM_GOB:
+		if (IS_GOB(val)) {
+			VAL_EVENT_MODEL(value) = EVM_GUI;
+			VAL_EVENT_SER(value) = VAL_GOB(val);
+			break;
+		}
+		return FALSE; 
+
 	case SYM_OFFSET:
 		if (IS_PAIR(val)) {
 			SET_EVENT_XY(value, Float_Int16(VAL_PAIR_X(val)), Float_Int16(VAL_PAIR_Y(val)));
