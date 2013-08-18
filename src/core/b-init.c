@@ -174,7 +174,7 @@ extern const REBYTE Str_Banner[];
 #endif
 
 	//Dump_Block_Raw(boot, 0, 2);
-	Set_Root_Series(ROOT_BOOT, boot); // "Boot Block";	// Do not let it get GC'd
+	Set_Root_Series(ROOT_BOOT, boot, "boot block");	// Do not let it get GC'd
 	if (text) Free_Series(text);
 
 	Boot_Block = (BOOT_BLK *)VAL_BLK(BLK_HEAD(boot));
@@ -437,11 +437,12 @@ extern const REBYTE Str_Banner[];
 	REBVAL *obj;
 	REBINT n;
 
-	Insert_Series(FRM_WORD_SERIES(frm), 1, (REBYTE*)FRM_WORD(Lib_Context, Action_Marker+1), A_MAX_ACTION-1); 
+	Insert_Series(FRM_WORD_SERIES(frm), 1, (REBYTE*)FRM_WORD(Lib_Context, Action_Marker+1), A_MAX_ACTION); 
 
 	SERIES_TAIL(frm) = A_MAX_ACTION;
 	for (n = 1; n < A_MAX_ACTION; n++)
 		SET_NONE(BLK_SKIP(frm, n));
+	BLK_TERM(frm);
 
 	obj = Get_System(SYS_STANDARD, STD_UTYPE);
 	SET_OBJECT(obj, frm);
@@ -455,7 +456,7 @@ extern const REBYTE Str_Banner[];
 ***********************************************************************/
 {
 	DS_Series = Make_Block(size);
-	Set_Root_Series(TASK_STACK, DS_Series); // "Data Stack"); // uses special GC
+	Set_Root_Series(TASK_STACK, DS_Series, "data stack"); // uses special GC
 	DS_Base = BLK_HEAD(DS_Series);
 	DSP = DSF = 0;
 	SET_NONE(DS_TOP); // avoids it being set to END (GC problem)
@@ -480,7 +481,7 @@ extern const REBYTE Str_Banner[];
 	REBSER *frame;
 
 	frame = Make_Block(ROOT_MAX);  // Only half the context! (No words)
-	KEEP_SERIES(frame, "Root_Context")
+	KEEP_SERIES(frame, "root context");
 	LOCK_SERIES(frame);
 	Root_Context = (ROOT_CTX*)(frame->data);
 
@@ -501,13 +502,13 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	void Set_Root_Series(REBVAL *value, REBSER *ser)
+*/	void Set_Root_Series(REBVAL *value, REBSER *ser, REBYTE *label)
 /*
 **		Used to set block and string values in the ROOT context.
 **
 ***********************************************************************/
 {
-	//SET_SERIES_LABEL(ser, label);  -- removed
+	LABEL_SERIES(ser, label);
 
 	if (SERIES_WIDE(ser) == sizeof(REBVAL))
 		Set_Block(value, ser); // VAL_SET(value, REB_BLOCK);
@@ -531,7 +532,7 @@ extern const REBYTE Str_Banner[];
 	//Print_Str("Task Context");
 
 	Task_Series = frame = Make_Block(TASK_MAX);
-	KEEP_SERIES(frame, "Task_Context")
+	KEEP_SERIES(frame, "task context");
 	LOCK_SERIES(frame);
 	Task_Context = (TASK_CTX*)(frame->data);
 

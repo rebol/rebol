@@ -18,7 +18,7 @@
 # For the build toolchain:
 CC=	$(TOOLS)gcc
 NM=	$(TOOLS)nm
-STRIP=	$(TOOLS)strip
+STRIP=	
 
 # CP allows different copy progs:
 CP= cp
@@ -40,8 +40,8 @@ I= -I$(INCL) -I$S/include/
 TO_OS?= TO_LINUX
 OS_ID?= 0.4.4
 BIN_SUFFIX=
-RAPI_FLAGS=  -O2 -fvisibility=hidden -m32
-HOST_FLAGS=	-DREB_EXE  -O2 -fvisibility=hidden -m32 -D_FILE_OFFSET_BITS=64
+RAPI_FLAGS=  -g -m32
+HOST_FLAGS=	-DREB_EXE  -g -m32 -D_FILE_OFFSET_BITS=64
 RLIB_FLAGS=
 
 # Flags for core and for host:
@@ -159,9 +159,7 @@ HOST =	objs/host-main.o objs/host-args.o objs/host-device.o objs/host-stdio.o \
 
 # Directly linked r3 executable:
 r3$(BIN_SUFFIX):	tmps objs $(OBJS) $(HOST)
-	$(CC) -o r3$(BIN_SUFFIX) $(OBJS) $(HOST) $(CLIB)
-	$(STRIP) r3$(BIN_SUFFIX)
-	-$(NM) -a r3$(BIN_SUFFIX)
+	$(CC) -g -o r3$(BIN_SUFFIX) $(OBJS) $(HOST) $(CLIB)
 	$(LS) r3$(BIN_SUFFIX)
 
 objs:
@@ -173,15 +171,11 @@ lib:	libr3.so
 # NOTE: Did not use "-Wl,-soname,libr3.so" because won't find .so in local dir.
 libr3.so:	$(OBJS)
 	$(CC) -o libr3.so -shared $(OBJS) $(CLIB)
-	$(STRIP) libr3.so
-	-$(NM) -D libr3.so
-	-$(NM) -a libr3.so | grep "Do_"
 	$(LS) libr3.so
 
 # PUBLIC: Host using the shared lib:
 host$(BIN_SUFFIX):	$(HOST)
 	$(CC) -o host$(BIN_SUFFIX) $(HOST) libr3.so $(CLIB)
-	$(STRIP) host$(BIN_SUFFIX)
 	$(LS) host$(BIN_SUFFIX)
 	echo "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"
 

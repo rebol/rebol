@@ -41,6 +41,7 @@
 ***********************************************************************/
 {
 	REBSER *series = Make_Series(length + 1, sizeof(REBYTE), FALSE);
+	LABEL_SERIES(series, "make binary");
 	BIN_DATA(series)[length] = 0;
 	return series;
 }
@@ -56,6 +57,7 @@
 ***********************************************************************/
 {
 	REBSER *series = Make_Series(length + 1, sizeof(REBUNI), FALSE);
+	LABEL_SERIES(series, "make unicode");
 	UNI_HEAD(series)[length] = 0;
 	return series;
 }

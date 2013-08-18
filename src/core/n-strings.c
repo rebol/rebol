@@ -188,6 +188,7 @@ static struct digest {
 			if (digests[i].index == sym) {
 
 				digest = Make_Series(digests[i].len, 1, FALSE);
+				LABEL_SERIES(digest, "checksum digest");
 
 				if (D_REF(ARG_CHECKSUM_KEY)) {
 					REBYTE tmpdigest[20];		// Size must be max of all digest[].len;

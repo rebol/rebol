@@ -1425,5 +1425,5 @@
 ***********************************************************************/
 {
 	// Temporary block used while scanning for frame words:
-	Set_Root_Series(TASK_BUF_WORDS, Make_Block(100)); // "Word Cache"); // just holds words, no GC
+	Set_Root_Series(TASK_BUF_WORDS, Make_Block(100), "word cache"); // just holds words, no GC
 }

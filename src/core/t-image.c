@@ -415,6 +415,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	}
 	
 	img = Make_Series(w * h + 1, sizeof(REBINT), FALSE);
+	LABEL_SERIES(img, "make image");
 	img->tail = w * h;
 	CLEAR(img->data, (img->tail + 1) * sizeof(REBINT));
 	IMG_WIDE(img) = w;

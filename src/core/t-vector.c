@@ -317,6 +317,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	len = size * dims;
 	if (len > 0x7fffffff) return 0;
 	ser = Make_Series(len+1, bits/8, TRUE); // !!! can width help extend the len?
+	LABEL_SERIES(ser, "make vector");
 	CLEAR(ser->data, len*bits/8);
 	ser->tail = len;  // !!! another way to do it?
 
