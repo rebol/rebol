@@ -231,7 +231,8 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 		break;
 
 	case REB_BLOCK:
-		ser = Join_Binary(arg);
+		// Join_Binary returns a shared buffer, so produce a copy:
+		ser = Copy_Series(Join_Binary(arg));
 		break;
 
 	// MAKE/TO BINARY! <tuple!>
