@@ -54,6 +54,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <time.h>
 #include <string.h>
 
@@ -595,17 +596,23 @@ static void *Task_Ready;
 
 static int Try_Browser(char *browser, REBCHR *url)
 {
-	REBCHR *cmd = MAKE_STR(LEN_STR(browser) + LEN_STR(url) + 10);
-	int result;
+	pid_t pid;
+	int result, status;
 
-	// A temporary solution -- for some versions...
-	strcpy(cmd, browser);
-	strcat(cmd, " \"");
-	strcat(cmd, url);
-	strcat(cmd, "\"");
-	result = (system(cmd) == 0);
-	// printf("result: %d\n", result);
-	free(cmd);
+	switch (pid = fork()) {
+		case -1:
+			result = FALSE;
+			break;
+		case 0:
+			execlp(browser, browser, url, NULL);
+			exit(1);
+			break;
+		default:
+			waitpid(pid, &status, WUNTRACED);
+			result = WIFEXITED(status)
+					&& (WEXITSTATUS(status) == 0);
+	}
+
 	return result;
 }
 
@@ -615,8 +622,14 @@ static int Try_Browser(char *browser, REBCHR *url)
 /*
 ***********************************************************************/
 {
-	if (Try_Browser("xdg-open", url) || Try_Browser("x-www-browser", url))
-		return TRUE;
+	if (
+#if defined(TO_OSX) || defined(TO_OSXI)
+		Try_Browser("/usr/bin/open", url)
+#else
+		Try_Browser("xdg-open", url)
+		|| Try_Browser("x-www-browser", url)
+#endif
+	) return TRUE;
 	return FALSE;
 }
 
