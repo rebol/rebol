@@ -48,9 +48,9 @@ uLong ZEXPORT adler32(adler, buf, len)
 uLong crc32(uLong num, const Bytef *buf, uInt len)
 {
 #ifndef CRC_DEFINED
-	extern CRC32(unsigned char *, uInt);
+	extern uLong Update_CRC32(uLong, unsigned char *, uInt);
 #endif
-	return num + CRC32((unsigned char *)buf, len);
+	return (len == 0) ? num : Update_CRC32(num, (unsigned char *)buf, len);
 }
 
 ///////////////////////////////////////////
@@ -364,7 +364,7 @@ int ZEXPORT deflateReset (strm)
         s->noheader = 0; /* was set to -1 by deflate(..., Z_FINISH); */
     }
     s->status = s->noheader ? BUSY_STATE : INIT_STATE;
-    strm->adler = 1;
+    strm->adler = (strm->checksum == crc32) ? 0L : 1L;
     s->last_flush = Z_NO_FLUSH;
 
     _tr_init(s);
@@ -456,7 +456,7 @@ int ZEXPORT deflate (strm, flush)
 	    putShortMSB(s, (uInt)(strm->adler >> 16));
 	    putShortMSB(s, (uInt)(strm->adler & 0xffff));
 	}
-	strm->adler = 1L;
+	strm->adler = (strm->checksum == crc32) ? 0L : 1L;
     }
 
     /* Flush as much pending output as possible */
