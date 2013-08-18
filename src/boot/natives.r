@@ -837,8 +837,8 @@ shift: native [
 ]
 
 first+: native [
-	{Return FIRST of series, and increment the series index.}
-	'word [word!] "Word must be a series"
+	{Return the FIRST of a series then increment the series index.}
+	'word [word!] "Word must refer to a series"
 ]
 
 stack: native [
