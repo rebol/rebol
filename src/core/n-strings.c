@@ -292,7 +292,7 @@ static struct digest {
 
 	len = Partial1(D_ARG(1), D_ARG(3));
 
-	if (D_REF(4)) limit = Int32s(D_ARG(5), 1);
+	if (D_REF(5)) limit = Int32s(D_ARG(6), 1); // /limit size
 	
 	Set_Binary(D_RET, Decompress(VAL_SERIES(arg), VAL_INDEX(arg), len, limit, D_REF(4))); // /gzip
 
