@@ -538,6 +538,20 @@ clear_header:
 
 /***********************************************************************
 **
+*/	void Free_Gob(REBGOB *gob)
+/*
+**		Free a gob, returning its memory for reuse.
+**
+***********************************************************************/
+{
+	FREE_GOB(gob);
+
+	Free_Node(GOB_POOL, (REBNOD *)gob);
+}
+
+
+/***********************************************************************
+**
 */	void Prop_Series(REBSER *newser, REBSER *oldser)
 /*
 **		Propagate a series from another.
