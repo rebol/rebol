@@ -66,7 +66,7 @@
 
 		// If wide, correct length:
 		len = req->actual;
-		if (GET_FLAG(req->flags, RRF_WIDE)) len /= sizeof(REBCHR);
+		if (GET_FLAG(req->flags, RRF_WIDE)) len /= sizeof(REBUNI);
 
 		// Copy the string (convert to latin-8 if it fits):
 		Set_String(arg, Copy_OS_Str(req->data, len));
@@ -110,13 +110,13 @@
 		}
 		else
 		// If unicode (may be from above conversion), handle it:
-		if (SERIES_WIDE(VAL_SERIES(arg)) == sizeof(REBCHR)) {
+		if (SERIES_WIDE(VAL_SERIES(arg)) == sizeof(REBUNI)) {
 			req->data = (REBYTE *)VAL_UNI_DATA(arg);
 			SET_FLAG(req->flags, RRF_WIDE);
 		}
 
 		// Temp!!!
-		req->length = len * sizeof(REBCHR);
+		req->length = len * sizeof(REBUNI);
 
 		// Setup the write:
 		*OFV(port, STD_PORT_DATA) = *arg;	// keep it GC safe
