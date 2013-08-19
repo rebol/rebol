@@ -423,6 +423,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	SERIES_REST(series) = length / wide;
 	series->data = (REBYTE *)node;
 	series->info = wide; // also clears flags
+	LABEL_SERIES(series, "make");
 
 	if ((GC_Ballast -= length) <= 0) SET_SIGNAL(SIG_RECYCLE);
 
@@ -775,7 +776,7 @@ crash:
 #ifdef SERIES_LABELS
 			kind = "----";
 			if (SERIES_GET_FLAG(series, SER_KEEP)) kind = "KEEP";
-			if (Find_Root(series)) kind = "ROOT";
+			//if (Find_Root(series)) kind = "ROOT";
 			if (!SERIES_FREED(series) && series->label) {
 				Debug_Fmt_("%08x: %16s %s ", series, series->label, kind);
 				f = 1;

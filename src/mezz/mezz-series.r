@@ -418,12 +418,12 @@ printf: func [
 	print format :fmt :val
 ]
 
-split: func [	; Gabriele, Gregg
+split: func [
 	"Split a series into pieces; fixed or variable size, fixed number, or at delimiters"
 	series	[series!] "The series to split"
-	dlm		[block! integer! char! bitset! any-string!] "Split size, delimiter(s), or rule(s)."
+	dlm		[block! integer! char! bitset! any-string!] "Split size, delimiter(s), or rule(s)." 
 	/into	"If dlm is an integer, split into n pieces, rather than pieces of length n."
-	/local size count mk1 mk2
+	/local size piece-size count mk1 mk2 res fill-val add-fill-val
 ][
 	either all [block? dlm  parse dlm [some integer!]] [
 		map-each len dlm [
@@ -436,15 +436,16 @@ split: func [	; Gabriele, Gregg
 			]
 		]
 	][
-		size: dlm	; alias for readability
-		collect [
+		size: dlm   ; alias for readability
+		res: collect [
 			parse/all series case [
-				all [integer? size into] [
+				all [integer? size  into] [
 					if size < 1 [cause-error 'Script 'invalid-arg size]
 					count: size - 1
-					size: round/down divide length? series size
+					piece-size: to integer! round/down divide length? series size
+					if zero? piece-size [piece-size: 1]
 					[
-						count [copy series size skip (keep/only series)]
+						count [copy series piece-size skip (keep/only series)]
 						copy series to end (keep/only series)
 					]
 				]
@@ -453,10 +454,50 @@ split: func [	; Gabriele, Gregg
 					[any [copy series 1 size skip (keep/only series)]]
 				]
 				'else [ ; = any [bitset? dlm  any-string? dlm  char? dlm]
-					[any [mk1: [to dlm mk2: dlm | to end mk2:] (keep copy/part mk1 mk2)]]
+					[any [mk1: some [mk2: dlm break | skip] (keep/only copy/part mk1 mk2)]]
 				]
 			]
 		]
+		;-- Special processing, to handle cases where the spec'd more items in
+		;   /into than the series contains (so we want to append empty items),
+		;   or where the dlm was a char/string/charset and it was the last char
+		;   (so we want to append an empty field that the above rule misses).
+		fill-val: does [copy either any-block? series [[]] [""]]
+		add-fill-val: does [append/only res fill-val]
+		case [
+			all [integer? size  into] [
+				; If the result is too short, i.e., less items than 'size, add
+				; empty items to fill it to 'size.
+				; We loop here, because insert/dup doesn't copy the value inserted.
+				if size > length? res [
+					loop (size - length? res) [add-fill-val]
+				]
+			]
+			; integer? dlm [
+			; ]
+			'else [ ; = any [bitset? dlm  any-string? dlm  char? dlm]
+				; If the last thing in the series is a delimiter, there is an
+				; implied empty field after it, which we add here.
+				case [
+					bitset? dlm [
+						; ATTEMPT is here because LAST will return NONE for an 
+						; empty series, and finding none in a bitest is not allowed.
+						if attempt [find dlm last series] [add-fill-val]
+					]
+					char? dlm [
+						if dlm = last series [add-fill-val]
+					]
+					string? dlm [
+						if all [
+							find series dlm
+							empty? find/last/tail series dlm
+						] [add-fill-val]
+					]
+				]
+			]
+		]
+				
+		res
 	]
 ]
 

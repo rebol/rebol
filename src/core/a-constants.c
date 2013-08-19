@@ -53,7 +53,7 @@ const REBYTE * const Crash_Msgs[] = {
 };
 
 const REBYTE * const Str_Dump[] = {
-	BP"%s Series %x %s: Wide: %2d - Bias: %d Tail: %d Rest: %d Size: %6d"
+	BP"%s Series %x \"%s\": wide: %2d size: %6d bias: %d tail: %d rest: %d flags: %x"
 };
 
 const REBYTE * Hex_Digits = BP"0123456789ABCDEF";

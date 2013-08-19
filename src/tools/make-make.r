@@ -83,8 +83,9 @@ RFLAGS= -c -D$(TO_OS) -DREB_API  $(RAPI_FLAGS) $I
 HFLAGS= -c -D$(TO_OS) -DREB_CORE $(HOST_FLAGS) $I
 CLIB=
 
-# REBOL builds various include files:
-REBOL=	$(CD)r3-make -qs
+# REBOL is needed to build various include files:
+REBOL_TOOL= r3-make
+REBOL=	$(CD)$(REBOL_TOOL) -qs
 
 # For running tests, ship, build, etc.
 R3=	$(CD)r3$(BIN_SUFFIX) -qs
@@ -116,6 +117,21 @@ prep:
 	$(REBOL) $T/make-os-ext.r # ok, but not always
 	$(REBOL) $T/make-host-ext.r
 	$(REBOL) $T/make-reb-lib.r
+
+### Provide more info if make fails due to no local Rebol build tool:
+tmps: $S/include/tmp-bootdefs.h
+
+$S/include/tmp-bootdefs.h: $(REBOL_TOOL)
+	$(MAKE) prep
+
+$(REBOL_TOOL):
+	@echo
+	@echo "*** ERROR: Missing $(REBOL_TOOL) to build various tmp files."
+	@echo "*** Download Rebol 3 and copy it here as $(REBOL_TOOL), then"
+	@echo "*** make prep. Or, make prep on some other machine and copy"
+	@echo "*** the src/include files here. See README for details."
+	@echo
+	false
 
 ### Post build actions
 purge:
@@ -152,7 +168,7 @@ check:
 
 makefile-link: {
 # Directly linked r3 executable:
-r3$(BIN_SUFFIX):	objs $(OBJS) $(HOST)
+r3$(BIN_SUFFIX):	tmps objs $(OBJS) $(HOST)
 	$(CC) -o r3$(BIN_SUFFIX) $(OBJS) $(HOST) $(CLIB)
 	$(STRIP) r3$(BIN_SUFFIX)
 	-$(NM) -a r3$(BIN_SUFFIX)

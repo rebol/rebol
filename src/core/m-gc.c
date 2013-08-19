@@ -560,6 +560,7 @@ mark_obj:
 **
 ***********************************************************************/
 {
+	LABEL_SERIES(series, "guarded");
 	if (SERIES_FULL(GC_Series)) Extend_Series(GC_Series, 8);
 	((REBSER **)GC_Series->data)[GC_Series->tail++] = series;
 }
@@ -576,6 +577,7 @@ mark_obj:
 	REBSER **sp;
 	REBCNT n;
 
+	LABEL_SERIES(series, "unguarded");
 	sp = (REBSER **)GC_Series->data;
 	for (n = 0; n < SERIES_TAIL(GC_Series); n++) {
 		if (sp[n] == series) {
@@ -607,8 +609,8 @@ mark_obj:
 
 	// Temporary series protected from GC. Holds series pointers.
 	GC_Protect = Make_Series(15, sizeof(REBSER *), FALSE);
-	KEEP_SERIES(GC_Protect, "GC_Protect");
+	KEEP_SERIES(GC_Protect, "gc protected");
 
 	GC_Series = Make_Series(60, sizeof(REBSER *), FALSE);
-	KEEP_SERIES(GC_Series, "GC_Series");
+	KEEP_SERIES(GC_Series, "gc guarded");
 }

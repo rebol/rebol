@@ -276,6 +276,7 @@ static REBCNT *CRC_Table;
 	if (!n) Trap_Num(RE_SIZE_LIMIT, len);
 
 	ser = Make_Series(n + 1, sizeof(REBCNT), FALSE);
+	LABEL_SERIES(ser, "make hash array");
 	Clear_Series(ser);
 	ser->tail = n;
 

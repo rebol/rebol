@@ -868,6 +868,6 @@ mold_value:
 **
 ***********************************************************************/
 {
-	Set_Root_Series(TASK_BUF_PRINT, Make_Binary(1000)); // "Print Buffer");
-	Set_Root_Series(TASK_BUF_FORM,  Make_Binary(64));	// "Form Buffer");
+	Set_Root_Series(TASK_BUF_PRINT, Make_Binary(1000), "print buffer");
+	Set_Root_Series(TASK_BUF_FORM,  Make_Binary(64), "form buffer");
 }

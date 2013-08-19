@@ -1384,10 +1384,12 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 		case TOKEN_STRING:
 			// During scan above, string was stored in BUF_MOLD (with Uni width)
 			Set_String(value, Copy_String(BUF_MOLD, 0, -1));
+			LABEL_SERIES(VAL_SERIES(value), "scan string");
 			break;
 
 		case TOKEN_BINARY:
 			Scan_Binary(bp, len, value);
+			LABEL_SERIES(VAL_SERIES(value), "scan binary");
 			break;
 
 		case TOKEN_PAIR:
@@ -1400,18 +1402,22 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 
 		case TOKEN_FILE:
 			Scan_File(bp, len, value);
+			LABEL_SERIES(VAL_SERIES(value), "scan file");
 			break;
 
 		case TOKEN_EMAIL:
 			Scan_Email(bp, len, value);
+			LABEL_SERIES(VAL_SERIES(value), "scan email");
 			break;
 
 		case TOKEN_URL:
 			Scan_URL(bp, len, value);
+			LABEL_SERIES(VAL_SERIES(value), "scan url");
 			break;
 
 		case TOKEN_TAG:
 			Scan_Any(bp+1, len-2, value, REB_TAG);
+			LABEL_SERIES(VAL_SERIES(value), "scan tag");
 			break;
 
 		case TOKEN_CONSTRUCT:
@@ -1498,7 +1504,7 @@ exit_block:
 
 	len = emitbuf->tail;
 	block = Copy_Values(BLK_SKIP(emitbuf, begin), len - begin);
-	//LABEL_SERIES(block, "block(scan)");
+	LABEL_SERIES(block, "scan block");
 	SERIES_SET_FLAG(block, SER_MON);
 	emitbuf->tail = begin;
 //!!!!	if (value) VAL_OPTS(BLK_TAIL(block)) = VAL_OPTS(value); // save NEWLINE marker
@@ -1597,8 +1603,8 @@ exit_block:
 /*
 ***********************************************************************/
 {
-	Set_Root_Series(TASK_BUF_EMIT, Make_Block(511)); // "Emit Buffer");
-	Set_Root_Series(TASK_BUF_UTF8, Make_Unicode(1020));
+	Set_Root_Series(TASK_BUF_EMIT, Make_Block(511), "emit block");
+	Set_Root_Series(TASK_BUF_UTF8, Make_Unicode(1020), "utf8 buffer");
 }
 
 

@@ -38,15 +38,16 @@
 {
 	if (!series) return;
 	Debug_Fmt(
-		Str_Dump[0], //"%s Series %x %s: Wide: %2d - Bias: %d Tail: %d Rest: %d Size: %6d"
+		Str_Dump[0], //"%s Series %x %s: Wide: %2d Size: %6d - Bias: %d Tail: %d Rest: %d Flags: %x"
 		memo,
 		series,
 		(SERIES_LABEL(series) ? SERIES_LABEL(series) : "-"),
 		SERIES_WIDE(series),
+		SERIES_TOTAL(series),
 		SERIES_BIAS(series),
 		SERIES_TAIL(series),
 		SERIES_REST(series),
-		SERIES_TOTAL(series)
+		SERIES_FLAGS(series)
 	);
 	if (SERIES_WIDE(series) == sizeof(REBVAL))
 		Dump_Values(BLK_HEAD(series), SERIES_TAIL(series));
@@ -58,12 +59,10 @@
 **
 */	void Dump_Bytes(REBYTE *bp, REBCNT limit)
 /*
-**		Dump memory into a string buffer;
-**
 ***********************************************************************/
 {
-#ifdef _DEBUG
-	REBYTE buf[20480];
+	const max_lines = 120;
+	REBYTE buf[2048];
 	REBYTE str[40];
 	REBYTE *cp, *tp;
 	REBYTE c;
@@ -71,7 +70,7 @@
 	REBCNT cnt = 0;
 
 	cp = buf;
-	for (l = 0; l < 150; l++) {
+	for (l = 0; l < max_lines; l++) {
 		cp = Form_Hex_Pad(cp, (REBCNT) bp, 8);
 
 		*cp++ = ':';
@@ -98,19 +97,20 @@
 		*tp++ = 0;
 
 		for (tp = str; *tp;) *cp++ = *tp++;
-		*cp++ = '\n';
+
+		*cp = 0;
+		Debug_Str(buf);
 		if (cnt >= limit) break;
+		cp = buf;
 	}
-	*cp++ = 0;
-	Debug_Str(buf);
-#endif
 }
 
 /***********************************************************************
 **
 */	void Dump_Values(REBVAL *vp, REBCNT count)
 /*
-**		Dump raw values into a string buffer;
+**		Print out values in raw hex; If memory is corrupted
+**		this function still needs to work.
 **
 ***********************************************************************/
 {
@@ -118,24 +118,29 @@
 	REBYTE *cp;
 	REBCNT l, n;
 	REBCNT *bp = (REBCNT*)vp;
+	REBYTE *type;
 
 	cp = buf;
 	for (l = 0; l < count; l++) {
-		cp = Form_Hex_Pad(cp, (REBCNT) bp, 8);
-
+		cp = Form_Hex_Pad(cp, (REBCNT) l, 4);
 		*cp++ = ':';
 		*cp++ = ' ';
 
+		type = Get_Type_Name((REBVAL*)bp);
+		for (n = 0; n < 11; n++) {
+			if (*type) *cp++ = *type++;
+			else *cp++ = ' ';
+		}
+		*cp++ = ' ';
 		for (n = 0; n < 4; n++) {
 			cp = Form_Hex_Pad(cp, *bp++, 8);
 			*cp++ = ' ';
 		}
 
-		*cp++ = '\n';
-		if ((cp - buf) >= 2040) break;
+		*cp = 0;
+		Debug_Str(buf);
+		cp = buf;
 	}
-	*cp++ = 0;
-	Debug_Str(buf);
 }
 
 #ifdef not_used
