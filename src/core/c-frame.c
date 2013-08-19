@@ -455,11 +455,8 @@
 	//DISABLE_GC;
 	// Copy functions:
 	for (val = BLK_SKIP(obj, 1); NOT_END(val); val++) {
-		if (IS_FUNCTION(val)) {
-			Clone_Function(val, val); 
-			funcs = TRUE;
-		}
-		else if (IS_CLOSURE(val)) {
+		if (IS_FUNCTION(val) || IS_CLOSURE(val)) {
+			Clone_Function(val, val);
 			funcs = TRUE;
 		}
 	}
@@ -470,10 +467,8 @@
 	if (funcs) {
 		// Rebind functions:
 		for (val = BLK_SKIP(obj, 1); NOT_END(val); val++) {
-			if (IS_FUNCTION(val)) {
+			if (IS_FUNCTION(val) || IS_CLOSURE(val)) {
 				Bind_Relative(VAL_FUNC_ARGS(val), VAL_FUNC_ARGS(val), VAL_FUNC_BODY(val));
-			}
-			else if (IS_CLOSURE(val)) {
 			}
 		}
 	}
@@ -841,7 +836,7 @@
 		}
 		else if (ANY_BLOCK(value) && (mode & BIND_DEEP))
 			Bind_Block_Words(frame, VAL_BLK_DATA(value), mode);
-		else if (IS_FUNCTION(value) && (mode & BIND_FUNC))
+		else if ((IS_FUNCTION(value) || IS_CLOSURE(value)) && (mode & BIND_FUNC))
 			Bind_Block_Words(frame, BLK_HEAD(VAL_FUNC_BODY(value)), mode);
 	}
 }
