@@ -253,7 +253,7 @@ static REBSER *Trim_Object(REBSER *obj)
 	REBVAL *arg = D_ARG(2);
 	REBINT n;
 	REBVAL *val;
-	REBSER *obj;
+	REBSER *obj, *src_obj;
 	REBCNT type = 0;
 
 	switch (action) {
@@ -331,19 +331,19 @@ static REBSER *Trim_Object(REBSER *obj)
 		// make parent-object ....
 		if (IS_OBJECT(value)) {
 			type = REB_OBJECT;
-			obj  = VAL_OBJ_FRAME(value);
+			src_obj  = VAL_OBJ_FRAME(value);
 
 			// make parent none | []
 			if (IS_NONE(arg) || (IS_BLOCK(arg) && IS_EMPTY(arg))) {
-				obj = Clone_Block(obj);
-				Bind_Frame(obj);
+				obj = Clone_Block(src_obj);
+				Rebind_Frame(src_obj, obj);
 				break;	// returns obj
 			}
 
 			// make parent [...]
 			if (IS_BLOCK(arg)) {
-				obj = Make_Object(obj, VAL_BLK_DATA(arg));
-				Bind_Frame(obj);
+				obj = Make_Object(src_obj, VAL_BLK_DATA(arg));
+				Rebind_Frame(src_obj, obj);
 				SET_OBJECT(ds, obj);
 				arg = Do_Bind_Block(obj, arg); // GC-OK
 				if (THROWN(arg)) {
@@ -355,7 +355,7 @@ static REBSER *Trim_Object(REBSER *obj)
 
 			// make parent-object object
 			if (IS_OBJECT(arg)) {
-				obj = Merge_Frames(obj, VAL_OBJ_FRAME(arg));
+				obj = Merge_Frames(src_obj, VAL_OBJ_FRAME(arg));
 				break; // returns obj
 			}
 		}

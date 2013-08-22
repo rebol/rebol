@@ -442,38 +442,26 @@
 
 /***********************************************************************
 **
-*/  void Bind_Frame(REBSER *obj)
+*/  void Rebind_Frame(REBSER *src_frame, REBSER *dst_frame)
 /*
-**      Clone a frame, knowing which types of values need to be
-**		copied, deep copied, and rebound.
+**      Clone old src_frame to new dst_frame knowing
+**		which types of values need to be copied, deep copied, and rebound.
 **
 ***********************************************************************/
 {
 	REBVAL *val;
-	REBOOL funcs = FALSE;
 
-	//DISABLE_GC;
+	SAVE_SERIES(dst_frame); // GC - dst_frame has just been created
+
 	// Copy functions:
-	for (val = BLK_SKIP(obj, 1); NOT_END(val); val++) {
-		if (IS_FUNCTION(val) || IS_CLOSURE(val)) {
-			Clone_Function(val, val);
-			funcs = TRUE;
-		}
+	for (val = BLK_SKIP(dst_frame, 1); NOT_END(val); val++) {
+		if (IS_FUNCTION(val) || IS_CLOSURE(val)) Clone_Function(val, val);
 	}
+
+	UNSAVE_SERIES(dst_frame);
 
 	// Rebind all values:
-	Bind_Block(obj, BLK_SKIP(obj, 1), BIND_DEEP | BIND_FUNC);
-
-	if (funcs) {
-		// Rebind functions:
-		for (val = BLK_SKIP(obj, 1); NOT_END(val); val++) {
-			if (IS_FUNCTION(val) || IS_CLOSURE(val)) {
-				Bind_Relative(VAL_FUNC_ARGS(val), VAL_FUNC_ARGS(val), VAL_FUNC_BODY(val));
-			}
-		}
-	}
-
-	//ENABLE_GC;
+	Rebind_Block(src_frame, dst_frame, BLK_SKIP(dst_frame, 1), REBIND_FUNC);
 }
 
 
@@ -1016,26 +1004,26 @@
 
 /***********************************************************************
 **
-*/  void Rebind_Block(REBSER *frame_src, REBSER *frame_dst, REBSER *block, REBFLG change_type)
+*/  void Rebind_Block(REBSER *src_frame, REBSER *dst_frame, REBVAL *data, REBFLG modes)
 /*
 **      Rebind all words that reference src frame to dst frame.
 **      Rebind is always deep.
 **
 **		There are two types of frames: relative frames and normal frames.
 **		When frame_src type and frame_dst type differ,
-**		the change_type flag must be TRUE.
+**		modes must have REBIND_TYPE.
 **
 ***********************************************************************/
 {
-	REBVAL *value;
-
-	for (value = BLK_HEAD(block); NOT_END(value); value++) {
-		if (ANY_BLOCK(value)) Rebind_Block(frame_src, frame_dst, VAL_SERIES(value), change_type);
-		else if (ANY_WORD(value) && VAL_WORD_FRAME(value) == frame_src) {
-			VAL_WORD_FRAME(value) = frame_dst;
+	for (; NOT_END(data); data++) {
+		if (ANY_BLOCK(data))
+			Rebind_Block(src_frame, dst_frame, VAL_BLK_DATA(data), modes);
+		else if (ANY_WORD(data) && VAL_WORD_FRAME(data) == src_frame) {
+			VAL_WORD_FRAME(data) = dst_frame;
 			// changing frame type?
-			if (change_type) VAL_WORD_INDEX(value) = - VAL_WORD_INDEX(value);
-		}
+			if (modes & REBIND_TYPE) VAL_WORD_INDEX(data) = - VAL_WORD_INDEX(data);
+		} else if ((modes & REBIND_FUNC) && (IS_FUNCTION(data) || IS_CLOSURE(data)))
+			Rebind_Block(src_frame, dst_frame, BLK_HEAD(VAL_FUNC_BODY(data)), modes);
 	}
 }
 

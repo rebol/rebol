@@ -260,9 +260,12 @@
 /*
 ***********************************************************************/
 {
+	REBSER *src_frame = VAL_FUNC_ARGS(func);
+
 	VAL_FUNC_SPEC(value) = VAL_FUNC_SPEC(func);
-	VAL_FUNC_ARGS(value) = Copy_Block(VAL_FUNC_ARGS(func), 0);
 	VAL_FUNC_BODY(value) = Clone_Block(VAL_FUNC_BODY(func));
+	VAL_FUNC_ARGS(value) = Copy_Block(src_frame, 0);
+	Rebind_Block(src_frame, VAL_FUNC_ARGS(value), BLK_HEAD(VAL_FUNC_BODY(value)), 0);
 }
 
 
@@ -447,7 +450,7 @@
 	SET_FRAME(BLK_HEAD(frame), 0, VAL_FUNC_ARGS(func));
 
 	// Rebind the body to the new context (deeply):
-	Rebind_Block(VAL_FUNC_ARGS(func), frame, body, TRUE);
+	Rebind_Block(VAL_FUNC_ARGS(func), frame, BLK_HEAD(body), REBIND_TYPE);
 
 	ds = DS_RETURN;
 	SET_OBJECT(ds, body); // keep it GC safe
