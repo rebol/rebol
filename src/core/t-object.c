@@ -335,7 +335,7 @@ static REBSER *Trim_Object(REBSER *obj)
 
 			// make parent none | []
 			if (IS_NONE(arg) || (IS_BLOCK(arg) && IS_EMPTY(arg))) {
-				obj = Clone_Block(src_obj);
+				obj = Copy_Block_Values(src_obj, 0, SERIES_TAIL(src_obj), TS_CLONE);
 				Rebind_Frame(src_obj, obj);
 				break;	// returns obj
 			}
