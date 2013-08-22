@@ -449,17 +449,6 @@
 **
 ***********************************************************************/
 {
-	REBVAL *val;
-
-	SAVE_SERIES(dst_frame); // GC - dst_frame has just been created
-
-	// Copy functions:
-	for (val = BLK_SKIP(dst_frame, 1); NOT_END(val); val++) {
-		if (IS_FUNCTION(val) || IS_CLOSURE(val)) Clone_Function(val, val);
-	}
-
-	UNSAVE_SERIES(dst_frame);
-
 	// Rebind all values:
 	Rebind_Block(src_frame, dst_frame, BLK_SKIP(dst_frame, 1), REBIND_FUNC);
 }
@@ -480,7 +469,7 @@
 	PG_Reb_Stats->Objects++;
 
 	if (!block || IS_END(block)) {
-		object = parent ? Clone_Block(parent) : Make_Frame(0);
+		object = parent ? Copy_Block_Values(parent, 0, SERIES_TAIL(parent), TS_CLONE) : Make_Frame(0);
 	} else {
 		words = Collect_Frame(BIND_ONLY, parent, block); // GC safe
 		object = Create_Frame(words, 0); // GC safe
@@ -489,8 +478,7 @@
 				Debug_Fmt(BOOT_STR(RS_WATCH, 2), SERIES_TAIL(parent) - 1, FRM_WORD_SERIES(object));
 			// Copy parent values and deep copy blocks and strings:
 			COPY_VALUES(FRM_VALUES(parent)+1, FRM_VALUES(object)+1, SERIES_TAIL(parent) - 1);
-			Copy_Deep_Values(object, 1, SERIES_TAIL(object), TS_CODE);
-			//Copy_Block_xDeep(object, 1, 0, COPY_OBJECT | COPY_SAME);
+			Copy_Deep_Values(object, 1, SERIES_TAIL(object), TS_CLONE);
 		}
 	}
 

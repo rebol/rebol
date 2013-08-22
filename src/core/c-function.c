@@ -265,6 +265,8 @@
 	VAL_FUNC_SPEC(value) = VAL_FUNC_SPEC(func);
 	VAL_FUNC_BODY(value) = Clone_Block(VAL_FUNC_BODY(func));
 	VAL_FUNC_ARGS(value) = Copy_Block(src_frame, 0);
+	// VAL_FUNC_BODY(value) = Clone_Block(VAL_FUNC_BODY(func));
+	VAL_FUNC_BODY(value) = Copy_Block_Values(VAL_FUNC_BODY(func), 0, SERIES_TAIL(VAL_FUNC_BODY(func)), TS_CLONE);
 	Rebind_Block(src_frame, VAL_FUNC_ARGS(value), BLK_HEAD(VAL_FUNC_BODY(value)), 0);
 }
 

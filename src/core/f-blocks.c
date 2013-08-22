@@ -137,7 +137,8 @@
 				if ((types & CP_DEEP) != 0)
 					Copy_Deep_Values(VAL_SERIES(val), 0, VAL_TAIL(val), types);
 			}
-		}
+		} else if (types & TYPESET(VAL_TYPE(val)) & TS_FUNCLOS)
+			Clone_Function(val, val);
 	}
 
 	UNSAVE_SERIES(block);
