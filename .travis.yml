@@ -1,0 +1,10 @@
+language: C
+
+install:
+    - cd make
+    - curl -A '' -O http://www.rebol.com/downloads/v278/rebol-core-278-4-2.tar.gz
+    - tar zxvf rebol-core-278-4-2.tar.gz
+    - mv releases/rebol-core/rebol r3-make
+    - make prep
+
+script: make
