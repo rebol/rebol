@@ -12,7 +12,7 @@ REBOL [
 	Author: "Carl Sassenrath"
 ]
 
-bv: load %../boot/version.r
+bv: load %../boot/version.reb
 
 form-header: func [title [string!] file [file!] /gen by] [
 	print ["..." title]

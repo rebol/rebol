@@ -357,10 +357,10 @@ usage: func [
 
 	Examples:
 
-		REBOL script.r
-		REBOL -s script.r
-		REBOL script.r 10:30 test@example.com
-		REBOL --do "watch: on" script.r
+		REBOL script.reb
+		REBOL -s script.reb
+		REBOL script.reb 10:30 test@example.com
+		REBOL --do "watch: on" script.reb
 	}
 ]
 

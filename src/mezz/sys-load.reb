@@ -689,8 +689,8 @@ export [load import]
 #test [
 test: [
 	[
-		write %test-emb.r {123^/[REBOL [title: "embed"] 1 2 3]^/123^/}
-		[1 2 3] = xload/header/type %test-emb.r 'unbound
+		write %test-emb.reb {123^/[REBOL [title: "embed"] 1 2 3]^/123^/}
+		[1 2 3] = xload/header/type %test-emb.reb 'unbound
 	]
 ][	; General function:
 	[[1 2 3] = xload ["1" "2" "3"]]
@@ -717,35 +717,35 @@ test: [
 		[<h1> "test" </h1>] = xload %test.html
 	]
 	[
-		save %test2.r 1
-		1 = xload %test1.r
+		save %test2.reb 1
+		1 = xload %test1.reb
 	]
 	[
-		save %test2.r [1 2]
-		[1 2] = xload %test2.r
+		save %test2.reb [1 2]
+		[1 2] = xload %test2.reb
 	]
 	[
-		save/header %test.r [1 2 3] [title: "Test"]
-		[1 2 3] = xload %test.r
+		save/header %test.reb [1 2 3] [title: "Test"]
+		[1 2 3] = xload %test.reb
 	]
 	[
-		save/header %test-checksum.r [1 2 3] [checksum: true]
-		;print read/string %test-checksum.r
-		[1 2 3] = xload %test-checksum.r
+		save/header %test-checksum.reb [1 2 3] [checksum: true]
+		;print read/string %test-checksum.reb
+		[1 2 3] = xload %test-checksum.reb
 	]
 	[
-		save/header %test-checksum.r [1 2 3] [checksum: true compress: true]
-		;print read/string %test-checksum.r
-		[1 2 3] = xload %test-checksum.r
+		save/header %test-checksum.reb [1 2 3] [checksum: true compress: true]
+		;print read/string %test-checksum.reb
+		[1 2 3] = xload %test-checksum.reb
 	]
 	[
-		save/header %test-checksum.r [1 2 3] [checksum: script compress: true]
-		;print read/string %test-checksum.r
-		[1 2 3] = xload %test-checksum.r
+		save/header %test-checksum.reb [1 2 3] [checksum: script compress: true]
+		;print read/string %test-checksum.reb
+		[1 2 3] = xload %test-checksum.reb
 	]
 	[
-		write %test-emb.r {123^/[REBOL [title: "embed"] 1 2 3]^/123^/}
-		[1 2 3] = probe xload/header %test-emb.r
+		write %test-emb.reb {123^/[REBOL [title: "embed"] 1 2 3]^/123^/}
+		[1 2 3] = probe xload/header %test-emb.reb
 	]
 ]
 foreach t test [print either do t ['ok] [join "FAILED:" mold t] print ""]

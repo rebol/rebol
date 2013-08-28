@@ -21,10 +21,10 @@ REBOL [
 
 print "--- Make Boot : System Embedded Script ---"
 
-do %form-header.r
+do %form-header.reb
 
 ; Set platform TARGET
-do %systems.r
+do %systems.reb
 target: config-system/define ; default
 
 ; Include graphics for these systems:
@@ -63,7 +63,7 @@ change-dir %../boot/
 inc: %../include/
 src: %../core/
 
-version: load %version.r
+version: load %version.reb
 either tuple? opts [
 	version/4: opts/2
 	version/5: opts/3
@@ -155,7 +155,7 @@ emit-line: func [prefix word cmt /var /define /code /decl /up1 /local str][
 	str: to-c-name word
 
 	if word = 0 [prefix: ""]
-	
+
 	if not any [code decl] [
 		either var [uppercase/part str 1] [uppercase str]
 	]
@@ -183,7 +183,7 @@ emit-line: func [prefix word cmt /var /define /code /decl /up1 /local str][
 
 emit-head: func [title [string!] file [file!]] [
 	clear out
-	emit form-header/gen title file %make-boot.r
+	emit form-header/gen title file %make-boot.reb
 ]
 
 emit-end: func [/easy] [
@@ -233,7 +233,7 @@ remove-tests: func [d] [
 ;
 ;----------------------------------------------------------------------------
 
-boot-types: load %types.r
+boot-types: load %types.reb
 type-record: [type evalclass typeclass moldtype formtype haspath maker typesets]
 
 emit-head "Evaluation Maps" %evaltypes.h
@@ -543,7 +543,7 @@ write-if inc/reb-types.h out
 ;
 ;----------------------------------------------------------------------------
 
-ext-types: load %types-ext.r
+ext-types: load %types-ext.reb
 rxt-record: [type offset size]
 
 ; Generate type table with necessary gaps
@@ -688,7 +688,7 @@ emit {
 ***********************************************************************/
 }
 
-boot-strings: load %strings.r
+boot-strings: load %strings.reb
 
 code: ""
 n: 0
@@ -726,9 +726,9 @@ foreach :type-record boot-types [
 	n: n + 1
 ]
 
-boot-words: load %words.r
+boot-words: load %words.reb
 
-replace boot-words '*port-modes* load %modes.r
+replace boot-words '*port-modes* load %modes.reb
 
 foreach word boot-words [
 	emit-line "SYM_" word reform [n "-" word]
@@ -749,7 +749,7 @@ emit {
 ^{
 }
 
-boot-actions: load %actions.r
+boot-actions: load %actions.reb
 n: 1
 emit-line "A_" "type = 0" "Handled by interpreter"
 foreach word boot-actions [
@@ -778,7 +778,7 @@ emit newline
 
 at-value: func ['field] [next find boot-sysobj to-set-word field]
 
-boot-sysobj: load %sysobj.r
+boot-sysobj: load %sysobj.reb
 change at-value version version
 when: now
 when: when - when/zone
@@ -787,7 +787,7 @@ change at-value build when
 change at-value product to lit-word! product
 
 
-plats: load %platforms.r
+plats: load %platforms.reb
 
 change/only at-value platform reduce [
 	any [pick plats version/4 * 2 - 1 "Unknown"]
@@ -920,7 +920,7 @@ emit {
 ^{
 }
 
-boot-errors: load %errors.r
+boot-errors: load %errors.reb
 err-list: make block! 200
 errs: false
 
@@ -957,7 +957,7 @@ write inc/tmp-errnums.h out
 
 emit-head "Port Modes" %port-modes.h
 
-data: load %modes.r
+data: load %modes.reb
 
 emit {
 enum port_modes ^{
@@ -977,7 +977,7 @@ write inc/tmp-portmodes.h out
 ;----------------------------------------------------------------------------
 
 ;-- Add other MEZZ functions:
-mezz-files: load %../mezz/boot-files.r ; base lib, sys, mezz
+mezz-files: load %../mezz/boot-files.reb ; base lib, sys, mezz
 
 ;append boot-mezz+ none ?? why was this needed?
 
@@ -1018,10 +1018,10 @@ emit {
 }
 
 externs: make string! 2000
-boot-booters: load %booters.r
-boot-natives: load %natives.r
+boot-booters: load %booters.reb
+boot-natives: load %natives.reb
 
-if has-graphics [append boot-natives load %graphics.r]
+if has-graphics [append boot-natives load %graphics.reb]
 
 nats: append copy boot-booters boot-natives
 
@@ -1070,19 +1070,19 @@ emit newline
 
 ;-- Build typespecs block (in same order as datatypes table):
 boot-typespecs: make block! 100
-specs: load %typespec.r
+specs: load %typespec.reb
 foreach type datatypes [
 	append/only boot-typespecs select specs type
 ]
 
 ;-- Create main code section (compressed):
 boot-types: new-types
-boot-root: load %root.r
-boot-task: load %task.r
-boot-ops: load %ops.r
-;boot-script: load %script.r
+boot-root: load %root.reb
+boot-task: load %task.reb
+boot-ops: load %ops.reb
+;boot-script: load %script.reb
 
-write %boot-code.r mold reduce sections
+write %boot-code.reb mold reduce sections
 data: mold/flat reduce sections
 insert data reduce ["; Copyright (C) REBOL Technologies " now newline]
 insert tail data make char! 0 ; scanner requires zero termination

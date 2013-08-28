@@ -23,4 +23,4 @@ func: funco [
 ]
 
 ; Quick test runner (temporary):
-t: does [do %test.r]
+t: does [do %test.reb]

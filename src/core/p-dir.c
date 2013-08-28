@@ -89,8 +89,8 @@
 **
 **	Patterns:
 **		abc/ is true
-**		abc/*.r is true
-**		abc/?.r is true
+**		abc/*.reb is true
+**		abc/?.reb is true
 **		abc - ask the file system
 **
 ***********************************************************************/
@@ -299,7 +299,7 @@ create:
 		//Trap_Security(flags[POL_WRITE], POL_WRITE, path);
 		SET_NONE(state);
 		Init_Dir_Path(&dir, path, 0, POL_WRITE);
-		// !!! add *.r deletion
+		// !!! add *.reb deletion
 		// !!! add recursive delete (?)
 		result = OS_DO_DEVICE(&dir, RDC_DELETE);
 		///OS_FREE(dir.file.path);

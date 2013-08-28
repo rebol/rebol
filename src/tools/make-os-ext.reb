@@ -15,16 +15,16 @@ REBOL [
 
 verbose: false
 
-version: load %../boot/version.r
+version: load %../boot/version.reb
 
 lib-version: version/3
 print ["--- Make OS Ext Lib --- Version:" lib-version]
 
 ; Set platform TARGET
-do %systems.r
+do %systems.reb
 target: config-system/os-dir
 
-do %form-header.r
+do %form-header.reb
 
 change-dir append %../os/ target
 
@@ -146,7 +146,7 @@ foreach file files [
 remit "} REBOL_HOST_LIB;"
 
 out: reduce [
-	form-header/gen "Host Access Library" %host-lib.h %make-os-ext.r
+	form-header/gen "Host Access Library" %host-lib.h %make-os-ext.reb
 {
 #define HOST_LIB_VER } lib-version {
 #define HOST_LIB_SUM } checksum/tcp to-binary xsum {

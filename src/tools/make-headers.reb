@@ -22,7 +22,7 @@ chk-dups: true
 dups: make block! 10000 ; get pick [map! hash!] r3 1000
 dup-found: false
 
-do %form-header.r
+do %form-header.reb
 
 tmp: context [
 
@@ -35,7 +35,7 @@ emit: func [d] [append repend output d newline]
 remit: func [d] [append repend rlib d newline]
 
 emit-header: func [t f] [emit form-header/gen t f %make-headers]
-rlib: form-header/gen "REBOL Interface Library" %reb-lib.h %make-headers.r
+rlib: form-header/gen "REBOL Interface Library" %reb-lib.h %make-headers.reb
 append rlib newline
 
 append-spec: func [spec] [
@@ -168,11 +168,11 @@ make-arg-enums: func [word] [
 	]
 	remove back tail output
 	append output ")^/^/"
-	
+
 	;?? output halt
 ]
 
-acts: load %../boot/actions.r
+acts: load %../boot/actions.reb
 
 foreach word [
 	copy
@@ -185,7 +185,7 @@ foreach word [
 	write
 ] [make-arg-enums word]
 
-acts: load %../boot/natives.r
+acts: load %../boot/natives.reb
 
 foreach word [
 	checksum

@@ -22,7 +22,7 @@
 **  Title: Graphics Compositing
 **  Author: Cyphre, Carl
 **  Purpose: Interface from graphics commands to AGG library.
-**  Tools: make-host-ext.r
+**  Tools: make-host-ext.reb
 **
 ************************************************************************
 **

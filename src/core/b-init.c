@@ -555,7 +555,7 @@ extern const REBYTE Str_Banner[];
 **
 */	static void Init_System_Object()
 /*
-**		The system object is defined in boot.r.
+**		The system object is defined in boot.reb.
 **
 ***********************************************************************/
 {
@@ -753,7 +753,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 **
 */	static void Init_Main_Args(REBARGS *rargs)
 /*
-**		The system object is defined in boot.r.
+**		The system object is defined in boot.reb.
 **
 ***********************************************************************/
 {

@@ -26,26 +26,26 @@ print "--- Make Host Init Code ---"
 include-vid: off
 proof: off
 
-do %form-header.r
+do %form-header.reb
 
 ; Output directory for temp files:
 dir: %os/
 
 ; Files to include in the host program:
 files: [
-	%mezz/prot-http.r
+	%mezz/prot-http.reb
 ;	%mezz/view-colors.r
 ]
 
 vid-files: [
-	%mezz/dial-draw.r
-	%mezz/dial-text.r
-	%mezz/dial-effect.r
-	%mezz/view-funcs.r
-	%mezz/vid-face.r
-	%mezz/vid-events.r
-	%mezz/vid-styles.r
-	%mezz/mezz-splash.r
+	%mezz/dial-draw.reb
+	%mezz/dial-text.reb
+	%mezz/dial-effect.reb
+	%mezz/view-funcs.reb
+	%mezz/vid-face.reb
+	%mezz/vid-events.reb
+	%mezz/vid-styles.reb
+	%mezz/mezz-splash.reb
 ]
 
 if include-vid [append files vid-files]
@@ -61,7 +61,7 @@ emit: func [data] [repend out data]
 
 emit-head: func [title file] [
 	clear out
-	emit form-header/gen title file %make-host-init.r
+	emit form-header/gen title file %make-host-init.reb
 ]
 
 emit-end: func [/easy] [
@@ -124,8 +124,8 @@ write-c-file: func [
 	insert tail data make char! 0 ; zero termination required
 
 	if proof [
-		write %tmp.r to-binary data
-		;ask "wrote tmp.r for proofreading (press return)"
+		write %tmp.reb to-binary data
+		;ask "wrote tmp.reb for proofreading (press return)"
 		;probe data
 	]
 
@@ -191,7 +191,7 @@ load-files: func [
 
 code: load-files files
 
-save %boot/host-init.r code
+save %boot/host-init.reb code
 
 write-c-file %include/host-init.h code
 

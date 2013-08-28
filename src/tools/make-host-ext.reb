@@ -20,7 +20,7 @@ REBOL [
 print "--- Make Host Boot Extension ---"
 
 secure none
-do %form-header.r
+do %form-header.reb
 
 ;-- Conversion to C strings, depending on compiler ---------------------------
 
@@ -113,7 +113,7 @@ emit-file: func [
 	prefix: uppercase copy name
 
 	clear out
-	emit form-header/gen title second split-path file %make-host-ext.r
+	emit form-header/gen title second split-path file %make-host-ext.reb
 
 	emit ["enum " name "_commands {^/"]
 
@@ -150,27 +150,27 @@ emit-file: func [
 	write rejoin [%../include/ file %.h] out
 
 ;	clear out
-;	emit form-header/gen join title " - Module Initialization" second split-path file %make-host-ext.r
+;	emit form-header/gen join title " - Module Initialization" second split-path file %make-host-ext.reb
 ;	write rejoin [%../os/ file %.c] out
 ]
 
 ;-- Create Files -------------------------------------------------------------
 
 emit-file %host-ext-graphics [
-	%../boot/graphics.r
-	%../mezz/view-funcs.r
+	%../boot/graphics.reb
+	%../mezz/view-funcs.reb
 ]
 
 emit-file %host-ext-draw [
-	%../boot/draw.r
+	%../boot/draw.reb
 ]
 
 emit-file %host-ext-shape [
-	%../boot/shape.r
+	%../boot/shape.reb
 ]
 
 emit-file %host-ext-text [
-	%../boot/text.r
+	%../boot/text.reb
 ]
 
 print "   "

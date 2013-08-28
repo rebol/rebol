@@ -12,7 +12,7 @@ REBOL [
 	Name: 'http
 	Type: 'module
 	Version: 0.1.0
-	File: %prot-http.r
+	File: %prot-http.reb
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
 	}

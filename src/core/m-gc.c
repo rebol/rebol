@@ -190,7 +190,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 
 		case REB_DATATYPE:
 			if (VAL_TYPE_SPEC(val)) {	// allow it to be zero
-				CHECK_MARK(VAL_TYPE_SPEC(val), depth); // check typespec.r file
+				CHECK_MARK(VAL_TYPE_SPEC(val), depth); // check typespec.reb file
 			}
 			break;
 

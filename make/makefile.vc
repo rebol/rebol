@@ -29,12 +29,12 @@ REBOL=	r3-make.exe -qs
 all: prep r3.exe
 
 prep:
-	$(REBOL) $T/make-headers.r
-	$(REBOL) $T/make-boot.r $(OS_ID)
-	$(REBOL) $T/make-host-init.r
-	$(REBOL) $T/make-os-ext.r # ok, but not always
-	$(REBOL) $T/make-host-ext.r
-	$(REBOL) $T/make-reb-lib.r
+	$(REBOL) $T/make-headers.reb
+	$(REBOL) $T/make-boot.reb $(OS_ID)
+	$(REBOL) $T/make-host-init.reb
+	$(REBOL) $T/make-os-ext.reb # ok, but not always
+	$(REBOL) $T/make-host-ext.reb
+	$(REBOL) $T/make-reb-lib.reb
 
 objs:
 	mkdir objs

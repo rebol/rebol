@@ -114,17 +114,17 @@ start: func [
 		'else [compose [file throw (file) [allow read] %. allow]] ; default
 	])
 
-	;-- Evaluate rebol.r script:
-	loud-print ["Checking for rebol.r file in" file]
-	if exists? file/rebol.r [do file/rebol.r] ; bug#706
+	;-- Evaluate rebol.reb script:
+	loud-print ["Checking for rebol.reb file in" file]
+	if exists? file/rebol.reb [do file/rebol.reb] ; bug#706
 
 	;-- Make the user's global context:
 	tmp: make object! 320
 	append tmp reduce ['system :system]
 	system/contexts/user: tmp
 
-	;boot-print ["Checking for user.r file in" file]
-	;if exists? file/user.r [do file/user.r]
+	;boot-print ["Checking for user.reb file in" file]
+	;if exists? file/user.reb [do file/user.reb]
 
 	boot-print ""
 

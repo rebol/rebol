@@ -27,6 +27,6 @@ typesets		; block of TYPESETs used by system; expandable
 noneval			; NONE value
 noname			; noname function word
 
-boot			; boot block defined in boot.r (GC'd after boot is done)
+boot			; boot block defined in boot.reb (GC'd after boot is done)
 script			; final boot script
 
