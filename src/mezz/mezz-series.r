@@ -288,7 +288,7 @@ collect: func [
 	either into [output] [head output]
 ]
 
-format: funct [
+format: function [
 	"Format a string according to the format dialect."
 	rules {A block in the format dialect. E.g. [10 -10 #"-" 4]}
 	values
@@ -429,7 +429,7 @@ split: func [
 	]
 ]
 
-find-all: funct [
+find-all: function [
     "Find all occurrences of a value within a series (allows modification)."
     'series [word!] "Variable for block, string, or other series"
     value

@@ -11,7 +11,7 @@ REBOL [
 	}
 ]
 
-closure: func [
+clos: func [
 	{Defines a closure function.}
 	spec [block!] {Help string (opt) followed by arg words (and opt type and string)}
 	body [block!] {The body block of the function}
@@ -19,13 +19,34 @@ closure: func [
 	make closure! copy/deep reduce [spec body]
 ]
 
-function: func [
-	{Defines a user function with local words.}
-	spec [block!] {Optional help info followed by arg words (and optional type and string)}
-	vars [block!] {List of words that are local to the function}
+closure: func [
+	{Defines a closure function with all set-words as locals.}
+	spec [block!] {Help string (opt) followed by arg words (and opt type and string)}
 	body [block!] {The body block of the function}
+	/with {Define or use a persistent object (self)}
+	object [object! block! map!] {The object or spec}
+	/extern words [block!] {These words are not local}
 ][
-	make function! copy/deep reduce [compose [(spec) /local (vars)] body]
+	; Copy the spec and add /local to the end if not found
+	unless find spec: copy/deep spec /local [append spec [
+		/local ; In a block so the generated source gets the newlines
+	]]
+	; Make a full copy of the body, to allow reuse of the original
+	body: copy/deep body
+	; Collect all set-words in the body as words to be used as locals, and add
+	; them to the spec. Don't include the words already in the spec or object.
+	append spec collect-words/deep/set/ignore body either with [
+		; Make our own local object if a premade one is not provided
+		unless object? object [object: make object! object]
+		bind body object  ; Bind any object words found in the body
+		; Ignore the words in the spec and those in the object. The spec needs
+		; to be copied since the object words shouldn't be added to the locals.
+		append append append copy spec 'self words-of object words ; ignore 'self too
+	][
+		; Don't include the words in the spec, or any extern words.
+		either extern [append copy spec words] [spec]
+	]
+	make closure! reduce [spec body]
 ]
 
 has: func [
