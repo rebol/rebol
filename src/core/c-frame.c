@@ -607,46 +607,59 @@
 
 /***********************************************************************
 **
-*/  REBSER *Merge_Frames(REBSER *parent, REBSER *child)
+*/  REBSER *Merge_Frames(REBSER *parent1, REBSER *parent2)
 /*
-**      Create a frame from two frames. Merge common fields.
-**      Values from the second frame take precedence. No rebinding.
+**      Create a child frame from two parent frames. Merge common fields.
+**      Values from the second parent take precedence.
+**
+**		Do not deep copy or rebind the child.
 **
 ***********************************************************************/
 {
 	REBSER *wrds;
-	REBSER *frame;
+	REBSER *child;
 	REBVAL *words;
 	REBVAL *value;
 	REBCNT n;
+	REBINT *binds = WORDS_HEAD(Bind_Table);
 
-	// Merge parent and child words. This trick works because the
-	// word list is itself a valid block.
-	wrds = Collect_Frame(BIND_ALL, parent, BLK_SKIP(FRM_WORD_SERIES(child),1));
-
-	// Allocate frame (now that we know the correct size):
-	frame = Make_Block(SERIES_TAIL(wrds));  // GC!!!
-	value = Append_Value(frame);
+	// Merge parent1 and parent2 words.
+	// Keep the binding table.
+	Collect_Start(BIND_ALL);
+	// Setup binding table and BUF_WORDS with parent1 words:
+	if (parent1) Collect_Object(parent1);
+	// Add parent2 words to binding table and BUF_WORDS:
+	Collect_Words(BLK_SKIP(FRM_WORD_SERIES(parent2), 1), BIND_ALL);
+	wrds = Copy_Series(BUF_WORDS);
+	SAVE_SERIES(wrds); // GC - has just been allocated
+	// Allocate child (now that we know the correct size):
+	child = Make_Block(SERIES_TAIL(wrds));
+	value = Append_Value(child);
 	VAL_SET(value, REB_FRAME);
 	VAL_FRM_WORDS(value) = wrds;
 	VAL_FRM_SPEC(value) = 0;
+	UNSAVE_SERIES(wrds); // wrds is safe now if child is safe
 
-	// Copy parent values:
-	COPY_VALUES(FRM_VALUES(parent)+1, FRM_VALUES(frame)+1, SERIES_TAIL(parent)-1);
+	// Copy parent1 values:
+	COPY_VALUES(FRM_VALUES(parent1)+1, FRM_VALUES(child)+1, SERIES_TAIL(parent1)-1);
 
-	// Copy new words and values:
-	words = FRM_WORDS(child)+1;
-	value = FRM_VALUES(child)+1;
+	// Copy parent2 values:
+	words = FRM_WORDS(parent2)+1;
+	value = FRM_VALUES(parent2)+1;
 	for (; NOT_END(words); words++, value++) {
-		n = Find_Word_Index(frame, VAL_BIND_SYM(words), FALSE);
-		if (n) BLK_HEAD(frame)[n] = *value;
+		// no need to search when the binding table is available
+		n = binds[VAL_WORD_CANON(words)];
+		BLK_HEAD(child)[n] = *value;
 	}
 
-	// Terminate the new frame:
-	SERIES_TAIL(frame) = SERIES_TAIL(wrds);
-	BLK_TERM(frame);
+	// Terminate the child frame:
+	SERIES_TAIL(child) = SERIES_TAIL(wrds);
+	BLK_TERM(child);
 
-	return frame;
+	// release the bind table 
+	Collect_End(wrds);
+
+	return child;
 }
 
 
