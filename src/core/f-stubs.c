@@ -32,27 +32,28 @@
 
 /***********************************************************************
 **
-*/	void Long_To_Bytes(REBYTE *out, REBCNT in)
+*/	void REBCNT_To_Bytes(REBYTE *out, REBCNT in)
 /*
 ***********************************************************************/
 {
+	ASSERT(sizeof(REBCNT) == 4, RP_BAD_SIZE);
 	out[0] = (REBYTE) in;
 	out[1] = (REBYTE)(in >> 8);
 	out[2] = (REBYTE)(in >> 16);
 	out[3] = (REBYTE)(in >> 24);
 }
 
-
 /***********************************************************************
 **
-*/	REBCNT Bytes_To_Long(REBYTE *in)
+*/	REBCNT Bytes_To_REBCNT(REBYTE *in)
 /*
 ***********************************************************************/
 {
-	return (REBCNT) in[0]          // & 0xFF
-	     | (REBCNT) (in[1] <<  8)  // & 0xFF00;
-	     | (REBCNT) (in[2] << 16)  // & 0xFF0000;
-	     | (REBCNT) (in[3] << 24); // & 0xFF000000;
+	ASSERT(sizeof(REBCNT) == 4, RP_BAD_SIZE);
+	return (REBCNT) in[0]         // & 0xFF
+		| (REBCNT) ((REBCNT) in[1] <<  8)  // & 0xFF00;
+		| (REBCNT) ((REBCNT) in[2] << 16)  // & 0xFF0000;
+		| (REBCNT) ((REBCNT) in[3] << 24); // & 0xFF000000;
 }
 
 
