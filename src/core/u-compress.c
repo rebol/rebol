@@ -74,7 +74,7 @@
 	uLongf size;
 	REBSER *output;
 	REBINT err;
-	REBYTE out_size[4];
+	REBYTE out_size[sizeof(REBCNT)];
 
 	if (len < 0) Trap0(RE_PAST_END); // !!! better msg needed
 	size = len + (len > STERLINGS_MAGIC_NUMBER ? len / 10 + 12 : STERLINGS_MAGIC_FIX);
@@ -90,8 +90,8 @@
 	}
 	SET_STR_END(output, size);
 	SERIES_TAIL(output) = size;
-	Long_To_Bytes(out_size, (REBCNT)len); // Tag the size to the end.
-	Append_Series(output, (REBYTE*)out_size, 4);
+	REBCNT_To_Bytes(out_size, (REBCNT)len); // Tag the size to the end.
+	Append_Series(output, (REBYTE*)out_size, sizeof(REBCNT));
 	if (SERIES_AVAIL(output) > 1024) // Is there wasted space?
 		output = Copy_Series(output); // Trim it down if too big. !!! Revisit this based on mem alloc alg.
 	//ENABLE_GC;
@@ -116,7 +116,7 @@
 
 	// Get the size from the end and make the output buffer that size.
 	if (len <= 4) Trap0(RE_PAST_END); // !!! better msg needed
-	size = Bytes_To_Long(BIN_SKIP(input, len) - 4);
+	size = Bytes_To_REBCNT(BIN_SKIP(input, len) - sizeof(REBCNT));
 
 	if (limit && size > limit) Trap_Num(RE_SIZE_LIMIT, size); 
 

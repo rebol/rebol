@@ -269,11 +269,11 @@ xx*/	REBCNT Random_Int(REBFLG secure)
 		REBYTE srcbuf[20], dstbuf[20];
 		REBCNT i;
 
-		Long_To_Bytes(srcbuf, tmp);
+		REBCNT_To_Bytes(srcbuf, tmp);
 		for(i = sizeof(tmp); i < 20; i += sizeof(tmp))
 			memcpy(srcbuf + i, srcbuf, sizeof(tmp));
 		SHA1(srcbuf, i, dstbuf);
-		tmp = Bytes_To_Long(dstbuf);
+		tmp = Bytes_To_REBCNT(dstbuf);
 	}
 
 	return tmp;

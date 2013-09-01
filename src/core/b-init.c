@@ -163,7 +163,7 @@ extern const REBYTE Str_Banner[];
 	{
 		REBSER spec;
 		REBSER *text;
-		REBINT textlen;
+		REBCNT textlen;
 
 		// REVIEW: This is a nasty casting away of a const.  But there's
 		// nothing that can be done about it as long as Decompress takes
@@ -171,7 +171,7 @@ extern const REBYTE Str_Banner[];
 		spec.data = ((REBYTE*)Native_Specs) + 4;
 		spec.tail = NAT_SPEC_SIZE;
 
-		textlen = Bytes_To_Long(Native_Specs);
+		textlen = Bytes_To_REBCNT(Native_Specs);
 		text = Decompress(&spec, 0, -1, textlen, 0);
 		if (!text || (STR_LEN(text) != textlen)) Crash(RP_BOOT_DATA);
 		boot = Scan_Source(STR_HEAD(text), textlen);
