@@ -71,7 +71,7 @@
 **
 ***********************************************************************/
 {
-	REBCNT size;
+	uLongf size;
 	REBSER *output;
 	REBINT err;
 	REBYTE out_size[4];
@@ -108,7 +108,7 @@
 **
 ***********************************************************************/
 {
-	REBCNT size;
+	uLongf size;
 	REBSER *output;
 	REBINT err;
 
