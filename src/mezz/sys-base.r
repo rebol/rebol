@@ -203,7 +203,7 @@ export: func [
 	foreach word words [repend lib [word get word]]
 ]
 
-assert-utf8: funct [
+assert-utf8: function [
 	"If binary data is UTF-8, returns it, else throws an error."
 	data [binary!]
 ][

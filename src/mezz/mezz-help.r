@@ -12,7 +12,7 @@ REBOL [
 ]
 
 ; MOVE THIS INTERNAL FUNC:
-dump-obj: funct [
+dump-obj: function [
 	"Returns a block of information about an object or port."
 	obj [object! port!]
 	/match "Include only those that match a string or datatype" pat
@@ -422,7 +422,7 @@ say-browser: does [
 	print "Opening web browser..."
 ]
 
-upgrade: funct [
+upgrade: function [
 	"Check for newer versions (update REBOL)."
 ][
 	print "Fetching upgrade check ..."
@@ -432,7 +432,7 @@ upgrade: funct [
 	exit
 ]
 
-chat: funct [
+chat: function [
 	"Open REBOL DevBase forum/BBS."
 ][
 	print "Fetching chat..."
@@ -489,7 +489,7 @@ why?: func [
 	exit
 ]
 
-demo: funct [
+demo: function [
 	"Run R3 demo."
 ][
 	print "Fetching demo..."
@@ -499,7 +499,7 @@ demo: funct [
 	exit
 ]
 
-load-gui: funct [
+load-gui: function [
 	"Download current GUI module from web. (Temporary)"
 ][
 	print "Fetching GUI..."
