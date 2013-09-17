@@ -37,10 +37,9 @@
 /*
 ***********************************************************************/
 {
-	REBI64 num = VAL_INT64(a) - VAL_INT64(b);
-	if (mode >= 0)  return (num == 0);
-	if (mode == -1) return (num >= 0);
-	return (num > 0);
+	if (mode >= 0)  return (VAL_INT64(a) == VAL_INT64(b));
+	if (mode == -1) return (VAL_INT64(a) >= VAL_INT64(b));
+	return (VAL_INT64(a) > VAL_INT64(b));
 }
 
 
@@ -54,8 +53,12 @@
 	REBVAL *val2 = D_ARG(2);
 	REBI64 num;
 	REBI64 arg;
-	REBI64 anum;	// used for overflow detection
 	REBINT n;
+
+	REBU64 p, a, b; // for overflow detection
+	REBCNT a1, a0, b1, b0;
+	REBFLG sgn;
+	REBI64 anum;
 
 	num = VAL_INT64(val);
 
@@ -107,32 +110,48 @@
 	switch (action) {
 
 	case A_ADD:
-		anum = (num >= 0) == (arg >= 0);
-		num += arg;
-		if (anum && ((num >= 0) != (arg >= 0)))
-			Trap0(RE_OVERFLOW);
+		anum = (REBU64)num + (REBU64)arg;
+		if (
+			((num < 0) == (arg < 0)) && ((num < 0) != (anum < 0))
+		) Trap0(RE_OVERFLOW);
+		num = anum;
 		break;
 
 	case A_SUBTRACT:
-		anum = (num >= 0) == (arg <= 0);
-		num -= arg;
-		if (anum && ((num >= 0) != (arg <= 0)))
-			Trap0(RE_OVERFLOW);
+		anum = (REBU64)num - (REBU64)arg;
+		if (
+			((num < 0) != (arg < 0)) && ((num < 0) != (anum < 0))
+		) Trap0(RE_OVERFLOW);
+		num = anum;
 		break;
 
 	case A_MULTIPLY:
-		anum = num * arg;
-		if (((num != 0) && (anum / num != arg)) || ((anum == arg) && (arg != 0) && (num != 1)))
-			Trap0(RE_OVERFLOW);
-		num = anum;
+		a = num;
+		sgn = (num < 0);
+		if (sgn) a = -a;
+		b = arg;
+		if (arg < 0) {
+			sgn = !sgn;
+			b = -b;
+		}
+		p = a * b;
+		a1 = a>>32;
+		a0 = a;
+		b1 = b>>32;
+		b0 = b;
+		if (
+			(a1 && b1)
+			|| ((REBU64)a0 * b1 + (REBU64)a1 * b0 > p >> 32)
+			|| ((p > (REBU64)MAX_I64) && (!sgn || (p > -(REBU64)MIN_I64)))
+		) Trap0(RE_OVERFLOW);
+		num = sgn ? -p : p;
 		break;
 
 	case A_DIVIDE:
 		if (arg == 0) Trap0(RE_ZERO_DIVIDE);
-		if (num == MAX_NEG_INT && arg == -1) Trap0(RE_OVERFLOW);
-		anum = num / arg;
+		if (num == MIN_I64 && arg == -1) Trap0(RE_OVERFLOW);
 		if (num % arg == 0) {
-			num = anum;
+			num = num / arg;
 			break;
 		}
 		// Fall thru
@@ -152,14 +171,14 @@
 	case A_XOR: num ^= arg; break;
 
 	case A_NEGATE:
-		if (num == MAX_NEG_INT) Trap0(RE_OVERFLOW);
+		if (num == MIN_I64) Trap0(RE_OVERFLOW);
 		num = -num;
 		break;
 
 	case A_COMPLEMENT: num = ~num; break;
 
 	case A_ABSOLUTE: 
-		if (num == MAX_NEG_INT) Trap0(RE_OVERFLOW);
+		if (num == MIN_I64) Trap0(RE_OVERFLOW);
 		if (num < 0) num = -num;
 		break;
 
@@ -196,7 +215,7 @@
 		num = Random_Range(num, (REBOOL)D_REF(3));	//!!! 64 bits
 #ifdef OLD_METHOD
 		if (num < 0)  num = -(1 + (REBI64)(arg % -num));
-		else          num =   1 + (REBI64)(arg % num);
+		else	      num =   1 + (REBI64)(arg % num);
 #endif
 		break;
 

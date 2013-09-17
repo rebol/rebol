@@ -139,21 +139,20 @@ enum {
 };
 
 
+// Used for MOLDing:
+#define MAX_DIGITS 17   // number of digits
+#define MAX_NUMCHR 32   // space for digits and -.e+000%
+
+#ifdef INT_64_MODE      // Set in reb-config.h
+
 /***********************************************************************
 **
 **  64 Bit Integers - Now supported in REBOL 3.0
 **
 ***********************************************************************/
 
-// Used for MOLDing:
-#define MAX_DIGITS 17   // number of digits
-#define MAX_NUMCHR 32   // space for digits and -.e+000%
-
-#ifdef INT_64_MODE      // Set in config.h
-
 #define MAX_INT_LEN     20
 #define MAX_HEX_LEN     16
-#define MAX_NEG_INT     ((REBI64)(((REBU64)1)<<63))
 
 #ifdef ITOA64           // Integer to ascii conversion
 #define INT_TO_STR(n,s) _i64toa(n, s, 10)
@@ -180,7 +179,6 @@ enum {
 
 #define MAX_INT_LEN     10
 #define MAX_HEX_LEN     8
-#define MAX_NEG_INT     ((REBI64)(((REBU64)1)<<31))
 
 #ifdef ITOA
 #define INT_TO_STR(n,s) itoa(n, s, 10)
