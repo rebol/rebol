@@ -17,7 +17,7 @@ REBOL [
 	}
 ]
 
-decode: funct [
+decode: function [
  	{Decodes a series of bytes into the related datatype (e.g. image!).}
 	type [word!] {Media type (jpeg, png, etc.)}
 	data [binary!] {The data to decode}
@@ -31,7 +31,7 @@ decode: funct [
 	data
 ]
 
-encode: funct [
+encode: function [
 	{Encodes a datatype (e.g. image!) into a series of bytes.}
 	type [word!] {Media type (jpeg, png, etc.)}
 	data [image! binary! string!] {The data to encode}
@@ -46,7 +46,7 @@ encode: funct [
 	data
 ]
 
-encoding?: funct [
+encoding?: function [
 	"Returns the media codec name for given binary data. (identify)"
 	data [binary!]
 ][
