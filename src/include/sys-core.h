@@ -160,6 +160,9 @@ enum {
 
 #define TS_CODE ((CP_DEEP | TS_SERIES) & ~TS_NOT_COPIED)
 
+#define TS_FUNCLOS (TYPESET(REB_FUNCTION) | TYPESET(REB_CLOSURE))
+#define TS_CLONE ((CP_DEEP | TS_SERIES | TS_FUNCLOS) & ~TS_NOT_COPIED)
+
 // Modes allowed by Bind related functions:
 enum {
 	BIND_ONLY = 0,		// Only bind the words found in the context.
@@ -170,6 +173,13 @@ enum {
 	BIND_NO_DUP = 16,	// Do not allow dups during word collection (for specs)
 	BIND_FUNC = 32,		// Recurse into functions.
 	BIND_NO_SELF = 64,	// Do not bind SELF (in closures)
+};
+
+// Modes for Rebind_Block:
+enum {
+	REBIND_TYPE = 1,	// Change frame type when rebinding
+	REBIND_FUNC	= 2,	// Rebind function and closure bodies
+	REBIND_TABLE = 4,	// Use bind table when rebinding
 };
 
 // Mold and form options:
