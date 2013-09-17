@@ -268,7 +268,6 @@ load: funct [
 	/all     {Load all values (does not evaluate REBOL header)}
 	/type    {Override default file-type; use NONE to always load as code}
 		ftype [word! none!] "E.g. text, markup, jpeg, unbound, etc."
-	/next    {Removed - use TRANSCODE instead}
 ] [
 	; WATCH OUT: for ALL and NEXT words! They are local.
 
@@ -287,9 +286,6 @@ load: funct [
 	assert/type [local none!] ; easiest way to protect against /local hacks
 
 	case/all [
-		next [
-			cause-error 'script 'no-refine [load next] ;!! bug#1711
-		]
 		header [all: none]
 
 		;-- Load multiple sources?
