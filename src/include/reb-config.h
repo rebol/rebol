@@ -69,7 +69,6 @@ These are now obsolete (as of A107) and should be removed:
 
 //* Common *************************************************************
 
-#define INT_64_MODE				// 64 bit integer datatype
 #define THREADED				// enable threads
 
 #ifdef REB_EXE					// standalone exe from RT

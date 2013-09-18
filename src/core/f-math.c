@@ -392,7 +392,8 @@ static int Convert_Decimal(REBDEC d, REBI64 *sig, REBINT *point)
 
 REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT decimal_digits) {
 	REBYTE *start = cp, *sig, *rve;
-	REBINT e, sgn, digits_obtained;
+	int e, sgn;
+	REBINT digits_obtained;
 
 	/* sanity checks */
 	if (decimal_digits < MIN_DIGITS) decimal_digits = MIN_DIGITS;
