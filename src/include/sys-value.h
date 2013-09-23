@@ -1091,7 +1091,6 @@ typedef struct Reb_All {
 		REBCNT  logic;
 		REBI64	integer;
 		REBU64	unteger;
-		REBINT	int32;
 		REBDEC	decimal;
 		REBUNI  uchar;
 		REBERR	error;
