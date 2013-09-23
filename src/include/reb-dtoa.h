@@ -44,6 +44,7 @@
 
 /* this renames the strtod function to suppress possible conflicts
  * with some overly aggressive definitions in stdlib.h */
+#undef strtod
 #define strtod STRTOD
 
 /* #define IEEE_8087 for IEEE-arithmetic machines where the least
