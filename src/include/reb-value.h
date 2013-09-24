@@ -41,12 +41,12 @@ typedef struct rebol_series_index
 } REBSRI;
 
 typedef struct rebol_word {
-	REBCNT	sym;		// Index of the word's symbol
-	REBINT	index;		// Index of the word in the frame
 	union {
 		REBSER	*frame;	// Frame in which the word is defined
 		REBCNT	typeset;// Typeset number
 	} c;
+	REBCNT	sym;		// Index of the word's symbol
+	REBINT	index;		// Index of the word in the frame
 } REBWRD;
 
 struct rebol_value {
