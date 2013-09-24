@@ -724,16 +724,19 @@ typedef struct Reb_Symbol {
 
 typedef struct Reb_Word {
 	REBSER	*frame;		// Frame in which the word is defined
-#ifndef __LP64__
-	REBCNT	pad;		//make sure sym has the same offset as in Reb_Word_Spec, or Init_Frame_Word would be broken
-#endif
+#ifdef __LP64__
+	//make sure sym has the same offset as in Reb_Word_Spec, or Init_Frame_Word would be broken
 	REBCNT	sym;		// Index of the word's symbol
 	REBINT	index;		// Index of the word in the frame
+#else
+	REBINT	index;		// Index of the word in the frame
+	REBCNT	sym;		// Index of the word's symbol
+#endif
 } REBWRD;
 
 typedef struct Reb_Word_Spec {
 	REBU64	typeset;
-	REBCNT	sym;		// Index of the word's symbol (and pad for U64 alignment)
+	REBCNT	sym;		// Index of the word's symbol
 } REBWRS;
 
 #define IS_SAME_WORD(v, n)		(IS_WORD(v) && VAL_WORD_CANON(v) == n)
