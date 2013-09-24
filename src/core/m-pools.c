@@ -387,6 +387,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		pool->first = *node;
 		pool->free--;
 		length = pool->wide;
+		memset(node, 0, length);
 	} else {
 		if (powerof2) {
 			// !!! WHO added this and why??? Just use a left shift and mask!
