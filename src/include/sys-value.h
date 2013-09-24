@@ -1066,7 +1066,7 @@ typedef struct Reb_Utype {
 
 // All bits of value fields:
 typedef struct Reb_All {
-	REBCNT bits[3];
+	uintptr_t bits[3];
 } REBALL;
 
 #define VAL_ALL_BITS(v) ((v)->data.all.bits)

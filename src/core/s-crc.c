@@ -186,7 +186,8 @@ static REBCNT *CRC_Table;
 **
 ***********************************************************************/
 {
-	uintptr_t	ret; //FIXME: the return type of the function needs to be changed as well?
+	REBCNT ret;
+	REBCNT *data = NULL;
 
 	switch(VAL_TYPE(val)) {
 
@@ -222,7 +223,8 @@ static REBCNT *CRC_Table;
 		break;
 
 	case REB_MONEY:
-		ret = VAL_ALL_BITS(val)[0] ^ VAL_ALL_BITS(val)[1] ^ VAL_ALL_BITS(val)[2];
+		data = (REBCNT*)&VAL_DECI(val);
+		ret = data[0] ^ data[1] ^ data[2];
 		break;
 
 	case REB_TIME:
@@ -236,7 +238,8 @@ static REBCNT *CRC_Table;
 		break;
 
 	case REB_PAIR:
-		ret = VAL_ALL_BITS(val)[0] ^ VAL_ALL_BITS(val)[1];
+		data = (REBCNT*)&VAL_PAIR(val);
+		ret = data[0] ^ data[1];
 		break;
 
 	case REB_OBJECT:
