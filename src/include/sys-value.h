@@ -104,8 +104,8 @@ enum {
 ***********************************************************************/
 
 typedef struct Reb_Type {
-	REBINT	type;	// base type
 	REBSER  *spec;
+	REBINT	type;	// base type
 //	REBINT	min_type;
 //	REBINT	max_type;
 } REBTYP;
@@ -462,12 +462,12 @@ enum {
 typedef struct Reb_Series_Ref
 {
 	REBSER	*series;
-	REBCNT	index;
 	union {
 		REBSER	*side;		// lookaside block for lists/hashes/images
 		REBINT  back;		// (Used in DO for stack back linking)
 //		REBFRM	*frame;		// (may also be used as frame for binding blocks)
 	} link;
+	REBCNT	index;
 } REBSRI;
 
 #define VAL_SERIES(v)	    ((v)->data.series.series)
@@ -723,14 +723,17 @@ typedef struct Reb_Symbol {
 ***********************************************************************/
 
 typedef struct Reb_Word {
+	REBSER	*frame;		// Frame in which the word is defined
+#ifndef __LP64__
+	REBCNT	pad;		//make sure sym has the same offset as in Reb_Word_Spec, or Init_Frame_Word would be broken
+#endif
 	REBCNT	sym;		// Index of the word's symbol
 	REBINT	index;		// Index of the word in the frame
-	REBSER	*frame;		// Frame in which the word is defined
 } REBWRD;
 
 typedef struct Reb_Word_Spec {
-	REBCNT	sym;		// Index of the word's symbol (and pad for U64 alignment)
 	REBU64	typeset;
+	REBCNT	sym;		// Index of the word's symbol (and pad for U64 alignment)
 } REBWRS;
 
 #define IS_SAME_WORD(v, n)		(IS_WORD(v) && VAL_WORD_CANON(v) == n)
@@ -978,8 +981,8 @@ typedef struct Reb_Handle {
 ***********************************************************************/
 
 typedef struct Reb_Library {
-	long handle;        // ALPHA wants a long
 	REBSER *name;
+	long handle;        // ALPHA wants a long
 	REBCNT id;
 } REBLIB;
 
@@ -1017,7 +1020,6 @@ typedef struct Reb_Rot_Info {
 #define RFRO_CALLIDX(i) ((i)->call_idx)
 
 typedef struct Reb_Typeset {
-	REBCNT  pad;	// Allows us to overlay this type on WORD spec type
 	REBU64  bits;
 } REBTYS;
 
@@ -1081,42 +1083,42 @@ typedef struct Reb_All {
 **
 ***********************************************************************/
 {
-	union Reb_Val_Head {
-		REBHED flags;
-		REBCNT header;
-	} flags;
 	union Reb_Val_Data {
-		REBWRD	word;
-		REBSRI	series;
+		REBWRD	word; 		//12 bytes on LP32 or 16 bytes on LP64
+		REBSRI	series;		//12 bytes on LP32 or 20 bytes on LP64
 		REBCNT  logic;
 		REBI64	integer;
 		REBU64	unteger;
 		REBINT	int32;
-		REBDEC	decimal;
+		REBDEC	decimal;	//8 bytes
 		REBUNI  uchar;
-		REBERR	error;
-		REBTYP	datatype;
-		REBFRM	frame;
-		REBWRS	wordspec;
-		REBTYS  typeset;
-		REBSYM	symbol;
-		REBTIM	time;
-		REBTUP	tuple;
-		REBFCN	func;
-		REBOBJ	object;
-		REBXYF	pair;
-		REBEVT	event;
-		REBLIB  library;
-		REBROT  routine;
-		REBSTU  structure;
-		REBGBO	gob;
-		REBUDT  utype;
-		REBDCI  deci;
-		REBHAN  handle;
+		REBERR	error;		//12 bytes on LP32 or 16 bytes on LP64
+		REBTYP	datatype;	//8 bytes on LP32 or 12 bytes on LP64
+		REBFRM	frame;		//8 bytes on LP32 or 16 bytes on LP64
+		REBWRS	wordspec;	//12 bytes
+		REBTYS  typeset;	//12 bytes
+		REBSYM	symbol;		//12 bytes
+		REBTIM	time;		//12 bytes
+		REBTUP	tuple;		//12 bytes
+		REBFCN	func;		//12 bytes on LP32 or 24 bytes on LP64
+		REBOBJ	object;		//8 bytes on LP32 or 16 bytes on LP64
+		REBXYF	pair;		//8 bytes
+		REBEVT	event;		//12 bytes on LP32 or 16 bytes on LP64
+		REBLIB  library;	//12 bytes on LP32 or 20 bytes on LP64
+		REBROT  routine;	//12 bytes on LP32 or 20 bytes on LP64
+		REBSTU  structure;	//12 bytes on LP32 or 24 bytes on LP64
+		REBGBO	gob;		//8 bytes on LP32 or 12 bytes on LP64
+		REBUDT  utype;		//8 bytes on LP32 or 16 bytes on LP64
+		REBDCI  deci;		//12 bytes
+		REBHAN  handle;		//4 bytes on LP32 or 8 bytes on LP64
 		REBALL  all;
 	} data;
+	union Reb_Val_Head {
+		REBHED flags;		//4 bytes
+		REBCNT header;		//4 bytes
+	} flags;
 #ifdef __LP64__
-	REBINT	padding; //make it 32-bit
+	REBINT	pad; //make the size of whole struct 32 bytes (power of 2)
 #endif
 };
 
