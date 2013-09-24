@@ -30,15 +30,15 @@
 
 #pragma pack(4)
 typedef struct rebol_event {
-	u8  type;		// event id (mouse-move, mouse-button, etc)
-	u8  flags;		// special flags
-	u8  win;		// window id
-	u8  model;		// port, object, gui, callback
-	u32 data;		// an x/y position or keycode (raw/decoded)
 	union {
 		REBREQ *req;	// request (for device events)
 		void *ser;		// port or object
 	};
+	u32 data;		// an x/y position or keycode (raw/decoded)
+	u8  type;		// event id (mouse-move, mouse-button, etc)
+	u8  flags;		// special flags
+	u8  win;		// window id
+	u8  model;		// port, object, gui, callback
 } REBEVT;
 #pragma pack()
 
