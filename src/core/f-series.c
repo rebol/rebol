@@ -159,6 +159,8 @@ is_true:
 	REBVAL	*t = VAL_BLK_DATA(tval);
 	REBINT	diff;
 
+	CHECK_STACK(&s);
+
 	if ((VAL_SERIES(sval)==VAL_SERIES(tval))&&
 	 (VAL_INDEX(sval)==VAL_INDEX(tval)))
 		 return 0;
