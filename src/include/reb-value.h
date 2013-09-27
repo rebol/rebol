@@ -41,16 +41,15 @@ typedef struct rebol_series_index
 } REBSRI;
 
 typedef struct rebol_word {
-	REBCNT	sym;		// Index of the word's symbol
-	REBINT	index;		// Index of the word in the frame
 	union {
 		REBSER	*frame;	// Frame in which the word is defined
 		REBCNT	typeset;// Typeset number
 	} c;
+	REBCNT	sym;		// Index of the word's symbol
+	REBINT	index;		// Index of the word in the frame
 } REBWRD;
 
 struct rebol_value {
-	REBINT flags;
 	union REBOL_Val_Data {
 		REBI64	integer;
 		REBINT	int32;
@@ -61,6 +60,7 @@ struct rebol_value {
 		REBWRD	word;
 		REBSRI	series;
 	} data;
+	REBINT flags;
 };
 
 #define VAL_TYPE(v)			((REBYTE)((v)->flags))	// get only the type, not flags

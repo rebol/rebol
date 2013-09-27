@@ -96,7 +96,7 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 		arg.int32b = 0;
 		break;
 	case RXE_DATE:
-		arg.int32a = VAL_ALL_BITS(val)[2];
+		arg.int32a = VAL_DATE(val).bits;
 		arg.int32b = 0;
 		break;
 	case RXE_SYM:
@@ -139,7 +139,7 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 		break;
 	case RXE_DATE:
 		VAL_TIME(val) = NO_TIME;
-		VAL_ALL_BITS(val)[2] = arg.int32a;
+		VAL_DATE(val).bits = arg.int32a;
 		break;
 	case RXE_SYM:
 		VAL_WORD_SYM(val) = arg.int32a;

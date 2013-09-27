@@ -706,7 +706,7 @@ pick:
 
 		case 's':
 			cp = va_arg(args, REBYTE *);
-			if ((REBCNT)cp < 100) cp = (REBYTE*)Bad_Ptr;
+			if ((uintptr_t)cp < 100) cp = (REBYTE*)Bad_Ptr;
 			if (pad == 1) pad = LEN_BYTES(cp);
 			if (pad < 0) {
 				pad = -pad;
@@ -751,7 +751,7 @@ mold_value:
 			if (len + MAX_HEX_LEN + 1 < max) { // A cheat, but it is safe.
 				*bp++ = '#';
 				if (pad == 1) pad = 8;
-				cp = Form_Hex_Pad(bp, (REBCNT)(va_arg(args, REBYTE*)), pad);
+				cp = Form_Hex_Pad(bp, (REBU64)(uintptr_t)(va_arg(args, REBYTE*)), pad);
 				len += 1 + (REBCNT)(cp - bp);
 				bp = cp;
 			}

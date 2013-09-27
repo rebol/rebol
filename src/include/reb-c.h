@@ -54,8 +54,17 @@ typedef char            i8;
 typedef unsigned char   u8;
 typedef short           i16;
 typedef unsigned short  u16;
+#ifdef __LP64__
+typedef int            i32;
+typedef unsigned int   u32;
+typedef long			intptr_t;
+typedef unsigned long	uintptr_t;
+#else
 typedef long            i32;
 typedef unsigned long   u32;
+typedef int				intptr_t;
+typedef unsigned int	uintptr_t;
+#endif
 
 #ifndef DEF_UINT		// some systems define it, don't define it again
 typedef unsigned int    uint;
@@ -80,8 +89,8 @@ typedef unsigned long long u64;
 // (Note: compatible with FILETIME used in Windows)
 #pragma pack(4)
 typedef struct sInt64 {
-	long l;
-	long h;
+	i32 l;
+	i32 h;
 } I64;
 #pragma pack()
 
@@ -91,12 +100,12 @@ typedef struct sInt64 {
 **
 ***********************************************************************/
 
-typedef int             REBINT;     // 32 bit (64 bit defined below)
-typedef unsigned int    REBCNT;     // 32 bit (counting number)
+typedef i32             REBINT;     // 32 bit (64 bit defined below)
+typedef u32    			REBCNT;     // 32 bit (counting number)
 typedef i64             REBI64;     // 64 bit integer
 typedef u64             REBU64;     // 64 bit unsigned integer
 typedef char            REBOOL;     // 8  bit flag (for struct usage)
-typedef unsigned int    REBFLG;     // 32 bit flag (for cpu efficiency)
+typedef u32    			REBFLG;     // 32 bit flag (for cpu efficiency)
 typedef float           REBD32;     // 32 bit decimal
 typedef double          REBDEC;     // 64 bit decimal
 

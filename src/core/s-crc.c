@@ -186,7 +186,8 @@ static REBCNT *CRC_Table;
 **
 ***********************************************************************/
 {
-	REBCNT	ret;
+	REBCNT ret;
+	REBCNT *data = NULL;
 
 	switch(VAL_TYPE(val)) {
 
@@ -222,7 +223,8 @@ static REBCNT *CRC_Table;
 		break;
 
 	case REB_MONEY:
-		ret = VAL_ALL_BITS(val)[0] ^ VAL_ALL_BITS(val)[1] ^ VAL_ALL_BITS(val)[2];
+		data = (REBCNT*)&VAL_DECI(val);
+		ret = data[0] ^ data[1] ^ data[2];
 		break;
 
 	case REB_TIME:
@@ -236,11 +238,12 @@ static REBCNT *CRC_Table;
 		break;
 
 	case REB_PAIR:
-		ret = VAL_ALL_BITS(val)[0] ^ VAL_ALL_BITS(val)[1];
+		data = (REBCNT*)&VAL_PAIR(val);
+		ret = data[0] ^ data[1];
 		break;
 
 	case REB_OBJECT:
-		ret = ((REBCNT)VAL_OBJ_FRAME(val)) >> 4;
+		ret = ((uintptr_t)VAL_OBJ_FRAME(val)) >> 4;
 		break;
 
 	case REB_DATATYPE:
