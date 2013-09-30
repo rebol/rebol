@@ -1087,16 +1087,29 @@ data: mold/flat reduce sections
 insert data reduce ["; Copyright (C) REBOL Technologies " now newline]
 insert tail data make char! 0 ; scanner requires zero termination
 
-comp-data: compress data: to-binary data ;R3
-;append comp-data "ABCD"
+comp-data: compress data: to-binary data
 
-encloak/with comp-data thekey: checksum/secure to binary! "REBOL Version 3.0" ;R3
+emit [
+{
+	// This array contains 4 bytes encoding a 32-bit little endian value,
+	// followed by data which is the DEFLATE-algorithm-compressed
+	// representation of the textual function specs for Rebol's native
+	// routines.  This textual representation is null-terminated.
+	// The leading value represents the expected length of
+	// the text after it is decompressed (this is redundant with
+	// information saved by DEFLATE, but having it twice provides a
+	// redundant sanity check on the compression and decompression)
+}
+]
 
-;cc: decompress decloak/with comp-data thekey print ["decompressed?" cc = data] halt
+emit ["const REBYTE Native_Specs[" 4 + length? comp-data "] = {^/^-"]
 
-emit ["const REBYTE Native_Specs[" length? comp-data "] = {^/^-"]
+;-- Prefix with the length
+data-len-bin: to binary! length? data
+assert [parse data-len-bin [4 #{00} 4 skip]] ;-- See CC #2064
+emit binary-to-c reverse (skip data-len-bin 4)
 
-;-- Convert to C-encoded string:
+;-- Convert UTF-8 binary to C-encoded string:
 emit binary-to-c comp-data
 emit-end/easy
 
