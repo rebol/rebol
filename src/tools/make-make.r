@@ -118,6 +118,9 @@ prep:
 	$(REBOL) $T/make-host-ext.r
 	$(REBOL) $T/make-reb-lib.r
 
+zlib:
+	$(REBOL) $T/make-zlib.r	
+
 ### Provide more info if make fails due to no local Rebol build tool:
 tmps: $S/include/tmp-bootdefs.h
 
