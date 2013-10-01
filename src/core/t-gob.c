@@ -56,6 +56,46 @@ const REBCNT Gob_Flag_Words[] = {
 	return -1;
 }
 
+
+/***********************************************************************
+**
+*/	void Mark_Gob(REBGOB *gob, REBCNT depth)
+/*
+**		Call out the internal series in a gob! to protect from GC.
+**
+************************************************************************/
+{
+	REBGOB **pane;
+	REBCNT i;
+
+	if (IS_GOB_MARK(gob)) return;
+
+	MARK_GOB(gob);
+
+	if (GOB_PANE(gob)) {
+		MARK_SERIES(GOB_PANE(gob));
+		pane = GOB_HEAD(gob);
+		for (i = 0; i < GOB_TAIL(gob); i++, pane++) {
+			Mark_Gob(*pane, depth);
+		}
+	}
+
+	if (GOB_PARENT(gob)) Mark_Gob(GOB_PARENT(gob), depth);
+
+	if (GOB_CONTENT(gob)) {
+		if (GOB_TYPE(gob) >= GOBT_IMAGE && GOB_TYPE(gob) <= GOBT_STRING) {
+			MARK_SERIES(GOB_CONTENT(gob));
+		} else if (GOB_TYPE(gob) >= GOBT_DRAW && GOB_TYPE(gob) <= GOBT_EFFECT) {
+			CHECK_MARK(GOB_CONTENT(gob), depth);
+		}
+	}
+
+	if (GOB_DATA(gob) && GOB_DTYPE(gob) && GOB_DTYPE(gob) != GOBD_INTEGER) {
+		CHECK_MARK(GOB_DATA(gob), depth);
+	}
+}
+
+
 /***********************************************************************
 **
 */  REBGOB *Make_Gob(void)
