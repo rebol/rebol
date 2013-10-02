@@ -22,7 +22,7 @@
 **  Module:  m-gc.c
 **  Summary: main memory garbage collection
 **  Section: memory
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Ladislav Mecir, HostileFork
 **  Notes:
 **    WARNING WARNING WARNING
 **    This is highly tuned code that should only be modified by experts
@@ -31,17 +31,18 @@
 **
 **	  The process consists of two stages:
 **
-**		MARK - Mark all series that can be found in:
+**		MARK -	Mark all series and gobs ("collectible values")
+*				that can be found in:
 **
-**			Root Block: special structures and buffers
-**			Task Block: special structures and buffers per task
-**			Data Stack: current state of evaluation
-**			Safe Series: saves the last N allocations
+**				Root Block: special structures and buffers
+**				Task Block: special structures and buffers per task
+**				Data Stack: current state of evaluation
+**				Safe Series: saves the last N allocations
 **
-**			Mark is recursive until we reach the terminals, or
-**			until we hit series already marked.
+**				Mark is recursive until we reach the terminals, or
+**				until we hit values already marked.
 **
-**		SWEEP - Free all series that were not marked.
+**		SWEEP - Free all collectible values that were not marked.
 **
 **	  GC protection methods:
 **
@@ -78,6 +79,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include "reb-evtypes.h"
 
 //-- For Serious Debugging:
 #ifdef WATCH_GC_VALUE
@@ -139,6 +141,40 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 
 	if (GOB_DATA(gob) && GOB_DTYPE(gob) && GOB_DTYPE(gob) != GOBD_INTEGER) {
 		CHECK_MARK(GOB_DATA(gob), depth);
+	}
+}
+
+
+/***********************************************************************
+**
+*/	static void Mark_Event(REBVAL *value, REBCNT depth)
+/*
+***********************************************************************/
+{
+	if (
+		   IS_EVENT_MODEL(value, EVM_PORT)
+		|| IS_EVENT_MODEL(value, EVM_OBJECT)
+		|| (VAL_EVENT_TYPE(value) == EVT_DROP_FILE && GET_FLAG(VAL_EVENT_FLAGS(value), EVF_COPIED))
+	) {
+		// The ->ser field of the REBEVT is void*, so we must cast
+		// Comment says it is a "port or object"
+		CHECK_MARK((REBSER*)VAL_EVENT_SER(value), depth);
+	} 
+
+	if (IS_EVENT_MODEL(value, EVM_DEVICE)) {
+		// In the case of being an EVM_DEVICE event type, the port! will
+		// not be in VAL_EVENT_SER of the REBEVT structure.  It is held
+		// indirectly by the REBREQ ->req field of the event, which
+		// in turn possibly holds a singly linked list of other requests.
+		REBREQ *req = VAL_EVENT_REQ(value);
+
+		// The ->next field of a REBREQ is just used while it's in the
+		// device's ->pending list, and is set to 0 by Detach_Request
+		ASSERT(req->next == NULL, RP_MISC);
+
+		// The ->port field of the REBREQ is void*, so we must cast
+		// Comment says it is "link back to REBOL port object"
+		CHECK_MARK((REBSER*)req->port, depth);
 	}
 }
 
@@ -359,7 +395,7 @@ mark_obj:
 			break;
 
 		case REB_EVENT:
-			if (NZ(ser = GC_Event(val))) CHECK_MARK(ser, depth);
+			Mark_Event(val, depth);
 			break;
 
 		default:
@@ -464,7 +500,6 @@ mark_obj:
 	REBINT n;
 	REBSER **sp;
 	REBCNT count;
-//	REBSER *ports;
 
 	//Debug_Num("GC", GC_Disabled);
 
