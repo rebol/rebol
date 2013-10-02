@@ -263,92 +263,114 @@ static void No_Nones(REBVAL *arg) {
 
 /***********************************************************************
 **
-*/	void Make_Block_Type(REBFLG make, REBVAL *value, REBVAL *arg)
+*/	REBSER *Make_Block_Type(REBCNT typenum, REBVAL *spec)
 /*
-**		Value can be:
-**			1. a datatype (e.g. BLOCK!)
-**			2. a value (e.g. [...])
-**
-**		Arg can be:
-**			1. integer (length of block)
-**			2. block (copy it)
-**			3. value (convert to a block)
+**		Spec can be:
+**			1. string/binary (tokenize to make a block of Rebol values)
+**			2. integer/decimal (make empty block w/reserved alloc size)
+**			3. block (dialect for more internal flags, future expansion)
+**			3. typeset (make block containing list of types in set)
+**		All other types convertible to blocks are flattened into them.
 **
 ***********************************************************************/
 {
-	REBCNT type;
-	REBCNT len;
 	REBSER *ser;
 
-	// make block! ...
-	if (IS_DATATYPE(value))
-		type = VAL_DATATYPE(value);
-	else  // make [...] ....
-		type = VAL_TYPE(value);
-
-	// make block! [1 2 3]
-	if (ANY_BLOCK(arg)) {
-		len = VAL_BLK_LEN(arg);
-		if (len > 0 && type >= REB_PATH && type <= REB_LIT_PATH)
-			No_Nones(arg);
-		ser = Copy_Values(VAL_BLK_DATA(arg), len);
+	// e.g. make block! [min: 10 max: 30 ...]
+	if (ANY_BLOCK(spec)) {
+		// Reserved for future expansion.  If you want to use a block
+		// as the contents for a new block of a different type, use
+		// TO with an ANY-BLOCK! as the type.  Or just use COPY if you
+		// want to retain the original type (more succinct).
+		Trap_Arg(spec);
 		goto done;
 	}
 
-	if (IS_STRING(arg)) {
+	if (IS_STRING(spec)) {
 		REBCNT index, len = 0;
-		VAL_SERIES(arg) = Prep_Bin_Str(arg, &index, &len); // (keeps safe)
-		ser = Scan_Source(VAL_BIN(arg), VAL_LEN(arg));
+		VAL_SERIES(spec) = Prep_Bin_Str(spec, &index, &len); // (keeps safe)
+		ser = Scan_Source(VAL_BIN(spec), VAL_LEN(spec));
 		goto done;
 	}
 
-	if (IS_BINARY(arg)) {
-		ser = Scan_Source(VAL_BIN_DATA(arg), VAL_LEN(arg));
+	if (IS_BINARY(spec)) {
+		ser = Scan_Source(VAL_BIN_DATA(spec), VAL_LEN(spec));
 		goto done;
 	}
 
-	if (IS_MAP(arg)) {
-		ser = Map_To_Block(VAL_SERIES(arg), 0);
+	if (IS_MAP(spec)) {
+		ser = Map_To_Block(VAL_SERIES(spec), 0);
 		goto done;
 	}
 
-	if (ANY_OBJECT(arg)) {
-		ser = Make_Object_Block(VAL_OBJ_FRAME(arg), 3);
+	if (ANY_OBJECT(spec)) {
+		ser = Make_Object_Block(VAL_OBJ_FRAME(spec), 3);
 		goto done;
 	}
 
-	if (IS_VECTOR(arg)) {
-		ser = Make_Vector_Block(arg);
+	if (IS_VECTOR(spec)) {
+		ser = Make_Vector_Block(spec);
 		goto done;
 	}
 
-//	if (make && IS_NONE(arg)) {
-//		ser = Make_Block(0);
-//		goto done;
-//	}
-
-	// to block! typset
-	if (!make && IS_TYPESET(arg) && type == REB_BLOCK) {
-		Set_Block(value, Typeset_To_Block(arg));
-		return;
+	// make block! typeset
+	if (IS_TYPESET(spec) && typenum == REB_BLOCK) {
+		ser = Typeset_To_Block(spec);
+		goto done;
 	}
 
-	if (make) {
-		// make block! 10
-		if (IS_INTEGER(arg) || IS_DECIMAL(arg)) {
-			len = Int32s(arg, 0);
-			Set_Series(type, value, Make_Block(len));
-			return;
-		}
-		Trap_Arg(arg);
+	// make block! 10
+	if (IS_INTEGER(spec) || IS_DECIMAL(spec)) {
+		REBCNT len = Int32s(spec, 0);
+		ser = Make_Block(len);
+		goto done;
 	}
 
-	ser = Copy_Values(arg, 1);
+#define MAKE_BLOCK_OF_NONE_IS_EMPTY_BLOCK 0
+#ifdef MAKE_BLOCK_OF_NONE_IS_EMPTY_BLOCK
+	if (IS_NONE(spec)) {
+		ser = Make_Block(0);
+		goto done;
+	}
+#endif
+
+	Trap_Arg(spec);
 
 done:
-	Set_Series(type, value, ser);
-	return;
+	return ser;
 }
+
+
+/***********************************************************************
+**
+*/	REBSER *To_Block_Type(REBCNT typenum, REBVAL *value)
+/*
+**		If value is an ANY-BLOCK!, a block of subtype indicated by
+**		type will be returned with the same contents as value
+**		copied into it.  For all non-block values inputs, a single
+**		element block of the subtype indicated by type will be
+**		created containing that value.
+**
+***********************************************************************/
+{
+	REBSER *ser;
+
+	if (ANY_BLOCK(value)) {
+		REBCNT len = VAL_BLK_LEN(value);
+		if (len > 0 && typenum >= REB_PATH && typenum <= REB_LIT_PATH) {
+			// REVIEW: Currently we don't allow any values of type none!
+			// if the target is a path, although these should probably
+			// be allowed and handled gracefully by MOLD/ALL
+			No_Nones(value);
+		}
+		ser = Copy_Values(VAL_BLK_DATA(value), len);
+	} else {
+		ser = Copy_Values(value, 1);
+	}
+
+	return ser;
+}
+
 
 // WARNING! Not re-entrant. !!!  Must find a way to push it on stack?
 static struct {
@@ -603,11 +625,24 @@ static struct {
 	len = Do_Series_Action(action, value, arg);
 	if (len >= 0) return len; // return code
 
-	// Special case (to avoid fetch of index and tail below):
+	// Special cases (to avoid fetch of index and tail below):
 	if (action == A_MAKE || action == A_TO) {
-		Make_Block_Type(action == A_MAKE, value, arg); // returned in value
-		if (ANY_PATH(value)) Clear_Value_Opts(VAL_SERIES(value));
-		*D_RET = *value;
+		REBCNT typenum;
+
+		// e.g. make block! ...
+		if (IS_DATATYPE(value))
+			typenum = VAL_DATATYPE(value);
+		else  // e.g. make [...] ....
+			typenum = VAL_TYPE(value);
+
+		ser = (action == A_MAKE)
+			? Make_Block_Type(typenum, arg)
+			: To_Block_Type(typenum, arg);
+
+		// Don't want line breaks appearing in paths, e.g. via new-line
+		if (ANY_PATH(value)) Clear_Value_Opts(ser);
+
+		Set_Series(typenum, D_RET, ser);
 		return R_RET;
 	}
 

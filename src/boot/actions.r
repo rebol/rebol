@@ -238,15 +238,15 @@ reflect: action [
 ;-- Making, copying, modifying
 
 make: action [
-	{Constructs or allocates the specified datatype.}
-	type [any-type!] {The datatype or an example value}
-	spec [any-type!] {Attributes or size of the new value (modified)}
+	{Constructs the given datatype, according to a specification.}
+	type [any-type!] {The target datatype, or example value of the target type}
+	spec [any-type!] {Specification of properties for the new value (modified)}
 ]
 
 to: action [
-	{Converts to a specified datatype.}
-	type [any-type!] {The datatype or example value}
-	spec [any-type!] {The attributes of the new value}
+	{Simple conversion of a value to a given datatype.}
+	type [any-type!] {The target datatype, or example value of the target type}
+	value [any-type!] {The value to convert}
 ]
 
 copy: action [

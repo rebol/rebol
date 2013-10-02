@@ -178,6 +178,10 @@ load-ext-module: funct [
 	]
 	;assert/type [hdr object! hdr/options [block! none!] code [binary! block!]]
 
+	; Convert the code to a block if not already.  Should be either block!
+	; or binary!, but may support string! transcoding in the future
+	unless block? code [code: make block! code]
+
 	loud-print ["Extension:" select hdr 'title]
 	unless hdr/options [hdr/options: make block! 1]
 	append hdr/options 'extension ; So make module! special cases it
@@ -201,8 +205,6 @@ load-ext-module: funct [
 		]
 	]
 
-	; Convert the code to a block if not already:
-	unless block? code [code: to block! code]
 	insert code tmp ; Extension object fields and values must be first!
 	reduce [hdr code] ; ready for make module!
 ]
@@ -322,7 +324,7 @@ load: funct [
 		; data is binary or block now, hdr is object or none
 
 		;-- Convert code to block, insert header if requested:
-		not block? data [data: to block! data]
+		not block? data [data: make block! data]
 		header [insert data hdr]
 
 		;-- Bind code to user context:
@@ -607,7 +609,7 @@ load-module: funct [
 						hdr/options: append any [hdr/options make block! 1] 'isolate
 					]
 				]
-				binary? code [code: to block! code]
+				binary? code [code: make block! code]
 			]
 			assert/type [hdr object! code block!]
 			mod: reduce [hdr code do-needs/no-user hdr]
