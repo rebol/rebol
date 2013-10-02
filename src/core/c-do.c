@@ -1608,7 +1608,6 @@ eval_func2:
 		return TRUE;
 	}
 	SET_STATE(state, Halt_State);
-	Saved_State = Halt_State;
 
 	SAVE_SERIES(block);
 	val = Do_Blk(block, index);
@@ -1616,7 +1615,6 @@ eval_func2:
 
 	DS_Base[state.dsp+1] = *val;
 	POP_STATE(state, Halt_State);
-	Saved_State = Halt_State;
 
 //	Debug_Fmt("Ret Halt %d", depth);
 
