@@ -202,53 +202,61 @@
 
 	case A_MAKE:
 	case A_TO:
-		val = D_ARG(2);
-		if (IS_DECIMAL(val) || IS_PERCENT(val)) {
-			if (VAL_DECIMAL(val) < MIN_D64 || VAL_DECIMAL(val) >= MAX_D64)
-				Trap0(RE_OVERFLOW);
-			num = (REBI64)VAL_DECIMAL(val);
-		}
-		else if (IS_INTEGER(val))
-			num = VAL_INT64(val);
-		else if (IS_MONEY(val))
-			num = deci_to_int(VAL_DECI(val));
-		else if (IS_ISSUE(val)) {
-			REBYTE *bp;
-			REBCNT len;
-			bp = Get_Word_Name(val);
-			len = strlen(bp);
-			n = MIN(MAX_HEX_LEN, len);
-			if (Scan_Hex(bp, &num, n, n) == 0) goto is_bad;
-		}
-		else if (IS_BINARY(val)) { // must be before STRING!
-			REBYTE	*bp;
-			n = VAL_LEN(val);
-			if (n > sizeof(REBI64)) n = sizeof(REBI64);
-			num = 0;
-			for (bp = VAL_BIN_DATA(val); n; n--, bp++)
-				num = (num << 8) | *bp;
-		}
-		else if (ANY_STR(val)) {
-			REBYTE *bp;
-			REBCNT len;
-			bp = Qualify_String(val, MAX_INT_LEN, &len, FALSE);
-			if (memchr(bp, '.', len)) {
-				if (Scan_Decimal(bp, len, DS_RETURN, TRUE)) {
-					num = (REBINT)VAL_DECIMAL(DS_RETURN);
-					break;
-				}
+		{
+			REBOOL make = (action == A_MAKE);
+			val = D_ARG(2);
+			if (IS_DECIMAL(val) || IS_PERCENT(val)) {
+				if (VAL_DECIMAL(val) < MIN_D64 || VAL_DECIMAL(val) >= MAX_D64)
+					Trap0(RE_OVERFLOW);
+				num = (REBI64)VAL_DECIMAL(val);
 			}
-			if (Scan_Integer(bp, len, DS_RETURN))
-				return R_RET;
-			goto is_bad;
+			else if (IS_INTEGER(val))
+				num = VAL_INT64(val);
+			else if (IS_MONEY(val))
+				num = deci_to_int(VAL_DECI(val));
+			else if (IS_ISSUE(val)) {
+				REBYTE *bp;
+				REBCNT len;
+				bp = Get_Word_Name(val);
+				len = strlen(bp);
+				n = MIN(MAX_HEX_LEN, len);
+				if (Scan_Hex(bp, &num, n, n) == 0) goto is_bad;
+			}
+			else if (IS_BINARY(val)) { // must be before STRING!
+				REBYTE	*bp;
+				n = VAL_LEN(val);
+				if (n > sizeof(REBI64)) n = sizeof(REBI64);
+				num = 0;
+				for (bp = VAL_BIN_DATA(val); n; n--, bp++)
+					num = (num << 8) | *bp;
+			}
+			else if (ANY_STR(val)) {
+				REBYTE *bp;
+				REBCNT len;
+				bp = Qualify_String(val, MAX_INT_LEN, &len, FALSE);
+				if (memchr(bp, '.', len)) {
+					if (Scan_Decimal(bp, len, DS_RETURN, TRUE)) {
+						num = (REBINT)VAL_DECIMAL(DS_RETURN);
+						break;
+					}
+				}
+				if (Scan_Integer(bp, len, DS_RETURN))
+					return R_RET;
+				goto is_bad;
+			}
+			else if (IS_LOGIC(val)) {
+				// No integer is uniquely representative of true, so TO conversions reject
+				// integer-to-logic conversions.  MAKE is more liberal and constructs true
+				// to 1 and false to 0.
+				if (!make) goto is_bad;
+				num = VAL_LOGIC(val) ? 1 : 0;
+			}
+			else if (IS_CHAR(val))
+				num = VAL_CHAR(val);
+			// else if (IS_NONE(val)) num = 0;
+			else if (IS_TIME (val)) num = SECS_IN(VAL_TIME(val));
+			else goto is_bad;
 		}
-		else if (IS_LOGIC(val))
-			num = VAL_LOGIC(val) ? 1 : 0; //VAL_LOGIC_WORDS(val) ? VAL_LOGIC(val) : (VAL_LOGIC(val) ? 1 : 0);
-		else if (IS_CHAR(val))
-			num = VAL_CHAR(val);
-		// else if (IS_NONE(val)) num = 0;
-		else if (IS_TIME (val)) num = SECS_IN(VAL_TIME(val));
-		else goto is_bad;
 		break;
 
 	default:
