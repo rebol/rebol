@@ -1021,29 +1021,47 @@ post:
 					index = begin;
 				}
 				if (flags & (1<<PF_INSERT | 1<<PF_CHANGE)) {
+					REBCNT modflags = 0;
 					count = GET_FLAG(flags, PF_INSERT) ? 0 : count;
-					cmd = GET_FLAG(flags, PF_INSERT) ? 0 : (1<<AN_PART);
+					if (!GET_FLAG(flags, PF_INSERT)) SET_FLAG(modflags, AN_PART);
 					item = rules++;
 					if (IS_END(item)) goto bad_end;
-					// Check for ONLY flag:
+					// Check for ONLY or SPLICE flag:
 					if (IS_WORD(item) && NZ(cmd = VAL_CMD(item))) {
-						if (cmd != SYM_ONLY) goto bad_rule;
-						cmd |= (1<<AN_ONLY);
+						// If a known parse keyword is used in the slot after the rule,
+						// then it must be either SPLICE or ONLY.
+						if (cmd == SYM_ONLY) {
+							SET_FLAG(modflags, AN_ONLY);
+						}
+						else if (cmd == SYM_SPLICE) {
+							SET_FLAG(modflags, AN_SPLICE);
+						} else goto bad_rule;
+
+						// If we saw a SPLICE or ONLY, then what we want substituted
+						// will be in the slot after that.
 						item = rules++;
+						item = Get_Parse_Value(item); // Check for QUOTE???
+					} else {
+						// What we have in the next slot could be an immediate value
+						// or a word containing a variable of what we want substituted.
+						// We obey the convention to request splicing by default if
+						// the types match on an any-block! substitution.
+						item = Get_Parse_Value(item); // Check for QUOTE???
+						if (ANY_BLOCK(item) && (VAL_TYPE(item) == parse->type)) {
+							SET_FLAG(modflags, AN_SPLICE);
+						}
 					}
-					// CHECK FOR QUOTE!!
-					item = Get_Parse_Value(item); // new value
 					if (IS_UNSET(item)) Trap1(RE_NO_VALUE, rules-1);
 					if (IS_END(item)) goto bad_end;
 					if (IS_BLOCK_INPUT(parse)) {
 						index = Modify_Block(GET_FLAG(flags, PF_CHANGE) ? A_CHANGE : A_INSERT,
-								series, begin, item, cmd, count, 1);
+								series, begin, item, modflags, count, 1);
 						if (IS_LIT_WORD(item)) SET_TYPE(BLK_SKIP(series, index-1), REB_WORD);
 					}
 					else {
-						if (parse->type == REB_BINARY) cmd |= (1<<AN_SERIES); // special flag
+						if (parse->type == REB_BINARY) SET_FLAG(modflags, AN_SERIES); // special flag
 						index = Modify_String(GET_FLAG(flags, PF_CHANGE) ? A_CHANGE : A_INSERT,
-								series, begin, item, cmd, count, 1);
+								series, begin, item, modflags, count, 1);
 					}
 				}
 				if (GET_FLAG(flags, PF_AND)) index = begin;

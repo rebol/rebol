@@ -39,7 +39,7 @@
 **		dst_ser:	target
 **		dst_idx:	position
 **		src_val:    source
-**		flags:		AN_ONLY, AN_PART
+**		flags:		AN_ONLY, AN_SPLICE, AN_PART
 **		dst_len:	length to remove
 **		dups:		dup count
 **
@@ -56,7 +56,8 @@
 	if (action == A_APPEND || dst_idx > tail) dst_idx = tail;
 
 	// Check /PART, compute LEN:
-	if (!GET_FLAG(flags, AN_ONLY) && ANY_BLOCK(src_val)) {
+	if (GET_FLAG(flags, AN_SPLICE)) {
+		ASSERT(ANY_BLOCK(src_val), RP_MISC);
 		is_blk = TRUE; // src_val is a block
 		// Are we modifying ourselves? If so, copy src_val block first:
 		if (dst_ser == VAL_SERIES(src_val)) {

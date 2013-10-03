@@ -177,178 +177,135 @@ static void No_Nones(REBVAL *arg) {
 
 /***********************************************************************
 **
-*/	void Modify_Blockx(REBCNT action, REBVAL *block, REBVAL *arg)
+*/	void Make_Block_Type(REBVAL *type_in_result_out, REBVAL *spec)
 /*
-**		Actions: INSERT, APPEND, CHANGE
+**		Type can be:
+**			1. a datatype (e.g. BLOCK!)
+**			2. a value used as an example to sense type (e.g. [...])
 **
-**		block [block!] {Series at point to insert}
-**		value [any-type!] {The value to insert}
-**		/part {Limits to a given length or position.}
-**		length [number! series! pair!]
-**		/only {Inserts a series as a series.}
-**		/dup {Duplicates the insert a specified number of times.}
-**		count [number! pair!]
+**		Spec can be:
+**			1. string/binary (tokenize to make a block of Rebol values)
+**			2. integer/decimal (make empty block w/reserved alloc size)
+**			3. block (dialect for more internal flags, future expansion)
+**			3. typeset (make block containing list of types in set)
+**		All other types convertible to blocks are flattened into them.
 **
-**	Add:
-**		Handle insert [] () case
-**		What does insert () [] do?
-**		/deep option for cloning subcontents?
+**		The result is overwritten into the REBVAL passed in as type.
 **
 ***********************************************************************/
 {
-	REBSER *series = VAL_SERIES(block);
-	REBCNT index = VAL_INDEX(block);
-	REBCNT tail  = VAL_TAIL(block);
-	REBFLG only  = DS_REF(AN_ONLY);
-	REBINT rlen;  // length to be removed
-	REBINT ilen  = 1;  // length to be inserted
-	REBINT cnt   = 1;  // DUP count
-	REBINT size;
-	REBFLG is_blk = FALSE; // arg is a block not a value
+	REBCNT typenum;
+	REBSER *ser;
 
-	// Length of target (may modify index): (arg can be anything)
-	rlen = Partial1((action == A_CHANGE) ? block : arg, DS_ARG(AN_LENGTH));
+	// make block! ...
+	if (IS_DATATYPE(type_in_result_out))
+		typenum = VAL_DATATYPE(type_in_result_out);
+	else  // make [...] ....
+		typenum = VAL_TYPE(type_in_result_out);
 
-	index = VAL_INDEX(block);
-	if (action == A_APPEND || index > tail) index = tail;
-
-	// Check /PART, compute LEN:
-	if (!only && ANY_BLOCK(arg)) {
-		is_blk = TRUE; // arg is a block
-		// Are we modifying ourselves? If so, copy arg block first:
-		if (series == VAL_SERIES(arg))  {
-			VAL_SERIES(arg) = Copy_Block(VAL_SERIES(arg), VAL_INDEX(arg));
-			VAL_INDEX(arg) = 0;
-		}
-		// Length of insertion:
-		ilen = (action != A_CHANGE && DS_REF(AN_PART)) ? rlen : VAL_LEN(arg);
+	// e.g. make block! [min: 10 max: 30 ...]
+	if (ANY_BLOCK(spec)) {
+		// Reserved for future expansion.  If you want to use a block
+		// as the contents for a new block of a different type, use
+		// TO with an ANY-BLOCK! as the type.  Or just use COPY if you
+		// want to retain the original type (more succinct).
+		Trap_Arg(spec);
+		goto done;
 	}
 
-	// Get /DUP count:
-	if (DS_REF(AN_DUP)) {
-		cnt = Int32(DS_ARG(AN_COUNT));
-		if (cnt <= 0) return; // no changes
+	if (IS_STRING(spec)) {
+		REBCNT index, len = 0;
+		VAL_SERIES(spec) = Prep_Bin_Str(spec, &index, &len); // (keeps safe)
+		ser = Scan_Source(VAL_BIN(spec), VAL_LEN(spec));
+		goto done;
 	}
 
-	// Total to insert:
-	size = cnt * ilen;
-
-	if (action != A_CHANGE) {
-		// Always expand series for INSERT and APPEND actions:
-		Expand_Series(series, index, size);
-	} else {
-		if (size > rlen) 
-			Expand_Series(series, index, size-rlen);
-		else if (size < rlen && DS_REF(AN_PART))
-			Remove_Series(series, index, rlen-size);
-		else if (size + index > tail) {
-			EXPAND_SERIES_TAIL(series, size - (tail - index));
-		}
+	if (IS_BINARY(spec)) {
+		ser = Scan_Source(VAL_BIN_DATA(spec), VAL_LEN(spec));
+		goto done;
 	}
 
-	if (is_blk) arg = VAL_BLK_DATA(arg);
-
-	// For dup count:
-	VAL_INDEX(block) = (action == A_APPEND) ? 0 : size + index;
-
-	index *= SERIES_WIDE(series); // loop invariant
-	ilen *= SERIES_WIDE(series);   // loop invariant
-	for (; cnt > 0; cnt--) {
-		memcpy(series->data + index, (REBYTE *)arg, ilen);
-		index += ilen;
+	if (IS_MAP(spec)) {
+		ser = Map_To_Block(VAL_SERIES(spec), 0);
+		goto done;
 	}
-	BLK_TERM(series);
+
+	if (ANY_OBJECT(spec)) {
+		ser = Make_Object_Block(VAL_OBJ_FRAME(spec), 3);
+		goto done;
+	}
+
+	if (IS_VECTOR(spec)) {
+		ser = Make_Vector_Block(spec);
+		goto done;
+	}
+
+//	if (make && IS_NONE(spec)) {
+//		ser = Make_Block(0);
+//		goto done;
+//	}
+
+	// make block! typeset
+	if (IS_TYPESET(spec) && typenum == REB_BLOCK) {
+		Set_Block(type_in_result_out, Typeset_To_Block(spec));
+		return;
+	}
+
+	// make block! 10
+	if (IS_INTEGER(spec) || IS_DECIMAL(spec)) {
+		REBCNT len = Int32s(spec, 0);
+		Set_Series(typenum, type_in_result_out, Make_Block(len));
+		return;
+	}
+	Trap_Arg(spec);
+
+	ser = Copy_Values(spec, 1);
+
+done:
+	Set_Series(typenum, type_in_result_out, ser);
+	return;
 }
 
 
 /***********************************************************************
 **
-*/	void Make_Block_Type(REBFLG make, REBVAL *value, REBVAL *arg)
+*/	void To_Block_Type(REBVAL *type_in_result_out, REBVAL *value)
 /*
-**		Value can be:
+**		Type can be:
 **			1. a datatype (e.g. BLOCK!)
-**			2. a value (e.g. [...])
+**			2. a value used as an example to sense type (e.g. [...])
 **
-**		Arg can be:
-**			1. integer (length of block)
-**			2. block (copy it)
-**			3. value (convert to a block)
+**		If value is an ANY-BLOCK!, a block of subtype indicated by
+**		type will be returned with the same contents as value
+**		copied into it.  For all non-block values inputs, a single
+**		element block of the subtype indicated by type will be
+**		created containing that value.
+**
+**		The result is overwritten into the REBVAL passed in as type.
 **
 ***********************************************************************/
 {
-	REBCNT type;
-	REBCNT len;
+	REBCNT typenum;
 	REBSER *ser;
 
-	// make block! ...
-	if (IS_DATATYPE(value))
-		type = VAL_DATATYPE(value);
-	else  // make [...] ....
-		type = VAL_TYPE(value);
+	// to block! ...
+	if (IS_DATATYPE(type_in_result_out))
+		typenum = VAL_DATATYPE(type_in_result_out);
+	else  // to [...] ....
+		typenum = VAL_TYPE(type_in_result_out);
 
-	// make block! [1 2 3]
-	if (ANY_BLOCK(arg)) {
-		len = VAL_BLK_LEN(arg);
-		if (len > 0 && type >= REB_PATH && type <= REB_LIT_PATH)
-			No_Nones(arg);
-		ser = Copy_Values(VAL_BLK_DATA(arg), len);
-		goto done;
+	if (ANY_BLOCK(value)) {
+		REBCNT len = VAL_BLK_LEN(value);
+		if (len > 0 && typenum >= REB_PATH && typenum <= REB_LIT_PATH)
+			No_Nones(value);
+		ser = Copy_Values(VAL_BLK_DATA(value), len);
+	} else {
+		ser = Copy_Values(value, 1);
 	}
 
-	if (IS_STRING(arg)) {
-		REBCNT index, len = 0;
-		VAL_SERIES(arg) = Prep_Bin_Str(arg, &index, &len); // (keeps safe)
-		ser = Scan_Source(VAL_BIN(arg), VAL_LEN(arg));
-		goto done;
-	}
-
-	if (IS_BINARY(arg)) {
-		ser = Scan_Source(VAL_BIN_DATA(arg), VAL_LEN(arg));
-		goto done;
-	}
-
-	if (IS_MAP(arg)) {
-		ser = Map_To_Block(VAL_SERIES(arg), 0);
-		goto done;
-	}
-
-	if (ANY_OBJECT(arg)) {
-		ser = Make_Object_Block(VAL_OBJ_FRAME(arg), 3);
-		goto done;
-	}
-
-	if (IS_VECTOR(arg)) {
-		ser = Make_Vector_Block(arg);
-		goto done;
-	}
-
-//	if (make && IS_NONE(arg)) {
-//		ser = Make_Block(0);
-//		goto done;
-//	}
-
-	// to block! typset
-	if (!make && IS_TYPESET(arg) && type == REB_BLOCK) {
-		Set_Block(value, Typeset_To_Block(arg));
-		return;
-	}
-
-	if (make) {
-		// make block! 10
-		if (IS_INTEGER(arg) || IS_DECIMAL(arg)) {
-			len = Int32s(arg, 0);
-			Set_Series(type, value, Make_Block(len));
-			return;
-		}
-		Trap_Arg(arg);
-	}
-
-	ser = Copy_Values(arg, 1);
-
-done:
-	Set_Series(type, value, ser);
-	return;
+	Set_Series(typenum, type_in_result_out, ser);
 }
+
 
 // WARNING! Not re-entrant. !!!  Must find a way to push it on stack?
 static struct {
@@ -603,9 +560,15 @@ static struct {
 	len = Do_Series_Action(action, value, arg);
 	if (len >= 0) return len; // return code
 
-	// Special case (to avoid fetch of index and tail below):
-	if (action == A_MAKE || action == A_TO) {
-		Make_Block_Type(action == A_MAKE, value, arg); // returned in value
+	// Special cases (to avoid fetch of index and tail below):
+	if (action == A_MAKE) {
+		Make_Block_Type(value, arg); // returned in value
+		if (ANY_PATH(value)) Clear_Value_Opts(VAL_SERIES(value));
+		*D_RET = *value;
+		return R_RET;
+	}
+	if (action == A_TO) {
+		To_Block_Type(value, arg); // returned in value
 		if (ANY_PATH(value)) Clear_Value_Opts(VAL_SERIES(value));
 		*D_RET = *value;
 		return R_RET;
@@ -740,8 +703,19 @@ zero_blk:
 		len = Partial1((action == A_CHANGE) ? value : arg, DS_ARG(AN_LENGTH));
 		index = VAL_INDEX(value);
 		args = 0;
-		if (DS_REF(AN_ONLY)) SET_FLAG(args, AN_ONLY);
+		if (ANY_BLOCK(arg)) {
+			if (DS_REF(AN_SPLICE)) {
+				SET_FLAG(args, AN_SPLICE);
+			}
+			else if (DS_REF(AN_ONLY)) {
+				SET_FLAG(args, AN_ONLY);
+			} 
+			else if (VAL_TYPE(value) == VAL_TYPE(arg)) {
+				SET_FLAG(args, AN_SPLICE);
+			}
+		}
 		if (DS_REF(AN_PART)) SET_FLAG(args, AN_PART);
+
 		index = Modify_Block(action, ser, index, arg, args, len, DS_REF(AN_DUP) ? Int32(DS_ARG(AN_COUNT)) : 1);
 		VAL_INDEX(value) = index;
 		break;
