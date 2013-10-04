@@ -355,6 +355,9 @@ xx*/	REBSER *Make_Func_Words(REBSER *spec)
 		case R_ARG3:
 			*ds = *D_ARG(3);
 			break;
+		case R_ARG4:
+			*ds = *D_ARG(4);
+			break;
 		}
 	}
 }
@@ -404,6 +407,9 @@ xx*/	REBSER *Make_Func_Words(REBSER *spec)
 			break;
 		case R_ARG3:
 			*ds = *D_ARG(3);
+			break;
+		case R_ARG4:
+			*ds = *D_ARG(4);
 			break;
 		}
 	}
