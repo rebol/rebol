@@ -82,7 +82,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 
 /***********************************************************************
 **
-*/	static REBCNT Parse_Series(REBVAL *val, REBVAL *rules, REBCNT flags, REBCNT depth)
+*/	static REBCNT Parse_Series(REBVAL *val, REBVAL *rules_block, REBCNT flags, REBCNT depth)
 /*
 ***********************************************************************/
 {
@@ -93,7 +93,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	parse.flags = flags;
 	parse.result = 0;
 
-	return Parse_Rules_Loop(&parse, VAL_INDEX(val), rules, depth);
+	return Parse_Rules_Loop(&parse, VAL_INDEX(val), rules_block, depth);
 }
 
 
@@ -115,7 +115,40 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 
 /***********************************************************************
 **
-*/	static REBVAL *Get_Parse_Value(REBVAL *item)
+*/	static REBVAL *Eval_Parse_Expression_Volatile(REBVAL* rules_block, REBVAL **ruleptr)
+/*
+**		Simple wrapper around Do_Next which adapts it to evaluate
+**		an expression that lives in a parse rule block; updating
+**		the parse rule pointer in accordance with the convention
+**		that it has already been advanced past the item at the
+**		head of the evaluation.  (Messy, but doing differently
+**		would require more invasive changes.)
+**
+**		To avoid having calls to this leak values on the stack,
+**		it pops the stack... but that means that the value is
+**		volatile.  So it should be used quickly before another
+**		evaluation is performed that could corrupt it.  Also, if
+**		the evaluation produces a value pointing to a new series,
+**		that could also get garbage collected if a Recycle()
+**		gets triggered.
+**
+***********************************************************************/
+{
+	REBCNT post_eval_index;
+	REBCNT rule_index = (*ruleptr - VAL_BLK_DATA(rules_block) - 1);
+	// For all paths, we call Do_Next to evaluate them and
+	// get the result.  The result lives on the top of
+	// the stack, and we pop it to avoid stack overflowing?
+	post_eval_index = Do_Next(VAL_SERIES(rules_block), rule_index, FALSE);
+	// advance rule pointer to just beyond last argument consumed
+	*ruleptr += post_eval_index - rule_index - 1; 
+	return DS_POP; // VOLATILE!
+}
+
+
+/***********************************************************************
+**
+*/	static REBVAL *Get_Parse_Value_Volatile(REBVAL *item, REBVAL* rules_block, REBVAL **ruleptr)
 /*
 **		Get the value of a word (when not a command) or path.
 **		Returns all other values as-is.
@@ -124,11 +157,12 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 {
 	if (IS_WORD(item)) {
 		if (!VAL_CMD(item)) item = Get_Var(item);
+		if (IS_FUNCTION(item) || IS_CLOSURE(item)) {
+			return Eval_Parse_Expression_Volatile(rules_block, ruleptr);
+		}
 	}
 	else if (IS_PATH(item)) {
-		REBVAL *path = item;
-		if (Do_Path(&path, 0)) return item; // found a function
-		item = DS_TOP;
+		return Eval_Parse_Expression_Volatile(rules_block, ruleptr);
 	}
 	return item;
 }
@@ -136,7 +170,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 
 /***********************************************************************
 **
-*/	static REBVAL *Do_Parse_Path(REBVAL *item, REBPARSE *parse, REBCNT *index)
+*/	static REBVAL *Do_Parse_Path_Volatile(REBVAL *item, REBPARSE *parse, REBVAL* rules_block, REBVAL **ruleptr, REBCNT *index)
 /*
 **		Handle a PATH, including get and set, that's found in a rule.
 **
@@ -146,8 +180,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	REBVAL tmp;
 
 	if (IS_PATH(item)) {
-		if (Do_Path(&path, 0)) return item; // found a function
-		item = DS_TOP;
+		return Eval_Parse_Expression_Volatile(rules_block, ruleptr);
 	}
 	else if (IS_SET_PATH(item)) {
 		Set_Series(parse->type, &tmp, parse->series);
@@ -238,7 +271,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 
 	// Parse a sub-rule block:
 	case REB_BLOCK:
-		index = Parse_Rules_Loop(parse, index, VAL_BLK_DATA(item), depth);
+		index = Parse_Rules_Loop(parse, index, item, depth);
 		break;
 
 	// Do an expression:
@@ -304,7 +337,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 
 	// Parse a sub-rule block:
 	case REB_BLOCK:
-		index = Parse_Rules_Loop(parse, index, VAL_BLK_DATA(item), depth);
+		index = Parse_Rules_Loop(parse, index, item, depth);
 		break;
 
 	// Do an expression:
@@ -372,7 +405,7 @@ no_result:
 				}
 			}
 			else if (IS_PATH(item)) {
-				item = Get_Parse_Value(item);
+				item = Get_Parse_Value_Volatile(item, block, &blk);
 			}
 
 			// Try to match it:
@@ -536,7 +569,7 @@ bad_target:
 
 /***********************************************************************
 **
-*/	static REBCNT Do_Eval_Rule(REBPARSE *parse, REBCNT index, REBVAL **rule)
+*/	static REBCNT Do_Eval_Rule(REBPARSE *parse, REBCNT index, REBVAL *rules_block, REBVAL **rule)
 /*
 **		Evaluate the input as a code block. Advance input if
 **		rule succeeds. Return new index or failure.
@@ -594,19 +627,19 @@ bad_target:
 			item = item + 1;
 			(*rule)++;
 			if (IS_END(item)) Trap1(RE_PARSE_END, item-2);
-			item = Get_Parse_Value(item); // sub-rules
+			item = Get_Parse_Value_Volatile(item, rules_block, rule); // sub-rules
 			if (!IS_BLOCK(item)) Trap1(RE_PARSE_RULE, item-2);
 			if (!ANY_BINSTR(&value) && !ANY_BLOCK(&value)) return NOT_FOUND;
-			return (Parse_Series(&value, VAL_BLK_DATA(item), parse->flags, 0) == VAL_TAIL(&value))
+			return (Parse_Series(&value, item, parse->flags, 0) == VAL_TAIL(&value))
 				? index : NOT_FOUND;
 		}
 		else if (n > 0)
 			Trap1(RE_PARSE_RULE, item);
 		else	
-			item = Get_Parse_Value(item); // variable
+			item = Get_Parse_Value_Volatile(item, rules_block, rule); // variable
 	}
 	else if (IS_PATH(item)) {
-		item = Get_Parse_Value(item); // variable
+		item = Get_Parse_Value_Volatile(item, rules_block, rule); // variable
 	}
 	else if (IS_SET_WORD(item) || IS_GET_WORD(item) || IS_SET_PATH(item) || IS_GET_PATH(item))
 		Trap1(RE_PARSE_RULE, item);
@@ -631,7 +664,7 @@ bad_target:
 
 /***********************************************************************
 **
-*/	static REBCNT Parse_Rules_Loop(REBPARSE *parse, REBCNT index, REBVAL *rules, REBCNT depth)
+*/	static REBCNT Parse_Rules_Loop(REBPARSE *parse, REBCNT index, REBVAL *rules_block, REBCNT depth)
 /*
 ***********************************************************************/
 {
@@ -650,7 +683,8 @@ bad_target:
 	REBSER *ser;
 	REBFLG flags;
 	REBCNT cmd;
-	REBVAL *rule_head = rules;
+	REBVAL *rule_head = VAL_BLK_DATA(rules_block);
+	REBVAL *rule = rule_head;
 
 	CHECK_STACK(&flags);
 	//if (depth > MAX_PARSE_DEPTH) Trap_Word(RE_LIMIT_HIT, SYM_PARSE, 0);
@@ -660,9 +694,9 @@ bad_target:
 	start = begin = index;
 
 	// For each rule in the rule block:
-	while (NOT_END(rules)) {
+	while (NOT_END(rule)) {
 
-		//Print_Parse_Index(parse->type, rules, series, index);
+		//Print_Parse_Index(parse->type, rule, series, index);
 
 		if (--Eval_Count <= 0 || Eval_Signals) Do_Signals();
 
@@ -674,7 +708,7 @@ bad_target:
 		// a GET-WORD variable.
 		//--------------------------------------------------------------------
 
-		item = rules++;
+		item = rule++;
 
 		// If word, set-word, or get-word, process it:
 		if (VAL_TYPE(item) >= REB_WORD && VAL_TYPE(item) <= REB_GET_WORD) {
@@ -708,7 +742,7 @@ bad_target:
 						SET_FLAG(flags, PF_COPY);
 					case SYM_SET:
 						SET_FLAG(flags, PF_SET);
-						item = rules++;
+						item = rule++;
 						if (!IS_WORD(item)) Trap1(RE_PARSE_VARIABLE, item);
 						if (VAL_CMD(item)) Trap1(RE_PARSE_COMMAND, item);
 						word = item;
@@ -740,8 +774,8 @@ bad_target:
 						continue;
 
 					case SYM_RETURN:
-						if (IS_PAREN(rules)) {
-							item = Do_Block_Value_Throw(rules); // might GC
+						if (IS_PAREN(rule)) {
+							item = Do_Block_Value_Throw(rule); // might GC
 							Throw_Return_Value(item);
 						}
 						SET_FLAG(flags, PF_RETURN);
@@ -761,7 +795,7 @@ bad_target:
 						goto post;
 
 					case SYM_IF:
-						item = rules++;
+						item = rule++;
 						if (IS_END(item)) goto bad_end;
 						if (!IS_PAREN(item)) Trap1(RE_PARSE_RULE, item);
 						item = Do_Block_Value_Throw(item); // might GC
@@ -773,7 +807,7 @@ bad_target:
 
 					case SYM_LIMIT:
 						Trap0(RE_NOT_DONE);
-						//val = Get_Parse_Value(rules++);
+						//val = Get_Parse_Value_Volatile(rule++);
 					//	if (IS_INTEGER(val)) limit = index + Int32(val);
 					//	else if (ANY_SERIES(val)) limit = VAL_INDEX(val);
 					//	else goto
@@ -781,7 +815,7 @@ bad_target:
 					//	goto post;
 
 					case SYM_QQ:
-						Print_Parse_Index(parse->type, rules, series, index);
+						Print_Parse_Index(parse->type, rule, series, index);
 						continue;
 					}
 				}
@@ -800,8 +834,8 @@ bad_target:
 					item = Get_Var(item);
 					// CureCode #1263 change
 					//if (parse->type != VAL_TYPE(item) || VAL_SERIES(item) != series)
-					//	Trap1(RE_PARSE_SERIES, rules-1);
-					if (!ANY_SERIES(item)) Trap1(RE_PARSE_SERIES, rules-1);
+					//	Trap1(RE_PARSE_SERIES, rule-1);
+					if (!ANY_SERIES(item)) Trap1(RE_PARSE_SERIES, rule-1);
 					index = Set_Parse_Series(parse, item);
 					series = parse->series;
 					continue;
@@ -809,14 +843,17 @@ bad_target:
 
 				// word - some other variable
 				if (IS_WORD(item)) {
-					item = Get_Var(item);
+					item = Get_Parse_Value_Volatile(item, rules_block, &rule);
 				}
 
 				// item can still be 'word or /word
 			}
 		}
 		else if (ANY_PATH(item)) {
-			item = Do_Parse_Path(item, parse, &index); // index can be modified
+			// index can be modified if (...what?)
+			// rule will be advanced if path was a function w/args,
+			// (to the position of the last argument)
+			item = Do_Parse_Path_Volatile(item, parse, rules_block, &rule, &index);
 			if (index > series->tail) index = series->tail;
 			if (item == 0) continue; // for SET and GET cases
 		}
@@ -831,12 +868,14 @@ bad_target:
 		if (IS_INTEGER(item)) {	// Specify count or range count
 			SET_FLAG(flags, PF_WHILE);
 			mincount = maxcount = Int32s(item, 0);
-			item = Get_Parse_Value(rules++);
-			if (IS_END(item)) Trap1(RE_PARSE_END, rules-2);
+			rule++;
+			item = Get_Parse_Value_Volatile(rule, rules_block, &rule);
+			if (IS_END(item)) Trap1(RE_PARSE_END, rule-2);
 			if (IS_INTEGER(item)) {
 				maxcount = Int32s(item, 0);
-				item = Get_Parse_Value(rules++);
-				if (IS_END(item)) Trap1(RE_PARSE_END, rules-2);
+				rule++;
+				item = Get_Parse_Value_Volatile(rule, rules_block, &rule);
+				if (IS_END(item)) Trap1(RE_PARSE_END, rule-2);
 			}
 		}
 		// else fall through on other values and words
@@ -852,10 +891,10 @@ bad_target:
 		item_hold = item;	// a command or literal match value
 		if (VAL_TYPE(item) <= REB_UNSET || VAL_TYPE(item) >= REB_NATIVE) goto bad_rule;
 		begin = index;		// input at beginning of match section
-		rulen = 0;			// rules consumed (do not use rule++ below)
+		rulen = 0;			// rule consumed (do not use rule++ below)
 		i = index;
 
-		//note: rules var already advanced
+		//note: rule var already advanced
 
 		for (count = 0; count < maxcount;) {
 
@@ -875,37 +914,37 @@ bad_target:
 
 				case SYM_TO:
 				case SYM_THRU:
-					if (IS_END(rules)) goto bad_end;
-					item = Get_Parse_Value(rules);
+					if (IS_END(rule)) goto bad_end;
+					item = Get_Parse_Value_Volatile(rule, rules_block, &rule);
 					rulen = 1;
 					i = Parse_To(parse, index, item, cmd == SYM_THRU);
 					break;
 					
 				case SYM_QUOTE:
-					if (IS_END(rules)) goto bad_end;
+					if (IS_END(rule)) goto bad_end;
 					rulen = 1;
-					if (IS_PAREN(rules)) {
-						item = Do_Block_Value_Throw(rules); // might GC
+					if (IS_PAREN(rule)) {
+						item = Do_Block_Value_Throw(rule); // might GC
 					}
-					else item = rules;
+					else item = rule;
 					i = (0 == Cmp_Value(BLK_SKIP(series, index), item, parse->flags & AM_FIND_CASE)) ? index+1 : NOT_FOUND;
 					break;
 
 				case SYM_INTO:
-					if (IS_END(rules)) goto bad_end;
+					if (IS_END(rule)) goto bad_end;
 					rulen = 1;
-					item = Get_Parse_Value(rules); // sub-rules
+					item = Get_Parse_Value_Volatile(rule, rules_block, &rule); // sub-rule
 					if (!IS_BLOCK(item)) goto bad_rule;
 					val = BLK_SKIP(series, index);
 					i = (
 						(ANY_BINSTR(val) || ANY_BLOCK(val))
-						&& (Parse_Series(val, VAL_BLK_DATA(item), parse->flags, depth+1) == VAL_TAIL(val))
+						&& (Parse_Series(val, item, parse->flags, depth+1) == VAL_TAIL(val))
 					) ? index+1 : NOT_FOUND;
 					break;
 
 				case SYM_DO:
 					if (!IS_BLOCK_INPUT(parse)) goto bad_rule;
-					i = Do_Eval_Rule(parse, index, &rules);
+					i = Do_Eval_Rule(parse, index, rules_block, &rule);
 					rulen = 1;
 					break;
 
@@ -914,9 +953,8 @@ bad_target:
 				}
 			}
 			else if (IS_BLOCK(item)) {
-				item = VAL_BLK_DATA(item);
-				//if (IS_END(rules) && item == rule_head) {
-				//	rules = item;
+				//if (IS_END(rule) && item == rule_head) {
+				//	rule = item;
 				//	goto top;
 				//}
 				i = Parse_Rules_Loop(parse, index, item, depth+1);
@@ -960,7 +998,7 @@ bad_target:
 			//if (parse->result) {parse->result = 0; break;}
 		}
 
-		rules += rulen;
+		rule += rulen;
 
 		//if (index > series->tail && index != NOT_FOUND) index = series->tail;
 		if (index > series->tail) index = NOT_FOUND;
@@ -979,8 +1017,8 @@ post:
 			if (index == NOT_FOUND) { // Failure actions:
 				// not decided: if (word) Set_Var_Basic(word, REB_NONE);
 				if (GET_FLAG(flags, PF_THEN)) {
-					SKIP_TO_BAR(rules);
-					if (!IS_END(rules)) rules++;
+					SKIP_TO_BAR(rule);
+					if (!IS_END(rule)) rule++;
 				}
 			}
 			else {  // Success actions:
@@ -1023,17 +1061,17 @@ post:
 				if (flags & (1<<PF_INSERT | 1<<PF_CHANGE)) {
 					count = GET_FLAG(flags, PF_INSERT) ? 0 : count;
 					cmd = GET_FLAG(flags, PF_INSERT) ? 0 : (1<<AN_PART);
-					item = rules++;
+					item = rule++;
 					if (IS_END(item)) goto bad_end;
 					// Check for ONLY flag:
 					if (IS_WORD(item) && NZ(cmd = VAL_CMD(item))) {
 						if (cmd != SYM_ONLY) goto bad_rule;
 						cmd |= (1<<AN_ONLY);
-						item = rules++;
+						item = rule++;
 					}
 					// CHECK FOR QUOTE!!
-					item = Get_Parse_Value(item); // new value
-					if (IS_UNSET(item)) Trap1(RE_NO_VALUE, rules-1);
+					item = Get_Parse_Value_Volatile(item, rules_block, &rule); // new value
+					if (IS_UNSET(item)) Trap1(RE_NO_VALUE, rule-1);
 					if (IS_END(item)) goto bad_end;
 					if (IS_BLOCK_INPUT(parse)) {
 						index = Modify_Block(GET_FLAG(flags, PF_CHANGE) ? A_CHANGE : A_INSERT,
@@ -1055,9 +1093,9 @@ post:
 
 		// Goto alternate rule and reset input:
 		if (index == NOT_FOUND) {
-			SKIP_TO_BAR(rules);
-			if (IS_END(rules)) break;
-			rules++;
+			SKIP_TO_BAR(rule);
+			if (IS_END(rule)) break;
+			rule++;
 			index = begin = start;
 		}
 
@@ -1068,9 +1106,9 @@ post:
 	return index;
 
 bad_rule:
-	Trap1(RE_PARSE_RULE, rules-1);
+	Trap1(RE_PARSE_RULE, rule-1);
 bad_end:
-	Trap1(RE_PARSE_END, rules-1);
+	Trap1(RE_PARSE_END, rule-1);
 	return 0;
 }
 
@@ -1261,7 +1299,7 @@ bad_end:
 			Throw_Error(VAL_ERR_OBJECT(DS_RETURN));
 		}
 		SET_STATE(state, Saved_State);
-		n = Parse_Series(val, VAL_BLK_DATA(arg), (opts & PF_CASE) ? AM_FIND_CASE : 0, 0);
+		n = Parse_Series(val, arg, (opts & PF_CASE) ? AM_FIND_CASE : 0, 0);
 		SET_LOGIC(DS_RETURN, n >= VAL_TAIL(val) && n != NOT_FOUND);
 		POP_STATE(state, Saved_State);
 	}
