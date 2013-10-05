@@ -323,6 +323,7 @@ make_sym:
 ***********************************************************************/
 {
 	VAL_SET(value, REB_WORD);
+	VAL_SET_OPT(value, OPTS_UNWORD);
 	VAL_BIND_SYM(value) = sym;
 	VAL_BIND_TYPESET(value) = ALL_64;
 }
