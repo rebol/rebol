@@ -131,10 +131,10 @@ do: native [
 ;]
 
 either: native [
-	{If condition is TRUE, evaluates the first block, else evaluates the second.}
+	{If TRUE condition return first arg, else second; evaluate block args.}
 	condition
-	true-block [block!]
-	false-block [block!]
+	true-branch
+	false-branch
 ]
 
 exit: native [
@@ -186,11 +186,11 @@ halt: native [
 ]
 
 if: native [
-	{If condition is TRUE, evaluates the block.}
+	{If TRUE condition, return arg; evaluate block args.}
 	condition
-	then-block [block!]
+	true-branch
 	/else "If not true, evaluate this block"
-	else-block [block!]
+	false-branch
 ]
 
 loop: native [
@@ -306,9 +306,9 @@ try: native [
 ]
 
 unless: native [
-	{Evaluates the block if condition is not TRUE.}
+	{If FALSE condition, return arg; evaluate block args.}
 	condition
-	block [block!]
+	false-branch
 ]
 
 until: native [

@@ -642,7 +642,13 @@ got_err:
 		DO_BLK(D_ARG(argnum));
 		return R_TOS1;
 	} {
-		return argnum == 2 ? R_ARG2 : R_ARG4;
+		if (argnum == 2)
+			return R_ARG2;
+		else {
+			// No R_ARG4, but IF/ELSE may get the axe (CC #2077)
+			DS_RET_VALUE(D_ARG(argnum));
+			return R_RET;
+		}
 	}
 
 }
