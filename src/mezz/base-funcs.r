@@ -121,3 +121,15 @@ default: func [
 
 secure: func ['d] [boot-print "SECURE is disabled"]
 
+prin: func [
+	{Deprecated print variant that reduces blocks, inserts spaces, no newline}
+	value {Value to print}
+] [
+	if block? value [
+		value: reduce value
+		while [not tail? value: next value] [
+			value: insert value space
+		]
+	]
+	print/only head value
+]

@@ -32,6 +32,7 @@ Note: [
 	exited:             [{exit occurred}]
 	deprecated:         {deprecated function not allowed}
 	else-gone:          {ELSE is obsolete - use the EITHER function}
+	prin-gone:			{PRIN is obsolete - use PRINT/ONLY}
 ]
 
 Syntax: [

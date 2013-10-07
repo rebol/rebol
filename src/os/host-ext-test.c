@@ -93,7 +93,7 @@ char *RX_Spec =
 			"[cec0 [a: cec1 b: cec1 c: cec1] reduce [a b c]]\n"
 		"][\n"
 			"print [{test:} mold blk]\n"
-			"prin {      } \n"
+			"print/only {      } \n"
 			//"replace {x} {x} {y}\n"
 			"probe do blk\n"
 		"]\n"
