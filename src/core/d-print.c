@@ -393,7 +393,7 @@ static REBREQ *Req_SIO;
 		Debug_Space(1);
 		if (n > 0 && VAL_TYPE(value) <= REB_NONE) Debug_Chars('.', 1);
 		else {
-			out = Mold_Print_Value(value, limit, TRUE); // shared mold buffer
+			out = Mold_Print_Value(value, limit, TRUE, FALSE); // shared mold buffer
 			for (i1 = i2 = 0; i1 < out->tail; i1++) {
 				uc = GET_ANY_CHAR(out, i1);
 				if (uc < ' ') uc = ' ';
@@ -722,7 +722,7 @@ pick:
 			vp = va_arg(args, REBVAL *);
 mold_value:
 			// Form the REBOL value into a reused buffer:
-			ser = Mold_Print_Value(vp, 0, desc != 'v');
+			ser = Mold_Print_Value(vp, 0, desc != 'v', FALSE);
 
 			l = Length_As_UTF8(UNI_HEAD(ser), SERIES_TAIL(ser), TRUE, OS_CRLF);
 			if (pad != 1 && l > pad) l = pad;
@@ -775,14 +775,14 @@ mold_value:
 
 /***********************************************************************
 **
-*/  void Prin_Value(REBVAL *value, REBCNT limit, REBOOL mold)
+*/  void Print_Only_Value(REBVAL *value, REBCNT limit, REBOOL mold)
 /*
 **		Print a value or block's contents for user viewing.
 **		Can limit output to a given size. Set limit to 0 for full size.
 **
 ***********************************************************************/
 {
-	REBSER *out = Mold_Print_Value(value, limit, mold);
+	REBSER *out = Mold_Print_Value(value, limit, mold, TRUE);
 	Prin_OS_String(out->data, out->tail, TRUE);
 }
 
@@ -796,7 +796,8 @@ mold_value:
 **
 ***********************************************************************/
 {
-	Prin_Value(value, limit, mold);
+	REBSER *out = Mold_Print_Value(value, limit, mold, FALSE);
+	Prin_OS_String(out->data, out->tail, TRUE);
 	Print_OS_Line();
 }
 

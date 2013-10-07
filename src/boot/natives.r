@@ -599,13 +599,9 @@ value?: native [
 ;-- IO Natives - nat_io.c
 
 print: native [
-	{Outputs a value followed by a line break.}
+	{Outputs a value to the standard output device.}
 	value [any-type!] {The value to print}
-]
-
-prin: native [
-	{Outputs a value with no line break.}
-	value [any-type!]
+	/only {For a block value, no spaces between components and no newline.}
 ]
 
 mold: native [

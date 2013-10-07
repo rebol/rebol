@@ -152,9 +152,17 @@ static REBSER *Read_All_File(char *fname)
 ***********************************************************************/
 {
 	REBVAL *value = D_ARG(1);
+	REBOOL splf = !D_REF(2);
 
-	if (IS_BLOCK(value)) Reduce_Block(VAL_SERIES(value), VAL_INDEX(value), 0);
-	Print_Value(DS_TOP, 0, 0);
+	if (IS_BLOCK(value)) {
+		Reduce_Block(VAL_SERIES(value), VAL_INDEX(value), 0);
+		value = DS_TOP;
+	}
+	if (splf) {
+		Print_Value(value, 0, FALSE);
+	} else {
+		Print_Only_Value(value, 0, FALSE);
+	}
 	return R_UNSET; // reloads ds
 }
 
@@ -165,11 +173,8 @@ static REBSER *Read_All_File(char *fname)
 /*
 ***********************************************************************/
 {
-	REBVAL *value = D_ARG(1);
-
-	if (IS_BLOCK(value)) Reduce_Block(VAL_SERIES(value), VAL_INDEX(value), 0);
-	Prin_Value(DS_TOP, 0, 0);
-	return R_UNSET; // reloads ds
+	Trap0(RE_PRIN_GONE);
+	DEAD_END;
 }
 
 
