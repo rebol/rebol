@@ -302,13 +302,14 @@ x*/	REBSER *Copy_Block_Deep(REBSER *block, REBCNT index, REBINT len, REBCNT mode
 
 			REBCNT i;
 			REBCNT flags = 0;
+			REBCNT offset = VAL_INDEX(into);
 			// you get weird behavior if you don't do this
 			if (IS_BINARY(into)) SET_FLAG(flags, AN_SERIES);
 			for (i = 0; i < len; i++) {
-				VAL_INDEX(into) += Modify_String(
+				offset = Modify_String(
 					A_INSERT,
 					VAL_SERIES(into),
-					VAL_INDEX(into) + i,
+					offset,
 					blk + i,
 					flags,
 					1, // insert one element at a time
@@ -319,7 +320,7 @@ x*/	REBSER *Copy_Block_Deep(REBSER *block, REBCNT index, REBINT len, REBCNT mode
 			// Len is used below to set the index of the result,
 			// and we want it to be just past the last element
 			// that we inserted
-			len = VAL_INDEX(into);
+			len = offset;
 		}
 	} else {
 		series = Make_Series(len + 1, sizeof(REBVAL), FALSE);

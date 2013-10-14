@@ -13,6 +13,8 @@ REBOL [
 	Needs: 2.100.100
 ]
 
+do %workarounds.r
+
 verbose: false
 
 version: load %../boot/version.r

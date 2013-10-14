@@ -12,15 +12,17 @@ REBOL [
 	Author: "Carl Sassenrath"
 ]
 
+do %workarounds.r
+
 bv: load %../boot/version.r
 
 form-header: func [title [string!] file [file!] /gen by] [
 	print ["..." title]
 	by: either gen [
-		rejoin [{**  AUTO-GENERATED FILE - Do not modify. (From: } by {)^/**^/}]
+		join [{**  AUTO-GENERATED FILE - Do not modify. (From: } by {)^/**^/}]
 	][""]
 
-	rejoin [
+	join [
 {/***********************************************************************
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment

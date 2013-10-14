@@ -18,9 +18,10 @@ REBOL [
 
 ;-- Control Natives - nat_control.c
 
-ajoin: native [
-	{Reduces and joins a block of values into a new string.}
-	block [block!]
+adjoin: native [
+	{Creates a new series concatenating base and rest, with type cued by base.}
+	base {Base value (string converted if scalar, not reduced if block)}
+	rest {Value or block of values (will be reduced if block)}
 ]
 
 also: native [
@@ -191,6 +192,11 @@ if: native [
 	then-block [block!]
 	/else "If not true, evaluate this block"
 	else-block [block!]
+]
+
+join: native [
+	"Reduce a block's first expression, and adjoin it to the remaining content."
+	block [block!] "Values to reduce and join"
 ]
 
 loop: native [

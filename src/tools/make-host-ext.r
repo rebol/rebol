@@ -147,11 +147,11 @@ emit-file: func [
 	emit ["const unsigned char RX_" name "[] = {^/" to-cstr data "^/};^/^/"]
 	emit "#endif^/"
 
-	write rejoin [%../include/ file %.h] out
+	write join [%../include/ file %.h] out
 
 ;	clear out
 ;	emit form-header/gen join title " - Module Initialization" second split-path file %make-host-ext.r
-;	write rejoin [%../os/ file %.c] out
+;	write join [%../os/ file %.c] out
 ]
 
 ;-- Create Files -------------------------------------------------------------

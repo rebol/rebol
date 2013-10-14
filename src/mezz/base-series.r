@@ -16,6 +16,11 @@ REBOL [
 	}
 ]
 
+;; Deprecated - use JOIN which is now functionally equivalent and native.
+;; (or ADJOIN if you specifically wish to join one value with a value or series)
+rejoin: :join 
+
+;; Deprecated - instead of REPEND X Y use APPEND X REDUCE Y
 repend: func [
 	"Appends a reduced value to a series and returns the series head."
 	series [series! port! map! gob! object! bitset!] {Series at point to insert (modified)}
@@ -29,19 +34,32 @@ repend: func [
 	apply :append [series reduce :value part length only dup count]
 ]
 
-join: func [
-	"Concatenates values."
-	value "Base value"
-	rest "Value or block of values"
-][
-	value: either series? :value [copy value] [form :value]
-	repend value :rest
-]
-
+;; Deprecated - instead of REFORM X use FORM REDUCE X
 reform: func [
 	"Forms a reduced block and returns a string."
 	value "Value to reduce and form"
 	;/with "separator"
 ][
 	form reduce :value
+]
+
+;; Deprecated - instead of REMOLD X use MOLD REDUCE X
+remold: func [
+	{Reduces and converts a value to a REBOL-readable string.}
+	value {The value to reduce and mold}
+	/only {For a block value, mold only its contents, no outer []}
+	/all  {Mold in serialized format}
+	/flat {No indentation}
+][
+	apply :mold [reduce :value only all flat]
+]
+
+;; Deprecated - AJOIN X was really just FORM REDUCE X internally
+;; Use ADJOIN {} X or update to be expressed as a JOIN, which
+;; is now faster by virtue of being native.
+ajoin: func [
+	{Reduces and joins a block of values into a new string}
+	block [block!]
+] [
+	adjoin {} block
 ]

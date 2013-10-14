@@ -26,7 +26,7 @@ to-event:
 use [word] [
 	foreach type system/catalog/datatypes [
 		; The list above determines what will be made here:
-		if in lib word: make word! head remove back tail ajoin ["to-" type] [
+		if in lib word: make word! head remove back tail join ["to-" type] [
 			; Add doc line only if this build has autodocs:
 			set in lib :word func either string? first spec-of :make [
 				reduce [reform ["Converts to" form type "value."] 'value]

@@ -19,6 +19,8 @@ REBOL [
 	}
 ]
 
+do %workarounds.r
+
 print "--- Make Host Init Code ---"
 ;print ["REBOL version:" system/version]
 

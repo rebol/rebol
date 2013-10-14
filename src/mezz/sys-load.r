@@ -748,6 +748,6 @@ test: [
 		[1 2 3] = probe xload/header %test-emb.r
 	]
 ]
-foreach t test [print either do t ['ok] [join "FAILED:" mold t] print ""]
+foreach t test [print either do t ['ok] [join ["FAILED:" mold t]] print ""]
 halt
 ]

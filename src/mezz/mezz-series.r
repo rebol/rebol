@@ -50,27 +50,6 @@ extend: func [
 	:val
 ]
 
-rejoin: func [
-	"Reduces and joins a block of values."
-	block [block!] "Values to reduce and join"
-	;/with "separator"
-][
-	if empty? block: reduce block [return block]
-	append either series? first block [copy first block][
-		form first block
-	] next block
-]
-
-remold: func [
-	{Reduces and converts a value to a REBOL-readable string.}
-	value {The value to reduce and mold}
-	/only {For a block value, mold only its contents, no outer []}
-	/all  {Mold in serialized format}
-	/flat {No indentation}
-][
-	apply :mold [reduce :value only all flat]
-]
-
 charset: func [
 	"Makes a bitset of chars for the parse function."
 	chars [string! block! binary! char! integer!]
