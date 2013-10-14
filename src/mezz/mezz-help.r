@@ -195,7 +195,7 @@ dump-obj: funct [
 			tmp: http://www.rebol.com/r3/docs/datatypes/
 			remove back tail item ; the !
 		]
-		browse join tmp [item ".html"]
+		browse join [tmp item ".html"]
 	]
 
 	; If arg is a string or datatype! word, search the system:
@@ -227,7 +227,7 @@ dump-obj: funct [
 	type-name: func [value] [
 		value: mold type? :value
 		clear back tail value
-		join either find "aeiou" first value ["an "]["a "] value
+		join [either find "aeiou" first value ["an"] ["a"] space value]
 	]
 
 	; Print literal values:
@@ -269,7 +269,7 @@ dump-obj: funct [
 		print [uppercase mold word args]
 	]
 
-	print ajoin [
+	print join [
 		newline "DESCRIPTION:" newline
 		tab any [title-of :value "(undocumented)"] newline
 		tab uppercase mold word " is " type-name :value " value."
@@ -283,7 +283,7 @@ dump-obj: funct [
 		if empty? list [exit]
 		print label
 		foreach arg list [
-			str: ajoin [tab arg/1]
+			str: join [tab arg/1]
 			if all [extra word? arg/1] [insert str tab]
 			if arg/2 [append append str " -- " arg/2]
 			if all [arg/3 not refinement? arg/1] [
@@ -481,8 +481,9 @@ why?: func [
 		err/type ; avoids lower level error types (like halt)
 	][
 		say-browser
-		err: lowercase ajoin [err/type #"-" err/id]
-		browse join http://www.rebol.com/r3/docs/errors/ [err ".html"]
+		browse lowercase join [
+			http://www.rebol.com/r3/docs/errors/ err/type #"-" err/id %.html
+		]
 	][
 		print "No information is available."
 	]

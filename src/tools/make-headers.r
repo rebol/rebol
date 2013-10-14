@@ -13,6 +13,8 @@ REBOL [
 	Needs: 2.100.100
 ]
 
+do %workarounds.r
+
 print "------ Building headers"
 
 r3: system/version > 2.100.0

@@ -104,7 +104,7 @@ make-http-error: func [
 	"Make an error for the HTTP protocol"
 	message [string! block!]
 ] [
-	if block? message [message: ajoin message]
+	if block? message [message: join message]
 	make error! [
 		type: 'Access
 		id: 'Protocol
@@ -125,7 +125,7 @@ make-http-request: func [
 	content [any-string! binary! none!] {Request contents (Content-Length is created automatically). Empty string not exactly like none.}
 	/local result
 ] [
-	result: rejoin [
+	result: join [
 		uppercase form method #" "
 		either file? target [next mold target] [target]
 		" HTTP/1.0" CRLF
@@ -153,7 +153,7 @@ do-request: func [
 		Accept: "*/*"
 		Accept-Charset: "utf-8"
 		Host: either spec/port-id <> 80 [
-			rejoin [form spec/host #":" spec/port-id]
+			join [form spec/host #":" spec/port-id]
 		] [
 			form spec/host
 		]
@@ -326,7 +326,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state] 
 	spec: port/spec
 	state: port/state
 	if #"/" = first new-uri [
-		new-uri: to url! ajoin [spec/scheme "://" spec/host new-uri]
+		new-uri: to url! join [to string! spec/scheme "://" spec/host new-uri]
 	]
 	new-uri: construct/with decode-url new-uri port/scheme/spec
 	if new-uri/scheme <> 'http [
@@ -469,7 +469,7 @@ sys/make-scheme [
 				scheme: 'tcp
 				host: port/spec/host
 				port-id: port/spec/port-id
-				ref: rejoin [tcp:// host ":" port-id]
+				ref: join [tcp:// host ":" port-id]
 			]
 			conn/awake: :http-awake
 			conn/locals: port

@@ -19,6 +19,22 @@ REBOL [
 	}
 ]
 
+do %workarounds.r
+
+unless value? 'old-to [
+    old-to: :to
+]
+
+to: func [type value] [
+    if any [string! == type  string! == type? type] [
+        if any-word? value [
+            return replace/all replace/all replace/all old-to string! value {:} {} {'} {} {/} {}
+        ]
+    ]
+    return old-to type value
+]
+
+
 print "--- Make Boot : System Embedded Script ---"
 
 do %form-header.r
@@ -163,10 +179,10 @@ emit-line: func [prefix word cmt /var /define /code /decl /up1 /local str][
 	if up1 [uppercase/part str 1]
 
 	str: any [
-		if define [rejoin [prefix str]]
-		if code   [rejoin ["    " prefix str cmt]]
-		if decl   [rejoin [prefix str cmt]]
-		rejoin ["    " prefix str ","]
+		if define [join [prefix str]]
+		if code   [join ["    " prefix str cmt]]
+		if decl   [join [prefix str cmt]]
+		join ["    " prefix str ","]
 	]
 	if any [code decl] [cmt: none]
 	if cmt [
@@ -421,7 +437,7 @@ write inc/tmp-comptypes.h out
 ;		+ [t: type]
 ;		- [t: 0]
 ;	][t: uppercase/part form moldtype 1]
-;	emit [tab "case " uppercase join "REB_" type ":" tab "\\" t]
+;	emit [tab "case " uppercase join ["REB_" type] ":" tab "\\" t]
 ;	emit newline
 ;	;emit-line/var f t type
 ;]
@@ -446,7 +462,7 @@ write inc/tmp-comptypes.h out
 ;		f+ [t: type f: "Form_"]
 ;		-  [t: 0]
 ;	][t: uppercase/part form moldtype 1]
-;	emit [tab "case " uppercase join "REB_" type ":" tab "\\" t]
+;	emit [tab "case " uppercase join ["REB_" type] ":" tab "\\" t]
 ;	emit newline
 ;	;emit-line/var f t type
 ;]
@@ -496,10 +512,10 @@ emit {
 
 new-types: []
 foreach :type-record boot-types [
-	append new-types to-word join type "!"
+	append new-types to-word join [to string! type "!"]
 	str: uppercase form type
 	replace/all str #"-" #"_"
-	def: join {#define IS_} [str "(v)"]
+	def: join [{#define IS_} str "(v)"]
 	len: 31 - length? def
 	loop to-integer len / 4 [append def tab]
 	emit [def "(VAL_TYPE(v)==REB_" str ")" newline]
@@ -570,7 +586,7 @@ enum REBOL_Ext_Types
 n: 0
 foreach :rxt-record ext-types [
 	either integer? offset [
-		emit-line "RXT_" rejoin [type " = " offset] n
+		emit-line "RXT_" join [to string! type " = " offset] n
 	][
 		emit-line "RXT_" type n
 	]
@@ -646,7 +662,7 @@ emit {
 #define RXT_ALLOWED_TYPES (}
 foreach type next rxt-types [
 	if word? type [
-		emit replace join "((u64)" uppercase rejoin ["1<<REB_" type ") \^/"] #"-" #"_"
+		emit replace join ["((u64)" uppercase join ["1<<REB_" type ") \^/"]] #"-" #"_"
 		emit "|"
 	]
 ]
@@ -722,7 +738,7 @@ emit {
 
 n: 1
 foreach :type-record boot-types [
-	emit-line "SYM_" join type "_type" n
+	emit-line "SYM_" join [to string! type "_type"] n
 	n: n + 1
 ]
 
@@ -803,12 +819,12 @@ make-obj-defs: func [obj prefix depth /local f] [
 	foreach field words-of obj [ ;R3
 		emit-line prefix field none
 	]
-	emit [tab uppercase join prefix "MAX^/"]
+	emit [tab uppercase join [to string! prefix "MAX^/"]]
 	emit "};^/^/"
 
 	if depth > 1 [
 		foreach field words-of obj [ ;R3
-			f: join prefix [field #"_"]
+			f: join [to string! prefix field #"_"]
 			replace/all f "-" "_"
 			all [
 				field <> 'standard
@@ -940,7 +956,7 @@ foreach [cat msgs] boot-errors [
 		]
 		code: code + 1
 	]
-	emit-line "RE_" join to word! cat "_max" none ;R3
+	emit-line "RE_" join [to string! cat "_max"] none ;R3
 	emit newline
 ]
 if errs [wait 3 quit]
@@ -984,7 +1000,7 @@ mezz-files: load %../mezz/boot-files.r ; base lib, sys, mezz
 foreach section [boot-base boot-sys boot-mezz] [
 	set section make block! 200
 	foreach file first mezz-files [
-		append get section load join %../mezz/ file
+		append get section load join [%../mezz/ file]
 	]
 	remove-tests get section
 	mezz-files: next mezz-files
@@ -992,7 +1008,7 @@ foreach section [boot-base boot-sys boot-mezz] [
 
 boot-protocols: make block! 20
 foreach file first mezz-files [
-	m: load/all join %../mezz/ file ; not REBOL word
+	m: load/all join [%../mezz/ file] ; not REBOL word
 	append/only append/only boot-protocols m/2 skip m 2
 ]
 
@@ -1061,7 +1077,7 @@ emit newline
 ;if where [
 ;	remove where
 ;	foreach file sort load %../tests/ [
-;		test: load join %../tests/ file
+;		test: load join [%../tests/ file]
 ;		if test/1 <> 'skip-test [
 ;			where: insert where test
 ;		]
@@ -1117,7 +1133,7 @@ print [
 ;	lowercase product
 ;	replace/all product "-" ""
 ;]
-;;dir: to-file rejoin [%../to- platform "/" product "/temp/"]
+;;dir: join [%../to- platform "/" product "/temp/"]
 
 ;----------------------------------------------------------------------------
 ;
@@ -1165,7 +1181,7 @@ emit ["} ROOT_CTX;" lf lf]
 
 n: 0
 foreach word boot-root [
-	emit-line/define "#define ROOT_" word join "(&Root_Context->" [lowercase replace/all form word #"-" #"_" ")"]
+	emit-line/define "#define ROOT_" word join ["(&Root_Context->" lowercase replace/all form word #"-" #"_" ")"]
 	n: n + 1
 ]
 emit ["#define ROOT_MAX " n lf]
@@ -1188,7 +1204,7 @@ emit ["} TASK_CTX;" lf lf]
 
 n: 0
 foreach word boot-task [
-	emit-line/define "#define TASK_" word join "(&Task_Context->" [lowercase replace/all form word #"-" #"_" ")"]
+	emit-line/define "#define TASK_" word join ["(&Task_Context->" lowercase replace/all form word #"-" #"_" ")"]
 	n: n + 1
 ]
 emit ["#define TASK_MAX " n lf]

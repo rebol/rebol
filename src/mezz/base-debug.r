@@ -34,7 +34,7 @@ probe: func [
 			word? :name
 			path? :name
 		][
-			print ajoin [name ": " mold name: get :name]
+			print join [name ": " mold name: get :name]
 		]
 		block? :name [
 			out: make string! 50

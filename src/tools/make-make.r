@@ -300,7 +300,7 @@ macro+: func [
 		thru n any space ["=" | "?="] to newline  ; over simplified
 		insert #" " insert value to end
 	][
-		print ajoin ["Cannot find " name "= definition"]
+		print join ["Cannot find " name "= definition"]
 	]
 ]
 
@@ -354,7 +354,7 @@ emit-file-deps: func [
 ][
 	foreach src files [
 		obj: to-obj src
-		src: rejoin pick [["$R/" src]["$S/" path src]] not dir
+		src: join pick [["$R/" src]["$S/" path src]] not dir
 		emit [
 			%objs/ obj ":" pad obj src
 			newline tab

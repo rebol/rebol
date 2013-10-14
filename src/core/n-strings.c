@@ -96,15 +96,144 @@ static struct digest {
 
 /***********************************************************************
 **
-*/	REBNATIVE(ajoin)
+*/	static REBVAL* Adjoin_Values_Maybe_Volatile(REBVAL* base, REBVAL *rest, REBOOL only)
+/*
+**  Generalized routine used by both ADJOIN and JOIN; modifies base
+**  REBVAL (copies contents if series and copy_base requested)
+**
+**  If ONLY is not specified, then this may call into Reduce_Block();
+**  in that case it is volatile and may modify the stack.
+**
+***********************************************************************/
+{	
+	if (ANY_BLOCK(base) || ANY_STR(base) || IS_BINARY(base)) {
+		// Strings, blocks, binaries, etc. can have contents joined into them
+		// We need copy semantics; JOIN shouldn't change existing series
+
+		VAL_SERIES(base) = Copy_Series_Value(base);
+	} else {
+		// Default all other types, including scalars, to make their
+		// formed value for now.
+
+		// REVIEW: what about [vector! map! object!] -- should they be
+		// prohibited here or just make what looks to probably be junk?
+
+		Set_String(base, Copy_Form_Value(base, 0));
+	}
+
+	VAL_INDEX(base) = VAL_TAIL(base);
+
+	if (IS_BLOCK(rest) && ANY_BLOCK(base)) {
+		if (only) {
+			Insert_Series(
+				VAL_SERIES(base),
+				VAL_INDEX(base),
+				(void*)(BLK_SKIP(VAL_SERIES(rest), VAL_INDEX(rest))),
+				VAL_TAIL(rest) - VAL_INDEX(rest)
+			);
+		} {
+			// Do the equivalent of [reduce/into rest base]
+			// The insert is about as efficient as a memcpy
+			Reduce_Block(VAL_SERIES(rest), VAL_INDEX(rest), base);
+		}
+	} else {
+		if (ANY_BLOCK(rest) && !only) {
+			// If we have to reduce a block in order to insert
+			// into a string or binary, then for most input
+			// it is more efficient to make a temporary reduced
+			// block on the stack and do a single insert.  If
+			// Reduce_Block() is used, it would loop inserts and
+			// do multiple FORMs.
+
+			// REVIEW: Should verify that the looping REDUCE/INTO for
+			// this case would generate the same result even though
+			// it uses a different code path.
+
+			Reduce_Block(VAL_SERIES(rest), VAL_INDEX(rest), 0);
+			rest = DS_POP; // volatile!
+		}
+
+		if (ANY_BLOCK(base)) {
+			Modify_Block(
+				A_APPEND,
+				VAL_SERIES(base), VAL_INDEX(base),
+				rest,
+				0, // no flags needed
+				1, // just one item
+				1 // duplication count
+			);
+		} else {
+			REBCNT flags = 0;
+			// you get weird behavior if you don't do this
+			if (IS_BINARY(base)) SET_FLAG(flags, AN_SERIES);
+
+			Modify_String(
+				A_APPEND,
+				VAL_SERIES(base), VAL_INDEX(base),
+				rest,
+				flags,
+				1, // just one item
+				1 // duplication count
+			);
+		}
+	}
+
+	VAL_INDEX(base) = 0; // returned value should be at head of series
+	return base;
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(adjoin)
 /*
 ***********************************************************************/
 {
-	REBSER *str;
+	// Expanded Mezzanine code for ADJOIN (formerly called JOIN) was:
+	//
+	//    value: either series? :value [copy value] [form :value]
+	//    append value reduce :rest
+	//
+	// APPEND requires that its first value be a series, which is
+	// enforced by ADJOIN by turning any non-series value into 
+	// a string via FORM.  Hence the incoming types to ADJOIN may
+	// be anything.
 
-	str = Form_Reduce(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
+	REBVAL* base = D_ARG(1);
+	REBVAL* rest = D_ARG(2);
 
-	Set_String(DS_RETURN, str); // not D_RET (stack modified)
+	*DS_RETURN = *Adjoin_Values_Maybe_Volatile(base, rest, FALSE);
+
+	return R_RET;
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(join)
+/*
+***********************************************************************/
+{
+	// JOIN will do the first reduction for a block, and then ADJOIN
+	// the result of that reduction with the rest of the block.  This
+	// creates a small performance disadvantage over what is possible
+	// because it does two reduces instead of one.
+
+	REBVAL* block = D_ARG(1);
+
+	if (VAL_TAIL(block) == 0) {
+		// Quickly return a new empty block if empty
+		VAL_SERIES(block) = Copy_Series_Value(block);
+		return R_ARG1;
+	}
+
+	Reduce_Block(VAL_SERIES(block), VAL_INDEX(block), 0);
+	VAL_SERIES(block) = VAL_SERIES(DS_TOP);
+	VAL_INDEX(block) = 1;
+
+	// Should not be volatile since we pass in only=TRUE
+	// So we should be okay using the popped top of stack as base
+	*DS_RETURN = *Adjoin_Values_Maybe_Volatile(BLK_HEAD(VAL_SERIES(DS_POP)), block, TRUE);
 
 	return R_RET;
 }

@@ -272,6 +272,10 @@ x*/	REBSER *Copy_Block_Deep(REBSER *block, REBCNT index, REBINT len, REBCNT mode
 **
 ***********************************************************************/
 {
+	// REVIEW: Can we change the interface to not take a REBVAL
+	// for into, in order to better show the subtypes allowed here?
+	// Currently it can be any-block!, any-string!, or binary!
+
 	REBSER *series;
 	REBVAL *blk = DS_Base + start;
 	REBCNT len = DSP - start + 1;
@@ -280,7 +284,44 @@ x*/	REBSER *Copy_Block_Deep(REBSER *block, REBCNT index, REBINT len, REBCNT mode
 	if (into) {
 		type = VAL_TYPE(into);
 		series = VAL_SERIES(into);
-		len = Insert_Series(series, VAL_INDEX(into), (REBYTE*)blk, len);
+		if (ANY_BLOCK(into)) {
+			// When the target is an any-block, we can do an ordinary
+			// insertion of the values via a memcpy()-style operation
+
+			len = Insert_Series(series, VAL_INDEX(into), (REBYTE*)blk, len);
+		} else {
+			// When the target is a string or binary series, we defer
+			// to the same code used by A_INSERT.  Because the interface
+			// does not take a memory address and count, we insert
+			// the values one by one.
+
+			// REVIEW: Is there a way to do this without the loop,
+			// which may be able to make a better guess of how much
+			// to expand the target series by based on the size of
+			// the operation?
+
+			REBCNT i;
+			REBCNT flags = 0;
+			REBCNT offset = VAL_INDEX(into);
+			// you get weird behavior if you don't do this
+			if (IS_BINARY(into)) SET_FLAG(flags, AN_SERIES);
+			for (i = 0; i < len; i++) {
+				offset = Modify_String(
+					A_INSERT,
+					VAL_SERIES(into),
+					offset,
+					blk + i,
+					flags,
+					1, // insert one element at a time
+					1 // duplication count
+				);
+			}
+
+			// Len is used below to set the index of the result,
+			// and we want it to be just past the last element
+			// that we inserted
+			len = offset;
+		}
 	} else {
 		series = Make_Series(len + 1, sizeof(REBVAL), FALSE);
 		COPY_BLK_PART(series, blk, len);

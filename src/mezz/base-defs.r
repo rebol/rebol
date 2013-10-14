@@ -29,9 +29,9 @@ title-of:
 
 use [word title] [
 	foreach name system/catalog/reflectors [
-		word: make word! ajoin [name "-of"]
+		word: make word! join [name "-of"]
 		word: bind/new word 'reflect
-		title: ajoin ["Returns a copy of the " name " of a " switch/default name [
+		title: join ["Returns a copy of the " name " of a " switch/default name [
 			spec        ["function or module"]
 			values      ["object or module"]
 			types title ["function"] ; title should include module Title too...

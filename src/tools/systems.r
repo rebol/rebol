@@ -90,7 +90,7 @@ config-system: func [
 	foreach rec next systems [
 		if rec/1 = v [
 			if os-dir [return dirize to-file rec/3]
-			if define [return to-word uppercase join "TO_" rec/2]
+			if define [return to-word uppercase join ["TO_" rec/2]]
 			return rec
 		]
 	]

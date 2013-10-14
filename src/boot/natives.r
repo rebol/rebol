@@ -18,9 +18,10 @@ REBOL [
 
 ;-- Control Natives - nat_control.c
 
-ajoin: native [
-	{Reduces and joins a block of values into a new string.}
-	block [block!]
+adjoin: native [
+	{Creates a new series concatenating base and rest, with type cued by base.}
+	base {Base value (string converted if scalar, not reduced if block)}
+	rest {Value or block of values (will be reduced if block)}
 ]
 
 also: native [
@@ -92,8 +93,8 @@ compose: native [
 	value "Block to compose"
 	/deep "Compose nested blocks"
 	/only {Insert a block as a single value (not the contents of the block)}
-	/into {Output results into a block with no intermediate storage}
-	out [any-block!]
+	/into {Output results into a series with no intermediate storage}
+	out [any-block! any-string! binary!]
 ]
 
 context: native [
@@ -193,6 +194,11 @@ if: native [
 	else-block [block!]
 ]
 
+join: native [
+	"Reduce a block's first expression, and adjoin it to the remaining content."
+	block [block!] "Values to reduce and join"
+]
+
 loop: native [
 	{Evaluates a block a specified number of times.}
 	count [number!] {Number of repetitions}
@@ -251,8 +257,8 @@ reduce: native [
 	/no-set {Keep set-words as-is. Do not set them.}
 	/only {Only evaluate words and paths, not functions}
 	words [block! none!] {Optional words that are not evaluated (keywords)}
-	/into {Output results into a block with no intermediate storage}
-	out [any-block!]
+	/into {Output results into a series with no intermediate storage}
+	out [any-block! any-string! binary!]
 ]
 
 repeat: native [

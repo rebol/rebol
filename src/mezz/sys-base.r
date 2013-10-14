@@ -189,7 +189,7 @@ make-module*: func [
 ]
 
 ; MOVE some of these to SYSTEM?
-boot-banner: ajoin ["REBOL 3.0 A" system/version/3 " " system/build newline]
+boot-banner: join ["REBOL 3.0 A" system/version/3 " " system/build newline]
 boot-help: "Boot-sys level - no extra features."
 boot-host: none ; any host add-ons to the lib (binary)
 boot-mezz: none ; built-in mezz code (put here on boot)
@@ -208,7 +208,7 @@ assert-utf8: funct [
 	data [binary!]
 ][
 	unless find [0 8] tmp: utf? data [ ; Not UTF-8
-		cause-error 'script 'no-decode ajoin ["UTF-" abs tmp]
+		cause-error 'script 'no-decode join ["UTF-" abs tmp]
 	]
 	data
 ]
