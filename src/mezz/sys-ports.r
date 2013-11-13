@@ -172,19 +172,33 @@ init-schemes: func [
 		awake: func [
 			sport "System port (State block holds events)"
 			ports "Port list (Copy of block passed to WAIT)"
-			/local event port waked
+			/only
+			/local event event-list n-event port waked
 		][
 			waked: sport/data ; The wake list (pending awakes)
 
+			if only [
+				unless block? ports [return none] ;short cut for a pause
+			]
+
 			; Process all events (even if no awake ports).
 			; Do only 8 events at a time (to prevent polling lockout).
-			loop 8 [
-				unless event: take sport/state [break]
+			n-event: 0
+			event-list: sport/state
+			while [not empty? event-list][
+				if n-event > 8 [break]
+				event: first event-list
 				port: event/port
-				if wake-up port event [
-					; Add port to wake list:
-					;print ["==System-waked:" port/spec/ref]
-					unless find waked port [append waked port]
+				either ((none? only) or (none != find ports port)) [
+					if wake-up port event [
+						; Add port to wake list:
+						;print ["==System-waked:" port/spec/ref]
+						unless find waked port [append waked port]
+					]
+					remove event-list
+					++ n-event
+				][
+					event-list: next event-list
 				]
 			]
 

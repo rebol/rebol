@@ -371,7 +371,7 @@ chk_neg:
 	if (ports) Set_Block(D_RET, ports);
 
 	// Process port events [stack-move]:
-	if (!Wait_Ports(ports, timeout)) return R_NONE;
+	if (!Wait_Ports(ports, timeout, D_REF(3))) return R_NONE;
 	if (!ports) return R_NONE;
 	DS_RELOAD(ds);
 
