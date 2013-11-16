@@ -450,14 +450,18 @@ err:
 		memcpy(BIN_HEAD(ser), codi.data, codi.len);
 		Set_Binary(D_RET, ser);
 		if (result != CODI_BINARY) VAL_SET(D_RET, REB_STRING);
-		// Free the binary!
+		
+		// See notice in reb-codec.h on reb_codec_image 
+		Free_Mem(codi.data, codi.len);
 		break;
 
 	case CODI_IMAGE:
 		ser = Make_Image(codi.w, codi.h, TRUE); // Puts it into RETURN stack position
 		memcpy(IMG_DATA(ser), codi.bits, codi.w * codi.h * 4);
 		SET_IMAGE(D_RET, ser);
-		// Free the image!
+
+		// See notice in reb-codec.h on reb_codec_image 
+		Free_Mem(codi.bits, codi.w * codi.h * 4);
 		break;
 
 	case CODI_BLOCK:
