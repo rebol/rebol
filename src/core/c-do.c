@@ -440,6 +440,12 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 {
 	REBPVS pvs;
 
+	if (val && THROWN(val)) {
+		// If unwind/throw value is not coming from TOS, push it.
+		if (val != DS_TOP) DS_PUSH(val);
+		return 0;
+	}
+
 	pvs.setval = val;		// Set to this new value
 	DS_PUSH_NONE;
 	pvs.store = DS_TOP;		// Temp space for constructed results
@@ -655,6 +661,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 
 		case REB_WORD:		// WORD - Evaluate next value
 			index = Do_Next(block, index, IS_OP(func));
+			// THROWN is handled after the switch.
 			if (index == END_FLAG) Trap2(RE_NO_ARG, Func_Word(dsf), args);
 			DS_Base[ds] = *DS_POP;
 			break;
@@ -664,6 +671,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 				value = BLK_SKIP(block, index);
 				if (IS_PAREN(value) || IS_GET_WORD(value) || IS_GET_PATH(value)) {
 					index = Do_Next(block, index, IS_OP(func));
+					// THROWN is handled after the switch.
 					DS_Base[ds] = *DS_POP;
 				}
 				else {
@@ -718,6 +726,8 @@ more_path:
 		default:
 			Trap_Arg(args);
 		}
+
+		if (THROWN(DS_VALUE(ds))) return index;
 
 		// If word is typed, verify correct argument datatype:
 		if (!TYPE_CHECK(args, VAL_TYPE(DS_VALUE(ds))))
@@ -837,6 +847,7 @@ reval:
 		word = value;
 		//if (!VAL_WORD_FRAME(word)) Trap1(RE_NOT_DEFINED, word); (checked in set_var)
 		index = Do_Next(block, index+1, 0);
+		// THROWN is handled in Set_Var.
 		if (index == END_FLAG || VAL_TYPE(DS_TOP) <= REB_UNSET) Trap1(RE_NEED_VALUE, word);
 		Set_Var(word, DS_TOP);
 		//Set_Word(word, DS_TOP); // (value stays on stack)
@@ -858,8 +869,13 @@ eval_func:
 eval_func2:
 		// Evaluate the function:
 		DSF = dsf;	// Set new DSF
-		if (Trace_Flags) Trace_Func(word, value);
-		Func_Dispatch[ftype](value);
+		if (!THROWN(DS_TOP)) {
+			if (Trace_Flags) Trace_Func(word, value);
+			Func_Dispatch[ftype](value);
+		}
+		else {
+			*DS_RETURN = *DS_TOP;
+		}
 
 		// Reset the stack to prior function frame, but keep the
 		// return value (function result) on the top of the stack.
@@ -895,6 +911,7 @@ eval_func2:
 		//Debug_Fmt("t: %r", value);
 		if (ftype == REB_SET_PATH) {
 			index = Do_Next(block, index+1, 0);
+			// THROWN is handled in Do_Path.
 			if (index == END_FLAG || VAL_TYPE(DS_TOP) <= REB_UNSET) Trap1(RE_NEED_VALUE, word);
 			Do_Path(&word, DS_TOP);
 		} else {
@@ -1072,6 +1089,7 @@ eval_func2:
 
 	while (index < BLK_LEN(block)) {
 		index = Do_Next(block, index, 0);
+		if (THROWN(DS_TOP)) return;
 	}
 
 	Copy_Stack_Values(start, into);
@@ -1122,6 +1140,8 @@ eval_func2:
 			Do_Path(&v, 0); // pushes val on stack
 		}
 		else DS_PUSH(val);
+		// No need to check for unwinds (THROWN) here, because unwinds should
+		// never be accessible via words or paths.
 	}
 
 	Copy_Stack_Values(start, into);
@@ -1143,6 +1163,7 @@ eval_func2:
 			index++;
 		} else
 			index = Do_Next(block, index, 0);
+		if (THROWN(DS_TOP)) return;
 	}
 
 	Copy_Stack_Values(start, into);
@@ -1303,6 +1324,7 @@ eval_func2:
 		n = 0;
 		while (index < BLK_LEN(block)) {
 			index = Do_Next(block, index, 0);
+			if (THROWN(DS_TOP)) return;
 			n++;
 		}
 		if (n > len) DSP = start + len;

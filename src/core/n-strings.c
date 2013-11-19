@@ -103,6 +103,7 @@ static struct digest {
 	REBSER *str;
 
 	str = Form_Reduce(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
+	if (!str) return R_TOS;
 
 	Set_String(DS_RETURN, str); // not D_RET (stack modified)
 
