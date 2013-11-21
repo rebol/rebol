@@ -286,7 +286,7 @@
 **
 */ void Collect_Words(REBVAL *block, REBFLG modes)
 /*
-**		The inner recursive loop used for Collect_Words function below.
+**		The inner recursive loop used for Collect_Frame function below.
 **
 ***********************************************************************/
 {
@@ -668,7 +668,7 @@
 	Rebind_Block(parent2, child, BLK_SKIP(child, 1), REBIND_FUNC | REBIND_TABLE);
 
 	// release the bind table 
-	Collect_End(wrds);
+	Collect_End(child);
 
 	return child;
 }
@@ -864,9 +864,6 @@
 
 	CHECK_BIND_TABLE;
 
-//	for (index = 0; index < Bind_Table->tail; index++)
-//		if (binds[index] != 0) Crash(1333);
-
 	// Note about optimization: it's not a big win to avoid the
 	// binding table for short blocks (size < 4), because testing
 	// every block for the rare case adds up.
@@ -884,6 +881,8 @@
 	// Reset binding table:
 	for (words = FRM_WORDS(frame)+1; NOT_END(words); words++)
 		binds[VAL_BIND_CANON(words)] = 0;
+
+	CHECK_BIND_TABLE;
 }
 
 
@@ -986,6 +985,8 @@
 	// Reset binding table:
 	for (args = BLK_SKIP(words, 1); NOT_END(args); args++)
 		binds[VAL_BIND_CANON(args)] = 0;
+
+	CHECK_BIND_TABLE;
 }
 
 
