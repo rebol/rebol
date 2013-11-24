@@ -64,7 +64,7 @@
 	REBCNT extra;
 	REBCNT wide;
 	REBSER *newser, swap;
-	uintptr_t n;
+	REBUPT n;
 	REBCNT x;
 
 	if (delta == 0) return;
@@ -101,21 +101,21 @@
 		// Create a new series that is bigger.
 		// Have we recently expanded the same series?
 		x = 1;
-		n = (uintptr_t)(Prior_Expand[0]);
+		n = (REBUPT)(Prior_Expand[0]);
 		do {
 			if (Prior_Expand[n] == series) {
 				x = series->tail + delta + 1; // Double the size
 				break;
 			}
 			if (++n >= MAX_EXPAND_LIST) n = 1;
-		} while (n != (uintptr_t)(Prior_Expand[0]));
+		} while (n != (REBUPT)(Prior_Expand[0]));
 #ifdef DEBUGGING
 		Print_Num("Expand:", series->tail + delta + 1);
 #endif
 		newser = Make_Series(series->tail + delta + x, wide, TRUE);
 		// If necessary, add series to the recently expanded list:
 		if (Prior_Expand[n] != series) {
-			n = (uintptr_t)(Prior_Expand[0]) + 1;
+			n = (REBUPT)(Prior_Expand[0]) + 1;
 			if (n >= MAX_EXPAND_LIST) n = 1;
 			Prior_Expand[n] = series;
 		}
