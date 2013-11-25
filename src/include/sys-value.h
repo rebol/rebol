@@ -590,24 +590,13 @@ typedef struct Reb_Series_Ref
 //#define VAL_IMAGE_TYPE(v)		((VAL_IMAGE_INFO(v)>>30)&3)
 
 // New Image Datatype defines:
-#define TO_COLOR(r,g,b,a) (REBCNT)((a)<<24 | (r)<<16 | (g)<<8 |  (b))
 
-#define TO_COLOR_TUPLE(t) TO_COLOR(VAL_TUPLE(t)[0], VAL_TUPLE(t)[1], VAL_TUPLE(t)[2], \
-							VAL_TUPLE_LEN(t) > 3 ? VAL_TUPLE(t)[3] : 0)
-
-// Maps color components to correct byte positions for RGBA:
-#ifdef ENDIAN_BIG
-#define C_A 0
-#define C_R 1
-#define C_G 2
-#define C_B 3
-#else
-#define C_B 0
-#define C_G 1
-#define C_R 2
-#define C_A 3
-#endif
-
+//tuple to image! pixel order bytes
+#define TO_PIXEL_TUPLE(t) TO_PIXEL_COLOR(VAL_TUPLE(t)[0], VAL_TUPLE(t)[1], VAL_TUPLE(t)[2], \
+							VAL_TUPLE_LEN(t) > 3 ? VAL_TUPLE(t)[3] : 0xff)
+//tuple to RGBA bytes
+#define TO_COLOR_TUPLE(t) TO_RGBA_COLOR(VAL_TUPLE(t)[0], VAL_TUPLE(t)[1], VAL_TUPLE(t)[2], \
+							VAL_TUPLE_LEN(t) > 3 ? VAL_TUPLE(t)[3] : 0xff)
 
 /***********************************************************************
 **
@@ -1085,6 +1074,9 @@ typedef struct Reb_All {
 		REBHED flags;
 		REBCNT header;
 	} flags;
+#if defined(__LP64__) || defined(__LLP64__)
+	REBINT	padding; //make it 32-bit
+#endif
 	union Reb_Val_Data {
 		REBWRD	word;
 		REBSRI	series;
@@ -1114,9 +1106,6 @@ typedef struct Reb_All {
 		REBHAN  handle;
 		REBALL  all;
 	} data;
-#ifdef __LP64__
-	REBINT	padding; //make it 32-bit
-#endif
 };
 
 #define ANY_SERIES(v)		(VAL_TYPE(v) >= REB_BINARY && VAL_TYPE(v) <= REB_LIT_PATH)
