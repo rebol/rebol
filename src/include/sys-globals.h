@@ -85,7 +85,7 @@ TVAR REBINT	GC_Last_Infant;	// Index to last infant above (circular)
 TVAR REBFLG GC_Stay_Dirty;  // Do not free memory, fill it with 0xBB
 TVAR REBSER **Prior_Expand;	// Track prior series expansions (acceleration)
 
-TVAR uintptr_t Stack_Limit;	// Limit address for CPU stack.
+TVAR REBUPT Stack_Limit;	// Limit address for CPU stack.
 
 //-- Evaluation stack:
 TVAR REBSER	*DS_Series;
