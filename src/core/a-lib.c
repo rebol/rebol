@@ -104,21 +104,21 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 ***********************************************************************/
 {
 	int marker;
-	uintptr_t bounds;
+	REBUPT bounds;
 
 	Host_Lib = lib;
 
 	if (Host_Lib->size < HOST_LIB_SIZE) return 1;
 	if (((HOST_LIB_VER << 16) + HOST_LIB_SUM) != Host_Lib->ver_sum) return 2;
 
-	bounds = (uintptr_t)OS_CONFIG(1, 0);
-	if (bounds == 0) bounds = (uintptr_t)STACK_BOUNDS;
+	bounds = (REBUPT)OS_CONFIG(1, 0);
+	if (bounds == 0) bounds = (REBUPT)STACK_BOUNDS;
 
 #ifdef OS_STACK_GROWS_UP
-	Stack_Limit = (uintptr_t)(&marker) + bounds;
+	Stack_Limit = (REBUPT)(&marker) + bounds;
 #else
-	if (bounds > (uintptr_t) &marker) Stack_Limit = 100;
-	else Stack_Limit = (uintptr_t)&marker - bounds;
+	if (bounds > (REBUPT) &marker) Stack_Limit = 100;
+	else Stack_Limit = (REBUPT)&marker - bounds;
 #endif
 
 	Init_Core(rargs);
@@ -708,7 +708,7 @@ RL_API u32 RL_Find_Word(u32 *words, u32 word)
 	return 0;
 }
 
-RL_API uintptr_t RL_Series(REBSER *series, REBCNT what)
+RL_API REBUPT RL_Series(REBSER *series, REBCNT what)
 /*
 **	Get series information.
 **
@@ -722,7 +722,7 @@ RL_API uintptr_t RL_Series(REBSER *series, REBCNT what)
 */
 {
 	switch (what) {
-	case RXI_SER_DATA: return (uintptr_t)SERIES_DATA(series);
+	case RXI_SER_DATA: return (REBUPT)SERIES_DATA(series);
 	case RXI_SER_TAIL: return SERIES_TAIL(series);
 	case RXI_SER_LEFT: return SERIES_AVAIL(series);
 	case RXI_SER_SIZE: return SERIES_REST(series);
