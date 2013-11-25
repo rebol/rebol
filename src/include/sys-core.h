@@ -366,9 +366,9 @@ enum encoding_opts {
 #endif
 
 #ifdef OS_STACK_GROWS_UP
-#define CHECK_STACK(v) if ((uintptr_t)(v) >= Stack_Limit) Trap_Stack();
+#define CHECK_STACK(v) if ((REBUPT)(v) >= Stack_Limit) Trap_Stack();
 #else
-#define CHECK_STACK(v) if ((uintptr_t)(v) <= Stack_Limit) Trap_Stack();
+#define CHECK_STACK(v) if ((REBUPT)(v) <= Stack_Limit) Trap_Stack();
 #endif
 #define STACK_BOUNDS (4*1024*1000) // note: need a better way to set it !!
 // Also: made somewhat smaller than linker setting to allow trapping it
