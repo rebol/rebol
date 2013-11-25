@@ -1085,6 +1085,9 @@ typedef struct Reb_All {
 		REBHED flags;
 		REBCNT header;
 	} flags;
+#if defined(__LP64__) || defined(__LLP64__)
+	REBINT	padding; //make it 32-bit
+#endif
 	union Reb_Val_Data {
 		REBWRD	word;
 		REBSRI	series;
@@ -1114,9 +1117,6 @@ typedef struct Reb_All {
 		REBHAN  handle;
 		REBALL  all;
 	} data;
-#ifdef __LP64__
-	REBINT	padding; //make it 32-bit
-#endif
 };
 
 #define ANY_SERIES(v)		(VAL_TYPE(v) >= REB_BINARY && VAL_TYPE(v) <= REB_LIT_PATH)
