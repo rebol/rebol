@@ -49,9 +49,6 @@
 
 #if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 /* C-code types: use C99 */
-typedef int				intptr_t;
-typedef unsigned int	uintptr_t;
-#endif
 
 #include <stdint.h>
 
