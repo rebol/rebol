@@ -133,7 +133,7 @@
 			else *cp++ = ' ';
 		}
 		*cp++ = ' ';
-		for (n = 0; n < 4; n++) {
+		for (n = 0; n < sizeof(REBVAL) / sizeof(REBCNT); n++) {
 			cp = Form_Hex_Pad(cp, *bp++, 8);
 			*cp++ = ' ';
 		}
