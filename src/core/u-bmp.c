@@ -173,7 +173,7 @@ void Map_Bytes(void *dstp, REBYTE **srcp, char *map) {
 
 		case 'l':
 			if (longaligned()) {
-				while(((unsigned long)dst)&3)
+				while(((REBUPT)dst)&3)
 					dst++;
 			}
 			*((REBCNT *)dst) = *((REBCNT *)src);
@@ -230,7 +230,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 
 		case 'l':
 			if (longaligned()) {
-				while(((unsigned long)src)&3)
+				while(((REBUPT)src)&3)
 					src++;
 			}
 			*((REBCNT *)dst) = *((REBCNT *)src);
