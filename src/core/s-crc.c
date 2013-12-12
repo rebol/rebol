@@ -186,7 +186,7 @@ static REBCNT *CRC_Table;
 **
 ***********************************************************************/
 {
-	uintptr_t	ret; //FIXME: the return type of the function needs to be changed as well?
+	REBCNT ret;
 
 	switch(VAL_TYPE(val)) {
 
@@ -240,7 +240,7 @@ static REBCNT *CRC_Table;
 		break;
 
 	case REB_OBJECT:
-		ret = ((uintptr_t)VAL_OBJ_FRAME(val)) >> 4;
+		ret = (REBCNT)((REBUPT)VAL_OBJ_FRAME(val) >> 4);
 		break;
 
 	case REB_DATATYPE:
