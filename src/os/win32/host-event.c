@@ -185,7 +185,11 @@ static Check_Modifiers(REBINT flags)
 	static LPARAM last_xy = 0;
 	static REBINT mode = 0;
 
+#ifdef __LLP64__
+	gob = (REBGOB *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+#else
 	gob = (REBGOB *)GetWindowLong(hwnd, GWL_USERDATA);
+#endif
 
 	// Not a REBOL window (or early creation):
 	if (!gob || !IS_WINDOW(gob)) {
