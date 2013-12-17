@@ -187,7 +187,7 @@ static int Poll_Default(REBDEV *dev)
 
 /***********************************************************************
 **
-*/	void Done_Device(uintptr_t handle, int error)
+*/	void Done_Device(REBUPT handle, int error)
 /*
 **		Given a handle mark the related request as done.
 **		(Used by DNS device).
@@ -204,7 +204,7 @@ static int Poll_Default(REBDEV *dev)
 		prior = &dev->pending;
 		// Scan the pending requests, mark the one we got:
 		for (req = *prior; req; req = *prior) {
-			if ((uintptr_t)(req->handle) == handle) {
+			if ((REBUPT)(req->handle) == handle) {
 				req->error = error; // zero when no error
 				SET_FLAG(req->flags, RRF_DONE);
 				return;
