@@ -35,9 +35,6 @@
 #include <stdio.h>
 #include "sys-state.h"
 
-REBNATIVE(do);  // Forward declaration for detection and special cases
-#define IS_DO(v) (IS_NATIVE(v) && (VAL_FUNC_CODE(v) == &N_do))
-
 enum Eval_Types {
 	ET_INVALID,		// not valid to evaluate
 	ET_WORD,
@@ -607,13 +604,13 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 
 /***********************************************************************
 **
-*/	static REBINT Do_Args(REBVAL *func, REBVAL *path, REBSER *block, REBCNT index)
+*/	static REBINT Do_Args(REBCNT func_offset, REBVAL *path, REBSER *block, REBCNT index)
 /*
 **		Evaluate code block according to the function arg spec.
 **		Args are pushed onto the data stack in the same order
 **		as the function frame.
 **
-**			func:  function or path value
+**			func_offset:  offset of the function or path value, relative to DS_Base
 **			path:  refinements or object/function path
 **			block: current evaluation block
 **			index: current evaluation index
@@ -627,11 +624,15 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 	REBINT dsp = DSP + 1;	// stack base
 	REBINT dsf = dsp - DSF_BIAS;
 	REBVAL *tos;
+	REBVAL *func;
+
+	if ((dsp + 100) > (REBINT)SERIES_REST(DS_Series)) {
+		Expand_Stack(STACK_MIN);
+	}
+
+	func = &DS_Base[func_offset];
 
 	if (IS_OP(func)) dsf--; // adjust for extra arg
-
-	if ((dsp + 100) > (REBINT)SERIES_REST(DS_Series)) 
-		Trap0(RE_STACK_OVERFLOW); //Expand_Stack();
 
 	// Get list of words:
 	words = VAL_FUNC_WORDS(func);
@@ -655,6 +656,8 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 	// Go thru the word list args:
 	ds = dsp;
 	for (; NOT_END(args); args++, ds++) {
+
+		func = &DS_Base[func_offset]; //DS_Base could be changed
 
 		//if (Trace_Flags) Trace_Arg(ds - dsp, args, path);
 
@@ -841,6 +844,7 @@ reval:
 		if (IS_UNSET(value)) Trap1(RE_NO_VALUE, word);
 		if (VAL_TYPE(value) >= REB_NATIVE && VAL_TYPE(value) <= REB_FUNCTION) goto reval; // || IS_LIT_PATH(value)
 		DS_PUSH(value);
+		if (IS_LIT_WORD(value)) VAL_SET(DS_TOP, REB_WORD);
 		if (IS_FRAME(value)) Init_Obj_Value(DS_TOP, VAL_WORD_FRAME(word));
 		index++;
 		break;
@@ -872,7 +876,8 @@ eval_func:
 			Debug_Value(word, 4, 0);
 			Dump_Values(value, 4);
 		}
-		index = Do_Args(value, 0, block, index+1); // uses old DSF, updates DSP
+		index = Do_Args(dsf + 3, 0, block, index+1); // uses old DSF, updates DSP
+		value = DSF_FUNC(dsf); //reevaluate value, because stack could be expanded in Do_Args
 eval_func2:
 		// Evaluate the function:
 		DSF = dsf;	// Set new DSF
@@ -927,12 +932,15 @@ eval_func2:
 			//Debug_Fmt("v: %r", value);
 			// Value returned only for functions that need evaluation (but not GET_PATH):
 			if (value && ANY_FUNC(value)) {
+				REBCNT offset = 0;
 				if (IS_OP(value)) Trap_Type(value); // (because prior value is wiped out above)
 				// Can be object/func or func/refinements or object/func/refinement:
 				dsf = Push_Func(TRUE, block, index, VAL_WORD_SYM(word), value); // Do not unset TOS1 (it is the value)
 				value = DS_TOP;
-				index = Do_Args(value, word+1, block, index+1);
+				offset = value - DS_Base;
 				ftype = VAL_TYPE(value)-REB_NATIVE;
+				index = Do_Args(offset, word+1, block, index+1);
+				value = &DS_Base[offset]; //restore in case the stack is expanded
 				goto eval_func2;
 			} else
 				index++;
@@ -1323,9 +1331,9 @@ eval_func2:
 **
 ***********************************************************************/
 {
+	REBINT ftype = VAL_TYPE(func) - REB_NATIVE; // function type
 	REBSER *block = VAL_SERIES(args);
 	REBCNT index = VAL_INDEX(args);
-	REBCNT dsp;
 	REBCNT dsf;
 
 	REBSER *words;
@@ -1333,10 +1341,6 @@ eval_func2:
 	REBINT n;
 	REBINT start;
 	REBVAL *val;
-
-	dsp = DSP; // in case we have to reset it later
-
-reapply:  // Go back here to start over with a new func
 
 	if (index > SERIES_TAIL(block)) index = SERIES_TAIL(block);
 
@@ -1353,17 +1357,6 @@ reapply:  // Go back here to start over with a new func
 	if (reduce) {
 		// Reduce block contents to stack:
 		n = 0;
-		// Check for DO any-function
-		if (index < BLK_LEN(block)) {
-			index = Do_Next(block, index, 0);
-			val = DS_TOP;
-			if (IS_DO(func) && ANY_FUNC(val)) {
-				func = val;    // apply this func directly (volatile reference!)
-				DSP = dsp;     // reset the stack
-				goto reapply;  // go back to the beginning
-			}
-			n++;
-		}
 		while (index < BLK_LEN(block)) {
 			index = Do_Next(block, index, 0);
 			if (THROWN(DS_TOP)) return;
@@ -1372,18 +1365,11 @@ reapply:  // Go back here to start over with a new func
 		if (n > len) DSP = start + len;
 	}
 	else {
-		// Get args block and check for DO any-function
-		n = BLK_LEN(block) - index;
-		val = BLK_SKIP(block, index);
-		if (n > 0 && IS_DO(func) && ANY_FUNC(val)) {
-			func = val;    // apply this func directly
-			index++;       // skip past the func value in the args
-			DSP = dsp;     // reset the stack
-			goto reapply;  // go back to the beginning
-		}
 		// Copy block contents to stack:
+		n = VAL_BLK_LEN(args);
 		if (len < n) n = len;
-		memcpy(&DS_Base[start], val, n * sizeof(REBVAL));
+		if (start + n + 100 > SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN);
+		memcpy(&DS_Base[start], BLK_SKIP(block, index), n * sizeof(REBVAL));
 		DSP = start + n - 1;
 	}
 
@@ -1418,7 +1404,8 @@ reapply:  // Go back here to start over with a new func
 
 	// Evaluate the function:
 	DSF = dsf;
-	Func_Dispatch[VAL_TYPE(func) - REB_NATIVE](func);
+	func = DSF_FUNC(dsf); //stack could be expanded
+	Func_Dispatch[ftype](func);
 	DSP = dsf;
 	DSF = PRIOR_DSF(dsf);
 }
@@ -1447,6 +1434,10 @@ reapply:  // Go back here to start over with a new func
 	func = DSF_FUNC(dsf); // for safety
 	words = VAL_FUNC_WORDS(func);
 	ds = SERIES_TAIL(words)-1;	// length of stack fill below
+	if (DSP + ds + 100 > SERIES_REST(DS_Series)) {//unlikely
+		Expand_Stack(STACK_MIN);
+		func = DSF_FUNC(dsf); //reevaluate func
+	}
 
 	// Gather arguments from C stack:
 	for (; ds > 0; ds--) {
