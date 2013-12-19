@@ -151,6 +151,8 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 /*
 ***********************************************************************/
 {
+	REBREQ *req;
+	
 	if (
 		   IS_EVENT_MODEL(value, EVM_PORT)
 		|| IS_EVENT_MODEL(value, EVM_OBJECT)
@@ -166,15 +168,14 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 		// not be in VAL_EVENT_SER of the REBEVT structure.  It is held
 		// indirectly by the REBREQ ->req field of the event, which
 		// in turn possibly holds a singly linked list of other requests.
-		REBREQ *req = VAL_EVENT_REQ(value);
-
-		// The ->next field of a REBREQ is just used while it's in the
-		// device's ->pending list, and is set to 0 by Detach_Request
-		ASSERT(req->next == NULL, RP_MISC);
-
-		// The ->port field of the REBREQ is void*, so we must cast
-		// Comment says it is "link back to REBOL port object"
-		CHECK_MARK((REBSER*)req->port, depth);
+		req = VAL_EVENT_REQ(value);
+		
+		while(req) {
+			// The ->port field of the REBREQ is void*, so we must cast
+			// Comment says it is "link back to REBOL port object"
+			CHECK_MARK((REBSER*)req->port, depth);
+			req = req->next;
+		}
 	}
 }
 
