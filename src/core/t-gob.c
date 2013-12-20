@@ -422,7 +422,7 @@ const REBCNT Gob_Flag_Words[] = {
 		}
 		else if (IS_INTEGER(val)) {
 			SET_GOB_DTYPE(gob, GOBD_INTEGER);
-			SET_GOB_DATA(gob, (void*)VAL_INT32(val));
+			SET_GOB_DATA(gob, (void*)(REBIPT)VAL_INT64(val));
 		}
 		else if (IS_NONE(val))
 			SET_GOB_TYPE(gob, GOBT_NONE);
@@ -541,7 +541,7 @@ is_none:
 			SET_BINARY(val, GOB_DATA(gob));
 		}
 		else if (GOB_DTYPE(gob) == GOBD_INTEGER) {
-			SET_INTEGER(val, (REBINT)GOB_DATA(gob));
+			SET_INTEGER(val, (REBIPT)GOB_DATA(gob));
 		}
 		else goto is_none;
 		break;

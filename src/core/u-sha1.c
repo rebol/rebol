@@ -78,19 +78,21 @@ extern "C" {
 #define SHA_LENGTH_BLOCK 8
 #define SHA_DIGEST_LENGTH 20
 
+#define SHA_LONG u32
+
 typedef struct SHAstate_st
 	{
-	unsigned long h0,h1,h2,h3,h4;
-	unsigned long Nl,Nh;
-	unsigned long data[SHA_LBLOCK];
-	int num;
+	SHA_LONG h0,h1,h2,h3,h4;
+	SHA_LONG Nl,Nh;
+	SHA_LONG data[SHA_LBLOCK];
+	unsigned int num;
 	} SHA_CTX;
 
 void SHA1_Init(SHA_CTX *c);
-void SHA1_Update(SHA_CTX *c, unsigned char *data, unsigned long len);
+void SHA1_Update(SHA_CTX *c, unsigned char *data, size_t len);
 void SHA1_Final(unsigned char *md, SHA_CTX *c);
 int SHA1_CtxSize(void);
-//unsigned char *SHA1(unsigned char *d, unsigned long n,unsigned char *md);
+//unsigned char *SHA1(unsigned char *d, SHA_LONG n,unsigned char *md);
 //static void SHA1_Transform(SHA_CTX *c, unsigned char *data);
 
 #ifdef  __cplusplus
@@ -98,7 +100,7 @@ int SHA1_CtxSize(void);
 #endif
 
 
-#define ULONG	unsigned long
+#define ULONG	SHA_LONG
 #define UCHAR	unsigned char
 #define UINT	unsigned int
 
@@ -107,18 +109,18 @@ int SHA1_CtxSize(void);
 #endif
 
 #undef c2nl
-#define c2nl(c,l)	(l =(((unsigned long)(*((c)++)))<<24), \
-			 l|=(((unsigned long)(*((c)++)))<<16), \
-			 l|=(((unsigned long)(*((c)++)))<< 8), \
-			 l|=(((unsigned long)(*((c)++)))    ))
+#define c2nl(c,l)	(l =(((SHA_LONG)(*((c)++)))<<24), \
+			 l|=(((SHA_LONG)(*((c)++)))<<16), \
+			 l|=(((SHA_LONG)(*((c)++)))<< 8), \
+			 l|=(((SHA_LONG)(*((c)++)))    ))
 
 #undef p_c2nl
 #define p_c2nl(c,l,n)	{ \
 			switch (n) { \
-			case 0: l =((unsigned long)(*((c)++)))<<24; \
-			case 1: l|=((unsigned long)(*((c)++)))<<16; \
-			case 2: l|=((unsigned long)(*((c)++)))<< 8; \
-			case 3: l|=((unsigned long)(*((c)++))); \
+			case 0: l =((SHA_LONG)(*((c)++)))<<24; \
+			case 1: l|=((SHA_LONG)(*((c)++)))<<16; \
+			case 2: l|=((SHA_LONG)(*((c)++)))<< 8; \
+			case 3: l|=((SHA_LONG)(*((c)++))); \
 				} \
 			}
 
@@ -128,9 +130,9 @@ int SHA1_CtxSize(void);
 			l=0; \
 			(c)+=n; \
 			switch (n) { \
-			case 3: l =((unsigned long)(*(--(c))))<< 8; \
-			case 2: l|=((unsigned long)(*(--(c))))<<16; \
-			case 1: l|=((unsigned long)(*(--(c))))<<24; \
+			case 3: l =((SHA_LONG)(*(--(c))))<< 8; \
+			case 2: l|=((SHA_LONG)(*(--(c))))<<16; \
+			case 1: l|=((SHA_LONG)(*(--(c))))<<24; \
 				} \
 			}
 
@@ -138,11 +140,11 @@ int SHA1_CtxSize(void);
 #define p_c2nl_p(c,l,sc,len) { \
 			switch (sc) \
 				{ \
-			case 0: l =((unsigned long)(*((c)++)))<<24; \
+			case 0: l =((SHA_LONG)(*((c)++)))<<24; \
 				if (--len == 0) break; \
-			case 1: l|=((unsigned long)(*((c)++)))<<16; \
+			case 1: l|=((SHA_LONG)(*((c)++)))<<16; \
 				if (--len == 0) break; \
-			case 2: l|=((unsigned long)(*((c)++)))<< 8; \
+			case 2: l|=((SHA_LONG)(*((c)++)))<< 8; \
 				} \
 			}
 
@@ -153,18 +155,18 @@ int SHA1_CtxSize(void);
 			 *((c)++)=(unsigned char)(((l)    )&0xff))
 
 #undef c2l
-#define c2l(c,l)	(l =(((unsigned long)(*((c)++)))    ), \
-			 l|=(((unsigned long)(*((c)++)))<< 8), \
-			 l|=(((unsigned long)(*((c)++)))<<16), \
-			 l|=(((unsigned long)(*((c)++)))<<24))
+#define c2l(c,l)	(l =(((SHA_LONG)(*((c)++)))    ), \
+			 l|=(((SHA_LONG)(*((c)++)))<< 8), \
+			 l|=(((SHA_LONG)(*((c)++)))<<16), \
+			 l|=(((SHA_LONG)(*((c)++)))<<24))
 
 #undef p_c2l
 #define p_c2l(c,l,n)	{ \
 			switch (n) { \
-			case 0: l =((unsigned long)(*((c)++))); \
-			case 1: l|=((unsigned long)(*((c)++)))<< 8; \
-			case 2: l|=((unsigned long)(*((c)++)))<<16; \
-			case 3: l|=((unsigned long)(*((c)++)))<<24; \
+			case 0: l =((SHA_LONG)(*((c)++))); \
+			case 1: l|=((SHA_LONG)(*((c)++)))<< 8; \
+			case 2: l|=((SHA_LONG)(*((c)++)))<<16; \
+			case 3: l|=((SHA_LONG)(*((c)++)))<<24; \
 				} \
 			}
 
@@ -174,9 +176,9 @@ int SHA1_CtxSize(void);
 			l=0; \
 			(c)+=n; \
 			switch (n) { \
-			case 3: l =((unsigned long)(*(--(c))))<<16; \
-			case 2: l|=((unsigned long)(*(--(c))))<< 8; \
-			case 1: l|=((unsigned long)(*(--(c)))); \
+			case 3: l =((SHA_LONG)(*(--(c))))<<16; \
+			case 2: l|=((SHA_LONG)(*(--(c))))<< 8; \
+			case 1: l|=((SHA_LONG)(*(--(c)))); \
 				} \
 			}
 
@@ -184,11 +186,11 @@ int SHA1_CtxSize(void);
 #define p_c2l_p(c,l,sc,len) { \
 			switch (sc) \
 				{ \
-			case 0: l =((unsigned long)(*((c)++))); \
+			case 0: l =((SHA_LONG)(*((c)++))); \
 				if (--len == 0) break; \
-			case 1: l|=((unsigned long)(*((c)++)))<< 8; \
+			case 1: l|=((SHA_LONG)(*((c)++)))<< 8; \
 				if (--len == 0) break; \
-			case 2: l|=((unsigned long)(*((c)++)))<<16; \
+			case 2: l|=((SHA_LONG)(*((c)++)))<<16; \
 				} \
 			}
 
@@ -204,7 +206,7 @@ int SHA1_CtxSize(void);
 #else
 #if defined(TO_AMIGA_OLD)
 #define ROTATE(a,n) __builtin_rol(a,n,2)
-unsigned long __builtin_rol(unsigned long,int,int);
+SHA_LONG __builtin_rol(SHA_LONG,int,int);
 #else
 #define ROTATE(a,n)     (((a)<<(n))|(((a)&0xffffffff)>>(32-(n))))
 #endif
@@ -216,14 +218,14 @@ unsigned long __builtin_rol(unsigned long,int,int);
 /* 5 instructions with rotate instruction, else 9 */
 #define Endian_Reverse32(a) \
 	{ \
-	unsigned long l=(a); \
+	SHA_LONG l=(a); \
 	(a)=((ROTATE(l,8)&0x00FF00FF)|(ROTATE(l,24)&0xFF00FF00)); \
 	}
 #else
 /* 6 instructions with rotate instruction, else 8 */
 #define Endian_Reverse32(a) \
 	{ \
-	unsigned long l=(a); \
+	SHA_LONG l=(a); \
 	l=(((l&0xFF00FF00)>>8L)|((l&0x00FF00FF)<<8L)); \
 	(a)=ROTATE(l,16L); \
 	}
@@ -280,11 +282,11 @@ unsigned long __builtin_rol(unsigned long,int,int);
 /* Implemented from SHA-1 document - The Secure Hash Algorithm
  */
 
-#define INIT_DATA_h0 (unsigned long)0x67452301L
-#define INIT_DATA_h1 (unsigned long)0xefcdab89L
-#define INIT_DATA_h2 (unsigned long)0x98badcfeL
-#define INIT_DATA_h3 (unsigned long)0x10325476L
-#define INIT_DATA_h4 (unsigned long)0xc3d2e1f0L
+#define INIT_DATA_h0 (SHA_LONG)0x67452301L
+#define INIT_DATA_h1 (SHA_LONG)0xefcdab89L
+#define INIT_DATA_h2 (SHA_LONG)0x98badcfeL
+#define INIT_DATA_h3 (SHA_LONG)0x10325476L
+#define INIT_DATA_h4 (SHA_LONG)0xc3d2e1f0L
 
 #define K_00_19	0x5a827999L
 #define K_20_39 0x6ed9eba1L
@@ -292,10 +294,10 @@ unsigned long __builtin_rol(unsigned long,int,int);
 #define K_60_79 0xca62c1d6L
 
 #  ifdef SHA1_ASM
-     void sha1_block_x86(SHA_CTX *c, register unsigned long *p, int num);
+     void sha1_block_x86(SHA_CTX *c, register SHA_LONG *p, int num);
 #    define sha1_block sha1_block_x86
 #  else
-     static void sha1_block(SHA_CTX *c, register unsigned long *p, int num);
+     static void sha1_block(SHA_CTX *c, register SHA_LONG *p, int num);
 #  endif
 
 
@@ -329,7 +331,7 @@ SHA_CTX *c;
 void SHA1_Update(c, data, len)
 SHA_CTX *c;
 register unsigned char *data;
-unsigned long len;
+size_t len;
 	{
 	register ULONG *p;
 	int ew,ec,sw,sc;
@@ -337,7 +339,7 @@ unsigned long len;
 
 	if (len == 0) return;
 
-	l=(c->Nl+(len<<3))&0xffffffffL;
+	l=(c->Nl+((SHA_LONG)len<<3))&(SHA_LONG)-1;
 	if (l < c->Nl) /* overflow */
 		c->Nh++;
 	c->Nh+=(len>>29);
@@ -399,7 +401,7 @@ unsigned long len;
 	 * the C version as well....
 	 */
 #if defined(ENDIAN_BIG) || defined(SHA1_ASM)
-	if ((((unsigned long)data)%sizeof(ULONG)) == 0)
+	if ((((SHA_LONG)data)%sizeof(ULONG)) == 0)
 		{
 		sw=len/SHA_CBLOCK;
 		if (sw)
@@ -417,7 +419,7 @@ unsigned long len;
 	while (len >= SHA_CBLOCK)
 		{
 #if defined(ENDIAN_BIG) || defined(ENDIAN_LITTLE)
-		if (p != (unsigned long *)data)
+		if (p != (SHA_LONG *)data)
 			memcpy(p,data,SHA_CBLOCK);
 		data+=SHA_CBLOCK;
 #  ifdef ENDIAN_LITTLE
@@ -500,7 +502,7 @@ unsigned char *b;
 
 static void sha1_block(c, W, num)
 SHA_CTX *c;
-register unsigned long *W;
+register SHA_LONG *W;
 int num;
 	{
 	register ULONG A,B,C,D,E,T;

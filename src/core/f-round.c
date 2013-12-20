@@ -86,7 +86,7 @@ enum {
 ***********************************************************************/
 {
 	REBDEC r;
-	int e;
+	REBINT e;
 	REBFLG v;
 	union {REBDEC d; REBI64 i;} m;
 	REBI64 j;

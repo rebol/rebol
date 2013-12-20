@@ -387,6 +387,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		pool->first = *node;
 		pool->free--;
 		length = pool->wide;
+		memset(node, 0, length);
 	} else {
 		if (powerof2) {
 			// !!! WHO added this and why??? Just use a left shift and mask!
@@ -420,7 +421,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	memset((REBYTE *)node, 0xff, length);
 #endif
 	series->tail = series->size = 0;
-	SERIES_REST(series) = length / wide;
+	SERIES_REST(series) = length / wide; //FIXME: This is based on the assumption that length is multiple of wide
 	series->data = (REBYTE *)node;
 	series->info = wide; // also clears flags
 	LABEL_SERIES(series, "make");
@@ -639,7 +640,7 @@ clear_header:
 			count++;
 			// The node better belong to one of the pool's segments:
 			for (seg = Mem_Pools[pool_num].segs; seg; seg = seg->next) {
-				if ((int)node > (int)seg && (int)node < (int)seg + (int)seg->size) break;
+				if ((REBUPT)node > (REBUPT)seg && (REBUPT)node < (REBUPT)seg + (REBUPT)seg->size) break;
 			}
 			if (!seg) goto crash;
 			pnode = node; // for debugger

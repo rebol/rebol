@@ -5,6 +5,8 @@
 **  Copyright 2012 REBOL Technologies
 **  REBOL is a trademark of REBOL Technologies
 **
+**  Additional code modifications and improvements Copyright 2012 Saphirion AG
+**
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
 **  You may obtain a copy of the License at
@@ -20,7 +22,7 @@
 ************************************************************************
 **
 **  Title: Windowing Event Handler
-**  Author: Carl Sassenrath
+**  Author: Carl Sassenrath, Richard Smolak
 **  Purpose: This code handles windowing related events.
 **	Related: host-window.c, dev-event.c
 **
@@ -43,6 +45,7 @@
 #include <windows.h>
 #include <commctrl.h>	// For WM_MOUSELEAVE event
 #include <zmouse.h>
+#include <math.h>	//for floor()
 
 //-- Not currently used:
 //#include <windowsx.h>
@@ -185,7 +188,11 @@ static Check_Modifiers(REBINT flags)
 	static LPARAM last_xy = 0;
 	static REBINT mode = 0;
 
+#ifdef __LLP64__
+	gob = (REBGOB *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+#else
 	gob = (REBGOB *)GetWindowLong(hwnd, GWL_USERDATA);
+#endif
 
 	// Not a REBOL window (or early creation):
 	if (!gob || !IS_WINDOW(gob)) {

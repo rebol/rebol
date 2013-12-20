@@ -96,9 +96,14 @@ extern const REBYTE Str_Banner[];
 #endif
 
 	ASSERT(VAL_TYPE(&val) == 123,  RP_REBVAL_ALIGNMENT);
-	ASSERT(sizeof(REBVAL) == 16,   RP_REBVAL_ALIGNMENT);
+	if (sizeof(void *) == 8) {
+		ASSERT(sizeof(REBVAL) == 32,   RP_REBVAL_ALIGNMENT);
+		ASSERT1(sizeof(REBGOB) == 84,  RP_BAD_SIZE);
+	} else {
+		ASSERT(sizeof(REBVAL) == 16,   RP_REBVAL_ALIGNMENT);
+		ASSERT1(sizeof(REBGOB) == 64,  RP_BAD_SIZE);
+	}
 	ASSERT1(sizeof(REBDAT) == 4,   RP_BAD_SIZE);
-	ASSERT1(sizeof(REBGOB) == 64,  RP_BAD_SIZE);
 }
 
 
@@ -320,7 +325,7 @@ extern const REBYTE Str_Banner[];
 {
 	Action_Count++;
 	if (Action_Count >= A_MAX_ACTION) Crash(RP_ACTION_OVERFLOW);
-	Make_Native(ds, VAL_SERIES(D_ARG(1)), (REBFUN)Action_Count, REB_ACTION);
+	Make_Native(ds, VAL_SERIES(D_ARG(1)), (REBFUN)(REBUPT)Action_Count, REB_ACTION);
 	return R_RET;
 }
 

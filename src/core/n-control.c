@@ -553,7 +553,7 @@ got_err:
 	case REB_URL:
 	case REB_FILE:
 		// DO native and system/intrinsic/do must use same arg list:
-		Do_Sys_Func(SYS_CTX_DO_P, value, D_ARG(2), D_ARG(3), D_ARG(4), D_ARG(5), 0);
+		Do_Sys_Func(SYS_CTX_DO_P, value, D_ARG(2), D_ARG(3), D_ARG(4), D_ARG(5), NULL);
 		return R_TOS1;
 
 	case REB_TASK:

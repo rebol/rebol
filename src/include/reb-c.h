@@ -60,6 +60,8 @@ typedef int32_t			i32;
 typedef uint32_t		u32;
 typedef int64_t			i64;
 typedef uint64_t		u64;
+typedef intptr_t		REBIPT;		// integral counterpart of void*
+typedef uintptr_t		REBUPT;		// unsigned counterpart of void*
 
 #define MAX_I32 INT32_MAX
 #define MIN_I32 INT32_MIN
@@ -81,6 +83,13 @@ typedef unsigned _int64 u64;
 #else
 typedef long long       i64;
 typedef unsigned long long u64;
+#endif
+#ifdef __LLP64__
+typedef long long		REBIPT;		// integral counterpart of void*
+typedef unsigned long long	REBUPT;		// unsigned counterpart of void*
+#else
+typedef long			REBIPT;		// integral counterpart of void*
+typedef unsigned long	REBUPT;		// unsigned counterpart of void*
 #endif
 
 #define MAX_I32 ((int)0x7fffffff)
@@ -209,6 +218,7 @@ typedef void(*CFUNC)(void *);
 #define GET_FLAGS(v,f,g)    (((v) & ((1<<(f)) | (1<<(g)))) != 0)
 #define SET_FLAG(v,f)       ((v) |= (1<<(f)))
 #define CLR_FLAG(v,f)       ((v) &= ~(1<<(f)))
+#define CLR_FLAGS(v,f,g)    ((v) &= ~((1<<(f)) | (1<<(g))))
 
 #ifdef min
 #define MIN(a,b) min(a,b)

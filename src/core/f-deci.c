@@ -536,8 +536,8 @@ REBDEC deci_to_decimal (const deci a) {
 deci decimal_to_deci (REBDEC a) {
 	deci result;
 	REBI64 d; /* decimal significand */
-	int e; /* decimal exponent */
-	int s; /* sign */
+	REBINT e; /* decimal exponent */
+	REBINT s; /* sign */
 	REBYTE *c;
 	REBYTE *rve;
 
