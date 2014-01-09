@@ -445,7 +445,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	SET_FLAG(sock->state, mode);
 
 	// Limit size of transfer:
-	len = MIN(sock->length, MAX_TRANSFER);
+	len = MIN(sock->length - sock->actual, MAX_TRANSFER);
 
 	if (mode == RSM_SEND) {
 		// If host is no longer connected:
