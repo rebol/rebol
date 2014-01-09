@@ -605,7 +605,7 @@ lserr:
 	news->net.remote_port = ntohs(sa.sin_port);
 	Get_Local_IP(news);
 
-	//Nonblocking_Mode(news->socket);  ???Needed?
+	Nonblocking_Mode(news->socket);
 
 	Attach_Request((REBREQ**)&sock->data, news);
 	Signal_Device(sock, EVT_ACCEPT);
