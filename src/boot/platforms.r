@@ -15,7 +15,7 @@ REBOL [
 ]
 
 Amiga		[1 m68k20+ 2 m68k 3 ppc]
-Macintosh	[1 mac-ppc 2 mac-m68k 3 mac-misc 4 osx-ppc 5 osx-x86]
+Macintosh	[1 mac-ppc 2 mac-m68k 3 mac-misc 4 osx-ppc 5 osx-x86 40 osx-x64]
 Windows		[1 win32-x86 2 dec-alpha 3 win32-x64]
 Linux		[1 libc5-x86 2 libc6-2-3-x86 3 libc6-2-5-x86 4 libc6-2-11-x86 10 libc6-ppc 20 libc6-arm 21 bionic-arm 30 libc6-mips 40 libc-x64]
 Haiku		[75 x86-32]
