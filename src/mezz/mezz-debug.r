@@ -11,7 +11,7 @@ REBOL [
 	}
 ]
 
-dt: delta-time: funct [
+dt: delta-time: function [
 	{Delta-time - returns the time it takes to evaluate the block.}
 	block [block!]
 ][
@@ -37,7 +37,7 @@ dp: delta-profile: func [
 	start
 ]
 
-speed?: funct [
+speed?: function [
 	"Returns approximate speed benchmarks [eval cpu memory file-io]."
 	/no-io "Skip the I/O test"
 	/times "Show time for each test"

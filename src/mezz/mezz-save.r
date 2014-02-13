@@ -15,7 +15,7 @@ REBOL [
 	}
 ]
 
-mold64: funct [
+mold64: function [
 	"Temporary function to mold binary base 64." ; fix the need for this! -CS
 	data
 ][
@@ -26,7 +26,7 @@ mold64: funct [
 	data
 ]
 
-save: funct [
+save: function [
 	{Saves a value, block, or other data to a file, URL, binary, or string.}
 	where [file! url! binary! string! none!] {Where to save (suffix determines encoding)}
 	value {Value(s) to save}

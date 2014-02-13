@@ -62,7 +62,7 @@ clean-path: func [
 	reverse out
 ]
 
-input: funct [
+input: function [
 	{Inputs a string from the console. New-line character is removed.}
 ;	/hide "Mask input with a * character"
 ][
