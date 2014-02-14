@@ -342,7 +342,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	VAL_WORD_SYM(tos) = word ? word : SYM__APPLY_;
 	VAL_WORD_INDEX(tos) = -1; // avoid GC access to invalid FRAME above
 	if (func) {
-		VAL_WORD_FRAME(tos) = VAL_FUNC_BODY(func);
+		VAL_WORD_FRAME(tos) = VAL_FUNC_ARGS(func);
 		// Save FUNC value for safety (spec, args, code):
 		tos++;
 		*tos = *func;	// the DSF_FUNC
@@ -439,6 +439,12 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 ***********************************************************************/
 {
 	REBPVS pvs;
+
+	if (val && THROWN(val)) {
+		// If unwind/throw value is not coming from TOS, push it.
+		if (val != DS_TOP) DS_PUSH(val);
+		return 0;
+	}
 
 	pvs.setval = val;		// Set to this new value
 	DS_PUSH_NONE;
@@ -655,6 +661,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 
 		case REB_WORD:		// WORD - Evaluate next value
 			index = Do_Next(block, index, IS_OP(func));
+			// THROWN is handled after the switch.
 			if (index == END_FLAG) Trap2(RE_NO_ARG, Func_Word(dsf), args);
 			DS_Base[ds] = *DS_POP;
 			break;
@@ -664,6 +671,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 				value = BLK_SKIP(block, index);
 				if (IS_PAREN(value) || IS_GET_WORD(value) || IS_GET_PATH(value)) {
 					index = Do_Next(block, index, IS_OP(func));
+					// THROWN is handled after the switch.
 					DS_Base[ds] = *DS_POP;
 				}
 				else {
@@ -718,6 +726,8 @@ more_path:
 		default:
 			Trap_Arg(args);
 		}
+
+		if (THROWN(DS_VALUE(ds))) return index;
 
 		// If word is typed, verify correct argument datatype:
 		if (!TYPE_CHECK(args, VAL_TYPE(DS_VALUE(ds))))
@@ -837,6 +847,7 @@ reval:
 		word = value;
 		//if (!VAL_WORD_FRAME(word)) Trap1(RE_NOT_DEFINED, word); (checked in set_var)
 		index = Do_Next(block, index+1, 0);
+		// THROWN is handled in Set_Var.
 		if (index == END_FLAG || VAL_TYPE(DS_TOP) <= REB_UNSET) Trap1(RE_NEED_VALUE, word);
 		Set_Var(word, DS_TOP);
 		//Set_Word(word, DS_TOP); // (value stays on stack)
@@ -858,8 +869,13 @@ eval_func:
 eval_func2:
 		// Evaluate the function:
 		DSF = dsf;	// Set new DSF
-		if (Trace_Flags) Trace_Func(word, value);
-		Func_Dispatch[ftype](value);
+		if (!THROWN(DS_TOP)) {
+			if (Trace_Flags) Trace_Func(word, value);
+			Func_Dispatch[ftype](value);
+		}
+		else {
+			*DS_RETURN = *DS_TOP;
+		}
 
 		// Reset the stack to prior function frame, but keep the
 		// return value (function result) on the top of the stack.
@@ -895,6 +911,7 @@ eval_func2:
 		//Debug_Fmt("t: %r", value);
 		if (ftype == REB_SET_PATH) {
 			index = Do_Next(block, index+1, 0);
+			// THROWN is handled in Do_Path.
 			if (index == END_FLAG || VAL_TYPE(DS_TOP) <= REB_UNSET) Trap1(RE_NEED_VALUE, word);
 			Do_Path(&word, DS_TOP);
 		} else {
@@ -1072,6 +1089,7 @@ eval_func2:
 
 	while (index < BLK_LEN(block)) {
 		index = Do_Next(block, index, 0);
+		if (THROWN(DS_TOP)) return;
 	}
 
 	Copy_Stack_Values(start, into);
@@ -1122,6 +1140,8 @@ eval_func2:
 			Do_Path(&v, 0); // pushes val on stack
 		}
 		else DS_PUSH(val);
+		// No need to check for unwinds (THROWN) here, because unwinds should
+		// never be accessible via words or paths.
 	}
 
 	Copy_Stack_Values(start, into);
@@ -1143,6 +1163,7 @@ eval_func2:
 			index++;
 		} else
 			index = Do_Next(block, index, 0);
+		if (THROWN(DS_TOP)) return;
 	}
 
 	Copy_Stack_Values(start, into);
@@ -1303,6 +1324,7 @@ eval_func2:
 		n = 0;
 		while (index < BLK_LEN(block)) {
 			index = Do_Next(block, index, 0);
+			if (THROWN(DS_TOP)) return;
 			n++;
 		}
 		if (n > len) DSP = start + len;
@@ -1590,6 +1612,9 @@ eval_func2:
 **
 */	REBOOL Try_Block_Halt(REBSER *block, REBCNT index)
 /*
+**		Evaluate a block from the index position specified in the value,
+**		with a handler for quit conditions (QUIT, HALT) set up.
+**
 ***********************************************************************/
 {
 	REBOL_STATE state;
@@ -1603,12 +1628,10 @@ eval_func2:
 	if (SET_JUMP(state)) {
 //		Debug_Fmt("Throw Halt %d", depth);
 		POP_STATE(state, Halt_State);
-		Saved_State = Halt_State;
 		Catch_Error(DS_NEXT); // Stores error value here
 		return TRUE;
 	}
 	SET_STATE(state, Halt_State);
-	Saved_State = Halt_State;
 
 	SAVE_SERIES(block);
 	val = Do_Blk(block, index);
@@ -1616,7 +1639,6 @@ eval_func2:
 
 	DS_Base[state.dsp+1] = *val;
 	POP_STATE(state, Halt_State);
-	Saved_State = Halt_State;
 
 //	Debug_Fmt("Ret Halt %d", depth);
 
@@ -1653,6 +1675,9 @@ eval_func2:
 		return val;
 	}
 	SET_STATE(state, Halt_State);
+	// Use this handler for both, halt conditions (QUIT, HALT) and error
+	// conditions. As this is a top-level handler, simply overwriting
+	// Saved_State is safe.
 	Saved_State = Halt_State;
 
 	code = Scan_Source(text, LEN_BYTES(text));
@@ -1737,7 +1762,7 @@ eval_func2:
 	REBINT n;
 
 	// Caller must: Prep_Func + Args above
-	VAL_WORD_FRAME(DSF_WORD(DSF)) = VAL_FUNC_BODY(func_val);
+	VAL_WORD_FRAME(DSF_WORD(DSF)) = VAL_FUNC_ARGS(func_val);
 	n = DS_ARGC - (SERIES_TAIL(VAL_FUNC_WORDS(func_val)) - 1);
 	for (; n > 0; n--) DS_PUSH_NONE;
 	Func_Dispatch[VAL_TYPE(func_val)-REB_NATIVE](func_val);
@@ -1818,7 +1843,7 @@ push_arg:
 	memmove(DS_ARG(1), DS_TOP-(inew-1), inew * sizeof(REBVAL));
 	DSP = DS_ARG_BASE + inew; // new TOS
 	//Dump_Block(DS_ARG(1), inew);
-	VAL_WORD_FRAME(DSF_WORD(DSF)) = VAL_FUNC_BODY(func_val);
+	VAL_WORD_FRAME(DSF_WORD(DSF)) = VAL_FUNC_ARGS(func_val);
 	*DSF_FUNC(DSF) = *func_val;
 	Func_Dispatch[VAL_TYPE(func_val)-REB_NATIVE](func_val);
 }
@@ -2167,6 +2192,9 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 			return -1;
 		}
 		SET_STATE(state, Halt_State);
+		// Use this handler for both, halt conditions (QUIT, HALT) and error
+		// conditions. As this is a top-level handler, simply overwriting
+		// Saved_State is safe.
 		Saved_State = Halt_State;
 
 		val = Do_Sys_Func(SYS_CTX_START, 0); // what if script contains a HALT?

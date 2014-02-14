@@ -32,3 +32,6 @@ This file is part of the Independent JPEG Group's software.
 dtoa:
 The author of this software is David M. Gay.
 Copyright (c) 1991, 2000, 2001 by Lucent Technologies.
+
+qsort:
+Copyright (c) 1992, 1993 The Regents of the University of California.

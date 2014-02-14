@@ -122,6 +122,7 @@
 
 	//DISABLE_GC;
 	words = Make_Block(len + 1); // size + room for SELF
+	BARE_SERIES(words);
 	frame = Make_Block(len + 1);
 	//ENABLE_GC;
 	// Note: cannot use Append_Frame for first word.
@@ -148,8 +149,10 @@
 	BLK_TERM(frame);
 
 	// Expand or copy WORDS block:
-	if (copy) FRM_WORD_SERIES(frame) = Copy_Expand_Block(words, delta);
-	else {
+	if (copy) {
+		FRM_WORD_SERIES(frame) = Copy_Expand_Block(words, delta);
+		BARE_SERIES(FRM_WORD_SERIES(frame));
+	} else {
 		Extend_Series(words, delta);
 		BLK_TERM(words);
 	}
@@ -164,8 +167,8 @@
 **      if necessary. Returns the value cell for the word. (Set to
 **      UNSET by default to avoid GC corruption.)
 **
-**      If sym is zero, use the word sym and bind the word value.
-**      If sym is set, use that sym.
+**      If word is not NULL, use the word sym and bind the word value,
+**      otherwise use sym.
 **
 **      WARNING: Invalidates pointers to values within the frame
 **      because the frame block may get expanded. (Use indexes.)
@@ -265,11 +268,13 @@
 **
 ***********************************************************************/
 {
-	REBVAL *words;
-	REBINT *binds = WORDS_HEAD(Bind_Table); // GC safe to do here
+	REBVAL *words = FRM_WORDS(prior);
+	REBINT *binds = WORDS_HEAD(Bind_Table);
 	REBINT n;
 
-	words = FRM_WORDS(prior);
+	// this is necessary for COPY_VALUES below
+	// to not overwrite memory BUF_WORDS does not own
+	RESIZE_SERIES(BUF_WORDS, SERIES_TAIL(prior));
 	COPY_VALUES(words, BLK_HEAD(BUF_WORDS), SERIES_TAIL(prior));
 	SERIES_TAIL(BUF_WORDS) = SERIES_TAIL(prior);
 	for (n = 1, words++; NOT_END(words); words++) // skips first = SELF
@@ -281,7 +286,7 @@
 **
 */ void Collect_Words(REBVAL *block, REBFLG modes)
 /*
-**		The inner recursive loop used for Collect_Words function below.
+**		The inner recursive loop used for Collect_Frame function below.
 **
 ***********************************************************************/
 {
@@ -442,43 +447,15 @@
 
 /***********************************************************************
 **
-*/  void Bind_Frame(REBSER *obj)
+*/  void Rebind_Frame(REBSER *src_frame, REBSER *dst_frame)
 /*
-**      Clone a frame, knowing which types of values need to be
-**		copied, deep copied, and rebound.
+**      Clone old src_frame to new dst_frame knowing
+**		which types of values need to be copied, deep copied, and rebound.
 **
 ***********************************************************************/
 {
-	REBVAL *val;
-	REBOOL funcs = FALSE;
-
-	//DISABLE_GC;
-	// Copy functions:
-	for (val = BLK_SKIP(obj, 1); NOT_END(val); val++) {
-		if (IS_FUNCTION(val)) {
-			Clone_Function(val, val); 
-			funcs = TRUE;
-		}
-		else if (IS_CLOSURE(val)) {
-			funcs = TRUE;
-		}
-	}
-
 	// Rebind all values:
-	Bind_Block(obj, BLK_SKIP(obj, 1), BIND_DEEP | BIND_FUNC);
-
-	if (funcs) {
-		// Rebind functions:
-		for (val = BLK_SKIP(obj, 1); NOT_END(val); val++) {
-			if (IS_FUNCTION(val)) {
-				Bind_Relative(VAL_FUNC_ARGS(val), VAL_FUNC_BODY(val), VAL_FUNC_BODY(val));
-			}
-			else if (IS_CLOSURE(val)) {
-			}
-		}
-	}
-
-	//ENABLE_GC;
+	Rebind_Block(src_frame, dst_frame, BLK_SKIP(dst_frame, 1), REBIND_FUNC);
 }
 
 
@@ -497,7 +474,7 @@
 	PG_Reb_Stats->Objects++;
 
 	if (!block || IS_END(block)) {
-		object = parent ? Clone_Block(parent) : Make_Frame(0);
+		object = parent ? Copy_Block_Values(parent, 0, SERIES_TAIL(parent), TS_CLONE) : Make_Frame(0);
 	} else {
 		words = Collect_Frame(BIND_ONLY, parent, block); // GC safe
 		object = Create_Frame(words, 0); // GC safe
@@ -506,8 +483,7 @@
 				Debug_Fmt(BOOT_STR(RS_WATCH, 2), SERIES_TAIL(parent) - 1, FRM_WORD_SERIES(object));
 			// Copy parent values and deep copy blocks and strings:
 			COPY_VALUES(FRM_VALUES(parent)+1, FRM_VALUES(object)+1, SERIES_TAIL(parent) - 1);
-			Copy_Deep_Values(object, 1, SERIES_TAIL(object), TS_CODE);
-			//Copy_Block_xDeep(object, 1, 0, COPY_OBJECT | COPY_SAME);
+			Copy_Deep_Values(object, 1, SERIES_TAIL(object), TS_CLONE);
 		}
 	}
 
@@ -636,46 +612,65 @@
 
 /***********************************************************************
 **
-*/  REBSER *Merge_Frames(REBSER *parent, REBSER *child)
+*/  REBSER *Merge_Frames(REBSER *parent1, REBSER *parent2)
 /*
-**      Create a frame from two frames. Merge common fields.
-**      Values from the second frame take precedence. No rebinding.
+**      Create a child frame from two parent frames. Merge common fields.
+**      Values from the second parent take precedence.
+**
+**		Deep copy and rebind the child.
 **
 ***********************************************************************/
 {
 	REBSER *wrds;
-	REBSER *frame;
+	REBSER *child;
 	REBVAL *words;
 	REBVAL *value;
 	REBCNT n;
+	REBINT *binds = WORDS_HEAD(Bind_Table);
 
-	// Merge parent and child words. This trick works because the
-	// word list is itself a valid block.
-	wrds = Collect_Frame(BIND_ALL, parent, BLK_SKIP(FRM_WORD_SERIES(child),1));
+	// Merge parent1 and parent2 words.
+	// Keep the binding table.
+	Collect_Start(BIND_ALL);
+	// Setup binding table and BUF_WORDS with parent1 words:
+	if (parent1) Collect_Object(parent1);
+	// Add parent2 words to binding table and BUF_WORDS:
+	Collect_Words(BLK_SKIP(FRM_WORD_SERIES(parent2), 1), BIND_ALL);
 
-	// Allocate frame (now that we know the correct size):
-	frame = Make_Block(SERIES_TAIL(wrds));  // GC!!!
-	value = Append_Value(frame);
+	// Allocate child (now that we know the correct size):
+	wrds = Copy_Series(BUF_WORDS);
+	child = Make_Block(SERIES_TAIL(wrds));
+	value = Append_Value(child);
 	VAL_SET(value, REB_FRAME);
 	VAL_FRM_WORDS(value) = wrds;
 	VAL_FRM_SPEC(value) = 0;
 
-	// Copy parent values:
-	COPY_VALUES(FRM_VALUES(parent)+1, FRM_VALUES(frame)+1, SERIES_TAIL(parent)-1);
+	// Copy parent1 values:
+	COPY_VALUES(FRM_VALUES(parent1)+1, FRM_VALUES(child)+1, SERIES_TAIL(parent1)-1);
 
-	// Copy new words and values:
-	words = FRM_WORDS(child)+1;
-	value = FRM_VALUES(child)+1;
+	// Copy parent2 values:
+	words = FRM_WORDS(parent2)+1;
+	value = FRM_VALUES(parent2)+1;
 	for (; NOT_END(words); words++, value++) {
-		n = Find_Word_Index(frame, VAL_BIND_SYM(words), FALSE);
-		if (n) BLK_HEAD(frame)[n] = *value;
+		// no need to search when the binding table is available
+		n = binds[VAL_WORD_CANON(words)];
+		BLK_HEAD(child)[n] = *value;
 	}
 
-	// Terminate the new frame:
-	SERIES_TAIL(frame) = SERIES_TAIL(wrds);
-	BLK_TERM(frame);
+	// Terminate the child frame:
+	SERIES_TAIL(child) = SERIES_TAIL(wrds);
+	BLK_TERM(child);
 
-	return frame;
+	// Deep copy the child
+	Copy_Deep_Values(child, 1, SERIES_TAIL(child), TS_CLONE);
+
+	// Rebind the child
+	Rebind_Block(parent1, child, BLK_SKIP(child, 1), REBIND_FUNC);
+	Rebind_Block(parent2, child, BLK_SKIP(child, 1), REBIND_FUNC | REBIND_TABLE);
+
+	// release the bind table 
+	Collect_End(child);
+
+	return child;
 }
 
 
@@ -841,7 +836,7 @@
 		}
 		else if (ANY_BLOCK(value) && (mode & BIND_DEEP))
 			Bind_Block_Words(frame, VAL_BLK_DATA(value), mode);
-		else if (IS_FUNCTION(value) && (mode & BIND_FUNC))
+		else if ((IS_FUNCTION(value) || IS_CLOSURE(value)) && (mode & BIND_FUNC))
 			Bind_Block_Words(frame, BLK_HEAD(VAL_FUNC_BODY(value)), mode);
 	}
 }
@@ -869,9 +864,6 @@
 
 	CHECK_BIND_TABLE;
 
-//	for (index = 0; index < Bind_Table->tail; index++)
-//		if (binds[index] != 0) Crash(1333);
-
 	// Note about optimization: it's not a big win to avoid the
 	// binding table for short blocks (size < 4), because testing
 	// every block for the rare case adds up.
@@ -889,6 +881,8 @@
 	// Reset binding table:
 	for (words = FRM_WORDS(frame)+1; NOT_END(words); words++)
 		binds[VAL_BIND_CANON(words)] = 0;
+
+	CHECK_BIND_TABLE;
 }
 
 
@@ -935,7 +929,7 @@
 /*
 **      Recursive function for relative function word binding.
 **
-**      Note: body arg points to an identifying series of the function,
+**      Note: frame arg points to an identifying series of the function,
 **      not a normal frame. This will be used to verify the word fetch.
 **
 ***********************************************************************/
@@ -960,14 +954,14 @@
 
 /***********************************************************************
 **
-*/  void Bind_Relative(REBSER *words, REBSER *body, REBSER *block)
+*/  void Bind_Relative(REBSER *words, REBSER *frame, REBSER *block)
 /*
 **      Bind the words of a function block to a stack frame.
 **      To indicate the relative nature of the index, it is set to
 **		a negative offset.
 **
 **		words: VAL_FUNC_ARGS(func)
-**		body:  VAL_FUNC_BODY(func) - used as frame
+**		frame: VAL_FUNC_ARGS(func)
 **		block: block to bind
 **
 ***********************************************************************/
@@ -986,75 +980,65 @@
 	for (index = 1; NOT_END(args); args++, index++)
 		binds[VAL_BIND_CANON(args)] = -index;
 
-	Bind_Relative_Words(body, block);
+	Bind_Relative_Words(frame, block);
 
 	// Reset binding table:
 	for (args = BLK_SKIP(words, 1); NOT_END(args); args++)
 		binds[VAL_BIND_CANON(args)] = 0;
+
+	CHECK_BIND_TABLE;
 }
 
 
 /***********************************************************************
 **
-*/  void Bind_Stack_Block(REBSER *body, REBSER *block)
+*/  void Bind_Stack_Block(REBSER *frame, REBSER *block)
 /*
 ***********************************************************************/
 {
-	REBINT dsf = DSF;
-
-	// Find body (frame) on stack:
-	while (body != VAL_WORD_FRAME(DSF_WORD(dsf))) {
-		dsf = PRIOR_DSF(dsf);
-		if (dsf <= 0) Trap0(RE_NOT_DEFINED);  // better message !!!!
-	}
-
-	if (IS_FUNCTION(DSF_FUNC(dsf))) {
-		Bind_Relative(VAL_FUNC_ARGS(DSF_FUNC(dsf)), body, block);
-	}
+	Bind_Relative(frame, frame, block);
 }
 
 
 /***********************************************************************
 **
-*/  void Bind_Stack_Word(REBSER *body, REBVAL *word)
+*/  void Bind_Stack_Word(REBSER *frame, REBVAL *word)
 /*
 ***********************************************************************/
 {
-	REBINT dsf = DSF;
 	REBINT index;
 
-	// Find body (frame) on stack:
-	while (body != VAL_WORD_FRAME(DSF_WORD(dsf))) {
-		dsf = PRIOR_DSF(dsf);
-		if (dsf <= 0) Trap1(RE_NOT_IN_CONTEXT, word);
-	}
-
-	if (IS_FUNCTION(DSF_FUNC(dsf))) {
-		index = Find_Arg_Index(VAL_FUNC_ARGS(DSF_FUNC(dsf)), VAL_WORD_SYM(word));
-		if (!index) Trap1(RE_NOT_IN_CONTEXT, word);
-		VAL_WORD_FRAME(word) = body;
-		VAL_WORD_INDEX(word) = -index;
-	} else
-		Crash(9100); // !!!  function is not there!
+	index = Find_Arg_Index(frame, VAL_WORD_SYM(word));
+	if (!index) Trap1(RE_NOT_IN_CONTEXT, word);
+	VAL_WORD_FRAME(word) = frame;
+	VAL_WORD_INDEX(word) = -index;
 }
 
 
 /***********************************************************************
 **
-*/  void Rebind_Block(REBSER *frame_src, REBSER *frame_dst, REBSER *block)
+*/  void Rebind_Block(REBSER *src_frame, REBSER *dst_frame, REBVAL *data, REBFLG modes)
 /*
 **      Rebind all words that reference src frame to dst frame.
 **      Rebind is always deep.
 **
+**		There are two types of frames: relative frames and normal frames.
+**		When frame_src type and frame_dst type differ,
+**		modes must have REBIND_TYPE.
+**
 ***********************************************************************/
 {
-	REBVAL *value;
+	REBINT *binds = WORDS_HEAD(Bind_Table);
 
-	for (value = BLK_HEAD(block); NOT_END(value); value++) {
-		if (ANY_BLOCK(value)) Rebind_Block(frame_src, frame_dst, VAL_SERIES(value));
-		else if (ANY_WORD(value) && VAL_WORD_FRAME(value) == frame_src) {
-			VAL_WORD_FRAME(value) = frame_dst;
-		}
+	for (; NOT_END(data); data++) {
+		if (ANY_BLOCK(data))
+			Rebind_Block(src_frame, dst_frame, VAL_BLK_DATA(data), modes);
+		else if (ANY_WORD(data) && VAL_WORD_FRAME(data) == src_frame) {
+			VAL_WORD_FRAME(data) = dst_frame;
+			if (modes & REBIND_TABLE) VAL_WORD_INDEX(data) = binds[VAL_WORD_CANON(data)];
+			if (modes & REBIND_TYPE) VAL_WORD_INDEX(data) = - VAL_WORD_INDEX(data);
+		} else if ((modes & REBIND_FUNC) && (IS_FUNCTION(data) || IS_CLOSURE(data)))
+			Rebind_Block(src_frame, dst_frame, BLK_HEAD(VAL_FUNC_BODY(data)), modes);
 	}
 }
 
@@ -1293,6 +1277,8 @@
 	REBINT index = VAL_WORD_INDEX(word);
 	REBINT dsf;
 	REBSER *frm;
+
+	if (THROWN(value)) return;
 
 	if (!HAS_FRAME(word)) Trap1(RE_NOT_DEFINED, word);
 

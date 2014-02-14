@@ -151,50 +151,122 @@ replace: func [
 ; We need to consider adding an /any refinement to use find/any, once that works.
 
 reword: func [
-	"Substitutes values into a template string, returning a new string."
-	source [any-string!] "Template series (or string with escape sequences)"
-	values [map! object! block!] "Pairs of values and replacements (will be called if functions)"
-	/escape "Choose your own escape char (no escape for block templates)"
-	char [char! any-string!] "Use this escape char (default $)"
+	"Make a string or binary based on a template and substitution values."
+	source [any-string! binary!] "Template series with escape sequences"
+	values [map! object! block!] "Keyword literals and value expressions"
+	/case "Characters are case-sensitive"  ;!!! Note CASE is redefined in here!
+	/only "Use values as-is, do not reduce the block, insert block values"
+	/escape "Choose your own escape char(s) or [begin end] delimiters"
+	char [char! any-string! binary! block! none!] {Default "$"}
 	/into "Insert into a buffer instead (returns position after insert)"
-	output [any-string!] "The buffer series (modified)"
-	/local vals word a b c d
+	output [any-string! binary!] "The buffer series (modified)"
+	/local char-end vals word wtype cword out fout rule a b w v
 ][
-	output: any [output make source length? source]
-	; Convert to strings and eliminate duplicates and empties (case insensitive)
-	vals: make map! length? values
-	foreach [w v] values [
-		; Last duplicate word wins; empty words, unset or none vals removed
-		unless string? :w [w: to string! :w]
-		unless empty? w [poke vals w unless unset? :v [:v]]
+	assert/type [local none!]  ; Prevent locals injection
+	unless into [output: make source length? source]
+	; Determine the datatype to convert the keywords to internally
+	; Case-sensitive map keys must be binary, tags are special-cased by parse
+	wtype: lib/case [case binary! tag? source string! 'else type? source]
+	; Determine the escape delimiter(s), if any
+	lib/case/all [
+		not escape [char: "$"]
+		block? char [
+			; Have to use parse here because ASSERT/type is broken
+			rule: [char! | any-string! | binary!]
+			unless parse c: char [set char rule set char-end opt rule] [
+				cause-error 'script 'invalid-arg reduce [c]
+			]
+		]
+		char? char [char: to wtype char]
+		char? char-end [char-end: to wtype char-end]
+	]
+	lib/case [
+		; Check whether values is a map of the kind we can use internally
+		all [
+			map? values      ; Must be a map to use series keys with no dups
+			empty? char-end  ; If we have char-end, it gets appended to the keys
+			foreach [w v] values [
+				; Key types must match wtype and no unset values allowed
+				if any [unset? :v wtype <> type? :w] [break/return false]
+				true
+			]
+		] [vals: values]  ; Success, so use it
+		; Otherwise, convert keywords to wtype and eliminate duplicates and empties
+		; Last duplicate keyword wins; empty keywords, unset or none vals removed
+		; Any trailing delimiter is added to the end of the key for convenience
+		all [
+			vals: make map! length? values  ; Make a new map internally
+			not only block? values  ; Should we evaluate value expressions?
+		] [
+			while [not tail? values] [
+				w: first+ values  ; Keywords are not evaluated
+				set/any 'v do/next values 'values
+				if any [set-word? :w lit-word? :w] [w: to word! :w]
+				lib/case [
+					wtype = type? :w none
+					wtype <> binary! [w: to wtype :w]
+					any-string? :w [w: to binary! :w]
+					'else [w: to binary! to string! :w]
+				]
+				unless empty? w [
+					unless empty? char-end [w: append copy w char-end]
+					poke vals w unless unset? :v [:v]
+				]
+			]
+		]
+		'else [  ; /only doesn't apply, just assign raw values
+			foreach [w v] values [  ; foreach can be used on all values types
+				if any [set-word? :w lit-word? :w] [w: to word! :w]
+				lib/case [
+					wtype = type? :w none
+					wtype <> binary! [w: to wtype :w]
+					any-string? :w [w: to binary! :w]
+					'else [w: to binary! to string! :w]
+				]
+				unless empty? w [
+					unless empty? char-end [w: append copy w char-end]
+					poke vals w unless unset? :v [:v]
+				]
+			]
+		]
 	]
 	; Construct the reword rule
 	word: make block! 2 * length? vals
 	foreach w vals [word: reduce/into [w '|] word]
 	word: head remove back word
-	escape: [c: word d: (
-		; Copy the skipped part, then the result of evaluating the value
-		output: insert insert/part output a b vals/(copy/part c d) :b
-		; Value selected with path so functions evaluate with start pos arg
-	) a:]
-	; Determine the escape string, if any
-	char: to string! any [char "$"]
-	either empty? char [
-		; No escape string, check everything (until PARSE is fixed)
-		parse/all source [
-			a: any [b: [escape | skip]]
-			to end (output: insert output a)
-		]  ; !! We need PARSE TO bitset! badly
-	] [
-		; Escape string defined, use the optimized method
-		parse/all source [
-			a: any [to char b: char [escape | none]]
-			to end (output: insert output a)
+	; Convert keyword if the type doesn't match
+	cword: pick [(w: to wtype w)] wtype <> type? source
+	set/any [out: fout:] pick [
+		[   ; Convert to string if type combination needs it
+			(output: insert output to string! copy/part a b)
+			(output: insert output to string! a)
+		][  ; ... otherwise just insert it directly
+			(output: insert/part output a b)
+			(output: insert output a)
 		]
+	] or~ tag? source and~ binary? source not binary? output
+	escape: [
+		copy w word cword out (
+			output: insert output lib/case [
+				block? v: select vals w [either only [v] :v]
+				any-function? :v [apply :v [:b]]
+				'else :v
+			]
+		) a:
 	]
+	rule: either empty? char [
+		; No starting escape string, use TO multi
+		[a: any [to word b: [escape | skip]] to end fout]
+	][
+		; Starting escape string defined, use regular TO
+		if wtype <> type? char [char: to wtype char]
+		[a: any [to char b: char [escape | none]] to end fout]
+	]
+	either case [parse/case source rule] [parse source rule]
 	; Return end of output with /into, head otherwise
 	either into [output] [head output]
 ]
+; It's big, it's complex, but it works. Placeholder for a native.
 
 move: func [
 	"Move a value or span of values in a series."
@@ -288,7 +360,7 @@ collect: func [
 	either into [output] [head output]
 ]
 
-format: funct [
+format: function [
 	"Format a string according to the format dialect."
 	rules {A block in the format dialect. E.g. [10 -10 #"-" 4]}
 	values
@@ -429,7 +501,7 @@ split: func [
 	]
 ]
 
-find-all: funct [
+find-all: function [
     "Find all occurrences of a value within a series (allows modification)."
     'series [word!] "Variable for block, string, or other series"
     value

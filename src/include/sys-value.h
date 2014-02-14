@@ -1085,13 +1085,15 @@ typedef struct Reb_All {
 		REBHED flags;
 		REBCNT header;
 	} flags;
+#if defined(__LP64__) || defined(__LLP64__)
+	REBINT	padding; //make it 32-bit
+#endif
 	union Reb_Val_Data {
 		REBWRD	word;
 		REBSRI	series;
 		REBCNT  logic;
 		REBI64	integer;
 		REBU64	unteger;
-		REBINT	int32;
 		REBDEC	decimal;
 		REBUNI  uchar;
 		REBERR	error;

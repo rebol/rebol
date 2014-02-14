@@ -81,11 +81,7 @@
 	SET_END(word);
 	SET_END(vals);
 
-	// Keep the frame safe as we copy the body block deeply:
-	SAVE_SERIES(frame);
 	body = Clone_Block_Value(body_blk);
-//	body = Copy_Block_Deep(VAL_SERIES(body_blk), VAL_INDEX(body_blk), 0, COPY_ALL);
-	UNSAVE_SERIES(frame);
 	Bind_Block(frame, BLK_HEAD(body), BIND_DEEP);
 
 	*fram = frame;
@@ -677,7 +673,7 @@ utop:
 	do {
 		ds = Do_Blk(b1, i1);
 		if (IS_UNSET(ds) || IS_ERROR(ds)) {	// Unset, break, throw, error.
-			if (Check_Error(ds)) return R_TOS1;
+			if (Check_Error(ds) >= 0) return R_TOS1;
 		}
 		if (!IS_TRUE(ds)) return R_RET;
 		ds = Do_Blk(b2, i2);

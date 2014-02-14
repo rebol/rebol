@@ -1235,10 +1235,8 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		REBSER *blk;
 		Pre_Mold(value, mold);
 		blk = Gob_To_Block(VAL_GOB(value));
-		SAVE_SERIES(blk);
 		Mold_Block_Series(mold, blk, 0, 0);
 		End_Mold(mold);
-		UNSAVE_SERIES(blk);
 	}
 		break;
 
@@ -1313,6 +1311,9 @@ append:
 **
 */	REBSER *Form_Reduce(REBSER *block, REBCNT index)
 /*
+**		Reduce a block and then form each value into a string. Return the
+**		string or NULL if an unwind triggered while reducing.
+**
 ***********************************************************************/
 {
 	REBINT start = DSP + 1;
@@ -1321,6 +1322,11 @@ append:
 
 	while (index < BLK_LEN(block)) {
 		index = Do_Next(block, index, 0);
+		if (THROWN(DS_TOP)) {
+			*DS_VALUE(start) = *DS_TOP;
+			DSP = start;
+			return NULL;
+		}
 	}
 
 	Reset_Mold(&mo);

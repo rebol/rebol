@@ -49,25 +49,6 @@
 
 /***********************************************************************
 **
-*/	REBSER *GC_Event(REBVAL *value)
-/*
-**		Return internal series to prevent GC on it.
-**
-***********************************************************************/
-{
-	if (
-		   IS_EVENT_MODEL(value, EVM_PORT)
-		|| IS_EVENT_MODEL(value, EVM_OBJECT)
-		|| (VAL_EVENT_TYPE(value) == EVT_DROP_FILE && GET_FLAG(VAL_EVENT_FLAGS(value), EVF_COPIED))
-	)
-		return VAL_EVENT_SER(value);
-
-	return 0;
-}
-
-
-/***********************************************************************
-**
 */	REBINT Cmp_Event(REBVAL *t1, REBVAL *t2)
 /*
 **	Given two events, compare them.

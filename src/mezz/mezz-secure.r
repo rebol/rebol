@@ -11,7 +11,7 @@ REBOL [
 	}
 ]
 
-secure: funct/with [
+secure: function/with [
 	"Set security policies (use SECURE help for more information)."
 	'policy [word! lit-word! block! unset!] "Set single or multiple policies (or HELP)"
 ] append bind [

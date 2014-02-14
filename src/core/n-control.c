@@ -293,6 +293,7 @@ enum {
 ***********************************************************************/
 {
 	Apply_Block(D_ARG(1), D_ARG(2), !D_REF(3)); // stack volatile
+	VAL_CLR_OPT(DS_TOP, OPTS_REVAL); // secure against return/redo
 	return R_TOS;
 }
 
@@ -368,16 +369,14 @@ enum {
 
 	if (D_REF(4)) {	//QUIT
 		if (Try_Block_Halt(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
-			// We can be here for 2 reasons:
-			// 1. a QUIT/HALT condition
-			// 2. an error condition
+			// We are here because of a QUIT/HALT condition.
 			ret = DS_NEXT;
 			if (VAL_ERR_NUM(ret) == RE_QUIT)
 				ret = VAL_ERR_VALUE(ret);
 			else if (VAL_ERR_NUM(ret) == RE_HALT)
 				Halt_Code(RE_HALT, 0);
 			else
-				Throw_Error(VAL_ERR_OBJECT(ret));
+				Crash(RP_NO_CATCH);
 			*DS_RETURN = *ret;
 			return R_RET;
 		}
@@ -554,7 +553,7 @@ got_err:
 	case REB_URL:
 	case REB_FILE:
 		// DO native and system/intrinsic/do must use same arg list:
-		Do_Sys_Func(SYS_CTX_DO_P, value, D_ARG(2), D_ARG(3), D_ARG(4), D_ARG(5), 0);
+		Do_Sys_Func(SYS_CTX_DO_P, value, D_ARG(2), D_ARG(3), D_ARG(4), D_ARG(5), NULL);
 		return R_TOS1;
 
 	case REB_TASK:

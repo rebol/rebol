@@ -369,7 +369,11 @@ static void Free_Window(REBGOB *gob) {
 	SET_GOB_STATE(gob, GOBS_OPEN);
 
 	// Provide pointer from window back to REBOL window:
-	SetWindowLong(window, GWL_USERDATA, (long)gob);
+#ifdef __LLP64__
+	SetWindowLongPtr(window, GWLP_USERDATA, (REBUPT)gob);
+#else
+	SetWindowLong(window, GWL_USERDATA, (REBUPT)gob);
+#endif
 
 	if (!GET_GOB_FLAG(gob, GOBF_HIDDEN)) {
 		if (GET_GOB_FLAG(gob, GOBF_ON_TOP)) SetWindowPos(window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
@@ -666,7 +670,11 @@ static void Free_Window(REBGOB *gob) {
 	REBGOB *gob;
 	REBPAR size;
 
+#ifdef __LLP64__
+	gob = (REBGOB *)GetWindowLongPtr(window, GWLP_USERDATA);
+#else
 	gob = (REBGOB *)GetWindowLong(window, GWL_USERDATA);
+#endif
 
 	if (gob) {
 

@@ -29,7 +29,7 @@ REBOL [
 ; The system/modules list holds modules for fully init'd modules, otherwise it
 ; holds their headers, along with the binary or block that will be used to init them.
 
-intern: funct [
+intern: function [
 	"Imports (internalizes) words/values from the lib into the user context."
 	data [block! any-word!] "Word or block of words to be added (deeply)"
 ][
@@ -73,7 +73,7 @@ mixin?: func [
 	]
 ]
 
-load-header: funct/with [
+load-header: function/with [
 	"Loads script header object and body binary (not loaded)."
 	source [binary! string!] "Source code (string! will be UTF-8 encoded)"
 	/only "Only process header, don't decompress or checksum body"
@@ -165,7 +165,7 @@ load-header: funct/with [
 	non-ws: make bitset! [not 1 - 32]
 ]
 
-load-ext-module: funct [
+load-ext-module: function [
 	"Loads an extension module from an extension object."
 	ext [object!] "Extension object (from LOAD-EXTENSION, modified)"
 	;/local -- don't care if cmd-index and command are defined local
@@ -207,7 +207,7 @@ load-ext-module: funct [
 	reduce [hdr code] ; ready for make module!
 ]
 
-load-boot-exts: funct [
+load-boot-exts: function [
 	"INIT: Load boot-based extensions."
 ][
 	loud-print "Loading boot extensions..."
@@ -246,7 +246,7 @@ load-boot-exts: funct [
 	set 'load-boot-exts 'done ; only once
 ]
 
-read-decode: funct [
+read-decode: function [
 	"Reads code/data from source or DLL, decodes it, returns result (binary, block, image,...)."
 	source [file! url!] "Source or block of sources?"
 	type [word! none!] "File type, or NONE for binary raw data"
@@ -261,14 +261,13 @@ read-decode: funct [
 	data
 ]
 
-load: funct [
+load: function [
 	{Loads code or data from a file, URL, string, or binary.}
 	source [file! url! string! binary! block!] {Source or block of sources}
 	/header  {Result includes REBOL header object (preempts /all)}
 	/all     {Load all values (does not evaluate REBOL header)}
 	/type    {Override default file-type; use NONE to always load as code}
 		ftype [word! none!] "E.g. text, markup, jpeg, unbound, etc."
-	/next    {Removed - use TRANSCODE instead}
 ] [
 	; WATCH OUT: for ALL and NEXT words! They are local.
 
@@ -287,9 +286,6 @@ load: funct [
 	assert/type [local none!] ; easiest way to protect against /local hacks
 
 	case/all [
-		next [
-			cause-error 'script 'no-refine [load next] ;!! bug#1711
-		]
 		header [all: none]
 
 		;-- Load multiple sources?
@@ -343,7 +339,7 @@ load: funct [
 	:data
 ]
 
-do-needs: funct [
+do-needs: function [
 	"Process the NEEDS block of a program header. Returns unapplied mixins."
 	needs [block! object! tuple! none!] "Needs block, header or version"
 	/no-share "Force module to use its own non-shared global namespace"
@@ -416,7 +412,7 @@ do-needs: funct [
 	]
 ]
 
-load-module: funct [
+load-module: function [
 	{Loads a module (from a file, URL, binary, etc.) and inserts it into the system module list.}
 	source [word! file! url! string! binary! module! block!] {Source or block of sources}
 	/version ver [tuple!] "Module must be this version or greater"
@@ -628,7 +624,7 @@ load-module: funct [
 	reduce [name if module? mod [mod]]
 ]
 
-import: funct [
+import: function [
 	"Imports a module; locate, load, make, and setup its bindings."
 	module [word! file! url! string! binary! module! block!]
 	/version ver [tuple!] "Module must be this version or greater"

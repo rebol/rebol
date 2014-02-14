@@ -69,7 +69,6 @@ These are now obsolete (as of A107) and should be removed:
 
 //* Common *************************************************************
 
-#define INT_64_MODE				// 64 bit integer datatype
 #define THREADED				// enable threads
 
 #ifdef REB_EXE					// standalone exe from RT
@@ -148,6 +147,14 @@ These are now obsolete (as of A107) and should be removed:
 #ifdef TO_LINUX					// Linux/Intel
 #define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
+#endif
+
+#ifdef TO_LINUX_X64				// Linux/AMD64
+#define ENDIAN_LITTLE
+#define HAS_LL_CONSTS
+#ifndef __LP64__
+#define __LP64__
+#endif
 #endif
 
 #ifdef TO_LINUX_PPC				// Linux/PPC

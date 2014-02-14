@@ -601,7 +601,6 @@ chk_neg:
 	}
 
 	blk = Make_Block(len*2);
-	SAVE_SERIES(blk);
 
 	str = start;
 	while (NZ(eq = FIND_CHR(str+1, '=')) && NZ(n = LEN_STR(str))) {
@@ -612,7 +611,6 @@ chk_neg:
 
 	Block_As_Map(blk);
 
-	UNSAVE_SERIES(blk);
 	return blk;
 }
 
@@ -663,7 +661,6 @@ chk_neg:
 	}
 
 	blk = Make_Block(len);
-	SAVE_SERIES(blk);
 
 	// First is a dir path or full file path:
 	str = start;
@@ -685,7 +682,6 @@ chk_neg:
 		}
 	}
 
-	UNSAVE_SERIES(blk);
 	return blk;
 }
 #endif

@@ -38,6 +38,7 @@ core: [
 	f-extension.c
 	f-math.c
 	f-modify.c
+	f-qsort.c
 	f-random.c
 	f-round.c
 	f-series.c

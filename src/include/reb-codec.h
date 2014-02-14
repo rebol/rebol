@@ -29,6 +29,17 @@
 #define CODI_DEFINED
 
 // Codec image interface:
+//
+// If your codec routine returns CODI_IMAGE, it is expected that the
+// ->bits field contains a block of memory allocated with Make_Mem
+// of size (->w * ->h * 4).  This will be freed by the
+// REBNATIVE(do_codec) in n-system.c
+//
+// If your codec routine returns CODI_BINARY or CODI_TEXT, it is
+// expected that the ->data field contains a block of memory
+// allocated with Make_Mem of size ->len.  This will be freed by
+// the REBNATIVE(do_codec) in n-system.c
+//
 typedef struct reb_codec_image {
 	int action;
 	int w;
@@ -37,13 +48,13 @@ typedef struct reb_codec_image {
 	int alpha;
 	unsigned char *data;
 	union {
-		unsigned int *bits;  // 32 bits
+		u32 *bits;
 		void *other;
 	};
 	int error;
 } REBCDI;
 
-typedef int (*codo)(REBCDI *cdi);
+typedef REBINT (*codo)(REBCDI *cdi);
 
 // Media types:
 enum {
