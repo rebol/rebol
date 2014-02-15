@@ -30,6 +30,7 @@
 #include "sys-core.h"
 #include "sys-scan.h"
 #include "sys-deci-funcs.h"
+#include "sys-dec-to-char.h"
 #include <errno.h>
 
 typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
@@ -249,6 +250,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	REBYTE buf[MAX_NUM_LEN+4];
 	REBYTE *ep = buf;
 	REBOOL dig = FALSE;   /* flag that a digit was present */
+	char *se;
 
 	if (len > MAX_NUM_LEN) return 0;
 
@@ -278,7 +280,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	if ((REBCNT)(cp-bp) != len) return 0;
 
 	VAL_SET(value, REB_DECIMAL);
-	VAL_DECIMAL(value) = atof((char*)(&buf[0])); // need check for NaN, and INF !!!
+	VAL_DECIMAL(value) = STRTOD((char *)buf, &se); // need check for NaN, and INF !!!
 	if (fabs(VAL_DECIMAL(value)) == HUGE_VAL) Trap0(RE_OVERFLOW);
 	return cp;
 }

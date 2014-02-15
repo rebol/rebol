@@ -524,10 +524,11 @@ REBI64 deci_to_int (const deci a) {
 }
 
 REBDEC deci_to_decimal (const deci a) {
-	/* use atof */
+	/* use STRTOD */
+	char *se;
     REBYTE b [34];
 	deci_to_string(b, a, 0, '.');
-	return atof(b);
+	return STRTOD((char *)b, &se);
 }
 
 #define DOUBLE_DIGITS 17
