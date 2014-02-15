@@ -167,16 +167,16 @@ make-module*: func [
 		; All words of the module body are module variables:
 		bind/new body obj
 		; The module keeps its own variables (not shared with system):
+		if object? mixins [resolve obj mixins]
 		;resolve obj sys -- no longer done -Carl
 		resolve obj lib
-		if object? mixins [resolve obj mixins]
 	][
 		; Only top level defined words are module variables.
 		bind/only/set body obj
 		; The module shares system exported variables:
-		if object? mixins [bind body mixins]
 		bind body lib
 		;bind body sys -- no longer done -Carl
+		if object? mixins [bind body mixins]
 	]
 
 	bind body obj
