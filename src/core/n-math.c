@@ -247,28 +247,39 @@ enum {SINE, COSINE, TANGENT};
 **
 */	REBNATIVE(shift)
 /*
-**		shift int bits /logical
-**		Clip shift at 64 bits.
+**		shift int bits arithmetic or logical
 **
 ***********************************************************************/
 {
 	REBI64 b = VAL_INT64(D_ARG(2));
 	REBVAL *a = D_ARG(1);
+	REBU64 c, d;
 
 	if (b < 0) {
-		b = -b;
-		if (b >= 64) {
-			if (D_REF(3)) VAL_UNT64(a) = 0;
+		// this is defined:
+		c = -(REBU64)b;
+		if (c >= 64) {
+			if (D_REF(3)) VAL_INT64(a) = 0;
 			else VAL_INT64(a) >>= 63;
+		} else {
+			if (D_REF(3)) VAL_UNT64(a) >>= c;
+			else VAL_INT64(a) >>= (REBI64)c;
 		}
-		else {
-			if (D_REF(3)) VAL_UNT64(a) >>= b;
-			else VAL_INT64(a) >>= b;
-		}
-	}
-	else {
-		if (b >= 64) VAL_INT64(a) = 0;
-		else VAL_INT64(a) <<= b;
+	} else {
+		if (b >= 64) {
+			if (D_REF(3)) VAL_INT64(a) = 0;
+			else if (VAL_INT64(a)) Trap0(RE_OVERFLOW);
+		} else
+			if (D_REF(3)) VAL_UNT64(a) <<= b;
+			else {
+				c = (REBU64)MIN_I64 >> b;
+				d = VAL_INT64(a) < 0 ? -VAL_UNT64(a) : VAL_UNT64(a);
+				if (c <= d)
+					if ((c < d) || (VAL_INT64(a) >= 0)) Trap0(RE_OVERFLOW);
+					else VAL_INT64(a) = MIN_I64;
+				else
+					VAL_INT64(a) <<= b;
+			}
 	}
 	return R_ARG1;
 }
