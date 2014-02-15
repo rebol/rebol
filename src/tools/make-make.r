@@ -304,7 +304,7 @@ macro+: func [
 	]
 ]
 
-macro++: funct ['name obj [object!]] [
+macro++: func ['name obj [object!] /local out] [
 	out: make string! 10
 	foreach n words-of obj [
 		all [
