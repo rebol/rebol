@@ -81,11 +81,7 @@
 	SET_END(word);
 	SET_END(vals);
 
-	// Keep the frame safe as we copy the body block deeply:
-	SAVE_SERIES(frame);
 	body = Clone_Block_Value(body_blk);
-//	body = Copy_Block_Deep(VAL_SERIES(body_blk), VAL_INDEX(body_blk), 0, COPY_ALL);
-	UNSAVE_SERIES(frame);
 	Bind_Block(frame, BLK_HEAD(body), BIND_DEEP);
 
 	*fram = frame;

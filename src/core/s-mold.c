@@ -1235,10 +1235,8 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		REBSER *blk;
 		Pre_Mold(value, mold);
 		blk = Gob_To_Block(VAL_GOB(value));
-		SAVE_SERIES(blk);
 		Mold_Block_Series(mold, blk, 0, 0);
 		End_Mold(mold);
-		UNSAVE_SERIES(blk);
 	}
 		break;
 
