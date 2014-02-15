@@ -38,64 +38,17 @@
 		word - word, 'word, :word, /word
 		value - typeset! or none (valid datatypes)
 
-	Arg list provides:
+	Args list provides:
 
 		1. specifies arg order, arg kind (e.g. 'word)
 		2. specifies valid datatypes (typesets)
 		3. used for word and type in error output
 		4. used for debugging tools (stack dumps)
 		5. not used for MOLD (spec is used)
-
+		6. used as a (pseudo) frame of function variables
 */
 
 #include "sys-core.h"
-
-#ifdef not_used
-void Dump_Func_Words(REBSER *words)
-{
-	REBINT n;
-
-	for (n = 0; n < (REBINT)SERIES_TAIL(words); n++) {
-		Debug_Fmt("%d: %d", n, WORDS_HEAD(words)[n]);
-	}
-}
-#endif
-
-#ifdef obsolete
-/***********************************************************************
-**
-xx*/	REBSER *Make_Func_Words(REBSER *spec)
-/*
-**		Make a word list part of a context block for a function spec.
-**		This series is stored in the ARGS field of the function value.
-**
-***********************************************************************/
-{
-	REBVAL *word = BLK_HEAD(spec);
-	REBSER *words;
-	REBCNT n;
-	REBCNT len = 0;
-
-	// Count the number of words within the spec:
-	for (n = 0; n < SERIES_TAIL(spec); n++) {
-		if (ANY_WORD(word+n)) len++;
-	}
-
-	// Make the words table:
-	words = Make_Words(len+1);
-
-	// Skip 0th entry (because 0 is not valid for bind index).
-	len = 1;
-	WORDS_HEAD(words)[0] = 0;
-
-	// Initialize the words in the new table.
-	for (n = 0; n < SERIES_TAIL(spec); n++) {
-		if (ANY_WORD(word+n)) WORDS_HEAD(words)[len++] = n;
-	}
-	SERIES_TAIL(words) = len;
-	return words;
-}
-#endif
 
 /***********************************************************************
 **
@@ -232,7 +185,6 @@ xx*/	REBSER *Make_Func_Words(REBSER *spec)
 
 	if (
 		!IS_BLOCK(def)
-////		|| type < REB_CLOSURE // for now
 		|| (len = VAL_LEN(def)) < 2
 		|| !IS_BLOCK(spec = VAL_BLK(def))
 	) return FALSE;
@@ -253,7 +205,7 @@ xx*/	REBSER *Make_Func_Words(REBSER *spec)
 	VAL_SET(value, type);
 
 	if (type == REB_FUNCTION)
-		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value), VAL_FUNC_BODY(value));
+		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value));
 
 	return TRUE;
 }
@@ -265,17 +217,22 @@ xx*/	REBSER *Make_Func_Words(REBSER *spec)
 /*
 ***********************************************************************/
 {
-	REBVAL *spec = VAL_BLK(args);
-	REBVAL *body = VAL_BLK_SKIP(args, 1);
+	REBVAL *spec;
+	REBVAL *body;
 
-	if (IS_END(spec)) body = 0;
-	else {
+	if (!args || ((spec = VAL_BLK(args)) && IS_END(spec))) {
+		body = 0;
+		if (IS_FUNCTION(value)) VAL_FUNC_ARGS(value) = Copy_Block(VAL_FUNC_ARGS(value), 0);
+	} else {
+		body = VAL_BLK_SKIP(args, 1);
 		// Spec given, must be block or *
 		if (IS_BLOCK(spec)) {
 			VAL_FUNC_SPEC(value) = VAL_SERIES(spec);
 			VAL_FUNC_ARGS(value) = Check_Func_Spec(VAL_SERIES(spec));
-		} else
+		} else {
 			if (!IS_STAR(spec)) return FALSE;
+			VAL_FUNC_ARGS(value) = Copy_Block(VAL_FUNC_ARGS(value), 0);
+		}
 	}
 
 	if (body && !IS_END(body)) {
@@ -284,13 +241,13 @@ xx*/	REBSER *Make_Func_Words(REBSER *spec)
 		if (!IS_BLOCK(body)) return FALSE;
 		VAL_FUNC_BODY(value) = VAL_SERIES(body);
 	}
-	// No body, use protytpe:
+	// No body, use prototype:
 	else if (IS_FUNCTION(value) || IS_CLOSURE(value))
 		VAL_FUNC_BODY(value) = Clone_Block(VAL_FUNC_BODY(value));
 
 	// Rebind function words:
 	if (IS_FUNCTION(value))
-		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value), VAL_FUNC_BODY(value));
+		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value));
 
 	return TRUE;
 }
@@ -303,7 +260,7 @@ xx*/	REBSER *Make_Func_Words(REBSER *spec)
 ***********************************************************************/
 {
 	VAL_FUNC_SPEC(value) = VAL_FUNC_SPEC(func);
-	VAL_FUNC_ARGS(value) = VAL_FUNC_ARGS(func);
+	VAL_FUNC_ARGS(value) = Copy_Block(VAL_FUNC_ARGS(func), 0);
 	VAL_FUNC_BODY(value) = Clone_Block(VAL_FUNC_BODY(func));
 }
 
