@@ -705,7 +705,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	REBINT What_UTF(REBYTE *bp, REBCNT len)
+*/	REBINT What_UTF(const REBYTE *bp, REBCNT len)
 /*
 **		Tell us what UTF encoding the string has. Negative for LE.
 **
@@ -736,7 +736,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	REBFLG Legal_UTF8_Char(REBYTE *str, REBCNT len)
+*/	REBFLG Legal_UTF8_Char(const REBYTE *str, REBCNT len)
 /*
 **		Returns TRUE if char is legal.
 **
@@ -768,7 +768,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	REBCNT Decode_UTF8_Char(REBYTE **str, REBINT *len)
+*/	REBCNT Decode_UTF8_Char(const REBYTE **str, REBINT *len)
 /*
 **		Converts a single UTF8 code-point (to 32 bit).
 **		Errors are returned as zero. (So prescan source for null.)
@@ -777,7 +777,7 @@ ConversionResult ConvertUTF8toUTF32 (
 **
 ***********************************************************************/
 {
-	UTF8 *source = *str;
+	const UTF8 *source = *str;
 	UTF32 ch = 0;
 	int slen = trailingBytesForUTF8[*source];
 
@@ -817,7 +817,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	int Decode_UTF8(REBUNI *dst, REBYTE *src, REBINT len, REBFLG ccr)
+*/	int Decode_UTF8(REBUNI *dst, const REBYTE *src, REBINT len, REBFLG ccr)
 /*
 **		Decode UTF8 byte string into a 16 bit preallocated array.
 **
@@ -853,7 +853,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	int Decode_UTF16(REBUNI *dst, REBYTE *src, REBINT len, REBFLG lee, REBFLG ccr)
+*/	int Decode_UTF16(REBUNI *dst, const REBYTE *src, REBINT len, REBFLG lee, REBFLG ccr)
 /*
 **		dst: the desination array, must always be large enough!
 **		src: source binary data
@@ -906,7 +906,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	int Decode_UTF32(REBUNI *dst, REBYTE *src, REBINT len, REBFLG lee, REBFLG ccr)
+*/	int Decode_UTF32(REBUNI *dst, const REBYTE *src, REBINT len, REBFLG lee, REBFLG ccr)
 /*
 ***********************************************************************/
 {
@@ -916,7 +916,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	REBSER *Decode_UTF_String(REBYTE *bp, REBCNT len, REBINT utf)
+*/	REBSER *Decode_UTF_String(const REBYTE *bp, REBCNT len, REBINT utf)
 /*
 **		Do all the details to decode a string.
 **		Input is a byte series. Len is len of input.

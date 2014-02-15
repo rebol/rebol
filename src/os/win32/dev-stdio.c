@@ -133,7 +133,7 @@ static void close_stdio(void)
 ***********************************************************************/
 {
 	REBDEV *dev;
-	REBCHR *title = TEXT("REBOL 3 Alpha");
+	const REBCHR *title = TEXT("REBOL 3 Alpha");
 	HANDLE win;
 
 	dev = Devices[req->device];

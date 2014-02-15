@@ -70,7 +70,7 @@ void Quit_Terminal(void*);
 int  Read_Line(void*, char*, int);
 #endif
 
-void Put_Str(char *buf);
+void Put_Str(const REBYTE *buf);
 
 void *Term_IO;
 

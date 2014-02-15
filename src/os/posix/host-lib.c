@@ -269,7 +269,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	REBINT OS_Get_Env(REBCHR *envname, REBCHR* envval, REBINT valsize)
+*/	REBINT OS_Get_Env(const REBCHR *envname, REBCHR* envval, REBINT valsize)
 /*
 **		Get a value from the environment.
 **		Returns size of retrieved value for success or zero if missing.
@@ -298,7 +298,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	REBOOL OS_Set_Env(REBCHR *envname, REBCHR *envval)
+*/	REBOOL OS_Set_Env(const REBCHR *envname, const REBCHR *envval)
 /*
 **		Set a value from the environment.
 **		Returns >0 for success and 0 for errors.
@@ -454,7 +454,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	REBOOL OS_Set_Current_Dir(REBCHR *path)
+*/	REBOOL OS_Set_Current_Dir(const REBCHR *path)
 /*
 **		Set the current directory to local path. Return FALSE
 **		on failure.
@@ -480,7 +480,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Open_Library(REBCHR *path, REBCNT *error)
+*/	void *OS_Open_Library(const REBCHR *path, REBCNT *error)
 /*
 **		Load a DLL library and return the handle to it.
 **		If zero is returned, error indicates the reason.
@@ -514,7 +514,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Find_Function(void *dll, char *funcname)
+*/	void *OS_Find_Function(void *dll, const char *funcname)
 /*
 **		Get a DLL function address from its string name.
 **
@@ -594,7 +594,7 @@ static void *Task_Ready;
 	return system(call); // returns -1 on system call error
 }
 
-static int Try_Browser(char *browser, REBCHR *url)
+static int Try_Browser(const REBCHR *browser, const REBCHR *url)
 {
 	pid_t pid;
 	int result, status;
@@ -618,7 +618,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 
 /***********************************************************************
 **
-*/	int OS_Browse(REBCHR *url, int reserved)
+*/	int OS_Browse(const REBCHR *url, int reserved)
 /*
 ***********************************************************************/
 {

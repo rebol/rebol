@@ -150,7 +150,7 @@ static REBCNT *CRC_Table;
 
 /***********************************************************************
 **
-*/	REBINT Hash_Word(REBYTE *str, REBINT len)
+*/	REBINT Hash_Word(const REBYTE *str, REBINT len)
 /*
 **		Return a case insensitive hash value for the string.
 **

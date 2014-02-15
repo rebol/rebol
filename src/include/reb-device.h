@@ -119,7 +119,7 @@ typedef i32 (*DEVICE_CMD_FUNC)(REBREQ *req);
 
 // Device structure:
 struct rebol_device {
-	char *title;			// title of device
+	const char *title;		// title of device
 	u32 version;			// version, revision, release
 	u32 date;				// year, month, day, hour
 	DEVICE_CMD_FUNC *commands;	// command dispatch table

@@ -34,7 +34,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *To_REBOL_Path(void *bp, REBCNT len, REBINT uni, REBFLG dir)
+*/	REBSER *To_REBOL_Path(const void *bp, REBCNT len, REBINT uni, REBFLG dir)
 /*
 **		Convert local filename to a REBOL filename.
 **
@@ -112,7 +112,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *To_Local_Path(void *bp, REBCNT len, REBOOL uni, REBFLG full)
+*/	REBSER *To_Local_Path(const void *bp, REBCNT len, REBOOL uni, REBFLG full)
 /*
 **		Convert REBOL filename to a local filename.
 **

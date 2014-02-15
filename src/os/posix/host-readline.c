@@ -136,7 +136,12 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 
 	// Setup variables:
 	Line_History = (char**)malloc((MAX_HISTORY+2) * sizeof(char*));
-	Line_History[0] = "";
+
+	// Avoids compiler warning about assigning literal to non-const.
+	// Safer to allocate than try and mentally book-keep the fact
+	// that element zero should not be freed (undefined behavior)
+	Line_History[0] = MAKE_STR(1);
+	strcpy(Line_History[0], "");
 	Line_Count = 1;
 
 	term = malloc(sizeof(*term));
@@ -170,7 +175,7 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 		free(term->residue);
 		free(term->buffer);
 		free(term);
-		for (n = 1; n < Line_Count; n++) free(Line_History[n]);
+		for (n = 0; n < Line_Count; n++) free(Line_History[n]);
 		free(Line_History);
 	}
 

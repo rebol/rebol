@@ -692,7 +692,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	void Register_Codec(REBYTE *name, codo dispatcher)
+*/	void Register_Codec(const REBYTE *name, codo dispatcher)
 /*
 **		Internal function for adding a codec.
 **

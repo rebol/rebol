@@ -36,7 +36,7 @@
 
 const REBYTE Str_Banner[] = "REBOL 3 %d.%d.%d.%d.%d";
 
-const char Str_REBOL[] = "REBOL";
+const REBYTE Str_REBOL[] = "REBOL";
 
 const REBYTE * Str_Stack_Misaligned = {
 	BP("!! Stack misaligned: %d")

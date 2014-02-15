@@ -754,7 +754,7 @@ chk_neg:
 /*
 ***********************************************************************/
 {
-	REBCHR *cmd;
+	const REBCHR *cmd;
 	REBINT lenplus;
 	REBCHR *buf;
 	REBVAL *arg = D_ARG(1);
@@ -784,7 +784,7 @@ chk_neg:
 /*
 ***********************************************************************/
 {
-	REBCHR *cmd;
+	const REBCHR *cmd;
 	REBVAL *arg1 = D_ARG(1);
 	REBVAL *arg2 = D_ARG(2);
 	REBOOL success;
@@ -795,7 +795,7 @@ chk_neg:
 	cmd = Val_Str_To_OS(arg1);
 	
 	if (ANY_STR(arg2)) {
-		REBCHR *value = Val_Str_To_OS(arg2);
+		const REBCHR *value = Val_Str_To_OS(arg2);
 		success = OS_SET_ENV(cmd, value);
 		if (success) {
 			// What function could reuse arg2 as-is?
