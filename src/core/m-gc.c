@@ -79,6 +79,9 @@
 
 #include "sys-core.h"
 
+// Track whether we are currently running the garbage collector
+REBOOL In_Recycle = FALSE;
+
 //-- For Serious Debugging:
 #ifdef WATCH_GC_VALUE
 REBSER *Watcher = 0;
@@ -103,49 +106,10 @@ REBVAL *N_watch(REBFRM *frame, REBVAL **inter_block)
 		// Print("Mark: %s %x", TYPE_NAME(val), val);
 #endif
 
-static void Mark_Series(REBSER *series, REBCNT depth);
-
 
 /***********************************************************************
 **
-*/	static void Mark_Gob(REBGOB *gob, REBCNT depth)
-/*
-***********************************************************************/
-{
-	REBGOB **pane;
-	REBCNT i;
-
-	if (IS_GOB_MARK(gob)) return;
-
-	MARK_GOB(gob);
-
-	if (GOB_PANE(gob)) {
-		MARK_SERIES(GOB_PANE(gob));
-		pane = GOB_HEAD(gob);
-		for (i = 0; i < GOB_TAIL(gob); i++, pane++) {
-			Mark_Gob(*pane, depth);
-		}
-	}
-
-	if (GOB_PARENT(gob)) Mark_Gob(GOB_PARENT(gob), depth);
-
-	if (GOB_CONTENT(gob)) {
-		if (GOB_TYPE(gob) >= GOBT_IMAGE && GOB_TYPE(gob) <= GOBT_STRING) {
-			MARK_SERIES(GOB_CONTENT(gob));
-		} else if (GOB_TYPE(gob) >= GOBT_DRAW && GOB_TYPE(gob) <= GOBT_EFFECT) {
-			CHECK_MARK(GOB_CONTENT(gob), depth);
-		}
-	}
-
-	if (GOB_DATA(gob) && GOB_DTYPE(gob) && GOB_DTYPE(gob) != GOBD_INTEGER) {
-		CHECK_MARK(GOB_DATA(gob), depth);
-	}
-}
-
-
-/***********************************************************************
-**
-*/	static void Mark_Series(REBSER *series, REBCNT depth)
+*/	void Mark_Series(REBSER *series, REBCNT depth)
 /*
 **		Mark all series reachable from the block.
 **
@@ -154,6 +118,12 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	REBCNT len;
 	REBSER *ser;
 	REBVAL *val;
+
+	// Mark_Series used to be static, but is now exported so types like
+	// gob! and event! can have their GC marking in their own modules.
+	// This test prevents Mark_Series from being called accidentally
+	// when a Recycle() invocation is not on the stack.
+	ASSERT(In_Recycle, RP_MISC);
 
 	ASSERT(series != 0, RP_NULL_MARK_SERIES);
 
@@ -359,7 +329,7 @@ mark_obj:
 			break;
 
 		case REB_EVENT:
-			if (NZ(ser = GC_Event(val))) CHECK_MARK(ser, depth);
+			Mark_Event(val, depth);
 			break;
 
 		default:
@@ -453,6 +423,55 @@ mark_obj:
 }
 
 
+#define NEED_TO_MARK_PENDING_REQUESTS 0
+#if NEED_TO_MARK_PENDING_REQUESTS
+extern REBDEV *Devices[];
+
+/***********************************************************************
+**
+*/	void Mark_Pending_Requests(REBCNT depth)
+/*
+**		NOTE: Something like this is quite probably necessary.  We have
+**		seen that processed REBREQs that make it into REBEVTs can be
+**		holding onto port! references that need to be marked for
+**		protection from GC (otherwise crashes result).  There has not
+**		(yet) been given any proof that the REBREQs in the Devices
+**		pending queue only hold ports that are protected from GC by
+**		other references.
+**
+**		However, if we were to include the code in this form, it would
+**		violate the layering and the core could not be built as a DLL
+**		independent from a Devices[] array.  So it is currently not
+**		included.  If a suspicious GC of a port is happening, this
+**		could be enabled to see if that is the problem...and if so
+**		a better solution will be needed to be thought out.
+**
+***********************************************************************/
+{
+	int d;
+
+	for (d = 0; d < RDI_MAX; d++) {
+		REBDEV *dev;
+		REBREQ *req;
+
+		dev = Devices[d];
+		if (!dev) continue;
+		if (!dev->pending) continue;
+
+		req = dev->pending;
+		do {
+			// The ->port field of the REBREQ is void*, so we must cast
+			// Comment says it is "link back to REBOL port object"
+			if (req->port) {
+				CHECK_MARK((REBSER*)req->port, depth);
+			}
+			req = req->next;
+		} while (req != NULL);
+	}
+}
+#endif
+
+
 /***********************************************************************
 **
 */	REBCNT Recycle(void)
@@ -464,7 +483,10 @@ mark_obj:
 	REBINT n;
 	REBSER **sp;
 	REBCNT count;
-//	REBSER *ports;
+
+	// Disallow recursive calls to Recycle()
+	ASSERT(!In_Recycle, RP_MISC);
+	In_Recycle = TRUE;
 
 	//Debug_Num("GC", GC_Disabled);
 
@@ -516,6 +538,13 @@ mark_obj:
 		} else break;
 	}
 
+#if NEED_TO_MARK_PENDING_REQUESTS
+	// Look in REBREQs in the pending queue to mark their ports as used
+	// (Currently disabled due to breaking hostkit/core layering, but
+	// that may well be leaving the system vulnerable to GC bugs)
+	Mark_Pending_Requests(0);
+#endif
+
 	// Mark all root series:
 	Mark_Series(VAL_SERIES(ROOT_ROOT), 0);
 	Mark_Series(Task_Series, 0);
@@ -537,6 +566,9 @@ mark_obj:
 	GC_Disabled = 0;
 
 	if (Reb_Opts->watch_recycle) Debug_Fmt(BOOT_STR(RS_WATCH, 1), count);
+
+	In_Recycle = FALSE;
+
 	return count;
 }
 

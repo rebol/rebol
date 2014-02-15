@@ -49,9 +49,9 @@
 
 /***********************************************************************
 **
-*/	REBSER *GC_Event(REBVAL *value)
+*/	void Mark_Event(REBVAL *value, REBCNT depth)
 /*
-**		Return internal series to prevent GC on it.
+**		Mark internal series to prevent GC on them.
 **
 ***********************************************************************/
 {
@@ -59,10 +59,27 @@
 		   IS_EVENT_MODEL(value, EVM_PORT)
 		|| IS_EVENT_MODEL(value, EVM_OBJECT)
 		|| (VAL_EVENT_TYPE(value) == EVT_DROP_FILE && GET_FLAG(VAL_EVENT_FLAGS(value), EVF_COPIED))
-	)
-		return VAL_EVENT_SER(value);
+	) {
+		// The ->ser field of the REBEVT is void*, so we must cast
+		// Comment says it is a "port or object"
+		CHECK_MARK((REBSER*)VAL_EVENT_SER(value), depth);
+	} 
 
-	return 0;
+	if (IS_EVENT_MODEL(value, EVM_DEVICE)) {
+		// In the case of being an EVM_DEVICE event type, the port! will
+		// not be in VAL_EVENT_SER of the REBEVT structure.  It is held
+		// indirectly by the REBREQ ->req field of the event, which
+		// in turn possibly holds a singly linked list of other requests.
+		REBREQ *req = VAL_EVENT_REQ(value);
+
+		// The ->next field of a REBREQ is just used while it's in the
+		// device's ->pending list, and is set to 0 by Detach_Request
+		ASSERT(req->next == NULL, RP_MISC);
+
+		// The ->port field of the REBREQ is void*, so we must cast
+		// Comment says it is "link back to REBOL port object"
+		CHECK_MARK((REBSER*)req->port, depth);
+	}
 }
 
 
