@@ -1590,6 +1590,9 @@ eval_func2:
 **
 */	REBOOL Try_Block_Halt(REBSER *block, REBCNT index)
 /*
+**		Evaluate a block from the index position specified in the value,
+**		with a handler for quit conditions (QUIT, HALT) set up.
+**
 ***********************************************************************/
 {
 	REBOL_STATE state;
@@ -1603,12 +1606,10 @@ eval_func2:
 	if (SET_JUMP(state)) {
 //		Debug_Fmt("Throw Halt %d", depth);
 		POP_STATE(state, Halt_State);
-		Saved_State = Halt_State;
 		Catch_Error(DS_NEXT); // Stores error value here
 		return TRUE;
 	}
 	SET_STATE(state, Halt_State);
-	Saved_State = Halt_State;
 
 	SAVE_SERIES(block);
 	val = Do_Blk(block, index);
@@ -1616,7 +1617,6 @@ eval_func2:
 
 	DS_Base[state.dsp+1] = *val;
 	POP_STATE(state, Halt_State);
-	Saved_State = Halt_State;
 
 //	Debug_Fmt("Ret Halt %d", depth);
 
@@ -1653,6 +1653,9 @@ eval_func2:
 		return val;
 	}
 	SET_STATE(state, Halt_State);
+	// Use this handler for both, halt conditions (QUIT, HALT) and error
+	// conditions. As this is a top-level handler, simply overwriting
+	// Saved_State is safe.
 	Saved_State = Halt_State;
 
 	code = Scan_Source(text, LEN_BYTES(text));
@@ -2167,6 +2170,9 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 			return -1;
 		}
 		SET_STATE(state, Halt_State);
+		// Use this handler for both, halt conditions (QUIT, HALT) and error
+		// conditions. As this is a top-level handler, simply overwriting
+		// Saved_State is safe.
 		Saved_State = Halt_State;
 
 		val = Do_Sys_Func(SYS_CTX_START, 0); // what if script contains a HALT?

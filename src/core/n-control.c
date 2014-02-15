@@ -368,16 +368,14 @@ enum {
 
 	if (D_REF(4)) {	//QUIT
 		if (Try_Block_Halt(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
-			// We can be here for 2 reasons:
-			// 1. a QUIT/HALT condition
-			// 2. an error condition
+			// We are here because of a QUIT/HALT condition.
 			ret = DS_NEXT;
 			if (VAL_ERR_NUM(ret) == RE_QUIT)
 				ret = VAL_ERR_VALUE(ret);
 			else if (VAL_ERR_NUM(ret) == RE_HALT)
 				Halt_Code(RE_HALT, 0);
 			else
-				Throw_Error(VAL_ERR_OBJECT(ret));
+				Crash(RP_NO_CATCH);
 			*DS_RETURN = *ret;
 			return R_RET;
 		}
