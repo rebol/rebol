@@ -172,6 +172,12 @@ enum {
 	BIND_NO_SELF = 64,	// Do not bind SELF (in closures)
 };
 
+// Modes for Rebind_Block:
+enum {
+	REBIND_TYPE = 1,	// Change frame type when rebinding
+	REBIND_FUNC	= 2,	// Rebind function and closure bodies
+};
+
 // Mold and form options:
 enum REB_Mold_Opts {
 	MOPT_MOLD_ALL,		// Output lexical types in #[type...] format

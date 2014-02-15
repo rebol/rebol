@@ -447,43 +447,26 @@
 
 /***********************************************************************
 **
-*/  void Bind_Frame(REBSER *obj)
+*/  void Rebind_Frame(REBSER *src_frame, REBSER *dst_frame)
 /*
-**      Clone a frame, knowing which types of values need to be
-**		copied, deep copied, and rebound.
+**      Clone old src_frame to new dst_frame knowing
+**		which types of values need to be copied, deep copied, and rebound.
 **
 ***********************************************************************/
 {
 	REBVAL *val;
-	REBOOL funcs = FALSE;
 
-	//DISABLE_GC;
+	SAVE_SERIES(dst_frame); // GC - dst_frame has just been created
+
 	// Copy functions:
-	for (val = BLK_SKIP(obj, 1); NOT_END(val); val++) {
-		if (IS_FUNCTION(val)) {
-			Clone_Function(val, val); 
-			funcs = TRUE;
-		}
-		else if (IS_CLOSURE(val)) {
-			funcs = TRUE;
-		}
+	for (val = BLK_SKIP(dst_frame, 1); NOT_END(val); val++) {
+		if (IS_FUNCTION(val) || IS_CLOSURE(val)) Clone_Function(val, val);
 	}
+
+	UNSAVE_SERIES(dst_frame);
 
 	// Rebind all values:
-	Bind_Block(obj, BLK_SKIP(obj, 1), BIND_DEEP | BIND_FUNC);
-
-	if (funcs) {
-		// Rebind functions:
-		for (val = BLK_SKIP(obj, 1); NOT_END(val); val++) {
-			if (IS_FUNCTION(val)) {
-				Bind_Relative(VAL_FUNC_ARGS(val), VAL_FUNC_BODY(val), VAL_FUNC_BODY(val));
-			}
-			else if (IS_CLOSURE(val)) {
-			}
-		}
-	}
-
-	//ENABLE_GC;
+	Rebind_Block(src_frame, dst_frame, BLK_SKIP(dst_frame, 1), REBIND_FUNC);
 }
 
 
@@ -846,7 +829,7 @@
 		}
 		else if (ANY_BLOCK(value) && (mode & BIND_DEEP))
 			Bind_Block_Words(frame, VAL_BLK_DATA(value), mode);
-		else if (IS_FUNCTION(value) && (mode & BIND_FUNC))
+		else if ((IS_FUNCTION(value) || IS_CLOSURE(value)) && (mode & BIND_FUNC))
 			Bind_Block_Words(frame, BLK_HEAD(VAL_FUNC_BODY(value)), mode);
 	}
 }
@@ -940,7 +923,7 @@
 /*
 **      Recursive function for relative function word binding.
 **
-**      Note: body arg points to an identifying series of the function,
+**      Note: frame arg points to an identifying series of the function,
 **      not a normal frame. This will be used to verify the word fetch.
 **
 ***********************************************************************/
@@ -965,14 +948,14 @@
 
 /***********************************************************************
 **
-*/  void Bind_Relative(REBSER *words, REBSER *body, REBSER *block)
+*/  void Bind_Relative(REBSER *words, REBSER *frame, REBSER *block)
 /*
 **      Bind the words of a function block to a stack frame.
 **      To indicate the relative nature of the index, it is set to
 **		a negative offset.
 **
 **		words: VAL_FUNC_ARGS(func)
-**		body:  VAL_FUNC_BODY(func) - used as frame
+**		frame: VAL_FUNC_ARGS(func)
 **		block: block to bind
 **
 ***********************************************************************/
@@ -991,7 +974,7 @@
 	for (index = 1; NOT_END(args); args++, index++)
 		binds[VAL_BIND_CANON(args)] = -index;
 
-	Bind_Relative_Words(body, block);
+	Bind_Relative_Words(frame, block);
 
 	// Reset binding table:
 	for (args = BLK_SKIP(words, 1); NOT_END(args); args++)
@@ -1001,65 +984,51 @@
 
 /***********************************************************************
 **
-*/  void Bind_Stack_Block(REBSER *body, REBSER *block)
+*/  void Bind_Stack_Block(REBSER *frame, REBSER *block)
 /*
 ***********************************************************************/
 {
-	REBINT dsf = DSF;
-
-	// Find body (frame) on stack:
-	while (body != VAL_WORD_FRAME(DSF_WORD(dsf))) {
-		dsf = PRIOR_DSF(dsf);
-		if (dsf <= 0) Trap0(RE_NOT_DEFINED);  // better message !!!!
-	}
-
-	if (IS_FUNCTION(DSF_FUNC(dsf))) {
-		Bind_Relative(VAL_FUNC_ARGS(DSF_FUNC(dsf)), body, block);
-	}
+	Bind_Relative(frame, frame, block);
 }
 
 
 /***********************************************************************
 **
-*/  void Bind_Stack_Word(REBSER *body, REBVAL *word)
+*/  void Bind_Stack_Word(REBSER *frame, REBVAL *word)
 /*
 ***********************************************************************/
 {
-	REBINT dsf = DSF;
 	REBINT index;
 
-	// Find body (frame) on stack:
-	while (body != VAL_WORD_FRAME(DSF_WORD(dsf))) {
-		dsf = PRIOR_DSF(dsf);
-		if (dsf <= 0) Trap1(RE_NOT_IN_CONTEXT, word);
-	}
-
-	if (IS_FUNCTION(DSF_FUNC(dsf))) {
-		index = Find_Arg_Index(VAL_FUNC_ARGS(DSF_FUNC(dsf)), VAL_WORD_SYM(word));
-		if (!index) Trap1(RE_NOT_IN_CONTEXT, word);
-		VAL_WORD_FRAME(word) = body;
-		VAL_WORD_INDEX(word) = -index;
-	} else
-		Crash(9100); // !!!  function is not there!
+	index = Find_Arg_Index(frame, VAL_WORD_SYM(word));
+	if (!index) Trap1(RE_NOT_IN_CONTEXT, word);
+	VAL_WORD_FRAME(word) = frame;
+	VAL_WORD_INDEX(word) = -index;
 }
 
 
 /***********************************************************************
 **
-*/  void Rebind_Block(REBSER *frame_src, REBSER *frame_dst, REBSER *block)
+*/  void Rebind_Block(REBSER *src_frame, REBSER *dst_frame, REBVAL *data, REBFLG modes)
 /*
 **      Rebind all words that reference src frame to dst frame.
 **      Rebind is always deep.
 **
+**		There are two types of frames: relative frames and normal frames.
+**		When frame_src type and frame_dst type differ,
+**		modes must have REBIND_TYPE.
+**
 ***********************************************************************/
 {
-	REBVAL *value;
-
-	for (value = BLK_HEAD(block); NOT_END(value); value++) {
-		if (ANY_BLOCK(value)) Rebind_Block(frame_src, frame_dst, VAL_SERIES(value));
-		else if (ANY_WORD(value) && VAL_WORD_FRAME(value) == frame_src) {
-			VAL_WORD_FRAME(value) = frame_dst;
-		}
+	for (; NOT_END(data); data++) {
+		if (ANY_BLOCK(data))
+			Rebind_Block(src_frame, dst_frame, VAL_BLK_DATA(data), modes);
+		else if (ANY_WORD(data) && VAL_WORD_FRAME(data) == src_frame) {
+			VAL_WORD_FRAME(data) = dst_frame;
+			// changing frame type?
+			if (modes & REBIND_TYPE) VAL_WORD_INDEX(data) = - VAL_WORD_INDEX(data);
+		} else if ((modes & REBIND_FUNC) && (IS_FUNCTION(data) || IS_CLOSURE(data)))
+			Rebind_Block(src_frame, dst_frame, BLK_HEAD(VAL_FUNC_BODY(data)), modes);
 	}
 }
 
