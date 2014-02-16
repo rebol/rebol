@@ -139,6 +139,7 @@ These are now obsolete (as of A107) and should be removed:
 #define API_EXPORT __attribute__((visibility("default")))
 #else
 #define API_EXPORT
+#define DEF_UINT
 #endif 
 
 #define API_IMPORT

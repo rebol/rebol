@@ -124,6 +124,21 @@ make-dir: func [
 	path
 ]
 
+delete-dir: func [
+	{Deletes a directory including all files and subdirectories.}
+	dir [file! url!]
+	/local files
+][
+	if all [
+		dir? dir
+		dir: dirize dir
+		attempt [files: load dir]
+	] [
+		foreach file files [delete-dir dir/:file]
+	]
+	attempt [delete dir]
+]
+
 script?: func [
 	{Checks file, url, or string for a valid script header.}
 	source [file! url! binary! string!]

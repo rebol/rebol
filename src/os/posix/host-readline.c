@@ -429,7 +429,7 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 	if (*cp == ESC) {
 		// Escape sequence:
 		cp++;
-		if (*cp == '[') {
+		if (*cp == '[' || *cp == 'O') {
 
 			// Special key:
 			switch (*++cp) {
