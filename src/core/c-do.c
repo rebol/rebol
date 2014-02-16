@@ -727,7 +727,11 @@ more_path:
 			Trap_Arg(args);
 		}
 
-		if (THROWN(DS_VALUE(ds))) return index;
+		if (THROWN(DS_VALUE(ds))) {
+			// Store THROWN value in TOS, so that Do_Next can handle it.
+			*DS_TOP = *DS_VALUE(ds);
+			return index;
+		}
 
 		// If word is typed, verify correct argument datatype:
 		if (!TYPE_CHECK(args, VAL_TYPE(DS_VALUE(ds))))
