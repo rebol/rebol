@@ -143,22 +143,18 @@ static int find_word(REBVAL *val, REBVAL *word)
 
 	case A_MAKE:
 	case A_TO:
-		{
-			// As a "Rebol conversion", TO falls in line with the rest of the
-			// interpreter canon that all non-none non-logic values are
-			// considered effectively "truth".  As a construction routine,
-			// MAKE takes more liberties in the meaning of its parameters,
-			// so it lets zero values be false.
-
-			REBOOL make = (action == A_MAKE);
-			if (IS_NONE(arg) ||
-				(IS_LOGIC(arg) && !VAL_LOGIC(arg)) ||
-				(IS_INTEGER(arg) && (make && VAL_INT64(arg) == 0)) ||
-				((IS_DECIMAL(arg) || IS_PERCENT(arg)) && (make && VAL_DECIMAL(arg) == 0.0)) ||
-				(IS_MONEY(arg) && (make && deci_is_zero(VAL_DECI(arg))))
-			) goto is_false;
-			goto is_true;
-		}
+		// As a "Rebol conversion", TO falls in line with the rest of the
+		// interpreter canon that all non-none non-logic values are
+		// considered effectively "truth".  As a construction routine,
+		// MAKE takes more liberties in the meaning of its parameters,
+		// so it lets zero values be false.
+		if (IS_NONE(arg) ||
+			(IS_LOGIC(arg) && !VAL_LOGIC(arg)) ||
+			(IS_INTEGER(arg) && (action == A_MAKE && VAL_INT64(arg) == 0)) ||
+			((IS_DECIMAL(arg) || IS_PERCENT(arg)) && (action == A_MAKE && VAL_DECIMAL(arg) == 0.0)) ||
+			(IS_MONEY(arg) && (action == A_MAKE && deci_is_zero(VAL_DECI(arg))))
+		) goto is_false;
+		goto is_true;
 
 #ifdef removed
 	case A_CHANGE:
