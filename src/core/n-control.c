@@ -589,10 +589,14 @@ got_err:
 /*
 ***********************************************************************/
 {
-	REBVAL *block = IS_FALSE(D_ARG(1)) ? D_ARG(3) : D_ARG(2);
+	REBCNT argnum = IS_FALSE(D_ARG(1)) ? 3 : 2;
 
-	DO_BLK(block);
-	return R_TOS1;
+	if (IS_BLOCK(D_ARG(argnum)) && !D_REF(4) /* not using /ONLY */) {
+		DO_BLK(D_ARG(argnum));
+		return R_TOS1;
+	} else {
+		return argnum == 2 ? R_ARG2 : R_ARG3;
+	}
 }
 
 
@@ -625,15 +629,26 @@ got_err:
 ***********************************************************************/
 {
 	REBVAL *cond = D_ARG(1);
-	REBVAL *body = D_ARG(2);
+	REBCNT argnum = 2;
 
 	if (!D_REF(3)) {	// no /else
 		if (IS_FALSE(cond)) return R_NONE;
 	} else
-		if (IS_FALSE(cond)) body = D_ARG(4);
+		if (IS_FALSE(cond)) argnum = 4;
 
-	DO_BLK(body);
-	return R_TOS1;
+	if (IS_BLOCK(D_ARG(argnum)) && !D_REF(5) /* not using /ONLY */) {
+		DO_BLK(D_ARG(argnum));
+		return R_TOS1;
+	} {
+		if (argnum == 2)
+			return R_ARG2;
+		else {
+			// No R_ARG4, but IF/ELSE may get the axe (CC #2077)
+			DS_RET_VALUE(D_ARG(argnum));
+			return R_RET;
+		}
+	}
+
 }
 
 
@@ -773,8 +788,12 @@ got_err:
 ***********************************************************************/
 {
 	if (IS_FALSE(D_ARG(1))) {
-		DO_BLK(D_ARG(2));
-		return R_TOS1;
+		if (IS_BLOCK(D_ARG(2)) && !D_REF(3) /* not using /ONLY */) {
+			DO_BLK(D_ARG(2));
+			return R_TOS1;
+		} else {
+			return R_ARG2;
+		}
 	}
 	return R_NONE;
 }
