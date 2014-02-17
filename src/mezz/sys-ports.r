@@ -260,6 +260,14 @@ init-schemes: func [
 	]
 
 	make-scheme [
+		title: "UDP Networking"
+		name: 'udp
+		spec: system/standard/port-spec-net
+		info: system/standard/net-info ; for C enums
+		awake: func [event] [print ['UDP-event event/type] true]
+	]
+
+	make-scheme [
 		title: "Clipboard"
 		name: 'clipboard
 	]
