@@ -120,7 +120,7 @@
 
 	if (limit && size > limit) Trap_Num(RE_SIZE_LIMIT, size); 
 
-	output = Make_Binary(size + 20); // (Why 20 extra? -CS)
+	output = Make_Binary(size);
 
 	//DISABLE_GC;
 	err = Z_uncompress(BIN_HEAD(output), (uLongf*)&size, BIN_HEAD(input) + index, len, use_crc);

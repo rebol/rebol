@@ -143,23 +143,16 @@ static int find_word(REBVAL *val, REBVAL *word)
 
 	case A_MAKE:
 	case A_TO:
-#ifdef removed
-		if (IS_BLOCK(arg)) {
-			REBVAL *val;
-			for (val = VAL_BLK_DATA(arg); NOT_END(val); val++) {
-				if (!IS_WORD(val)) Trap_Arg(val);
-			}
-			VAL_LOGIC(D_RET) = 0;
-			VAL_LOGIC_WORDS(D_RET) = Copy_Block(VAL_SERIES(arg), VAL_INDEX(arg));
-			SET_TYPE(D_RET, REB_LOGIC);
-			return R_RET;
-		}
-#endif
+		// As a "Rebol conversion", TO falls in line with the rest of the
+		// interpreter canon that all non-none non-logic values are
+		// considered effectively "truth".  As a construction routine,
+		// MAKE takes more liberties in the meaning of its parameters,
+		// so it lets zero values be false.
 		if (IS_NONE(arg) ||
 			(IS_LOGIC(arg) && !VAL_LOGIC(arg)) ||
-			(IS_INTEGER(arg) && VAL_INT64(arg) == 0) ||
-			((IS_DECIMAL(arg) || IS_PERCENT(arg)) && VAL_DECIMAL(arg) == 0.0) ||
-			(IS_MONEY(arg) && deci_is_zero(VAL_DECI(arg)))
+			(IS_INTEGER(arg) && (action == A_MAKE && VAL_INT64(arg) == 0)) ||
+			((IS_DECIMAL(arg) || IS_PERCENT(arg)) && (action == A_MAKE && VAL_DECIMAL(arg) == 0.0)) ||
+			(IS_MONEY(arg) && (action == A_MAKE && deci_is_zero(VAL_DECI(arg))))
 		) goto is_false;
 		goto is_true;
 

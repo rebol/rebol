@@ -261,8 +261,13 @@
 				return R_RET;
 			goto is_bad;
 		}
-		else if (IS_LOGIC(val))
-			num = VAL_LOGIC(val) ? 1 : 0; //VAL_LOGIC_WORDS(val) ? VAL_LOGIC(val) : (VAL_LOGIC(val) ? 1 : 0);
+		else if (IS_LOGIC(val)) {
+			// No integer is uniquely representative of true, so TO conversions reject
+			// integer-to-logic conversions.  MAKE is more liberal and constructs true
+			// to 1 and false to 0.
+			if (action != A_MAKE) goto is_bad;
+			num = VAL_LOGIC(val) ? 1 : 0;
+		}
 		else if (IS_CHAR(val))
 			num = VAL_CHAR(val);
 		// else if (IS_NONE(val)) num = 0;
