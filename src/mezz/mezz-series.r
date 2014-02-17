@@ -501,15 +501,18 @@ split: func [
 	]
 ]
 
-find-all: function [
-    "Find all occurrences of a value within a series (allows modification)."
-    'series [word!] "Variable for block, string, or other series"
-    value
-    body [block!] "Evaluated for each occurrence"
+find-all: func [
+	"Find all occurrences of a value within a series (allows modification)."
+	'series [word!] "Variable for block, string, or other series"
+	value
+	body [block!] "Evaluated for each occurrence"
+	/local orig result
 ][
-    assert [series? orig: get series]
-    while [any [set series find get series :value (set series orig false)]] [
-        do body
-        ++ (series)
-    ]
+	assert [series? orig: get series]
+	set/any 'result while [set series find get series :value] [
+		do body
+		++ (series)
+	]
+	unless get series [set series orig]
+	:result
 ]
