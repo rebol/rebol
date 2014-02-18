@@ -21,12 +21,11 @@
 **
 **  Summary: General C definitions and constants
 **  Module:  reb-c.h
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Ladislav Mecir
 **  Notes:
 **      Various configuration defines (from reb-config.h):
 **
 **      HAS_LL_CONSTS - compiler allows 1234LL constants
-**      INT_64_MODE - int size is 64 bits
 **      ODD_INT_64 - old MSVC typedef for 64 bit int
 **      OS_WIDE_CHAR - the OS uses wide chars (not UTF-8)
 **
@@ -41,8 +40,6 @@
 **
 **  C-Code Types
 **
-**      These types are used mainly in C modules, not REBOL.
-**
 **      One of the biggest flaws in the C language was not
 **      to indicate bitranges of integers. So, we do that here.
 **      You cannot "abstractly remove" the range of a number.
@@ -50,12 +47,68 @@
 **
 ***********************************************************************/
 
-typedef char            i8;
-typedef unsigned char   u8;
-typedef short           i16;
-typedef unsigned short  u16;
-typedef long            i32;
-typedef unsigned long   u32;
+#if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+/* C-code types: use C99 */
+
+#include <stdint.h>
+
+typedef int8_t			i8;
+typedef uint8_t			u8;
+typedef int16_t			i16;
+typedef uint16_t		u16;
+typedef int32_t			i32;
+typedef uint32_t		u32;
+typedef int64_t			i64;
+typedef uint64_t		u64;
+typedef intptr_t		REBIPT;		// integral counterpart of void*
+typedef uintptr_t		REBUPT;		// unsigned counterpart of void*
+
+#define MAX_I32 INT32_MAX
+#define MIN_I32 INT32_MIN
+#define MAX_I64 INT64_MAX
+#define MIN_I64 INT64_MIN
+
+#else
+/* C-code types: C99 definitions unavailable, do it ourselves */
+
+typedef char			i8;
+typedef unsigned char	u8;
+typedef short			i16;
+typedef unsigned short	u16;
+#ifdef __LP64__
+typedef int				i32;
+typedef unsigned int	u32;
+#else
+typedef long				i32;
+typedef unsigned long	u32;
+ #endif
+#ifdef ODD_INT_64       // Windows VC6 nonstandard typing for 64 bits
+typedef _int64          i64;
+typedef unsigned _int64 u64;
+#else
+typedef long long       i64;
+typedef unsigned long long u64;
+#endif
+#ifdef __LLP64__
+typedef long long		REBIPT;		// integral counterpart of void*
+typedef unsigned long long	REBUPT;		// unsigned counterpart of void*
+#else
+typedef long			REBIPT;		// integral counterpart of void*
+typedef unsigned long	REBUPT;		// unsigned counterpart of void*
+#endif
+
+#define MAX_I32 ((i32)0x7fffffff)
+#define MIN_I32 ((i32)0x80000000)
+#ifdef HAS_LL_CONSTS
+#define MAX_I64 ((i64)0x7fffffffffffffffLL)
+#define MIN_I64 ((i64)0x8000000000000000LL)
+#else
+#define MAX_I64 ((i64)0x7fffffffffffffffI64)
+#define MIN_I64 ((i64)0x8000000000000000I64)
+#endif
+
+#endif
+/* C-code types */
 
 #ifndef DEF_UINT		// some systems define it, don't define it again
 typedef unsigned int    uint;
@@ -68,20 +121,12 @@ typedef unsigned int    uint;
 typedef int BOOL;       // (int is used for speed in modern CPUs)
 #endif
 
-#ifdef ODD_INT_64       // Windows VC6 nonstandard typing for 64 bits
-typedef _int64          i64;
-typedef unsigned _int64 u64;
-#else
-typedef long long       i64;
-typedef unsigned long long u64;
-#endif
-
 // Used for cases where we need 64 bits, even in 32 bit mode.
 // (Note: compatible with FILETIME used in Windows)
 #pragma pack(4)
 typedef struct sInt64 {
-	long l;
-	long h;
+	i32 l;
+	i32 h;
 } I64;
 #pragma pack()
 
@@ -91,21 +136,17 @@ typedef struct sInt64 {
 **
 ***********************************************************************/
 
-typedef int             REBINT;     // 32 bit (64 bit defined below)
-typedef unsigned int    REBCNT;     // 32 bit (counting number)
-typedef i64             REBI64;     // 64 bit integer
-typedef u64             REBU64;     // 64 bit unsigned integer
-typedef char            REBOOL;     // 8  bit flag (for struct usage)
-typedef unsigned int    REBFLG;     // 32 bit flag (for cpu efficiency)
-typedef float           REBD32;     // 32 bit decimal
-typedef double          REBDEC;     // 64 bit decimal
+typedef i32				REBINT;     // 32 bit (64 bit defined below)
+typedef u32				REBCNT;     // 32 bit (counting number)
+typedef i64				REBI64;     // 64 bit integer
+typedef u64				REBU64;     // 64 bit unsigned integer
+typedef i8				REBOOL;     // 8  bit flag (for struct usage)
+typedef u32				REBFLG;     // 32 bit flag (for cpu efficiency)
+typedef float			REBD32;     // 32 bit decimal
+typedef double			REBDEC;     // 64 bit decimal
 
-#ifdef HAS_LONG_DOUBLE
-typedef long double     REBDCL;     // more than 80 or more bits
-#endif
-
-typedef unsigned char   REBYTE;     // unsigned byte data
-typedef unsigned short  REBUNI;     // unicode char
+typedef unsigned char	REBYTE;     // unsigned byte data
+typedef u16				REBUNI;     // unicode char
 
 // REBCHR - only to refer to OS char strings (not internal strings)
 #ifdef OS_WIDE_CHAR
@@ -116,15 +157,6 @@ typedef REBYTE          REBCHR;
 
 #define MAX_UNI ((1 << (8*sizeof(REBUNI))) - 1)
 
-#define MAX_I32 ((int)0x7fffffff)
-#define MIN_I32 ((int)0x80000000)
-#ifdef HAS_LL_CONSTS
-#define MAX_I64 ((i64)0x7fffffffffffffffLL)
-#define MIN_I64 ((i64)0x8000000000000000LL)
-#else
-#define MAX_I64 ((i64)0x7fffffffffffffffI64)
-#define MIN_I64 ((i64)0x8000000000000000I64)
-#endif
 #define MIN_D64 ((double)-9.2233720368547758e18)
 #define MAX_D64 ((double) 9.2233720368547758e18)
 
@@ -138,12 +170,9 @@ enum {
 	DEL = 127
 };
 
-
 // Used for MOLDing:
 #define MAX_DIGITS 17   // number of digits
 #define MAX_NUMCHR 32   // space for digits and -.e+000%
-
-#ifdef INT_64_MODE      // Set in reb-config.h
 
 /***********************************************************************
 **
@@ -168,30 +197,6 @@ enum {
 
 #define LDIV            lldiv
 #define LDIV_T          lldiv_t
-
-#else
-
-/***********************************************************************
-**
-**  32 Bit Integers - For non-64 bit (small) systems
-**
-***********************************************************************/
-
-#define MAX_INT_LEN     10
-#define MAX_HEX_LEN     8
-
-#ifdef ITOA
-#define INT_TO_STR(n,s) itoa(n, s, 10)
-#else
-#define INT_TO_STR(n,s) Form_Int_Len(s, n, MAX_INT_LEN)
-#endif
-
-#define CHR_TO_INT(s)   atoi(s)
-
-#define LDIV            ldiv
-#define LDIV_T          ldiv_t
-
-#endif
 
 /***********************************************************************
 **
@@ -218,6 +223,7 @@ typedef void(*CFUNC)(void *);
 #define GET_FLAGS(v,f,g)    (((v) & ((1<<(f)) | (1<<(g)))) != 0)
 #define SET_FLAG(v,f)       ((v) |= (1<<(f)))
 #define CLR_FLAG(v,f)       ((v) &= ~(1<<(f)))
+#define CLR_FLAGS(v,f,g)    ((v) &= ~((1<<(f)) | (1<<(g))))
 
 #ifdef min
 #define MIN(a,b) min(a,b)
