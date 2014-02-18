@@ -114,7 +114,7 @@
 	pnum = Get_Hash_Prime(ser->tail+1);
 	if (!pnum) Trap_Num(RE_SIZE_LIMIT, ser->tail+1);
 
-	nser = Make_Series(pnum+1, sizeof(REBCNT), TRUE);
+	nser = Make_Series(pnum+1, SERIES_WIDE(ser), TRUE);
 	LABEL_SERIES(nser, "hash series");
 
 	oser = *ser;
@@ -398,7 +398,7 @@ make_sym:
 	if (!only) {
 		// Create the hash for locating words quickly:
 		// Note that the TAIL is never changed for this series.
-		PG_Word_Table.hashes = Make_Series(n+1, sizeof(REBCNT *), FALSE);
+		PG_Word_Table.hashes = Make_Series(n+1, sizeof(REBCNT), FALSE);
 		KEEP_SERIES(PG_Word_Table.hashes, "word hashes"); // pointer array
 		Clear_Series(PG_Word_Table.hashes);
 		PG_Word_Table.hashes->tail = n;
