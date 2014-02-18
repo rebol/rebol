@@ -449,9 +449,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 
 	if (mode == RSM_SEND) {
 		// If host is no longer connected:
-		if (GET_FLAG(sock->modes, RST_UDP)) {
-			Set_Addr(&remote_addr, sock->net.remote_ip, sock->net.remote_port);
-		}
+		Set_Addr(&remote_addr, sock->net.remote_ip, sock->net.remote_port);
 		result = sendto(sock->socket, sock->data, len, 0,
 						(struct sockaddr*)&remote_addr, addr_len);
 		WATCH2("send() len: %d actual: %d\n", len, result);
