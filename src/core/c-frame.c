@@ -1278,6 +1278,8 @@
 	REBINT dsf;
 	REBSER *frm;
 
+	if (THROWN(value)) return;
+
 	if (!HAS_FRAME(word)) Trap1(RE_NOT_DEFINED, word);
 
 //	ASSERT(index, RP_BAD_SET_INDEX);
