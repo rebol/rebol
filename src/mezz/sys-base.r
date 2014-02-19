@@ -28,7 +28,7 @@ action: none ; for boot only
 
 do*: func [
 	{SYS: Called by system for DO on datatypes that require special handling.}
-	value [file! url! string!]
+	value [file! url! string! binary!]
 	/args "If value is a script, this will set its system/script/args"
 	arg   "Args passed to a script (normally a string)"
 	/next "Do next expression only, return it, update block variable"

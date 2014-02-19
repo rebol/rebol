@@ -548,10 +548,11 @@ got_err:
 		if (IS_THROW(value)) return R_ARG1;
 		Throw_Error(VAL_ERR_OBJECT(value));
 
+	case REB_BINARY:
 	case REB_STRING:
 	case REB_URL:
 	case REB_FILE:
-		// DO native and system/intrinsic/do must use same arg list:
+		// DO native and sys/do* must use same arg list:
 		Do_Sys_Func(SYS_CTX_DO_P, value, D_ARG(2), D_ARG(3), D_ARG(4), D_ARG(5), 0);
 		return R_TOS1;
 
