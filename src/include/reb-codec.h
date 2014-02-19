@@ -48,13 +48,13 @@ typedef struct reb_codec_image {
 	int alpha;
 	unsigned char *data;
 	union {
-		unsigned int *bits;  // 32 bits
+		u32 *bits;
 		void *other;
 	};
 	int error;
 } REBCDI;
 
-typedef int (*codo)(REBCDI *cdi);
+typedef REBINT (*codo)(REBCDI *cdi);
 
 // Media types:
 enum {
