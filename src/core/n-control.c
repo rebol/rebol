@@ -522,12 +522,12 @@ got_err:
 		else DO_BLK(value);
 		return R_TOS1;
 
-    case REB_NATIVE:
+	case REB_NATIVE:
 	case REB_ACTION:
-    case REB_COMMAND:
-    case REB_REBCODE:
-    case REB_OP:
-    case REB_CLOSURE:
+	case REB_COMMAND:
+	case REB_REBCODE:
+	case REB_OP:
+	case REB_CLOSURE:
 	case REB_FUNCTION:
 		VAL_SET_OPT(value, OPTS_REVAL);
 		return R_ARG1;
@@ -542,6 +542,11 @@ got_err:
 	case REB_LIT_WORD:
 		*D_RET = *value;
 		SET_TYPE(D_RET, REB_WORD);
+		return R_RET;
+
+	case REB_LIT_PATH:
+		*D_RET = *value;
+		SET_TYPE(D_RET, REB_PATH);
 		return R_RET;
 
 	case REB_ERROR:
@@ -561,6 +566,7 @@ got_err:
 		return R_ARG1;
 
 	case REB_SET_WORD:
+	case REB_SET_PATH:
 		Trap_Arg(value);
 
 	default:
