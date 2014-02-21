@@ -147,7 +147,7 @@ REBOL [
 	]
 
 	; Print type name with proper singular article:
-	type-name: func-boot [value] [
+	type-name: func [value] [
 		value: mold type? :value
 		clear back tail value
 		join either find "aeiou" first value ["an "]["a "] value
@@ -202,7 +202,7 @@ REBOL [
 	clear find args /local
 
 	;-- Print arg lists:
-	print-args: func-boot [label list /extra /local str] [
+	print-args: func [label list /extra /local str] [
 		if empty? list [exit]
 		print label
 		foreach arg list [

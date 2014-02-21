@@ -14,32 +14,23 @@ REBOL [
 ;-- Remove FUNC-BOOT from client use.
 ;-- (Note: experts who need this kind of control with their own function 
 ;-- generators can use MAKE FUNCTION!, which does not copy.)
-func-boot: func [
-	{Internal function generator (not for client use)}
-	spec body
-] [
-    print "FUNC-BOOT should only be used in Mezzanine code"
-    probe spec
-    probe body
-    exit
-]
+unset 'func-boot
 
 
 ; MOVE THIS INTERNAL FUNCTION!
-dump-obj: func [
+dump-obj: function [
 	"Returns a block of information about an object or port."
 	obj [object! port!]
 	/match "Include only those that match a string or datatype" pat
-	/local str val out 
 ][
-	clip-str: func-boot [str] [
+	clip-str: func [str] [
 		; Keep string to one line.
 		trim/lines str
 		if (length? str) > 45 [str: append copy/part str 45 "..."]
 		str
 	]
 
-	form-val: func-boot [val] [
+	form-val: func [val] [
 		; Form a limited string from the value provided.
 		if any-block? :val [return reform ["length:" length? val]]
 		if image? :val [return reform ["size:" val/size]]
@@ -54,7 +45,7 @@ dump-obj: func [
 		clip-str mold :val
 	]
 
-	form-pad: func-boot [val size] [
+	form-pad: func [val size] [
 		; Form a value with fixed size (space padding follows).
 		val: form val
 		insert/dup tail val #" " size - length? val
