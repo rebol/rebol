@@ -16,7 +16,7 @@ REBOL [
 	}
 ]
 
-repend: func [
+repend: func-boot [
 	"Appends a reduced value to a series and returns the series head."
 	series [series! port! map! gob! object! bitset!] {Series at point to insert (modified)}
 	value {The value to insert}
@@ -29,7 +29,7 @@ repend: func [
 	apply :append [series reduce :value part length only dup count]
 ]
 
-join: func [
+join: func-boot [
 	"Concatenates values."
 	value "Base value"
 	rest "Value or block of values"
@@ -38,7 +38,7 @@ join: func [
 	repend value :rest
 ]
 
-reform: func [
+reform: func-boot [
 	"Forms a reduced block and returns a string."
 	value "Value to reduce and form"
 	;/with "separator"

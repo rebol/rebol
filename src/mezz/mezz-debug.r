@@ -11,16 +11,17 @@ REBOL [
 	}
 ]
 
-dt: delta-time: function [
+dt: delta-time: func-boot [
 	{Delta-time - returns the time it takes to evaluate the block.}
 	block [block!]
+	/local start
 ][
 	start: stats/timer
 	do block
 	stats/timer - start
 ]
 
-dp: delta-profile: func [
+dp: delta-profile: func-boot [
 	{Delta-profile of running a specific block.}
 	block [block!]
 	/local start end
@@ -37,10 +38,11 @@ dp: delta-profile: func [
 	start
 ]
 
-speed?: function [
+speed?: func-boot [
 	"Returns approximate speed benchmarks [eval cpu memory file-io]."
 	/no-io "Skip the I/O test"
 	/times "Show time for each test"
+	/local calc tmp secs
 ][
 	result: copy []
 	foreach block [

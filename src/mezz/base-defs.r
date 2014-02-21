@@ -36,7 +36,7 @@ use [word title] [
 			values      ["object or module"]
 			types title ["function"] ; title should include module Title too...
 		] ["function, object, or module"]] ; body, words
-		set word func
+		set word func-boot
 			reduce [title 'value]
 			compose [reflect :value (to lit-word! name)]
 	]
@@ -90,57 +90,57 @@ system/options/result-types: make typeset! [
 
 ;-- Create "To-Datatype" conversion functions early in bootstrap:
 
-any-block?: func [
+any-block?: func-boot [
 	"Return TRUE if value is any type of block."
 	value [any-type!]
 ][find any-block! type? :value]
 
-any-string?: func [
+any-string?: func-boot [
 	"Return TRUE if value is any type of string."
 	value [any-type!]
 ][find any-string! type? :value]
 
-any-function?: func [
+any-function?: func-boot [
 	"Return TRUE if value is any type of function."
 	value [any-type!]
 ][find any-function! type? :value]
 
-any-word?: func [
+any-word?: func-boot [
 	"Return TRUE if value is any type of word."
 	value [any-type!]
 ][find any-word! type? :value]
 
-any-path?: func [
+any-path?: func-boot [
 	"Return TRUE if value is any type of path."
 	value [any-type!]
 ][find any-path! type? :value]
 
-any-object?: func [
+any-object?: func-boot [
 	"Return TRUE if value is any type of object."
 	value [any-type!]
 ][find any-object! type? :value]
 
-number?: func [
+number?: func-boot [
 	"Return TRUE if value is a number (integer or decimal)."
 	value [any-type!]
 ][find number! type? :value]
 
-series?: func [
+series?: func-boot [
 	"Return TRUE if value is any type of series."
 	value [any-type!]
 ][find series! type? :value]
 
-scalar?: func [
+scalar?: func-boot [
 	"Return TRUE if value is any type of scalar."
 	value [any-type!]
 ][find scalar! type? :value]
 
-true?: func [
+true?: func-boot [
 	"Returns true if an expression can be used as true."
 	val ; Note: No [any-type!] - we want unset! to fail.
 ] [not not :val]
 
-quote: func [
+quote: func-boot [
 	"Returns the value passed to it without evaluation."
 	:value [any-type!]
 ] [

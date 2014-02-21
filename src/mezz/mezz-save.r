@@ -15,7 +15,7 @@ REBOL [
 	}
 ]
 
-mold64: function [
+mold64: func-boot [
 	"Temporary function to mold binary base 64." ; fix the need for this! -CS
 	data
 ][
@@ -26,7 +26,7 @@ mold64: function [
 	data
 ]
 
-save: function [
+save: func-boot [
 	{Saves a value, block, or other data to a file, URL, binary, or string.}
 	where [file! url! binary! string! none!] {Where to save (suffix determines encoding)}
 	value {Value(s) to save}
@@ -36,6 +36,7 @@ save: function [
 	/length {Save the length of the script content in the header}
 	/compress {Save in a compressed format or not}
 	method [logic! word!] "true = compressed, false = not, 'script = encoded string"
+	/local data tmp
 ][
 	;-- Special datatypes use codecs directly (e.g. PNG image file):
 	if lib/all [

@@ -17,7 +17,7 @@ REBOL [
 	}
 ]
 
-make-port*: func [
+make-port*: func-boot [
 	"SYS: Called by system on MAKE of PORT! port from a scheme."
 	spec [file! url! block! object! word! port!] "port specification"
 	/local name scheme port
@@ -86,8 +86,8 @@ make-port*: func [
 	user-char:   insert copy alpha-num "=+-_.;&$%*,'#|"
 	pass-char:   complement make bitset! "^/ ^-@"
 	s1: s2: none ; in R3, input datatype is preserved - these are now URL strings!
-	out: []
-	emit: func ['w v] [reduce/into [to set-word! w if :v [to string! :v]] tail out]
+	out: none ;-- initialized by decode-url
+	emit: func-boot ['w v] [reduce/into [to set-word! w if :v [to string! :v]] tail out]
 
 	rules: [
 		; Scheme://user-host-part
@@ -118,7 +118,7 @@ make-port*: func [
 		opt [#"#" copy s1 some path-char (emit tag s1)]
 	]
 
-	decode-url: func ["Decode a URL according to rules of sys/*parse-url." url] [
+	decode-url: func-boot ["Decode a URL according to rules of sys/*parse-url." url] [
 		--- "This function is bound in the context of sys/*parse-url."
 		out: make block! 8
 		parse/all url rules
@@ -130,7 +130,7 @@ decode-url: none ; used by sys funcs, defined above, set below
 
 ;-- Native Schemes -----------------------------------------------------------
 
-make-scheme: func [
+make-scheme: func-boot [
 	"INIT: Make a scheme from a specification and add it to the system."
 	def [block!] "Scheme specification"
 	/with 'scheme "Scheme name to use as base"
@@ -157,7 +157,7 @@ make-scheme: func [
 	append system/schemes reduce [def/name def]
 ]
 
-init-schemes: func [
+init-schemes: func-boot [
 	"INIT: Init system native schemes and ports."
 ][
 	loud-print "Init schemes"
@@ -169,7 +169,7 @@ init-schemes: func [
 	make-scheme [
 		title: "System Port"
 		name: 'system
-		awake: func [
+		awake: func-boot [
 			sport "System port (State block holds events)"
 			ports "Port list (Copy of block passed to WAIT)"
 			/local event port waked
@@ -198,7 +198,7 @@ init-schemes: func [
 
 			false ; keep waiting
 		]
-		init: func [port] [
+		init: func-boot [port] [
 			;;print ["Init" title]
 			port/data: copy [] ; The port wake list
 		]
@@ -212,7 +212,7 @@ init-schemes: func [
 	make-scheme [
 		title: "Callback Event Functions"
 		name: 'callback
-		awake: func [event] [
+		awake: func-boot [event] [
 			do-callback event
 			true
 		]
@@ -222,7 +222,7 @@ init-schemes: func [
 		title: "File Access"
 		name: 'file
 		info: system/standard/file-info ; for C enums
-		init: func [port /local path] [
+		init: func-boot [port /local path] [
 			if url? port/spec/ref [
 				parse port/spec/ref [thru #":" 0 2 slash path:]
 				append port/spec compose [path: (to file! path)]
@@ -238,7 +238,7 @@ init-schemes: func [
 	make-scheme [
 		title: "GUI Events"
 		name: 'event
-		awake: func [event] [
+		awake: func-boot [event] [
 			print ["Default GUI event/awake:" event/type]
 			true
 		]
@@ -248,7 +248,7 @@ init-schemes: func [
 		title: "DNS Lookup"
 		name: 'dns
 		spec: system/standard/port-spec-net
-		awake: func [event] [print event/type true]
+		awake: func-boot [event] [print event/type true]
 	]
 
 	make-scheme [
@@ -256,7 +256,7 @@ init-schemes: func [
 		name: 'tcp
 		spec: system/standard/port-spec-net
 		info: system/standard/net-info ; for C enums
-		awake: func [event] [print ['TCP-event event/type] true]
+		awake: func-boot [event] [print ['TCP-event event/type] true]
 	]
 
 	make-scheme [

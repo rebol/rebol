@@ -26,7 +26,7 @@ REBOL [
 native: none ; for boot only
 action: none ; for boot only
 
-do*: func [
+do*: func-boot [
 	{SYS: Called by system for DO on datatypes that require special handling.}
 	value [file! url! string! binary!]
 	/args "If value is a script, this will set its system/script/args"
@@ -100,7 +100,7 @@ do*: func [
 	]
 ]
 
-make-module*: func [
+make-module*: func-boot [
 	"SYS: Called by system on MAKE of MODULE! datatype."
 	spec [block!] "As [spec-block body-block opt-mixins-object]"
 	/local body obj mixins hidden w
@@ -196,16 +196,17 @@ boot-mezz: none ; built-in mezz code (put here on boot)
 boot-prot: none ; built-in boot protocols
 boot-exts: none ; boot extension list
 
-export: func [
+export: func-boot [
 	"Low level export of values (e.g. functions) to lib."
 	words [block!] "Block of words (already defined in local context)"
 ][
 	foreach word words [repend lib [word get word]]
 ]
 
-assert-utf8: function [
+assert-utf8: func-boot [
 	"If binary data is UTF-8, returns it, else throws an error."
 	data [binary!]
+	/local tmp
 ][
 	unless find [0 8] tmp: utf? data [ ; Not UTF-8
 		cause-error 'script 'no-decode ajoin ["UTF-" abs tmp]

@@ -28,7 +28,7 @@ use [word] [
 		; The list above determines what will be made here:
 		if in lib word: make word! head remove back tail ajoin ["to-" type] [
 			; Add doc line only if this build has autodocs:
-			set in lib :word func either string? first spec-of :make [
+			set in lib :word func-boot either string? first spec-of :make [
 				reduce [reform ["Converts to" form type "value."] 'value]
 			][
 				[value]

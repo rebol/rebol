@@ -16,21 +16,21 @@ REBOL [
 	}
 ]
 
-info?: func [
+info?: func-boot [
 	{Returns an info object about a file or url.}
 	target [file! url!]
 ][
 	query target
 ]
 
-exists?: func [
+exists?: func-boot [
 	{Returns the type of a file or URL if it exists, otherwise none.}
 	target [file! url!]
 ][ ; Returns 'file or 'dir, or none
 	select attempt [query target] 'type
 ]
 
-size?: func [
+size?: func-boot [
 	{Returns the size of a file.}
 	target [file! url!]
 ][
@@ -40,7 +40,7 @@ size?: func [
 	]
 ]
 
-modified?: func [
+modified?: func-boot [
 	{Returns the last modified date of a file.}
 	target [file! url!]
 ][
@@ -50,7 +50,7 @@ modified?: func [
 	]
 ]
 
-suffix?: func [
+suffix?: func-boot [
 	"Return the file suffix of a filename or url. Else, NONE."
 	path [file! url! string!]
 ][
@@ -60,14 +60,14 @@ suffix?: func [
 	][to file! path]
 ]
 
-dir?: func [
+dir?: func-boot [
 	{Returns TRUE if the file or url ends with a slash (or backslash).}
 	target [file! url!]
 ][
 	true? find "/\" last target
 ]
 
-dirize: func [
+dirize: func-boot [
 	{Returns a copy (always) of the path as a directory (ending slash).}
 	path [file! string! url!]
 ][
@@ -76,7 +76,7 @@ dirize: func [
 	path
 ]
 
-make-dir: func [
+make-dir: func-boot [
 	"Creates the specified directory. No error if already exists."
 	path [file! url!]
 	/deep "Create subdirectories too"
@@ -124,7 +124,7 @@ make-dir: func [
 	path
 ]
 
-delete-dir: func [
+delete-dir: func-boot [
 	{Deletes a directory including all files and subdirectories.}
 	dir [file! url!]
 	/local files
@@ -139,7 +139,7 @@ delete-dir: func [
 	attempt [delete dir]
 ]
 
-script?: func [
+script?: func-boot [
 	{Checks file, url, or string for a valid script header.}
 	source [file! url! binary! string!]
 ][
@@ -150,14 +150,14 @@ script?: func [
 	find-script source ; Returns binary!
 ]
 
-file-type?: func [
+file-type?: func-boot [
 	"Return the identifying word for a specific file type (or NONE)."
 	file [file! url!]
 ][
 	if file: find find system/options/file-types suffix? file word! [first file]
 ]
 
-split-path: func [
+split-path: func-boot [
 	"Splits and returns directory path and file as a block."
 	target [file! url! string!]
 	/local dir pos
@@ -172,22 +172,25 @@ split-path: func [
 	reduce [dir pos]
 ]
 
-intern: function [
+intern: func-boot [
 	"Imports (internalize) words and their values from the lib into the user context."
 	data [block! any-word!] "Word or block of words to be added (deeply)"
+	/local index usr
 ][
-	index: 1 + length? usr: system/contexts/user ; optimization
+	; index for resolve (for optimization below)
+	index: 1 + length? usr: system/contexts/user 
 	data: bind/new :data usr   ; Extend the user context with new words
 	resolve/only usr lib index ; Copy only the new values into the user context
 	:data
 ]
 
-load: function [
+load-boot: func-boot [
 	{Simple load of a file, URL, or string/binary - minimal boot version.}
 	source [file! url! string! binary!]
 	/header  {Includes REBOL header object if present}
 	/all     {Load all values, including header (as block)}
 	;/unbound {Do not bind the block}
+	/local data hdr?
 ][
 	if string? data: case [
 		file? source [read source]

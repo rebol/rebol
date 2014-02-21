@@ -18,7 +18,7 @@ empty?: make :tail? [
 	]
 ]
 
-offset?: func [
+offset?: func-boot [
 	"Returns the offset between two series positions."
 	series1 [series!]
 	series2 [series!]
@@ -26,21 +26,21 @@ offset?: func [
 	subtract index? series2 index? series1
 ]
 
-found?: func [
+found?: func-boot [
 	"Returns TRUE if value is not NONE."
 	value
 ][
 	not none? :value
 ]
 
-last?: single?: func [
+last?: single?: func-boot [
 	"Returns TRUE if the series length is 1."
 	series [series! port! map! tuple! bitset! object! gob! any-word!]
 ][
 	1 = length? series
 ]
 
-extend: func [
+extend: func-boot [
 	"Extend an object, map, or block type with word and value pair."
 	obj [object! map! block! paren!] {object to extend (modified)}
 	word [any-word!]
@@ -50,7 +50,7 @@ extend: func [
 	:val
 ]
 
-rejoin: func [
+rejoin: func-boot [
 	"Reduces and joins a block of values."
 	block [block!] "Values to reduce and join"
 	;/with "separator"
@@ -61,7 +61,7 @@ rejoin: func [
 	] next block
 ]
 
-remold: func [
+remold: func-boot [
 	{Reduces and converts a value to a REBOL-readable string.}
 	value {The value to reduce and mold}
 	/only {For a block value, mold only its contents, no outer []}
@@ -71,7 +71,7 @@ remold: func [
 	apply :mold [reduce :value only all flat]
 ]
 
-charset: func [
+charset: func-boot [
 	"Makes a bitset of chars for the parse function."
 	chars [string! block! binary! char! integer!]
 	/length "Preallocate this many bits"
@@ -80,7 +80,7 @@ charset: func [
 	either length [append make bitset! len chars] [make bitset! chars]
 ]
 
-array: func [
+array: func-boot [
 	"Makes and initializes a series of a given size."
 	size [integer! block!] "Size or block of sizes for each dimension"
 	/initial "Specify an initial value for all elements"
@@ -109,7 +109,7 @@ array: func [
 	head block
 ]
 
-replace: func [
+replace: func-boot [
 	"Replaces a search value with the replace value within the target series."
 	target  [series!] "Series to replace within (modified)"
 	search  "Value to be replaced (converted if necessary)"
@@ -150,7 +150,7 @@ replace: func [
 ]
 ; We need to consider adding an /any refinement to use find/any, once that works.
 
-reword: func [
+reword: func-boot [
 	"Make a string or binary based on a template and substitution values."
 	source [any-string! binary!] "Template series with escape sequences"
 	values [map! object! block!] "Keyword literals and value expressions"
@@ -268,7 +268,7 @@ reword: func [
 ]
 ; It's big, it's complex, but it works. Placeholder for a native.
 
-move: func [
+move: func-boot [
 	"Move a value or span of values in a series."
 	source [series!] "Source series (modified)"
 	offset [integer!] "Offset to move by, or index to move to"
@@ -290,7 +290,7 @@ move: func [
 	] part
 ]
 
-extract: func [
+extract: func-boot [
 	"Extracts a value from a series at regular intervals."
 	series [series!]
 	width [integer!] "Size of each entry (the skip)"
@@ -328,7 +328,7 @@ extract: func [
 	either into [output] [head output]
 ]
 
-alter: func [
+alter: func-boot [
 	"Append value if not found, else remove it; returns true if added."
 	series [series! port! bitset!] {(modified)}
 	value
@@ -346,7 +346,7 @@ alter: func [
 	) [append series :value]
 ]
 
-collect: func [
+collect: func-boot [
 	"Evaluates a block, storing values via KEEP function, and returns block of collected values."
 	body [block!] "Block to evaluate"
 	/into "Insert into a buffer instead (returns position after insert)"
@@ -360,11 +360,12 @@ collect: func [
 	either into [output] [head output]
 ]
 
-format: function [
+format: func-boot [
 	"Format a string according to the format dialect."
 	rules {A block in the format dialect. E.g. [10 -10 #"-" 4]}
 	values
 	/pad p
+	/local val out 
 ][
 	p: any [p #" "]
 	unless block? :rules [rules: reduce [:rules]]
@@ -410,7 +411,7 @@ format: function [
 	head out
 ]
 
-printf: func [
+printf: func-boot [
 	"Formatted print."
 	fmt "Format"
 	val "Value or block of values"
@@ -418,7 +419,7 @@ printf: func [
 	print format :fmt :val
 ]
 
-split: func [
+split: func-boot [
 	"Split a series into pieces; fixed or variable size, fixed number, or at delimiters"
 	series	[series!] "The series to split"
 	dlm		[block! integer! char! bitset! any-string!] "Split size, delimiter(s), or rule(s)." 
@@ -501,7 +502,7 @@ split: func [
 	]
 ]
 
-find-all: func [
+find-all: func-boot [
 	"Find all occurrences of a value within a series (allows modification)."
 	'series [word!] "Variable for block, string, or other series"
 	value

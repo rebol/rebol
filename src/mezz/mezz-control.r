@@ -11,7 +11,7 @@ REBOL [
 	}
 ]
 
-launch: func [
+launch: func-boot [
 	{Runs a script as a separate process; return immediately.}
 	script [file! string! none!] "The name of the script"
 	/args arg [string! block! none!] "Arguments to the script"

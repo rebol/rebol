@@ -16,7 +16,7 @@ REBOL [
 	}
 ]
 
-probe: func [
+probe: func-boot [
 	{Debug print a molded value and returns that same value.}
 	value [any-type!]
 ][
@@ -24,7 +24,7 @@ probe: func [
 	:value
 ]
 
-??: func [
+??: func-boot [
 	{Debug print a word, path, or block of such, followed by its molded value.}
 	'name "Word, path, and block to obtain values."
 	/local out
@@ -55,14 +55,14 @@ probe: func [
 	:name
 ]
 
-boot-print: func [
+boot-print: func-boot [
 	"Prints during boot when not quiet."
 	data
 ][
 	unless system/options/quiet [print :data]
 ]
 
-loud-print: func [
+loud-print: func-boot [
 	"Prints during boot when verbose."
 	data
 ][

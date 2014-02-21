@@ -11,7 +11,7 @@ REBOL [
 	}
 ]
 
-clean-path: func [
+clean-path: func-boot [
 	"Returns new directory path with //, . and .. processed."
 	file [file! url! string!]
 	/only "Do not prepend current directory"
@@ -62,9 +62,10 @@ clean-path: func [
 	reverse out
 ]
 
-input: function [
+input: func-boot [
 	{Inputs a string from the console. New-line character is removed.}
 ;	/hide "Mask input with a * character"
+	/local line
 ][
 	if any [
 		not port? system/ports/input
@@ -77,7 +78,7 @@ input: function [
 	line
 ]
 
-ask: func [
+ask: func-boot [
 	"Ask the user for input."
 	question [series!] "Prompt to user"
 	/hide "mask input with *"
@@ -86,7 +87,7 @@ ask: func [
 	trim either hide [input/hide] [input]
 ]
 
-confirm: func [
+confirm: func-boot [
 	"Confirms a user choice."
 	question [series!] "Prompt to user"
 	/with choices [string! block!]
@@ -106,7 +107,7 @@ confirm: func [
 	]
 ]
 
-list-dir: func [
+list-dir: func-boot [
 	"Print contents of a directory (ls)."
 	'path [file! word! path! string! unset!] "Accepts %file, :variables, and just words (as dirs)"
 	/l "Line of info format"
@@ -152,7 +153,7 @@ list-dir: func [
 	exit
 ]
 
-undirize: func [
+undirize: func-boot [
 	{Returns a copy of the path with any trailing "/" removed.}
 	path [file! string! url!]
 ][
@@ -161,7 +162,7 @@ undirize: func [
 	path
 ]
 
-in-dir: func [
+in-dir: func-boot [
 	"Evaluate a block while in a directory."
 	dir [file!] "Directory to change to (changed back after)"
 	block [block!] "Block to evaluate"
@@ -172,7 +173,7 @@ in-dir: func [
 	also do block change-dir old-dir
 ] ; You don't want the block to be done if the change-dir fails, for safety.
 
-to-relative-file: func [
+to-relative-file: func-boot [
 	"Returns the relative portion of a file if in a subdirectory, or the original if not."
 	file [file! string!] "File to check (local if string!)"
 	/no-copy "Don't copy, just reference"

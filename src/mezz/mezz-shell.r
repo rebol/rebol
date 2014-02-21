@@ -16,7 +16,7 @@ pwd:	:what-dir
 rm:		:delete
 mkdir:	:make-dir
 
-cd: func [
+cd: func-boot [
 	"Change directory (shell shortcut function)."
 	'path [file! word! path! unset! string!] "Accepts %file, :variables and just words (as dirs)"
 ][
@@ -28,7 +28,7 @@ cd: func [
 	]
 ]
 
-more: func [
+more: func-boot [
 	"Print file (shell shortcut function)."
 	'file [file! word! path! string!] "Accepts %file and also just words (as file names)"
 ][

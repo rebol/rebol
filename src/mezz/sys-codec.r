@@ -17,10 +17,11 @@ REBOL [
 	}
 ]
 
-decode: function [
+decode: func-boot [
  	{Decodes a series of bytes into the related datatype (e.g. image!).}
 	type [word!] {Media type (jpeg, png, etc.)}
 	data [binary!] {The data to decode}
+	/local cod
 ][
 	unless all [
 		cod: select system/codecs type
@@ -31,11 +32,12 @@ decode: function [
 	data
 ]
 
-encode: function [
+encode: func-boot [
 	{Encodes a datatype (e.g. image!) into a series of bytes.}
 	type [word!] {Media type (jpeg, png, etc.)}
 	data [image! binary! string!] {The data to encode}
 	/options opts [block!] {Special encoding options}
+	/local cod
 ][
 	unless all [
 		cod: select system/codecs type
@@ -46,7 +48,7 @@ encode: function [
 	data
 ]
 
-encoding?: function [
+encoding?: func-boot [
 	"Returns the media codec name for given binary data. (identify)"
 	data [binary!]
 ][

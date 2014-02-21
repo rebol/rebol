@@ -17,7 +17,7 @@ REBOL [
 	}
 ]
 
-start: func [
+start: func-boot [
 	"INIT: Completes the boot sequence. Loads extras, handles args, security, scripts."
 	/local file tmp script-path script-args code
 ] bind [ ; context is: system/options

@@ -11,7 +11,7 @@ REBOL [
 	}
 ]
 
-make-banner: func [
+make-banner: func-boot [
 	"Build startup banner."
 	fmt /local str star spc a b s
 ][

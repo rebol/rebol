@@ -34,7 +34,6 @@ REBOL [
 ;-- lib: mid-level lib context:
 [
 	%mezz-types.r
-	%mezz-func.r
 	%mezz-debug.r
 	%mezz-control.r
 	%mezz-save.r
@@ -42,10 +41,11 @@ REBOL [
 	%mezz-files.r
 	%mezz-shell.r
 	%mezz-math.r
-	%mezz-help.r ; move dump-obj!
+	%mezz-help.r
 	%mezz-banner.r
 	%mezz-colors.r
-	%mezz-tail.r
+	%mezz-func.r
+	%mezz-tail.r ; move dump-obj!
 ]
 
 ;-- protocols:

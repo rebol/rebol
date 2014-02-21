@@ -11,7 +11,7 @@ REBOL [
 	}
 ]
 
-mod: func [
+mod: func-boot [
 	"Compute a nonnegative remainder of A divided by B."
 	; In fact the function tries to find the remainder,
 	; that is "almost non-negative"
@@ -31,7 +31,7 @@ mod: func [
 	either all [a + r = (a + b)  positive? r + r - b] [r - b] [r]
 ]
 
-modulo: func [
+modulo: func-boot [
 	{Wrapper for MOD that handles errors like REMAINDER. Negligible values (compared to A and B) are rounded to zero.}
 	;[catch]
 	a [number! money! time!]
@@ -48,7 +48,7 @@ modulo: func [
 	either any [a - r = a   r + b = b] [make r 0] [r]
 ]
 
-sign?: func [
+sign?: func-boot [
 	"Returns sign of number as 1, 0, or -1 (to use as multiplier)."
 	number [number! money! time!]
 ][
@@ -59,7 +59,7 @@ sign?: func [
 	]
 ]
 
-minimum-of: func [
+minimum-of: func-boot [
 	{Finds the smallest value in a series}
 	series [series!] {Series to search}
 	/skip {Treat the series as records of fixed size}
@@ -75,7 +75,7 @@ minimum-of: func [
 	spot
 ]
 
-maximum-of: func [
+maximum-of: func-boot [
 	{Finds the largest value in a series}
 	series [series!] {Series to search}
 	/skip {Treat the series as records of fixed size}

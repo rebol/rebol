@@ -11,91 +11,14 @@ REBOL [
 	}
 ]
 
-; MOVE THIS INTERNAL FUNC:
-dump-obj: function [
-	"Returns a block of information about an object or port."
-	obj [object! port!]
-	/match "Include only those that match a string or datatype" pat
-][
-	clip-str: func [str] [
-		; Keep string to one line.
-		trim/lines str
-		if (length? str) > 45 [str: append copy/part str 45 "..."]
-		str
-	]
-
-	form-val: func [val] [
-		; Form a limited string from the value provided.
-		if any-block? :val [return reform ["length:" length? val]]
-		if image? :val [return reform ["size:" val/size]]
-		if datatype? :val [return get in spec-of val 'title]
-		if any-function? :val [
-			return clip-str any [title-of :val mold spec-of :val]
-		]
-		if object? :val [val: words-of val]
-		if typeset? :val [val: to-block val]
-		if port? :val [val: reduce [val/spec/title val/spec/ref]]
-		if gob? :val [return reform ["offset:" val/offset "size:" val/size]]
-		clip-str mold :val
-	]
-
-	form-pad: func [val size] [
-		; Form a value with fixed size (space padding follows).
-		val: form val
-		insert/dup tail val #" " size - length? val
-		val
-	]
-
-	; Search for matching strings:
-	out: copy []
-	wild: all [string? pat  find pat "*"]
-
-	foreach [word val] obj [
-		type: type?/word :val
-		str: either find [function! closure! native! action! op! object!] type [
-			reform [word mold spec-of :val words-of :val]
-		][
-			form word
-		]
-		if any [
-			not match
-			all [
-				not unset? :val
-				either string? :pat [
-					either wild [
-						tail? any [find/any/match str pat pat]
-					][
-						find str pat
-					]
-				][
-					all [
-						datatype? get :pat
-						type = :pat
-					]
-				]
-			]
-		][
-			str: form-pad word 15
-			append str #" "
-			append str form-pad type 10 - ((length? str) - 15)
-			append out reform [
-				"  " str
-				if type <> 'unset! [form-val :val]
-				newline
-			]
-		]
-	]
-	out
-]
-
-?: help: func [
+?: help: func-boot [
 	"Prints information about words and values."
 	'word [any-type!]
 	/doc "Open web browser to related documentation."
 	/local value args item type-name types tmp print-args
 ][
 	if unset? get/any 'word [
-		print trim/auto {
+		print trim/auto copy {
 			Use HELP or ? to see built-in info:
 
 				help insert
@@ -224,7 +147,7 @@ dump-obj: function [
 	]
 
 	; Print type name with proper singular article:
-	type-name: func [value] [
+	type-name: func-boot [value] [
 		value: mold type? :value
 		clear back tail value
 		join either find "aeiou" first value ["an "]["a "] value
@@ -279,7 +202,7 @@ dump-obj: function [
 	clear find args /local
 
 	;-- Print arg lists:
-	print-args: func [label list /extra /local str] [
+	print-args: func-boot [label list /extra /local str] [
 		if empty? list [exit]
 		print label
 		foreach arg list [
@@ -314,7 +237,7 @@ dump-obj: function [
 	exit ; return unset
 ]
 
-about: func [
+about: func-boot [
 	"Information about REBOL"
 ][
 	print make-banner sys/boot-banner
@@ -322,10 +245,10 @@ about: func [
 
 ;		--cgi (-c)       Load CGI utiliy module and modes
 
-usage: func [
+usage: func-boot [
 	"Prints command-line arguments."
 ][
-	print trim/auto {
+	print trim/auto copy {
 	Command line usage:
 
 		REBOL |options| |script| |arguments|
@@ -364,13 +287,13 @@ usage: func [
 	}
 ]
 
-license: func [
+license: func-boot [
 	"Prints the REBOL/core license agreement."
 ][
 	print system/license
 ]
 
-source: func [
+source: func-boot [
 	"Prints the source code for a word."
 	'word [word! path!]
 ][
@@ -379,7 +302,7 @@ source: func [
 	exit
 ]
 
-what: func [
+what: func-boot [
 	{Prints a list of known functions.}
 	'name [word! lit-word! unset!] "Optional module name"
 	/args "Show arguments not titles"
@@ -412,17 +335,17 @@ what: func [
 	exit
 ]
 
-pending: does [
+pending: func-boot [] [
 	comment "temp function"
 	print "Pending implementation."
 ]
 
-say-browser: does [
+say-browser: func-boot [] [
 	comment "temp function"
 	print "Opening web browser..."
 ]
 
-upgrade: function [
+upgrade: func-boot [/local err] [
 	"Check for newer versions (update REBOL)."
 ][
 	print "Fetching upgrade check ..."
@@ -432,7 +355,7 @@ upgrade: function [
 	exit
 ]
 
-chat: function [
+chat: func-boot [/local err] [
 	"Open REBOL DevBase forum/BBS."
 ][
 	print "Fetching chat..."
@@ -442,7 +365,7 @@ chat: function [
 	exit
 ]
 
-docs: func [
+docs: func-boot [
 	"Browse on-line documentation."
 ][
 	say-browser
@@ -450,7 +373,7 @@ docs: func [
 	exit
 ]
 
-bugs: func [
+bugs: func-boot [
 	"View bug database."
 ][
 	say-browser
@@ -458,7 +381,7 @@ bugs: func [
 	exit
 ]
 
-changes: func [
+changes: func-boot [
 	"What's new about this version."
 ][
 	say-browser
@@ -466,7 +389,7 @@ changes: func [
 	exit
 ]
 
-why?: func [
+why?: func-boot [
 	"Explain the last error in more detail."
 	'err [word! path! error! none! unset!] "Optional error value"
 ][
@@ -489,8 +412,9 @@ why?: func [
 	exit
 ]
 
-demo: function [
+demo: func-boot [
 	"Run R3 demo."
+	/local err
 ][
 	print "Fetching demo..."
 	if error? err: try [do http://www.rebol.com/r3/demo.r none][
@@ -499,8 +423,9 @@ demo: function [
 	exit
 ]
 
-load-gui: function [
+load-gui: func-boot [
 	"Download current GUI module from web. (Temporary)"
+	/local data
 ][
 	print "Fetching GUI..."
 	either error? data: try [load http://www.rebol.com/r3/gui.r][
