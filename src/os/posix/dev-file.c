@@ -53,6 +53,14 @@
 #define O_BINARY 0
 #endif
 
+/*** Android don't have S_IREAD and S_IWRITE ***/
+#ifndef S_IREAD
+#define S_IREAD S_IRUSR
+#endif
+#ifndef S_IWRITE
+#define S_IWRITE S_IWUSR
+#endif
+
 // NOTE: the code below assumes a file id will never by zero. This should
 // be safe. In posix, zero is stdin, which is handled by dev-stdio.c.
 
