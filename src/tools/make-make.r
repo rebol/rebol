@@ -43,9 +43,10 @@ makefile-head:
 # and provide an OS_ID (from the systems table). Linux 2.5 for example:
 #    make make OS_ID=0.4.3
 
-# To cross compile using a different toolchain and include files:
-#    $TOOLS - should point to bin where gcc is found
-#    $INCL  - should point to the dir for includes
+# To cross compile using a different toolchain, include files and sysroot:
+#    $TOOLS   - should point to bin where gcc is found
+#    $INCL    - should point to the dir for includes
+#    $SYSROOT - should point to the sysroot
 # Example make:
 #    make TOOLS=~/amiga/amiga/bin/ppc-amigaos- INCL=/SDK/newlib/include
 
