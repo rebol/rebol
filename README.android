@@ -3,10 +3,9 @@ CROSS-COMPILE FOR ANDROID:
  
  1: make make OS_ID=0.4.3 # 0.4.4 use compile options incompatible with android cross-compiler
  
- 2: make TOOLS=<path-to-cross-compile-tools><cross-compile-prefix>
+ 2: make TOOLS=<path-to-cross-compile-tools><cross-compile-prefix> INCL=<path-to-include> SYSROOT=<path-to-sysroot>
       e.g.
-    make TOOLS=/android/android-ndk-r8b/toolchains/arm-linux-androideabi-4.8.0/prebuilt/linux-x86/bin/arm-linux-androideabi-
-      (NOTE the final '-' )
+    make TOOLS=(...)android-ndk/toolchains/arm-linux-androideabi-4.6/prebuilt/linux-arm/bin/arm-linux-androideabi- INCL=(...)android-ndk/platforms/android-14/arch-arm/usr/include SYSROOT=(...)android-ndk/platforms/android-14/arch-arm/
    
- :-)
- giuliolunati@gmail.com
+:-)
+giuliolunati@gmail.com
