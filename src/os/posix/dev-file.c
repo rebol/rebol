@@ -53,7 +53,7 @@
 #define O_BINARY 0
 #endif
 
-/*** Android don't have S_IREAD and S_IWRITE ***/
+// The BSD legacy names S_IREAD/S_IWRITE are not defined on e.g. Android.
 #ifndef S_IREAD
 #define S_IREAD S_IRUSR
 #endif
