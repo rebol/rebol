@@ -33,6 +33,7 @@ systems: [
 	[0.5.75 "haiku"      posix  [+O2 ST1 NWK]]
 	[0.7.02 "freebsd"    posix  [+O1 C++ ST1 -LM]]
 	[0.9.04 "openbsd"    posix  [+O1 C++ ST1 -LM]]
+	[0.13.01 "android_arm"  android  [HID F64 LDL LLOG -LM CST]]
 ]
 
 compile-flags: [
@@ -40,6 +41,7 @@ compile-flags: [
 	+O1: "-O1"                    ; full optimize
 	+O2: "-O2"                    ; full optimize
 	UNI: "-DUNICODE"              ; win32 wants it
+	CST: "-DCUSTOM_STARTUP"		  ; include custom startup script at host boot
 	HID: "-fvisibility=hidden"    ; all syms are hidden
 	F64: "-D_FILE_OFFSET_BITS=64" ; allow larger files
 	NPS: "-Wno-pointer-sign"      ; OSX fix
@@ -57,6 +59,7 @@ linker-flags: [
 	STA: "--strip-all"
 	C++: "-lstdc++" ; link with stdc++
 	LDL: "-ldl"     ; link with dynamic lib lib
+	LLOG: "-llog"	; on Android, link with liblog.so
 	ARC: "-arch i386" ; x86 32 bit architecture (OSX)
 	M32: "-m32"       ; use 32-bit memory model (Linux x64)
 	W32: "-lwsock32 -lcomdlg32"
