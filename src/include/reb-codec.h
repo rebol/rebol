@@ -35,10 +35,15 @@
 // of size (->w * ->h * 4).  This will be freed by the
 // REBNATIVE(do_codec) in n-system.c
 //
-// If your codec routine returns CODI_BINARY or CODI_TEXT, it is
+// If your codec routine returns CODI_BINARY, it is
 // expected that the ->data field contains a block of memory
 // allocated with Make_Mem of size ->len.  This will be freed by
 // the REBNATIVE(do_codec) in n-system.c
+//
+// If your codec routine returns CODI_TEXT, it is
+// expected that the ->data field is 3rd input binary! argument in
+// the REBNATIVE(do_codec) in n-system.c
+// so the deallocation is left to GC
 //
 typedef struct reb_codec_image {
 	int action;
