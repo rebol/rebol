@@ -158,14 +158,17 @@ static REBCNT *CRC_Table;
 {
 	REBINT m, n;
 	REBINT hash;
+	REBCNT ulen;
 
 	if (len < 0) len = LEN_BYTES(str);
 
 	hash = (REBINT)len + (REBINT)((REBYTE)LO_CASE(*str));
 
-	for (; len > 0; str++, len--) {
+	ulen = (REBCNT)len; // so the & operation later isn't for the wrong type
+
+	for (; ulen > 0; str++, ulen--) {
 		n = *str;
-		if (n > 127 && NZ(m = Decode_UTF8_Char(&str, &len))) n = m; // mods str, len
+		if (n > 127 && NZ(m = Decode_UTF8_Char(&str, &ulen))) n = m; // mods str, ulen
 		if (n < UNICODE_CASES) n = LO_CASE(n);
 		n = (REBYTE)((hash >> CRCSHIFTS) ^ (REBYTE)n); // drop upper 8 bits
 		hash = MASK_CRC(hash << 8) ^ (REBINT)CRC_Table[n];

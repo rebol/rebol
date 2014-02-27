@@ -257,7 +257,7 @@
 **			-3: no match, s2 > s1
 **			-1: no match, s1 > s2
 **			 0: exact match
-**		     1: non-case match, s2 > s1
+**			 1: non-case match, s2 > s1
 **			 3: non-case match, s1 > s2
 **
 **		So, result + 2 for no-match gives proper sort order.
@@ -271,7 +271,7 @@
 	REBCNT l1 = LEN_BYTES(s1);
 	REBINT result = 0;
 
-	for (; l2 > 0; s1++, s2++, l2--) {
+	for (; l1 > 0 && l2 > 0; s1++, s2++, l1--, l2--) {
 		c1 = (REBYTE)*s1;
 		c2 = (REBYTE)*s2;
 		if (c1 > 127) c1 = Decode_UTF8_Char(&s1, &l1); //!!! can return 0 on error!
@@ -284,6 +284,7 @@
 			if (!result) result = (c1 > c2) ? 3 : 1;
 		}
 	}
+	if (l1 != l2) result = (l1 > l2) ? -1 : -3;
 
 	return result;
 }
