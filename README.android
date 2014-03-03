@@ -1,0 +1,22 @@
+CROSS-COMPILATION FOR ANDROID:
+ 
+  1: make make OS_ID=0.4.3 # 0.4.4 use compile options incompatible with android cross-compiler
+ 
+  2: make TOOLS=<path-to-cross-compile-tools><cross-compile-prefix> INCL=<path-to-include> SYSROOT=<path-to-sysroot>
+      e.g.
+    make TOOLS=(...)android-ndk/toolchains/arm-linux-androideabi-4.6/prebuilt/linux-arm/bin/arm-linux-androideabi- INCL=(...)android-ndk/platforms/android-14/arch-arm/usr/include SYSROOT=(...)android-ndk/platforms/android-14/arch-arm/
+
+NATIVE COMPILATION UNDER ANDROID
+
+  1: Install AIDE from https://play.google.com/store/apps/details?id=com.aide.ui
+     In AIDE: [menu] -> More -> Settings -> Build & Run -> install native code support
+     This will download and install the native toolchain in /data/com.aide.ui/files/ndksupport-YYYYMMDD/android-ndk-aide/
+
+  2: To build from the command line, we must have access to the toolchain from terminal, so we have to install su and superuser app from https://play.google.com/store/apps/details?id=com.noshufou.android.su
+     Will also serve some precompiled executables: su, make: it can be downloaded from https://drive.google.com/folderview?id=0B8Z4fCj7YAC9dGJwV2pwWVJfQW8&usp=sharing.
+     Maybe you want also download bash and vim.
+     Copy them somewhere in terminal PATH and make them executable.
+
+  3: Gain root access with su, then follow the instructions for cross-compilation ... good luck!
+
+You can mail me: giuliolunati at gmail dot com
