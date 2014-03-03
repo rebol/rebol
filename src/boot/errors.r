@@ -31,7 +31,6 @@ Note: [
 	no-load:            [{cannot load: } :arg1]
 	exited:             [{exit occurred}]
 	deprecated:         {deprecated function not allowed}
-	else-gone:          {ELSE is obsolete - use the EITHER function}
 ]
 
 Syntax: [
