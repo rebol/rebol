@@ -203,9 +203,10 @@ export: func [
 	foreach word words [repend lib [word get word]]
 ]
 
-assert-utf8: function [
+assert-utf8: func [
 	"If binary data is UTF-8, returns it, else throws an error."
 	data [binary!]
+	/local tmp
 ][
 	unless find [0 8] tmp: utf? data [ ; Not UTF-8
 		cause-error 'script 'no-decode ajoin ["UTF-" abs tmp]

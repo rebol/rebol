@@ -12,10 +12,11 @@ REBOL [
 ]
 
 ; MOVE THIS INTERNAL FUNC:
-dump-obj: function [
+dump-obj: func [
 	"Returns a block of information about an object or port."
 	obj [object! port!]
 	/match "Include only those that match a string or datatype" pat
+	/local clip-str form-val form-pad out wild type str
 ][
 	clip-str: func [str] [
 		; Keep string to one line.
@@ -95,7 +96,7 @@ dump-obj: function [
 	/local value args item type-name types tmp print-args
 ][
 	if unset? get/any 'word [
-		print trim/auto {
+		print trim/auto copy {
 			Use HELP or ? to see built-in info:
 
 				help insert
@@ -325,7 +326,7 @@ about: func [
 usage: func [
 	"Prints command-line arguments."
 ][
-	print trim/auto {
+	print trim/auto copy {
 	Command line usage:
 
 		REBOL |options| |script| |arguments|
@@ -422,8 +423,9 @@ say-browser: does [
 	print "Opening web browser..."
 ]
 
-upgrade: function [
+upgrade: func [
 	"Check for newer versions (update REBOL)."
+	/local err
 ][
 	print "Fetching upgrade check ..."
 	if error? err: try [do http://www.rebol.com/r3/upgrade.r none][
@@ -432,8 +434,9 @@ upgrade: function [
 	exit
 ]
 
-chat: function [
+chat: func [
 	"Open REBOL DevBase forum/BBS."
+	/local err
 ][
 	print "Fetching chat..."
 	if error? err: try [do http://www.rebol.com/r3/chat.r none][
@@ -489,8 +492,9 @@ why?: func [
 	exit
 ]
 
-demo: function [
+demo: func [
 	"Run R3 demo."
+	/local err
 ][
 	print "Fetching demo..."
 	if error? err: try [do http://www.rebol.com/r3/demo.r none][
@@ -499,12 +503,13 @@ demo: function [
 	exit
 ]
 
-load-gui: function [
+load-gui: func [
 	"Download current GUI module from web. (Temporary)"
+	/local data
 ][
 	print "Fetching GUI..."
 	either error? data: try [load http://www.rebol.com/r3/gui.r][
-		either data/id = 'protocol [print "Cannot load GUI from web."][do err]
+		either data/id = 'protocol [print "Cannot load GUI from web."][do data]
 	][
 		do data
 	]
