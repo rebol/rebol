@@ -64,8 +64,9 @@
 		len = LEN_STR(file.file.path);
 		if (GET_FLAG(file.modes, RFM_DIR)) len++;
 		name = Copy_OS_Str(file.file.path, len);
-		if (GET_FLAG(file.modes, RFM_DIR))
+		if (GET_FLAG(file.modes, RFM_DIR)) {
 			SET_ANY_CHAR(name, name->tail-1, '/');
+		}
 		Set_Series(REB_FILE, Append_Value(files), name);
 	}
 

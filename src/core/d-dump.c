@@ -61,7 +61,7 @@
 /*
 ***********************************************************************/
 {
-	const max_lines = 120;
+	const int max_lines = 120;
 	REBYTE buf[2048];
 	REBYTE str[40];
 	REBYTE *cp, *tp;

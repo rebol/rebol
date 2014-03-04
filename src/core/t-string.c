@@ -664,10 +664,10 @@ zero_str:
 		// Check for valid arg combinations:
 		args = Find_Refines(ds, ALL_TRIM_REFS);
 		if (
-			(args & (AM_TRIM_ALL | AM_TRIM_WITH)) &&
-			(args & (AM_TRIM_HEAD | AM_TRIM_TAIL | AM_TRIM_LINES | AM_TRIM_AUTO)) ||
-			(args & AM_TRIM_AUTO) && 
-			(args & (AM_TRIM_HEAD | AM_TRIM_TAIL | AM_TRIM_LINES | AM_TRIM_ALL | AM_TRIM_WITH))
+			((args & (AM_TRIM_ALL | AM_TRIM_WITH)) &&
+			(args & (AM_TRIM_HEAD | AM_TRIM_TAIL | AM_TRIM_LINES | AM_TRIM_AUTO))) ||
+			((args & AM_TRIM_AUTO) &&
+			(args & (AM_TRIM_HEAD | AM_TRIM_TAIL | AM_TRIM_LINES | AM_TRIM_ALL | AM_TRIM_WITH)))
 		)
 			Trap0(RE_BAD_REFINES);
 

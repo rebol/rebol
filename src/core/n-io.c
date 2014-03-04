@@ -595,7 +595,7 @@ chk_neg:
 	REBCHR *eq;
 	REBSER *blk;
 
-	while (n = LEN_STR(str)) {
+	while ((n = LEN_STR(str))) {
 		len++;
 		str += n + 1; // next
 	}

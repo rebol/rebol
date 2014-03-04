@@ -397,7 +397,7 @@ static REBREQ *Req_SIO;
 			for (i1 = i2 = 0; i1 < out->tail; i1++) {
 				uc = GET_ANY_CHAR(out, i1);
 				if (uc < ' ') uc = ' ';
-				if (uc > ' ' || pc > ' ') SET_ANY_CHAR(out, i2++, uc);
+				if (uc > ' ' || pc > ' ') { SET_ANY_CHAR(out, i2++, uc); }
 				pc = uc;
 			}
 			SET_ANY_CHAR(out, i2, 0);

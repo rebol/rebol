@@ -42,7 +42,7 @@
 **		Return 0 on error.
 **
 **		Reduces width when possible.
-**		Adds extra space at end for appending a dir /*
+**		Adds extra space at end for appending a dir /?
 **
 **		REBDIFF: No longer appends current dir to volume when no
 **		root slash is provided (that odd MSDOS c:file case).
@@ -119,7 +119,7 @@
 **		Allocate and return a new series with the converted path.
 **		Return 0 on error.
 **
-**		Adds extra space at end for appending a dir /*
+**		Adds extra space at end for appending a dir /?
 **		Expands width for OS's that require it.
 **
 ***********************************************************************/
