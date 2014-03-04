@@ -272,7 +272,6 @@ remove-each: native [
 return: native [
 	{Returns a value from a function.}
 	value [any-type!]
-	/redo {Upon return, re-evaluate the returned result. (Used for DO)}
 ]
 
 switch: native [

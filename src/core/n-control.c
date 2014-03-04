@@ -687,7 +687,6 @@ got_err:
 {
 	REBVAL *arg = D_ARG(1);
 
-	if (D_REF(2)) VAL_SET_OPT(arg, OPTS_REVAL);
 	SET_THROW(ds, RE_RETURN, arg);
 	return R_RET;
 }

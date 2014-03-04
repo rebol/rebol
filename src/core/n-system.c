@@ -443,19 +443,21 @@ err:
 	case CODI_CHECK:
 		return R_TRUE;
 
-	case CODI_BINARY:
-	case CODI_TEXT:
+	case CODI_BINARY: //used on encode
+	case CODI_TEXT: //used on decode
 		ser = Make_Binary(codi.len);
 		ser->tail = codi.len;
 		memcpy(BIN_HEAD(ser), codi.data, codi.len);
 		Set_Binary(D_RET, ser);
 		if (result != CODI_BINARY) VAL_SET(D_RET, REB_STRING);
-		
-		// See notice in reb-codec.h on reb_codec_image 
-		Free_Mem(codi.data, codi.len);
+
+		//don't free the text binary input buffer during decode (it's the 3rd arg value in fact)
+		if (result == CODI_BINARY)
+			// See notice in reb-codec.h on reb_codec_image 
+			Free_Mem(codi.data, codi.len);
 		break;
 
-	case CODI_IMAGE:
+	case CODI_IMAGE: //used on decode
 		ser = Make_Image(codi.w, codi.h, TRUE); // Puts it into RETURN stack position
 		memcpy(IMG_DATA(ser), codi.bits, codi.w * codi.h * 4);
 		SET_IMAGE(D_RET, ser);

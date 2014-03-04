@@ -81,6 +81,10 @@
 #include "sys-core.h"
 #include "reb-evtypes.h"
 
+#ifdef REB_API
+extern REBOL_HOST_LIB *Host_Lib;
+#endif
+
 //-- For Serious Debugging:
 #ifdef WATCH_GC_VALUE
 REBSER *Watcher = 0;
@@ -173,12 +177,32 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 		while(req) {
 			// The ->port field of the REBREQ is void*, so we must cast
 			// Comment says it is "link back to REBOL port object"
-			CHECK_MARK((REBSER*)req->port, depth);
+			if (req->port) CHECK_MARK((REBSER*)req->port, depth);
 			req = req->next;
 		}
 	}
 }
 
+/***********************************************************************
+**
+*/ static void Mark_Devices(REBCNT depth)
+/*
+**  Mark all devices. Search for pending requests.
+**
+***********************************************************************/
+{
+	int d;
+	REBDEV *dev;
+	REBREQ *req;
+	REBDEV **devices = Host_Lib->devices;
+	
+	for (d = 0; d < RDI_MAX; d++) {
+		dev = devices[d];
+		if (dev)
+			for (req = dev->pending; req; req = req->next)
+				if (req->port) CHECK_MARK((REBSER*)req->port, depth);
+	}
+}
 
 /***********************************************************************
 **
@@ -556,6 +580,9 @@ mark_obj:
 	Mark_Series(VAL_SERIES(ROOT_ROOT), 0);
 	Mark_Series(Task_Series, 0);
 
+	// Mark all devices:
+	Mark_Devices(0);
+	
 	count = Sweep_Series();
 	count += Sweep_Gobs();
 

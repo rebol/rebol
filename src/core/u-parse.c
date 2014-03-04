@@ -527,6 +527,11 @@ bad_target:
 				i = Find_Str_Char(series, 0, index, series->tail, 1, VAL_CHAR(item), HAS_CASE(parse));
 				if (i != NOT_FOUND && is_thru) i++;
 			}
+			// bitset
+			else if (IS_BITSET(item)) {
+				i = Find_Str_Bitset(series, 0, index, series->tail, 1, VAL_BITSET(item), HAS_CASE(parse));
+				if (i != NOT_FOUND && is_thru) i++;
+			}
 		}
 	}
 
