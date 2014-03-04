@@ -29,6 +29,7 @@ systems: [
 	[0.4.04 "linux"      posix  [+O2 HID LDL ST1 M32 -LM]]	; libc 2.11
 	[0.4.10 "linux_ppc"  posix  [+O1 HID LDL ST1 -LM]]
 	[0.4.20 "linux_arm"  posix  [+O2 HID LDL ST1 -LM]]
+	[0.4.21 "linux_arm"  posix  [+O2 HID LDL ST1 -LM PIE]]  ; bionic (Android)
 	[0.4.30 "linux_mips" posix  [+O2 HID LDL ST1 -LM]]  ; glibc does not need C++
 	[0.5.75 "haiku"      posix  [+O2 ST1 NWK]]
 	[0.7.02 "freebsd"    posix  [+O1 C++ ST1 -LM]]
@@ -45,6 +46,7 @@ compile-flags: [
 	NPS: "-Wno-pointer-sign"      ; OSX fix
 	NSP: "-fno-stack-protector"   ; avoid insert of functions names
 	PIC: "-fPIC"                  ; position independent (used for libs)
+	PIE: "-fPIE"                  ; position independent (executables)
 	DYN: "-dynamic"               ; optimize for dll??
 	NCM: "-fno-common"            ; lib cannot have common vars
 	PAK: "-fpack-struct"          ; pack structures
