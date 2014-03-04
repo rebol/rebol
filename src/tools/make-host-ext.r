@@ -20,6 +20,9 @@ REBOL [
 print "--- Make Host Boot Extension ---"
 
 secure none
+
+;do %ordinals-back.r
+
 do %form-header.r
 
 ;-- Conversion to C strings, depending on compiler ---------------------------
@@ -33,7 +36,7 @@ to-cstr: either system/version/4 = 3 [
 			out: insert out reduce [to-integer first str ", "]
 			if zero? ((index? str) // 10) [out: insert out "^/^-"]
 		]
-		;remove/part out either (pick out -1) = #" " [-2][-4]
+		;remove/part out either (first-back out) = #" " [-2][-4]
 		head out
 	]
 ][

@@ -486,7 +486,7 @@ load-module: function [
 			if tmp: find/skip next system/modules mod: source 3 [
 				if as [cause-error 'script 'bad-refine /as] ; already imported
 				if all [ ; not /version, not /check, same as top module of that name
-					not version not check same? mod select system/modules pick tmp 0
+					not version not check same? mod select system/modules first-back tmp
 				] [return copy/part back tmp 2]
 				set [mod: modsum:] tmp
 			]

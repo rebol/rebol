@@ -744,6 +744,56 @@ tenth: native [
 	value
 ]
 
+first-back: native [
+	{Returns the first value back in a series.}
+	value
+]
+
+second-back: native [
+	{Returns the second value back in a series.}
+	value
+]
+
+third-back: native [
+	{Returns the third value back in a series.}
+	value
+]
+
+fourth-back: native [
+	{Returns the fourth value back in a series.}
+	value
+]
+
+fifth-back: native [
+	{Returns the fifth value back in a series.}
+	value
+]
+
+sixth-back: native [
+	{Returns the sixth value back in a series.}
+	value
+]
+
+seventh-back: native [
+	{Returns the seventh value back in a series.}
+	value
+]
+
+eighth-back: native [
+	{Returns the eighth value back in a series.}
+	value
+]
+
+ninth-back: native [
+	{Returns the ninth value back in a series.}
+	value
+]
+
+tenth-back: native [
+	{Returns the tenth value back in a series.}
+	value
+]
+
 last: native [
 	{Returns the last value of a series.}
 	value [series! tuple! gob!]

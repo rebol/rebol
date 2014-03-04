@@ -22,6 +22,8 @@ REBOL [
 print "--- Make Host Init Code ---"
 ;print ["REBOL version:" system/version]
 
+;do %ordinals-back.r
+
 ; Options:
 include-vid: off
 proof: off
@@ -79,7 +81,7 @@ binary-to-c: either system/version/4 = 3 [
 			out: insert out reduce [to-integer first comp-data ", "]
 			if zero? ((index? comp-data) // 10) [out: insert out "^/^-"]
 		]
-		;remove/part out either (pick out -1) = #" " [-2][-4]
+		;remove/part out either (first-back out) = #" " [-2][-4]
 		head out
 	]
 ][

@@ -21,6 +21,8 @@ REBOL [
 
 print "--- Make Boot : System Embedded Script ---"
 
+;do %ordinals-back.r
+
 do %form-header.r
 
 ; Set platform TARGET
@@ -199,7 +201,7 @@ binary-to-c: either system/version/4 = 3 [
 			out: insert out reduce [to-integer first comp-data ", "]
 			if zero? ((index? comp-data) // 10) [out: insert out "^/^-"]
 		]
-;		remove/part out either (pick out -1) = #" " [-2][-4]
+;		remove/part out either (first-back out) = #" " [-2][-4]
 		head out
 	]
 ][
