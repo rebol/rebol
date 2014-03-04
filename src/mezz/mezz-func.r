@@ -35,7 +35,7 @@ closure: func [
 	body: copy/deep body
 	; Collect all set-words in the body as words to be used as locals, and add
 	; them to the spec. Don't include the words already in the spec or object.
-	append spec collect-words/deep/set/ignore body either with [
+	insert find/tail spec /local collect-words/deep/set/ignore body either with [
 		; Make our own local object if a premade one is not provided
 		unless object? object [object: make object! object]
 		bind body object  ; Bind any object words found in the body
