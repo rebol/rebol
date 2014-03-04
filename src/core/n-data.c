@@ -139,10 +139,12 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	if (IS_BLOCK(val)) {
 		for (types = VAL_BLK_DATA(val); NOT_END(types); types++) {
 			val = IS_WORD(types) ? Get_Var(types) : types;
-			if (IS_DATATYPE(val))
+			if (IS_DATATYPE(val)) {
 				if (VAL_DATATYPE(val) == (REBINT)VAL_TYPE(value)) return TRUE;
-			else if (IS_TYPESET(val))
+			}
+			else if (IS_TYPESET(val)) {
 				if (TYPE_CHECK(val, VAL_TYPE(value))) return TRUE;
+			}
 			else
 				Trap1(RE_INVALID_TYPE, Of_Type(val));
 		}

@@ -329,7 +329,7 @@ no_result:
 
 /***********************************************************************
 **
-*/	static To_Thru(REBPARSE *parse, REBCNT index, REBVAL *block, REBFLG is_thru)
+*/	static REBCNT To_Thru(REBPARSE *parse, REBCNT index, REBVAL *block, REBFLG is_thru)
 /*
 ***********************************************************************/
 {
@@ -349,7 +349,7 @@ no_result:
 
 			// Deal with words and commands
 			if (IS_WORD(item)) {
-				if (cmd = VAL_CMD(item)) {
+				if ((cmd = VAL_CMD(item))) {
 					if (cmd == SYM_END) {
 						if (index >= series->tail) {
 							index = series->tail;
@@ -680,7 +680,7 @@ bad_target:
 		if (VAL_TYPE(item) >= REB_WORD && VAL_TYPE(item) <= REB_GET_WORD) {
 
 			// Is it a command word?
-			if (cmd = VAL_CMD(item)) {
+			if ((cmd = VAL_CMD(item))) {
 
 				if (!IS_WORD(item)) Trap1(RE_PARSE_COMMAND, item); // SET or GET not allowed
 
