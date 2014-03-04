@@ -172,9 +172,10 @@ split-path: func [
 	reduce [dir pos]
 ]
 
-intern: function [
+intern: func [
 	"Imports (internalize) words and their values from the lib into the user context."
 	data [block! any-word!] "Word or block of words to be added (deeply)"
+	/local index usr
 ][
 	index: 1 + length? usr: system/contexts/user ; optimization
 	data: bind/new :data usr   ; Extend the user context with new words
@@ -182,12 +183,13 @@ intern: function [
 	:data
 ]
 
-load: function [
+load: func [
 	{Simple load of a file, URL, or string/binary - minimal boot version.}
 	source [file! url! string! binary!]
 	/header  {Includes REBOL header object if present}
 	/all     {Load all values, including header (as block)}
 	;/unbound {Do not bind the block}
+	/local data hdr?
 ][
 	if string? data: case [
 		file? source [read source]

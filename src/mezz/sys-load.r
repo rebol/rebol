@@ -29,9 +29,10 @@ REBOL [
 ; The system/modules list holds modules for fully init'd modules, otherwise it
 ; holds their headers, along with the binary or block that will be used to init them.
 
-intern: function [
+intern: func [
 	"Imports (internalizes) words/values from the lib into the user context."
 	data [block! any-word!] "Word or block of words to be added (deeply)"
+	/local index usr
 ][
 	index: 1 + length? usr: system/contexts/user ; for optimization below (index for resolve)
 	data: bind/new :data usr   ; Extend the user context with new words
@@ -73,11 +74,12 @@ mixin?: func [
 	]
 ]
 
-load-header: function/with [
+load-header: func [
 	"Loads script header object and body binary (not loaded)."
 	source [binary! string!] "Source code (string! will be UTF-8 encoded)"
 	/only "Only process header, don't decompress or checksum body"
 	/required "Script header is required"
+	/local non-ws tmp data key rest hdr end sum
 ][
 	; This function decodes the script header from the script body.
 	; It checks the header 'checksum and 'compress and 'content options,
@@ -134,6 +136,7 @@ load-header: function/with [
 		:key = 'rebol [ ; regular script, binary or script encoded compression supported
 			case [
 				find hdr/options 'compress [
+					non-ws: make bitset! [not 1 - 32]
 					rest: any [find rest non-ws rest] ; skip whitespace after header
 					unless rest: any [ ; automatic detection of compression type
 						attempt [decompress/part rest end] ; binary compression
@@ -161,14 +164,12 @@ load-header: function/with [
 	;assert/type [hdr object! rest [binary! block!] end binary!]
 	;assert/type [hdr/checksum [binary! none!] hdr/options [block! none!]]
 	reduce [hdr rest end]
-][
-	non-ws: make bitset! [not 1 - 32]
 ]
 
-load-ext-module: function [
+load-ext-module: func [
 	"Loads an extension module from an extension object."
 	ext [object!] "Extension object (from LOAD-EXTENSION, modified)"
-	;/local -- don't care if cmd-index and command are defined local
+	/local hdr code tmp
 ][
 	; for ext obj: help system/standard/extensions
 	assert/type [ext/lib-base handle! ext/lib-boot binary!] ; Just in case
@@ -207,12 +208,13 @@ load-ext-module: function [
 	reduce [hdr code] ; ready for make module!
 ]
 
-load-boot-exts: function [
+load-boot-exts: func [
 	"INIT: Load boot-based extensions."
+	/local ext-objs hdr code delay mod
 ][
 	loud-print "Loading boot extensions..."
 
-	ext-objs: []
+	ext-objs: copy []
 
 	foreach [spec caller] boot-exts [
 		append ext-objs load-extension/dispatch spec caller
@@ -246,10 +248,11 @@ load-boot-exts: function [
 	set 'load-boot-exts 'done ; only once
 ]
 
-read-decode: function [
+read-decode: func [
 	"Reads code/data from source or DLL, decodes it, returns result (binary, block, image,...)."
 	source [file! url!] "Source or block of sources?"
 	type [word! none!] "File type, or NONE for binary raw data"
+	/local data
 ][
 	either type = 'extension [ ; DLL-based extension
 		; Try to load it (will fail if source is a url)
@@ -261,13 +264,14 @@ read-decode: function [
 	data
 ]
 
-load: function [
+load: func [
 	{Loads code or data from a file, URL, string, or binary.}
 	source [file! url! string! binary! block!] {Source or block of sources}
 	/header  {Result includes REBOL header object (preempts /all)}
 	/all     {Load all values (does not evaluate REBOL header)}
 	/type    {Override default file-type; use NONE to always load as code}
 		ftype [word! none!] "E.g. text, markup, jpeg, unbound, etc."
+	/local hdr data sftype
 ] [
 	; WATCH OUT: for ALL and NEXT words! They are local.
 
@@ -339,13 +343,14 @@ load: function [
 	:data
 ]
 
-do-needs: function [
+do-needs: func [
 	"Process the NEEDS block of a program header. Returns unapplied mixins."
 	needs [block! object! tuple! none!] "Needs block, header or version"
 	/no-share "Force module to use its own non-shared global namespace"
 	/no-lib "Don't export to the runtime library"
 	/no-user "Don't export to the user context (mixins returned)"
 	/block "Return all the imported modules in a block, instead"
+	/local name vers hash here mixins mods mod
 ][
 	; NOTES:
 	; This is a low-level function and its use and return values reflect that.
@@ -412,7 +417,7 @@ do-needs: function [
 	]
 ]
 
-load-module: function [
+load-module: func [
 	{Loads a module (from a file, URL, binary, etc.) and inserts it into the system module list.}
 	source [word! file! url! string! binary! module! block!] {Source or block of sources}
 	/version ver [tuple!] "Module must be this version or greater"
@@ -422,6 +427,7 @@ load-module: function [
 	/import "Do module import now, overriding /delay and 'delay option"
 	/as name [word!] "New name for the module (not valid for reloads)"
 	/delay "Delay module init until later (ignored if source is module!)"
+	/local tmp mod modsum data ext hdr code modver override? name0 mod0 sum0 pos hdr0 ver0
 ][
 	; NOTES:
 	; This is a variation of LOAD that is used by IMPORT. Unlike LOAD, the module init
@@ -624,7 +630,7 @@ load-module: function [
 	reduce [name if module? mod [mod]]
 ]
 
-import: function [
+import: func [
 	"Imports a module; locate, load, make, and setup its bindings."
 	module [word! file! url! string! binary! module! block!]
 	/version ver [tuple!] "Module must be this version or greater"
@@ -632,6 +638,7 @@ import: function [
 	/no-share "Force module to use its own non-shared global namespace"
 	/no-lib "Don't export to the runtime library (lib)"
 	/no-user "Don't export to the user context"
+	/local name mod file hdr exports
 	; See also: sys/make-module*, sys/load-module, sys/do-needs
 ][
 	; If it's a needs dialect block, call DO-NEEDS/block:
