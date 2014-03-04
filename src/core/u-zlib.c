@@ -287,6 +287,8 @@ int ZEXPORT deflateInit2_(strm, level, method, windowBits, memLevel, strategy,
     }
     if (strm->zfree == Z_NULL) strm->zfree = zcfree;
 
+	if (!strm->checksum) strm->checksum = adler32;
+	
     if (level == Z_DEFAULT_COMPRESSION) level = 6;
 /* #ifdef FASTEST */
 /*     level = 1; */
