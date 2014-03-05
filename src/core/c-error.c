@@ -604,7 +604,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 /*
 ***********************************************************************/
 {
-	Trap_Arg(arg);
+	Trap2(RE_CANNOT_USE, arg, Get_Type(type));
 }
 
 
