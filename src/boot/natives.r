@@ -596,6 +596,11 @@ value?: native [
 	value
 ]
 
+to-value: native [
+	{Returns the value if it is a value, NONE if unset.}
+	value [any-type!]
+]
+
 ;-- IO Natives - nat_io.c
 
 print: native [
