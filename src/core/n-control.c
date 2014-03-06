@@ -504,6 +504,7 @@ got_err:
 ***********************************************************************/
 {
 	REBVAL *value = D_ARG(1);
+	REBINT ret;
 
 	switch (VAL_TYPE(value)) {
 
@@ -530,19 +531,22 @@ got_err:
     case REB_CLOSURE:
 	case REB_FUNCTION:
 		VAL_SET_OPT(value, OPTS_REVAL);
-		return R_ARG1;
+		ret = R_ARG1;
+		break;
 
 //	case REB_PATH:  ? is it used?
 
 	case REB_WORD:
 	case REB_GET_WORD:
 		*D_RET = *Get_Var(value);
-		return R_RET;
+		ret = R_RET;
+		break;
 
 	case REB_LIT_WORD:
 		*D_RET = *value;
 		SET_TYPE(D_RET, REB_WORD);
-		return R_RET;
+		ret = R_RET;
+		break;
 
 	case REB_ERROR:
 		if (IS_THROW(value)) return R_ARG1;
@@ -558,14 +562,19 @@ got_err:
 
 	case REB_TASK:
 		Do_Task(value);
-		return R_ARG1;
+		ret = R_ARG1;
+		break;
 
 	case REB_SET_WORD:
 		Trap_Arg(value);
 
 	default:
-		return R_ARG1;
+		ret = R_ARG1;
 	}
+
+	if (D_REF(4)) Set_Var(D_ARG(5), NONE_VALUE); // fallback /next behavior
+
+	return ret;
 }
 
 
