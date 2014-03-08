@@ -816,11 +816,8 @@ bad_target:
 
 			} else { // It's not a PARSE command, get or set it:
 			
-				// word: - if not the target of a COPY or SET operation, this will
-				// default to setting a variable to the series at current index
-				if (IS_SET_WORD(item) &&
-					!(GET_FLAG(flags, PF_SET_OR_COPY) || GET_FLAG(flags, PF_COPY)))
-				{
+				// word: - set a variable to the series at current index
+				if (IS_SET_WORD(item)) {
 					Set_Var_Series(item, parse->type, series, index);
 					continue;
 				}

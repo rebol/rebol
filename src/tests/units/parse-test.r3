@@ -95,4 +95,13 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "Other parse issues"
+
+--test-- "issue-2130"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2130
+	--assert parse [x][set val pos: word!]
+	--assert pos = [x]
+
+===end-group===
+
 ~~~end-file~~~
