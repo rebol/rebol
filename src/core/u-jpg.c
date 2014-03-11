@@ -26,11 +26,7 @@
 //#include "jpeglib.h"
 //#include "jerror.h"
 
-#ifdef LONG_SIZE_64
-typedef unsigned int uinteger32;
-#else
-typedef unsigned long uinteger32;
-#endif
+typedef u32 uinteger32;
 
 /* Expanded data source object for stdio input */
 
