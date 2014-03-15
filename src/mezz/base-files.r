@@ -53,11 +53,23 @@ modified?: func [
 suffix?: func [
 	"Return the file suffix of a filename or url. Else, NONE."
 	path [file! url! string!]
+	/local end
 ][
-	if all [
-		path: find/last path #"."
-		not find path #"/"
-	][to file! path]
+	either all [
+		url? path end: find path make bitset! "?#"
+	][
+		all [
+			path: find/reverse end #"."
+			not find/part path #"/" end
+			to file! copy/part path end
+		]
+	][
+		all [
+			path: find/last path #"."
+			not find path #"/"
+			to file! path
+		]
+	]
 ]
 
 dir?: func [
