@@ -360,6 +360,8 @@ REBINT Mode_Syms[] = {
 		break;
 
 	case A_APPEND:
+		if (!(IS_BINARY(D_ARG(2)) || IS_STRING(D_ARG(2)) || IS_BLOCK(D_ARG(2))))
+			Trap1(RE_INVALID_ARG, D_ARG(2));
 		file->file.index = file->file.size;
 		SET_FLAG(file->modes, RFM_RESEEK);
 
