@@ -737,17 +737,17 @@ got_err:
 /*
 ***********************************************************************/
 {
-	REBVAL value = *D_ARG(3); // TRY exception will trim the stack
 	REBFLG except = D_REF(2);
+	REBVAL handler = *D_ARG(3); // TRY exception will trim the stack
 
 	if (Try_Block(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
 		if (except) {
-			if (IS_BLOCK(&value)) {
-				DO_BLK(&value);
+			if (IS_BLOCK(&handler)) {
+				DO_BLK(&handler);
 			}
-			else { // do func[error] arg
-				REBVAL arg = *DS_NEXT; // will get overwritten
-				Apply_Func(0, &value, &arg, 0);
+			else { // do func[err] error
+				REBVAL error = *DS_NEXT; // will get overwritten
+				Apply_Func(0, &handler, &error, 0);
 			}
 		}
 	}
