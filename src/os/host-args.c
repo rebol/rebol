@@ -45,8 +45,6 @@
 #include "reb-c.h"
 #include "reb-args.h"
 
-#define ARG_BUF_SIZE 1024
-
 extern int OS_Get_Current_Dir(REBCHR **lp);
 
 // REBOL Option --Words:
@@ -201,6 +199,8 @@ const struct arg_chr arg_chars2[] = {
 **
 ***********************************************************************/
 {
+	int ARG_BUF_SIZE=1024;
+
 	REBCHR *arg;
 	REBCHR *args = 0; // holds trailing args
 	int flag;
@@ -261,12 +261,20 @@ const struct arg_chr arg_chars2[] = {
 			if (!rargs->script)
 				rargs->script = arg;
 			else {
-				int len;
+				int len; REBCHR *tmp;
 				if (!args) {
 					args = MAKE_STR(ARG_BUF_SIZE);
 					args[0] = 0;
 				}
 				len = ARG_BUF_SIZE - LEN_STR(args) - 2; // space remaining
+				while (len < 0) {
+					tmp = args;
+					args = MAKE_STR(2 * ARG_BUF_SIZE);
+					memcpy(args, tmp, ARG_BUF_SIZE);
+					ARG_BUF_SIZE *= 2;
+					free(tmp);
+					len = ARG_BUF_SIZE - LEN_STR(args) - 2;
+				}
 				JOIN_STR(args, arg, len);
 				JOIN_STR(args, TXT(" "), 1);
 			}
