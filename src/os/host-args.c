@@ -199,7 +199,7 @@ const struct arg_chr arg_chars2[] = {
 **
 ***********************************************************************/
 {
-	int ARG_BUF_SIZE=1024;
+	int arg_buf_size=1024;
 
 	REBCHR *arg;
 	REBCHR *args = 0; // holds trailing args
@@ -263,17 +263,17 @@ const struct arg_chr arg_chars2[] = {
 			else {
 				int len; REBCHR *tmp;
 				if (!args) {
-					args = MAKE_STR(ARG_BUF_SIZE);
+					args = MAKE_STR(arg_buf_size);
 					args[0] = 0;
 				}
-				len = ARG_BUF_SIZE - LEN_STR(args) - 2; // space remaining
+				len = arg_buf_size - LEN_STR(args) - 2; // space remaining
 				while (len < 0) {
 					tmp = args;
-					args = MAKE_STR(2 * ARG_BUF_SIZE);
-					memcpy(args, tmp, ARG_BUF_SIZE);
-					ARG_BUF_SIZE *= 2;
+					args = MAKE_STR(2 * arg_buf_size);
+					memcpy(args, tmp, arg_buf_size);
+					arg_buf_size *= 2;
 					free(tmp);
-					len = ARG_BUF_SIZE - LEN_STR(args) - 2;
+					len = arg_buf_size - LEN_STR(args) - 2;
 				}
 				JOIN_STR(args, arg, len);
 				JOIN_STR(args, TXT(" "), 1);
