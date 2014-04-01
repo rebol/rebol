@@ -199,7 +199,7 @@ const struct arg_chr arg_chars2[] = {
 **
 ***********************************************************************/
 {
-	int arg_buf_size=1024;
+	int arg_buf_size=128;
 
 	REBCHR *arg;
 	REBCHR *args = 0; // holds trailing args
@@ -208,7 +208,7 @@ const struct arg_chr arg_chars2[] = {
 
 	CLEARS(rargs);
 
-	// First arg is path to execuable (on most systems):
+	// First arg is path to executable (on most systems):
 	if (argc > 0) rargs->exe_path = *argv;
 
 	OS_Get_Current_Dir(&rargs->home_dir);
@@ -261,20 +261,24 @@ const struct arg_chr arg_chars2[] = {
 			if (!rargs->script)
 				rargs->script = arg;
 			else {
-				int len; REBCHR *tmp;
+				int len;
+				int size;
+				REBCHR *tmp;
 				if (!args) {
 					args = MAKE_STR(arg_buf_size);
 					args[0] = 0;
 				}
-				len = arg_buf_size - LEN_STR(args) - 2; // space remaining
-				while (len < 0) {
+				len = LEN_STR(arg) + LEN_STR(args) + 2;
+				size = arg_buf_size;
+				while (size < len) size *= 2;
+				if (size > arg_buf_size) {
 					tmp = args;
-					args = MAKE_STR(2 * arg_buf_size);
+					args = MAKE_STR(size);
 					memcpy(args, tmp, arg_buf_size);
-					arg_buf_size *= 2;
+					arg_buf_size = size;
 					free(tmp);
-					len = arg_buf_size - LEN_STR(args) - 2;
 				}
+				len = arg_buf_size - LEN_STR(args) - 2; // space remaining
 				JOIN_STR(args, arg, len);
 				JOIN_STR(args, TXT(" "), 1);
 			}
