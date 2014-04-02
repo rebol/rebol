@@ -421,6 +421,11 @@ no_result:
 					if (!HAS_CASE(parse)) ch2 = UP_CASE(ch2);
 					if (ch1 == ch2) goto found1;
 				}
+				// bitset
+				else if (IS_BITSET(item)) {
+					if (Check_Bit(VAL_SERIES(item), ch1, !HAS_CASE(parse)))
+						goto found1;
+				}
 				else if (ANY_STR(item)) {
 					ch2 = VAL_ANY_CHAR(item);
 					if (!HAS_CASE(parse)) ch2 = UP_CASE(ch2);
