@@ -137,6 +137,31 @@
 
 /***********************************************************************
 **
+*/	static void Loop_Pair(REBVAL *var, REBSER* body, REBD32 xstart, REBD32 ystart, REBD32 xend, REBD32 yend, REBD32 xincr, REBD32 yincr)
+/*
+***********************************************************************/
+{
+	REBD32 xi;
+	REBD32 yi;
+	REBVAL *result;
+
+	VAL_SET(var, REB_PAIR);
+	for (yi = ystart; (yincr > 0.) ? yi <= yend : yi >= yend; yi += yincr) {
+		for (xi = xstart; (xincr > 0.) ? xi <= xend : xi >= xend; xi += xincr) {
+			VAL_PAIR_X(var) = xi;
+			VAL_PAIR_Y(var) = yi;
+			result = Do_Blk(body, 0);
+			if (THROWN(result) && Check_Error(result) >= 0) return;
+			if (!IS_PAIR(var)) Trap_Type(var);
+			xi = VAL_PAIR_X(var);
+			yi = VAL_PAIR_Y(var);
+		}
+	}
+}
+
+
+/***********************************************************************
+**
 */	static void Loop_Number(REBVAL *var, REBSER* body, REBVAL *start, REBVAL *end, REBVAL *incr)
 /*
 ***********************************************************************/
@@ -486,6 +511,12 @@ skip_hidden: ;
 		//if (ANY_SERIES(end) && VAL_SERIES(start) != VAL_SERIES(end)) Trap_Arg(end);
 		Loop_Series(var, body, start, ANY_SERIES(end) ? VAL_INDEX(end) : (Int32s(end, 1) - 1), Int32(incr));
 	}
+	else if (IS_PAIR(start) && IS_PAIR(end) && IS_PAIR(incr)) {
+		Loop_Pair(var, body,
+			VAL_PAIR_X(start), VAL_PAIR_Y(start),
+			VAL_PAIR_X(end), VAL_PAIR_Y(end),
+			VAL_PAIR_X(incr), VAL_PAIR_Y(incr));
+	}
 	else
 		Loop_Number(var, body, start, end, incr);
 
@@ -629,6 +660,9 @@ skip_hidden: ;
 	}
 	else if (IS_INTEGER(count)) {
 		Loop_Integer(var, body, 1, VAL_INT64(count), 1);
+	}
+	else if (IS_PAIR(count)) {
+		Loop_Pair(var, body, 1., 1., VAL_PAIR_X(count), VAL_PAIR_Y(count), 1., 1.);
 	}
 
 	return R_TOS1;
