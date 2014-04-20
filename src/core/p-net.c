@@ -197,7 +197,7 @@ enum Transport_Types {
 		// If no length is given, program must stop it at some point.
 		refs = Find_Refines(ds, ALL_READ_REFS);
 		if (!GET_FLAG(sock->modes, RST_UDP)
-			&& !GET_FLAG(sock->state, RSM_CONNECT))
+				&& !GET_FLAG(sock->state, RSM_CONNECT))
 			Trap_Port(RE_NOT_CONNECTED, port, -15);
 
 		// Setup the read buffer (allocate a buffer if needed):
@@ -224,7 +224,7 @@ enum Transport_Types {
 
 		refs = Find_Refines(ds, ALL_WRITE_REFS);
 		if (!GET_FLAG(sock->modes, RST_UDP)
-			&& !GET_FLAG(sock->state, RSM_CONNECT))
+				&& !GET_FLAG(sock->state, RSM_CONNECT))
 			Trap_Port(RE_NOT_CONNECTED, port, -15);
 
 		// Determine length. Clip /PART to size of string if needed.

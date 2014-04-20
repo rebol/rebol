@@ -436,7 +436,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	int mode = (sock->command == RDC_READ ? RSM_RECEIVE : RSM_SEND);
 
 	if (!GET_FLAG(sock->state, RSM_CONNECT)
-		&&!GET_FLAG(sock->modes, RST_UDP)) {
+			&& !GET_FLAG(sock->modes, RST_UDP)) {
 		sock->error = -18;
 		return DR_ERROR;
 	}
