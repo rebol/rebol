@@ -355,7 +355,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	if (GET_FLAG(sock->modes, RST_LISTEN))
 		return Listen_Socket(sock);
 
-	if (GET_FLAG(sock->state, RSM_CONNECT)) return DR_DONE; // already connected 
+	if (GET_FLAG(sock->state, RSM_CONNECT)) return DR_DONE; // already connected
 
 	if (GET_FLAG(sock->modes, RST_UDP)) {
 		CLR_FLAG(sock->state, RSM_ATTEMPT);
