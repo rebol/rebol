@@ -34,6 +34,11 @@
 
 #define NET_BUF_SIZE 32*1024
 
+enum Transport_Types {
+	TRANSPORT_TCP,
+	TRANSPORT_UDP
+};
+
 /***********************************************************************
 **
 */	static void Ret_Query_Net(REBSER *port, REBREQ *sock, REBVAL *ret)
@@ -86,10 +91,9 @@
 	OS_FREE(nsock); // allocated by dev_net.c (MT issues?)
 }
 
-
 /***********************************************************************
 **
-*/	static int TCP_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int Transport_Actor(REBVAL *ds, REBSER *port, REBCNT action, enum Transport_Types proto)
 /*
 ***********************************************************************/
 {
@@ -109,6 +113,9 @@
 	refs = 0;
 
 	sock = Use_Port_State(port, RDI_NET, sizeof(*sock));
+	if (proto == TRANSPORT_UDP) {
+		SET_FLAG(sock->modes, RST_UDP);
+	}
 	//Debug_Fmt("Sock: %x", sock);
 	spec = OFV(port, STD_PORT_SPEC);
 	if (!IS_OBJECT(spec)) Trap0(RE_INVALID_PORT);
@@ -189,7 +196,9 @@
 		// Read data into a buffer, expanding the buffer if needed.
 		// If no length is given, program must stop it at some point.
 		refs = Find_Refines(ds, ALL_READ_REFS);
-		if (!GET_FLAG(sock->state, RSM_CONNECT)) Trap_Port(RE_NOT_CONNECTED, port, -15);
+		if (!GET_FLAG(sock->modes, RST_UDP)
+				&& !GET_FLAG(sock->state, RSM_CONNECT))
+			Trap_Port(RE_NOT_CONNECTED, port, -15);
 
 		// Setup the read buffer (allocate a buffer if needed):
 		arg = OFV(port, STD_PORT_DATA);
@@ -214,7 +223,9 @@
 		// The lower level write code continues until done.
 
 		refs = Find_Refines(ds, ALL_WRITE_REFS);
-		if (!GET_FLAG(sock->state, RSM_CONNECT)) Trap_Port(RE_NOT_CONNECTED, port, -15);
+		if (!GET_FLAG(sock->modes, RST_UDP)
+				&& !GET_FLAG(sock->state, RSM_CONNECT))
+			Trap_Port(RE_NOT_CONNECTED, port, -15);
 
 		// Determine length. Clip /PART to size of string if needed.
 		spec = D_ARG(2);
@@ -293,6 +304,23 @@
 	return R_RET;
 }
 
+/***********************************************************************
+**
+*/	static int TCP_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+/*
+***********************************************************************/
+{
+	return Transport_Actor(ds, port, action, TRANSPORT_TCP);
+}
+
+/***********************************************************************
+**
+*/	static int UDP_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+/*
+***********************************************************************/
+{
+	return Transport_Actor(ds, port, action, TRANSPORT_UDP);
+}
 
 /***********************************************************************
 **
@@ -301,4 +329,12 @@
 ***********************************************************************/
 {
 	Register_Scheme(SYM_TCP, 0, TCP_Actor);
+}
+/***********************************************************************
+**
+*/	void Init_UDP_Scheme(void)
+/*
+***********************************************************************/
+{
+	Register_Scheme(SYM_UDP, 0, UDP_Actor);
 }

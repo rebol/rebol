@@ -624,6 +624,7 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	Init_Dir_Scheme();
 	Init_Event_Scheme();
 	Init_TCP_Scheme();
+	Init_UDP_Scheme();
 	Init_DNS_Scheme();
 #ifndef MIN_OS
 	Init_Clipboard_Scheme();
