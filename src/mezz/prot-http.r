@@ -172,7 +172,7 @@ parse-write-dialect: func [port block /local spec] [
 		opt [set block [file! | url!] (spec/path: block)] [set block block! (spec/headers: block) | (spec/headers: [])] [set block [any-string! | binary!] (spec/content: block) | (spec/content: none)]
 	]
 ]
-check-response: func [port /local conn res headers d1 d2 line info state awake spec] [
+check-response: func [port /local conn res headers d1 d2 d line info state awake spec] [
 	state: port/state
 	conn: state/connection
 	info: state/info
@@ -189,7 +189,8 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 		info/headers: headers: construct/with d1 http-response-headers
 		info/name: to file! any [spec/path %/]
 		if headers/content-length [info/size: headers/content-length: to integer! headers/content-length]
-		if headers/last-modified [info/date: attempt [to date! headers/last-modified]]
+		if headers/last-modified [info/date: attempt [d: parse headers/last-modified " "
+							      to date! ajoin [d/2 "-" d/3 "-" d/4 "/" d/5]]]
 		remove/part conn/data d2
 		state/state: 'reading-data
 	]
@@ -495,23 +496,29 @@ sys/make-scheme [
 			port [port!]
 		] [
 			either all [port/spec/method = 'head port/state] [
-				reduce bind [name size date] port/state/info
+				reduce bind [name size date type] port/state/info
 			] [
 				if port/data [copy port/data]
 			]
 		]
 		query: func [
 			port [port!]
-			/local error state
+			/local error state i m
 		] [
-			if state: port/state [
+			either state: port/state [
 				either error? error: state/error [
 					state/error: none
 					error
 				] [
 					state/info
 				]
-			]
+			][
+                           m: port/spec/method
+                           port/spec/method: 'head
+                           i: read port
+                           port/spec/method: m
+                           make system/standard/file-info compose [name: (i/1) size: (i/2) date: (i/3) type: (to-lit-word i/4)]
+                        ]
 		]
 		length?: func [
 			port [port!]
