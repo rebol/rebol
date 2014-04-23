@@ -190,7 +190,7 @@ check-response: func [port /local conn res headers d1 d2 d line info state awake
 		info/name: to file! any [spec/path %/]
 		if headers/content-length [info/size: headers/content-length: to integer! headers/content-length]
 		if headers/last-modified [info/date: attempt [d: parse headers/last-modified " "
-							      to date! to date! ajoin [d/2 "-" d/3 "-" d/4 "/" d/5]]]
+							      to date! ajoin [d/2 "-" d/3 "-" d/4 "/" d/5]]]
 		remove/part conn/data d2
 		state/state: 'reading-data
 	]
