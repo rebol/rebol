@@ -523,18 +523,21 @@ chk_neg:
 **
 */	REBNATIVE(call)
 /*
+**		1 command     "An OS-local command line, quoted as necessary"
+**		2 /wait       "Wait for command to terminate before returning"
+**
 ***********************************************************************/
 {
 	REBINT r;
 	REBCHR *cmd;
 	REBVAL *arg = D_ARG(1);
+	REBOOL wait = D_REF(2);
 
 	Check_Security(SYM_CALL, POL_EXEC, arg);
 
 	cmd = Val_Str_To_OS(arg);
-	r = OS_CREATE_PROCESS(cmd, D_REF(2) ? 1 : 0);
-
-	if (D_REF(2)) {
+	r = OS_CREATE_PROCESS(cmd, wait ? 1 : 0);
+	if (wait) {
 		SET_INTEGER(D_RET, r);
 		return R_RET;
 	}

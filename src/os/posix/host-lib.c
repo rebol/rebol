@@ -591,7 +591,40 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	return system(call); // returns -1 on system call error
+	pid_t pid;
+	int status;
+	int flag_wait = flags & 1;
+
+	pid = fork();
+	if (pid == -1) {
+		// fork() failed.
+		return -1;
+	}
+
+	if (pid == 0) {
+		// We are in the child.
+		execl("/bin/sh", "/bin/sh", "-c", call, (char*)0);
+		// Only reached if exec() failed, which should not happen.
+		exit(EXIT_FAILURE);
+	}
+
+	// We are in the parent.
+	if (flag_wait) {
+		if (waitpid(pid, &status, WUNTRACED) < 0) {
+			// waitpid() failed.
+			return -1;
+		}
+
+		if (WIFEXITED(status)) {
+			// Child exited, return exit code.
+			return WEXITSTATUS(status);
+		}
+
+		// TODO: Child signaled, stopped, continued. For now, return an error.
+		return -1;
+	}
+
+	return 0;
 }
 
 static int Try_Browser(char *browser, REBCHR *url)
