@@ -32,8 +32,8 @@
 #define CRC_DEFINED
 
 #define CRCBITS 24			/* may be 16, 24, or 32 */
-#define MASK_CRC(crc) ((crc) & 0x00ffffffL)	  /* if CRCBITS is 24 */
-#define CRCHIBIT ((REBCNT) (1L<<(CRCBITS-1))) /* 0x8000 if CRCBITS is 16 */
+#define MASK_CRC(crc) ((crc) & I32_C(0x00ffffff))	  /* if CRCBITS is 24 */
+#define CRCHIBIT ((REBCNT) (I32_C(1)<<(CRCBITS-1))) /* 0x8000 if CRCBITS is 16 */
 #define CRCSHIFTS (CRCBITS-8)
 #define CCITTCRC 0x1021 	/* CCITT's 16-bit CRC generator polynomial */
 #define PRZCRC   0x864cfb	/* PRZ's 24-bit CRC generator polynomial */
@@ -368,11 +368,7 @@ static void Make_CRC32_Table(void) {
 		c=(u32)n;
 		for(k=0;k<8;k++) {
 			if(c&1)
-#ifdef __LP64__
-				c=0xedb88320^(c>>1);
-#else
-				c=0xedb88320L^(c>>1);
-#endif
+				c=U32_C(0xedb88320)^(c>>1);
 			else
 				c=c>>1;
 		}
@@ -398,7 +394,7 @@ REBCNT Update_CRC32(u32 crc, REBYTE *buf, int len) {
 /*
 ***********************************************************************/
 {
-	return Update_CRC32(0x00000000L, buf, len);
+	return Update_CRC32(U32_C(0x00000000), buf, len);
 }
 
 
