@@ -359,16 +359,20 @@ static REBCNT *CRC32_Table = 0;
 
 
 static void Make_CRC32_Table(void) {
-	unsigned long c;
+	u32 c;
 	int n,k;
 
 	CRC32_Table = Make_Mem(256 * sizeof(u32));
 
 	for(n=0;n<256;n++) {
-		c=(unsigned long)n;
+		c=(u32)n;
 		for(k=0;k<8;k++) {
 			if(c&1)
+#ifdef __LP64__
+				c=0xedb88320^(c>>1);
+#else
 				c=0xedb88320L^(c>>1);
+#endif
 			else
 				c=c>>1;
 		}
