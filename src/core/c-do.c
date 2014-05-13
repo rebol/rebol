@@ -289,8 +289,10 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 {
 	static char tracebuf[64];
 	int depth;
+	int len = MIN(60, limit);
 	CHECK_DEPTH(depth);
-	memcpy(tracebuf, str, MIN(60, limit));
+	memcpy(tracebuf, str, len);
+	tracebuf[len] = '\0';
 	Debug_Fmt(BOOT_STR(RS_TRACE,n), tracebuf);
 }
 
