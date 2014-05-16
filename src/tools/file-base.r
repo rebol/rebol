@@ -63,6 +63,7 @@ core: [
 	p-event.c
 	p-file.c
 	p-net.c
+	p-serial.c
 	s-cases.c
 	s-crc.c
 	s-file.c
@@ -149,6 +150,7 @@ os-posix: [
 	dev-stdio.c
 	dev-event.c
 	dev-file.c
+	dev-serial.c
 ]
 
 boot-files: [

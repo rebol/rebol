@@ -73,6 +73,7 @@ extern REBDEV Dev_DNS;
 #ifndef MIN_OS
 extern REBDEV Dev_Clipboard;
 #endif
+extern REBDEV Dev_Serial;
 
 REBDEV *Devices[RDI_LIMIT] =
 {
@@ -85,7 +86,10 @@ REBDEV *Devices[RDI_LIMIT] =
 	&Dev_DNS,
 #ifndef MIN_OS
 	&Dev_Clipboard,
+#else
+	0,
 #endif
+	&Dev_Serial,
 	0,
 };
 

@@ -225,6 +225,10 @@ standard: context [
 		port-id: 80
 			none
 	]
+
+	port-spec-serial: make port-spec-head [
+		speed: 115200
+	]
 	
 	file-info: context [
 		name:

@@ -38,6 +38,7 @@ enum {
 	RDI_NET,
 	RDI_DNS,
 	RDI_CLIPBOARD,
+	RDI_SERIAL,
 	RDI_MAX,
 	RDI_LIMIT = 32
 };
