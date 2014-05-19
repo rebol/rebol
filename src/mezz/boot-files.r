@@ -51,4 +51,5 @@ REBOL [
 ;-- protocols:
 [
 	%prot-http.r
+	%prot-tls.r
 ]

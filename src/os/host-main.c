@@ -75,6 +75,8 @@ extern void Init_Windows(void);
 extern void Init_Graphics(void);
 #endif
 
+extern void Init_Crypto_Ext();
+
 //#define TEST_EXTENSIONS
 #ifdef TEST_EXTENSIONS
 extern void Init_Ext_Test(void);	// see: host-ext-test.c
@@ -153,6 +155,8 @@ int main(int argc, char **argv)
 	Init_Windows();
 	Init_Graphics();
 #endif
+
+	Init_Crypto_Ext();
 
 #ifdef TEST_EXTENSIONS
 	Init_Ext_Test();

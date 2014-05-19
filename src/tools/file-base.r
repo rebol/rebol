@@ -109,6 +109,14 @@ core: [
 	u-zlib.c
 ]
 
+codecs: [
+	aes/aes.c
+	bigint/bigint.c
+	dh/dh.c
+	rc4/rc4.c
+	rsa/rsa.c
+]
+
 made: [
 	make-boot.r			core/b-boot.c
 	make-headers.r		include/tmp-funcs.h
@@ -125,6 +133,7 @@ os: [
 	host-stdio.c
 	dev-net.c
 	dev-dns.c
+	host-crypto.c
 ]
 
 os-win32: [

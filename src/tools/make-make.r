@@ -69,7 +69,7 @@ S= ../src
 R= $S/core
 
 INCL ?= .
-I= -I$(INCL) -I$S/include/
+I= -I$(INCL) -I$S/include/ -I$S/codecs/
 
 TO_OS?=
 OS_ID?=
@@ -325,7 +325,8 @@ to-obj: func [
 	file
 ][
 	;?? file
-	file: to-file file ;second split-path file
+	;file: to-file file
+	file: second split-path to file! file
 	head change back tail file "o"
 ]
 
@@ -393,7 +394,7 @@ if flag? +SC [remove find fb/os-specific-objs 'host-readline.c]
 
 emit makefile-head
 emit ["OBJS =" tab]
-emit-obj-files fb/core
+emit-obj-files append copy fb/core fb/codecs
 emit ["HOST =" tab]
 emit-obj-files append copy fb/os os-specific-objs
 emit makefile-link
@@ -405,6 +406,7 @@ b-boot.c: $(SRC)/boot/boot.r
 }
 emit newline
 emit-file-deps fb/core
+emit-file-deps/dir fb/codecs %codecs/
 emit-file-deps/dir fb/os %os/
 emit-file-deps/dir os-specific-objs os-specific-dir
 
