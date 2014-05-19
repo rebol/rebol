@@ -386,6 +386,7 @@ application-data: func [
 
 alert-close-notify: func [
 	ctx [object!]
+	/local message
 ] [
 	message: encrypt-data ctx #{0100} ; close notify
 	emit ctx [
