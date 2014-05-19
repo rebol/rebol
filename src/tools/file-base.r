@@ -133,6 +133,7 @@ os: [
 	host-stdio.c
 	dev-net.c
 	dev-dns.c
+	host-core.c
 ]
 
 os-win32: [

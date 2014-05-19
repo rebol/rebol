@@ -103,7 +103,7 @@ emit-file: func [
 	"Emit command enum and source script code."
 	file [file!]
 	source [block!]
-	/local title name data exports words src prefix
+	/local title name data exports words exported-words src prefix
 ][
 	source: collect-files source
 
@@ -119,16 +119,21 @@ emit-file: func [
 
 	; Gather exported words if exports field is a block:
 	words: make block! 100
+	exported-words: make block! 100
 	src: source
 	while [src: find src set-word!] [
-		if find [command func function funct] src/2 [
-			append words to-word src/1
+		if all [
+			<no-export> <> first back src
+			find [command func function funct] src/2
+		][
+			append exported-words to-word src/1
 		]
+		if src/2 = 'command [append words to-word src/1]
 		src: next src
 	]
 
 	if block? exports: select second source to-set-word 'exports [
-		insert exports words
+		insert exports exported-words
 	]
 
 	foreach word words [emit [tab "CMD_" prefix #"_" replace/all form-name word "'" "_LIT"  ",^/"]]
@@ -159,6 +164,10 @@ emit-file: func [
 emit-file %host-ext-graphics [
 	%../boot/graphics.r
 	%../mezz/view-funcs.r
+]
+
+emit-file %host-ext-core [
+	%../boot/core.r
 ]
 
 emit-file %host-ext-draw [
