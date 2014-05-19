@@ -18,7 +18,7 @@
 **
 ************************************************************************
 **
-**  Title: Core extension. Contains commands not yet migrated to core codebase.
+**  Title: Crypto extension. Contains commands not yet migrated to core codebase.
 **  Author: Richard Smolak
 **
 ************************************************************************
@@ -48,7 +48,7 @@
 #include "aes/aes.h"
 
 #define INCLUDE_EXT_DATA
-#include "host-ext-core.h"
+#include "host-ext-crypto.h"
 
 //***** Externs *****
 #ifdef TO_WIN32
@@ -61,19 +61,19 @@ extern REBOOL OS_Request_Dir(REBCHR *title, REBCHR **folder, REBCHR *path);
 REBYTE *encapBuffer = NULL;
 REBINT encapBufferLen;
 RL_LIB *RL; // Link back to reb-lib from embedded extensions
-static u32 *core_ext_words;
+static u32 *crypto_ext_words;
 
 /***********************************************************************
 **
-*/	RXIEXT int RXD_Core(int cmd, RXIFRM *frm, REBCEC *data)
+*/	RXIEXT int RXD_Crypto(int cmd, RXIFRM *frm, REBCEC *data)
 /*
-**		Core command extension dispatcher.
+**		Crypto command extension dispatcher.
 **
 ***********************************************************************/
 {
 		switch (cmd) {
 
-		case CMD_CORE_RC4:
+		case CMD_CRYPTO_RC4:
 		{
 			RC4_CTX *ctx;
 			REBSER *data, key;
@@ -113,7 +113,7 @@ static u32 *core_ext_words;
 			return RXR_VALUE;
 		}
 
-		case CMD_CORE_AES:
+		case CMD_CRYPTO_AES:
 		{
 			AES_CTX *ctx;
 			REBSER *data, key;
@@ -229,7 +229,7 @@ static u32 *core_ext_words;
 			return RXR_VALUE;
 		}
 
-		case CMD_CORE_RSA:
+		case CMD_CRYPTO_RSA:
 		{
 			RXIARG val;
 			u32 *words,*w;
@@ -261,37 +261,37 @@ static u32 *core_ext_words;
 					objData = (REBYTE *)RL_SERIES(val.series, RXI_SER_DATA) + val.index;
 					objData_len = RL_SERIES(val.series, RXI_SER_TAIL) - val.index;
 					
-					switch(RL_FIND_WORD(core_ext_words,w[0]))
+					switch(RL_FIND_WORD(crypto_ext_words,w[0]))
 					{
-						case W_CORE_N:
+						case W_CRYPTO_N:
 							n = objData;
 							n_len = objData_len;
 							break;
-						case W_CORE_E:
+						case W_CRYPTO_E:
 							e = objData;
 							e_len = objData_len;
 							break;
-						case W_CORE_D:
+						case W_CRYPTO_D:
 							d = objData;
 							d_len = objData_len;
 							break;
-						case W_CORE_P:
+						case W_CRYPTO_P:
 							p = objData;
 							p_len = objData_len;
 							break;
-						case W_CORE_Q:
+						case W_CRYPTO_Q:
 							q = objData;
 							q_len = objData_len;
 							break;
-						case W_CORE_DP:
+						case W_CRYPTO_DP:
 							dp = objData;
 							dp_len = objData_len;
 							break;
-						case W_CORE_DQ:
+						case W_CRYPTO_DQ:
 							dq = objData;
 							dq_len = objData_len;
 							break;
-						case W_CORE_QINV:
+						case W_CRYPTO_QINV:
 							qinv = objData;
 							qinv_len = objData_len;
 							break;
@@ -343,7 +343,7 @@ static u32 *core_ext_words;
 			return RXR_VALUE;
 		}
 		
-		case CMD_CORE_DH_GENERATE_KEY:
+		case CMD_CRYPTO_DH_GENERATE_KEY:
 		{
 			DH_CTX dh_ctx;
 			RXIARG val, priv_key, pub_key;
@@ -360,13 +360,13 @@ static u32 *core_ext_words;
 				{
 					objData = (REBYTE *)RL_SERIES(val.series, RXI_SER_DATA) + val.index;
 					
-					switch(RL_FIND_WORD(core_ext_words,words[0]))
+					switch(RL_FIND_WORD(crypto_ext_words,words[0]))
 					{
-						case W_CORE_P:
+						case W_CRYPTO_P:
 							dh_ctx.p = objData;
 							dh_ctx.len = RL_SERIES(val.series, RXI_SER_TAIL) - val.index;
 							break;
-						case W_CORE_G:
+						case W_CRYPTO_G:
 							dh_ctx.g = objData;
 							dh_ctx.glen = RL_SERIES(val.series, RXI_SER_TAIL) - val.index;
 							break;
@@ -396,13 +396,13 @@ static u32 *core_ext_words;
 			DH_generate_key(&dh_ctx);
 
 			//set the object fields
-			RL_Set_Field(obj, core_ext_words[W_CORE_PRIV_KEY], priv_key, RXT_BINARY);	
-			RL_Set_Field(obj, core_ext_words[W_CORE_PUB_KEY], pub_key, RXT_BINARY);	
+			RL_Set_Field(obj, crypto_ext_words[W_CRYPTO_PRIV_KEY], priv_key, RXT_BINARY);	
+			RL_Set_Field(obj, crypto_ext_words[W_CRYPTO_PUB_KEY], pub_key, RXT_BINARY);	
 			
 			break;
 		}
 
-		case CMD_CORE_DH_COMPUTE_KEY:
+		case CMD_CRYPTO_DH_COMPUTE_KEY:
 		{
 			DH_CTX dh_ctx;
 			RXIARG val;
@@ -422,13 +422,13 @@ static u32 *core_ext_words;
 				{
 					objData = (REBYTE *)RL_SERIES(val.series, RXI_SER_DATA) + val.index;
 					
-					switch(RL_FIND_WORD(core_ext_words,words[0]))
+					switch(RL_FIND_WORD(crypto_ext_words,words[0]))
 					{
-						case W_CORE_P:
+						case W_CRYPTO_P:
 							dh_ctx.p = objData;
 							dh_ctx.len = RL_SERIES(val.series, RXI_SER_TAIL) - val.index;
 							break;
-						case W_CORE_PRIV_KEY:
+						case W_CRYPTO_PRIV_KEY:
 							dh_ctx.x = objData;
 							break;
 					}
@@ -459,8 +459,8 @@ static u32 *core_ext_words;
 			return RXR_VALUE;
 		}
 
-		case CMD_CORE_INIT_WORDS:
-		core_ext_words = RL_MAP_WORDS(RXA_SERIES(frm,1));
+		case CMD_CRYPTO_INIT_WORDS:
+		crypto_ext_words = RL_MAP_WORDS(RXA_SERIES(frm,1));
 		break;
 
 		default:
@@ -472,11 +472,11 @@ static u32 *core_ext_words;
 
 /***********************************************************************
 **
-*/	void Init_Core_Ext(void)
+*/	void Init_Crypto_Ext(void)
 /*
-**	Initialize special variables of the core extension.
+**	Initialize special variables of the crypto extension.
 **
 ***********************************************************************/
 {
-	RL = RL_Extend((REBYTE *)(&RX_core[0]), &RXD_Core);
+	RL = RL_Extend((REBYTE *)(&RX_crypto[0]), &RXD_Crypto);
 }

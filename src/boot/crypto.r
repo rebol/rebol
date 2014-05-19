@@ -1,5 +1,5 @@
 REBOL [
-	Title: "REBOL Core extension"
+	Title: "REBOL Crypto extension"
 	Purpose: {
 		This extension contains commands not yet migrated to the core source code.
 	}
@@ -9,7 +9,7 @@ REBOL [
 		Licensed under the Apache License, Version 2.0.
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-	Name: core
+	Name: crypto
 	Type: extension
 	Exports: [] ; added by make-host-ext.r
 ]

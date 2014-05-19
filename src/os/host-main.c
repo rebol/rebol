@@ -75,7 +75,7 @@ extern void Init_Windows(void);
 extern void Init_Graphics(void);
 #endif
 
-extern void Init_Core_Ext();
+extern void Init_Crypto_Ext();
 
 //#define TEST_EXTENSIONS
 #ifdef TEST_EXTENSIONS
@@ -156,7 +156,7 @@ int main(int argc, char **argv)
 	Init_Graphics();
 #endif
 
-	Init_Core_Ext();
+	Init_Crypto_Ext();
 
 #ifdef TEST_EXTENSIONS
 	Init_Ext_Test();

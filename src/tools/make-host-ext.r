@@ -166,8 +166,8 @@ emit-file %host-ext-graphics [
 	%../mezz/view-funcs.r
 ]
 
-emit-file %host-ext-core [
-	%../boot/core.r
+emit-file %host-ext-crypto [
+	%../boot/crypto.r
 ]
 
 emit-file %host-ext-draw [
