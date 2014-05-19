@@ -42,8 +42,6 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
-#include "png/lodepng.h"
- 
 #include "rc4/rc4.h"
 #include "rsa/rsa.h"
 #include "dh/dh.h"
@@ -73,137 +71,8 @@ static u32 *core_ext_words;
 **
 ***********************************************************************/
 {
-    switch (cmd) {
+		switch (cmd) {
 
-    case CMD_CORE_SHOW_CONSOLE:
-#ifdef TO_WIN32	
-        Console_Window(TRUE);
-#endif
-        break;
-
-    case CMD_CORE_HIDE_CONSOLE:
-#ifdef TO_WIN32	
-        Console_Window(FALSE);
-#endif
-        break;
-
-	case CMD_CORE_GET_ENCAP_DATA:
-		if (encapBuffer != NULL)
-		{
-			REBSER *encapData = (REBSER*)RL_Make_String(encapBufferLen, FALSE);
-			COPY_MEM((REBYTE *)RL_SERIES(encapData, RXI_SER_DATA), encapBuffer, encapBufferLen);
-			FREE_MEM(encapBuffer);
-			encapBuffer = NULL;
-			
-			//hack! - will set the tail to data size
-			*((REBCNT*)(encapData+1)) = encapBufferLen;
-			
-			//setup returned binary! value
-			RXA_TYPE(frm,1) = RXT_BINARY;
-			RXA_SERIES(frm,1) = encapData;
-			RXA_INDEX(frm,1) = 0;
-			return RXR_VALUE;
-		}
-		return RXR_NONE;
-		
-    case CMD_CORE_TO_PNG:
-		{
-			size_t buffersize;
-			REBYTE *buffer;
-			REBSER *binary;
-			REBYTE *binaryBuffer;
-			REBINT w = RXA_IMAGE_WIDTH(frm,1);
-			REBINT h = RXA_IMAGE_HEIGHT(frm,1);
-			LodePNGState state;
-			unsigned error;
-			
-			lodepng_state_init(&state);
-			
-			//disable autopilot ;)
-			state.encoder.auto_convert = LAC_NO;
-			//input format
-			state.info_raw.colortype = LCT_RGBA;
-			state.info_raw.bitdepth = 8;
-			//output format
-			state.info_png.color.colortype = LCT_RGBA;
-			state.info_png.color.bitdepth = 8;
-			
-			//encode
-			error = lodepng_encode(&buffer, &buffersize, RXA_IMAGE_BITS(frm,1), w, h, &state);
-			
-			//cleanup
-			lodepng_state_cleanup(&state);
-			
-			if (error) return RXR_NONE;
-RL_Print("buff size: %d\n",buffersize);
-			//allocate new binary!
-			binary = (REBSER*)RL_Make_String(buffersize, FALSE);
-			binaryBuffer = (REBYTE *)RL_SERIES(binary, RXI_SER_DATA);
-			//copy PNG data
-			memcpy(binaryBuffer, buffer, buffersize);
-			
-			//hack! - will set the tail to buffersize
-			*((REBCNT*)(binary+1)) = buffersize;
-			
-			//setup returned binary! value
-			RXA_TYPE(frm,1) = RXT_BINARY;			
-			RXA_SERIES(frm,1) = binary;
-			RXA_INDEX(frm,1) = 0;			
-			return RXR_VALUE;
-		}
-        break;
-
-    case CMD_CORE_CONSOLE_OUTPUT:
-#ifdef TO_WIN32
-        Console_Output(RXA_LOGIC(frm, 1));
-#endif		
-        break;
-
-	case CMD_CORE_REQ_DIR:
-		{
-#ifdef TO_WIN32
-			REBCHR *title;
-			REBSER *string;
-			REBCHR *stringBuffer;
-			REBCHR *path = NULL;
-			REBOOL osTitle = FALSE;
-			REBOOL osPath = FALSE;
-			
-			//allocate new string!
-			string = (REBSER*)RL_Make_String(MAX_PATH, TRUE);
-			stringBuffer = (REBCHR*)RL_SERIES(string, RXI_SER_DATA);
-			
-			
-			if (RXA_TYPE(frm, 2) == RXT_STRING) {
-				osTitle = As_OS_Str(RXA_SERIES(frm, 2),  (REBCHR**)&title);
-			} else {
-				title = L"Please, select a directory...";
-			}
-			
-			if (RXA_TYPE(frm, 4) == RXT_STRING) {
-				osPath = As_OS_Str(RXA_SERIES(frm, 4),  (REBCHR**)&path);
-			}
-			
-			if (OS_Request_Dir(title , &stringBuffer, path)){
-				//hack! - will set the tail to string length
-				*((REBCNT*)(string+1)) = wcslen(stringBuffer);
-				
-				RXA_TYPE(frm, 1) = RXT_STRING;
-				RXA_SERIES(frm,1) = string;
-				RXA_INDEX(frm,1) = 0;
-			} else {
-				RXA_TYPE(frm, 1) = RXT_NONE;
-			}
-
-			//don't let the strings leak!
-			if (osTitle) OS_Free(title);
-			if (osPath) OS_Free(path);
-			
-			return RXR_VALUE;
-#endif
-		}
-		break;
-		
 		case CMD_CORE_RC4:
 		{
 			RC4_CTX *ctx;
@@ -363,7 +232,7 @@ RL_Print("buff size: %d\n",buffersize);
 		case CMD_CORE_RSA:
 		{
 			RXIARG val;
-            u32 *words,*w;
+			u32 *words,*w;
 			REBCNT type;
 			REBSER *data = RXA_SERIES(frm, 1);
 			REBYTE *dataBuffer = (REBYTE *)RL_SERIES(data, RXI_SER_DATA) + RXA_INDEX(frm,1);
@@ -383,11 +252,11 @@ RL_Print("buff size: %d\n",buffersize);
 				padding = (RXA_TYPE(frm, 6) != RXT_NONE);
 			}
 			
-            words = RL_WORDS_OF_OBJECT(obj);
-            w = words;
-
-            while ((type = RL_GET_FIELD(obj, w[0], &val)))
-            {
+			words = RL_WORDS_OF_OBJECT(obj);
+			w = words;
+			
+			while ((type = RL_GET_FIELD(obj, w[0], &val)))
+			{
 				if (type == RXT_BINARY){
 					objData = (REBYTE *)RL_SERIES(val.series, RXI_SER_DATA) + val.index;
 					objData_len = RL_SERIES(val.series, RXI_SER_TAIL) - val.index;
@@ -485,8 +354,8 @@ RL_Print("buff size: %d\n",buffersize);
 
 			memset(&dh_ctx, 0, sizeof(dh_ctx));
 
-            while ((type = RL_GET_FIELD(obj, words[0], &val)))
-            {
+			while ((type = RL_GET_FIELD(obj, words[0], &val)))
+			{
 				if (type == RXT_BINARY)
 				{
 					objData = (REBYTE *)RL_SERIES(val.series, RXI_SER_DATA) + val.index;
@@ -547,8 +416,8 @@ RL_Print("buff size: %d\n",buffersize);
 
 			memset(&dh_ctx, 0, sizeof(dh_ctx));
 
-            while ((type = RL_GET_FIELD(obj, words[0], &val)))
-            {
+			while ((type = RL_GET_FIELD(obj, words[0], &val)))
+			{
 				if (type == RXT_BINARY)
 				{
 					objData = (REBYTE *)RL_SERIES(val.series, RXI_SER_DATA) + val.index;
@@ -590,15 +459,15 @@ RL_Print("buff size: %d\n",buffersize);
 			return RXR_VALUE;
 		}
 
-        case CMD_CORE_INIT_WORDS:
-            core_ext_words = RL_MAP_WORDS(RXA_SERIES(frm,1));
-            break;
+		case CMD_CORE_INIT_WORDS:
+		core_ext_words = RL_MAP_WORDS(RXA_SERIES(frm,1));
+		break;
 
-        default:
-            return RXR_NO_COMMAND;
-    }
+		default:
+		return RXR_NO_COMMAND;
+		}
 
-    return RXR_UNSET;
+		return RXR_UNSET;
 }
 
 /***********************************************************************
