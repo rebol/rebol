@@ -28,10 +28,10 @@
 ***********************************************************************/
 
 #include "sys-core.h"
-
 #include "reb-net.h"
 #include "reb-evtypes.h"
 
+#define MAX_SERIAL_DEV_PATH 128
 
 /***********************************************************************
 **
@@ -69,10 +69,11 @@
 		switch (action) {
 
 		case A_OPEN:
-			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_PATH);
-			req->file.path = VAL_DATA(arg);
+			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_PATH);  //Should Obj_Value really return a char* ?
+			req->serial.path = MAKE_STR(MAX_SERIAL_DEV_PATH);
+			TO_OS_STR(req->serial.path, (char *) VAL_DATA(arg), MAX_SERIAL_DEV_PATH);  
 			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_SPEED);
-			req->file.size = VAL_INT32(arg); // used for baudrate
+			req->serial.baud = VAL_INT32(arg);
 			//Secure_Port(SYM_SERIAL, ???, path, ser);
 			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, -12);
 			SET_OPEN(req);
@@ -107,8 +108,9 @@
 		req->data = STR_TAIL(ser); // write at tail
 		//if (SERIES_TAIL(ser) == 0)
 		req->actual = 0;  // Actual for THIS read, not for total.
-
-		// printf("(max read length %d)", req->length);
+#ifdef DEBUG_SERIAL
+		printf("(max read length %d)", req->length);
+#endif
 		result = OS_DO_DEVICE(req, RDC_READ); // recv can happen immediately
 		if (result < 0) Trap_Port(RE_READ_ERROR, port, req->error);
 #ifdef DEBUG_SERIAL
@@ -144,7 +146,7 @@
 		if (result < 0) Trap_Port(RE_WRITE_ERROR, port, req->error);
 		if (result == DR_DONE) SET_NONE(OFV(port, STD_PORT_DATA));
 		break;
-#if 0
+#ifdef UPDATE_IMPLEMENTED
 	case A_UPDATE:
 		// Update the port object after a READ or WRITE operation.
 		// This is normally called by the WAKE-UP function.

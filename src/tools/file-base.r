@@ -134,6 +134,7 @@ os-win32: [
 	dev-file.c
 	dev-event.c
 	dev-clipboard.c
+	dev-serial.c
 ]
 
 os-win32g: [

@@ -19,8 +19,8 @@
 **
 ************************************************************************
 **
-**  Title: Device: Serial port access for Posix
-**  Author: Carl Sassenrath
+**  Title: Device: Serial port access for Windows
+**  Author: Carl Sassenrath, Joshua Shireman
 **
 ************************************************************************
 **
@@ -34,108 +34,66 @@
 **
 ***********************************************************************/
 
+
+#include <windows.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <errno.h>
-#include <termios.h>
 
 #include "reb-host.h"
 #include "host-lib.h"
 
-#define MAX_SERIAL_PATH 128
+#define MAX_SERIAL_DEV_PATH 128
 
-/* BXXX constants are defined in termios.h */ 
 const int speeds[] = {
-	50, B50,
-	75, B75,
-	110, B110,
-	134, B134,
-	150, B150,
-	200, B200,
-	300, B300,
-	600, B600,
-	1200, B1200,
-	1800, B1800,
-	2400, B2400,
-	4800, B4800,
-	9600, B9600,
-	19200, B19200,
-	38400, B38400,
-	57600, B57600,
-	115200, B115200,
-	230400, B230400,
+	110, CBR_110,
+	300, CBR_300,
+	600, CBR_600,
+	1200, CBR_1200,
+	2400, CBR_2400,
+	4800, CBR_4800,
+	9600, CBR_9600,
+	14400, CBR_14400,
+	19200, CBR_19200,
+	38400, CBR_38400,
+	57600, CBR_57600,
+	115200, CBR_115200,
+	128000, CBR_128000,
+	230400, CBR_256000,
 	0
 };
+
 
 /***********************************************************************
 **
 **	Local Functions
 **
 ***********************************************************************/
-
-static struct termios *Get_Serial_Settings(int ttyfd)
+static REBINT Set_Serial_Settings(HANDLE h, int speed)
 {
-	struct termios *attr = NULL;
-	attr= (struct termios *) MAKE_NEW(struct termios);
-	if (attr != NULL) {
-        	if (tcgetattr(ttyfd,attr) == -1) {
-          		FREE_MEM(attr);
-          		attr = NULL;
-        	}
-      	}
-	return attr;
-}
-
-
-static REBINT Set_Serial_Settings(int ttyfd, int speed)
-{
+	DCB dcbSerialParams = {0};
 	REBINT n;
-	struct termios attr = {};
-#ifdef DEBUG_SERIAL
-	printf("setting attributes: speed %d\n", speed);
-#endif
+
+	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
+	if (GetCommState(h, &dcbSerialParams) == 0) return 1;
+
+
 	for (n = 0; speeds[n]; n += 2) {
 		if (speed == speeds[n]) {
-			speed = speeds[n+1];
+			dcbSerialParams.BaudRate = speeds[n+1];
 			break;
 		}
 	}
-	if (speeds[n] == 0) speed = B115200; // invalid, use default
+	if (speeds[n] == 0) dcbSerialParams.BaudRate = CBR_115200; // invalid, use default
 
-	cfsetospeed (&attr, speed);
-	cfsetispeed (&attr, speed);
+	dcbSerialParams.ByteSize = 8;
+	dcbSerialParams.StopBits = ONESTOPBIT;
+	dcbSerialParams.Parity = NOPARITY;
 
-	// TTY has many attributes. Refer to "man tcgetattr" for descriptions.
-	// C-flags - control modes:
-	attr.c_cflag |= CREAD | CS8 | CLOCAL;
 
-	// L-flags - local modes:
-	attr.c_lflag = 0; // raw, not ICANON
+	if(SetCommState(h, &dcbSerialParams) == 0) {
+		return 1;
+	}
 
-	// I-flags - input modes:
-	attr.c_iflag |= IGNPAR;
-	
-	// O-flags - output modes:
-	attr.c_oflag = 0;
-
-	// Control characters:
-	// R3 devices are non-blocking (polled for changes):
-	attr.c_cc[VMIN]  = 0;
-	attr.c_cc[VTIME] = 0;
-
-	// Make sure OS queues are empty:
-	tcflush(ttyfd, TCIFLUSH);
-
-	// Set new attributes:
-	if (tcsetattr(ttyfd, TCSANOW, &attr)) return 2;
-
-	return 0;
+	PurgeComm(h,PURGE_RXCLEAR|PURGE_TXCLEAR);  //make sure buffers are clean
 }
 
 /***********************************************************************
@@ -147,34 +105,45 @@ static REBINT Set_Serial_Settings(int ttyfd, int speed)
 **
 ***********************************************************************/
 {
-	REBCHR *path;
-	REBCHR devpath[MAX_SERIAL_PATH];
-	REBINT h;
+	HANDLE h;
+	COMMTIMEOUTS timeouts = {0}; //add in timeouts? Currently unused
 
-	if (!(path = req->serial.path)) {
+	// req->serial.path should be prefixed with "\\.\" to allow for higher com port numbers
+	REBCHR fullpath [MAX_SERIAL_DEV_PATH]=TXT("\\\\.\\");
+
+	if (!req->serial.path) {
 		req->error = -RFE_BAD_PATH;
 		return DR_ERROR;
 	}
 
-	strcpy(&devpath[0], "/dev/");
-	strncpy(&devpath[5], path, MAX_SERIAL_PATH-6);
-	h = open(&devpath[0], O_RDWR | O_NOCTTY | O_NONBLOCK);
-	if (h < 0) {
+	JOIN_STR(fullpath,req->serial.path,MAX_SERIAL_DEV_PATH);
+
+	h = CreateFile(fullpath, GENERIC_READ|GENERIC_WRITE, 0, NULL,OPEN_EXISTING, 0, NULL );
+	if (h == INVALID_HANDLE_VALUE) {
 		req->error = -RFE_OPEN_FAIL;
 		return DR_ERROR;
 	}
 
-	//Getting prior atttributes:
-	req->serial.prior_attr = Get_Serial_Settings(h);
-	if (tcgetattr(h, req->serial.prior_attr)) return 1;	
-
-	if (Set_Serial_Settings(h, req->serial.baud)) {
-		close(h);
+	if (Set_Serial_Settings(h,req->serial.baud)==0) {
+		CloseHandle(h);
 		req->error = -RFE_OPEN_FAIL;
 		return DR_ERROR;
-	}		
+	}
 
-	req->id = h;
+	
+	// See: http://msdn.microsoft.com/en-us/library/windows/desktop/aa363190%28v=vs.85%29.aspx
+	timeouts.ReadIntervalTimeout = MAXDWORD;
+	timeouts.ReadTotalTimeoutMultiplier = 0;
+	timeouts.ReadTotalTimeoutConstant = 0;
+	timeouts.WriteTotalTimeoutMultiplier = 1;   // These two write lines may need to be set to 0.  
+	timeouts.WriteTotalTimeoutConstant = 1;
+	if (!SetCommTimeouts(h, &timeouts)) {
+		CloseHandle(h);
+		req->error = -RFE_OPEN_FAIL;
+		return DR_ERROR;
+	}
+
+	req->handle = h;
 	return DR_DONE;
 }
 
@@ -185,11 +154,10 @@ static REBINT Set_Serial_Settings(int ttyfd, int speed)
 /*
 ***********************************************************************/
 {
-	if (req->id) {
+	if (req->handle) {
 		//Warning: should free req->serial.prior_attr termios struct?
-		tcsetattr(req->id, TCSANOW, req->serial.prior_attr);
-		close(req->id);
-		req->id = 0;
+		CloseHandle(req->handle);
+		req->handle = 0;
 	}
 	return DR_DONE;
 }
@@ -201,21 +169,21 @@ static REBINT Set_Serial_Settings(int ttyfd, int speed)
 /*
 ***********************************************************************/
 {
-	if (!req->id) {
+	if (!req->handle) {
 		req->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
 	}
 
-	req->actual = read(req->id, req->data, req->length);
-#ifdef DEBUG_SERIAL
-	printf("read %d ret: %d\n", req->length, req->actual);
-#endif
-	if (req->actual < 0) {
+	if (!ReadFile(req->handle, req->data, req->length, &req->actual, 0)) {
 		req->error = -RFE_BAD_READ;
 		return DR_ERROR;
 	} else {
 		req->serial.index += req->actual;
 	}
+
+#ifdef DEBUG_SERIAL
+	printf("read %d ret: %d\n", req->length, req->actual);
+#endif
 
 	return DR_DONE;
 }
@@ -227,21 +195,26 @@ static REBINT Set_Serial_Settings(int ttyfd, int speed)
 /*
 ***********************************************************************/
 {
-	if (!req->id) {
+	if (!req->handle) {
 		req->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
 	}
 
 	if (req->length == 0) return DR_DONE;
 
-	req->actual = write(req->id, req->data, req->length);
-#ifdef DEBUG_SERIAL
-	printf("write %d ret: %d\n", req->length, req->actual);
-#endif
+	if (!WriteFile(req->handle, req->data, req->length, &req->actual, NULL)){
+		req->error = -RFE_BAD_WRITE;
+		return DR_ERROR;
+	}
+
 	if (req->actual < 0) {
 		req->error = -RFE_BAD_WRITE;
 		return DR_ERROR;
 	}
+
+#ifdef DEBUG_SERIAL
+	printf("write %d ret: %d\n", req->length, req->actual);
+#endif
 
 	return DR_DONE;
 }
@@ -256,8 +229,8 @@ static REBINT Set_Serial_Settings(int ttyfd, int speed)
 #ifdef QUERY_IMPLEMENTED
 	struct pollfd pfd;
 
-	if (req->id) {
-		pfd.fd = req->id;
+	if (req->handle) {
+		pfd.fd = req->handle;
 		pfd.events = POLLIN;
 		n = poll(&pfd, 1, 0);
 	}
