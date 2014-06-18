@@ -38,6 +38,7 @@ enum {
 	RDI_NET,
 	RDI_DNS,
 	RDI_CLIPBOARD,
+	RDI_SERIAL,
 	RDI_MAX,
 	RDI_LIMIT = 32
 };
@@ -178,6 +179,12 @@ struct rebol_devreq {
 			u32  remote_port;		// remote port
 			void *host_info;		// for DNS usage
 		} net;
+		struct {
+			REBCHR *path;			//device path string (in OS local format)
+			i64 baud;				// baud rate of serial port
+			i64 index;				// serial index position
+			void *prior_attr;			// termios: retain previous settings to revert on close
+		} serial;
 	};
 };
 #pragma pack()
