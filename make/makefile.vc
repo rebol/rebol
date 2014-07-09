@@ -10,7 +10,7 @@ CD=	 ./
 
 I= /I..\src\include
 TO_OS= TO_WIN32
-OS_ID= 0.4.4
+OS_ID= 0.3.1
 
 CFLAGS=/c /Os /D "UNICODE" /D "WIN32" /W3 /GR- /Zi /GS /Gy /GF /EHs-c- /GL /D "NDEBUG" /D "_CRT_SECURE_NO_WARNINGS"
 
