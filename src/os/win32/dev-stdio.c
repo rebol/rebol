@@ -46,6 +46,7 @@
 
 #include "reb-host.h"
 #include "host-lib.h"
+#include "sys-scan.h"
 
 #define BUF_SIZE (16*1024)		// MS restrictions apply
 
@@ -66,6 +67,32 @@ static BOOL Redir_Inp = 0;
 extern REBDEV *Devices[];
 
 
+//** ANSI emulation definition ****************************************** 
+#define FOREGROUND_BLACK           0x0000
+//#define FOREGROUND_BLUE          0x0001
+//#define FOREGROUND_GREEN         0x0002
+#define FOREGROUND_CYAN            0x0003
+//#define FOREGROUND_RED           0x0004
+#define FOREGROUND_MAGENTA         0x0005
+#define FOREGROUND_YELLOW          0x0006
+#define FOREGROUND_GREY            0x0007
+//#define FOREGROUND_INTENSITY     0x0008
+#define FOREGROUND_WHITE           0x000F
+//#define BACKGROUND_BLUE          0x0010
+#define BACKGROUND_CYAN            0x0030
+//#define BACKGROUND_GREEN         0x0020
+//#define BACKGROUND_RED           0x0040
+#define BACKGROUND_MAGENTA         0x0050
+#define BACKGROUND_YELLOW          0x0060
+#define BACKGROUND_GREY            0x0070
+//#define BACKGROUND_INTENSITY     0x0080
+#define COMMON_LVB_UNDERSCORE      0x8000
+
+static COORD Std_coord = {0, 0};
+
+int Update_Graphic_Mode(int attribute, int value);
+REBYTE* Parse_ANSI_sequence(REBYTE *cp, REBYTE *ep);
+
 //**********************************************************************
 
 BOOL WINAPI Handle_Break(DWORD dwCtrlType)
@@ -82,7 +109,7 @@ BOOL WINAPI Handle_Break(DWORD dwCtrlType)
 static dbgout(char *fmt, int d, char *s)
 {
 	char buf[255];
-	FILE *f = fopen("dbgout.txt", "w");
+	FILE *f = fopen("dbgout.txt", "a");
 	sprintf(buf, fmt, d, s);
 	fwrite(buf, strlen(buf), 1, f);
 	fclose(f);
@@ -234,6 +261,9 @@ static void close_stdio(void)
 	long len;
 	long total = 0;
 	BOOL ok = FALSE;
+	REBYTE *bp;
+	REBYTE *cp;
+	REBYTE *ep;
 
 	if (GET_FLAG(req->modes, RDM_NULL)) {
 		req->actual = req->length;
@@ -244,6 +274,10 @@ static void close_stdio(void)
 
 		if (Redir_Out) { // Always UTF-8
 			ok = WriteFile(Std_Out, req->data, req->length, &total, 0);
+			if (!ok) {
+				req->error = GetLastError();
+				return DR_ERROR;
+			}
 		}
 		else {
 			// Convert UTF-8 buffer to Win32 wide-char format for console.
@@ -251,14 +285,30 @@ static void close_stdio(void)
 			// however, if our buffer overflows, it's an error. There's no
 			// efficient way at this level to split-up the input data,
 			// because its UTF-8 with variable char sizes.
-			len = MultiByteToWideChar(CP_UTF8, 0, req->data, req->length, Std_Buf, BUF_SIZE);
-			if (len > 0) // no error
-				ok = WriteConsoleW(Std_Out, Std_Buf, len, &total, 0);
-		}
-
-		if (!ok) {
-			req->error = GetLastError();
-			return DR_ERROR;
+			bp = req->data;
+			ep = bp + req->length;
+			
+			do {
+				cp = Skip_To_Char(bp, ep, (REBYTE)27); //find ANSI escape char "^["
+				//if found, write to the console content before it starts, else everything
+				if (cp){
+					len = MultiByteToWideChar(CP_UTF8, 0, bp, cp - bp, Std_Buf, BUF_SIZE);
+				} else {
+					len = MultiByteToWideChar(CP_UTF8, 0, bp, ep - bp, Std_Buf, BUF_SIZE);
+					bp = ep;
+				}
+				if (len > 0) {// no error
+					ok = WriteConsoleW(Std_Out, Std_Buf, len, &total, 0);
+					if (!ok) {
+						req->error = GetLastError();
+						return DR_ERROR;
+					}
+				}
+				//is escape char was found, parse the ANSI sequence...
+				if (cp) {
+					bp = Parse_ANSI_sequence(++cp, ep);
+				}
+			} while (bp < ep);
 		}
 
 		req->actual = req->length;  // do not use "total" (can be byte or wide)
@@ -376,6 +426,198 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);
 
 
+
+/***********************************************************************
+**
+*/	int Update_Graphic_Mode(int attribute, int value)
+/*
+**
+***********************************************************************/
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbiInfo; 
+	int tmp;
+
+	if (attribute < 0) {
+		GetConsoleScreenBufferInfo(Std_Out, &csbiInfo);
+		attribute = csbiInfo.wAttributes;
+	}
+
+	switch (value) {
+		case 0: attribute = FOREGROUND_GREY;                           break;
+		case 1: attribute = attribute | FOREGROUND_INTENSITY | BACKGROUND_INTENSITY; break;
+		case 4: attribute = attribute | COMMON_LVB_UNDERSCORE;         break;
+		case 7: tmp = (attribute & 0xF0) >> 4;
+				attribute = ((attribute & 0x0F) << 4) | tmp;           break; //reverse
+		case 30: attribute =  attribute & 0xF8;                        break;
+		case 31: attribute = (attribute & 0xF8) | FOREGROUND_RED;      break;
+		case 32: attribute = (attribute & 0xF8) | FOREGROUND_GREEN;    break;
+		case 33: attribute = (attribute & 0xF8) | FOREGROUND_YELLOW;   break;
+		case 34: attribute = (attribute & 0xF8) | FOREGROUND_BLUE;     break;
+		case 35: attribute = (attribute & 0xF8) | FOREGROUND_MAGENTA;  break;
+		case 36: attribute = (attribute & 0xF8) | FOREGROUND_CYAN;     break;
+		case 37: attribute = (attribute & 0xF8) | FOREGROUND_GREY;     break;
+		case 39: attribute =  attribute & 0xF7;                        break;  //FOREGROUND_INTENSITY reset	
+		case 40: attribute =  attribute & 0x8F;                        break;
+		case 41: attribute = (attribute & 0x8F) | BACKGROUND_RED;      break;
+		case 42: attribute = (attribute & 0x8F) | BACKGROUND_GREEN;    break;
+		case 43: attribute = (attribute & 0x8F) | BACKGROUND_YELLOW;   break;
+		case 44: attribute = (attribute & 0x8F) | BACKGROUND_BLUE;     break;
+		case 45: attribute = (attribute & 0x8F) | BACKGROUND_MAGENTA;  break;
+		case 46: attribute = (attribute & 0x8F) | BACKGROUND_CYAN;     break;
+		case 47: attribute = (attribute & 0x8F) | BACKGROUND_GREY;     break;
+		case 49: attribute =  attribute & 0x7F;                        break; //BACKGROUND_INTENSITY reset
+		default: attribute = value;
+	}
+	return attribute;
+}
+
+/***********************************************************************
+**
+*/	REBYTE* Parse_ANSI_sequence(REBYTE *cp, REBYTE *ep)
+/*
+**		Parses ANSI sequence and return number of bytes used.
+**      Based on http://ascii-table.com/ansi-escape-sequences.php
+**
+***********************************************************************/
+{
+	if(*cp != '[') return cp;
+
+	int state = 1;
+	int value1 = 0;
+	int value2 = 0;
+	int attribute = -1;
+	int num;
+	int len;
+	COORD coordScreen; 
+	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+	
+
+	do {
+		if(++cp == ep) return cp;
+
+		switch (state) {
+
+		case 1: //value1 start
+			if( *cp >= (int)'0' && *cp <= (int)'9') {
+				value1 = ((value1 * 10) + (*cp - (int)'0')) % 0xFFFF;
+				state = 2;
+			} else if (*cp == ';') {
+				//do nothing
+			} else if (*cp == 's') {
+				//Saves the current cursor position.
+				GetConsoleScreenBufferInfo(Std_Out, &csbiInfo);
+				Std_coord.X = csbiInfo.dwCursorPosition.X;
+				Std_coord.Y = csbiInfo.dwCursorPosition.Y;
+				state = -1;
+			} else if (*cp == 'u') {
+				//Returns the cursor to the position stored by the Save Cursor Position sequence.
+				SetConsoleCursorPosition(Std_Out, Std_coord);
+				state = -1;
+			} else if (*cp == 'K') {
+				//TODO: Erase Line.
+				state = -1;
+			} else if (*cp == 'J') {
+				//TODO: Clear screen from cursor down.
+				state = -1;
+			} else if (*cp == 'H' || *cp == 'f') {
+				coordScreen.X = 0;
+				coordScreen.Y = 0;
+				SetConsoleCursorPosition(Std_Out, coordScreen);
+				state = -1;
+			} else {
+				state = -1;
+			}
+			break;
+		case 2: //value1 continue
+			if( *cp >= (int)'0' && *cp <= (int)'9') {
+				value1 = ((value1 * 10) + (*cp - (int)'0')) % 0xFFFF;
+				state = 2;
+			} else if (*cp == ';') {
+				state = 3;
+			} else if (*cp == 'm') {
+				attribute = Update_Graphic_Mode(attribute, value1);
+				SetConsoleTextAttribute(Std_Out, attribute);
+				state = -1;
+			} else if (*cp == 'A') {
+				//Cursor Up.
+				GetConsoleScreenBufferInfo(Std_Out, &csbiInfo);
+				csbiInfo.dwCursorPosition.Y = MAX(0, csbiInfo.dwCursorPosition.Y - value1);
+				SetConsoleCursorPosition(Std_Out, csbiInfo.dwCursorPosition);
+				state = -1;
+			} else if (*cp == 'B') {
+				//Cursor Down.
+				GetConsoleScreenBufferInfo(Std_Out, &csbiInfo);
+				csbiInfo.dwCursorPosition.Y = MIN(csbiInfo.dwSize.Y, csbiInfo.dwCursorPosition.Y + value1);
+				SetConsoleCursorPosition(Std_Out, csbiInfo.dwCursorPosition);
+				state = -1;
+			} else if (*cp == 'C') {
+				//Cursor Forward.
+				GetConsoleScreenBufferInfo(Std_Out, &csbiInfo);
+				csbiInfo.dwCursorPosition.X = MIN(csbiInfo.dwSize.X, csbiInfo.dwCursorPosition.X + value1);
+				SetConsoleCursorPosition(Std_Out, csbiInfo.dwCursorPosition);
+				state = -1;
+			} else if (*cp == 'D') {
+				//Cursor Backward.
+				GetConsoleScreenBufferInfo(Std_Out, &csbiInfo);
+				csbiInfo.dwCursorPosition.X = MAX(0, csbiInfo.dwCursorPosition.X - value1);
+				SetConsoleCursorPosition(Std_Out, csbiInfo.dwCursorPosition);
+				state = -1;
+			} else if (*cp == 'J') {
+				if (value1 == 2) {
+					GetConsoleScreenBufferInfo(Std_Out, &csbiInfo);
+					len = csbiInfo.dwSize.X * csbiInfo.dwSize.Y;
+					coordScreen.X = 0;
+					coordScreen.Y = 0;
+					FillConsoleOutputCharacter(Std_Out, (TCHAR)' ', len, coordScreen, &num);
+					FillConsoleOutputAttribute(Std_Out, csbiInfo.wAttributes, len, coordScreen, &num);
+					SetConsoleCursorPosition(Std_Out, coordScreen);
+				}
+				state = -1;
+			} else {
+				state = -1;
+			}
+			break; //End CASE 2
+		case 3: //value2 start
+			if( *cp >= (int)'0' && *cp <= (int)'9') {
+				value2 = ((value2 * 10) + (*cp - (int)'0')) % 0xFFFF;
+				state = 4;
+			} else if (*cp == ';') {
+				//do nothing
+			} else {
+				state = -1;
+			}
+			break; //End CASE 3
+		case 4: //value2 continue
+			if( *cp >= (int)'0' && *cp <= (int)'9') {
+				value2 = ((value2 * 10) + (*cp - (int)'0')) % 0xFFFF;
+				state = 4;
+			} else if (*cp == 'm') {
+				attribute = Update_Graphic_Mode(attribute, value1);
+				attribute = Update_Graphic_Mode(attribute, value2);
+				SetConsoleTextAttribute(Std_Out, attribute);
+				state = -1;
+			} else if (*cp == ';') {
+				attribute = Update_Graphic_Mode(attribute, value1);
+				attribute = Update_Graphic_Mode(attribute, value2);
+				SetConsoleTextAttribute(Std_Out, attribute);
+				value1 = 0;
+				value2 = 0;
+				state = 1;
+			} else if (*cp == 'H' || *cp == 'f') {
+				coordScreen.X = value1;
+				coordScreen.Y = value2;
+				SetConsoleCursorPosition(Std_Out, coordScreen);
+				state = -1;
+			} else {
+				state = -1;
+			}
+
+
+		} //End: switch (state)
+	} while (state >= 0);
+
+	return ++cp;
+}
 
 //*** Old fragments ***************************************************
 
