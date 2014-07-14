@@ -604,8 +604,8 @@ DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);
 				value2 = 0;
 				state = 1;
 			} else if (*cp == 'H' || *cp == 'f') {
-				coordScreen.X = value1;
-				coordScreen.Y = value2;
+				coordScreen.Y = value1;
+				coordScreen.X = value2;
 				SetConsoleCursorPosition(Std_Out, coordScreen);
 				state = -1;
 			} else {
