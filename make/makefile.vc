@@ -43,7 +43,7 @@ OBJS =	objs/a-constants.obj objs/a-globals.obj objs/a-lib.obj objs/b-boot.obj \
 	objs/b-init.obj objs/c-do.obj objs/c-error.obj objs/c-frame.obj \
 	objs/c-function.obj objs/c-port.obj objs/c-task.obj objs/c-word.obj \
 	objs/d-crash.obj objs/d-dump.obj objs/d-print.obj objs/f-blocks.obj \
-	objs/f-deci.obj objs/f-enbase.obj objs/f-extension.obj objs/f-math.obj \
+	objs/f-deci.obj objs/f-dtoa.obj objs/f-enbase.obj objs/f-extension.obj objs/f-math.obj \
 	objs/f-modify.obj objs/f-random.obj objs/f-round.obj objs/f-series.obj \
 	objs/f-stubs.obj objs/l-scan.obj objs/l-types.obj objs/m-gc.obj \
 	objs/m-pools.obj objs/m-series.obj objs/n-control.obj objs/n-data.obj \
@@ -61,7 +61,7 @@ OBJS =	objs/a-constants.obj objs/a-globals.obj objs/a-lib.obj objs/b-boot.obj \
 	objs/t-utype.obj objs/t-vector.obj objs/t-word.obj objs/u-bmp.obj \
 	objs/u-compress.obj objs/u-dialect.obj objs/u-gif.obj objs/u-jpg.obj \
 	objs/u-md5.obj objs/u-parse.obj objs/u-png.obj objs/u-sha1.obj \
-	objs/u-zlib.obj objs/f-dtoa.obj
+	objs/u-zlib.obj
 
 HOST =	objs/host-main.obj objs/host-args.obj objs/host-device.obj objs/host-stdio.obj \
 	objs/dev-net.obj objs/dev-dns.obj objs/host-lib.obj \
