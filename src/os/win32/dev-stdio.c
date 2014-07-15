@@ -289,7 +289,11 @@ static void close_stdio(void)
 			ep = bp + req->length;
 			
 			do {
-				cp = Skip_To_Char(bp, ep, (REBYTE)27); //find ANSI escape char "^["
+				//from some reason, I must decrement the tail pointer in function bellow,
+				//else escape char is found past the end and processed in rare cases - like in console: do [help] do [help func]
+				//It looks dangerous, but it should be safe as it looks the req->length is always at least 1.
+				cp = Skip_To_Char(bp, ep-1, (REBYTE)27); //find ANSI escape char "^["
+
 				//if found, write to the console content before it starts, else everything
 				if (cp){
 					len = MultiByteToWideChar(CP_UTF8, 0, bp, cp - bp, Std_Buf, BUF_SIZE);
