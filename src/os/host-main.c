@@ -61,8 +61,8 @@
 
 /**********************************************************************/
 
-#define PROMPT_STR ">> "
-#define RESULT_STR "== "
+#define PROMPT_STR "\x1B[1;31;49m>>\x1B[0m "
+#define RESULT_STR "\x1B[1;31;49m==\x1B[33m "
 
 REBARGS Main_Args;
 
