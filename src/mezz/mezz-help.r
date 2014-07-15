@@ -96,54 +96,54 @@ dump-obj: function [
 ][
 	if unset? get/any 'word [
 		print trim/auto {
-			Use HELP or ? to see built-in info:
-
+			Use ^[[1;32;49mHELP^[[0m or ^[[1;32;49m?^[[0m to see built-in info:
+			^[[1;32;49m
 				help insert
 				? insert
-
+			^[[0m
 			To search within the system, use quotes:
-
+			^[[1;32;49m
 				? "insert"
-
+			^[[0m
 			To browse online web documents:
-
+			^[[1;32;49m
 				help/doc insert
-
+			^[[0m
 			To view words and values of a context or object:
 
-				? lib    - the runtime library
-				? self   - your user context
-				? system - the system object
-				? system/options - special settings
+				^[[1;32;49m? lib^[[0m    - the runtime library
+				^[[1;32;49m? self^[[0m   - your user context
+				^[[1;32;49m? system^[[0m - the system object
+				^[[1;32;49m? system/options^[[0m - special settings
 
 			To see all words of a specific datatype:
-
+			^[[1;32;49m
 				? native!
 				? function!
 				? datatype!
-
+			^[[0m
 			Other debug functions:
 
-				docs - open browser to web documentation
-				?? - display a variable and its value
-				probe - print a value (molded)
-				source func - show source code of func
-				trace - trace evaluation steps
-				what - show a list of known functions
-				why? - explain more about last error (via web)
+				^[[1;32;49mdocs^[[0m - open browser to web documentation
+				^[[1;32;49m??^[[0m - display a variable and its value
+				^[[1;32;49mprobe^[[0m - print a value (molded)
+				^[[1;32;49msource func^[[0m - show source code of func
+				^[[1;32;49mtrace^[[0m - trace evaluation steps
+				^[[1;32;49mwhat^[[0m - show a list of known functions
+				^[[1;32;49mwhy?^[[0m - explain more about last error (via web)
 
 			Other information:
 
-				chat - open DevBase developer forum/BBS
-				docs - open DocBase document wiki website
-				bugs - open CureCore bug database website
-				demo - run demo launcher (from rebol.com)
-				about - see general product info
-				upgrade - check for newer versions
-				changes - show changes for recent version
-				install - install (when applicable)
-				license - show user license
-				usage - program cmd line options
+				^[[1;32;49mchat^[[0m - open DevBase developer forum/BBS
+				^[[1;32;49mdocs^[[0m - open DocBase document wiki website
+				^[[1;32;49mbugs^[[0m - open CureCore bug database website
+				^[[1;32;49mdemo^[[0m - run demo launcher (from rebol.com)
+				^[[1;32;49mabout^[[0m - see general product info
+				^[[1;32;49mupgrade^[[0m - check for newer versions
+				^[[1;32;49mchanges^[[0m - show changes for recent version
+				^[[1;32;49minstall^[[0m - install (when applicable)
+				^[[1;32;49mlicense^[[0m - show user license
+				^[[1;32;49musage^[[0m - program cmd line options
 		}
 		exit
 	]
