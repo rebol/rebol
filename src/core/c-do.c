@@ -73,9 +73,7 @@ void Do_Rebcode(REBVAL *v) {;}
 
 static REBVAL *Func_Word(REBINT dsf)
 {
-	static REBVAL val;  // Safe: Lifetime is limited to passage to error object.
-	Init_Word(&val, VAL_WORD_SYM(DSF_WORD(dsf)));
-	return &val;
+	return DSF_WORD(dsf);
 }
 
 
@@ -341,9 +339,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 
 	// Save WORD for function and fake frame for relative arg lookup:
 	tos++;
-	VAL_SET(tos, REB_TYPESET); // Was REB_WORD and REB_HANDLE, but GC does not like bad fields.
-	VAL_WORD_SYM(tos) = word ? word : SYM__APPLY_;
-	VAL_WORD_INDEX(tos) = -1; // avoid GC access to invalid FRAME above
+	Init_Word(tos, word ? word : SYM__APPLY_);
 	if (func) {
 		VAL_WORD_FRAME(tos) = VAL_FUNC_ARGS(func);
 		// Save FUNC value for safety (spec, args, code):
