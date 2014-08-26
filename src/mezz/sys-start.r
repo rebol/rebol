@@ -111,7 +111,7 @@ start: func [
 		flags/secure-min ['allow]
 		flags/secure-max ['quit]
 		file? script [compose [file throw (file) [allow read] (first script-path) allow]]
-		'else [compose [file throw (file) [allow read] %. allow]] ; default
+		'else ['none] ;compose [file throw (file) [allow read] %. allow]] ; default
 	])
 
 	;-- Evaluate rebol.r script:
