@@ -71,6 +71,7 @@ extern HWND Event_Handle; // For WSAAsync API
 static void Set_Addr(SOCKAI *sa, long ip, int port)
 {
 	// Set the IP address and port number in a socket_addr struct.
+	memset(sa, 0, sizeof(*sa));
 	sa->sin_family = AF_INET;
 	sa->sin_addr.s_addr = ip;  //htonl(ip); NOTE: REBOL stays in network byte order
 	sa->sin_port = htons((unsigned short)port);
