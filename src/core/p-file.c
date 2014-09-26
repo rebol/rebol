@@ -353,7 +353,6 @@ REBINT Mode_Syms[] = {
 		if (opened) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
 			Cleanup_File(file);
-			Free_Port_State(port);
 		}
 
 		if (file->error) Trap_Port(RE_READ_ERROR, port, file->error);
@@ -399,7 +398,6 @@ REBINT Mode_Syms[] = {
 		if (opened) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
 			Cleanup_File(file);
-			Free_Port_State(port);
 		}
 
 		if (file->error) Trap1(RE_WRITE_ERROR, path);
@@ -427,7 +425,6 @@ REBINT Mode_Syms[] = {
 		if (IS_OPEN(file)) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
 			Cleanup_File(file);
-			Free_Port_State(port);
 		}
 		break;
 

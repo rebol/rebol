@@ -272,7 +272,6 @@ enum Transport_Types {
 			OS_DO_DEVICE(sock, RDC_CLOSE);
 			SET_CLOSED(sock);
 		}
-		Free_Port_State(port);
 		break;
 
 	case A_LENGTHQ:

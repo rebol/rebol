@@ -115,23 +115,6 @@
 
 /***********************************************************************
 **
-*/	void Free_Port_State(REBSER *port)
-/*
-***********************************************************************/
-{
-	REBVAL *state = BLK_SKIP(port, STD_PORT_STATE);
-
-	// ??? check that this is the binary we think it is? !!!
-
-	if (IS_BINARY(state)) {
-		Loose_Series(VAL_SERIES(state));
-		VAL_SET(state, REB_NONE);
-	}
-}
-
-
-/***********************************************************************
-**
 */	REBFLG Pending_Port(REBVAL *port)
 /*
 **		Return TRUE if port value is pending a signal.
