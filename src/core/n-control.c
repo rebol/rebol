@@ -293,6 +293,7 @@ enum {
 ***********************************************************************/
 {
 	Apply_Block(D_ARG(1), D_ARG(2), !D_REF(3)); // stack volatile
+	VAL_CLR_OPT(DS_TOP, OPTS_REVAL); // secure against return/redo
 	return R_TOS;
 }
 
@@ -553,7 +554,7 @@ got_err:
 	case REB_URL:
 	case REB_FILE:
 		// DO native and sys/do* must use same arg list:
-		Do_Sys_Func(SYS_CTX_DO_P, value, D_ARG(2), D_ARG(3), D_ARG(4), D_ARG(5), 0);
+		Do_Sys_Func(SYS_CTX_DO_P, value, D_ARG(2), D_ARG(3), D_ARG(4), D_ARG(5), NULL);
 		return R_TOS1;
 
 	case REB_TASK:

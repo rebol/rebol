@@ -613,13 +613,23 @@ static REBREQ *Req_SIO;
 **
 ***********************************************************************/
 {
-	up[0] = Hex_Digits[(val >> 20) & 0xf];
-	up[1] = Hex_Digits[(val >> 16) & 0xf];
+#ifdef ENDIAN_LITTLE
+	up[0] = Hex_Digits[(val >>  4) & 0xf];
+	up[1] = Hex_Digits[val & 0xf];
 	up[2] = Hex_Digits[(val >> 12) & 0xf];
 	up[3] = Hex_Digits[(val >>  8) & 0xf];
-	up[4] = Hex_Digits[(val >>  4) & 0xf];
-	up[5] = Hex_Digits[val & 0xf];
+	up[4] = Hex_Digits[(val >> 20) & 0xf];
+	up[5] = Hex_Digits[(val >> 16) & 0xf];
+#else
+	up[0] = Hex_Digits[(val >>  28) & 0xf];
+	up[1] = Hex_Digits[(val >> 24) & 0xf];
+	up[2] = Hex_Digits[(val >> 20) & 0xf];
+	up[3] = Hex_Digits[(val >> 16) & 0xf];
+	up[4] = Hex_Digits[(val >> 12) & 0xf];
+	up[5] = Hex_Digits[(val >>  8) & 0xf];
+#endif
 	up[6] = 0;
+
 	return up+6;
 }
 
@@ -706,7 +716,7 @@ pick:
 
 		case 's':
 			cp = va_arg(args, REBYTE *);
-			if ((REBCNT)cp < 100) cp = (REBYTE*)Bad_Ptr;
+			if ((REBUPT)cp < 100) cp = (REBYTE*)Bad_Ptr;
 			if (pad == 1) pad = LEN_BYTES(cp);
 			if (pad < 0) {
 				pad = -pad;
@@ -751,7 +761,7 @@ mold_value:
 			if (len + MAX_HEX_LEN + 1 < max) { // A cheat, but it is safe.
 				*bp++ = '#';
 				if (pad == 1) pad = 8;
-				cp = Form_Hex_Pad(bp, (REBCNT)(va_arg(args, REBYTE*)), pad);
+				cp = Form_Hex_Pad(bp, (REBU64)(REBUPT)(va_arg(args, REBYTE*)), pad);
 				len += 1 + (REBCNT)(cp - bp);
 				bp = cp;
 			}
