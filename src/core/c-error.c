@@ -324,6 +324,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 	if (num) {
 		obj1 = Find_Word_Value(frame, SYM_CODE);
+		if (!obj1) return 0;
 		*num = VAL_INT32(obj1)
 			+ Find_Word_Index(frame, VAL_WORD_SYM(&error->id), FALSE)
 			- Find_Word_Index(frame, SYM_TYPE, FALSE) - 1;
