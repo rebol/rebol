@@ -30,10 +30,10 @@ systems: [
 	[0.4.10		"linux_ppc"		posix		[+O1 HID LDL ST1 -LM]]
 	[0.4.20		"linux_arm"		posix		[+O2 HID LDL ST1 -LM]]
 	[0.4.21		"linux_arm"		posix		[+O2 HID LDL ST1 -LM PIE]]	; bionic (Android)
-	[0.4.30		"linux_mips"	posix		[+O2 HID LDL ST1 -LM]]		; glibc does not need C++
+	[0.4.30		"linux_mips"	posix		[+O2 HID LDL ST1 -LM]]
 	[0.5.75		"haiku"			posix		[+O2 ST1 NWK]]
-	[0.7.02		"freebsd"		posix		[+O1 C++ ST1 -LM]]
-	[0.9.04		"openbsd"		posix		[+O1 C++ ST1 -LM]]
+	[0.7.02		"freebsd"		posix		[+O1 ST1 -LM]]
+	[0.9.04		"openbsd"		posix		[+O1 ST1 -LM]]
 	[0.13.01	"android_arm"	android		[HID F64 LDL LLOG -LM CST]]
 ]
 
@@ -59,7 +59,6 @@ compile-flags: [
 linker-flags: [
 	MAP:	"-Wl,-M"					; output a map
 	STA:	"--strip-all"
-	C++:	"-lstdc++"					; link with stdc++
 	LDL:	"-ldl"						; link with dynamic lib lib
 	LLOG:	"-llog"						; on Android, link with liblog.so
 	ARC:	"-arch i386"				; x86 32 bit architecture (OSX)
