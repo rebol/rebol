@@ -1082,9 +1082,12 @@ eval_func2:
 {
 	REBOL_STATE state;
 	REBVAL *tos;
+	jmp_buf *Last_Halt_State = Halt_State;
 
 	PUSH_STATE(state, Saved_State);
 	if (SET_JUMP(state)) {
+		/* Halt_State might become invalid, restore the one above */
+		Halt_State = Last_Halt_State;
 		POP_STATE(state, Saved_State);
 		Catch_Error(DS_NEXT); // Stores error value here
 		return TRUE;
@@ -1662,6 +1665,7 @@ eval_func2:
 {
 	REBOL_STATE state;
 	REBVAL *val;
+	jmp_buf *Last_Saved_State = Saved_State;
 //	static D = 0;
 //	int depth = D++;
 
@@ -1670,6 +1674,8 @@ eval_func2:
 	PUSH_STATE(state, Halt_State);
 	if (SET_JUMP(state)) {
 //		Debug_Fmt("Throw Halt %d", depth);
+		/* Saved_State might become invalid, restore the one above */
+		Saved_State = Last_Saved_State;
 		POP_STATE(state, Halt_State);
 		Catch_Error(DS_NEXT); // Stores error value here
 		return TRUE;
