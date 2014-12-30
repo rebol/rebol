@@ -899,6 +899,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	PG_Mem_Usage = 0;
 	PG_Mem_Limit = 0;
 	PG_Reb_Stats = Make_Mem(sizeof(*PG_Reb_Stats));
+	Halt_State = 0;
 	Reb_Opts = Make_Mem(sizeof(*Reb_Opts));
 
 	// Thread locals:
