@@ -1,0 +1,40 @@
+#
+# .travis.yaml contains YAML-formatted (http://www.yaml.org/) build
+# instructions for continuous integration via Travis CI
+# (http://docs.travis-ci.com/).
+#
+
+notifications:
+    email: false
+
+language: c
+
+compiler:
+    - gcc
+
+env:
+    matrix:
+        # Linux x86
+        - OS_ID=0.4.4
+        # Linux x64
+        - OS_ID=0.4.40
+
+before_install:
+    - sudo apt-get update
+
+install:
+    #
+    # --- Rebol Prerequisites ---
+    #
+    # Set up 32-bit multiarch for building Rebol
+    - sudo apt-get install -y gcc-multilib g++-multilib libc6:i386
+    # Fetch a Rebol binary needed for building Rebol
+    - wget http://www.rebol.com/r3/downloads/r3-a111-4-2.tar.gz
+    - tar xvzf r3-a111-4-2.tar.gz
+    - cp r3 make/r3-make
+
+script:
+    - cd make/
+    - make make OS_ID=${OS_ID}
+    - make clean prep r3
+    - ./r3 --do 'print {Hello, World!}'
