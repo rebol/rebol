@@ -320,6 +320,9 @@ typedef struct Reb_Tuple {
 	REBCNT	tail;		// one past end of useful data
 	REBCNT	rest;		// total number of units from bias to end
 	REBINT	info;		// holds width and flags
+#if defined(__LP64__) || defined(__LLP64__)
+	REBCNT	padding;	// ensure next pointer is naturally aligned
+#endif
 	union {
 		REBCNT size;	// used for vectors and bitsets
 		REBSER *series;	// MAP datatype uses this
