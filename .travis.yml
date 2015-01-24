@@ -23,12 +23,17 @@ before_install:
     - sudo apt-get update
 
 install:
-    #
-    # --- Rebol Prerequisites ---
-    #
-    # Set up 32-bit multiarch for building Rebol
-    - sudo apt-get install -y gcc-multilib g++-multilib libc6:i386
-    # Fetch a Rebol binary needed for building Rebol
+    # gcc-multilib:
+    #   For building 32b binaries on a 64b host (not necessary when we build
+    #   for 64b).
+    # valgrind:
+    #   For basic sanity checking of our freshly built binaries.
+    # libc6:i386:
+    #   For running the 32b bootsrap rebol ("r3-make") on a 64b host.
+    # libc6-dbg:i386:
+    #   For running valgrind on a 32b subject-under-test on a 64b host.
+    - sudo apt-get install -y gcc-multilib valgrind libc6:i386 libc6-dbg:i386
+    # Fetch a Rebol bootsrap binary, which is needed for building Rebol.
     - wget http://www.rebol.com/r3/downloads/r3-a111-4-2.tar.gz
     - tar xvzf r3-a111-4-2.tar.gz
     - cp r3 make/r3-make
@@ -37,4 +42,4 @@ script:
     - cd make/
     - make make OS_ID=${OS_ID}
     - make clean prep r3
-    - ./r3 --do 'print {Hello, World!}'
+    - valgrind --error-exitcode=42 --leak-check=full ./r3 --do 'print {Hello!}'
