@@ -829,7 +829,7 @@
 			else {
 				// Word is not in frame. Add it if option is specified:
 				if ((mode & BIND_ALL) || ((mode & BIND_SET) && (IS_SET_WORD(value)))) {
-					Expand_Frame(obj, 1, 1);
+					Expand_Frame(frame, 1, 1);
 					Append_Frame(frame, value, 0);
 					binds[VAL_WORD_CANON(value)] = VAL_WORD_INDEX(value);
 				}
