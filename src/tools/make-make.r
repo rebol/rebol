@@ -389,7 +389,7 @@ macro++ RAPI_FLAGS compile-flags
 macro++ HOST_FLAGS make compile-flags [PIC: NCM: none]
 macro+  HOST_FLAGS compile-flags/f64 ; default for all
 
-if flag? +SC [remove find fb/os-specific-objs 'host-readline.c]
+if flag? +SC [remove find os-specific-objs 'host-readline.c]
 
 emit makefile-head
 emit ["OBJS =" tab]
