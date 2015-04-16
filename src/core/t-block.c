@@ -382,16 +382,33 @@ static struct {
 
 /***********************************************************************
 **
-*/	static int Compare_Call(const void *v1, const void *v2)
+*/	static int Compare_Call(const void *p1, const void *p2)
 /*
 ***********************************************************************/
 {
+	REBVAL *v1 = (REBVAL*)p1;
+	REBVAL *v2 = (REBVAL*)p2;
 	REBVAL *val;
-	
-	if (sort_flags.reverse)
-		val = Apply_Func(0, sort_flags.compare, v1, v2, 0);	
-	else
-		val = Apply_Func(0, sort_flags.compare, v2, v1, 0);	
+	REBVAL *tmp;
+	REBSER *args;
+
+	if (!sort_flags.reverse) {
+		tmp = v1;
+		v1 = v2;
+		v2 = tmp;
+	}
+
+	// Check argument types of comparator function.
+	// TODO: The below results in an error message such as "op! does not allow
+	// unset! for its value1 argument". A better message would be more like
+	// "compare handler does not allow error! for its value1 argument."
+	args = VAL_FUNC_ARGS(sort_flags.compare);
+	if (BLK_LEN(args) > 1 && !TYPE_CHECK(BLK_SKIP(args, 1), VAL_TYPE(v1)))
+		Trap3(RE_EXPECT_ARG, Of_Type(sort_flags.compare), BLK_SKIP(args, 1), Of_Type(v1));
+	if (BLK_LEN(args) > 2 && !TYPE_CHECK(BLK_SKIP(args, 2), VAL_TYPE(v2)))
+		Trap3(RE_EXPECT_ARG, Of_Type(sort_flags.compare), BLK_SKIP(args, 2), Of_Type(v2));
+
+	val = Apply_Func(0, sort_flags.compare, v1, v2, 0);
 
 	if (IS_LOGIC(val)) {
 		if (IS_TRUE(val)) return 1;
