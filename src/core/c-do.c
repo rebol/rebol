@@ -739,8 +739,10 @@ more_path:
 	}
 
 	// Hack to process remaining path:
-	if (path && NOT_END(path)) goto more_path;
-	//	Trap2(RE_NO_REFINE, Func_Word(dsf), path);
+	if (path && NOT_END(path)) {
+		if (!IS_WORD(path)) Trap1(RE_BAD_REFINE, path);
+		goto more_path;
+	}
 
 	return index;
 }
