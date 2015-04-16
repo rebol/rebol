@@ -23,6 +23,11 @@ Rebol [
 	recycle ;@@ <-- it was crashing here
 	--assert 1 = a
 
+--test-- "issue-1977"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1977
+	a: func [/b] [1]
+	--assert error? try [a/b/%] ;- no crash, just error!
+
 ===end-group===
 
 ~~~end-file~~~
