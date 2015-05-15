@@ -401,7 +401,7 @@ static REBCNT bit_sizes[4] = { 8, 16, 32, 64 };
 #define	SERIES_FLAGS(s)	 ((s)->info)
 #define	SERIES_WIDE(s)	 (((s)->info) & 0xff)
 #define SERIES_DATA(s)   ((s)->data)
-#define	SERIES_SKIP(s,i) (SERIES_DATA(s) + (SERIES_WIDE(s) * i))
+#define	SERIES_SKIP(s,i) (SERIES_DATA(s) + (SERIES_WIDE(s) * (i)))
 
 #define END_FLAG 0x80000000  // Indicates end of block as an index (from DO_NEXT)
 
@@ -629,7 +629,7 @@ typedef struct Reb_Series_Ref
 //} REBIMI;
 
 #define QUAD_HEAD(s)	((REBYTE *)((s)->data))
-#define QUAD_SKIP(s,n)	(((REBYTE *)((s)->data))+(n * 4))
+#define QUAD_SKIP(s,n)	(((REBYTE *)((s)->data))+((n) * 4))
 #define QUAD_TAIL(s)	(((REBYTE *)((s)->data))+((s)->tail * 4))
 #define	QUAD_LEN(s)		(SERIES_TAIL(s))
 
