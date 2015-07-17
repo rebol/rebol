@@ -50,8 +50,6 @@ enum Eval_Types {
 	ET_END			// end of block
 };
 
-static jmp_buf *Halt_State = 0;  //!!!!!!!!!! global?
-
 /*
 void T_Error(REBCNT n) {;}
 

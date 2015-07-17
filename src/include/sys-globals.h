@@ -58,6 +58,8 @@ PVAR REBI64 PG_Boot_Time;	// Counter when boot started
 PVAR REBINT Current_Year;
 PVAR REB_OPTS *Reb_Opts;
 
+PVAR jmp_buf *Halt_State;	// Pointer to saved CPU state for HALT/QUIT handlers
+
 // This signal word should be thread-local, but it will not work
 // when implemented that way. Needs research!!!!
 PVAR REBCNT	Eval_Signals;	// Signal flags
@@ -93,7 +95,7 @@ TVAR REBVAL	*DS_Base;		// Data stack base
 TVAR REBINT	DSP;			// Data stack pointer
 TVAR REBINT	DSF;			// Data stack frame (function base)
 
-TVAR jmp_buf *Saved_State;	// Pointer to saved CPU state
+TVAR jmp_buf *Saved_State;	// Pointer to saved CPU state for error handlers.
 
 //-- Evaluation variables:
 TVAR REBI64	Eval_Cycles;	// Total evaluation counter (upward)
