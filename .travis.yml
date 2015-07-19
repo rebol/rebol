@@ -29,11 +29,11 @@ install:
     # valgrind:
     #   For basic sanity checking of our freshly built binaries.
     # libc6:i386:
-    #   For running the 32b bootsrap rebol ("r3-make") on a 64b host.
+    #   For running the 32b bootstrap rebol ("r3-make") on a 64b host.
     # libc6-dbg:i386:
     #   For running valgrind on a 32b subject-under-test on a 64b host.
     - sudo apt-get install -y gcc-multilib valgrind libc6:i386 libc6-dbg:i386
-    # Fetch a Rebol bootsrap binary, which is needed for building Rebol.
+    # Fetch a Rebol bootstrap binary, which is needed for building Rebol.
     - wget http://www.rebol.com/r3/downloads/r3-a111-4-2.tar.gz
     - tar xvzf r3-a111-4-2.tar.gz
     - cp r3 make/r3-make
