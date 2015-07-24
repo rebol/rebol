@@ -71,25 +71,25 @@ REBU64 get_vect(REBCNT bits, REBYTE *data, REBCNT n)
 {
 	switch (bits) {
 	case VTSI08:
-		return (REBI64) ((char*)data)[n];
+		return (REBI64) ((i8*)data)[n];
 
 	case VTSI16:
-		return (REBI64) ((short*)data)[n];
+		return (REBI64) ((i16*)data)[n];
 
 	case VTSI32:
-		return (REBI64) ((long*)data)[n];
+		return (REBI64) ((i32*)data)[n];
 
 	case VTSI64:
 		return (REBI64) ((i64*)data)[n];
 
 	case VTUI08:
-		return (REBU64) ((unsigned char*)data)[n];
+		return (REBU64) ((u8*)data)[n];
 
 	case VTUI16:
-		return (REBU64) ((unsigned short*)data)[n];
+		return (REBU64) ((u16*)data)[n];
 
 	case VTUI32:
-		return (REBU64) ((unsigned long*)data)[n];
+		return (REBU64) ((u32*)data)[n];
 
 	case VTUI64:
 		return (REBU64) ((i64*)data)[n];
@@ -110,15 +110,15 @@ void set_vect(REBCNT bits, REBYTE *data, REBCNT n, REBI64 i, REBDEC f) {
 	switch (bits) {
 
 	case VTSI08:
-		((char*)data)[n] = (char)i;
+		((i8*)data)[n] = (i8)i;
 		break;
 
 	case VTSI16:
-		((short*)data)[n] = (short)i;
+		((i16*)data)[n] = (i16)i;
 		break;
 
 	case VTSI32:
-		((long*)data)[n] = (long)i;
+		((i32*)data)[n] = (i32)i;
 		break;
 
 	case VTSI64:
@@ -126,15 +126,15 @@ void set_vect(REBCNT bits, REBYTE *data, REBCNT n, REBI64 i, REBDEC f) {
 		break;
 
 	case VTUI08:
-		((unsigned char*)data)[n] = (unsigned char)i;
+		((u8*)data)[n] = (u8)i;
 		break;
 
 	case VTUI16:
-		((unsigned short*)data)[n] = (unsigned short)i;
+		((u16*)data)[n] = (u16)i;
 		break;
 
 	case VTUI32:
-		((unsigned long*)data)[n] = (unsigned long)i;
+		((u32*)data)[n] = (u32)i;
 		break;
 
 	case VTUI64:
