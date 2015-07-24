@@ -32,7 +32,7 @@ REBOL [
 3 Windows [
 	1 win32-x86
 	2 dec-alpha
-	3 win32-x64
+	40 win32-x64
 ]
 
 4 Linux [
