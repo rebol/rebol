@@ -790,8 +790,8 @@ change at-value product to lit-word! product
 plats: load %platforms.r
 
 change/only at-value platform reduce [
-	any [pick plats version/4 * 2 - 1 "Unknown"]
-	any [select pick plats version/4 * 2 version/5 ""]
+	any [select plats version/4 "Unknown"]
+	any [select third any [find/skip plats version/4 3 []] version/5 ""]
 ]
 
 ob: context boot-sysobj
