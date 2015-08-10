@@ -718,7 +718,7 @@ got_err:
 			// Evaluate the case block
 			result = DO_BLK(blk);
 			if (!all) return R_TOS1;
-			if (THROWN(result) && Check_Error(result) >= 0) break;
+			if (THROWN(result)) return R_TOS1;
 		}
 	}
 
