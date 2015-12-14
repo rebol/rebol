@@ -622,14 +622,12 @@ static int Try_Browser(char *browser, REBCHR *url)
 /*
 ***********************************************************************/
 {
-	if (
 #if defined(TO_OSX) || defined(TO_OSXI)
-		Try_Browser("/usr/bin/open", url)
+#define test_browser Try_Browser("/usr/bin/open", url)
 #else
-		Try_Browser("xdg-open", url)
-		|| Try_Browser("x-www-browser", url)
+#define test_browser Try_Browser("xdg-open", url) || Try_Browser("x-www-browser", url)
 #endif
-	) return TRUE;
+	if (test_browser) return TRUE;
 	return FALSE;
 }
 
