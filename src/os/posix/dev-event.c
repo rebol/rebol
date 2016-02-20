@@ -41,6 +41,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <errno.h>
 
 #include "reb-host.h"
 #include "host-lib.h"
@@ -103,8 +104,16 @@ void Done_Device(int handle, int error);
 	
 	result = select(0, 0, 0, 0, &tv);
 	if (result < 0) {
-		// !!! set error code
-		printf("ERROR!!!!\n");
+		//
+		// !!! In R3-Alpha this had a TBD that said "set error code" and had a
+		// printf that said "ERROR!!!!".  However this can happen when a
+		// Ctrl-C interrupts a timer on a WAIT.  As a patch this is tolerant
+		// of EINTR, but still returns the error code.  :-/
+		//
+		if (errno == EINTR)
+			return DR_ERROR;
+
+		printf("select() returned -1 in dev-event.c (I/O error!)\n");
 		return DR_ERROR;
 	}
 
