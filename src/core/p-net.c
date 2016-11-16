@@ -269,7 +269,9 @@ enum Transport_Types {
 
 	case A_CLOSE:
 		if (IS_OPEN(sock)) {
-			OS_DO_DEVICE(sock, RDC_CLOSE);
+            if (OS_DO_DEVICE(sock, RDC_CLOSE) < 0) {
+                Trap_Port(RE_CANNOT_CLOSE, port, sock->error);
+            }
 			SET_CLOSED(sock);
 		}
 		break;

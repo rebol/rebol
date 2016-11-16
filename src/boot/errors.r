@@ -164,6 +164,7 @@ Access: [
 	read-only:          [{read-only - write not allowed:} :arg1]
 	no-buffer:          [{port has no data buffer:} :arg1]
 	timeout:            [{port action timed out:} :arg1]
+	cannot-close:       [{cannot close port} :arg1 {reason:} :arg2]
 
 	no-create:          [{cannot create:} :arg1]
 	no-delete:          [{cannot delete:} :arg1]
