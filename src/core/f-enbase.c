@@ -609,7 +609,7 @@ err:
 		if (brk && ((count % 32) == 0)) *bp++ = LF;
 	}
 
-	if (*(bp-1) != LF && (len >= 32) && brk) *bp++ = LF;
+	if ((len >= 32) && brk && *(bp-1) != LF) *bp++ = LF;
 	*bp = 0;
 	
 	SERIES_TAIL(series) = DIFF_PTRS(bp, series->data);
