@@ -269,23 +269,25 @@ take: action [
 ]
 
 insert: action [
-	{Inserts element(s); for series, returns just past the insert.}
+	{Inserts item, or contents if block type match; returns insert tail.}
 	series [series! port! map! gob! object! bitset! port!] {At position (modified)}
 	value [any-type!] {The value to insert}
 	/part {Limits to a given length or position}
 	length [number! series! pair!]
 	/only {Only insert a block as a single value (not the contents of the block)}
+	/splice {Force splicing semantics even for mismatched any-block! types}
 	/dup {Duplicates the insert a specified number of times}
 	count [number! pair!]
 ]
 
 append: action [
-	{Inserts element(s) at tail; for series, returns head.}
+	{Inserts item at tail, or contents if block type match; returns head.}
 	series [series! port! map! gob! object! bitset!] {Any position (modified)}
 	value [any-type!] {The value to insert}
 	/part {Limits to a given length or position}
 	length [number! series! pair!]
 	/only {Only insert a block as a single value (not the contents of the block)}
+	/splice {Force splicing semantics even for mismatched any-block! types}
 	/dup {Duplicates the insert a specified number of times}
 	count [number! pair!]
 ]
@@ -298,12 +300,13 @@ remove: action [
 ]
 
 change: action [
-	{Replaces element(s); returns just past the change.}
+	{Change to item, or contents if block type match; returns change tail.}
 	series [series! gob! port!]{At position (modified)}
 	value [any-type!] {The new value}
 	/part {Limits the amount to change to a given length or position}
 	length [number! series! pair!]
 	/only {Only change a block as a single value (not the contents of the block)}
+	/splice {Force splicing semantics even for mismatched any-block! types}
 	/dup {Duplicates the change a specified number of times}
 	count [number! pair!]
 ]

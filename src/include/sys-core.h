@@ -242,6 +242,7 @@ enum Insert_Arg_Nums {
 	AN_PART,
 	AN_LENGTH,
 	AN_ONLY,
+	AN_SPLICE,
 	AN_DUP,
 	AN_COUNT
 };

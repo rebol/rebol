@@ -130,6 +130,7 @@ quote
 do
 into
 only
+splice
 end  ; must be last
 
 ; Event:
