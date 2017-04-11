@@ -138,9 +138,48 @@ static REBCNT find_string(REBSER *series, REBCNT index, REBCNT end, REBVAL *targ
 	return NOT_FOUND;
 }
 
-static REBSER *make_string(REBVAL *arg, REBOOL make)
+
+// Allowing single-valued blocks to convert back to the scalar they
+// contain is good for symmetry:
+// 
+//     10 == to integer! to string! to block! to string! 10
+//
+// Yet there may be debate whether things like to integer! [10] returning
+// 10 for the sake of this symmetry is better than giving an error and
+// expecting people to use FIRST or similar if this is what they wanted.
+#define ALLOW_ANY_BLOCK_TO_SCALAR_CONVERSIONS 0
+
+static REBSER *To_Or_Make_String(REBVAL *arg, REBOOL make)
 {
 	REBSER *ser = 0;
+
+	if (IS_NONE(arg)) {
+		// Historically TO or MAKE of a none! value created an empty
+		// string, but this was deliberately disabled.
+		Trap_Arg(arg);
+	}
+
+	if (ANY_BLOCK(arg)) {
+		if (make) {
+			Trap_Arg(arg); // reserved for future use in string-making-dialect
+		} else {
+			// Because TO ANY-BLOCK! of a non-any-block value gives us a
+			// single-element block of the target subtype containing the value,
+			// we can have a well-defined reversal of that operation for
+			// TO if the block is length one and contains a simple value
+
+#if ALLOW_ANY_BLOCK_TO_SCALAR_CONVERSIONS
+			REBVAL* solo;
+
+			if (VAL_LEN(arg) != 1) Trap_Arg(arg);
+			solo = VAL_BLK_SKIP(arg, 0);
+			if (ANY_BLOCK(solo)) Trap_Arg(arg);
+			arg = solo;
+#else
+			Trap_Arg(arg);
+#endif
+		}
+	}
 
 	// MAKE <type> 123
 	if (make && (IS_INTEGER(arg) || IS_DECIMAL(arg))) {
@@ -168,23 +207,24 @@ static REBSER *make_string(REBVAL *arg, REBOOL make)
 	}
 	// MAKE/TO <type> <any-word>
 	else if (ANY_WORD(arg)) {
-		ser = Copy_Mold_Value(arg, TRUE);
-		//ser = Append_UTF8(0, Get_Word_Name(arg), -1);
+		ser = Append_UTF8(0, Get_Word_Name(arg), -1);
 	}
 	// MAKE/TO <type> #"A"
 	else if (IS_CHAR(arg)) {
 		ser = (VAL_CHAR(arg) > 0xff) ? Make_Unicode(2) : Make_Binary(2);
 		Append_Byte(ser, VAL_CHAR(arg));
+	} else {
+		// For any non-any-block! non-none! value not explicitly handled by
+		// the above conditions, we assume a mold will be be suitable;
+		// although perhaps ideally we would be using some shared code
+		// path that was a subset of mold that handled only simple REBVALs
+		ser = Copy_Mold_Value(arg, TRUE);
 	}
-	// MAKE/TO <type> <any-value>
-//	else if (IS_NONE(arg)) {
-//		ser = Make_Binary(0);
-//	}
-	else
-		ser = Copy_Form_Value(arg, 1<<MOPT_TIGHT);
 
+done:
 	return ser;
 }
+
 
 static REBSER *Make_Binary_BE64(REBVAL *arg)
 {
@@ -203,9 +243,38 @@ static REBSER *Make_Binary_BE64(REBVAL *arg)
 	return ser;
 }
 
-static REBSER *make_binary(REBVAL *arg, REBOOL make)
+
+static REBSER *To_Or_Make_Binary(REBVAL *arg, REBOOL make)
 {
 	REBSER *ser;
+
+	if (IS_NONE(arg)) {
+		// Historically TO or MAKE of a none! value created an empty
+		// string, but this was deliberately disabled.
+		Trap_Arg(arg);
+	}
+
+	if (ANY_BLOCK(arg)) {
+		if (make) {
+			Trap_Arg(arg); // reserved for future use in binary-making-dialect
+		} else {
+			// Because TO ANY-BLOCK! of a non-any-block value gives us a
+			// single-element block of the target subtype containing the value,
+			// we can have a well-defined reversal of that operation for
+			// TO if the block is length one and contains a simple value
+
+#if ALLOW_ANY_BLOCK_TO_SCALAR_CONVERSIONS
+			REBVAL* solo;
+
+			if (VAL_LEN(arg) != 1) Trap_Arg(arg);
+			solo = VAL_BLK_SKIP(arg, 0);
+			if (ANY_BLOCK(solo)) Trap_Arg(arg);
+			arg = solo;
+#else
+			Trap_Arg(arg);
+#endif
+		}
+	}
 
 	// MAKE BINARY! 123
 	switch (VAL_TYPE(arg)) {
@@ -226,13 +295,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	case REB_EMAIL:
 	case REB_URL:
 	case REB_TAG:
-//	case REB_ISSUE:
 		ser = Encode_UTF8_Value(arg, VAL_LEN(arg), 0);
-		break;
-
-	case REB_BLOCK:
-		// Join_Binary returns a shared buffer, so produce a copy:
-		ser = Copy_Series(Join_Binary(arg));
 		break;
 
 	// MAKE/TO BINARY! <tuple!>
@@ -269,6 +332,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 	return ser;
 }
+
 
 /***********************************************************************
 **
@@ -629,17 +693,22 @@ zero_str:
 
 	case A_MAKE:
 	case A_TO:
-		// Determine the datatype to create:
-		type = VAL_TYPE(value);
-		if (type == REB_DATATYPE) type = VAL_DATATYPE(value);
+		// make string! ...
+		if (IS_DATATYPE(value))
+			type = VAL_DATATYPE(value);
+		else  // make {...} ....
+			type = VAL_TYPE(value);
 
 		if (IS_NONE(arg)) Trap_Make(type, arg);
 
 		ser = (type != REB_BINARY) 
-			? make_string(arg, (REBOOL)(action == A_MAKE))
-			: make_binary(arg, (REBOOL)(action == A_MAKE));
+			? To_Or_Make_String(arg, action == A_MAKE)
+			: To_Or_Make_Binary(arg, action == A_MAKE);
 
-		if (ser) goto str_exit;
+		if (ser) {
+			Set_Series(type, D_RET, ser);
+			return R_RET;
+		}
 		Trap_Arg(arg);
 
 	//-- Bitwise:
@@ -721,7 +790,6 @@ zero_str:
 
 ser_exit:
 	type = VAL_TYPE(value);
-str_exit:
 	Set_Series(type, D_RET, ser);
 	return R_RET;
 
