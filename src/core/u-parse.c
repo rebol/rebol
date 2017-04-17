@@ -1034,8 +1034,8 @@ post:
 					item = rules++;
 					if (IS_END(item)) goto bad_end;
 					// Check for ONLY flag:
-					if (IS_WORD(item) && NZ(cmd = VAL_CMD(item))) {
-						if (cmd != SYM_ONLY) goto bad_rule;
+					if (IS_WORD(item) && NZ(VAL_CMD(item))) {
+						if (VAL_CMD(item) != SYM_ONLY) goto bad_rule;
 						cmd |= (1<<AN_ONLY);
 						item = rules++;
 					}
