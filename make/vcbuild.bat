@@ -1,9 +1,21 @@
 @ECHO OFF
 
 REM Allow to explicitly specify the desired Visual Studio version
+IF /I "%1" == "vc17" GOTO TRY_VS17
+IF /I "%1" == "vc15" GOTO TRY_VS15
 IF /I "%1" == "vc12" GOTO TRY_VS12
 IF /I "%1" == "vc10" GOTO TRY_VS10
 IF /I "%1" == "vc9" GOTO TRY_VS9
+
+REM vs15 is VS 2017
+:TRY_VS17
+CALL "%VS150COMNTOOLS%\vsvars32.bat" 2>NUL
+IF NOT ERRORLEVEL 1 GOTO BUILD
+
+REM vs14 is VS 2015
+:TRY_VS17
+CALL "%VS140COMNTOOLS%\vsvars32.bat" 2>NUL
+IF NOT ERRORLEVEL 1 GOTO BUILD
 
 REM vs12 is VS 2012
 :TRY_VS12
