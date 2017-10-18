@@ -291,6 +291,10 @@ static void close_stdio(void)
 					ok = WriteFile(Std_Out, bp, ep - bp, &total, 0);
 					bp = ep;
 				}
+				if (!ok) {
+					req->error = GetLastError();
+					return DR_ERROR;
+				}
 			} else { // for Windows SubSystem - must be converted to Win32 wide-char format
 
 				// Thankfully, MS provides something other than mbstowcs();
@@ -317,12 +321,6 @@ static void close_stdio(void)
 					bp = Parse_ANSI_sequence(++cp, ep);
 				}
 			}
-
-			if (!ok) {
-				req->error = GetLastError();
-				return DR_ERROR;
-			}
-
 		} while (bp < ep);
 
 		req->actual = req->length;  // do not use "total" (can be byte or wide)
