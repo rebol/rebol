@@ -50,8 +50,6 @@ enum Eval_Types {
 	ET_END			// end of block
 };
 
-static jmp_buf *Halt_State = 0;  //!!!!!!!!!! global?
-
 /*
 void T_Error(REBCNT n) {;}
 
@@ -451,7 +449,8 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	pvs.store = DS_TOP;		// Temp space for constructed results
 
 	// Get first block value:
-	pvs.path = VAL_BLK_DATA(pvs.orig = *path_val);
+	pvs.orig = *path_val;
+	pvs.path = VAL_BLK_DATA(*path_val);
 
 	// Lookup the value of the variable:
 	if (IS_WORD(pvs.path)) {

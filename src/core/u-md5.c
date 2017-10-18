@@ -12,36 +12,38 @@
 #define MD5_LENGTH_BLOCK 8
 #define MD5_DIGEST_LENGTH 16
 
+#define MD5_LONG u32
+
 typedef struct MD5state_st {
-	unsigned long A,B,C,D;
-	unsigned long Nl,Nh;
-	unsigned long data[MD5_LBLOCK];
+	MD5_LONG A,B,C,D;
+	MD5_LONG Nl,Nh;
+	MD5_LONG data[MD5_LBLOCK];
 	int num;
 } MD5_CTX;
 
 void MD5_Init(MD5_CTX *c);
-void MD5_Update(MD5_CTX *c, unsigned char *data, unsigned long len);
+void MD5_Update(MD5_CTX *c, unsigned char *data, MD5_LONG len);
 void MD5_Final(unsigned char *md, MD5_CTX *c);
 int MD5_CtxSize(void);
-unsigned char *MD5(unsigned char *d, unsigned long n, unsigned char *md);
+unsigned char *MD5(unsigned char *d, MD5_LONG n, unsigned char *md);
 
-#define ULONG	unsigned long
+#define ULONG	MD5_LONG
 #define UCHAR	unsigned char
 #define UINT	unsigned int
 
 #undef c2l
-#define c2l(c,l)	(l = ((unsigned long)(*((c)++)))     , \
-			 l|=(((unsigned long)(*((c)++)))<< 8), \
-			 l|=(((unsigned long)(*((c)++)))<<16), \
-			 l|=(((unsigned long)(*((c)++)))<<24))
+#define c2l(c,l)	(l = ((MD5_LONG)(*((c)++)))     , \
+			 l|=(((MD5_LONG)(*((c)++)))<< 8), \
+			 l|=(((MD5_LONG)(*((c)++)))<<16), \
+			 l|=(((MD5_LONG)(*((c)++)))<<24))
 
 #undef p_c2l
 #define p_c2l(c,l,n)	{ \
 			switch (n) { \
-			case 0: l =((unsigned long)(*((c)++))); \
-			case 1: l|=((unsigned long)(*((c)++)))<< 8; \
-			case 2: l|=((unsigned long)(*((c)++)))<<16; \
-			case 3: l|=((unsigned long)(*((c)++)))<<24; \
+			case 0: l =((MD5_LONG)(*((c)++))); \
+			case 1: l|=((MD5_LONG)(*((c)++)))<< 8; \
+			case 2: l|=((MD5_LONG)(*((c)++)))<<16; \
+			case 3: l|=((MD5_LONG)(*((c)++)))<<24; \
 				} \
 			}
 
@@ -51,9 +53,9 @@ unsigned char *MD5(unsigned char *d, unsigned long n, unsigned char *md);
 			l=0; \
 			(c)+=n; \
 			switch (n) { \
-			case 3: l =((unsigned long)(*(--(c))))<<16; \
-			case 2: l|=((unsigned long)(*(--(c))))<< 8; \
-			case 1: l|=((unsigned long)(*(--(c))))    ; \
+			case 3: l =((MD5_LONG)(*(--(c))))<<16; \
+			case 2: l|=((MD5_LONG)(*(--(c))))<< 8; \
+			case 1: l|=((MD5_LONG)(*(--(c))))    ; \
 				} \
 			}
 
@@ -61,11 +63,11 @@ unsigned char *MD5(unsigned char *d, unsigned long n, unsigned char *md);
 #define p_c2l_p(c,l,sc,len) { \
 			switch (sc) \
 				{ \
-			case 0: l =((unsigned long)(*((c)++))); \
+			case 0: l =((MD5_LONG)(*((c)++))); \
 				if (--len == 0) break; \
-			case 1: l|=((unsigned long)(*((c)++)))<< 8; \
+			case 1: l|=((MD5_LONG)(*((c)++)))<< 8; \
 				if (--len == 0) break; \
-			case 2: l|=((unsigned long)(*((c)++)))<<16; \
+			case 2: l|=((MD5_LONG)(*((c)++)))<<16; \
 				} \
 			}
 
@@ -96,14 +98,14 @@ unsigned char *MD5(unsigned char *d, unsigned long n, unsigned char *md);
 /* 5 instructions with rotate instruction, else 9 */
 #define Endian_Reverse32(a) \
 	{ \
-	unsigned long l=(a); \
+	MD5_LONG l=(a); \
 	(a)=((ROTATE(l,8)&0x00FF00FF)|(ROTATE(l,24)&0xFF00FF00)); \
 	}
 #else
 /* 6 instructions with rotate instruction, else 8 */
 #define Endian_Reverse32(a) \
 	{ \
-	unsigned long l=(a); \
+	MD5_LONG l=(a); \
 	l=(((l&0xFF00FF00)>>8L)|((l&0x00FF00FF)<<8L)); \
 	(a)=ROTATE(l,16L); \
 	}
@@ -150,12 +152,12 @@ unsigned char *MD5(unsigned char *d, unsigned long n, unsigned char *md);
 	a=ROTATE(a,s); \
 	a+=b; };
 
-#define INIT_DATA_A (unsigned long)0x67452301L
-#define INIT_DATA_B (unsigned long)0xefcdab89L
-#define INIT_DATA_C (unsigned long)0x98badcfeL
-#define INIT_DATA_D (unsigned long)0x10325476L
+#define INIT_DATA_A (MD5_LONG)0x67452301L
+#define INIT_DATA_B (MD5_LONG)0xefcdab89L
+#define INIT_DATA_C (MD5_LONG)0x98badcfeL
+#define INIT_DATA_D (MD5_LONG)0x10325476L
 
-static void md5_block(MD5_CTX *c, unsigned long *p);
+static void md5_block(MD5_CTX *c, MD5_LONG *p);
 
 void MD5_Init(MD5_CTX *c) {
 	c->A=INIT_DATA_A;
@@ -167,7 +169,7 @@ void MD5_Init(MD5_CTX *c) {
 	c->num=0;
 }
 
-void MD5_Update(MD5_CTX *c, register unsigned char *data, unsigned long len)
+void MD5_Update(MD5_CTX *c, register unsigned char *data, MD5_LONG len)
 {
 	register ULONG *p;
 	int sw,sc;
@@ -390,7 +392,7 @@ int MD5_CtxSize(void) {
 	return sizeof(MD5_CTX);
 }
 
-unsigned char *MD5(unsigned char *d, unsigned long n, unsigned char *md)
+unsigned char *MD5(unsigned char *d, MD5_LONG n, unsigned char *md)
 {
 	MD5_CTX c;
 	static unsigned char m[MD5_DIGEST_LENGTH];
