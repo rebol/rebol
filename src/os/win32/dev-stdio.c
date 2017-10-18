@@ -272,27 +272,28 @@ static void close_stdio(void)
 
 	if (Std_Out) {
 
-		if (Redir_Out) { // Always UTF-8
-			ok = WriteFile(Std_Out, req->data, req->length, &total, 0);
-			if (!ok) {
-				req->error = GetLastError();
-				return DR_ERROR;
-			}
-		}
-		else {
-			// Convert UTF-8 buffer to Win32 wide-char format for console.
-			// Thankfully, MS provides something other than mbstowcs();
-			// however, if our buffer overflows, it's an error. There's no
-			// efficient way at this level to split-up the input data,
-			// because its UTF-8 with variable char sizes.
-			bp = req->data;
-			ep = bp + req->length;
-			
-			do {
-				//from some reason, I must decrement the tail pointer in function bellow,
-				//else escape char is found past the end and processed in rare cases - like in console: do [help] do [help func]
-				//It looks dangerous, but it should be safe as it looks the req->length is always at least 1.
-				cp = Skip_To_Char(bp, ep-1, (REBYTE)27); //find ANSI escape char "^["
+		bp = req->data;
+		ep = bp + req->length;
+		do {
+			//from some reason, I must decrement the tail pointer in function bellow,
+			//else escape char is found past the end and processed in rare cases - like in console: do [help] do [help func]
+			//It looks dangerous, but it should be safe as it looks the req->length is always at least 1.
+			cp = Skip_To_Char(bp, ep-1, (REBYTE)27); //find ANSI escape char "^["
+
+			if (Redir_Out) { // Always UTF-8 for Console app
+				if (cp){
+					ok = WriteFile(Std_Out, bp, cp - bp, &total, 0);
+					bp = Parse_ANSI_sequence(++cp, ep);
+				} else {
+					ok = WriteFile(Std_Out, bp, ep - bp, &total, 0);
+					bp = ep;
+				}
+			} else { // for Windows app
+				// Convert UTF-8 buffer to Win32 wide-char format for console.
+				// Thankfully, MS provides something other than mbstowcs();
+				// however, if our buffer overflows, it's an error. There's no
+				// efficient way at this level to split-up the input data,
+				// because its UTF-8 with variable char sizes.
 
 				//if found, write to the console content before it starts, else everything
 				if (cp){
@@ -312,8 +313,14 @@ static void close_stdio(void)
 				if (cp) {
 					bp = Parse_ANSI_sequence(++cp, ep);
 				}
-			} while (bp < ep);
-		}
+			}
+
+			if (!ok) {
+				req->error = GetLastError();
+				return DR_ERROR;
+			}
+
+		} while (bp < ep);
 
 		req->actual = req->length;  // do not use "total" (can be byte or wide)
 
