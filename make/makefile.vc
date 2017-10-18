@@ -35,6 +35,7 @@ prep:
 	$(REBOL) $T/make-os-ext.r # ok, but not always
 	$(REBOL) $T/make-host-ext.r
 	$(REBOL) $T/make-reb-lib.r
+	windres r3.rc -O coff -o objs/r3.res
 
 objs:
 	mkdir objs
@@ -61,7 +62,7 @@ OBJS =	objs/a-constants.obj objs/a-globals.obj objs/a-lib.obj objs/b-boot.obj \
 	objs/t-utype.obj objs/t-vector.obj objs/t-word.obj objs/u-bmp.obj \
 	objs/u-compress.obj objs/u-dialect.obj objs/u-gif.obj objs/u-jpg.obj \
 	objs/u-md5.obj objs/u-parse.obj objs/u-png.obj objs/u-sha1.obj \
-	objs/u-zlib.obj
+	objs/u-zlib.obj objs/r3.res
 
 HOST =	objs/host-main.obj objs/host-args.obj objs/host-device.obj objs/host-stdio.obj \
 	objs/dev-net.obj objs/dev-dns.obj objs/host-lib.obj \

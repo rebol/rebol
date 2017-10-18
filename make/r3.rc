@@ -1,0 +1,24 @@
+IDI_APPICON ICON "r3-icon.ico"
+
+1 VERSIONINFO
+FILEVERSION     3,0,0,0
+PRODUCTVERSION  3,0,0,0
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904E4"
+    BEGIN
+      VALUE "FileDescription", "REBOL (relative expression based object language) console."
+      VALUE "FileVersion", "3.0"
+      VALUE "InternalName", "Rebol 3 (Oldes branch)"
+      VALUE "LegalCopyright", "2012 REBOL Technologies"
+      VALUE "OriginalFilename", "Rebol.exe"
+      VALUE "ProductName", "Rebol"
+      VALUE "ProductVersion", "3.0"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1252
+  END
+END
