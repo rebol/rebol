@@ -274,13 +274,16 @@ static void close_stdio(void)
 
 		bp = req->data;
 		ep = bp + req->length;
+
+		// Using this loop for seeking escape char and processing ANSI sequence
 		do {
+
 			//from some reason, I must decrement the tail pointer in function bellow,
 			//else escape char is found past the end and processed in rare cases - like in console: do [help] do [help func]
 			//It looks dangerous, but it should be safe as it looks the req->length is always at least 1.
 			cp = Skip_To_Char(bp, ep-1, (REBYTE)27); //find ANSI escape char "^["
 
-			if (Redir_Out) { // Always UTF-8 for Console app
+			if (Redir_Out) { // for Console SubSystem (always UTF-8)
 				if (cp){
 					ok = WriteFile(Std_Out, bp, cp - bp, &total, 0);
 					bp = Parse_ANSI_sequence(++cp, ep);
@@ -288,8 +291,8 @@ static void close_stdio(void)
 					ok = WriteFile(Std_Out, bp, ep - bp, &total, 0);
 					bp = ep;
 				}
-			} else { // for Windows app
-				// Convert UTF-8 buffer to Win32 wide-char format for console.
+			} else { // for Windows SubSystem - must be converted to Win32 wide-char format
+
 				// Thankfully, MS provides something other than mbstowcs();
 				// however, if our buffer overflows, it's an error. There's no
 				// efficient way at this level to split-up the input data,
