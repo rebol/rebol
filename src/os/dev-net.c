@@ -57,6 +57,7 @@ void Signal_Device(REBREQ *req, REBINT type);
 DEVICE_CMD Listen_Socket(REBREQ *sock);
 
 #ifdef TO_WIN32
+typedef int socklen_t;
 extern HWND Event_Handle; // For WSAAsync API
 #endif
 
@@ -356,6 +357,14 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 
 	if (GET_FLAG(sock->state, RSM_CONNECT)) return DR_DONE; // already connected
 
+	if (GET_FLAG(sock->modes, RST_UDP)) {
+		CLR_FLAG(sock->state, RSM_ATTEMPT);
+		SET_FLAG(sock->state, RSM_CONNECT);
+		Get_Local_IP(sock);
+		Signal_Device(sock, EVT_CONNECT);
+		return DR_DONE; // done
+	}
+
 	Set_Addr(&sa, sock->net.remote_ip, sock->net.remote_port);
 	result = connect(sock->socket, (struct sockaddr *)&sa, sizeof(sa));
 
@@ -422,9 +431,12 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 {
 	int result;
 	long len;
+	SOCKAI remote_addr;
+	socklen_t addr_len = sizeof(remote_addr);
 	int mode = (sock->command == RDC_READ ? RSM_RECEIVE : RSM_SEND);
 
-	if (!GET_FLAG(sock->state, RSM_CONNECT)) {
+	if (!GET_FLAG(sock->state, RSM_CONNECT)
+			&& !GET_FLAG(sock->modes, RST_UDP)) {
 		sock->error = -18;
 		return DR_ERROR;
 	}
@@ -436,7 +448,11 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 
 	if (mode == RSM_SEND) {
 		// If host is no longer connected:
-		result = send(sock->socket, sock->data, len, 0);
+		if (GET_FLAG(sock->modes, RST_UDP)) {
+			Set_Addr(&remote_addr, sock->net.remote_ip, sock->net.remote_port);
+		}
+		result = sendto(sock->socket, sock->data, len, 0,
+						(struct sockaddr*)&remote_addr, addr_len);
 		WATCH2("send() len: %d actual: %d\n", len, result);
 
 		if (result >= 0) {
@@ -451,10 +467,15 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 		// if (result < 0) ...
 	}
 	else {
-		result = recv(sock->socket, sock->data, len, 0);
+		result = recvfrom(sock->socket, sock->data, len, 0,
+						  (struct sockaddr*)&remote_addr, &addr_len);
 		WATCH2("recv() len: %d result: %d\n", len, result);
 
 		if (result > 0) {
+			if (GET_FLAG(sock->modes, RST_UDP)) {
+				sock->net.remote_ip = remote_addr.sin_addr.s_addr;
+				sock->net.remote_port = ntohs(remote_addr.sin_port);
+			}
 			sock->actual = result;
 			Signal_Device(sock, EVT_READ);
 			return DR_DONE;
