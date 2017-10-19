@@ -58,6 +58,8 @@ STRIP=	$(TOOLS)strip
 CP=
 # LS allows different ls progs:
 LS=
+# RM allows different RM progs:
+RM=
 # UP - some systems do not use ../
 UP=
 # CD - some systems do not use ./
@@ -74,6 +76,8 @@ I= -I$(INCL) -I$S/include/
 TO_OS?=
 OS_ID?=
 BIN_SUFFIX=
+LIB_SUFFIX=
+RES=
 RAPI_FLAGS=
 HOST_FLAGS=	-DREB_EXE
 RLIB_FLAGS=
@@ -84,7 +88,7 @@ HFLAGS= -c -D$(TO_OS) -DREB_CORE $(HOST_FLAGS) $I
 CLIB=
 
 # REBOL is needed to build various include files:
-REBOL_TOOL= r3-make
+REBOL_TOOL= r3-make$(BIN_SUFFIX)
 REBOL=	$(CD)$(REBOL_TOOL) -qs
 
 # For running tests, ship, build, etc.
@@ -101,7 +105,7 @@ make:
 	$(REBOL) $T/make-make.r $(OS_ID)
 
 clean:
-	@-rm -rf libr3.so objs/
+	$(RM) libr3$(LIB_SUFFIX) objs $(RES)
 
 all:
 	$(MAKE) clean
@@ -109,6 +113,7 @@ all:
 	$(MAKE) r3$(BIN_SUFFIX)
 	$(MAKE) lib
 	$(MAKE) host$(BIN_SUFFIX)
+	$(MAKE) testdo
 
 prep:
 	$(REBOL) $T/make-headers.r
@@ -134,11 +139,15 @@ $(REBOL_TOOL):
 	false
 
 ### Post build actions
+
 purge:
-	-rm libr3.*
-	-rm host$(BIN_SUFFIX)
+	$(RM) libr3.*
+	$(RM) host$(BIN_SUFFIX)
 	$(MAKE) lib
 	$(MAKE) host$(BIN_SUFFIX)
+
+testdo:
+	r3$(BIN_SUFFIX) --do "print {^^/^^[[32mI'm READY^^[[0m}"
 
 test:
 	$(CP) r3$(BIN_SUFFIX) $(UP)/src/tests/
@@ -150,11 +159,11 @@ install:
 ship:
 	$(R3) $S/tools/upload.r
 
-build:	libr3.so
+build:	libr3$(LIB_SUFFIX)
 	$(R3) $S/tools/make-build.r
 
 cln:
-	rm libr3.* r3.o
+	$(RM) libr3.* r3.o
 
 check:
 	$(STRIP) -s -o r3.s r3$(BIN_SUFFIX)
@@ -165,11 +174,16 @@ check:
 }
 
 ;******************************************************************************
+makefile-res: {
+# Compile resources:
+$(RES):
+	windres r3.rc -O coff -o $(RES)
+}
 
 makefile-link: {
 # Directly linked r3 executable:
-r3$(BIN_SUFFIX):	tmps objs $(OBJS) $(HOST)
-	$(CC) -o r3$(BIN_SUFFIX) $(OBJS) $(HOST) $(CLIB)
+r3$(BIN_SUFFIX):	tmps objs $(OBJS) $(RES) $(HOST)
+	$(CC) -o r3$(BIN_SUFFIX) $(OBJS) $(RES) $(HOST) $(CLIB)
 	$(STRIP) r3$(BIN_SUFFIX)
 	-$(NM) -a r3$(BIN_SUFFIX)
 	$(LS) r3$(BIN_SUFFIX)
@@ -179,23 +193,23 @@ objs:
 }
 
 makefile-so: {
-lib:	libr3.so
+lib:	libr3$(LIB_SUFFIX)
 
 # PUBLIC: Shared library:
-# NOTE: Did not use "-Wl,-soname,libr3.so" because won't find .so in local dir.
-libr3.so:	$(OBJS)
-	$(CC) -o libr3.so -shared $(OBJS) $(CLIB)
-	$(STRIP) libr3.so
-	-$(NM) -D libr3.so
-	-$(NM) -a libr3.so | grep "Do_"
-	$(LS) libr3.so
+# NOTE: Did not use "-Wl,-soname,libr3$(LIB_SUFFIX)" because won't find $(LIB_SUFFIX) in local dir.
+libr3$(LIB_SUFFIX):	$(OBJS)
+	$(CC) -o libr3$(LIB_SUFFIX) -shared $(OBJS) $(CLIB)
+	$(STRIP) libr3$(LIB_SUFFIX)
+	-$(NM) -D libr3$(LIB_SUFFIX)
+	-$(NM) -a libr3$(LIB_SUFFIX) | grep "Do_"
+	$(LS) libr3$(LIB_SUFFIX)
 
 # PUBLIC: Host using the shared lib:
-host$(BIN_SUFFIX):	$(HOST)
-	$(CC) -o host$(BIN_SUFFIX) $(HOST) libr3.so $(CLIB)
+host$(BIN_SUFFIX):	$(HOST) $(RES)
+	$(CC) -o host$(BIN_SUFFIX) $(HOST) $(RES) libr3$(LIB_SUFFIX) $(CLIB)
 	$(STRIP) host$(BIN_SUFFIX)
 	$(LS) host$(BIN_SUFFIX)
-	echo "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"
+	@echo "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"
 }
 
 makefile-dyn: {
@@ -215,7 +229,7 @@ host$(BIN_SUFFIX):	$(HOST)
 	$(CC) -o host$(BIN_SUFFIX) $(HOST) libr3.dylib $(CLIB)
 	$(STRIP) host$(BIN_SUFFIX)
 	$(LS) host$(BIN_SUFFIX)
-	echo "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"
+	@echo "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"
 }
 
 not-used: {
@@ -383,7 +397,16 @@ unless flag? -SP [ ; Use standard paths:
 	macro+ CD "./"
 ]
 if os-plat/2 = 3 [macro+ REBOL ">NUL:"] ; Temporary workaround for R3 on Win7.
-if flag? EXE [macro+ BIN_SUFFIX %.exe]
+either flag? EXE [
+	macro+ BIN_SUFFIX %.exe
+	macro+ LIB_SUFFIX %.dll
+	macro+ RES "objs\r3.res"
+	macro+ RM  "DEL /s /q"
+][
+	macro+ LIB_SUFFIX %.so
+	macro+ RM  "@-rm -rf"
+]
+
 macro++ CLIB linker-flags
 macro++ RAPI_FLAGS compile-flags
 macro++ HOST_FLAGS make compile-flags [PIC: NCM: none]
@@ -396,6 +419,7 @@ emit ["OBJS =" tab]
 emit-obj-files fb/core
 emit ["HOST =" tab]
 emit-obj-files append copy fb/os os-specific-objs
+if flag? EXE [emit makefile-res]
 emit makefile-link
 emit get pick [makefile-dyn makefile-so] os-plat/2 = 2
 emit {
