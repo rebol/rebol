@@ -33,3 +33,38 @@ wrap: func [
 ][
 	do bind/copy/set body make object! 0
 ]
+
+any-of: func [
+	"Returns the first value(s) for which the test is not FALSE or NONE."
+	'word [word! block!] "Word or block of words to set each time (local)"
+	data [series! any-object! map! none!] "The series to traverse"
+	test [block!] "Condition to test each time"
+][
+	if data [
+		foreach (word) data reduce [
+			:if to paren! test compose [
+				(to path! reduce [:break 'return]) (
+					either word? word [to get-word! word] [
+						reduce [:reduce map-each w word [to get-word! w]]
+					]
+				)
+			]
+		]
+	]
+]
+
+all-of: func [
+	"Returns TRUE if all value(s) pass the test, otherwise NONE."
+	'word [word! block!] "Word or block of words to set each time (local)"
+	data [series! any-object! map! none!] "The series to traverse"
+	test [block!] "Condition to test each time"
+][
+	if data [
+		foreach (word) data reduce [
+			:unless to paren! test reduce [
+				to path! reduce [:break 'return] none
+			]
+			true
+		]
+	]
+]
