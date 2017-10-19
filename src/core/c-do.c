@@ -35,6 +35,9 @@
 #include <stdio.h>
 #include "sys-state.h"
 
+REBNATIVE(do);  // Forward declaration for detection and special cases
+#define IS_DO(v) (IS_NATIVE(v) && (VAL_FUNC_CODE(v) == &N_do))
+
 enum Eval_Types {
 	ET_INVALID,		// not valid to evaluate
 	ET_WORD,
@@ -1298,9 +1301,9 @@ eval_func2:
 **
 ***********************************************************************/
 {
-	REBINT ftype = VAL_TYPE(func) - REB_NATIVE; // function type
 	REBSER *block = VAL_SERIES(args);
 	REBCNT index = VAL_INDEX(args);
+	REBCNT dsp;
 	REBCNT dsf;
 
 	REBSER *words;
@@ -1309,11 +1312,15 @@ eval_func2:
 	REBINT start;
 	REBVAL *val;
 
+	dsp = DSP; // in case we have to reset it later
+
+reapply:  // Go back here to start over with a new func
+
 	if (index > SERIES_TAIL(block)) index = SERIES_TAIL(block);
 
 	// Push function frame:
 	dsf = Push_Func(0, block, index, 0, func);
-	func = DSF_FUNC(dsf); // for safety
+	func = DSF_FUNC(dsf); // set to non-volatile reference for safety
 
 	// Determine total number of args:
 	words = VAL_FUNC_WORDS(func);
@@ -1324,6 +1331,17 @@ eval_func2:
 	if (reduce) {
 		// Reduce block contents to stack:
 		n = 0;
+		// Check for DO any-function
+		if (index < BLK_LEN(block)) {
+			index = Do_Next(block, index, 0);
+			val = DS_TOP;
+			if (IS_DO(func) && ANY_FUNC(val)) {
+				func = val;    // apply this func directly (volatile reference!)
+				DSP = dsp;     // reset the stack
+				goto reapply;  // go back to the beginning
+			}
+			n++;
+		}
 		while (index < BLK_LEN(block)) {
 			index = Do_Next(block, index, 0);
 			if (THROWN(DS_TOP)) return;
@@ -1332,10 +1350,18 @@ eval_func2:
 		if (n > len) DSP = start + len;
 	}
 	else {
+		// Get args block and check for DO any-function
+		n = BLK_LEN(block) - index;
+		val = BLK_SKIP(block, index);
+		if (n > 0 && IS_DO(func) && ANY_FUNC(val)) {
+			func = val;    // apply this func directly
+			index++;       // skip past the func value in the args
+			DSP = dsp;     // reset the stack
+			goto reapply;  // go back to the beginning
+		}
 		// Copy block contents to stack:
-		n = VAL_BLK_LEN(args);
 		if (len < n) n = len;
-		memcpy(&DS_Base[start], BLK_SKIP(block, index), n * sizeof(REBVAL));
+		memcpy(&DS_Base[start], val, n * sizeof(REBVAL));
 		DSP = start + n - 1;
 	}
 
@@ -1370,7 +1396,7 @@ eval_func2:
 
 	// Evaluate the function:
 	DSF = dsf;
-	Func_Dispatch[ftype](func);
+	Func_Dispatch[VAL_TYPE(func) - REB_NATIVE](func);
 	DSP = dsf;
 	DSF = PRIOR_DSF(dsf);
 }
