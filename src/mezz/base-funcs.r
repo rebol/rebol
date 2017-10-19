@@ -74,7 +74,7 @@ object: func [
 	{Defines a unique object.}
 	blk [block!] {Object words and values (modified)}
 ][
-	make object! append blk none
+	make object! blk  ; blk modified by deep-binding
 ]
 
 module: func [
