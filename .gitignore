@@ -4,6 +4,9 @@
 
 make/r3*
 make/objs/
+make/host.exe
+make/libr3.so
+make/libr3.dll
 src/boot/boot-code.r
 src/boot/host-init.r
 src/core/b-boot.c
