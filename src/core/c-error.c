@@ -272,7 +272,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	REBSER *cats;		// Error catalog object
 	REBSER *cat;		// Error category object
 	REBCNT n;		// Word symbol number
-	REBCNT code;
+	REBINT code;
 
 	code = VAL_INT32(&error->code);
 
