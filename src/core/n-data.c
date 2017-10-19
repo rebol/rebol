@@ -644,6 +644,16 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
+/***********************************************************************
+**
+*/	REBNATIVE(to_value)
+/*
+***********************************************************************/
+{
+	return (IS_UNSET(D_ARG(1)) ? R_NONE : R_ARG1);
+}
+
+
 //** SERIES ************************************************************
 
 static int Do_Ordinal(REBVAL *ds, REBINT n)
