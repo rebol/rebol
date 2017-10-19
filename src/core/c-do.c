@@ -836,7 +836,6 @@ reval:
 		if (IS_UNSET(value)) Trap1(RE_NO_VALUE, word);
 		if (VAL_TYPE(value) >= REB_NATIVE && VAL_TYPE(value) <= REB_FUNCTION) goto reval; // || IS_LIT_PATH(value)
 		DS_PUSH(value);
-		if (IS_LIT_WORD(value)) VAL_SET(DS_TOP, REB_WORD);
 		if (IS_FRAME(value)) Init_Obj_Value(DS_TOP, VAL_WORD_FRAME(word));
 		index++;
 		break;

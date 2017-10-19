@@ -31,9 +31,11 @@ make-port*: func [
 		url? spec [
 			spec: repend decode-url spec [to set-word! 'ref spec]
 			name: select spec to set-word! 'scheme
+			if lit-word? name [name: to word! name]
 		]
 		block? spec [
 			name: select spec to set-word! 'scheme
+			if lit-word? name [name: to word! name]
 		]
 		object? spec [
 			name: get in spec 'scheme
