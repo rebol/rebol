@@ -352,6 +352,8 @@ fail:
 /*
 ***********************************************************************/
 {
+	ssize_t num_bytes;
+
 	if (GET_FLAG(file->modes, RFM_DIR)) {
 		return Read_Directory(file, (REBREQ*)file->data);
 	}
@@ -367,11 +369,12 @@ fail:
 	}
 
 	// printf("read %d len %d\n", file->id, file->length);
-	file->actual = read(file->id, file->data, file->length);
-	if (file->actual < 0) {
+	num_bytes = read(file->id, file->data, file->length);
+	if (num_bytes < 0) {
 		file->error = -RFE_BAD_READ;
 		return DR_ERROR;
 	} else {
+		file->actual = num_bytes;
 		file->file.index += file->actual;
 	}
 
@@ -387,6 +390,8 @@ fail:
 **
 ***********************************************************************/
 {
+	ssize_t num_bytes;
+
 	if (!file->id) {
 		file->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
@@ -406,11 +411,13 @@ fail:
 
 	if (file->length == 0) return DR_DONE;
 
-	file->actual = write(file->id, file->data, file->length);
-	if (file->actual < 0) {
+	num_bytes = write(file->id, file->data, file->length);
+	if (num_bytes < 0) {
 		if (errno == ENOSPC) file->error = -RFE_DISK_FULL;
 		else file->error = -RFE_BAD_WRITE;
 		return DR_ERROR;
+	} else {
+		file->actual = num_bytes;
 	}
 
 	return DR_DONE;
