@@ -140,7 +140,7 @@
 	if (c == '/') {			// %/
 		dst = Make_Unicode(len+FN_PAD);
 		out = UNI_HEAD(dst);
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 		i++;
 		if (i < len) {
 			c = GET_CHAR_UNI(uni, bp, i);
@@ -167,7 +167,7 @@
 		if (full) l = OS_GET_CURRENT_DIR(&lpath);
 		dst = Make_Unicode(l + len + FN_PAD); // may be longer (if lpath is encoded)
 		if (full) {
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 			Append_Uni_Uni(dst, lpath, l);
 #else
 			REBINT clen = Decode_UTF8(UNI_HEAD(dst), lpath, l, FALSE);
@@ -252,7 +252,7 @@
 ***********************************************************************/
 {
 	REBSER *ser; // will be unicode size
-#ifndef TO_WIN32
+#ifndef TO_WINDOWS
 	REBSER *bin;
 	REBCNT n;
 #endif
@@ -261,7 +261,7 @@
 
 	ser = To_Local_Path(VAL_DATA(val), VAL_LEN(val), (REBOOL)!VAL_BYTE_SIZE(val), TRUE);
 
-#ifndef TO_WIN32
+#ifndef TO_WINDOWS
 	// Posix needs UTF8 conversion:
 	n = Length_As_UTF8(UNI_HEAD(ser), SERIES_TAIL(ser), TRUE, OS_CRLF);
 	bin = Make_Binary(n + FN_PAD);

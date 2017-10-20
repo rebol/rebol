@@ -49,7 +49,7 @@
 //#define TEST_MODE  // teset as stand-alone program
 
 #ifdef NO_TTY_ATTRIBUTES
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 #include <io.h>
 #endif
 #else

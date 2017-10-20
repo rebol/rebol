@@ -66,7 +66,7 @@
 
 REBARGS Main_Args;
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 HINSTANCE App_Instance = 0;
 #endif
 
@@ -111,7 +111,7 @@ void Host_Crash(REBYTE *reason) {
 **
 ***********************************************************************/
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 int WINAPI WinMain(HINSTANCE inst, HINSTANCE prior, LPSTR cmd, int show)
 #else
 int main(int argc, char **argv)
@@ -121,7 +121,7 @@ int main(int argc, char **argv)
 	REBYTE *line;
 	REBINT n;
 
-#ifdef TO_WIN32  // In Win32 get args manually:
+#ifdef TO_WINDOWS  // In Win32 get args manually:
 	int argc;
 	REBCHR **argv;
 	// Fetch the win32 unicoded program arguments:

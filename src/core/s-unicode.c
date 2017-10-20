@@ -977,7 +977,7 @@ ConversionResult ConvertUTF8toUTF32 (
 	for (; len > 0; len--) {
 		c = uni ? *src++ : *bp++;
 		if (c < (UTF32)0x80) {
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 			if (ccr && c == LF) size++; // because we will add a CR to it
 #endif
 			size++;
@@ -1058,7 +1058,7 @@ ConversionResult ConvertUTF8toUTF32 (
 	for (; max > 0 && cnt > 0; cnt--) {
 		c = uni ? *up++ : *bp++;
 		if (c < 0x80) {
-#if defined(TO_WIN32)
+#if defined(TO_WINDOWS)
 			if (ccr && c == LF) {
 				// If there's not room, don't try to output CRLF
 				if (2 > max) {up--; break;}

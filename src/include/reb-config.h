@@ -81,12 +81,19 @@ These are now obsolete (as of A107) and should be removed:
 #endif
 #endif
 
-//* MS Windows 32 ******************************************************
 
-#ifdef TO_WIN32					// Win32/Intel
+//* MS Windows *********************************************************
+
+#ifdef TO_WIN32	
+#define TO_WINDOWS
+#endif
+#ifdef TO_WIN32_X64
+#define TO_WINDOWS
+#endif
+
+#ifdef TO_WINDOWS				// Win32/Intel
 
 #define	WIN32_LEAN_AND_MEAN		// trim down the Win32 headers
-#define ENDIAN_LITTLE			// uses little endian byte order
 #define OS_WIDE_CHAR			// OS uses WIDE_CHAR API
 #define OS_CRLF TRUE			// uses CRLF as line terminator
 #define OS_DIR_SEP '\\'			// file path separator (Thanks Bill.)
@@ -124,7 +131,8 @@ These are now obsolete (as of A107) and should be removed:
 //#pragma warning(disable : 4701)
 
 #define AGG_WIN32_FONTS //use WIN32 api for font handling
-#else
+
+#else //end of Windows section
 
 //* Non Windows ********************************************************
 
@@ -146,12 +154,10 @@ These are now obsolete (as of A107) and should be removed:
 #endif
 
 #ifdef TO_LINUX					// Linux/Intel
-#define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_LINUX_X64				// Linux/AMD64
-#define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #ifndef __LP64__
 #define __LP64__
@@ -159,38 +165,31 @@ These are now obsolete (as of A107) and should be removed:
 #endif
 
 #ifdef TO_LINUX_PPC				// Linux/PPC
-#define ENDIAN_BIG
 #define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_LINUX_ARM				// Linux/ARM
-#define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_LINUX_MIPS
-#define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_HAIKU					// same as Linux/Intel seems to work
-#define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_OSXI					// OSX/Intel
-#define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_OSX					// OSX/PPC
-#define ENDIAN_BIG
 #define HAS_LL_CONSTS
 #define OLD_COMPILER
 #endif
 
 #ifdef TO_OSX_X64				// OSX/AMD64
-#define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #ifndef __LP64__
 #define __LP64__
@@ -198,12 +197,10 @@ These are now obsolete (as of A107) and should be removed:
 #endif
 
 #ifdef TO_FREEBSD
-#define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_FREEBSD_X64			// FreeBSD/AMD64
-#define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #ifndef __LP64__
 #define __LP64__
@@ -211,7 +208,6 @@ These are now obsolete (as of A107) and should be removed:
 #endif
 
 #ifdef TO_OPENBSD
-#define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #endif
 
@@ -221,7 +217,6 @@ These are now obsolete (as of A107) and should be removed:
 #endif
 
 #ifdef TO_AMIGA					// Target for OS4
-#define ENDIAN_BIG
 #define HAS_BOOL
 #define HAS_LL_CONSTS
 #define HAS_SMART_CONSOLE

@@ -615,7 +615,7 @@ chk_neg:
 }
 
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 /***********************************************************************
 **
 */	REBSER *Block_To_String_List(REBVAL *blk)
@@ -693,7 +693,7 @@ chk_neg:
 /*
 ***********************************************************************/
 {
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 	REBRFR fr = {0};
 	REBSER *ser;
 	REBINT n;

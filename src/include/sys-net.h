@@ -27,7 +27,7 @@
 ***********************************************************************/
 
 //----- Windows - "Network standards? What network standards?" -Bill G.
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS // any Windows version
 
 #include <winsock.h>
 

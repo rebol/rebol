@@ -204,7 +204,7 @@ enum {
 **
 ***********************************************************************/
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 typedef long (__stdcall *FUNCPTR)();
 typedef void(__cdecl *CFUNC)(void *);
 #else

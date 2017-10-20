@@ -56,7 +56,7 @@
 void Signal_Device(REBREQ *req, REBINT type);
 DEVICE_CMD Listen_Socket(REBREQ *sock);
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 typedef int socklen_t;
 extern HWND Event_Handle; // For WSAAsync API
 #endif
@@ -115,7 +115,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 ***********************************************************************/
 {
 	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 	WSADATA wsaData;
 	// Initialize Windows Socket API with given VERSION.
 	// It is ok to call twice, as long as WSACleanup twice.
@@ -135,7 +135,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 ***********************************************************************/
 {
 	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 	if (GET_FLAG(dev->flags, RDF_INIT)) WSACleanup();
 #endif
 	CLR_FLAG(dev->flags, RDF_INIT);
@@ -275,7 +275,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 **
 ***********************************************************************/
 {
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 	HANDLE handle;
 #endif
 	HOSTENT *host;
@@ -383,7 +383,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 		Signal_Device(sock, EVT_CONNECT);
 		return DR_DONE; // done
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 	case NE_INVALID:	// Corrects for Microsoft bug
 #endif
 	case NE_WOULDBLOCK:

@@ -201,7 +201,7 @@ int SHA1_CtxSize(void);
 			 *((c)++)=(unsigned char)(((l)>>24)&0xff))
 
 #undef ROTATE
-#if defined(TO_WIN32)
+#if defined(TO_WINDOWS)
 #define ROTATE(a,n)     _lrotl(a,n)
 #else
 #if defined(TO_AMIGA_OLD)
@@ -214,7 +214,7 @@ SHA_LONG __builtin_rol(SHA_LONG,int,int);
 
 /* A nice byte order reversal from Wei Dai <weidai@eskimo.com> */
 #if !defined(Endian_Reverse32)
-#if defined(TO_WIN32)
+#if defined(TO_WINDOWS)
 /* 5 instructions with rotate instruction, else 9 */
 #define Endian_Reverse32(a) \
 	{ \

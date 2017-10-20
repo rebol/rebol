@@ -177,13 +177,13 @@ check:
 makefile-res: {
 # Compile resources:
 $(RES):
-	windres r3.rc -O coff -o $(RES)
+	$(TOOLS)windres r3.rc -O coff -o $(RES)
 }
 
 makefile-link: {
 # Directly linked r3 executable:
-r3$(BIN_SUFFIX):	tmps objs $(OBJS) $(RES) $(HOST)
-	$(CC) -o r3$(BIN_SUFFIX) $(OBJS) $(RES) $(HOST) $(CLIB)
+r3$(BIN_SUFFIX):	tmps objs $(OBJS) $(HOST) $(RES)
+	$(CC) -o r3$(BIN_SUFFIX) $(OBJS) $(HOST) $(RES) $(CLIB)
 	$(STRIP) r3$(BIN_SUFFIX)
 	-$(NM) -a r3$(BIN_SUFFIX)
 	$(LS) r3$(BIN_SUFFIX)
@@ -400,7 +400,7 @@ if os-plat/2 = 3 [macro+ REBOL ">NUL:"] ; Temporary workaround for R3 on Win7.
 either flag? EXE [
 	macro+ BIN_SUFFIX %.exe
 	macro+ LIB_SUFFIX %.dll
-	macro+ RES "objs\r3.res"
+	macro+ RES {"objs/r3.res"}
 	macro+ RM  "DEL /s /q"
 ][
 	macro+ LIB_SUFFIX %.so

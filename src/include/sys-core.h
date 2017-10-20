@@ -58,7 +58,7 @@
 
 // Special OS-specific definitions:
 #ifdef OS_DEFS
-	#ifdef TO_WIN32
+	#ifdef TO_WINDOWS
 	#include <windows.h>
 	#undef IS_ERROR
 	#endif

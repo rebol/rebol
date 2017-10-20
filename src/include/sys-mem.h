@@ -123,7 +123,7 @@ typedef void *REBNOD;			// Just used for linking free nodes
 #define MUNG_PATTERN2 "Magic protection"
 #define MUNG_SIZE 16
 #define MUNG_CHECK(a,b,c) Mung_Check((a),(REBYTE *)(b),(c))
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 void mywrite(int a, char *b, int c) {int i;for(i=0;i<c;i++) Put_Term(b[i]);}
 #else
 #define mywrite(a,b,c) write(a,b,c)
