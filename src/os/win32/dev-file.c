@@ -297,7 +297,7 @@ fail:
 		if (!Seek_File_64(file)) return DR_ERROR;
 	}
 
-	if (!ReadFile(file->handle, file->data, file->length, &file->actual, 0)) {
+	if (!ReadFile(file->handle, file->data, file->length, (LPDWORD)&file->actual, 0)) {
 		file->error = -RFE_BAD_READ;
 		return DR_ERROR;
 	} else {
@@ -337,7 +337,7 @@ fail:
 	}
 
 	if (file->length != 0) {
-		if (!WriteFile(file->handle, file->data, file->length, &file->actual, 0)) {
+		if (!WriteFile(file->handle, file->data, file->length, (LPDWORD)&file->actual, 0)) {
 			result = GetLastError();
 			if (result == ERROR_HANDLE_DISK_FULL) file->error = -RFE_DISK_FULL;
 			else file->error = -RFE_BAD_WRITE;
