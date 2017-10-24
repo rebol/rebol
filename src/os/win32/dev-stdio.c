@@ -498,7 +498,7 @@ DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);
 	int value1 = 0;
 	int value2 = 0;
 	int attribute = -1;
-	int num;
+	long unsigned int num;
 	int len;
 	COORD coordScreen; 
 	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
