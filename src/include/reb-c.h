@@ -68,13 +68,31 @@ typedef uintptr_t		REBUPT;		// unsigned counterpart of void*
 #define MAX_I64 INT64_MAX
 #define MIN_I64 INT64_MIN
 
+#define I8_C(c)			INT8_C(c)
+#define U8_C(c)			UINT8_C(c)
+
+#define I16_C(c)		INT16_C(c)
+#define U16_C(c)		UINT16_C(c)
+
+#define I32_C(c)		INT32_C(c)
+#define U32_C(c)		UINT32_C(c)
+
+#define I64_C(c)		INT64_C(c)
+#define U64_C(c)		UINT64_C(c)
+
 #else
 /* C-code types: C99 definitions unavailable, do it ourselves */
 
 typedef char			i8;
 typedef unsigned char	u8;
+#define I8(c) 			c
+#define U8(c) 			c
+
 typedef short			i16;
 typedef unsigned short	u16;
+#define I16(c) 			c
+#define U16(c) 			c
+
 #ifdef __LP64__
 typedef int				i32;
 typedef unsigned int	u32;
@@ -82,12 +100,19 @@ typedef unsigned int	u32;
 typedef long				i32;
 typedef unsigned long	u32;
 #endif
+#define I32_C(c) c
+#define U32_C(c) c ## U
+
 #ifdef ODD_INT_64       // Windows VC6 nonstandard typing for 64 bits
 typedef _int64          i64;
 typedef unsigned _int64 u64;
+#define I64_C(c) c ## I64
+#define U64_C(c) c ## U64
 #else
 typedef long long       i64;
 typedef unsigned long long u64;
+#define I64_C(c) c ## LL
+#define U64_C(c) c ## ULL
 #endif
 #ifdef __LLP64__
 typedef long long		REBIPT;		// integral counterpart of void*
@@ -97,18 +122,16 @@ typedef long			REBIPT;		// integral counterpart of void*
 typedef unsigned long	REBUPT;		// unsigned counterpart of void*
 #endif
 
-#define MAX_I32 ((i32)0x7fffffff)
-#define MIN_I32 ((i32)0x80000000)
-#ifdef HAS_LL_CONSTS
-#define MAX_I64 ((i64)0x7fffffffffffffffLL)
-#define MIN_I64 ((i64)0x8000000000000000LL)
-#else
-#define MAX_I64 ((i64)0x7fffffffffffffffI64)
-#define MIN_I64 ((i64)0x8000000000000000I64)
-#endif
+#define MAX_I32 I32_C(0x7fffffff)
+#define MIN_I32 ((i32)I32_C(0x80000000)) //compiler treats the hex literal as unsigned without casting
+#define MAX_I64 I64_C(0x7fffffffffffffff)
+#define MIN_I64 ((i64)I64_C(0x8000000000000000)) //compiler treats the hex literal as unsigned without casting
 
 #endif
 /* C-code types */
+
+#define MAX_U32 U32_C(0xffffffff)
+#define MAX_U64 U64_C(0xffffffffffffffff)
 
 #ifndef DEF_UINT		// some systems define it, don't define it again
 typedef unsigned int    uint;
@@ -180,7 +203,7 @@ enum {
 **
 ***********************************************************************/
 
-#define MAX_INT_LEN     20
+#define MAX_INT_LEN     21
 #define MAX_HEX_LEN     16
 
 #ifdef ITOA64           // Integer to ascii conversion
@@ -277,3 +300,114 @@ typedef void(*CFUNC)(void *);
 #define MAKE_STR(n) (REBCHR*)(malloc((n) * sizeof(REBCHR)))  // OS chars!
 
 #define ROUND_TO_INT(d) (REBINT)(floor((d) + 0.5))
+
+//
+// CASTING MACROS
+//
+// The following code and explanation is from "Casts for the Masses (in C)":
+//
+// http://blog.hostilefork.com/c-casts-for-the-masses/
+//
+// But debug builds don't inline functions--not even no-op ones whose sole
+// purpose is static analysis.  This means the cast macros add a headache when
+// stepping through the debugger, and also they consume a measurable amount
+// of runtime.  Hence we sacrifice cast checking in the debug builds...and the
+// release C++ builds on Travis are relied upon to do the proper optimizations
+// as well as report any static analysis errors.
+//
+
+#if !defined(__cplusplus) || !defined(NDEBUG)
+    /* These macros are easier-to-spot variants of the parentheses cast.
+     * The 'm_cast' is when getting [M]utablity on a const is okay (RARELY!)
+     * Plain 'cast' can do everything else (except remove volatile)
+     * The 'c_cast' helper ensures you're ONLY adding [C]onst to a value
+     */
+    #define m_cast(t,v)     ((t)(v))
+    #define cast(t,v)       ((t)(v))
+    #define c_cast(t,v)     ((t)(v))
+    /*
+     * Q: Why divide roles?  A: Frequently, input to cast is const but you
+     * "just forget" to include const in the result type, gaining mutable
+     * access.  Stray writes to that can cause even time-traveling bugs, with
+     * effects *before* that write is made...due to "undefined behavior".
+     */
+#elif defined(__cplusplus) /* for gcc -Wundef */ && (__cplusplus < 201103L)
+    /* Well-intentioned macros aside, C has no way to enforce that you can't
+     * cast away a const without m_cast. C++98 builds can do that, at least:
+     */
+    #define m_cast(t,v)     const_cast<t>(v)
+    #define cast(t,v)       ((t)(v))
+    #define c_cast(t,v)     const_cast<t>(v)
+#else
+    /* __cplusplus >= 201103L has C++11's type_traits, where we get some
+     * actual power.  cast becomes a reinterpret_cast for pointers and a
+     * static_cast otherwise.  We ensure c_cast added a const and m_cast
+     * removed one, and that neither affected volatility.
+     */
+    template<typename T, typename V>
+    T m_cast_helper(V v) {
+        static_assert(!std::is_const<T>::value,
+            "invalid m_cast() - requested a const type for output result");
+        static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
+            "invalid m_cast() - input and output have mismatched volatility");
+        return const_cast<T>(v);
+    }
+    /* reinterpret_cast for pointer to pointer casting (non-class source)*/
+    template<typename T, typename V,
+        typename std::enable_if<
+            !std::is_class<V>::value
+            && (std::is_pointer<V>::value || std::is_pointer<T>::value)
+        >::type* = nullptr>
+                T cast_helper(V v) { return reinterpret_cast<T>(v); }
+    /* static_cast for non-pointer to non-pointer casting (non-class source) */
+    template<typename T, typename V,
+        typename std::enable_if<
+            !std::is_class<V>::value
+            && (!std::is_pointer<V>::value && !std::is_pointer<T>::value)
+        >::type* = nullptr>
+                T cast_helper(V v) { return static_cast<T>(v); }
+    /* use static_cast on all classes, to go through their cast operators */
+    template<typename T, typename V,
+        typename std::enable_if<
+            std::is_class<V>::value
+        >::type* = nullptr>
+                T cast_helper(V v) { return static_cast<T>(v); }
+    template<typename T, typename V>
+    T c_cast_helper(V v) {
+        static_assert(!std::is_const<T>::value,
+            "invalid c_cast() - did not request const type for output result");
+        static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
+            "invalid c_cast() - input and output have mismatched volatility");
+        return const_cast<T>(v);
+    }
+    #define m_cast(t, v)    m_cast_helper<t>(v)
+    #define cast(t, v)      cast_helper<t>(v)
+    #define c_cast(t, v)    c_cast_helper<t>(v)
+#endif
+#if defined(NDEBUG) || !defined(REB_DEF)
+    /* These [S]tring and [B]inary casts are for "flips" between a 'char *'
+     * and 'unsigned char *' (or 'const char *' and 'const unsigned char *').
+     * Being single-arity with no type passed in, they are succinct to use:
+     */
+    #define s_cast(b)       ((char *)(b))
+    #define cs_cast(b)      ((const char *)(b))
+    #define b_cast(s)       ((unsigned char *)(s))
+    #define cb_cast(s)      ((const unsigned char *)(s))
+    /*
+     * In C++ (or C with '-Wpointer-sign') this is powerful.  'char *' can
+     * be used with string functions like strlen().  Then 'unsigned char *'
+     * can be saved for things you shouldn't _accidentally_ pass to functions
+     * like strlen().  (One GREAT example: encoded UTF-8 byte strings.)
+     */
+#else
+    /* We want to ensure the input type is what we thought we were flipping,
+     * particularly not the already-flipped type.  Instead of type_traits, 4
+     * functions check in both C and C++ (here only during Debug builds):
+     * (Definitions are in n-strings.c w/prototypes built by make-headers.r)
+     */
+    #define s_cast(b)       s_cast_(b)
+    #define cs_cast(b)      cs_cast_(b)
+    #define b_cast(s)       b_cast_(s)
+    #define cb_cast(s)      cb_cast_(s)
+#endif
+

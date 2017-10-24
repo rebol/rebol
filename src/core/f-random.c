@@ -149,7 +149,7 @@ static REBI64 ran_arr_cycle()
 	return tmp;
 }
 
-#define MAX_U64 ((REBU64)(REBI64)-1)
+//#define MAX_U64 ((REBU64)(REBI64)-1) //defined in reb-c.h
 /***********************************************************************
 **
 */	REBI64 Random_Range(REBI64 r, REBFLG secure)

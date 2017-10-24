@@ -36,6 +36,7 @@ core: [
 	f-dtoa.c
 	f-enbase.c
 	f-extension.c
+	f-int.c
 	f-math.c
 	f-modify.c
 	f-qsort.c
