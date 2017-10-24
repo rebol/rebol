@@ -235,12 +235,16 @@
 }
 
 
-
+/***********************************************************************
+**
+*/	REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT decimal_digits)
+/*
+***********************************************************************/
+{
 #define MIN_DIGITS 1
 /* this is appropriate for 64-bit IEEE754 binary floating point format */
 #define MAX_DIGITS 17
-
-REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT decimal_digits) {
+	
 	REBYTE *start = cp, *sig, *rve;
 	int e, sgn;
 	REBINT digits_obtained;
