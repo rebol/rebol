@@ -120,7 +120,7 @@ static const REBCNT P26_1[] = {3825205247u, 3704098002u, 5421010u};
 	Computes max decimal shift left for nonzero significand a with length 3;
 	using double arithmetic;
 */
-INLINE REBINT max_shift_left (const REBCNT a[]) {
+REBINT max_shift_left (const REBCNT a[]) {
     REBINT i;
 	i = (REBINT)(log10((a[2] * two_to_32 + a[1]) * two_to_32 + a[0]) + 0.5);
     return m_cmp (3, P[i], a) <= 0 ? 25 - i : 26 - i;
@@ -161,7 +161,7 @@ static const REBCNT Q[][6] = {
     to fit length 3;
 	using double arithmetic;
 */
-INLINE REBINT min_shift_right (const REBCNT a[6]) {
+REBINT min_shift_right (const REBCNT a[6]) {
     REBINT i;
     if (m_cmp (6, a, P26) < 0) return 0;
     i = (REBINT) (log10 (
@@ -281,7 +281,7 @@ INLINE void m_multiply_1 (REBINT n, REBCNT p[], const REBCNT a[], REBCNT b) {
 	a must be longer than the complete result;
 	n is the initial length of a; 
 */
-INLINE void dsl (REBINT n, REBCNT a[], REBINT shift) {
+void dsl (REBINT n, REBCNT a[], REBINT shift) {
 	REBINT shift1;
 	for (; shift > 0; shift -= shift1) {
 		shift1 = 9 <= shift ? 9 : shift;
@@ -335,7 +335,7 @@ INLINE REBCNT m_divide_1 (REBINT n, REBCNT q[], const REBCNT a[], REBCNT b) {
 	2 - exactly half of the least significant unit truncated
 	3 - more than half of the least significant unit truncated
 */
-INLINE void dsr (REBINT n, REBCNT a[], REBINT shift, REBINT *t_flag) {
+void dsr (REBINT n, REBCNT a[], REBINT shift, REBINT *t_flag) {
 	REBCNT remainder, divisor;
 	REBINT shift1;
 	for (; shift > 0; shift -= shift1) {
@@ -563,7 +563,7 @@ deci decimal_to_deci (REBDEC a) {
 	ta is a truncate flag as described above;
 	*f is supposed to be in range [-128; 127];
 */
-INLINE void m_ldexp (REBCNT a[4], REBINT *f, REBINT e, REBINT ta) {
+void m_ldexp (REBCNT a[4], REBINT *f, REBINT e, REBINT ta) {
 	/* take care of zero significand */
 	if (m_is_zero (3, a)) {
 		*f = 0;
