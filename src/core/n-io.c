@@ -86,7 +86,7 @@ static REBSER *Read_All_File(char *fname)
 	Echo_File(0);
 
 	if (IS_FILE(val))
-		ser = Value_To_OS_Path(val);
+		ser = Value_To_OS_Path(val, TRUE);
 	else if (IS_LOGIC(val) && IS_TRUE(val))
 		ser = To_Local_Path("output.txt", 10, FALSE, TRUE);
 
@@ -481,7 +481,7 @@ chk_neg:
 	REBINT n;
 	REBVAL val;
 
-	ser = Value_To_OS_Path(arg);
+	ser = Value_To_OS_Path(arg, TRUE);
 	if (!ser) Trap_Arg(arg); // !!! ERROR MSG
 
 	Set_String(&val, ser); // may be unicode or utf-8
@@ -513,7 +513,11 @@ chk_neg:
 
 	r = OS_BROWSE(url, 0);
 
-	if (r == 0) Trap1(RE_CALL_FAIL, Make_OS_Error());
+	if (r == 0) {
+		return R_UNSET;
+	} else {
+		Trap1(RE_CALL_FAIL, Make_OS_Error(r));
+	}
 
 	return R_UNSET;
 }
@@ -523,24 +527,233 @@ chk_neg:
 **
 */	REBNATIVE(call)
 /*
+ *
+	/wait "Wait for command to terminate before returning"
+    /console "Runs command with I/O redirected to console"
+    /shell "Forces command to be run from shell"
+	/info "Return process information object"
+    /input in [string! file! none] "Redirects stdin to in"
+    /output out [string! file! none] "Redirects stdout to out"
+    /error err [string! file! none] "Redirects stderr to err"
 ***********************************************************************/
 {
+#define INHERIT_TYPE 0
+#define NONE_TYPE 1
+#define STRING_TYPE 2
+#define FILE_TYPE 3
+#define BINARY_TYPE 4
+
+#define FLAG_WAIT 1
+#define FLAG_CONSOLE 2
+#define FLAG_SHELL 4
+#define FLAG_INFO 8
+
 	REBINT r;
-	REBCHR *cmd;
+	REBCHR *cmd = NULL;
 	REBVAL *arg = D_ARG(1);
+	REBI64 pid = -1;
+	u32 flags = 0;
+	int argc = 1;
+	REBCHR ** argv = NULL;
+	REBVAL *input = NULL;
+	REBVAL *output = NULL;
+	REBVAL *err = NULL;
+	void *os_input = NULL;
+	void *os_output = NULL;
+	void *os_err = NULL;
+	int input_type = INHERIT_TYPE;
+	int output_type = INHERIT_TYPE;
+	int err_type = INHERIT_TYPE;
+	REBCNT input_len = 0;
+	REBCNT output_len = 0;
+	REBCNT err_len = 0;
+	REBOOL flag_wait = FALSE;
+	REBOOL flag_console = FALSE;
+	REBOOL flag_shell = FALSE;
+	REBOOL flag_info = FALSE;
+	int exit_code = 0;
 
 	Check_Security(SYM_CALL, POL_EXEC, arg);
 
-	cmd = Val_Str_To_OS(arg);
-	r = OS_CREATE_PROCESS(cmd, D_REF(2) ? 1 : 0);
+	if (D_REF(2)) flag_wait = TRUE;
+	if (D_REF(3)) flag_console = TRUE;
+	if (D_REF(4)) flag_shell = TRUE;
+	if (D_REF(5)) flag_info = TRUE;
+	if (D_REF(6)) { /* input */
+		REBVAL *param = D_ARG(7);
+		input = param;
+		if (IS_STRING(param)) {
+			input_type = STRING_TYPE;
+			os_input = Val_Str_To_OS(param);
+			input_len = VAL_LEN(param);
+		} else if (IS_BINARY(param)) {
+			input_type = BINARY_TYPE;
+			os_input = VAL_BIN_DATA(param);
+			input_len = VAL_LEN(param);
+		} else if (IS_FILE(param)) {
+			REBSER *path = Value_To_OS_Path(param, FALSE);
+			input_type = FILE_TYPE;
+			os_input = SERIES_DATA(path);
+			input_len = SERIES_TAIL(path);
+		} else if (IS_NONE(param)) {
+			input_type = NONE_TYPE;
+		} else {
+			Trap_Arg(param);
+		}
+	}
 
-	if (D_REF(2)) {
-		SET_INTEGER(D_RET, r);
+	if (D_REF(8)) { /* output */
+		REBVAL *param = D_ARG(9);
+		output = param;
+		if (IS_STRING(param)) {
+			output_type = STRING_TYPE;
+		} else if (IS_BINARY(param)) {
+			output_type = BINARY_TYPE;
+		} else if (IS_FILE(param)) {
+			REBSER *path = Value_To_OS_Path(param, FALSE);
+			output_type = FILE_TYPE;
+			os_output = SERIES_DATA(path);
+			output_len = SERIES_TAIL(path);
+		} else if (IS_NONE(param)) {
+			output_type = NONE_TYPE;
+		} else {
+			Trap_Arg(param);
+		}
+	}
+
+	if (D_REF(10)) { /* err */
+		REBVAL *param = D_ARG(11);
+		err = param;
+		if (IS_STRING(param)) {
+			err_type = STRING_TYPE;
+		} else if (IS_BINARY(param)) {
+			err_type = BINARY_TYPE;
+		} else if (IS_FILE(param)) {
+			REBSER *path = Value_To_OS_Path(param, FALSE);
+			err_type = FILE_TYPE;
+			os_err = SERIES_DATA(path);
+			err_len = SERIES_TAIL(path);
+		} else if (IS_NONE(param)) {
+			err_type = NONE_TYPE;
+		} else {
+			Trap_Arg(param);
+		}
+	}
+
+	/* I/O redirection implies /wait */
+	if (input_type == STRING_TYPE
+		|| input_type == BINARY_TYPE
+		|| output_type == STRING_TYPE
+		|| output_type == BINARY_TYPE
+		|| err_type == STRING_TYPE
+		|| err_type == BINARY_TYPE) {
+		flag_wait = TRUE;
+	}
+
+	if (flag_wait) flags |= FLAG_WAIT;
+	if (flag_console) flags |= FLAG_CONSOLE;
+	if (flag_shell) flags |= FLAG_SHELL;
+	if (flag_info) flags |= FLAG_INFO;
+
+	if (IS_STRING(arg)) {
+		REBSER * ser = NULL;
+		cmd = Val_Str_To_OS(arg);
+		argc = 1;
+		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
+		argv = (REBCHR**)SERIES_DATA(ser);
+		argv[0] = cmd;
+		argv[argc] = NULL;
+	} else if (IS_BLOCK(arg)) {
+		int i = 0;
+		REBSER * ser = NULL;
+		argc = VAL_LEN(arg);
+		if (argc <= 0) {
+			Trap0(RE_TOO_SHORT);
+		}
+		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
+		argv = (REBCHR**)SERIES_DATA(ser);
+		for (i = 0; i < argc; i ++) {
+			REBVAL *param = VAL_BLK_SKIP(arg, i);
+			if (IS_STRING(param)) {
+				argv[i] = Val_Str_To_OS(param);
+			} else if (IS_FILE(param)) {
+				REBSER *path = Value_To_OS_Path(param, FALSE);
+				argv[i] = (REBCHR*) SERIES_DATA(path);
+			} else {
+				Trap_Arg(param);
+			}
+		}
+		argv[argc] = NULL;
+		cmd = NULL;
+	} else if (IS_FILE(arg)) {
+		REBSER * ser = NULL;
+		REBSER *path = Value_To_OS_Path(arg, FALSE);
+		argc = 1;
+		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
+		argv = (REBCHR**)SERIES_DATA(ser);
+		argv[0] = (REBCHR*) SERIES_DATA(path);
+		argv[argc] = NULL;
+		cmd = NULL;
+	} else {
+		Trap_Arg(arg);
+	}
+
+	r = OS_CREATE_PROCESS(cmd, argc, argv, flags, &pid, &exit_code,
+						  input_type, os_input, input_len,
+						  output_type, &os_output, &output_len,
+						  err_type, &os_err, &err_len);
+
+	if (output_type == STRING_TYPE) {
+		if (output != NULL
+			&& output_len > 0) {
+			REBSER *ser = Copy_OS_Str(os_output, output_len);
+			Append_String(VAL_SERIES(output), ser, 0, SERIES_TAIL(ser));
+			OS_FREE(os_output);
+		}
+	} else if (output_type == BINARY_TYPE) {
+		if (output != NULL
+			&& output_len > 0) {
+			Append_Bytes_Len(VAL_SERIES(output), os_output, output_len);
+			OS_FREE(os_output);
+		}
+	}
+
+	if (err_type == STRING_TYPE) {
+		if (err != NULL
+			&& err_len > 0) {
+			REBSER *ser = Copy_OS_Str(os_err, err_len);
+			Append_String(VAL_SERIES(err), ser, 0, SERIES_TAIL(ser));
+			OS_FREE(os_err);
+		}
+	} else if (err_type == BINARY_TYPE) {
+		if (err != NULL
+			&& err_len > 0) {
+			Append_Bytes_Len(VAL_SERIES(err), os_err, err_len);
+			OS_FREE(os_err);
+		}
+	}
+
+	if (flag_info) {
+		REBSER *obj = Make_Frame(2);
+		REBVAL *val = Append_Frame(obj, NULL, SYM_ID);
+		SET_INTEGER(val, pid);
+
+		if (flag_wait) {
+			val = Append_Frame(obj, NULL, SYM_EXIT_CODE);
+			SET_INTEGER(val, exit_code);
+		}
+
+		SET_OBJECT(D_RET, obj);
 		return R_RET;
 	}
-	
-	if (r < 0) Trap1(RE_CALL_FAIL, Make_OS_Error());
-	return R_NONE;
+
+	if (r == 0) {
+		SET_INTEGER(D_RET, flag_wait ? exit_code : pid);
+		return R_RET;
+	} else {
+		Trap1(RE_CALL_FAIL, Make_OS_Error(r));
+		return R_NONE;
+	}
 }
 
 
@@ -573,7 +786,7 @@ chk_neg:
 		}
 		Print("Launching: %s", STR_HEAD(cmd));
 		r = OS_CREATE_PROCESS(STR_HEAD(cmd), 0);
-		if (r < 0) Trap1(RE_CALL_FAIL, Make_OS_Error());
+		if (r < 0) Trap1(RE_CALL_FAIL, Make_OS_Error(r));
 	}
 	return R_NONE;
 }
@@ -708,7 +921,7 @@ chk_neg:
 	if (D_REF(ARG_REQUEST_FILE_MULTI)) SET_FLAG(fr.flags, FRF_MULTI);
 
 	if (D_REF(ARG_REQUEST_FILE_FILE)) {
-		ser = Value_To_OS_Path(D_ARG(ARG_REQUEST_FILE_NAME));
+		ser = Value_To_OS_Path(D_ARG(ARG_REQUEST_FILE_NAME), TRUE);
 		fr.dir = (REBCHR*)(ser->data);
 		n = ser->tail;
 		if (fr.dir[n-1] != OS_DIR_SEP) {

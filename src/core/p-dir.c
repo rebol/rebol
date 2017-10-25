@@ -114,7 +114,7 @@
 		REBREQ file;
 
 		CLEARS(&file); 
-		ser = Value_To_OS_Path(path);
+		ser = Value_To_OS_Path(path, TRUE);
 		file.file.path = (REBCHR*)(ser->data);
 		file.device = RDI_FILE;
 		len = OS_DO_DEVICE(&file, RDC_QUERY);
@@ -165,7 +165,7 @@
 	SET_FLAG(dir->modes, RFM_DIR);
 
 	// We depend on To_Local_Path giving us 2 extra chars for / and *
-	ser = Value_To_OS_Path(path);
+	ser = Value_To_OS_Path(path, TRUE);
 	len = ser->tail;
 	dir->file.path = (REBCHR*)(ser->data);
 
@@ -288,7 +288,7 @@ create:
 
 			Init_Dir_Path(&dir, path, 0, POL_WRITE | REMOVE_TAIL_SLASH); // Sets RFM_DIR too
 			// Convert file name to OS format:
-			if (!(target = Value_To_OS_Path(D_ARG(2)))) Trap1(RE_BAD_FILE_PATH, D_ARG(2));
+			if (!(target = Value_To_OS_Path(D_ARG(2), TRUE))) Trap1(RE_BAD_FILE_PATH, D_ARG(2));
 			dir.data = BIN_DATA(target);
 			OS_DO_DEVICE(&dir, RDC_RENAME);
 			Free_Series(target);

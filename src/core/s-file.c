@@ -245,7 +245,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *Value_To_OS_Path(REBVAL *val)
+*/	REBSER *Value_To_OS_Path(REBVAL *val, REBFLG full)
 /*
 **		Helper to above function.
 **
@@ -259,7 +259,7 @@
 
 	ASSERT1(ANY_BINSTR(val), RP_MISC);
 
-	ser = To_Local_Path(VAL_DATA(val), VAL_LEN(val), (REBOOL)!VAL_BYTE_SIZE(val), TRUE);
+	ser = To_Local_Path(VAL_DATA(val), VAL_LEN(val), (REBOOL)!VAL_BYTE_SIZE(val), full);
 
 #ifndef TO_WINDOWS
 	// Posix needs UTF8 conversion:

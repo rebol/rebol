@@ -862,13 +862,13 @@
 
 /***********************************************************************
 **
-*/	REBVAL *Make_OS_Error()
+*/	REBVAL *Make_OS_Error(int errnum)
 /*
 ***********************************************************************/
 {
 	REBCHR str[100];
 
-	OS_FORM_ERROR(0, str, 100);
+	OS_FORM_ERROR(errnum, str, 100);
 	Set_String(DS_RETURN, Copy_OS_Str(str, LEN_STR(str)));
 	return DS_RETURN;
 }

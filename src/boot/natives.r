@@ -889,9 +889,16 @@ list-env: native [
 
 call: native [
 	{Run another program; return immediately.}
-	command [string!] "An OS-local command line, quoted as necessary"
+	command [string! block! file!] "An OS-local command line (quoted as necessary), a block with arguments, or an executable file"
 	/wait "Wait for command to terminate before returning"
+	/console "Runs command with I/O redirected to console"
+	/shell "Forces command to be run from shell"
+	/info "Returns process information object"
+	/input in [string! binary! file! none!] "Redirects stdin to in"
+	/output out [string! binary! file! none!] "Redirects stdout to out"
+	/error err [string! binary! file! none!] "Redirects stderr to err"
 ]
+
 
 browse: native [
 	{Open web browser to a URL or local file.}

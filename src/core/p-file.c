@@ -56,7 +56,7 @@
 	}
 
 	// Convert file name to OS format, let it GC later.
-	if (!(ser = Value_To_OS_Path(path)))
+	if (!(ser = Value_To_OS_Path(path, TRUE)))
 		Trap1(RE_BAD_FILE_PATH, path);
 	
 	file->file.path = (REBCHR*)(ser->data);
@@ -445,7 +445,7 @@ REBINT Mode_Syms[] = {
 			Setup_File(file, 0, path);
 
 			// Convert file name to OS format:
-			if (!(target = Value_To_OS_Path(D_ARG(2))))
+			if (!(target = Value_To_OS_Path(D_ARG(2), TRUE)))
 				Trap1(RE_BAD_FILE_PATH, D_ARG(2));
 			file->data = BIN_DATA(target);
 			OS_DO_DEVICE(file, RDC_RENAME);
