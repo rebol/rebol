@@ -19,6 +19,7 @@ make-banner: func [
 	str: make string! 200
 	star: append/dup make string! 74 #"*" 74
 	spc: format ["**" 70 "**"] ""
+	append str "^[[7m"
 	parse fmt [
 		some [
 			[
@@ -30,24 +31,26 @@ make-banner: func [
 						| block! (b: reform b/1)
 						| string! (b: b/1)
 					]
-					(s: format ["**    " 11 55 "**"] reduce [a b])
+					(s: either none? b [none][format ["**    " 11 55 "**"] reduce [a b]])
 			  | '* (s: star)
 			  | '- (s: spc)
 			]
-			(append append str s newline)
+			(unless none? s [append append str s newline])
 		]
 	]
+	append str "^[[0m"
 	str
 ]
 
 sys/boot-banner: make-banner [
 	*
 	-
-	"REBOL 3.0 [Alpha Test]"
+	"REBOL 3.0 (Oldes branch)"
 	-
-	= Copyright: [system/build/year "REBOL Technologies"]
-	= "" "All rights reserved."
-	= Website:  "www.REBOL.com"
+	= Copyright: "2012 REBOL Technologies"
+	= "" "2012-2017 Rebol Open Source Contributors"
+	= "" "Apache 2.0 License, see LICENSE."
+	= Website:  "https://github.com/oldes/r3"
 	-
 	= Version:  system/version
 	= Platform: system/platform
@@ -56,27 +59,20 @@ sys/boot-banner: make-banner [
 	-
 	= Language: system/locale/language*
 	= Locale:   system/locale/locale*
-	= Home:     [to-local-file system/options/home]
+	= Home:     [to-local-file clean-path join what-dir system/options/home]
 	-
 	*
 ]
 
 sys/boot-help:
-{Important notes:
+{^[[1;33;49mImportant notes^[[0m:
 
   * Sandbox and security are not available.
   * Direct access to TCP HTTP required (no proxies).
-  * Default web browser must be available.
 
-Special functions:
+^[[1;33;49mSpecial functions^[[0m:
 
-  Chat - open DevBase developer forum/BBS
-  Docs - open DocBase document wiki (web)
-  Bugs - open CureCode bug database (web)
-  Demo - run demo launcher (from rebol.com)
-  Help - show built-in help information
-  Upgrade - check for newer releases
-  Changes - what's new about this version (web)
+  ^[[1;32;49mHelp^[[0m  - show built-in help information
 }
 
 ;print make-banner boot-banner halt
