@@ -6,7 +6,7 @@ if error? set/any 'err try [
 TOOLS-Win32: ""
 TOOLS-Win64: ""
 
-attempt [do %make-settings.r3]
+attempt [do %make-settings.r]
 
 cmd-menu: {^/^[[1;33;49mPlease choose version to build:^[[0m^/}
 
