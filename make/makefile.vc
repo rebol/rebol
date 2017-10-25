@@ -12,7 +12,7 @@ I= /I..\src\include
 TO_OS= TO_WIN32
 OS_ID= 0.3.1
 
-CFLAGS=/c /Os /D "UNICODE" /D "WIN32" /W3 /GR- /Zi /GS /Gy /GF /EHs-c- /GL /D "NDEBUG" /D "_CRT_SECURE_NO_WARNINGS"
+CFLAGS=/c /Os /D "UNICODE" /D "WIN32" /D "ENDIAN_LITTLE" /W3 /GR- /Zi /GS /Gy /GF /EHs-c- /GL /D "NDEBUG" /D "_CRT_SECURE_NO_WARNINGS"
 
 RAPI_FLAGS= $(CFLAGS)
 HOST_FLAGS= $(CFLAGS)
@@ -24,27 +24,30 @@ HFLAGS= $(HOST_FLAGS) $(I) /D$(TO_OS) /DREB_CORE
 LIBS= user32.lib ws2_32.lib advapi32.lib shell32.lib comdlg32.lib
 LDFLAGS = /nologo /DEBUG /RELEASE /opt:ref /opt:icf /LTCG
 
-REBOL=	r3-make.exe -qs
+REBOL= prebuild\r3-make-win.exe -qs
 
-all: prep r3.exe
+clean:
+	DEL /s /q objs
 
-prep:
+all: clean prep r3.exe
+
+prep:  objs
 	$(REBOL) $T/make-headers.r
 	$(REBOL) $T/make-boot.r $(OS_ID)
 	$(REBOL) $T/make-host-init.r
 	$(REBOL) $T/make-os-ext.r # ok, but not always
 	$(REBOL) $T/make-host-ext.r
 	$(REBOL) $T/make-reb-lib.r
-	windres r3.rc -O coff -o objs/r3.res
+	windres --target=pe-i386 r3.rc -O coff -o objs/r3.res
 
 objs:
-	mkdir objs
+	if not exist objs MKDIR objs
 
 OBJS =	objs/a-constants.obj objs/a-globals.obj objs/a-lib.obj objs/b-boot.obj \
 	objs/b-init.obj objs/c-do.obj objs/c-error.obj objs/c-frame.obj \
 	objs/c-function.obj objs/c-port.obj objs/c-task.obj objs/c-word.obj \
 	objs/d-crash.obj objs/d-dump.obj objs/d-print.obj objs/f-blocks.obj \
-	objs/f-deci.obj objs/f-dtoa.obj objs/f-enbase.obj objs/f-extension.obj objs/f-math.obj \
+	objs/f-deci.obj objs/f-dtoa.obj objs/f-enbase.obj objs/f-extension.obj objs/f-int.obj objs/f-math.obj \
 	objs/f-modify.obj objs/f-random.obj objs/f-round.obj objs/f-series.obj \
 	objs/f-stubs.obj objs/l-scan.obj objs/l-types.obj objs/m-gc.obj \
 	objs/m-pools.obj objs/m-series.obj objs/n-control.obj objs/n-data.obj \

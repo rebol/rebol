@@ -88,7 +88,7 @@ HFLAGS= -c -D$(TO_OS) -DREB_CORE $(HOST_FLAGS) $I
 CLIB=
 
 # REBOL is needed to build various include files:
-REBOL_TOOL= r3-make$(BIN_SUFFIX)
+REBOL_TOOL=
 REBOL=	$(CD)$(REBOL_TOOL) -qs
 
 # For running tests, ship, build, etc.
@@ -147,7 +147,7 @@ purge:
 	$(MAKE) host$(BIN_SUFFIX)
 
 testdo:
-	r3$(BIN_SUFFIX) --do "print {^^/^^[[32mI'm READY^^[[0m}"
+	r3$(BIN_SUFFIX) --do "print {^^/^^[[1;32m### I'm READY ###^^[[0m^^/}"
 
 test:
 	$(CP) r3$(BIN_SUFFIX) $(UP)/src/tests/
@@ -392,11 +392,23 @@ macro+ TO_OS to-def
 macro+ OS_ID os-plat
 macro+ LS pick ["dir" "ls -l"] flag? DIR
 macro+ CP pick [copy cp] flag? COP
+macro+ REBOL_TOOL join %prebuild/r3-make switch/default system/version/4 [
+	1  [%-amiga  ]
+	2  [%-osx    ]
+	3  [%-win.exe]
+	4  [%-linux  ]
+	5  [%-haiku  ]
+	7  [%-freebsd]
+	9  [%-openbsd]
+	13 [%-android]
+][	%"" ]
+
 unless flag? -SP [ ; Use standard paths:
 	macro+ UP ".."
 	macro+ CD "./"
 ]
-if os-plat/2 = 3 [macro+ REBOL ">NUL:"] ; Temporary workaround for R3 on Win7.
+;Oldes: Why there was the next line?
+;if os-plat/2 = 3 [macro+ REBOL ">NUL:"] ; Temporary workaround for R3 on Win7.
 either flag? EXE [
 	macro+ BIN_SUFFIX %.exe
 	macro+ LIB_SUFFIX %.dll

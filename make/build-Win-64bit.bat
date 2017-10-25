@@ -1,4 +1,4 @@
-make make OS_ID=0.3.40
+make make OS_ID=0.3.40 REBOL_TOOL=prebuild\r3-make-win.exe
 make TOOLS=x:/MingW/mingw64/bin/ all
 
 SET BUILD_DIR=..\build\win-x64\
