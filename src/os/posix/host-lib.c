@@ -52,11 +52,14 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <poll.h>
+#include <fcntl.h>              /* Obtain O_* constant definitions */
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <string.h>
+#include <errno.h>
 
 #ifndef timeval // for older systems
 #include <sys/time.h>
@@ -1024,12 +1027,11 @@ stdout_pipe_err:
 		close(stdin_pipe[W]);
 	}
 stdin_pipe_err:
-	printf("ret: %d\n", ret);
+	if(ret != 0) printf("ret: %d\n", ret);
 	return ret;
 }
 
 
-/**********************************************************************/
 static int Try_Browser(char *browser, REBCHR *url)
 {
 	pid_t pid;
