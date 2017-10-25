@@ -113,7 +113,6 @@ all:
 	$(MAKE) r3$(BIN_SUFFIX)
 	$(MAKE) lib
 	$(MAKE) host$(BIN_SUFFIX)
-	$(MAKE) testdo
 
 prep:
 	$(REBOL) $T/make-headers.r
@@ -147,7 +146,7 @@ purge:
 	$(MAKE) host$(BIN_SUFFIX)
 
 testdo:
-	r3$(BIN_SUFFIX) --do "print {^^/^^[[1;32m### I'm READY ###^^[[0m^^/}"
+	$(CD)r3$(BIN_SUFFIX) --do "print {^^/^^[[1;32m### I'm READY ###^^[[0m^^/}"
 
 test:
 	$(CP) r3$(BIN_SUFFIX) $(UP)/src/tests/

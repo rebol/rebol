@@ -26,14 +26,14 @@ systems: [
 	[0.2.40		"osx_x64"		posix		[LEN +O1 NPS PIC NCM HID STX -LM]]
 	[0.3.01		"win32"			win32		[LEN +O2 UNI M32 W32 CON S4M EXE DIR -LM]]
 	[0.3.40		"win32_x64"		win32		[LEN +O2 UNI M64 P64 W32 CON S4M EXE DIR -LM]]
-	[0.4.02		"linux"			posix		[LEN +O2 LDL ST1 -LM]]			; libc 2.3
-	[0.4.03		"linux"			posix		[LEN +O2 HID LDL ST1 -LM]]		; libc 2.5
-	[0.4.04		"linux"			posix		[LEN +O2 HID LDL ST1 M32 -LM]]	; libc 2.11
-	[0.4.10		"linux_ppc"		posix		[BEN +O1 HID LDL ST1 -LM]]
-	[0.4.20		"linux_arm"		posix		[LEN +O2 HID LDL ST1 -LM]]
-	[0.4.21		"linux_arm"		posix		[LEN +O2 HID LDL ST1 -LM PIE]]	; bionic (Android)
-	[0.4.30		"linux_mips"	posix		[LEN +O2 HID LDL ST1 -LM]]
-	[0.4.40		"linux_x64"		posix		[LEN +O2 HID LDL ST1 -LM]]
+	[0.4.02		"linux"			posix		[LEN +O2 PIC LDL ST1 -LM]]			; libc 2.3
+	[0.4.03		"linux"			posix		[LEN +O2 PIC HID LDL ST1 -LM]]		; libc 2.5
+	[0.4.04		"linux"			posix		[LEN +O2 PIC HID LDL ST1 M32 -LM]]	; libc 2.11
+	[0.4.10		"linux_ppc"		posix		[BEN +O1 PIC HID LDL ST1 -LM]]
+	[0.4.20		"linux_arm"		posix		[LEN +O2 PIC HID LDL ST1 -LM]]
+	[0.4.21		"linux_arm"		posix		[LEN +O2 PIE HID LDL ST1 -LM]]	; bionic (Android)
+	[0.4.30		"linux_mips"	posix		[LEN +O2 PIC HID LDL ST1 -LM]]
+	[0.4.40		"linux_x64"		posix		[LEN +O2 PIC HID LDL ST1 -LM]]
 	[0.5.75		"haiku"			posix		[LEN +O2 ST1 NWK]]
 	[0.7.02		"freebsd"		posix		[LEN +O1 ST1 -LM]]
 	[0.7.40		"freebsd_x64"	posix		[LEN +O1 ST1 -LM]]
