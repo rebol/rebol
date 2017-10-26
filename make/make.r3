@@ -17,9 +17,22 @@ cmd-actions: [
 
 settings: []
 
+either system/version/4 = 3 [;Windows
+	MV: {move /Y }
+	BIN_SUFFIX: %.exe
+	LIB_SUFFIX: %.dll
+	LS: {dir }
+][
+	MV: {mv -f }
+	LS: {ls -la }
+	BIN_SUFFIX: %""
+	LIB_SUFFIX: %.so
+]
+
 rebol-tool: to-local-file join %prebuild/r3-make switch/default system/version/4 [
 	1  [%-amiga  ]
 	2  [
+		LIB_SUFFIX: %.dylib
 		append settings [
 			"OSX - PPC"                  [0.2.04 %../build/osx-ppc/          ""]
 			"OSX - Intel"                [0.2.05 %../build/osx-intel/        ""]
@@ -49,18 +62,6 @@ rebol-tool: to-local-file join %prebuild/r3-make switch/default system/version/4
 	9  [%-openbsd]
 	13 [%-android]
 ][	%"" ]
-
-either system/version/4 = 3 [;Windows
-	MV: {move /Y }
-	BIN_SUFFIX: %.exe
-	LIB_SUFFIX: %.dll
-	LS: {dir }
-][
-	MV: {mv -f }
-	LS: {ls -la }
-	BIN_SUFFIX: %""
-	LIB_SUFFIX: %.so
-]
 
 i: 1
 foreach [name data] settings [
