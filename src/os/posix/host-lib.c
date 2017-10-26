@@ -585,6 +585,42 @@ static void *Task_Ready;
 	//SetEvent(Task_Ready);
 }
 
+//Helper function for OS_Create_Process:
+//see: https://stackoverflow.com/questions/41976446/pipe2-vs-pipe-fcntl-why-different
+static inline REBOOL Open_Pipe_Fails(int pipefd[2]) {
+#ifdef USE_OLD_PIPE
+	//
+	// NOTE: pipe() is POSIX, but pipe2() is Linux-specific.  With pipe() it
+	// takes an additional call to fcntl() to request non-blocking behavior,
+	// so it's a small amount more work.  However, there are other flags which
+	// if aren't passed atomically at the moment of opening allow for a race
+	// condition in threading if split, e.g. FD_CLOEXEC.
+	//
+	// (If you don't have FD_CLOEXEC set on the file descriptor, then all
+	// instances of CALL will act as a /WAIT.)
+	//
+	// At time of writing, this is mostly academic...but the code needed to be
+	// patched to work with pipe() since some older libcs do not have pipe2().
+	// So the ability to target both are kept around, saving the pipe2() call
+	// for later Linuxes known to have it (and O_CLOEXEC).
+	//
+	if (pipe(pipefd) < 0)
+		return TRUE;
+	int direction; // READ=0, WRITE=1
+	for (direction = 0; direction < 2; ++direction) {
+		int oldflags = fcntl(pipefd[direction], F_GETFD);
+		if (oldflags < 0)
+			return TRUE;
+		if (fcntl(pipefd[direction], F_SETFD, oldflags | FD_CLOEXEC) < 0)
+			return TRUE;
+	}
+#else
+	if (pipe2(pipefd, O_CLOEXEC))
+		return TRUE;
+#endif
+	return FALSE;
+}
+
 
 /***********************************************************************
 **
@@ -641,26 +677,23 @@ static void *Task_Ready;
 	if (flags & FLAG_SHELL) flag_shell = TRUE;
 	if (flags & FLAG_INFO) flag_info = TRUE;
 
-	if (input_type == STRING_TYPE
-		|| input_type == BINARY_TYPE) {
-		if (pipe2(stdin_pipe, O_CLOEXEC | O_NONBLOCK) < 0) {
+	if (input_type == STRING_TYPE || input_type == BINARY_TYPE) {
+		if (Open_Pipe_Fails(stdin_pipe)) {
 			goto stdin_pipe_err;
 		}
 	}
-	if (output_type == STRING_TYPE
-		|| output_type == BINARY_TYPE) {
-		if (pipe2(stdout_pipe, O_CLOEXEC | O_NONBLOCK) < 0) {
+	if (output_type == STRING_TYPE || output_type == BINARY_TYPE) {
+		if (Open_Pipe_Fails(stdout_pipe)) {
 			goto stdout_pipe_err;
 		}
 	}
-	if (err_type == STRING_TYPE
-		|| err_type == BINARY_TYPE) {
-		if (pipe2(stderr_pipe, O_CLOEXEC | O_NONBLOCK) < 0) {
+	if (err_type == STRING_TYPE || err_type == BINARY_TYPE) {
+		if (Open_Pipe_Fails(stderr_pipe)) {
 			goto stderr_pipe_err;
 		}
 	}
 
-	if (pipe2(info_pipe, O_CLOEXEC | O_NONBLOCK) < 0) {
+	if (Open_Pipe_Fails(info_pipe)) {
 		goto info_pipe_err;
 	}
 
@@ -760,7 +793,9 @@ static void *Task_Ready;
 			sh = getenv("SHELL");
 			if (sh == NULL) {
 				int err = 2; /* shell does not exist */
-				write(info_pipe[W], &err, sizeof(err));
+				if(write(info_pipe[W], &err, sizeof(err)) == -1) {
+					//nothing there... just to avoid "unused-result" compiler warning
+				}
 				exit(EXIT_FAILURE);
 			}
 			argv_new = OS_Make((argc + 3) * sizeof(char*));
@@ -773,7 +808,9 @@ static void *Task_Ready;
 			execvp(argv[0], argv);
 		}
 child_error:
-		write(info_pipe[W], &errno, sizeof(errno));
+		if(write(info_pipe[W], &errno, sizeof(errno)) == -1) {
+			//nothing there... just to avoid "unused-result" compiler warning
+		}
 		exit(EXIT_FAILURE); /* get here only when exec fails */
 	} else if (fpid > 0) {
 		/* parent */
