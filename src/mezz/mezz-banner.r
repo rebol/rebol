@@ -42,6 +42,11 @@ make-banner: func [
 	str
 ]
 
+if #"/" <> first system/options/home [
+	;make sure that home directory is absolute on all platforms
+	system/options/home: clean-path join what-dir system/options/home
+]
+
 sys/boot-banner: make-banner [
 	*
 	-
@@ -59,7 +64,7 @@ sys/boot-banner: make-banner [
 	-
 	= Language: system/locale/language*
 	= Locale:   system/locale/locale*
-	= Home:     [to-local-file clean-path join what-dir system/options/home]
+	= Home:     [to-local-file system/options/home]
 	-
 	*
 ]
