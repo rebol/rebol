@@ -150,6 +150,7 @@ os-posix: [
 	dev-stdio.c
 	dev-event.c
 	dev-file.c
+	dev-clipboard.c
 ]
 
 boot-files: [

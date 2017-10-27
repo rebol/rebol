@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h> //for read and write
 
 //#define TEST_MODE  // teset as stand-alone program
 
@@ -75,9 +76,9 @@ enum {
 
 // Macros: (does not use reb-c.h)
 #define MAKE_STR(l) (char*)malloc(l)
-#define WRITE_CHAR(s)    write(1, s, 1)
-#define WRITE_CHARS(s,l) write(1, s, l)
-#define WRITE_STR(s)     write(1, s, strlen(s))
+#define WRITE_CHAR(s)    if(-1==write(1, s, 1)){}
+#define WRITE_CHARS(s,l) if(-1==write(1, s, l)){}
+#define WRITE_STR(s)     if(-1==write(1, s, strlen(s))){}
 
 #define DBG_INT(t,n) //printf("\r\ndbg[%s]: %d\r\n", t, (n));
 #define DBG_STR(t,s) //printf("\r\ndbg[%s]: %s\r\n", t, (s));
