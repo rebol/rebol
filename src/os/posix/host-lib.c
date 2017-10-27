@@ -79,7 +79,9 @@ static void *Task_Ready;
 #define PATH_MAX 4096  // generally lacking in Posix
 #endif
 
-
+#ifndef USE_OLD_PIPE
+int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" warning
+#endif
 
 /***********************************************************************
 **

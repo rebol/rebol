@@ -57,6 +57,7 @@ typedef long __LONG;
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <unistd.h>
 
 #define GET_ERROR		errno
 #define IOCTL			ioctl
