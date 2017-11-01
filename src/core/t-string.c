@@ -335,7 +335,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	sfunc = rev ? Compare_Chr_Rev : Compare_Chr;
 
 	//!!uni - needs to compare wide chars too
-	qsort((void *)VAL_DATA(string), len, size * SERIES_WIDE(VAL_SERIES(string)), sfunc);
+	reb_qsort((void *)VAL_DATA(string), len, size * SERIES_WIDE(VAL_SERIES(string)), sfunc);
 }
 
 

@@ -457,9 +457,9 @@ static struct {
 	if (skip > 1) len /= skip, size *= skip;
 
 	if (sort_flags.compare)
-		qsort((void *)VAL_BLK_DATA(block), len, size, Compare_Call);
+		reb_qsort((void *)VAL_BLK_DATA(block), len, size, Compare_Call);
 	else
-		qsort((void *)VAL_BLK_DATA(block), len, size, Compare_Val);
+		reb_qsort((void *)VAL_BLK_DATA(block), len, size, Compare_Val);
 
 }
 

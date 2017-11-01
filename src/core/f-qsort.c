@@ -42,13 +42,21 @@ __FBSDID("$FreeBSD$");
 
 #include <stdlib.h>
 
+#define qsort reb_qsort
+
 #ifdef I_AM_QSORT_R
 typedef int		 cmp_t(void *, const void *, const void *);
 #else
 typedef int		 cmp_t(const void *, const void *);
 #endif
-static inline char	*med3(char *, char *, char *, cmp_t *, void *);
-static inline void	 swapfunc(char *, char *, int, int);
+#ifdef _MSC_VER
+#define __inline__
+#else
+#define __inline__ inline
+#endif
+
+static __inline__ char	*med3(char *, char *, char *, cmp_t *, void *);
+static __inline__ void	 swapfunc(char *, char *, int, int);
 
 #define min(a, b)	(a) < (b) ? a : b
 
@@ -69,10 +77,8 @@ static inline void	 swapfunc(char *, char *, int, int);
 #define SWAPINIT(a, es) swaptype = ((char *)a - (char *)0) % sizeof(long) || \
 	es % sizeof(long) ? 2 : es == sizeof(long)? 0 : 1;
 
-static inline void
-swapfunc(a, b, n, swaptype)
-	char *a, *b;
-	int n, swaptype;
+static __inline__ void
+swapfunc(char *a, char *b, int n, int swaptype)
 {
 	if(swaptype <= 1)
 		swapcode(long, a, b, n)
@@ -96,7 +102,7 @@ swapfunc(a, b, n, swaptype)
 #define	CMP(t, x, y) (cmp((x), (y)))
 #endif
 
-static inline char *
+static __inline__ char *
 med3(char *a, char *b, char *c, cmp_t *cmp, void *thunk
 #ifndef I_AM_QSORT_R
 
