@@ -242,6 +242,10 @@ enum {SINE, COSINE, TANGENT};
 	return R_RET;
 }
 
+#if defined(_MSC_VER) && _MSC_VER > 1800
+#pragma warning (disable : 4146)
+#endif
+
 
 /***********************************************************************
 **
@@ -283,6 +287,12 @@ enum {SINE, COSINE, TANGENT};
 	}
 	return R_ARG1;
 }
+
+// See above for the temporary disablement and reasoning.
+//
+#if defined(_MSC_VER) && _MSC_VER > 1800
+#pragma warning (default : 4146)
+#endif
 
 
 /***********************************************************************
