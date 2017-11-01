@@ -371,8 +371,8 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 	REBSER *ser = VAL_SERIES(value);
 	REBCNT idx = VAL_INDEX(value);
 	REB_STRF sf = {0};
-	REBYTE *bp;
-	REBUNI *up;
+	REBYTE *bp = NULL;
+	REBUNI *up = NULL;
 	REBUNI *dp;
 	REBOOL uni = !BYTE_SIZE(ser);
 	REBCNT n;
@@ -639,7 +639,7 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 
 STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 {
-	REBYTE *sep;
+	REBYTE *sep = NULL;
 	REBOOL all = GET_MOPT(mold, MOPT_MOLD_ALL);
 	REBSER *series = mold->series;
 	REBFLG over = FALSE;

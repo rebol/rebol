@@ -364,7 +364,7 @@
 {
 	REBI64	secs;
 	REBVAL	*val;
-	REBVAL	*arg;
+	REBVAL	*arg = NULL;
 	REBI64	num;
 
 	val = D_ARG(1);

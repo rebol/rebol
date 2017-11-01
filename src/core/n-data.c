@@ -183,7 +183,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	}
 	else {
 		// /types [var1 integer!  var2 [integer! decimal!]]
-		REBVAL *val;
+		REBVAL *val = NULL;
 		REBVAL *type;
 
 		for (value = VAL_BLK_DATA(value); NOT_END(value); value += 2) {

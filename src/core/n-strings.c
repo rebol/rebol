@@ -372,7 +372,7 @@ static struct digest {
 ***********************************************************************/
 {
 	REBINT base = 64;
-	REBSER *ser;
+	REBSER *ser = NULL;
 	REBCNT index;
 	REBVAL *arg = D_ARG(1);
 

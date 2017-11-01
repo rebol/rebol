@@ -737,7 +737,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 ***********************************************************************/
 {
 	REBVAL *policy = Get_System(SYS_STATE, STATE_POLICIES);
-	REBYTE *flags;
+	REBYTE *flags = NULL;
 	REBCNT len;
 	REBCNT errcode = RE_SECURITY_ERROR;
 

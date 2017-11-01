@@ -261,7 +261,7 @@
 	REBSER *frame;
 	REBVAL *value;
 	REBSER *series;
-	REBSER *out;	// output block (for MAP, mode = 2)
+	REBSER *out = NULL;	// output block (for MAP, mode = 2)
 
 	REBINT index;	// !!!! should these be REBCNT?
 	REBINT tail;

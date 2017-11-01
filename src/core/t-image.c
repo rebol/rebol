@@ -703,7 +703,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	REBCNT  tail = VAL_TAIL(value);
 	REBCNT	len;
 	REBCNT	*ip = (REBCNT *)VAL_IMAGE_DATA(value); // NOTE ints not bytes
-	REBCNT  *p;
+	REBCNT  *p = NULL;
 	REBINT  n;
 	REBOOL  only = FALSE;
 	REBYTE  no_refs[10] = {5, 6, 7, 8, 9, 10, 13, 14}; // ref - 1 (invalid refinements)

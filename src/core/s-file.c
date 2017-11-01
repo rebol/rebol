@@ -129,7 +129,7 @@
 	REBCNT i = 0;
 	REBCNT n = 0;
 	REBUNI *out;
-	REBCHR *lpath;
+	REBCHR *lpath = NULL;
 	REBCNT l = 0;
 
 	if (len == 0)

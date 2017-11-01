@@ -203,7 +203,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	REBCNT type = VECT_TYPE(VAL_SERIES(vect));
 	REBSER *ser = Make_Block(len);
 	REBCNT n;
-	REBVAL *val;
+	REBVAL *val = NULL;
 
 	if (len > 0) {
 		val = BLK_HEAD(ser);

@@ -279,7 +279,7 @@ static REBSER *Trim_Object(REBSER *obj)
 	REBVAL *arg = D_ARG(2);
 	REBINT n;
 	REBVAL *val;
-	REBSER *obj, *src_obj;
+	REBSER *obj = NULL, *src_obj;
 	REBCNT type = 0;
 
 	switch (action) {
