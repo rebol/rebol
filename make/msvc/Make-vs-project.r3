@@ -417,6 +417,11 @@ BEGIN
   BEGIN
     VALUE "Translation", 0x409, 1252
   END
+END
+
+STRINGTABLE
+BEGIN
+    101  "Rebol 3 (Oldes branch)"
 END}
 ]
 

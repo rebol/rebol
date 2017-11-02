@@ -68,6 +68,7 @@ REBARGS Main_Args;
 
 #ifdef TO_WINDOWS
 HINSTANCE App_Instance = 0;
+WCHAR     App_Title[1024]; //will be filled later from the resources file
 #endif
 
 #ifndef REB_CORE
@@ -112,6 +113,7 @@ void Host_Crash(REBYTE *reason) {
 ***********************************************************************/
 
 #ifdef TO_WINDOWS
+
 #ifdef WINDOWS_CONSOLE
 int main(int argc, char **argv) {
 	// Retrieves the window handle used by the console associated with the calling process
@@ -126,7 +128,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE prior, LPSTR cmd, int show) {
 	argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 	App_Instance = inst;
 #endif
-
+	LoadStringW(App_Instance, 101, App_Title, 100); //101 is hardcoded ID of application name string defined in resource file (.rc)
 #else //non Windows platforms
 int main(int argc, char **argv) {
 #endif
@@ -144,6 +146,11 @@ int main(int argc, char **argv) {
 	// Must be done before an console I/O can occur. Does not use reb-lib,
 	// so this device should open even if there are other problems.
 	Open_StdIO();  // also sets up interrupt handler
+
+#ifdef TO_WINDOWS
+	// Setting title after Open_StdIO, because with Windows subsystem the console is not by default opened.
+	SetConsoleTitle((LPWSTR)App_Title);
+#endif
 
 	// Initialize the REBOL library (reb-lib):
 	if (!CHECK_STRUCT_ALIGN) Host_Crash("Incompatible struct alignment");

@@ -153,6 +153,38 @@ static void close_stdio(void)
 	return DR_DONE;
 }
 
+//Used to get handle of a newly created console
+//See: http://support.microsoft.com/kb/124103
+HWND GetConsoleHwnd(void) {
+#define MY_BUFSIZE 1024 // Buffer size for console window titles.
+	HWND hwndFound;     // This is what is returned to the caller.
+	char pszNewWindowTitle[MY_BUFSIZE]; // Contains fabricated
+										// WindowTitle.
+	char pszOldWindowTitle[MY_BUFSIZE]; // Contains original
+										// WindowTitle.
+										// Fetch current window title.
+
+	GetConsoleTitle((LPWSTR)pszOldWindowTitle, MY_BUFSIZE);
+
+	// Format a "unique" NewWindowTitle.
+	wsprintf((LPWSTR)pszNewWindowTitle, (LPCWSTR)"%d/%d",
+		GetTickCount(),
+		GetCurrentProcessId());
+
+	// Change current window title.
+	SetConsoleTitle((LPWSTR)pszNewWindowTitle);
+
+	// Ensure window title has been updated.
+	Sleep(40);
+
+	// Look for NewWindowTitle.
+	hwndFound = FindWindow(NULL, (LPWSTR)pszNewWindowTitle);
+
+	// Restore original window title.
+	SetConsoleTitle((LPWSTR)pszOldWindowTitle);
+	return(hwndFound);
+}
+
 /***********************************************************************
 **
 */	DEVICE_CMD Open_IO(REBREQ *req)
@@ -160,7 +192,6 @@ static void close_stdio(void)
 ***********************************************************************/
 {
 	REBDEV *dev;
-	REBCHR *title = TEXT("REBOL 3 Alpha");
 	HANDLE win;
 
 	dev = Devices[req->device];
@@ -194,12 +225,7 @@ static void close_stdio(void)
 				return DR_ERROR;
 			}
 
-			SetConsoleTitle(title);
-
-			// The goof-balls at MS seem to require this:
-			// See: http://support.microsoft.com/kb/124103
-			Sleep(40);
-			win = FindWindow(NULL, title); // What if more than one open ?!
+			win = GetConsoleHwnd();
 			if (win) {
 				SetForegroundWindow(win);
 				BringWindowToTop(win);
