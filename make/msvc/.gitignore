@@ -1,0 +1,8 @@
+# Ignore everything
+*
+
+# But not these files...
+!.gitignore
+!Make-vs-project.r3
+!Make-vs-project.bat
+!ReadMe.md
