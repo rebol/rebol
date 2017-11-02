@@ -112,22 +112,27 @@ void Host_Crash(REBYTE *reason) {
 ***********************************************************************/
 
 #ifdef TO_WINDOWS
-int WINAPI WinMain(HINSTANCE inst, HINSTANCE prior, LPSTR cmd, int show)
+#ifdef WINDOWS_CONSOLE
+int main(int argc, char **argv) {
+	// Retrieves the window handle used by the console associated with the calling process
+	HWND hwndC = GetConsoleWindow();
+	// Then we could just get the HINSTANCE:
+	App_Instance = GetModuleHandle(0); // HMODULE=HINSTANCE
 #else
-int main(int argc, char **argv)
-#endif
-{
-	REBYTE vers[8];
-	REBYTE *line;
-	REBINT n;
-
-#ifdef TO_WINDOWS  // In Win32 get args manually:
+int APIENTRY WinMain(HINSTANCE inst, HINSTANCE prior, LPSTR cmd, int show) {
 	int argc;
 	REBCHR **argv;
 	// Fetch the win32 unicoded program arguments:
 	argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 	App_Instance = inst;
 #endif
+
+#else //non Windows platforms
+int main(int argc, char **argv) {
+#endif
+	REBYTE vers[8];
+	REBYTE *line;
+	REBINT n;
 
 	Host_Lib = &Host_Lib_Init;
 

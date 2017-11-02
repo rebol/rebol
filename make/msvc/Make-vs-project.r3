@@ -436,8 +436,8 @@ vs/Sources: compose/only [
 ]
 vs/IncludePath-x86:
 vs/IncludePath-x64: "..\..\..\src\include;"
-vs/PreprocessorDefinitions-x86: {TO_WIN32;REB_CORE;REB_EXE;ENDIAN_LITTLE;_FILE_OFFSET_BITS=64;_CRT_SECURE_NO_WARNINGS;_UNICODE;UNICODE;}
-vs/PreprocessorDefinitions-x64: {TO_WIN32_X64;__LLP64__;REB_CORE;REB_EXE;ENDIAN_LITTLE;_FILE_OFFSET_BITS=64;_CRT_SECURE_NO_WARNINGS;_UNICODE;UNICODE;}
+vs/PreprocessorDefinitions-x86: {WINDOWS_CONSOLE;TO_WIN32;REB_CORE;REB_EXE;ENDIAN_LITTLE;_FILE_OFFSET_BITS=64;_CRT_SECURE_NO_WARNINGS;_UNICODE;UNICODE;}
+vs/PreprocessorDefinitions-x64: {WINDOWS_CONSOLE;TO_WIN32_X64;__LLP64__;REB_CORE;REB_EXE;ENDIAN_LITTLE;_FILE_OFFSET_BITS=64;_CRT_SECURE_NO_WARNINGS;_UNICODE;UNICODE;}
 vs/Prebuild-x86: {
 set REBOL=..\..\prebuild\r3-make-win.exe
 set T=../../../src/tools
@@ -464,6 +464,6 @@ set OS_ID=0.3.40
 %REBOL% %T%/make-reb-lib.r
 }
 
-vs/make-project "Rebol3" %./
+vs/make-project/type "Rebol3" %./ "Console"
 
 ask "^/Press ENTER to end."
