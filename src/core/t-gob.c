@@ -189,7 +189,7 @@ const REBCNT Gob_Flag_Words[] = {
 					}
 				}
 				Detach_Gob(VAL_GOB(val));
-				if ((REBINT)index > i) index--;
+				if (i >= 0 && (REBINT)index > i) index--;
 			}
 		}
 	}
