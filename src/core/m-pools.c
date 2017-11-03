@@ -529,6 +529,12 @@ clear_header:
 
 	Free_Node(SERIES_POOL, (REBNOD *)series);
 
+	/* remove from GC_Infants */
+	for (n = 0; n < MAX_SAFE_SERIES; n++) {
+		if (GC_Infants[n] == series)
+			GC_Infants[n] = NULL;
+	}
+
 /* Old torture mode:
 	if (!SERIES_FREED(series)) { // Don't try to free twice.
 		MUNG_CHECK(SERIES_POOL, (REBNOD *)series, Mem_Pools[SERIES_POOL].wide);
