@@ -197,7 +197,7 @@ const REBCNT Gob_Flag_Words[] = {
 
 	// Create or expand the pane series:
 	if (!GOB_PANE(gob)) {
-		GOB_PANE(gob) = Make_Series(count, sizeof(REBGOB*), 0);
+		GOB_PANE(gob) = Make_Series(count + 1, sizeof(REBGOB*), 0);
 		LABEL_SERIES(GOB_PANE(gob), "gob pane");
 		GOB_TAIL(gob) = count;
 		index = 0;
