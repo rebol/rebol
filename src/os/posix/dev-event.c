@@ -72,12 +72,6 @@ void Done_Device(int handle, int error);
 **		Poll for events and process them.
 **		Returns 1 if event found, else 0.
 **
-**	MS Notes:
-**
-**		"The PeekMessage function normally does not remove WM_PAINT
-**		messages from the queue. WM_PAINT messages remain in the queue
-**		until they are processed."
-**
 ***********************************************************************/
 {
 	int flag = DR_DONE;
