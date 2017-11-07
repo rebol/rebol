@@ -82,9 +82,7 @@ void *Term_IO;
 
 static void Handle_Signal(int sig)
 {
-	char *buf = strdup("[escape]");
-	Put_Str(buf);
-	free(buf);
+	Put_Str("[escape]\n");
 	RL_Escape(0);
 }
 
