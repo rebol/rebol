@@ -589,7 +589,9 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 {
 	char buf[READ_BUF_LEN];
 	char *cp;
+	char *pp;
 	int len;		// length of IO read
+	int line_end_reached = 0;
 
 	term->pos = term->end = 0;
 	term->hist = Line_Count;
@@ -599,9 +601,14 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 	do {
 		Read_Bytes(term, buf, READ_BUF_LEN-2);
 		for (cp = buf; *cp;) {
+			pp = cp;
 			cp = Process_Key(term, cp);
+			if(pp[0] == CR || pp[0] == LF) {
+				line_end_reached = 1;
+				break;
+			}
 		}
-	} while (!term->out);
+	} while (!line_end_reached && !term->out);
 
 	// Not at end of input? Save any unprocessed chars:
 	if (*cp) {
