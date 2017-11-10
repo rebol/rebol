@@ -1024,6 +1024,7 @@ boot-natives: load %natives.r
 if has-graphics [append boot-natives load %graphics.r]
 
 nats: append copy boot-booters boot-natives
+nats-collected: load %tmp-natives.r
 
 n: boot-sys
 ;while [n: find n 'native] [
@@ -1043,6 +1044,11 @@ foreach val nats [
 	]
 ]
 
+foreach [name spec] nats-collected [
+	emit-line/decl "REBNATIVE(" name ");"
+	nat-count: nat-count + 1
+]
+
 print [nat-count "natives"]
 
 emit [newline {const REBFUN Native_Funcs[} nat-count {] = ^{
@@ -1051,7 +1057,10 @@ foreach val nats [
 	if set-word? val [
 		emit-line/code "N_" to word! val "," ;R3
 	]
-	;nat-count: nat-count + 1
+]
+foreach [name spec] nats-collected [
+	emit-line/code "N_" name ","
+	append boot-natives to-block spec
 ]
 emit-end
 emit newline

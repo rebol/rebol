@@ -9,6 +9,7 @@ make/libr3.so
 make/libr3.dll
 src/boot/boot-code.r
 src/boot/host-init.r
+src/boot/tmp-natives.r
 src/core/b-boot.c
 src/include/ext-types.h
 src/include/host-*

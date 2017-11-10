@@ -29,14 +29,24 @@ tmp: context [
 change-dir %../core/
 
 count: 0
-output: make string! 20000
+output:  make string! 20000
+natives: make string! 20000
 
-emit: func [d] [append repend output d newline]
-remit: func [d] [append repend rlib d newline]
+emit:    func [d] [append repend output  d newline]
+emit-rl: func [d] [append repend rlib    d newline]
+emit-n:  func [d] [append repend natives d newline]
 
 emit-header: func [t f] [emit form-header/gen t f %make-headers]
 rlib: form-header/gen "REBOL Interface Library" %reb-lib.h %make-headers.r
 append rlib newline
+
+emit-n {REBOL [
+	Title:   "REBOL automatically collected natives."
+	Purpose: {Data in format: [c-name {rebol-specification}]}
+	Note:    "AUTO-GENERATED FILE - Do not modify. (From: make-headers.r)"
+]}
+
+c-file: none
 
 append-spec: func [spec] [
 	;?? spec
@@ -58,7 +68,7 @@ append-spec: func [spec] [
 			append dups spec
 		]
 		either find spec "RL_API" [
-			remit ["extern " spec "; // " the-file]
+			emit-rl ["extern " spec "; // " the-file]
 		][
 			emit ["extern " spec "; // " the-file]
 		]
@@ -77,12 +87,44 @@ func-header: [
 		any [
 			thru "**"
 			[#" " | #"^-"]
-			copy line thru newline
+			copy  line thru newline
 		]
 		thru "*/"
 		| 
 		none
 	]
+]
+
+ch_func-chars: charset [#"a" - #"z" #"A"]
+
+spec-reb: make string! 1024
+name: none
+
+native-header: [
+	;-- Scan for native header box:
+	"^///" to newline (clear spec-reb)
+	any [ "^///" copy line to newline (append append spec-reb line newline)]
+	any [#"^/" | #" " | #"^-"]
+	"REBNATIVE(" copy name to ")" (probe name
+		either any [
+			error? try [spec: load spec-reb]
+			3 <> length? spec
+			error? try [name: load name]
+			not word? name
+		][
+			print "^[[1;32;49m** Invalid NATIVE spec definition found: ^[[0m"
+			print spec-reb
+			ask "Press ENTER to continue."
+		][
+			if c-file <> the-file [
+				emit-n ["^/;-- " the-file]
+				c-file: the-file
+			]
+			emit-n ["^/" name " {"]
+			emit-n trim/head/tail detab spec-reb
+			emit-n #"}"
+		]
+	)
 ]
 
 process: func [file] [
@@ -93,7 +135,7 @@ process: func [file] [
 		any [
 			thru "/******" to newline
 			[
-				func-header | thru newline
+				func-header | native-header | thru newline
 			]
 		]
 	]
@@ -118,6 +160,7 @@ foreach file files [
 	][process file]
 ]
 
+write %../boot/tmp-natives.r natives
 write %../include/tmp-funcs.h output
 
 print [count "function prototypes"]
