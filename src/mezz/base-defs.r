@@ -85,7 +85,7 @@ immediate!: make typeset! [
 ]
 
 system/options/result-types: make typeset! [
-	immediate! series! bitset! image! object! map! gob!
+	immediate! series! bitset! image! object! map! gob! handle!
 ]
 
 ;-- Create "To-Datatype" conversion functions early in bootstrap:
