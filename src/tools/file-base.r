@@ -50,6 +50,7 @@ core: [
 	m-pools.c
 	m-series.c
 	n-control.c
+	n-crypt.c
 	n-data.c
 	n-io.c
 	n-loop.c
@@ -106,6 +107,7 @@ core: [
 	u-md5.c
 	u-parse.c
 	u-png.c
+	u-rc4.c
 	u-sha1.c
 	u-zlib.c
 ]
