@@ -339,7 +339,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 
 	// Save WORD for function and fake frame for relative arg lookup:
 	tos++;
-	VAL_SET(tos, REB_HANDLE); // Was REB_WORD, but GC does not like bad fields.
+	VAL_SET(tos, REB_TYPESET); // Was REB_WORD and REB_HANDLE, but GC does not like bad fields.
 	VAL_WORD_SYM(tos) = word ? word : SYM__APPLY_;
 	VAL_WORD_INDEX(tos) = -1; // avoid GC access to invalid FRAME above
 	if (func) {

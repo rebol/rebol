@@ -123,6 +123,8 @@ Script: [
 ;   bad-port-action:    [{Cannot use} :arg1 {on this type port}]
 ;   face-error:         [{Invalid graphics face object}]
 ;   face-reused:        [{Face object reused (in more than one pane):} :arg1]
+
+	invalid-handle:     {invalid handle}
 ]
 
 Math: [

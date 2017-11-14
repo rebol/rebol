@@ -531,6 +531,19 @@ STOID Mold_Tag(REBVAL *value, REB_MOLD *mold)
 
 }
 
+STOID Mold_Handle(REBVAL *value, REB_MOLD *mold)
+{
+	REBYTE *name = VAL_HANDLE_NAME(value);
+	if (name != NULL) {
+		Append_Bytes(mold->series, "#[handle! ");
+		Append_Bytes(mold->series, name);
+		Append_Byte(mold->series, ']');
+	}
+	else {
+		Emit(mold, "+T", value);
+	}
+}
+
 /***********************************************************************
 **
 */	void Mold_Binary(REBVAL *value, REB_MOLD *mold)
@@ -1245,10 +1258,13 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		Mold_Event(value, mold);
 		break;
 
+	case REB_HANDLE:
+		Mold_Handle(value, mold);
+		break;
+
 	case REB_REBCODE:
 	case REB_OP:
 	case REB_FRAME:
-	case REB_HANDLE:
 	case REB_STRUCT:
 	case REB_LIBRARY:
 	case REB_UTYPE:

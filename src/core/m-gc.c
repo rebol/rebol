@@ -246,7 +246,12 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 
 		case REB_UNSET:
 		case REB_TYPESET:
+			break;
 		case REB_HANDLE:
+			if (VAL_HANDLE_NAME(val) != NULL) {
+				//printf("markserhandle %i val: %i %i \n", (int)val, VAL_HANDLE(val), VAL_HANDLE_NAME(val));
+				MARK_SERIES((REBSER*)VAL_HANDLE(val));
+			}
 			break;
 
 		case REB_DATATYPE:
@@ -458,6 +463,7 @@ mark_obj:
 			MUNG_CHECK(SERIES_POOL, series, sizeof(*series));
 			if (!SERIES_FREED(series)) {
 				if (IS_FREEABLE(series)) {
+					//printf("free: %i\n", (int)series);
 					Free_Series(series);
 					count++;
 				} else

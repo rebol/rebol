@@ -507,6 +507,7 @@ typedef struct Reb_Series_Ref
 #define	BIN_TAIL(s)		(REBYTE*)STR_TAIL(s)
 #define BIN_SKIP(s, n)	(((REBYTE *)((s)->data))+(n))
 #define	BIN_LEN(s)		(SERIES_TAIL(s))
+#define VAL_BIN_AT(v)   ((REBYTE*)(BIN_DATA(VAL_SERIES(v))+VAL_INDEX(v)))
 
 // Arg is a unicode series:
 #define UNI_HEAD(s)		((REBUNI *)((s)->data))
@@ -833,7 +834,7 @@ typedef struct Reb_Object {
 #define VAL_MOD_BODY(v)		((v)->data.object.body)
 #define VAL_MOD_SPEC(v)		VAL_FRM_SPEC(VAL_OBJ_VALUES(v))
 
-#define SET_HANDLE(v,h)		VAL_SET(v, REB_HANDLE), VAL_HANDLE(v) = (void*)(h) // a place to put it.
+#define SET_HANDLE(v,h)		VAL_SET(v, REB_HANDLE), VAL_HANDLE_NAME(v) = NULL, VAL_HANDLE(v) = (void*)(h) // a place to put it.
 
 /***********************************************************************
 **
@@ -970,9 +971,11 @@ typedef REBINT (*REBCTF)(REBVAL *a, REBVAL *b, REBINT s);
 
 typedef struct Reb_Handle {
 	ANYFUNC	code;
+	const REBYTE *name;
 } REBHAN;
 
 #define VAL_HANDLE(v)		((v)->data.handle.code)
+#define VAL_HANDLE_NAME(v)  ((v)->data.handle.name)
 
 /***********************************************************************
 **
