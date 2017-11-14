@@ -99,6 +99,7 @@ core: [
 	t-utype.c
 	t-vector.c
 	t-word.c
+	u-aes.c
 	u-bmp.c
 	u-compress.c
 	u-dialect.c

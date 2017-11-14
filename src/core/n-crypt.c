@@ -30,8 +30,10 @@
 
 #include "sys-core.h"
 #include "sys-rc4.h"
+#include "sys-aes.h"
 
 const REBYTE rc4_name[] = "RC4-context"; //Used as a context handle name
+const REBYTE aes_name[] = "AES-context";
 
 /**********************************************************************/
 //
@@ -82,4 +84,126 @@ REBNATIVE(rc4)
 		VAL_HANDLE_NAME(ret) = rc4_name;
     }
     return R_RET;
+}
+
+
+/**********************************************************************/
+//
+//  aes: native [
+//
+//	"Encrypt/decrypt data using AES algorithm. Returns stream cipher context handle or encrypted/decrypted data."
+//
+//		/key                  "Provided only for the first time to get stream HANDLE!."
+//		crypt-key   [binary!] "Crypt key (16 or 32 bytes)."
+//		iv    [binary! none!] "Optional initialization vector (16 bytes)."
+//		/decrypt              "Use the crypt-key for decryption (default is to encrypt)"
+//		/stream
+//		ctx   [handle!]       "Stream cipher context."
+//		data  [binary!]       "Data to encrypt/decrypt. Or NONE to close the cipher stream."
+
+//  ]
+REBNATIVE(aes)
+{
+	REBOOL  ref_key       = D_REF(1);
+    REBVAL *val_crypt_key = D_ARG(2);
+    REBVAL *val_iv        = D_ARG(3);
+	REBOOL  ref_decrypt   = D_REF(4);
+    REBOOL  ref_stream    = D_REF(5);
+    REBVAL *val_ctx       = D_ARG(6);
+    REBVAL *val_data      = D_ARG(7);
+    
+    REBVAL *ret = D_RET;
+	REBSER *ctx;
+	REBINT  len, pad_len;
+	REBYTE *data;
+
+	if (ref_key) {
+    	//key defined - setup new context
+
+    	uint8_t iv[AES_IV_SIZE];
+
+		if (IS_BINARY(val_iv)) {
+			if (VAL_LEN(val_iv) < AES_IV_SIZE) {
+				return R_NONE;
+			}
+			memcpy(iv, VAL_BIN_AT(val_iv), AES_IV_SIZE);
+		} else {
+			//TODO: provide some random IV or use ECB encryption if IV is not specified
+			memset(iv, 0, AES_IV_SIZE);
+		}
+		
+		len = VAL_LEN(val_crypt_key) << 3;
+
+		if (len != 128 && len != 256) {
+			return R_NONE;
+		}
+
+		//making series from POOL so it will be GCed automaticaly
+		ctx = Make_Series(sizeof(AES_CTX), (REBCNT)1, FALSE);
+
+		AES_set_key(
+			(AES_CTX*)ctx->data,
+			VAL_BIN_AT(val_crypt_key),
+			(const uint8_t *)iv,
+			(len == 128) ? AES_MODE_128 : AES_MODE_256
+		);
+
+		if (ref_decrypt) AES_convert_key((AES_CTX*)ctx->data);
+
+		SET_HANDLE(ret, ctx);
+		VAL_HANDLE_NAME(ret) = aes_name;
+    
+    } else if(ref_stream) {
+
+    	if (VAL_HANDLE_NAME(val_ctx) != aes_name) {
+    		Trap0(RE_INVALID_HANDLE);
+    	}
+
+    	ctx = (REBSER*)VAL_HANDLE(val_ctx);
+
+    	len = VAL_LEN(val_data);
+    	if (len == 0) return R_NONE;
+
+		pad_len = (((len - 1) >> 4) << 4) + AES_BLOCKSIZE;
+
+		REBYTE *data = VAL_BIN_AT(val_data);
+		REBYTE *pad_data;
+
+		if (len < pad_len) {
+			//  make new data input with zero-padding
+			//TODO: instead of making new data, the original could be extended with padding.
+			pad_data = (REBYTE*)MAKE_MEM(pad_len);
+			memset(pad_data, 0, pad_len);
+			memcpy(pad_data, data, len);
+			data = pad_data;
+		}
+		else {
+			pad_data = NULL;
+		}
+
+		REBSER  *binaryOut = Make_Binary(pad_len);
+		AES_CTX *aes_ctx = (AES_CTX *)ctx->data;
+		if (aes_ctx->key_mode == AES_MODE_DECRYPT) {
+			AES_cbc_decrypt(
+				aes_ctx,
+				(const uint8_t*)data,
+				BIN_HEAD(binaryOut),
+				pad_len
+			);
+		}
+		else {
+			AES_cbc_encrypt(
+				aes_ctx,
+				(const uint8_t*)data,
+				BIN_HEAD(binaryOut),
+				pad_len
+			);
+		}
+		if (pad_data) FREE_MEM(pad_data);
+
+		SET_BINARY(ret, binaryOut);
+		VAL_TAIL(ret) = pad_len;
+
+    }
+	return R_RET;
 }
