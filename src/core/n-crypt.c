@@ -100,7 +100,6 @@ REBNATIVE(rc4)
 //		/stream
 //		ctx   [handle!]       "Stream cipher context."
 //		data  [binary!]       "Data to encrypt/decrypt. Or NONE to close the cipher stream."
-
 //  ]
 REBNATIVE(aes)
 {
