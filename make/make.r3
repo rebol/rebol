@@ -11,6 +11,7 @@ attempt [do %make-settings.r]
 cmd-menu: {^/^[[1;33;49mPlease choose version to build:^[[0m^/}
 
 cmd-actions: [
+	"c" [val: none eval-cmd [{make TOOLS=} TOOLS { clean}]]
 	"q" [quit]
 	""  [val: none]
 ]
@@ -72,6 +73,7 @@ foreach [name data] settings [
 	]
 	i: i + 1
 ]
+append cmd-menu {^-^[[1;32;49mc^[[0m:  Clean^/}
 append cmd-menu {^-^[[1;32;49mq^[[0m:  Quit^/}
 
 eval-cmd: func[cmd [string! block!] /local err][
@@ -89,8 +91,10 @@ move-file: func[file [file!] dir [file!]][
 ]
 
 menu?: true
+prev: none
 forever [
 	if menu? [print cmd-menu]
+	
 	error? try [val: trim/head/tail ask "^[[1;32;49mBuild version: ^[[0m"]
 	switch/default val cmd-actions [
 		print "What?"
@@ -99,6 +103,11 @@ forever [
 
 	if val [
 		eval-cmd [rebol-tool " -qs ../src/tools/make-make.r " OS_ID]
+		if prev <> val [
+			;clean if making different target or for the first run
+			eval-cmd [{make TOOLS=} TOOLS { clean}]
+			prev: val
+		]
 		eval-cmd [{make TOOLS=} TOOLS { all}]
 		make-dir/deep BUILD_DIR
 

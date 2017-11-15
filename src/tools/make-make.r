@@ -105,10 +105,10 @@ make:
 	$(REBOL) $T/make-make.r $(OS_ID)
 
 clean:
-	$(RM) libr3$(LIB_SUFFIX) objs $(RES)
+	$(RM) $(RES)
+	$(RM) objs
 
 all:
-	$(MAKE) clean
 	$(MAKE) prep
 	$(MAKE) r3$(BIN_SUFFIX)
 	$(MAKE) lib
@@ -411,7 +411,7 @@ unless flag? -SP [ ; Use standard paths:
 either flag? EXE [
 	macro+ BIN_SUFFIX %.exe
 	macro+ LIB_SUFFIX %.dll
-	macro+ RES {"objs/r3.res"}
+	macro+ RES {"objs\r3.res"}
 	macro+ RM  "DEL /s /q"
 ][
 	macro+ LIB_SUFFIX %.so
