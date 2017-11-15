@@ -144,6 +144,7 @@ shift
 
 ; Checksum
 sha1
+sha256
 md4
 md5
 crc32

@@ -110,6 +110,7 @@ core: [
 	u-png.c
 	u-rc4.c
 	u-sha1.c
+	u-sha256.c
 	u-zlib.c
 ]
 

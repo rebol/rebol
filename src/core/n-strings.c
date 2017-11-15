@@ -47,6 +47,16 @@ int  SHA1_CtxSize(void);
 #endif
 #endif
 
+#ifndef SHA256_DEFINED
+#ifdef HAS_SHA256
+REBYTE *SHA256(REBYTE *, REBCNT, REBYTE *);
+void SHA256_Init(void *c);
+void SHA256_Update(void *c, REBYTE *data, REBCNT len);
+void SHA256_Final(REBYTE *md, void *c);
+int  SHA256_CtxSize(void);
+#endif
+#endif
+
 #ifndef MD5_DEFINED
 #ifdef HAS_MD5
 REBYTE *MD5(REBYTE *, REBCNT, REBYTE *);
@@ -79,6 +89,10 @@ static struct digest {
 
 #ifdef HAS_SHA1
 	{SHA1, SHA1_Init, SHA1_Update, SHA1_Final, SHA1_CtxSize, SYM_SHA1, 20, 64},
+#endif
+
+#ifdef HAS_SHA256
+	{SHA256, SHA256_Init, SHA256_Update, SHA256_Final, SHA256_CtxSize, SYM_SHA256, 32, 64},
 #endif
 
 #ifdef HAS_MD4
