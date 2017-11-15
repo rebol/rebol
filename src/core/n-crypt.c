@@ -93,13 +93,14 @@ REBNATIVE(rc4)
 //
 //	"Encrypt/decrypt data using AES algorithm. Returns stream cipher context handle or encrypted/decrypted data."
 //
-//		/key                  "Provided only for the first time to get stream HANDLE!."
-//		crypt-key   [binary!] "Crypt key (16 or 32 bytes)."
-//		iv    [binary! none!] "Optional initialization vector (16 bytes)."
-//		/decrypt              "Use the crypt-key for decryption (default is to encrypt)"
+//		/key                "Provided only for the first time to get stream HANDLE!."
+//		crypt-key [binary!] "Crypt key (16 or 32 bytes)."
+//		iv  [none! binary!] "Optional initialization vector (16 bytes)."
+//		/decrypt            "Use the crypt-key for decryption (default is to encrypt)"
 //		/stream
-//		ctx   [handle!]       "Stream cipher context."
-//		data  [binary!]       "Data to encrypt/decrypt. Or NONE to close the cipher stream."
+//		ctx       [handle!] "Stream cipher context."
+//		data      [binary!] "Data to encrypt/decrypt. Or NONE to close the cipher stream."
+
 //  ]
 REBNATIVE(aes)
 {
@@ -127,7 +128,7 @@ REBNATIVE(aes)
 			}
 			memcpy(iv, VAL_BIN_AT(val_iv), AES_IV_SIZE);
 		} else {
-			//TODO: provide some random IV or use ECB encryption if IV is not specified
+			//TODO: Use ECB encryption if IV is not specified
 			memset(iv, 0, AES_IV_SIZE);
 		}
 		
