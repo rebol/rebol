@@ -251,16 +251,16 @@ int main(int argc, char **argv) {
 	REBYTE vers[8];
 	REBINT n;
 
+	// Must be done before an console I/O can occur. Does not use reb-lib,
+	// so this device should open even if there are other problems.
+	Open_StdIO();  // also sets up interrupt handler
+
 	Host_Lib = &Host_Lib_Init;
 
 	Parse_Args(argc, (REBCHR **)argv, &Main_Args);
 
 	vers[0] = 5; // len
 	RL_Version(&vers[0]);
-
-	// Must be done before an console I/O can occur. Does not use reb-lib,
-	// so this device should open even if there are other problems.
-	Open_StdIO();  // also sets up interrupt handler
 
 #ifdef TO_WINDOWS
 	// Setting title after Open_StdIO, because with Windows subsystem the console is not by default opened.

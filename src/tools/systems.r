@@ -45,7 +45,7 @@ compile-flags: [
 	+OS:	"-Os"						; size optimize
 	+O1:	"-O1"						; full optimize
 	+O2:	"-O2"						; full optimize
-	UNI:	"-DUNICODE"					; win32 wants it
+	UNI:	"-DUNICODE -D_UNICODE"		; win32 wants it
 	CST:	"-DCUSTOM_STARTUP"			; include custom startup script at host boot
 	HID:	"-fvisibility=hidden"		; all syms are hidden
 	F64:	"-D_FILE_OFFSET_BITS=64"	; allow larger files

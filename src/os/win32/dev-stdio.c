@@ -53,7 +53,7 @@
 #define SF_DEV_NULL 31			// local flag to mark NULL device
 
 #define CONSOLE_MODES ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT | ENABLE_ECHO_INPUT \
-		| 0x0040 | 0x0020  // quick edit and insert mode (not defined in VC6)
+		| ENABLE_EXTENDED_FLAGS | 0x0040 | 0x0020  // quick edit and insert mode (not defined in VC6)
 
 static HANDLE Std_Out = 0;
 static HANDLE Std_Inp = 0;
@@ -213,11 +213,11 @@ HWND GetConsoleHwnd(void) {
 		//Std_Err = GetStdHandle(STD_ERROR_HANDLE);
 		Std_Echo = 0;
 
-		Redir_Out = (GetFileType(Std_Out) != 0);
-		Redir_Inp = (GetFileType(Std_Inp) != 0);
+		Redir_Out = (GetFileType(Std_Out) != FILE_TYPE_CHAR);
+		Redir_Inp = (GetFileType(Std_Inp) != FILE_TYPE_CHAR);
 
-		// attach_console();  // merges streams, not good
-
+#ifdef _WINDOWS
+// This code is needed only when the app is not copiled with Console subsystem
  		// If output not redirected, open a console:
 		if (!Redir_Out) {
 			if (!AllocConsole()) {
@@ -236,12 +236,23 @@ HWND GetConsoleHwnd(void) {
 
 			if (!Redir_Inp)	{
 				Std_Inp = GetStdHandle(STD_INPUT_HANDLE);
-				// Make the Win32 console a bit smarter by default:
-				SetConsoleMode(Std_Inp, CONSOLE_MODES);
 			}
 		}
-
+#endif
 		Std_Buf = OS_Make(BUF_SIZE * sizeof(REBCHR));
+
+		if (!Redir_Inp) {
+			//
+			// Windows offers its own "smart" line editor (with history
+			// management, etc.) in the form of the Windows Terminal.  These
+			// modes only apply if a the input is coming from the terminal,
+			// not if Rebol has a file redirection connected to the input.
+			//
+			// While the line editor is running with ENABLE_LINE_INPUT, there
+			// are very few hooks offered.
+			//
+			SetConsoleMode( Std_Inp, CONSOLE_MODES );
+		}
 
 		// Handle stdio CTRL-C interrupt:
 		SetConsoleCtrlHandler(Handle_Break, TRUE);
@@ -393,6 +404,7 @@ HWND GetConsoleHwnd(void) {
 		if (Redir_Inp) { // always UTF-8
 			len = MIN(req->length, BUF_SIZE);
 			ok = ReadFile(Std_Inp, req->data, len, &total, 0);
+			printf("%i\n", total);
 		}
 		else {
 			ok = ReadConsoleW(Std_Inp, Std_Buf, BUF_SIZE-1, &total, 0);
