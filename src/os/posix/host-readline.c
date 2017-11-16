@@ -76,9 +76,9 @@ enum {
 
 // Macros: (does not use reb-c.h)
 #define MAKE_STR(l) (char*)malloc(l)
-#define WRITE_CHAR(s)    if(-1==write(1, s, 1)){}
-#define WRITE_CHARS(s,l) if(-1==write(1, s, l)){}
-#define WRITE_STR(s)     if(-1==write(1, s, strlen(s))){}
+#define WRITE_CHAR(s)    if(-1==write(STDOUT_FILENO, s, 1)){}
+#define WRITE_CHARS(s,l) if(-1==write(STDOUT_FILENO, s, l)){}
+#define WRITE_STR(s)     if(-1==write(STDOUT_FILENO, s, strlen(s))){}
 
 #define DBG_INT(t,n) //printf("\r\ndbg[%s]: %d\r\n", t, (n));
 #define DBG_STR(t,s) //printf("\r\ndbg[%s]: %s\r\n", t, (s));
@@ -561,7 +561,7 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 		// We assume that escape-sequences are always complete in buf.
 		// (No partial escapes.) If this is not true, then we will need
 		// to add an additional "collection" loop here.
-		if ((len = read(0, buf, len)) < 0) {
+		if ((len = read(STDIN_FILENO, buf, len)) < 0) {
 			WRITE_STR("\r\nI/O terminated\r\n");
 			Quit_Terminal(term); // something went wrong
 			exit(100);
