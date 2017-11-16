@@ -153,9 +153,15 @@ static void close_stdio(void)
 	return DR_DONE;
 }
 
-//Used to get handle of a newly created console
-//See: http://support.microsoft.com/kb/124103
-HWND GetConsoleHwnd(void) {
+/***********************************************************************
+**
+*/	HWND GetConsoleHwnd(void)
+/*
+**		Used to get handle of a newly created console
+**		See: http://support.microsoft.com/kb/124103
+**
+***********************************************************************/
+{
 #define MY_BUFSIZE 1024 // Buffer size for console window titles.
 	HWND hwndFound;     // This is what is returned to the caller.
 	char pszNewWindowTitle[MY_BUFSIZE]; // Contains fabricated
@@ -251,7 +257,7 @@ HWND GetConsoleHwnd(void) {
 			// While the line editor is running with ENABLE_LINE_INPUT, there
 			// are very few hooks offered.
 			//
-			SetConsoleMode( Std_Inp, CONSOLE_MODES );
+			SetConsoleMode(Std_Inp, CONSOLE_MODES);
 		}
 
 		// Handle stdio CTRL-C interrupt:
