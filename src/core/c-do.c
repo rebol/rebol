@@ -1781,7 +1781,7 @@ reapply:  // Go back here to start over with a new func
 	VAL_ERR_VALUE(err) = TASK_THIS_VALUE;
 	VAL_ERR_SYM(err) = 0;
 
-	longjmp(*Halt_State, 1);
+	LONG_JUMP(*Halt_State, 1);
 }
 
 

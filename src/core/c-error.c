@@ -141,7 +141,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	if (!Saved_State) Crash(RP_NO_SAVED_STATE);
 	SET_ERROR(TASK_THIS_ERROR, ERR_NUM(err), err);
 	if (Trace_Level) Trace_Error(TASK_THIS_ERROR);
-	longjmp(*Saved_State, 1);
+	LONG_JUMP(*Saved_State, 1);
 }
 
 
@@ -156,7 +156,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 {
 	if (!Saved_State) Crash(RP_NO_SAVED_STATE);
 	*TASK_THIS_ERROR = *val;
-	longjmp(*Saved_State, 1);
+	LONG_JUMP(*Saved_State, 1);
 }
 
 
@@ -216,7 +216,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 	*TASK_THIS_ERROR = *TASK_STACK_ERROR; // pre-allocated
 
-	longjmp(*Saved_State, 1);
+	LONG_JUMP(*Saved_State, 1);
 }
 
 
