@@ -11,7 +11,11 @@ attempt [do %make-settings.r]
 cmd-menu: {^/^[[1;33;49mPlease choose version to build:^[[0m^/}
 
 cmd-actions: [
-	"c" [val: none eval-cmd [{make TOOLS=} TOOLS { clean}]]
+	"c" [
+		val: none
+		;eval-cmd [{make TOOLS=} TOOLS { clean}]
+		clean-project
+	]
 	"q" [quit]
 	""  [val: none]
 ]
@@ -75,6 +79,14 @@ foreach [name data] settings [
 ]
 append cmd-menu {^-^[[1;32;49mc^[[0m:  Clean^/}
 append cmd-menu {^-^[[1;32;49mq^[[0m:  Quit^/}
+
+clean-project: func[/local dir][
+	dir: %objs/
+	foreach file read dir [
+		print ["Deleting:" dir/:file]
+		delete dir/:file
+	] 
+]
 
 eval-cmd: func[cmd [string! block!] /local err][
 	if block? cmd [cmd: rejoin cmd]
