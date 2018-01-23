@@ -53,8 +53,6 @@
 
 #include "sys-core.h"
 
-#define MIN_DICT 8 // size to switch to hashing
-
 
 /***********************************************************************
 **
@@ -74,14 +72,14 @@
 /*
 **		Makes a MAP block (that holds both keys and values).
 **		Size is the number of key-value pairs.
-**		If size >= MIN_DICT, then a hash series is also created.
+**		Hash series is also created.
 **
 ***********************************************************************/
 {
 	REBSER *blk = Make_Block(size*2);
 	REBSER *ser = 0;
 
-	if (size >= MIN_DICT) ser = Make_Hash_Array(size);
+	ser = Make_Hash_Array(size);
 
 	blk->series = ser;
 
@@ -210,62 +208,7 @@
 	REBVAL *v;
 	REBCNT n;
 
-	if (IS_NONE(key)) return 0;
-
-	// We may not be large enough yet for the hash table to
-	// be worthwhile, so just do a linear search:
-	if (!hser) {
-		if (series->tail < MIN_DICT*2) {
-			v = BLK_HEAD(series);
-			if (ANY_WORD(key)) {
-				for (n = 0; n < series->tail; n += 2, v += 2) {
-					if (ANY_WORD(v) && SAME_SYM(key, v)) {
-						if (val) *++v = *val;
-						return n/2+1;
-					}
-				}
-			}
-			else if (ANY_BINSTR(key)) {
-				for (n = 0; n < series->tail; n += 2, v += 2) {
-					if (VAL_TYPE(key) == VAL_TYPE(v) && 0 == Compare_String_Vals(key, v, (REBOOL)!IS_BINARY(v))) {
-						if (val) {
-							*++v = *val;
-//							VAL_SERIES(v) = Copy_Series_Value(val);
-//							VAL_INDEX(v) = 0;
-						}
-						return n/2+1;
-					}
-				}
-			}
-			else if (IS_INTEGER(key)) {
-				for (n = 0; n < series->tail; n += 2, v += 2) {
-					if (IS_INTEGER(v) && VAL_INT64(key) == VAL_INT64(v)) {
-						if (val) *++v = *val;
-						return n/2+1;
-					}
-				}
-			}
-			else if (IS_CHAR(key)) {
-				for (n = 0; n < series->tail; n += 2, v += 2) {
-					if (IS_CHAR(v) && VAL_CHAR(key) == VAL_CHAR(v)) {
-						if (val) *++v = *val;
-						return n/2+1;
-					}
-				}
-			}
-			else Trap_Type(key);
-
-			if (!val) return 0;
-			Append_Val(series, key);
-			Append_Val(series, val); // no Copy_Series_Value(val) on strings
-			return series->tail/2;
-		}
-
-		// Add hash table:
-		//Print("hash added %d", series->tail);
-		series->series = hser = Make_Hash_Array(series->tail);
-		Rehash_Hash(series);
-	}
+	if (IS_NONE(key) || hser == NULL) return 0;
 
 	// Get hash table, expand it if needed:
 	if (series->tail > hser->tail/2) {
@@ -427,7 +370,7 @@
 	REBSER *ser = 0;
 	REBCNT size = SERIES_TAIL(blk);
 
-	if (size >= MIN_DICT) ser = Make_Hash_Array(size);
+	ser = Make_Hash_Array(size);
 	blk->series = ser;
 	Rehash_Hash(blk);
 }
