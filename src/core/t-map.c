@@ -299,10 +299,15 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Map(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Map(REBVAL *out, REBVAL *data, REBCNT type, REBU64 types)
 /*
 ***********************************************************************/
 {
+	/*
+	Oldes asking: 
+	1. What means the MT in the function name?
+	2. What is purpose of the unused `type` argument?
+	*/
 	REBCNT n;
 	REBSER *series;
 
@@ -315,6 +320,8 @@
 
 	//COPY_BLK_PART(series, VAL_BLK_DATA(data), n);
 	Append_Map(series, data, UNKNOWN);
+
+	if (types != 0) Copy_Deep_Values(series, 0, SERIES_TAIL(series), types);
 
 	Rehash_Hash(series);
 
@@ -466,7 +473,7 @@
 	case A_TO:
 		// make map! [word val word val]
 		if (IS_BLOCK(arg) || IS_PAREN(arg) || IS_MAP(arg)) {
-			if (MT_Map(D_RET, arg, 0)) return R_RET;
+			if (MT_Map(D_RET, arg, 0, 0)) return R_RET;
 			Trap_Arg(arg);
 //		} else if (IS_NONE(arg)) {
 //			n = 3; // just a start
@@ -481,10 +488,20 @@
 		Set_Series(REB_MAP, D_RET, series);
 		break;
 
-	case A_COPY:
-		if (MT_Map(D_RET, val, 0)) return R_RET;
+	case A_COPY: {
+		REBU64 types = 0;
+		if (D_REF(ARG_COPY_DEEP)) {
+			//puts("deep copy wanted");
+			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? 0 : TS_STD_SERIES);
+		}
+		if D_REF(ARG_COPY_TYPES) {
+			arg = D_ARG(ARG_COPY_KINDS);
+			if (IS_DATATYPE(arg)) types |= TYPESET(VAL_DATATYPE(arg));
+			else types |= VAL_TYPESET(arg);
+		}
+		if (MT_Map(D_RET, val, 0, types)) return R_RET;
 		Trap_Arg(val);
-
+	}
 	case A_CLEAR:
 		Clear_Series(series);
 		if (series->series) Clear_Series(series->series);
