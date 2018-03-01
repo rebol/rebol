@@ -299,15 +299,10 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Map(REBVAL *out, REBVAL *data, REBCNT type, REBU64 types)
+*/	REBFLG Copy_Map(REBVAL *out, REBVAL *data, REBU64 types)
 /*
 ***********************************************************************/
 {
-	/*
-	Oldes asking: 
-	1. What means the MT in the function name?
-	2. What is purpose of the unused `type` argument?
-	*/
 	REBCNT n;
 	REBSER *series;
 
@@ -328,6 +323,17 @@
 	Set_Series(REB_MAP, out, series);
 
 	return TRUE;
+}
+
+
+/***********************************************************************
+**
+*/	REBFLG MT_Map(REBVAL *out, REBVAL *data, REBCNT type)
+/*
+***********************************************************************/
+{
+	//Oldes: MT means "make type" and has fixed arguments
+	return Copy_Map(out, data, 0);
 }
 
 
@@ -473,7 +479,7 @@
 	case A_TO:
 		// make map! [word val word val]
 		if (IS_BLOCK(arg) || IS_PAREN(arg) || IS_MAP(arg)) {
-			if (MT_Map(D_RET, arg, 0, 0)) return R_RET;
+			if (Copy_Map(D_RET, arg, 0)) return R_RET;
 			Trap_Arg(arg);
 //		} else if (IS_NONE(arg)) {
 //			n = 3; // just a start
@@ -499,7 +505,7 @@
 			if (IS_DATATYPE(arg)) types |= TYPESET(VAL_DATATYPE(arg));
 			else types |= VAL_TYPESET(arg);
 		}
-		if (MT_Map(D_RET, val, 0, types)) return R_RET;
+		if (Copy_Map(D_RET, val, types)) return R_RET;
 		Trap_Arg(val);
 	}
 	case A_CLEAR:
