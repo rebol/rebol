@@ -513,11 +513,7 @@ chk_neg:
 
 	r = OS_BROWSE(url, 0);
 
-	if (r == 0) {
-		return R_UNSET;
-	} else {
-		Trap1(RE_CALL_FAIL, Make_OS_Error(r));
-	}
+	if (r == 0) Trap1(RE_CALL_FAIL, Make_OS_Error(r));
 
 	return R_UNSET;
 }
