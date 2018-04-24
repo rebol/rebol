@@ -165,7 +165,11 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 		// The ->ser field of the REBEVT is void*, so we must cast
 		// Comment says it is a "port or object"
 		CHECK_MARK((REBSER*)VAL_EVENT_SER(value), depth);
-	} 
+	}
+
+	if (IS_EVENT_MODEL(value, EVM_GUI)) {
+		Mark_Gob(VAL_EVENT_SER(value), depth);
+	}
 
 	if (IS_EVENT_MODEL(value, EVM_DEVICE)) {
 		// In the case of being an EVM_DEVICE event type, the port! will
