@@ -106,7 +106,7 @@ make:
 
 clean:
 	$(RM) $(RES)
-	$(RM) objs
+	$(RM) objs/*
 
 all:
 	$(MAKE) prep
@@ -115,6 +115,7 @@ all:
 	$(MAKE) host$(BIN_SUFFIX)
 
 prep:
+	$(RM) objs/b-init.* # boot init must be always recompiled
 	$(REBOL) $T/make-headers.r
 	$(REBOL) $T/make-boot.r $(OS_ID)
 	$(REBOL) $T/make-host-init.r
@@ -185,7 +186,6 @@ r3$(BIN_SUFFIX):	tmps objs $(OBJS) $(HOST) $(RES)
 	$(CC) -o r3$(BIN_SUFFIX) $(OBJS) $(HOST) $(RES) $(CLIB)
 	$(STRIP) r3$(BIN_SUFFIX)
 	-$(NM) -a r3$(BIN_SUFFIX)
-	$(LS) r3$(BIN_SUFFIX)
 
 objs:
 	mkdir -p objs
@@ -201,13 +201,11 @@ libr3$(LIB_SUFFIX):	$(OBJS)
 	$(STRIP) libr3$(LIB_SUFFIX)
 	-$(NM) -D libr3$(LIB_SUFFIX)
 	-$(NM) -a libr3$(LIB_SUFFIX) | grep "Do_"
-	$(LS) libr3$(LIB_SUFFIX)
 
 # PUBLIC: Host using the shared lib:
 host$(BIN_SUFFIX):	$(HOST) $(RES)
 	$(CC) -o host$(BIN_SUFFIX) $(HOST) $(RES) libr3$(LIB_SUFFIX) $(CLIB)
 	$(STRIP) host$(BIN_SUFFIX)
-	$(LS) host$(BIN_SUFFIX)
 	@echo "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"
 }
 
@@ -412,7 +410,7 @@ either flag? EXE [
 	macro+ BIN_SUFFIX %.exe
 	macro+ LIB_SUFFIX %.dll
 	macro+ RES {"objs\r3.res"}
-	macro+ RM  "DEL /s /q"
+	macro+ RM  "@-rm -rf"
 ][
 	macro+ LIB_SUFFIX %.so
 	macro+ RM  "@-rm -rf"
