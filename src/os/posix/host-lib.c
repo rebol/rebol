@@ -1100,7 +1100,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 ***********************************************************************/
 {
 	if (
-#if defined(TO_OSX) || defined(TO_OSXI)
+#if defined(TO_OSX) || defined(TO_OSXI) || defined(TO_OSX_X64)
 		Try_Browser("/usr/bin/open", url)
 #else
 		Try_Browser("xdg-open", url)
