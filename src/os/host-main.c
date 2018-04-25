@@ -242,7 +242,7 @@ int main(int argc, char **argv) {
 	App_Instance = GetModuleHandle(0); // HMODULE=HINSTANCE
 #endif
 	// Fetch the win32 unicoded program arguments:
-	(LPWSTR*)argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+	argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 	// Use title string as defined in resources file (.rc) with hardcoded ID 101
 	LoadStringW(App_Instance, 101, App_Title, MAX_TITLE_LENGTH);
 #else //non Windows platforms
