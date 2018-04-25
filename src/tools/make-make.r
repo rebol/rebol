@@ -385,6 +385,14 @@ emit-file-deps: func [
 
 replace makefile-head "!date" now
 
+if all [
+	cc: get-env "CC"
+	pos: find makefile-head "CC="
+][
+	;prefer system defined CC
+	insert pos #"#"
+]
+
 macro+ TO_OS to-def
 macro+ OS_ID os-plat
 macro+ LS pick ["dir" "ls -l"] flag? DIR
