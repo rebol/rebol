@@ -235,7 +235,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE prior, LPSTR cmd, int show) {
 	REBCHR **argv;
 	App_Instance = inst;
 #else
-int main(int argc, char **argv) {
+int main(int argc, REBCHR **argv) {
 	// Retrieves the window handle used by the console associated with the calling process
 	HWND hwndC = GetConsoleWindow();
 	// Then we could just get the HINSTANCE:
@@ -246,7 +246,7 @@ int main(int argc, char **argv) {
 	// Use title string as defined in resources file (.rc) with hardcoded ID 101
 	LoadStringW(App_Instance, 101, App_Title, MAX_TITLE_LENGTH);
 #else //non Windows platforms
-int main(int argc, char **argv) {
+int main(int argc, REBCHR **argv) {
 #endif
 	REBYTE vers[8];
 	REBINT n;
@@ -257,7 +257,7 @@ int main(int argc, char **argv) {
 
 	Host_Lib = &Host_Lib_Init;
 
-	Parse_Args(argc, (REBCHR **)argv, &Main_Args);
+	Parse_Args(argc, argv, &Main_Args);
 
 	vers[0] = 5; // len
 	RL_Version(&vers[0]);
