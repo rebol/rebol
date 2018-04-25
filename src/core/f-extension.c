@@ -313,7 +313,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	REBEXT *ext;
 	RXICAL call;
 	REBSER *src;
-	int Remove_after_first_run;
+//	int Remove_after_first_run;
 	//Check_Security(SYM_EXTENSION, POL_EXEC, val);
 
 	if (!D_REF(2)) { // No /dispatch, use the DLL file:

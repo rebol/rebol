@@ -205,7 +205,6 @@
 	REBSER *hser = series->series; // can be null
 	REBCNT *hashes;
 	REBCNT hash;
-	REBVAL *v;
 	REBCNT n;
 
 	if (IS_NONE(key) || hser == NULL) return 0;

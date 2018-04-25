@@ -301,7 +301,7 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 		Decode_LZW(dp, &cp, colormap, w, h, interlaced);
 
 		if(transparency_index >= 0) {
-			int ADD_alpha_key_detection;
+			//int ADD_alpha_key_detection;
 			REBYTE *p=colormap+3*transparency_index;
 			///Chroma_Key_Alpha(Temp_Value, (REBCNT)(p[2]|(p[1]<<8)|(p[0]<<16)), BLIT_MODE_COLOR);
 		}

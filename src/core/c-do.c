@@ -2208,7 +2208,7 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 	//REBVAL *val;
 	REBOL_STATE state;
 	REBVAL *val;
-	int MERGE_WITH_Do_String;
+//	int MERGE_WITH_Do_String;
 //	static D = 0;
 //	int depth = D++;
 

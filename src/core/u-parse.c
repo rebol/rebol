@@ -184,7 +184,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	REBSER *series = parse->series;
 	REBSER *ser;
 	REBCNT flags = parse->flags | AM_FIND_MATCH | AM_FIND_TAIL;
-	int rewrite_needed;
+//	int rewrite_needed;
 
 	if (Trace_Level) {
 		Trace_Value(7, item);

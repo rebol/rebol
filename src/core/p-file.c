@@ -262,7 +262,7 @@ REBINT Mode_Syms[] = {
 {
 	REBI64 len;  // maximum size
 	REBI64 cnt;
-	int what_if_it_changed;
+//	int what_if_it_changed;
 
 	// Compute and bound bytes remaining:
 	len = file->file.size - file->file.index; // already read

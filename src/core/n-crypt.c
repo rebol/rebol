@@ -115,7 +115,6 @@ REBNATIVE(aes)
     REBVAL *ret = D_RET;
 	REBSER *ctx;
 	REBINT  len, pad_len;
-	REBYTE *data;
 
 	if (ref_key) {
     	//key defined - setup new context

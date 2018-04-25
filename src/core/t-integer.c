@@ -56,9 +56,7 @@
 	REBI64 arg;
 	REBINT n;
 
-	REBU64 p, a, b; // for overflow detection
-	REBCNT a1, a0, b1, b0;
-	REBFLG sgn;
+	REBU64 p; // for overflow detection
 	REBI64 anum;
 
 	num = VAL_INT64(val);

@@ -198,7 +198,7 @@ static void close_stdio(void)
 ***********************************************************************/
 {
 	REBDEV *dev;
-	HANDLE win;
+//	HANDLE win;
 
 	dev = Devices[req->device];
 
