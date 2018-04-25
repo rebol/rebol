@@ -202,7 +202,7 @@
 	bodi = VAL_INDEX(D_ARG(mode+2));
 
 	// Starting location when past end with negative skip:
-	if (inc < 0 && VAL_INDEX(var) >= (REBINT)VAL_TAIL(var)) {
+	if (inc < 0 && VAL_INDEX(var) >= VAL_TAIL(var)) {
 		VAL_INDEX(var) = (REBINT)VAL_TAIL(var) + inc;
 	}
 

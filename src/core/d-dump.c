@@ -70,7 +70,7 @@
 	REBCNT cnt = 0;
 
 	cp = buf;
-	for (l = 0; l < max_lines; l++) {
+	for (l = 0; (int)l < max_lines; l++) {
 		cp = Form_Hex_Pad(cp, (REBUPT) bp, 8);
 
 		*cp++ = ':';

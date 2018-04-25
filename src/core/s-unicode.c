@@ -783,7 +783,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 	// Check that we have enough valid source bytes:
 	if (len) {
-		if (slen+1 > *len) return 0;
+		if ((REBCNT)slen+1 > *len) return 0;
 	}
 	else {
 		for (; slen >= 0; slen--)

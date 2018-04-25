@@ -437,7 +437,7 @@
 
 	if (month < 1 || month > 12) return FALSE;
 
-	if (year > MAX_YEAR || day < 1 || day > (REBINT)(Month_Lengths[month-1])) return FALSE;
+	if (year > MAX_YEAR || day < 1 || day > (REBCNT)(Month_Lengths[month-1])) return FALSE;
 
 	// Check February for leap year or century:
 	if (month == 2 && day == 29) {
