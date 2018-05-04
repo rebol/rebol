@@ -72,7 +72,9 @@ VS: context [
 		dir:    prepare-dir dir
 		dir-vs: prepare-dir/confirm dir/:name
 
-
+		;target dirs:
+		prepare-dir %../../build/win-x86/
+		prepare-dir %../../build/win-x64/
 
 		guid: make-guid
 		tmp: replace/all copy sln     "#PROJECT-TYPE-GUID#"       guid-project-type
