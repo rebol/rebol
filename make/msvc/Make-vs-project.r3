@@ -40,7 +40,7 @@ VS: context [
 		if all [confirm exists? dir][
 			print ["Target directory:" mold dir "already exists!"]
 			print  "Files inside may be modified!"
-			ask    "^/Press ENTER to continue."
+			if not system/options/quiet [ ask "^/Press ENTER to continue."]
 			print  ""
 		]
 		unless exists? dir [
@@ -471,4 +471,4 @@ set OS_ID=0.3.40
 
 vs/make-project/type "Rebol3" %./ "Console"
 
-ask "^/Press ENTER to end."
+if not system/options/quiet [ask "^/Press ENTER to end."]
