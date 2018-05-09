@@ -11,13 +11,13 @@ REBOL [
 	}
 	Name: 'http
 	Type: 'module
-	Version: 0.1.0
+	Version: 0.1.4
 	File: %prot-http.r
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
 	}
-	Author: "Gabriele Santilli"
-	Date: 22-Jun-2007
+	Author: ["Gabriele Santilli" "Richard Smolak"]
+	Date: 26-Nov-2012
 ]
 
 sync-op: func [port body /local state] [
@@ -26,7 +26,13 @@ sync-op: func [port body /local state] [
 	state/awake: :read-sync-awake
 	do body
 	if state/state = 'ready [do-request port]
-	unless port? wait [state/connection port/spec/timeout] [http-error "Timeout"]
+	;NOTE: We'll wait in a WHILE loop so the timeout cannot occur during 'reading-data state.
+	;The timeout should be triggered only when the response from other side exceeds the timeout value.
+	;--Richard
+	while [not find [ready close] state/state][
+		unless port? wait [state/connection port/spec/timeout] [http-error "Timeout"]
+		if state/state = 'reading-data [read state/connection]
+	]
 	body: copy port
 	if state/close? [close port]
 	body
@@ -88,6 +94,8 @@ http-awake: func [event /local port http-port state awake res] [
 						state/error: make-http-error "Server closed connection"
 						awake make event! [type: 'error port: http-port]
 					] [
+						;set state to CLOSE so the WAIT loop in 'sync-op can be interrupted --Richard
+						state/state: 'close
 						any [
 							awake make event! [type: 'done port: http-port]
 							awake make event! [type: 'close port: http-port]
@@ -152,7 +160,7 @@ do-request: func [
 	spec/headers: body-of make make object! [
 		Accept: "*/*"
 		Accept-Charset: "utf-8"
-		Host: either spec/port-id <> 80 [
+		Host: either not find [80 443] spec/port-id [
 			rejoin [form spec/host #":" spec/port-id]
 		] [
 			form spec/host
@@ -249,6 +257,11 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 				res: awake make event! [type: 'custom port: port code: 0]
 			] [
 				res: check-data port
+				unless open? port [
+					;NOTE some servers(e.g. yahoo.com) don't supply content-data in the redirect header so the state/state can be left in 'reading-data after check-data call
+					;I think it is better to check if port has been closed here and set the state so redirect sequence can happen. --Richard
+					state/state: 'ready
+				]
 			]
 			if all [not res state/state = 'ready] [
 				either all [
@@ -328,9 +341,16 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state] 
 	if #"/" = first new-uri [
 		new-uri: to url! ajoin [spec/scheme "://" spec/host new-uri]
 	]
-	new-uri: construct/with decode-url new-uri port/scheme/spec
-	if new-uri/scheme <> 'http [
-		state/error: make-http-error {Redirect to a protocol different from HTTP not supported}
+	new-uri: decode-url new-uri
+	unless select new-uri 'port-id [
+		switch new-uri/scheme [
+			'https [append new-uri [port-id: 443]]
+			'http [append new-uri [port-id: 80]]
+		]
+	]
+	new-uri: construct/with new-uri port/scheme/spec
+	unless find [http https] new-uri/scheme [
+		state/error: make-http-error {Redirect to a protocol different from HTTP or HTTPS not supported}
 		return state/awake make event! [type: 'error port: port]
 	]
 	either all [
@@ -338,6 +358,9 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state] 
 		new-uri/port-id = spec/port-id
 	] [
 		spec/path: new-uri/path
+		;we need to reset tcp connection here before doing a redirect
+		close port/state/connection
+		open port/state/connection
 		do-request port
 		false
 	] [
@@ -353,12 +376,14 @@ check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer st
 	case [
 		headers/transfer-encoding = "chunked" [
 			data: conn/data
-			out: port/data: make binary! length? data
+			;clear the port data only at the beginning of the request --Richard
+			unless port/data [port/data: make binary! length? data]
+			out: port/data
 			until [
 				either parse/all data [
 					copy chunk-size some hex-digits thru crlfbin mk1: to end
 				] [
-					chunk-size: to integer! to issue! chunk-size
+					chunk-size: to integer! to issue! to string! chunk-size
 					either chunk-size = 0 [
 						if parse/all mk1 [
 							crlfbin (trailer: "") to end | copy trailer to crlf2bin to end
@@ -385,7 +410,10 @@ check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer st
 					true
 				]
 			]
-			unless state/state = 'ready [read conn]
+			unless state/state = 'ready [
+				;Awake from the WAIT loop to prevent timeout when reading big data. --Richard
+				res: true
+			]
 		]
 		integer? headers/content-length [
 			port/data: conn/data
@@ -394,12 +422,19 @@ check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer st
 				conn/data: make binary! 32000
 				res: state/awake make event! [type: 'custom port: port code: 0]
 			] [
-				read conn
+				;Awake from the WAIT loop to prevent timeout when reading big data. --Richard
+				res: true
 			]
 		]
 		true [
 			port/data: conn/data
-			read conn
+			either state/info/response-parsed = 'ok [
+				;Awake from the WAIT loop to prevent timeout when reading big data. --Richard
+				res: true
+			][
+				;On other response than OK read all data asynchronously (assuming the data are small). --Richard
+				read conn
+			]
 		]
 	]
 	res
@@ -465,8 +500,8 @@ sys/make-scheme [
 				info: make port/scheme/info [type: 'file]
 				awake: :port/awake
 			]
-			port/state/connection: conn: make port! [
-				scheme: 'tcp
+			port/state/connection: conn: make port! compose [
+				scheme: (to lit-word! either port/spec/scheme = 'http ['tcp]['tls])
 				host: port/spec/host
 				port-id: port/spec/port-id
 				ref: rejoin [tcp:// host ":" port-id]
@@ -520,3 +555,11 @@ sys/make-scheme [
 		]
 	]
 ]
+
+sys/make-scheme/with [
+	name: 'https
+	title: "Secure HyperText Transport Protocol v1.1"
+	spec: make spec [
+		port-id: 443
+	]
+] 'http
