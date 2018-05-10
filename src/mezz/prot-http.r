@@ -11,14 +11,44 @@ REBOL [
 	}
 	Name: 'http
 	Type: 'module
-	Version: 0.1.4
+	Version: 0.1.5
 	File: %prot-http.r
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
 	}
-	Author: ["Gabriele Santilli" "Richard Smolak"]
-	Date: 26-Nov-2012
+	Author: ["Gabriele Santilli" "Richard Smolak" "Oldes"]
+	Date: 10-May-2018
+	History: [
+		0.1.1 22-Jun-2007 "Gabriele Santilli" "Version used in R3-Alpha"
+		0.1.4 26-Nov-2012 "Richard Smolak"    "Version from Atronix's fork"
+		0.1.5 10-May-2018 "Oldes" "FIX: Query on URL was returning just none"
+	]
 ]
+
+;@@ idate-to-date should be moved to other location!
+digit: charset [#"0" - #"9"]
+alpha: charset [#"a" - #"z" #"A" - #"Z"]
+idate-to-date: function [date [string!]] [
+    either parse date [
+        5 skip
+        copy day: 2 digit
+        space
+        copy month: 3 alpha
+        space
+        copy year: 4 digit
+        space
+        copy time: to space
+        space
+        copy zone: to end
+    ][
+        if zone = "GMT" [zone: copy "+0"]
+        to date! rejoin [day "-" month "-" year "/" time zone]
+    ][
+        none
+    ]
+]
+;@@==================================================
+
 
 sync-op: func [port body /local state] [
 	unless port/state [open port port/state/close?: yes]
@@ -195,7 +225,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 	] [
 		info/response-line: line: to string! copy/part conn/data d1
 		info/headers: headers: construct/with d1 http-response-headers
-		info/name: to file! any [spec/path %/]
+		info/name: spec/ref
 		if headers/content-length [info/size: headers/content-length: to integer! headers/content-length]
 		if headers/last-modified [info/date: attempt [to date! headers/last-modified]]
 		remove/part conn/data d2
@@ -497,7 +527,7 @@ sys/make-scheme [
 				connection:
 				error: none
 				close?: no
-				info: make port/scheme/info [type: 'file]
+				info: make port/scheme/info [type: 'url]
 				awake: :port/awake
 			]
 			port/state/connection: conn: make port! compose [
@@ -539,14 +569,19 @@ sys/make-scheme [
 			port [port!]
 			/local error state
 		] [
-			if state: port/state [
-				either error? error: state/error [
-					state/error: none
-					error
-				] [
-					state/info
-				]
+			either port/state [
+				state: port/state
+			][
+				open port ;there is port opening in sync-op, but it would also close the port later and so clear the state
+				attempt [sync-op port [parse-write-dialect port [HEAD]]]
+				state: port/state
+				close port
 			]
+			if none? state [return none]
+			either state/info/response-parsed = 'ok [
+				attempt [ state/info/date: idate-to-date state/info/headers/Last-Modified ]
+				state/info
+			][	none ]
 		]
 		length?: func [
 			port [port!]
