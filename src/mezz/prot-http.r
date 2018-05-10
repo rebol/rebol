@@ -227,7 +227,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 		info/headers: headers: construct/with d1 http-response-headers
 		info/name: spec/ref
 		if headers/content-length [info/size: headers/content-length: to integer! headers/content-length]
-		if headers/last-modified [info/date: attempt [to date! headers/last-modified]]
+		if headers/last-modified [info/date: attempt [idate-to-date headers/last-modified]]
 		remove/part conn/data d2
 		state/state: 'reading-data
 	]
@@ -579,7 +579,6 @@ sys/make-scheme [
 			]
 			if none? state [return none]
 			either state/info/response-parsed = 'ok [
-				attempt [ state/info/date: idate-to-date state/info/headers/Last-Modified ]
 				state/info
 			][	none ]
 		]
