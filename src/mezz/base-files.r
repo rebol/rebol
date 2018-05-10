@@ -16,18 +16,11 @@ REBOL [
 	}
 ]
 
-info?: func [
-	{Returns an info object about a file or url.}
+exists?: func [
+	{Determines if a file or URL exists.}
 	target [file! url!]
 ][
-	query target
-]
-
-exists?: func [
-	{Returns the type of a file or URL if it exists, otherwise none.}
-	target [file! url!]
-][ ; Returns 'file or 'dir, or none
-	select attempt [query target] 'type
+	to logic! query target
 ]
 
 size?: func [
