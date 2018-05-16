@@ -376,9 +376,14 @@ fail:
 		return DR_ERROR;
 	}
 
-	if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) SET_FLAG(file->modes, RFM_DIR);
-	else CLR_FLAG(file->modes, RFM_DIR);
-	file->file.size = ((i64)info.nFileSizeHigh << 32) + (i64)info.nFileSizeLow;
+	if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+		SET_FLAG(file->modes, RFM_DIR);
+		file->file.size = 0;
+	}
+	else {
+		CLR_FLAG(file->modes, RFM_DIR);
+		file->file.size = ((i64)info.nFileSizeHigh << 32) + (i64)info.nFileSizeLow;
+	}
 	file->file.time.l = info.ftLastWriteTime.dwLowDateTime;
 	file->file.time.h = info.ftLastWriteTime.dwHighDateTime;
 	return DR_DONE;
