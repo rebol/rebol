@@ -49,6 +49,8 @@ idate-to-date: function [date [string!]] [
 ]
 ;@@==================================================
 
+;@@ just simple trace function
+;@@net-log: :print
 
 sync-op: func [port body /local state] [
 	unless port/state [open port port/state/close?: yes]
@@ -60,14 +62,26 @@ sync-op: func [port body /local state] [
 	;The timeout should be triggered only when the response from other side exceeds the timeout value.
 	;--Richard
 	while [not find [ready close] state/state][
+		;@@net-log ["########### sync-op.." state/state]
 		unless port? wait [state/connection port/spec/timeout] [http-error "Timeout"]
-		if state/state = 'reading-data [read state/connection]
+		;@@net-log ["########### sync-op wakeup" state/state]
+		switch state/state [
+			reading-data [
+				read state/connection
+			]
+			redirect [
+				do-redirect port port/state/info/headers/location
+				state: port/state
+				state/awake: :read-sync-awake
+			]
+		]
 	]
 	body: copy port
 	if state/close? [close port]
 	body
 ]
 read-sync-awake: func [event [event!] /local error] [
+	;@@net-log ["[HTTP read-sync-awake]" event/type]
 	switch/default event/type [
 		connect ready [
 			do-request event/port
@@ -78,6 +92,13 @@ read-sync-awake: func [event [event!] /local error] [
 		]
 		close [
 			true
+		]
+		custom [
+			if event/offset/x = 300 [
+				event/port/state/state: 'redirect
+				return true
+			]
+			false
 		]
 		error [
 			error: event/port/state/error
@@ -94,6 +115,11 @@ http-awake: func [event /local port http-port state awake res] [
 	state: http-port/state
 	if any-function? :http-port/awake [state/awake: :http-port/awake]
 	awake: :state/awake
+
+	;@@net-log ["[HTTP http-awake]"  event/type]
+
+	;?? awake
+
 	switch/default event/type [
 		read [
 			awake make event! [type: 'read port: http-port]
@@ -200,9 +226,10 @@ do-request: func [
 	port/state/state: 'doing-request
 	info/headers: info/response-line: info/response-parsed: port/data:
 	info/size: info/date: info/name: none
-	write port/state/connection
-	make-http-request spec/method to file! any [spec/path %/]
-	spec/headers spec/content
+
+	;@@net-log ["[HTTP do-request]" spec/method spec/host spec/path]
+
+	write port/state/connection make-http-request spec/method to file! any [spec/path %/] spec/headers spec/content
 ]
 parse-write-dialect: func [port block /local spec] [
 	spec: port/spec
@@ -218,6 +245,9 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 	line: info/response-line
 	awake: :state/awake
 	spec: port/spec
+	
+	;@@net-log ["[HTTP check-response]" info/response-parsed]
+	
 	if all [
 		not headers
 		d1: find conn/data crlfbin
@@ -267,6 +297,9 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 			| (info/response-parsed: 'version-not-supported)
 		]
 	]
+	;?? info/response-parsed
+	;?? spec/method
+
 	switch/all info/response-parsed [
 		ok [
 			either spec/method = 'head [
@@ -290,9 +323,13 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 				unless open? port [
 					;NOTE some servers(e.g. yahoo.com) don't supply content-data in the redirect header so the state/state can be left in 'reading-data after check-data call
 					;I think it is better to check if port has been closed here and set the state so redirect sequence can happen. --Richard
-					state/state: 'ready
+					state/state: 'redirect ;ready
 				]
 			]
+			;?? res
+			;?? headers
+			;?? state/state
+
 			if all [not res state/state = 'ready] [
 				either all [
 					any [
@@ -304,7 +341,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 					]
 					in headers 'Location
 				] [
-					res: do-redirect port headers/location
+					return awake make event! [type: 'custom port: port code: 300]
 				] [
 					state/error: make-http-error "Redirect requires manual intervention"
 					res: awake make event! [type: 'error port: port]
@@ -379,30 +416,34 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state] 
 		]
 	]
 	new-uri: construct/with new-uri port/scheme/spec
+	new-uri/ref:  to url! ajoin [new-uri/scheme "://" new-uri/host new-uri/path]
+	new-uri/method: spec/method
+
+	;@@net-log ["[HTTP do-redirect] new-uri:" mold new-uri]
+	;?? port
+
 	unless find [http https] new-uri/scheme [
 		state/error: make-http-error {Redirect to a protocol different from HTTP or HTTPS not supported}
 		return state/awake make event! [type: 'error port: port]
 	]
-	either all [
-		new-uri/host = spec/host
-		new-uri/port-id = spec/port-id
-	] [
-		spec/path: new-uri/path
-		;we need to reset tcp connection here before doing a redirect
-		close port/state/connection
-		open port/state/connection
-		do-request port
-		false
-	] [
-		state/error: make-http-error "Redirect to other host - requires custom handling"
-		state/awake make event! [type: 'error port: port]
-	]
+
+	;we need to reset tcp connection here before doing a redirect
+	clear spec/headers
+	port/data: none
+	close port/state/connection
+		
+	port/spec: spec: new-uri
+	port/state: none
+	open port
 ]
 check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer state conn] [
 	state: port/state
 	headers: state/info/headers
 	conn: state/connection
 	res: false
+
+	;@@net-log ["[HTTP check-data] bytes:" length? conn/data]
+
 	case [
 		headers/transfer-encoding = "chunked" [
 			data: conn/data
@@ -449,7 +490,7 @@ check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer st
 			port/data: conn/data
 			either headers/content-length <= length? port/data [
 				state/state: 'ready
-				conn/data: make binary! 32000
+				conn/data: make binary! 32000 ;@@ Oldes: why not just none?
 				res: state/awake make event! [type: 'custom port: port code: 0]
 			] [
 				;Awake from the WAIT loop to prevent timeout when reading big data. --Richard
@@ -489,6 +530,7 @@ sys/make-scheme [
 		read: func [
 			port [port!]
 		] [
+			;@@net-log "[HTTP read]"
 			either any-function? :port/awake [
 				unless open? port [cause-error 'Access 'not-open port/spec/ref]
 				if port/state/state <> 'ready [http-error "Port not ready"]
@@ -503,8 +545,11 @@ sys/make-scheme [
 			port [port!]
 			value
 		] [
+			;@@net-log "[HTTP write]"
+			;?? port
 			unless any [block? :value binary? :value any-string? :value] [value: form :value]
 			unless block? value [value: reduce [[Content-Type: "application/x-www-form-urlencoded; charset=utf-8"] value]]
+
 			either any-function? :port/awake [
 				unless open? port [cause-error 'Access 'not-open port/spec/ref]
 				if port/state/state <> 'ready [http-error "Port not ready"]
@@ -520,6 +565,7 @@ sys/make-scheme [
 			port [port!]
 			/local conn
 		] [
+			;@@net-log ["[HTTP open]" port/state]
 			if port/state [return port]
 			if none? port/spec/host [http-error "Missing host address"]
 			port/state: context [
@@ -534,10 +580,13 @@ sys/make-scheme [
 				scheme: (to lit-word! either port/spec/scheme = 'http ['tcp]['tls])
 				host: port/spec/host
 				port-id: port/spec/port-id
-				ref: rejoin [tcp:// host ":" port-id]
+				ref: rejoin [to url! scheme "://" host #":" port-id]
 			]
+			;?? conn 
 			conn/awake: :http-awake
 			conn/locals: port
+			;@@net-log ["[HTTP opne]" conn/spec/scheme conn/spec/host]
+			;?? conn
 			open conn
 			port
 		]
@@ -549,6 +598,7 @@ sys/make-scheme [
 		close: func [
 			port [port!]
 		] [
+			;@@net-log "[HTTP close]"
 			if port/state [
 				close port/state/connection
 				port/state/connection/awake: none
@@ -577,8 +627,9 @@ sys/make-scheme [
 				state: port/state
 				close port
 			]
+			;?? state
 			if none? state [return none]
-			either state/info/response-parsed = 'ok [
+			either find [ok redirect] state/info/response-parsed [
 				state/info
 			][	none ]
 		]
