@@ -11,17 +11,18 @@ REBOL [
 	}
 	Name: 'http
 	Type: 'module
-	Version: 0.1.5
+	Version: 0.1.6
 	File: %prot-http.r
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
 	}
 	Author: ["Gabriele Santilli" "Richard Smolak" "Oldes"]
-	Date: 10-May-2018
+	Date: 21-May-2018
 	History: [
 		0.1.1 22-Jun-2007 "Gabriele Santilli" "Version used in R3-Alpha"
 		0.1.4 26-Nov-2012 "Richard Smolak"    "Version from Atronix's fork"
 		0.1.5 10-May-2018 "Oldes" "FIX: Query on URL was returning just none"
+		0.1.6 21-May-2018 "Oldes" "FEAT: Added support for basic redirection"
 	]
 ]
 
