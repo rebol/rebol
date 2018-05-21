@@ -30,23 +30,23 @@ REBOL [
 digit: charset [#"0" - #"9"]
 alpha: charset [#"a" - #"z" #"A" - #"Z"]
 idate-to-date: function [date [string!]] [
-    either parse date [
-        5 skip
-        copy day: 2 digit
-        space
-        copy month: 3 alpha
-        space
-        copy year: 4 digit
-        space
-        copy time: to space
-        space
-        copy zone: to end
-    ][
-        if zone = "GMT" [zone: copy "+0"]
-        to date! rejoin [day "-" month "-" year "/" time zone]
-    ][
-        none
-    ]
+	either parse date [
+		5 skip
+		copy day: 2 digit
+		space
+		copy month: 3 alpha
+		space
+		copy year: 4 digit
+		space
+		copy time: to space
+		space
+		copy zone: to end
+	][
+		if zone = "GMT" [zone: copy "+0"]
+		to date! rejoin [day "-" month "-" year "/" time zone]
+	][
+		none
+	]
 ]
 ;@@==================================================
 
@@ -246,11 +246,21 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 	spec: port/spec
 	
 	;@@net-log ["[HTTP check-response]" info/response-parsed]
-	
+
 	if all [
 		not headers
-		d1: find conn/data crlfbin
-		d2: find/tail d1 crlf2bin
+		any [
+			all [
+				d1: find conn/data crlfbin
+				d2: find/tail d1 crlf2bin
+				;@@net-log "server using standard content separator of #{0D0A0D0A}"
+			]
+			all [
+				d1: find conn/data #{0A}
+				d2: find/tail d1 #{0A0A}
+				;@@net-log "server using malformed line separator of #{0A0A}"
+			]
+		]
 	] [
 		info/response-line: line: to string! copy/part conn/data d1
 		info/headers: headers: construct/with d1 http-response-headers
