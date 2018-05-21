@@ -118,8 +118,6 @@ http-awake: func [event /local port http-port state awake res] [
 
 	;@@net-log ["[HTTP http-awake]"  event/type]
 
-	;?? awake
-
 	switch/default event/type [
 		read [
 			awake make event! [type: 'read port: http-port]
@@ -323,7 +321,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 				unless open? port [
 					;NOTE some servers(e.g. yahoo.com) don't supply content-data in the redirect header so the state/state can be left in 'reading-data after check-data call
 					;I think it is better to check if port has been closed here and set the state so redirect sequence can happen. --Richard
-					state/state: 'redirect ;ready
+					state/state: 'ready
 				]
 			]
 			;?? res
@@ -409,6 +407,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state] 
 		new-uri: to url! ajoin [spec/scheme "://" spec/host new-uri]
 	]
 	new-uri: decode-url new-uri
+
 	unless select new-uri 'port-id [
 		switch new-uri/scheme [
 			'https [append new-uri [port-id: 443]]
@@ -416,8 +415,10 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state] 
 		]
 	]
 	new-uri: construct/with new-uri port/scheme/spec
-	new-uri/ref:  to url! ajoin [new-uri/scheme "://" new-uri/host new-uri/path]
 	new-uri/method: spec/method
+	new-uri/ref: to url! ajoin either find [#[none] 80 443] new-uri/port-id [
+		[new-uri/scheme "://" new-uri/host new-uri/path]
+	][	[new-uri/scheme "://" new-uri/host #":" new-uri/port-id new-uri/path]]
 
 	;@@net-log ["[HTTP do-redirect] new-uri:" mold new-uri]
 	;?? port
@@ -580,7 +581,7 @@ sys/make-scheme [
 				scheme: (to lit-word! either port/spec/scheme = 'http ['tcp]['tls])
 				host: port/spec/host
 				port-id: port/spec/port-id
-				ref: rejoin [to url! scheme "://" host #":" port-id]
+				ref: to url! ajoin [scheme "://" host #":" port-id]
 			]
 			;?? conn 
 			conn/awake: :http-awake
@@ -628,8 +629,10 @@ sys/make-scheme [
 				close port
 			]
 			;?? state
-			if none? state [return none]
-			either find [ok redirect] state/info/response-parsed [
+			either all [
+				state
+				find [ok redirect] state/info/response-parsed
+			][
 				state/info
 			][	none ]
 		]
