@@ -81,9 +81,9 @@ speed?: function [
 			]
 		]
 	][
+		recycle
 		secs: now/precise
 		calc: 0
-		recycle
 		do block
 		secs: to decimal! difference now/precise secs
 		append result to integer! do calc
