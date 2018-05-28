@@ -127,7 +127,11 @@ native-header: [
 	)
 ]
 
-process: func [file] [
+sym-chars: charset [#"A" - #"Z" #"_" #"0" - #"9"]
+sym-check: charset "/S"
+symbols: make block! 256
+
+process: func [file /local sym p] [
 	if verbose [?? file]
 	data: read the-file: file
 	if r3 [data: deline to-string data]
@@ -136,6 +140,21 @@ process: func [file] [
 			thru "/******" to newline
 			[
 				func-header | native-header | thru newline
+			]
+		]
+	]
+	;collect all SYM_* uses
+	parse/all/case data [
+		any [
+			to sym-check p: [
+				  "/*" thru "*/"
+				| "//" to newline
+				| "SYM_" copy sym some sym-chars (
+					if not find sym-chars p/0 [
+						append symbols sym
+					]
+				)
+				| 1 skip
 			]
 		]
 	]
@@ -160,6 +179,15 @@ foreach file files [
 	][process file]
 ]
 
+symbols: sort unique symbols ;contains all symbols (like: SYM_CALL) used in above processed C files (without the SYM_ part)
+symbols: new-line/skip symbols true 1
+
+save/header  %../boot/tmp-symbols.r symbols [
+	title:    "C Symbols"
+	purpose:  "Automaticly collected symbols from C files"
+	commment: "AUTO-GENERATED FILE - Do not modify. (From: make-headers.r)"
+
+]
 write %../boot/tmp-natives.r natives
 write %../include/tmp-funcs.h output
 

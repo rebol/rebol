@@ -164,17 +164,16 @@ emit-line: func [prefix word cmt /var /define /code /decl /up1 /local str][
 
 	str: any [
 		if define [rejoin [prefix str]]
-		if code   [rejoin ["    " prefix str cmt]]
+		if code   [rejoin [tab prefix str cmt]]
 		if decl   [rejoin [prefix str cmt]]
-		rejoin ["    " prefix str ","]
+		rejoin [tab prefix str ","]
 	]
 	if any [code decl] [cmt: none]
 	if cmt [
-		len: 31 - length? str
-		loop to-integer len / 4 [append str tab]
+		append/dup str #" " (31 - length? str)
 		any [
 			if define [repend str cmt]
-			if cmt [repend str ["// " cmt]]
+			if cmt    [repend str ["// " cmt]]
 		]
 	]
 	append str newline
@@ -187,7 +186,7 @@ emit-head: func [title [string!] file [file!]] [
 ]
 
 emit-end: func [/easy] [
-	if not easy [remove find/last out #","]
+	if not easy [change find/last out #"," #" "]
 	append out {^};^/}
 ]
 
@@ -720,9 +719,13 @@ emit {
 	SYM_NOT_USED = 0,
 }
 
+used-words: copy []
+
 n: 1
 foreach :type-record boot-types [
-	emit-line "SYM_" join type "_type" n
+	word: join type "_type"
+	append used-words to-c-name word
+	emit-line "SYM_" word n
 	n: n + 1
 ]
 
@@ -731,9 +734,25 @@ boot-words: load %words.r
 replace boot-words '*port-modes* load %modes.r
 
 foreach word boot-words [
+	append used-words to-c-name word
 	emit-line "SYM_" word reform [n "-" word]
 	n: n + 1
 ]
+
+if exists? %../boot/tmp-symbols.r [
+	emit {^/    // follows symbols used in C sources, but not defined in %words.r list...^/}
+
+	foreach word load %../boot/tmp-symbols.r [
+		if not find used-words word [
+			append boot-words to word! lowercase word
+			emit-line "SYM_" word form n
+			n: n + 1
+		]
+	]
+
+	delete %../boot/tmp-symbols.r
+]
+
 emit-end
 
 ;-- Generate Action Constants ------------------------------------------------
