@@ -206,6 +206,7 @@
 	REBINT result;
 	REBCNT wt = 1;
 	REBCNT res = (timeout >= 1000) ? 0 : 16;  // OS dependent?
+	REBCNT old_time = -1;
 
 	while (wt) {
 		if (GET_SIGNAL(SIG_ESCAPE)) {
@@ -229,6 +230,13 @@
 			if (time >= timeout) break;	  // done (was dt = 0 before)
 			else if (wt > timeout - time) // use smaller residual time
 				wt = timeout - time;
+
+			if (old_time >= 0
+				&& time - old_time < res) {
+				res = time - old_time;
+			}
+
+			old_time = time;
 		}
 
 		//printf("%d %d %d\n", dt, time, timeout);
