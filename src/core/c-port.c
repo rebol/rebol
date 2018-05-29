@@ -184,7 +184,7 @@
 	v = Apply_Func(0, awake, port, &tmp, &ref_only, 0); // ds is return value
 
 	// Awake function returns 1 for end of WAIT:
-	return (IS_LOGIC(v) && VAL_LOGIC(v)) ? 1 : 0;
+	return IS_NONE(v) ? -1 : (IS_LOGIC(v) && VAL_LOGIC(v)) ? 1 : 0;
 }
 
 
