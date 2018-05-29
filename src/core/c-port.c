@@ -549,10 +549,10 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	if (!actor) return R_NONE;
 
 	// Does this scheme have native actor or actions?
-	for (n = 0; Scheme_Actions[n].sym; n++) {
+	for (n = 0; n < MAX_SCHEMES && Scheme_Actions[n].sym; n++) {
 		if (Scheme_Actions[n].sym == VAL_WORD_SYM(act)) break;
 	}
-	if (!Scheme_Actions[n].sym) return R_NONE;
+	if (n == MAX_SCHEMES || !Scheme_Actions[n].sym) return R_NONE;
 
 	// The scheme uses a native actor:
 	if (Scheme_Actions[n].fun) {
