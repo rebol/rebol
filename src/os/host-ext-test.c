@@ -92,11 +92,12 @@ char *RX_Spec =
 			"[c: do-commands [a: xarg0 b: xarg1 333 xobj1 system 'version] reduce [a b c]]\n"
 			"[cec0 [a: cec1 b: cec1 c: cec1] reduce [a b c]]\n"
 		"][\n"
-			"print [{test:} mold blk]\n"
+			"print [{^[[7mtest:^[[0m} mold blk]\n"
 			"prin {      } \n"
 			//"replace {x} {x} {y}\n"
 			"probe do blk\n"
 		"]\n"
+		"prin {^/^[[7mAsync call result should be printed:^[[0m }"
 		"wait 0.1 ; let async events happen\n"
 		"exit\n"
 	"]\n"
@@ -110,7 +111,7 @@ REBCNT Test_Sync_Callback(REBSER *obj, REBCNT word, RXIARG *result)
 	RXIARG args[4];
 	REBCNT n;
 
-	puts("Test_Sync_Callback");
+	printf("Test_Sync_Callback: ");
 
 	// These can be on the stack, because it's synchronous.
 	CLEAR(&cbi, sizeof(cbi));
@@ -138,7 +139,7 @@ REBCNT Test_Async_Callback(REBSER *obj, REBCNT word)
 	RXIARG *args;
 	REBCNT n;
 
-	puts("Test_Async_Callback");
+	printf("Test_Async_Callback: ");
 
 	// These cannot be on the stack, because they are used
 	// when the callback happens later.
@@ -155,7 +156,7 @@ REBCNT Test_Async_Callback(REBSER *obj, REBCNT word)
 	RXI_COUNT(args) = 1;
 	RXI_TYPE(args, 1) = RXT_INTEGER;
 
-	args[1].int64 = 123;
+	args[1].int64 = 1234;
 
 	n = RL_CALLBACK(cbi); // result is in cbi struct, if wanted
 
@@ -167,49 +168,49 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 
 	switch (cmd) {
 
-	case 0:
+	case 0: //command [{return zero}]
 		RXA_INT64(frm, 1) = 0;
 		RXA_TYPE(frm, 1) = RXT_INTEGER;
 		break;
 
-	case 1:
+	case 1: //command [{return first arg} arg]
 		break; // same as arg
 
-	case 2:
+	case 2: //command [{return second arg} arg1 arg2]
 		RXA_INT64(frm, 1) = RXA_INT64(frm, 2);
 		RXA_TYPE(frm, 1)  = RXA_TYPE(frm, 2);
 		break;
 
-	case 3:
+	case 3: //command [{return system word from internal string}]
 		RXA_WORD(frm, 1) = RL_MAP_WORD("system"); //?? is frame always long enough??
 		RXA_TYPE(frm, 1) = RXT_WORD;
 		break;
 
-	case 4:
+	case 4: //command [{return word from string} str [string!]]
 		RL_GET_STRING(RXA_SERIES(frm, 1), 0, (void*)(&str)); // latin-1 only for test
 		RXA_WORD(frm, 1) = RL_MAP_WORD(str);
 		RXA_TYPE(frm, 1) = RXT_WORD;
 		break;
 
-	case 5:
+	case 5: //command [{return obj field value} obj [object!] field [word! lit-word!]]
 		RXA_TYPE(frm, 1) = RL_GET_FIELD(RXA_OBJECT(frm, 1), RXA_WORD(frm, 2), &RXA_ARG(frm, 1));
 		break;
 
-	case 6:
+	case 6: //command [{test sync callback} context [object!] word [word!]]
 		RXA_TYPE(frm, 1) = Test_Sync_Callback(RXA_OBJECT(frm, 1), RXA_WORD(frm, 2), &RXA_ARG(frm, 1));
 		break;
 
-	case 7:
+	case 7: //command [{test async callback} context [object!] word [word!]]
 		RXA_LOGIC(frm, 1) = Test_Async_Callback(RXA_OBJECT(frm, 1), RXA_WORD(frm, 2));
 		RXA_TYPE(frm, 1) = RXT_LOGIC;
 		break;
 
-	case 8:
+	case 8: //command [{return 2x3 image}]
 		RXA_TYPE(frm, 1) = RXT_IMAGE;
 		RXA_SERIES(frm, 1) = RL_MAKE_IMAGE(2, 3);
 		break;
 
-	case 9:
+	case 9: //command [{test command context struct} blk [block!]]
 		{
 			REBCEC cec;
 			cec.envr = 0;
@@ -219,7 +220,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 		}
 		return RXR_UNSET;
 
-	case 10:
+	case 10: //command [{returns cec.index value or -1 if no cec}]
 		{
 			REBCEC* cec = (REBCEC*)ctx;
 			RXA_INT64(frm, 1) = (i64)(cec ? cec->index : -1);
