@@ -110,6 +110,8 @@ REBCNT Test_Sync_Callback(REBSER *obj, REBCNT word, RXIARG *result)
 	RXIARG args[4];
 	REBCNT n;
 
+	puts("Test_Sync_Callback");
+
 	// These can be on the stack, because it's synchronous.
 	CLEAR(&cbi, sizeof(cbi));
 	CLEAR(&args[0], sizeof(args));
@@ -136,6 +138,8 @@ REBCNT Test_Async_Callback(REBSER *obj, REBCNT word)
 	RXIARG *args;
 	REBCNT n;
 
+	puts("Test_Async_Callback");
+
 	// These cannot be on the stack, because they are used
 	// when the callback happens later.
 	cbi = MAKE_NEW(*cbi);
@@ -158,8 +162,7 @@ REBCNT Test_Async_Callback(REBSER *obj, REBCNT word)
 	return n;
 }
 
-
-RXIEXT int RX_Call(int cmd, RXIFRM *frm, REBCEC *ctx) {
+RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 	REBYTE *str;
 
 	switch (cmd) {
@@ -217,8 +220,12 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, REBCEC *ctx) {
 		return RXR_UNSET;
 
 	case 10:
-		RXA_INT64(frm, 1) = (i64)(ctx ? ctx->index : -1);
-		RXA_TYPE(frm, 1) = RXT_INTEGER;
+		{
+			REBCEC* cec = (REBCEC*)ctx;
+			RXA_INT64(frm, 1) = (i64)(cec ? cec->index : -1);
+			RXA_TYPE(frm, 1) = RXT_INTEGER;
+		}
+		
 		break;
 
 	default:
@@ -230,5 +237,5 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, REBCEC *ctx) {
 
 void Init_Ext_Test(void)
 {
-	RL = RL_Extend(&RX_Spec[0], &RX_Call);
+	RL = RL_Extend(&RX_Spec[0], (RXICAL)&RX_Call);
 }
