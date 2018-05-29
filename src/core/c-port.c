@@ -302,8 +302,9 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 	for (n = 0; n < SERIES_TAIL(ports);) {
 		val = BLK_SKIP(ports, n);
 		if (IS_PORT(val)) {
-			if (VAL_TAIL(waked) != Find_Block_Simple(VAL_SERIES(waked), 0, val)) {
-				Remove_Series(VAL_SERIES(waked), n, 1);
+			if (VAL_TAIL(waked) != 0 
+				&& VAL_TAIL(waked) == Find_Block_Simple(VAL_SERIES(waked), 0, val)) {//not found
+				Remove_Series(ports, n, 1);
 				continue;
 			}
 		}
