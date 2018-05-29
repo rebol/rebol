@@ -1197,23 +1197,38 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		break;
 
 	case REB_SET_WORD:
-		Emit(mold, "W:", value);
+		if(molded)
+			Emit(mold, "W:", value);
+		else
+			Append_UTF8(ser, Get_Sym_Name(VAL_WORD_SYM(value)), -1);
 		break;
 
 	case REB_GET_WORD:
-		Emit(mold, ":W", value);
+		if(molded)
+			Emit(mold, ":W", value);
+		else
+			Append_UTF8(ser, Get_Sym_Name(VAL_WORD_SYM(value)), -1);
 		break;
 
 	case REB_LIT_WORD:
-		Emit(mold, "\'W", value);
+		if(molded)
+			Emit(mold, "\'W", value);
+		else
+			Append_UTF8(ser, Get_Sym_Name(VAL_WORD_SYM(value)), -1);
 		break;
 
 	case REB_REFINEMENT:
-		Emit(mold, "/W", value);
+		if(molded)
+			Emit(mold, "/W", value);
+		else
+			Append_UTF8(ser, Get_Sym_Name(VAL_WORD_SYM(value)), -1);
 		break;
 
 	case REB_ISSUE:
-		Emit(mold, "#W", value);
+		if(molded)
+			Emit(mold, "#W", value);
+		else
+			Append_UTF8(ser, Get_Sym_Name(VAL_WORD_SYM(value)), -1);
 		break;
 
 	case REB_CLOSURE:
