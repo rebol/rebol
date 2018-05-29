@@ -99,7 +99,6 @@
 	if (!IS_BINARY(state)) {
 		REBSER *data = Make_Binary(size);
 		REBREQ *req = (REBREQ*)STR_HEAD(data);
-		Guard_Series(data); // GC safe if no other references
 		req->clen = size;
 		CLEAR(STR_HEAD(data), size);
 		//data->tail = size; // makes it easier for ACCEPT to clone the port
