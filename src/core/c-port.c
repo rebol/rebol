@@ -138,7 +138,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Awake_System(REBSER *ports)
+*/	REBINT Awake_System(REBSER *ports, REBINT only)
 /*
 **	Returns:
 **		-1 for errors
@@ -152,6 +152,7 @@
 	REBVAL *waked;
 	REBVAL *awake;
 	REBVAL tmp;
+	REBVAL ref_only;
 	REBVAL *v;
 
 	// Get the system port object:
@@ -177,8 +178,10 @@
 	if (ports) Set_Block(&tmp, ports);
 	else SET_NONE(&tmp);
 
+	if (only) SET_TRUE(&ref_only);
+	else SET_NONE(&ref_only);
 	// Call the system awake function:
-	v = Apply_Func(0, awake, port, &tmp, 0); // ds is return value
+	v = Apply_Func(0, awake, port, &tmp, &ref_only, 0); // ds is return value
 
 	// Awake function returns 1 for end of WAIT:
 	return (IS_LOGIC(v) && VAL_LOGIC(v)) ? 1 : 0;
@@ -187,7 +190,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Wait_Ports(REBSER *ports, REBCNT timeout)
+*/	REBINT Wait_Ports(REBSER *ports, REBCNT timeout, REBINT only)
 /*
 **	Inputs:
 **		Ports: a block of ports or zero (on stack to avoid GC).
@@ -211,7 +214,7 @@
 		}
 
 		// Process any waiting events:
-		if ((result = Awake_System(ports)) > 0) return TRUE;
+		if ((result = Awake_System(ports, only)) > 0) return TRUE;
 
 		// If activity, use low wait time, otherwise increase it:
 		if (result == 0) wt = 1;

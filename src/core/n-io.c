@@ -371,7 +371,7 @@ chk_neg:
 	if (ports) Set_Block(D_RET, ports);
 
 	// Process port events [stack-move]:
-	if (!Wait_Ports(ports, timeout)) {
+	if (!Wait_Ports(ports, timeout, D_REF(3))) {
 		Sieve_Ports(NULL); /* just reset the waked list */
 		return R_NONE;
 	}
