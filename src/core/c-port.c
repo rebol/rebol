@@ -286,6 +286,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 */	void Sieve_Ports(REBSER *ports)
 /*
 **		Remove all ports not found in the WAKE list.
+**		ports could be NULL, in which case the WAKE list is cleared.
 **
 ***********************************************************************/
 {
@@ -299,7 +300,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 	waked = VAL_BLK_SKIP(port, STD_PORT_DATA);
 	if (!IS_BLOCK(waked)) return;
 
-	for (n = 0; n < SERIES_TAIL(ports);) {
+	for (n = 0; ports && n < SERIES_TAIL(ports);) {
 		val = BLK_SKIP(ports, n);
 		if (IS_PORT(val)) {
 			ASSERT(VAL_TAIL(waked) != 0, RP_IO_ERROR);
