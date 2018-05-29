@@ -95,7 +95,7 @@ read-sync-awake: func [event [event!] /local error] [
 			true
 		]
 		custom [
-			if event/offset/x = 300 [
+			if all [event/offset event/offset/x = 300] [
 				event/port/state/state: 'redirect
 				return true
 			]
