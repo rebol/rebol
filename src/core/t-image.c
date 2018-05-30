@@ -352,7 +352,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	// Output RGB image:
 	size = VAL_IMAGE_LEN(value); // # pixels (from index to tail)
 	data = (REBCNT *)VAL_IMAGE_DATA(value);
-	up = Prep_Uni_Series(mold, (size * 6) + (size / 10) + 1);
+	up = Prep_Uni_Series(mold, (size * 6) + ((size - 1) / 10) + 1);
 
 	for (len = 0; len < size; len++) {
 		if ((len % 10) == 0) *up++ = LF;
