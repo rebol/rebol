@@ -35,7 +35,7 @@
 
 #include "sys-core.h"
 
-#define CLEAR_IMAGE(p, x, y) memset(p, 0, x * y * sizeof(long))
+#define CLEAR_IMAGE(p, x, y) memset(p, 0, x * y * sizeof(u32))
 
 
 /***********************************************************************
@@ -414,10 +414,10 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		else return 0;
 	}
 	
-	img = Make_Series(w * h + 1, sizeof(REBINT), FALSE);
+	img = Make_Series(w * h + 1, sizeof(u32), FALSE);
 	LABEL_SERIES(img, "make image");
 	img->tail = w * h;
-	CLEAR(img->data, (img->tail + 1) * sizeof(REBINT));
+	CLEAR(img->data, (img->tail + 1) * sizeof(u32));
 	IMG_WIDE(img) = w;
 	IMG_HIGH(img) = h;
 	return img;
