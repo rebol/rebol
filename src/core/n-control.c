@@ -37,6 +37,7 @@ enum {
 	PROT_DEEP,
 	PROT_HIDE,
 	PROT_WORD,
+	PROT_PERMANENTLY
 };
 
 
@@ -105,10 +106,14 @@ enum {
 
 	if (IS_MARK_SERIES(series)) return; // avoid loop
 
-	if (GET_FLAG(flags, PROT_SET))
+	if (GET_FLAG(flags, PROT_SET)) {
 		PROTECT_SERIES(series);
+		if (GET_FLAG(flags, PROT_PERMANENTLY)) LOCK_SERIES(series);
+	} 
 	else
-		UNPROTECT_SERIES(series);
+		//unprotect series only when not locked (using protect/permanently)
+		if (!IS_LOCK_SERIES(series))
+			UNPROTECT_SERIES(series);
 
 	if (!ANY_BLOCK(val) || !GET_FLAG(flags, PROT_DEEP)) return;
 
@@ -132,8 +137,14 @@ enum {
 
 	if (IS_MARK_SERIES(series)) return; // avoid loop
 
-	if (GET_FLAG(flags, PROT_SET)) PROTECT_SERIES(series);
-	else UNPROTECT_SERIES(series);
+	if (GET_FLAG(flags, PROT_SET)) {
+		PROTECT_SERIES(series);
+		if (GET_FLAG(flags, PROT_PERMANENTLY)) LOCK_SERIES(series);
+	}
+	else 
+		//unprotect series only when not locked (using protect/permanently)
+		if (!IS_LOCK_SERIES(series))
+			UNPROTECT_SERIES(series);
 
 	for (value = FRM_WORDS(series)+1; NOT_END(value); value++) {
 		Protect_Word(value, flags);
@@ -191,6 +202,7 @@ enum {
 **		3: /words  - list of words
 **		4: /values - list of values
 **		5: /hide  - hide variables
+**		6: /permanent - protects permanently (unprotect would fail)
 **
 ***********************************************************************/
 {
@@ -205,6 +217,8 @@ enum {
 
 	if (D_REF(5)) SET_FLAG(flags, PROT_HIDE);
 	else SET_FLAG(flags, PROT_WORD); // there is no unhide
+
+	if (D_REF(6)) SET_FLAG(flags, PROT_PERMANENTLY);
 
 	if (IS_WORD(val) || IS_PATH(val)) {
 		Protect_Word_Value(val, flags); // will unmark if deep
