@@ -310,6 +310,9 @@
 		}
 	}
 
+	if (mode==1 && IS_PROTECT_SERIES(series)) 
+		Trap0(RE_PROTECTED);
+	
 	windex = index;
 
 	// Iterate over each value in the series block:
