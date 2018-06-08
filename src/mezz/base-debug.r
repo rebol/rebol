@@ -26,33 +26,34 @@ probe: func [
 
 ??: func [
 	{Debug print a word, path, or block of such, followed by its molded value.}
-	'name "Word, path, and block to obtain values."
-	/local out
+	'name "Word, path or block to obtain values."
 ][
 	case [
 		any [
 			word? :name
 			path? :name
 		][
-			print ajoin [name ": " mold name: get :name]
+			prin ajoin ["^[[1;32;49m" mold :name "^[[0m == ^[[32m"] 
+    		prin either value? :name [mold/all get/any :name] ["#[unset!]"]
+    		print "^[[0m"
 		]
 		block? :name [
-			out: make string! 50
 			foreach word name [
 				either any [
 					word? :word
 					path? :word
 				][
-					repend out [word ": " mold get word "  "]
+					prin ajoin ["^[[1;32;49m" mold :word "^[[0m == ^[[32m"] 
+					prin either value? :word [mold/all get/any :word]["#[unset!]"]
+					print "^[[0m"
 				][
-					repend out [mold word " "]
+					print ajoin ["^[[1;32;49m" mold/all word "^[[0m"]
 				]
 			]
-			print out
 		]
-		true [probe :name]
+		true [print ajoin ["^[[1;32;49m" mold/all word "^[[0m"]]
 	]
-	:name
+	exit
 ]
 
 boot-print: func [

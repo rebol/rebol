@@ -75,13 +75,13 @@ dump-obj: function [
 				]
 			]
 		][
-			str: form-pad word 15
-			append str #" "
-			append str form-pad type 10 - ((length? str) - 15)
+			str: join "^[[1;32;49m" form-pad word 15
+			append str "^[[0m "
+			append str form-pad type 24 - ((length? str) - 15)
 			append out reform [
-				"  " str
+				"  " str "^[[32m"
 				if type <> 'unset! [form-val :val]
-				newline
+				"^[[0m^/"
 			]
 		]
 	]
@@ -124,26 +124,19 @@ dump-obj: function [
 			^[[0m
 			Other debug functions:
 
-				^[[1;32;49mdocs^[[0m - open browser to web documentation
-				^[[1;32;49m??^[[0m - display a variable and its value
-				^[[1;32;49mprobe^[[0m - print a value (molded)
-				^[[1;32;49msource func^[[0m - show source code of func
-				^[[1;32;49mtrace^[[0m - trace evaluation steps
-				^[[1;32;49mwhat^[[0m - show a list of known functions
-				^[[1;32;49mwhy?^[[0m - explain more about last error (via web)
+				^[[1;32;49mdocs^[[0m    - open browser to web documentation
+				^[[1;32;49m??^[[0m      - display a variable and its value
+				^[[1;32;49mprobe^[[0m   - print a value (molded)
+				^[[1;32;49msource^[[0m  - show source code of func
+				^[[1;32;49mtrace^[[0m   - trace evaluation steps
+				^[[1;32;49mwhat^[[0m    - show a list of known functions
+				^[[1;32;49mwhy?^[[0m    - explain more about last error (via web)
 
 			Other information:
 
-				^[[1;32;49mchat^[[0m - open DevBase developer forum/BBS
-				^[[1;32;49mdocs^[[0m - open DocBase document wiki website
-				^[[1;32;49mbugs^[[0m - open CureCore bug database website
-				^[[1;32;49mdemo^[[0m - run demo launcher (from rebol.com)
-				^[[1;32;49mabout^[[0m - see general product info
-				^[[1;32;49mupgrade^[[0m - check for newer versions
-				^[[1;32;49mchanges^[[0m - show changes for recent version
-				^[[1;32;49minstall^[[0m - install (when applicable)
+				^[[1;32;49mabout^[[0m   - see general product info
 				^[[1;32;49mlicense^[[0m - show user license
-				^[[1;32;49musage^[[0m - program cmd line options
+				^[[1;32;49musage^[[0m   - program cmd line options
 		}
 		exit
 	]
@@ -178,7 +171,7 @@ dump-obj: function [
 		word? :word
 		any [any-function? get :word datatype? get :word]
 	][
-		item: form :word
+		item: mold :word
 		either any-function? get :word [
 			foreach [a b] [ ; need a better method !
 				"!" "-ex"
@@ -202,37 +195,37 @@ dump-obj: function [
 	if any [string? :word all [word? :word datatype? get :word]] [
 		if all [word? :word datatype? get :word] [
 			value: spec-of get :word
-			print [
-				mold :word "is a datatype" newline
-				"It is defined as" either find "aeiou" first value/title ["an"] ["a"] value/title newline
-				"It is of the general type" value/type newline
+			print ajoin [
+				"^[[1;32;49m" mold :word "^[[0m is a datatype" newline
+				"It is defined as " either find "aeiou" first value/title ["an "] ["a "] value/title newline
+				"It is of the general type ^[[1;32;49m" value/type "^[[0m^/"
 			]
 		]
 		if any [:word = 'unset! not value? :word] [exit]
 		types: dump-obj/match lib :word
 		sort types
 		if not empty? types [
-			print ["Found these related words:" newline types]
+			print ["Found these related words:^[[32m" newline types "^[[0m"]
 			exit
 		]
 		if all [word? :word datatype? get :word] [
-			print ["No values defined for" word]
+			print ["No values defined for^[[1;32;49m" word "^[[0m"]
 			exit
 		]
-		print ["No information on" word]
+		print ["No information on^[[1;32;49m" word "^[[0m"]
 		exit
 	]
 
 	; Print type name with proper singular article:
 	type-name: func [value] [
 		value: mold type? :value
-		clear back tail value
+		clear back tail value ;removes the ! char from datatype name
 		join either find "aeiou" first value ["an "]["a "] value
 	]
 
 	; Print literal values:
 	if not any [word? :word path? :word][
-		print [mold :word "is" type-name :word]
+		print ajoin ["^[[1;32;49m" mold :word "^[[0m is " type-name :word]
 		exit
 	]
 
@@ -259,8 +252,9 @@ dump-obj: function [
 		value: get :word
 	]
 	unless any-function? :value [
-		prin [uppercase mold word "is" type-name :value "of value: "]
-		print either any [object? value port? value]  [print "" dump-obj value][mold :value]
+		prin ajoin ["^[[1;32;49m" uppercase mold word "^[[0m is " type-name :value " of value: ^[[32m"]
+		prin either any [object? value port? value]  [print "" dump-obj value][mold/all :value]
+		print "^[[0m"
 		exit
 	]
 
@@ -276,7 +270,7 @@ dump-obj: function [
 	either op? :value [
 		print [args/1 word args/2]
 	][
-		print [uppercase mold word args]
+		print [uppercase mold word mold/only args]
 	]
 
 	print ajoin [
@@ -293,7 +287,7 @@ dump-obj: function [
 		if empty? list [exit]
 		print label
 		foreach arg list [
-			str: ajoin [tab arg/1]
+			str: ajoin [tab mold arg/1]
 			if all [extra word? arg/1] [insert str tab]
 			if arg/2 [append append str " -- " arg/2]
 			if all [arg/3 not refinement? arg/1] [
@@ -422,101 +416,101 @@ what: func [
 	exit
 ]
 
-pending: does [
-	comment "temp function"
-	print "Pending implementation."
-]
-
-say-browser: does [
-	comment "temp function"
-	print "Opening web browser..."
-]
-
-upgrade: function [
-	"Check for newer versions (update REBOL)."
-][
-	print "Fetching upgrade check ..."
-	if error? err: try [do http://www.rebol.com/r3/upgrade.r none][
-		either err/id = 'protocol [print "Cannot upgrade from web."][do err]
-	]
-	exit
-]
-
-chat: function [
-	"Open REBOL DevBase forum/BBS."
-][
-	print "Fetching chat..."
-	if error? err: try [do http://www.rebol.com/r3/chat.r none][
-		either err/id = 'protocol [print "Cannot load chat from web."][do err]
-	]
-	exit
-]
-
-docs: func [
-	"Browse on-line documentation."
-][
-	say-browser
-	browse http://www.rebol.com/r3/docs
-	exit
-]
-
-bugs: func [
-	"View bug database."
-][
-	say-browser
-	browse http://curecode.org/rebol3/
-	exit
-]
-
-changes: func [
-	"What's new about this version."
-][
-	say-browser
-	browse http://www.rebol.com/r3/changes.html
-	exit
-]
-
-why?: func [
-	"Explain the last error in more detail."
-	'err [word! path! error! none! unset!] "Optional error value"
-][
-	case [
-		unset? :err [err: none]
-		word? err [err: get err]
-		path? err [err: get err]
-	]
-
-	either all [
-		error? err: any [:err system/state/last-error]
-		err/type ; avoids lower level error types (like halt)
-	][
-		say-browser
-		err: lowercase ajoin [err/type #"-" err/id]
-		browse join http://www.rebol.com/r3/docs/errors/ [err ".html"]
-	][
-		print "No information is available."
-	]
-	exit
-]
-
-demo: function [
-	"Run R3 demo."
-][
-	print "Fetching demo..."
-	if error? err: try [do http://www.rebol.com/r3/demo.r none][
-		either err/id = 'protocol [print "Cannot load demo from web."][do err]
-	]
-	exit
-]
-
-load-gui: function [
-	"Download current GUI module from web. (Temporary)"
-][
-	print "Fetching GUI..."
-	either error? data: try [load http://www.rebol.com/r3/gui.r][
-		either data/id = 'protocol [print "Cannot load GUI from web."][do err]
-	][
-		do data
-	]
-	exit
-]
+;pending: does [
+;	comment "temp function"
+;	print "Pending implementation."
+;]
+;
+;say-browser: does [
+;	comment "temp function"
+;	print "Opening web browser..."
+;]
+;
+;upgrade: function [
+;	"Check for newer versions (update REBOL)."
+;][
+;	print "Fetching upgrade check ..."
+;	if error? err: try [do http://www.rebol.com/r3/upgrade.r none][
+;		either err/id = 'protocol [print "Cannot upgrade from web."][do err]
+;	]
+;	exit
+;]
+;
+;chat: function [
+;	"Open REBOL DevBase forum/BBS."
+;][
+;	print "Fetching chat..."
+;	if error? err: try [do http://www.rebol.com/r3/chat.r none][
+;		either err/id = 'protocol [print "Cannot load chat from web."][do err]
+;	]
+;	exit
+;]
+;
+;docs: func [
+;	"Browse on-line documentation."
+;][
+;	say-browser
+;	browse http://www.rebol.com/r3/docs
+;	exit
+;]
+;
+;bugs: func [
+;	"View bug database."
+;][
+;	say-browser
+;	browse http://curecode.org/rebol3/
+;	exit
+;]
+;
+;changes: func [
+;	"What's new about this version."
+;][
+;	say-browser
+;	browse http://www.rebol.com/r3/changes.html
+;	exit
+;]
+;
+;why?: func [
+;	"Explain the last error in more detail."
+;	'err [word! path! error! none! unset!] "Optional error value"
+;][
+;	case [
+;		unset? :err [err: none]
+;		word? err [err: get err]
+;		path? err [err: get err]
+;	]
+;
+;	either all [
+;		error? err: any [:err system/state/last-error]
+;		err/type ; avoids lower level error types (like halt)
+;	][
+;		say-browser
+;		err: lowercase ajoin [err/type #"-" err/id]
+;		browse join http://www.rebol.com/r3/docs/errors/ [err ".html"]
+;	][
+;		print "No information is available."
+;	]
+;	exit
+;]
+;
+;demo: function [
+;	"Run R3 demo."
+;][
+;	print "Fetching demo..."
+;	if error? err: try [do http://www.rebol.com/r3/demo.r none][
+;		either err/id = 'protocol [print "Cannot load demo from web."][do err]
+;	]
+;	exit
+;]
+;
+;load-gui: function [
+;	"Download current GUI module from web. (Temporary)"
+;][
+;	print "Fetching GUI..."
+;	either error? data: try [load http://www.rebol.com/r3/gui.r][
+;		either data/id = 'protocol [print "Cannot load GUI from web."][do err]
+;	][
+;		do data
+;	]
+;	exit
+;]
