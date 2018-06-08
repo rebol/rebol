@@ -963,6 +963,10 @@ eval_func2:
 	case ET_END:
 		 return END_FLAG;
 
+	case ET_INVALID:
+		 Trap1(RE_NO_VALUE, value);
+		 break;
+
 	default:
 		//Debug_Fmt("Bad eval: %d %s", VAL_TYPE(value), Get_Type_Name(value));
 		Crash(RP_BAD_EVALTYPE, VAL_TYPE(value));
