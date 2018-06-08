@@ -1182,7 +1182,8 @@ eval_func2:
 	REBVAL *val;
 
 	while (index < BLK_LEN(block)) {
-		if (IS_SET_WORD(val = BLK_SKIP(block, index))) {
+		val = BLK_SKIP(block, index);
+		if (IS_SET_WORD(val) || IS_SET_PATH(val)) {
 			DS_PUSH(val);
 			index++;
 		} else
