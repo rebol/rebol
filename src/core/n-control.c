@@ -684,17 +684,32 @@ got_err:
 /*
 ***********************************************************************/
 {
-	if (IS_BLOCK(D_ARG(1))) {
-		REBSER *ser = VAL_SERIES(D_ARG(1));
-		REBCNT index = VAL_INDEX(D_ARG(1));
-		REBVAL *val = D_REF(5) ? D_ARG(6) : 0;
+	REBVAL *val = D_ARG(1);
+	REBVAL *into = D_REF(5) ? D_ARG(6) : 0;
+
+	if (IS_BLOCK(val)) {
+		REBSER *ser = VAL_SERIES(val);
+		REBCNT index = VAL_INDEX(val);
 
 		if (D_REF(2))
-			Reduce_Block_No_Set(ser, index, val);
+			Reduce_Block_No_Set(ser, index, into);
 		else if (D_REF(3))
-			Reduce_Only(ser, index, D_ARG(4), val);
+			Reduce_Only(ser, index, D_ARG(4), into);
 		else
-			Reduce_Block(ser, index, val);
+			Reduce_Block(ser, index, into);
+		return R_TOS;
+	}
+	else if (into != 0) {
+		REBINT start = DSP + 1;
+		if (IS_WORD(val)) {
+			val = Get_Var(val);
+			DS_PUSH(val);
+		}
+		else if (IS_PATH(val)) {
+			Do_Path(&val, 0); // pushes val on stack
+		}
+		else DS_PUSH(val);
+		Copy_Stack_Values(start, into);
 		return R_TOS;
 	}
 
