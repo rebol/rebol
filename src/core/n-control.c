@@ -777,6 +777,14 @@ got_err:
 			}
 			else { // do func[err] error
 				REBVAL error = *DS_NEXT; // will get overwritten
+				REBVAL *args = BLK_SKIP(VAL_FUNC_ARGS(&handler), 1);
+				if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(&error))) {
+					// TODO: This results in an error message such as "action!
+					// does not allow error! for its value1 argument". A better
+					// message would be more like "except handler does not
+					// allow error! for its value1 argument."
+					Trap3(RE_EXPECT_ARG, Of_Type(&handler), args, Of_Type(&error));
+				}
 				Apply_Func(0, &handler, &error, 0);
 			}
 		}
