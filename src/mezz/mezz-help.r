@@ -238,12 +238,22 @@ dump-obj: function [
 
 	; Get value (may be a function, so handle with ":")
 	either path? :word [
-		if any [
-			error? set/any 'value try [get :word] ;try reduce [to-get-path word]
-			not value? 'value
-		][
-			print ["No information on" word "(path has no value)"]
-			exit
+		if error? set/any 'value try [get :word][
+			;check if value is error or if it was really an invalid or path without value
+			if all [
+				value/id   = 'invalid-path
+				value/arg1 = :word
+			][
+				print ["There is no" value/arg2 "in path" value/arg1]
+				exit
+			]
+			if all [
+				value/id = 'no-value
+				value/arg1 = first :word
+			][
+				print ["No information on" word "(path has no value)"]
+				exit
+			]
 		]
 	][
 		value: get :word
