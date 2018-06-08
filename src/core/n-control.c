@@ -476,10 +476,27 @@ got_err:
 ***********************************************************************/
 {
 	REBVAL *value = D_ARG(1);
+	REBVAL *into = D_REF(4) ? D_ARG(5) : 0;
 
-	if (!IS_BLOCK(value)) return R_ARG1;
-	Compose_Block(value, D_REF(2), D_REF(3), D_REF(4) ? D_ARG(5) : 0);
-	return R_TOS;
+	if (IS_BLOCK(value)) {
+		Compose_Block(value, D_REF(2), D_REF(3), into);
+		return R_TOS;
+	}
+	else if (into != 0) {
+		REBINT start = DSP + 1;
+		if (IS_WORD(value)) {
+			value = Get_Var(value);
+			DS_PUSH(value);
+		}
+		else if (IS_PATH(value)) {
+			Do_Path(&value, 0); // pushes val on stack
+		}
+		else DS_PUSH(value);
+		Copy_Stack_Values(start, into);
+		return R_TOS;
+	}
+	
+	return R_ARG1;
 }
 
 
