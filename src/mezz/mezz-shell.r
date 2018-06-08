@@ -22,7 +22,7 @@ cd: func [
 	/local val
 ][
 	switch type?/word :path [
-		unset!  [print what-dir]
+		;unset!  [print what-dir] ;-- looks like now need to print it as what-dir is now as a result
 		file!   [change-dir get :path]
 		string! [change-dir to-rebol-file path]
 		word! path! [
