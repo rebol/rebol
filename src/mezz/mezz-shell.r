@@ -19,13 +19,20 @@ mkdir:	:make-dir
 cd: func [
 	"Change directory (shell shortcut function)."
 	'path [file! word! path! unset! string!] "Accepts %file, :variables and just words (as dirs)"
+	/local val
 ][
 	switch type?/word :path [
-		unset! [print what-dir]
-		file! [change-dir path]
+		unset!  [print what-dir]
+		file!   [change-dir get :path]
 		string! [change-dir to-rebol-file path]
-		word! path! [change-dir to-file path]
+		word! path! [
+			change-dir either all [
+				not error? set/any 'val try [get :path]
+				val
+			][  val ][ to-file path ]
+		]
 	]
+	what-dir
 ]
 
 more: func [
