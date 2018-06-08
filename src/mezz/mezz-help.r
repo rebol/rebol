@@ -124,13 +124,11 @@ dump-obj: function [
 			^[[0m
 			Other debug functions:
 
-				^[[1;32;49mdocs^[[0m    - open browser to web documentation
 				^[[1;32;49m??^[[0m      - display a variable and its value
 				^[[1;32;49mprobe^[[0m   - print a value (molded)
 				^[[1;32;49msource^[[0m  - show source code of func
 				^[[1;32;49mtrace^[[0m   - trace evaluation steps
 				^[[1;32;49mwhat^[[0m    - show a list of known functions
-				^[[1;32;49mwhy?^[[0m    - explain more about last error (via web)
 
 			Other information:
 
