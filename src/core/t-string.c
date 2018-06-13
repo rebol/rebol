@@ -30,6 +30,7 @@
 #include "sys-core.h"
 #include "sys-scan.h"
 #include "sys-deci-funcs.h"
+#include "sys-int-funcs.h"
 
 /***********************************************************************
 **
@@ -541,9 +542,10 @@ find:
 	case A_PICK:
 	case A_POKE:
 		len = Get_Num_Arg(arg); // Position
-		index += len - 1;
 		//if (len > 0) index--;
-		if (index < 0 || index >= tail) {
+		if (REB_I32_SUB_OF(len, 1, &len)
+			|| REB_I32_ADD_OF(index, len, &index)
+			|| index < 0 || index >= tail) {
 			if (action == A_PICK) goto is_none;
 			Trap_Range(arg);
 		}
