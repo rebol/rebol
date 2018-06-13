@@ -354,7 +354,10 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	REBSER *ser = VAL_SERIES(data);
 
 	if (IS_INTEGER(pvs->select)) {
-		n = Int32(pvs->select) + VAL_INDEX(data) - 1;
+		i = Int32(pvs->select);
+		if (i == 0) return PE_NONE; // like in case: path/0
+		if (i < 0) i++;
+		n = i + VAL_INDEX(data) - 1;
 	}
 	else return PE_BAD_SELECT;
 
@@ -542,8 +545,9 @@ find:
 	case A_PICK:
 	case A_POKE:
 		len = Get_Num_Arg(arg); // Position
-		//if (len > 0) index--;
-		if (REB_I32_SUB_OF(len, 1, &len)
+		if (len < 0) REB_I32_ADD_OF(index, 1, &index);
+		if (len == 0
+			|| REB_I32_SUB_OF(len, 1, &len)
 			|| REB_I32_ADD_OF(index, len, &index)
 			|| index < 0 || index >= tail) {
 			if (action == A_PICK) goto is_none;

@@ -468,10 +468,13 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	REBINT bits;
 	REBYTE *vp;
 	REBI64 i;
-	REBDEC f;
+	REBDEC f = 0.0;
 
-	if (IS_INTEGER(pvs->select) || IS_DECIMAL(pvs->select))
+	if (IS_INTEGER(pvs->select) || IS_DECIMAL(pvs->select)) {
 		n = Int32(pvs->select);
+		if (n == 0) return PE_NONE;
+		if (n < 0) n++;
+	}
 	else return PE_BAD_SELECT;
 
 	n += VAL_INDEX(pvs->value);

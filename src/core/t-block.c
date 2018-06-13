@@ -540,7 +540,10 @@ static struct {
 	*/
 
 	if (IS_INTEGER(pvs->select)) {
-		n = Int32(pvs->select) + VAL_INDEX(pvs->value) - 1;
+		REBINT i = Int32(pvs->select);
+		if (i == 0) return PE_NONE; // like in case: path/0
+		if (i < 0) i++;
+		n = i + VAL_INDEX(pvs->value) - 1;
 	}
 	else if (IS_WORD(pvs->select)) {
 		n = Find_Word(VAL_SERIES(pvs->value), VAL_INDEX(pvs->value), VAL_WORD_CANON(pvs->select));
@@ -573,6 +576,8 @@ static struct {
 	REBINT n = 0;
 
 	n = Get_Num_Arg(selector);
+	if (n == 0) return 0;
+	if (n < 0) n++;
 	n += VAL_INDEX(block) - 1;
 	if (n < 0 || (REBCNT)n >= VAL_TAIL(block)) return 0;
 	return VAL_BLK_SKIP(block, n);
