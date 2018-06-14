@@ -461,6 +461,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 				Signal_Device(sock, EVT_WROTE);
 				return DR_DONE;
 			}
+			SET_FLAG(sock->flags, RRF_ACTIVE); /* notify OS_WAIT of activity */
 			return DR_PEND;
 		}
 		// if (result < 0) ...
@@ -612,7 +613,6 @@ lserr:
 	// accept additional connections.
 	return DR_PEND;
 }
-
 
 /***********************************************************************
 **

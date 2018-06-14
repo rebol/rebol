@@ -93,6 +93,7 @@ enum {
 	RRF_PENDING,	// Request is attached to pending list
 	RRF_ALLOC,		// Request is allocated, not a temp on stack
 	RRF_WIDE,		// Wide char IO
+	RRF_ACTIVE,		// Port is active, even no new events yet
 };
 
 // REBOL Device Errors:

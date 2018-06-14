@@ -103,9 +103,10 @@ static int Poll_Default(REBDEV *dev)
 	for (req = *prior; req; req = *prior) {
 
 		// Call command again:
-		if (req->command < RDC_MAX)
+		if (req->command < RDC_MAX) {
+			CLR_FLAG(req->flags, RRF_ACTIVE);
 			result = dev->commands[req->command](req);
-		else {
+		} else {
 			result = -1;	// invalid command, remove it
 			req->error = ((REBCNT)-1);
 		}
@@ -116,8 +117,12 @@ static int Poll_Default(REBDEV *dev)
 			req->next = 0;
 			CLR_FLAG(req->flags, RRF_PENDING);
 			change = TRUE;
+		} else {
+			prior = &req->next;
+			if (GET_FLAG(req->flags, RRF_ACTIVE)) {
+				change = TRUE;
+			}
 		}
-		else prior = &req->next;
 	}
 
 	return change;
