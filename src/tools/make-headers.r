@@ -17,12 +17,15 @@ print "------ Building headers"
 
 r3: system/version > 2.100.0
 
+zero-index?: not none? pick next system/platform 0 ;@@ used to be able compile using old R3 versions which were using path/0 instead of path/-1
+
 verbose: false
 chk-dups: true
 dups: make block! 10000 ; get pick [map! hash!] r3 1000
 dup-found: false
 
 do %form-header.r
+file-base: load %file-base.r
 
 tmp: context [
 
@@ -31,6 +34,14 @@ change-dir %../core/
 count: 0
 output:  make string! 20000
 natives: make string! 20000
+base-code: make string! 2000
+insert base-code {REBOL [
+	title:    "Rebol base code collected from C sources"
+	purpose:  "This is code which must be evaluated just after code from base-defs.r file"
+	commment: "AUTO-GENERATED FILE - Do not modify. (From: make-headers.r)"
+]
+}
+
 
 emit:    func [d] [append repend output  d newline]
 emit-rl: func [d] [append repend rlib    d newline]
@@ -131,7 +142,7 @@ sym-chars: charset [#"A" - #"Z" #"_" #"0" - #"9"]
 sym-check: charset "/S"
 symbols: make block! 256
 
-process: func [file /local sym p] [
+process: func [file /local sym p comm spec commented?] [
 	if verbose [?? file]
 	data: read the-file: file
 	if r3 [data: deline to-string data]
@@ -150,7 +161,7 @@ process: func [file /local sym p] [
 				  "/*" thru "*/"
 				| "//" to newline
 				| "SYM_" copy sym some sym-chars (
-					if not find sym-chars p/0 [
+					if not find sym-chars either zero-index? [p/0][p/-1] [
 						append symbols sym
 					]
 				)
@@ -158,11 +169,37 @@ process: func [file /local sym p] [
 			]
 		]
 	]
+
+	;collect Rebol code which may be evaluated on startup
+	parse data [
+		any [
+			;Search only in /*...*/ comments
+			thru "^//*" copy comm to "*/" (
+				parse/all comm [any [
+					thru {^/**} [
+						any [#" " | #"^-"]
+						"Base-code:"
+						any [#" " | #"^-"] newline
+						copy spec to "^/*" (
+							if not commented? [
+								append base-code rejoin [{^/;- code from: } mold file lf lf]
+								commented?: true
+							]
+							append base-code spec
+						)
+						| to newline
+					]
+				]]
+			)
+		]
+	]
 ]
 
 emit-header "Function Prototypes" %funcs.h
 
-files: sort read %./
+;in original source all files in core folder were parsed
+;now only the files specified in file-base/core are processed
+files: file-base/core
 
 ;do
 [
@@ -172,7 +209,9 @@ files: sort read %./
 ]
 
 foreach file files [
+	file: to file! file
 	if all [
+		exists? file
 		%.c = suffix? file
 		not find/match file "host-"
 		not find/match file "os-"
@@ -182,12 +221,13 @@ foreach file files [
 symbols: sort unique symbols ;contains all symbols (like: SYM_CALL) used in above processed C files (without the SYM_ part)
 symbols: new-line/skip symbols true 1
 
-save/header  %../boot/tmp-symbols.r symbols [
+save/header %../boot/tmp-symbols.r symbols [
 	title:    "C Symbols"
 	purpose:  "Automaticly collected symbols from C files"
 	commment: "AUTO-GENERATED FILE - Do not modify. (From: make-headers.r)"
 
 ]
+write %../mezz/base-collected.r base-code
 write %../boot/tmp-natives.r natives
 write %../include/tmp-funcs.h output
 

@@ -10,6 +10,7 @@ make/libr3.dll
 src/boot/boot-code.r
 src/boot/host-init.r
 src/boot/tmp-natives.r
+src/boot/tmp-symbols.r
 src/core/b-boot.c
 src/include/ext-types.h
 src/include/host-*
@@ -21,6 +22,7 @@ src/include/reb-types.h
 src/include/tmp-*
 src/tools/reb-lib-doc.txt
 src/reb-lib-doc.txt
+src/mezz/base-collected.r
 
 #################
 ## Eclipse

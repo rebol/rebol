@@ -20,6 +20,7 @@ REBOL [
 	%base-files.r
 	%base-debug.r
 	%base-defs.r
+	%base-collected.r ; contains automatically collected code from C files
 ]
 
 ;-- sys: low-level sys context:
