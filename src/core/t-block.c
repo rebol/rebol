@@ -534,12 +534,11 @@ static struct {
 	REBINT n = 0;
 
 	/* Issues!!!
-		a/1.3
 		a/not-found: 10 error or append?
 		a/not-followed: 10 error or append?
 	*/
 
-	if (IS_INTEGER(pvs->select)) {
+	if (IS_INTEGER(pvs->select) || IS_DECIMAL(pvs->select)) {
 		REBINT i = Int32(pvs->select);
 		if (i == 0) return PE_NONE; // like in case: path/0
 		if (i < 0) i++;
