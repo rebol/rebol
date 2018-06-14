@@ -85,8 +85,9 @@ REBDEV *Devices[RDI_LIMIT] =
 	&Dev_DNS,
 #ifndef MIN_OS
 	&Dev_Clipboard,
+#else
+	0
 #endif
-	0,
 };
 
 
