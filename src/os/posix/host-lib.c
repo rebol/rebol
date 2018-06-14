@@ -1070,6 +1070,21 @@ stdin_pipe_err:
 	return ret;
 }
 
+/***********************************************************************
+**
+*/	int OS_Reap_Process(int pid, int *status, int flags)
+/*
+ * pid: 
+ * 		> 0, a signle process
+ * 		-1, any child process
+ * flags:
+ * 		0: return immediately
+ *
+**		Return -1 on error, otherwise process ID
+***********************************************************************/
+{
+	return waitpid(pid, status, flags == 0? WNOHANG : 0);
+}
 
 static int Try_Browser(char *browser, REBCHR *url)
 {

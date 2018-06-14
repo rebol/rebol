@@ -1029,6 +1029,23 @@ input_error:
 	return ret;  // meaning depends on flags
 }
 
+/***********************************************************************
+**
+*/	int OS_Reap_Process(int pid, int *status, int flags)
+/*
+ * pid: 
+ * 		> 0, a signle process
+ * 		-1, any child process
+ * flags:
+ * 		0: return immediately
+ * 		1: wait until one of child processes exits
+ *
+**		Return -1 on error, otherwise process ID
+***********************************************************************/
+{
+	/* It seems that process doesn't need to be reaped on Windows */
+	return 0;
+}
 
 /***********************************************************************
 **
