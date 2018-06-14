@@ -57,14 +57,12 @@ foreach [codec handler] system/codecs [
 			suffixes: select [
 				text [%.txt]
 				markup [%.html %.htm %.xml %.xsl %.wml %.sgml %.asp %.php %.cgi]
-				bmp  [%.bmp]
-				gif  [%.gif]
-				jpeg [%.jpg %.jpeg]
-				png  [%.png]
 			] codec
 		]
 		; Media-types block format: [.abc .def type ...]
-		append append system/options/file-types codec/suffixes codec/name
+		if codec/suffixes [ ;append to file-types only if there is any suffix
+			append append system/options/file-types codec/suffixes codec/name
+		]
 	]
 ]
 

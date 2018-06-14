@@ -1,3 +1,4 @@
+#ifdef USE_BMP_CODEC
 /***********************************************************************
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
@@ -26,6 +27,14 @@
 **    This is an optional part of R3. This file can be replaced by
 **    library function calls into an updated implementation.
 **
+***********************************************************************
+**  Base-code:
+
+	if find system/codecs 'bmp [
+		system/codecs/bmp/suffixes: [%.bmp]
+		append append system/options/file-types system/codecs/bmp/suffixes 'bmp
+	]
+
 ***********************************************************************/
 
 #include "sys-core.h"
@@ -616,3 +625,5 @@ error:
 {
 	Register_Codec("bmp", Codec_BMP_Image);
 }
+
+#endif //USE_BMP_CODEC

@@ -1,25 +1,45 @@
+#ifdef USE_JPG_CODEC
+/***********************************************************************
+**
+**  jdatasrc.c
+** 
+**  Copyright (C) 1994-1996, Thomas G. Lane.
+**  This file is part of the Independent JPEG Group's software.
+**  For conditions of distribution and use, see the accompanying README file.
+** 
+**  This file contains decompression data source routines for the case of
+**  reading JPEG data from a file (or any stdio stream).  While these routines
+**  are sufficient for most applications, some will want to use a different
+**  source manager.
+**  IMPORTANT: we assume that fread() will correctly transcribe an array of
+**  JOCTETs from 8-bit-wide elements on external storage.  If char is wider
+**  than 8 bits on your machine, you may need to do some tweaking.
+**
+************************************************************************
+**
+**  Module:  u-jpg.c
+**  Summary: JPEG image format conversion
+**  Section: utility
+**  Notes:
+**    This is an optional part of R3. This file can be replaced by
+**    library function calls into an updated implementation.
+**
+***********************************************************************
+**  Base-code:
+
+  if find system/codecs 'jpeg [
+    system/codecs/jpeg/suffixes: [%.jpg %.jpeg]
+    append append system/options/file-types system/codecs/jpeg/suffixes 'jpeg
+  ]
+
+***********************************************************************/
+
 #define JPEG_INTERNALS
 #define NO_GETENV
 #include "reb-config.h"
 #include "reb-c.h"
 #include <setjmp.h>
 #include "sys-jpg.h"
-
-/*
- * jdatasrc.c
- *
- * Copyright (C) 1994-1996, Thomas G. Lane.
- * This file is part of the Independent JPEG Group's software.
- * For conditions of distribution and use, see the accompanying README file.
- *
- * This file contains decompression data source routines for the case of
- * reading JPEG data from a file (or any stdio stream).  While these routines
- * are sufficient for most applications, some will want to use a different
- * source manager.
- * IMPORTANT: we assume that fread() will correctly transcribe an array of
- * JOCTETs from 8-bit-wide elements on external storage.  If char is wider
- * than 8 bits on your machine, you may need to do some tweaking.
- */
 
 /* this is not a core library module, so it doesn't define JPEG_INTERNALS */
 //#include "jinclude.h"
@@ -10827,3 +10847,5 @@ extern void Register_Codec(char *name, codo dispatcher);
 {
 	Register_Codec("jpeg", Codec_JPEG_Image);
 }
+
+#endif //USE_JPG_CODEC

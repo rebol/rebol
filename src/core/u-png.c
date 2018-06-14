@@ -1,3 +1,4 @@
+#ifdef USE_PNG_CODEC
 /***********************************************************************
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
@@ -26,6 +27,14 @@
 **    This is an optional part of R3. This file can be replaced by
 **    library function calls into an updated implementation.
 **
+***********************************************************************
+**  Base-code:
+
+	if find system/codecs 'png [
+		system/codecs/png/suffixes: [%.png]
+		append append system/options/file-types system/codecs/png/suffixes 'png
+	]
+
 ***********************************************************************/
 
 #include "sys-core.h"
@@ -859,3 +868,5 @@ error:
 {
 	Register_Codec("png", Codec_PNG_Image);
 }
+
+#endif //USE_PNG_CODEC
