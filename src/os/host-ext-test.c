@@ -207,7 +207,9 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 
 	case 8: //command [{return 2x3 image}]
 		RXA_TYPE(frm, 1) = RXT_IMAGE;
-		RXA_SERIES(frm, 1) = RL_MAKE_IMAGE(2, 3);
+		RXA_IMAGE(frm, 1) = RL_MAKE_IMAGE(2, 3);
+		RXA_IMAGE_WIDTH(frm, 1) = 2;
+		RXA_IMAGE_HEIGHT(frm, 1) = 3;
 		break;
 
 	case 9: //command [{test command context struct} blk [block!]]
