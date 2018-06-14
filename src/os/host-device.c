@@ -252,6 +252,7 @@ static int Poll_Default(REBDEV *dev)
 ***********************************************************************/
 {
 	REBDEV *dev;
+	REBREQ req;
 
 	// Validate device:
 	if (device >= RDI_MAX || !(dev = Devices[device]))
@@ -262,7 +263,10 @@ static int Poll_Default(REBDEV *dev)
 		return -2;
 
 	// Do command, return result:
-	return dev->commands[command]((REBREQ*)dev);
+	/* fake a request, not all fields are set */
+	req.device = device;
+	req.command = command;
+	return dev->commands[command](&req);
 }
 
 

@@ -283,7 +283,7 @@ static void close_stdio(void)
 
 	close_stdio();
 
-	CLR_FLAG(req->flags, RRF_OPEN);
+	CLR_FLAG(dev->flags, RRF_OPEN);
 
 	return DR_DONE;
 }
