@@ -26,6 +26,8 @@ path-host:   %../os/
 path-make:   %../../make/
 path-incl:   %../../src/include/
 
+settings: attempt [load path-make/make-settings.r]
+
 ;******************************************************************************
 
 ; (Warning: format is a bit sensitive to extra spacing. E.g. see macro+ func)
@@ -81,10 +83,11 @@ RES=
 RAPI_FLAGS=
 HOST_FLAGS=	-DREB_EXE
 RLIB_FLAGS=
+USE_FLAGS=
 
 # Flags for core and for host:
-RFLAGS= -c -D$(TO_OS) -DREB_API  $(RAPI_FLAGS) $I
-HFLAGS= -c -D$(TO_OS) -DREB_CORE $(HOST_FLAGS) $I
+RFLAGS= -c -D$(TO_OS) -DREB_API  $(RAPI_FLAGS) $(USE_FLAGS) $I
+HFLAGS= -c -D$(TO_OS) -DREB_CORE $(HOST_FLAGS) $(USE_FLAGS) $I
 CLIB=
 
 # REBOL is needed to build various include files:
@@ -412,6 +415,15 @@ unless flag? -SP [ ; Use standard paths:
 	macro+ UP ".."
 	macro+ CD "./"
 ]
+
+if all [settings block? settings/defines][
+	flags: copy ""
+	foreach flag settings/defines [
+		append flags join " -D" flag
+	]
+	macro+ USE_FLAGS flags
+]
+
 ;Oldes: Why there was the next line?
 ;if os-plat/2 = 3 [macro+ REBOL ">NUL:"] ; Temporary workaround for R3 on Win7.
 either flag? EXE [

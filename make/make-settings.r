@@ -4,3 +4,12 @@ REBOL [
 
 TOOLS-Win32: "x:/MingW/mingw32/bin/"
 TOOLS-Win64: "x:/MingW/mingw64/bin/"
+
+;@@ If you add or remove some of these defines bellow, you should `make clean`
+;@@ to make sure that all affected files will be recompiled!
+Defines: [
+	USE_BMP_CODEC
+	USE_PNG_CODEC
+	USE_GIF_CODEC
+	USE_JPG_CODEC
+]
