@@ -188,6 +188,9 @@ Access: [
 
 	call-fail:          [{external process failed:} :arg1]
 
+	permission-denied: 	[{permission denied}]
+	process-not-found: 	[{process not found:} :arg1]
+
 ]
 
 Command: [

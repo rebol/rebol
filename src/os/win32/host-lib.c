@@ -130,6 +130,151 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
+*/	REBINT OS_Get_PID()
+/*
+**		Return the current process ID
+**
+***********************************************************************/
+{
+	return GetCurrentProcessId();
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_UID()
+/*
+**		Return the real user ID
+**
+***********************************************************************/
+{
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_UID(REBINT uid)
+/*
+**		Set the user ID, see setuid manual for its semantics
+**
+***********************************************************************/
+{
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_GID()
+/*
+**		Return the real group ID
+**
+***********************************************************************/
+{
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_GID(REBINT gid)
+/*
+**		Set the group ID, see setgid manual for its semantics
+**
+***********************************************************************/
+{
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_EUID()
+/*
+**		Return the effective user ID
+**
+***********************************************************************/
+{
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_EUID(REBINT uid)
+/*
+**		Set the effective user ID
+**
+***********************************************************************/
+{
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_EGID()
+/*
+**		Return the effective group ID
+**
+***********************************************************************/
+{
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_EGID(REBINT gid)
+/*
+**		Set the effective group ID
+**
+***********************************************************************/
+{
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Send_Signal(REBINT pid, REBINT signal)
+/*
+**		Send signal to a process
+**
+***********************************************************************/
+{
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Kill(REBINT pid)
+/*
+**		Try to kill the process
+**
+***********************************************************************/
+{
+	REBINT err = 0;
+	HANDLE ph = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+	if (ph == NULL) {
+		err = GetLastError();
+		switch (err) {
+			case ERROR_ACCESS_DENIED:
+				return OS_EPERM;
+			case ERROR_INVALID_PARAMETER:
+				return OS_ESRCH;
+			default:
+				return OS_ESRCH;
+		}
+	}
+	if (TerminateProcess(ph, 0)) {
+		CloseHandle(ph);
+		return 0;
+	}
+	err = GetLastError();
+	CloseHandle(ph);
+	switch (err) {
+		case ERROR_INVALID_HANDLE:
+			return OS_EINVAL;
+		default:
+			return -err;
+	}
+}
+
+/***********************************************************************
+**
 */	REBINT OS_Config(int id, REBYTE *result)
 /*
 **		Return a specific runtime configuration parameter.
