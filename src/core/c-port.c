@@ -101,11 +101,13 @@
 		REBREQ *req = (REBREQ*)STR_HEAD(data);
 		req->clen = size;
 		CLEAR(STR_HEAD(data), size);
-		//data->tail = size; // makes it easier for ACCEPT to clone the port
+		data->tail = size; // makes it easier for ACCEPT to clone the port
 		SET_FLAG(req->flags, RRF_ALLOC); // not on stack
 		req->port = port;
 		req->device = device;
 		Set_Binary(state, data);
+		PROTECT_SERIES(data); // protect state from modification...
+		LOCK_SERIES(data);    // ... permanently
 	}
 
 	return (void *)VAL_BIN(state);
