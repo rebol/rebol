@@ -1047,3 +1047,127 @@ chk_neg:
 
 	return R_RET;
 }
+
+/**********************************************************************/
+//
+//	access-os: native[
+//		{Access to various operating system functions (getuid, setuid, getpid, kill, etc.)}
+//		field [word!] "Valid words: uid, euid, gid, egid, pid"
+//		/set          "To set or kill pid (sig 15)"
+//		value [integer! block!] "Argument, such as uid, gid, or pid (in which case, it could be a block with the signal no)"
+//	]
+//
+REBNATIVE(access_os)
+{
+	REBVAL *field = D_ARG(1);
+	REBOOL set = D_REF(2);
+	REBVAL *val = D_ARG(3);
+	REBINT ret = 0;
+	REBVAL *pid = 0;
+
+	switch (VAL_WORD_CANON(field)) {
+		case SYM_UID:
+			if (set) {
+				if (IS_INTEGER(val)) {
+					ret = OS_SET_UID(VAL_INT32(val));
+				} else {
+					Trap_Arg(val);
+				}
+			} else {
+				ret = OS_GET_UID();
+			}
+			break;
+		case SYM_GID:
+			if (set) {
+				if (IS_INTEGER(val)) {
+					ret = OS_SET_GID(VAL_INT32(val));
+				} else {
+					Trap_Arg(val);
+				}
+			} else {
+				ret = OS_GET_GID();
+			}
+			break;
+		case SYM_EUID:
+			if (set) {
+				if (IS_INTEGER(val)) {
+					ret = OS_SET_EUID(VAL_INT32(val));
+				} else {
+					Trap_Arg(val);
+				}
+			} else {
+				ret = OS_GET_EUID();
+			}
+			break;
+		case SYM_EGID:
+			if (set) {
+				if (IS_INTEGER(val)) {
+					ret = OS_SET_EGID(VAL_INT32(val));
+				} else {
+					Trap_Arg(val);
+				}
+			} else {
+				ret = OS_GET_EGID();
+			}
+			break;
+		case SYM_PID:
+			if (set) {
+				pid = val;
+				REBVAL *arg = val;
+				if (IS_INTEGER(val)) {
+					ret = OS_KILL(VAL_INT32(pid));
+				} else if (IS_BLOCK(val)) {
+					REBVAL *sig = NULL;
+
+					if (VAL_LEN(val) != 2) {
+						Trap_Arg(val);
+					}
+					pid = VAL_BLK_SKIP(val, 0);
+					sig = VAL_BLK_SKIP(val, 1);
+					if (!IS_INTEGER(pid)) {
+						Trap_Arg(pid);
+					}
+					if (!IS_INTEGER(sig)) {
+						Trap_Arg(sig);
+					}
+					ret = OS_SEND_SIGNAL(VAL_INT32(pid), VAL_INT32(sig));
+					arg = sig;
+				} else {
+					Trap_Arg(val);
+				}
+			} else {
+				ret = OS_GET_PID();
+			}
+			break;
+		default:
+			Trap_Arg(field);
+	}
+
+	if(ret > 0) {
+		SET_INTEGER(D_RET, ret);
+		return R_RET;
+	}
+
+	if (ret == 0) {
+		SET_TRUE(D_RET);
+		return R_RET;
+	}
+
+	switch (ret) {
+		case OS_ENA:
+			Trap1(RE_NOT_HERE, field);
+			break;
+		case OS_EPERM:
+			Trap0(RE_PERMISSION_DENIED);
+			break;
+		case OS_EINVAL:
+			Trap_Arg(val);
+			break;
+		case OS_ESRCH:
+			Trap1(RE_PROCESS_NOT_FOUND, pid);
+			break;
+		default:
+			Trap_Arg(val);
+			break;
+	}
+}

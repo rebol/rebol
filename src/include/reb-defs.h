@@ -36,6 +36,12 @@ typedef void *REBSER;
 typedef void *REBOBJ;
 #endif
 
+/* These used for access-os native function */
+#define OS_ENA    -1
+#define OS_EINVAL -2
+#define OS_EPERM  -3
+#define OS_ESRCH  -4
+
 #pragma pack(4)
 
 // X/Y coordinate pair as floats:

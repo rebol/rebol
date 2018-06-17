@@ -139,6 +139,185 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 **
 ***********************************************************************/
 
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_PID()
+/*
+**		Return the current process ID
+**
+***********************************************************************/
+{
+	return getpid();
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_UID()
+/*
+**		Return the real user ID
+**
+***********************************************************************/
+{
+	return getuid();
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_UID(REBINT uid)
+/*
+**		Set the user ID, see setuid manual for its semantics
+**
+***********************************************************************/
+{
+	if (setuid(uid) < 0) {
+		switch (errno) {
+			case EINVAL:
+				return OS_EINVAL;
+			case EPERM:
+				return OS_EPERM;
+			default:
+				return -errno;
+		}
+	} else {
+		return 0;
+	}
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_GID()
+/*
+**		Return the real group ID
+**
+***********************************************************************/
+{
+	return getgid();
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_GID(REBINT gid)
+/*
+**		Set the group ID, see setgid manual for its semantics
+**
+***********************************************************************/
+{
+	if (setgid(gid) < 0) {
+		switch (errno) {
+			case EINVAL:
+				return OS_EINVAL;
+			case EPERM:
+				return OS_EPERM;
+			default:
+				return -errno;
+		}
+	} else {
+		return 0;
+	}
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_EUID()
+/*
+**		Return the effective user ID
+**
+***********************************************************************/
+{
+	return geteuid();
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_EUID(REBINT uid)
+/*
+**		Set the effective user ID
+**
+***********************************************************************/
+{
+	if (seteuid(uid) < 0) {
+		switch (errno) {
+			case EINVAL:
+				return OS_EINVAL;
+			case EPERM:
+				return OS_EPERM;
+			default:
+				return -errno;
+		}
+	} else {
+		return 0;
+	}
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_EGID()
+/*
+**		Return the effective group ID
+**
+***********************************************************************/
+{
+	return getegid();
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_EGID(REBINT gid)
+/*
+**		Set the effective group ID
+**
+***********************************************************************/
+{
+	if (setegid(gid) < 0) {
+		switch (errno) {
+			case EINVAL:
+				return OS_EINVAL;
+			case EPERM:
+				return OS_EPERM;
+			default:
+				return -errno;
+		}
+	} else {
+		return 0;
+	}
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Send_Signal(REBINT pid, REBINT signal)
+/*
+**		Send signal to a process
+**
+***********************************************************************/
+{
+	if (kill(pid, signal) < 0) {
+		switch (errno) {
+			case EINVAL:
+				return OS_EINVAL;
+			case EPERM:
+				return OS_EPERM;
+			case ESRCH:
+				return OS_ESRCH;
+			default:
+				return -errno;
+		}
+	} else {
+		return 0;
+	}
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Kill(REBINT pid)
+/*
+**		Try to kill the process
+**
+***********************************************************************/
+{
+	return OS_Send_Signal(pid, SIGTERM);
+}
+
 /***********************************************************************
 **
 */	REBINT OS_Config(int id, REBYTE *result)
