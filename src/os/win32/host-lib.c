@@ -235,6 +235,9 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
+	if (signal == 9 || signal == 15) { //SIGKILL || SIGTERM
+		return OS_Kill(pid);
+	}
 	return OS_ENA;
 }
 
