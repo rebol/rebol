@@ -1062,152 +1062,57 @@ REBNATIVE(access_os)
 	REBVAL *field = D_ARG(1);
 	REBOOL set = D_REF(2);
 	REBVAL *val = D_ARG(3);
+	REBINT ret = 0;
+	REBVAL *pid = 0;
 
 	switch (VAL_WORD_CANON(field)) {
 		case SYM_UID:
 			if (set) {
 				if (IS_INTEGER(val)) {
-					REBINT ret = OS_SET_UID(VAL_INT32(val));
-					if (ret < 0) {
-						switch (ret) {
-							case OS_ENA:
-								return R_NONE;
-							case OS_EPERM:
-								Trap0(RE_PERMISSION_DENIED);
-								break;
-							case OS_EINVAL:
-								Trap_Arg(val);
-								break;
-							default:
-								Trap_Arg(val);
-								break;
-						}
-					} else {
-						SET_INTEGER(D_RET, ret);
-						return R_RET;
-					}
+					ret = OS_SET_UID(VAL_INT32(val));
 				} else {
 					Trap_Arg(val);
 				}
 			} else {
-				REBINT ret = OS_GET_UID();
-				if (ret < 0) {
-					return R_NONE;
-				} else {
-					SET_INTEGER(D_RET, ret);
-					return R_RET;
-				}
+				ret = OS_GET_UID();
 			}
 			break;
 		case SYM_GID:
 			if (set) {
 				if (IS_INTEGER(val)) {
-					REBINT ret = OS_SET_GID(VAL_INT32(val));
-					if (ret < 0) {
-						switch (ret) {
-							case OS_ENA:
-								return R_NONE;
-							case OS_EPERM:
-								Trap0(RE_PERMISSION_DENIED);
-								break;
-							case OS_EINVAL:
-								Trap_Arg(val);
-								break;
-							default:
-								Trap_Arg(val);
-								break;
-						}
-					} else {
-						SET_INTEGER(D_RET, ret);
-						return R_RET;
-					}
+					ret = OS_SET_GID(VAL_INT32(val));
 				} else {
 					Trap_Arg(val);
 				}
 			} else {
-				REBINT ret = OS_GET_GID();
-				if (ret < 0) {
-					return R_NONE;
-				} else {
-					SET_INTEGER(D_RET, ret);
-					return R_RET;
-				}
+				ret = OS_GET_GID();
 			}
 			break;
 		case SYM_EUID:
 			if (set) {
 				if (IS_INTEGER(val)) {
-					REBINT ret = OS_SET_EUID(VAL_INT32(val));
-					if (ret < 0) {
-						switch (ret) {
-							case OS_ENA:
-								return R_NONE;
-							case OS_EPERM:
-								Trap0(RE_PERMISSION_DENIED);
-								break;
-							case OS_EINVAL:
-								Trap_Arg(val);
-								break;
-							default:
-								Trap_Arg(val);
-								break;
-						}
-					} else {
-						SET_INTEGER(D_RET, ret);
-						return R_RET;
-					}
+					ret = OS_SET_EUID(VAL_INT32(val));
 				} else {
 					Trap_Arg(val);
 				}
 			} else {
-				REBINT ret = OS_GET_EUID();
-				if (ret < 0) {
-					return R_NONE;
-				} else {
-					SET_INTEGER(D_RET, ret);
-					return R_RET;
-				}
+				ret = OS_GET_EUID();
 			}
 			break;
 		case SYM_EGID:
 			if (set) {
 				if (IS_INTEGER(val)) {
-					REBINT ret = OS_SET_EGID(VAL_INT32(val));
-					if (ret < 0) {
-						switch (ret) {
-							case OS_ENA:
-								return R_NONE;
-							case OS_EPERM:
-								Trap0(RE_PERMISSION_DENIED);
-								break;
-							case OS_EINVAL:
-								Trap_Arg(val);
-								break;
-							default:
-								Trap_Arg(val);
-								break;
-						}
-					} else {
-						SET_INTEGER(D_RET, ret);
-						return R_RET;
-					}
+					ret = OS_SET_EGID(VAL_INT32(val));
 				} else {
 					Trap_Arg(val);
 				}
 			} else {
-				REBINT ret = OS_GET_EGID();
-				if (ret < 0) {
-					return R_NONE;
-				} else {
-					SET_INTEGER(D_RET, ret);
-					return R_RET;
-				}
+				ret = OS_GET_EGID();
 			}
 			break;
 		case SYM_PID:
 			if (set) {
-				REBINT ret = 0;
-				REBVAL *pid = val;
+				pid = val;
 				REBVAL *arg = val;
 				if (IS_INTEGER(val)) {
 					ret = OS_KILL(VAL_INT32(pid));
@@ -1230,39 +1135,39 @@ REBNATIVE(access_os)
 				} else {
 					Trap_Arg(val);
 				}
-
-				if (ret < 0) {
-					switch (ret) {
-						case OS_ENA:
-							return R_NONE;
-						case OS_EPERM:
-							Trap0(RE_PERMISSION_DENIED);
-							break;
-						case OS_EINVAL:
-							Trap_Arg(arg);
-							break;
-						case OS_ESRCH:
-							Trap1(RE_PROCESS_NOT_FOUND, pid);
-							break;
-						default:
-							Trap_Arg(val);
-							break;
-					}
-				} else {
-					SET_INTEGER(D_RET, ret);
-					return R_RET;
-				}
 			} else {
-				REBINT ret = OS_GET_PID();
-				if (ret < 0) {
-					return R_NONE;
-				} else {
-					SET_INTEGER(D_RET, ret);
-					return R_RET;
-				}
+				ret = OS_GET_PID();
 			}
 			break;
 		default:
 			Trap_Arg(field);
+	}
+
+	if(ret > 0) {
+		SET_INTEGER(D_RET, ret);
+		return R_RET;
+	}
+
+	if (ret == 0) {
+		SET_TRUE(D_RET);
+		return R_RET;
+	}
+
+	switch (ret) {
+		case OS_ENA:
+			Trap1(RE_NOT_HERE, field);
+			break;
+		case OS_EPERM:
+			Trap0(RE_PERMISSION_DENIED);
+			break;
+		case OS_EINVAL:
+			Trap_Arg(val);
+			break;
+		case OS_ESRCH:
+			Trap1(RE_PROCESS_NOT_FOUND, pid);
+			break;
+		default:
+			Trap_Arg(val);
+			break;
 	}
 }
