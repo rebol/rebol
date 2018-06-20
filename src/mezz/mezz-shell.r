@@ -15,6 +15,7 @@ ls:		:list-dir
 pwd:	:what-dir
 rm:		:delete
 mkdir:	:make-dir
+~: system/options/home
 
 cd: func [
 	"Change directory (shell shortcut function)."
