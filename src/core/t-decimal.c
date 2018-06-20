@@ -298,8 +298,6 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 					goto setDec;
 				}
 				if (d1 == 0) goto setDec;
-				//if (d1 < 0 && d2 < 1 && d2 != -1)
-				//  Trap0(RE_POSITIVE);
 				d1 = pow(d1, d2);
 				goto setDec;
 
