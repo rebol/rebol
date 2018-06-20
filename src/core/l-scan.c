@@ -1285,6 +1285,7 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 			break;
 
 		case TOKEN_ISSUE:
+#ifdef USE_EMPTY_HASH_AS_NONE
 			if (len == 1) {
 				if (bp[1] == '(') {token = TOKEN_CONSTRUCT; goto syntax_error;}
 				SET_NONE(value);  // A single # means NONE
@@ -1293,6 +1294,10 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 				VAL_SET(value, REB_ISSUE); // NO_FRAME
 				if (!(VAL_WORD_SYM(value) = Scan_Issue(bp+1, len-1))) goto syntax_error;
 			}
+#else
+			VAL_SET(value, REB_ISSUE); // NO_FRAME
+			if (!(VAL_WORD_SYM(value) = Scan_Issue(bp+1, len-1))) goto syntax_error;
+#endif
 			break;
 
 		case TOKEN_BLOCK:
