@@ -1,4 +1,4 @@
-IDI_APPICON ICON "r3-icon.ico"
+IDI_APPICON ICON "r3.ico"
 
 1 VERSIONINFO
 FILEVERSION     3,0,0,0
@@ -27,3 +27,6 @@ STRINGTABLE
 BEGIN
     101  "Rebol 3 (Oldes branch)"
 END
+
+2 MANIFEST "r3.manifest"
+

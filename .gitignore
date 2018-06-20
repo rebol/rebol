@@ -2,7 +2,6 @@
 ## REBOL R3
 #################
 
-make/r3*
 make/objs/
 make/host.exe
 make/libr3.so
