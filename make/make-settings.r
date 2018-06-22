@@ -12,4 +12,5 @@ Defines: [
 	USE_PNG_CODEC
 	USE_GIF_CODEC
 	USE_JPG_CODEC
+	;USE_NO_INFINITY ;-- use when you don't want to support IEEE infinity
 ]

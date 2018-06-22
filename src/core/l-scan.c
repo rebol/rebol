@@ -957,6 +957,25 @@
 				if (cp[0] == '2' && cp[1] == '#' && cp[2] == '{')
 					{cp++; goto pound;} // very rare
 			}
+
+#ifndef USE_NO_INFINITY
+			if (Skip_To_Char(cp, scan_state->end, 'x')) return TOKEN_PAIR;
+			if (
+				cp[0] == '1' && cp[1] == '.'  && cp[2] == '#'
+				) {
+				if ((  (cp[3] == 'I' || cp[3] == 'i')
+					&& (cp[4] == 'N' || cp[4] == 'n')
+					&& (cp[5] == 'F' || cp[5] == 'f')
+					) || (
+					   (cp[3] == 'N' || cp[3] == 'n')
+					&& (cp[4] == 'a' || cp[4] == 'A')
+					&& (cp[5] == 'N' || cp[5] == 'n')
+				)) {
+					return TOKEN_DECIMAL;
+				}
+			}
+#endif // !USE_NO_INFINITY
+
 			return -TOKEN_INTEGER;
 		}
 		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) return TOKEN_TIME;  /* 12:34 */

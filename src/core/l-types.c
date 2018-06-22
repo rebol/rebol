@@ -260,6 +260,43 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 		else cp++;
 	if (*cp == ',' || *cp == '.') cp++;
 	*ep++ = '.';
+
+#ifndef USE_NO_INFINITY
+	if (cp[0] == '#') {
+		if (
+			   (cp[1] == 'I' || cp[1] == 'i')
+			&& (cp[2] == 'N' || cp[2] == 'n')
+			&& (cp[3] == 'F' || cp[3] == 'f')
+		) {
+			cp += 4;
+			if ((REBCNT)(cp - bp) != len) return 0;
+			VAL_SET(value, REB_DECIMAL);
+			VAL_DECIMAL(value) = (bp[0] == '-') ? -INFINITY : INFINITY;
+			return cp;
+		}
+		if (
+			   (cp[1] == 'N' || cp[1] == 'n')
+			&& (cp[2] == 'a' || cp[2] == 'A')
+			&& (cp[3] == 'N' || cp[3] == 'n')
+		) {
+			cp += 4;
+			if ((REBCNT)(cp - bp) != len) return 0;
+			VAL_SET(value, REB_DECIMAL);
+
+			// NOTE: NAN sign may differ!
+			//       VS (17) is producing negative NaN #{FFF8000000000000}, while GCC positive #{7FF8000000000000}!
+			// Is this an issue?
+#if _MSC_VER
+			VAL_DECIMAL(value) = (bp[0] == '-') ? NAN : -NAN;
+#else
+			VAL_DECIMAL(value) = (bp[0] == '-') ? -NAN : NAN;
+#endif
+			return cp;
+		}
+		return 0;
+	}
+#endif // !USE_NO_INFINITY
+
 	while (IS_LEX_NUMBER(*cp) || *cp == '\'')
 		if (*cp != '\'') *ep++ = *cp++, dig=1;
 		else cp++;
@@ -745,13 +782,67 @@ end_date:
 	//ep = Grab_Int(ep, &n);
 	ep = Scan_Dec_Buf(cp, MAX_NUM_LEN, &buf[0]);
 	if (!ep) return 0;
+
+#ifndef USE_NO_INFINITY
+	if (ep[0] == '#') {
+		if (!((buf[0] == '-' && buf[1] == '1' && buf[2] == '.') || (buf[0] == '1' && buf[1] == '.'))) return 0; //don't allow numbers like 20.#INF or -2.#INF
+		if (
+			(ep[1] == 'I' || ep[1] == 'i') &&
+			(ep[2] == 'N' || ep[2] == 'n') &&
+			(ep[3] == 'F' || ep[3] == 'f')
+		) {
+			VAL_PAIR_X(value) = buf[0] == '-' ? -INFINITY : INFINITY;
+			ep += 4;
+		}
+		else if (
+			 (ep[1] == 'N' || ep[1] == 'n')
+		  && (ep[2] == 'a' || ep[2] == 'A')
+		  && (ep[3] == 'N' || ep[3] == 'n')
+		) {
+			ep += 4;
+			VAL_PAIR_X(value) = NAN;
+		}
+		else return 0;
+	} else {
+		VAL_PAIR_X(value) = (float)atof((char*)(&buf[0])); //n;
+	}
+#else
 	VAL_PAIR_X(value) = (float)atof((char*)(&buf[0])); //n;
+#endif // !USE_NO_INFINITY
+	
 	if (*ep != 'x' && *ep != 'X') return 0;
 	ep++;
 
 	xp = Scan_Dec_Buf(ep, MAX_NUM_LEN, &buf[0]);
 	if (!xp) return 0;
+
+#ifndef USE_NO_INFINITY
+	if (xp[0] == '#') {
+		if(!((buf[0]=='-' && buf[1]=='1' && buf[2]=='.') || (buf[0]=='1' && buf[1]=='.'))) return 0; //don't allow numbers like 20.#INF or -2.#INF
+		if (
+			(xp[1] == 'I' || xp[1] == 'i') &&
+			(xp[2] == 'N' || xp[2] == 'n') &&
+			(xp[3] == 'F' || xp[3] == 'f')
+		) {
+			VAL_PAIR_Y(value) = buf[0] == '-' ? -INFINITY : INFINITY;
+			xp += 4;
+		}
+		else if (
+			   (xp[1] == 'N' || xp[1] == 'n')
+			&& (xp[2] == 'a' || xp[2] == 'A')
+			&& (xp[3] == 'N' || xp[3] == 'n')
+		) {
+			xp += 4;
+			VAL_PAIR_Y(value) = NAN;
+		}
+		else return 0;
+	}
+	else {
+		VAL_PAIR_Y(value) = (float)atof((char*)(&buf[0])); //n;
+	}
+#else
 	VAL_PAIR_Y(value) = (float)atof((char*)(&buf[0])); //n;
+#endif // !USE_NO_INFINITY
 
 	if (len > (REBCNT)(xp - cp)) return 0;
 	VAL_SET(value, REB_PAIR);
