@@ -95,6 +95,10 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 	union {REBDEC d; REBI64 i;} ua, ub;
 	REBI64 int_diff;
 
+#ifndef USE_NO_INFINITY
+	if(isnan(a) || isnan(b)) return FALSE;
+#endif // !USE_NO_INFINITY
+
 	ua.d = a;
 	ub.d = b;
 
@@ -287,7 +291,9 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 
 			case A_DIVIDE:
 			case A_REMAINDER:
+#ifdef USE_NO_INFINITY
 				if (d2 == 0.0) Trap0(RE_ZERO_DIVIDE);
+#endif
 				if (action == A_DIVIDE) d1 /= d2;
 				else d1 = fmod(d1, d2);
 				goto setDec;
@@ -460,7 +466,9 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 	Trap_Action(VAL_TYPE(val), action);
 
 setDec:
+#ifdef USE_NO_INFINITY
 	if (!FINITE(d1)) Trap0(RE_OVERFLOW);
+#endif
 #ifdef not_required
 	if (type == REB_PERCENT) {
 		// Keep percent in smaller range (not to use e notation).

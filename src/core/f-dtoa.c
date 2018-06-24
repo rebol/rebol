@@ -3761,12 +3761,13 @@ dtoa
 #endif
 		{
 		/* Infinity or NaN */
-		*decpt = 9999;
+		*decpt = 1;
 #ifdef IEEE_Arith
 		if (!word1(&u) && !(word0(&u) & 0xfffff))
-			return nrv_alloc("Infinity", rve, 8);
+			return nrv_alloc("1#INF", rve, 5);
 #endif
-		return nrv_alloc("NaN", rve, 3);
+		*sign = 0; //pretend that all NaNs are positive
+		return nrv_alloc("1#NaN", rve, 5);
 		}
 #endif
 #ifdef IBM

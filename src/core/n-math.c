@@ -136,7 +136,14 @@ enum {SINE, COSINE, TANGENT};
 ***********************************************************************/
 {
 	REBDEC dval = Trig_Value(ds, TANGENT);
-	if (Eq_Decimal(fabs(dval), pi1 / 2.0)) Trap0(RE_OVERFLOW);
+	if (Eq_Decimal(fabs(dval), pi1 / 2.0)) {
+#ifdef USE_NO_INFINITY
+		Trap0(RE_OVERFLOW);
+#else
+		SET_DECIMAL(D_RET, (dval < 0) ? -INFINITY : INFINITY);
+		return R_RET;
+#endif
+	}
 	SET_DECIMAL(D_RET, tan(dval));
 	return R_RET;
 }
