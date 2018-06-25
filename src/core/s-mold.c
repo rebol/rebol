@@ -1467,5 +1467,5 @@ append:
 	//for (c = 0; c <= MAX_URL_CHAR; c++) if (IS_LEX_DELIMIT(c)) cp[c] = ESC_URL;
 	for (c = 0; c <= ' '; c++) cp[c] = ESC_URL | ESC_FILE;
 	dc = ";%\"()[]{}<>";
-	for (c = LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
+	for (c = (REBYTE)LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
 }
