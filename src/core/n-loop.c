@@ -276,6 +276,8 @@
 	REBCNT i;
 	REBCNT j;
 
+	ASSERT2(mode >= 0 && mode < 3, RP_MISC);
+
 	value = D_ARG(2); // series
 	if (IS_NONE(value)) return R_NONE;
 
