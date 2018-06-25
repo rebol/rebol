@@ -79,6 +79,9 @@ typedef struct rebol_met {
 	REBPAR work_size;
 } X_REBOL_OS_METRICS;
 
+typedef int	cmp_t(const void *, const void *);
+void reb_qsort(void *a, size_t n, size_t es, cmp_t *cmp);
+
 #pragma pack()
 
 #endif
