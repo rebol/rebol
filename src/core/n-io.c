@@ -1170,4 +1170,7 @@ REBNATIVE(access_os)
 			Trap_Arg(val);
 			break;
 	}
+	// should not happen, but VS compiler wants to return value in all cases
+	SET_FALSE(D_RET);
+	return R_RET;
 }
