@@ -184,6 +184,97 @@ enum {SINE, COSINE, TANGENT};
 }
 
 
+// Follows faster trigonometric functions (without conversions and bounds checks)
+#ifndef USE_NO_INFINITY //use these functions only with INFINITY support (cos/sin may return 1.#NaN value)!
+
+/***********************************************************************
+**
+*/	REBNATIVE(cos)
+/*
+//	cos: native [
+//		{Returns the trigonometric cosine.}
+//		value [decimal!] "In radians"
+//	]
+***********************************************************************/
+{
+	SET_DECIMAL(D_RET, cos(VAL_DECIMAL(D_ARG(1))));
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(sin)
+/*
+//	sin: native [
+//		{Returns the trigonometric sine.}
+//		value [decimal!] "In radians"
+//	]
+***********************************************************************/
+{
+	SET_DECIMAL(D_RET, sin(VAL_DECIMAL(D_ARG(1))));
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(tan)
+/*
+//	tan: native [
+//		{Returns the trigonometric tangent.}
+//		value [decimal!] "In radians"
+//	]
+***********************************************************************/
+{
+	SET_DECIMAL(D_RET, tan(VAL_DECIMAL(D_ARG(1))));
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(arctan)
+/*
+//	arctan: native [
+//		{Returns the trigonometric arctangent.}
+//		value [decimal!] "In radians"
+//	]
+***********************************************************************/
+{
+	SET_DECIMAL(D_RET, atan(VAL_DECIMAL(D_ARG(1))));
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(asin)
+/*
+//	asin: native [
+//		{Returns the trigonometric arcsine.}
+//		value [decimal!] "In radians"
+//	]
+***********************************************************************/
+{
+	SET_DECIMAL(D_RET, asin(VAL_DECIMAL(D_ARG(1))));
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(acos)
+/*
+//	acos: native [
+//		{Returns the trigonometric arccosine.}
+//		value [decimal!] "In radians"
+//	]
+***********************************************************************/
+{
+	SET_DECIMAL(D_RET, acos(VAL_DECIMAL(D_ARG(1))));
+	return R_RET;
+}
+
+#endif //!USE_NO_INFINITY
+
+
+
 /***********************************************************************
 **
 */	REBNATIVE(exp)
