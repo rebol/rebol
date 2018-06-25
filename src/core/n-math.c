@@ -91,7 +91,9 @@ enum {SINE, COSINE, TANGENT};
 	REBDEC	dval;
 
 	dval = AS_DECIMAL(D_ARG(1));
+#ifdef USE_NO_INFINITY
 	if (kind != TANGENT && (dval < -1 || dval > 1)) Trap0(RE_OVERFLOW);
+#endif
 
 	if (kind == SINE) dval = asin(dval);
 	else if (kind == COSINE) dval = acos(dval);
