@@ -114,7 +114,7 @@ emit-native-spec: func[
 		3 <> length? spec
 		error? try [name: load name]
 		not word? name
-		(form name) <> (to-c-name first spec)
+		(form name) <> (to-c-name to word! first spec)
 	][
 		print ["^[[1;32;49m** In file: ^[[0m" the-file]
 		print "^[[1;32;49m** Invalid NATIVE spec definition found: ^[[0m"
