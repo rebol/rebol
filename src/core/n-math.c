@@ -231,9 +231,9 @@ enum {SINE, COSINE, TANGENT};
 
 /***********************************************************************
 **
-*/	REBNATIVE(arctan)
+*/	REBNATIVE(atan)
 /*
-//	arctan: native [
+//	atan: native [
 //		{Returns the trigonometric arctangent.}
 //		value [decimal!] "In radians"
 //	]
