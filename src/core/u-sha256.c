@@ -165,14 +165,14 @@ void SHA256_Final(REBYTE hash[], SHA256_CTX *ctx)
 
     // Append to the padding the total message's length in bits and transform.
     ctx->bitlen += ctx->datalen * 8;
-    ctx->data[63] = ctx->bitlen;
-    ctx->data[62] = ctx->bitlen >> 8;
-    ctx->data[61] = ctx->bitlen >> 16;
-    ctx->data[60] = ctx->bitlen >> 24;
-    ctx->data[59] = ctx->bitlen >> 32;
-    ctx->data[58] = ctx->bitlen >> 40;
-    ctx->data[57] = ctx->bitlen >> 48;
-    ctx->data[56] = ctx->bitlen >> 56;
+    ctx->data[63] = (REBYTE)ctx->bitlen;
+    ctx->data[62] = (REBYTE)(ctx->bitlen >> 8);
+    ctx->data[61] = (REBYTE)(ctx->bitlen >> 16);
+    ctx->data[60] = (REBYTE)(ctx->bitlen >> 24);
+    ctx->data[59] = (REBYTE)(ctx->bitlen >> 32);
+    ctx->data[58] = (REBYTE)(ctx->bitlen >> 40);
+    ctx->data[57] = (REBYTE)(ctx->bitlen >> 48);
+    ctx->data[56] = (REBYTE)(ctx->bitlen >> 56);
     SHA256_Transform(ctx, ctx->data);
 
     // Since this implementation uses little endian byte ordering and SHA uses big endian,
