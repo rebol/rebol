@@ -396,7 +396,7 @@ cd %~dp0
 pause}
 
 	rc-file: {
-IDI_APPICON ICON "../../r3-icon.ico"
+IDI_APPICON ICON "../../r3.ico"
 
 1 VERSIONINFO
 FILEVERSION     3,0,0,0
