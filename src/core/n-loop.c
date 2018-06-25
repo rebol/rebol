@@ -29,6 +29,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include "sys-int-funcs.h" //REB_I64_ADD_OF
 
 
 /***********************************************************************
@@ -125,12 +126,16 @@
 
 	VAL_SET(var, REB_INTEGER);
 	
-	for (; (incr > 0) ? start <= end : start >= end; start += incr) {
+	while ((incr > 0) ? start <= end : start >= end) {
 		VAL_INT64(var) = start;
 		result = Do_Blk(body, 0);
 		if (THROWN(result) && Check_Error(result) >= 0) break;
 		if (!IS_INTEGER(var)) Trap_Type(var);
 		start = VAL_INT64(var);
+		
+		if (REB_I64_ADD_OF(start, incr, &start)) {
+			Trap0(RE_OVERFLOW);
+		}
 	}
 }
 
