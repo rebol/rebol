@@ -183,6 +183,23 @@ enum {SINE, COSINE, TANGENT};
 	return R_RET;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(arctangent2)
+/*
+//	arctangent2: native [
+//		{Returns the angle of the point, when measured counterclockwise from a circle's X axis (where 0x0 represents the center of the circle). The return value is in interval -180 to 180 degrees.}
+//		point [pair!] "X/Y coordinate in space"
+//		/radians "Result is in radians instead of degrees"
+//	]
+***********************************************************************/
+{
+	REBDEC dval = atan2(VAL_PAIR_Y(D_ARG(1)), VAL_PAIR_X(D_ARG(1)));
+	if(!D_REF(2)) dval *= 180.0 / pi1; //to degrees
+	SET_DECIMAL(D_RET, dval);
+	return R_RET;
+}
+
 
 // Follows faster trigonometric functions (without conversions and bounds checks)
 #ifndef USE_NO_INFINITY //use these functions only with INFINITY support (cos/sin may return 1.#NaN value)!
@@ -268,6 +285,21 @@ enum {SINE, COSINE, TANGENT};
 ***********************************************************************/
 {
 	SET_DECIMAL(D_RET, acos(VAL_DECIMAL(D_ARG(1))));
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(atan2)
+/*
+//	atan2: native [
+//		{Returns the angle of the point y/x in the interval [-pi,+pi] radians.}
+//		y [decimal!] "The proportion of the Y-coordinate"
+//		x [decimal!] "The proportion of the X-coordinate"
+//	]
+***********************************************************************/
+{
+	SET_DECIMAL(D_RET, atan2(VAL_DECIMAL(D_ARG(1)), VAL_DECIMAL(D_ARG(2))));
 	return R_RET;
 }
 
