@@ -35,19 +35,20 @@
 const REBYTE rc4_name[] = "RC4-context"; //Used as a context handle name
 const REBYTE aes_name[] = "AES-context";
 
-/**********************************************************************/
+/***********************************************************************
+**
+*/	REBNATIVE(rc4)
+/*
+//	rc4: native [
+//		"Encrypt/decrypt data (modifies) using RC4 algorithm."
 //
-//  rc4: native [
-//
-//  "Encrypt/decrypt data (modifies) using RC4 algorithm."
-//
-//      /key "Provided only for the first time to get stream HANDLE!"
-//     	crypt-key [binary!] "Crypt key."
-//      /stream
-//		ctx       [handle!] "Stream cipher context."
-//      data      [binary! none!] "Data to encrypt/decrypt."
-//  ]
-REBNATIVE(rc4)
+//		/key "Provided only for the first time to get stream HANDLE!"
+//			crypt-key [binary!]  "Crypt key."
+//		/stream
+//			ctx [handle!]        "Stream cipher context."
+//			data [binary! none!] "Data to encrypt/decrypt."
+//	]
+***********************************************************************/
 {
     REBOOL  ref_key       = D_REF(1);
     REBVAL *val_crypt_key = D_ARG(2); 
@@ -86,23 +87,21 @@ REBNATIVE(rc4)
     return R_RET;
 }
 
-
-/**********************************************************************/
-//
+/***********************************************************************
+**
+*/	REBNATIVE(aes)
+/*
 //  aes: native [
-//
-//	"Encrypt/decrypt data using AES algorithm. Returns stream cipher context handle or encrypted/decrypted data."
-//
-//		/key                "Provided only for the first time to get stream HANDLE!."
-//		crypt-key [binary!] "Crypt key (16 or 32 bytes)."
-//		iv  [none! binary!] "Optional initialization vector (16 bytes)."
+//		"Encrypt/decrypt data using AES algorithm. Returns stream cipher context handle or encrypted/decrypted data."
+//		/key                "Provided only for the first time to get stream HANDLE!"
+//			crypt-key [binary!] "Crypt key (16 or 32 bytes)."
+//			iv  [none! binary!] "Optional initialization vector (16 bytes)."
 //		/decrypt            "Use the crypt-key for decryption (default is to encrypt)"
 //		/stream
-//		ctx       [handle!] "Stream cipher context."
-//		data      [binary!] "Data to encrypt/decrypt. Or NONE to close the cipher stream."
-
+//			ctx [handle!]   "Stream cipher context."
+//			data [binary!]  "Data to encrypt/decrypt. Or NONE to close the cipher stream."
 //  ]
-REBNATIVE(aes)
+***********************************************************************/
 {
 	REBOOL  ref_key       = D_REF(1);
     REBVAL *val_crypt_key = D_ARG(2);

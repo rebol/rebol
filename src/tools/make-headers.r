@@ -11,6 +11,9 @@ REBOL [
 	}
 	Author: "Carl Sassenrath"
 	Needs: 2.100.100
+	History: [
+		25-6-2018 "Oldes" {Added posibility to use `native` Rebol definition in C header}
+	]
 ]
 
 print "------ Building headers"
@@ -24,7 +27,7 @@ chk-dups: true
 dups: make block! 10000 ; get pick [map! hash!] r3 1000
 dup-found: false
 
-do %form-header.r
+do %common.r
 file-base: load %file-base.r
 
 tmp: context [
@@ -41,7 +44,6 @@ insert base-code {REBOL [
 	commment: "AUTO-GENERATED FILE - Do not modify. (From: make-headers.r)"
 ]
 }
-
 
 emit:    func [d] [append repend output  d newline]
 emit-rl: func [d] [append repend rlib    d newline]
@@ -87,6 +89,51 @@ append-spec: func [spec] [
 	]
 ]
 
+ch_func-chars: charset [#"a" - #"z" #"A" - #"Z" "_!?-" #"0" - #"9"] ;just limited set!
+spec-reb: make string! 1024
+name: s: e: none
+
+emit-native-spec: func[
+	spec-c
+	spec-rebol
+	/local spec name
+][
+	parse spec-c [
+		thru "REBNATIVE(" copy name to ")"
+	]
+
+	;trim leading chars from the rebol code block
+	parse spec-rebol [
+		["**" | " *" | "//"] (
+			replace/all spec-rebol join "^/" (take/part spec-rebol 2) #"^/"
+		) 
+	]
+
+	if any [
+		error? try [spec: load spec-rebol]
+		3 <> length? spec
+		error? try [name: load name]
+		not word? name
+		(form name) <> (to-c-name first spec)
+	][
+		print ["^[[1;32;49m** In file: ^[[0m" the-file]
+		print "^[[1;32;49m** Invalid NATIVE spec definition found: ^[[0m"
+		print spec-rebol
+		prin  "^[[1;32;49m** For C spec:^[[0m^/^-"
+		print spec-c
+		ask "^/Press ENTER to continue."
+		exit
+	]
+
+	if c-file <> the-file [
+		emit-n ["^/;-- " the-file]
+		c-file: the-file
+	]
+	emit-n ["^/" name " {"]
+	emit-n trim/head/tail detab spec-rebol
+	emit-n #"}"
+]
+
 func-header: [
 	;-- Scan for function header box:
 	"^/**" to newline
@@ -95,6 +142,15 @@ func-header: [
 	newline
 	[
 		"/*" ; must be in func header section, not file banner
+		[
+			thru newline s:
+			opt  ["**" | " *" | "//"]
+			some [#" " | #"^-"] some ch_func-chars #":" some [#" " | #"^-"] "native" any [#" " | #"^-"] #"[" thru newline
+			to "^/****" e: (
+				emit-native-spec spec copy/part s e
+			)
+		]
+		|
 		any [
 			thru "**"
 			[#" " | #"^-"]
@@ -106,37 +162,21 @@ func-header: [
 	]
 ]
 
-ch_func-chars: charset [#"a" - #"z" #"A"]
 
-spec-reb: make string! 1024
-name: none
-
+;@@ Remove this rule later... let's use just the new style
 native-header: [
 	;-- Scan for native header box:
 	"^///" to newline (clear spec-reb)
 	any [ "^///" copy line to newline (append append spec-reb line newline)]
 	any [#"^/" | #" " | #"^-"]
 	"REBNATIVE(" copy name to ")" (probe name
-		either any [
-			error? try [spec: load spec-reb]
-			3 <> length? spec
-			error? try [name: load name]
-			not word? name
-		][
-			print "^[[1;32;49m** Invalid NATIVE spec definition found: ^[[0m"
-			print spec-reb
-			ask "Press ENTER to continue."
-		][
-			if c-file <> the-file [
-				emit-n ["^/;-- " the-file]
-				c-file: the-file
-			]
-			emit-n ["^/" name " {"]
-			emit-n trim/head/tail detab spec-reb
-			emit-n #"}"
-		]
+		print ["^[[1;32;49m** In file: ^[[0m" the-file]
+		print "^[[1;32;49m** Found deprecated NATIVE spec definition: ^[[0m"
+		print spec-reb
+		ask "^/Press ENTER to continue."
 	)
 ]
+;@@-------------------------------------------------------
 
 sym-chars: charset [#"A" - #"Z" #"_" #"0" - #"9"]
 sym-check: charset "/S"

@@ -1048,16 +1048,18 @@ chk_neg:
 	return R_RET;
 }
 
-/**********************************************************************/
-//
-//	access-os: native[
-//		{Access to various operating system functions (getuid, setuid, getpid, kill, etc.)}
-//		field [word!] "Valid words: uid, euid, gid, egid, pid"
-//		/set          "To set or kill pid (sig 15)"
-//		value [integer! block!] "Argument, such as uid, gid, or pid (in which case, it could be a block with the signal no)"
-//	]
-//
-REBNATIVE(access_os)
+/***********************************************************************
+**
+*/	REBNATIVE(access_os)
+/*
+**	access-os: native [
+**		{Access to various operating system functions (getuid, setuid, getpid, kill, etc.)}
+**		field [word!] "Valid words: uid, euid, gid, egid, pid"
+**		/set          "To set or kill pid (sig 15)"
+**		value [integer! block!] "Argument, such as uid, gid, or pid (in which case, it could be a block with the signal no)"
+**	]
+**	
+***********************************************************************/
 {
 	REBVAL *field = D_ARG(1);
 	REBOOL set = D_REF(2);

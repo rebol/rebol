@@ -20,7 +20,7 @@ REBOL [
 print "--- Make Host Boot Extension ---"
 
 secure none
-do %form-header.r
+do %common.r
 
 ;-- Conversion to C strings, depending on compiler ---------------------------
 

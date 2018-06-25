@@ -24,7 +24,7 @@ print ["--- Make OS Ext Lib --- Version:" lib-version]
 do %systems.r
 target: config-system/os-dir
 
-do %form-header.r
+do %common.r
 
 change-dir append %../os/ target
 

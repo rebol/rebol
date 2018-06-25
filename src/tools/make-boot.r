@@ -21,7 +21,7 @@ REBOL [
 
 print "--- Make Boot : System Embedded Script ---"
 
-do %form-header.r
+do %common.r
 
 ; Set platform TARGET
 do %systems.r
@@ -119,34 +119,9 @@ build: context [features: [help-strings]]
 ;platform-data: platforms/:platform
 ;build: platform-data/builds/:product
 
-;-- UTILITIES ----------------------------------------------------------
-
-up-word: func [w] [
-	w: uppercase form w
-	foreach [f t] [
-		#"-" #"_"
-	][replace/all w f t]
-	w
-]
-
 ;-- Emit Function
 out: make string! 100000
 emit: func [data] [repend out data]
-
-to-c-name: func [word] [
-	word: form word
-	foreach [f t] [
-		#"-" #"_"
-		#"." #"_"
-		#"?" #"q"
-		#"!" #"x"
-		#"~" ""
-		#"*" "_p"
-		#"+" "_add"
-		#"|" "or_bar"
-	][replace/all word f t]
-	word
-]
 
 emit-enum: func [word] [emit [tab to-c-name word "," newline]]
 
