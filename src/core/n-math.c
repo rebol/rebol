@@ -303,6 +303,20 @@ enum {SINE, COSINE, TANGENT};
 	return R_RET;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(nanq)
+/*
+//	nan?: native [
+//		{Returns TRUE if the number is Not-a-Number.}
+//		value [number!]
+//	]
+***********************************************************************/
+{
+	SET_LOGIC(D_RET, isnan(AS_DECIMAL(D_ARG(1))));
+	return R_RET;
+}
+
 #endif //!USE_NO_INFINITY
 
 
