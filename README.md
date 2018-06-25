@@ -1,5 +1,5 @@
 [![Travis build](https://travis-ci.org/Oldes/Rebol3.svg?branch=master)](https://travis-ci.org/Oldes/Rebol3)
-[![AppVeyor build](https://ci.appveyor.com/api/projects/status/70wh8i8o61d6hipu?svg=true)](https://ci.appveyor.com/project/Oldes/Rebol3)
+[![AppVeyor build](https://ci.appveyor.com/api/projects/status/70wh8i8o61d6hipu?svg=true)](https://ci.appveyor.com/project/Oldes/r3)
 
 # Rebol [R3] Source Code Distribution
 
