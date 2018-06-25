@@ -419,7 +419,10 @@
 		ds = Do_Blk(body, 0);
 
 		if (THROWN(ds)) {
-			if ((err = Check_Error(ds)) >= 0) break;
+			if ((err = Check_Error(ds)) >= 0) {
+				index = rindex;
+				break;
+			}
 			// else CONTINUE:
 			if (mode == 1) SET_FALSE(ds); // keep the value (for mode == 1)
 		} else {
