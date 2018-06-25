@@ -533,10 +533,10 @@ STOID Mold_Tag(REBVAL *value, REB_MOLD *mold)
 
 STOID Mold_Handle(REBVAL *value, REB_MOLD *mold)
 {
-	REBYTE *name = VAL_HANDLE_NAME(value);
+	const REBYTE *name = VAL_HANDLE_NAME(value);
 	if (name != NULL) {
 		Append_Bytes(mold->series, "#[handle! ");
-		Append_Bytes(mold->series, name);
+		Append_Bytes(mold->series, (REBYTE *)name);
 		Append_Byte(mold->series, ']');
 	}
 	else {
