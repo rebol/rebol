@@ -276,7 +276,7 @@ const struct arg_chr arg_chars2[] = {
 					args = MAKE_STR(size);
 					memcpy(args, tmp, arg_buf_size);
 					arg_buf_size = size;
-					free(tmp);
+					FREE_MEM(tmp);
 				}
 				len = arg_buf_size - LEN_STR(args) - 2; // space remaining
 				JOIN_STR(args, arg, len);
