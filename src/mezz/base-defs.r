@@ -118,10 +118,11 @@ any-object?: func [
 	value [any-type!]
 ][find any-object! type? :value]
 
-number?: func [
-	"Return TRUE if value is a number (integer or decimal)."
-	value [any-type!]
-][find number! type? :value]
+;@@ Oldes: replaced with native version - n-math.c (which handles NaN values too)
+;number?: func [
+;	"Return TRUE if value is a number (integer or decimal)."
+;	value [any-type!]
+;][find number! type? :value]
 
 series?: func [
 	"Return TRUE if value is any type of series."

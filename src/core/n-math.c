@@ -303,22 +303,32 @@ enum {SINE, COSINE, TANGENT};
 	return R_RET;
 }
 
+#endif //!USE_NO_INFINITY
+
 /***********************************************************************
 **
-*/	REBNATIVE(nanq)
+*/	REBNATIVE(numberq)
 /*
-//	nan?: native [
-//		{Returns TRUE if the number is Not-a-Number.}
-//		value [number!]
+//	number?: native [
+//		{Returns TRUE if the value is any type of number and not a NaN. }
+//		value
 //	]
 ***********************************************************************/
 {
-	SET_LOGIC(D_RET, isnan(AS_DECIMAL(D_ARG(1))));
+	BOOL result = FALSE;
+	switch(VAL_TYPE(D_ARG(1))) {
+		case REB_DECIMAL:
+			if (!isnan(VAL_DECIMAL(D_ARG(1)))) result = TRUE;
+			break;
+		case REB_INTEGER:
+		case REB_MONEY:
+		case REB_PERCENT:
+			result = TRUE;
+			break;
+	}
+	SET_LOGIC(D_RET, result);
 	return R_RET;
 }
-
-#endif //!USE_NO_INFINITY
-
 
 
 /***********************************************************************
