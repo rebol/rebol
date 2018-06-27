@@ -150,9 +150,9 @@ find-script: native [
 for: native [
 	{Evaluate a block over a range of values. (See also: REPEAT)}
 	'word [word!] "Variable to hold current value"
-	start [series! number!] "Starting value"
-	end   [series! number!] "Ending value"
-	bump  [number!] "Amount to skip each time"
+	start [series! number! pair!] "Starting value"
+	end   [series! number! pair!] "Ending value"
+	bump  [number! pair!] "Amount to skip each time"
 	body  [block!] "Block to evaluate"
 ]
 
@@ -259,7 +259,7 @@ reduce: native [
 repeat: native [
 	{Evaluates a block a number of times or over a series.}
 	'word [word!] {Word to set each time}
-	value [number! series! none!] {Maximum number or series to traverse}
+	value [number! series! pair! none!] {Maximum number or series to traverse}
 	body [block!] {Block to evaluate each time}
 ]
 
