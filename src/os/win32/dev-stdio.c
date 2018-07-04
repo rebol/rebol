@@ -88,7 +88,12 @@ extern REBDEV *Devices[];
 //#define BACKGROUND_INTENSITY     0x0080
 #define COMMON_LVB_UNDERSCORE      0x8000
 
-static COORD Std_coord = {0, 0};
+static COORD Std_coord = { 0, 0 };
+
+static int ANSI_State = -1; // if >= 0, we are in the middle of the parsing ANSI sequence
+static int ANSI_Value1 = 0;
+static int ANSI_Value2 = 0;
+static int ANSI_Attr  = -1;
 
 int Update_Graphic_Mode(int attribute, int value);
 REBYTE* Parse_ANSI_sequence(REBYTE *cp, REBYTE *ep);
@@ -240,7 +245,7 @@ static void close_stdio(void)
 			// Get the new stdio handles:
 			Std_Out = GetStdHandle(STD_OUTPUT_HANDLE);
 
-			if (!Redir_Inp)	{
+			if (!Redir_Inp) {
 				Std_Inp = GetStdHandle(STD_INPUT_HANDLE);
 			}
 		}
@@ -321,16 +326,17 @@ static void close_stdio(void)
 		// Using this loop for seeking escape char and processing ANSI sequence
 		do {
 
-			//from some reason, I must decrement the tail pointer in function bellow,
-			//else escape char is found past the end and processed in rare cases - like in console: do [help] do [help func]
-			//It looks dangerous, but it should be safe as it looks the req->length is always at least 1.
-			cp = Skip_To_Char(bp, ep-1, (REBYTE)27); //find ANSI escape char "^["
+			if(ANSI_State >= 0) // there is pending ansi sequence state
+				bp = Parse_ANSI_sequence(bp-1, ep); // the pointer is incremented back in the parser
+
+			cp = Skip_To_Char(bp, ep, (REBYTE)27); //find ANSI escape char "^["
 
 			if (Redir_Out) { // for Console SubSystem (always UTF-8)
-				if (cp){
+				if (cp) {
 					ok = WriteFile(Std_Out, bp, cp - bp, &total, 0);
-					bp = Parse_ANSI_sequence(++cp, ep);
-				} else {
+					bp = Parse_ANSI_sequence(cp, ep);
+				}
+				else {
 					ok = WriteFile(Std_Out, bp, ep - bp, &total, 0);
 					bp = ep;
 				}
@@ -338,7 +344,8 @@ static void close_stdio(void)
 					req->error = GetLastError();
 					return DR_ERROR;
 				}
-			} else { // for Windows SubSystem - must be converted to Win32 wide-char format
+			}
+			else { // for Windows SubSystem - must be converted to Win32 wide-char format
 
 				// Thankfully, MS provides something other than mbstowcs();
 				// however, if our buffer overflows, it's an error. There's no
@@ -346,9 +353,10 @@ static void close_stdio(void)
 				// because its UTF-8 with variable char sizes.
 
 				//if found, write to the console content before it starts, else everything
-				if (cp){
+				if (cp) {
 					len = MultiByteToWideChar(CP_UTF8, 0, bp, cp - bp, Std_Buf, BUF_SIZE);
-				} else {
+				}
+				else {
 					len = MultiByteToWideChar(CP_UTF8, 0, bp, ep - bp, Std_Buf, BUF_SIZE);
 					bp = ep;
 				}
@@ -361,7 +369,7 @@ static void close_stdio(void)
 				}
 				//is escape char was found, parse the ANSI sequence...
 				if (cp) {
-					bp = Parse_ANSI_sequence(++cp, ep);
+					bp = Parse_ANSI_sequence(cp, ep);
 				}
 			}
 		} while (bp < ep);
@@ -490,7 +498,7 @@ DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);
 **
 ***********************************************************************/
 {
-	CONSOLE_SCREEN_BUFFER_INFO csbiInfo; 
+	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
 	int tmp;
 
 	if (attribute < 0) {
@@ -536,90 +544,108 @@ DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);
 **
 ***********************************************************************/
 {
-	if(*cp != '[') return cp;
-
-	int state = 1;
-	int value1 = 0;
-	int value2 = 0;
-	int attribute = -1;
+	if (cp >= ep) return cp;
 	long unsigned int num;
 	int len;
-	COORD coordScreen; 
+	COORD coordScreen;
 	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-	
+	if (ANSI_State < 0) {
+		ANSI_State = 0;
+		ANSI_Value1 = 0;
+		ANSI_Value2 = 0;
+		ANSI_Attr = -1;
+	}
 
 	do {
-		if(++cp == ep) return cp;
+		if (++cp == ep) return cp;
 
-		switch (state) {
+		switch (ANSI_State) {
+
+		case 0:
+			ANSI_State = (*cp == '[') ? 1 : -1;
+			break;
 
 		case 1: //value1 start
-			if( *cp >= (int)'0' && *cp <= (int)'9') {
-				value1 = ((value1 * 10) + (*cp - (int)'0')) % 0xFFFF;
-				state = 2;
-			} else if (*cp == ';') {
+			if (*cp >= (int)'0' && *cp <= (int)'9') {
+				ANSI_Value1 = ((ANSI_Value1 * 10) + (*cp - (int)'0')) % 0xFFFF;
+				ANSI_State = 2;
+			}
+			else if (*cp == ';') {
 				//do nothing
-			} else if (*cp == 's') {
+			}
+			else if (*cp == 's') {
 				//Saves the current cursor position.
 				GetConsoleScreenBufferInfo(Std_Out, &csbiInfo);
 				Std_coord.X = csbiInfo.dwCursorPosition.X;
 				Std_coord.Y = csbiInfo.dwCursorPosition.Y;
-				state = -1;
-			} else if (*cp == 'u') {
+				ANSI_State = -1;
+			}
+			else if (*cp == 'u') {
 				//Returns the cursor to the position stored by the Save Cursor Position sequence.
 				SetConsoleCursorPosition(Std_Out, Std_coord);
-				state = -1;
-			} else if (*cp == 'K') {
+				ANSI_State = -1;
+			}
+			else if (*cp == 'K') {
 				//TODO: Erase Line.
-				state = -1;
-			} else if (*cp == 'J') {
+				ANSI_State = -1;
+			}
+			else if (*cp == 'J') {
 				//TODO: Clear screen from cursor down.
-				state = -1;
-			} else if (*cp == 'H' || *cp == 'f') {
+				ANSI_State = -1;
+			}
+			else if (*cp == 'H' || *cp == 'f') {
 				coordScreen.X = 0;
 				coordScreen.Y = 0;
 				SetConsoleCursorPosition(Std_Out, coordScreen);
-				state = -1;
-			} else {
-				state = -1;
+				ANSI_State = -1;
+			}
+			else {
+				ANSI_State = -1;
 			}
 			break;
 		case 2: //value1 continue
-			if( *cp >= (int)'0' && *cp <= (int)'9') {
-				value1 = ((value1 * 10) + (*cp - (int)'0')) % 0xFFFF;
-				state = 2;
-			} else if (*cp == ';') {
-				state = 3;
-			} else if (*cp == 'm') {
-				attribute = Update_Graphic_Mode(attribute, value1);
-				SetConsoleTextAttribute(Std_Out, attribute);
-				state = -1;
-			} else if (*cp == 'A') {
+			if (*cp >= (int)'0' && *cp <= (int)'9') {
+				ANSI_Value1 = ((ANSI_Value1 * 10) + (*cp - (int)'0')) % 0xFFFF;
+				ANSI_State = 2;
+			}
+			else if (*cp == ';') {
+				ANSI_State = 3;
+			}
+			else if (*cp == 'm') {
+				ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, ANSI_Value1);
+				SetConsoleTextAttribute(Std_Out, ANSI_Attr);
+				ANSI_State = -1;
+			}
+			else if (*cp == 'A') {
 				//Cursor Up.
 				GetConsoleScreenBufferInfo(Std_Out, &csbiInfo);
-				csbiInfo.dwCursorPosition.Y = MAX(0, csbiInfo.dwCursorPosition.Y - value1);
+				csbiInfo.dwCursorPosition.Y = MAX(0, csbiInfo.dwCursorPosition.Y - ANSI_Value1);
 				SetConsoleCursorPosition(Std_Out, csbiInfo.dwCursorPosition);
-				state = -1;
-			} else if (*cp == 'B') {
+				ANSI_State = -1;
+			}
+			else if (*cp == 'B') {
 				//Cursor Down.
 				GetConsoleScreenBufferInfo(Std_Out, &csbiInfo);
-				csbiInfo.dwCursorPosition.Y = MIN(csbiInfo.dwSize.Y, csbiInfo.dwCursorPosition.Y + value1);
+				csbiInfo.dwCursorPosition.Y = MIN(csbiInfo.dwSize.Y, csbiInfo.dwCursorPosition.Y + ANSI_Value1);
 				SetConsoleCursorPosition(Std_Out, csbiInfo.dwCursorPosition);
-				state = -1;
-			} else if (*cp == 'C') {
+				ANSI_State = -1;
+			}
+			else if (*cp == 'C') {
 				//Cursor Forward.
 				GetConsoleScreenBufferInfo(Std_Out, &csbiInfo);
-				csbiInfo.dwCursorPosition.X = MIN(csbiInfo.dwSize.X, csbiInfo.dwCursorPosition.X + value1);
+				csbiInfo.dwCursorPosition.X = MIN(csbiInfo.dwSize.X, csbiInfo.dwCursorPosition.X + ANSI_Value1);
 				SetConsoleCursorPosition(Std_Out, csbiInfo.dwCursorPosition);
-				state = -1;
-			} else if (*cp == 'D') {
+				ANSI_State = -1;
+			}
+			else if (*cp == 'D') {
 				//Cursor Backward.
 				GetConsoleScreenBufferInfo(Std_Out, &csbiInfo);
-				csbiInfo.dwCursorPosition.X = MAX(0, csbiInfo.dwCursorPosition.X - value1);
+				csbiInfo.dwCursorPosition.X = MAX(0, csbiInfo.dwCursorPosition.X - ANSI_Value1);
 				SetConsoleCursorPosition(Std_Out, csbiInfo.dwCursorPosition);
-				state = -1;
-			} else if (*cp == 'J') {
-				if (value1 == 2) {
+				ANSI_State = -1;
+			}
+			else if (*cp == 'J') {
+				if (ANSI_Value1 == 2) {
 					GetConsoleScreenBufferInfo(Std_Out, &csbiInfo);
 					len = csbiInfo.dwSize.X * csbiInfo.dwSize.Y;
 					coordScreen.X = 0;
@@ -628,49 +654,56 @@ DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);
 					FillConsoleOutputAttribute(Std_Out, csbiInfo.wAttributes, len, coordScreen, &num);
 					SetConsoleCursorPosition(Std_Out, coordScreen);
 				}
-				state = -1;
-			} else {
-				state = -1;
+				ANSI_State = -1;
+			}
+			else {
+				ANSI_State = -1;
 			}
 			break; //End CASE 2
 		case 3: //value2 start
-			if( *cp >= (int)'0' && *cp <= (int)'9') {
-				value2 = ((value2 * 10) + (*cp - (int)'0')) % 0xFFFF;
-				state = 4;
-			} else if (*cp == ';') {
+			if (*cp >= (int)'0' && *cp <= (int)'9') {
+				ANSI_Value2 = ((ANSI_Value2 * 10) + (*cp - (int)'0')) % 0xFFFF;
+				ANSI_State = 4;
+			}
+			else if (*cp == ';') {
 				//do nothing
-			} else {
-				state = -1;
+			}
+			else {
+				ANSI_State = -1;
 			}
 			break; //End CASE 3
 		case 4: //value2 continue
-			if( *cp >= (int)'0' && *cp <= (int)'9') {
-				value2 = ((value2 * 10) + (*cp - (int)'0')) % 0xFFFF;
-				state = 4;
-			} else if (*cp == 'm') {
-				attribute = Update_Graphic_Mode(attribute, value1);
-				attribute = Update_Graphic_Mode(attribute, value2);
-				SetConsoleTextAttribute(Std_Out, attribute);
-				state = -1;
-			} else if (*cp == ';') {
-				attribute = Update_Graphic_Mode(attribute, value1);
-				attribute = Update_Graphic_Mode(attribute, value2);
-				SetConsoleTextAttribute(Std_Out, attribute);
-				value1 = 0;
-				value2 = 0;
-				state = 1;
-			} else if (*cp == 'H' || *cp == 'f') {
-				coordScreen.Y = value1;
-				coordScreen.X = value2;
+			if (*cp >= (int)'0' && *cp <= (int)'9') {
+				ANSI_Value2 = ((ANSI_Value2 * 10) + (*cp - (int)'0')) % 0xFFFF;
+				ANSI_State = 4;
+			}
+			else if (*cp == 'm') {
+				ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, ANSI_Value1);
+				ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, ANSI_Value2);
+				SetConsoleTextAttribute(Std_Out, ANSI_Attr);
+				ANSI_State = -1;
+			}
+			else if (*cp == ';') {
+				ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, ANSI_Value1);
+				ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, ANSI_Value2);
+				SetConsoleTextAttribute(Std_Out, ANSI_Attr);
+				ANSI_Value1 = 0;
+				ANSI_Value2 = 0;
+				ANSI_State = 1;
+			}
+			else if (*cp == 'H' || *cp == 'f') {
+				coordScreen.Y = ANSI_Value1;
+				coordScreen.X = ANSI_Value2;
 				SetConsoleCursorPosition(Std_Out, coordScreen);
-				state = -1;
-			} else {
-				state = -1;
+				ANSI_State = -1;
+			}
+			else {
+				ANSI_State = -1;
 			}
 
 
 		} //End: switch (state)
-	} while (state >= 0);
+	} while (ANSI_State >= 0);
 
 	return ++cp;
 }
