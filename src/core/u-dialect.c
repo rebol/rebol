@@ -501,6 +501,8 @@ again:
 	dia.out = VAL_SERIES(D_ARG(3));	
 	dia.outi = VAL_INDEX(D_ARG(3));
 
+	if (IS_PROTECT_SERIES(dia.out)) Trap0(RE_PROTECTED);
+
 	if (dia.argi >= SERIES_TAIL(dia.args)) return R_NONE; // end of block
 
 	if (D_REF(4)) { // in
