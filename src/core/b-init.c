@@ -733,6 +733,9 @@ extern const REBYTE Str_Banner[];
 #ifdef USE_JPG_CODEC
 	Init_JPEG_Codec();
 #endif
+#ifdef USE_WAV_CODEC
+	Init_WAV_Codec();
+#endif
 }
 
 

@@ -112,6 +112,7 @@ core: [
 	u-sha1.c
 	u-sha256.c
 	u-zlib.c
+	u-wav.c
 ]
 
 made: [
