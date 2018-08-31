@@ -21,6 +21,13 @@ SHA1:
 Copyright 1995-1998 Eric Young (eay@cryptsoft.com)
 All rights reserved.
 
+SHA256:
+Copyright 2006-2012 (?) Brad Conte
+
+RC4, AES:
+Copyright (c) 2007, Cameron Rich
+All rights reserved.
+
 ZLIB general purpose compression library:
 Version 1.1.2, March 19th, 1998
 Copyright 1995-1998 Jean-loup Gailly and Mark Adler
