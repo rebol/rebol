@@ -332,7 +332,10 @@ err:
 		else if (lex == BIN_ERROR) goto err;
 	}
 
-	if (flip) goto err;
+	if(flip==2) {
+		// input may not be padded... see https://github.com/rebol/rebol-issues/issues/2318 
+		*bp++ = (REBYTE)(accum >> 4);
+	} else if (flip) goto err;
 
 	*bp = 0;
 	ser->tail = bp - STR_HEAD(ser);
