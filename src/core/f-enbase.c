@@ -486,10 +486,19 @@ start:
 		}
 	}
 
-	if(flip==2) {
-		// input may not be padded... see https://github.com/rebol/rebol-issues/issues/2318 
-		*bp++ = (REBYTE)(accum >> 4);
-	} else if (flip) goto err;
+	if (flip) {
+		if(urlSafe) {
+			// in url safe mode may be ommited the final inut padding
+			if (flip == 3) {
+				*bp++ = (REBYTE)(accum >> 10);
+				*bp++ = (REBYTE)(accum >> 2);
+			}
+			else if (flip == 2) {
+				*bp++ = (REBYTE)(accum >> 4);
+			}
+			else goto err;
+		} else goto err;
+	}
 
 	*bp = 0;
 	ser->tail = bp - STR_HEAD(ser);
