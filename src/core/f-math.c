@@ -231,7 +231,7 @@
 ***********************************************************************/
 {
 	INT_TO_STR(val, buf);
-	return LEN_BYTES(buf);
+	return (REBINT)LEN_BYTES(buf);
 }
 
 

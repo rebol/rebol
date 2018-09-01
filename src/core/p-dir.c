@@ -61,7 +61,7 @@
 	dir->data = (REBYTE*)(&file);
 
 	while ((result = OS_DO_DEVICE(dir, RDC_READ)) == 0 && !GET_FLAG(dir->flags, RRF_DONE)) {
-		len = LEN_STR(file.file.path);
+		len = (REBCNT)LEN_STR(file.file.path);
 		if (GET_FLAG(file.modes, RFM_DIR)) len++;
 		name = Copy_OS_Str(file.file.path, len);
 		if (GET_FLAG(file.modes, RFM_DIR)) {

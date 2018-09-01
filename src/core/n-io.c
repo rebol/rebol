@@ -811,7 +811,7 @@ chk_neg:
 	REBCHR *eq;
 	REBSER *blk;
 
-	while ((n = LEN_STR(str))) {
+	while ((n = (REBCNT)LEN_STR(str))) {
 		len++;
 		str += n + 1; // next
 	}
@@ -819,7 +819,7 @@ chk_neg:
 	blk = Make_Block(len*2);
 
 	str = start;
-	while (NZ(eq = FIND_CHR(str+1, '=')) && NZ(n = LEN_STR(str))) {
+	while (NZ(eq = FIND_CHR(str+1, '=')) && NZ(n = (REBCNT)LEN_STR(str))) {
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(str, eq-str));
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(eq+1, n-(eq-str)-1));
 		str += n + 1; // next
@@ -871,7 +871,7 @@ chk_neg:
 	REBSER *blk;
 	REBSER *dir;
 
-	while (n = LEN_STR(str)) {
+	while (n = (REBCNT)LEN_STR(str)) {
 		len++;
 		str += n + 1; // next
 	}
@@ -880,7 +880,7 @@ chk_neg:
 
 	// First is a dir path or full file path:
 	str = start;
-	n = LEN_STR(str);
+	n = (REBCNT)LEN_STR(str);
 
 	if (len == 1) {  // First is full file path
 		dir = To_REBOL_Path(str, n, -1, 0);
@@ -890,7 +890,7 @@ chk_neg:
 		dir = To_REBOL_Path(str, n, -1, TRUE);
 		str += n + 1; // next
 		len = dir->tail;
-		while (n = LEN_STR(str)) {
+		while (n = (REBCNT)LEN_STR(str)) {
 			dir->tail = len;
 			Append_Uni_Uni(dir, str, n);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
@@ -948,7 +948,7 @@ chk_neg:
 			Set_Block(D_RET, ser);
 		}
 		else {
-			ser = To_REBOL_Path(fr.files, LEN_STR(fr.files), OS_WIDE, 0);
+			ser = To_REBOL_Path(fr.files, (REBCNT)LEN_STR(fr.files), OS_WIDE, 0);
 			Set_Series(REB_FILE, D_RET, ser);
 		}
 	} else
@@ -1015,7 +1015,7 @@ chk_neg:
 		success = OS_SET_ENV(cmd, value);
 		if (success) {
 			// What function could reuse arg2 as-is?
-			Set_String(D_RET, Copy_OS_Str(value, LEN_STR(value)));
+			Set_String(D_RET, Copy_OS_Str(value, (REBCNT)LEN_STR(value)));
 			return R_RET;
 		}
 		return R_UNSET;

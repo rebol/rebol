@@ -324,7 +324,7 @@ static REBYTE seed_str[SEED_LEN] = {
 			break;
 		case REB_INTEGER:
 			INT_TO_STR(VAL_INT64(val), dst);
-			klen = LEN_BYTES(dst);
+			klen = (REBCNT)LEN_BYTES(dst);
 			as_is = FALSE;
 			break;
 		}

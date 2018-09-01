@@ -101,7 +101,7 @@ static REBREQ *Req_SIO;
 	if (!bp) Crash(RP_NO_PRINT_PTR);
 
 	// Determine length if not provided:
-	if (len == UNKNOWN) len = uni ? wcslen(up) : LEN_BYTES(bp);
+	if (len == UNKNOWN) len = (REBINT)(uni ? wcslen(up) : LEN_BYTES(bp));
 
 	SET_FLAG(Req_SIO->flags, RRF_FLUSH);
 
@@ -223,7 +223,7 @@ static REBREQ *Req_SIO;
 	if (Trace_Limit > 0) {
 		if (Trace_Buffer->tail >= Trace_Limit)
 			Remove_Series(Trace_Buffer, 0, 2000);
-		if (len == UNKNOWN) len = uni ? wcslen(up) : LEN_BYTES(bp);
+		if (len == UNKNOWN) len = (REBINT)(uni ? wcslen(up) : LEN_BYTES(bp));
 		// !!! account for unicode!
 		for (; len > 0; len--) {
 			uc = uni ? *up++ : *bp++;
@@ -443,7 +443,7 @@ static REBREQ *Req_SIO;
 	tail = bp - STR_HEAD(buf);
 
 	for (n = 0; n < tail; n += len) {
-		len = LEN_BYTES(STR_SKIP(buf, n));
+		len = (REBCNT)LEN_BYTES(STR_SKIP(buf, n));
 		if (len > 1024) len = 1024;
 		Debug_String(STR_SKIP(buf, n), len, 0, 0);
 	}
@@ -717,10 +717,10 @@ pick:
 		case 's':
 			cp = va_arg(args, REBYTE *);
 			if ((REBUPT)cp < 100) cp = (REBYTE*)Bad_Ptr;
-			if (pad == 1) pad = LEN_BYTES(cp);
+			if (pad == 1) pad = (REBINT)LEN_BYTES(cp);
 			if (pad < 0) {
 				pad = -pad;
-				pad -= LEN_BYTES(cp);
+				pad -= (REBINT)LEN_BYTES(cp);
 				for (; pad > 0 && len < max; len++, pad--) *bp++ = ' ';
 			}
 			for (; *cp && len < max && pad > 0; pad--, len++) *bp++ = *cp++;

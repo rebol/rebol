@@ -1728,7 +1728,7 @@ reapply:  // Go back here to start over with a new func
 	// Saved_State is safe.
 	Saved_State = Halt_State;
 
-	code = Scan_Source(text, LEN_BYTES(text));
+	code = Scan_Source(text, (REBCNT)LEN_BYTES(text));
 	SAVE_SERIES(code);
 
 	// Bind into lib or user spaces?

@@ -74,7 +74,7 @@
 {
 	REBSER *dst;
 
-	if (len < 0) len = LEN_BYTES(src);
+	if (len < 0) len = (REBINT)LEN_BYTES(src);
 
 	dst = Make_Binary(len);
 	memcpy(STR_DATA(dst), src, len);
@@ -426,7 +426,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 **
 ***********************************************************************/
 {
-	return Append_Bytes_Len(dst, src, LEN_BYTES(src));
+	return Append_Bytes_Len(dst, src, (REBCNT)LEN_BYTES(src));
 }
 
 
@@ -580,7 +580,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 {
 	REBSER *ser = BUF_UTF8;	// buffer is Unicode width
 
-	if (len < 0) len = LEN_BYTES(src);
+	if (len < 0) len = (REBINT)LEN_BYTES(src);
 
 	Resize_Series(ser, len+1); // needs at most this much
 

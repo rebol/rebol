@@ -211,7 +211,7 @@
 			REBYTE *bp;
 			REBCNT len;
 			bp = Get_Word_Name(val);
-			len = strlen(bp);
+			len = (REBCNT)strlen(bp);
 			n = MIN(MAX_HEX_LEN, len);
 			if (Scan_Hex(bp, &num, n, n) == 0) goto is_bad;
 		}

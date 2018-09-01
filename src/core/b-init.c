@@ -744,7 +744,7 @@ static void Set_Option_String(REBCHR *str, REBCNT field)
 	REBVAL *val;
 	if (str) {
 		val = Get_System(SYS_OPTIONS, field);
-		Set_String(val, Copy_OS_Str(str, LEN_STR(str)));
+		Set_String(val, Copy_OS_Str(str, (REBINT)LEN_STR(str)));
 	}
 }
 
@@ -756,7 +756,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	REBCNT n = 0;
 
 	if (str) {
-		n = LEN_STR(str); // WC correct
+		n = (REBCNT)LEN_STR(str); // WC correct
 		if (n > 38) return 0;
 		bp = &buf[0];
 		while ((*bp++ = (REBYTE)*str++)); // clips unicode
@@ -834,22 +834,22 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 	if (NZ(data = OS_GET_LOCALE(0))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE);
-		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
 	}
 
 	if (NZ(data = OS_GET_LOCALE(1))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE_P);
-		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
 	}
 
 	if (NZ(data = OS_GET_LOCALE(2))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE);
-		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
 	}
 
 	if (NZ(data = OS_GET_LOCALE(3))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE_P);
-		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
 	}
 }
 

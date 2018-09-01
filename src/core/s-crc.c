@@ -160,7 +160,7 @@ static REBCNT *CRC_Table;
 	REBINT hash;
 	REBCNT ulen;
 
-	if (len < 0) len = LEN_BYTES(str);
+	if (len < 0) len = (REBINT)LEN_BYTES(str);
 
 	hash = (REBINT)len + (REBINT)((REBYTE)LO_CASE(*str));
 

@@ -342,7 +342,7 @@ size_t len;
 	l=(c->Nl+((SHA_LONG)len<<3))&(SHA_LONG)-1;
 	if (l < c->Nl) /* overflow */
 		c->Nh++;
-	c->Nh+=(len>>29);
+	c->Nh+=((SHA_LONG)len>>29);
 	c->Nl=l;
 
 	if (c->num != 0)

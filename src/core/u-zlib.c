@@ -1,3 +1,8 @@
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4244)   /* conversion from '__int64' to 'Z_uLong', possible loss of data */
+#endif
+
 #include "sys-zlib.h"
 #include <stdlib.h>
 
@@ -4283,3 +4288,6 @@ int f;
 /*   return Z_OK; */
 /* } */
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#endif

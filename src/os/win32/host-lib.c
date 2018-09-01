@@ -496,7 +496,7 @@ static void *Task_Ready;
 	REBCHR *str;
 
 	str = env;
-	while (n = LEN_STR(str)) {
+	while (n = (REBCNT)LEN_STR(str)) {
 		len += n + 1;
 		str = env + len; // next
 	}

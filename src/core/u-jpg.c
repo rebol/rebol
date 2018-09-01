@@ -46,6 +46,11 @@
 //#include "jpeglib.h"
 //#include "jerror.h"
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4267)   /* conversion from 'size_t' to 'long', possible loss of data */
+#endif
+
 typedef u32 uinteger32;
 
 /* Expanded data source object for stdio input */
@@ -10847,5 +10852,9 @@ extern void Register_Codec(char *name, codo dispatcher);
 {
 	Register_Codec("jpeg", Codec_JPEG_Image);
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #endif //USE_JPG_CODEC

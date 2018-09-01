@@ -78,7 +78,7 @@ static REBYTE *Get_Next_Line()
 
 static int Fetch_Buf()
 {
-	REBCNT len = strlen(inbuf);
+	REBCNT len = (REBCNT)strlen(inbuf);
 
 	Std_IO_Req.data   = inbuf + len;
 	Std_IO_Req.length = inbuf_len - len - 1;

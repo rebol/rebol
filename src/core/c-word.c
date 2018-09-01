@@ -206,7 +206,7 @@
 
 	//REBYTE *sss = Get_Sym_Name(1);	// (Debugging method)
 
-	if (len == 0) len = LEN_BYTES(str);
+	if (len == 0) len = (REBCNT)LEN_BYTES(str);
 
 	// If hash part of word table is too dense, expand it:
 	if (PG_Word_Table.series->tail > PG_Word_Table.hashes->tail/2)
@@ -381,7 +381,7 @@ make_sym:
 	if (VAL_WORD_CANON(s) == VAL_WORD_CANON(t)) return 0;
 
 	// They must be differ by case:
-	return Compare_UTF8(sp, tp, LEN_BYTES(tp)) + 2;
+	return Compare_UTF8(sp, tp, (REBCNT)LEN_BYTES(tp)) + 2;
 }
 
 

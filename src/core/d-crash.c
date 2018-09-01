@@ -94,7 +94,7 @@ enum Crash_Msg_Nums {
 
 	// Use the above string or the boot string for the error (in boot.r):
 	msg = (REBYTE*)(n >= 0 ? Crash_Msgs[n] : BOOT_STR(RS_ERROR, id - RP_STR_BASE - 1));
-	Form_Var_Args(buf + LEN_BYTES(buf), CRASH_BUF_SIZE - 1 - LEN_BYTES(buf), msg, args);
+	Form_Var_Args(buf + LEN_BYTES(buf), (REBCNT)(CRASH_BUF_SIZE - 1 - LEN_BYTES(buf)), msg, args);
 
 	APPEND_BYTES(buf, Crash_Msgs[CM_CONTACT], CRASH_BUF_SIZE);
 

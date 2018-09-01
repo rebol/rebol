@@ -351,7 +351,7 @@
 		if (IS_ISSUE(arg)) {
 			REBUNI c;
 			ap = Get_Word_Name(arg);
-			len = LEN_BYTES(ap);  // UTF-8 len
+			len = (REBINT)LEN_BYTES(ap);  // UTF-8 len
 			if (len & 1) goto bad_arg; // must have even # of chars
 			len /= 2;
 			if (len > MAX_TUPLE) goto bad_arg; // valid even for UTF-8

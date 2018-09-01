@@ -268,7 +268,7 @@
 ***********************************************************************/
 {
 	REBINT c1, c2;
-	REBCNT l1 = LEN_BYTES(s1);
+	REBCNT l1 = (REBCNT)LEN_BYTES(s1);
 	REBINT result = 0;
 
 	for (; l1 > 0 && l2 > 0; s1++, s2++, l1--, l2--) {

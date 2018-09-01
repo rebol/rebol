@@ -869,7 +869,7 @@
 	REBCHR str[100];
 
 	OS_FORM_ERROR(errnum, str, 100);
-	Set_String(DS_RETURN, Copy_OS_Str(str, LEN_STR(str)));
+	Set_String(DS_RETURN, Copy_OS_Str(str, (REBINT)LEN_STR(str)));
 	return DS_RETURN;
 }
 

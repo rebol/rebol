@@ -105,7 +105,7 @@
 		return DR_ERROR;
 	}
 
-	len = LEN_STR(cp); // wide chars
+	len = (REBINT)LEN_STR(cp); // wide chars
 	bin = OS_Make((len+1) * sizeof(REBCHR));
 	COPY_STR(bin, cp, len);
 

@@ -268,7 +268,7 @@ const struct arg_chr arg_chars2[] = {
 					args = MAKE_STR(arg_buf_size);
 					args[0] = 0;
 				}
-				len = LEN_STR(arg) + LEN_STR(args) + 2;
+				len = (int)LEN_STR(arg) + (int)LEN_STR(args) + 2;
 				size = arg_buf_size;
 				while (size < len) size *= 2;
 				if (size > arg_buf_size) {
@@ -278,7 +278,7 @@ const struct arg_chr arg_chars2[] = {
 					arg_buf_size = size;
 					FREE_MEM(tmp);
 				}
-				len = arg_buf_size - LEN_STR(args) - 2; // space remaining
+				len = arg_buf_size - (int)LEN_STR(args) - 2; // space remaining
 				JOIN_STR(args, arg, len);
 				JOIN_STR(args, TXT(" "), 1);
 			}
