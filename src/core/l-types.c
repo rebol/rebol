@@ -904,7 +904,7 @@ end_date:
 	if (*cp++ != '{') return 0;
 	len -= 2;
 
-	cp = Decode_Binary(value, cp, len, base, '}');
+	cp = Decode_Binary(value, cp, len, base, '}', FALSE);
 	if (!cp) return 0;
 
 	cp = Skip_To_Char(cp, cp + len, '}');

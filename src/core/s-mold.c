@@ -560,7 +560,7 @@ STOID Mold_Handle(REBVAL *value, REB_MOLD *mold)
 		break;
 	case 64:
 		Append_Bytes(mold->series, "64");
-		out = Encode_Base64(value, 0, len > 64);
+		out = Encode_Base64(value, 0, len > 64, FALSE);
 		break;
 	case 2:
 		Append_Byte(mold->series, '2');
