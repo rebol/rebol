@@ -410,16 +410,20 @@ err:
 {
 	REBYTE *bp;
 	REBYTE *cp;
-	REBCNT flip = 0;
-	REBINT accum = 0;
+	REBCNT flip, pos;
+	REBINT accum;
 	REBYTE lex;
 	REBSER *ser;
 
 	// Allocate buffer large enough to hold result:
 	// Accounts for e bytes decoding into 3 bytes.
 	ser = Make_Binary(((len + 3) * 3) / 4);
+
+start:
 	bp = STR_HEAD(ser);
 	cp = *src;
+	accum = 0;
+	flip = 0;
 
 	const REBYTE *table;
 	if (urlSafe) {
@@ -428,7 +432,7 @@ err:
 		table = Debase64;
 	}
 
-	for (; len > 0; cp++, len--) {
+	for (pos = len; pos > 0; cp++, pos--) {
 
 		// Check for terminating delimiter (optional):
 		if (delim && *cp == delim) break;
@@ -455,14 +459,14 @@ err:
 			} else {
 				// Special padding: "="
 				cp++;
-				len--;
+				pos--;
 				if (flip == 3) {
 					*bp++ = (REBYTE)(accum >> 10);
 					*bp++ = (REBYTE)(accum >> 2);
 					flip = 0;
 				}
 				else if (flip == 2) {
-					if (!Skip_To_Char(cp, cp + len, '=')) goto err;
+					if (!Skip_To_Char(cp, cp + pos, '=')) goto err;
 					cp++;
 					*bp++ = (REBYTE)(accum >> 4);
 					flip = 0;
@@ -471,7 +475,15 @@ err:
 				break;
 			}
 		}
-		else if (lex == BIN_ERROR) goto err;
+		else if (lex == BIN_ERROR) {
+			if(!urlSafe && (*cp == '-' || *cp == '_')) {
+				// there was found char, which is used in URL safe encoding, but we are in simple Base64 mode,
+				// so try to decode it using safe table, instead of throwing an error immediately.
+				urlSafe = TRUE;
+				goto start;
+			}
+			goto err;
+		}
 	}
 
 	if(flip==2) {
