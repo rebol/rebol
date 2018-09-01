@@ -369,7 +369,7 @@ static struct digest {
 
 	if (D_REF(2)) base = VAL_INT32(D_ARG(3)); // /base
 
-	if (!Decode_Binary(D_RET, BIN_SKIP(ser, index), len, base, 0))
+	if (!Decode_Binary(D_RET, BIN_SKIP(ser, index), len, base, 0, D_REF(4)))
  		Trap1(RE_INVALID_DATA, D_ARG(1));
 
 	return R_RET;
@@ -397,7 +397,7 @@ static struct digest {
 
 	switch (base) {
 	case 64:
-		ser = Encode_Base64(arg, 0, FALSE);
+		ser = Encode_Base64(arg, 0, FALSE, D_REF(4));
 		break;
 	case 16:
 		ser = Encode_Base16(arg, 0, FALSE);

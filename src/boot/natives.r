@@ -413,6 +413,7 @@ debase: native [
 	value [binary! string!] {The string to decode}
 	/base {Binary base to use}
 	base-value [integer!] {The base to convert from: 64, 16, or 2}
+	/url  {Base 64 Decoding with URL and Filename Safe Alphabet}
 ]
 
 enbase: native [
@@ -420,6 +421,7 @@ enbase: native [
 	value [binary! string!] {If string, will be UTF8 encoded}
 	/base {Binary base to use}
 	base-value [integer!] {The base to convert to: 64, 16, or 2}
+	/url  {Base 64 Encoding with URL and Filename Safe Alphabet}
 ]
 
 decloak: native [
