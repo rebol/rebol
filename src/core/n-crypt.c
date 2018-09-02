@@ -276,7 +276,7 @@ const REBYTE rsa_name[] = "RSA-context";
 //		/encrypt  "Use public key to encrypt data"
 //		/decrypt  "Use private key to decrypt data"
 //		/sign     "Use private key to sign data"
-//		/validate "Use public key to validate signed data"
+//		/verify   "Use public key to verify signed data"
 //  ]
 ***********************************************************************/
 {
@@ -285,14 +285,14 @@ const REBYTE rsa_name[] = "RSA-context";
 	REBOOL  refEncrypt      = D_REF(3);
 	REBOOL  refDecrypt      = D_REF(4);
 	REBOOL  refSign         = D_REF(5);
-	REBOOL  refValidate     = D_REF(6);
+	REBOOL  refverify       = D_REF(6);
 
 	// make sure that only one refinement is used!
 	if(
-		(refEncrypt  && (refDecrypt || refSign    || refValidate)) ||
-		(refDecrypt  && (refEncrypt || refSign    || refValidate)) ||
-		(refSign     && (refDecrypt || refEncrypt || refValidate)) ||
-		(refValidate && (refDecrypt || refSign    || refEncrypt))
+		(refEncrypt && (refDecrypt || refSign    || refverify)) ||
+		(refDecrypt && (refEncrypt || refSign    || refverify)) ||
+		(refSign    && (refDecrypt || refEncrypt || refverify)) ||
+		(refverify  && (refDecrypt || refSign    || refEncrypt))
 	) {
 		Trap0(RE_BAD_REFINES);
 	}
@@ -337,7 +337,7 @@ const REBYTE rsa_name[] = "RSA-context";
 	REBSER* output = Make_Binary(rsa_ctx->num_octets);
 	REBYTE* outBinary = BIN_DATA(output);
 
-	if(refDecrypt || refValidate) {
+	if(refDecrypt || refverify) {
 		outBytes = RSA_decrypt(rsa_ctx, inBinary, outBinary, refDecrypt, FALSE);
 	} else {
 		outBytes = RSA_encrypt(rsa_ctx, inBinary, inBytes, outBinary, refSign, TRUE);

@@ -88,10 +88,10 @@ do  %../quick-test.r3
 		--assert binary? sign-hash: rsa/sign key-pri #{41686F6A21}
 		--assert              none? rsa/sign key-pub #{41686F6A21} ;because private key is needed
 
-	--test-- "RSA validation"
-		;you can use both keys for validation (only the public parts are used)
-		--assert #{41686F6A21} = rsa/validate key-pub sign-hash
-		--assert #{41686F6A21} = rsa/validate key-pri sign-hash
+	--test-- "RSA verifiation"
+		;you can use both keys for verifiation (only the public parts are used)
+		--assert #{41686F6A21} = rsa/verify key-pub sign-hash
+		--assert #{41686F6A21} = rsa/verify key-pri sign-hash
 
 ===end-group===
 
