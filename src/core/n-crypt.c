@@ -31,9 +31,11 @@
 #include "sys-core.h"
 #include "sys-rc4.h"
 #include "sys-aes.h"
+#include "sys-rsa.h"
 
 const REBYTE rc4_name[] = "RC4-context"; //Used as a context handle name
 const REBYTE aes_name[] = "AES-context";
+const REBYTE rsa_name[] = "RSA-context";
 
 /***********************************************************************
 **
@@ -204,4 +206,155 @@ const REBYTE aes_name[] = "AES-context";
 
     }
 	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(rsa_init)
+/*
+//  rsa-init: native [
+//		"Creates a context which is than used to encrypt or decrypt data using RSA"
+//		n  [binary!]  "Modulus"
+//		e  [binary!]  "Public exponent"
+//		/private "Init also private values"
+//			d [binary!] "Private exponent"
+//			p [binary!] "Prime number 1"
+//			q [binary!] "Prime number 2"
+//			dP [binary!]
+//			dQ [binary!]
+//			qInv [binary!]
+//  ]
+***********************************************************************/
+{
+	REBSER *n       = VAL_SERIES(D_ARG(1));
+	REBSER *e       = VAL_SERIES(D_ARG(2));
+	REBOOL  ref_private =        D_REF(3);
+	REBSER *d       = VAL_SERIES(D_ARG(4));
+	REBSER *p       = VAL_SERIES(D_ARG(5));
+	REBSER *q       = VAL_SERIES(D_ARG(6));
+	REBSER *dP      = VAL_SERIES(D_ARG(7));
+	REBSER *dQ      = VAL_SERIES(D_ARG(8));
+	REBSER *qInv    = VAL_SERIES(D_ARG(9));
+
+	RSA_CTX *rsa_ctx = NULL;
+
+	REBVAL *ret = D_RET;
+
+	if(ref_private) {
+		RSA_priv_key_new(
+			&rsa_ctx,
+			BIN_DATA(n), BIN_LEN(n),
+			BIN_DATA(e), BIN_LEN(e),
+			BIN_DATA(d), BIN_LEN(d),
+			BIN_DATA(p), BIN_LEN(p),
+			BIN_DATA(q), BIN_LEN(q),
+			BIN_DATA(dP), BIN_LEN(dP),
+			BIN_DATA(dQ), BIN_LEN(dQ),
+			BIN_DATA(qInv), BIN_LEN(qInv)
+		);
+	} else {
+		RSA_pub_key_new(
+			&rsa_ctx,
+			BIN_DATA(n), BIN_LEN(n),
+			BIN_DATA(e), BIN_LEN(e)
+		);
+	}
+	//printf("rsa ctx %u %i\n", (uint32_t)rsa_ctx, rsa_ctx->num_octets);
+	SET_HANDLE(ret, rsa_ctx);
+	VAL_HANDLE_NAME(ret) = rsa_name;
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(rsa)
+/*
+//  rsa: native [
+//		"Encrypt/decrypt/sign/verify data using RSA cryptosystem. Only one refinement must be used!"
+//		rsa-key [handle!] "RSA context created using `rsa-init` function"
+//		data    [binary!] "Data to work with"
+//		/encrypt  "Use public key to encrypt data"
+//		/decrypt  "Use private key to decrypt data"
+//		/sign     "Use private key to sign data"
+//		/validate "Use public key to validate signed data"
+//  ]
+***********************************************************************/
+{
+	REBVAL *key             = D_ARG(1);
+	REBSER *data = VAL_SERIES(D_ARG(2));
+	REBOOL  refEncrypt      = D_REF(3);
+	REBOOL  refDecrypt      = D_REF(4);
+	REBOOL  refSign         = D_REF(5);
+	REBOOL  refValidate     = D_REF(6);
+
+	// make sure that only one refinement is used!
+	if(
+		(refEncrypt  && (refDecrypt || refSign    || refValidate)) ||
+		(refDecrypt  && (refEncrypt || refSign    || refValidate)) ||
+		(refSign     && (refDecrypt || refEncrypt || refValidate)) ||
+		(refValidate && (refDecrypt || refSign    || refEncrypt))
+	) {
+		Trap0(RE_BAD_REFINES);
+	}
+
+	REBVAL *ret = D_RET;
+
+	REBINT outBytes;
+
+	bigint *data_bi;
+	RSA_CTX *rsa_ctx;
+
+
+	if(VAL_HANDLE_NAME(key) != rsa_name || VAL_HANDLE(key) == NULL) {
+		Trap0(RE_INVALID_HANDLE);
+	}
+
+	rsa_ctx = (RSA_CTX*)VAL_HANDLE(key);
+
+	if(
+		(rsa_ctx->m == NULL || rsa_ctx->e == NULL) ||
+		((refDecrypt || refSign) && (
+			rsa_ctx->d  == NULL ||
+			rsa_ctx->p  == NULL ||
+			rsa_ctx->q  == NULL ||
+			rsa_ctx->dP == NULL ||
+			rsa_ctx->dQ == NULL ||
+			rsa_ctx->qInv == NULL
+		))
+	) {
+		//puts("[RSA] Missing RSA key data!");
+		return R_NONE;
+	}
+
+	REBYTE* inBinary = BIN_DATA(data);
+	REBINT  inBytes = BIN_LEN(data);
+
+	//printf("inbytes: %i\n", inBytes);
+
+	data_bi = bi_import(rsa_ctx->bi_ctx, inBinary, inBytes);
+
+	//allocate new binary!
+	REBSER* output = Make_Binary(rsa_ctx->num_octets);
+	REBYTE* outBinary = BIN_DATA(output);
+
+	if(refDecrypt || refValidate) {
+		outBytes = RSA_decrypt(rsa_ctx, inBinary, outBinary, refDecrypt, FALSE);
+	} else {
+		outBytes = RSA_encrypt(rsa_ctx, inBinary, inBytes, outBinary, refSign, TRUE);
+	}
+
+	bi_free(rsa_ctx->bi_ctx, data_bi);
+
+	//printf("result bts %i\n", outBytes);
+
+	if(outBytes < 0) {
+		Free_Series(output);
+		return R_NONE;
+	}
+
+	SET_BINARY(ret, output);
+	VAL_TAIL(ret) = outBytes;
+
+	return R_RET;
+
 }

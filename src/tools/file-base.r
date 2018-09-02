@@ -100,6 +100,7 @@ core: [
 	t-vector.c
 	t-word.c
 	u-aes.c
+	u-bigint.c ;needed for RSA which is needed in TLS protocol (HTTPS)
 	u-bmp.c
 	u-compress.c
 	u-dialect.c
@@ -109,6 +110,7 @@ core: [
 	u-parse.c
 	u-png.c
 	u-rc4.c
+	u-rsa.c    ;needed in TLS protocol (HTTPS)
 	u-sha1.c
 	u-sha256.c
 	u-zlib.c

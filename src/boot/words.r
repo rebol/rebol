@@ -203,3 +203,6 @@ stack-size
 ;call/info
 id
 exit-code
+
+pub-exp
+priv-exp
