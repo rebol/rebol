@@ -879,8 +879,11 @@
             cp++;
             if (IS_LEX_AT_LEAST_NUMBER(*cp)) goto num;
             if (IS_LEX_SPECIAL(*cp)) {
-                if ((GET_LEX_VALUE(*cp)) >= LEX_SPECIAL_PERIOD) goto next_ls;
-/*              if (*cp == '#') goto hex; */
+                if (*cp == '#') {
+					scan_state->end = cp;
+					return TOKEN_WORD;
+				}
+				if ((GET_LEX_VALUE(*cp)) >= LEX_SPECIAL_PERIOD) goto next_ls;
                 if (*cp == '+' || *cp == '-') {
                     type = TOKEN_WORD;
                     goto scanword;
