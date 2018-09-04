@@ -20,6 +20,10 @@ do %../quick-test.r3
 	;above is now consistent with:
 	--test-- "sign-before-string"	--assert  [- "a"] = (load {-"a"})
 	--test-- "sign-before-block"	--assert  [- []] = (load {-[]})
+	;and can be used correctly in charsets
+	--test-- "lexer-charset-with-tight-range"
+		--assert "make bitset! #{0000000000000000000000007FFFFFE0}" = mold charset [#"a"-#"z"] ;this failed before fix of #2319
+		--assert "make bitset! #{0000000000000000000000007FFFFFE0}" = mold charset [#"a" - #"z"]
 
 ===end-group===
 
