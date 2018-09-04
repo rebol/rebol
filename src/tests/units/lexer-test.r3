@@ -16,6 +16,7 @@ do %../quick-test.r3
 	--test-- "sign-before-pound-3"	--assert  [- #{00}]   = try [load {-#{00}}]
 	--test-- "sign-before-pound-4"	--assert  [- #[none]] = try [load {-#[none]}]
 	--test-- "sign-before-pound-5"	--assert  word! = try [type? first load {+#"a"}]
+	--test-- "sign-before-pound-6"	--assert  [- #hhh] = try [load {-#hhh}]
 	;above is now consistent with:
 	--test-- "sign-before-string"	--assert  [- "a"] = (load {-"a"})
 	--test-- "sign-before-block"	--assert  [- []] = (load {-[]})
