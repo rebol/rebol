@@ -345,6 +345,12 @@ create:
 		SET_INTEGER(D_RET, len);
 		break;
 
+	case A_TAILQ:
+		if(IS_BLOCK(state)) {
+			return (VAL_BLK_LEN(state) > 0) ? R_FALSE: R_TRUE;
+		}
+		Trap_Port(RE_NOT_OPEN, port, 0);
+
 	default:
 		Trap_Action(REB_PORT, action);
 	}
