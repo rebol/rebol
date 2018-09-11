@@ -3,9 +3,8 @@ Rebol [
 	Author:  "Oldes, Peter W A Wood"
 	File: 	 %rsa-test.red
 	Tabs:	 4
+	Needs:   [%../quick-test-module.r3]
 ]
-
-do  %../quick-test.r3
 
 ~~~start-file~~~ "RSA"
 

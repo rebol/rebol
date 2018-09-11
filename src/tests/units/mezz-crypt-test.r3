@@ -3,9 +3,8 @@ Rebol [
 	Author:  "Olds"
 	File: 	 %lexer-test.red
 	Tabs:	 4
+	Needs:   [%../quick-test-module.r3]
 ]
-
-do %../quick-test.r3
 
 ~~~start-file~~~ "Crypt mezzanine"
 
@@ -137,7 +136,7 @@ Smluak1aZIttePeTAHeJJs8izNJ5aR3Wcd3A5gLztQ==
 -----END ATTRIBUTE CERTIFICATE-----}
 	--assert block? Load-PKIX pkxi
 	--assert binary? Load-PKIX/binary pkxi
-	
+
 
 ;-- SSH public keys (not real PKIX, but can be handled)
 ;@@ https://tools.ietf.org/html/rfc4716#section-3.6

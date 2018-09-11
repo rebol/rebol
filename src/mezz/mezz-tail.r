@@ -23,4 +23,18 @@ func: funco [
 ]
 
 ; Quick test runner (temporary):
-t: does [do %test.r]
+run-tests: qt: function["Runs quick test"][
+	if any [
+		exists? script: ~/../src/tests/run-tests.r3
+		exists? script: ~/../../src/tests/run-tests.r3
+		exists? script: ~/../r3/src/tests/run-tests.r3
+		exists? script: ~/../../r3/src/tests/run-tests.r3
+	][	do script ]
+]
+
+t: function["Test script shortcut"][
+	if any [
+		exists? script: ~/../test.r3
+		exists? script: ~/../../test.r3
+	][	do script ]
+]

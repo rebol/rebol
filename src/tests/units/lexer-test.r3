@@ -3,9 +3,8 @@ Rebol [
 	Author:  "Olds"
 	File: 	 %lexer-test.red
 	Tabs:	 4
+	Needs:   [%../quick-test-module.r3]
 ]
-
-do %../quick-test.r3
 
 ~~~start-file~~~ "Lexer"
 
