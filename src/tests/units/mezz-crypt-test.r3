@@ -14,7 +14,7 @@ Rebol [
 	;@@ https://tools.ietf.org/html/rfc7468#section-5
 	;this one also with possible explanatory text
 	;@@ https://tools.ietf.org/html/rfc7468#section-5.2
-	pkxi:
+	pkix:
 {Subject: CN=Atlantis
 Issuer: CN=Atlantis
 Validity: from 7/9/2012 3:10:38 AM UTC to 7/9/2013 3:10:37 AM UTC
@@ -29,12 +29,12 @@ LjAsgBA0jOnSSuIHYmnVryHAdywMoRUwEzERMA8GA1UEAxMIQXRsYW50aXOCASow
 CQYFKw4DAh0FAANBAKi6HRBaNEL5R0n56nvfclQNaXiDT174uf+lojzA4lhVInc0
 ILwpnZ1izL4MlI9eCSHhVQBHEp2uQdXJB+d5Byg=
 -----END CERTIFICATE-----}
-	--assert block? Load-PKIX pkxi
-	--assert binary? Load-PKIX/binary pkxi
+	--assert block? Load-PKIX pkix
+	--assert binary? Load-PKIX/binary pkix
 
 --test-- "Textual Encoding of Certificate Revocation Lists"
 	;@@ https://tools.ietf.org/html/rfc7468#section-6
-	pkxi:
+	pkix:
 {-----BEGIN X509 CRL-----
 MIIB9DCCAV8CAQEwCwYJKoZIhvcNAQEFMIIBCDEXMBUGA1UEChMOVmVyaVNpZ24s
 IEluYy4xHzAdBgNVBAsTFlZlcmlTaWduIFRydXN0IE5ldHdvcmsxRjBEBgNVBAsT
@@ -48,12 +48,12 @@ Nbrq1Dn5IKL8nXLgPGcHv1I/le1MNo9t1ohGQxB5HnFUkRPAY82fR6Epor4aHgVy
 b+5y+neKN9Kn2mPF4iiun+a4o26CjJ0pArojCL1p8T0yyi9Xxvyc/ezaZ98HiIyP
 c3DGMNR+oUmSjKZ0jIhAYmeLxaPHfQwR
 -----END X509 CRL-----}
-	--assert block? Load-PKIX pkxi
-	--assert binary? Load-PKIX/binary pkxi
+	--assert block? Load-PKIX pkix
+	--assert binary? Load-PKIX/binary pkix
 
 --test-- "Textual Encoding of PKCS #10 Certification Request Syntax"
 	;@@ https://tools.ietf.org/html/rfc7468#section-7
-	pkxi:
+	pkix:
 {-----BEGIN CERTIFICATE REQUEST-----
 MIIBWDCCAQcCAQAwTjELMAkGA1UEBhMCU0UxJzAlBgNVBAoTHlNpbW9uIEpvc2Vm
 c3NvbiBEYXRha29uc3VsdCBBQjEWMBQGA1UEAxMNam9zZWZzc29uLm9yZzBOMBAG
@@ -64,12 +64,12 @@ BAUDAwegADAWBgNVHSUBAf8EDDAKBggrBgEFBQcDATAKBggqhkjOPQQDAgM/ADA8
 AhxBvfhxPFfbBbsE1NoFmCUczOFApEuQVUw3ZP69AhwWXk3dgSUsKnuwL5g/ftAY
 dEQc8B8jAcnuOrfU
 -----END CERTIFICATE REQUEST-----}
-	--assert block? Load-PKIX pkxi
-	--assert binary? Load-PKIX/binary pkxi
+	--assert block? Load-PKIX pkix
+	--assert binary? Load-PKIX/binary pkix
 
 --test-- "Textual Encoding of PKCS #7 Cryptographic Message Syntax"
 	;@@ https://tools.ietf.org/html/rfc7468#section-8
-	pkxi:
+	pkix:
 {-----BEGIN PKCS7-----
 MIHjBgsqhkiG9w0BCRABF6CB0zCB0AIBADFho18CAQCgGwYJKoZIhvcNAQUMMA4E
 CLfrI6dr0gUWAgITiDAjBgsqhkiG9w0BCRADCTAUBggqhkiG9w0DBwQIZpECRWtz
@@ -77,35 +77,35 @@ u5kEGDCjerXY8odQ7EEEromZJvAurk/j81IrozBSBgkqhkiG9w0BBwEwMwYLKoZI
 hvcNAQkQAw8wJDAUBggqhkiG9w0DBwQI0tCBcU09nxEwDAYIKwYBBQUIAQIFAIAQ
 OsYGYUFdAH0RNc1p4VbKEAQUM2Xo8PMHBoYdqEcsbTodlCFAZH4=
 -----END PKCS7-----}
-	--assert block? Load-PKIX pkxi
-	--assert binary? Load-PKIX/binary pkxi
+	--assert block? Load-PKIX pkix
+	--assert binary? Load-PKIX/binary pkix
 
 --test-- "Textual Encoding of Cryptographic Message Syntax"
 	;@@ https://tools.ietf.org/html/rfc7468#section-9
-	pkxi:
+	pkix:
 {-----BEGIN CMS-----
 MIGDBgsqhkiG9w0BCRABCaB0MHICAQAwDQYLKoZIhvcNAQkQAwgwXgYJKoZIhvcN
 AQcBoFEET3icc87PK0nNK9ENqSxItVIoSa0o0S/ISczMs1ZIzkgsKk4tsQ0N1nUM
 dvb05OXi5XLPLEtViMwvLVLwSE0sKlFIVHAqSk3MBkkBAJv0Fx0=
 -----END CMS-----}
-	--assert block? Load-PKIX pkxi
-	--assert binary? Load-PKIX/binary pkxi
+	--assert block? Load-PKIX pkix
+	--assert binary? Load-PKIX/binary pkix
 
 --test-- "One Asymmetric Key and the Textual Encoding of PKCS #8 Private Key Info"
 	;@@ https://tools.ietf.org/html/rfc7468#section-10
-	pkxi:
+	pkix:
 {-----BEGIN PRIVATE KEY-----
 MIGEAgEAMBAGByqGSM49AgEGBSuBBAAKBG0wawIBAQQgVcB/UNPxalR9zDYAjQIf
 jojUDiQuGnSJrFEEzZPT/92hRANCAASc7UJtgnF/abqWM60T3XNJEzBv5ez9TdwK
 H0M6xpM2q+53wmsN/eYLdgtjgBd3DBmHtPilCkiFICXyaA8z9LkJ
 -----END PRIVATE KEY-----}
-	--assert block? Load-PKIX pkxi
-	--assert binary? Load-PKIX/binary pkxi
+	--assert block? Load-PKIX pkix
+	--assert binary? Load-PKIX/binary pkix
 
 
 --test-- "Textual Encoding of PKCS #8 Encrypted Private Key Info"
 	;@@ https://tools.ietf.org/html/rfc7468#section-11
-	pkxi:
+	pkix:
 {-----BEGIN ENCRYPTED PRIVATE KEY-----
 MIHNMEAGCSqGSIb3DQEFDTAzMBsGCSqGSIb3DQEFDDAOBAghhICA6T/51QICCAAw
 FAYIKoZIhvcNAwcECBCxDgvI59i9BIGIY3CAqlMNBgaSI5QiiWVNJ3IpfLnEiEsW
@@ -113,13 +113,13 @@ Z0JIoHyRmKK/+cr9QPLnzxImm0TR9s4JrG3CilzTWvb0jIvbG3hu0zyFPraoMkap
 8eRzWsIvC5SVel+CSjoS2mVS87cyjlD+txrmrXOVYDE+eTgMLbrLmsWh3QkCTRtF
 QC7k0NNzUHTV9yGDwfqMbw==
 -----END ENCRYPTED PRIVATE KEY-----}
-	--assert block? Load-PKIX pkxi
-	--assert binary? Load-PKIX/binary pkxi
+	--assert block? Load-PKIX pkix
+	--assert binary? Load-PKIX/binary pkix
 
 
 --test-- "Textual Encoding of Attribute Certificates"
 	;@@ https://tools.ietf.org/html/rfc7468#section-12
-	pkxi:
+	pkix:
 {-----BEGIN ATTRIBUTE CERTIFICATE-----
 MIICKzCCAZQCAQEwgZeggZQwgYmkgYYwgYMxCzAJBgNVBAYTAlVTMREwDwYDVQQI
 DAhOZXcgWW9yazEUMBIGA1UEBwwLU3RvbnkgQnJvb2sxDzANBgNVBAoMBkNTRTU5
@@ -134,15 +134,15 @@ M9axFPXXozEFcer06bj9MCBBCQLtAM7ZXcZjcxyva7xCBDmtZXPYUluHf5OcWPJz
 5XPus/xS9wBgtlM3fldIKNyNO8RsMp6Ocx+PGlICc7zpZiGmCYLl64lAEGPO/bsw
 Smluak1aZIttePeTAHeJJs8izNJ5aR3Wcd3A5gLztQ==
 -----END ATTRIBUTE CERTIFICATE-----}
-	--assert block? Load-PKIX pkxi
-	--assert binary? Load-PKIX/binary pkxi
+	--assert block? Load-PKIX pkix
+	--assert binary? Load-PKIX/binary pkix
 
 
 ;-- SSH public keys (not real PKIX, but can be handled)
 ;@@ https://tools.ietf.org/html/rfc4716#section-3.6
 
 --test-- "SSH-public-key-1"	
-	pkxi:
+	pkix:
 {---- BEGIN SSH2 PUBLIC KEY ----
 Comment: "1024-bit RSA, converted from OpenSSH by me@example.com"
 x-command: /home/me/bin/lock-in-guest.sh
@@ -151,11 +151,11 @@ YYFw8pfGesIFoEuVth4HKyF8k1y4mRUnYHP1XNMNMJl1JcEArC2asV8sHf6zSPVffozZ
 5TT4SfsUu/iKy9lUcCfXzwre4WWZSXXcPff+EHtWshahu3WzBdnGxm5Xoi89zcE=
 ---- END SSH2 PUBLIC KEY ----}
 
-	--assert block? Load-PKIX pkxi
-	--assert binary? Load-PKIX/binary pkxi
+	--assert block? Load-PKIX pkix
+	--assert binary? Load-PKIX/binary pkix
 
 --test-- "SSH-public-key-2"	
-	pkxi:
+	pkix:
 {---- BEGIN SSH2 PUBLIC KEY ----
 Comment: This is my public key for use on \
 servers which I don't like.
@@ -170,11 +170,11 @@ n24VYtYtsMu74qXviYjziVucWKjjKEb11juqnF0GDlB3VVmxHLmxnAz643WK42Z7dLM5
 sY29ouezv4Xz2PuMch5VGPP+CDqzCM4loWgV
 ---- END SSH2 PUBLIC KEY ----}
 
-	--assert block? Load-PKIX pkxi
-	--assert binary? Load-PKIX/binary pkxi
+	--assert block? Load-PKIX pkix
+	--assert binary? Load-PKIX/binary pkix
 
 --test-- "SSH-public-key-3"	
-	pkxi:
+	pkix:
 {---- BEGIN SSH2 PUBLIC KEY ----
 Comment: DSA Public Key for use with MyIsp
 AAAAB3NzaC1kc3MAAACBAPY8ZOHY2yFSJA6XYC9HRwNHxaehvx5wOJ0rzZdzoSOXxbET
@@ -187,8 +187,8 @@ AN7CY+KKv1gHpRzFwdQm7HK9bb1LAo2KwaoXnadFgeptNBQeSXG1vO+JsvphVMBJc9HS
 n24VYtYtsMu74qXviYjziVucWKjjKEb11juqnF0GDlB3VVmxHLmxnAz643WK42Z7dLM5
 sY29ouezv4Xz2PuMch5VGPP+CDqzCM4loWgV
 ---- END SSH2 PUBLIC KEY ----}
-	--assert block? Load-PKIX pkxi
-	--assert binary? Load-PKIX/binary pkxi
+	--assert block? Load-PKIX pkix
+	--assert binary? Load-PKIX/binary pkix
 
 
 ===end-group===
