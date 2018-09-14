@@ -29,6 +29,7 @@ cd: func [
 		word! path! [
 			change-dir either all [
 				not error? set/any 'val try [get :path]
+				not function? :val
 				val
 			][  val ][ to-file path ]
 		]
