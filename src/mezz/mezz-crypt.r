@@ -80,7 +80,7 @@ import module [
 		]
 	]
 
-	register-codec object [
+	register-codec [
 		name:  'PKIX
 		title: "Public-Key Infrastructure (X.509)"
 		suffixes: [%.pem %.ssh]
@@ -99,5 +99,32 @@ import module [
 			parse/all data [rl_label to end]
     	]
     ]
+
+    register-codec [
+		name: 'UTC-time
+		title: "UTC time as used in ASN.1 data structures (BER/DER)"
+		decode: function [
+			"Converts DER/BER UTC-time data to Rebol date! value"
+			utc [binary! string!]
+		][
+			ch_digits: charset [#"0" - #"9"]
+			parse/all utc [
+				insert "20"
+				  2 ch_digits   insert #"-"
+				  2 ch_digits   insert #"-"
+				  2 ch_digits   insert #"/"
+				  2 ch_digits   insert #":"
+				  2 ch_digits   insert #":" 
+				[ 2 ch_digits | insert #"0"] ;seconds
+				[
+					remove #"Z" end
+					|
+					[#"-" | #"+"]
+					2 ch_digits insert #":" 
+				]
+			]
+			try [load utc]
+		]
+	]
 
 ] ;- end of module

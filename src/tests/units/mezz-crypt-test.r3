@@ -201,4 +201,16 @@ sY29ouezv4Xz2PuMch5VGPP+CDqzCM4loWgV
 
 ===end-group===
 
+===start-group=== "UTC-time codec"
+
+--test-- "Basic UTC-time decoding"
+	;@@ http://luca.ntop.org/Teaching/Appunti/asn1.html#5.17
+	
+	--assert "9-Jul-2012/3:10:38" = mold decode 'utc-time "120709031038Z"
+	--assert "9-Jul-2012/3:10:38" = mold decode 'utc-time #{3132303730393033313033385A}
+	--assert "9-Jul-2012/3:10" = mold decode 'utc-time "1207090310Z"
+	--assert "9-Jul-2012/3:10+2:00" = mold decode 'utc-time "1207090310+0200"
+
+===end-group===
+
 ~~~end-file~~~
