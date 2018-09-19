@@ -19,9 +19,10 @@ REBOL [
 
 register-codec: function [
 	{Registers non-native codec to system/codecs and it's suffixes into system/options/file-types}
-	codec [object!] "Codec to register (should be based on system/standard/codec template)"
+	codec [block! object!] "Codec to register (should be based on system/standard/codec template)"
 	/local name suffixes
 ][
+	if block? codec [codec: make object! codec]
 	if not word? name: try [codec/name][
 		cause-error 'Script 'wrong-type 'codec/name
 	]
