@@ -150,6 +150,16 @@ script: context [
 
 standard: context [
 
+	codec: context [
+		name:       ;word!
+		title:      ;string!
+		suffixes:   ;block!
+		decode:     ;[any-function! none!]
+		encode:     ;[any-function! none!]
+		identify:   ;[any-function! none!]
+			none
+	]
+
 	error: context [ ; Template used for all errors:
 		code: 0
 		type: 'user
