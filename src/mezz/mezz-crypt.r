@@ -79,4 +79,25 @@ import module [
 			]
 		]
 	]
+
+	register-codec object [
+		name:  'PKIX
+		title: "Public-Key Infrastructure (X.509)"
+		suffixes: [%.pem %.ssh]
+		decode: function[data [string! binary!]][
+			load-PKIX data
+		]
+		identify: function[data [string! binary!]][
+			rl_label: [
+				[
+					"---- BEGIN " any ch_label "----" |
+					"-----BEGIN " any ch_label "-----"
+				] opt cr lf
+				|
+				some ch_pretext rl_label
+			]
+			parse/all data [rl_label to end]
+    	]
+    ]
+
 ] ;- end of module

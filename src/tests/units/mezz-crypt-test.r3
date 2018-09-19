@@ -190,6 +190,14 @@ sY29ouezv4Xz2PuMch5VGPP+CDqzCM4loWgV
 	--assert block? Load-PKIX pkix
 	--assert binary? Load-PKIX/binary pkix
 
+;-- Using codecs
+
+--test-- "Load PKIX data from file using PKIX codec"
+
+	--assert block? pkix: load %units/files/dhparam2048.pem
+	--assert "DH PARAMETERS" = pkix/label
+	--assert binary? pkix/binary
+
 
 ===end-group===
 
