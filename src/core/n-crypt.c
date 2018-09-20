@@ -165,7 +165,7 @@ const REBYTE  dh_name[] = "DH-Key";
 		if(ctx == NULL) Trap0(RE_INVALID_HANDLE);
 
 		if(IS_NONE(val_data)) {
-			puts("releasing AES ctx");
+			//puts("releasing AES ctx");
 			Free_Series(ctx);
 			SET_HANDLE(val_ctx, NULL);
 			return R_TRUE;
@@ -390,7 +390,6 @@ const REBYTE  dh_name[] = "DH-Key";
 	
 	DH_CTX *dh;
 	REBYTE *bin;
-	REBCNT  len;
 	REBVAL *ret;
 
 	REBCNT  len_g = BIN_LEN(g);
@@ -409,7 +408,7 @@ const REBYTE  dh_name[] = "DH-Key";
 		*D_RET = *D_ARG(4);
 		dh = (DH_CTX*)VAL_HANDLE(val_dh);
 		if(dh == NULL) goto new_dh_handle;
-		if(dh->len_data < buffer_len) {
+		if((REBCNT)dh->len_data < buffer_len) {
 			//needs new allocation for keys
 			if(dh->data != NULL) FREE_MEM(dh->data);
 		} else {
@@ -503,12 +502,12 @@ new_dh_handle:
 	}
 
 	if(ref_secret) {
-		bin = BIN_DATA(VAL_SERIES(pub_key)); //@@ use VAL_BIN_AT instead?
-		len = BIN_LEN(VAL_SERIES(pub_key));
+		bin = VAL_SERIES(pub_key); //@@ use VAL_BIN_AT instead?
+		len = BIN_LEN(bin);
 		if(len != dh->len) {
 			return R_NONE; // throw an error?
 		}
-		COPY_MEM(dh->gy, bin, len);
+		COPY_MEM(dh->gy, BIN_DATA(bin), len);
 
 		DH_compute_key(dh);
 
