@@ -32,10 +32,12 @@
 #include "sys-rc4.h"
 #include "sys-aes.h"
 #include "sys-rsa.h"
+#include "sys-dh.h"
 
 const REBYTE rc4_name[] = "RC4-context"; //Used as a context handle name
 const REBYTE aes_name[] = "AES-context";
 const REBYTE rsa_name[] = "RSA-context";
+const REBYTE  dh_name[] = "DH-Key";
 
 /***********************************************************************
 **
@@ -101,7 +103,7 @@ const REBYTE rsa_name[] = "RSA-context";
 //		/decrypt            "Use the crypt-key for decryption (default is to encrypt)"
 //		/stream
 //			ctx [handle!]   "Stream cipher context."
-//			data [binary!]  "Data to encrypt/decrypt. Or NONE to close the cipher stream."
+//			data [binary! none!]  "Data to encrypt/decrypt. Or NONE to close the cipher stream."
 //  ]
 ***********************************************************************/
 {
@@ -160,6 +162,14 @@ const REBYTE rsa_name[] = "RSA-context";
     	}
 
     	ctx = (REBSER*)VAL_HANDLE(val_ctx);
+		if(ctx == NULL) Trap0(RE_INVALID_HANDLE);
+
+		if(IS_NONE(val_data)) {
+			puts("releasing AES ctx");
+			Free_Series(ctx);
+			SET_HANDLE(val_ctx, NULL);
+			return R_TRUE;
+		}
 
     	len = VAL_LEN(val_data);
     	if (len == 0) return R_NONE;
@@ -355,6 +365,165 @@ const REBYTE rsa_name[] = "RSA-context";
 	SET_BINARY(ret, output);
 	VAL_TAIL(ret) = outBytes;
 
+	return R_RET;
+
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(dh_init)
+/*
+//  dh-init: native [
+//		"Generates a new Diffie-Hellman private/public key pair"
+//		g [binary!] "Generator"
+//		p [binary!] "Field prime"
+//		/into
+//			dh-key [handle!] "Existing DH key handle"
+//  ]
+***********************************************************************/
+{
+	REBSER *g = VAL_SERIES(D_ARG(1));
+	REBSER *p = VAL_SERIES(D_ARG(2));
+	REBOOL  ref_into =     D_REF(3);
+	REBVAL *val_dh   =     D_ARG(4);
+	
+	DH_CTX *dh;
+	REBYTE *bin;
+	REBCNT  len;
+	REBVAL *ret;
+
+	REBCNT  len_g = BIN_LEN(g);
+	REBCNT  len_p = BIN_LEN(p);
+	REBYTE *buffer = NULL;
+
+	// allocating buffers for all keys as a one blob
+	REBCNT  buffer_len = BIN_LEN(g) + (5 * BIN_LEN(p));
+	
+	if(ref_into) {
+		if(!IS_HANDLE(val_dh) || VAL_HANDLE_NAME(val_dh) != dh_name) {
+			//error!
+			return R_NONE;
+		}
+		ret = val_dh;
+		*D_RET = *D_ARG(4);
+		dh = (DH_CTX*)VAL_HANDLE(val_dh);
+		if(dh == NULL) goto new_dh_handle;
+		if(dh->len_data < buffer_len) {
+			//needs new allocation for keys
+			if(dh->data != NULL) FREE_MEM(dh->data);
+		} else {
+			//skip the buffer allocation
+			buffer = dh->data;
+		}
+	} else {
+		ret = D_RET;
+new_dh_handle:
+		dh = (DH_CTX*)MAKE_NEW(DH_CTX);
+		SET_HANDLE(ret, dh);
+		VAL_HANDLE_NAME(ret) = dh_name;
+	}
+	
+	if(buffer == NULL) {
+		buffer = MAKE_MEM(buffer_len);
+		dh->len_data = buffer_len;
+	}
+
+	CLEAR(buffer, dh->len_data);
+
+	bin = BIN_DATA(g); //@@ use VAL_BIN_AT instead?
+	dh->len_g = len_g;
+	dh->g = buffer;
+	COPY_MEM(dh->g, bin, len_g);
+	
+	buffer += len_g;
+
+	bin = BIN_DATA(p);
+	dh->len = len_p;
+	dh->p = buffer;
+	COPY_MEM(dh->p, bin, len_p);
+	
+	buffer += len_p;
+	
+	dh->x  = buffer; //private key
+	buffer += len_p;
+	dh->gx = buffer; //public key (self)
+	buffer += len_p;
+	dh->gy = buffer; //public key (peer)
+	buffer += len_p;
+	dh->k  = buffer; //negotiated key
+	
+	DH_generate_key(dh);
+	
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(dh)
+/*
+//  dh: native [
+//		"Diffie-Hellman key exchange"
+//		dh-key [handle!] "DH key created using `dh-init` function"
+//		/release "Releases internal DH key resources"
+//		/public  "Returns public key as a binary"
+//		/secret  "Computes secret result using peer's public key"
+//			public-key [binary!] "Peer's public key"
+//  ]
+***********************************************************************/
+{
+	REBVAL *val_dh      = D_ARG(1);
+	REBOOL  ref_release = D_REF(2);
+	REBOOL  ref_public  = D_REF(3);
+	REBOOL  ref_secret  = D_REF(4);
+	REBVAL *pub_key     = D_ARG(5);
+
+	REBVAL *ret = D_RET;
+	REBSER *bin;
+	REBCNT len;
+
+	if (ref_public && ref_secret) {
+		// only one can be used
+		Trap0(RE_BAD_REFINES);
+	}
+
+	if (VAL_HANDLE_NAME(val_dh) != dh_name || VAL_HANDLE(val_dh) == NULL) {
+		Trap0(RE_INVALID_HANDLE);
+	}
+
+	DH_CTX *dh = (DH_CTX*)VAL_HANDLE(val_dh);
+	
+	if (dh->g == NULL) return R_NONE; //or error?
+
+	if(ref_public) {
+		bin = Make_Binary(dh->len);
+		COPY_MEM(BIN_DATA(bin), dh->gx, dh->len);
+		SET_BINARY(ret, bin);
+		BIN_LEN(bin) = dh->len;
+	}
+
+	if(ref_secret) {
+		bin = BIN_DATA(VAL_SERIES(pub_key)); //@@ use VAL_BIN_AT instead?
+		len = BIN_LEN(VAL_SERIES(pub_key));
+		if(len != dh->len) {
+			return R_NONE; // throw an error?
+		}
+		COPY_MEM(dh->gy, bin, len);
+
+		DH_compute_key(dh);
+
+		bin = Make_Binary(len);
+		COPY_MEM(BIN_DATA(bin), dh->k, len);
+		SET_BINARY(ret, bin);
+		BIN_LEN(bin) = len;
+	}
+
+	if(ref_release) {
+		if(dh->g != NULL) FREE_MEM(dh->data);
+		CLEARS(dh);
+		if(!ref_public && !ref_secret) return R_ARG1;
+	}
+	
 	return R_RET;
 
 }

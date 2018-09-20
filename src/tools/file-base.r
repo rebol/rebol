@@ -103,6 +103,7 @@ core: [
 	u-bigint.c ;needed for RSA which is needed in TLS protocol (HTTPS)
 	u-bmp.c
 	u-compress.c
+	u-dh.c
 	u-dialect.c
 	u-gif.c
 	u-jpg.c
