@@ -516,6 +516,7 @@ clear_header:
 	REBCNT n;
 
 	PG_Reb_Stats->Series_Freed++;
+	PG_Reb_Stats->Series_Memory -= SERIES_TOTAL(series);
 
 	// Remove series from expansion list, if found:
 	for (n = 1; n < MAX_EXPAND_LIST; n++) {
