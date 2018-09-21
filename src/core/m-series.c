@@ -27,6 +27,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include "sys-int-funcs.h"
 
 
 /***********************************************************************
@@ -112,13 +113,9 @@
 #ifdef DEBUGGING
 		Print_Num("Expand:", series->tail + delta + 1);
 #endif
-		new_size = series->tail + delta + x;
-		if (new_size < series->tail
-			|| new_size < delta
-			|| new_size < x
-			|| new_size < series->tail + delta
-			|| new_size < series->tail + x
-			|| new_size < delta + x) {
+		/* new_size = series->tail + delta + x with overflow checking */
+		if (REB_U32_ADD_OF(series->tail, delta, &new_size)
+			|| REB_U32_ADD_OF(new_size, x, &new_size)) {
 			Trap0(RE_PAST_END);
 		}
 
