@@ -475,7 +475,8 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	// Verify that size matches pool size:
 	if (pool_num < SERIES_POOL) {
-		ASSERT(Mem_Pools[pool_num].wide == size, RP_FREE_NODE_SIZE);
+		/* size < wide when "wide" is not a multiple of element size */
+		ASSERT(Mem_Pools[pool_num].wide >= size, RP_FREE_NODE_SIZE);
 	}
 	MUNG_CHECK(pool_num,node, size);
 
