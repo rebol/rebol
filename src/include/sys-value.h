@@ -330,6 +330,7 @@ typedef struct Reb_Tuple {
 			REBCNT wide:16;
 			REBCNT high:16;
 		} area;
+		REBUPT all; /* for copying, must have the same size as the union */
 	};
 #ifdef SERIES_LABELS
 	REBYTE  *label;		// identify the series
@@ -400,7 +401,7 @@ enum {
 	SER_MARK = 1,		// Series was found during GC mark scan.
 	SER_KEEP = 1<<1,	// Series is permanent, do not GC it.
 	SER_LOCK = 1<<2,	// Series is locked, do not expand it
-	SER_EXT  = 1<<3,	// Series is external (library), do not GC it.
+	SER_EXT  = 1<<3,	// Series data is external (library), do not GC it.
 	SER_FREE = 1<<4,	// mark series as removed
 	SER_BARE = 1<<5,	// Series has no links to GC-able values
 	SER_PROT = 1<<6,	// Series is protected from modification
@@ -411,11 +412,12 @@ enum {
 #define SERIES_CLR_FLAG(s, f) (SERIES_FLAGS(s) &= ~((f) << 8))
 #define SERIES_GET_FLAG(s, f) (SERIES_FLAGS(s) &  ((f) << 8))
 
-#define	IS_FREEABLE(s)    !SERIES_GET_FLAG(s, SER_MARK|SER_KEEP|SER_EXT|SER_FREE)
+#define	IS_FREEABLE(s)    !SERIES_GET_FLAG(s, SER_MARK|SER_KEEP|SER_FREE)
 #define MARK_SERIES(s)    SERIES_SET_FLAG(s, SER_MARK)
 #define UNMARK_SERIES(s)  SERIES_CLR_FLAG(s, SER_MARK)
 #define IS_MARK_SERIES(s) SERIES_GET_FLAG(s, SER_MARK)
 #define KEEP_SERIES(s,l)  do {SERIES_SET_FLAG(s, SER_KEEP); LABEL_SERIES(s,l);} while(0)
+#define EXT_SERIES(s)     SERIES_SET_FLAG(s, SER_EXT)
 #define IS_EXT_SERIES(s)  SERIES_GET_FLAG(s, SER_EXT)
 #define LOCK_SERIES(s)    SERIES_SET_FLAG(s, SER_LOCK)
 #define IS_LOCK_SERIES(s) SERIES_GET_FLAG(s, SER_LOCK)
