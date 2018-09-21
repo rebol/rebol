@@ -351,13 +351,28 @@
 			CLEAR(series->data, SERIES_WIDE(series)); // terminate
 		} else {
 			// Add bias to head:
-			SERIES_ADD_BIAS(series, len);
-			SERIES_REST(series) -= len;
-			series->data += SERIES_WIDE(series) * len;
-			if (NZ(start = SERIES_BIAS(series))) {
-				// If more than half biased:
-				if (start >= MAX_SERIES_BIAS || start > SERIES_REST(series))
-					Reset_Bias(series);
+			REBCNT bias = SERIES_BIAS(series);
+			if (REB_U32_ADD_OF(bias, len, &bias)) {
+				Trap0(RE_OVERFLOW);
+			}
+			if (bias > 0xffff) { //bias is 16-bit, so a simple SERIES_ADD_BIAS could overflow it
+				REBYTE *data = series->data;
+
+				data += SERIES_WIDE(series) * len;
+				series->data -= SERIES_WIDE(series) * SERIES_BIAS(series);
+				SERIES_REST(series) += bias;
+				SERIES_SET_BIAS(series, 0);
+
+				memmove(series->data, data, SERIES_USED(series));
+			} else {
+				SERIES_SET_BIAS(series, bias);
+				SERIES_REST(series) -= len;
+				series->data += SERIES_WIDE(series) * len;
+				if (NZ(start = SERIES_BIAS(series))) {
+					// If more than half biased:
+					if (start >= MAX_SERIES_BIAS || start > SERIES_REST(series))
+						Reset_Bias(series);
+				}
 			}
 		}
 		return;
