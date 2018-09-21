@@ -376,6 +376,8 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	series = (REBSER *)Make_Node(SERIES_POOL);
 	length *= wide;
+	ASSERT(length != 0, RP_BAD_SERIES);
+
 	pool_num = FIND_POOL(length);
 	if (pool_num < SYSTEM_POOL) {
 		pool = &Mem_Pools[pool_num];
