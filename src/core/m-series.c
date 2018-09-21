@@ -60,7 +60,7 @@
 ***********************************************************************/
 {
 	REBCNT start;
-	REBCNT size;
+	REBCNT size, new_size;
 	REBCNT extra;
 	REBCNT wide;
 	REBSER *newser, swap;
@@ -112,7 +112,17 @@
 #ifdef DEBUGGING
 		Print_Num("Expand:", series->tail + delta + 1);
 #endif
-		newser = Make_Series(series->tail + delta + x, wide, TRUE);
+		new_size = series->tail + delta + x;
+		if (new_size < series->tail
+			|| new_size < delta
+			|| new_size < x
+			|| new_size < series->tail + delta
+			|| new_size < series->tail + x
+			|| new_size < delta + x) {
+			Trap0(RE_PAST_END);
+		}
+
+		newser = Make_Series(new_size, wide, TRUE);
 		// If necessary, add series to the recently expanded list:
 		if (Prior_Expand[n] != series) {
 			n = (REBUPT)(Prior_Expand[0]) + 1;
