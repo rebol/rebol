@@ -522,7 +522,9 @@ clear_header:
 		if (Prior_Expand[n] == series) Prior_Expand[n] = 0;
 	}
 
-	Free_Series_Data(series, TRUE);
+	if (!IS_EXT_SERIES(series)) {
+		Free_Series_Data(series, TRUE);
+	}
 	series->info = 0; // includes width
 	//series->data = BAD_MEM_PTR;
 	//series->tail = 0xBAD2BAD2;
