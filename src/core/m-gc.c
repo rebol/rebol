@@ -307,6 +307,7 @@ mark_obj:
 		case REB_CLOSURE:
 		case REB_REBCODE:
 			CHECK_MARK(VAL_FUNC_BODY(val), depth);
+			/* no break */
 		case REB_NATIVE:
 		case REB_ACTION:
 		case REB_OP:
