@@ -701,6 +701,51 @@ crash:
 	}
 }
 
+/***********************************************************************
+**
+*/	void Dump_Series_In_Pool(int pool_id)
+/*
+**		Dump all series in the pool @pool_id, -1 for all pools
+**
+***********************************************************************/
+{
+	REBSEG	*seg;
+	REBSER *series;
+	REBCNT count;
+	REBCNT n = 0;
+
+	for (seg = Mem_Pools[SERIES_POOL].segs; seg; seg = seg->next) {
+		series = (REBSER *) (seg + 1);
+		for (count = Mem_Pools[SERIES_POOL].units; count > 0; count--) {
+			SKIP_WALL(series);
+			if (!SERIES_FREED(series)) {
+				if (pool_id < 0 || FIND_POOL(SERIES_TOTAL(series)) == pool_id) {
+					Debug_Fmt(
+							  Str_Dump[0], //"%s Series %x %s: Wide: %2d Size: %6d - Bias: %d Tail: %d Rest: %d Flags: %x"
+							  "Dump",
+							  series,
+							  (SERIES_LABEL(series) ? SERIES_LABEL(series) : "-"),
+							  SERIES_WIDE(series),
+							  SERIES_TOTAL(series),
+							  SERIES_BIAS(series),
+							  SERIES_TAIL(series),
+							  SERIES_REST(series),
+							  SERIES_FLAGS(series)
+							 );
+					//Dump_Series(series, "Dump");
+					if (SERIES_WIDE(series) == sizeof(REBVAL)) {
+						Debug_Values(BLK_HEAD(series), SERIES_TAIL(series), 1024); /* FIXME limit */
+					} else{
+						Dump_Bytes(series->data, (SERIES_TAIL(series)+1) * SERIES_WIDE(series));
+					}
+				}
+			}
+			series++;
+			SKIP_WALL(series);
+		}
+	}
+}
+
 
 /***********************************************************************
 **

@@ -162,6 +162,12 @@
 		return R_RET;
 	}
 
+	if (D_REF(5)) {
+		REBVAL *pool_id = D_ARG(6);
+		Dump_Series_In_Pool(VAL_INT32(pool_id));
+		return R_NONE;
+	}
+
 	if (D_REF(1)) flags = 3;
 	n = Inspect_Series(flags);
 

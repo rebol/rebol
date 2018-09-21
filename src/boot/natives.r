@@ -941,6 +941,7 @@ stats: native [
 	/profile {Returns profiler object}
 	/timer {High resolution time difference from start}
 	/evals {Number of values evaluated by interpreter}
+	/dump-series pool-id [integer!] {Dump all series in pool pool-id, -1 for all pools}
 ]
 
 do-codec: native [

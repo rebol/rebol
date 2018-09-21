@@ -27,6 +27,7 @@
 **
 ***********************************************************************/
 
+#include <stdio.h>
 #include "sys-core.h"
 
 
@@ -49,9 +50,9 @@
 		SERIES_REST(series),
 		SERIES_FLAGS(series)
 	);
-	if (SERIES_WIDE(series) == sizeof(REBVAL))
+	if (SERIES_WIDE(series) == sizeof(REBVAL)) {
 		Dump_Values(BLK_HEAD(series), SERIES_TAIL(series));
-	else
+	} else
 		Dump_Bytes(series->data, (SERIES_TAIL(series)+1) * SERIES_WIDE(series));
 }
 
@@ -122,6 +123,7 @@
 
 	cp = buf;
 	for (l = 0; l < count; l++) {
+		REBVAL *val = (REBVAL*)bp;
 		cp = Form_Hex_Pad(cp, l, 8);
 
 		*cp++ = ':';
@@ -137,8 +139,13 @@
 			cp = Form_Hex_Pad(cp, *bp++, 8);
 			*cp++ = ' ';
 		}
+		n = 0;
+		if (IS_WORD((REBVAL*)val) || IS_GET_WORD((REBVAL*)val) || IS_SET_WORD((REBVAL*)val)) {
+			char * name = Get_Word_Name((REBVAL*)val);
+			n = snprintf(cp, sizeof(buf) - (cp - buf), " (%s)", name);
+		}
 
-		*cp = 0;
+		*(cp + n) = 0;
 		Debug_Str(buf);
 		cp = buf;
 	}
