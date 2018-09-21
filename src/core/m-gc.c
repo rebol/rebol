@@ -654,7 +654,7 @@ mark_obj:
 	sp = (REBSER **)GC_Series->data;
 	for (n = 0; n < SERIES_TAIL(GC_Series); n++) {
 		if (sp[n] == series) {
-			Remove_Series(GC_Series, n, sizeof(REBSER *));
+			Remove_Series(GC_Series, n, 1);
 			break;
 		}
 	}
