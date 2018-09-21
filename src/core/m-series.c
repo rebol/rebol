@@ -38,7 +38,7 @@
 **		number of units specified by delta.
 **
 **			index - where space is expanded (but not cleared)
-**			delta - number of UNITS to expand (keeping terminator)
+**			delta - number of UNITS to expand from TAIL (keeping terminator)
 **			tail  - will be updated
 **
 **			        |<---rest--->|
@@ -127,6 +127,7 @@
 			Prior_Expand[n] = series;
 		}
 		Prior_Expand[0] = (REBSER*)n; // start next search here
+//#endif
 		Prop_Series(newser, series);
 		//ENABLE_GC;
 
