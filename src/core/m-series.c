@@ -360,7 +360,7 @@
 
 				data += SERIES_WIDE(series) * len;
 				series->data -= SERIES_WIDE(series) * SERIES_BIAS(series);
-				SERIES_REST(series) += bias;
+				SERIES_REST(series) += SERIES_BIAS(series);
 				SERIES_SET_BIAS(series, 0);
 
 				memmove(series->data, data, SERIES_USED(series));
