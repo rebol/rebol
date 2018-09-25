@@ -3,6 +3,7 @@ Simple implementation of Diffie-Hellman algorithm (c) 2013 Richard Smolak
 The code uses Bigint implementation Copyright (c) 2007, Cameron Rich
 */
 
+#include "sys-core.h"
 #include "sys-dh.h"
 
 void DH_generate_key(DH_CTX *dh_ctx)
@@ -16,7 +17,7 @@ void DH_generate_key(DH_CTX *dh_ctx)
 	bi_permanent(g);
 
     //generate private key  X
-	get_random_NZ(len, dh_ctx->x);
+	Random_Bytes(dh_ctx->x, len, 1);
 	x = bi_import(bi_ctx, dh_ctx->x, len);
 	bi_permanent(x);
 

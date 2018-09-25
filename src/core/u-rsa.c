@@ -34,6 +34,7 @@
  */
 
 #include "reb-config.h"
+#include "sys-core.h"
 
 //#include <stdio.h>
 #include <string.h>
@@ -47,48 +48,6 @@
 #endif
 
 #include "sys-rsa.h"
-#ifdef TO_WINDOWS
-    #include <windows.h>
-    #include <wincrypt.h>
-#else
-    #include <fcntl.h>
-#endif
-
-
-#ifdef TO_WINDOWS
-static HCRYPTPROV gCryptProv;
-#else
-static int rng_fd = -1;
-#endif
-
-/**
- * Set a series of bytes with a random number. Individual bytes can be 0
- */
-void get_random(int num_rand_bytes, uint8_t *rand_data)
-{
-#ifdef TO_WINDOWS
-    /* use Microsoft Crypto Libraries */
-    CryptGenRandom(gCryptProv, num_rand_bytes, rand_data);
-#else
-    if (rng_fd == -1) rng_fd = open("/dev/urandom", O_RDONLY);
-    read(rng_fd, rand_data, num_rand_bytes);
-#endif
-}
-
-/**
- * Set a series of bytes with a random number. Individual bytes are not zero.
- */
-void get_random_NZ(int num_rand_bytes, uint8_t *rand_data)
-{
-    int i;
-    get_random(num_rand_bytes, rand_data);
-
-    for (i = 0; i < num_rand_bytes; i++)
-    {
-        while (rand_data[i] == 0)  /* can't be 0 */
-            rand_data[i] = (uint8_t)(rand());
-    }
-}
 
 void RSA_priv_key_new(RSA_CTX **ctx,
         const uint8_t *modulus, int mod_len,
@@ -327,7 +286,7 @@ int RSA_encrypt(const RSA_CTX *ctx, const uint8_t *in_data, uint16_t in_len,
 		else /* randomize the encryption padding with non-zero bytes */
 		{
 			out_data[1] = 2;
-			get_random_NZ(num_pads_needed, &out_data[2]);
+			Random_Bytes(&out_data[2], num_pads_needed, 1);
 		}
 		
 		out_data[2+num_pads_needed] = 0;

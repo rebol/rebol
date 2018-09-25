@@ -104,13 +104,6 @@ int RSA_encrypt(const RSA_CTX *ctx, const uint8_t *in_data, uint16_t in_len,
 void RSA_print(const RSA_CTX *ctx);
 #endif
 
-/**************************************************************************
- * RNG declarations
- **************************************************************************/
-void get_random(int num_rand_bytes, uint8_t *rand_data);
-void get_random_NZ(int num_rand_bytes, uint8_t *rand_data);
-
-
 #ifdef __cplusplus
 }
 #endif
