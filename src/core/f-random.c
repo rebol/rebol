@@ -192,8 +192,9 @@ static REBI64 ran_arr_cycle()
 	REBCNT k = length / 8;
 	REBCNT r = length % 8;
 	REBYTE *cp = dest;
+	REBCNT i;
 
-	for (REBCNT i = 0; i < k; i++) {
+	for (i = 0; i < k; i++) {
 		rnd = Random_Int(TRUE);
 		memcpy(cp, (REBYTE*)&rnd, 8);
 		cp += 8;
@@ -204,7 +205,7 @@ static REBI64 ran_arr_cycle()
 	}
 	if(no_zeros) {
 		// make result without null bytes
-		for (REBCNT i = 0; i < length; i++) {
+		for (i = 0; i < length; i++) {
 			while (dest[i] == 0) 
 				dest[i] = (u8)(rand());
 		}
