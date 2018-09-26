@@ -27,6 +27,14 @@ Rebol [
 	--test-- "enbase-14" --assert "666F6F626172" = enbase/base "foobar" 16
 ===end-group===
 
+===start-group=== "enbase with position not at head"
+	;@@ https://github.com/rebol/rebol-issues/issues/319
+	bin: #{FF00FF00}
+	--test-- "enbase-2"  --assert #{00FF00} = debase/base enbase/base next bin 2 2
+	--test-- "enbase-16" --assert #{00FF00} = debase/base enbase/base next bin 16 16
+	--test-- "enbase-64" --assert #{00FF00} = debase enbase next bin
+===end-group===
+
 ===start-group=== "debase 64"
 
 	--test-- "debase 64 1"          

@@ -632,7 +632,7 @@ err:
 	REBINT x, loop;
 
 	len = VAL_LEN(value);
-	src = VAL_BIN(value);
+	src = VAL_BIN_DATA(value);
 
 	const REBYTE *table;
 	if(urlSafe) {
