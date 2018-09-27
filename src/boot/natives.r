@@ -383,7 +383,7 @@ checksum: native [
 	/method {Method to use}
 	word [word!] {Methods: SHA1 SHA256 MD5 CRC32}
 	/key {Returns keyed HMAC value}
-	key-value [any-string!] {Key to use}
+	key-value [any-string! binary!] {Key to use}
 ]
 
 compress: native [

@@ -16,6 +16,7 @@ wrap load %units/mezz-crypt-test.r3
 wrap load %units/rsa-test.r3
 wrap load %units/dh-test.r3
 wrap load %units/port-test.r3
+wrap load %units/checksum-test.r3
 
 wrap load %units/crash-test.r3
 

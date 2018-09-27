@@ -170,7 +170,7 @@ static struct digest {
 **		/method {Method to use}
 **		word [word!] {Method: SHA1 MD5}
 **		/key {Returns keyed HMAC value}
-**		key-value [any-string!] {Key to use}
+**		key-value [any-string! binary!] {Key to use}
 **
 ***********************************************************************/
 {
