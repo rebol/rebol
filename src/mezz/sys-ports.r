@@ -166,7 +166,7 @@ init-schemes: func [
 
 	sys/decode-url: lib/decode-url: :sys/*parse-url/decode-url
 
-	system/schemes: make object! 10
+	system/schemes: make object! 11
 
 	make-scheme [
 		title: "System Port"
@@ -289,6 +289,34 @@ init-schemes: func [
 		awake: func [event] [print ['UDP-event event/type] true]
 	]
 
+	make-scheme [
+		title: "Checksum incremental computing for: MD5, SHA1 and SHA256"
+		name: 'checksum
+		init: function [
+			port [port!]
+		][
+			spec: port/spec
+			meth: any [ ; using short name so I can easily make the new spec bellow
+			            ; when it would be: method: method - it would throw binding error
+				select spec 'meth
+				select spec 'host   ; if scheme was opened using url type
+				'md5                     ; default method
+			]
+			meth: to word! meth ; in case it was not
+			unless find [md5 sha1 sha256] meth [
+				cause-error 'access 'invalid-spec meth
+			] 
+			; make the spec only with relevant fields
+			port/spec: object [
+				title:  spec/title
+				scheme: spec/scheme
+				method: meth
+			]
+			protect/words port/spec
+			protect/words port
+		]
+
+	]
 	make-scheme [
 		title: "Clipboard"
 		name: 'clipboard
