@@ -27,11 +27,12 @@
 **
 ***********************************************************************/
 
-#include "sys-core.h"
+//#include "sys-core.h"
+#include "sys-sha2.h"
 #include "reb-net.h"
 #include "sys-md5.h"
 #include "sys-sha1.h"
-#include "sys-sha256.h"
+
 
 
 /***********************************************************************
@@ -51,7 +52,15 @@
 			break;
 		case SYM_SHA256:
 			*ctx = sizeof(SHA256_CTX);
-			*blk = SHA256_BLOCK_SIZE;
+			*blk = SHA256_DIGEST_LENGTH;
+			return;
+		case SYM_SHA384:
+			*ctx = sizeof(SHA384_CTX);
+			*blk = SHA384_DIGEST_LENGTH;
+			return;
+		case SYM_SHA512:
+			*ctx = sizeof(SHA512_CTX);
+			*blk = SHA512_DIGEST_LENGTH;
 			return;
 		default:
 			*ctx = *blk = 0;
@@ -84,6 +93,12 @@
 			return TRUE;
 		case SYM_SHA256:
 			SHA256_Init((SHA256_CTX*)VAL_BIN(ctx));
+			return TRUE;
+		case SYM_SHA384:
+			SHA384_Init((SHA384_CTX*)VAL_BIN(ctx));
+			return TRUE;
+		case SYM_SHA512:
+			SHA512_Init((SHA512_CTX*)VAL_BIN(ctx));
 			return TRUE;
 	}
 	return FALSE;
@@ -162,6 +177,12 @@
 			case SYM_SHA256:
 				SHA256_Update((SHA256_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
 				break;
+			case SYM_SHA384:
+				SHA384_Update((SHA384_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				break;
+			case SYM_SHA512:
+				SHA512_Update((SHA512_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				break;
 			}
 		break;
 	case A_READ:
@@ -193,6 +214,12 @@
 			break;
 		case SYM_SHA256:
 			SHA256_Final(VAL_BIN_DATA(data), (SHA256_CTX*)DS_TOP);
+			break;
+		case SYM_SHA384:
+			SHA384_Final(VAL_BIN_DATA(data), (SHA384_CTX*)DS_TOP);
+			break;
+		case SYM_SHA512:
+			SHA512_Final(VAL_BIN_DATA(data), (SHA512_CTX*)DS_TOP);
 			break;
 		}
 		if(action == A_READ) *D_RET = *data;

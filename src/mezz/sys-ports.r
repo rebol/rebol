@@ -290,7 +290,8 @@ init-schemes: func [
 	]
 
 	make-scheme [
-		title: "Checksum incremental computing for: MD5, SHA1 and SHA256"
+		title: "Checksum incremental computing"
+		info: "Possible methods: MD5, SHA1, SHA256, SHA384, SHA512"
 		name: 'checksum
 		init: function [
 			port [port!]
@@ -303,7 +304,7 @@ init-schemes: func [
 				'md5                     ; default method
 			]
 			meth: to word! meth ; in case it was not
-			unless find [md5 sha1 sha256] meth [
+			unless find [md5 sha1 sha256 sha384 sha512] meth [
 				cause-error 'access 'invalid-spec meth
 			] 
 			; make the spec only with relevant fields

@@ -114,7 +114,7 @@ core: [
 	u-rc4.c
 	u-rsa.c    ;needed in TLS protocol (HTTPS)
 	u-sha1.c
-	u-sha256.c
+	u-sha2.c
 	u-zlib.c
 	u-wav.c
 ]

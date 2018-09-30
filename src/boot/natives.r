@@ -381,7 +381,7 @@ checksum: native [
 	/hash {Returns a hash value}
 	size [integer!] {Size of the hash table}
 	/method {Method to use}
-	word [word!] {Methods: SHA1 SHA256 MD5 CRC32}
+	word [word!] {Methods: SHA1 SHA256 SHA384 SHA512 MD5 CRC32}
 	/key {Returns keyed HMAC value}
 	key-value [any-string! binary!] {Key to use}
 ]

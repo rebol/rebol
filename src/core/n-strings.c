@@ -47,13 +47,25 @@ int  SHA1_CtxSize(void);
 #endif
 #endif
 
-#ifndef SHA256_DEFINED
-#ifdef HAS_SHA256
+#ifndef SHA2_DEFINED
+#ifdef HAS_SHA2
 REBYTE *SHA256(REBYTE *, REBCNT, REBYTE *);
 void SHA256_Init(void *c);
 void SHA256_Update(void *c, REBYTE *data, REBCNT len);
 void SHA256_Final(REBYTE *md, void *c);
 int  SHA256_CtxSize(void);
+
+REBYTE *SHA384(REBYTE *, REBCNT, REBYTE *);
+void SHA384_Init(void *c);
+void SHA384_Update(void *c, REBYTE *data, REBCNT len);
+void SHA384_Final(REBYTE *md, void *c);
+int  SHA384_CtxSize(void);
+
+REBYTE *SHA512(REBYTE *, REBCNT, REBYTE *);
+void SHA512_Init(void *c);
+void SHA512_Update(void *c, REBYTE *data, REBCNT len);
+void SHA512_Final(REBYTE *md, void *c);
+int  SHA512_CtxSize(void);
 #endif
 #endif
 
@@ -91,8 +103,10 @@ static struct digest {
 	{SHA1, SHA1_Init, SHA1_Update, SHA1_Final, SHA1_CtxSize, SYM_SHA1, 20, 64},
 #endif
 
-#ifdef HAS_SHA256
-	{SHA256, SHA256_Init, SHA256_Update, SHA256_Final, SHA256_CtxSize, SYM_SHA256, 32, 64},
+#ifdef HAS_SHA2
+	{ SHA256, SHA256_Init, SHA256_Update, SHA256_Final, SHA256_CtxSize, SYM_SHA256, 32, 64 },
+	{ SHA384, SHA384_Init, SHA384_Update, SHA384_Final, SHA384_CtxSize, SYM_SHA384, 48, 128 },
+	{ SHA512, SHA512_Init, SHA512_Update, SHA512_Final, SHA512_CtxSize, SYM_SHA512, 64, 128 },
 #endif
 
 #ifdef HAS_MD4

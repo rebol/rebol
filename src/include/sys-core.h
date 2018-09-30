@@ -47,7 +47,7 @@
 #define USE_UNICODE 1			// scanner uses unicode
 #define UNICODE_CASES 0x2E00	// size of unicode folding table
 #define HAS_SHA1				// allow it
-#define HAS_SHA256				// allow it
+#define HAS_SHA2				// allow SHA 256/384/512
 #define HAS_MD5					// allow it
 
 // External system includes:
