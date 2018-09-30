@@ -44,17 +44,18 @@
 		case SYM_MD5:
 			*ctx = sizeof(MD5_CTX);
 			*blk = MD5_DIGEST_LENGTH;
-			return;
+			break;
 		case SYM_SHA1:
 			*ctx = sizeof(SHA_CTX);
 			*blk = SHA_DIGEST_LENGTH;
-			return;
+			break;
 		case SYM_SHA256:
 			*ctx = sizeof(SHA256_CTX);
 			*blk = SHA256_BLOCK_SIZE;
 			return;
 		default:
-			return 0;
+			*ctx = *blk = 0;
+			break;
 	}
 }
 
@@ -100,7 +101,6 @@
 	REBVAL *arg;
 	REBVAL *data;
 	REBVAL *ctx;
-	REBSER *bin;
 	REBYTE *temp;
 
 	Validate_Port(port, action);
@@ -114,7 +114,8 @@
 
 	req = Use_Port_State(port, RDI_CHECKSUM, sizeof(REBREQ));
 
-	ctx = BLK_SKIP(port, STD_PORT_LOCALS);
+	data = BLK_SKIP(port, STD_PORT_DATA); //will hold result
+	ctx  = BLK_SKIP(port, STD_PORT_LOCALS);
 	int ctx_size = 0, blk_size = 0;
 
 	Init_sizes(method, &blk_size, &ctx_size);
@@ -144,16 +145,13 @@
 	case A_UPDATE:
 		if (!IS_OPEN(req)) return R_NONE;
 
-		data = BLK_SKIP(port, STD_PORT_DATA); //will hold result
-
 		if (!IS_BINARY(data)) {
 			SET_BINARY(data, Make_Binary(blk_size));
 			VAL_TAIL(data) = blk_size;
 		}
 		else {
-			bin = VAL_BIN(data);
 			if (blk_size > SERIES_REST(VAL_SERIES(data)) - VAL_INDEX(data)) {
-				Expand_Series(bin, AT_TAIL, blk_size - SERIES_TAIL(bin));
+				Expand_Series(VAL_BIN(data), AT_TAIL, blk_size - VAL_TAIL(data));
 			}
 			if (VAL_TAIL(data) < VAL_INDEX(data) + blk_size) {
 				VAL_TAIL(data) = VAL_INDEX(data) + blk_size;

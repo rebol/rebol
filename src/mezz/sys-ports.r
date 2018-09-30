@@ -313,7 +313,6 @@ init-schemes: func [
 				method: meth
 			]
 			protect/words port/spec
-			protect/words port
 		]
 
 	]
