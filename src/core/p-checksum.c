@@ -99,6 +99,7 @@
 	REBVAL *method;
 	REBREQ *req;
 	REBVAL *arg;
+	REBCNT  args = 0;
 	REBVAL *data;
 	REBVAL *ctx;
 	REBYTE *temp;
@@ -128,16 +129,38 @@
 			Checksum_Open(port, method, ctx_size);
 			SET_OPEN(req);
 		}
+		args = Find_Refines(ds, ALL_WRITE_REFS);
 		arg = D_ARG(2);
+		REBYTE *bin = VAL_BIN_DATA(arg);
+		REBI64  pos = (REBI64)VAL_INDEX(arg);
+		if (args & AM_WRITE_SEEK) {
+			pos += Int64(D_ARG(ARG_WRITE_INDEX));
+			if(pos < 0) pos = 0;
+			else if (pos > VAL_TAIL(arg)) pos = VAL_TAIL(arg);
+		}
+		REBI64 part = (REBI64)VAL_TAIL(arg) - pos;
+		if (args & AM_WRITE_PART) {	
+			REBI64 cnt = Int64(D_ARG(ARG_WRITE_LENGTH));
+			if(cnt < 0) {
+				cnt = -cnt;
+				pos -= cnt;
+				if (pos < 0) {
+					cnt += pos;
+					pos = 0;
+				}
+				part = cnt;
+			} else if (cnt < part) part = cnt;
+		}
+		if(part <= 0) return R_RET;
 		switch (VAL_WORD_CANON(method)) {
 			case SYM_MD5:
-				MD5_Update((MD5_CTX*)VAL_BIN(ctx), VAL_BIN_DATA(arg), VAL_TAIL(arg) - VAL_INDEX(arg));
+				MD5_Update((MD5_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
 				break;
 			case SYM_SHA1:
-				SHA1_Update((SHA_CTX*)VAL_BIN(ctx), VAL_BIN_DATA(arg), VAL_TAIL(arg) - VAL_INDEX(arg));
+				SHA1_Update((SHA_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
 				break;
 			case SYM_SHA256:
-				SHA256_Update((SHA256_CTX*)VAL_BIN(ctx), VAL_BIN_DATA(arg), VAL_TAIL(arg) - VAL_INDEX(arg));
+				SHA256_Update((SHA256_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
 				break;
 			}
 		break;
@@ -176,7 +199,6 @@
 		return R_RET;
 
 	case A_OPEN:
-		if (IS_OPEN(req)) return R_RET;
 		if (Checksum_Open(port, method, ctx_size)) {
 			SET_OPEN(req);
 		} else {

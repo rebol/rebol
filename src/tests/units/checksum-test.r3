@@ -77,6 +77,25 @@ Rebol [
 		--assert sum1 = port/data
 		close port
 
+	--test-- "checksum-write-refinements"
+		port: open checksum://
+		write/part port bin 1
+		write/part port next bin 1
+		sum1: checksum/method bin port/spec/method
+		sum2: checksum/method join bin bin port/spec/method
+		--assert sum1 = read port
+		--assert sum1 = read write/part port bin 0
+		--assert sum1 = read write/part port bin -1
+		--assert sum2 = read write/part port tail bin -2
+		port: open checksum://
+		--assert sum1 = read write/seek/part port #{cafe0bad} 2 2
+		;opening already opened port restarts computation
+		--assert sum1 = read write/seek/part open port #{cafe0bad} 2 2
+		--assert sum1 = read write/seek/part open port tail #{cafe0bad} -2 2
+
+
+
+
 ===end-group===
 
 ~~~end-file~~~
