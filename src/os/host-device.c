@@ -70,6 +70,7 @@ extern REBDEV Dev_File;
 extern REBDEV Dev_Event;
 extern REBDEV Dev_Net;
 extern REBDEV Dev_DNS;
+extern REBDEV Dev_Checksum;
 #ifndef MIN_OS
 extern REBDEV Dev_Clipboard;
 #endif
@@ -83,6 +84,7 @@ REBDEV *Devices[RDI_LIMIT] =
 	&Dev_Event,
 	&Dev_Net,
 	&Dev_DNS,
+	&Dev_Checksum,
 #ifndef MIN_OS
 	&Dev_Clipboard,
 #else

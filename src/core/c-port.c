@@ -510,7 +510,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 **
 ***********************************************************************/
 
-#define MAX_SCHEMES 10		// max native schemes
+#define MAX_SCHEMES 11		// max native schemes
 
 typedef struct rebol_scheme_actions {
 	REBCNT sym;
@@ -625,6 +625,7 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	Init_TCP_Scheme();
 	Init_UDP_Scheme();
 	Init_DNS_Scheme();
+	Init_Checksum_Scheme();
 #ifndef MIN_OS
 	Init_Clipboard_Scheme();
 #endif

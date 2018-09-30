@@ -127,7 +127,6 @@
 			Prior_Expand[n] = series;
 		}
 		Prior_Expand[0] = (REBSER*)n; // start next search here
-//#endif
 		Prop_Series(newser, series);
 		//ENABLE_GC;
 
