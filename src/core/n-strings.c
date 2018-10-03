@@ -220,8 +220,8 @@ static struct digest {
 				LABEL_SERIES(digest, "checksum digest");
 
 				if (D_REF(ARG_CHECKSUM_KEY)) {
-					REBYTE tmpdigest[20];		// Size must be max of all digest[].len;
-					REBYTE ipad[64],opad[64];	// Size must be max of all digest[].hmacblock;
+					REBYTE tmpdigest[64];		// Size must be max of all digest[].len;
+					REBYTE ipad[128],opad[128];	// Size must be max of all digest[].hmacblock;
 					void *ctx = Make_Mem(digests[i].ctxsize());
 					REBVAL *key = D_ARG(ARG_CHECKSUM_KEY_VALUE);
 					REBYTE *keycp = VAL_BIN_DATA(key);

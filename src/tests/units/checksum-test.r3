@@ -149,9 +149,39 @@ D2079D59D6984814DAC71CDEB38097DB52F77810391FD7B6F92FFBD64EA93DF8
 		;opening already opened port restarts computation
 		--assert sum1 = read write/seek/part open port #{cafe0bad} 2 2
 		--assert sum1 = read write/seek/part open port tail #{cafe0bad} -2 2
+===end-group===
 
+===start-group=== "Checksum HMAC SHA"
+;@@ https://tools.ietf.org/html/rfc4231
+	--test-- "test case 1"
+		key: #{0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b}
+		data: #{4869205468657265}
+		--assert (checksum/method/key data 'sha256 key) = #{
+B0344C61D8DB38535CA8AFCEAF0BF12B881DC200C9833DA726E9376C2E32CFF7}
 
+		--assert (checksum/method/key data 'sha384 key) = #{
+AFD03944D84895626B0825F4AB46907F15F9DADBE4101EC682AA034C7CEBC59C
+FAEA9EA9076EDE7F4AF152E8B2FA9CB6}
 
+		--assert (checksum/method/key data 'sha512 key) = #{
+87AA7CDEA5EF619D4FF0B4241A1D6CB02379F4E2CE4EC2787AD0B30545E17CDE
+DAA833B7D6B8A702038B274EAEA3F4E4BE9D914EEB61F1702E696C203A126854
+}
+
+	--test-- "test case 2"
+		key: #{4a656665}
+		data: #{7768617420646f2079612077616e7420 666f72206e6f7468696e673f}
+		--assert (checksum/method/key data 'sha256 key) = #{
+5BDCC146BF60754E6A042426089575C75A003F089D2739839DEC58B964EC3843}
+
+		--assert (checksum/method/key data 'sha384 key) = #{
+AF45D2E376484031617F78D2B58A6B1B9C7EF464F5A01B47E42EC3736322445E
+8E2240CA5E69E2C78B3239ECFAB21649}
+
+		--assert (checksum/method/key data 'sha512 key) = #{
+164B7A7BFCF819E2E395FBE73B56E0A387BD64222E831FD610270CD7EA250554
+9758BF75C05A994A6D034F65F8F0E6FDCAEAB1A34D4A6B4B636E070A38BCE737
+}
 
 ===end-group===
 
