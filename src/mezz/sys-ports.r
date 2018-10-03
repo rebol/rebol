@@ -290,7 +290,7 @@ init-schemes: func [
 	]
 
 	make-scheme [
-		title: "Checksum incremental computing"
+		title: "Checksum port"
 		info: "Possible methods: MD5, SHA1, SHA256, SHA384, SHA512"
 		name: 'checksum
 		init: function [
@@ -311,6 +311,7 @@ init-schemes: func [
 			port/spec: object [
 				title:  spec/title
 				scheme: spec/scheme
+				ref:    spec/ref    ;-- help system wants this value!
 				method: meth
 			]
 			protect/words port/spec
