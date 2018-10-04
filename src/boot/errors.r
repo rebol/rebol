@@ -125,6 +125,8 @@ Script: [
 ;   face-reused:        [{Face object reused (in more than one pane):} :arg1]
 
 	invalid-handle:     {invalid handle}
+	invalid-value-for:  [{invalid value} :arg1 {for:} :arg2]
+
 ]
 
 Math: [

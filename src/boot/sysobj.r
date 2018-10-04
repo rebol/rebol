@@ -160,6 +160,8 @@ standard: context [
 			none
 	]
 
+	enum: none ; is defined later in %mezz-func.r file
+
 	error: context [ ; Template used for all errors:
 		code: 0
 		type: 'user
@@ -284,6 +286,7 @@ standard: context [
 			none
 	]
 
+	bincode: none
 	utype: none
 	font: none	; mezz-graphics.h
 	para: none	; mezz-graphics.h

@@ -78,3 +78,60 @@ task: func [
 ][
 	make task! copy/deep reduce [spec body]
 ]
+
+enum: function [
+	"Creates enumeration object from given specification"
+	spec [block!] "Specification with names and values."
+	title [string! word!] "Enumeration name"
+][
+	enum-value: 0
+	spec: copy spec
+	parse spec [any [
+		pos: word! insert enum-value (
+			change pos to set-word! pos/1
+			enum-value: enum-value + 1
+		)
+		| some set-word! pos: [
+			integer! | issue! | binary! | char!
+		] (
+			if error? try [
+				enum-value: to integer! pos/1
+				pos: change pos enum-value
+				enum-value: enum-value + 1
+			][
+				cause-error 'Script 'invalid-data reduce [pos]
+			]
+		) :pos
+		| pos: 1 skip (
+			cause-error 'Script 'invalid-data reduce [pos]
+		)
+		]
+	]
+	enum: make system/standard/enum spec
+	enum/title*: title
+	enum
+]
+
+system/standard/enum: context [
+	title*: none
+	assert: func[
+		"Checks if value exists as an enumeration. Throws error if not."
+		value [integer!]
+	][
+		unless find values-of self value [
+			cause-error 'Script 'invalid-value-for reduce [value title*]
+		]
+		true
+	]
+	name: func[
+		"Returns name of the emumeration by its value if value exists, else none."
+		value [integer!]
+		/local pos
+	][
+		all [
+			pos: find values-of self value
+			pick words-of self index? pos
+		]
+	]
+	;@@ add some other accessor functions?
+]
