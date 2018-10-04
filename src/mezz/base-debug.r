@@ -33,7 +33,7 @@ probe: func [
 			word? :name
 			path? :name
 		][
-			prin ajoin ["^[[1;32;49m" mold :name "^[[0m == ^[[32m"] 
+			prin ajoin ["^[[1;32;49m" mold :name "^[[0m: ^[[32m"] 
     		prin either value? :name [mold/all get/any :name] ["#[unset!]"]
     		print "^[[0m"
 		]
@@ -43,7 +43,7 @@ probe: func [
 					word? :word
 					path? :word
 				][
-					prin ajoin ["^[[1;32;49m" mold :word "^[[0m == ^[[32m"] 
+					prin ajoin ["^[[1;32;49m" mold :word "^[[0m: ^[[32m"] 
 					prin either value? :word [mold/all get/any :word]["#[unset!]"]
 					print "^[[0m"
 				][
