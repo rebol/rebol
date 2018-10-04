@@ -34,6 +34,14 @@ wrap: func [
 	do bind/copy/set body make object! 0
 ]
 
+with: func[
+	"Evaluates a block binded to the specified context."
+	context [object!]
+	body    [block!]
+][
+	do bind body context
+]
+
 any-of: func [
 	"Returns the first value(s) for which the test is not FALSE or NONE."
 	'word [word! block!] "Word or block of words to set each time (local)"
