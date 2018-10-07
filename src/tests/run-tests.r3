@@ -18,6 +18,7 @@ wrap load %units/dh-test.r3
 wrap load %units/port-test.r3
 wrap load %units/checksum-test.r3
 wrap load %units/enum-test.r3
+wrap load %units/conditional-test.r3
 
 wrap load %units/crash-test.r3
 

@@ -294,7 +294,7 @@ enum {
 	while (index < SERIES_TAIL(block)) {
 		index = Do_Next(block, index, 0); // stack volatile
 		ds = DS_POP;  // volatile stack reference
-		if (!IS_FALSE(ds) && !IS_UNSET(ds)) return R_TOS1;
+		if (!IS_FALSE(ds)) return R_TOS1;
 	}
 	return R_NONE;
 }

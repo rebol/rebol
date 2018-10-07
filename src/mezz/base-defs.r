@@ -136,7 +136,7 @@ scalar?: func [
 
 true?: func [
 	"Returns true if an expression can be used as true."
-	val ; Note: No [any-type!] - we want unset! to fail.
+	val [any-type!] ;- we want unset! not to fail.
 ] [not not :val]
 
 quote: func [

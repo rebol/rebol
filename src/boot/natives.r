@@ -132,7 +132,7 @@ do: native [
 
 either: native [
 	{If TRUE condition return first arg, else second; evaluate blocks by default.}
-	condition
+	condition [any-type!]
 	true-branch
 	false-branch
 	/only "Suppress evaluation of block args."
@@ -188,7 +188,7 @@ halt: native [
 
 if: native [
 	{If TRUE condition, return arg; evaluate blocks by default.}
-	condition
+	condition [any-type!]
 	true-branch
 	/only "Return block arg instead of evaluating it."
 ]
@@ -307,7 +307,7 @@ try: native [
 
 unless: native [
 	{If FALSE condition, return arg; evaluate blocks by default.}
-	condition
+	condition [any-type!]
 	false-branch
 	/only "Return block arg instead of evaluating it."
 ]
@@ -818,7 +818,7 @@ log-e: native [
 
 not: native [
 	{Returns the logic complement.}
-	value {(Only FALSE and NONE return TRUE)}
+	value [any-type!] {(Only FALSE and NONE return TRUE)}
 ]
 
 square-root: native [
