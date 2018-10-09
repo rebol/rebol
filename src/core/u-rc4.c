@@ -28,6 +28,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * NOTE: usage of RC4 is not recommended for insufficient security
+ *       https://tools.ietf.org/html/rfc7465
+ */
+
 #include "sys-rc4.h"
 
 /**
