@@ -1,7 +1,7 @@
 Rebol [
 	Title:   "Rebol3 map! test script"
 	Author:  "Oldes, Peter W A Wood"
-	File: 	 %map-test.red
+	File: 	 %map-test.r3
 	Tabs:	 4
 	Needs:   [%../quick-test-module.r3]
 ]

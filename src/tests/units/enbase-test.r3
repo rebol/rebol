@@ -1,7 +1,7 @@
 Rebol [
 	Title:   "Rebol3 enbase/debase test script"
 	Author:  "Oldes, Peter W A Wood"
-	File: 	 %enbase-test.red
+	File: 	 %enbase-test.r3
 	Tabs:	 4
 	Needs:   [%../quick-test-module.r3]
 ]

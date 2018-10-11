@@ -1,7 +1,7 @@
 Rebol [
 	Title:   "Rebol3 RSA test script"
 	Author:  "Oldes, Peter W A Wood"
-	File: 	 %rsa-test.red
+	File: 	 %rsa-test.r3
 	Tabs:	 4
 	Needs:   [%../quick-test-module.r3]
 ]

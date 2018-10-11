@@ -1,7 +1,7 @@
 Rebol [
 	Title:   "Rebol checksum test script"
-	Author:  "Olds"
-	File: 	 %checksum-test.red
+	Author:  "Oldes"
+	File: 	 %checksum-test.r3
 	Tabs:	 4
 	Needs:   [%../quick-test-module.r3]
 ]

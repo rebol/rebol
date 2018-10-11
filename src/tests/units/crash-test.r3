@@ -1,7 +1,7 @@
 Rebol [
 	Title:   "Rebol3 crash test script"
 	Author:  "Oldes, Peter W A Wood"
-	File: 	 %dh-test.red
+	File: 	 %dh-test.r3
 	Tabs:	 4
 	Needs:   [%../quick-test-module.r3]
 ]

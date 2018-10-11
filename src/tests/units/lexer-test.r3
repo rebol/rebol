@@ -1,7 +1,7 @@
 Rebol [
 	Title:   "Rebol lexer test script"
-	Author:  "Olds"
-	File: 	 %lexer-test.red
+	Author:  "Oldes"
+	File: 	 %lexer-test.r3
 	Tabs:	 4
 	Needs:   [%../quick-test-module.r3]
 ]

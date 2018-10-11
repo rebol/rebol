@@ -1,6 +1,6 @@
 Rebol [
 	Title:   "Rebol conditional test script"
-	Author:  "Olds"
+	Author:  "Oldes"
 	File: 	 %conditional-test.r3
 	Tabs:	 4
 	Needs:   [%../quick-test-module.r3]

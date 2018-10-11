@@ -1,7 +1,7 @@
 Rebol [
 	Title:   "Red power function test script"
 	Author:  "mahengyang"
-	File: 	 %power-test.red
+	File: 	 %power-test.r3
 	Tabs:	 4
 	Rights:  "Copyright (C) 2011-2017, Nenad Rakocevic & Peter W A Wood & mahengyang. All rights reserved."
 	License: "BSD-3 - https://github.com/red/red/blob/origin/BSD-3-License.txt"

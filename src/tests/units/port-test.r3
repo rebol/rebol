@@ -1,7 +1,7 @@
 Rebol [
 	Title:   "Rebol3 port! test script"
 	Author:  "Oldes, Peter W A Wood"
-	File: 	 %port-test.red
+	File: 	 %port-test.r3
 	Tabs:	 4
 	Needs:   [%../quick-test-module.r3]
 ]

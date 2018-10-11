@@ -1,7 +1,7 @@
 Rebol [
 	Title:   "Rebol enum test script"
 	Author:  "Oldes"
-	File: 	 %enum-test.red
+	File: 	 %enum-test.r3
 	Tabs:	 4
 	Needs:   [%../quick-test-module.r3]
 ]
