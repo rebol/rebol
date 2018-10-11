@@ -75,13 +75,13 @@ dump-obj: function [
 				]
 			]
 		][
-			str: join "^[[1;32;49m" form-pad word 15
-			append str "^[[0m "
+			str: join "^[[1;32m" form-pad word 15
+			append str "^[[m "
 			append str form-pad type 24 - ((length? str) - 15)
 			append out reform [
 				"  " str "^[[32m"
 				if type <> 'unset! [form-val :val]
-				"^[[0m^/"
+				"^[[m^/"
 			]
 		]
 	]
@@ -96,45 +96,45 @@ dump-obj: function [
 ][
 	if unset? get/any 'word [
 		print trim/auto {
-			Use ^[[1;32;49mHELP^[[0m or ^[[1;32;49m?^[[0m to see built-in info:
-			^[[1;32;49m
+			Use ^[[1;32mHELP^[[m or ^[[1;32m?^[[m to see built-in info:
+			^[[1;32m
 				help insert
 				? insert
-			^[[0m
+			^[[m
 			To search within the system, use quotes:
-			^[[1;32;49m
+			^[[1;32m
 				? "insert"
-			^[[0m
+			^[[m
 			To browse online web documents:
-			^[[1;32;49m
+			^[[1;32m
 				help/doc insert
-			^[[0m
+			^[[m
 			To view words and values of a context or object:
 
-				^[[1;32;49m? lib^[[0m    - the runtime library
-				^[[1;32;49m? self^[[0m   - your user context
-				^[[1;32;49m? system^[[0m - the system object
-				^[[1;32;49m? system/options^[[0m - special settings
+				^[[1;32m? lib^[[m    - the runtime library
+				^[[1;32m? self^[[m   - your user context
+				^[[1;32m? system^[[m - the system object
+				^[[1;32m? system/options^[[m - special settings
 
 			To see all words of a specific datatype:
-			^[[1;32;49m
+			^[[1;32m
 				? native!
 				? function!
 				? datatype!
-			^[[0m
+			^[[m
 			Other debug functions:
 
-				^[[1;32;49m??^[[0m      - display a variable and its value
-				^[[1;32;49mprobe^[[0m   - print a value (molded)
-				^[[1;32;49msource^[[0m  - show source code of func
-				^[[1;32;49mtrace^[[0m   - trace evaluation steps
-				^[[1;32;49mwhat^[[0m    - show a list of known functions
+				^[[1;32m??^[[m      - display a variable and its value
+				^[[1;32mprobe^[[m   - print a value (molded)
+				^[[1;32msource^[[m  - show source code of func
+				^[[1;32mtrace^[[m   - trace evaluation steps
+				^[[1;32mwhat^[[m    - show a list of known functions
 
 			Other information:
 
-				^[[1;32;49mabout^[[0m   - see general product info
-				^[[1;32;49mlicense^[[0m - show user license
-				^[[1;32;49musage^[[0m   - program cmd line options
+				^[[1;32mabout^[[m   - see general product info
+				^[[1;32mlicense^[[m - show user license
+				^[[1;32musage^[[m   - program cmd line options
 		}
 		exit
 	]
@@ -194,23 +194,23 @@ dump-obj: function [
 		if all [word? :word datatype? get :word] [
 			value: spec-of get :word
 			print ajoin [
-				"^[[1;32;49m" mold :word "^[[0m is a datatype" newline
+				"^[[1;32m" mold :word "^[[m is a datatype" newline
 				"It is defined as " either find "aeiou" first value/title ["an "] ["a "] value/title newline
-				"It is of the general type ^[[1;32;49m" value/type "^[[0m^/"
+				"It is of the general type ^[[1;32m" value/type "^[[m^/"
 			]
 		]
 		if any [:word = 'unset! not value? :word] [exit]
 		types: dump-obj/match lib :word
 		sort types
 		if not empty? types [
-			print ["Found these related words:^[[32m" newline types "^[[0m"]
+			print ["Found these related words:^[[32m" newline types "^[[m"]
 			exit
 		]
 		if all [word? :word datatype? get :word] [
-			print ["No values defined for^[[1;32;49m" word "^[[0m"]
+			print ["No values defined for^[[1;32m" word "^[[m"]
 			exit
 		]
-		print ["No information on^[[1;32;49m" word "^[[0m"]
+		print ["No information on^[[1;32m" word "^[[m"]
 		exit
 	]
 
@@ -223,7 +223,7 @@ dump-obj: function [
 
 	; Print literal values:
 	if not any [word? :word path? :word][
-		print ajoin ["^[[1;32;49m" mold :word "^[[0m is " type-name :word]
+		print ajoin ["^[[1;32m" mold :word "^[[m is " type-name :word]
 		exit
 	]
 
@@ -250,9 +250,9 @@ dump-obj: function [
 		value: get :word
 	]
 	unless any-function? :value [
-		prin ajoin ["^[[1;32;49m" uppercase mold word "^[[0m is " type-name :value " of value: ^[[32m"]
+		prin ajoin ["^[[1;32m" uppercase mold word "^[[m is " type-name :value " of value: ^[[32m"]
 		prin either any [object? value port? value]  [print "" dump-obj value][mold/all :value]
-		print "^[[0m"
+		print "^[[m"
 		exit
 	]
 
@@ -261,7 +261,7 @@ dump-obj: function [
 	;if path? :word [word: first :word]
 
 	;-- Print info about function:
-	prin "USAGE:^/^-"
+	prin "^[[4;1;36mUSAGE^[[m:^/^-"
 
 	args: words-of :value
 	clear find args /local
@@ -272,7 +272,7 @@ dump-obj: function [
 	]
 
 	print ajoin [
-		newline "DESCRIPTION:" newline
+		newline "^[[4;1;36mDESCRIPTION^[[m:" newline
 		tab any [title-of :value "(undocumented)"] newline
 		tab uppercase mold word " is " type-name :value " value."
 	]
@@ -309,8 +309,8 @@ dump-obj: function [
 			]
 		]
 
-		print-args "^/ARGUMENTS:" argl
-		print-args/extra "^/REFINEMENTS:" refl
+		print-args "^/^[[4;1;36mARGUMENTS^[[m:" argl
+		print-args/extra "^/^[[4;1;36mREFINEMENTS^[[m:" refl
 	]
 
 	exit ; return unset
@@ -327,43 +327,42 @@ about: func [
 usage: func [
 	"Prints command-line arguments."
 ][
-	print trim/auto {
-	Command line usage:
-
-		REBOL |options| |script| |arguments|
-
-	Standard options:
-
-		--args data      Explicit arguments to script (quoted)
-		--do expr        Evaluate expression (quoted)
-		--help (-?)      Display this usage information
-		--script file    Explicit script filename
-		--version tuple  Script must be this version or greater
-
-	Special options:
-
-		--boot level     Valid levels: base sys mods
-		--debug flags    For user scripts (system/options/debug)
-		--halt (-h)      Leave console open when script is done
-		--import file    Import a module prior to script
-		--quiet (-q)     No startup banners or information
-		--secure policy  Can be: none allow ask throw quit
-		--trace (-t)     Enable trace mode during boot
-		--verbose        Show detailed startup information
-
-	Other quick options:
-
-		-s               No security
-		+s               Full security
-		-v               Display version only (then quit)
-
-	Examples:
-
-		REBOL script.r
-		REBOL -s script.r
-		REBOL script.r 10:30 test@example.com
-		REBOL --do "watch: on" script.r
-	}
+	print {
+    ^[[4;1;36mCommand line usage^[[m:
+    
+        ^[[1;32mREBOL |options| |script| |arguments|^[[m
+    
+    ^[[4;1;36mStandard options^[[m:
+    
+        ^[[1;32m--args data^[[m      Explicit arguments to script (quoted)
+        ^[[1;32m--do expr^[[m        Evaluate expression (quoted)
+        ^[[1;32m--help (-?)^[[m      Display this usage information
+        ^[[1;32m--script file^[[m    Explicit script filename
+        ^[[1;32m--version tuple^[[m  Script must be this version or greater
+    
+    ^[[4;1;36mSpecial options^[[m:
+    
+        ^[[1;32m--boot level^[[m     Valid levels: base sys mods
+        ^[[1;32m--debug flags^[[m    For user scripts (system/options/debug)
+        ^[[1;32m--halt (-h)^[[m      Leave console open when script is done
+        ^[[1;32m--import file^[[m    Import a module prior to script
+        ^[[1;32m--quiet (-q)^[[m     No startup banners or information
+        ^[[1;32m--secure policy^[[m  Can be: none allow ask throw quit
+        ^[[1;32m--trace (-t)^[[m     Enable trace mode during boot
+        ^[[1;32m--verbose^[[m        Show detailed startup information
+    
+    ^[[4;1;36mOther quick options^[[m:
+    
+        ^[[1;32m-s^[[m               No security
+        ^[[1;32m+s^[[m               Full security
+        ^[[1;32m-v^[[m               Display version only (then quit)
+    
+    ^[[4;1;36mExamples^[[m:
+    
+        REBOL script.r
+        REBOL -s script.r
+        REBOL script.r 10:30 test@example.com
+        REBOL --do "watch: on" script.r}
 ]
 
 license: func [

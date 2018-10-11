@@ -95,7 +95,7 @@ static int ANSI_Value1 = 0;
 static int ANSI_Value2 = 0;
 static int ANSI_Attr  = -1;
 
-int Update_Graphic_Mode(int attribute, int value);
+int Update_Graphic_Mode(int attribute, int value, boolean set);
 REBYTE* Parse_ANSI_sequence(REBYTE *cp, REBYTE *ep);
 
 //**********************************************************************
@@ -493,7 +493,7 @@ DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);
 
 /***********************************************************************
 **
-*/	int Update_Graphic_Mode(int attribute, int value)
+*/	int Update_Graphic_Mode(int attribute, int value, boolean set)
 /*
 **
 ***********************************************************************/
@@ -508,30 +508,52 @@ DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);
 
 	switch (value) {
 		case 0: attribute = FOREGROUND_GREY;                           break;
-		case 1: attribute = attribute | FOREGROUND_INTENSITY | BACKGROUND_INTENSITY; break;
+		case 1: attribute = attribute | FOREGROUND_INTENSITY;          break;
 		case 4: attribute = attribute | COMMON_LVB_UNDERSCORE;         break;
-		case 7: tmp = (attribute & 0xF0) >> 4;
-				attribute = ((attribute & 0x0F) << 4) | tmp;           break; //reverse
-		case 30: attribute =  attribute & 0xF8;                        break;
-		case 31: attribute = (attribute & 0xF8) | FOREGROUND_RED;      break;
-		case 32: attribute = (attribute & 0xF8) | FOREGROUND_GREEN;    break;
-		case 33: attribute = (attribute & 0xF8) | FOREGROUND_YELLOW;   break;
-		case 34: attribute = (attribute & 0xF8) | FOREGROUND_BLUE;     break;
-		case 35: attribute = (attribute & 0xF8) | FOREGROUND_MAGENTA;  break;
-		case 36: attribute = (attribute & 0xF8) | FOREGROUND_CYAN;     break;
-		case 37: attribute = (attribute & 0xF8) | FOREGROUND_GREY;     break;
-		case 39: attribute =  attribute & 0xF7;                        break;  //FOREGROUND_INTENSITY reset	
-		case 40: attribute =  attribute & 0x8F;                        break;
-		case 41: attribute = (attribute & 0x8F) | BACKGROUND_RED;      break;
-		case 42: attribute = (attribute & 0x8F) | BACKGROUND_GREEN;    break;
-		case 43: attribute = (attribute & 0x8F) | BACKGROUND_YELLOW;   break;
-		case 44: attribute = (attribute & 0x8F) | BACKGROUND_BLUE;     break;
-		case 45: attribute = (attribute & 0x8F) | BACKGROUND_MAGENTA;  break;
-		case 46: attribute = (attribute & 0x8F) | BACKGROUND_CYAN;     break;
-		case 47: attribute = (attribute & 0x8F) | BACKGROUND_GREY;     break;
-		case 49: attribute =  attribute & 0x7F;                        break; //BACKGROUND_INTENSITY reset
-		default: attribute = value;
+		case 7: tmp = (attribute & 0xFFF0) >> 4;
+				attribute = ((attribute & 0xFF0F) << 4) | tmp;           break; //reverse
+		case 22: attribute = attribute & 0xFFF7;                         break; //FOREGROUND_INTENSITY reset
+		case 24: attribute = attribute & 0x7FFF;                         break; //reset underscore
+		case 30: attribute =  attribute & 0xFFF8;                        break;
+		case 31: attribute = (attribute & 0xFFF8) | FOREGROUND_RED;      break;
+		case 32: attribute = (attribute & 0xFFF8) | FOREGROUND_GREEN;    break;
+		case 33: attribute = (attribute & 0xFFF8) | FOREGROUND_YELLOW;   break;
+		case 34: attribute = (attribute & 0xFFF8) | FOREGROUND_BLUE;     break;
+		case 35: attribute = (attribute & 0xFFF8) | FOREGROUND_MAGENTA;  break;
+		case 36: attribute = (attribute & 0xFFF8) | FOREGROUND_CYAN;     break;
+		case 37: attribute = (attribute & 0xFFF8) | FOREGROUND_GREY;     break;	
+		case 39: attribute =  attribute & 0xFFF7;                        break;  //FOREGROUND_INTENSITY reset	
+		case 40: attribute =  attribute & 0xFF8F;                        break;
+		case 41: attribute = (attribute & 0xFF8F) | BACKGROUND_RED;      break;
+		case 42: attribute = (attribute & 0xFF8F) | BACKGROUND_GREEN;    break;
+		case 43: attribute = (attribute & 0xFF8F) | BACKGROUND_YELLOW;   break;
+		case 44: attribute = (attribute & 0xFF8F) | BACKGROUND_BLUE;     break;
+		case 45: attribute = (attribute & 0xFF8F) | BACKGROUND_MAGENTA;  break;
+		case 46: attribute = (attribute & 0xFF8F) | BACKGROUND_CYAN;     break;
+		case 47: attribute = (attribute & 0xFF8F) | BACKGROUND_GREY;     break;
+		case 49: attribute =  attribute & 0xFF7F;                        break; //BACKGROUND_INTENSITY reset
+		//bright foreground colors
+		case 90: attribute = (attribute & 0xFFF8) | FOREGROUND_INTENSITY;                       break;
+		case 91: attribute = (attribute & 0xFFF8) | FOREGROUND_INTENSITY | FOREGROUND_RED;      break;
+		case 92: attribute = (attribute & 0xFFF8) | FOREGROUND_INTENSITY | FOREGROUND_GREEN;    break;
+		case 93: attribute = (attribute & 0xFFF8) | FOREGROUND_INTENSITY | FOREGROUND_YELLOW;   break;
+		case 94: attribute = (attribute & 0xFFF8) | FOREGROUND_INTENSITY | FOREGROUND_BLUE;     break;
+		case 95: attribute = (attribute & 0xFFF8) | FOREGROUND_INTENSITY | FOREGROUND_MAGENTA;  break;
+		case 96: attribute = (attribute & 0xFFF8) | FOREGROUND_INTENSITY | FOREGROUND_CYAN;     break;
+		case 97: attribute = (attribute & 0xFFF8) | FOREGROUND_INTENSITY | FOREGROUND_GREY;     break;
+		//bright background colors
+		case 100: attribute = (attribute & 0xFF8F) | BACKGROUND_INTENSITY;                      break;
+		case 101: attribute = (attribute & 0xFF8F) | BACKGROUND_INTENSITY | BACKGROUND_RED;     break;
+		case 102: attribute = (attribute & 0xFF8F) | BACKGROUND_INTENSITY | BACKGROUND_GREEN;   break;
+		case 103: attribute = (attribute & 0xFF8F) | BACKGROUND_INTENSITY | BACKGROUND_YELLOW;  break;
+		case 104: attribute = (attribute & 0xFF8F) | BACKGROUND_INTENSITY | BACKGROUND_BLUE;    break;
+		case 105: attribute = (attribute & 0xFF8F) | BACKGROUND_INTENSITY | BACKGROUND_MAGENTA; break;
+		case 106: attribute = (attribute & 0xFF8F) | BACKGROUND_INTENSITY | BACKGROUND_CYAN;    break;
+		case 107: attribute = (attribute & 0xFF8F) | BACKGROUND_INTENSITY | BACKGROUND_GREY;    break;
+
+		//default: attribute = value1;
 	}
+	if(set) SetConsoleTextAttribute(Std_Out, attribute);
 	return attribute;
 }
 
@@ -599,6 +621,10 @@ DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);
 				SetConsoleCursorPosition(Std_Out, coordScreen);
 				ANSI_State = -1;
 			}
+			else if (*cp == 'm') {
+				ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, 0, TRUE);
+				ANSI_State = -1;
+			}
 			else {
 				ANSI_State = -1;
 			}
@@ -612,8 +638,7 @@ DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);
 				ANSI_State = 3;
 			}
 			else if (*cp == 'm') {
-				ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, ANSI_Value1);
-				SetConsoleTextAttribute(Std_Out, ANSI_Attr);
+				ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, ANSI_Value1, TRUE);
 				ANSI_State = -1;
 			}
 			else if (*cp == 'A') {
@@ -677,19 +702,48 @@ DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);
 				ANSI_Value2 = ((ANSI_Value2 * 10) + (*cp - (int)'0')) % 0xFFFF;
 				ANSI_State = 4;
 			}
-			else if (*cp == 'm') {
-				ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, ANSI_Value1);
-				ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, ANSI_Value2);
-				SetConsoleTextAttribute(Std_Out, ANSI_Attr);
-				ANSI_State = -1;
-			}
-			else if (*cp == ';') {
-				ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, ANSI_Value1);
-				ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, ANSI_Value2);
-				SetConsoleTextAttribute(Std_Out, ANSI_Attr);
-				ANSI_Value1 = 0;
-				ANSI_Value2 = 0;
-				ANSI_State = 1;
+			else if (*cp == 'm' || *cp == ';') {
+				if(ANSI_Value2 == 5 && (ANSI_Value1 == 38 || ANSI_Value1 == 48)) {
+					// 8-bit colors... try to emulate it at least partially
+					if(*cp == 'm') {
+						// ignored
+						ANSI_State = -1;
+						break;
+					} else {
+						// 256-color lookup; fetch one more value
+						ANSI_Value1 = -ANSI_Value1;
+						ANSI_Value2 = 0;
+						ANSI_State = 3;
+						break;
+					}
+				}
+				else if(ANSI_Value1 < 0) {
+					// 256-color lookup
+					ANSI_Value1 = -ANSI_Value1 - 8;
+					if(ANSI_Value2 < 8) {
+						// standard colors (as in ESC [ 30–37 m)
+						ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, ANSI_Value2 + ANSI_Value1, TRUE);
+						
+					} else if(ANSI_Value2 < 16) {
+						// high intensity colors (as in ESC [ 90–97 m)
+						ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, ANSI_Value2 + ANSI_Value1 + 60 - 8, TRUE);
+					} else {
+						// on POSIX it is 216 colors and or 24 grey colors
+						// this is not possible on Windows.. so just ignore it.
+					}
+				}
+				else {
+					ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, ANSI_Value1, FALSE);
+					ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, ANSI_Value2, TRUE);
+				}
+				if (*cp == ';') {
+					ANSI_Value1 = 0;
+					ANSI_Value2 = 0;
+					ANSI_State = 1;
+				}
+				else {
+					ANSI_State = -1;
+				}
 			}
 			else if (*cp == 'H' || *cp == 'f') {
 				coordScreen.Y = ANSI_Value1;
