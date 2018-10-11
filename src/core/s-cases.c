@@ -920,6 +920,7 @@ static short const Char_Cases[] = {
 	White_Chars[' ']  = 3;	// space
 	White_Chars['\t'] = 3;	// space
 	White_Chars[0]    = 0;	// special
+	White_Chars[27]   = 0;	// special (ANSI escape)
 
 	// Casing tables:
 	Upper_Cases = Make_Mem(UNICODE_CASES * sizeof(REBUNI));
