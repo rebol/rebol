@@ -362,9 +362,9 @@ collect: func [
 
 format: function [
 	"Format a string according to the format dialect."
-	rules {A block in the format dialect. E.g. [10 -10 #"-" 4]}
+	rules {A block in the format dialect. E.g. [10 -10 #"-" 4 $32 "green" $0]}
 	values
-	/pad p
+	/pad p {Pattern to use instead of spaces}
 ][
 	p: any [p #" "]
 	unless block? :rules [rules: reduce [:rules]]
@@ -376,8 +376,9 @@ format: function [
 		if word? :rule [rule: get rule]
 		val: val + switch/default type?/word :rule [
 			integer! [abs rule]
-			string! [length? rule]
+			string!  [length? rule]
 			char!    [1]
+			money!   [2 + length? form rule]
 		][0]
 	]
 
@@ -402,6 +403,7 @@ format: function [
 			]
 			string!  [out: change out rule]
 			char!    [out: change out rule]
+			money!   [out: change out replace rejoin ["^[[" next form rule #"m"] #"." #";"]
 		]
 	]
 

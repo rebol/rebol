@@ -17,13 +17,13 @@ make-banner: func [
 ][
 	if string? fmt [return fmt] ; aleady built
 	str: make string! 200
-	star: append/dup make string! 74 #"*" 74
-	spc: format ["**" 70 "**"] ""
-	append str "^[[7m"
+	star: format/pad [$30.107 74 $0] "" #"*"
+
+	spc: format [$30.107 "**" 70 "**" $0] ""
 	parse fmt [
 		some [
 			[
-				set a string! (s: format ["**  " 68 "**"] a)
+				set a string! (s: format [$30.107 "**  " $35 68 $30.107 "**" $0] a)
 			  | '= set a [string! | word! | set-word!] [
 			  			b:
 						  path! (b: get b/1)
@@ -31,14 +31,13 @@ make-banner: func [
 						| block! (b: reform b/1)
 						| string! (b: b/1)
 					]
-					(s: either none? b [none][format ["**    " 11 55 "**"] reduce [a b]])
+					(s: either none? b [none][format [$30.107 "**    " $32 11 $31 55 $30 "**" $0] reduce [a b]])
 			  | '* (s: star)
 			  | '- (s: spc)
 			]
 			(unless none? s [append append str s newline])
 		]
 	]
-	append str "^[[0m"
 	str
 ]
 
