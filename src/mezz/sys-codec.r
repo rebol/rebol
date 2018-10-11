@@ -86,15 +86,17 @@ encoding?: function [
 	"Returns the media codec name for given binary data. (identify)"
 	data [binary!]
 ][
-	foreach [name codec] system/codecs [
-		either handle? try [cod/entry] [
+
+	foreach name reverse words-of system/codecs [
+		codec: system/codecs/:name
+		either handle? try [codec/entry] [
 			if do-codec codec/entry 'identify data [
 				return name
 			]
 		][
 			if all [
-				function? try [:cod/identify]
-				cod/identify data
+				function? try [:codec/identify]
+				codec/identify data
 			][
 				return name
 			]
