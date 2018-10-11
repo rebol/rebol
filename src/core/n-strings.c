@@ -440,6 +440,8 @@ static struct digest {
 	REBVAL *data = D_ARG(1);
 	REBVAL *key  = D_ARG(2);
 
+	if (IS_PROTECT_SERIES(VAL_SERIES(data))) Trap0(RE_PROTECTED);
+
 	if (!Cloak(TRUE, VAL_BIN_DATA(data), VAL_LEN(data), (REBYTE*)key, 0, D_REF(3)))
 		Trap_Arg(key);
 
@@ -457,6 +459,8 @@ static struct digest {
 {
 	REBVAL *data = D_ARG(1);
 	REBVAL *key  = D_ARG(2);
+	
+	if (IS_PROTECT_SERIES(VAL_SERIES(data))) Trap0(RE_PROTECTED);
 
 	if (!Cloak(FALSE, VAL_BIN_DATA(data), VAL_LEN(data), (REBYTE*)key, 0, D_REF(3)))
 		Trap_Arg(key);
