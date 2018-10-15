@@ -202,6 +202,8 @@
 	arg = D_ARG(2);
 
 	if (IS_BINARY_ACT(action)) {
+		ASSERT2(vp != NULL, RP_MISC);
+
 		if (IS_INTEGER(arg)) {
 			a = VAL_INT32(arg);
 			ap = 0;
