@@ -195,7 +195,7 @@
 		}
 		else {
 			if (blk_size > SERIES_REST(VAL_SERIES(data)) - VAL_INDEX(data)) {
-				Expand_Series(VAL_BIN(data), AT_TAIL, blk_size - VAL_TAIL(data));
+				Expand_Series(VAL_SERIES(data), AT_TAIL, blk_size - VAL_TAIL(data));
 			}
 			if (VAL_TAIL(data) < VAL_INDEX(data) + blk_size) {
 				VAL_TAIL(data) = VAL_INDEX(data) + blk_size;
