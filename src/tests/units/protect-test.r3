@@ -11,7 +11,7 @@ Rebol [
 ===start-group=== "Checks if protected data are really protected"
 	bin: #{cafe}
 	str:  "cafe"
-	blk:  "cafe"
+	blk: ["cafe"]
 	protect/values [bin str blk]
 
 	is-protected-error?: function[code][
@@ -34,6 +34,10 @@ Rebol [
 	--test-- "random block"  --assert is-protected-error? [random blk]
 	--test-- "random string" --assert is-protected-error? [random str]
 	--test-- "random binary" --assert is-protected-error? [random bin]
+
+	--test-- "swap block"  --assert is-protected-error? [swap blk [0]]
+	--test-- "swap string" --assert is-protected-error? [swap str "0bad"]
+	--test-- "swap binary" --assert is-protected-error? [swap bin #{0bad}]
 
 ===end-group===
 
