@@ -12,20 +12,22 @@ Rebol [
 	data: #{cafe}
 	protect data
 
-	is-protected?: function[code][
+	is-protected-error?: function[code][
 		true? all [
 			error? err: try code
 			err/id = 'protected
 		]
 	]
 
-	--test-- "clear"   --assert is-protected? [clear data]
-	--test-- "append"  --assert is-protected? [append data #{0bad}]
-	--test-- "insert"  --assert is-protected? [insert data #{0bad}]
+	--test-- "clear"   --assert is-protected-error? [clear data]
+	--test-- "append"  --assert is-protected-error? [append data #{0bad}]
+	--test-- "insert"  --assert is-protected-error? [insert data #{0bad}]
 
 	;@@ https://github.com/rebol/rebol-issues/issues/2321
-	--test-- "encloak" --assert is-protected? [encloak data "key"]
-	--test-- "decloak" --assert is-protected? [decloak data "key"]
+	--test-- "encloak" --assert is-protected-error? [encloak data "key"]
+	--test-- "decloak" --assert is-protected-error? [decloak data "key"]
+	;@@ https://github.com/rebol/rebol-issues/issues/1780
+	--test-- "remove-each" --assert is-protected-error? [remove-each a data [a < 3]]
 
 ===end-group===
 
