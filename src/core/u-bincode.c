@@ -848,7 +848,7 @@ system/standard/bincode: make object! [
 								ASSERT_READ_SIZE(value, cp, ep, n);
 								len = 0;
 								//printf("///%i\n", n);
-								for (int i = 1; i <= n; i++) {
+								for (i = 1; i <= n; i++) {
 									len = (len << 8) + cp[i];
 								}
 								SET_INT32(temp, len);
