@@ -833,6 +833,7 @@ zero_blk:
 		break;
 
 	case A_RANDOM:
+		if (IS_PROTECT_SERIES(VAL_SERIES(value))) Trap0(RE_PROTECTED);
 		if (!IS_BLOCK(value)) Trap_Action(VAL_TYPE(value), action);
 		if (D_REF(2)) Trap0(RE_BAD_REFINES); // seed
 		if (D_REF(4)) { // /only
