@@ -199,7 +199,7 @@
 	}
 	else if (ANY_BLOCK(val) && VAL_BLK_LEN(val) <= 3) {
 		REBFLG neg = FALSE;
-		REBINT i;
+		REBI64 i;
 
 		val = VAL_BLK_DATA(val);
 		if (!IS_INTEGER(val)) goto no_time;
