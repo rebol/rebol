@@ -102,6 +102,7 @@ core: [
 	t-word.c
 	u-aes.c
 	u-bigint.c ;needed for RSA which is needed in TLS protocol (HTTPS)
+	u-bincode.c
 	u-bmp.c
 	u-compress.c
 	u-dh.c

@@ -206,3 +206,12 @@ exit-code
 
 pub-exp
 priv-exp
+
+r-buffer
+w-buffer
+r-mask
+w-mask
+not-bit
+unixtime-now
+random-bytes
+length?
