@@ -36,6 +36,7 @@ qt-file-asserts: 0
 qt-file-passes: 0 
 qt-file-failures: 0
 qt-file-incompatible: 0
+qt-test-assert: 0 
 
 ;- names
 qt-run-name:
@@ -109,6 +110,7 @@ start-test: func [
 	title [string!]
 ][
 	qt-test-name: title
+	qt-test-assert: 0
 	qt-file-tests: qt-file-tests + 1
 	qt-red-only: false
 ]
@@ -121,7 +123,7 @@ assert: func [
 	assertion [logic!]
 ][
 	qt-file-asserts: qt-file-asserts + 1
-  
+	qt-test-assert: qt-test-assert + 1
 	either assertion [
 		qt-file-passes: qt-file-passes + 1
 	][
@@ -136,7 +138,7 @@ assert: func [
 			]
 		]
 		prin "--test-- " 
-		prin qt-test-name
+		prin [qt-test-name qt-test-assert]
 		print either qt-red-only [
 			" not like Red********"
 		][	" FAILED**************"]
