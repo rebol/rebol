@@ -362,7 +362,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	// Output Alpha channel, if it has one:
 	if (Image_Has_Alpha(value, FALSE)) {
 
-		Append_Bytes(mold->series, "\n} #{");
+		Append_Bytes(mold->series, cb_cast("\n} #{"));
 
 		up = Prep_Uni_Series(mold, (size * 2) + (size / 10) + 1);
 
@@ -374,7 +374,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	}
 	*up = 0; // tail already set from Prep.
 
-	Append_Bytes(mold->series, "\n}");
+	Append_Bytes(mold->series, cb_cast("\n}"));
 }
 
 

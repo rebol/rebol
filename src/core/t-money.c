@@ -110,7 +110,7 @@
 {
 	REBVAL *val = D_ARG(1);
 	REBVAL *arg;
-	REBYTE *str;
+	const REBYTE *str;
 	REBINT equal = 1;
 
 	if (IS_BINARY_ACT(action)) {
@@ -215,7 +215,7 @@
 
 		case REB_STRING:
 		{
-			REBYTE *end;
+			const REBYTE *end;
 			str = Qualify_String(arg, 36, 0, FALSE);
 			VAL_DECI(D_RET) = string_to_deci(str, &end);
 			if (end == str || *end != 0) Trap_Make(REB_MONEY, arg);

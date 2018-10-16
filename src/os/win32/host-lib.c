@@ -642,7 +642,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Find_Function(void *dll, char *funcname)
+*/	void *OS_Find_Function(void *dll, const char *funcname)
 /*
 **		Get a DLL function address from its string name.
 **

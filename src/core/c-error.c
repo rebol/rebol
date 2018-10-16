@@ -680,7 +680,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	errs = Construct_Object(0, VAL_BLK(errors), 0);
 	Set_Object(Get_System(SYS_CATALOG, CAT_ERRORS), errs);
 
-	Set_Root_Series(TASK_ERR_TEMPS, Make_Block(3), "task errors");
+	Set_Root_Series(TASK_ERR_TEMPS, Make_Block(3), cb_cast("task errors"));
 
 	// Create objects for all error types:
 	for (val = BLK_SKIP(errs, 1); NOT_END(val); val++) {

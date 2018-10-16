@@ -10805,7 +10805,7 @@ jinit_phuff_decoder (j_decompress_ptr cinfo)
 #ifndef CODI_DEFINED
 #include "reb-codec.h"
 extern long* Make_Mem(size_t size);
-extern void Register_Codec(char *name, codo dispatcher);
+extern void Register_Codec(const REBYTE *name, codo dispatcher);
 #endif
 
 /***********************************************************************
@@ -10850,7 +10850,7 @@ extern void Register_Codec(char *name, codo dispatcher);
 /*
 ***********************************************************************/
 {
-	Register_Codec("jpeg", Codec_JPEG_Image);
+	Register_Codec(cb_cast("jpeg"), Codec_JPEG_Image);
 }
 
 #ifdef _MSC_VER

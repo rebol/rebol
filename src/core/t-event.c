@@ -520,7 +520,7 @@ enum rebol_event_fields {
 		if (!IS_NONE(&val)) {
 			New_Indented_Line(mold);
 			Append_UTF8(mold->series, Get_Sym_Name(fields[field]), -1);
-			Append_Bytes(mold->series, ": ");
+			Append_Bytes(mold->series, cb_cast(": "));
 			if (IS_WORD(&val)) Append_Byte(mold->series, '\'');
 			Mold_Value(mold, &val, TRUE);
 		}

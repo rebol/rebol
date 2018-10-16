@@ -96,7 +96,7 @@ static int ANSI_Value2 = 0;
 static int ANSI_Attr  = -1;
 
 int Update_Graphic_Mode(int attribute, int value, boolean set);
-REBYTE* Parse_ANSI_sequence(REBYTE *cp, REBYTE *ep);
+const REBYTE* Parse_ANSI_sequence(const REBYTE *cp, const REBYTE *ep);
 
 //**********************************************************************
 
@@ -309,9 +309,9 @@ static void close_stdio(void)
 	long len;
 	long total = 0;
 	BOOL ok = FALSE;
-	REBYTE *bp;
-	REBYTE *cp;
-	REBYTE *ep;
+	const REBYTE *bp;
+	const REBYTE *cp;
+	const REBYTE *ep;
 
 	if (GET_FLAG(req->modes, RDM_NULL)) {
 		req->actual = req->length;
@@ -559,7 +559,7 @@ DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);
 
 /***********************************************************************
 **
-*/	REBYTE* Parse_ANSI_sequence(REBYTE *cp, REBYTE *ep)
+*/	const REBYTE* Parse_ANSI_sequence(const REBYTE *cp, const REBYTE *ep)
 /*
 **		Parses ANSI sequence and return number of bytes used.
 **      Based on http://ascii-table.com/ansi-escape-sequences.php

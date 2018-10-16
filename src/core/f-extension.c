@@ -328,7 +328,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		}
 
 		// Call its info() function for header and code body:
-		if (!(info = OS_FIND_FUNCTION(dll, BOOT_STR(RS_EXTENSION, 0)))){
+		if (!(info = OS_FIND_FUNCTION(dll, cs_cast(BOOT_STR(RS_EXTENSION, 0))))){
 			OS_CLOSE_LIBRARY(dll);
 			Trap1(RE_BAD_EXTENSION, val);
 		}
@@ -341,7 +341,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 		// Import the string into REBOL-land:
 		src = Copy_Bytes(code, -1); // Nursery protected
-		call = OS_FIND_FUNCTION(dll, BOOT_STR(RS_EXTENSION, 2)); // zero is allowed
+		call = OS_FIND_FUNCTION(dll, cs_cast(BOOT_STR(RS_EXTENSION, 2))); // zero is allowed
 	}
 	else {
 		// Hosted extension:

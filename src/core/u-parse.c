@@ -76,7 +76,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	REBVAL val;
 	Set_Series(type, &val, series);
 	VAL_INDEX(&val) = index;
-	Debug_Fmt("%r: %r", rules, &val);
+	Debug_Fmt(cb_cast("%r: %r"), rules, &val);
 }
 
 

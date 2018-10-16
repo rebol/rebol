@@ -692,7 +692,7 @@ crash:
 			if (!SERIES_FREED(series)) {
 				if (SERIES_WIDE(series) == size && SERIES_GET_FLAG(series, SER_MON)) {
 					//Debug_Fmt("%3d %4d %4d = \"%s\"", n++, series->tail, SERIES_TOTAL(series), series->data);
-					Debug_Fmt("%3d %4d %4d = \"%s\"", n++, series->tail, SERIES_REST(series), (SERIES_LABEL(series) ? SERIES_LABEL(series) : "-"));
+					Debug_Fmt(cb_cast("%3d %4d %4d = \"%s\""), n++, series->tail, SERIES_REST(series), (SERIES_LABEL(series) ? SERIES_LABEL(series) : "-"));
 				}
 			}
 			series++;
@@ -770,7 +770,7 @@ crash:
 			size += seg->size;
 
 		used = Mem_Pools[n].has - Mem_Pools[n].free;
-		Debug_Fmt("Pool[%-2d] %-4dB %-5d/%-5d:%-4d (%-2d%%) %-2d segs, %-07d total",
+		Debug_Fmt(cb_cast("Pool[%-2d] %-4dB %-5d/%-5d:%-4d (%-2d%%) %-2d segs, %-07d total"),
 			n,
 			Mem_Pools[n].wide,
 			used,
@@ -784,8 +784,8 @@ crash:
 		tused += used * Mem_Pools[n].wide;
 		total += size;
 	}
-	Debug_Fmt("Pools used %d of %d (%2d%%)", tused, total, (tused*100) / total);
-	Debug_Fmt("System pool used %d", Mem_Pools[SYSTEM_POOL].has);
+	Debug_Fmt(cb_cast("Pools used %d of %d (%2d%%)"), tused, total, (tused*100) / total);
+	Debug_Fmt(cb_cast("System pool used %d"), Mem_Pools[SYSTEM_POOL].has);
 	//Debug_Fmt("Raw allocator reports %d", PG_Mem_Usage);
 }
 
@@ -846,25 +846,25 @@ crash:
 			if (SERIES_WIDE(series) == sizeof(REBVAL)) {
 				blks++;
 				blk_size += SERIES_TOTAL(series);
-				if (f) Debug_Fmt_("BLOCK ");
+				if (f) Debug_Fmt_(cb_cast("BLOCK "));
 			}
 			else if (SERIES_WIDE(series) == 1) {
 				strs++;
 				str_size += SERIES_TOTAL(series);
-				if (f) Debug_Fmt_("STRING");
+				if (f) Debug_Fmt_(cb_cast("STRING"));
 			}
 			else if (SERIES_WIDE(series) == sizeof(REBUNI)) {
 				unis++;
 				uni_size += SERIES_TOTAL(series);
-				if (f) Debug_Fmt_("UNICOD");
+				if (f) Debug_Fmt_(cb_cast("UNICOD"));
 			}
 			else if (SERIES_WIDE(series)) {
 				odds++;
 				odd_size += SERIES_TOTAL(series);
-				if (f) Debug_Fmt_("ODD[%d]", SERIES_WIDE(series));
+				if (f) Debug_Fmt_(cb_cast("ODD[%d]"), SERIES_WIDE(series));
 			}
 			if (f && SERIES_WIDE(series)) {
-				Debug_Fmt(" units: %-5d tail: %-5d bytes: %-7d", SERIES_REST(series), SERIES_TAIL(series), SERIES_TOTAL(series));
+				Debug_Fmt(cb_cast(" units: %-5d tail: %-5d bytes: %-7d"), SERIES_REST(series), SERIES_TAIL(series), SERIES_TOTAL(series));
 			}
 
 			series++;
@@ -878,7 +878,7 @@ crash:
 	}
 
 	if (flags & 1) {
-		Debug_Fmt(
+		Debug_Fmt(cb_cast(
 			  "Series Memory Info:\n"
 			  "  node   size = %d\n"
 			  "  series size = %d\n"
@@ -889,7 +889,7 @@ crash:
 			  "  %-6d odds = %-7d bytes - odd series\n"
 			  "  %-6d used = %-7d bytes - total used\n"
 			  "  %-6d free / %-7d bytes - free headers / node-space\n"
-			  ,
+			  ),
 			  sizeof(REBVAL),
 			  sizeof(REBSER),
 			  segs, seg_size,

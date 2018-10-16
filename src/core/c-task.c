@@ -67,14 +67,14 @@
 {
 	REBSER *body;
 
-	Debug_Str("Begin Task");
+	Debug_Str((REBYTE*)"Begin Task");
 
 	Init_Task();
 	body = Clone_Block(VAL_MOD_BODY(task));
 	OS_TASK_READY(0);
 	Do_Blk(body, 0);
 
-	Debug_Str("End Task");
+	Debug_Str((REBYTE*)"End Task");
 }
 
 

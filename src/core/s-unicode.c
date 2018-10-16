@@ -736,7 +736,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	REBFLG Legal_UTF8_Char(REBYTE *str, REBCNT len)
+*/	REBFLG Legal_UTF8_Char(const REBYTE *str, REBCNT len)
 /*
 **		Returns TRUE if char is legal.
 **
@@ -768,7 +768,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	REBCNT Decode_UTF8_Char(REBYTE **str, REBCNT *len)
+*/	REBCNT Decode_UTF8_Char(const REBYTE **str, REBCNT *len)
 /*
 **		Converts a single UTF8 code-point (to 32 bit).
 **		Errors are returned as zero. (So prescan source for null.)
@@ -777,7 +777,7 @@ ConversionResult ConvertUTF8toUTF32 (
 **
 ***********************************************************************/
 {
-	UTF8 *source = *str;
+	const UTF8 *source = *str;
 	UTF32 ch = 0;
 	int slen = trailingBytesForUTF8[*source];
 
@@ -817,7 +817,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	int Decode_UTF8(REBUNI *dst, REBYTE *src, REBCNT len, REBFLG ccr)
+*/	int Decode_UTF8(REBUNI *dst, const REBYTE *src, REBCNT len, REBFLG ccr)
 /*
 **		Decode UTF8 byte string into a 16 bit preallocated array.
 **

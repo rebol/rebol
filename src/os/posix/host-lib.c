@@ -698,7 +698,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 /***********************************************************************
 **
-*/	void *OS_Find_Function(void *dll, char *funcname)
+*/	void *OS_Find_Function(void *dll, const char *funcname)
 /*
 **		Get a DLL function address from its string name.
 **

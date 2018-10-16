@@ -866,7 +866,7 @@ error:
 /*
 ***********************************************************************/
 {
-	Register_Codec("png", Codec_PNG_Image);
+	Register_Codec(cb_cast("png"), Codec_PNG_Image);
 }
 
 #endif //USE_PNG_CODEC

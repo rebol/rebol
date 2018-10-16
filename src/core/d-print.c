@@ -71,7 +71,7 @@ static REBREQ *Req_SIO;
 **
 ***********************************************************************/
 {
-	Req_SIO->data = BYTES("\n");
+	Req_SIO->data = b_cast("\n");
 	Req_SIO->length = 1;
 	Req_SIO->actual = 0;
 
@@ -452,7 +452,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	void Debug_Fmt_(REBYTE *fmt, ...)
+*/	void Debug_Fmt_(const REBYTE *fmt, ...)
 /*
 **		Print using a format string and variable number
 **		of arguments.  All args must be long word aligned
@@ -878,6 +878,6 @@ mold_value:
 **
 ***********************************************************************/
 {
-	Set_Root_Series(TASK_BUF_PRINT, Make_Binary(1000), "print buffer");
-	Set_Root_Series(TASK_BUF_FORM,  Make_Binary(64), "form buffer");
+	Set_Root_Series(TASK_BUF_PRINT, Make_Binary(1000), cb_cast("print buffer"));
+	Set_Root_Series(TASK_BUF_FORM,  Make_Binary(64), cb_cast("form buffer"));
 }

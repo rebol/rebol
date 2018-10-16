@@ -1452,8 +1452,8 @@ append:
 	REBYTE c;
 	REBYTE *dc;
 
-	Set_Root_Series(TASK_MOLD_LOOP, Make_Block(size/10), "mold loop");
-	Set_Root_Series(TASK_BUF_MOLD, Make_Unicode(size), "mold buffer");
+	Set_Root_Series(TASK_MOLD_LOOP, Make_Block(size/10), cb_cast("mold loop"));
+	Set_Root_Series(TASK_BUF_MOLD, Make_Unicode(size), cb_cast("mold buffer"));
 
 	// Create quoted char escape table:
 	Char_Escapes = cp = Make_Mem(MAX_ESC_CHAR+1); // cleared

@@ -96,7 +96,7 @@
 		//DISABLE_GC; // Don't let GC occur just for an expansion.
 
 		if (Reb_Opts->watch_expand) {
-			Debug_Fmt("Expand %x wide: %d tail: %d delta: %d", series, wide, series->tail, delta);
+			Debug_Fmt(cb_cast("Expand %x wide: %d tail: %d delta: %d"), series, wide, series->tail, delta);
 		}
 
 		// Create a new series that is bigger.
@@ -203,7 +203,7 @@
 
 /***********************************************************************
 **
-*/	void Append_Series(REBSER *series, REBYTE *data, REBCNT len)
+*/	void Append_Series(REBSER *series, const REBYTE *data, REBCNT len)
 /*
 **		Append value(s) onto the tail of a series.  The len is
 **		the number of units (bytes, REBVALS, etc.) of the data,
@@ -224,7 +224,7 @@
 
 /***********************************************************************
 **
-*/	void Append_Mem_Extra(REBSER *series, REBYTE *data, REBCNT len, REBCNT extra)
+*/	void Append_Mem_Extra(REBSER *series, const REBYTE *data, REBCNT len, REBCNT extra)
 /*
 **		An optimized function for appending raw memory bytes to
 **		a byte-sized series. The series will be expanded if room

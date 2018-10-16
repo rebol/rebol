@@ -349,7 +349,7 @@ xx*/	void Dump_Bind_Table()
 	};
 
 	DISABLE_GC;
-	for (n = 0; n < 14; n++) Debug_Fmt(BOOT_STR(RS_DUMP, n), nums[n]);
+	for (n = 0; n < 14; n++) Debug_Fmt(cb_cast(BOOT_STR(RS_DUMP, n)), nums[n]);
 	ENABLE_GC;
 }
 
@@ -377,7 +377,7 @@ xx*/	void Dump_Bind_Table()
 			args = BLK_HEAD(VAL_FUNC_ARGS(DSF_FUNC(dsf)));
 			m = SERIES_TAIL(VAL_FUNC_ARGS(DSF_FUNC(dsf)));
 			for (n = 1; n < m; n++)
-				Debug_Fmt("\t%s: %72r", Get_Word_Name(args+n), DSF_ARGS(dsf, n));
+				Debug_Fmt(cb_cast("\t%s: %72r"), Get_Word_Name(args+n), DSF_ARGS(dsf, n));
 		}
 		//Debug_Fmt(Str_Stack[2], PRIOR_DSF(dsf));
 		if (PRIOR_DSF(dsf) > 0) Dump_Stack(PRIOR_DSF(dsf), dsf-1);
