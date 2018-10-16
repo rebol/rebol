@@ -24,4 +24,9 @@ wrap load %units/protect-test.r3
 wrap load %units/crash-test.r3
 wrap load %units/bincode-test.r3
 
+recycle/torture
+recycle
+stats/show
+print "------------------------------------------------------------"
 ***end-run***
+recycle/on
