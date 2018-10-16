@@ -73,7 +73,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#define ASSERT_SI_RANGE(v, n) if (VAL_INT32(v) < (- n) || VAL_INT32(v) > n) Trap1(RE_OUT_OF_RANGE, v);
+#define ASSERT_SI_RANGE(v, n) if (VAL_INT64(v) < (- (i64)n) || VAL_INT64(v) > (i64)n) Trap1(RE_OUT_OF_RANGE, v);
 #define ASSERT_UI_RANGE(v, n) if (VAL_INT32(v) > n) Trap1(RE_OUT_OF_RANGE, v);
 #define ASSERT_UIBYTES_RANGE(v, n) if (VAL_LEN(v) > n) Trap1(RE_OUT_OF_RANGE, v);
 #define ASSERT_U32_RANGE(v) if((i64)VAL_UNT64(v) > (i64)0xFFFFFFFFLL || (i64)VAL_UNT64(v) < (i64)0xFFFFFFFF00000001LL)  Trap1(RE_OUT_OF_RANGE, v);
@@ -444,9 +444,9 @@ system/standard/bincode: make object! [
 
 			value = VAL_BLK(val_write); //resets value at head of the input block
 
-			/*********************************************************
-			/* Do real WRITE evaluation ******************************
-			/*********************************************************/
+			//#########################################################
+			//## Do real WRITE evaluation #############################
+			//#########################################################
 			
 			cp = BIN_DATA(bin) + VAL_INDEX(buffer_write);
 
@@ -588,7 +588,6 @@ system/standard/bincode: make object! [
 						ASSERT_SI_RANGE(next, 0x7FFFFFFF);
 						goto write_ui32;
 					case SYM_SI64:
-						ASSERT_SI_RANGE(next, 0x7FFFFFFFFFFFFFFF);
 						goto write_ui64;
 
 					case SYM_BYTES:
