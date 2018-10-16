@@ -207,15 +207,15 @@ enum {
 #define MAX_HEX_LEN     16
 
 #ifdef ITOA64           // Integer to ascii conversion
-#define INT_TO_STR(n,s) _i64toa(n, s, 10)
+#define INT_TO_STR(n,s) _i64toa(n, s_cast(s), 10)
 #else
 #define INT_TO_STR(n,s) Form_Int_Len(s, n, MAX_INT_LEN)
 #endif
 
 #ifdef ATOI64           // Ascii to integer conversion
-#define CHR_TO_INT(s)   _atoi64(s)
+#define CHR_TO_INT(s)   _atoi64(cs_cast(s))
 #else
-#define CHR_TO_INT(s)   strtoll(s, 0, 10)
+#define CHR_TO_INT(s)   strtoll(cs_cast(s), 0, 10)
 #endif
 
 #define LDIV            lldiv

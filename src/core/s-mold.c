@@ -96,7 +96,7 @@ enum {
 			Mold_Value(mold, va_arg(args, REBVAL*), TRUE);
 			break;
 		case 'S':	// String of bytes
-			Append_Bytes(series, va_arg(args, REBYTE*));
+			Append_Bytes(series, va_arg(args, const char*));
 			break;
 		case 'C':	// Char
 			Append_Byte(series, va_arg(args, REBCNT));
@@ -536,7 +536,7 @@ STOID Mold_Handle(REBVAL *value, REB_MOLD *mold)
 	const REBYTE *name = VAL_HANDLE_NAME(value);
 	if (name != NULL) {
 		Append_Bytes(mold->series, "#[handle! ");
-		Append_Bytes(mold->series, (REBYTE *)name);
+		Append_Bytes(mold->series, cs_cast(name));
 		Append_Byte(mold->series, ']');
 	}
 	else {
@@ -608,7 +608,7 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 	if (!sep) sep = "[]";
 
 	if (IS_END(value)) {
-		Append_Bytes(out, sep);
+		Append_Bytes(out, cs_cast(sep));
 		return;
 	}
 
@@ -709,7 +709,7 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 			break;
 		}
 
-		if (over) Append_Bytes(mold->series, sep ? sep : (REBYTE*)("[]"));
+		if (over) Append_Bytes(mold->series, sep ? cs_cast(sep) : "[]");
 		else Mold_Block_Series(mold, VAL_SERIES(value), VAL_INDEX(value), sep);
 
 		if (VAL_TYPE(value) == REB_SET_PATH)

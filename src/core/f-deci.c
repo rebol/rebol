@@ -546,7 +546,7 @@ deci decimal_to_deci (REBDEC a) {
 
 	e -= (rve - c);
 
-	d = CHR_TO_INT(c);
+	d = CHR_TO_INT(cs_cast(c));
 
 	result.s = s;
 	result.m2 = 0;

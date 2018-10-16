@@ -417,7 +417,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 
 /***********************************************************************
 **
-*/	REBSER *Append_Bytes(REBSER *dst, const REBYTE *src)
+*/	REBSER *Append_Bytes(REBSER *dst, const char *src)
 /*
 **		Optimized function to append a non-encoded byte string.
 **		If dst is null, it will be created and returned.
@@ -543,7 +543,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 	REBYTE buf[32];
 	
 	Form_Int(buf, num);
-	Append_Bytes(dst, buf);
+	Append_Bytes(dst, cs_cast(buf));
 }
 
 
@@ -561,7 +561,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 	else
 		Form_Int_Pad(buf, num, -digs, digs, '0');
 
-	Append_Bytes(dst, buf);
+	Append_Bytes(dst, cs_cast(buf));
 }
 
 

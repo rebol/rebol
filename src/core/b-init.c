@@ -200,9 +200,9 @@ extern const REBYTE Str_Banner[];
 		}
 	}
 
-	ASSERT(!CMP_BYTES("end!", Get_Sym_Name(SYM_END_TYPE)), RP_BAD_END_CANON_WORD);
-	ASSERT(!CMP_BYTES("true", Get_Sym_Name(SYM_TRUE)), RP_BAD_TRUE_CANON_WORD);
-	ASSERT(!CMP_BYTES("line", BOOT_STR(RS_SCAN,1)), RP_BAD_BOOT_STRING);
+	ASSERT(!CMP_BYTES(cb_cast("end!"), Get_Sym_Name(SYM_END_TYPE)), RP_BAD_END_CANON_WORD);
+	ASSERT(!CMP_BYTES(cb_cast("true"), Get_Sym_Name(SYM_TRUE)), RP_BAD_TRUE_CANON_WORD);
+	ASSERT(!CMP_BYTES(cb_cast("line"), BOOT_STR(RS_SCAN,1)), RP_BAD_BOOT_STRING);
 }
 
 

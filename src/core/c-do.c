@@ -257,7 +257,7 @@ void Trace_Return(REBVAL *word, REBVAL *value)
 {
 	int depth;
 	CHECK_DEPTH(depth);
-	Debug_Fmt_(cb_cast(BOOT_STR(RS_TRACE,6)), Get_Word_Name(word));
+	Debug_Fmt_(BOOT_STR(RS_TRACE,6), Get_Word_Name(word));
 	Debug_Values(value, 1, 50);
 }
 

@@ -376,7 +376,7 @@
 
 		// Check for identifiers:
 		for (n = 0; n < ESC_MAX; n++) {
-			if (NZ(cp = Match_Bytes(*bp, cb_cast(Esc_Names[n])))) {
+			if (NZ(cp = Match_Bytes(*bp, Esc_Names[n]))) {
 				if (cp && *cp == ')') {
 					*bp = cp + 1;
 					return Esc_Codes[n];
