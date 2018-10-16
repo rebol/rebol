@@ -39,4 +39,4 @@ script:
     - cd make/
     - prebuild/r3-make-linux -qs ../src/tools/make-make.r ${OS_ID}
     - make clean prep r3
-    - valgrind -v --leak-check=full ./r3 --do run-tests
+    - valgrind -v --error-exitcode=42 --track-origins=yes --leak-check=full ./r3 --do run-tests
