@@ -207,7 +207,7 @@
 	REBINT result;
 	REBCNT wt = 1;
 	REBCNT res = (timeout >= 1000) ? 0 : 16;  // OS dependent?
-	REBCNT old_time = -1;
+	REBINT old_time = -1;
 
 	while (wt) {
 		if (GET_SIGNAL(SIG_ESCAPE)) {
@@ -235,12 +235,13 @@
 			if (old_time >= 0
 				&& time - old_time < res) {
 				res = time - old_time;
+				// printf("=== res: %u old_time: %i time: %u \n", res, old_time, time);
 			}
 
 			old_time = time;
 		}
 
-		//printf("%d %d %d\n", dt, time, timeout);
+		// printf("base: %ull res: %u wt: %u old_time: %i time: %u timeout: %u\n", base, res, wt, old_time, time, timeout);
 
 		// Wait for events or time to expire:
 		//Debug_Num("OSW", wt);
