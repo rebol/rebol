@@ -31,4 +31,19 @@ if find system/codecs 'wav [
 	system/codecs/wav/verbose: 0
 ]
 
+if find system/codecs 'der [
+	system/codecs/der/verbose: 2
+	===start-group=== "DER codec"
+		
+		--test-- "Load DER file"
+			--assert block? pfx: load %units/files/test.pfx
+			--assert binary? try [a: pfx/sequence/sequence/4/2]
+			--assert block? b: decode 'DER a
+			--assert binary? try [c: b/sequence/sequence/4/2]
+			--assert block? d: decode 'DER c
+
+	===end-group===
+	system/codecs/der/verbose: 0
+]
+
 ~~~end-file~~~
