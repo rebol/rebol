@@ -37,6 +37,7 @@
 */
 
 #include "sys-core.h"
+#include <wchar.h>
 
 static REBREQ *Req_SIO;
 
@@ -226,7 +227,7 @@ static REBREQ *Req_SIO;
 	if (Trace_Limit > 0) {
 		if (Trace_Buffer->tail >= Trace_Limit)
 			Remove_Series(Trace_Buffer, 0, 2000);
-		if (len == UNKNOWN) len = (REBINT)(uni ? wcslen(up) : LEN_BYTES(bp));
+		if (len == UNKNOWN) len = (REBINT)(uni ? wcslen((const wchar_t*)up) : LEN_BYTES(bp));
 		// !!! account for unicode!
 		for (; len > 0; len--) {
 			uc = uni ? *up++ : *bp++;

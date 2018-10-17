@@ -119,7 +119,7 @@
 		break;
 
 	case A_MULTIPLY:
-		if (REB_I64_MUL_OF(num, arg, &p)) Trap0(RE_OVERFLOW);
+		if (REB_I64_MUL_OF(num, arg, (REBI64*)&p)) Trap0(RE_OVERFLOW);
 		num = p;
 		break;
 

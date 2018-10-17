@@ -462,7 +462,7 @@
 
 	if (!IS_END(arg)) return FALSE;
 
-	Normalize_Time(&secs, &day);
+	Normalize_Time(&secs, (REBINT*)&day);
 	date = Normalize_Date(day, month, year, tz);
 
 	VAL_SET(val, REB_DATE);

@@ -28,6 +28,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include <wchar.h>
 
 #define FN_PAD 2	// pad file name len for adding /, /*, and /?
 

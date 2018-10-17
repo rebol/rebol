@@ -986,7 +986,7 @@ static inline REBOOL Open_Pipe_Fails(int pipefd[2]) {
 			argv_new[argc + 2] = NULL;
 			execvp(sh, (char* const*)argv_new);
 		} else {
-			execvp(argv[0], argv);
+			execvp(argv[0], (char* const*)argv);
 		}
 child_error:
 		if(write(info_pipe[W], &errno, sizeof(errno)) == -1) {
