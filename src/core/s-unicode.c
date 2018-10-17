@@ -866,6 +866,7 @@ ConversionResult ConvertUTF8toUTF32 (
 **
 ***********************************************************************/
 {
+#define EXPECT_LF 2
 	int flag = -1;
 	UTF32 ch;
 	REBUNI *start = dst;
@@ -883,12 +884,12 @@ ConversionResult ConvertUTF8toUTF32 (
 
 		// Skip CR, but add LF (even if missing)
 		if (ccr) {
-			if (ccr < 0 && ch != LF) {
+			if (ccr == EXPECT_LF && ch != LF) {
 				ccr = 1;
 				*dst++ = LF;
 			}
 			if (ch == CR) {
-				ccr = -1;
+				ccr = EXPECT_LF;
 				continue;
 			}
 		}
