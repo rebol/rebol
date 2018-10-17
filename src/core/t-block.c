@@ -207,7 +207,7 @@ static void No_Nones(REBVAL *arg) {
 	REBFLG is_blk = FALSE; // arg is a block not a value
 
 	// Length of target (may modify index): (arg can be anything)
-	rlen = Partial1((action == A_CHANGE) ? block : arg, DS_ARG(AN_LENGTH));
+	rlen = (REBINT)Partial1((action == A_CHANGE) ? block : arg, DS_ARG(AN_LENGTH));
 
 	index = VAL_INDEX(block);
 	if (action == A_APPEND || index > tail) index = tail;

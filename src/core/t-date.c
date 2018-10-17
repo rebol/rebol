@@ -120,7 +120,7 @@
 	bp = Form_Int_Pad(bp, (REBINT)VAL_YEAR(value), 6, -4, '0');
 	*bp = 0;
 
-	Append_Bytes(mold->series, buf);
+	Append_Bytes(mold->series, cs_cast(buf));
 
 	if (VAL_TIME(value) != NO_TIME) {
 
@@ -143,7 +143,7 @@
 			bp = Form_Int_Pad(bp, (tz&3) * 15, 2, 2, '0');
 			*bp = 0;
 
-			Append_Bytes(mold->series, buf);
+			Append_Bytes(mold->series, cs_cast(buf));
 		}
 	}
 }
@@ -266,7 +266,7 @@
 	if (secs == NO_TIME) return;
 
 	// how many days worth of seconds do we have
-	day = (REBINT)(secs / TIME_IN_DAY);
+	day = cast(REBINT, secs / TIME_IN_DAY);
 	secs %= TIME_IN_DAY;
 
 	if (secs < 0L) {

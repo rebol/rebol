@@ -819,7 +819,7 @@ error:
 	codi->w = w;
 	codi->h = h;
 	codi->bits = Make_Mem(w * h * 4);
-	png_load((unsigned char *)(codi->data), codi->len, (unsigned char *)(codi->bits), &alpha);
+	png_load((unsigned char *)(codi->data), codi->len, (char *)(codi->bits), &alpha);
 
 	//if(alpha) VAL_IMAGE_TRANSP(Temp_Value)=VITT_ALPHA;
 }

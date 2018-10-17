@@ -296,13 +296,13 @@ static struct digest {
 {
 	REBSER *ser;
 	REBCNT index;
-	REBINT len;
+	REBCNT len;
 
 	len = Partial1(D_ARG(1), D_ARG(3));
 
 	ser = Prep_Bin_Str(D_ARG(1), &index, &len); // result may be a SHARED BUFFER!
 
-	Set_Binary(D_RET, Compress(ser, index, len, D_REF(4))); // /gzip
+	Set_Binary(D_RET, Compress(ser, index, (REBINT)len, D_REF(4))); // /gzip
 
 	return R_RET;
 }
@@ -318,13 +318,13 @@ static struct digest {
 {
 	REBVAL *arg = D_ARG(1);
 	REBINT limit = 0;
-	REBINT len;
+	REBCNT len;
 
 	len = Partial1(D_ARG(1), D_ARG(3));
 
 	if (D_REF(5)) limit = Int32s(D_ARG(6), 1); // /limit size
 	
-	Set_Binary(D_RET, Decompress(VAL_SERIES(arg), VAL_INDEX(arg), len, limit, D_REF(4))); // /gzip
+	Set_Binary(D_RET, Decompress(VAL_SERIES(arg), VAL_INDEX(arg), (REBINT)len, limit, D_REF(4))); // /gzip
 
 	return R_RET;
 }

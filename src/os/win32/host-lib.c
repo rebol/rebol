@@ -547,7 +547,7 @@ static void *Task_Ready;
 	LARGE_INTEGER time;
 
 	if (!QueryPerformanceCounter(&time))
-		OS_Crash("Missing resource", "High performance timer");
+		OS_Crash(cb_cast("Missing resource"), "High performance timer");
 
 	if (base == 0) return time.QuadPart; // counter (may not be time)
 
@@ -642,7 +642,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Find_Function(void *dll, char *funcname)
+*/	void *OS_Find_Function(void *dll, const char *funcname)
 /*
 **		Get a DLL function address from its string name.
 **

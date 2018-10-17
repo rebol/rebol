@@ -78,9 +78,9 @@ enum Crash_Msg_Nums {
 
 	// "REBOL PANIC #nnn:"
 	COPY_BYTES(buf, Crash_Msgs[CM_ERROR], CRASH_BUF_SIZE);
-	APPEND_BYTES(buf, " #", CRASH_BUF_SIZE);
+	APPEND_BYTES(buf, cb_cast(" #"), CRASH_BUF_SIZE);
 	Form_Int(buf + LEN_BYTES(buf), id);
-	APPEND_BYTES(buf, ": ", CRASH_BUF_SIZE);
+	APPEND_BYTES(buf, cb_cast(": "), CRASH_BUF_SIZE);
 
 	// "REBOL PANIC #nnn: put error message here"
 	// The first few error types only print general error message.

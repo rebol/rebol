@@ -56,7 +56,7 @@
 
 /***********************************************************************
 **
-*/  REBSER *Compress(REBSER *input, REBINT index, REBINT len, REBFLG use_crc)
+*/  REBSER *Compress(REBSER *input, REBINT index, REBCNT len, REBFLG use_crc)
 /*
 **      Compress a binary (only).
 **		data
@@ -76,7 +76,6 @@
 	REBINT err;
 	REBYTE out_size[sizeof(REBCNT)];
 
-	if (len < 0) Trap0(RE_PAST_END); // !!! better msg needed
 	size = len + (len > STERLINGS_MAGIC_NUMBER ? len / 10 + 12 : STERLINGS_MAGIC_FIX);
 	output = Make_Binary(size);
 

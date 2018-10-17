@@ -309,12 +309,12 @@
 
 /***********************************************************************
 **
-*/	static REBSER *Decode_Base2(REBYTE **src, REBCNT len, REBYTE delim)
+*/	static REBSER *Decode_Base2(const REBYTE **src, REBCNT len, REBYTE delim)
 /*
 ***********************************************************************/
 {
 	REBYTE *bp;
-	REBYTE *cp;
+	const REBYTE *cp;
 	REBCNT count = 0;
 	REBINT accum = 0;
 	REBYTE lex;
@@ -359,12 +359,12 @@ err:
 
 /***********************************************************************
 **
-*/	static REBSER *Decode_Base16(REBYTE **src, REBCNT len, REBYTE delim)
+*/	static REBSER *Decode_Base16(const REBYTE **src, REBCNT len, REBYTE delim)
 /*
 ***********************************************************************/
 {
 	REBYTE *bp;
-	REBYTE *cp;
+	const REBYTE *cp;
 	REBCNT count = 0;
 	REBINT accum = 0;
 	REBYTE lex;
@@ -404,12 +404,12 @@ err:
 								
 /***********************************************************************
 **
-*/	static REBSER *Decode_Base64(REBYTE **src, REBCNT len, REBYTE delim, REBOOL urlSafe)
+*/	static REBSER *Decode_Base64(const REBYTE **src, REBCNT len, REBYTE delim, REBOOL urlSafe)
 /*
 ***********************************************************************/
 {
 	REBYTE *bp;
-	REBYTE *cp;
+	const REBYTE *cp;
 	REBCNT flip, pos;
 	REBINT accum;
 	REBYTE lex;
@@ -513,7 +513,7 @@ err:
 
 /***********************************************************************
 **
-*/	REBYTE *Decode_Binary(REBVAL *value, REBYTE *src, REBCNT len, REBINT base, REBYTE delim, REBOOL urlSafe)
+*/	const REBYTE *Decode_Binary(REBVAL *value, const REBYTE *src, REBCNT len, REBINT base, REBYTE delim, REBOOL urlSafe)
 /*
 **		Scan and convert a binary string.
 **

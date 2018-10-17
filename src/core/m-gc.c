@@ -546,7 +546,7 @@ mark_obj:
 		return 0;
 	}
 
-	if (Reb_Opts->watch_recycle) Debug_Str(BOOT_STR(RS_WATCH, 0));
+	if (Reb_Opts->watch_recycle) Debug_Str(cs_cast(BOOT_STR(RS_WATCH, 0)));
 
 	GC_Disabled = 1;
 

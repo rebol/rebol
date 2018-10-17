@@ -33,7 +33,7 @@
 
 /***********************************************************************
 **
-*/	void Dump_Series(REBSER *series, REBYTE *memo)
+*/	void Dump_Series(REBSER *series, const char *memo)
 /*
 ***********************************************************************/
 {
@@ -100,7 +100,7 @@
 		for (tp = str; *tp;) *cp++ = *tp++;
 
 		*cp = 0;
-		Debug_Str(buf);
+		Debug_Str(cs_cast(buf));
 		if (cnt >= limit) break;
 		cp = buf;
 	}
@@ -119,7 +119,7 @@
 	REBYTE *cp;
 	REBCNT l, n;
 	REBCNT *bp = (REBCNT*)vp;
-	REBYTE *type;
+	const REBYTE *type;
 
 	cp = buf;
 	for (l = 0; l < count; l++) {
@@ -141,12 +141,12 @@
 		}
 		n = 0;
 		if (IS_WORD((REBVAL*)val) || IS_GET_WORD((REBVAL*)val) || IS_SET_WORD((REBVAL*)val)) {
-			char * name = Get_Word_Name((REBVAL*)val);
-			n = snprintf(cp, sizeof(buf) - (cp - buf), " (%s)", name);
+			const char * name = cs_cast(Get_Word_Name((REBVAL*)val));
+			n = snprintf(s_cast(cp), sizeof(buf) - (cp - buf), " (%s)", name);
 		}
 
 		*(cp + n) = 0;
-		Debug_Str(buf);
+		Debug_Str(s_cast(buf));
 		cp = buf;
 	}
 }
@@ -377,7 +377,7 @@ xx*/	void Dump_Bind_Table()
 			args = BLK_HEAD(VAL_FUNC_ARGS(DSF_FUNC(dsf)));
 			m = SERIES_TAIL(VAL_FUNC_ARGS(DSF_FUNC(dsf)));
 			for (n = 1; n < m; n++)
-				Debug_Fmt("\t%s: %72r", Get_Word_Name(args+n), DSF_ARGS(dsf, n));
+				Debug_Fmt(cb_cast("\t%s: %72r"), Get_Word_Name(args+n), DSF_ARGS(dsf, n));
 		}
 		//Debug_Fmt(Str_Stack[2], PRIOR_DSF(dsf));
 		if (PRIOR_DSF(dsf) > 0) Dump_Stack(PRIOR_DSF(dsf), dsf-1);

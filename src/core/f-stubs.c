@@ -667,7 +667,7 @@
 
 /***********************************************************************
 **
-*/	 REBINT Partial1(REBVAL *sval, REBVAL *lval)
+*/	 REBCNT Partial1(REBVAL *sval, REBVAL *lval)
 /*
 **		Process the /part (or /skip) and other length modifying
 **		arguments.
@@ -705,7 +705,7 @@
 		}
 	}
 
-	return (REBINT)len;
+	return (REBCNT)len;
 }
 
 

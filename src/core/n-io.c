@@ -554,7 +554,7 @@ chk_neg:
 	REBINT r;
 	REBCHR *cmd = NULL;
 	REBVAL *arg = D_ARG(1);
-	REBI64 pid = -1;
+	REBU64 pid = 0;
 	u32 flags = 0;
 	int argc = 1;
 	REBCHR ** argv = NULL;

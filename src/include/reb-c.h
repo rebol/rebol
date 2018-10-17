@@ -207,15 +207,15 @@ enum {
 #define MAX_HEX_LEN     16
 
 #ifdef ITOA64           // Integer to ascii conversion
-#define INT_TO_STR(n,s) _i64toa(n, s, 10)
+#define INT_TO_STR(n,s) _i64toa(n, s_cast(s), 10)
 #else
 #define INT_TO_STR(n,s) Form_Int_Len(s, n, MAX_INT_LEN)
 #endif
 
 #ifdef ATOI64           // Ascii to integer conversion
-#define CHR_TO_INT(s)   _atoi64(s)
+#define CHR_TO_INT(s)   _atoi64(cs_cast(s))
 #else
-#define CHR_TO_INT(s)   strtoll(s, 0, 10)
+#define CHR_TO_INT(s)   strtoll(cs_cast(s), 0, 10)
 #endif
 
 #define LDIV            lldiv
@@ -265,36 +265,28 @@ typedef void(*CFUNC)(void *);
 #define COPY_MEM(t,f,l) memcpy((void*)(t), (void*)(f), l)
 #define MOVE_MEM(t,f,l) memmove((void*)(t), (void*)(f), l)
 
-// Byte string functions:
-#define COPY_BYTES(t,f,l)   strncpy((char*)t, (char*)f, l)
-// For APPEND_BYTES, l is the max-size allocated for t (dest)
-#define APPEND_BYTES(t,f,l) strncat((char*)t, (char*)f, MAX((l)-strlen(t)-1, 0))
-#define LEN_BYTES(s)        strlen((char*)s)
-#define CMP_BYTES(s,t)      strcmp((char*)s, (char*)t)
-#define BYTES(s) (REBYTE*)(s)
-
 // OS has wide char string interfaces:
 #ifdef OS_WIDE_CHAR
 #define OS_WIDE TRUE
 #define TXT(s) (L##s)
-#define COPY_STR(t,f,l) wcsncpy(t, f, l)
-#define JOIN_STR(d,s,l) wcsncat(d,s,l)
-#define FIND_STR(d,s)   wcsstr(d,s)
-#define FIND_CHR(d,s)   wcschr(d,s)
-#define LEN_STR(s)      wcslen(s)
+#define COPY_STR(t,f,l) wcsncpy((wchar_t*)t,(const wchar_t*)f, l)
+#define JOIN_STR(d,s,l) wcsncat((wchar_t*)d,(const wchar_t*)s,l)
+#define FIND_STR(d,s)   (REBCHR*)wcsstr((const wchar_t*)d,s)
+#define FIND_CHR(d,s)   (REBCHR*)wcschr((const wchar_t*)d,s)
+#define LEN_STR(s)      wcslen((const wchar_t*)s)
 #define TO_OS_STR(s1,s2,l)   mbstowcs(s1,s2,l)
-#define FROM_OS_STR(s1,s2,l) wcstombs(s1,s2,l)
+#define FROM_OS_STR(s1,s2,l) wcstombs(s1,(const wchar_t*)s2,l)
 #else
 // OS has UTF-8 byte string interfaces:
 #define OS_WIDE FALSE
 #define TXT(s) (s)
-#define COPY_STR(t,f,l) strncpy(t, f, l)
-#define JOIN_STR(d,s,l) strncat(d,s,l)
-#define FIND_STR(d,s)   strstr(d,s)
-#define FIND_CHR(d,s)   strchr(d,s)
-#define LEN_STR(s)      strlen(s)
+#define COPY_STR(t,f,l) strncpy((char *)t, (const char *)f, l)
+#define JOIN_STR(d,s,l) strncat((char *)d,(const char *)s,l)
+#define FIND_STR(d,s)   strstr((const char*)d,s)
+#define FIND_CHR(d,s)   (REBCHR*)strchr((const char*)d,s)
+#define LEN_STR(s)      strlen((const char*)s)
 #define TO_OS_STR(s1,s2,l)   strncpy(s1,s2,l)
-#define FROM_OS_STR(s1,s2,l) strncpy(s1,s2,l)
+#define FROM_OS_STR(s1,s2,l) strncpy(s1,(const char*)s2,l)
 #endif
 
 #define MAKE_STR(n) (REBCHR*)(malloc((n) * sizeof(REBCHR)))  // OS chars!
@@ -384,30 +376,89 @@ typedef void(*CFUNC)(void *);
     #define cast(t, v)      cast_helper<t>(v)
     #define c_cast(t, v)    c_cast_helper<t>(v)
 #endif
-#if defined(NDEBUG) || !defined(REB_DEF)
+
+
+//=//// BYTE STRINGS VS UNENCODED CHARACTER STRINGS ///////////////////////=//
+//
+// Use these when you semantically are talking about unsigned characters as
+// bytes.  For instance: if you want to count unencoded chars in 'char *' us
+// strlen(), and the reader will know that is a count of letters.  If you have
+// something like UTF-8 with more than one byte per character, use LEN_BYTES.
+// The casting macros are derived from "Casts for the Masses (in C)":
+//
+// http://blog.hostilefork.com/c-casts-for-the-masses/
+//
+// For APPEND_BYTES_LIMIT, m is the max-size allocated for d (dest)
+//
+#include <string.h> // for strlen() etc, but also defines `size_t`
+#define strsize strlen
+#if defined(NDEBUG)
     /* These [S]tring and [B]inary casts are for "flips" between a 'char *'
      * and 'unsigned char *' (or 'const char *' and 'const unsigned char *').
      * Being single-arity with no type passed in, they are succinct to use:
      */
     #define s_cast(b)       ((char *)(b))
     #define cs_cast(b)      ((const char *)(b))
-    #define b_cast(s)       ((unsigned char *)(s))
-    #define cb_cast(s)      ((const unsigned char *)(s))
-    /*
-     * In C++ (or C with '-Wpointer-sign') this is powerful.  'char *' can
-     * be used with string functions like strlen().  Then 'unsigned char *'
-     * can be saved for things you shouldn't _accidentally_ pass to functions
-     * like strlen().  (One GREAT example: encoded UTF-8 byte strings.)
-     */
+    #define b_cast(s)       ((REBYTE *)(s))
+    #define cb_cast(s)      ((const REBYTE *)(s))
+
+    #define LEN_BYTES(s) \
+        strlen((const char*)(s))
+
+    #define COPY_BYTES(d,s,n) \
+        strncpy((char*)(d), (const char*)(s), (n))
+
+    #define CMP_BYTES(l,r) \
+        strcmp((const char*)(l), (const char*)(r))
+
+    inline static REBYTE *APPEND_BYTES(
+        REBYTE *dest, const REBYTE *src, size_t max
+    ){
+        size_t len = LEN_BYTES(dest);
+        return b_cast(strncat(
+            s_cast(dest), cs_cast(src), MAX(max - len - 1, 0)
+        ));
+    }
 #else
     /* We want to ensure the input type is what we thought we were flipping,
      * particularly not the already-flipped type.  Instead of type_traits, 4
      * functions check in both C and C++ (here only during Debug builds):
-     * (Definitions are in n-strings.c w/prototypes built by make-headers.r)
      */
-    #define s_cast(b)       s_cast_(b)
-    #define cs_cast(b)      cs_cast_(b)
-    #define b_cast(s)       b_cast_(s)
-    #define cb_cast(s)      cb_cast_(s)
-#endif
+    inline static REBYTE *b_cast(char *s)
+        { return (REBYTE*)s; }
 
+    inline static const REBYTE *cb_cast(const char *s)
+        { return (const REBYTE*)s; }
+
+    inline static char *s_cast(REBYTE *s)
+        { return (char*)s; }
+
+    inline static const char *cs_cast(const REBYTE *s)
+        { return (const char*)s; }
+
+    // Debug build uses inline functions to ensure you pass in unsigned char *
+    //
+    inline static unsigned char *COPY_BYTES(
+        REBYTE *dest, const REBYTE *src, size_t count
+    ){
+        return b_cast(strncpy(s_cast(dest), cs_cast(src), count));
+    }
+
+    inline static size_t LEN_BYTES(const REBYTE *str)
+        { return strlen(cs_cast(str)); }
+
+    inline static int CMP_BYTES(
+        const REBYTE *lhs, const REBYTE *rhs
+    ){
+        return strcmp(cs_cast(lhs), cs_cast(rhs));
+    }
+
+    inline static REBYTE *APPEND_BYTES(
+        REBYTE *dest, const REBYTE *src, size_t max
+    ){
+        size_t len = LEN_BYTES(dest);
+        return b_cast(strncat(
+            s_cast(dest), cs_cast(src), MAX(max - len - 1, 0)
+        ));
+    }
+#endif

@@ -66,7 +66,7 @@
 
 		arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
 
-		if (IS_TUPLE(arg) && Scan_Tuple(VAL_BIN(arg), strlen(VAL_BIN(arg)), &tmp)) {
+		if (IS_TUPLE(arg) && Scan_Tuple(VAL_BIN(arg), LEN_BYTES(VAL_BIN(arg)), &tmp)) {
 			SET_FLAG(sock->modes, RST_REVERSE);
 			memcpy(&sock->net.remote_ip, VAL_TUPLE(&tmp), 4);
 		}

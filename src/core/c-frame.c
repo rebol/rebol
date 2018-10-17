@@ -100,7 +100,7 @@
 	//Debug_Fmt("Bind Table (Size: %d)", SERIES_TAIL(Bind_Table));
 	for (n = 0; n < SERIES_TAIL(Bind_Table); n++) {
 		if (binds[n]) {
-			Debug_Fmt("Bind table fault: %3d to %3d (%s)", n, binds[n], Get_Sym_Name(n));
+			Debug_Fmt(cb_cast("Bind table fault: %3d to %3d (%s)"), n, binds[n], Get_Sym_Name(n));
 		}
 	}
 }
@@ -1395,12 +1395,12 @@
 
 	for (n = 0; n < tail; n++, values++, words++) {
 		if (IS_END(words) || IS_END(values)) {
-			Debug_Fmt("** Early %s end at index: %d", IS_END(words) ? "words" : "values", n);
+			Debug_Fmt(cb_cast("** Early %s end at index: %d"), IS_END(words) ? "words" : "values", n);
 		}
 	}
 
 	if (NOT_END(words) || NOT_END(values))
-		Debug_Fmt("** Missing %s end at index: %d type: %d", NOT_END(words) ? "words" : "values", n, VAL_TYPE(words));
+		Debug_Fmt(cb_cast("** Missing %s end at index: %d type: %d"), NOT_END(words) ? "words" : "values", n, VAL_TYPE(words));
 }
 
 
@@ -1411,5 +1411,5 @@
 ***********************************************************************/
 {
 	// Temporary block used while scanning for frame words:
-	Set_Root_Series(TASK_BUF_WORDS, Make_Block(100), "word cache"); // just holds words, no GC
+	Set_Root_Series(TASK_BUF_WORDS, Make_Block(100), cb_cast("word cache")); // just holds words, no GC
 }

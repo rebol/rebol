@@ -75,7 +75,7 @@ enum {
 
 /***********************************************************************
 **
-*/  REBSER *Emit(REB_MOLD *mold, REBYTE *fmt, ...)
+*/  REBSER *Emit(REB_MOLD *mold, char *fmt, ...)
 /*
 ***********************************************************************/
 {
@@ -96,7 +96,7 @@ enum {
 			Mold_Value(mold, va_arg(args, REBVAL*), TRUE);
 			break;
 		case 'S':	// String of bytes
-			Append_Bytes(series, va_arg(args, REBYTE*));
+			Append_Bytes(series, va_arg(args, const char*));
 			break;
 		case 'C':	// Char
 			Append_Byte(series, va_arg(args, REBCNT));
@@ -536,7 +536,7 @@ STOID Mold_Handle(REBVAL *value, REB_MOLD *mold)
 	const REBYTE *name = VAL_HANDLE_NAME(value);
 	if (name != NULL) {
 		Append_Bytes(mold->series, "#[handle! ");
-		Append_Bytes(mold->series, (REBYTE *)name);
+		Append_Bytes(mold->series, cs_cast(name));
 		Append_Byte(mold->series, ']');
 	}
 	else {
@@ -605,10 +605,10 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 	REBOOL had_lines = FALSE;
 	REBVAL *value = BLK_SKIP(series, index);
 
-	if (!sep) sep = "[]";
+	if (!sep) sep = b_cast("[]");
 
 	if (IS_END(value)) {
-		Append_Bytes(out, sep);
+		Append_Bytes(out, cs_cast(sep));
 		return;
 	}
 
@@ -686,18 +686,18 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 		case REB_BLOCK:
 			if (GET_MOPT(mold, MOPT_ONLY)) {
 				CLR_FLAG(mold->opts, MOPT_ONLY); // only top level
-				sep = "\000\000";
+				sep = b_cast("\000\000");
 			}
 			else sep = 0;
 			break;
 
 		case REB_PAREN:
-			sep = "()";
+			sep = b_cast("()");
 			break;
 
 		case REB_GET_PATH:
 			series = Append_Byte(series, ':');
-			sep = "/";
+			sep = b_cast("/");
 			break;
 
 		case REB_LIT_PATH:
@@ -705,11 +705,11 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 			/* fall through */
 		case REB_PATH:
 		case REB_SET_PATH:
-			sep = "/";
+			sep = b_cast("/");
 			break;
 		}
 
-		if (over) Append_Bytes(mold->series, sep ? sep : (REBYTE*)("[]"));
+		if (over) Append_Bytes(mold->series, sep ? cs_cast(sep) : "[]");
 		else Mold_Block_Series(mold, VAL_SERIES(value), VAL_INDEX(value), sep);
 
 		if (VAL_TYPE(value) == REB_SET_PATH)
@@ -1452,8 +1452,8 @@ append:
 	REBYTE c;
 	REBYTE *dc;
 
-	Set_Root_Series(TASK_MOLD_LOOP, Make_Block(size/10), "mold loop");
-	Set_Root_Series(TASK_BUF_MOLD, Make_Unicode(size), "mold buffer");
+	Set_Root_Series(TASK_MOLD_LOOP, Make_Block(size/10), cb_cast("mold loop"));
+	Set_Root_Series(TASK_BUF_MOLD, Make_Unicode(size), cb_cast("mold buffer"));
 
 	// Create quoted char escape table:
 	Char_Escapes = cp = Make_Mem(MAX_ESC_CHAR+1); // cleared
@@ -1466,6 +1466,6 @@ append:
 	URL_Escapes = cp = Make_Mem(MAX_URL_CHAR+1); // cleared
 	//for (c = 0; c <= MAX_URL_CHAR; c++) if (IS_LEX_DELIMIT(c)) cp[c] = ESC_URL;
 	for (c = 0; c <= ' '; c++) cp[c] = ESC_URL | ESC_FILE;
-	dc = ";%\"()[]{}<>";
+	dc = b_cast(";%\"()[]{}<>");
 	for (c = (REBYTE)LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
 }

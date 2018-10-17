@@ -114,7 +114,7 @@ extern const REBYTE Str_Banner[];
 ***********************************************************************/
 {
 	if (rargs->options & RO_VERS) {
-		Debug_Fmt((REBYTE*)Str_Banner, REBOL_VER, REBOL_REV, REBOL_UPD, REBOL_SYS, REBOL_VAR);
+		Debug_Fmt(Str_Banner, REBOL_VER, REBOL_REV, REBOL_UPD, REBOL_SYS, REBOL_VAR);
 		OS_EXIT(0);
 	}
 }
@@ -179,7 +179,7 @@ extern const REBYTE Str_Banner[];
 		Free_Series(text);
 	}
 
-	Set_Root_Series(ROOT_BOOT, boot, "boot block");	// Do not let it get GC'd
+	Set_Root_Series(ROOT_BOOT, boot, cb_cast("boot block"));	// Do not let it get GC'd
 
 	Boot_Block = (BOOT_BLK *)VAL_BLK(BLK_HEAD(boot));
 
@@ -200,9 +200,9 @@ extern const REBYTE Str_Banner[];
 		}
 	}
 
-	ASSERT(!CMP_BYTES("end!", Get_Sym_Name(SYM_END_TYPE)), RP_BAD_END_CANON_WORD);
-	ASSERT(!CMP_BYTES("true", Get_Sym_Name(SYM_TRUE)), RP_BAD_TRUE_CANON_WORD);
-	ASSERT(!CMP_BYTES("line", BOOT_STR(RS_SCAN,1)), RP_BAD_BOOT_STRING);
+	ASSERT(!CMP_BYTES(cb_cast("end!"), Get_Sym_Name(SYM_END_TYPE)), RP_BAD_END_CANON_WORD);
+	ASSERT(!CMP_BYTES(cb_cast("true"), Get_Sym_Name(SYM_TRUE)), RP_BAD_TRUE_CANON_WORD);
+	ASSERT(!CMP_BYTES(cb_cast("line"), BOOT_STR(RS_SCAN,1)), RP_BAD_BOOT_STRING);
 }
 
 
@@ -463,7 +463,7 @@ extern const REBYTE Str_Banner[];
 ***********************************************************************/
 {
 	DS_Series = Make_Block(size);
-	Set_Root_Series(TASK_STACK, DS_Series, "data stack"); // uses special GC
+	Set_Root_Series(TASK_STACK, DS_Series, cb_cast("data stack")); // uses special GC
 	DS_Base = BLK_HEAD(DS_Series);
 	DSP = DSF = 0;
 	SET_NONE(DS_TOP); // avoids it being set to END (GC problem)
@@ -509,7 +509,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	void Set_Root_Series(REBVAL *value, REBSER *ser, REBYTE *label)
+*/	void Set_Root_Series(REBVAL *value, REBSER *ser, const REBYTE *label)
 /*
 **		Used to set block and string values in the ROOT context.
 **
@@ -699,14 +699,14 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	void Register_Codec(REBYTE *name, codo dispatcher)
+*/	void Register_Codec(const char *name, codo dispatcher)
 /*
 **		Internal function for adding a codec.
 **
 ***********************************************************************/
 {
 	REBVAL *value = Get_System(SYS_CODECS, 0);
-	REBCNT sym = Make_Word(name, 0);
+	REBCNT sym = Make_Word(cb_cast(name), 0);
 
 	value = Append_Frame(VAL_OBJ_FRAME(value), 0, sym);
 	SET_HANDLE(value, dispatcher);
@@ -719,8 +719,8 @@ extern const REBYTE Str_Banner[];
 /*
 ***********************************************************************/
 {
-	Register_Codec((REBYTE*)"text", Codec_Text);
-	Register_Codec((REBYTE*)"markup", Codec_Markup);
+	Register_Codec("text", Codec_Text);
+	Register_Codec("markup", Codec_Markup);
 #ifdef USE_BMP_CODEC
 	Init_BMP_Codec();
 #endif

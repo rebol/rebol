@@ -170,7 +170,7 @@
 
 /***********************************************************************
 **
-*/	static REBCNT Make_Word_Name(REBYTE *str, REBCNT len)
+*/	static REBCNT Make_Word_Name(const REBYTE *str, REBCNT len)
 /*
 **		Allocates and copies the text string of the word.
 **
@@ -186,7 +186,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Make_Word(REBYTE *str, REBCNT len)
+*/	REBCNT Make_Word(const REBYTE *str, REBCNT len)
 /*
 **		Given a string and its length, compute its hash value,
 **		search for a match, and if not found, add it to the table.
