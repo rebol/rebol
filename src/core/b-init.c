@@ -699,7 +699,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	void Register_Codec(const REBYTE *name, codo dispatcher)
+*/	void Register_Codec(const char *name, codo dispatcher)
 /*
 **		Internal function for adding a codec.
 **
@@ -719,8 +719,8 @@ extern const REBYTE Str_Banner[];
 /*
 ***********************************************************************/
 {
-	Register_Codec(cb_cast("text"), Codec_Text);
-	Register_Codec(cb_cast("markup"), Codec_Markup);
+	Register_Codec("text", Codec_Text);
+	Register_Codec("markup", Codec_Markup);
 #ifdef USE_BMP_CODEC
 	Init_BMP_Codec();
 #endif

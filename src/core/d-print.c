@@ -544,9 +544,7 @@ static REBREQ *Req_SIO;
 {
 	REBYTE buffer[MAX_HEX_LEN+4];
 	REBYTE *bp = (REBYTE*)(buffer + MAX_HEX_LEN + 1);
-	REBU64 sgn;
-
-	sgn = (val < 0) ? -1 : 0;
+	REBU64 sgn = 0; // was: sgn = (val < 0) ? -1 : 0;
 
 	len = MIN(len, MAX_HEX_LEN);
 	*bp-- = 0;

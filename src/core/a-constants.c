@@ -88,7 +88,7 @@ const REBYTE Month_Lengths[12] = {
 	31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 
-const REBYTE * const Month_Names[12] = {
+const REBYTE * Month_Names[12] = {
 	BP"January",	BP"February", BP"March",
 	BP"April",	BP"May",		 BP"June",
 	BP"July",	BP"August",	 BP"September",

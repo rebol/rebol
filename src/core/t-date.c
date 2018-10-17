@@ -254,7 +254,7 @@
 
 /***********************************************************************
 **
-*/	void Normalize_Time(REBI64 *sp, REBINT *dp)
+*/	void Normalize_Time(REBI64 *sp, REBCNT *dp)
 /*
 **		Adjust *dp by number of days and set secs to less than a day.
 **
@@ -266,7 +266,7 @@
 	if (secs == NO_TIME) return;
 
 	// how many days worth of seconds do we have
-	day = (REBINT)(secs / TIME_IN_DAY);
+	day = cast(REBINT, secs / TIME_IN_DAY);
 	secs %= TIME_IN_DAY;
 
 	if (secs < 0L) {

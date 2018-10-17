@@ -46,7 +46,7 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
-void Host_Crash(REBYTE *reason);
+void Host_Crash(char *reason);
 
 // Temporary globals: (either move or remove?!)
 REBREQ Std_IO_Req;

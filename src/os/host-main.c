@@ -63,8 +63,8 @@
 
 REBARGS Main_Args;
 
-#define PROMPT_STR "\x1B[1;31;49m>>\x1B[1;33;49m "
-#define RESULT_STR "\x1B[32m==\x1B[1;32;49m "
+#define PROMPT_STR (REBYTE*)"\x1B[1;31;49m>>\x1B[1;33;49m "
+#define RESULT_STR (REBYTE*)"\x1B[32m==\x1B[1;32;49m "
 
 #ifdef TO_WINDOWS
 #define MAX_TITLE_LENGTH  1024
@@ -88,8 +88,8 @@ extern void Close_StdIO(void);
 extern void Put_Str(REBYTE *buf);
 extern REBYTE *Get_Str();
 
-void Host_Crash(REBYTE *reason) {
-	OS_Crash("REBOL Host Failure", reason);
+void Host_Crash(char *reason) {
+	OS_Crash(cb_cast("REBOL Host Failure"), reason);
 }
 
 void Host_Repl() {
@@ -123,7 +123,7 @@ void Host_Repl() {
 
 		if (!line) {
 			// "end of stream" - for example on CTRL+C
-			Put_Str("\x1B[0m"); //reset console color before leaving
+			Put_Str(b_cast("\x1B[0m")); //reset console color before leaving
 			goto cleanup_and_return;
 		}
 
@@ -173,7 +173,7 @@ void Host_Repl() {
 		if (input_len + line_len > input_max) {
 			REBYTE *tmp = OS_Make(2 * input_max);
 			if (!tmp) {
-				Put_Str("\x1B[0m"); //reset console color;
+				Put_Str(b_cast("\x1B[0m")); //reset console color;
 				Host_Crash("Growing console input buffer failed!");
 			}
 			memcpy(tmp, input, input_len);
@@ -194,7 +194,7 @@ void Host_Repl() {
 		input_len = 0;
 		cont_level = 0;
 
-		Put_Str("\x1B[0m"); //reset color
+		Put_Str(b_cast("\x1B[0m")); //reset color
 
 		RL_Do_String(input, 0, 0);
 		RL_Print_TOS(TRUE, RESULT_STR);

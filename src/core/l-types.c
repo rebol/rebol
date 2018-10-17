@@ -489,7 +489,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 		size = (REBCNT)(ep - cp);
 		if (size < 3) return 0;
 		for (num = 0; num < 12; num++) {
-			if (!Compare_Bytes(cb_cast(Month_Names[num]), cp, size, TRUE)) break;
+			if (!Compare_Bytes(Month_Names[num], cp, size, TRUE)) break;
 		}
 		month = num + 1;
 	}

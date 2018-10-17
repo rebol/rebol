@@ -57,7 +57,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 	// Setup WITH array from arg or the default:
 	n = 0;
 	if (IS_NONE(with)) {
-		bp = "\n \r\t";
+		bp = b_cast("\n \r\t");
 		wlen = n = 4;
 	}
 	else if (IS_CHAR(with)) {

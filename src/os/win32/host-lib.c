@@ -547,7 +547,7 @@ static void *Task_Ready;
 	LARGE_INTEGER time;
 
 	if (!QueryPerformanceCounter(&time))
-		OS_Crash("Missing resource", "High performance timer");
+		OS_Crash(cb_cast("Missing resource"), "High performance timer");
 
 	if (base == 0) return time.QuadPart; // counter (may not be time)
 

@@ -366,13 +366,13 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 #else
 	if (VAL_STR_IS_ASCII(val)) {
 		// On Linux/Unix we can use ASCII directly (it is valid UTF-8):
-		return s_cast(VAL_BIN_DATA(val));
+		return VAL_BIN_DATA(val);
 	}
 	else {
 		REBCNT n = VAL_LEN(val);
 		REBSER *ser = Prep_Bin_Str(val, 0, &n);
 		// NOTE: may return a shared buffer!
-		return s_cast(BIN_HEAD(ser)); // (actually, it's a byte pointer)
+		return BIN_HEAD(ser); // (actually, it's a byte pointer)
 	}
 #endif
 }
@@ -426,7 +426,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 **
 ***********************************************************************/
 {
-	return Append_Bytes_Len(dst, src, (REBCNT)LEN_BYTES(src));
+	return Append_Bytes_Len(dst, cb_cast(src), (REBCNT)LEN_BYTES(src));
 }
 
 
@@ -528,7 +528,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 /*
 ***********************************************************************/
 {
-	Append_Bytes(dst, PG_Boot_Strs[num]);
+	Append_Bytes(dst, cs_cast(PG_Boot_Strs[num]));
 }
 
 
