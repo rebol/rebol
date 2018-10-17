@@ -89,7 +89,7 @@ extern void Put_Str(REBYTE *buf);
 extern REBYTE *Get_Str();
 
 void Host_Crash(char *reason) {
-	OS_Crash(cb_cast("REBOL Host Failure"), reason);
+	OS_Crash(cb_cast("REBOL Host Failure"), cb_cast(reason));
 }
 
 void Host_Repl() {

@@ -426,7 +426,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 **
 ***********************************************************************/
 {
-	return Append_Bytes_Len(dst, cb_cast(src), (REBCNT)LEN_BYTES(src));
+	return Append_Bytes_Len(dst, cb_cast(src), (REBCNT)LEN_BYTES(cb_cast(src)));
 }
 
 

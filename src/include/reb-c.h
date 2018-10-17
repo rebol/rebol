@@ -269,24 +269,24 @@ typedef void(*CFUNC)(void *);
 #ifdef OS_WIDE_CHAR
 #define OS_WIDE TRUE
 #define TXT(s) (L##s)
-#define COPY_STR(t,f,l) wcsncpy(t, f, l)
-#define JOIN_STR(d,s,l) wcsncat(d,s,l)
+#define COPY_STR(t,f,l) wcsncpy((wchar_t*)t,(const wchar_t*)f, l)
+#define JOIN_STR(d,s,l) wcsncat((wchar_t*)d,(const wchar_t*)s,l)
 #define FIND_STR(d,s)   (REBCHR*)wcsstr((const wchar_t*)d,s)
 #define FIND_CHR(d,s)   (REBCHR*)wcschr((const wchar_t*)d,s)
 #define LEN_STR(s)      wcslen((const wchar_t*)s)
 #define TO_OS_STR(s1,s2,l)   mbstowcs(s1,s2,l)
-#define FROM_OS_STR(s1,s2,l) wcstombs(s1,s2,l)
+#define FROM_OS_STR(s1,s2,l) wcstombs(s1,(const wchar_t*)s2,l)
 #else
 // OS has UTF-8 byte string interfaces:
 #define OS_WIDE FALSE
 #define TXT(s) (s)
-#define COPY_STR(t,f,l) strncpy(t, f, l)
-#define JOIN_STR(d,s,l) strncat(d,s,l)
+#define COPY_STR(t,f,l) strncpy((char *)t, (const char *)f, l)
+#define JOIN_STR(d,s,l) strncat((char *)d,(const char *)s,l)
 #define FIND_STR(d,s)   strstr((const char*)d,s)
 #define FIND_CHR(d,s)   (REBCHR*)strchr((const char*)d,s)
 #define LEN_STR(s)      strlen((const char*)s)
 #define TO_OS_STR(s1,s2,l)   strncpy(s1,s2,l)
-#define FROM_OS_STR(s1,s2,l) strncpy(s1,s2,l)
+#define FROM_OS_STR(s1,s2,l) strncpy(s1,(const char*)s2,l)
 #endif
 
 #define MAKE_STR(n) (REBCHR*)(malloc((n) * sizeof(REBCHR)))  // OS chars!

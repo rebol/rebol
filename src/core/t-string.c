@@ -349,7 +349,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	REBVAL *data = pvs->value;
 	REBVAL *val = pvs->setval;
 	REBINT n = 0;
-	REBCNT i;
+	REBINT i;
 	REBINT c;
 	REBSER *ser = VAL_SERIES(data);
 

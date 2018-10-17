@@ -29,7 +29,7 @@
 #include "sys-core.h"
 
 // Unicode 5.0 case folding table:
-static short const Char_Cases[] = {
+static const REBUNI Char_Cases[] = {
 	0x0041, 0x0061, // LATIN CAPITAL LETTER A
 	0x0042, 0x0062, // LATIN CAPITAL LETTER B
 	0x0043, 0x0063, // LATIN CAPITAL LETTER C

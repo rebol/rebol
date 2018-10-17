@@ -254,7 +254,7 @@
 
 /***********************************************************************
 **
-*/	void Normalize_Time(REBI64 *sp, REBCNT *dp)
+*/	void Normalize_Time(REBI64 *sp, REBINT *dp)
 /*
 **		Adjust *dp by number of days and set secs to less than a day.
 **

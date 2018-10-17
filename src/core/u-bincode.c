@@ -1043,5 +1043,6 @@ system/standard/bincode: make object! [
 
 error:
 	Trap_Word(RE_DIALECT, SYM_BINCODE, value);
+	return R_ARG1; //just to make Clang happy
 }
 #endif //IGNORE_BINCODE

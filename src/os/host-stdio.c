@@ -69,7 +69,7 @@ static REBYTE *Get_Next_Line()
 		out = OS_Make(len + 2);
 		COPY_BYTES(out, inbuf, len+1);
 		out[len+1] = 0;
-		MOVE_MEM(inbuf, bp+1, 1+strlen(bp+1));
+		MOVE_MEM(inbuf, bp+1, 1+strlen(cs_cast(bp)+1));
 		return out;
 	}
 
@@ -78,7 +78,7 @@ static REBYTE *Get_Next_Line()
 
 static int Fetch_Buf()
 {
-	REBCNT len = (REBCNT)strlen(inbuf);
+	REBCNT len = (REBCNT)strlen(cs_cast(inbuf));
 
 	Std_IO_Req.data   = inbuf + len;
 	Std_IO_Req.length = inbuf_len - len - 1;
@@ -170,7 +170,7 @@ static int Fetch_Buf()
 **
 ***********************************************************************/
 {
-	Std_IO_Req.length = strlen(buf);
+	Std_IO_Req.length = strlen(cs_cast(buf));
 	Std_IO_Req.data = (REBYTE*)buf;
 	Std_IO_Req.actual = 0;
 

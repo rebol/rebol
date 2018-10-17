@@ -104,7 +104,7 @@ static REBREQ *Req_SIO;
 	if (!bp) Crash(RP_NO_PRINT_PTR);
 
 	// Determine length if not provided:
-	if (len == UNKNOWN) len = (REBINT)(uni ? wcslen(up) : LEN_BYTES(bp));
+	if (len == UNKNOWN) len = (REBINT)(uni ? wcslen((const wchar_t*)up) : LEN_BYTES(bp));
 
 	SET_FLAG(Req_SIO->flags, RRF_FLUSH);
 

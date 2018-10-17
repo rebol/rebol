@@ -401,10 +401,10 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 	// A title tells us we should alert the user:
 	if (title) {
-		fputs(title, stderr);
+		fputs(cs_cast(title), stderr);
 		fputs(":\n", stderr);
 	}
-	fputs(content, stderr);
+	fputs(cs_cast(content), stderr);
 	fputs("\n\n", stderr);
 	exit(100);
 }
@@ -419,7 +419,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 **
 ***********************************************************************/
 {
-	strerror_r(errnum, str, len);
+	strerror_r(errnum, s_cast(str), len);
 	return str;
 }
 
@@ -465,7 +465,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 	// Note: The Posix variant of this API is case-sensitive
 
 	REBINT len;
-	const REBCHR* value = getenv(envname);
+	const REBCHR* value = cs_cast(getenv(cs_cast(envname)));
 	if (value == 0) return 0;
 
 	len = LEN_STR(value);
@@ -515,9 +515,9 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 		char* expr = MAKE_STR(LEN_STR(envname) + 1 + LEN_STR(envval) + 1);
 
-		strcpy(expr, envname);
+		strcpy(expr, cs_cast(envname));
 		strcat(expr, "=");
-		strcat(expr, envval);
+		strcat(expr, cs_cast(envval));
 
 		if (putenv(expr) == -1)
 			return FALSE;
@@ -571,7 +571,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 		*cp = 0;
 	}
 
-	return str; // caller will free it
+	return (REBCHR*)str; // caller will free it
 }
 
 

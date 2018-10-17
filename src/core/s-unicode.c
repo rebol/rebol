@@ -1053,7 +1053,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 	if (len) cnt = *len;
 	else {
-		cnt = (REBCNT)(uni ? wcslen((REBUNI*)bp) : LEN_BYTES((REBYTE*)bp));
+		cnt = (REBCNT)(uni ? wcslen((const wchar_t*)bp) : LEN_BYTES((REBYTE*)bp));
 	}
 
 	for (; max > 0 && cnt > 0; cnt--) {

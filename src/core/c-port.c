@@ -212,7 +212,7 @@
 	while (wt) {
 		if (GET_SIGNAL(SIG_ESCAPE)) {
 			CLR_SIGNAL(SIG_ESCAPE);
-			Out_Str("[ESC]", 1);
+			Out_Str(cb_cast("[ESC]"), 1);
 			Halt_Code(RE_HALT, 0); // Throws!
 		}
 
