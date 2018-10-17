@@ -49,6 +49,7 @@ REBOL [
 	%mezz-crypt.r
 	%mezz-tail.r
 	%codec-wav.r
+	%codec-der.r
 ]
 
 ;-- protocols:
