@@ -48,6 +48,7 @@ REBOL [
 	%mezz-colors.r
 	%mezz-crypt.r
 	%mezz-tail.r
+	%codec-wav.r
 ]
 
 ;-- protocols:
