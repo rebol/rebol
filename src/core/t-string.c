@@ -517,7 +517,7 @@ find:
 
 		if (ANY_BINSTR(arg)) len = VAL_LEN(arg);
 
-		if (args & AM_FIND_PART) tail = Partial(value, 0, D_ARG(ARG_FIND_LENGTH), 0);
+		if (args & AM_FIND_PART) tail = index + Partial(value, 0, D_ARG(ARG_FIND_LENGTH), 0);
 		ret = 1; // skip size
 		if (args & AM_FIND_SKIP) ret = Partial(value, 0, D_ARG(ARG_FIND_SIZE), 0);
 

@@ -713,7 +713,7 @@ zero_blk:
 		args = Find_Refines(ds, ALL_FIND_REFS);
 //		if (ANY_BLOCK(arg) || args) {
 			len = ANY_BLOCK(arg) ? VAL_BLK_LEN(arg) : 1;
-			if (args & AM_FIND_PART) tail = Partial1(value, D_ARG(ARG_FIND_LENGTH));
+			if (args & AM_FIND_PART) tail = index + Partial1(value, D_ARG(ARG_FIND_LENGTH));
 			ret = 1;
 			if (args & AM_FIND_SKIP) ret = Int32s(D_ARG(ARG_FIND_SIZE), 1);
 			ret = Find_Block(ser, index, tail, arg, len, args, ret);
