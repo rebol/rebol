@@ -76,7 +76,7 @@ typedef struct
     BI_CTX *bi_ctx;
 } RSA_CTX;
 
-void RSA_priv_key_new(RSA_CTX **rsa_ctx,
+void RSA_priv_key_new(RSA_CTX *rsa_ctx,
         const uint8_t *modulus, int mod_len,
         const uint8_t *pub_exp, int pub_len,
         const uint8_t *priv_exp, int priv_len
@@ -88,7 +88,7 @@ void RSA_priv_key_new(RSA_CTX **rsa_ctx,
         const uint8_t *qInv, int qInv_len
 #endif
         );
-void RSA_pub_key_new(RSA_CTX **rsa_ctx,
+void RSA_pub_key_new(RSA_CTX *rsa_ctx,
         const uint8_t *modulus, int mod_len,
         const uint8_t *pub_exp, int pub_len);
 void RSA_free(RSA_CTX *ctx);

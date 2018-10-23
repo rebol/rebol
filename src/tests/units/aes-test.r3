@@ -76,8 +76,6 @@ Rebol [
 	][
 		--assert handle? k: aes/key key iv
 		--assert cipher = aes/stream k plain
-		--assert aes/stream k none ;release resources
-
 	]
 
 ===end-group===

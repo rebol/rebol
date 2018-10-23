@@ -49,7 +49,7 @@
 
 #include "sys-rsa.h"
 
-void RSA_priv_key_new(RSA_CTX **ctx,
+void RSA_priv_key_new(RSA_CTX *rsa_ctx,
         const uint8_t *modulus, int mod_len,
         const uint8_t *pub_exp, int pub_len,
         const uint8_t *priv_exp, int priv_len
@@ -62,10 +62,9 @@ void RSA_priv_key_new(RSA_CTX **ctx,
 #endif
     )
 {
-    RSA_CTX *rsa_ctx;
     BI_CTX *bi_ctx;
-    RSA_pub_key_new(ctx, modulus, mod_len, pub_exp, pub_len);
-    rsa_ctx = *ctx;
+    RSA_pub_key_new(rsa_ctx, modulus, mod_len, pub_exp, pub_len);
+
     bi_ctx = rsa_ctx->bi_ctx;
     rsa_ctx->d = bi_import(bi_ctx, priv_exp, priv_len);
     bi_permanent(rsa_ctx->d);
@@ -87,19 +86,19 @@ void RSA_priv_key_new(RSA_CTX **ctx,
 #endif
 }
 
-void RSA_pub_key_new(RSA_CTX **ctx,
+void RSA_pub_key_new(RSA_CTX *rsa_ctx,
         const uint8_t *modulus, int mod_len,
         const uint8_t *pub_exp, int pub_len)
 {
-    RSA_CTX *rsa_ctx;
+ //   RSA_CTX *rsa_ctx;
     BI_CTX *bi_ctx;
 
-    if (*ctx)   /* if we load multiple certs, dump the old one */
-        RSA_free(*ctx);
+ //   if (*ctx)   /* if we load multiple certs, dump the old one */
+ //       RSA_free(*ctx);
 
     bi_ctx = bi_initialize();
-    *ctx = (RSA_CTX *)calloc(1, sizeof(RSA_CTX));
-    rsa_ctx = *ctx;
+ //  *ctx = (RSA_CTX *)calloc(1, sizeof(RSA_CTX));
+ //  rsa_ctx = *ctx;
     rsa_ctx->bi_ctx = bi_ctx;
     rsa_ctx->num_octets = mod_len;
     rsa_ctx->m = bi_import(bi_ctx, modulus, mod_len);
@@ -127,6 +126,9 @@ void RSA_free(RSA_CTX *rsa_ctx)
     {
         bi_depermanent(rsa_ctx->d);
         bi_free(bi_ctx, rsa_ctx->d);
+
+		bi_free(bi_ctx, rsa_ctx->p);
+		bi_free(bi_ctx, rsa_ctx->q);
 #ifdef CONFIG_BIGINT_CRT
         if (rsa_ctx->dP) //it is enough to check only one value - complete check is in already in RSA_priv_key_new()
         {
@@ -143,7 +145,7 @@ void RSA_free(RSA_CTX *rsa_ctx)
     }
 
     bi_terminate(bi_ctx);
-    free(rsa_ctx);
+    //free(rsa_ctx); //<-- it is now freed on REBOL side
 }
 
 /**

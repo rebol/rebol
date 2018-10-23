@@ -836,8 +836,6 @@ typedef struct Reb_Object {
 #define VAL_MOD_BODY(v)		((v)->data.object.body)
 #define VAL_MOD_SPEC(v)		VAL_FRM_SPEC(VAL_OBJ_VALUES(v))
 
-#define SET_HANDLE(v,h)		VAL_SET(v, REB_HANDLE), VAL_HANDLE_NAME(v) = NULL, VAL_HANDLE(v) = (void*)(h) // a place to put it.
-
 /***********************************************************************
 **
 **	PORTS - External series interface
@@ -970,14 +968,35 @@ typedef REBINT (*REBCTF)(REBVAL *a, REBVAL *b, REBINT s);
 **	HANDLE
 **
 ***********************************************************************/
+enum Handle_Flags {
+	HANDLE_FUNCTION    = 0     ,  // hanndle has pointer to function so GC don't mark it
+	HANDLE_SERIES      = 1 << 0,  // handle has pointer to REB series, GC will mark it, if not set as releasable 
+	HANDLE_RELEASABLE  = 1 << 1,  // GC will not try to mark it, if it is SERIES handle type
+};
 
 typedef struct Reb_Handle {
-	ANYFUNC	code;
-	const REBYTE *name;
+	REBCNT	sym;    // Index of the word's symbol. Used as a handle's type!
+	REBFLG  flags;  // Handle_Flags
+	union {
+		ANYFUNC	code;
+		REBSER *data;
+	};
 } REBHAN;
 
 #define VAL_HANDLE(v)		((v)->data.handle.code)
-#define VAL_HANDLE_NAME(v)  ((v)->data.handle.name)
+#define VAL_HANDLE_DATA(v)  ((v)->data.handle.data)
+#define VAL_HANDLE_TYPE(v)  ((v)->data.handle.sym)
+#define VAL_HANDLE_FLAGS(v) ((v)->data.handle.flags)
+#define VAL_HANDLE_NAME(v)  VAL_WORD_NAME(v) // used in MOLD as an info about handle's type
+
+#define HANDLE_SET_FLAG(v, f) (VAL_HANDLE_FLAGS(v) |=  (f))
+#define HANDLE_CLR_FLAG(v, f) (VAL_HANDLE_FLAGS(v) &= ~(f))
+#define HANDLE_GET_FLAG(v, f) (VAL_HANDLE_FLAGS(v) &   (f))
+
+#define IS_SERIES_HANDLE(v)     HANDLE_GET_FLAG(v, HANDLE_SERIES)
+#define IS_FUNCTION_HANDLE(v)  !HANDLE_GET_FLAG(v, HANDLE_SERIES)
+
+#define SET_HANDLE(v,h,t,f)	VAL_SET(v, REB_HANDLE), VAL_HANDLE(v) = (void*)(h), VAL_HANDLE_TYPE(v) = t, HANDLE_SET_FLAG(v,f)
 
 /***********************************************************************
 **

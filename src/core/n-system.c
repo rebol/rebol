@@ -402,10 +402,11 @@ err:
 	REBVAL *val;
 	REBINT result;
 	REBSER *ser;
+	REBVAL *hnd = D_ARG(1); //codec's handle
+
+	if (VAL_HANDLE_TYPE(hnd) != SYM_CODEC) Trap0(RE_INVALID_HANDLE);
 
 	CLEAR(&codi, sizeof(codi));
-
-	codi.action = CODI_DECODE;
 
 	val = D_ARG(3);
 
@@ -415,6 +416,7 @@ err:
 		codi.action = CODI_IDENTIFY;
 	case SYM_DECODE:
 		if (!IS_BINARY(val)) Trap1(RE_INVALID_ARG, val);
+		codi.action = CODI_DECODE;
 		codi.data = VAL_BIN_DATA(D_ARG(3));
 		codi.len  = VAL_LEN(D_ARG(3));
 		break;
@@ -436,8 +438,7 @@ err:
 	}
 
 	// Nasty alias, but it must be done:
-	// !!! add a check to validate the handle as a codec!!!!
-	result = ((codo) (VAL_HANDLE(D_ARG(1))))(&codi);
+	result = ((codo)(VAL_HANDLE(hnd)))(&codi);
 
 	if (codi.error != 0) {
 		if (result == CODI_CHECK) return R_FALSE;

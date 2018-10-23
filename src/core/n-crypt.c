@@ -34,11 +34,6 @@
 #include "sys-rsa.h"
 #include "sys-dh.h"
 
-const REBYTE rc4_name[] = "RC4-context"; //Used as a context handle name
-const REBYTE aes_name[] = "AES-context";
-const REBYTE rsa_name[] = "RSA-context";
-const REBYTE  dh_name[] = "DH-Key";
-
 /***********************************************************************
 **
 */	REBNATIVE(rc4)
@@ -49,8 +44,8 @@ const REBYTE  dh_name[] = "DH-Key";
 //		/key "Provided only for the first time to get stream HANDLE!"
 //			crypt-key [binary!]  "Crypt key."
 //		/stream
-//			ctx [handle!]        "Stream cipher context."
-//			data [binary! none!] "Data to encrypt/decrypt."
+//			ctx  [handle!] "Stream cipher context."
+//			data [binary!] "Data to encrypt/decrypt."
 //	]
 ***********************************************************************/
 {
@@ -64,9 +59,9 @@ const REBYTE  dh_name[] = "DH-Key";
 	REBSER *ctx;
 
     if(ref_stream) {
-    	ctx = (REBSER*)VAL_HANDLE(val_ctx);
+    	ctx = VAL_HANDLE_DATA(val_ctx);
 
-    	if (VAL_HANDLE_NAME(val_ctx) != rc4_name) {
+    	if (VAL_HANDLE_TYPE(val_ctx) != SYM_RC4) {
     		Trap0(RE_INVALID_HANDLE);
     	}
 
@@ -77,7 +72,7 @@ const REBYTE  dh_name[] = "DH-Key";
     } else if (ref_key) {
     	//key defined - setup new context
 		//making series from POOL so it will be GCed automaticaly
-		REBSER* ctx = Make_Series(sizeof(RC4_CTX), (REBCNT)1, FALSE);
+		REBSER* ctx = Make_Series(sizeof(RC4_CTX), 1, FALSE);
 
 		RC4_setup(
 			(RC4_CTX*)ctx->data,
@@ -85,8 +80,7 @@ const REBYTE  dh_name[] = "DH-Key";
             VAL_LEN(val_crypt_key)
         );
 
-        SET_HANDLE(ret, ctx);
-		VAL_HANDLE_NAME(ret) = rc4_name;
+        SET_HANDLE(ret, ctx, SYM_RC4, HANDLE_SERIES);
     }
     return R_RET;
 }
@@ -103,7 +97,7 @@ const REBYTE  dh_name[] = "DH-Key";
 //		/decrypt            "Use the crypt-key for decryption (default is to encrypt)"
 //		/stream
 //			ctx [handle!]   "Stream cipher context."
-//			data [binary! none!]  "Data to encrypt/decrypt. Or NONE to close the cipher stream."
+//			data [binary!]  "Data to encrypt/decrypt."
 //  ]
 ***********************************************************************/
 {
@@ -118,6 +112,8 @@ const REBYTE  dh_name[] = "DH-Key";
     REBVAL *ret = D_RET;
 	REBSER *ctx;
 	REBINT  len, pad_len;
+
+	//TODO: could be optimized by reusing the handle
 
 	if (ref_key) {
     	//key defined - setup new context
@@ -142,6 +138,7 @@ const REBYTE  dh_name[] = "DH-Key";
 
 		//making series from POOL so it will be GCed automaticaly
 		ctx = Make_Series(sizeof(AES_CTX), (REBCNT)1, FALSE);
+		SERIES_TAIL(ctx) = sizeof(AES_CTX);
 
 		AES_set_key(
 			(AES_CTX*)ctx->data,
@@ -152,24 +149,16 @@ const REBYTE  dh_name[] = "DH-Key";
 
 		if (ref_decrypt) AES_convert_key((AES_CTX*)ctx->data);
 
-		SET_HANDLE(ret, ctx);
-		VAL_HANDLE_NAME(ret) = aes_name;
-    
+		SET_HANDLE(ret, ctx, SYM_AES, HANDLE_SERIES);
+		// the ctx in the handle is released by GC once the handle is not referenced
+
     } else if(ref_stream) {
 
-    	if (VAL_HANDLE_NAME(val_ctx) != aes_name) {
+		ctx = VAL_HANDLE_DATA(val_ctx);
+
+    	if (VAL_HANDLE_TYPE(val_ctx) != SYM_AES || ctx == NULL || SERIES_TAIL(ctx) != sizeof(AES_CTX)){
     		Trap0(RE_INVALID_HANDLE);
     	}
-
-    	ctx = (REBSER*)VAL_HANDLE(val_ctx);
-		if(ctx == NULL) Trap0(RE_INVALID_HANDLE);
-
-		if(IS_NONE(val_data)) {
-			//puts("releasing AES ctx");
-			Free_Series(ctx);
-			SET_HANDLE(val_ctx, NULL);
-			return R_TRUE;
-		}
 
     	len = VAL_LEN(val_data);
     	if (len == 0) return R_NONE;
@@ -194,20 +183,10 @@ const REBYTE  dh_name[] = "DH-Key";
 		REBSER  *binaryOut = Make_Binary(pad_len);
 		AES_CTX *aes_ctx = (AES_CTX *)ctx->data;
 		if (aes_ctx->key_mode == AES_MODE_DECRYPT) {
-			AES_cbc_decrypt(
-				aes_ctx,
-				(const uint8_t*)data,
-				BIN_HEAD(binaryOut),
-				pad_len
-			);
+			AES_cbc_decrypt(aes_ctx, data, BIN_HEAD(binaryOut),	pad_len);
 		}
 		else {
-			AES_cbc_encrypt(
-				aes_ctx,
-				(const uint8_t*)data,
-				BIN_HEAD(binaryOut),
-				pad_len
-			);
+			AES_cbc_encrypt(aes_ctx, data, BIN_HEAD(binaryOut),	pad_len);
 		}
 		if (pad_data) FREE_MEM(pad_data);
 
@@ -246,13 +225,18 @@ const REBYTE  dh_name[] = "DH-Key";
 	REBSER *dQ      = VAL_SERIES(D_ARG(8));
 	REBSER *qInv    = VAL_SERIES(D_ARG(9));
 
-	RSA_CTX *rsa_ctx = NULL;
-
 	REBVAL *ret = D_RET;
+	REBSER *ser = Make_Series(sizeof(RSA_CTX), 1, FALSE);
+	SERIES_TAIL(ser) = sizeof(RSA_CTX);
+	
+	RSA_CTX *rsa_ctx = (RSA_CTX*)SERIES_DATA(ser);
+	CLEARS(rsa_ctx);
+
+	SET_HANDLE(ret, ser, SYM_RSA, HANDLE_SERIES);
 
 	if(ref_private) {
 		RSA_priv_key_new(
-			&rsa_ctx,
+			rsa_ctx,
 			BIN_DATA(n), BIN_LEN(n),
 			BIN_DATA(e), BIN_LEN(e),
 			BIN_DATA(d), BIN_LEN(d),
@@ -264,14 +248,11 @@ const REBYTE  dh_name[] = "DH-Key";
 		);
 	} else {
 		RSA_pub_key_new(
-			&rsa_ctx,
+			rsa_ctx,
 			BIN_DATA(n), BIN_LEN(n),
 			BIN_DATA(e), BIN_LEN(e)
 		);
 	}
-	//printf("rsa ctx %u %i\n", (uint32_t)rsa_ctx, rsa_ctx->num_octets);
-	SET_HANDLE(ret, rsa_ctx);
-	VAL_HANDLE_NAME(ret) = rsa_name;
 	return R_RET;
 }
 
@@ -282,7 +263,7 @@ const REBYTE  dh_name[] = "DH-Key";
 //  rsa: native [
 //		"Encrypt/decrypt/sign/verify data using RSA cryptosystem. Only one refinement must be used!"
 //		rsa-key [handle!] "RSA context created using `rsa-init` function"
-//		data    [binary!] "Data to work with"
+//		data    [binary! none!] "Data to work with. Use NONE to release the RSA handle resources!"
 //		/encrypt  "Use public key to encrypt data"
 //		/decrypt  "Use private key to decrypt data"
 //		/sign     "Use private key to sign data"
@@ -290,12 +271,12 @@ const REBYTE  dh_name[] = "DH-Key";
 //  ]
 ***********************************************************************/
 {
-	REBVAL *key             = D_ARG(1);
-	REBSER *data = VAL_SERIES(D_ARG(2));
-	REBOOL  refEncrypt      = D_REF(3);
-	REBOOL  refDecrypt      = D_REF(4);
-	REBOOL  refSign         = D_REF(5);
-	REBOOL  refverify       = D_REF(6);
+	REBVAL *key         = D_ARG(1);
+	REBVAL *val_data    = D_ARG(2);
+	REBOOL  refEncrypt  = D_REF(3);
+	REBOOL  refDecrypt  = D_REF(4);
+	REBOOL  refSign     = D_REF(5);
+	REBOOL  refverify   = D_REF(6);
 
 	// make sure that only one refinement is used!
 	if(
@@ -307,19 +288,27 @@ const REBYTE  dh_name[] = "DH-Key";
 		Trap0(RE_BAD_REFINES);
 	}
 
-	REBVAL *ret = D_RET;
-
-	REBINT outBytes;
-
-	bigint *data_bi;
-	RSA_CTX *rsa_ctx;
-
-
-	if(VAL_HANDLE_NAME(key) != rsa_name || VAL_HANDLE(key) == NULL) {
+	if (VAL_HANDLE_TYPE(key) != SYM_RSA || VAL_HANDLE_DATA(key) == NULL) {
 		Trap0(RE_INVALID_HANDLE);
 	}
 
-	rsa_ctx = (RSA_CTX*)VAL_HANDLE(key);
+	REBSER  *rsa_ser = VAL_HANDLE_DATA(key);
+	if(SERIES_TAIL(rsa_ser) != sizeof(RSA_CTX)) return R_NONE; // probably released (and so invalidated) handle
+	RSA_CTX *rsa_ctx = (RSA_CTX*)SERIES_DATA(rsa_ser);
+
+	if (IS_NONE(val_data)) {
+		// release RSA key resources
+		RSA_free(rsa_ctx);
+		// and invalidate the handle's data (the series will be GCed once the handle will not be referenced
+		CLEARS(rsa_ctx);
+		SERIES_TAIL(rsa_ser) = 0;
+		return R_TRUE;
+	}
+
+	REBSER *data = VAL_SERIES(val_data);
+	REBVAL *ret = D_RET;
+	REBINT  outBytes;
+	bigint *data_bi;
 
 	if(
 		(rsa_ctx->m == NULL || rsa_ctx->e == NULL) ||
@@ -339,8 +328,6 @@ const REBYTE  dh_name[] = "DH-Key";
 	REBYTE* inBinary = BIN_DATA(data);
 	REBINT  inBytes = BIN_LEN(data);
 
-	//printf("inbytes: %i\n", inBytes);
-
 	data_bi = bi_import(rsa_ctx->bi_ctx, inBinary, inBytes);
 
 	//allocate new binary!
@@ -354,8 +341,6 @@ const REBYTE  dh_name[] = "DH-Key";
 	}
 
 	bi_free(rsa_ctx->bi_ctx, data_bi);
-
-	//printf("result bts %i\n", outBytes);
 
 	if(outBytes < 0) {
 		Free_Series(output);
@@ -395,40 +380,35 @@ const REBYTE  dh_name[] = "DH-Key";
 	REBCNT  len_g = BIN_LEN(g);
 	REBCNT  len_p = BIN_LEN(p);
 	REBYTE *buffer = NULL;
+	REBSER *dh_ser;
 
 	// allocating buffers for all keys as a one blob
 	REBCNT  buffer_len = BIN_LEN(g) + (5 * BIN_LEN(p));
 	
 	if(ref_into) {
-		if(!IS_HANDLE(val_dh) || VAL_HANDLE_NAME(val_dh) != dh_name) {
+		if(!IS_HANDLE(val_dh) || VAL_HANDLE_TYPE(val_dh) != SYM_DH) {
 			//error!
 			return R_NONE;
 		}
 		ret = val_dh;
 		*D_RET = *D_ARG(4);
-		dh = (DH_CTX*)VAL_HANDLE(val_dh);
-		if(dh == NULL) goto new_dh_handle;
-		if((REBCNT)dh->len_data < buffer_len) {
-			//needs new allocation for keys
-			if(dh->data != NULL) FREE_MEM(dh->data);
-		} else {
-			//skip the buffer allocation
-			buffer = dh->data;
+		dh_ser = VAL_HANDLE_DATA(val_dh);
+		if (dh_ser == NULL) goto new_dh_handle;
+		HANDLE_CLR_FLAG(val_dh, HANDLE_RELEASABLE);
+		if(SERIES_REST(dh_ser) < (sizeof(DH_CTX) + buffer_len)) {
+			//needs more space for keys
+			Expand_Series(dh_ser, AT_TAIL, (sizeof(DH_CTX) + buffer_len) - SERIES_TAIL(dh_ser));
 		}
 	} else {
 		ret = D_RET;
-new_dh_handle:
-		dh = (DH_CTX*)MAKE_NEW(DH_CTX);
-		SET_HANDLE(ret, dh);
-		VAL_HANDLE_NAME(ret) = dh_name;
+	new_dh_handle:
+		dh_ser = Make_Series(sizeof(DH_CTX) + buffer_len, 1, FALSE);
+		SET_HANDLE(ret, dh_ser, SYM_DH, HANDLE_SERIES);
 	}
-	
-	if(buffer == NULL) {
-		buffer = MAKE_MEM(buffer_len);
-		dh->len_data = buffer_len;
-	}
-
-	CLEAR(buffer, dh->len_data);
+	dh = (DH_CTX*)SERIES_DATA(dh_ser);
+	buffer = SERIES_DATA(dh_ser) + sizeof(DH_CTX);
+	CLEAR(buffer, buffer_len);
+	dh->len_data = buffer_len;
 
 	bin = BIN_DATA(g); //@@ use VAL_BIN_AT instead?
 	dh->len_g = len_g;
@@ -453,7 +433,7 @@ new_dh_handle:
 	dh->k  = buffer; //negotiated key
 	
 	DH_generate_key(dh);
-	
+
 	return R_RET;
 }
 
@@ -486,11 +466,12 @@ new_dh_handle:
 		Trap0(RE_BAD_REFINES);
 	}
 
-	if (VAL_HANDLE_NAME(val_dh) != dh_name || VAL_HANDLE(val_dh) == NULL) {
+	if (VAL_HANDLE_TYPE(val_dh) != SYM_DH || VAL_HANDLE_DATA(val_dh) == NULL) {
 		Trap0(RE_INVALID_HANDLE);
 	}
 
-	DH_CTX *dh = (DH_CTX*)VAL_HANDLE(val_dh);
+	REBSER *dh_ser = VAL_HANDLE_DATA(val_dh);
+	DH_CTX *dh = (DH_CTX*)SERIES_DATA(dh_ser);
 	
 	if (dh->g == NULL) return R_NONE; //or error?
 
@@ -518,8 +499,9 @@ new_dh_handle:
 	}
 
 	if(ref_release) {
-		if(dh->g != NULL) FREE_MEM(dh->data);
+	//	if(dh->data != NULL) FREE_MEM(dh->data);
 		CLEARS(dh);
+		HANDLE_SET_FLAG(val_dh, HANDLE_RELEASABLE);
 		if(!ref_public && !ref_secret) return R_ARG1;
 	}
 	

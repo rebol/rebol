@@ -66,8 +66,8 @@ Rebol [
 	--test-- "Init RSA keys"
 		--assert handle? key-pub:  rsa-init ko/n ko/e ;<-- this key has only public properties
 		--assert handle? key-pri:  rsa-init/private ko/n ko/e ko/d ko/p ko/q ko/dp ko/dq ko/qi
-		--assert "#[handle! RSA-context]" = mold key-pub
-		--assert "#[handle! RSA-context]" = mold key-pri
+		--assert "#[handle! rsa]" = mold key-pub
+		--assert "#[handle! rsa]" = mold key-pri
 
 	;-- note: you could use key-pri only as it contains the public properties too
 	;-- the key-pub is there just to simulate situation, where user have only the public parts
@@ -91,6 +91,11 @@ Rebol [
 		;you can use both keys for verification (only the public parts are used)
 		--assert #{41686F6A21} = rsa/verify key-pub sign-hash
 		--assert #{41686F6A21} = rsa/verify key-pri sign-hash
+
+	--test-- "RSA key release"
+		;once RSA key is not needed, release the resources using NONE data
+		--assert rsa key-pub none
+		--assert rsa key-pri none
 
 ===end-group===
 

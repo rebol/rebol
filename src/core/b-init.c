@@ -709,7 +709,7 @@ extern const REBYTE Str_Banner[];
 	REBCNT sym = Make_Word(cb_cast(name), 0);
 
 	value = Append_Frame(VAL_OBJ_FRAME(value), 0, sym);
-	SET_HANDLE(value, dispatcher);
+	SET_HANDLE(value, dispatcher, SYM_CODEC, HANDLE_FUNCTION);
 }
 
 
