@@ -253,7 +253,7 @@
 	if (decimal_digits < MIN_DIGITS) decimal_digits = MIN_DIGITS;
 	else if (decimal_digits > MAX_DIGITS) decimal_digits = MAX_DIGITS;
 
-	sig = (REBYTE *) dtoa (d, 0, decimal_digits, &e, &sgn, (char **) &rve);
+	sig = (REBYTE *) dtoa (d, 2, decimal_digits, &e, &sgn, (char **) &rve);
 
 	digits_obtained = rve - sig;
 
