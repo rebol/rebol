@@ -123,7 +123,7 @@ register-codec [
 				]
 			]
 			if verbose > 0 [
-				if empty? data [data: none]
+				if all [series? data empty? data] [data: none]
 				if tag-name = 'OBJECT_IDENTIFIER [
 					data: decode-OID/full data
 				]
