@@ -79,7 +79,7 @@ qt-init-file: does [
 ]
 
 start-run: func[
-    title [string!]
+    title [any-string!]
 ][
 	was-quiet: system/options/quiet
 	system/options/quiet: true
@@ -90,7 +90,7 @@ start-run: func[
 ]
 
 start-file: func [
-	title [string!]
+	title [any-string!]
 ][
 	qt-init-file
 	prin "^[[7m~~~started test~~~^[[0m "
@@ -100,14 +100,14 @@ start-file: func [
 ]
 
 start-group: func [
- 	title [string!]
+ 	title [any-string!]
 ][
 	qt-group-name: title
 	qt-group?: true
 ]
 
 start-test: func [
-	title [string!]
+	title [any-string!]
 ][
 	qt-test-name: title
 	qt-test-assert: 0
