@@ -29,7 +29,7 @@ register-codec [
 		]
 		if data/1 <> 48 [
 			if verbose > 0 [
-				print "*** DER data does not start with SEQUENCE tag ***^\*** "
+				prin "*** DER data does not start with SEQUENCE tag ***^/*** "
 				probe copy/part data 10
 			]
 			return none
