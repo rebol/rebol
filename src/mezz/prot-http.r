@@ -64,10 +64,18 @@ sync-op: func [port body /local state] [
 	;--Richard
 	while [not find [ready close] state/state][
 		;@@net-log ["########### sync-op.." state/state]
-		unless port? wait [state/connection port/spec/timeout] [http-error "Timeout"]
+		unless port? wait [state/connection port/spec/timeout] [http-error "HTTP(s) Timeout"]
 		;@@net-log ["########### sync-op wakeup" state/state]
 		switch state/state [
+			inited [
+				;@@net-log ["state/connection open? ->" open? state/connection]
+				if not open? state/connection [
+					state/error: make-http-error rejoin ["Internal " state/connection/spec/ref " connection closed"]
+					break
+				]
+			]
 			reading-data [
+				;? state/connection
 				read state/connection
 			]
 			redirect [
@@ -77,6 +85,7 @@ sync-op: func [port body /local state] [
 			]
 		]
 	]
+	if state/error [do state/error]
 	body: copy port
 	if state/close? [close port]
 	body
@@ -136,6 +145,7 @@ http-awake: func [event /local port http-port state awake res] [
 			awake make event! [type: 'connect port: http-port]
 		]
 		close [
+			;?? state/state
 			res: switch state/state [
 				ready [
 					awake make event! [type: 'close port: http-port]
@@ -263,6 +273,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 		]
 	] [
 		info/response-line: line: to string! copy/part conn/data d1
+		;?? line
 		info/headers: headers: construct/with d1 http-response-headers
 		info/name: spec/ref
 		if headers/content-length [info/size: headers/content-length: to integer! headers/content-length]
@@ -270,6 +281,8 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 		remove/part conn/data d2
 		state/state: 'reading-data
 	]
+	;? state
+	;?? headers
 	unless headers [
 		read conn
 		return false
@@ -317,6 +330,8 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 				unless res [res: awake make event! [type: 'ready port: port]]
 			] [
 				res: check-data port
+				;?? res
+				;?? state/state
 				if all [not res state/state = 'ready] [
 					res: awake make event! [type: 'done port: port]
 					unless res [res: awake make event! [type: 'ready port: port]]
@@ -455,6 +470,7 @@ check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer st
 	res: false
 
 	;@@net-log ["[HTTP check-data] bytes:" length? conn/data]
+	;? conn
 
 	case [
 		headers/transfer-encoding = "chunked" [
@@ -577,7 +593,7 @@ sys/make-scheme [
 			port [port!]
 			/local conn
 		] [
-			;@@net-log ["[HTTP open]" port/state]
+			;@@net-log ["[HTTP open] state:" port/state]
 			if port/state [return port]
 			if none? port/spec/host [http-error "Missing host address"]
 			port/state: context [
@@ -588,6 +604,7 @@ sys/make-scheme [
 				info: make port/scheme/info [type: 'url]
 				awake: :port/awake
 			]
+			;? port/state/info
 			port/state/connection: conn: make port! compose [
 				scheme: (to lit-word! either port/spec/scheme = 'http ['tcp]['tls])
 				host: port/spec/host
@@ -597,7 +614,7 @@ sys/make-scheme [
 			;?? conn 
 			conn/awake: :http-awake
 			conn/locals: port
-			;@@net-log ["[HTTP opne]" conn/spec/scheme conn/spec/host]
+			;@@net-log ["[HTTP open] scheme:" conn/spec/scheme conn/spec/host]
 			;?? conn
 			open conn
 			port
