@@ -51,7 +51,7 @@ register-codec [
 					copy *val to end ;@@ TODO: decode it too?
 				]
 				(
-					append *blk to word! der-codec/decode-OID *oid
+					append *blk der-codec/decode-OID *oid
 					if *val [append *blk *val]
 				)
 			]
