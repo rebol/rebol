@@ -289,5 +289,5 @@ register-codec [
 		][ oid ]
 	]
 
-	verbose: 2
+	verbose: 0
 ]
