@@ -50,6 +50,7 @@ REBOL [
 	%mezz-tail.r
 	%codec-wav.r
 	%codec-der.r
+	%codec-crt.r
 ]
 
 ;-- protocols:
