@@ -38,3 +38,5 @@ t: function["Test script shortcut"][
 		exists? script: ~/../../test.r3
 	][	do script ]
 ]
+
+protect system/standard
