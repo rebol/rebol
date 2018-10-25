@@ -46,4 +46,17 @@ if find system/codecs 'der [
 	system/codecs/der/verbose: 0
 ]
 
+if find system/codecs 'crt [
+	system/codecs/crt/verbose: 3
+	===start-group=== "CRT codec"
+		
+		--test-- "Load CRT file"
+			--assert object? cert: load %units/files/google.crt
+			--assert "Google Internet Authority G3" = try [cert/issuer/commonName]
+			--assert block? try [key: cert/public-key/rsaEncryption]
+			--assert #{010001} = try [key/2]
+	===end-group===
+	system/codecs/crt/verbose: 0
+]
+
 ~~~end-file~~~
