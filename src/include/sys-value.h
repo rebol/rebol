@@ -980,11 +980,13 @@ typedef struct Reb_Handle {
 	union {
 		ANYFUNC	code;
 		REBSER *data;
+		REBINT  index;
 	};
 } REBHAN;
 
 #define VAL_HANDLE(v)		((v)->data.handle.code)
 #define VAL_HANDLE_DATA(v)  ((v)->data.handle.data)
+#define VAL_HANDLE_I32(v)   ((v)->data.handle.index) // for handles which are storing just index in the data field
 #define VAL_HANDLE_TYPE(v)  ((v)->data.handle.sym)
 #define VAL_HANDLE_FLAGS(v) ((v)->data.handle.flags)
 #define VAL_HANDLE_NAME(v)  VAL_WORD_NAME(v) // used in MOLD as an info about handle's type

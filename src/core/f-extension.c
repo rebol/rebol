@@ -363,8 +363,8 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 	// Set extension fields needed:
 	val = FRM_VALUE(obj, STD_EXTENSION_LIB_BASE);
-	VAL_SET(val, REB_HANDLE);
-	VAL_I32(val) = ext->index;
+	SET_HANDLE(val, NULL, SYM_EXTENSION, HANDLE_FUNCTION);
+	VAL_HANDLE_I32(val) = ext->index;
 	if (!D_REF(2)) *FRM_VALUE(obj, STD_EXTENSION_LIB_FILE) = *D_ARG(1);
 	Set_Binary(FRM_VALUE(obj, STD_EXTENSION_LIB_BOOT), src);
 
@@ -390,13 +390,14 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		VAL_LEN(def) != 3
 		|| !(IS_MODULE(val) || IS_OBJECT(val))
 		|| !IS_HANDLE(VAL_OBJ_VALUE(val, 1))
+		|| VAL_HANDLE_TYPE(VAL_OBJ_VALUE(val, 1)) != SYM_EXTENSION
 		|| !IS_INTEGER(val+1)
 		|| VAL_INT64(val+1) > 0xffff
 	) Trap1(RE_BAD_FUNC_DEF, def);
 
 	val = VAL_OBJ_VALUE(val, 1);
 	if (
-		!(ext = &Ext_List[VAL_I32(val)])
+		!(ext = &Ext_List[VAL_HANDLE_I32(val)])
 		|| !(ext->call)
 	) Trap1(RE_BAD_EXTENSION, def);
 
@@ -441,7 +442,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	// All of these were checked above on definition:
 	val = BLK_HEAD(VAL_FUNC_BODY(value));
 	cmd = (int)VAL_INT64(val+1);
-	ext = &Ext_List[VAL_I32(VAL_OBJ_VALUE(val, 1))]; // Handler
+	ext = &Ext_List[VAL_HANDLE_I32(VAL_OBJ_VALUE(val, 1))]; // Handler
 
 	// Copy args to command frame (array of args):
 	RXA_COUNT(&frm) = argc = SERIES_TAIL(VAL_FUNC_ARGS(value))-1; // not self
@@ -573,7 +574,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		// Call the command (also supports different extension modules):
 		func  = BLK_HEAD(VAL_FUNC_BODY(func));
 		n = (REBCNT)VAL_INT64(func + 1);
-		ext = &Ext_List[VAL_I32(VAL_OBJ_VALUE(func, 1))]; // Handler
+		ext = &Ext_List[VAL_HANDLE_I32(VAL_OBJ_VALUE(func, 1))]; // Handler
 		n = ext->call(n, &frm, context);
 		val = DS_RETURN;
 		switch (n) {
