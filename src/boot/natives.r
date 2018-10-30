@@ -386,20 +386,8 @@ checksum: native [
 	key-value [any-string! binary!] {Key to use}
 ]
 
-compress: native [
-	{Compresses a string series and returns it.}
-	data [binary! string!] {If string, it will be UTF8 encoded}
-	/part length {Length of data (elements)}
-	/gzip {Use GZIP checksum}
-]
-
-decompress: native [
-	{Decompresses data. Result is binary.}
-	data [binary!] {Data to decompress}
-	/part length {Length of compressed data (must match end marker)}
-	/gzip {Use GZIP checksum}
-	/limit size {Error out if result is larger than this}
-]
+;compress:   native [] ; defined in %n-string.c
+;decompress: native [] ; defined in %n-string.c
 
 construct: native [
 	{Creates an object with scant (safe) evaluation.}

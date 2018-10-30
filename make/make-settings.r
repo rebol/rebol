@@ -14,4 +14,5 @@ Defines: [
 	USE_JPG_CODEC
 	;USE_WAV_CODEC   ;-- deprecated; using Rebol codec instead
 	;USE_NO_INFINITY ;-- use when you don't want to support IEEE infinity
+	USE_LZMA         ;-- adds support for LZMA [de]compression
 ]

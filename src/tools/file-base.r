@@ -109,6 +109,7 @@ core: [
 	u-dialect.c
 	u-gif.c
 	u-jpg.c
+	u-lzma.c
 	u-md5.c
 	u-parse.c
 	u-png.c

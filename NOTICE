@@ -32,6 +32,10 @@ ZLIB general purpose compression library:
 Version 1.1.2, March 19th, 1998
 Copyright 1995-1998 Jean-loup Gailly and Mark Adler
 
+LZMA (optional):
+Copyright (C) 2018, Igor Pavlov
+Public domain - https://www.7-zip.org/sdk.html
+
 JPEG decoder:
 Copyright 1994-1996, Thomas G. Lane.
 This file is part of the Independent JPEG Group's software.

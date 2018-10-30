@@ -290,19 +290,37 @@ static struct digest {
 **
 */	REBNATIVE(compress)
 /*
-**		Binary and string (gets UTF8 converted).
-**
+//	compress: native [
+//		{Compresses data. Default is deflate with Adler32 checksum.}
+//		data [binary! string!] {If string, it will be UTF8 encoded}
+//		/part length {Length of data (elements)}
+//		/gzip {Use deflate with GZIP checksum (CRC32)}
+//		/lzma {Use LZMA compression}
+//	]
 ***********************************************************************/
 {
+	REBVAL *data    = D_ARG(1);
+  //REBOOL ref_part = D_REF(2);
+	REBVAL *length  = D_ARG(3);
+	REBOOL ref_gzip = D_REF(4);
+	REBOOL ref_lzma = D_REF(5);
+
 	REBSER *ser;
 	REBCNT index;
 	REBCNT len;
 
-	len = Partial1(D_ARG(1), D_ARG(3));
+	len = Partial1(data, length);
+	ser = Prep_Bin_Str(data, &index, &len); // result may be a SHARED BUFFER!
 
-	ser = Prep_Bin_Str(D_ARG(1), &index, &len); // result may be a SHARED BUFFER!
-
-	Set_Binary(D_RET, Compress(ser, index, (REBINT)len, D_REF(4))); // /gzip
+	if(ref_lzma) {
+#ifdef USE_LZMA
+		Set_Binary(D_RET, CompressLzma(ser, index, (REBINT)len));
+#else
+		Trap0(RE_FEATURE_NA);
+#endif
+	} else {
+		Set_Binary(D_RET, Compress(ser, index, (REBINT)len, ref_gzip)); // /gzip
+	}
 
 	return R_RET;
 }
@@ -312,19 +330,41 @@ static struct digest {
 **
 */	REBNATIVE(decompress)
 /*
-**		Binary only.
-**
+//	decompress: native [
+//		{Decompresses data. Result is binary.}
+//		data [binary!] {Data to decompress}
+//		/part length {Length of compressed data (must match end marker)}
+//		/gzip {Use GZIP checksum}
+//		/lzma {Use LZMA encoding}
+//		/limit size {Error out if result is larger than this}
+]
 ***********************************************************************/
 {
-	REBVAL *arg = D_ARG(1);
+	REBVAL *data     = D_ARG(1);
+  //REBOOL ref_part  = D_REF(2);
+	REBVAL *length   = D_ARG(3);
+	REBOOL ref_gzip  = D_REF(4);
+	REBOOL ref_lzma  = D_REF(5);
+	REBOOL ref_limit = D_REF(6);
+	REBVAL *size     = D_ARG(7);
+
 	REBINT limit = 0;
 	REBCNT len;
 
 	len = Partial1(D_ARG(1), D_ARG(3));
 
-	if (D_REF(5)) limit = Int32s(D_ARG(6), 1); // /limit size
+	if (ref_limit) limit = Int32s(size, 1); // /limit size
+
+	if (ref_lzma) {
+#ifdef USE_LZMA
+		Set_Binary(D_RET, DecompressLzma(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit));
+#else
+		Trap0(RE_FEATURE_NA);
+#endif
+	} else {
+		Set_Binary(D_RET, Decompress(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit, ref_gzip)); // /gzip
+	}
 	
-	Set_Binary(D_RET, Decompress(VAL_SERIES(arg), VAL_INDEX(arg), (REBINT)len, limit, D_REF(4))); // /gzip
 
 	return R_RET;
 }

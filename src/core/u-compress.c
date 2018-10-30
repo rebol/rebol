@@ -20,7 +20,7 @@
 ************************************************************************
 **
 **  Module:  u-compress.c
-**  Summary: interface to zlib compression
+**  Summary: interface to zlib and or optional lzma compression
 **  Section: utility
 **  Notes:
 **
@@ -28,6 +28,11 @@
 
 #include "sys-core.h"
 #include "sys-zlib.h"
+#ifdef USE_LZMA
+#include "sys-lzma.h"
+#endif // USE_LZMA
+
+
 
 /*
  *  This number represents the top file size that,
@@ -134,3 +139,117 @@
 	//ENABLE_GC;
 	return output;
 }
+
+#ifdef USE_LZMA
+
+static void *SzAlloc(ISzAllocPtr p, size_t size) { UNUSED(p); return malloc(size); }
+static void SzFree(ISzAllocPtr p, void *address) { UNUSED(p); free(address); }
+const ISzAlloc g_Alloc = { SzAlloc, SzFree };
+
+/***********************************************************************
+**
+*/  REBSER *CompressLzma(REBSER *input, REBINT index, REBCNT len)
+/*
+**      Compress a binary (only) using LZMA compression.
+**		data
+**		/part
+**		length
+**
+***********************************************************************/
+{
+	REBU64  size;
+	REBU64  size_in = len;
+	REBSER *output;
+	REBINT  err;
+	REBYTE *dest;
+	REBYTE  out_size[sizeof(REBCNT)];
+
+	//@@ are these Sterling's magic numbers correct for LZMA too?
+	size = LZMA_PROPS_SIZE + size_in + (size_in > STERLINGS_MAGIC_NUMBER ? size_in / 10 + 12 : STERLINGS_MAGIC_FIX);
+	output = Make_Binary(size);
+
+	// so far hardcoded LZMA encoder properties... it would be nice to be able specify these by user if needed.
+	CLzmaEncProps props;
+	LzmaEncProps_Init(&props);
+	props.level = 5;
+	props.dictSize = 0; // use default value
+	props.lc = -1; // -1 = default value
+	props.lp = -1;
+	props.pb = -1;
+	props.fb = -1;
+	props.numThreads = -1;
+	// Possible values:
+	//	int level, /* 0 <= level <= 9, default = 5 */
+	//	unsigned dictSize, /* use (1 << N) or (3 << N). 4 KB < dictSize <= 128 MB */
+	//	int lc, /* 0 <= lc <= 8, default = 3  */
+	//	int lp, /* 0 <= lp <= 4, default = 0  */
+	//	int pb, /* 0 <= pb <= 4, default = 2  */
+	//	int fb,  /* 5 <= fb <= 273, default = 32 */
+	//	int numThreads /* 1 or 2, default = 2 */
+
+	dest = BIN_HEAD(output);
+
+	/* header: 5 bytes of LZMA properties */
+	REBU64 headerSize = LZMA_PROPS_SIZE;
+	size -= headerSize;
+
+	err = LzmaEncode(dest + headerSize, (SizeT*)&size, BIN_HEAD(input) + index, (SizeT)len, &props, dest, &headerSize, 0,
+		NULL, &g_Alloc, &g_Alloc);
+	//printf("lzmaencode res: %i size: %u headerSize: %u\n", err, size, headerSize);
+	if (err) {
+		if (err == SZ_ERROR_MEM) Trap0(RE_NO_MEMORY);
+		SET_INTEGER(DS_RETURN, err);
+		Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
+	}
+	size += headerSize;
+	//SET_STR_END(output, size);
+	SERIES_TAIL(output) = size;
+	REBCNT_To_Bytes(out_size, (REBCNT)len); // Tag the size to the end.
+	Append_Series(output, (REBYTE*)out_size, sizeof(REBCNT));
+	if (SERIES_AVAIL(output) > 1024) // Is there wasted space?
+		output = Copy_Series(output); // Trim it down if too big. !!! Revisit this based on mem alloc alg.
+	return output;
+}
+
+/***********************************************************************
+**
+*/  REBSER *DecompressLzma(REBSER *input, REBCNT index, REBINT len, REBCNT limit)
+/*
+**      Decompress a binary (only).
+**
+***********************************************************************/
+{
+	REBU64 size;
+	REBU64 unpackSize;
+	REBSER *output;
+	REBINT err;
+	REBYTE *dest;
+	REBYTE *src = BIN_HEAD(input) + index;
+	REBU64 headerSize = LZMA_PROPS_SIZE;
+	ELzmaStatus status = 0;
+
+	if (len < 0 || (index + len > BIN_LEN(input))) len = BIN_LEN(input) - index;
+	if (len < 9) Trap0(RE_PAST_END); // !!! better msg needed
+	size = cast(REBU64, len - LZMA_PROPS_SIZE); // don't include size of properties
+
+	// Get the uncompressed size from the end.
+	unpackSize = cast(REBU64, Bytes_To_REBCNT(BIN_SKIP(input, len) - sizeof(REBCNT)));
+	if(limit > 0 && unpackSize > limit) unpackSize = limit;
+
+	output = Make_Binary(unpackSize);
+	dest = BIN_HEAD(output);
+
+	err = LzmaDecode(dest, (SizeT*)&unpackSize, src + LZMA_PROPS_SIZE, (SizeT*)&size, src, headerSize, LZMA_FINISH_ANY, &status, &g_Alloc);
+	//printf("lzmadecode res: %i status: %i size: %u\n", err, status, size);
+
+	if (err) {
+		if (err == SZ_ERROR_MEM) Trap0(RE_NO_MEMORY);
+		SET_INTEGER(DS_RETURN, err);
+		Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
+	}
+	SET_STR_END(output, unpackSize);
+	SERIES_TAIL(output) = unpackSize;
+	return output;
+}
+
+#endif //USE_LZMA
