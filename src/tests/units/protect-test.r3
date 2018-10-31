@@ -39,6 +39,12 @@ Rebol [
 	--test-- "swap string" --assert is-protected-error? [swap str "0bad"]
 	--test-- "swap binary" --assert is-protected-error? [swap bin #{0bad}]
 
+	;@@ https://github.com/rebol/rebol-issues/issues/2325
+	str: protect "a^M^/b"
+	--test-- "deline string"  --assert is-protected-error? [deline str]
+	--test-- "enline string"  --assert is-protected-error? [enline str]
+
+
 ===end-group===
 
 ~~~end-file~~~

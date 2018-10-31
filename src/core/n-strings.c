@@ -573,6 +573,8 @@ static struct digest {
 	REBINT len = VAL_LEN(val);
 	REBINT n;
 
+	if (IS_PROTECT_SERIES(VAL_SERIES(val))) Trap0(RE_PROTECTED);
+
 	if (D_REF(2)) { //lines
 		Set_Block(D_RET, Split_Lines(val));
 		return R_RET;
@@ -602,6 +604,8 @@ static struct digest {
 {
 	REBVAL *val = D_ARG(1);
 	REBSER *ser = VAL_SERIES(val);
+
+	if (IS_PROTECT_SERIES(VAL_SERIES(val))) Trap0(RE_PROTECTED);
 
 	if (SERIES_TAIL(ser)) {
 		if (VAL_BYTE_SIZE(val))
