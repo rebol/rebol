@@ -193,8 +193,8 @@ const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 	REBU64 headerSize = LZMA_PROPS_SIZE;
 	size -= headerSize;
 
-	err = LzmaEncode(dest + headerSize, (SizeT*)&size, BIN_HEAD(input) + index, (SizeT)len, &props, dest, &headerSize, 0,
-		NULL, &g_Alloc, &g_Alloc);
+	err = LzmaEncode(dest + headerSize, (SizeT*)&size, BIN_HEAD(input) + index, (SizeT)len, &props, dest, (SizeT*)&headerSize, 0,
+		((ICompressProgress *)0), &g_Alloc, &g_Alloc);
 	//printf("lzmaencode res: %i size: %u headerSize: %u\n", err, size, headerSize);
 	if (err) {
 		if (err == SZ_ERROR_MEM) Trap0(RE_NO_MEMORY);

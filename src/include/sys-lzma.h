@@ -134,12 +134,12 @@ typedef unsigned char Byte;
 typedef short Int16;
 typedef unsigned short UInt16;
 
-#ifdef _LZMA_UINT32_IS_ULONG
-typedef long i32;
-typedef unsigned long u32;
+#ifdef __LP64__
+typedef int				i32;
+typedef unsigned int	u32;
 #else
-typedef int i32;
-typedef unsigned int u32;
+typedef long			i32;
+typedef unsigned long	u32;
 #endif
 
 #ifdef _SZ_NO_INT_64
