@@ -134,6 +134,15 @@ typedef unsigned char Byte;
 typedef short Int16;
 typedef unsigned short UInt16;
 
+#if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#include <stdint.h>
+typedef uint16_t		u16;
+typedef int32_t			i32;
+typedef uint32_t		u32;
+typedef int64_t			i64;
+typedef uint64_t		u64;
+#else
+
 #ifdef __LP64__
 typedef int				i32;
 typedef unsigned int	u32;
@@ -144,25 +153,24 @@ typedef unsigned long	u32;
 
 #ifdef _SZ_NO_INT_64
 
-/* define _SZ_NO_INT_64, if your compiler doesn't support 64-bit integers.
-   NOTES: Some code will work incorrectly in that case! */
+	/* define _SZ_NO_INT_64, if your compiler doesn't support 64-bit integers.
+	   NOTES: Some code will work incorrectly in that case! */
 
-typedef long i64;
-typedef unsigned long u64;
+	typedef long i64;
+	typedef unsigned long u64;
 
 #else
-
-#if defined(_MSC_VER) || defined(__BORLANDC__)
-typedef __int64 i64;
-typedef unsigned __int64 u64;
-#define UINT64_CONST(n) n
-#else
-typedef long long int i64;
-typedef unsigned long long int u64;
-#define UINT64_CONST(n) n ## ULL
+	#if defined(_MSC_VER) || defined(__BORLANDC__)
+	typedef __int64 i64;
+	typedef unsigned __int64 u64;
+	#define UINT64_CONST(n) n
+	#else
+	typedef long long int i64;
+	typedef unsigned long long int u64;
+	#define UINT64_CONST(n) n ## ULL
+	#endif
 #endif
-
-#endif
+#endif //defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 
 #ifdef _LZMA_NO_SYSTEM_SIZE_T
 typedef u32 SizeT;
