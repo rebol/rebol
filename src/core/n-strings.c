@@ -30,7 +30,6 @@
 #include "sys-core.h"
 #include "sys-deci-funcs.h"
 
-
 /***********************************************************************
 **
 **	Hash Function Externs
@@ -291,19 +290,24 @@ static struct digest {
 */	REBNATIVE(compress)
 /*
 //	compress: native [
-//		{Compresses data. Default is deflate with Adler32 checksum.}
+//		{Compresses data. Default is deflate with Adler32 checksum and uncompressed size in last 4 bytes.}
 //		data [binary! string!] {If string, it will be UTF8 encoded}
-//		/part length {Length of data (elements)}
-//		/gzip {Use deflate with GZIP checksum (CRC32)}
+//		/part length {Length of source data}
+//		/zlib {Use ZLIB (Adler32 checksum) without uncompressed length appended}
+//		/gzip {Use ZLIB with GZIP envelope (using CRC32 checksum)}
 //		/lzma {Use LZMA compression}
+//		/level lvl [integer!] {Compression level 0-9}
 //	]
 ***********************************************************************/
 {
 	REBVAL *data    = D_ARG(1);
   //REBOOL ref_part = D_REF(2);
 	REBVAL *length  = D_ARG(3);
-	REBOOL ref_gzip = D_REF(4);
-	REBOOL ref_lzma = D_REF(5);
+	REBOOL ref_zlib = D_REF(4);
+	REBOOL ref_gzip = D_REF(5);
+	REBOOL ref_lzma = D_REF(6);
+	REBOOL ref_level= D_REF(7);
+	REBVAL *level   = D_ARG(8);
 
 	REBSER *ser;
 	REBCNT index;
@@ -314,12 +318,14 @@ static struct digest {
 
 	if(ref_lzma) {
 #ifdef USE_LZMA
-		Set_Binary(D_RET, CompressLzma(ser, index, (REBINT)len));
+		Set_Binary(D_RET, CompressLzma(ser, index, (REBINT)len, ref_level ? VAL_INT32(level) : -1));
 #else
 		Trap0(RE_FEATURE_NA);
 #endif
 	} else {
-		Set_Binary(D_RET, Compress(ser, index, (REBINT)len, ref_gzip)); // /gzip
+		int windowBits = MAX_WBITS;
+		if (ref_gzip) windowBits |= 16;
+		Set_Binary(D_RET, CompressZlib(ser, index, (REBINT)len, ref_level ? VAL_INT32(level) : -1, windowBits));
 	}
 
 	return R_RET;
@@ -332,28 +338,32 @@ static struct digest {
 /*
 //	decompress: native [
 //		{Decompresses data. Result is binary.}
-//		data [binary!] {Data to decompress}
-//		/part length {Length of compressed data (must match end marker)}
-//		/gzip {Use GZIP checksum}
-//		/lzma {Use LZMA encoding}
-//		/limit size {Error out if result is larger than this}
+//		data [binary!] {Source data to decompress}
+//		/part "Limits source data to a given length or position"
+//			length [number! series!] {Length of compressed data (must match end marker)}
+//		/zlib {Data are in ZLIB format with Adler32 checksum}
+//		/gzip {Data are in ZLIB format with CRC32 checksum}
+//		/lzma {Data are in LZMA format}
+//		/size
+//			bytes [integer!] {Number of decompressed bytes. If not used, size is detected from last 4 source data bytes.}
 ]
 ***********************************************************************/
 {
 	REBVAL *data     = D_ARG(1);
   //REBOOL ref_part  = D_REF(2);
 	REBVAL *length   = D_ARG(3);
-	REBOOL ref_gzip  = D_REF(4);
-	REBOOL ref_lzma  = D_REF(5);
-	REBOOL ref_limit = D_REF(6);
-	REBVAL *size     = D_ARG(7);
+	REBOOL ref_zlib  = D_REF(4);
+	REBOOL ref_gzip  = D_REF(5);
+	REBOOL ref_lzma  = D_REF(6);
+	REBOOL ref_size  = D_REF(7);
+	REBVAL *size     = D_ARG(8);
 
 	REBINT limit = 0;
 	REBCNT len;
 
 	len = Partial1(D_ARG(1), D_ARG(3));
 
-	if (ref_limit) limit = Int32s(size, 1); // /limit size
+	if (ref_size) limit = Int32s(size, 1); // /limit size
 
 	if (ref_lzma) {
 #ifdef USE_LZMA
@@ -362,7 +372,9 @@ static struct digest {
 		Trap0(RE_FEATURE_NA);
 #endif
 	} else {
-		Set_Binary(D_RET, Decompress(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit, ref_gzip)); // /gzip
+		int windowBits = MAX_WBITS;
+		if (ref_gzip) windowBits |= 16;
+		Set_Binary(D_RET, DecompressZlib(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit, windowBits));
 	}
 	
 

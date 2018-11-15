@@ -157,7 +157,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	if (bin) {
 		spec.data = bin;
 		spec.tail = len;
-		ser = Decompress(&spec, 0, -1, 10000000, 0);
+		ser = DecompressZlib(&spec, 0, -1, 0, 0);
 		if (!ser) return 1;
 
 		val = BLK_SKIP(Sys_Context, SYS_CTX_BOOT_HOST);
@@ -307,7 +307,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	//Cloak(TRUE, code, NAT_SPEC_SIZE, &key[0], 20, TRUE);
 	spec.data = bin;
 	spec.tail = length;
-	text = Decompress(&spec, 0, -1, 10000000, 0);
+	text = DecompressZlib(&spec, 0, -1, 0, 0);
 	if (!text) return FALSE;
 	Append_Byte(text, 0);
 

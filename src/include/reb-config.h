@@ -237,3 +237,19 @@ These are now obsolete (as of A107) and should be removed:
 #ifndef OS_CRLF
 #define OS_CRLF FALSE
 #endif
+
+//* ZLIB ***************************************************************
+
+/* Maximum value for memLevel in deflateInit2 */
+#ifndef MAX_MEM_LEVEL
+#  ifdef SYS16BIT
+#    define MAX_MEM_LEVEL 8
+#  else
+#    define MAX_MEM_LEVEL 9
+#  endif
+#endif
+
+/* Maximum value for windowBits in deflateInit2 and inflateInit2. */
+#ifndef MAX_WBITS
+#  define MAX_WBITS   15 /* 32K LZ77 window */
+#endif

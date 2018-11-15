@@ -26,6 +26,7 @@ wrap load %units/crash-test.r3
 wrap load %units/bincode-test.r3
 wrap load %units/codecs-test.r3
 wrap load %units/series-test.r3
+wrap load %units/compress-test.r3
 
 recycle/torture
 recycle

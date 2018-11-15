@@ -172,7 +172,7 @@ extern const REBYTE Str_Banner[];
 		spec.tail = NAT_SPEC_SIZE;
 
 		textlen = Bytes_To_REBCNT(Native_Specs);
-		text = Decompress(&spec, 0, -1, textlen, 0);
+		text = DecompressZlib(&spec, 0, -1, textlen, 0);
 		if (!text || (STR_LEN(text) != textlen)) Crash(RP_BOOT_DATA);
 		boot = Scan_Source(STR_HEAD(text), textlen);
 		//Dump_Block_Raw(boot, 0, 2);

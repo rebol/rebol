@@ -32,8 +32,22 @@
 #include "sys-lzma.h"
 #endif // USE_LZMA
 
+static void *zalloc(void *opaque, unsigned nr, unsigned size)
+{
+	UNUSED(opaque);
+	void *ptr = malloc(nr * size);
+	//printf("zalloc: %x - %i\n", ptr, nr * size);
+	return ptr;
+}
 
+static void zfree(void *opaque, void *addr)
+{
+	UNUSED(opaque);
+	//printf("zfree: %x\n", addr);
+	free(addr);
+}
 
+//#ifdef old_Sterlings_code
 /*
  *  This number represents the top file size that,
  *  if the data is random, will produce a larger output
@@ -58,55 +72,94 @@
  *  be a good idea.
 */
 #define WHY_COMPRESS_CONSTANT       0.1
+//#endif
+
+void Trap_ZStream_Error(z_stream *stream, int err, REBOOL while_compression)
+/*
+**      Free Z_stream resources and throw Rebol error using message,
+**      if available, or error code
+**/
+{
+	REBVAL *ret = DS_RETURN;
+	if(stream->msg) {
+		REBSER* msg = Append_UTF8(NULL, cs_cast(stream->msg), cast(REBINT, strlen(stream->msg)));
+		SET_STRING(ret, msg);
+	} else {
+		SET_INTEGER(ret, err);
+	}
+	if(while_compression) {
+		deflateEnd(stream);
+	} else {
+		inflateEnd(stream);
+	}
+	Trap1(RE_BAD_PRESS, ret);
+}
 
 /***********************************************************************
 **
-*/  REBSER *Compress(REBSER *input, REBINT index, REBCNT len, REBFLG use_crc)
+*/  REBSER *CompressZlib(REBSER *input, REBINT index, REBCNT in_len, REBINT level, REBINT windowBits)
 /*
 **      Compress a binary (only).
-**		data
-**		/part
-**		length
-**		/crc32
-**
-**      Note: If the file length is "small", it can't overrun on
-**      compression too much so we use our magic numbers; otherwise,
-**      we'll just be safe by a percentage of the file size.  This may
-**      be a bit much, though.
 **
 ***********************************************************************/
 {
 	uLongf size;
 	REBSER *output;
 	REBINT err;
-	REBYTE out_size[sizeof(REBCNT)];
 
-	size = len + (len > STERLINGS_MAGIC_NUMBER ? len / 10 + 12 : STERLINGS_MAGIC_FIX);
+	z_stream stream;
+	stream.zalloc = &zalloc;
+	stream.zfree = &zfree;
+	stream.opaque = NULL;
+
+	if(level < 0)
+		level = Z_DEFAULT_COMPRESSION;
+	else if(level > Z_BEST_COMPRESSION)
+		level = Z_BEST_COMPRESSION;
+
+	err = z_deflateInit2(&stream, level, Z_DEFLATED, windowBits, 8, Z_DEFAULT_STRATEGY);
+	if (err != Z_OK) Trap_ZStream_Error(&stream, err, TRUE);
+
+#ifdef old_Sterlings_code
+	size = in_len + (in_len > STERLINGS_MAGIC_NUMBER ? in_len / 10 + 12 : STERLINGS_MAGIC_FIX);
+#else
+	size = 1 + deflateBound(&stream, in_len); // one more byte for trailing null byte -> SET_STR_END
+#endif
+
+	stream.avail_in = in_len;
+	stream.next_in = cast(const z_Bytef*, BIN_HEAD(input) + index);
+
 	output = Make_Binary(size);
+	stream.avail_out = size;
+	stream.next_out = BIN_HEAD(output);
 
-	//DISABLE_GC;	// !!! why??
-	// dest, dest-len, src, src-len, level
-	err = Z_compress2(BIN_HEAD(output), (uLongf*)&size, BIN_HEAD(input) + index, len, use_crc);
-	if (err) {
-		if (err == Z_MEM_ERROR) Trap0(RE_NO_MEMORY);
-		SET_INTEGER(DS_RETURN, err);
-		Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
+	err = deflate(&stream, Z_FINISH);
+	//printf("deflate err: %i  stream.total_out: %i .avail_out: %i\n", err, stream.total_out, stream.avail_out);
+	
+	if (err != Z_STREAM_END)
+		Trap_ZStream_Error(&stream, err, TRUE);
+
+	SET_STR_END(output, stream.total_out);
+	SERIES_TAIL(output) = stream.total_out;
+
+	if((windowBits & 16) != 16) { // Not GZIP
+		// Tag the size to the end. Only when not using GZIP envelope.
+		REBYTE out_size[sizeof(REBCNT)];
+		REBCNT_To_Bytes(out_size, (REBCNT)in_len);
+		Append_Series(output, (REBYTE*)out_size, sizeof(REBCNT));
 	}
-	SET_STR_END(output, size);
-	SERIES_TAIL(output) = size;
-	REBCNT_To_Bytes(out_size, (REBCNT)len); // Tag the size to the end.
-	Append_Series(output, (REBYTE*)out_size, sizeof(REBCNT));
+	
 	if (SERIES_AVAIL(output) > 1024) // Is there wasted space?
 		output = Copy_Series(output); // Trim it down if too big. !!! Revisit this based on mem alloc alg.
-	//ENABLE_GC;
 
+	deflateEnd(&stream);
 	return output;
 }
 
 
 /***********************************************************************
 **
-*/  REBSER *Decompress(REBSER *input, REBCNT index, REBINT len, REBCNT limit, REBFLG use_crc)
+*/  REBSER *DecompressZlib(REBSER *input, REBCNT index, REBINT len, REBCNT limit, REBINT windowBits)
 /*
 **      Decompress a binary (only).
 **
@@ -117,26 +170,48 @@
 	REBINT err;
 
 	if (len < 0 || (index + len > BIN_LEN(input))) len = BIN_LEN(input) - index;
-
-	// Get the size from the end and make the output buffer that size.
-	if (len <= 4) Trap0(RE_PAST_END); // !!! better msg needed
-	size = Bytes_To_REBCNT(BIN_SKIP(input, len) - sizeof(REBCNT));
-
-	if (limit && size > limit) Trap_Num(RE_SIZE_LIMIT, size); 
+	if (limit > 0) {
+		size = limit;
+	} else {
+		// Get the uncompressed size from last 4 source data bytes.
+		if (len < 4) Trap0(RE_PAST_END); // !!! better msg needed
+		size = cast(REBU64, Bytes_To_REBCNT(BIN_SKIP(input, len) - sizeof(REBCNT)));
+		if (size > len * 6) Trap_Num(RE_SIZE_LIMIT, size);
+	}
 
 	output = Make_Binary(size);
 
-	//DISABLE_GC;
-	err = Z_uncompress(BIN_HEAD(output), (uLongf*)&size, BIN_HEAD(input) + index, len, use_crc);
-	if (err) {
-		if (PG_Boot_Phase < 2) return 0;
-		if (err == Z_MEM_ERROR) Trap0(RE_NO_MEMORY);
-		SET_INTEGER(DS_RETURN, err);
-		Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
+	z_stream stream;
+	stream.zalloc = &zalloc; // fail() cleans up automatically, see notes
+	stream.zfree = &zfree;
+	stream.opaque = NULL; // passed to zalloc and zfree, not needed currently
+	stream.total_out = 0;
+
+	stream.avail_in = len;
+	stream.next_in = cast(const Bytef*, BIN_HEAD(input) + index);
+	
+	err = inflateInit2(&stream, windowBits);
+	if (err != Z_OK) Trap_ZStream_Error(&stream, err, FALSE);
+	
+	stream.avail_out = size;
+	stream.next_out = BIN_HEAD(output);
+
+	for(;;) {
+		err = inflate(&stream, Z_NO_FLUSH);
+		if (err == Z_STREAM_END || stream.total_out == size)
+			break; // Finished. (and buffer was big enough)
+		//printf("err: %i size: %i avail_out: %i total_out: %i\n", err, size, stream.avail_out, stream.total_out);
+		if(err != Z_OK) Trap_ZStream_Error(&stream, err, FALSE);
+		//@@: may need to resize the destination buffer! But...
+		//@@: so far let's expect that size is always correct
+		//@@: and introduce self expanding buffers in compression port implementation
 	}
+	//printf("total_out: %i\n", stream.total_out);
+	inflateEnd(&stream);
+
 	SET_STR_END(output, size);
 	SERIES_TAIL(output) = size;
-	//ENABLE_GC;
+
 	return output;
 }
 
@@ -144,11 +219,11 @@
 
 static void *SzAlloc(ISzAllocPtr p, size_t size) { UNUSED(p); return malloc(size); }
 static void SzFree(ISzAllocPtr p, void *address) { UNUSED(p); free(address); }
-const ISzAlloc g_Alloc = { SzAlloc, SzFree };
+static const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 
 /***********************************************************************
 **
-*/  REBSER *CompressLzma(REBSER *input, REBINT index, REBCNT len)
+*/  REBSER *CompressLzma(REBSER *input, REBINT index, REBCNT in_len, REBINT level)
 /*
 **      Compress a binary (only) using LZMA compression.
 **		data
@@ -158,11 +233,16 @@ const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 ***********************************************************************/
 {
 	REBU64  size;
-	REBU64  size_in = len;
+	REBU64  size_in = in_len;
 	REBSER *output;
 	REBINT  err;
 	REBYTE *dest;
 	REBYTE  out_size[sizeof(REBCNT)];
+
+	if (level < 0)
+		level = 5;
+	else if (level > 9)
+		level = 9;
 
 	//@@ are these Sterling's magic numbers correct for LZMA too?
 	size = LZMA_PROPS_SIZE + size_in + (size_in > STERLINGS_MAGIC_NUMBER ? size_in / 10 + 12 : STERLINGS_MAGIC_FIX);
@@ -171,7 +251,7 @@ const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 	// so far hardcoded LZMA encoder properties... it would be nice to be able specify these by user if needed.
 	CLzmaEncProps props;
 	LzmaEncProps_Init(&props);
-	props.level = 5;
+	props.level = level;
 	props.dictSize = 0; // use default value
 	props.lc = -1; // -1 = default value
 	props.lp = -1;
@@ -193,7 +273,7 @@ const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 	REBU64 headerSize = LZMA_PROPS_SIZE;
 	size -= headerSize;
 
-	err = LzmaEncode(dest + headerSize, (SizeT*)&size, BIN_HEAD(input) + index, (SizeT)len, &props, dest, (SizeT*)&headerSize, 0,
+	err = LzmaEncode(dest + headerSize, (SizeT*)&size, BIN_HEAD(input) + index, (SizeT)in_len, &props, dest, (SizeT*)&headerSize, 0,
 		((ICompressProgress *)0), &g_Alloc, &g_Alloc);
 	//printf("lzmaencode res: %i size: %u headerSize: %u\n", err, size, headerSize);
 	if (err) {
@@ -204,7 +284,7 @@ const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 	size += headerSize;
 	//SET_STR_END(output, size);
 	SERIES_TAIL(output) = size;
-	REBCNT_To_Bytes(out_size, (REBCNT)len); // Tag the size to the end.
+	REBCNT_To_Bytes(out_size, (REBCNT)in_len); // Tag the size to the end.
 	Append_Series(output, (REBYTE*)out_size, sizeof(REBCNT));
 	if (SERIES_AVAIL(output) > 1024) // Is there wasted space?
 		output = Copy_Series(output); // Trim it down if too big. !!! Revisit this based on mem alloc alg.
@@ -213,14 +293,14 @@ const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 
 /***********************************************************************
 **
-*/  REBSER *DecompressLzma(REBSER *input, REBCNT index, REBINT len, REBCNT limit)
+*/  REBSER *DecompressLzma(REBSER *input, REBCNT index, REBINT in_len, REBCNT limit)
 /*
 **      Decompress a binary (only).
 **
 ***********************************************************************/
 {
 	REBU64 size;
-	REBU64 unpackSize;
+	REBU64 destLen;
 	REBSER *output;
 	REBINT err;
 	REBYTE *dest;
@@ -228,18 +308,21 @@ const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 	REBU64 headerSize = LZMA_PROPS_SIZE;
 	ELzmaStatus status = 0;
 
-	if (len < 0 || (index + len > BIN_LEN(input))) len = BIN_LEN(input) - index;
-	if (len < 9) Trap0(RE_PAST_END); // !!! better msg needed
-	size = cast(REBU64, len - LZMA_PROPS_SIZE); // don't include size of properties
+	if (in_len < 0 || (index + in_len > BIN_LEN(input))) in_len = BIN_LEN(input) - index;
+	if (in_len < 9) Trap0(RE_PAST_END); // !!! better msg needed
+	size = cast(REBU64, in_len - LZMA_PROPS_SIZE); // don't include size of properties
 
-	// Get the uncompressed size from the end.
-	unpackSize = cast(REBU64, Bytes_To_REBCNT(BIN_SKIP(input, len) - sizeof(REBCNT)));
-	if(limit > 0 && unpackSize > limit) unpackSize = limit;
+	if(limit > 0) {
+		destLen = limit;
+	} else {
+		// Get the uncompressed size from last 4 source data bytes.
+		destLen = cast(REBU64, Bytes_To_REBCNT(BIN_SKIP(input, in_len) - sizeof(REBCNT)));
+	}
 
-	output = Make_Binary(unpackSize);
+	output = Make_Binary(destLen);
 	dest = BIN_HEAD(output);
 
-	err = LzmaDecode(dest, (SizeT*)&unpackSize, src + LZMA_PROPS_SIZE, (SizeT*)&size, src, headerSize, LZMA_FINISH_ANY, &status, &g_Alloc);
+	err = LzmaDecode(dest, (SizeT*)&destLen, src + LZMA_PROPS_SIZE, (SizeT*)&size, src, headerSize, LZMA_FINISH_ANY, &status, &g_Alloc);
 	//printf("lzmadecode res: %i status: %i size: %u\n", err, status, size);
 
 	if (err) {
@@ -247,8 +330,8 @@ const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 		SET_INTEGER(DS_RETURN, err);
 		Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
 	}
-	SET_STR_END(output, unpackSize);
-	SERIES_TAIL(output) = unpackSize;
+	SET_STR_END(output, destLen);
+	SERIES_TAIL(output) = destLen;
 	return output;
 }
 
