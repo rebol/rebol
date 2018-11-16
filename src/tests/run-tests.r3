@@ -5,37 +5,38 @@ Rebol [
 	Needs:   [%quick-test-module.r3]
 ]
 
-***start-run*** "All tests"
-;recycle/torture
-wrap load %units/lexer-test.r3
-wrap load %units/enbase-test.r3
-wrap load %units/map-test.r3
-;wrap load %units/integer-test.r3
-wrap load %units/power-test.r3
-wrap load %units/mezz-crypt-test.r3
-wrap load %units/rc4-test.r3
-wrap load %units/aes-test.r3
-wrap load %units/rsa-test.r3
-wrap load %units/dh-test.r3
-wrap load %units/port-test.r3
-wrap load %units/checksum-test.r3
-wrap load %units/enum-test.r3
-wrap load %units/conditional-test.r3
-wrap load %units/protect-test.r3
-wrap load %units/crash-test.r3
-wrap load %units/bincode-test.r3
-wrap load %units/codecs-test.r3
-wrap load %units/series-test.r3
-wrap load %units/compress-test.r3
+dt [ ;- delta time
+	***start-run*** "All tests"
+	;recycle/torture
+	wrap load %units/lexer-test.r3
+	wrap load %units/enbase-test.r3
+	wrap load %units/map-test.r3
+	;wrap load %units/integer-test.r3
+	wrap load %units/power-test.r3
+	wrap load %units/mezz-crypt-test.r3
+	wrap load %units/rc4-test.r3
+	wrap load %units/aes-test.r3
+	wrap load %units/rsa-test.r3
+	wrap load %units/dh-test.r3
+	wrap load %units/port-test.r3
+	wrap load %units/checksum-test.r3
+	wrap load %units/enum-test.r3
+	wrap load %units/conditional-test.r3
+	wrap load %units/protect-test.r3
+	wrap load %units/crash-test.r3
+	wrap load %units/bincode-test.r3
+	wrap load %units/codecs-test.r3
+	wrap load %units/series-test.r3
+	wrap load %units/compress-test.r3
 
-recycle/torture
-recycle
-stats/show
+	recycle/torture
+	recycle
+	stats/show
 
-print "System profiler:"
-print dump-obj stats/profile
+	print "System profiler:"
+	print dump-obj stats/profile
 
-print "------------------------------------------------------------"
-***end-run***
-recycle/on
-
+	print "------------------------------------------------------------"
+	***end-run***
+	recycle/on
+]
