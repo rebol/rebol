@@ -213,5 +213,6 @@ r-mask
 w-mask
 not-bit
 unixtime-now
+unixtime-now-le
 random-bytes
 length?

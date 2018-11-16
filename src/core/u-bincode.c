@@ -396,6 +396,7 @@ system/standard/bincode: make object! [
 						}
 						goto error;
 					case SYM_UNIXTIME_NOW:
+					case SYM_UNIXTIME_NOW_LE:
 						value--; //there is no argument so no next
 						count += 4;
 						break;
@@ -644,11 +645,22 @@ system/standard/bincode: make object! [
 						value--; // no args
 						n = 4;
 						i = (i32)time(NULL);
-						REBYTE *bp = (REBYTE*)&i;
+						bp = (REBYTE*)&i;
 #ifdef ENDIAN_LITTLE
 						cp[0] = bp[3]; cp[1] = bp[2]; cp[2] = bp[1]; cp[3] = bp[0];
 #else
 						memcpy(cp, bp, 4);
+#endif
+						break;
+					case SYM_UNIXTIME_NOW_LE:
+						value--; // no args
+						n = 4;
+						i = (i32)time(NULL);
+						bp = (REBYTE*)&i;
+#ifdef ENDIAN_LITTLE
+						memcpy(cp, bp, 4);
+#else
+						cp[0] = bp[3]; cp[1] = bp[2]; cp[2] = bp[1]; cp[3] = bp[0];
 #endif
 						break;
 					case SYM_RANDOM_BYTES:
@@ -928,6 +940,21 @@ system/standard/bincode: make object! [
 							bin_new = Copy_Series_Part(bin, VAL_INDEX(buffer_read), n);
 							VAL_SERIES(temp) = bin_new;
 							VAL_INDEX(temp) = 0;
+							break;
+						case SYM_STRING:
+							bp = cp;
+							for(;;) {
+								if(bp[0] == 0) break;
+								if(bp == ep) Trap1(RE_OUT_OF_RANGE, value);
+								bp++;
+							}
+							n = bp - cp;
+							VAL_SET(temp, REB_STRING);
+							bin_new = Copy_Series_Part(bin, VAL_INDEX(buffer_read), n);
+							SET_STR_END(bin_new, n);
+							VAL_SERIES(temp) = bin_new;
+							VAL_INDEX(temp) = 0;
+							n++;
 							break;
 						case SYM_UI8BYTES:
 							//puts("ui8bytes");
