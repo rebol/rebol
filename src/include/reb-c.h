@@ -241,6 +241,8 @@ typedef void(*CFUNC)(void *);
 **
 ***********************************************************************/
 
+#define UNUSED(x) (void)x;
+
 #define FLAGIT(f)           (1<<(f))
 #define GET_FLAG(v,f)       (((v) & (1<<(f))) != 0)
 #define GET_FLAGS(v,f,g)    (((v) & ((1<<(f)) | (1<<(g)))) != 0)
