@@ -186,14 +186,17 @@ is-protected-error?: func[code][
 	--test-- "BinCode - UNIXTIME-NOW"
 		;Writes UNIX time as UI32 value
 		b: binary 4
-		binary/write b [UNIXTIME-NOW]
-		--assert 4 = length? b/buffer
-		binary/read b [i: UI32]
+		binary/write b [UNIXTIME-NOW UNIXTIME-NOW-LE]
+		--assert 8 = length? b/buffer
+		binary/read b [t1: UI32 t2: UI32LE]
 		time: now/utc
-		--assert time/date   = (1-Jan-1970 + (to integer! i / 86400))
-		--assert time/hour   = (to-integer i // 86400 / 3600)
-		--assert time/minute = (to-integer i // 86400 // 3600 / 60)
+		--assert time/date   = (1-Jan-1970 + (to integer! t1 / 86400))
+		--assert time/hour   = (to-integer t1 // 86400 / 3600)
+		--assert time/minute = (to-integer t1 // 86400 // 3600 / 60)
 		;lets say that seconds will be ok too:)
+		--assert time/date   = (1-Jan-1970 + (to integer! t2 / 86400))
+		--assert time/hour   = (to-integer t2 // 86400 / 3600)
+		--assert time/minute = (to-integer t2 // 86400 // 3600 / 60)
 
 	--test-- "BinCode - overwrite protected values"
 		out: copy #{} ;not yet protected
@@ -211,8 +214,12 @@ is-protected-error?: func[code][
 		--assert is-protected-error? [binary/read/into out [at 1 ui8] blk]
 		unprotect/words [blk out i]
 
-
-
+	--test-- "BinCode - STRING"
+		;@@ this is yet not fully implemented feature! So far only reading.
+		b: binary #{74657374002A}
+		binary/read b [str: STRING i: UI8]
+		--assert str = "test"
+		--assert   i = 42
 
 ===end-group===
 
