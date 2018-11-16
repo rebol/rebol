@@ -51,6 +51,7 @@ REBOL [
 	%codec-wav.r
 	%codec-der.r
 	%codec-crt.r
+	%codec-gzip.r
 ]
 
 ;-- protocols:
