@@ -47,10 +47,10 @@ data: "test test test"
 		--assert  data = to string! decompress/gzip compress/gzip data
 
 	--test-- "GZIP compress/decompress while specifing level of compression"
-		--assert (compress/gzip/level ""   0) =
-		#{1F8B080000000000040A010000FFFF0000000000000000}
-		--assert (compress/gzip/level data 0) =
-		#{1F8B080000000000040A010E00F1FF7465737420746573742074657374026A5B230E000000}
+		--assert (skip compress/gzip/level ""   0 10) =
+			#{010000FFFF0000000000000000}
+		--assert (skip compress/gzip/level data 0 10) =
+			#{010E00F1FF7465737420746573742074657374026A5B230E000000}
 		--assert  data = to string! decompress/gzip compress/gzip/level data 0
 		--assert  data = to string! decompress/gzip compress/gzip/level data 1
 		--assert  data = to string! decompress/gzip compress/gzip/level data 2
