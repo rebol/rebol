@@ -255,7 +255,7 @@ register-codec [
 		][
 		]
 		characters: func [
-			characters [string! none!]
+			characters [string! char! none!]
 		][
 		]
 		pi: func [
@@ -338,7 +338,7 @@ register-codec [
 			print remold ['end-elem ns-uri local-name q-name]
 		]
 		characters: func [
-			characters [string! none!]
+			characters [string! char! none!]
 		][
 			print remold ['characters characters]
 		]
@@ -387,25 +387,27 @@ register-codec [
 			;
 			; Seed the document
 			;
-			xml-block: reduce copy/deep ['document [version none
-											   encoding none 
-											   standalone none
-											   doctype none
-											   pubid none
-											   sysid none
-											   subset none
-											  ]
-									none
-								   ]
+			xml-block: reduce copy/deep [
+				'document [
+					version none
+					encoding none 
+					standalone none
+					doctype none
+					pubid none
+					sysid none
+					subset none
+				]
+				none
+			]
 		]
 		xml-decl: func [
 			version-info [string! none!] 
 			encoding [string! none!] 
 			standalone [string! none!]
 		][
-			change next (find xml-block/2 'version) version-info
-			change next (find xml-block/2 'encoding) encoding
-			change next (find xml-block/2 'standalone) standalone
+			xml-block/2/version:    version-info
+			xml-block/2/encoding:   encoding
+			xml-block/2/standalone: standalone
 		]
 		document-type: func [
 			document-type [string!] 
@@ -413,10 +415,10 @@ register-codec [
 			system-id [string! none!] 
 			internal-subset [string! none!]
 		][
-			change next (find xml-block/2 'doctype) document-type
-			change next (find xml-block/2 'pubid) public-id
-			change next (find xml-block/2 'sysid) system-id
-			change next (find xml-block/2 'subset) internal-subset
+			xml-block/2/doctype: document-type
+			xml-block/2/pubid:   public-id
+			xml-block/2/sysid:   system-id
+			xml-block/2/subset:  internal-subset
 		]
 		start-element: func [
 			ns-uri [string! none!] 
@@ -442,7 +444,7 @@ register-codec [
 			]
 		]
 		characters: func [
-			characters [string! none!]
+			characters [string! char! none!]
 		][
 			;
 			; Accumulate more character data
@@ -495,48 +497,9 @@ register-codec [
 	; processing.  It should only be used with a parser that has been
 	; set to namespace-aware true.
 	;
-	ns-block-handler: make xml-parse-handler [
-		xml-doc: copy []
-		xml-block: copy []
-		xml-content: copy ""
+	ns-block-handler: make block-handler [
 		nsinfo-stack: copy []
 
-		start-document: func [
-		][
-			;
-			; Seed the document
-			;
-			xml-block: reduce copy/deep ['document [version none
-											   encoding none 
-											   standalone none
-											   doctype none
-											   pubid none
-											   sysid none
-											   subset none
-											  ]
-									none
-								   ]
-		]
-		xml-decl: func [
-			version-info [string! none!] 
-			encoding [string! none!] 
-			standalone [string! none!]
-		][
-			change next (find xml-block/2 'version) version-info
-			change next (find xml-block/2 'encoding) encoding
-			change next (find xml-block/2 'standalone) standalone
-		]
-		document-type: func [
-			document-type [string!] 
-			public-id [string! none!]
-			system-id [string! none!] 
-			internal-subset [string! none!]
-		][
-			change next (find xml-block/2 'doctype) document-type
-			change next (find xml-block/2 'pubid) public-id
-			change next (find xml-block/2 'sysid) system-id
-			change next (find xml-block/2 'subset) internal-subset
-		]
 		start-element: func [
 			ns-uri [string! none!] 
 			local-name [string! none!] 
@@ -564,41 +527,7 @@ register-codec [
 				xml-block/2: copy attr-list
 			]
 		]
-		characters: func [
-			characters [string! none!]
-		][
-			;
-			; Accumulate more character data
-			;
-			if not none? characters [
-				append xml-content characters
-			]
-		]
-		end-element: func [
-			ns-uri [string! none!] 
-			local-name [string! none!] 
-			q-name [string!]
-		][
-			;
-			; Is there any pending content to add before
-			; we terminate this element?
-			;
-			if not empty? xml-content [
-				add-child copy xml-content
-				clear head xml-content
-			]
-			;
-			; Basic well-formedness check
-			;
-;           while [q-name <> first xml-block] [
-;               if empty? xml-doc [
-;                   print ["End tag error:" q-name]
-;                   halt
-;               ]
-;               pop-xml-block
-;           ]
-			pop-xml-block
-		]
+
 		start-prefix-mapping: func [
 			ns-prefix-uri-pairs [block!] 
 		][
@@ -608,18 +537,6 @@ register-codec [
 			ns-prefix-uri-pairs [block!] 
 		][
 			remove nsinfo-stack
-		]
-		add-child: func [child] [
-			if none? third xml-block [xml-block/3: make block! 1]
-			insert/only tail third xml-block child
-			child
-		]
-		pop-xml-block: func [] [
-			xml-block: last xml-doc
-			remove back tail xml-doc
-		]
-		get-parse-result: func [] [
-			xml-block
 		]
 	]
 
@@ -1078,8 +995,8 @@ register-codec [
 		;
 		convert-character-entity: func [{
 			Accepts the name reference portion of an entity
-			reference and attempts to return a string containing
-			the actual character referenced by the entity.
+			reference and attempts to return the actual character
+			referenced by the entity.
 			If the conversion is not successful, the value of 
 			none is returned.
 			For example, for the ampersand character this function
@@ -1089,18 +1006,18 @@ register-codec [
 			entity-ref [string!]
 		][
 			switch/default entity-ref [
-				"lt"        [ return "<" ]
-				"gt"        [ return ">" ]
-				"amp"       [ return "&" ]
-				"quot"      [ return "^"" ]
-				"apos"      [ return "'" ]
+				"lt"        [ return #"<" ]
+				"gt"        [ return #">" ]
+				"amp"       [ return #"&" ]
+				"quot"      [ return #"^"" ]
+				"apos"      [ return #"'" ]
 			][
 				either (first entity-ref) = #"#" [
 					either (second entity-ref) = #"x" [
-						to-string to-char to-integer to-issue 
+						to char! to integer! to issue! 
 							skip entity-ref 2
 					][
-						to-string to-char to-integer
+						to char! to integer!
 							skip entity-ref 1
 					]
 				][
