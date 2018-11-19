@@ -450,6 +450,46 @@ enum {SINE, COSINE, TANGENT};
 #pragma warning (default : 4146)
 #endif
 
+/***********************************************************************
+**
+*/	REBNATIVE(shift_left)
+/*
+//  shift-left: native [
+//		"Shift bits to the left (unsigned)."
+//		data [integer!]
+//		bits [integer!]
+//  ]
+***********************************************************************/
+{
+	REBVAL *a = D_ARG(1);
+	REBVAL *b = D_ARG(2);
+
+	if (!IS_INTEGER(a)) Trap2(RE_EXPECT_VAL, Get_Type_Word(REB_INTEGER), a);
+	if (!IS_INTEGER(b)) Trap2(RE_EXPECT_VAL, Get_Type_Word(REB_INTEGER), b);
+	if (VAL_INT64(b) > (uint)0L) VAL_INT64(a) <<= VAL_INT64(b);
+	return R_ARG1;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(shift_right)
+/*
+//  shift-right: native [
+//		"Shift bits to the right (unsigned)."
+//		data [integer!]
+//		bits [integer!]
+//  ]
+***********************************************************************/
+{
+	REBVAL *a = D_ARG(1);
+	REBVAL *b = D_ARG(2);
+	
+	if (!IS_INTEGER(a)) Trap2(RE_EXPECT_VAL, Get_Type_Word(REB_INTEGER), a);
+	if (!IS_INTEGER(b)) Trap2(RE_EXPECT_VAL, Get_Type_Word(REB_INTEGER), b);
+	if (VAL_INT64(b) > (uint)0L) VAL_INT64(a) >>= VAL_INT64(b);
+	return R_ARG1;
+}
+
 
 /***********************************************************************
 **

@@ -823,6 +823,9 @@ shift: native [
 
 ;-- New, hackish stuff:
 
+;shift-left:  ;@@ defined in n-math.c
+;shift-right: ;@@ defined in n-math.c
+
 ++: native [
 	{Increment an integer or series index. Return its prior value.}
 	'word [word!] "Integer or series variable"

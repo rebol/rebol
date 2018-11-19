@@ -35,3 +35,5 @@ REBOL [
 and and~
 or  or~
 xor xor~
+<< shift-left
+>> shift-right
