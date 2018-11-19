@@ -56,7 +56,7 @@ foreach [codec handler] system/codecs [
 			type: 'image!
 			suffixes: select [
 				text [%.txt]
-				markup [%.html %.htm %.xml %.xsl %.wml %.sgml %.asp %.php %.cgi]
+				markup [%.html %.htm %.xsl %.wml %.sgml %.asp %.php %.cgi]
 			] codec
 		]
 		; Media-types block format: [.abc .def type ...]
