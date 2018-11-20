@@ -387,7 +387,7 @@ what: func [
 	/local ctx vals arg list size
 ][
 	list: make block! 400
-	size: 0
+	size: 10 ; defines minimal function name padding
 
 	ctx: any [select system/modules :name lib]
 
@@ -404,11 +404,11 @@ what: func [
 			size: max size length? word
 		]
 	]
-
+	size: min size 18 ; limits function name padding to be max 18 chars
 	vals: make string! size
 	foreach [word arg] sort/skip list 2 [
 		append/dup clear vals #" " size
-		print [head change vals word any [arg ""]]
+		print rejoin ["^[[1;32m" head change vals word "^[[0m " any [arg ""]]
 	]
 	exit
 ]
