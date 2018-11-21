@@ -294,6 +294,7 @@ static void Close_Stdio(void)
 	req->console.window_cols =
 	req->console.buffer_cols = w.uw_width / w.uw_hs;
 #endif
+#endif
 	return DR_DONE;
 }
 
