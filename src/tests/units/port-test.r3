@@ -20,4 +20,11 @@ Rebol [
 		--assert  not error? [delete %port-issue-2320/]
 ===end-group===
 
+===start-group=== "console port"
+	--test-- "query input port"
+		--assert  port? system/ports/input
+		--assert  object? console-info: query system/ports/input
+		?? console-info
+===end-group===
+
 ~~~end-file~~~
