@@ -266,6 +266,9 @@ static void Close_Stdio(void)
 */	DEVICE_CMD Query_IO(REBREQ *req)
 /*
 **		Resolve port information. Currently just size of console.
+**		Note: Windows console have BUFFER size, which may be bigger than
+**		visible window size. There seems to be nothing like it on POSIX,
+**		so the `buffer-size` info is reported same as `window-info`
 **
 ***********************************************************************/
 {
@@ -273,7 +276,8 @@ static void Close_Stdio(void)
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 	req->console.window_rows =
 	req->console.buffer_rows = w.ws_row;
-	req->console.window_cols = w.ws_col;
+	req->console.window_cols =
+	req->console.buffer_cols = w.ws_col;
 	return DR_DONE;
 }
 
