@@ -439,6 +439,22 @@ static void close_stdio(void)
 	return DR_DONE;
 }
 
+/***********************************************************************
+**
+*/	DEVICE_CMD Query_IO(REBREQ *req)
+/*
+**		Resolve console port information. Currently just size of console.
+**
+***********************************************************************/
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+	GetConsoleScreenBufferInfo(Std_Out, &csbiInfo);
+	req->console.buffer_rows = csbiInfo.dwSize.Y;
+	req->console.buffer_cols = csbiInfo.dwSize.X;
+	req->console.window_rows = csbiInfo.srWindow.Bottom - csbiInfo.srWindow.Top + 1;
+	req->console.window_cols = csbiInfo.srWindow.Right - csbiInfo.srWindow.Left + 1;
+	return DR_DONE;
+}
 
 /***********************************************************************
 **
@@ -482,7 +498,7 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 	Write_IO,
 	0,	// poll
 	0,	// connect
-	0,	// query
+	Query_IO,
 	0,	// modify
 	Open_Echo,	// CREATE used for opening echo file
 };

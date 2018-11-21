@@ -254,6 +254,11 @@ standard: context [
 			none
 	]
 
+	console-info: context [
+		buffer-size: none
+		window-size: none
+	]
+
 	extension: context [
 		lib-base:	; handle to DLL
 		lib-file:	; file name loaded

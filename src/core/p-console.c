@@ -128,6 +128,16 @@
 		if (IS_OPEN(req)) return R_TRUE;
 		return R_FALSE;
 
+	case A_QUERY:
+		if (OS_DO_DEVICE(req, RDC_QUERY) < 0) return R_NONE;
+		REBVAL *spec = Get_System(SYS_STANDARD, STD_CONSOLE_INFO);
+		if (!IS_OBJECT(spec)) Trap_Arg(spec);
+		REBSER *obj = CLONE_OBJECT(VAL_OBJ_FRAME(spec));
+		SET_OBJECT(D_RET, obj);
+		SET_PAIR(OFV(obj, STD_CONSOLE_INFO_BUFFER_SIZE), req->console.buffer_cols, req->console.buffer_rows);
+		SET_PAIR(OFV(obj, STD_CONSOLE_INFO_WINDOW_SIZE), req->console.window_cols, req->console.window_rows);
+		break;
+
 	default:
 		Trap_Action(REB_PORT, action);
 	}

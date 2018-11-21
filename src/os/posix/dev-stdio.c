@@ -44,6 +44,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 
 #include "reb-host.h"
 
@@ -260,6 +261,21 @@ static void Close_Stdio(void)
 	return DR_DONE;
 }
 
+/***********************************************************************
+**
+*/	DEVICE_CMD Query_IO(REBREQ *req)
+/*
+**		Resolve port information. Currently just size of console.
+**
+***********************************************************************/
+{
+	struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+	req->console.window_rows =
+	req->console.buffer_rows = w.ws_row;
+	req->console.window_cols = w.ws_col;
+	return DR_DONE;
+}
 
 /***********************************************************************
 **
@@ -302,7 +318,7 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 	Write_IO,
 	0,	// poll
 	0,	// connect
-	0,	// query
+	Query_IO,
 	0,	// modify
 	Open_Echo,	// CREATE used for opening echo file
 };

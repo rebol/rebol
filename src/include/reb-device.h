@@ -180,6 +180,12 @@ struct rebol_devreq {
 			u32  remote_port;		// remote port
 			void *host_info;		// for DNS usage
 		} net;
+		struct {
+			u32  buffer_rows;
+			u32  buffer_cols;
+			u32  window_rows;
+			u32  window_cols;
+		} console;
 	};
 };
 #pragma pack()
