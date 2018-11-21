@@ -24,7 +24,8 @@ Rebol [
 	--test-- "query input port"
 		--assert  port? system/ports/input
 		--assert  object? console-info: query system/ports/input
-		?? console-info
+		--assert  pair? try [console-info/window-size]
+		;?? console-info
 ===end-group===
 
 ~~~end-file~~~

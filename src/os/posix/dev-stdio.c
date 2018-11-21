@@ -272,12 +272,28 @@ static void Close_Stdio(void)
 **
 ***********************************************************************/
 {
+#ifdef TIOCGWINSZ
 	struct winsize w;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+	if (ioctl(Std_Out, TIOCGWINSZ, &w) != 0) {
+		req->error = errno;
+		return DR_ERROR;
+	}
 	req->console.window_rows =
 	req->console.buffer_rows = w.ws_row;
 	req->console.window_cols =
 	req->console.buffer_cols = w.ws_col;
+#else
+#ifdef WIOCGETD
+	struct uwdata w;
+	if (ioctl(Std_Out, WIOCGETD, &w) != 0) {
+		req->error = errno;
+		return DR_ERROR;
+	}
+	req->console.window_rows =
+	req->console.buffer_rows = w.uw_height / w.uw_vs;
+	req->console.window_cols =
+	req->console.buffer_cols = w.uw_width / w.uw_hs;
+#endif
 	return DR_DONE;
 }
 
