@@ -15,7 +15,7 @@ import module [
 	Title:  "Help related functions"
 	Name:    Help
 	Version: 3.0.0
-	Exports: [? help about usage what license source]
+	Exports: [? help about usage what license source dump-obj]
 ][
 	buffer: none
 	max-desc-width: 45
@@ -119,15 +119,15 @@ import module [
 		val
 	]
 
-	out-form-obj: func [
-		"Returns a block of information about an object or port"
+	dump-obj: func [
+		"Returns a string with information about an object value"
 		obj [any-object!]
 		/weak "Provides sorting and does not displays unset values"
 		/match "Include only those that match a string or datatype"
 			pattern
-		/local start wild type str
+		/local start wild type str result
 	][
-		start: buffer
+		result: make string! 250
 		; Search for matching strings:
 		wild: all [string? pattern  find pattern "*"]
 		foreach [word val] obj [
@@ -156,14 +156,13 @@ import module [
 					str: join "^[[1;32m" form-pad word 15
 					append str "^[[m "
 					append str form-pad type 11 - min 0 ((length? str) - 15)
-					output ["  " str "^[[32m" form-val :val "^[[m^/"]
+					append result ajoin ["  " str "^[[32m" form-val :val "^[[m^/"]
 				]
 			]
 		]
-		if all [pattern buffer = start] [
-			buffer: insert buffer reduce ["No information on: ^[[32m" pattern "^[[m^/"]
-		]
-		buffer
+		either all [pattern empty? result] [
+			ajoin ["No information on: ^[[32m" pattern "^[[m^/"]
+		][	result ]
 	]
 
 	out-description: func [des [block!]][
@@ -198,12 +197,12 @@ import module [
 					][	word: mold :word ]  ;or use it as a string input
 				]
 				string? :word  [
-					out-form-obj/weak/match system/contexts/lib :word
+					output dump-obj/weak/match system/contexts/lib :word
 					throw true
 				]
 				datatype? :value [
 					output ajoin ["^[[1;32m" uppercase mold :word "^[[m is a datatype of value: ^[[32m" mold :value "^[[m^/"]
-					out-form-obj/match system/contexts/lib :word
+					output dump-obj/match system/contexts/lib :word
 					throw true
 				]
 				not any [word? :word path? :word] [
@@ -298,7 +297,7 @@ import module [
 				]
 				'else [
 					output ajoin ["^[[1;32m" uppercase mold word "^[[m is " form-type :value " of value: ^[[32m"]
-					either any [any-object? value] [output lf out-form-obj :value] [output mold :value]
+					output either any [any-object? value] [dump-obj :value][mold :value]
 					output "^[[m"
 				]
 			]
