@@ -2,7 +2,7 @@ REBOL [
 	title: "REBOL3 TLSv1.2 protocol scheme"
 	name: 'tls
 	type: 'module
-	author: rights: ["Richard 'Cyphre' Smolak" "Oldes" "HF"]
+	author: rights: ["Richard 'Cyphre' Smolak" "Oldes" "Brian Dickens (Hostilefork)"]
 	version: 0.6.1
 	history: [
 		0.6.1 "Cyphre" "Initial implementation used in old R3-alpha"
