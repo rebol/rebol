@@ -298,7 +298,7 @@ import module [
 				]
 				'else [
 					output ajoin ["^[[1;32m" uppercase mold word "^[[m is " form-type :value " of value: ^[[32m"]
-					output either any [any-object? value] [dump-obj :value][mold :value]
+					output either any [any-object? value] [output lf dump-obj :value][mold :value]
 					output "^[[m"
 				]
 			]
