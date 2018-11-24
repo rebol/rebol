@@ -293,6 +293,7 @@ import module [
 							]
 						]
 					]
+					output newline
 					throw true
 				]
 				'else [
