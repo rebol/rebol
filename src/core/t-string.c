@@ -105,7 +105,7 @@ static void reverse_string(REBVAL *value, REBCNT len)
 	}
 }
 
-static REBCNT find_string(REBSER *series, REBCNT index, REBCNT end, REBVAL *target, REBCNT len, REBCNT flags, REBINT skip)
+static REBCNT find_string(REBSER *series, REBCNT index, REBCNT end, REBVAL *target, REBCNT len, REBCNT flags, REBINT skip, REBVAL *wild)
 {
 	REBCNT start = index;
 
@@ -118,10 +118,13 @@ static REBCNT find_string(REBSER *series, REBCNT index, REBCNT end, REBVAL *targ
 
 	if (ANY_BINSTR(target)) {
 		// Do the optimal search or the general search?
-		if (BYTE_SIZE(series) && VAL_BYTE_SIZE(target) && !(flags & ~(AM_FIND_CASE|AM_FIND_MATCH)))
+		if (BYTE_SIZE(series) && VAL_BYTE_SIZE(target) && !(flags & ~(AM_FIND_CASE|AM_FIND_MATCH))) {
 			return Find_Byte_Str(series, start, VAL_BIN_DATA(target), len, !GET_FLAG(flags, ARG_FIND_CASE-1), GET_FLAG(flags, ARG_FIND_MATCH-1));
-		else
-			return Find_Str_Str(series, start, index, end, skip, VAL_SERIES(target), VAL_INDEX(target), len, flags & (AM_FIND_MATCH|AM_FIND_CASE));
+		} else if (flags & AM_FIND_ANY) {
+			return Find_Str_Str_Any(series, start, index, end, skip, VAL_SERIES(target), VAL_INDEX(target), len, flags, wild);
+		} else {
+			return Find_Str_Str(series, start, index, end, skip, VAL_SERIES(target), VAL_INDEX(target), len, flags & (AM_FIND_MATCH | AM_FIND_CASE | AM_FIND_TAIL));
+		}
 	}
 	else if (IS_BINARY(target)) {
 		return Find_Byte_Str(series, start, VAL_BIN_DATA(target), len, 0, GET_FLAG(flags, ARG_FIND_MATCH-1));
@@ -521,17 +524,17 @@ find:
 		ret = 1; // skip size
 		if (args & AM_FIND_SKIP) ret = Partial(value, 0, D_ARG(ARG_FIND_SIZE), 0);
 
-		ret = find_string(VAL_SERIES(value), index, tail, arg, len, args, ret);
+		if (action == A_SELECT) args |= AM_FIND_TAIL;
 
-		if (ret >= (REBCNT)tail) goto is_none;
+		ret = find_string(VAL_SERIES(value), index, tail, arg, len, args, ret, D_ARG(ARG_FIND_WILD));
+
+		if (ret > (REBCNT)tail) goto is_none;
 		if (args & AM_FIND_ONLY) len = 1;
 
 		if (action == A_FIND) {
-			if (args & (AM_FIND_TAIL | AM_FIND_MATCH)) ret += len;
 			VAL_INDEX(value) = ret;
 		}
 		else {
-			ret++;
 			if (ret >= (REBCNT)tail) goto is_none;
 			if (IS_BINARY(value)) {
 				SET_INTEGER(value, *BIN_SKIP(VAL_SERIES(value), ret));
