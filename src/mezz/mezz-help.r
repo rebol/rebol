@@ -178,7 +178,7 @@ import module [
 		'word [any-type!]
 		/into "Help text will be inserted into provided string instead of printed"
 			string [string!] "Returned series will be past the insertion"
-		/local value spec args refs type ret desc arg def des tmp
+		/local value spec args refs rets type ret desc arg def des tmp
 	][
 		try [
 			tmp: query system/ports/input
@@ -222,6 +222,7 @@ import module [
 					spec: copy/deep spec-of :value
 					args: copy []
 					refs: none
+					rets: none
 					type: type? :value
 					
 					clear find spec /local
@@ -234,7 +235,8 @@ import module [
 							copy des any string! (
 								repend args [arg def des]
 							)
-							opt [set-word! block!]
+							|
+							quote return: set rets block!
 						]
 						opt [refinement! refs:]
 						to end
@@ -292,6 +294,10 @@ import module [
 								]
 							]
 						]
+					]
+					if rets [
+						output  "^/^/^[[4;1;36mRETURNS^[[m:"
+						output ["^/    " mold rets ]
 					]
 					output newline
 					throw true

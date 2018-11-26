@@ -125,6 +125,7 @@
 	REBSER *words;
 	REBINT n = 0;
 	REBVAL *value;
+	REBOOL return_defined = FALSE;
 
 	blk = BLK_HEAD(block);
 	words = Collect_Frame(BIND_ALL | BIND_NO_DUP | BIND_NO_SELF, 0, blk);
@@ -151,6 +152,14 @@
 			VAL_TYPESET(value) = (TYPESET(REB_LOGIC) | TYPESET(REB_NONE));
 			break;
 		case REB_SET_WORD:
+			// Allow one `return: [type(s)]` specification, so one can use Red function definition.
+			// It will be ignored while evaluating.
+			if (!return_defined && VAL_WORD_SYM(blk) == SYM_RETURN && IS_BLOCK(blk+1)) {
+				return_defined = TRUE;
+				blk++; // skips the return's specification
+				continue;
+			}
+			// fall thru...
 		default:
 			Trap1(RE_BAD_FUNC_DEF, blk);
 		}

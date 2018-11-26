@@ -725,6 +725,8 @@ more_path:
 			break;
 
 		case REB_SET_WORD:	// WORD: - reserved for special features
+			//@@ is it safe to expect that all values here are validated using Check_Func_Spec?
+			break; // the only allowed value is now RETURN: and it is ignored here
 		default:
 			Trap_Arg(args);
 		}
