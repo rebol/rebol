@@ -188,7 +188,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 ***********************************************************************/
 {
 	int type;
-    int	protocol;
+	int	protocol;
 	long result;
 
 	sock->error = 0;
@@ -210,6 +210,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	// Failed, get error code (os local):
 	if (result == BAD_SOCKET) {
 		sock->error = GET_ERROR;
+		Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
 
@@ -219,6 +220,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	// Set socket to non-blocking async mode:
 	if (!Nonblocking_Mode(sock->socket)) {
 		sock->error = GET_ERROR;
+		Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
 
@@ -262,6 +264,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 
 		if (CLOSE_SOCKET(sock->socket)) {
 			sock->error = GET_ERROR;
+			Signal_Device(sock, EVT_ERROR);
 			return DR_ERROR;
 		}
 	}
@@ -331,7 +334,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 #endif
 
 	sock->error = GET_ERROR;
-	//Signal_Device(sock, EVT_ERROR);
+	Signal_Device(sock, EVT_ERROR);
 	return DR_ERROR; // Remove it from pending list
 }
 
@@ -405,7 +408,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 		// An error happened:
 		CLR_FLAG(sock->state, RSM_ATTEMPT);
 		sock->error = result;
-		//Signal_Device(sock, EVT_ERROR);
+		Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
 }
@@ -446,6 +449,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	if (!GET_FLAG(sock->state, RSM_CONNECT)
 			&& !GET_FLAG(sock->modes, RST_UDP)) {
 		sock->error = -18;
+		Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
 
@@ -509,7 +513,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	WATCH4("ERROR: recv(%d %x) len: %d error: %d\n", sock->socket, sock->data, len, result);
 	// A nasty error happened:
 	sock->error = result;
-	//Signal_Device(sock, EVT_ERROR);
+	Signal_Device(sock, EVT_ERROR);
 	return DR_ERROR;
 }
 
@@ -540,6 +544,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	if (result) {
 lserr:
 		sock->error = GET_ERROR;
+		Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
 
@@ -594,7 +599,7 @@ lserr:
 		result = GET_ERROR;
 		if (result == NE_WOULDBLOCK) return DR_PEND;
 		sock->error = result;
-		//Signal_Device(sock, EVT_ERROR);
+		Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
 
