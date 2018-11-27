@@ -22,10 +22,10 @@ systems: [
 	[plat		os-name			os-base		build-flags]
 	[0.1.03		"amiga"			posix		[BEN HID NPS +SC CMT COP -SP -LM]]
 	[0.2.04		"osx"			posix		[BEN +OS NCM -LM UOP]]				; OSX/PPC; no shared lib possible
-	[0.2.05		"osxi"			posix		[LEN ARC +O1 NPS PIC NCM HID STX -LM UOP]]
-	[0.2.40		"osx_x64"		posix		[LEN +O1 NPS PIC NCM HID STX -LM UOP]]
+	[0.2.05		"osxi"			posix		[LEN +O1 PIC NPS NCM HID STX -LM UOP ARC]]
+	[0.2.40		"osx_x64"		posix		[LEN +O1 PIC NPS NCM HID STX -LM UOP L64]]
 	[0.3.01		"win32"			win32		[LEN +O2 UNI M32 W32 CON S4M EXE DIR -LM]]
-	[0.3.40		"win32_x64"		win32		[LEN +O2 UNI M64 P64 W32 CON S4M EXE DIR -LM]]
+	[0.3.40		"win32_x64"		win32		[LEN +O2 UNI M64 W32 CON S4M EXE DIR -LM P64]]
 	[0.4.02		"linux"			posix		[LEN +O2 PIC LDL ST1 -LM]]			; libc 2.3
 	[0.4.03		"linux"			posix		[LEN +O2 PIC LDL ST1 -LM HID]]		; libc 2.5
 	[0.4.04		"linux"			posix		[LEN +O2 PIC LDL ST1 -LM HID M32]]	; libc 2.11
@@ -33,10 +33,10 @@ systems: [
 	[0.4.20		"linux_arm"		posix		[LEN +O2 PIC LDL ST1 -LM HID]]
 	[0.4.21		"linux_arm"		posix		[LEN +O2 PIE LDL ST1 -LM HID]]	; bionic (Android)
 	[0.4.30		"linux_mips"	posix		[LEN +O2 PIC LDL ST1 -LM HID]]
-	[0.4.40		"linux_x64"		posix		[LEN +O2 PIC LDL ST1 -LM HID]]
+	[0.4.40		"linux_x64"		posix		[LEN +O2 PIC LDL ST1 -LM HID L64]]
 	[0.5.75		"haiku"			posix		[LEN +O2 ST1 NWK]]
 	[0.7.02		"freebsd"		posix		[LEN +O1 ST1 -LM]]
-	[0.7.40		"freebsd_x64"	posix		[LEN +O1 ST1 -LM]]
+	[0.7.40		"freebsd_x64"	posix		[LEN +O1 ST1 -LM L64]]
 	[0.9.04		"openbsd"		posix		[LEN +O1 ST1 -LM]]
 	[0.13.01	"android_arm"	android		[LEN HID F64 LDL LLOG -LM CST]]
 ]
@@ -50,6 +50,7 @@ compile-flags: [
 	HID:	"-fvisibility=hidden"		; all syms are hidden
 	F64:	"-D_FILE_OFFSET_BITS=64"	; allow larger files
 	P64:    "-D__LLP64__"				; 64-bit, and 'void *' is sizeof(long long)
+	L64:	"-D__LP64__"				; same like LLP64, but long has 64-bit instead of 32
 	NPS:	"-Wno-pointer-sign"			; OSX fix
 	NSP:	"-fno-stack-protector"		; avoid insert of functions names
 	PIC:	"-fPIC"						; position independent (used for libs)

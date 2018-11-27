@@ -81,6 +81,9 @@ These are now obsolete (as of A107) and should be removed:
 #endif
 #endif
 
+#define HAS_LL_CONSTS // compiler allows 1234LL constants;
+                      // undef bellow for targets where not supported
+
 
 //* MS Windows *********************************************************
 
@@ -118,8 +121,7 @@ These are now obsolete (as of A107) and should be removed:
 // Use non-standard int64 declarations:
 #if (defined(_MSC_VER) && (_MSC_VER <= 1200))
 #define ODD_INT_64
-#else
-#define HAS_LL_CONSTS
+#undef HAS_LL_CONSTS
 #endif
 
 // Disable various warnings
@@ -153,62 +155,8 @@ These are now obsolete (as of A107) and should be removed:
 #define API_IMPORT
 #endif
 
-#ifdef TO_LINUX					// Linux/Intel
-#define HAS_LL_CONSTS
-#endif
-
-#ifdef TO_LINUX_X64				// Linux/AMD64
-#define HAS_LL_CONSTS
-#ifndef __LP64__
-#define __LP64__
-#endif
-#endif
-
-#ifdef TO_LINUX_PPC				// Linux/PPC
-#define HAS_LL_CONSTS
-#endif
-
-#ifdef TO_LINUX_ARM				// Linux/ARM
-#define HAS_LL_CONSTS
-#endif
-
-#ifdef TO_LINUX_MIPS
-#define HAS_LL_CONSTS
-#endif
-
-#ifdef TO_HAIKU					// same as Linux/Intel seems to work
-#define HAS_LL_CONSTS
-#endif
-
-#ifdef TO_OSXI					// OSX/Intel
-#define HAS_LL_CONSTS
-#endif
-
 #ifdef TO_OSX					// OSX/PPC
-#define HAS_LL_CONSTS
 #define OLD_COMPILER
-#endif
-
-#ifdef TO_OSX_X64				// OSX/AMD64
-#define HAS_LL_CONSTS
-#ifndef __LP64__
-#define __LP64__
-#endif
-#endif
-
-#ifdef TO_FREEBSD
-#define HAS_LL_CONSTS
-#endif
-
-#ifdef TO_FREEBSD_X64			// FreeBSD/AMD64
-#define HAS_LL_CONSTS
-#ifndef __LP64__
-#define __LP64__
-#endif
-#endif
-
-#ifdef TO_OPENBSD
-#define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_OBSD					// OpenBSD
@@ -218,11 +166,9 @@ These are now obsolete (as of A107) and should be removed:
 
 #ifdef TO_AMIGA					// Target for OS4
 #define HAS_BOOL
-#define HAS_LL_CONSTS
 #define HAS_SMART_CONSOLE
 #define NO_DL_LIB
 #endif
-
 
 //* Defaults ***********************************************************
 
