@@ -220,6 +220,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	// Set socket to non-blocking async mode:
 	if (!Nonblocking_Mode(sock->socket)) {
 		sock->error = GET_ERROR;
+		CLOSE_SOCKET(sock->socket);
 		Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
