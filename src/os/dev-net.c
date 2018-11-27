@@ -100,8 +100,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	flags = fcntl(sock, F_GETFL, 0);
 	flags |= O_NONBLOCK;
 	//else flags &= ~O_NONBLOCK;
-	fcntl(sock, F_SETFL, flags);
-	return TRUE;
+	return fcntl(sock, F_SETFL, flags) >= 0;
 #endif
 }
 
