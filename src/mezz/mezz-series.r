@@ -85,9 +85,14 @@ array: func [
 	size [integer! block!] "Size or block of sizes for each dimension"
 	/initial "Specify an initial value for all elements"
 	value "Initial value (will be called each time if a function)"
-	/local block rest
+	/local block rest word
+	/with tag indexes  ; Token to ensure internal use, and block of index expressions
 ][
+	unless same? :tag 'tag [with: tag: indexes: none]  ; Enforced internal option
 	if block? size [
+		if all [not with any-function? :value] [  ; Make indexes to pass to function
+			indexes: append/dup make block! 2 * length? size [index? block] length? size
+		]
 		if tail? rest: next size [rest: none]
 		unless integer? set/any 'size first size [
 			cause-error 'script 'expect-arg reduce ['array 'size type? :size]
@@ -95,14 +100,24 @@ array: func [
 	]
 	block: make block! size
 	case [
-		block? rest [
-			loop size [block: insert/only block array/initial rest :value]
+		block? :rest [
+			either any-function? :value [  ; Must construct params to pass to function
+				word: in make object! copy [x: block] 'x  ; Make a persistent word for this level
+				indexes: change next indexes word  ; Put that word in the params block
+				loop size [  ; Pass indexes block to recursive call, at that level's position
+					set word insert/only get word array/initial/with rest :value 'tag indexes
+				]
+				block: get word
+			] [  ; Regular value, no parameter handling needed
+				loop size [block: insert/only block array/initial rest :value]
+			]
 		]
 		series? :value [
 			loop size [block: insert/only block copy/deep value]
 		]
-		any-function? :value [ ; So value can be a thunk :)
-			loop size [block: insert/only block value] ; Called every time
+		any-function? :value [
+			unless indexes [indexes: [index? block]]  ; Single dimension, single index
+			loop size [block: insert/only block apply :value head indexes]
 		]
 		insert/dup block value size
 	]
@@ -423,8 +438,8 @@ printf: func [
 split: func [
 	"Split a series into pieces; fixed or variable size, fixed number, or at delimiters"
 	series	[series!] "The series to split"
-	dlm		[block! integer! char! bitset! any-string!] "Split size, delimiter(s), or rule(s)." 
-	/pieces	"If dlm is an integer, split into n pieces, rather than pieces of length n."
+	dlm		[block! integer! char! bitset! any-string!] "Split size, delimiter(s), or rule(s)."
+	/into	"If dlm is an integer, split into n pieces, rather than pieces of length n."
 	/local size piece-size count mk1 mk2 res fill-val add-fill-val
 ][
 	either all [block? dlm  parse dlm [some integer!]] [
@@ -441,7 +456,7 @@ split: func [
 		size: dlm   ; alias for readability
 		res: collect [
 			parse/all series case [
-				all [integer? size  pieces] [
+				all [integer? size  into] [
 					if size < 1 [cause-error 'Script 'invalid-arg size]
 					count: size - 1
 					piece-size: to integer! round/down divide length? series size
@@ -460,14 +475,14 @@ split: func [
 				]
 			]
 		]
-		; Special processing, to handle cases where the spec'd more items in
-		; /pieces than the series contains (so we want to append empty items),
-		; or where the dlm was a char/string/charset and it was the last char
-		; (so we want to append an empty field that the above rule misses).
+		;-- Special processing, to handle cases where the spec'd more items in
+		;   /into than the series contains (so we want to append empty items),
+		;   or where the dlm was a char/string/charset and it was the last char
+		;   (so we want to append an empty field that the above rule misses).
 		fill-val: does [copy either any-block? series [[]] [""]]
 		add-fill-val: does [append/only res fill-val]
 		case [
-			all [integer? size  pieces] [
+			all [integer? size  into] [
 				; If the result is too short, i.e., less items than 'size, add
 				; empty items to fill it to 'size.
 				; We loop here, because insert/dup doesn't copy the value inserted.
@@ -482,7 +497,7 @@ split: func [
 				; implied empty field after it, which we add here.
 				case [
 					bitset? dlm [
-						; ATTEMPT is here because LAST will return NONE for an 
+						; ATTEMPT is here because LAST will return NONE for an
 						; empty series, and finding none in a bitest is not allowed.
 						if attempt [find dlm last series] [add-fill-val]
 					]
@@ -498,7 +513,7 @@ split: func [
 				]
 			]
 		]
-				
+
 		res
 	]
 ]
