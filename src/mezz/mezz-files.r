@@ -80,10 +80,16 @@ input: function [
 ask: func [
 	"Ask the user for input."
 	question [series!] "Prompt to user"
-	/hide "mask input with *"
+	/hide "Turns off echoing inputs"
+	/local tmp
 ][
 	prin question
-	trim either hide [input/hide] [input]
+	trim either hide [
+		prin "^[[8m"   ; ANSI conceal command
+		tmp: input
+		print "^[[28m" ; ANSI reveal command
+		tmp
+	][	input ]
 ]
 
 confirm: func [

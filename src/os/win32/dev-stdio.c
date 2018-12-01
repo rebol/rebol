@@ -108,6 +108,15 @@ BOOL WINAPI Handle_Break(DWORD dwCtrlType)
 	return TRUE;	// We handled it
 }
 
+void Set_Echo_Mode(boolean set) {
+	DWORD mode = 0;
+	GetConsoleMode(Std_Inp, &mode);
+	if (set) 
+		SetConsoleMode(Std_Inp, mode | ENABLE_ECHO_INPUT);
+	else
+		SetConsoleMode(Std_Inp, mode & (~ENABLE_ECHO_INPUT));
+}
+
 #ifdef DEBUG_METHOD
 // Because this file deals with stdio, we must avoid using stdio for debug.
 // This funtion is of use wne needed.
@@ -528,8 +537,10 @@ DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);
 		case 4: attribute = attribute | COMMON_LVB_UNDERSCORE;         break;
 		case 7: tmp = (attribute & 0xFFF0) >> 4;
 				attribute = ((attribute & 0xFF0F) << 4) | tmp;           break; //reverse
+		case 8: Set_Echo_Mode(FALSE);                                    break; //Conceal (turn off echo)
 		case 22: attribute = attribute & 0xFFF7;                         break; //FOREGROUND_INTENSITY reset
 		case 24: attribute = attribute & 0x7FFF;                         break; //reset underscore
+		case 28: Set_Echo_Mode(TRUE);                                    break; //Reveal (Conceal off)
 		case 30: attribute =  attribute & 0xFFF8;                        break;
 		case 31: attribute = (attribute & 0xFFF8) | FOREGROUND_RED;      break;
 		case 32: attribute = (attribute & 0xFFF8) | FOREGROUND_GREEN;    break;
