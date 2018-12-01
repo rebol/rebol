@@ -116,6 +116,12 @@ void Set_Echo_Mode(boolean set) {
 	else
 		SetConsoleMode(Std_Inp, mode & (~ENABLE_ECHO_INPUT));
 }
+void Set_Cursor_Visible(boolean visible) {
+	CONSOLE_CURSOR_INFO cursorInfo;
+	GetConsoleCursorInfo(Std_Out, &cursorInfo);  // Get cursorinfo from output
+	cursorInfo.bVisible = visible;               // Set flag visible.
+	SetConsoleCursorInfo(Std_Out, &cursorInfo);  // Apply changes
+}
 
 #ifdef DEBUG_METHOD
 // Because this file deals with stdio, we must avoid using stdio for debug.
@@ -651,6 +657,17 @@ DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);
 			else if (*cp == 'm') {
 				ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, 0, TRUE);
 				ANSI_State = -1;
+			}
+			else if (*cp == '?' && (cp+3)<ep && cp[1] == '2' && cp[2] == '5') {
+				if(cp[3] == 'l') {
+					Set_Cursor_Visible(FALSE);
+					cp += 4;
+				} else if(cp[3] == 'h') {
+					Set_Cursor_Visible(TRUE);
+					cp += 4;
+				} else {
+					ANSI_State = -1;
+				}
 			}
 			else {
 				ANSI_State = -1;
