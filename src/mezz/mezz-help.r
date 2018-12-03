@@ -178,11 +178,10 @@ import module [
 		'word [any-type!]
 		/into "Help text will be inserted into provided string instead of printed"
 			string [string!] "Returned series will be past the insertion"
-		/local value spec args refs rets type ret desc arg def des tmp
+		/local value spec args refs rets type ret desc arg def des ref
 	][
 		try [
-			tmp: query system/ports/input
-			max-desc-width: tmp/window-size/x - 36
+			max-desc-width: (query/mode system/ports/input 'buffer-cols) - 36
 		]
 		buffer: any [string  make string! 1024]
 		catch [
@@ -278,8 +277,8 @@ import module [
 						output "^/^/^[[4;1;36mREFINEMENTS^[[m:"
 						parse back refs [
 							any [
-								set tmp refinement! (output ajoin ["^/     ^[[1;32m" pad mold tmp 14 "^[[m"])
-								opt [set tmp string! (output tmp)]
+								set ref refinement! (output ajoin ["^/     ^[[1;32m" pad mold ref 14 "^[[m"])
+								opt [set des string! (output des)]
 								any [
 									set arg [word! | lit-word! | get-word!] 
 									set def opt block! 

@@ -49,6 +49,8 @@
 	REBINT result;
 	REBVAL *arg = D_ARG(2);
 	REBSER *ser;
+	REBCNT args = 0;
+	REBVAL *spec;
 
 	Validate_Port(port, action);
 
@@ -129,13 +131,16 @@
 		return R_FALSE;
 
 	case A_QUERY:
-		if (OS_DO_DEVICE(req, RDC_QUERY) < 0) return R_NONE;
-		REBVAL *spec = Get_System(SYS_STANDARD, STD_CONSOLE_INFO);
+		spec = Get_System(SYS_STANDARD, STD_CONSOLE_INFO);
 		if (!IS_OBJECT(spec)) Trap_Arg(spec);
-		REBSER *obj = CLONE_OBJECT(VAL_OBJ_FRAME(spec));
-		SET_OBJECT(D_RET, obj);
-		SET_PAIR(OFV(obj, STD_CONSOLE_INFO_BUFFER_SIZE), req->console.buffer_cols, req->console.buffer_rows);
-		SET_PAIR(OFV(obj, STD_CONSOLE_INFO_WINDOW_SIZE), req->console.window_cols, req->console.window_rows);
+		args = Find_Refines(ds, ALL_QUERY_REFS);
+		if ((args & AM_QUERY_MODE) && IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
+			Set_Block(D_RET, Get_Object_Words(spec));
+			return R_RET;
+		}
+		if (OS_DO_DEVICE(req, RDC_QUERY) < 0) return R_NONE;
+
+		Ret_Query_Console(req, D_RET, D_ARG(ARG_QUERY_FIELD), spec);
 		break;
 
 	default:
@@ -143,6 +148,55 @@
 	}
 
 	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	static REBOOL Set_Console_Mode_Value(REBREQ *req, REBCNT mode, REBVAL *ret)
+/*
+**		Set a value with file data according specified mode
+**
+***********************************************************************/
+{
+	switch (mode) {
+	case SYM_BUFFER_COLS:
+		SET_INTEGER(ret, req->console.buffer_cols);
+		break;
+	case SYM_BUFFER_ROWS:
+		SET_INTEGER(ret, req->console.buffer_rows);
+		break;
+	case SYM_WINDOW_COLS:
+		SET_INTEGER(ret, req->console.window_cols);
+		break;
+	case SYM_WINDOW_ROWS:
+		SET_INTEGER(ret, req->console.window_rows);
+		break;
+	default:
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/***********************************************************************
+**
+*/	void Ret_Query_Console(REBREQ *req, REBVAL *ret, REBVAL *info, REBVAL *spec)
+/*
+**		Query file and set RET value to resulting STD_FILE_INFO object.
+**
+***********************************************************************/
+{
+	if (IS_WORD(info)) {
+		if (!Set_Console_Mode_Value(req, VAL_WORD_CANON(info), ret))
+			Trap1(RE_INVALID_ARG, info);
+	}
+	else {
+		REBSER *obj = CLONE_OBJECT(VAL_OBJ_FRAME(spec));
+		SET_INTEGER(OFV(obj, STD_CONSOLE_INFO_BUFFER_COLS), req->console.buffer_cols);
+		SET_INTEGER(OFV(obj, STD_CONSOLE_INFO_BUFFER_ROWS), req->console.buffer_rows);
+		SET_INTEGER(OFV(obj, STD_CONSOLE_INFO_WINDOW_COLS), req->console.window_cols);
+		SET_INTEGER(OFV(obj, STD_CONSOLE_INFO_WINDOW_ROWS), req->console.window_rows);
+		SET_OBJECT(ret, obj);
+	}
 }
 
 

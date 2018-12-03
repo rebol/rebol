@@ -1162,6 +1162,24 @@
 	return NOT_FOUND;
 }
 
+/***********************************************************************
+**
+*/	REBSER* Get_Object_Words(REBVAL *object)
+/*
+**		Returns block of object's words converted to simple word (not set-word)
+**		Note:  used in query/mode function to return default modes
+**
+***********************************************************************/
+{
+	REBSER *prior = VAL_OBJ_WORDS(object);
+	REBSER *words = Copy_Block_Len(prior, 1, SERIES_TAIL(prior) - 1);
+	// convert set-words to just words:
+	REBVAL *word = BLK_HEAD(words);
+	for (; NOT_END(word); word++)
+		if (IS_SET_WORD(word)) SET_TYPE(word, REB_WORD);
+	return words;
+}
+
 
 /***********************************************************************
 **

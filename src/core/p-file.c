@@ -96,33 +96,68 @@
 	Set_Date(val, &dat);
 }
 
+/***********************************************************************
+**
+*/	static REBOOL Set_File_Mode_Value(REBREQ *file, REBCNT mode, REBVAL *ret)
+/*
+**		Set a value with file data according specified mode 
+**
+***********************************************************************/
+{
+	switch (mode) {
+	case SYM_SIZE:
+		SET_INTEGER(ret, file->file.size);
+		break;
+	case SYM_TYPE:
+		Init_Word(ret, GET_FLAG(file->modes, RFM_DIR) ? SYM_DIR : SYM_FILE);
+		break;
+	case SYM_DATE:
+		Set_File_Date(file, ret);
+		break;
+	case SYM_NAME:
+		Set_Series(REB_FILE, ret, To_REBOL_Path(file->file.path, 0, OS_WIDE, 0));
+		break;
+	default:
+		return FALSE;
+	}
+	return TRUE;
+}
 
 /***********************************************************************
 **
-*/	void Ret_Query_File(REBSER *port, REBREQ *file, REBVAL *ret)
+*/	void Ret_Query_File(REBSER *port, REBREQ *file, REBVAL *ret, REBVAL *info)
 /*
 **		Query file and set RET value to resulting STD_FILE_INFO object.
 **
 ***********************************************************************/
 {
-	REBVAL *info = In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0);
 	REBSER *obj;
-	REBSER *ser;
 
-	if (!info || !IS_OBJECT(info)) Trap_Port(RE_INVALID_SPEC, port, -10);
-
-	obj = CLONE_OBJECT(VAL_OBJ_FRAME(info));
-
-	SET_OBJECT(ret, obj);
-	Init_Word(OFV(obj, STD_FILE_INFO_TYPE), GET_FLAG(file->modes, RFM_DIR) ? SYM_DIR : SYM_FILE);
-	SET_INTEGER(OFV(obj, STD_FILE_INFO_SIZE), file->file.size);
-	Set_File_Date(file, OFV(obj, STD_FILE_INFO_DATE));
-
-	ser = To_REBOL_Path(file->file.path, 0, OS_WIDE, 0);
-
-	Set_Series(REB_FILE, OFV(obj, STD_FILE_INFO_NAME), ser);
+	if ( IS_WORD(info) ) {
+		if(!Set_File_Mode_Value(file, VAL_WORD_CANON(info), ret))
+			Trap1(RE_INVALID_ARG, info);
+	} else {
+		info = In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0);
+		if (!info || !IS_OBJECT(info)) Trap_Port(RE_INVALID_SPEC, port, -10);
+		obj = CLONE_OBJECT(VAL_OBJ_FRAME(info));
+		Set_File_Mode_Value(file, SYM_TYPE, OFV(obj, STD_FILE_INFO_TYPE));
+		Set_File_Mode_Value(file, SYM_SIZE, OFV(obj, STD_FILE_INFO_SIZE));
+		Set_File_Mode_Value(file, SYM_DATE, OFV(obj, STD_FILE_INFO_DATE));
+		Set_File_Mode_Value(file, SYM_NAME, OFV(obj, STD_FILE_INFO_NAME));
+		SET_OBJECT(ret, obj);
+	}
 }
 
+/***********************************************************************
+**
+*/	void Ret_File_Modes(REBSER *port, REBVAL *ret)
+/*
+**		Sets value with block of possible file mode names
+**
+***********************************************************************/
+{
+	Set_Block(ret, Get_Object_Words(In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0)));
+}
 
 /***********************************************************************
 **
@@ -461,11 +496,16 @@ REBINT Mode_Syms[] = {
 		break;
 
 	case A_QUERY:
+		args = Find_Refines(ds, ALL_QUERY_REFS);
+		if ((args & AM_QUERY_MODE) && IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
+			Ret_File_Modes(port, D_RET);
+			return R_RET;
+		}
 		if (!IS_OPEN(file)) {
 			Setup_File(file, 0, path);
 			if (OS_DO_DEVICE(file, RDC_QUERY) < 0) return R_NONE;
 		}
-		Ret_Query_File(port, file, D_RET);
+		Ret_Query_File(port, file, D_RET, D_ARG(ARG_QUERY_FIELD));
 		// !!! free file path?
 		break;
 
@@ -476,7 +516,6 @@ REBINT Mode_Syms[] = {
 			if (OS_DO_DEVICE(file, RDC_MODIFY) < 0) return R_NONE;
 		}
 		return R_TRUE;
-		break;
 
 	case A_INDEXQ:
 		SET_INTEGER(D_RET, file->file.index + 1);
@@ -535,7 +574,6 @@ REBINT Mode_Syms[] = {
 		A_REMOVE,				// 52
 		A_CHANGE,				// 53
 		A_POKE,					// 54
-		A_QUERY,				// 64
 		A_FLUSH,				// 65
 	*/
 

@@ -255,8 +255,10 @@ standard: context [
 	]
 
 	console-info: context [
-		buffer-size: none
-		window-size: none
+		buffer-cols: none
+		buffer-rows: none
+		window-cols: none
+		window-rows: none
 	]
 
 	extension: context [

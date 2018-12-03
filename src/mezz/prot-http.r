@@ -646,11 +646,12 @@ sys/make-scheme [
 		]
 		query: func [
 			port [port!]
+			/mode
+			field [word! none!]
 			/local error state
 		] [
-			either port/state [
-				state: port/state
-			][
+			if all [mode none? field] [ return words-of system/standard/file-info]
+			if none? state: port/state [
 				open port ;there is port opening in sync-op, but it would also close the port later and so clear the state
 				attempt [sync-op port [parse-write-dialect port [HEAD]]]
 				state: port/state
@@ -659,9 +660,11 @@ sys/make-scheme [
 			;?? state
 			either all [
 				state
-				find [ok redirect] state/info/response-parsed
+				state/info/response-parsed
 			][
-				state/info
+				either field [
+					select state/info field
+				][	state/info ]
 			][	none ]
 		]
 		length?: func [

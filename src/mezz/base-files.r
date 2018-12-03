@@ -20,27 +20,21 @@ exists?: func [
 	{Determines if a file or URL exists.}
 	target [file! url!]
 ][
-	to logic! query target
+	not none? query/mode target 'type
 ]
 
 size?: func [
 	{Returns the size of a file.}
 	target [file! url!]
 ][
-	all [
-		target: attempt [query target]
-		target/size
-	]
+	query/mode target 'size
 ]
 
 modified?: func [
 	{Returns the last modified date of a file.}
 	target [file! url!]
 ][
-	all [
-		target: attempt [query target]
-		target/date
-	]
+	query/mode target 'date
 ]
 
 suffix?: func [

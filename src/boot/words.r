@@ -216,3 +216,7 @@ unixtime-now
 unixtime-now-le
 random-bytes
 length?
+buffer-cols
+buffer-rows
+window-cols
+window-rows

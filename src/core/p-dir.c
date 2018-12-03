@@ -331,10 +331,15 @@ create:
 
 	case A_QUERY:
 		//Trap_Security(flags[POL_READ], POL_READ, path);
+		args = Find_Refines(ds, ALL_QUERY_REFS);
+		if ((args & AM_QUERY_MODE) && IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
+			Ret_File_Modes(port, D_RET);
+			return R_RET;
+		}
 		SET_NONE(state);
 		Init_Dir_Path(&dir, path, -1, REMOVE_TAIL_SLASH | POL_READ);
 		if (OS_DO_DEVICE(&dir, RDC_QUERY) < 0) return R_NONE;
-		Ret_Query_File(port, &dir, D_RET);
+		Ret_Query_File(port, &dir, D_RET, D_ARG(ARG_QUERY_FIELD));
 		///OS_FREE(dir.file.path);
 		break;
 
