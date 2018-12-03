@@ -36,7 +36,7 @@ wrap: func [
 
 with: func[
 	"Evaluates a block binded to the specified context."
-	context [object!]
+	context [object! module!]
 	body    [block!]
 ][
 	do bind body context
