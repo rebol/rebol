@@ -23,6 +23,7 @@ REBOL [
 		0.1.4 26-Nov-2012 "Richard Smolak"    "Version from Atronix's fork"
 		0.1.5 10-May-2018 "Oldes" "FIX: Query on URL was returning just none"
 		0.1.6 21-May-2018 "Oldes" "FEAT: Added support for basic redirection"
+		0.1.7 03-Dec-2018 "Oldes" "FEAT: Added support for QUERY/MODE action"
 	]
 ]
 
@@ -647,10 +648,10 @@ sys/make-scheme [
 		query: func [
 			port [port!]
 			/mode
-			field [word! none!]
-			/local error state
+			field [word! block! none!]
+			/local error state result
 		] [
-			if all [mode none? field] [ return words-of system/standard/file-info]
+			if all [mode none? field] [ return words-of system/schemes/http/info]
 			if none? state: port/state [
 				open port ;there is port opening in sync-op, but it would also close the port later and so clear the state
 				attempt [sync-op port [parse-write-dialect port [HEAD]]]
@@ -663,7 +664,18 @@ sys/make-scheme [
 				state/info/response-parsed
 			][
 				either field [
-					select state/info field
+					either word? field [
+						select state/info field
+					][
+						result: make block! length? field
+						foreach word field [
+							if any-word? word [
+								if set-word? word [ append result word ]
+								append result state/info/(to word! word)
+							]
+						]
+						result
+					]
 				][	state/info ]
 			][	none ]
 		]

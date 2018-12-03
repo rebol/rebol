@@ -189,6 +189,26 @@
 		if (!Set_Console_Mode_Value(req, VAL_WORD_CANON(info), ret))
 			Trap1(RE_INVALID_ARG, info);
 	}
+	else if (IS_BLOCK(info)) {
+		REBVAL *val;
+		REBSER *values = Make_Block(2 * BLK_LEN(VAL_SERIES(info)));
+		REBVAL *word = VAL_BLK_DATA(info);
+		for (; NOT_END(word); word++) {
+			if (ANY_WORD(word)) {
+				if (IS_SET_WORD(word)) {
+					// keep the set-word in result
+					val = Append_Value(values);
+					*val = *word;
+					VAL_SET_LINE(val);
+				}
+				val = Append_Value(values);
+				if (!Set_Console_Mode_Value(req, VAL_WORD_CANON(word), val))
+					Trap1(RE_INVALID_ARG, word);
+			}
+			else  Trap1(RE_INVALID_ARG, word);
+		}
+		Set_Series(REB_BLOCK, ret, values);
+	}
 	else {
 		REBSER *obj = CLONE_OBJECT(VAL_OBJ_FRAME(spec));
 		SET_INTEGER(OFV(obj, STD_CONSOLE_INFO_BUFFER_COLS), req->console.buffer_cols);

@@ -424,7 +424,7 @@ query: action [
 	{Returns information about a port, file, or URL.}
 	target [port! file! url! block!]
 	/mode "Get mode information"
-	field [word! none!] "NONE will return valid modes for port type"
+	field [word! block! none!] "NONE will return valid modes for port type"
 ]
 
 modify: action [

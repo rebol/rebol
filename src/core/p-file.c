@@ -132,11 +132,38 @@
 ***********************************************************************/
 {
 	REBSER *obj;
+	REBVAL *val;
 
 	if ( IS_WORD(info) ) {
 		if(!Set_File_Mode_Value(file, VAL_WORD_CANON(info), ret))
 			Trap1(RE_INVALID_ARG, info);
+	} else if (IS_BLOCK(info)) {
+		// example:
+		//	query/mode file [type size] ;== [file 1234]
+		// or:
+		//	 query/mode file [type: size:] ;== [type: file size: 1234]
+		// or combined:
+		//	 query/mode file [type: size] ;== [type: file 1234]
+		// When not supported word is used, if will throw an error
+
+		REBSER *values = Make_Block(2 * BLK_LEN(VAL_SERIES(info)));
+		REBVAL *word = VAL_BLK_DATA(info);
+		for (; NOT_END(word); word++) {
+			if(ANY_WORD(word)) {
+				if (IS_SET_WORD(word)) {
+					// keep the set-word in result
+					val = Append_Value(values);
+					*val = *word;
+					VAL_SET_LINE(val);
+				}
+				val = Append_Value(values);
+				if(!Set_File_Mode_Value(file, VAL_WORD_CANON(word), val))
+					Trap1(RE_INVALID_ARG, word);
+			} else  Trap1(RE_INVALID_ARG, word);
+		}
+		Set_Series(REB_BLOCK, ret, values);
 	} else {
+		//@@ oldes: is returning object really still needed?
 		info = In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0);
 		if (!info || !IS_OBJECT(info)) Trap_Port(RE_INVALID_SPEC, port, -10);
 		obj = CLONE_OBJECT(VAL_OBJ_FRAME(info));

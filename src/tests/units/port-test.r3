@@ -32,6 +32,8 @@ Rebol [
 		--assert 'file = query/mode file 'type
 		--assert date?   query/mode file 'date
 		--assert 51732 = query/mode file 'size
+		--assert [file 51732] = query/mode file [type size]
+		--assert [type: file size: 51732] = query/mode file [type: size:]
 
 	--test-- "query file info (port)"
 		file: open %units/files/alice29.txt.gz
@@ -39,6 +41,8 @@ Rebol [
 		--assert 'file = query/mode file 'type
 		--assert date?   query/mode file 'date
 		--assert 51732 = query/mode file 'size
+		--assert [file 51732] = query/mode file [type size]
+		--assert [type: file size: 51732] = query/mode file [type: size:]
 		close file
 ===end-group===
 
@@ -58,7 +62,10 @@ Rebol [
 		--assert integer? query/mode system/ports/input 'buffer-cols
 		--assert integer? query/mode system/ports/input 'buffer-rows
 		--assert [buffer-cols buffer-rows window-cols window-rows]
-						= query/mode system/ports/input none
+						= m: query/mode system/ports/input none
+		--assert block?   v: query/mode system/ports/input m
+		--assert 4 = length? v
+
 ===end-group===
 
 ~~~end-file~~~
