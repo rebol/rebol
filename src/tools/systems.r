@@ -49,8 +49,8 @@ compile-flags: [
 	CST:	"-DCUSTOM_STARTUP"			; include custom startup script at host boot
 	HID:	"-fvisibility=hidden"		; all syms are hidden
 	F64:	"-D_FILE_OFFSET_BITS=64"	; allow larger files
-	P64:    "-D__LLP64__"				; 64-bit, and 'void *' is sizeof(long long)
-	L64:	"-D__LP64__"				; same like LLP64, but long has 64-bit instead of 32
+	P64:    "-D__LLP64__"				; 64-bit, long (integer) has 32 bits and 'void *' is sizeof(long long)
+	L64:	"-D__LP64__"				; same like LLP64, but long (integer) has 64 bits instead of 32
 	NPS:	"-Wno-pointer-sign"			; OSX fix
 	NSP:	"-fno-stack-protector"		; avoid insert of functions names
 	PIC:	"-fPIC"						; position independent (used for libs)
