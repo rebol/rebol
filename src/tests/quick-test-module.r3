@@ -102,6 +102,7 @@ start-file: func [
 start-group: func [
  	title [any-string!]
 ][
+	print ["   group:" title]
 	qt-group-name: title
 	qt-group?: true
 ]
@@ -109,6 +110,7 @@ start-group: func [
 start-test: func [
 	title [any-string!]
 ][
+	print ["    test:" title]
 	qt-test-name: title
 	qt-test-assert: 0
 	qt-file-tests: qt-file-tests + 1
@@ -120,7 +122,7 @@ as-red-only: does [
 ]
 
 assert: func [
-	assertion [logic!]
+	assertion [logic! none!]
 ][
 	qt-file-asserts: qt-file-asserts + 1
 	qt-test-assert: qt-test-assert + 1
