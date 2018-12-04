@@ -101,6 +101,7 @@ cause-error: func [
 			change/only args spec-of first args
 		]
 	]
+	args: head args 
 	; Build and throw the error:
 	do make error! [
 		type: err-type

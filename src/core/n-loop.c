@@ -267,9 +267,7 @@
 	}
 	else Trap_Arg(var);
 
-	// !!!!! ???? allowed to write VAR????
-	*var = *DS_ARG(1);
-
+	*D_RET = *var;
 	return R_RET;
 }
 

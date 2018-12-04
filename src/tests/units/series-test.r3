@@ -108,4 +108,35 @@ Rebol [
 	subs: ["1" "foo" "10" "bar"]
 	--assert "bar" = reword/escape "$<10>" subs ["$<" ">"]
 
+===end-group===
+
+===start-group=== "FORALL"
+
+--test-- "Basic FORALL"
+	;-- compatible with R2 & Red - the series is at its tail
+	data: [1 2 3 4]
+	--assert unset? forall data []
+	--assert tail? data
+
+;@@ https://github.com/rebol/rebol-issues/issues/2331
+--test-- "Escaping from FORALL loop using THROW"
+	data: [1 2 3 4]
+	--assert "yes" = catch [forall data [if data/1 = 3 [throw "yes"]]]
+	--assert [3 4] = data
+--test-- "Escaping from FORALL loop using BREAK"
+	data: [1 2 3 4]
+	--assert unset? forall data [if data/1 = 3 [break]]
+	--assert [3 4] = data
+--test-- "Escaping from FORALL loop using BREAK/RETURN"
+	data: [1 2 3 4]
+	--assert forall data [if data/1 = 3 [break/return true]]
+	--assert [3 4] = data
+--test-- "Escaping from FORALL loop on error"
+	data: [1 2 3 4]
+	--assert error? try [forall data [if data/1 = 3 [do make error! "stopped"]]]
+	--assert [3 4] = data
+
+===end-group===
+
+
 ~~~end-file~~~
