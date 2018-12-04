@@ -101,4 +101,11 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "REWORD"
+
+--test-- "reword/escape"
+	;@@ https://github.com/rebol/rebol-issues/issues/2333
+	subs: ["1" "foo" "10" "bar"]
+	--assert "bar" = reword/escape "$<10>" subs ["$<" ">"]
+
 ~~~end-file~~~

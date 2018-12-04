@@ -175,7 +175,7 @@ reword: func [
 	char [char! any-string! binary! block! none!] {Default "$"}
 	/into "Insert into a buffer instead (returns position after insert)"
 	output [any-string! binary!] "The buffer series (modified)"
-	/local char-end vals word wtype cword out fout rule a b w v
+	/local char-end vals word wtype cword out fout rule a b c w v
 ][
 	assert/type [local none!]  ; Prevent locals injection
 	unless into [output: make source length? source]
