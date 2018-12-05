@@ -255,7 +255,7 @@
 			if (THROWN(ds)) {	// Break, throw, continue, error.
 				if (Check_Error(ds) >= 0) {
 					*DS_RETURN = *DS_NEXT;
-					break;
+					return R_RET; // does not resets series position
 				}
 			}
 			*DS_RETURN = *ds;
@@ -267,7 +267,9 @@
 	}
 	else Trap_Arg(var);
 
-	*D_RET = *var;
+	// !!!!! ???? allowed to write VAR????
+	*var = *DS_ARG(1);
+	//*D_RET = *var;
 	return R_RET;
 }
 

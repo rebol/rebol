@@ -116,7 +116,12 @@ Rebol [
 	;-- compatible with R2 & Red - the series is at its tail
 	data: [1 2 3 4]
 	--assert unset? forall data []
-	--assert tail? data
+	--assert data = [1 2 3 4]
+	data: next data
+	--assert unset? forall data []
+	--assert data = [2 3 4]
+	--assert 4 = forall data [data/1]
+	--assert data = [2 3 4]
 
 ;@@ https://github.com/rebol/rebol-issues/issues/2331
 --test-- "Escaping from FORALL loop using THROW"
