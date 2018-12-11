@@ -1167,7 +1167,7 @@ ConversionResult ConvertUTF8toUTF32 (
 	return Copy_Bytes(BIN_HEAD(ser), len);
 }
 
-
+#ifdef unused
 /***********************************************************************
 **
 */	REBSER *Encode_String(void *str, REBCNT len, REBCNT opts)
@@ -1194,3 +1194,4 @@ ConversionResult ConvertUTF8toUTF32 (
 
 	return ser;
 }
+#endif
