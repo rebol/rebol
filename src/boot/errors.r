@@ -198,6 +198,7 @@ Access: [
 Command: [
 	code: 600
 	type: "command error"
+	command-fail:       [:arg1]
 ;   fmt-too-short:      {Format string is too short}
 ;   fmt-no-struct-size: [{Missing size spec for struct at arg#} :arg1]
 ;   fmt-no-struct-align: [{Missing align spec for struct at arg#} :arg1]
