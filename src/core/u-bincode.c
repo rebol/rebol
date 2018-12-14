@@ -80,6 +80,19 @@
 #define ASSERT_READ_SIZE(v, p, e, n) if((p + n) > e) Trap1(RE_OUT_OF_RANGE, v);
 #define ASSERT_INDEX_RANGE(v, p, e) if(i < 0 || i > VAL_TAIL(v)) Trap1(RE_OUT_OF_RANGE, e);
 
+#define IS_BIT_SET(v, b) ((v & b) == b)
+#define NEXT_IN_BIT(inBit) \
+	do { \
+		inBit = inBit >> 1; \
+		if (inBit == 0) { \
+			inBit = 0x80; \
+			ASSERT_READ_SIZE(value, cp, ep, 1); \
+			cp++; \
+			VAL_INDEX(buffer_read)++; \
+		} \
+	} while (0)
+#define STORE_IN_BIT(val, inBit)  SET_INT32(VAL_OBJ_VALUE(val, BINCODE_READ_BITMASK), inBit);
+
 //**********************************************************************
 //MUST be in order like the values in system/standard/bincode object bellow!!!
 enum BincodeContextValues {
@@ -136,7 +149,7 @@ system/standard/bincode: make object! [
 	REBSER *obj;
 	REBVAL *buffer_write;
 	REBVAL *buffer_read;
-	REBCNT inBit;
+	REBCNT inBit, nbits;
 	REBYTE *cp, *bp, *ep;
 	REBCNT n, count, index, tail, tail_new;
 	i32 i, len;
@@ -690,7 +703,7 @@ system/standard/bincode: make object! [
 		DS_DROP; // remove temp
 	}
 
-	if (ref_read) {		
+	if (ref_read) {	
 		//printf("\nREADING... in-index: %i\n\n", VAL_INDEX(buffer_read));
 
 		cp = BIN_DATA(bin) + VAL_INDEX(buffer_read);
@@ -873,23 +886,43 @@ system/standard/bincode: make object! [
 							i = 0;
 							if (inBit == 0) inBit = 0x80;
 							// could be optimized?
-							REBCNT nbits = VAL_INT32(next);
-							//printf("bits: %i\n", nbits);
+							nbits = VAL_INT32(next);
+							//printf("bits: %i %i\n", nbits, 1 << nbits);
 							nbits = 1 << nbits;
 							ASSERT_READ_SIZE(value, cp, ep, 1);
 							while(nbits > 1) {
 								nbits = nbits >> 1;
-								if((cp[0] & inBit) == inBit){
-									i = i | nbits;
-								}
+								if(IS_BIT_SET(cp[0], inBit)) i = i | nbits;
 								//printf("?? %i %i\n", inBit, i);
-								inBit = inBit >> 1;
-								if (inBit == 0) {
-									inBit = 0x80;
-									ASSERT_READ_SIZE(value, cp, ep, 1);
-									cp++;
-									VAL_INDEX(buffer_read)++;
+								NEXT_IN_BIT(inBit);
+								//printf("inBit: %i\n", inBit);
+							}
+							VAL_SET(temp, REB_INTEGER);
+							SET_INT32(temp, i);
+							STORE_IN_BIT(val_ctx, inBit);
+							break;
+						case SYM_SB:
+							next = ++value;
+							if (IS_GET_WORD(next)) next = Get_Var(next);
+							if (!IS_INTEGER(next)) Trap1(RE_INVALID_SPEC, value);
+							i = 0;
+							if (inBit == 0) inBit = 0x80;
+							// could be optimized?
+							nbits = VAL_INT32(next);
+							nbits = 1 << nbits;
+							if (nbits > 0) {
+								//printf("nbits: %i\n", nbits);
+								ASSERT_READ_SIZE(value, cp, ep, 1);
+								BOOL negative = IS_BIT_SET(cp[0], inBit);
+								nbits = nbits >> 1;
+								NEXT_IN_BIT(inBit);
+								while (nbits > 1) {
+									nbits = nbits >> 1;
+									if (IS_BIT_SET(cp[0], inBit)) i = i | nbits;
+									//printf("?? %i %i\n", inBit, i);
+									NEXT_IN_BIT(inBit);
 								}
+								if(negative) i = -i;
 							}
 							VAL_SET(temp, REB_INTEGER);
 							SET_INT32(temp, i);
@@ -907,7 +940,17 @@ system/standard/bincode: make object! [
 							}
 							inBit = inBit >> 1;
 							if(inBit == 0) n++;
+							STORE_IN_BIT(val_ctx, inBit);
 							break;
+						case SYM_ALIGN:
+							// aligns bit buffer to byte boundary
+							if (inBit > 0) {
+								inBit = 0;
+								cp++;
+								VAL_INDEX(buffer_read)++;
+								STORE_IN_BIT(val_ctx, inBit);
+							}
+							continue;
 						case SYM_UI16LE:
 							n = 2;
 							ASSERT_READ_SIZE(value, cp, ep, n);

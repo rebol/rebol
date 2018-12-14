@@ -50,6 +50,11 @@ is-protected-error?: func[code][
 		--assert object? binary/init b none ; just clear existing bincode
 		--assert empty? b/buffer
 		--assert empty? b/buffer-write
+
+===end-group===
+
+===start-group=== "BinCode basic read/write functions"
+
 	--test-- "BinCode - write positive unsigned integers (big endian)"
 		b: binary 64
 		--assert object? binary/write b [ui64 1 ui32 1 ui24 1 ui16 1 ui8 1]
@@ -221,6 +226,14 @@ is-protected-error?: func[code][
 		--assert str = "test"
 		--assert   i = 42
 
+	--test-- "BinCode - bits (SB, UB, ALIGN)"
+		b: binary 2#{01011011 10110011 11111111}
+		--assert [2 -2 3 -3 255] = binary/read b [SB 3 SB 3 UB 2 SB 4 ALIGN UI8]
+
 ===end-group===
+
+
+
+probe 
 
 ~~~end-file~~~
