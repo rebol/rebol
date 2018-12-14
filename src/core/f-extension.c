@@ -37,13 +37,14 @@
 // Extension evaluation categories:
 enum {
     RXE_NULL,	// unset
-	RXE_PTR,	// any pointer
+	RXE_HANDLE,	// handle
     RXE_32,		// logic
     RXE_64,		// integer, decimal, etc.
     RXE_SYM,	// word
     RXE_SER,	// string
 	RXE_IMAGE,	// image
 	RXE_DATE,	// from upper section
+	RXE_OBJECT, // any object
 	RXE_MAX
 };
 
@@ -88,8 +89,12 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 		arg.series = VAL_SERIES(val);
 		arg.index = VAL_INDEX(val);
 		break;
-	case RXE_PTR:
+	case RXE_OBJECT:
+		arg.addr = VAL_OBJ_FRAME(val);
+		break;
+	case RXE_HANDLE:
 		arg.addr = VAL_HANDLE(val);
+		arg.handle.type = VAL_HANDLE_TYPE(val);
 		break;
 	case RXE_32:
 		arg.int32a = VAL_I32(val);
@@ -105,7 +110,7 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 		break;
 	case RXE_IMAGE:
 		arg.series = VAL_SERIES(val);
-		arg.width = VAL_IMAGE_WIDE(val);
+		arg.width  = VAL_IMAGE_WIDE(val);
 		arg.height = VAL_IMAGE_HIGH(val);
 		break;
 	case RXE_NULL:
@@ -131,8 +136,12 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 		VAL_SERIES(val) = arg.series;
 		VAL_INDEX(val) = arg.index;
 		break;
-	case RXE_PTR:
+	case RXE_OBJECT:
+		VAL_OBJ_FRAME(val) = arg.addr;
+		break;
+	case RXE_HANDLE:
 		VAL_HANDLE(val) = arg.addr;
+		VAL_HANDLE_TYPE(val) = arg.handle.type;
 		break;
 	case RXE_32:
 		VAL_I32(val) = arg.int32a;
@@ -324,6 +333,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 		// Try to load the DLL file:
 		if (!(dll = OS_OPEN_LIBRARY(name, &error))) {
+			printf("error: %i\n", error);
 			Trap1(RE_NO_EXTENSION, val);
 		}
 
@@ -476,6 +486,19 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		SET_FALSE(val);
 		break;
 	case RXR_ERROR:
+		{
+			const char* errmsg = frm.args[1].series;
+			if(errmsg != NULL) {
+				int len = strlen(errmsg);
+				VAL_SET(val, REB_STRING);		
+				VAL_SERIES(val) = Make_Binary(len);
+				VAL_INDEX(val) = 0;
+				VAL_TAIL(val) = len;
+				memcpy(VAL_BIN_HEAD(val), errmsg, len);
+			}
+			Trap1(RE_COMMAND_FAIL, val);
+		}
+		break;
 	default:
 		SET_UNSET(val);
 	}

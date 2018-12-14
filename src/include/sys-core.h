@@ -268,24 +268,6 @@ enum {
 	POL_EXEC,
 };
 
-// Encoding options:
-enum encoding_opts {
-	ENC_OPT_BIG,		// big endian (not little)
-	ENC_OPT_UTF8,		// UTF-8
-	ENC_OPT_UTF16,		// UTF-16
-	ENC_OPT_UTF32,		// UTF-32
-	ENC_OPT_BOM,		// byte order marker
-	ENC_OPT_CRLF,		// CR line termination
-	ENC_OPT_NO_COPY,	// do not copy if ASCII
-};
-
-#define ENCF_NO_COPY (1<<ENC_OPT_NO_COPY)
-#if OS_CRLF
-#define ENCF_OS_CRLF (1<<ENC_OPT_CRLF)
-#else
-#define ENCF_OS_CRLF 0
-#endif
-
 /***********************************************************************
 **
 **	Macros

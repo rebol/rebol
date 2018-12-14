@@ -17,7 +17,7 @@ REBOL [
 end			0	0
 unset		*	null
 none		*	null
-handle		*	ptr
+handle		*	handle
 
 logic 		4	32
 integer		*	64
@@ -57,6 +57,6 @@ image		*	image
 
 gob			47	ser
 
-object		48	ptr
-module		*	ptr
+object		48	object
+module		*	object
 

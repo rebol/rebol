@@ -32,8 +32,21 @@
 #define REB_DEFS_H
 
 #ifndef REB_DEF
-typedef void *REBSER;
+typedef void(*ANYFUNC)(void *);
+typedef struct RL_Reb_Series {
+	void *data;
+	u32 tail;
+} REBSER;
 typedef void *REBOBJ;
+typedef struct Reb_Handle {
+	REBCNT	sym;    // Index of the word's symbol. Used as a handle's type!
+	REBFLG  flags;  // Handle_Flags
+	union {
+		ANYFUNC	code;
+		REBSER *data;
+		REBINT  index;
+	};
+} REBHAN;
 #endif
 
 /* These used for access-os native function */
@@ -81,6 +94,27 @@ typedef struct rebol_met {
 
 typedef int	cmp_t(const void *, const void *);
 void reb_qsort(void *a, size_t n, size_t es, cmp_t *cmp);
+
+// Encoding_opts was originally in sys-core.h, but I moved it here so it can
+// be used also while makking external extensions. (oldes)
+
+// Encoding options:
+enum encoding_opts {
+	ENC_OPT_BIG,		// big endian (not little)
+	ENC_OPT_UTF8,		// UTF-8
+	ENC_OPT_UTF16,		// UTF-16
+	ENC_OPT_UTF32,		// UTF-32
+	ENC_OPT_BOM,		// byte order marker
+	ENC_OPT_CRLF,		// CR line termination
+	ENC_OPT_NO_COPY,	// do not copy if ASCII
+};
+
+#define ENCF_NO_COPY (1<<ENC_OPT_NO_COPY)
+#if OS_CRLF
+#define ENCF_OS_CRLF (1<<ENC_OPT_CRLF)
+#else
+#define ENCF_OS_CRLF 0
+#endif
 
 #pragma pack()
 

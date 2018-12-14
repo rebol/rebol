@@ -68,10 +68,15 @@ char *RX_Spec =
 	"img0:   command [{return 10x20 image}]\n"
 	"cec0:   command [{test command context struct} blk [block!]]\n"
 	"cec1:   command [{returns cec.index value or -1 if no cec}]\n"
+	"hndl1:  command [{creates a handle}]\n"
+	"hndl2:  command [{return handle's internal value as integer} hnd [handle!]]\n"
+	"hndl3:  command [{null handle's internal value} hnd [handle!]]\n"
 
-	"a: b: c: none\n"
+	"a: b: c: h: none\n"
 	"xtest: does [\n"
 		"foreach blk [\n"
+			"[h: hndl1]\n"
+			"[hndl2 h]\n"
 			"[xarg0]\n"
 			"[xarg1 111]\n"
 			"[xarg1 1.1]\n"
@@ -82,6 +87,7 @@ char *RX_Spec =
 			"[xword0]\n"
 			"[xword1 {system}]\n"
 			"[xobj1 system 'version]\n"
+
 
 			// We just use this context as example. Normally, it would be
 			// your own object that has your special functions within it.
@@ -97,7 +103,7 @@ char *RX_Spec =
 			//"replace {x} {x} {y}\n"
 			"probe do blk\n"
 		"]\n"
-		"prin {^/^[[7mAsync call result should be printed:^[[0m }"
+	"prin {^/^[[7mAsync call result (should be printed 1234):^[[0m }"
 		"wait 0.1 ; let async events happen\n"
 		"exit\n"
 	"]\n"
@@ -228,7 +234,22 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			RXA_INT64(frm, 1) = (i64)(cec ? cec->index : -1);
 			RXA_TYPE(frm, 1) = RXT_INTEGER;
 		}
-		
+		break;
+
+	case 11: //command [{creates a handle}]"
+		{
+			RXA_HANDLE(frm, 1) = (void*)42;
+			RXA_HANDLE_TYPE(frm, 1) = RL_MAP_WORD("xtest");
+			RXA_TYPE(frm, 1) = RXT_HANDLE;
+		}
+		break;
+
+	case 12: //command [{return handle's internal value as integer} hnd [handle!]]"
+		{
+			i64 i = (i64)RXA_HANDLE(frm, 1);
+			RXA_INT64(frm, 1) = i;
+			RXA_TYPE(frm, 1) = RXT_INTEGER;
+		}
 		break;
 
 	default:
