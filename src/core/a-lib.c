@@ -612,6 +612,35 @@ RL_API int RL_Get_String(REBSER *series, u32 index, void **str)
 	return len;
 }
 
+RL_API int RL_Get_UTF8_String(REBSER *series, u32 index, void **str)
+/*
+**	Obtain a pointer into an UTF8 encoded string.
+**
+**	Returns:
+**		The length of string is bytes.
+**  Arguments:
+**		series - string series pointer
+**		index - index from beginning (zero-based)
+**		str   - pointer to first character
+**	Notes:
+**		Strings are allowed to move in memory. Therefore, you will want
+**		to make a copy of the string if needed.
+*/
+{
+	int len = (index >= series->tail) ? 0 : series->tail - index;
+
+	if (BYTE_SIZE(series)) {
+		*str = BIN_SKIP(series, index);
+	}
+	else {
+		REBSER *ser = Encode_UTF8_String((void*)UNI_SKIP(series, index), len, TRUE, 0);
+		*str = BIN_HEAD(ser);
+		len = BIN_LEN(ser);
+	}
+
+	return len;
+}
+
 RL_API u32 RL_Map_Word(REBYTE *string)
 /*
 **	Given a word as a string, return its global word identifier.
@@ -915,6 +944,54 @@ RL_API int RL_Callback(RXICBI *cbi)
 	SET_FLAG(cbi->flags, RXC_QUEUED);
 
 	return RL_Event(&evt);	// (returns 0 if queue is full, ignored)
+}
+
+RL_API REBCNT RL_Encode_UTF8(REBYTE *dst, REBINT max, void *src, REBCNT *len, REBFLG uni, REBFLG opts)
+/*
+**	Encode the unicode into UTF8 byte string.
+**		
+**	Returns:
+**		Number of source chars used.
+**		Updates len for dst bytes used.
+**		Does not add a terminator.
+**	Arguments:
+**		max  - The maximum size of the result (UTF8).
+**		uni  - Source string can be byte or unichar sized (uni = TRUE);
+**		opts - Convert LF/CRLF
+*/
+{
+	return Encode_UTF8(dst, max, src, len, uni, opts);
+}
+
+RL_API REBSER* RL_Encode_UTF8_String(void *src, REBCNT len, REBFLG uni, REBFLG opts)
+/*
+**	Encode the unicode into UTF8 byte string.
+**
+**	Returns:
+**		Rebol series value with an UTF8 encoded data.
+**	Arguments:
+**		src  - series as a REBYTE or REBUNI.
+**		len  - number of source bytes to convert.
+**		uni  - Source string can be byte or unichar sized (uni = TRUE);
+**		opts - Convert LF/CRLF
+*/
+{
+	return Encode_UTF8_String(src, len, uni, opts);
+}
+
+RL_API REBSER* RL_Decode_UTF_String(REBYTE *src, REBCNT len, REBINT utf)
+/*
+**	Decode the UTF8 encoded data into Rebol series.
+**
+**	Returns:
+**		Rebol series with char size 1 or 2
+**	Arguments:
+**		src  - UTF8 encoded data
+**		len  - number of source bytes to convert.
+**		utf  - is 0, 8, +/-16, +/-32.
+*/
+{
+	return Decode_UTF_String(src, len, utf);
 }
 
 

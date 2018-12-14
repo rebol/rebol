@@ -1137,13 +1137,39 @@ ConversionResult ConvertUTF8toUTF32 (
 **
 ***********************************************************************/
 {
+	REBSER * ser;
+	if (VAL_BYTE_SIZE(arg)) {
+		ser = Encode_UTF8_String(VAL_BIN_DATA(arg), len, FALSE, opts);
+	} else {
+		ser = Encode_UTF8_String(VAL_UNI_DATA(arg), len, TRUE, opts);
+	}
+	return ser;
+}
+
+/***********************************************************************
+**
+*/	REBSER *Encode_UTF8_String(void *src, REBCNT len, REBFLG uni, REBFLG opts)
+/*
+**		Do all the details to encode a string as UTF8.
+**		No_copy means do not make a copy.
+**		Result can be a shared buffer!
+**
+***********************************************************************/
+{
 	REBSER *ser = BUF_FORM; // a shared buffer
 	REBCNT size;
 	REBYTE *cp;
 	REBFLG ccr = GET_FLAG(opts, ENC_OPT_CRLF);
 
-	if (VAL_BYTE_SIZE(arg)) {
-		REBYTE *bp = VAL_BIN_DATA(arg);
+	if (uni) {
+		REBUNI *up = (REBUNI*)src;
+
+		size = Length_As_UTF8(up, len, TRUE, (REBOOL)ccr);
+		cp = Reset_Buffer(ser, size + (GET_FLAG(opts, ENC_OPT_BOM) ? 3 : 0));
+		Encode_UTF8(Reset_Buffer(ser, size), size, up, &len, TRUE, ccr);
+	}
+	else {
+		REBYTE *bp = (REBYTE*)src;
 
 		if (Is_Not_ASCII(bp, len)) {
 			size = Length_As_UTF8((REBUNI*)bp, len, FALSE, (REBOOL)ccr);
@@ -1152,13 +1178,6 @@ ConversionResult ConvertUTF8toUTF32 (
 		}
 		else if (GET_FLAG(opts, ENC_OPT_NO_COPY)) return 0;
 		else return Copy_Bytes(bp, len);
-
-	} else {
-		REBUNI *up = VAL_UNI_DATA(arg);
-
-		size = Length_As_UTF8(up, len, TRUE, (REBOOL)ccr);
-		cp = Reset_Buffer(ser, size + (GET_FLAG(opts, ENC_OPT_BOM) ? 3 : 0));
-		Encode_UTF8(Reset_Buffer(ser, size), size, up, &len, TRUE, ccr);
 	}
 
 	SERIES_TAIL(ser) = len;
@@ -1168,6 +1187,17 @@ ConversionResult ConvertUTF8toUTF32 (
 }
 
 #ifdef unused
+/***********************************************************************
+**
+*/	REBSER *Decode_UTF8_String(REBYTE *src, REBCNT len)
+/*
+**		Decode an UTF8 encoded source into series.
+**
+***********************************************************************/
+{
+	return Decode_UTF_String(src, len, 8);
+}
+
 /***********************************************************************
 **
 */	REBSER *Encode_String(void *str, REBCNT len, REBCNT opts)
