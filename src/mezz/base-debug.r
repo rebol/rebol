@@ -51,7 +51,7 @@ probe: func [
 				]
 			]
 		]
-		true [print ajoin ["^[[1;32;49m" mold/all word "^[[0m"]]
+		true [print ajoin ["^[[1;32;49m" mold/all :name "^[[0m"]]
 	]
 	exit
 ]
