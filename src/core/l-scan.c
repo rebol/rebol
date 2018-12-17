@@ -981,7 +981,8 @@
 
 			return -TOKEN_INTEGER;
 		}
-		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) return TOKEN_TIME;  /* 12:34 */
+		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON))
+			return (HAS_LEX_FLAG(flags, LEX_SPECIAL_WORD) ? TOKEN_DATE : TOKEN_TIME);  /* iso8601 datetime or 12:34 */
 		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_PERIOD)) {  /* 1.2 1.2.3 1,200.3 1.200,3 1.E-2 */
 			if (Skip_To_Char(cp, scan_state->end, 'x')) return TOKEN_PAIR;
 			cp = Skip_To_Char(cp, scan_state->end, '.');

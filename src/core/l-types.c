@@ -525,7 +525,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	VAL_TIME(value) = NO_TIME;
 	if (cp >= end) goto end_date;
 
-	if (*cp == '/' || *cp == ' ') {
+	if (*cp == '/' || *cp == 'T' || *cp == ' ') { //@@ Oldes: is the check for space really needed here?
 		sep = *cp++;
 		if (cp >= end) goto end_date;
 		cp = Scan_Time(cp, 0, value);
@@ -535,12 +535,19 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 
 	if (*cp == sep) cp++;
 
+	if (*cp == 'Z') {
+		// 'Z' must be last char in the ISO8601 date (if used).
+		if (++cp == end) goto end_date; // valid timezone 0:0
+		else return 0;
+	}
 	// Time zone can be 12:30 or 1230 (optional hour indicator)
 	if (*cp == '-' || *cp == '+') {
 		if (cp >= end) goto end_date;
 		ep = Grab_Int(cp+1, &num);
 		if (ep-cp == 0) return 0;
 		if (*ep != ':') {
+			// An integer is assumed to be HHMM format
+			// https://github.com/rebol/rebol-issues/issues/1411#issuecomment-170907151
 			int h, m;
 			if (num < -1500 || num > 1500) return 0;
 			h = (num / 100);
