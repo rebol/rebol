@@ -95,6 +95,7 @@
 	REBYTE *bp = &buf[0];
 	REBINT tz;
 	REBYTE dash = GET_MOPT(mold, MOPT_SLASH_DATE) ? '/' : '-';
+	REBOOL iso = GET_MOPT(mold, MOPT_MOLD_ALL);
 	REBVAL val = *value;
 	value = &val;
 
@@ -111,21 +112,30 @@
 	if (VAL_TIME(value) != NO_TIME) Adjust_Date_Zone(value, FALSE);
 
 //	Punctuation[GET_MOPT(mold, MOPT_COMMA_PT) ? PUNCT_COMMA : PUNCT_DOT]
-
-	bp = Form_Int(bp, (REBINT)VAL_DAY(value));
-	*bp++ = dash;
-	memcpy(bp, Month_Names[VAL_MONTH(value)-1], 3);
-	bp += 3;
-	*bp++ = dash;
-	bp = Form_Int_Pad(bp, (REBINT)VAL_YEAR(value), 6, -4, '0');
-	*bp = 0;
-
+	if (iso) {
+		// use ISO8601 output
+		bp = Form_Int_Pad(bp, (REBINT)VAL_YEAR(value), 6, -4, '0');
+		*bp = '-';
+		bp = Form_Int_Pad(++bp, (REBINT)VAL_MONTH(value), 2, -2, '0');
+		*bp = '-';
+		bp = Form_Int_Pad(++bp, (REBINT)VAL_DAY(value), 2, -2, '0');
+		*bp = 0;
+	} else {
+		// use standard Rebol output
+		bp = Form_Int(bp, (REBINT)VAL_DAY(value));
+		*bp++ = dash;
+		memcpy(bp, Month_Names[VAL_MONTH(value) - 1], 3);
+		bp += 3;
+		*bp++ = dash;
+		bp = Form_Int_Pad(bp, (REBINT)VAL_YEAR(value), 6, -4, '0');
+		*bp = 0;
+	}
 	Append_Bytes(mold->series, cs_cast(buf));
 
 	if (VAL_TIME(value) != NO_TIME) {
 
-		Append_Byte(mold->series, '/');
-		Emit_Time(mold, value);
+		Append_Byte(mold->series, iso ? 'T' : '/');
+		Emit_Time(mold, value, iso);
 
 		if (VAL_ZONE(value) != 0) {
 
@@ -138,9 +148,13 @@
 			else
 				*bp++ = '+';
 
-			bp = Form_Int(bp, tz/4);
+			if(iso) {
+				bp = Form_Int_Pad(bp, tz / 4, 2, -2, '0');
+			} else {
+				bp = Form_Int(bp, tz / 4);
+			}
 			*bp++ = ':';
-			bp = Form_Int_Pad(bp, (tz&3) * 15, 2, 2, '0');
+			bp = Form_Int_Pad(bp, (tz & 3) * 15, 2, 2, '0');
 			*bp = 0;
 
 			Append_Bytes(mold->series, cs_cast(buf));

@@ -135,8 +135,11 @@
 
 /***********************************************************************
 **
-*/  void Emit_Time(REB_MOLD *mold, REBVAL *value)
+*/  void Emit_Time(REB_MOLD *mold, REBVAL *value, REBOOL iso)
 /*
+**	NOTE: 'iso' arg is padding hour to two digits.
+**	      It is used only when MOLDing datetime with /ALL refinement.
+**	      In this datetime case hour should not be over 24.
 ***********************************************************************/
 {
 	REB_TIMEF tf;
@@ -144,8 +147,12 @@
 
 	Split_Time(VAL_TIME(value), &tf); // loses sign
 
-	if (tf.s == 0 && tf.n == 0) fmt = "I:2";
-	else fmt = "I:2:2";
+	if(iso) {
+		fmt = "2:2:2";
+	} else {
+		if (tf.s == 0 && tf.n == 0) fmt = "I:2";
+		else fmt = "I:2:2";
+	}
 
 	if (VAL_TIME(value) < (REBI64)0) Append_Byte(mold->series, '-');
 	Emit(mold, fmt, tf.h, tf.m, tf.s, 0);

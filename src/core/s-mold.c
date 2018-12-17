@@ -1095,7 +1095,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_TIME:
 		//len = Emit_Time(value, buf, Punctuation[GET_MOPT(mold, MOPT_COMMA_PT) ? PUNCT_COMMA : PUNCT_DOT]);
-		Emit_Time(mold, value);
+		Emit_Time(mold, value, FALSE);
 		break;
 
 	case REB_DATE:
