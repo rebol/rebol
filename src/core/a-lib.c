@@ -979,7 +979,7 @@ RL_API REBSER* RL_Encode_UTF8_String(void *src, REBCNT len, REBFLG uni, REBFLG o
 	return Encode_UTF8_String(src, len, uni, opts);
 }
 
-RL_API REBSER* RL_Decode_UTF_String(REBYTE *src, REBCNT len, REBINT utf)
+RL_API REBSER* RL_Decode_UTF_String(REBYTE *src, REBCNT len, REBINT utf, REBFLG ccr)
 /*
 **	Decode the UTF8 encoded data into Rebol series.
 **
@@ -989,9 +989,10 @@ RL_API REBSER* RL_Decode_UTF_String(REBYTE *src, REBCNT len, REBINT utf)
 **		src  - UTF8 encoded data
 **		len  - number of source bytes to convert.
 **		utf  - is 0, 8, +/-16, +/-32.
+**		ccr  - Convert LF/CRLF
 */
 {
-	return Decode_UTF_String(src, len, utf);
+	return Decode_UTF_String(src, len, utf, ccr);
 }
 
 

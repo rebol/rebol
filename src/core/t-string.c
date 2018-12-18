@@ -164,7 +164,7 @@ static REBSER *make_string(REBVAL *arg, REBOOL make)
 		default:
 			Trap0(RE_BAD_DECODE);
 		}
-		ser = Decode_UTF_String(bp, len, 8); // UTF-8
+		ser = Decode_UTF_String(bp, len, 8, FALSE); // UTF-8
 	}
 	// MAKE/TO <type> <any-string>
 	else if (ANY_BINSTR(arg)) {

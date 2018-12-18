@@ -919,7 +919,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	REBSER *Decode_UTF_String(REBYTE *bp, REBCNT len, REBINT utf)
+*/	REBSER *Decode_UTF_String(REBYTE *bp, REBCNT len, REBINT utf, REBFLG ccr)
 /*
 **		Do all the details to decode a string.
 **		Input is a byte series. Len is len of input.
@@ -932,7 +932,7 @@ ConversionResult ConvertUTF8toUTF32 (
 	REBSER *dst;
 	REBINT size;
 
-	REBFLG ccr = FALSE; // in original R3-alpha if was TRUE
+	//REBFLG ccr = FALSE; // in original R3-alpha if was TRUE
 	//@@ https://github.com/rebol/rebol-issues/issues/2336
 
 	if (utf == -1) {
