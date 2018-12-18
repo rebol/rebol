@@ -912,6 +912,7 @@ ConversionResult ConvertUTF8toUTF32 (
 /*
 ***********************************************************************/
 {
+	Trap0(RE_BAD_DECODE); // not yet supported 
 	return 0;
 }
 
@@ -946,9 +947,9 @@ ConversionResult ConvertUTF8toUTF32 (
 	else if (utf == -16 || utf == 16) {
 		size = Decode_UTF16((REBUNI*)Reset_Buffer(ser, len/2 + 1), bp, len, utf < 0, TRUE);
 	}
-//	else if (utf == -32 || utf == 32) {
-//		size = Decode_UTF32((REBUNI*)Reset_Buffer(ser, len/4 + 1), bp, len, utf < 0, TRUE);
-//	}
+	else if (utf == -32 || utf == 32) {
+		size = Decode_UTF32((REBUNI*)Reset_Buffer(ser, len/4 + 1), bp, len, utf < 0, TRUE);
+	}
 
 	if (size < 0) {
 		size = -size;
