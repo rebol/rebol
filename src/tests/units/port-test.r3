@@ -54,25 +54,30 @@ Rebol [
 ===end-group===
 
 ===start-group=== "console port"
-	--test-- "query input port"
-		--assert  port? system/ports/input
-		--assert  all [
-			object?  console-info: query system/ports/input
-			integer? console-info/window-cols
-			integer? console-info/window-rows
-			integer? console-info/buffer-cols
-			integer? console-info/buffer-rows
-			;?? console-info
-		]
-		--assert integer? query/mode system/ports/input 'window-cols
-		--assert integer? query/mode system/ports/input 'window-rows
-		--assert integer? query/mode system/ports/input 'buffer-cols
-		--assert integer? query/mode system/ports/input 'buffer-rows
-		--assert [buffer-cols buffer-rows window-cols window-rows]
-						= m: query/mode system/ports/input none
-		--assert block?   v: query/mode system/ports/input m
-		--assert 4 = length? v
+either "true" <> get-env "CONTINUOUS_INTEGRATION" [
+	
+		--test-- "query input port"
+			--assert  port? system/ports/input
+			--assert  all [
+				object?  console-info: query system/ports/input
+				integer? console-info/window-cols
+				integer? console-info/window-rows
+				integer? console-info/buffer-cols
+				integer? console-info/buffer-rows
+				;?? console-info
+			]
+			--assert integer? query/mode system/ports/input 'window-cols
+			--assert integer? query/mode system/ports/input 'window-rows
+			--assert integer? query/mode system/ports/input 'buffer-cols
+			--assert integer? query/mode system/ports/input 'buffer-rows
+			--assert [buffer-cols buffer-rows window-cols window-rows]
+							= m: query/mode system/ports/input none
+			--assert block?   v: query/mode system/ports/input m
+			--assert 4 = length? v
 
+][
+	probe query system/ports/input
+]
 ===end-group===
 
 ~~~end-file~~~
