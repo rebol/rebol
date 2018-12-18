@@ -272,7 +272,11 @@ static void Close_Stdio(void)
 **
 ***********************************************************************/
 {
+#ifdef WIOCGETD
+	puts("========================= DEFINED WIOCGETD");
+#endif
 #ifdef TIOCGWINSZ
+	puts("========================= USING TIOCGWINSZ");
 	struct winsize w;
 	if (ioctl(Std_Out, TIOCGWINSZ, &w) != 0) {
 		req->error = errno;
