@@ -146,7 +146,7 @@
 	}
 	return dst;
 #else
-	return Decode_UTF_String((REBYTE*)src, len, 8);
+	return Decode_UTF_String((REBYTE*)src, len, 8, FALSE);
 #endif
 }
 
