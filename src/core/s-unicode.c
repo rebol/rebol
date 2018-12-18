@@ -932,6 +932,9 @@ ConversionResult ConvertUTF8toUTF32 (
 	REBSER *dst;
 	REBINT size;
 
+	REBFLG ccr = FALSE; // in original R3-alpha if was TRUE
+	//@@ https://github.com/rebol/rebol-issues/issues/2336
+
 	if (utf == -1) {
 		utf = What_UTF(bp, len);
 		if (utf) {
@@ -942,13 +945,13 @@ ConversionResult ConvertUTF8toUTF32 (
 	}
 
 	if (utf == 0 || utf == 8) {
-		size = Decode_UTF8((REBUNI*)Reset_Buffer(ser, len), bp, len, TRUE);
+		size = Decode_UTF8((REBUNI*)Reset_Buffer(ser, len), bp, len, ccr);
 	} 
 	else if (utf == -16 || utf == 16) {
-		size = Decode_UTF16((REBUNI*)Reset_Buffer(ser, len/2 + 1), bp, len, utf < 0, TRUE);
+		size = Decode_UTF16((REBUNI*)Reset_Buffer(ser, len/2 + 1), bp, len, utf < 0, ccr);
 	}
 	else if (utf == -32 || utf == 32) {
-		size = Decode_UTF32((REBUNI*)Reset_Buffer(ser, len/4 + 1), bp, len, utf < 0, TRUE);
+		size = Decode_UTF32((REBUNI*)Reset_Buffer(ser, len/4 + 1), bp, len, utf < 0, ccr);
 	}
 
 	if (size < 0) {

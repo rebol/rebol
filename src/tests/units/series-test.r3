@@ -143,5 +143,16 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "STRING conversion"
+
+--test-- "issues/2336"
+	;@@ https://github.com/rebol/rebol-issues/issues/2336
+	--assert "^M"   = to-string to-binary "^M"
+	--assert "^/"   = to-string to-binary "^/"
+	--assert "^M^/" = to-string to-binary "^M^/"
+	--assert "^/^M" = to-string to-binary "^/^M"
+
+===end-group===
+
 
 ~~~end-file~~~
