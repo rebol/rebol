@@ -51,6 +51,12 @@ Rebol [
 		--assert ["a" ""] = read/lines %tmp.txt
 		delete %tmp.txt
 
+	--test-- "write file result - wish/2337"
+		;@@ https://github.com/rebol/rebol-issues/issues/2337
+		--assert file? write %foo "hello"
+		--assert "hello" = read/string write %foo "hello"
+		delete %foo
+
 ===end-group===
 
 if "true" <> get-env "CONTINUOUS_INTEGRATION" [

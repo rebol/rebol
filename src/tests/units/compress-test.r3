@@ -74,7 +74,7 @@ data: "test test test"
 	--test-- "GZIP codec"
 		--assert  binary? alice: load %units/files/alice29.txt.gz
 		--assert  #{37A087D23C8709E97AA45ECE662FAF3D07006A58} = checksum/method alice 'sha1
-		--assert  port? save %units/files/tmp.gz alice
+		--assert  file? save %units/files/tmp.gz alice
 		--assert  binary? alice: load %units/files/tmp.gz
 		--assert  #{37A087D23C8709E97AA45ECE662FAF3D07006A58} = checksum/method alice 'sha1
 		delete %units/files/tmp.gz

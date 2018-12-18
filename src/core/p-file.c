@@ -482,6 +482,7 @@ REBINT Mode_Syms[] = {
 		}
 
 		if (file->error) Trap1(RE_WRITE_ERROR, path);
+		*D_RET = *path;
 		break;
 
 	case A_OPEN:
