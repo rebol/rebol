@@ -53,9 +53,8 @@ Rebol [
 
 ===end-group===
 
-===start-group=== "console port"
-either "true" <> get-env "CONTINUOUS_INTEGRATION" [
-	
+if "true" <> get-env "CONTINUOUS_INTEGRATION" [
+	===start-group=== "console port"	
 		--test-- "query input port"
 			--assert  port? system/ports/input
 			--assert  all [
@@ -74,10 +73,7 @@ either "true" <> get-env "CONTINUOUS_INTEGRATION" [
 							= m: query/mode system/ports/input none
 			--assert block?   v: query/mode system/ports/input m
 			--assert 4 = length? v
-
-][
-	probe query system/ports/input
+	===end-group===
 ]
-===end-group===
 
 ~~~end-file~~~
