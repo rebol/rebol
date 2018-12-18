@@ -44,6 +44,13 @@ Rebol [
 		--assert [file 51732] = query/mode file [type size]
 		--assert [type: file size: 51732] = query/mode file [type: size:]
 		close file
+
+	--test-- "write/lines - issue/2102"
+		;@@ https://github.com/rebol/rebol-issues/issues/2102
+		write/lines %tmp.txt {a^/}
+		--assert ["a" ""] = read/lines %tmp.txt
+		delete %tmp.txt
+
 ===end-group===
 
 ===start-group=== "console port"

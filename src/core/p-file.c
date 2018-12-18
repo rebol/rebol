@@ -280,6 +280,8 @@ REBINT Mode_Syms[] = {
 ***********************************************************************/
 {
 	REBSER *ser;
+	REBOOL lines = (args & AM_WRITE_LINES) != 0;
+	REBINT n = 0;
 
 	if (IS_BLOCK(data)) {
 		// Form the values of the block
@@ -287,12 +289,22 @@ REBINT Mode_Syms[] = {
 		// into 32K chunks for writing.
 		REB_MOLD mo = {0};
 		Reset_Mold(&mo);
-		if (args & AM_WRITE_LINES) {
-			mo.opts = 1 << MOPT_LINES;
-		}
+		if (lines) mo.opts = 1 << MOPT_LINES;
 		Mold_Value(&mo, data, 0);
 		Set_String(data, mo.series); // fall into next section
 		len = SERIES_TAIL(mo.series);
+	} else if (lines) {
+		// if there was: WRITE/LINES "string"
+		// append temporary CRLF on Windows or LF on Posix
+		// @@ https://github.com/rebol/rebol-issues/issues/2102
+#ifdef TO_WINDOWS
+		Append_Bytes_Len(VAL_SERIES(data), "\r\n", 2);
+		n = 2;
+#else
+		Append_Byte(VAL_SERIES(data), '\n');
+		n = 1;
+#endif
+		len += n;
 	}
 
 	// Auto convert string to UTF-8
@@ -306,6 +318,13 @@ REBINT Mode_Syms[] = {
 	}
 	file->length = len;
 	OS_DO_DEVICE(file, RDC_WRITE);
+	
+	if(n > 0) {
+		// remove the temporary added newline from the series
+		len -= n;
+		SET_STR_END(VAL_SERIES(data), len);
+		VAL_SERIES(data)->tail = len;
+	}
 }
 
 
