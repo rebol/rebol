@@ -139,6 +139,7 @@
 			return R_RET;
 		}
 		if (OS_DO_DEVICE(req, RDC_QUERY) < 0) {
+			if(req->error == 25) return R_NONE; //Inappropriate ioctl for device (not running in terminal) 
 			SET_INTEGER(arg, req->error);
 			Trap1(RE_PROTOCOL, arg);
 			//return R_NONE;
