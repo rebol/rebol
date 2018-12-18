@@ -138,7 +138,11 @@
 			Set_Block(D_RET, Get_Object_Words(spec));
 			return R_RET;
 		}
-		if (OS_DO_DEVICE(req, RDC_QUERY) < 0) return R_NONE;
+		if (OS_DO_DEVICE(req, RDC_QUERY) < 0) {
+			SET_INTEGER(arg, req->error);
+			Trap1(RE_PROTOCOL, arg);
+			//return R_NONE;
+		}
 
 		Ret_Query_Console(req, D_RET, D_ARG(ARG_QUERY_FIELD), spec);
 		break;

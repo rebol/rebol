@@ -463,7 +463,10 @@ static void close_stdio(void)
 ***********************************************************************/
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-	GetConsoleScreenBufferInfo(Std_Out, &csbiInfo);
+	if(0 == GetConsoleScreenBufferInfo(Std_Out, &csbiInfo)) {
+		req->error = GetLastError();
+		return DR_ERROR;
+	}
 	req->console.buffer_rows = csbiInfo.dwSize.Y;
 	req->console.buffer_cols = csbiInfo.dwSize.X;
 	req->console.window_rows = csbiInfo.srWindow.Bottom - csbiInfo.srWindow.Top + 1;
