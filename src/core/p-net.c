@@ -110,7 +110,7 @@ enum Transport_Types {
 
 	*D_RET = *D_ARG(1);
 	arg = D_ARG(2);
-	refs = 0;
+	//refs = 0;
 
 	sock = Use_Port_State(port, RDI_NET, sizeof(*sock));
 	if (proto == TRANSPORT_UDP) {
@@ -195,7 +195,7 @@ enum Transport_Types {
 	case A_READ:
 		// Read data into a buffer, expanding the buffer if needed.
 		// If no length is given, program must stop it at some point.
-		refs = Find_Refines(ds, ALL_READ_REFS);
+		//refs = Find_Refines(ds, ALL_READ_REFS);
 		if (!GET_FLAG(sock->modes, RST_UDP)
 				&& !GET_FLAG(sock->state, RSM_CONNECT))
 			Trap_Port(RE_NOT_CONNECTED, port, -15);

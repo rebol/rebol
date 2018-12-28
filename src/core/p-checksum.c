@@ -41,6 +41,7 @@
 /*
 ***********************************************************************/
 {
+    if(!method) return;
 	switch (VAL_WORD_CANON(method)) {
 		case SYM_MD5:
 			*ctx = sizeof(MD5_CTX);
@@ -74,7 +75,7 @@
 /*
 ***********************************************************************/
 {
-	REBVAL *data = BLK_SKIP(port, STD_PORT_DATA);
+	//REBVAL *data = BLK_SKIP(port, STD_PORT_DATA);
 	REBVAL *ctx  = BLK_SKIP(port, STD_PORT_LOCALS);
 
 	if(!IS_BINARY(ctx)) {
@@ -117,14 +118,16 @@
 	REBCNT  args = 0;
 	REBVAL *data;
 	REBVAL *ctx;
-	REBYTE *temp;
 
 	Validate_Port(port, action);
 
 	spec = BLK_SKIP(port, STD_PORT_SPEC);
 	if (!IS_OBJECT(spec)) Trap1(RE_INVALID_SPEC, spec);
 	method = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
-	if (!method || !IS_WORD(method)) Trap1(RE_INVALID_SPEC, spec);
+    if (!method || !IS_WORD(method)) {
+        Trap1(RE_INVALID_SPEC, spec);
+        return 0; //just to make xcode analyze happy
+    }
 
 	*D_RET = *D_ARG(1);
 
@@ -146,7 +149,6 @@
 		}
 		args = Find_Refines(ds, ALL_WRITE_REFS);
 		arg = D_ARG(2);
-		REBYTE *bin = VAL_BIN_DATA(arg);
 		REBI64  pos = (REBI64)VAL_INDEX(arg);
 		if (args & AM_WRITE_SEEK) {
 			pos += Int64(D_ARG(ARG_WRITE_INDEX));

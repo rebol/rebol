@@ -303,7 +303,7 @@ static struct digest {
 	REBVAL *data    = D_ARG(1);
   //REBOOL ref_part = D_REF(2);
 	REBVAL *length  = D_ARG(3);
-	REBOOL ref_zlib = D_REF(4);
+    REBOOL ref_zlib = D_REF(4);
 	REBOOL ref_gzip = D_REF(5);
 	REBOOL ref_lzma = D_REF(6);
 	REBOOL ref_level= D_REF(7);
@@ -312,6 +312,8 @@ static struct digest {
 	REBSER *ser;
 	REBCNT index;
 	REBCNT len;
+    
+    if ((ref_zlib && (ref_gzip || ref_lzma)) || (ref_gzip && ref_lzma)) Trap0(RE_BAD_REFINES);
 
 	len = Partial1(data, length);
 	ser = Prep_Bin_Str(data, &index, &len); // result may be a SHARED BUFFER!
@@ -351,8 +353,8 @@ static struct digest {
 {
 	REBVAL *data     = D_ARG(1);
   //REBOOL ref_part  = D_REF(2);
-	REBVAL *length   = D_ARG(3);
-	REBOOL ref_zlib  = D_REF(4);
+    REBVAL *length   = D_ARG(3);
+    REBOOL ref_zlib  = D_REF(4);
 	REBOOL ref_gzip  = D_REF(5);
 	REBOOL ref_lzma  = D_REF(6);
 	REBOOL ref_size  = D_REF(7);
@@ -361,7 +363,9 @@ static struct digest {
 	REBINT limit = 0;
 	REBCNT len;
 
-	len = Partial1(D_ARG(1), D_ARG(3));
+    if ((ref_zlib && (ref_gzip || ref_lzma)) || (ref_gzip && ref_lzma)) Trap0(RE_BAD_REFINES);
+    
+	len = Partial1(data, length);
 
 	if (ref_size) limit = Int32s(size, 1); // /limit size
 

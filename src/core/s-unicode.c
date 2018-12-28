@@ -195,10 +195,12 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd);
 #include <stdio.h>
 #endif
 
+#ifdef unused
 static const int halfShift  = 10; /* used for shifting by 10 bits */
 
 static const UTF32 halfBase = 0x0010000UL;
 static const UTF32 halfMask = 0x3FFUL;
+#endif
 
 #define UNI_SUR_HIGH_START  (UTF32)0xD800
 #define UNI_SUR_HIGH_END    (UTF32)0xDBFF
@@ -953,6 +955,9 @@ ConversionResult ConvertUTF8toUTF32 (
 	else if (utf == -32 || utf == 32) {
 		size = Decode_UTF32((REBUNI*)Reset_Buffer(ser, len/4 + 1), bp, len, utf < 0, ccr);
 	}
+    else {
+        return NULL;
+    }
 
 	if (size < 0) {
 		size = -size;
@@ -1170,6 +1175,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 		size = Length_As_UTF8(up, len, TRUE, (REBOOL)ccr);
 		cp = Reset_Buffer(ser, size + (GET_FLAG(opts, ENC_OPT_BOM) ? 3 : 0));
+        UNUSED(cp);
 		Encode_UTF8(Reset_Buffer(ser, size), size, up, &len, TRUE, ccr);
 	}
 	else {

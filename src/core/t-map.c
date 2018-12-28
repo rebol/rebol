@@ -465,7 +465,7 @@
 		break;
 
 	case A_POKE:  // CHECK all pokes!!! to be sure they check args now !!!
-		n = Find_Entry(series, arg, D_ARG(3));
+		Find_Entry(series, arg, D_ARG(3));
 		*D_RET = *D_ARG(3);
 		break;
 

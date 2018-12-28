@@ -253,7 +253,7 @@
 
 	case A_READ:
 		//Trap_Security(flags[POL_READ], POL_READ, path);
-		args = Find_Refines(ds, ALL_READ_REFS);
+		//args = Find_Refines(ds, ALL_READ_REFS);
 		if (!IS_BLOCK(state)) {		// !!! ignores /SKIP and /PART, for now
 			Init_Dir_Path(&dir, path, 1, POL_READ);
 			Set_Block(state, Make_Block(7)); // initial guess

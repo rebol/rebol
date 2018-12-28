@@ -689,7 +689,7 @@ is_none:
 		index += Int32(pvs->select) - 1;
 		if (index >= tail) return PE_NONE;
 		gob = *GOB_SKIP(gob, index);
-		index = 0;
+		//index = 0;
 		VAL_SET(pvs->store, REB_GOB);
 		VAL_GOB(pvs->store) = gob;
 		VAL_GOB_INDEX(pvs->store) = 0;

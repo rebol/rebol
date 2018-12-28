@@ -42,7 +42,7 @@
 	if (mode >= 3) e = deci_is_same(VAL_DECI(a), VAL_DECI(b));
 	else {
 		e = deci_is_equal(VAL_DECI(a), VAL_DECI(b));
-		g = 0;
+		//g = 0;
 		if (mode < 0) {
 			g = deci_is_lesser_or_equal(VAL_DECI(b), VAL_DECI(a));
 			if (mode == -1) e |= g;

@@ -387,9 +387,8 @@
 
 		if (type == REB_TIME) {		// handle TIME - TIME cases
 			REBI64	secs2 = VAL_TIME(arg);
-			REBINT	diff;
-
-			diff = Cmp_Time(val, arg);
+			//REBINT	diff;
+			//diff = Cmp_Time(val, arg);
 			switch (action) {
 
 			case A_ADD:

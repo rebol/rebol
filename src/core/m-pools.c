@@ -616,7 +616,7 @@ clear_header:
 {
 	REBCNT pool_num;
 	REBNOD *node;
-	REBNOD *pnode;
+	//REBNOD *pnode;
 	REBCNT count = 0;
 	REBSEG *seg;
 	REBSER *series;
@@ -655,7 +655,7 @@ clear_header:
 				if ((REBUPT)node > (REBUPT)seg && (REBUPT)node < (REBUPT)seg + (REBUPT)seg->size) break;
 			}
 			if (!seg) goto crash;
-			pnode = node; // for debugger
+			//pnode = node; // for debugger
 		}
 		// The number of free nodes must agree with header:
 		if (
@@ -712,7 +712,7 @@ crash:
 	REBSEG	*seg;
 	REBSER *series;
 	REBCNT count;
-	REBCNT n = 0;
+	//REBCNT n = 0;
 
 	for (seg = Mem_Pools[SERIES_POOL].segs; seg; seg = seg->next) {
 		series = (REBSER *) (seg + 1);

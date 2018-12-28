@@ -125,7 +125,7 @@
 **
 ***********************************************************************/
 {
-	REBUNI c, d;
+	REBUNI c;
 	REBSER *dst;
 	REBCNT i = 0;
 	REBCNT n = 0;
@@ -149,7 +149,7 @@
 		}
 		if (c != '/') {		// %/c or %/c/ but not %/ %// %//c
 			// peek ahead for a '/':
-			d = '/';
+			REBUNI d = '/';
 			if (i < len) d = GET_CHAR_UNI(uni, bp, i);
 			if (d == '/') {	// %/c/ => "c:/"
 				i++;

@@ -226,7 +226,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 /*
 ***********************************************************************/
 {
-	REBCNT dsf = DSF;
+	REBCNT dsf;
 	REBCNT count = 0;
 
 	for (dsf = DSF; dsf > 0; dsf = PRIOR_DSF(dsf)) {

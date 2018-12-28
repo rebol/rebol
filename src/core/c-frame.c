@@ -869,7 +869,6 @@
 	// every block for the rare case adds up.
 
 	// Setup binding table:
-	index = 1;
 	for (index = 1; index < frame->tail; index++) {
 		words = FRM_WORD(frame, index);
 		if (!VAL_GET_OPT(words, OPTS_HIDE))

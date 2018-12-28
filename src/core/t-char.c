@@ -59,7 +59,7 @@
 ***********************************************************************/
 {
 	REBINT	chr = VAL_CHAR(D_ARG(1));
-	REBINT	arg;
+	REBINT	arg = 0;
 	REBVAL	*val;
 
 	if (IS_BINARY_ACT(action)) {
@@ -70,8 +70,10 @@
 			arg = VAL_INT32(val);
 		else if (IS_DECIMAL(val))
 			arg = (REBINT)VAL_DECIMAL(val);
-		else
+        else {
 			Trap_Math_Args(REB_CHAR, action);
+            return R_NONE; // just to make xcode happy
+        }
 	}
 
 	switch (action) {
@@ -87,11 +89,11 @@
 	case A_MULTIPLY: chr *= arg; break;
 	case A_DIVIDE:
 		if (arg == 0) Trap0(RE_ZERO_DIVIDE);
-		chr /= arg;
+		else chr /= arg;
 		break;
 	case A_REMAINDER:
 		if (arg == 0) Trap0(RE_ZERO_DIVIDE);
-		chr %= arg;
+		else chr %= arg;
 		break;
 
 	case A_AND: chr &= (REBUNI)arg; break;

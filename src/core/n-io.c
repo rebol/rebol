@@ -583,63 +583,60 @@ chk_neg:
 	if (D_REF(4)) flag_shell = TRUE;
 	if (D_REF(5)) flag_info = TRUE;
 	if (D_REF(6)) { /* input */
-		REBVAL *param = D_ARG(7);
-		input = param;
-		if (IS_STRING(param)) {
+		input = D_ARG(7);
+		if (IS_STRING(input)) {
 			input_type = STRING_TYPE;
-			os_input = Val_Str_To_OS(param);
-			input_len = VAL_LEN(param);
-		} else if (IS_BINARY(param)) {
+			os_input = Val_Str_To_OS(input);
+			input_len = VAL_LEN(input);
+		} else if (IS_BINARY(input)) {
 			input_type = BINARY_TYPE;
-			os_input = VAL_BIN_DATA(param);
-			input_len = VAL_LEN(param);
-		} else if (IS_FILE(param)) {
-			REBSER *path = Value_To_OS_Path(param, FALSE);
+			os_input = VAL_BIN_DATA(input);
+			input_len = VAL_LEN(input);
+		} else if (IS_FILE(input)) {
+			REBSER *path = Value_To_OS_Path(input, FALSE);
 			input_type = FILE_TYPE;
 			os_input = SERIES_DATA(path);
 			input_len = SERIES_TAIL(path);
-		} else if (IS_NONE(param)) {
+		} else if (IS_NONE(input)) {
 			input_type = NONE_TYPE;
 		} else {
-			Trap_Arg(param);
+			Trap_Arg(input);
 		}
 	}
 
 	if (D_REF(8)) { /* output */
-		REBVAL *param = D_ARG(9);
-		output = param;
-		if (IS_STRING(param)) {
+		output = D_ARG(9);
+		if (IS_STRING(output)) {
 			output_type = STRING_TYPE;
-		} else if (IS_BINARY(param)) {
+		} else if (IS_BINARY(output)) {
 			output_type = BINARY_TYPE;
-		} else if (IS_FILE(param)) {
-			REBSER *path = Value_To_OS_Path(param, FALSE);
+		} else if (IS_FILE(output)) {
+			REBSER *path = Value_To_OS_Path(output, FALSE);
 			output_type = FILE_TYPE;
 			os_output = SERIES_DATA(path);
 			output_len = SERIES_TAIL(path);
-		} else if (IS_NONE(param)) {
+		} else if (IS_NONE(output)) {
 			output_type = NONE_TYPE;
 		} else {
-			Trap_Arg(param);
+			Trap_Arg(output);
 		}
 	}
 
 	if (D_REF(10)) { /* err */
-		REBVAL *param = D_ARG(11);
-		err = param;
-		if (IS_STRING(param)) {
+		err = D_ARG(11);
+		if (IS_STRING(err)) {
 			err_type = STRING_TYPE;
-		} else if (IS_BINARY(param)) {
+		} else if (IS_BINARY(err)) {
 			err_type = BINARY_TYPE;
-		} else if (IS_FILE(param)) {
-			REBSER *path = Value_To_OS_Path(param, FALSE);
+		} else if (IS_FILE(err)) {
+			REBSER *path = Value_To_OS_Path(err, FALSE);
 			err_type = FILE_TYPE;
 			os_err = SERIES_DATA(path);
 			err_len = SERIES_TAIL(path);
-		} else if (IS_NONE(param)) {
+		} else if (IS_NONE(err)) {
 			err_type = NONE_TYPE;
 		} else {
-			Trap_Arg(param);
+			Trap_Arg(err);
 		}
 	}
 
@@ -1115,7 +1112,7 @@ chk_neg:
 		case SYM_PID:
 			if (set) {
 				pid = val;
-				REBVAL *arg = val;
+				//REBVAL *arg = val;
 				if (IS_INTEGER(val)) {
 					ret = OS_KILL(VAL_INT32(pid));
 				} else if (IS_BLOCK(val)) {
@@ -1133,7 +1130,7 @@ chk_neg:
 						Trap_Arg(sig);
 					}
 					ret = OS_SEND_SIGNAL(VAL_INT32(pid), VAL_INT32(sig));
-					arg = sig;
+					//arg = sig;
 				} else {
 					Trap_Arg(val);
 				}

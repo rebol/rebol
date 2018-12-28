@@ -345,7 +345,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	}
 
 	if (len > MAX_NUM_LEN) return 0; // prevent buffer overflow
-	len = 0;
+	//len = 0;
 	bp = buf;
 
 	// Strip leading signs:
@@ -367,7 +367,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	*bp = 0;
 
 	// Too many digits?
-	len = bp - &buf[0];
+	len = (REBCNT)(bp - &buf[0]);
 	if (neg) len--;
 	if (len > 19) return 0;
 
@@ -785,7 +785,7 @@ end_date:
 	const REBYTE *ep, *xp;
 	REBYTE buf[MAX_NUM_LEN+4];
 
-	ep = cp;
+	//ep = cp;
 	//ep = Grab_Int(ep, &n);
 	ep = Scan_Dec_Buf(cp, MAX_NUM_LEN, &buf[0]);
 	if (!ep) return 0;

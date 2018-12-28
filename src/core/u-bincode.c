@@ -144,7 +144,7 @@ system/standard/bincode: make object! [
 	REBVAL *val_into  = D_ARG(9);
 
     REBVAL *ret = D_RET;
-	REBVAL *buf;
+	//REBVAL *buf;
 	REBSER *bin, *bin_new;
 	REBSER *obj;
 	REBVAL *buffer_write;
@@ -153,7 +153,7 @@ system/standard/bincode: make object! [
 	REBYTE *cp, *bp, *ep;
 	REBCNT n, count, index, tail, tail_new;
 	i32 i, len;
-	u64 u;
+	//u64 u;
 
 	REBVAL *value, *next;
 	REBVAL *data;
@@ -243,10 +243,10 @@ system/standard/bincode: make object! [
 	} else {
 		if (!IS_OBJECT(val_ctx)) Trap_Arg(val_ctx);
 
-		obj = VAL_OBJ_FRAME(val_ctx);
-		bin = VAL_SERIES(VAL_OBJ_VALUE(val_ctx, BINCODE_WRITE));
+		//obj = VAL_OBJ_FRAME(val_ctx);
+		//bin = VAL_SERIES(VAL_OBJ_VALUE(val_ctx, BINCODE_WRITE));
 
-		obj = VAL_OBJ_FRAME(val_ctx);
+		//obj = VAL_OBJ_FRAME(val_ctx);
 		buffer_write = VAL_OBJ_VALUE(val_ctx, BINCODE_WRITE);
 		buffer_read  = VAL_OBJ_VALUE(val_ctx, BINCODE_READ);
 		bin = VAL_SERIES(buffer_write);

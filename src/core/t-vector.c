@@ -464,10 +464,10 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 {
 	REBSER *vect;
 	REBINT n;
-	REBINT dims;
+	//REBINT dims;
 	REBINT bits;
 	REBYTE *vp;
-	REBI64 i;
+	REBI64 i = 0;
 	REBDEC f = 0.0;
 
 	if (IS_INTEGER(pvs->select) || IS_DECIMAL(pvs->select)) {
@@ -481,7 +481,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	vect = VAL_SERIES(pvs->value);
 	vp   = vect->data;
 	bits = VECT_TYPE(vect);
-	dims = vect->size >> 8;
+	//dims = vect->size >> 8;
 
 	if (pvs->setval == 0) {
 

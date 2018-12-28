@@ -91,7 +91,7 @@
 /*
 ***********************************************************************/
 {
-	REBFLG is_not = 0;
+	//REBFLG is_not = 0;
 	
 	if (IS_BLOCK(data)) {
 		REBINT len = Find_Max_Bit(data);
@@ -518,15 +518,15 @@ found:
 /*
 ***********************************************************************/
 {
-	REBYTE *data = 0;
+	//REBYTE *data = 0;
 	REBVAL *value = D_ARG(1);
 	REBVAL *arg = D_ARG(2);
 	REBSER *ser;
 	REBINT len;
 	REBINT diff;
 
-	if (action != A_MAKE && action != A_TO)
-		data = VAL_BIT_DATA(value);
+	//if (action != A_MAKE && action != A_TO)
+	//	data = VAL_BIT_DATA(value);
 
 	// Check must be in this order (to avoid checking a non-series value);
 	if (action >= A_TAKE && action <= A_SORT && IS_PROTECT_SERIES(VAL_SERIES(value)))

@@ -47,7 +47,7 @@
 {
 	REBREQ *req;
 	REBINT result;
-	REBVAL *arg = D_ARG(2);
+    REBVAL *arg;
 	REBSER *ser;
 	REBCNT args = 0;
 	REBVAL *spec;

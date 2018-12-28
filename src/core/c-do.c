@@ -153,7 +153,7 @@ static REBVAL *Func_Word(REBINT dsf)
 /*
 ***********************************************************************/
 {
-	REBCNT dsf = DSF;
+	REBCNT dsf;
 
 	for (dsf = DSF; dsf > 0; dsf = PRIOR_DSF(dsf)) {
 		if (n-- <= 0) return DS_VALUE(dsf);
@@ -2211,8 +2211,7 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 /*
 ***********************************************************************/
 {
-	REBINT result = 0;
-	//REBVAL *val;
+	//REBINT result = 0;
 	REBOL_STATE state;
 	REBVAL *val;
 //	int MERGE_WITH_Do_String;
@@ -2248,8 +2247,8 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 		Saved_State = Halt_State;
 
 		val = Do_Sys_Func(SYS_CTX_START, 0); // what if script contains a HALT?
-
-		if (IS_INTEGER(val)) result = VAL_INT32(val);
+        UNUSED(val);
+		//if (IS_INTEGER(val)) result = VAL_INT32(val);
 		//if (Try_Block_Halt(VAL_SERIES(ROOT_SCRIPT), 0)) {
 
 		//DS_Base[state.dsp+1] = *val;

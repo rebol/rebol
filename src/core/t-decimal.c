@@ -226,7 +226,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 	REBVAL  *arg;
 	REBDEC  d2;
 	REBINT  num;
-	REBDEC  exp;
+	REBDEC  exp = 0;
 	REBINT  type = 0;
 
 	// all binary actions
@@ -406,7 +406,8 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 
 					if (IS_INTEGER(++arg)) exp = (REBDEC)VAL_INT64(arg);
 					else if (IS_DECIMAL(arg) || IS_PERCENT(val)) exp = VAL_DECIMAL(arg);
-					else Trap_Make(REB_DECIMAL, arg);
+                    else Trap_Make(REB_DECIMAL, arg);
+                    
 					while (exp >= 1)            // funky. There must be a better way
 						exp--, d1 *= 10.0, Check_Overflow(d1);
 					while (exp <= -1)

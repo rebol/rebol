@@ -899,7 +899,7 @@ RL_API int RL_Set_Field(REBSER *obj, u32 word, RXIARG val, int type)
 **		type - datatype of value
 */
 {
-	REBVAL value = {0};
+	//REBVAL value = {0};
 	if (!(word = Find_Word_Index(obj, word, FALSE))) return 0;
 	if (VAL_PROTECTED(FRM_WORDS(obj)+word)) return 0; //	Trap1(RE_LOCKED_WORD, word);
 	RXI_To_Value(FRM_VALUES(obj)+word, val, type);

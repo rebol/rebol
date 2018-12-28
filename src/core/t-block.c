@@ -209,7 +209,6 @@ static void No_Nones(REBVAL *arg) {
 	// Length of target (may modify index): (arg can be anything)
 	rlen = (REBINT)Partial1((action == A_CHANGE) ? block : arg, DS_ARG(AN_LENGTH));
 
-	index = VAL_INDEX(block);
 	if (action == A_APPEND || index > tail) index = tail;
 
 	// Check /PART, compute LEN:

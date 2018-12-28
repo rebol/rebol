@@ -244,6 +244,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	// Do an expression:
 	case REB_PAREN:
 		item = Do_Block_Value_Throw(item); // might GC
+        UNUSED(item);
 		// old: if (IS_ERROR(item)) Throw_Error(VAL_ERR_OBJECT(item));
         index = MIN(index, series->tail); // may affect tail
 		break;
@@ -310,7 +311,8 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	// Do an expression:
 	case REB_PAREN:
 		item = Do_Block_Value_Throw(item); // might GC
-		// old: if (IS_ERROR(item)) Throw_Error(VAL_ERR_OBJECT(item));
+        UNUSED(item);
+        // old: if (IS_ERROR(item)) Throw_Error(VAL_ERR_OBJECT(item));
         index = MIN(index, series->tail); // may affect tail
 		break;
 
@@ -674,7 +676,7 @@ bad_target:
 	REBSER *ser;
 	REBFLG flags;
 	REBCNT cmd;
-	REBVAL *rule_head = rules;
+	//REBVAL *rule_head = rules;
 
 	CHECK_STACK(&flags);
 	//if (depth > MAX_PARSE_DEPTH) Trap_Word(RE_LIMIT_HIT, SYM_PARSE, 0);

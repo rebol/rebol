@@ -442,7 +442,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 **
 ***********************************************************************/
 {
-	REBVAL *val = BLK_HEAD(VAL_FUNC_BODY(value));
+	REBVAL *val;
 	REBEXT *ext;
 	REBCNT cmd;
 	REBCNT argc;
