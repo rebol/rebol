@@ -84,7 +84,7 @@ REBDEV *Devices[RDI_LIMIT] =
 	&Dev_Event,
 	&Dev_Net,
 	&Dev_DNS,
-	&Dev_Checksum,
+	0,//&Dev_Checksum,
 #ifndef MIN_OS
 	&Dev_Clipboard,
 #else
