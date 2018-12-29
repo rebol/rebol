@@ -141,8 +141,13 @@ These are now obsolete (as of A107) and should be removed:
 #define MIN_OS					// not all devices are working
 #define NO_GRAPHICS				// no graphics yet
 #define AGG_FREETYPE            //use freetype2 library for fonts by default
-#define FINITE finite
 #define INLINE
+
+#ifdef TO_OSX_X64
+#define FINITE isfinite
+#else
+#define FINITE finite
+#endif
 
 #ifndef TO_HAIKU
 // Unsupported by gcc 2.95.3-haiku-121101
