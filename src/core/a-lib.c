@@ -170,7 +170,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
-*/	RL_API void RL_Reset()
+*/	RL_API void RL_Reset(void)
 /*
 **	Reset REBOL (not implemented)
 **

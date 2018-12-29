@@ -60,6 +60,7 @@
 #include <time.h>
 #include <string.h>
 #include <errno.h>
+#include <signal.h>  //for kill
 
 #ifndef timeval // for older systems
 #include <sys/time.h>
@@ -142,7 +143,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 /***********************************************************************
 **
-*/	REBINT OS_Get_PID()
+*/	REBINT OS_Get_PID(void)
 /*
 **		Return the current process ID
 **
@@ -153,7 +154,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 /***********************************************************************
 **
-*/	REBINT OS_Get_UID()
+*/	REBINT OS_Get_UID(void)
 /*
 **		Return the real user ID
 **
@@ -186,7 +187,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 /***********************************************************************
 **
-*/	REBINT OS_Get_GID()
+*/	REBINT OS_Get_GID(void)
 /*
 **		Return the real group ID
 **
@@ -219,7 +220,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 /***********************************************************************
 **
-*/	REBINT OS_Get_EUID()
+*/	REBINT OS_Get_EUID(void)
 /*
 **		Return the effective user ID
 **
@@ -252,7 +253,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 /***********************************************************************
 **
-*/	REBINT OS_Get_EGID()
+*/	REBINT OS_Get_EGID(void)
 /*
 **		Return the effective group ID
 **

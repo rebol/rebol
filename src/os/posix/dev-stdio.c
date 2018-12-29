@@ -70,7 +70,7 @@ typedef struct term_data {
 
 STD_TERM *Term_IO;
 
-extern STD_TERM *Init_Terminal();
+extern STD_TERM *Init_Terminal(void);
 extern void Quit_Terminal(STD_TERM*);
 extern int  Read_Line(STD_TERM*, char*, int);
 #endif
