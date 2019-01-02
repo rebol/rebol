@@ -46,6 +46,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h> //for read and write
+#include <errno.h>
+
+#include "reb-c.h"
 
 //#define TEST_MODE  // teset as stand-alone program
 
@@ -57,16 +60,18 @@
 #include <termios.h>
 #endif
 
-#define FALSE 0
-#define TRUE (0==0)
 
-enum {
-	BEL =   7,
-	BS  =   8,
-	LF  =  10,
-	CR  =  13,
-	ESC =  27,
-	DEL = 127,
+// Just by looking at the first byte of a UTF-8 character sequence, you can
+// tell how many additional bytes it will require.
+static const char trailingBytesForUTF8[256] = {
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+	2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, 3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5
 };
 
 // Configuration:
@@ -75,27 +80,34 @@ enum {
 #define MAX_HISTORY  300	// number of lines stored
 
 // Macros: (does not use reb-c.h)
-#define MAKE_STR(l) (char*)malloc(l)
 #define WRITE_CHAR(s)    if(-1==write(STDOUT_FILENO, s, 1)){}
 #define WRITE_CHARS(s,l) if(-1==write(STDOUT_FILENO, s, l)){}
 #define WRITE_STR(s)     if(-1==write(STDOUT_FILENO, s, strlen(s))){}
+
+#define CHAR_LEN(c) (1 + trailingBytesForUTF8[c])
+
+#define STEP_FORWARD(term) term->pos += 1 + trailingBytesForUTF8[term->buffer[term->pos]];
+#define STEP_BACKWARD(term) do {--term->pos;} while ((term->buffer[term->pos] & 0xC0) == 0x80);
+// Stepping backwards in UTF8 just means to keep going back so long
+// as you are looking at a byte with bit 7 set and bit 6 clear:
+// https://stackoverflow.com/a/22257843/211160
 
 #define DBG_INT(t,n) //printf("\r\ndbg[%s]: %d\r\n", t, (n));
 #define DBG_STR(t,s) //printf("\r\ndbg[%s]: %s\r\n", t, (s));
 
 typedef struct term_data {
-	char *buffer;
-	char *residue;
-	char *out;
+	unsigned char *buffer;
+	unsigned char *residue;
+	unsigned char *out;
 	int pos;
 	int end;
 	int hist;
 } STD_TERM;
 
 // Globals:
-static int  Term_Init = 0;			// Terminal init was successful
-static char **Line_History;		// Prior input lines
-static int Line_Count;			// Number of prior lines
+static int  Term_Init = 0;			 // Terminal init was successful
+static unsigned char **Line_History; // Prior input lines
+static int Line_Count;               // Number of prior lines
 
 #ifndef NO_TTY_ATTRIBUTES
 static struct termios Term_Attrs;	// Initial settings, restored on exit
@@ -136,11 +148,11 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 #endif
 
 	// Setup variables:
-	Line_History = (char**)malloc((MAX_HISTORY+2) * sizeof(char*));
-	Line_History[0] = "";
+	Line_History = (unsigned char**)MAKE_MEM((MAX_HISTORY+2) * sizeof(char*));
+	Line_History[0] = (unsigned char*)"";
 	Line_Count = 1;
 
-	term = malloc(sizeof(*term));
+	term = MAKE_NEW(*term);
 	memset(term, 0, sizeof(*term));
 	term->buffer = MAKE_STR(TERM_BUF_LEN);
 	term->buffer[0] = 0;
@@ -181,14 +193,34 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 
 /***********************************************************************
 **
-*/	static void Write_Char(char c, int n)
+*/static int Get_UTF8_Chars(unsigned char *buffer, int byte_count)
+/*
+**      Count number of characters (not bytes) of a UTF-8 string.
+**      Used to count number of BS chars needed to clear the line,
+**      or set cursor position
+**      Note: does not checks char's validity
+**
+***********************************************************************/
+{
+	int i, char_count = 0;
+	for(i = 0 ; i < byte_count ; i++)
+		if ((buffer[i] & 0xC0) != 0x80)
+			char_count++;
+	
+	return char_count;
+}
+
+
+/***********************************************************************
+**
+*/	static void Write_Char(unsigned char c, int n)
 /*
 **		Write out repeated number of chars.
 **		Unicode: not used
 **
 ***********************************************************************/
 {
-	char buf[4];
+	unsigned char buf[4];
 
 	buf[0] = c;
 	for (; n > 0; n--) WRITE_CHAR(buf);
@@ -206,12 +238,12 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 {
 	term->buffer[term->end] = 0;
 	term->out = MAKE_STR(term->end + 1);
-	strcpy(term->out, term->buffer);
+	COPY_STR(term->out, term->buffer, term->end + 1);
 
 	// If max history, drop older lines (but not [0] empty line):
 	if (Line_Count >= MAX_HISTORY) {
-		free(Line_History[1]);
-		memmove(Line_History+1, Line_History+2, (MAX_HISTORY-2)*sizeof(char*));
+		FREE_MEM(Line_History[1]);
+		MOVE_MEM(Line_History+1, Line_History+2, (MAX_HISTORY-2)*sizeof(char*));
 		Line_Count = MAX_HISTORY-1;
 	}
 
@@ -226,7 +258,6 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 **		Set the current buffer to the contents of the history
 **		list at its current position. Clip at the ends.
 **		Return the history line index number.
-**		Unicode: ok
 **
 ***********************************************************************/
 {
@@ -243,24 +274,45 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 	}
 	else {
 		// Fetch prior line:
-		strcpy(term->buffer, Line_History[term->hist]);
-		term->pos = term->end = strlen(term->buffer);
+		term->pos = term->end = (int)LEN_STR(Line_History[term->hist]);
+		COPY_STR(term->buffer, Line_History[term->hist], term->end);
 	}
 }
 
 
 /***********************************************************************
 **
-*/	static void Clear_Line(STD_TERM *term)
+*/	static void Clear_Line(STD_TERM *term, int back)
 /*
-**		Clear all the chars from the current position to the end.
-**		Reset cursor to current position.
-**		Unicode: not used
+**		Clear all characters from the current position to the end or head.
 **
 ***********************************************************************/
 {
-	Write_Char(' ', term->end - term->pos); // wipe prior line
-	Write_Char(BS, term->end - term->pos); // return to position
+	int bytes, chars;
+	bytes = term->end - term->pos;
+	if (back) {
+		Write_Char(BS, Get_UTF8_Chars(term->buffer, term->pos));
+		chars = Get_UTF8_Chars(term->buffer, term->end); // all chars
+		Write_Char(' ', chars);
+		Write_Char(BS, chars); // return to position
+		
+		if (bytes > 0) {
+			MOVE_MEM(term->buffer, term->buffer + term->pos, bytes);
+			WRITE_CHARS(term->buffer, bytes);
+			chars = Get_UTF8_Chars(term->buffer, bytes); // from cursor to head
+			Write_Char(BS, chars);
+		}
+		term->end = bytes;
+		term->pos = 0;
+	} else {
+		// from cursor to end
+		chars = Get_UTF8_Chars(term->buffer + term->pos, bytes);
+		Write_Char(' ', chars); // wipe prior line
+		Write_Char(BS, chars); // return to position
+		term->buffer[term->end + 1] = 0;
+		term->end = term->pos;
+	}
+
 }
 
 
@@ -269,11 +321,10 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 */	static void Home_Line(STD_TERM *term)
 /*
 **		Reset cursor to home position.
-**		Unicode: not used
 **
 ***********************************************************************/
 {
-	Write_Char(BS, term->pos);
+	Write_Char(BS, Get_UTF8_Chars(term->buffer, term->pos));
 	term->pos = 0;
 }
 
@@ -283,7 +334,6 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 */	static void End_Line(STD_TERM *term)
 /*
 **		Move cursor to end position.
-**		Unicode: not used
 **
 ***********************************************************************/
 {
@@ -304,7 +354,6 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 **		Extra blanks can be specified to erase chars off end.
 **		If blanks is negative, stay at end of line.
 **		Reset the cursor back to current position.
-**		Unicode: ok
 **
 ***********************************************************************/
 {
@@ -327,34 +376,47 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 	}
 
 	Write_Char(' ', blanks);
-	Write_Char(BS, blanks + len); // return to position or end
+	Write_Char(BS, blanks + Get_UTF8_Chars(term->buffer+term->pos, len)); // return to position or end
 }
 
 
 /***********************************************************************
 **
-*/	static char *Insert_Char(STD_TERM *term, char *cp)
+*/	static unsigned char *Insert_Char(STD_TERM *term, unsigned char *cp)
 /*
 **		Insert a char at the current position. Adjust end position.
 **		Redisplay the line.
-**		Unicode: not yet supported!
 **
 ***********************************************************************/
 {
 	//printf("\r\nins pos: %d end: %d ==", term->pos, term->end);
-	if (term->end < TERM_BUF_LEN-1) { // avoid buffer overrun
+    if (*cp < 32 && *cp != '\t') {
+        // ignore not-printable characters except TAB
+        Write_Char(BEL, 1); // bell
+        return ++cp;
+    }
+	int bytes = 1 + trailingBytesForUTF8[*cp];
+	if (term->end < TERM_BUF_LEN-bytes) { // avoid buffer overrun
 
 		if (term->pos < term->end) { // open space for it:
-			memmove(term->buffer + term->pos + 1, term->buffer + term->pos, 1 + term->end - term->pos);
+			MOVE_MEM(
+				term->buffer + term->pos + bytes,
+				term->buffer + term->pos,
+				bytes + term->end - term->pos
+			);
 		}
-		WRITE_CHAR(cp);
-		term->buffer[term->pos] = *cp;
-		term->end++;
-		term->pos++;
+		do {
+			WRITE_CHAR(cp);
+			term->buffer[term->pos] = *cp;
+			term->end++;
+			term->pos++;
+			++cp;
+		} while (--bytes > 0);
+
 		Show_Line(term, 0);
 	}
 
-	return ++cp;
+	return cp;
 }
 
 
@@ -364,22 +426,23 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 /*
 **		Delete a char at the current position. Adjust end position.
 **		Redisplay the line. Blank out extra char at end.
-**		Unicode: not yet supported!
 **
 ***********************************************************************/
 {
-	int len;
+	int encoded_len, len;
 
 	if ( (term->pos == term->end) && back == 0) return; //Ctrl-D at EOL
-   
-	if (back) term->pos--;
+	if ( term->pos == 0 && back ) return; // backspace at beginning of line
 
-	len = 1 + term->end - term->pos;
+	if (back) STEP_BACKWARD(term);
+
+	encoded_len = 1 + trailingBytesForUTF8[term->buffer[term->pos]];
+	len = encoded_len + term->end - term->pos;
 
 	if (term->pos >= 0 && len > 0) {
-		memmove(term->buffer + term->pos, term->buffer + term->pos + 1, len);
+		MOVE_MEM(term->buffer + term->pos, term->buffer + term->pos + encoded_len, len);
 		if (back) Write_Char(BS, 1);
-		term->end--;
+		term->end -= encoded_len;
 		Show_Line(term, 1);
 	}
 	else term->pos = 0;
@@ -391,20 +454,75 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 */	static void Move_Cursor(STD_TERM *term, int count)
 /*
 **		Move cursor right or left by one char.
-**		Unicode: not yet supported!
 **
 ***********************************************************************/
 {
 	if (count < 0) {
 		if (term->pos > 0) {
-			term->pos--;
+			STEP_BACKWARD(term);
 			Write_Char(BS, 1);
 		}
 	}
 	else {
 		if (term->pos < term->end) {
-			WRITE_CHAR(term->buffer + term->pos);
-			term->pos++;
+			int encoded_len = CHAR_LEN(term->buffer[term->pos]);
+			WRITE_CHARS(term->buffer + term->pos, encoded_len);
+			term->pos += encoded_len;
+		}
+	}
+}
+
+/***********************************************************************
+**
+*/    static void Move_Cursor_To_Boundary(STD_TERM *term, int back)
+/*
+**        Move cursor right or left to word boundary.
+**
+***********************************************************************/
+{
+	int pos;
+	if (back) {
+		if (term->pos == 0) return;
+		if (term->buffer[term->pos-1] == ' ') {
+			for(;term->pos > 0;){
+				STEP_BACKWARD(term);
+				Write_Char(BS, 1);
+				if(term->buffer[term->pos] != ' ') break;
+			}
+		}
+		for(;term->pos > 0;){
+			pos = term->pos;
+			STEP_BACKWARD(term);
+			if(term->buffer[term->pos] == ' ') {
+				term->pos = pos;
+				break;
+			}
+			Write_Char(BS, 1);
+		}
+	}
+	else {
+		if (term->pos == term->end) return;
+		if (term->buffer[term->pos] == ' ') {
+			for(;term->pos < term->end;){
+				pos = term->pos;
+				STEP_FORWARD(term);
+				if(pos > term->end) {
+					term->pos = pos;
+					break;
+				}
+				WRITE_CHARS(term->buffer + pos, term->pos - pos);
+				if(term->buffer[term->pos] != ' ') break;
+			}
+		}
+		for(;term->pos < term->end;){
+			pos = term->pos;
+			STEP_FORWARD(term);
+			if(pos > term->end) {
+				term->pos = pos;
+				break;
+			}
+			WRITE_CHARS(term->buffer + pos, term->pos - pos);
+			if(term->buffer[term->pos] == ' ') break;
 		}
 	}
 }
@@ -412,11 +530,10 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 
 /***********************************************************************
 **
-*/	static char *Process_Key(STD_TERM *term, char *cp)
+*/	static unsigned char *Process_Key(STD_TERM *term, unsigned char *cp)
 /*
 **		Process the next key. If it's an edit key, perform the
 **		necessary editing action. Return position of next char.
-**		Unicode: not yet supported!
 **
 ***********************************************************************/
 {
@@ -424,13 +541,18 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 
 	if (*cp == 0) return cp;
 
-	// No UTF-8 yet
-	if (*cp < 0) *cp = '?';
-
 	if (*cp == ESC) {
 		// Escape sequence:
 		cp++;
-		if (*cp == '[' || *cp == 'O') {
+		if (*cp == 0) {
+			// escape key
+			WRITE_STR("[ESC]\n");
+			term->buffer[0] = '\n';
+			term->buffer[1] = 0;
+			term->pos = 1;
+			return cp;
+		}
+		else if (*cp == '[' || *cp == 'O') {
 
 			// Special key:
 			switch (*++cp) {
@@ -482,17 +604,24 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 			}
 		}
 		else {
-			switch (*++cp) {
+			switch (*cp) {
 			case 'H':	// home
 				Home_Line(term);
 				break;
 			case 'F':	// end
 				End_Line(term);
 				break;
+			case 'b':   // opt + left_arrow
+				Move_Cursor_To_Boundary(term, TRUE);
+				break;
+			case 'f':   // opt + right_arrow
+				Move_Cursor_To_Boundary(term, FALSE);
+				break;
 			default:
 				// Q: what other keys do we want to support ?!
-				WRITE_STR("[ESC]");
-				cp--;
+				Write_Char(BEL, 1); // bell
+				//WRITE_STR("[ESC]");
+				//cp--;
 			}
 		}
 	}
@@ -527,7 +656,14 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 		case 6:	// CTRL-F
 			Move_Cursor(term, 1);
 			break;
-
+		case 11: // CTRL-K -> clear line from current position to end
+			Clear_Line(term, FALSE);
+			break;
+		case 21: // CTRL-U
+			Clear_Line(term, TRUE);
+			break;
+		case 23: // CTRL-W -> delete word backwards
+			// not implemented yet
 		default:
 			cp = Insert_Char(term, cp);
 			cp--;
@@ -540,7 +676,7 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 
 /***********************************************************************
 **
-*/	static int Read_Bytes(STD_TERM *term, char *buf, int len)
+*/	static int Read_Bytes(STD_TERM *term, unsigned char *buf, int len)
 /*
 **		Read the next "chunk" of data into the terminal buffer.
 **
@@ -550,10 +686,10 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 
 	// If we have leftovers:
 	if (term->residue[0]) {
-		end = strlen(term->residue);
+		end = (int)LEN_BYTES(term->residue);
 		if (end < len) len = end;
-		strncpy(buf, term->residue, len); // terminated below
-		memmove(term->residue, term->residue+len, end-len); // remove
+		COPY_STR(buf, term->residue, len); // terminated below
+		MOVE_MEM(term->residue, term->residue+len, end-len); // remove
 		term->residue[end-len] = 0;
 	}
 	else {
@@ -561,10 +697,14 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 		// We assume that escape-sequences are always complete in buf.
 		// (No partial escapes.) If this is not true, then we will need
 		// to add an additional "collection" loop here.
-		if ((len = read(STDIN_FILENO, buf, len)) < 0) {
-			WRITE_STR("\r\nI/O terminated\r\n");
-			Quit_Terminal(term); // something went wrong
-			exit(100);
+		if ((len = (int)read(STDIN_FILENO, buf, len)) < 0) {
+			if(errno == EINTR) {
+				len = 0;
+			} else {
+				WRITE_STR("\r\nI/O terminated\r\n");
+				Quit_Terminal(term); // something went wrong
+				exit(100);
+			}
 		}
 	}
 
@@ -587,9 +727,9 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 **
 ***********************************************************************/
 {
-	char buf[READ_BUF_LEN];
-	char *cp;
-	char *pp;
+	unsigned char buf[READ_BUF_LEN];
+	unsigned char *cp;
+	unsigned char *pp;
 	int len;		// length of IO read
 	int line_end_reached = 0;
 
@@ -601,6 +741,13 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 	do {
 		Read_Bytes(term, buf, READ_BUF_LEN-2);
 		for (cp = buf; *cp;) {
+			if (cp[0] == ESC && cp[1] == 0) {
+				// escape key
+				WRITE_STR("[ESC]\n");
+				result[0] = LF;
+				result[1] = 0;
+				return 2;
+			}
 			pp = cp;
 			cp = Process_Key(term, cp);
 			if(pp[0] == CR || pp[0] == LF) {
@@ -612,14 +759,14 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 
 	// Not at end of input? Save any unprocessed chars:
 	if (*cp) {
-		if (strlen(term->residue) + strlen(cp) < TERM_BUF_LEN-1) // avoid overrun
-			strcat(term->residue, cp);
+		if (LEN_STR(term->residue) + LEN_STR(cp) < TERM_BUF_LEN-1) // avoid overrun
+			strcat(s_cast(term->residue), s_cast(cp));
 	}
 
 	// Fill the output buffer:
-	len = strlen(term->out);
+	len = (int)LEN_STR(term->out);
 	if (len >= limit-1) len = limit-2;
-	strncpy(result, term->out, limit);
+	COPY_STR(result, term->out, limit);
 	result[len++] = LF;
 	result[len] = 0;
 
