@@ -399,6 +399,8 @@ static void *Task_Ready;
 	if (!ok) COPY_STR(str, TEXT("unknown error"), len);
 	else {
 		COPY_STR(str, lpMsgBuf, len);
+		len = (int)LEN_STR(str);
+		if (str[len-2] == '\r' && str[len-1] == '\n') str[len-2] = 0; // trim CRLF
 		LocalFree(lpMsgBuf);
 	}
 	return str;
