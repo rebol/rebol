@@ -22,6 +22,9 @@ func: funco [
 	make function! copy/deep reduce [spec body] ; (now it deep copies)
 ]
 
+;- Shortcut for home directory
+~: system/options/home
+
 ; Quick test runner (temporary):
 run-tests: qt: function["Runs quick test"][
 	if any [
