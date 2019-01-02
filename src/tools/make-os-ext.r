@@ -58,7 +58,7 @@ memit: func [d /nol] [
 ]
 
 count: func [s c /local n] [
-	if find ["()" "(void)"] s [return "()"]
+	if find ["()" "(void)"] s [return "(void)"]
 	out: copy "(a"
 	n: 1
 	while [s: find/tail s c][
