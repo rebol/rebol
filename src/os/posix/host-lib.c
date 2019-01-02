@@ -1285,7 +1285,7 @@ static int Try_Browser(char *browser, REBCHR *url)
             if (0 > waitpid(pid, &status, WUNTRACED)) {
                 result = FALSE;
             } else {
-                printf("status: %i WIFEXITED: %i WEXITSTATUS: %i\n", status, WIFEXITED(status), WEXITSTATUS(status) );
+                //printf("status: %i WIFEXITED: %i WEXITSTATUS: %i\n", status, WIFEXITED(status), WEXITSTATUS(status) );
                 result = WIFEXITED(status)
 					&& (WEXITSTATUS(status) == 0);
             }
