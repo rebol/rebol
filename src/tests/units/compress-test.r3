@@ -82,35 +82,38 @@ data: "test test test"
 ===end-group===
 
 ===start-group=== "LZMA compression / decompression"
-
 	--test-- "LZMA compress/decompress"
+	either error? e: try [compress/lzma "test"][
+		;-- LZMA compression is not available in current build
+		--assert  'feature-na = e/id
+	][	
 		--assert  data = to string! decompress/lzma compress/lzma data
 
-	--test-- "LZMA compress/decompress while specifing level of compression"
-		--assert (compress/lzma/level ""   0) =
-		#{5D00400000000000000000000000}
-		--assert (compress/lzma/level data 0) =
-		#{5D00400000003A194ACE1CFB1CD99000000E000000}
-		--assert  data = to string! decompress/lzma compress/lzma/level data 0
-		--assert  data = to string! decompress/lzma compress/lzma/level data 1
-		--assert  data = to string! decompress/lzma compress/lzma/level data 2
-		--assert  data = to string! decompress/lzma compress/lzma/level data 3
-		--assert  data = to string! decompress/lzma compress/lzma/level data 4
-		--assert  data = to string! decompress/lzma compress/lzma/level data 5
-		--assert  data = to string! decompress/lzma compress/lzma/level data 6
-		--assert  data = to string! decompress/lzma compress/lzma/level data 7
-		--assert  data = to string! decompress/lzma compress/lzma/level data 8
-		--assert  data = to string! decompress/lzma compress/lzma/level data 9
+		--test-- "LZMA compress/decompress while specifing level of compression"
+			--assert (compress/lzma/level ""   0) =
+			#{5D00400000000000000000000000}
+			--assert (compress/lzma/level data 0) =
+			#{5D00400000003A194ACE1CFB1CD99000000E000000}
+			--assert  data = to string! decompress/lzma compress/lzma/level data 0
+			--assert  data = to string! decompress/lzma compress/lzma/level data 1
+			--assert  data = to string! decompress/lzma compress/lzma/level data 2
+			--assert  data = to string! decompress/lzma compress/lzma/level data 3
+			--assert  data = to string! decompress/lzma compress/lzma/level data 4
+			--assert  data = to string! decompress/lzma compress/lzma/level data 5
+			--assert  data = to string! decompress/lzma compress/lzma/level data 6
+			--assert  data = to string! decompress/lzma compress/lzma/level data 7
+			--assert  data = to string! decompress/lzma compress/lzma/level data 8
+			--assert  data = to string! decompress/lzma compress/lzma/level data 9
 
-	--test-- "LZMA decompression with specified uncompressed size"
-		bin: compress/lzma data
-		--assert  #{74657374} = decompress/lzma/size bin 4
+		--test-- "LZMA decompression with specified uncompressed size"
+			bin: compress/lzma data
+			--assert  #{74657374} = decompress/lzma/size bin 4
 
-	--test-- "LZMA compression when input is limited"
-		--assert  #{74657374} = decompress/lzma compress/lzma/part data 4
-		--assert  #{74657374} = decompress/lzma compress/lzma/part skip data 5 4
-		--assert  #{74657374} = decompress/lzma compress/lzma/part tail data -4
-		
+		--test-- "LZMA compression when input is limited"
+			--assert  #{74657374} = decompress/lzma compress/lzma/part data 4
+			--assert  #{74657374} = decompress/lzma compress/lzma/part skip data 5 4
+			--assert  #{74657374} = decompress/lzma compress/lzma/part tail data -4
+	]
 ===end-group===
 
 
