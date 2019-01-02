@@ -188,7 +188,7 @@
 	REBVAL	*arg;
 	REBYTE	*vp = NULL;
 	REBYTE	*ap = NULL;
-	REBINT	len;
+	REBINT	len = 0;
 	REBINT	alen;
 	REBINT	v;
 	REBINT	a;

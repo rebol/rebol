@@ -206,7 +206,7 @@ static void Close_Stdio(void)
 			//FLUSH();
 		//}
 
-		req->actual = total;
+		req->actual = (u32)total;
 	}
 
 	if (Std_Echo) {

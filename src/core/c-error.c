@@ -206,7 +206,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 /***********************************************************************
 **
-*/	void Trap_Stack()
+*/	void Trap_Stack(void)
 /*
 ***********************************************************************/
 {
@@ -222,7 +222,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 /***********************************************************************
 **
-*/	REBCNT Stack_Depth()
+*/	REBCNT Stack_Depth(void)
 /*
 ***********************************************************************/
 {

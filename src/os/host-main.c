@@ -86,7 +86,7 @@ extern void Init_Ext_Test(void);	// see: host-ext-test.c
 extern void Open_StdIO(void);
 extern void Close_StdIO(void);
 extern void Put_Str(REBYTE *buf);
-extern REBYTE *Get_Str();
+extern REBYTE *Get_Str(void);
 
 void Host_Crash(char *reason) {
 	OS_Crash(cb_cast("REBOL Host Failure"), cb_cast(reason));

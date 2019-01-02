@@ -61,7 +61,7 @@ REBREQ *req;		//!!! move this global
 
 /***********************************************************************
 **
-*/	REBVAL *Append_Event()
+*/	REBVAL *Append_Event(void)
 /*
 **		Append an event to the end of the current event port queue.
 **		Return a pointer to the event value.

@@ -51,7 +51,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	static void Assert_Basics()
+*/	static void Assert_Basics(void)
 /*
 ***********************************************************************/
 {
@@ -434,7 +434,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	void Init_UType_Proto()
+*/	void Init_UType_Proto(void)
 /*
 **		Create prototype func object for UTypes.
 **
@@ -560,7 +560,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	static void Init_System_Object()
+*/	static void Init_System_Object(void)
 /*
 **		The system object is defined in boot.r.
 **
@@ -627,7 +627,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	static void Init_Contexts_Object()
+*/	static void Init_Contexts_Object(void)
 /*
 ***********************************************************************/
 {
@@ -715,7 +715,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	static void Init_Codecs()
+*/	static void Init_Codecs(void)
 /*
 ***********************************************************************/
 {

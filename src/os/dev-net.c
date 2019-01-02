@@ -214,7 +214,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 		return DR_ERROR;
 	}
 
-	sock->socket = result;
+	sock->socket = (int)result;
 	SET_FLAG(sock->state, RSM_OPEN);
 
 	// Set socket to non-blocking async mode:
