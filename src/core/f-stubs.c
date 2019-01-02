@@ -864,6 +864,10 @@
 **
 */	REBVAL *Make_OS_Error(int errnum)
 /*
+**      Creates Rebol string from error number.
+**      If errnum is zero, the number of last error will be resolved
+**      using system functions.
+**
 ***********************************************************************/
 {
 	REBCHR str[100];

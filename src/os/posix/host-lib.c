@@ -420,6 +420,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 **
 ***********************************************************************/
 {
+    if (!errnum) errnum = errno;
 	strerror_r(errnum, s_cast(str), len);
 	return str;
 }
@@ -1280,9 +1281,14 @@ static int Try_Browser(char *browser, REBCHR *url)
 			exit(1);
 			break;
 		default:
-			waitpid(pid, &status, WUNTRACED);
-			result = WIFEXITED(status)
+            sleep(1); // needed else WEXITSTATUS sometimes reports value 127
+            if (0 > waitpid(pid, &status, WUNTRACED)) {
+                result = FALSE;
+            } else {
+                printf("status: %i WIFEXITED: %i WEXITSTATUS: %i\n", status, WIFEXITED(status), WEXITSTATUS(status) );
+                result = WIFEXITED(status)
 					&& (WEXITSTATUS(status) == 0);
+            }
 	}
 
 	return result;
