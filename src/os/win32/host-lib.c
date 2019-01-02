@@ -1199,6 +1199,8 @@ input_error:
 **
 */	int OS_Browse(REBCHR *url, int reserved)
 /*
+**		Return FALSE on error else TRUE (like on Posix)
+**
 ***********************************************************************/
 {
 	#define MAX_BRW_PATH 2044
@@ -1211,7 +1213,7 @@ input_error:
 	int exit_code = 0;
 
 	if (RegOpenKeyEx(HKEY_CLASSES_ROOT, TEXT("http\\shell\\open\\command"), 0, KEY_READ, &key) != ERROR_SUCCESS)
-		return 0;
+		return FALSE;
 
 	if (!url) url = TEXT("");
 
@@ -1222,7 +1224,7 @@ input_error:
 	RegCloseKey(key);
 	if (flag != ERROR_SUCCESS) {
 		FREE_MEM(path);
-		return 0;
+		return FALSE;
 	}
 	//if (ExpandEnvironmentStrings(&str[0], result, len))
 
@@ -1237,7 +1239,7 @@ input_error:
 							INHERIT_TYPE, NULL, NULL); /* u32 err_type, void **err, u32 *err_len */
 
 	FREE_MEM(path);
-	return len;
+	return (len < 0) ? FALSE : TRUE;
 }
 
 
