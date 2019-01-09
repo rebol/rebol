@@ -63,7 +63,7 @@ clean-path: func [
 ]
 
 input: function [
-	{Inputs a string from the console. New-line character is removed.}
+	{Inputs a string from the console.}
 ;	/hide "Mask input with a * character"
 ][
 	if any [
@@ -72,9 +72,7 @@ input: function [
 	][
 		system/ports/input: open [scheme: 'console]
 	]
-	line: to-string read system/ports/input
-	trim/with line newline
-	line
+	to string! read system/ports/input
 ]
 
 ask: func [

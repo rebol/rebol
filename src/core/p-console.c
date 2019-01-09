@@ -79,39 +79,15 @@
 		req->data = BIN_HEAD(ser);
 		req->length = SERIES_AVAIL(ser);
 
-#ifdef nono
-		// Is the buffer large enough?
-		req->length = SERIES_AVAIL(ser); // space available
-		if (req->length < OUT_BUF_SIZE/2) Extend_Series(ser, OUT_BUF_SIZE);
-		req->length = SERIES_AVAIL(ser);
-
-		// Don't make buffer too large:  Bug #174   ?????
-		if (req->length > 1024) req->length = 1024;  //???
-		req->data = STR_TAIL(ser); // write at tail  //???
-		if (SERIES_TAIL(ser) == 0) req->actual = 0;  //???
-#endif
-
 		result = OS_DO_DEVICE(req, RDC_READ);
 		if (result < 0) Trap_Port(RE_READ_ERROR, port, req->error);
 
-#ifdef nono
-		// Does not belong here!!
-		// Remove or replace CRs:
-		result = 0;
-		for (n = 0; n < req->actual; n++) {
-			chr = GET_ANY_CHAR(ser, n);
-			if (chr == CR) {
-				chr = LF;
-				// Skip LF if it follows:
-				if ((n+1) < req->actual &&
-					LF == GET_ANY_CHAR(ser, n+1)) n++;
-			}
-			SET_ANY_CHAR(ser, result, chr);
-			result++;
-		}
+#ifdef TO_WINDOWS
+		if (req->actual > 1) req->actual -= 2; // remove CRLF from tail
+#else
+		if (req->actual > 0) req->actual -= 1; // remove LF from tail
 #endif
-		// Another copy???
-		//Set_String(ds, Copy_OS_Str((void *)(ser->data), result));
+
 		Set_Binary(ds, Copy_Bytes(req->data, req->actual));
 		break;
 
