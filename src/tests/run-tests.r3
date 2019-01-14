@@ -29,6 +29,7 @@ dt [ ;- delta time
 	wrap load %units/series-test.r3
 	wrap load %units/compress-test.r3
 	wrap load %units/date-test.r3
+	wrap load %units/image-test.r3
 
 	recycle/torture
 	recycle

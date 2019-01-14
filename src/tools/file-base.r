@@ -52,6 +52,7 @@ core: [
 	n-control.c
 	n-crypt.c
 	n-data.c
+	n-image.c
 	n-io.c
 	n-loop.c
 	n-math.c
