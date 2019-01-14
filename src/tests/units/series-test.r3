@@ -67,6 +67,17 @@ Rebol [
 ;	--assert none? find/part "abcd" "bc" 2
 ;	--assert none? find/part/any "abcd" "*c" 2
 
+--test-- "FIND char in string"
+	str: "a,b"
+	--assert ",b" = find str #","
+	--assert ",b" = find/reverse tail str #","
+	--assert "b"  = find/tail str #","
+	--assert "b"  = find/tail/reverse tail str #","
+	--assert "b"  = find str #"b"
+	--assert "b"  = find str #"B"
+	--assert "b"  = find/case str #"b"
+	--assert none?  find/case str #"B"
+
 --test-- https://github.com/rebol/rebol-issues/issues/66
 	--assert none? find/skip [1 2 3 4 5 6] 2 3
 

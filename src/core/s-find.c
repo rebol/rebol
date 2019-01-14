@@ -523,8 +523,10 @@
 		c1 = GET_ANY_CHAR(ser, index);
 		if (uncase && c1 < UNICODE_CASES) c1 = LO_CASE(c1);
 
-		if (c1 == c2) return index;
-
+		if (c1 == c2) {
+			if GET_FLAG(flags, ARG_FIND_TAIL - 1) index++;
+			return index;
+		}
 		if GET_FLAG(flags, ARG_FIND_MATCH-1) break;
 	}
 
