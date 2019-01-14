@@ -188,7 +188,7 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 			}
 			top_stack--;
 			rp = colortab + 3 * *top_stack;
-			*dp++ = rp[2] | (rp[1] << 8) | (rp[0] << 16);
+			*dp++ = TO_PIXEL_COLOR(rp[0], rp[1], rp[2], 0xff);
 			x++;
 		}
 		if (interlaced) {

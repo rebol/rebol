@@ -374,8 +374,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 						c = *cp++ & 0xff;
 					}
 					color = &ctab[(c&x) != 0];
-					*dp++ = ((int)color->rgbRed << 16) |
-							((int)color->rgbGreen << 8) | color->rgbBlue;
+					*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
 					x >>= 1;
 				}
 				i = (w+7) / 8;
@@ -394,8 +393,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 						goto error;
 					}
 					color = &ctab[x];
-					*dp++ = ((int)color->rgbRed << 16) |
-							((int)color->rgbGreen << 8) | color->rgbBlue;
+					*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
 				}
 				i = (w+1) / 2;
 				break;
@@ -408,18 +406,13 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 						goto error;
 					}
 					color = &ctab[c];
-					*dp++ = ((int)color->rgbRed << 16) |
-							((int)color->rgbGreen << 8) | color->rgbBlue;
+					*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
 				}
 				break;
 
 			case 24:
 				for (i = 0; i<w; i++) {
-#ifdef ENDIAN_BIG
-					*dp++=cp[0]|(cp[1]<<8)|(cp[2]<<16);
-#else
-					*dp++ = (*(int *)cp) & 0xffffffL;
-#endif
+					*dp++ = TO_PIXEL_COLOR(cp[2], cp[1], cp[0], 0xff);
 					cp += 3;
 				}
 				i = w * 3;
@@ -455,8 +448,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 						}
 						else
 							color = &ctab[x&0x0f];
-						*dp++ = ((int)color->rgbRed << 16) |
-							((int)color->rgbGreen << 8) | color->rgbBlue;
+						*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
 					}
 					j = (c+1) / 2;
 					while (j++%2)
@@ -473,8 +465,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 							color = &ctab[x&0x0f];
 						else
 							color = &ctab[x>>4];
-						*dp++ = ((int)color->rgbRed << 16) |
-							((int)color->rgbGreen << 8) | color->rgbBlue;
+						*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
 					}
 				}
 			}
@@ -496,8 +487,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 					for (j = 0; j<c; j++) {
 						x = *cp++ & 0xff;
 						color = &ctab[x];
-						*dp++ = ((int)color->rgbRed << 16) |
-							((int)color->rgbGreen << 8) | color->rgbBlue;
+						*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
 					}
 					while (j++ % 2)
 						cp++;
@@ -506,8 +496,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 					x = *cp++ & 0xff;
 					for (j = 0; j<c; j++) {
 						color = &ctab[x];
-						*dp++ = ((int)color->rgbRed << 16) |
-							((int)color->rgbGreen << 8) | color->rgbBlue;
+						*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
 					}
 				}
 			}
@@ -537,8 +526,8 @@ error:
 {
 	REBINT i, y;
 	REBINT w, h;
-	REBYTE *cp;
-	REBCNT *dp, v;
+	REBYTE *cp, *v;
+	REBCNT *dp;
 	BITMAPFILEHEADER bmfh;
 	BITMAPINFOHEADER bmih;
 
@@ -575,10 +564,10 @@ error:
 
 	for (y = 0; y<h; y++) {
 		for (i = 0; i<w; i++) {
-			v = *dp++;
-			cp[0] = v & 0xff;
-			cp[1] = (v >> 8) & 0xff;
-			cp[2] = (v >> 16) & 0xff;
+			v = (REBYTE*)dp++;
+			cp[0] = v[C_B];
+			cp[1] = v[C_G];
+			cp[2] = v[C_R];
 			cp += 3;
 		}
 		i = w * 3;

@@ -26,16 +26,10 @@
 **  Notes:
 **
 ***********************************************************************/
-/*
-**  It's a bit of a shame that alpha channels are represented with
-**  an inverted level compared to many standards. Alpha zero must
-**  be opaque in order for RGB tuples to be equal RGBA tuples.
-**  That is: 10.20.30 = 10.20.30.0
-*/
 
 #include "sys-core.h"
 
-#define CLEAR_IMAGE(p, x, y) memset(p, 0, x * y * sizeof(u32))
+#define CLEAR_IMAGE(p, x, y) memset(p, 0xFF, x * y * sizeof(u32))
 
 
 /***********************************************************************
@@ -91,7 +85,10 @@
 	dp[C_R] = tup[0];
 	dp[C_G] = tup[1];
 	dp[C_B] = tup[2];
-	if (VAL_TUPLE_LEN(tuple) > 3) dp[C_A] = tup[3];
+	if (VAL_TUPLE_LEN(tuple) > 3)
+		dp[C_A] = tup[3];
+	else
+		dp[C_A] = 0xff;
 }
 
 
@@ -119,9 +116,10 @@
 /*
 ***********************************************************************/
 {
-	if (only) // only RGB, do not touch Alpha
+	if (only) {// only RGB, do not touch Alpha
+		color &= 0xffffff;
 		for (; len > 0; len--, ip++) *ip = (*ip & 0xff000000) | color;
-	else
+	} else
 		for (; len > 0; len--) *ip++ = color;
 }
 
@@ -239,11 +237,11 @@
 {
 	if (len > (REBINT)size) len = size; // avoid over-run
 
-	// Convert from BGRA format to internal image (integer):
+	// Convert from RGBA format to internal image (integer):
 	for (; len > 0; len--, rgba += 4, bin += 4) {
-		rgba[C_B] = bin[0];
+		rgba[C_R] = bin[0];
 		rgba[C_G] = bin[1];
-		rgba[C_R] = bin[2];
+		rgba[C_B] = bin[2];
 		if (!only) rgba[C_A] = bin[3];
 	}
 }
@@ -313,18 +311,19 @@
 
 /***********************************************************************
 **
-*/	void Image_To_BGRA(REBYTE *rgba, REBYTE *bin, REBINT len)
+*/	void Image_To_RGBA(REBYTE *rgba, REBYTE *bin, REBINT len)
 /*
 ***********************************************************************/
 {
-	// Convert from BGRA format to internal image (integer):
+	// Convert from internal image (integer) to RGBA binary order:
 	for (; len > 0; len--, rgba += 4, bin += 4) {
-		bin[0] = rgba[C_B];
+		bin[0] = rgba[C_R];
 		bin[1] = rgba[C_G];
-		bin[2] = rgba[C_R];
+		bin[2] = rgba[C_B];
 		bin[3] = rgba[C_A];
 	}
 }
+
 
 #ifdef ndef
 INLINE REBCNT ARGB_To_BGR(REBCNT i)
@@ -346,7 +345,8 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	REBCNT len;
 	REBCNT size;
 	REBCNT *data;
-
+	REBYTE* pixel;
+	
 	Emit(mold, "IxI #{", VAL_IMAGE_WIDE(value), VAL_IMAGE_HIGH(value));
 
 	// Output RGB image:
@@ -355,8 +355,9 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	up = Prep_Uni_Series(mold, (size * 6) + ((size - 1) / 10) + 1);
 
 	for (len = 0; len < size; len++) {
+		pixel = (REBYTE*)data++;
 		if ((len % 10) == 0) *up++ = LF;
-		up = Form_RGB_Uni(up, *data++);
+		up = Form_RGB_Uni(up, TO_RGBA_COLOR(pixel[C_R], pixel[C_G], pixel[C_B], pixel[C_A]));
 	}
 
 	// Output Alpha channel, if it has one:
@@ -386,13 +387,11 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 {
 	REBSER *ser;
 
-#ifdef XENDIAN_BIG
-	ser = Make_Quad(0, VAL_IMAGE_LEN(image));
-	ser->tail = VAL_IMAGE_LEN(image) * 4;
-	Image_To_BGRA(VAL_IMAGE_DATA(image), QUAD_HEAD(ser), VAL_IMAGE_LEN(image));
-#else
-	ser = Copy_Bytes(VAL_IMAGE_DATA(image), VAL_IMAGE_LEN(image)*4);
-#endif
+	REBINT len;
+	len = VAL_IMAGE_LEN(image) * 4;
+	ser = Make_Binary(len);
+	SERIES_TAIL(ser) = len;
+	Image_To_RGBA(VAL_IMAGE_DATA(image), QUAD_HEAD(ser), VAL_IMAGE_LEN(image));
 	return ser;
 }
 
@@ -417,7 +416,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	img = Make_Series(w * h + 1, sizeof(u32), FALSE);
 	LABEL_SERIES(img, "make image");
 	img->tail = w * h;
-	CLEAR(img->data, (img->tail + 1) * sizeof(u32));
+	CLEAR_IMAGE(img->data, w, h);
 	IMG_WIDE(img) = w;
 	IMG_HIGH(img) = h;
 	return img;
@@ -486,7 +485,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		}
 	}
 	else if (IS_TUPLE(block)) {
-		Fill_Rect((REBCNT *)ip, TO_COLOR_TUPLE(block), w, w, h, TRUE);
+		Fill_Rect((REBCNT *)ip, TO_PIXEL_TUPLE(block), w, w, h, VAL_TUPLE_LEN(block) == 3);
 		block++;
 		if (IS_INTEGER(block)) {
 			Fill_Alpha_Rect((REBCNT *)ip, (REBYTE)VAL_INT32(block), w, w, h);
@@ -628,7 +627,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	if (action == A_INSERT) {
 		if (index > tail) index = tail;
 		Expand_Series(VAL_SERIES(value), index, dup * part);
-		CLEAR(VAL_BIN(value) + (index * 4), dup * part * 4);
+		CLEAR_IMAGE(VAL_BIN(value) + (index * 4), dup, part);
 		Reset_Height(value);
 		tail = VAL_TAIL(value);
 		only = 0;
@@ -648,9 +647,9 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 				Fill_Alpha_Line(ip, (REBYTE)n, dup);
 		} else if (IS_TUPLE(arg)) { // RGB
 			if (IS_PAIR(count)) // rectangular fill
-				Fill_Rect((REBCNT *)ip, TO_COLOR_TUPLE(arg), w, dupx, dupy, only);
+				Fill_Rect((REBCNT *)ip, TO_PIXEL_TUPLE(arg), w, dupx, dupy, only);
 			else
-				Fill_Line((REBCNT *)ip, TO_COLOR_TUPLE(arg), dup, only);
+				Fill_Line((REBCNT *)ip, TO_PIXEL_TUPLE(arg), dup, only);
 		}
 	} else if (IS_IMAGE(arg)) {
 		Copy_Rect_Data(value, x, y, partx, party, arg, 0, 0); // dst dx dy w h src sx sy
@@ -719,7 +718,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	if (IS_TUPLE(arg)) {
 		only = (REBOOL)(VAL_TUPLE_LEN(arg) < 4);
 		if (D_REF(5)) only = TRUE; // /only flag
-		p = Find_Color(ip, TO_COLOR_TUPLE(arg), len, only);
+		p = Find_Color(ip, TO_PIXEL_TUPLE(arg), len, only);
 	} else if (IS_INTEGER(arg)) {
 		n = VAL_INT32(arg);
 		if (n < 0 || n > 255) Trap_Range(arg);
@@ -762,7 +761,7 @@ find_none:
 	p = (REBCNT *)VAL_IMAGE_HEAD(v);
 	i = VAL_IMAGE_WIDE(v)*VAL_IMAGE_HIGH(v);
 	for(; i > 0; i--) {
-		if (*p++ & 0xff000000) {
+		if (~*p++ & 0xff000000) {
 //			if (save) VAL_IMAGE_TRANSP(v) = VITT_ALPHA;
 			return TRUE;
 		}
@@ -1183,7 +1182,7 @@ is_true:
 	len = MAX(len, 0);
 	src = VAL_IMAGE_DATA(data);
 
-	if (IS_PAIR(sel)) n = (VAL_PAIR_Y_INT(sel) * VAL_IMAGE_WIDE(data) + VAL_PAIR_X_INT(sel)) + 1;
+	if (IS_PAIR(sel)) n = ((VAL_PAIR_Y_INT(sel)-1) * VAL_IMAGE_WIDE(data) + (VAL_PAIR_X_INT(sel)-1)) + 1;
 	else if (IS_INTEGER(sel)) n = VAL_INT32(sel);
 	else if (IS_DECIMAL(sel)) n = (REBINT)VAL_DECIMAL(sel);
 	else if (IS_LOGIC(sel))   n = (VAL_LOGIC(sel) ? 1 : 2);
@@ -1229,11 +1228,11 @@ is_true:
 
 			case SYM_RGB:
 				if (IS_TUPLE(val)) {
-					Fill_Line((REBCNT *)src, TO_COLOR_TUPLE(val), len, 1);
+					Fill_Line((REBCNT *)src, TO_PIXEL_TUPLE(val), len, 1);
 				} else if (IS_INTEGER(val)) {
 					n = VAL_INT32(val);
 					if (n < 0 || n > 255) return PE_BAD_RANGE;
-					Fill_Line((REBCNT *)src, TO_COLOR(n,n,n,0), len, 1);
+					Fill_Line((REBCNT *)src, TO_PIXEL_COLOR(n,n,n,0xff), len, 1);
 				} else if (IS_BINARY(val)) {
 					Bin_To_RGB(src, len, VAL_BIN_DATA(val), VAL_LEN(val) / 3);
 				} else return PE_BAD_SET;

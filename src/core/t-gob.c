@@ -68,6 +68,7 @@ const REBCNT Gob_Flag_Words[] = {
 	CLEAR(gob, sizeof(REBGOB));
 	GOB_W(gob) = 100;
 	GOB_H(gob) = 100;
+	GOB_ALPHA(gob) = 255;
 	USE_GOB(gob);
 	if ((GC_Ballast -= Mem_Pools[GOB_POOL].wide) <= 0) SET_SIGNAL(SIG_RECYCLE);
 	return gob;

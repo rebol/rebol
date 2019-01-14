@@ -263,6 +263,7 @@ typedef void(*CFUNC)(void *);
 #define MAKE_NEW(s)     malloc(sizeof(s))
 #define FREE_MEM(m)     free(m)
 #define CLEAR(m, s)     memset((void*)(m), 0, s);
+#define CLEAR_WTH(m, s, v)     memset((void*)(m), v, s);
 #define CLEARS(m)       memset((void*)(m), 0, sizeof(*m));
 #define COPY_MEM(t,f,l) memcpy((void*)(t), (void*)(f), l)
 #define MOVE_MEM(t,f,l) memmove((void*)(t), (void*)(f), l)
@@ -294,6 +295,55 @@ typedef void(*CFUNC)(void *);
 #define MAKE_STR(n) (REBCHR*)(malloc((n) * sizeof(REBCHR)))  // OS chars!
 
 #define ROUND_TO_INT(d) (REBINT)(floor((d) + 0.5))
+
+
+/***********************************************************************
+**
+**  Color Macros
+**
+***********************************************************************/
+//global pixelformat setup for REBOL image!, image loaders, color handling, tuple! conversions etc.
+//the graphics compositor code should rely on this setting(and do specific conversions if needed)
+//notes:
+//TO_RGBA_COLOR always returns 32bit RGBA value, converts R,G,B,A components to native RGBA order
+//TO_PIXEL_COLOR must match internal image! datatype byte order, converts R,G,B,A components to native image format
+// C_R, C_G, C_B, C_A Maps color components to correct byte positions for image! datatype byte order
+
+#ifdef ENDIAN_BIG
+
+#define TO_RGBA_COLOR(r,g,b,a) (REBCNT)((r)<<24 | (g)<<16 | (b)<<8 |  (a))
+
+//ARGB pixelformat used on big endian systems
+#define C_A 0
+#define C_R 1
+#define C_G 2
+#define C_B 3
+
+#define TO_PIXEL_COLOR(r,g,b,a) (REBCNT)((a)<<24 | (r)<<16 | (g)<<8 |  (b))
+
+#else
+
+#define TO_RGBA_COLOR(r,g,b,a) (REBCNT)((a)<<24 | (b)<<16 | (g)<<8 |  (r))
+
+//we use RGBA pixelformat on Android
+#ifdef TO_ANDROID_ARM
+#define C_R 0
+#define C_G 1
+#define C_B 2
+#define C_A 3
+#define TO_PIXEL_COLOR(r,g,b,a) (REBCNT)((a)<<24 | (b)<<16 | (g)<<8 |  (r))
+#else
+//BGRA pixelformat is used on Windows
+#define C_B 0
+#define C_G 1
+#define C_R 2
+#define C_A 3
+#define TO_PIXEL_COLOR(r,g,b,a) (REBCNT)((a)<<24 | (r)<<16 | (g)<<8 |  (b))
+#endif
+
+#endif
+
+
 
 //
 // CASTING MACROS
