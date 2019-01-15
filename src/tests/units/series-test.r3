@@ -208,6 +208,10 @@ Rebol [
 	--assert 1 = v/1
 	--assert 3 = v/3
 
+--test-- "LOAD/MOLD on vector"
+	--assert v = load mold/all v
+	--assert v = do load mold v
+
 ===end-group===
 
 ~~~end-file~~~
