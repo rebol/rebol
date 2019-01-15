@@ -195,6 +195,11 @@ Rebol [
 	b2: random b1
 	--assert same? b1 b2
 
+--test-- "Some vector! formats are invalid"
+	;@@ https://github.com/rebol/rebol-issues/issues/350
+	--assert error? try [make vector! [- decimal! 32]]
+	--assert error? try [make vector! [- integer! 32]]
+
 ===end-group===
 
 ~~~end-file~~~
