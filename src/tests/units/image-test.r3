@@ -111,7 +111,7 @@ Rebol [
 ~~~end-file~~~
 
 ;clean up
-error? try [
-	delete %units/files/test.png
-	delete %units/files/test.bmp
-]
+foreach file [
+	%units/files/test.png
+	%units/files/test.bmp
+][	error? try [delete file] ]
