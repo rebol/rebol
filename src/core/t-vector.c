@@ -211,9 +211,9 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 			VAL_SET(val, (type >= VTSF08) ? REB_DECIMAL : REB_INTEGER);
 			VAL_INT64(val) = get_vect(type, data, n); // can be int or decimal
 		}
+		SET_END(val);
 	}
 
-	SET_END(val);
 	ser->tail = len;
 
 	return ser;

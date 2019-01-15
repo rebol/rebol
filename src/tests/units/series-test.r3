@@ -166,4 +166,11 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "VECTOR"
+
+--test-- "issue/2346"
+	--assert [] = to-block make vector! 0
+
+===end-group===
+
 ~~~end-file~~~
