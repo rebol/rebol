@@ -200,6 +200,14 @@ Rebol [
 	--assert error? try [make vector! [- decimal! 32]]
 	--assert error? try [make vector! [- integer! 32]]
 
+--test-- "FIRST, LAST on vector"
+	;@@ https://github.com/rebol/rebol-issues/issues/459
+	v: make vector! [integer! 8 [1 2 3]]
+	--assert 1 = first v
+	--assert 3 = last v
+	--assert 1 = v/1
+	--assert 3 = v/3
+
 ===end-group===
 
 ~~~end-file~~~
