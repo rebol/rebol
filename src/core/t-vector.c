@@ -168,7 +168,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 		val = VAL_BLK_DATA(blk);
 
 		for (; NOT_END(val); val++) {
-			if (IS_INTEGER(val)) {
+			if (IS_INTEGER(val) || IS_CHAR(val)) {
 				i = VAL_INT64(val);
 				if (bits > VTUI64) f = (REBDEC)(i);
 			}
