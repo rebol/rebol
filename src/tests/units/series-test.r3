@@ -186,6 +186,15 @@ Rebol [
 	--assert  0 = v/1
 	--assert 98 = v/5
 
+--test-- "Random shuffle of vector vs. block"
+	;@@ https://github.com/rebol/rebol-issues/issues/947
+	v1: make vector! [integer! 32 5 [1 2 3 4 5]]
+	v2: random v1
+	--assert same? v1 v2
+	b1: [1 2 3 4 5]
+	b2: random b1
+	--assert same? b1 b2
+
 ===end-group===
 
 ~~~end-file~~~
