@@ -212,6 +212,12 @@ Rebol [
 	--assert v = load mold/all v
 	--assert v = do load mold v
 
+--test-- "Conversion from VECTOR to BINARY"
+	--assert #{0102} = to binary! make vector! [integer! 8 [1 2]]
+	--assert #{01000200} = to binary! make vector! [integer! 16 [1 2]]
+	--assert #{0100000002000000} = to binary! make vector! [integer! 32 [1 2]]
+	--assert 1 = to integer! head reverse to binary! make vector! [integer! 64 [1]]
+
 ===end-group===
 
 ~~~end-file~~~

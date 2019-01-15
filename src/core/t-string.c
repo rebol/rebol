@@ -234,6 +234,12 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 		ser = Encode_UTF8_Value(arg, VAL_LEN(arg), 0);
 		break;
 
+	// MAKE/TO BINARY! <vector!>
+	case REB_VECTOR:
+		// result is in little-endian!
+		ser = Copy_Bytes(VAL_BIN_DATA(arg), VAL_LEN(arg) * VAL_VEC_WIDTH(arg));
+		break;
+
 	case REB_BLOCK:
 		// Join_Binary returns a shared buffer, so produce a copy:
 		ser = Copy_Series(Join_Binary(arg));

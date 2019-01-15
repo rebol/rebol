@@ -537,6 +537,8 @@ typedef struct Reb_Series_Ref
 #define VAL_BIN_SKIP(v,n) BIN_SKIP(VAL_SERIES(v), (n))
 #define VAL_BIN_TAIL(v)	BIN_SKIP(VAL_SERIES(v), VAL_SERIES(v)->tail)
 
+#define VAL_VEC_WIDTH(v) (VAL_SERIES(v)->info)
+
 // Arg is a unicode value:
 #define VAL_UNI(v)		UNI_HEAD(VAL_SERIES(v))
 #define VAL_UNI_HEAD(v) UNI_HEAD(VAL_SERIES(v))
