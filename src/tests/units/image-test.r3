@@ -103,10 +103,9 @@ Rebol [
 	if find words-of system/codecs 'bmp [
 		--test-- "save/load BMP"
 			img1: make image! [2x2 255.0.0.10]
-			;@@ Current BMP save discards the transparency info!
 			save %units/files/test.bmp img1
 			img2: load %units/files/test.bmp
-			--assert #{FF0000FFFF0000FFFF0000FFFF0000FF} = to binary! img2
+			--assert #{FF00000AFF00000AFF00000AFF00000A} = to binary! img2
 	]
 
 ~~~end-file~~~

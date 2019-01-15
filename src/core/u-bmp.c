@@ -425,6 +425,14 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 				i = w * 3;
 				break;
 
+			case 32:
+				for (i = 0; i<w; i++) {
+					*dp++ = TO_PIXEL_COLOR(cp[2], cp[1], cp[0], cp[3]);
+					cp += 4;
+				}
+				i = w * 4;
+				break;
+
 			default:
 				codi->error = CODI_ERR_BIT_LEN;
 				goto error;
@@ -538,14 +546,16 @@ error:
 	REBCNT *dp;
 	BITMAPFILEHEADER bmfh;
 	BITMAPINFOHEADER bmih;
+	REBOOL hasalpha;
 
 	w = codi->w;
 	h = codi->h;
+	hasalpha = codi->alpha;
 
 	memset(&bmfh, 0, sizeof(bmfh));
 	bmfh.bfType[0] = 'B';
 	bmfh.bfType[1] = 'M';
-	bmfh.bfSize = 14 + 40 + h * WADJUST(w);
+	bmfh.bfSize = 14 + 40 + h * (hasalpha ? w * 4: WADJUST(w));
 	bmfh.bfOffBits = 14 + 40;
 
 	// Create binary string:
@@ -558,7 +568,7 @@ error:
 	bmih.biWidth = w;
 	bmih.biHeight = h;
 	bmih.biPlanes = 1;
-	bmih.biBitCount = 24;
+	bmih.biBitCount = hasalpha ? 32 : 24;
 	bmih.biCompression = 0;
 	bmih.biSizeImage = 0;
 	bmih.biXPelsPerMeter = 0;
@@ -571,16 +581,27 @@ error:
 	dp += w * h - w;
 
 	for (y = 0; y<h; y++) {
-		for (i = 0; i<w; i++) {
-			v = (REBYTE*)dp++;
-			cp[0] = v[C_B];
-			cp[1] = v[C_G];
-			cp[2] = v[C_R];
-			cp += 3;
+		if (hasalpha) {
+			for (i = 0; i<w; i++) {
+				v = (REBYTE*)dp++;
+				cp[0] = v[C_B];
+				cp[1] = v[C_G];
+				cp[2] = v[C_R];
+				cp[3] = v[C_A];
+				cp += 4;
+			}
+		} else {
+			for (i = 0; i<w; i++) {
+				v = (REBYTE*)dp++;
+				cp[0] = v[C_B];
+				cp[1] = v[C_G];
+				cp[2] = v[C_R];
+				cp += 3;
+			}
+			i = w * 3;
+			while (i++ % 4)
+				*cp++ = 0;
 		}
-		i = w * 3;
-		while (i++ % 4)
-			*cp++ = 0;
 		dp -= 2 * w;
 	}
 }
