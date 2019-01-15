@@ -53,9 +53,10 @@ enum {
 	VTSF64,
 };
 
-#define VECT_TYPE(s) ((s)->size & 0xff)
+static REBCNT bit_sizes[4] = { 8, 16, 32, 64 };
 
-static REBCNT bit_sizes[4] = {8, 16, 32, 64};
+#define VECT_TYPE(s) ((s)->size & 0xff)
+#define VECT_BIT_SIZE(bits) (bit_sizes[bits & 3])
 
 REBU64 f_to_u64(float n) {
 	union {
@@ -621,6 +622,7 @@ bad_make:
 	union {REBU64 i; REBDEC d;} v;
 	REBYTE buf[32];
 	REBYTE l;
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
 
 	if (GET_MOPT(mold, MOPT_MOLD_ALL)) {
 		len = VAL_TAIL(value);
@@ -635,8 +637,11 @@ bad_make:
 		Pre_Mold(value, mold);
 		if (!GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Byte(mold->series, '[');
 		if (bits >= VTUI08 && bits <= VTUI64) Append_Bytes(mold->series, "unsigned ");
-		Emit(mold, "N I I [", type+1, bit_sizes[bits & 3], len);
-		if (len) New_Indented_Line(mold);
+		Emit(mold, "N I I [", type+1, VECT_BIT_SIZE(bits), len);
+		if (indented && len > 10) {
+			mold->indent = 1;
+			New_Indented_Line(mold);
+		}
 	}
 
 	c = 0;
@@ -648,8 +653,7 @@ bad_make:
 			l = Emit_Decimal(buf, v.d, 0, '.', mold->digits);
 		}
 		Append_Bytes_Len(mold->series, buf, l);
-
-		if ((++c > 7) && (n+1 < vect->tail)) {
+		if (indented && (++c > 9) && (n+1 < vect->tail)) {
 			New_Indented_Line(mold);
 			c = 0;
 		}
@@ -660,7 +664,10 @@ bad_make:
 	if (len) mold->series->tail--; // remove final space
 
 	if (molded) {
-		if (len) New_Indented_Line(mold);
+		if (indented && len > 10) {
+			mold->indent = 0;
+			New_Indented_Line(mold);
+		}
 		Append_Byte(mold->series, ']');
 		if (!GET_MOPT(mold, MOPT_MOLD_ALL)) {
 			Append_Byte(mold->series, ']');

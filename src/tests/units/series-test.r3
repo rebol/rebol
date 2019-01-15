@@ -213,10 +213,23 @@ Rebol [
 	--assert v = do load mold v
 
 --test-- "Conversion from VECTOR to BINARY"
+	;@@ https://github.com/rebol/rebol-issues/issues/2347
 	--assert #{0102} = to binary! make vector! [integer! 8 [1 2]]
 	--assert #{01000200} = to binary! make vector! [integer! 16 [1 2]]
 	--assert #{0100000002000000} = to binary! make vector! [integer! 32 [1 2]]
 	--assert 1 = to integer! head reverse to binary! make vector! [integer! 64 [1]]
+	--assert #{0000803F} = to binary! make vector! [decimal! 32 [1.0]]
+	--assert 1.0 = to decimal! head reverse to binary! make vector! [decimal! 64 [1.0]]
+
+--test-- "MOLD/flat on vector"
+	;@@ https://github.com/rebol/rebol-issues/issues/2349
+	--assert (mold/flat make vector! [integer! 8 12]) = {make vector! [integer! 8 12 [0 0 0 0 0 0 0 0 0 0 0 0]]}
+	--assert (mold/all/flat make vector! [integer! 8 12]) = "#[vector! integer! 8 12 [0 0 0 0 0 0 0 0 0 0 0 0]]"
+	--assert (mold make vector! [integer! 8  2]) = {make vector! [integer! 8 2 [0 0]]}
+	--assert (mold make vector! [integer! 8 20]) = {make vector! [integer! 8 20 [
+    0 0 0 0 0 0 0 0 0 0
+    0 0 0 0 0 0 0 0 0 0
+]]}
 
 ===end-group===
 
