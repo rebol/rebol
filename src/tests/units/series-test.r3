@@ -169,7 +169,12 @@ Rebol [
 ===start-group=== "VECTOR"
 
 --test-- "issue/2346"
+	;@@ https://github.com/rebol/rebol-issues/issues/2346
 	--assert [] = to-block make vector! 0
+
+--test-- "issue/1036"
+	;@@ https://github.com/rebol/rebol-issues/issues/1036
+	--assert 2 = index? load mold/all next make vector! [integer! 32 4 [1 2 3 4]]
 
 ===end-group===
 
