@@ -183,10 +183,16 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 		}
 	}
 	else {
+#ifdef old_code
 		REBYTE *data = VAL_BIN_DATA(blk);
 		for (; len > 0; len--, idx++) {
 			set_vect(bits, ser->data, n++, (REBI64)(data[idx]), f);
 		}
+#else
+		REBCNT bytes = ser->tail * ser->info;
+		if (len > bytes) len = bytes;
+		COPY_MEM(ser->data, VAL_BIN_DATA(blk), len);
+#endif
 	}
 }
 
@@ -357,7 +363,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	REBINT sign = -1; // 0 = signed, 1 = unsigned
 	REBINT dims = 1;
 	REBINT bits = 32;
-	REBCNT size = 1;
+	REBCNT size = 0;
 	REBSER *vect;
 	REBVAL *iblk = 0;
 
@@ -403,8 +409,8 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	// Initial data:
 	if (IS_BLOCK(bp) || IS_BINARY(bp)) {
 		REBCNT len = VAL_LEN(bp);
-		if (IS_BINARY(bp) && type == 1) return 0;
-		if (len > size) size = len;
+		if (IS_BINARY(bp)) len /= (bits >> 3);
+		if (len > size && size == 0) size = len;
 		iblk = bp;
 		bp++;
 	}

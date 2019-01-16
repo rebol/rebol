@@ -221,6 +221,35 @@ Rebol [
 	--assert #{0000803F} = to binary! make vector! [decimal! 32 [1.0]]
 	--assert 1.0 = to decimal! head reverse to binary! make vector! [decimal! 64 [1.0]]
 
+--test-- "VECTOR can be initialized using binary data"
+	;@@ https://github.com/rebol/rebol-issues/issues/1410
+	--assert vector? v: make vector! [integer! 16 #{010002000300}]
+	--assert 1 = v/1
+	--assert 3 = v/3
+
+	b: to binary! make vector! [decimal! 32 [1.0 -1.0]]
+	v: make vector! compose [decimal! 32 (b)]
+	--assert v/1 = 1.0
+	--assert v/2 = -1.0
+	--assert b = to binary! v
+
+--test-- "Croping input specification when size and series is provided"
+	--assert 2 = length? v: make vector! [integer! 16 2 [1 2 3 4]]
+	--assert 2 = v/2
+	--assert none? v/3
+	--assert 1 = length? v: make vector! [integer! 16 1 #{01000200}]
+	--assert none? v/2
+
+--test-- "Extending input specification when size and series is provided"
+	--assert 4 = length? v: make vector! [integer! 16 4 [1 2]]
+	--assert 2 = v/2
+	--assert 0 = v/4
+	--assert none? v/5
+
+--test-- "Vector created with specified index"
+	--assert 2 = index? v: make vector! [integer! 16 [1 2] 2]
+	--assert 2 = index? v: make vector! [integer! 16 #{01000200} 2]
+
 --test-- "MOLD/flat on vector"
 	;@@ https://github.com/rebol/rebol-issues/issues/2349
 	--assert (mold/flat make vector! [integer! 8 12]) = {make vector! [integer! 8 12 [0 0 0 0 0 0 0 0 0 0 0 0]]}
