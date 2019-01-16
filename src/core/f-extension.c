@@ -333,7 +333,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 		// Try to load the DLL file:
 		if (!(dll = OS_OPEN_LIBRARY(name, &error))) {
-			printf("error: %i\n", error);
+			//printf("error: %i\n", error);
 			Trap1(RE_NO_EXTENSION, val);
 		}
 
