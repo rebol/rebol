@@ -175,7 +175,8 @@
 			dst->tail = abs(clen);
 			//Append_Bytes(dst, lpath);
 #endif
-			Append_Byte(dst, OS_DIR_SEP);
+			if (OS_DIR_SEP != UNI_LAST(dst)[0])
+				Append_Byte(dst, OS_DIR_SEP);
 			OS_FREE(lpath);
 		}
 		out = UNI_HEAD(dst);
