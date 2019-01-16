@@ -106,6 +106,7 @@ import module [
 			port?         :val [ reduce [val/spec/title val/spec/ref] ]
 			image?        :val [ return reform ["size:" val/size] ]
 			gob?          :val [ return reform ["offset:" val/offset "size:" val/size] ]
+			vector?       :val [ mold/all val ]
 			;none?         :val [ mold/all val]
 			true [:val]
 		]
