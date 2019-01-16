@@ -164,7 +164,7 @@ func-header: [
 ]
 
 write-if: func [file data] [
-	if data <> attempt [to string! read file][ ;R3
+	if data <> attempt [deline to string! read file][ ;R3
 		print ["UPDATE:" file]
 		write file data
 	]
@@ -172,7 +172,7 @@ write-if: func [file data] [
 
 process: func [file] [
 	if verbose [?? file]
-	data: to string! read the-file: file ;R3
+	data: deline to string! read the-file: file ;R3
 	parse/all data [
 		any func-header
 	]

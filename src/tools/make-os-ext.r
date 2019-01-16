@@ -119,7 +119,7 @@ func-header: [
 process: func [file] [
 	if verbose [?? file]
 	data: read the-file: file
-	data: to-string data ; R3
+	data: deline to-string data ; R3
 	parse/all data [
 		any func-header
 	]
