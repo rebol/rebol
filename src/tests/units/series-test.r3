@@ -230,6 +230,18 @@ Rebol [
     0 0 0 0 0 0 0 0 0 0
     0 0 0 0 0 0 0 0 0 0
 ]]}
+	v: make vector! [integer! 8 20]
+	--assert (mold reduce [
+	1 2
+	v
+	3 4
+]) = {[
+    1 2 make vector! [integer! 8 20 [
+        0 0 0 0 0 0 0 0 0 0
+        0 0 0 0 0 0 0 0 0 0
+    ]]
+    3 4
+]}
 
 ===end-group===
 

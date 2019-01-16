@@ -639,7 +639,7 @@ bad_make:
 		if (bits >= VTUI08 && bits <= VTUI64) Append_Bytes(mold->series, "unsigned ");
 		Emit(mold, "N I I [", type+1, VECT_BIT_SIZE(bits), len);
 		if (indented && len > 10) {
-			mold->indent = 1;
+			mold->indent++;
 			New_Indented_Line(mold);
 		}
 	}
@@ -665,7 +665,7 @@ bad_make:
 
 	if (molded) {
 		if (indented && len > 10) {
-			mold->indent = 0;
+			mold->indent--;
 			New_Indented_Line(mold);
 		}
 		Append_Byte(mold->series, ']');
