@@ -149,6 +149,10 @@ typedef struct Reb_Type {
 **
 ***********************************************************************/
 
+#pragma pack()
+#include "sys-deci.h"
+#pragma pack(4)
+
 #define VAL_DECIMAL(v)	((v)->data.decimal)
 #define	SET_DECIMAL(v,n) VAL_SET(v, REB_DECIMAL), VAL_DECIMAL(v) = (n)
 
@@ -257,6 +261,20 @@ typedef struct Reb_Tuple {
 **
 ***********************************************************************/
 
+// X/Y coordinate pair as floats:
+typedef struct rebol_xy_float {
+	float x;
+	float y;
+} REBXYF;
+
+// X/Y coordinate pair as integers:
+typedef struct rebol_xy_int {
+	int x;
+	int y;
+} REBXYI;
+
+#define REBPAR REBXYI  // temporary until all sources are converted
+
 #define	VAL_PAIR(v)		((v)->data.pair)
 #define	VAL_PAIR_X(v)	((v)->data.pair.x)
 #define	VAL_PAIR_Y(v) 	((v)->data.pair.y)
@@ -270,6 +288,10 @@ typedef struct Reb_Tuple {
 **	EVENT
 **
 ***********************************************************************/
+
+#pragma pack()
+#include "reb-event.h"
+#pragma pack(4)
 
 #define	VAL_EVENT_TYPE(v)	((v)->data.event.type)  //(VAL_EVENT_INFO(v) & 0xff)
 #define	VAL_EVENT_FLAGS(v)	((v)->data.event.flags) //((VAL_EVENT_INFO(v) >> 16) & 0xff)

@@ -45,6 +45,7 @@
 
 #include "reb-host.h"
 #include "host-lib.h"
+#include "sys-value.h"
 
 RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
@@ -70,7 +71,7 @@ char *RX_Spec =
 	"cec1:   command [{returns cec.index value or -1 if no cec}]\n"
 	"hndl1:  command [{creates a handle}]\n"
 	"hndl2:  command [{return handle's internal value as integer} hnd [handle!]]\n"
-	"hndl3:  command [{null handle's internal value} hnd [handle!]]\n"
+	"vec0:   command [{return vector size in bytes} v [vector!]]\n"
 
 	"a: b: c: h: none\n"
 	"xtest: does [\n"
@@ -97,6 +98,7 @@ char *RX_Spec =
 			"[img0]\n"
 			"[c: do-commands [a: xarg0 b: xarg1 333 xobj1 system 'version] reduce [a b c]]\n"
 			"[cec0 [a: cec1 b: cec1 c: cec1] reduce [a b c]]\n"
+			"[vec0 make vector! [integer! 16 [1 2 3]]]\n"
 		"][\n"
 			"print [{^[[7mtest:^[[0m} mold blk]\n"
 			"prin {      } \n"
@@ -249,6 +251,14 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			i64 i = (i64)RXA_HANDLE(frm, 1);
 			RXA_INT64(frm, 1) = i;
 			RXA_TYPE(frm, 1) = RXT_INTEGER;
+		}
+		break;
+
+	case 13: //command [{return vector size in bytes} v [vector!]]
+		{
+			REBSER *vec = RXA_SERIES(frm, 1);
+			RXA_TYPE(frm, 1) = RXT_INTEGER;
+			RXA_INT64(frm, 1) = vec->info * vec->tail;
 		}
 		break;
 

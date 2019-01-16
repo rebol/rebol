@@ -26,7 +26,14 @@
 **
 ***********************************************************************/
 
+#ifndef REB_EVENT_H
+#define REB_EVENT_H
+
 // Note: size must be 12 bytes on 32-bit or 16 on 64-bit!
+
+// Forward references:
+typedef struct rebol_device REBDEV;
+typedef struct rebol_devreq REBREQ;
 
 #pragma pack(4)
 typedef struct rebol_event {
@@ -65,3 +72,5 @@ enum {
 
 // Special messages
 #define WM_DNS (WM_USER+100)
+
+#endif

@@ -82,8 +82,6 @@
 #include "reb-types.h"
 #include "reb-event.h"
 
-#include "sys-deci.h"
-
 #include "sys-value.h"
 #include "tmp-strings.h"
 #include "tmp-funcargs.h"

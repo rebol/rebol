@@ -33,6 +33,9 @@
 **
 ***********************************************************************/
 
+#ifndef REB_GOB_H
+#define REB_GOB_H
+
 enum GOB_FLAGS {		// GOB attribute and option flags
 	GOBF_TOP = 0,		// Top level (window or output image)
 	GOBF_WINDOW,		// Window (parent is OS window reference)
@@ -188,3 +191,5 @@ enum {
 #define FREE_GOB(g)		((g)->resv &= ~GOB_USED)
 
 extern REBGOB *Gob_Root; // Top level GOB (the screen)
+
+#endif

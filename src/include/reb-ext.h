@@ -28,6 +28,7 @@
 
 #include "reb-defs.h"
 #include "ext-types.h"
+#include "sys-value.h"
 
 /* Prefix naming conventions:
 

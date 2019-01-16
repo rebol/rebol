@@ -31,24 +31,6 @@
 #ifndef REB_DEFS_H  // due to sequences within the lib build itself
 #define REB_DEFS_H
 
-#ifndef REB_DEF
-typedef void(*ANYFUNC)(void *);
-typedef struct RL_Reb_Series {
-	void *data;
-	u32 tail;
-} REBSER;
-typedef void *REBOBJ;
-typedef struct Reb_Handle {
-	REBCNT	sym;    // Index of the word's symbol. Used as a handle's type!
-	REBFLG  flags;  // Handle_Flags
-	union {
-		ANYFUNC	code;
-		REBSER *data;
-		REBINT  index;
-	};
-} REBHAN;
-#endif
-
 /* These used for access-os native function */
 #define OS_ENA    -1
 #define OS_EINVAL -2
@@ -56,20 +38,6 @@ typedef struct Reb_Handle {
 #define OS_ESRCH  -4
 
 #pragma pack(4)
-
-// X/Y coordinate pair as floats:
-typedef struct rebol_xy_float {
-	float x;
-	float y;
-} REBXYF;
-
-// X/Y coordinate pair as integers:
-typedef struct rebol_xy_int {
-	int x;
-	int y;
-} REBXYI;
-
-#define REBPAR REBXYI  // temporary until all sources are converted
 
 // Standard date and time:
 typedef struct rebol_dat {
@@ -80,17 +48,6 @@ typedef struct rebol_dat {
 	int nano;
 	int zone;
 } REBOL_DAT;  // not same as REBDAT
-
-// OS metrics: (not used as of A100!)
-typedef struct rebol_met {
-	int len; // # entries in this table
-	REBPAR screen_size;
-	REBPAR title_size;
-	REBPAR border_size;
-	REBPAR border_fixed;
-	REBPAR work_origin;
-	REBPAR work_size;
-} X_REBOL_OS_METRICS;
 
 typedef int	cmp_t(const void *, const void *);
 void reb_qsort(void *a, size_t n, size_t es, cmp_t *cmp);
