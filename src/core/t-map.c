@@ -229,7 +229,16 @@
 	}
 
 	// Create new entry:
-	Append_Val(series, key);
+	// append key
+	if(ANY_WORD(key) && VAL_TYPE(key) != REB_SET_WORD) {
+		// Normalize the KEY (word) to be a SET-WORD
+		REBVAL *set = Append_Value(series);
+		*set = *key;
+		VAL_SET(set, REB_SET_WORD);
+	} else {
+		Append_Val(series, key);
+	}
+	// append value
 	Append_Val(series, val);  // no Copy_Series_Value(val) on strings
 
 	return (hashes[hash] = series->tail/2);
