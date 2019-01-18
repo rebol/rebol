@@ -38,8 +38,8 @@ catalog: context [
 	; Reflectors are used on boot to create *-of functions
 	reflectors: [
 		spec   [any-function! module! vector!]
-		body   [any-function! any-object!]
-		words  [any-object! map!]
+		body   [any-function! any-object! map!]
+		words  [any-function! any-object! map!]
 		values [any-object! map!]
 		types  [any-function!]
 		title  [any-function! datatype!]
