@@ -369,8 +369,14 @@
 	out = BLK_HEAD(blk);
 	for (val = BLK_HEAD(mapser); NOT_END(val) && NOT_END(val+1); val += 2) {
 		if (!IS_NONE(val+1)) {
-			if (what <= 0) *out++ = val[0];
-			if (what >= 0) *out++ = val[1];
+			if (what < 0) {
+				// words-of
+				*out++ = val[0];
+				if (ANY_WORD(val)) VAL_SET(out - 1, REB_WORD);
+			}
+			else if (what == 0)
+				*out++ = val[0]; // body-of
+			if (what >= 0) *out++ = val[1]; // values
 		}
 	}
 
