@@ -53,6 +53,21 @@
 
 #include "sys-core.h"
 
+// Use following define to speed map creation a little bit as the key words
+// will not be normalized to set-words and or words when using words-of
+
+//#define DO_NOT_NORMALIZE_MAP_KEYS
+
+// with this define you would get:
+//	[a b:]     = words-of make map! [a 1 b: 2]
+//	[a 1 b: 2] = body-of  make map! [a 1 b: 2]
+//
+// else:
+//	[a b]       = words-of make map! [a 1 b: 2]
+//	[a: 1 b: 2] = body-of  make map! [a 1 b: 2]
+
+
+
 
 /***********************************************************************
 **
@@ -229,6 +244,7 @@
 	}
 
 	// Create new entry:
+#ifndef DO_NOT_NORMALIZE_MAP_KEYS
 	// append key
 	if(ANY_WORD(key) && VAL_TYPE(key) != REB_SET_WORD) {
 		// Normalize the KEY (word) to be a SET-WORD
@@ -238,6 +254,9 @@
 	} else {
 		Append_Val(series, key);
 	}
+#else
+	Append_Val(series, key);
+#endif
 	// append value
 	Append_Val(series, val);  // no Copy_Series_Value(val) on strings
 
@@ -369,6 +388,7 @@
 	out = BLK_HEAD(blk);
 	for (val = BLK_HEAD(mapser); NOT_END(val) && NOT_END(val+1); val += 2) {
 		if (!IS_NONE(val+1)) {
+#ifndef DO_NOT_NORMALIZE_MAP_KEYS
 			if (what < 0) {
 				// words-of
 				*out++ = val[0];
@@ -376,6 +396,9 @@
 			}
 			else if (what == 0)
 				*out++ = val[0]; // body-of
+#else
+			if (what <= 0) *out++ = val[0]; // words-of or body-of
+#endif
 			if (what >= 0) *out++ = val[1]; // values
 		}
 	}
