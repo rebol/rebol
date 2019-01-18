@@ -199,6 +199,34 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 
 /***********************************************************************
 **
+*/	static REBOOL Query_Vector_Field(REBSER *vect, REBCNT field, REBVAL *ret)
+/*
+**		Set a value with file data according specified mode
+**
+***********************************************************************/
+{
+	switch (field) {
+	case SYM_TYPE:
+		Init_Word(ret, (VECT_TYPE(vect) >= VTSF08) ? SYM_DECIMAL_TYPE : SYM_INTEGER_TYPE);
+		break;
+	case SYM_SIZE:
+		SET_INTEGER(ret, VECT_BIT_SIZE(VECT_TYPE(vect)));
+		break;
+	case SYM_LENGTH:
+		SET_INTEGER(ret, vect->tail);
+		break;
+	case SYM_SIGNED:
+		SET_LOGIC(ret, !(VECT_TYPE(vect) >= VTUI08 && VECT_TYPE(vect) <= VTUI64));
+		break;
+	default:
+		return FALSE;
+	}
+	return TRUE;
+}
+
+
+/***********************************************************************
+**
 */	REBSER *Make_Vector_Block(REBVAL *vect)
 /*
 **		Convert a vector to a block.
@@ -469,25 +497,35 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 /*
 ***********************************************************************/
 {
-	REBSER *vect;
+	REBVAL *sel = pvs->select;
+	REBVAL *val = pvs->value;
+	REBVAL *set = pvs->setval;
+	REBSER *vect = VAL_SERIES(val);
+	REBINT bits = VECT_TYPE(vect);
 	REBINT n;
 	//REBINT dims;
-	REBINT bits;
+	
 	REBYTE *vp;
 	REBI64 i = 0;
 	REBDEC f = 0.0;
 
-	if (IS_INTEGER(pvs->select) || IS_DECIMAL(pvs->select)) {
-		n = Int32(pvs->select);
+	if (IS_INTEGER(sel) || IS_DECIMAL(sel)) {
+		n = Int32(sel);
 		if (n == 0) return PE_NONE;
 		if (n < 0) n++;
-	}
-	else return PE_BAD_SELECT;
+	} else if (IS_WORD(sel)) {
+		if (set == 0) {
+			val = pvs->value = pvs->store;
+			if(!Query_Vector_Field(vect, VAL_WORD_CANON(sel), val)) return PE_BAD_SELECT;
+			return PE_OK;
+		} else
+			return PE_BAD_SET;
+	} else  return PE_BAD_SELECT;
 
-	n += VAL_INDEX(pvs->value);
-	vect = VAL_SERIES(pvs->value);
+	n += VAL_INDEX(val);
+	vect = VAL_SERIES(val);
 	vp   = vect->data;
-	bits = VECT_TYPE(vect);
+	
 	//dims = vect->size >> 8;
 
 	if (pvs->setval == 0) {
@@ -511,12 +549,12 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 
 	if (n <= 0 || (REBCNT)n > vect->tail) return PE_BAD_RANGE;
 
-	if (IS_INTEGER(pvs->setval)) {
-		i = VAL_INT64(pvs->setval);
+	if (IS_INTEGER(set)) {
+		i = VAL_INT64(set);
 		if (bits > VTUI64) f = (REBDEC)(i);
 	}
-	else if (IS_DECIMAL(pvs->setval)) {
-		f = VAL_DECIMAL(pvs->setval);
+	else if (IS_DECIMAL(set)) {
+		f = VAL_DECIMAL(set);
 		if (bits <= VTUI64) i = (REBINT)(f);
 	}
 	else return PE_BAD_SET;
@@ -536,9 +574,11 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	REBVAL *value = D_ARG(1);
 	REBVAL *arg = D_ARG(2);
 	REBINT type;
-	REBCNT size;
+	REBCNT size, bits;
 	REBSER *vect;
 	REBSER *ser;
+	REBSER *blk;
+	REBVAL *val;
 
 	type = Do_Series_Action(action, value, arg);
 	if (type >= 0) return type;
@@ -599,6 +639,65 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 		Shuffle_Vector(value, D_REF(3));
 		return R_ARG1;
 
+	case A_REFLECT:
+		bits = VECT_TYPE(vect);
+		if (SYM_SPEC == VAL_WORD_SYM(D_ARG(2))) {
+			blk = Make_Block(4);
+			if (bits >= VTUI08 && bits <= VTUI64) Init_Word(Append_Value(blk), SYM_UNSIGNED);
+			Query_Vector_Field(vect, SYM_TYPE, Append_Value(blk));
+			Query_Vector_Field(vect, SYM_SIZE, Append_Value(blk));
+			Query_Vector_Field(vect, SYM_LENGTH, Append_Value(blk));
+			Set_Series(REB_BLOCK, value, blk);
+		} else {
+			if(!Query_Vector_Field(vect, VAL_WORD_SYM(D_ARG(2)), value))
+				Trap_Reflect(VAL_TYPE(value), D_ARG(2));
+		}
+		break;
+
+	case A_QUERY:
+		bits = VECT_TYPE(vect);
+		REBVAL *spec = Get_System(SYS_STANDARD, STD_VECTOR_INFO);
+		if (!IS_OBJECT(spec)) Trap_Arg(spec);
+		if (D_REF(2)) { // query/mode refinement
+			REBVAL *field = D_ARG(3);
+			if(IS_WORD(field)) {
+				if (!Query_Vector_Field(vect, VAL_WORD_SYM(field), value))
+					Trap_Reflect(VAL_TYPE(value), field); // better error?
+			}
+			else if (IS_BLOCK(field)) {
+				REBVAL *val;
+				REBSER *values = Make_Block(2 * BLK_LEN(VAL_SERIES(field)));
+				REBVAL *word = VAL_BLK_DATA(field);
+				for (; NOT_END(word); word++) {
+					if (ANY_WORD(word)) {
+						if (IS_SET_WORD(word)) {
+							// keep the set-word in result
+							val = Append_Value(values);
+							*val = *word;
+							VAL_SET_LINE(val);
+						}
+						val = Append_Value(values);
+						if (!Query_Vector_Field(vect, VAL_WORD_SYM(word), val))
+							Trap1(RE_INVALID_ARG, word);
+					}
+					else  Trap1(RE_INVALID_ARG, word);
+				}
+				Set_Series(REB_BLOCK, value, values);
+			}
+			else {
+				Set_Block(D_RET, Get_Object_Words(spec));
+				return R_RET;
+			}
+		} else {
+			REBSER *obj = CLONE_OBJECT(VAL_OBJ_FRAME(spec));
+			Query_Vector_Field(vect, SYM_SIGNED, OFV(obj, STD_VECTOR_INFO_SIGNED));
+			Query_Vector_Field(vect, SYM_TYPE,   OFV(obj, STD_VECTOR_INFO_TYPE));
+			Query_Vector_Field(vect, SYM_SIZE,   OFV(obj, STD_VECTOR_INFO_SIZE));
+			Query_Vector_Field(vect, SYM_LENGTH, OFV(obj, STD_VECTOR_INFO_LENGTH));
+			SET_OBJECT(value, obj);
+		}
+		break;
+
 	default:
 		Trap_Action(VAL_TYPE(value), action);
 	}
@@ -611,7 +710,7 @@ bad_make:
 	DEAD_END;
 }
 
-    
+
 /***********************************************************************
 **
 */	void Mold_Vector(REBVAL *value, REB_MOLD *mold, REBFLG molded)

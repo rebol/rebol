@@ -27,17 +27,20 @@ types-of:
 title-of:
 	none
 
-use [word title] [
-	foreach name system/catalog/reflectors [
+use [word title pos] [
+	foreach [name types] system/catalog/reflectors [
 		word: make word! ajoin [name "-of"]
 		word: bind/new word 'reflect
-		title: ajoin ["Returns a copy of the " name " of a " switch/default name [
-			spec        ["function or module"]
-			values      ["object or module"]
-			types title ["function"] ; title should include module Title too...
-		] ["function, object, or module"]] ; body, words
+		title: form types
+		remove back tail title ; removes last #"!"
+		; there is no replace function in this boot phase yet,
+		; so lets do it this way:
+		while [pos: find title "any-"][pos/4: #" "] ; replace/all "any-" to "any "
+		if pos: find/last title #"!" [change/part pos " or" 1]
+		while [pos: find title #"!"][pos/1: #","]   ; replace/all "!" to ","
+		insert title ajoin ["Returns a copy of the " name " of "]
 		set word func
-			reduce [title 'value]
+			reduce [title 'value types]
 			compose [reflect :value (to lit-word! name)]
 	]
 ]

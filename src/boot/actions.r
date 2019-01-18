@@ -421,10 +421,10 @@ open?: action [
 ]
 
 query: action [
-	{Returns information about a port, file, or URL.}
-	target [port! file! url! block!]
+	{Returns information about value if possible.}
+	target [port! file! url! block! vector!]
 	/mode "Get mode information"
-	field [word! block! none!] "NONE will return valid modes for port type"
+	field [word! block! none!] "NONE will return valid modes for target type"
 ]
 
 modify: action [

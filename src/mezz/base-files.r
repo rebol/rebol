@@ -24,8 +24,8 @@ exists?: func [
 ]
 
 size?: func [
-	{Returns the size of a file.}
-	target [file! url!]
+	{Returns the size of a file or vector (bits per value).}
+	target [file! url! vector!]
 ][
 	query/mode target 'size
 ]

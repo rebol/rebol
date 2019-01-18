@@ -272,6 +272,35 @@ Rebol [
     3 4
 ]}
 
+--test-- "QUERY on vector"
+	;@@ https://github.com/rebol/rebol-issues/issues/2352
+	v: make vector! [unsigned integer! 16 2]
+	o: query v
+	--assert object? o
+	--assert not o/signed
+	--assert o/type = 'integer!
+	--assert o/size = 16
+	--assert o/length = 2
+--test-- "QUERY/MODE on vector"
+	--assert [signed type size length] = query/mode v none
+	--assert [16 integer!] = query/mode v [size type]
+	--assert block? b: query/mode v [signed: length:]
+	--assert all [not b/signed b/length = 2]
+	--assert 16 = query/mode v 'size
+	--assert 16 = size? v
+--test-- "REFLECT on vector"
+	--assert 16 = reflect v 'size
+	--assert  2 = reflect v 'length
+	--assert 'integer! = reflect v 'type
+	--assert false = reflect v 'signed
+	--assert [unsigned integer! 16 2] = reflect v 'spec
+	--assert [unsigned integer! 16 2] = spec-of v
+--test-- "ACCESSORS on vector"
+	--assert 16 = v/size
+	--assert  2 = v/length
+	--assert 'integer! = v/type
+	--assert false     = v/signed
+
 ===end-group===
 
 ~~~end-file~~~

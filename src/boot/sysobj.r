@@ -35,7 +35,15 @@ catalog: context [
 	actions: none
 	natives: none
 	errors: none
-	reflectors: [spec body words values types title]
+	; Reflectors are used on boot to create *-of functions
+	reflectors: [
+		spec   [any-function! module! vector!]
+		body   [any-function! any-object!]
+		words  [any-object! map!]
+		values [any-object! map!]
+		types  [any-function!]
+		title  [any-function! datatype!]
+	]
 	; Official list of system/options/flags that can appear.
 	; Must match host reb-args.h enum!
 	boot-flags: [
@@ -259,6 +267,14 @@ standard: context [
 		buffer-rows: none
 		window-cols: none
 		window-rows: none
+	]
+
+	vector-info: context [
+		signed:     ; false if unsigned (always true for decimals)
+		type:       ; integer! or decimal! so far
+		size:       ; size per value in bits
+		length:     ; number of values
+			none
 	]
 
 	extension: context [
