@@ -124,6 +124,8 @@
 	case A_SUBTRACT:	// "test this" - 10
 	case A_MULTIPLY:	// "t" * 4 = "tttt"
 	case A_DIVIDE:
+		if (IS_VECTOR(value)) return -1; // allow vector for actions above
+		//continue...
 	case A_REMAINDER:
 	case A_POWER:
 	case A_ODDQ:

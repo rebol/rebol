@@ -21,26 +21,26 @@ REBOL [
 
 add: action [
 	{Returns the addition of two values.}
-	value1 [scalar! date!]
-	value2
+	value1 [scalar! date! vector!]
+	value2 [scalar! date! vector!]
 ]
 
 subtract: action [
 	{Returns the second value subtracted from the first.}
-	value1 [scalar! date!]
-	value2 [scalar! date!]
+	value1 [scalar! date! vector!]
+	value2 [scalar! date! vector!]
 ]
 
 multiply: action [
 	{Returns the first value multiplied by the second.}
-	value1 [scalar!]
-	value2 [scalar!]
+	value1 [scalar! vector!]
+	value2 [scalar! vector!]
 ]
 
 divide: action [
 	{Returns the first value divided by the second.}
-	value1 [scalar!]
-	value2 [scalar!]
+	value1 [scalar! vector!]
+	value2 [scalar! vector!]
 ]
 
 remainder: action [
@@ -421,7 +421,7 @@ open?: action [
 ]
 
 query: action [
-	{Returns information about value if possible.}
+	{Returns information about target if possible.}
 	target [port! file! url! block! vector!]
 	/mode "Get mode information"
 	field [word! block! none!] "NONE will return valid modes for target type"

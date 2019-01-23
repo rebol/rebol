@@ -238,7 +238,8 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 				type == REB_PAIR ||
 				type == REB_TUPLE ||
 				type == REB_MONEY ||
-				type == REB_TIME
+				type == REB_TIME ||
+				type == REB_VECTOR
 			) && (
 				action == A_ADD ||
 				action == A_MULTIPLY

@@ -228,6 +228,122 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 
 /***********************************************************************
 **
+*/	REBVAL* Math_Op_Vector(REBVAL *v1, REBVAL *v2, REBCNT action)
+/*
+**		Do basic math operation on a vector
+**
+***********************************************************************/
+{
+	REBSER *vect = NULL;
+	REBYTE *data;
+	REBCNT bits;
+	REBCNT len;
+
+	REBVAL *left;
+	REBVAL *right;
+
+	REBI64 i = 0;
+	REBDEC f = 0;
+	REBCNT n = 0;
+
+	if (IS_VECTOR(v1) && IS_NUMBER(v2)) {
+		left = v1;
+		right = v2;
+	} else if (IS_VECTOR(v2) && IS_NUMBER(v1)) {
+		left = v2;
+		right = v1;
+	} else {
+		Trap_Action(VAL_TYPE(v1), action);
+		return NULL;
+	}
+	vect = VAL_SERIES(left);
+	len  = VAL_LEN(left);
+	bits = VECT_TYPE(vect);
+	data = vect->data;
+
+	if (IS_INTEGER(right)) {
+		i = VAL_INT64(right);
+		f = (REBDEC)i;
+	} else {
+		f = VAL_DECIMAL(right);
+		i = (REBI64)f;
+	}
+
+	n = VAL_INDEX(left);
+
+	switch (action) {
+		case A_ADD:
+			switch (bits) {
+			case VTSI08: for (; n<len; n++) ( (i8*)data)[n] += ( i8)i; break;
+			case VTSI16: for (; n<len; n++) ((i16*)data)[n] += (i16)i; break;
+			case VTSI32: for (; n<len; n++) ((i32*)data)[n] += (i32)i; break;
+			case VTSI64: for (; n<len; n++) ((i64*)data)[n] += (i64)i; break;
+			case VTUI08: for (; n<len; n++) (( u8*)data)[n] += ( u8)i; break;
+			case VTUI16: for (; n<len; n++)	((u16*)data)[n] += (u16)i; break;
+			case VTUI32: for (; n<len; n++) ((u32*)data)[n] += (u32)i; break;
+			case VTUI64: for (; n<len; n++)	((i64*)data)[n] += (u64)i; break;
+			case VTSF08:
+			case VTSF16:
+			case VTSF32: for (; n<len; n++) (( float*)data)[n] += (float)f; break;
+			case VTSF64: for (; n<len; n++) ((double*)data)[n] += f; break;
+			}
+			break;
+		case A_SUBTRACT:
+			switch (bits) {
+			case VTSI08: for (; n<len; n++) (( i8*)data)[n] -= ( i8)i; break;
+			case VTSI16: for (; n<len; n++) ((i16*)data)[n] -= (i16)i; break;
+			case VTSI32: for (; n<len; n++) ((i32*)data)[n] -= (i32)i; break;
+			case VTSI64: for (; n<len; n++) ((i64*)data)[n] -= (i64)i; break;
+			case VTUI08: for (; n<len; n++) (( u8*)data)[n] -= ( u8)i; break;
+			case VTUI16: for (; n<len; n++)	((u16*)data)[n] -= (u16)i; break;
+			case VTUI32: for (; n<len; n++) ((u32*)data)[n] -= (u32)i; break;
+			case VTUI64: for (; n<len; n++)	((i64*)data)[n] -= (u64)i; break;
+			case VTSF08:
+			case VTSF16:
+			case VTSF32: for (; n<len; n++) (( float*)data)[n] -= (float)f; break;
+			case VTSF64: for (; n<len; n++) ((double*)data)[n] -= f; break;
+			}
+			break;
+		case A_MULTIPLY:
+			switch (bits) {
+			case VTSI08: for (; n<len; n++) (( i8*)data)[n] *= ( i8)i; break;
+			case VTSI16: for (; n<len; n++) ((i16*)data)[n] *= (i16)i; break;
+			case VTSI32: for (; n<len; n++) ((i32*)data)[n] *= (i32)i; break;
+			case VTSI64: for (; n<len; n++) ((i64*)data)[n] *= (i64)i; break;
+			case VTUI08: for (; n<len; n++) (( u8*)data)[n] *= ( u8)i; break;
+			case VTUI16: for (; n<len; n++)	((u16*)data)[n] *= (u16)i; break;
+			case VTUI32: for (; n<len; n++) ((u32*)data)[n] *= (u32)i; break;
+			case VTUI64: for (; n<len; n++)	((i64*)data)[n] *= (u64)i; break;
+			case VTSF08:
+			case VTSF16:
+			case VTSF32: for (; n<len; n++) (( float*)data)[n] *= (float)f; break;
+			case VTSF64: for (; n<len; n++) ((double*)data)[n] *= f; break;
+			}
+			break;
+		case A_DIVIDE:
+			if (i == 0) Trap0(RE_ZERO_DIVIDE);
+			switch (bits) {
+			case VTSI08: for (; n<len; n++) (( i8*)data)[n] /= ( i8)i; break;
+			case VTSI16: for (; n<len; n++) ((i16*)data)[n] /= (i16)i; break;
+			case VTSI32: for (; n<len; n++) ((i32*)data)[n] /= (i32)i; break;
+			case VTSI64: for (; n<len; n++) ((i64*)data)[n] /= (i64)i; break;
+			case VTUI08: for (; n<len; n++) (( u8*)data)[n] /= ( u8)i; break;
+			case VTUI16: for (; n<len; n++)	((u16*)data)[n] /= (u16)i; break;
+			case VTUI32: for (; n<len; n++) ((u32*)data)[n] /= (u32)i; break;
+			case VTUI64: for (; n<len; n++)	((i64*)data)[n] /= (u64)i; break;
+			case VTSF08:
+			case VTSF16:
+			case VTSF32: for (; n<len; n++) (( float*)data)[n] /= (float)f; break;
+			case VTSF64: for (; n<len; n++) ((double*)data)[n] /= f; break;
+			}
+			break;
+	}
+	return left;
+}
+
+
+/***********************************************************************
+**
 */	REBINT Compare_Vector(REBVAL *v1, REBVAL *v2)
 /*
 ***********************************************************************/
@@ -571,6 +687,13 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	case A_POKE:
 		Pick_Path(value, arg, D_ARG(3));
 		return R_ARG3;
+
+	case A_ADD:
+	case A_SUBTRACT:
+	case A_MULTIPLY:
+	case A_DIVIDE:
+		Math_Op_Vector(value, arg, action);
+		break;
 
 	case A_MAKE:
 		// We only allow MAKE VECTOR! ...
