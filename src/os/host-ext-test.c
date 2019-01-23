@@ -72,6 +72,8 @@ char *RX_Spec =
 	"hndl1:  command [{creates a handle}]\n"
 	"hndl2:  command [{return handle's internal value as integer} hnd [handle!]]\n"
 	"vec0:   command [{return vector size in bytes} v [vector!]]\n"
+	"vec1:   command [{return vector size in bytes (from object)} o [object!]]\n"
+	"blk1:   command [{print type ids of all values in a block} b [block!]]\n"
 
 	"a: b: c: h: none\n"
 	"xtest: does [\n"
@@ -99,6 +101,8 @@ char *RX_Spec =
 			"[c: do-commands [a: xarg0 b: xarg1 333 xobj1 system 'version] reduce [a b c]]\n"
 			"[cec0 [a: cec1 b: cec1 c: cec1] reduce [a b c]]\n"
 			"[vec0 make vector! [integer! 16 [1 2 3]]]\n"
+			"[vec1 object [v: make vector! [integer! 16 [1 2 3]]]]\n"
+			"[blk1 [read %img /at 1]]\n"
 		"][\n"
 			"print [{^[[7mtest:^[[0m} mold blk]\n"
 			"prin {      } \n"
@@ -174,6 +178,8 @@ REBCNT Test_Async_Callback(REBSER *obj, REBCNT word)
 RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 	REBYTE *str;
 
+	printf("Context ptr: %08X\n", ctx);
+
 	switch (cmd) {
 
 	case 0: //command [{return zero}]
@@ -246,7 +252,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 		}
 		break;
 
-	case 12: //command [{return handle's internal value as integer} hnd [handle!]]"
+	case 12: //command [{return handle's internal value as integer} hnd [handle!]]
 		{
 			i64 i = (i64)RXA_HANDLE(frm, 1);
 			RXA_INT64(frm, 1) = i;
@@ -259,6 +265,35 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			REBSER *vec = RXA_SERIES(frm, 1);
 			RXA_TYPE(frm, 1) = RXT_INTEGER;
 			RXA_INT64(frm, 1) = vec->info * vec->tail;
+		}
+		break;
+	case 14: //command [{return vector size in values (from object)} o [object!]]
+		{
+			RXIARG vec;
+			REBCNT type = RL_GET_FIELD(RXA_OBJECT(frm, 1), RL_MAP_WORD("v"), &vec);
+			if(type == RXT_VECTOR) {
+				REBSER *vecs = (REBSER*)vec.series;
+				u16* data = (u16*)vecs->data;
+				printf("data[0-2]: %i, %i, %i\n", data[0], data[1], data[2]);
+				//RXA_TYPE(frm, 1) = RXT_INTEGER;
+				//RXA_INT64(frm, 1) = vecs->tail;
+			} else {
+				return RXR_FALSE;
+			}
+		}
+		break;
+	case 15: //command [{print type ids of all values in a block} b [block!]]
+		{
+			REBSER *blk = RXA_SERIES(frm, 1);
+			REBCNT n, type;
+			RXIARG val;
+			printf("\nBlock with %i values:\n", RL_SERIES(blk, RXI_SER_TAIL));
+			for(n = 0; type = RL_GET_VALUE(blk, n, &val); n++) {
+				if(type == RXT_END) break;
+				printf("\t%i -> %i\n", n, type);
+			}
+			RL_MAP_WORDS(RXA_SERIES(frm, 1));
+			return RXR_UNSET;
 		}
 		break;
 

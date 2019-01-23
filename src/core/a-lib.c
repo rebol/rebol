@@ -22,7 +22,7 @@
 **  Module:  a-lib.c
 **  Summary: exported REBOL library functions
 **  Section: environment
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Oldes
 **  Notes:
 **
 ***********************************************************************/
@@ -557,6 +557,29 @@ RL_API void *RL_Make_Image(u32 width, u32 height)
 */
 {
 	return Make_Image(width, height, FALSE);
+}
+
+RL_API void *RL_Make_Vector(REBINT type, REBINT sign, REBINT dims, REBINT bits, REBINT size)
+/*
+**	Allocate a new vector of the given attributes.
+**
+**	Returns:
+**		A pointer to a vector series or zero.
+**	Arguments:
+**		type: the datatype
+**		sign: signed or unsigned
+**		dims: number of dimensions
+**		bits: number of bits per unit (8, 16, 32, 64)
+**		size: number of values
+**	Notes:
+**		Allocated with REBOL's internal memory manager.
+**		Vectors are automatically garbage collected if there are
+**		no references to them from REBOL code (C code does nothing.)
+*/
+{
+	// check if bits is valid 
+	if(!(bits == 8 || bits == 16 || bits == 32 || bits == 64)) return 0;
+	return Make_Vector(type, sign, dims, bits, size);
 }
 
 RL_API void RL_Protect_GC(REBSER *series, u32 flags)
