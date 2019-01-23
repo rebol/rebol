@@ -97,7 +97,7 @@ import module [
 		; Form a limited string from the value provided.
 		val: case [
 			string?       :val [ mold val ]
-			any-block?    :val [ return reform ["length:" length? val] ]
+			any-block?    :val [ return reform ["length:" length? val mold/flat val] ]
 			object?       :val [ words-of val ]
 			module?       :val [ words-of val ]
 			any-function? :val [ any [title-of :val spec-of :val] ]
