@@ -326,6 +326,42 @@ typedef struct rebol_xy_int {
 									(((c)&0xff)<<16)|(((w)&0xff)<<24))))
 #endif
 
+/***********************************************************************
+**
+**	VECTOR
+**
+***********************************************************************/
+
+#define	SET_VECTOR(v,s) VAL_SERIES(v)=(s), VAL_INDEX(v)=0, VAL_SET(v, REB_VECTOR)
+
+// Encoding Format:
+//		stored in series->size for now
+//		[d d d d   d d d d   0 0 0 0   t s b b]
+
+// Encoding identifiers:
+enum {
+	VTSI08 = 0,
+	VTSI16,
+	VTSI32,
+	VTSI64,
+
+	VTUI08,
+	VTUI16,
+	VTUI32,
+	VTUI64,
+
+	VTSF08,		// not used
+	VTSF16,		// not used
+	VTSF32,
+	VTSF64,
+};
+
+static REBCNT bit_sizes[4] = { 8, 16, 32, 64 };
+
+#define VECT_TYPE(s) ((s)->size & 0xff)
+#define VECT_BIT_SIZE(bits) (bit_sizes[bits & 3])
+
+
 
 /***********************************************************************
 **

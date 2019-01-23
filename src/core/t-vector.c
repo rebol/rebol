@@ -29,35 +29,6 @@
 
 #include "sys-core.h"
 
-#define	SET_VECTOR(v,s) VAL_SERIES(v)=(s), VAL_INDEX(v)=0, VAL_SET(v, REB_VECTOR)
-
-// Encoding Format:
-//		stored in series->size for now
-//		[d d d d   d d d d   0 0 0 0   t s b b]
-
-// Encoding identifiers:
-enum {
-	VTSI08 = 0,
-	VTSI16,
-	VTSI32,
-	VTSI64,
-
-	VTUI08,
-	VTUI16,
-	VTUI32,
-	VTUI64,
-
-	VTSF08,		// not used
-	VTSF16,		// not used
-	VTSF32,
-	VTSF64,
-};
-
-static REBCNT bit_sizes[4] = { 8, 16, 32, 64 };
-
-#define VECT_TYPE(s) ((s)->size & 0xff)
-#define VECT_BIT_SIZE(bits) (bit_sizes[bits & 3])
-
 REBU64 f_to_u64(float n) {
 	union {
 		REBU64 u;
@@ -342,12 +313,14 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 **		sign: signed or unsigned
 **		dims: number of dimensions
 **		bits: number of bits per unit (8, 16, 32, 64)
-**		size: size of array ?
+**		size: number of values
 **
 ***********************************************************************/
 {
 	REBCNT len;
 	REBSER *ser;
+
+	//printf("MAKE_VECTOR=> type: %i sign: %i dims: %i bits: %i size: %i\n", type, sign, dims, bits, size);
 
 	len = size * dims;
 	if (len > 0x7fffffff) return 0;
