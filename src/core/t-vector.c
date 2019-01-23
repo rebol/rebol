@@ -257,7 +257,6 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 		return NULL;
 	}
 	vect = VAL_SERIES(left);
-	len  = VAL_LEN(left);
 	bits = VECT_TYPE(vect);
 	data = vect->data;
 
@@ -270,6 +269,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	}
 
 	n = VAL_INDEX(left);
+	len = n + VAL_LEN(left);
 
 	switch (action) {
 		case A_ADD:

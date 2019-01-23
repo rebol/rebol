@@ -222,6 +222,11 @@ Rebol [
 	--assert (v * 20.5) = make vector! [decimal! 64 [20.5 41.0 61.5 82.0]]
 	--assert (v / 20.5) = make vector! [decimal! 64 [1.0 2.0 3.0 4.0]]
 
+--test-- "VECTOR math operation with vector not at head"
+	v: make vector! [integer! 8 [1 2 3 4]]
+	--assert (2 + skip v 2) = make vector! [integer! 8 [5 6]]
+	--assert v = make vector! [integer! 8 [1 2 5 6]]
+
 ===end-group===
 
 ~~~end-file~~~
