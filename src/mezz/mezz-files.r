@@ -72,7 +72,8 @@ input: function [
 	][
 		system/ports/input: open [scheme: 'console]
 	]
-	to string! read system/ports/input
+	if line: read system/ports/input [ line: to string! line ]
+	line
 ]
 
 ask: func [
@@ -81,7 +82,7 @@ ask: func [
 	/hide "Turns off echoing inputs"
 ][
 	prin question
-	trim either hide [
+	either hide [
 		prin  "^[[8m"  ; ANSI conceal command
 		also input
 		print "^[[28m" ; ANSI reveal command

@@ -529,6 +529,15 @@ static void close_stdio(void)
 		else {
 			ok = ReadConsoleW(Std_Inp, Std_Buf, BUF_SIZE-1, &total, 0);
 			if (ok) {
+				if (total == 0) {
+					// CTRL-C pressed
+					SetConsoleTextAttribute(Std_Out, FOREGROUND_INTENSITY | FOREGROUND_MAGENTA);
+					WriteConsoleW(Std_Out, L"[ESC]\r\n", 7, NULL, 0);
+					SetConsoleTextAttribute(Std_Out, 0);
+					req->data[0] = '\x1B'; // ESC char
+					req->actual = 1;
+					return DR_DONE;
+				}
 				total = WideCharToMultiByte(CP_UTF8, 0, Std_Buf, total, req->data, req->length, 0, 0);
 				if (!total) ok = FALSE;
 			}
