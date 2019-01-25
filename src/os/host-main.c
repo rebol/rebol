@@ -123,6 +123,13 @@ void Host_Repl() {
 
 		if (!line) {
 			// "end of stream" - for example on CTRL+C
+			if(cont_level > 0) {
+				// we were in multiline editing, so escape from it only
+				cont_level = 0;
+				input_len = 0;
+				input[0] = 0;
+				continue;
+			}
 			Put_Str(b_cast("\x1B[0m")); //reset console color before leaving
 			goto cleanup_and_return;
 		}
@@ -278,7 +285,7 @@ int main(int argc, char **argv) {
 
 #ifndef REB_CORE
 	Init_Windows();
-	Init_Graphics();
+	//Init_Graphics();
 #endif
 
 #ifdef TEST_EXTENSIONS

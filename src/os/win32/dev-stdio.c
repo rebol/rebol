@@ -78,6 +78,8 @@ static REBCHR *Std_Buf = 0;		// for input and output
 static BOOL Redir_Out = 0;
 static BOOL Redir_Inp = 0;
 
+static BOOL Handled_Break = 0;
+
 // Since some Windows10 version it's possible to use the new terminal processing,
 // of ANSI escape sequences. From my tests its not faster than my emulation, but
 // may be used for functionalities which are not handled in the emulation.
@@ -140,6 +142,12 @@ const REBYTE* Parse_ANSI_sequence(const REBYTE *cp, const REBYTE *ep);
 
 BOOL WINAPI Handle_Break(DWORD dwCtrlType)
 {
+	//printf("\nHandle_Break %i\n", dwCtrlType);
+	if(Handled_Break) {
+		// CTRL-C was catched durring ReadConsoleW and was already processed
+		Handled_Break = FALSE;
+		return TRUE;
+	}
 	// Handle the MS CMD console CTRL-C, BREAK, and other events:
 	if (dwCtrlType >= CTRL_CLOSE_EVENT) OS_Exit(100); // close button, shutdown, etc.
 	RL_Escape(0);
@@ -531,6 +539,8 @@ static void close_stdio(void)
 			if (ok) {
 				if (total == 0) {
 					// CTRL-C pressed
+					Handled_Break = TRUE; // let the break handler (which is signaled later) to know,
+					                      // that we handled it already
 					SetConsoleTextAttribute(Std_Out, FOREGROUND_INTENSITY | FOREGROUND_MAGENTA);
 					WriteConsoleW(Std_Out, L"[ESC]\r\n", 7, NULL, 0);
 					SetConsoleTextAttribute(Std_Out, 0);
