@@ -543,7 +543,7 @@ static void close_stdio(void)
 					                      // that we handled it already
 					SetConsoleTextAttribute(Std_Out, FOREGROUND_INTENSITY | FOREGROUND_MAGENTA);
 					WriteConsoleW(Std_Out, L"[ESC]\r\n", 7, NULL, 0);
-					SetConsoleTextAttribute(Std_Out, 0);
+					SetConsoleTextAttribute(Std_Out, FOREGROUND_GREY);
 					req->data[0] = '\x1B'; // ESC char
 					req->actual = 1;
 					return DR_DONE;
