@@ -28,5 +28,6 @@ Defines: [
 
 	;USE_EMPTY_HASH_AS_NONE ;-- A single # means NONE, else error; Used in l-scan.c file
 	;FORCE_ANSI_ESC_EMULATION_ON_WINDOWS ;-- would not try to use MS' built-in VIRTUAL_TERMINAL_PROCESSING
+	;EXCLUDE_VECTOR_MATH ;-- don't include vector math support (like: 3 * #[vector! integer! 8 3 [1 2 3]])
 
 ]
