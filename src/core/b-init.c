@@ -249,6 +249,7 @@ extern const REBYTE Str_Banner[];
 
 	for (word++; NOT_END(word); word++, n++) {
 		COPY_BYTES(str, Get_Word_Name(word), 32);
+		str[31] = '\0';
 		str[LEN_BYTES(str)-1] = '?';
 		sym = Make_Word(str, 0);
 		//Print("sym: %s", Get_Sym_Name(sym));

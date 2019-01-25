@@ -78,6 +78,7 @@ enum Crash_Msg_Nums {
 
 	// "REBOL PANIC #nnn:"
 	COPY_BYTES(buf, Crash_Msgs[CM_ERROR], CRASH_BUF_SIZE);
+	buf[CRASH_BUF_SIZE - 1] = '\0';
 	APPEND_BYTES(buf, cb_cast(" #"), CRASH_BUF_SIZE);
 	Form_Int(buf + LEN_BYTES(buf), id);
 	APPEND_BYTES(buf, cb_cast(": "), CRASH_BUF_SIZE);
