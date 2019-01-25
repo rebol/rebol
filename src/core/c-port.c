@@ -512,7 +512,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 **
 ***********************************************************************/
 
-#define MAX_SCHEMES 11		// max native schemes
+#define MAX_SCHEMES 12		// max native schemes
 
 typedef struct rebol_scheme_actions {
 	REBCNT sym;
@@ -568,7 +568,7 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 		if (Scheme_Actions[n].sym == VAL_WORD_SYM(act)) break;
 	}
 	if (n == MAX_SCHEMES || !Scheme_Actions[n].sym) return R_NONE;
-
+	
 	// The scheme uses a native actor:
 	if (Scheme_Actions[n].fun) {
 		//Make_Native(actor, Make_Block(0), (REBFUN)(Scheme_Actions[n].fun), REB_NATIVE);
@@ -630,5 +630,6 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	Init_Checksum_Scheme();
 #ifndef MIN_OS
 	Init_Clipboard_Scheme();
+	Init_MIDI_Scheme();
 #endif
 }
