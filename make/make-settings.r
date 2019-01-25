@@ -15,4 +15,18 @@ Defines: [
 	;USE_WAV_CODEC   ;-- deprecated; using Rebol codec instead
 	;USE_NO_INFINITY ;-- use when you don't want to support IEEE infinity
 	USE_LZMA         ;-- adds support for LZMA [de]compression
+
+	;@@ optional fine tuning:
+	;DO_NOT_NORMALIZE_MAP_KEYS
+	; with above define you would get:
+	;	[a b:]     = words-of make map! [a 1 b: 2]
+	;	[a 1 b: 2] = body-of  make map! [a 1 b: 2]
+	;
+	; else:
+	;	[a b]       = words-of make map! [a 1 b: 2]
+	;	[a: 1 b: 2] = body-of  make map! [a 1 b: 2]
+
+	;USE_EMPTY_HASH_AS_NONE ;-- A single # means NONE, else error; Used in l-scan.c file
+	;FORCE_ANSI_ESC_EMULATION_ON_WINDOWS ;-- would not try to use MS' built-in VIRTUAL_TERMINAL_PROCESSING
+
 ]

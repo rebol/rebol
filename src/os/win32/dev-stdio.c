@@ -52,8 +52,23 @@
 
 #define SF_DEV_NULL 31			// local flag to mark NULL device
 
+// some modes may not be defined
+#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+#endif
+#ifndef ENABLE_VIRTUAL_TERMINAL_INPUT
+#define ENABLE_VIRTUAL_TERMINAL_INPUT      0x0200
+#endif
+#ifndef ENABLE_INSERT_MODE
+#define ENABLE_INSERT_MODE                 0x0020
+#endif
+#ifndef ENABLE_QUICK_EDIT_MODE
+#define ENABLE_QUICK_EDIT_MODE             0x0040
+#endif
+
+
 #define CONSOLE_MODES ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT | ENABLE_ECHO_INPUT \
-		| ENABLE_EXTENDED_FLAGS | 0x0040 | 0x0020  // quick edit and insert mode (not defined in VC6)
+		| ENABLE_EXTENDED_FLAGS | ENABLE_QUICK_EDIT_MODE | ENABLE_INSERT_MODE
 
 static HANDLE Std_Out = 0;
 static HANDLE Std_Inp = 0;
@@ -62,6 +77,25 @@ static REBCHR *Std_Buf = 0;		// for input and output
 
 static BOOL Redir_Out = 0;
 static BOOL Redir_Inp = 0;
+
+// Since some Windows10 version it's possible to use the new terminal processing,
+// of ANSI escape sequences. From my tests its not faster than my emulation, but
+// may be used for functionalities which are not handled in the emulation.
+// If the terminal processing is not available, there is a fallback to emulation
+// so basic ANSI is supported also on older Windows.
+//
+// Known issues with the new MS terminal processing:
+//	* it does not process sequences to switch output echo (^[[8m and ^[[28m)
+//	  currently used in ASK/HIDE 
+//
+// Documentation: https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences
+//
+// It's possible to force the emulation with following compilation definition:
+#ifdef FORCE_ANSI_ESC_EMULATION_ON_WINDOWS
+static BOOL Emulate_ANSI = 1; // forces backward compatible ANSI emulation (not using VIRTUAL_TERMINAL_PROCESSING)
+#else
+static BOOL Emulate_ANSI = 0;
+#endif
 
 // Special access:
 extern REBDEV *Devices[];
@@ -94,6 +128,10 @@ static int ANSI_State = -1; // if >= 0, we are in the middle of the parsing ANSI
 static int ANSI_Value1 = 0;
 static int ANSI_Value2 = 0;
 static int ANSI_Attr  = -1;
+
+DWORD dwOriginalOutMode = 0;
+DWORD dwOriginalInpMode = 0;
+WORD wOriginalAttributes = 0;
 
 int Update_Graphic_Mode(int attribute, int value, boolean set);
 const REBYTE* Parse_ANSI_sequence(const REBYTE *cp, const REBYTE *ep);
@@ -167,6 +205,13 @@ static void close_stdio(void)
 {
 	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy above
 
+	// reset original modes on exit
+	if (Std_Inp) SetConsoleMode(Std_Inp, dwOriginalInpMode);
+	if (Std_Out) {
+		SetConsoleMode(Std_Out, dwOriginalOutMode);
+		SetConsoleTextAttribute(Std_Out, wOriginalAttributes);
+	}
+
 	close_stdio();
 	//if (GET_FLAG(dev->flags, RDF_OPEN)) FreeConsole();
 	CLR_FLAG(dev->flags, RDF_OPEN);
@@ -239,6 +284,11 @@ static void close_stdio(void)
 		//Std_Err = GetStdHandle(STD_ERROR_HANDLE);
 		Std_Echo = 0;
 
+		// store original text attributes:
+		CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+		GetConsoleScreenBufferInfo(Std_Out, &csbiInfo);
+		wOriginalAttributes = csbiInfo.wAttributes;
+
 		Redir_Out = (GetFileType(Std_Out) != FILE_TYPE_CHAR);
 		Redir_Inp = (GetFileType(Std_Inp) != FILE_TYPE_CHAR);
 
@@ -267,6 +317,10 @@ static void close_stdio(void)
 #endif
 		Std_Buf = OS_Make(BUF_SIZE * sizeof(REBCHR));
 
+		// store original modes
+		GetConsoleMode(Std_Out, &dwOriginalOutMode);
+		GetConsoleMode(Std_Inp, &dwOriginalInpMode);
+
 		if (!Redir_Inp) {
 			//
 			// Windows offers its own "smart" line editor (with history
@@ -277,7 +331,35 @@ static void close_stdio(void)
 			// While the line editor is running with ENABLE_LINE_INPUT, there
 			// are very few hooks offered.
 			//
-			SetConsoleMode(Std_Inp, CONSOLE_MODES);
+			DWORD dwInpMode = CONSOLE_MODES;
+			DWORD dwOutMode = dwOriginalOutMode;
+
+			if(!SetConsoleMode(Std_Inp, dwInpMode)) {
+				printf("Failed to set input ConsoleMode! Error: %i\n", GetLastError());
+				return DR_ERROR;
+			}
+
+			if(!Emulate_ANSI) {
+				//dwInpMode |= ENABLE_VIRTUAL_TERMINAL_INPUT;
+				dwOutMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+				if (SetConsoleMode(Std_Out, dwOutMode)) {
+					//SetConsoleMode(Std_Inp, dwInpMode);
+				} else {
+					Emulate_ANSI = 1; // failed to use VIRTUAL_TERMINAL_PROCESSING, so force emulation
+				}
+			}
+
+			// Try some Set Graphics Rendition (SGR) terminal escape sequences
+			/*
+			wprintf(L"\x1b[31mThis text has a red foreground using SGR.31.\r\n");
+			wprintf(L"\x1b[1mThis text has a bright (bold) red foreground using SGR.1 to affect the previous color setting.\r\n");
+			wprintf(L"\x1b[mThis text has returned to default colors using SGR.0 implicitly.\r\n");
+			wprintf(L"\x1b[34;46mThis text shows the foreground and background change at the same time.\r\n");
+			wprintf(L"\x1b[0mThis text has returned to default colors using SGR.0 explicitly.\r\n");
+			wprintf(L"\x1b[31;32;33;34;35;36;101;102;103;104;105;106;107mThis text attempts to apply many colors in the same command. Note the colors are applied from left to right so only the right-most option of foreground cyan (SGR.36) and background bright white (SGR.107) is effective.\r\n");
+			wprintf(L"\x1b[39mThis text has restored the foreground color only.\r\n");
+			wprintf(L"\x1b[49mThis text has restored the background color only.\r\n");
+			*/
 		}
 
 		// Handle stdio CTRL-C interrupt:
@@ -338,57 +420,66 @@ static void close_stdio(void)
 		bp = req->data;
 		ep = bp + req->length;
 
-		// Using this loop for seeking escape char and processing ANSI sequence
-		do {
+		if(Emulate_ANSI) {
+			// Using this loop for seeking escape char and processing ANSI sequence
+			do {
+				if (ANSI_State >= 0) // there is pending ansi sequence state
+					bp = Parse_ANSI_sequence(bp - 1, ep); // the pointer is incremented back in the parser
 
-			if(ANSI_State >= 0) // there is pending ansi sequence state
-				bp = Parse_ANSI_sequence(bp-1, ep); // the pointer is incremented back in the parser
+				cp = Skip_To_Char(bp, ep, (REBYTE)27); //find ANSI escape char "^["
 
-			cp = Skip_To_Char(bp, ep, (REBYTE)27); //find ANSI escape char "^["
-
-			if (Redir_Out) { // for Console SubSystem (always UTF-8)
-				if (cp) {
-					ok = WriteFile(Std_Out, bp, cp - bp, &total, 0);
-					bp = Parse_ANSI_sequence(cp, ep);
-				}
-				else {
-					ok = WriteFile(Std_Out, bp, ep - bp, &total, 0);
-					bp = ep;
-				}
-				if (!ok) {
-					req->error = GetLastError();
-					return DR_ERROR;
-				}
-			}
-			else { // for Windows SubSystem - must be converted to Win32 wide-char format
-
-				// Thankfully, MS provides something other than mbstowcs();
-				// however, if our buffer overflows, it's an error. There's no
-				// efficient way at this level to split-up the input data,
-				// because its UTF-8 with variable char sizes.
-
-				//if found, write to the console content before it starts, else everything
-				if (cp) {
-					len = MultiByteToWideChar(CP_UTF8, 0, bp, cp - bp, Std_Buf, BUF_SIZE);
-				}
-				else {
-					len = MultiByteToWideChar(CP_UTF8, 0, bp, ep - bp, Std_Buf, BUF_SIZE);
-					bp = ep;
-				}
-				if (len > 0) {// no error
-					ok = WriteConsoleW(Std_Out, Std_Buf, len, &total, 0);
+				if (Redir_Out) { // for Console SubSystem (always UTF-8)
+					if (cp) {
+						ok = WriteFile(Std_Out, bp, cp - bp, &total, 0);
+						bp = Parse_ANSI_sequence(cp, ep);
+					}
+					else {
+						ok = WriteFile(Std_Out, bp, ep - bp, &total, 0);
+						bp = ep;
+					}
 					if (!ok) {
 						req->error = GetLastError();
 						return DR_ERROR;
 					}
 				}
-				//is escape char was found, parse the ANSI sequence...
-				if (cp) {
-					bp = Parse_ANSI_sequence(cp, ep);
+				else { // for Windows SubSystem - must be converted to Win32 wide-char format
+					//if found, write to the console content before it starts, else everything
+					if (cp) {
+						len = MultiByteToWideChar(CP_UTF8, 0, bp, cp - bp, Std_Buf, BUF_SIZE);
+					}
+					else {
+						len = MultiByteToWideChar(CP_UTF8, 0, bp, ep - bp, Std_Buf, BUF_SIZE);
+						bp = ep;
+					}
+					if (len > 0) {// no error
+						ok = WriteConsoleW(Std_Out, Std_Buf, len, &total, 0);
+						if (!ok) {
+							req->error = GetLastError();
+							return DR_ERROR;
+						}
+					}
+					//is escape char was found, parse the ANSI sequence...
+					if (cp) {
+						bp = Parse_ANSI_sequence(cp, ep);
+					}
 				}
+			} while (bp < ep);
+		} else {
+			// using MS built in ANSI processing
+			if (Redir_Out) { // Always UTF-8
+				ok = WriteFile(Std_Out, req->data, req->length, &total, 0);
 			}
-		} while (bp < ep);
-
+			else {
+				// Convert UTF-8 buffer to Win32 wide-char format for console.
+				// Thankfully, MS provides something other than mbstowcs();
+				// however, if our buffer overflows, it's an error. There's no
+				// efficient way at this level to split-up the input data,
+				// because its UTF-8 with variable char sizes.
+				len = MultiByteToWideChar(CP_UTF8, 0, req->data, req->length, Std_Buf, BUF_SIZE);
+				if (len > 0) // no error
+					ok = WriteConsoleW(Std_Out, Std_Buf, len, &total, 0);
+			}
+		}
 		req->actual = req->length;  // do not use "total" (can be byte or wide)
 
 		//if (GET_FLAG(req->flags, RRF_FLUSH)) {
