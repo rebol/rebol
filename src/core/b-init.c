@@ -608,7 +608,7 @@ extern const REBYTE Str_Banner[];
 	value = Get_System(SYS_CATALOG, CAT_ACTIONS);
 	Set_Block(value, Collect_Set_Words(VAL_BLK(&Boot_Block->actions)));
 
-	// Create system/catalog/actions block:
+	// Create system/catalog/nativess block:
 	value = Get_System(SYS_CATALOG, CAT_NATIVES);
 	Set_Block(value, Collect_Set_Words(VAL_BLK(&Boot_Block->natives)));
 
