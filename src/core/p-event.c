@@ -96,7 +96,35 @@ REBREQ *req;		//!!! move this global
 
 	return value;
 }
+/***********************************************************************
+**
+*/	REBVAL *Find_Event (REBINT model, REBINT type)
+/*
+**		Find the event in the queue by the model and type
+**		Return a pointer to the event value.
+**
+**
+***********************************************************************/
+{
+	REBVAL *port;
+	REBVAL *value;
+	REBVAL *state;
 
+	port = Get_System(SYS_PORTS, PORTS_SYSTEM);
+	if (!IS_PORT(port)) return NULL; // verify it is a port object
+
+	// Get queue block:
+	state = VAL_BLK_SKIP(port, STD_PORT_STATE);
+	if (!IS_BLOCK(state)) return NULL;
+	for(value = VAL_BLK(state); value != VAL_BLK_TAIL(state); ++ value){
+		if (VAL_EVENT_MODEL(value) == model
+			&& VAL_EVENT_TYPE(value) == type){
+			return value;
+		}
+	}
+
+	return NULL;
+}
 
 /***********************************************************************
 **
