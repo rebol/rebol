@@ -514,6 +514,9 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	REBVAL *tmp    = NULL;
 	REBOOL not_any = !D_REF(3);
 	REBOOL is_blk  = FALSE;
+	REBSER *obj;
+	REBVAL *obj_val;
+
 
 	if (not_any && !IS_SET(val))
 		Trap1(RE_NEED_VALUE, word);
@@ -544,17 +547,36 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			if (not_any && is_blk && !IS_END(tmp) && IS_UNSET(tmp++)) // won't advance past end
 				Trap1(RE_NEED_VALUE, word);
 		}
-		for (word = VAL_OBJ_VALUES(D_ARG(1)) + 1; NOT_END(word); word++) { // skip self
-			// WARNING: Unwinds that make it here are assigned. All unwinds
-			// should be screened earlier (as is done in e.g. REDUCE, or for
-			// function arguments) so they don't even get into this function.
-			*word = *val;
-			if (is_blk) {
-				val++;
-				if (IS_END(val)) {
-					if (!D_REF(4)) break; // /pad not provided
-					is_blk = FALSE;
-					val = NONE_VALUE;
+		if (IS_OBJECT(val)) {
+			obj = VAL_OBJ_FRAME(D_ARG(1));
+			// Keep the binding table.
+			Collect_Start(BIND_ALL);
+			// Setup binding table and BUF_WORDS with destination obj words:
+			Collect_Object(obj);
+
+			obj_val = VAL_OBJ_VALUES(D_ARG(1)) + 1;  // skip self
+			for (word = BLK_HEAD(VAL_OBJ_WORDS(D_ARG(1))) + 1; NOT_END(word); word++) { // skip self
+				tmp = Find_Word_Value(VAL_OBJ_FRAME(val), VAL_WORD_SYM(word));
+				if(tmp && !IS_UNSET(tmp)) *obj_val = *tmp;
+				obj_val++;
+			}
+			Copy_Deep_Values(obj, 1, SERIES_TAIL(obj), TS_CLONE);
+			Rebind_Block(VAL_OBJ_FRAME(val), obj, BLK_SKIP(obj, 1), REBIND_FUNC | REBIND_TABLE);
+			// release binding table
+			Collect_End(obj);
+		} else {
+			for (word = VAL_OBJ_VALUES(D_ARG(1)) + 1; NOT_END(word); word++) { // skip self
+				// WARNING: Unwinds that make it here are assigned. All unwinds
+				// should be screened earlier (as is done in e.g. REDUCE, or for
+				// function arguments) so they don't even get into this function.
+				*word = *val;
+				if (is_blk) {
+					val++;
+					if (IS_END(val)) {
+						if (!D_REF(4)) break; // /pad not provided
+						is_blk = FALSE;
+						val = NONE_VALUE;
+					}
 				}
 			}
 		}
