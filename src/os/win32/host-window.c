@@ -78,7 +78,7 @@ static struct gob_window *Gob_Windows;
 
 REBGOB *Gob_Root;				// Top level GOB (the screen)
 HCURSOR Cursor;					// active cursor image object
-REBPAR Zero_Pair = {0, 0};
+REBXYF Zero_Pair = {0, 0};
 //void* Effects;
 
 
@@ -521,7 +521,7 @@ static void Free_Window(REBGOB *gob) {
 
 /***********************************************************************
 **
-*/	void Blit_Rect(REBGOB *gob, REBPAR d, REBPAR dsize, REBYTE *src, REBPAR s, REBPAR ssize)
+*/	void Blit_Rect(REBGOB *gob, REBXYF d, REBXYF dsize, REBYTE *src, REBXYF s, REBXYF ssize)
 /*
 **		This routine copies a rectangle from a PAN structure to the
 **		current output device.
@@ -572,7 +572,7 @@ static void Free_Window(REBGOB *gob) {
 
 /***********************************************************************
 **
-*/	void Blit_Color(REBGOB *gob, REBPAR d, REBPAR dsize, long color)
+*/	void Blit_Color(REBGOB *gob, REBXYF d, REBXYF dsize, long color)
 /*
 **		Fill color rectangle, a pixel at a time.
 **
