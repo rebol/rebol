@@ -549,7 +549,8 @@ set: native [
 	word [any-word! any-path! block! object!] {Word, block of words, path, or object to be set (modified)}
 	value [any-type!] {Value or block of values}
 	/any {Allows setting words to any value, including unset}
-	/pad {For objects, if block is too short, remaining words are set to NONE}
+	/only {Block or object value argument is set as a single value}
+	/some {None values in a block or object value argument, are not set}
 ]
 
 to-hex: native [
