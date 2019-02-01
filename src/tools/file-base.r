@@ -67,7 +67,7 @@ core: [
 	p-event.c
 	p-file.c
 	p-net.c
-	p-midi.c
+	;p-midi.c
 	s-cases.c
 	s-crc.c
 	s-file.c
@@ -147,7 +147,7 @@ os-win32: [
 	dev-file.c
 	dev-event.c
 	dev-clipboard.c
-	dev-midi.c
+	;dev-midi.c
 ]
 
 os-win32g: [
