@@ -27,6 +27,16 @@ Rebol [
 	--assert  "ah" = data/ser ; original serie not modified
 	--assert "aha" = new/ser  ; only the new one
 
+--test-- "set/only OBJECT OBJECT"
+	o: object [a: b: c: none] set o object [a: 1 d: 3]
+	--assert all [o/a = 1 none? o/b none? o/c]
+	o: object [a: b: c: none] set/only o o2: object [a: 1 d: 3] o
+	--assert all [object? o/a object? o/b object? o/c o/a = o/b  o/a = o2]
+	; note that if unsed /only, the setter is not being copied
+	o2/a: 23
+	--assert o/a/a = 23
+
+
 ===end-group===
 
 ~~~end-file~~~
