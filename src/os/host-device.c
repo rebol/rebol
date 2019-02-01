@@ -73,7 +73,7 @@ extern REBDEV Dev_DNS;
 extern REBDEV Dev_Checksum;
 #ifndef MIN_OS
 extern REBDEV Dev_Clipboard;
-extern REBDEV Dev_MIDI;
+//extern REBDEV Dev_MIDI;
 #endif
 
 REBDEV *Devices[RDI_LIMIT] =
@@ -88,7 +88,7 @@ REBDEV *Devices[RDI_LIMIT] =
 	0,//&Dev_Checksum,
 #ifndef MIN_OS
 	&Dev_Clipboard,
-	&Dev_MIDI,
+//	&Dev_MIDI,
 #else
 	0
 #endif

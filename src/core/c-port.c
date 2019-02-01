@@ -630,6 +630,6 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	Init_Checksum_Scheme();
 #ifndef MIN_OS
 	Init_Clipboard_Scheme();
-	Init_MIDI_Scheme();
+	//Init_MIDI_Scheme();
 #endif
 }
