@@ -498,6 +498,32 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	return 0;
 }
 
+/***********************************************************************
+**
+*/	RL_API int RL_Update_Event(REBEVT *evt)
+/*
+**	Updates an application event (e.g. GUI) to the event port.
+**
+**	Returns:
+**		Returns 1 if updated, or 0 if event appended, and -1 if full.
+**	Arguments:
+**		evt - A properly initialized event structure. The
+**			 model and type of the event are used to address 
+**           the unhandled event in the queue, when it is found,
+**           it will be replaced with this one
+**
+***********************************************************************/
+
+{
+	REBVAL *event = Find_Event(evt->model, evt->type);
+
+	if (event) {
+		event->data.event = *evt;
+		return 1;
+	}
+	
+	return RL_Event(evt) - 1;
+}
 
 RL_API void *RL_Make_Block(u32 size)
 /*

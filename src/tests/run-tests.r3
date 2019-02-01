@@ -9,6 +9,7 @@ dt [ ;- delta time
 	***start-run*** "All tests"
 	;recycle/torture
 	wrap load %units/lexer-test.r3
+	wrap load %units/evaluation-test.r3
 	wrap load %units/enbase-test.r3
 	wrap load %units/map-test.r3
 	wrap load %units/integer-test.r3
@@ -28,10 +29,12 @@ dt [ ;- delta time
 	wrap load %units/codecs-test.r3
 	wrap load %units/series-test.r3
 	wrap load %units/vector-test.r3
+	wrap load %units/object-test.r3
 	wrap load %units/compress-test.r3
 	wrap load %units/date-test.r3
 	wrap load %units/image-test.r3
 	wrap load %units/file-test.r3
+	wrap load %units/func-test.r3
 
 	recycle/torture
 	recycle

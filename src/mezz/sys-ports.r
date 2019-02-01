@@ -323,6 +323,12 @@ init-schemes: func [
 		name: 'clipboard
 	]
 
+	make-scheme [
+		title: "MIDI"
+		name: 'midi
+		awake: func [event] [print event/type true]
+	]
+
 	system/ports/system:   open [scheme: 'system]
 	system/ports/input:    open [scheme: 'console]
 	system/ports/callback: open [scheme: 'callback]
