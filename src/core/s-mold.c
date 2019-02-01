@@ -900,6 +900,7 @@ STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
 	REBVAL *words;
 	REBVAL *vals; // first value is context
 	REBCNT n;
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
 
 	ASSERT(VAL_OBJ_FRAME(value), RP_NO_OBJECT_FRAME);
 
@@ -927,7 +928,11 @@ STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
 			!VAL_GET_OPT(words+n, OPTS_HIDE) &&
 			((VAL_TYPE(vals+n) > REB_NONE) || !GET_MOPT(mold, MOPT_NO_NONE))
 		){
-			New_Indented_Line(mold);
+			if(indented)
+				New_Indented_Line(mold);
+			else if (n > 1)
+				Append_Byte(mold->series, ' ');
+
 			Append_UTF8(mold->series, Get_Sym_Name(VAL_WORD_SYM(words+n)), -1);
 			//Print("Slot: %s", Get_Sym_Name(VAL_WORD_SYM(words+n)));
 			Append_Bytes(mold->series, ": ");
@@ -936,7 +941,7 @@ STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
 		}
 	}
 	mold->indent--;
-	New_Indented_Line(mold);
+	if (indented) New_Indented_Line(mold);
 	Append_Byte(mold->series, ']');
 
 	End_Mold(mold);
