@@ -515,7 +515,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 ***********************************************************************/
 
 {
-	REBVAL *event = Find_Event(evt->model, evt->type);
+	REBVAL *event = Find_Event(evt->model, evt->type, evt->ser);
 
 	if (event) {
 		event->data.event = *evt;

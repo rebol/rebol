@@ -107,9 +107,9 @@ REBREQ *req;		//!!! move this global
 }
 /***********************************************************************
 **
-*/	REBVAL *Find_Event (REBINT model, REBINT type)
+*/	REBVAL *Find_Event (REBINT model, REBINT type, void* ser)
 /*
-**		Find the event in the queue by the model and type
+**		Find the event in the queue by the model, type and port/object (if any)
 **		Return a pointer to the event value.
 **
 **
@@ -127,7 +127,8 @@ REBREQ *req;		//!!! move this global
 	if (!IS_BLOCK(state)) return NULL;
 	for(value = VAL_BLK(state); value != VAL_BLK_TAIL(state); ++ value){
 		if (VAL_EVENT_MODEL(value) == model
-			&& VAL_EVENT_TYPE(value) == type){
+			&& VAL_EVENT_TYPE(value) == type
+			&& (ser == NULL || VAL_EVENT_SER(value) == ser)){
 			return value;
 		}
 	}
