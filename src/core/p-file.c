@@ -407,7 +407,7 @@ REBINT Mode_Syms[] = {
 	path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
 	if (!path) Trap1(RE_INVALID_SPEC, spec);
 
-	if (IS_URL(path)) path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
+	if (IS_URL(path)) path = Obj_Value(spec, STD_PORT_SPEC_FILE_PATH);
 	else if (!IS_FILE(path)) Trap1(RE_INVALID_SPEC, path);
 
 	// Get or setup internal state data:

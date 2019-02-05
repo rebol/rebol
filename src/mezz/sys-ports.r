@@ -292,41 +292,32 @@ init-schemes: func [
 	make-scheme [
 		title: "Checksum port"
 		info: "Possible methods: MD5, SHA1, SHA256, SHA384, SHA512"
+		spec: system/standard/port-spec-checksum
 		name: 'checksum
 		init: function [
 			port [port!]
 		][
 			spec: port/spec
-			meth: any [ ; using short name so I can easily make the new spec bellow
-			            ; when it would be: method: method - it would throw binding error
-				select spec 'meth
+			method: any [
+				select spec 'method
 				select spec 'host   ; if scheme was opened using url type
-				'md5                     ; default method
+				'md5                ; default method
 			]
-			meth: to word! meth ; in case it was not
-			unless find [md5 sha1 sha256 sha384 sha512] meth [
-				cause-error 'access 'invalid-spec meth
+			if any [
+				error? try [spec/method: to word! method] ; in case it was not
+				not find [md5 sha1 sha256 sha384 sha512] spec/method
+			][
+				cause-error 'access 'invalid-spec method
 			] 
-			; make the spec only with relevant fields
-			port/spec: object [
-				title:  spec/title
-				scheme: spec/scheme
-				ref:    spec/ref    ;-- help system wants this value!
-				method: meth
-			]
-			protect/words port/spec
+			; make port/spec to be only with midi related keys
+			set port/spec: copy system/standard/port-spec-checksum spec
+			;protect/words port/spec ; protect spec object keys of modification
 		]
 
 	]
 	make-scheme [
 		title: "Clipboard"
 		name: 'clipboard
-	]
-
-	make-scheme [
-		title: "MIDI"
-		name: 'midi
-		awake: func [event] [print event/type true]
 	]
 
 	system/ports/system:   open [scheme: 'system]

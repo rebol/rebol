@@ -123,7 +123,7 @@
 
 	spec = BLK_SKIP(port, STD_PORT_SPEC);
 	if (!IS_OBJECT(spec)) Trap1(RE_INVALID_SPEC, spec);
-	method = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
+	method = Obj_Value(spec, STD_PORT_SPEC_CHECKSUM_METHOD);
     if (!method || !IS_WORD(method)) {
         Trap1(RE_INVALID_SPEC, spec);
         return 0; //just to make xcode analyze happy

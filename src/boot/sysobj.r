@@ -236,14 +236,21 @@ standard: context [
 		title:		; user-friendly title for port
 		scheme:		; reference to scheme that defines this port
 		ref:		; reference path or url (for errors)
-		path:		; used for files
 		   none 	; (extended here)
 	]
 
-	port-spec-net: make port-spec-head [
+	port-spec-file: make port-spec-head [
+		path:  none
+	]
+
+	port-spec-net: make port-spec-file [
 		host: none
 		port-id: 80
-			none
+	]
+
+	port-spec-checksum: make port-spec-head [
+		scheme: 'checksum
+		method: none
 	]
 	
 	file-info: context [
