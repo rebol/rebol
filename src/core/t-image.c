@@ -1284,9 +1284,10 @@ is_true:
 	}
 
 	// Set the alpha only:
-	if (IS_INTEGER(val) && VAL_INT64(val) > 0 && VAL_INT64(val) < 255) n = VAL_INT32(val);
-	else if (IS_CHAR(val)) n = VAL_CHAR(val);
-	else return PE_BAD_RANGE;
+	if (IS_INTEGER(val) && VAL_INT64(val) >= 0 && VAL_INT64(val) <= 255) n = VAL_INT32(val);
+	else if (IS_CHAR(val) && VAL_CHAR(val) <= 255) n = VAL_CHAR(val); // char in R3 may be larger that 255, not like in R2
+	// Do we really want to be able change the alpha using a CHAR value? I don't think so, but keep it there so far; Oldes
+	else return PE_BAD_ARGUMENT;
 
 	dp = (REBCNT*)QUAD_SKIP(series, index);
 	*dp = (*dp & 0xffffff) | (n << 24);

@@ -421,6 +421,8 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 		Trap_Range(pvs->path);
 	case PE_BAD_SET_TYPE:
 		Trap2(RE_BAD_FIELD_SET, pvs->path, Of_Type(pvs->setval));
+	case PE_BAD_ARGUMENT:
+		Trap1(RE_INVALID_ARG, pvs->setval);
 	}
 
 	if (NOT_END(pvs->path+1)) Next_Path(pvs);

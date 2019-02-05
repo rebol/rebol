@@ -1005,7 +1005,8 @@ enum Path_Eval_Result {
 	PE_BAD_SELECT,
 	PE_BAD_SET,
 	PE_BAD_RANGE,
-	PE_BAD_SET_TYPE
+	PE_BAD_SET_TYPE,
+	PE_BAD_ARGUMENT
 };
 
 typedef REBINT (*REBPEF)(REBPVS *pvs); // Path evaluator function
