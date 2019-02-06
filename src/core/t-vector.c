@@ -225,7 +225,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	return ser;
 }
 
-
+#ifndef EXCLUDE_VECTOR_MATH
 /***********************************************************************
 **
 */	REBVAL* Math_Op_Vector(REBVAL *v1, REBVAL *v2, REBCNT action)
@@ -340,7 +340,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	}
 	return left;
 }
-
+#endif
 
 /***********************************************************************
 **
@@ -688,12 +688,14 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 		Pick_Path(value, arg, D_ARG(3));
 		return R_ARG3;
 
+#ifndef EXCLUDE_VECTOR_MATH
 	case A_ADD:
 	case A_SUBTRACT:
 	case A_MULTIPLY:
 	case A_DIVIDE:
 		Math_Op_Vector(value, arg, action);
 		break;
+#endif
 
 	case A_MAKE:
 		// We only allow MAKE VECTOR! ...

@@ -60,6 +60,27 @@ Rebol [
 		--assert error? try [img/(3x2): 1.2.3]
 ===end-group===
 
+===start-group=== "set alpha using path"
+	;@@ https://github.com/rebol/rebol-issues/issues/2343
+	img: make image! 2x2
+	--test-- "set alpha using path and integer"
+		img/1: 0
+		--assert img/1 = 255.255.255.0
+		img/1: 127
+		--assert img/1 = 255.255.255.127
+		
+	--test-- "set alpha using path and char"
+		img/1: #"^@"
+		--assert img/1 = 255.255.255.0
+		img/1: to char! 127 
+		--assert img/1 = 255.255.255.127
+
+	--test-- "set alpha using path with out of range value"
+		--assert error? try [img/1: -1]
+		--assert error? try [img/1: 256]
+		--assert error? try [img/1: #"^(260)"]
+===end-group===
+
 ===start-group=== "image pixel assignment validity"
 	--test-- "image pixel 3-tuple assignment"
 		--assert 255.255.255 = img/1: 255.255.255

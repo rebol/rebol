@@ -82,6 +82,8 @@
 		result = OS_DO_DEVICE(req, RDC_READ);
 		if (result < 0) Trap_Port(RE_READ_ERROR, port, req->error);
 
+		if (req->actual == 1 && req->data[0] == '\x1B') return R_NONE; // CTRL-C
+
 #ifdef TO_WINDOWS
 		if (req->actual > 1) req->actual -= 2; // remove CRLF from tail
 #else

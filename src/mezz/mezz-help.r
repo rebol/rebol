@@ -97,7 +97,7 @@ import module [
 		; Form a limited string from the value provided.
 		val: case [
 			string?       :val [ mold val ]
-			any-block?    :val [ return reform ["length:" length? val mold/flat val] ]
+			any-block?    :val [ reform ["length:" length? val mold/flat val] ]
 			object?       :val [ words-of val ]
 			module?       :val [ words-of val ]
 			any-function? :val [ any [title-of :val spec-of :val] ]
@@ -133,6 +133,7 @@ import module [
 		wild: all [string? pattern  find pattern "*"]
 		foreach [word val] obj [
 			type: type?/word :val
+			if all [weak type = 'unset!][ continue ]
 			str: either find [function! closure! native! action! op! object!] type [
 				reform [word mold spec-of :val words-of :val]
 			][
@@ -140,24 +141,24 @@ import module [
 			]
 			if any [
 				not match
-				all [
-					not unset? :val
-					either string? :pattern [
-						either wild [
-							tail? any [find/any/match str pattern pattern]
-						][
-							find str pattern
-						]
+				either string? :pattern [
+					either wild [
+						tail? any [find/any/match str pattern pattern]
 					][
-						type = :pattern
+						find str pattern
 					]
+				][
+					type = :pattern
 				]
 			][
-				unless all [weak type = unset!][
-					str: join "^[[1;32m" form-pad word 15
-					append str "^[[m "
-					append str form-pad type 11 - min 0 ((length? str) - 15)
-					append result ajoin ["  " str "^[[32m" form-val :val "^[[m^/"]
+				str: join "^[[1;32m" form-pad word 15
+				append str "^[[m "
+				append str form-pad type 11 - min 0 ((length? str) - 15)
+				append result rejoin [
+					"  " str
+					either unset? :val [#"^/"][
+						ajoin ["^[[32m" form-val :val "^[[m^/"]
+					]
 				]
 			]
 		]

@@ -249,6 +249,7 @@ extern const REBYTE Str_Banner[];
 
 	for (word++; NOT_END(word); word++, n++) {
 		COPY_BYTES(str, Get_Word_Name(word), 32);
+		str[31] = '\0';
 		str[LEN_BYTES(str)-1] = '?';
 		sym = Make_Word(str, 0);
 		//Print("sym: %s", Get_Sym_Name(sym));
@@ -608,7 +609,7 @@ extern const REBYTE Str_Banner[];
 	value = Get_System(SYS_CATALOG, CAT_ACTIONS);
 	Set_Block(value, Collect_Set_Words(VAL_BLK(&Boot_Block->actions)));
 
-	// Create system/catalog/actions block:
+	// Create system/catalog/nativess block:
 	value = Get_System(SYS_CATALOG, CAT_NATIVES);
 	Set_Block(value, Collect_Set_Words(VAL_BLK(&Boot_Block->natives)));
 
@@ -835,21 +836,25 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	if (NZ(data = OS_GET_LOCALE(0))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE);
 		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
+		OS_FREE(data);
 	}
 
 	if (NZ(data = OS_GET_LOCALE(1))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE_P);
 		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
+		OS_FREE(data);
 	}
 
 	if (NZ(data = OS_GET_LOCALE(2))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE);
 		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
+		OS_FREE(data);
 	}
 
 	if (NZ(data = OS_GET_LOCALE(3))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE_P);
 		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
+		OS_FREE(data);
 	}
 }
 
