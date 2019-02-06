@@ -220,3 +220,6 @@ buffer-cols
 buffer-rows
 window-cols
 window-rows
+
+devices-in
+devices-out

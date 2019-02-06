@@ -252,7 +252,13 @@ standard: context [
 		scheme: 'checksum
 		method: none
 	]
-	
+
+	port-spec-midi: make port-spec-head [
+		scheme:    'midi
+		device-in:  
+		device-out: none
+	]
+
 	file-info: context [
 		name:
 		size:
@@ -281,6 +287,12 @@ standard: context [
 		type:       ; integer! or decimal! so far
 		size:       ; size per value in bits
 		length:     ; number of values
+			none
+	]
+
+	midi-info: context [
+		devices-in:
+		devices-out:
 			none
 	]
 

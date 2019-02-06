@@ -187,6 +187,10 @@ struct rebol_devreq {
 			u32  window_rows;
 			u32  window_cols;
 		} console;
+		struct {
+			u32 device_in;  // requested device ID (1-based; 0 = none)
+			u32 device_out;
+		} midi;
 	};
 };
 #pragma pack()

@@ -320,6 +320,30 @@ init-schemes: func [
 		name: 'clipboard
 	]
 
+	make-scheme [
+		title: "MIDI"
+		name: 'midi
+		spec: system/standard/port-spec-midi
+		init: func [port /local spec inp out] [
+			spec: port/spec
+			if url? spec/ref [
+				parse spec/ref [
+					thru #":" 0 2 slash
+					opt "device:"
+					copy inp *parse-url/digits
+					opt [#"/" copy out *parse-url/digits]
+					end
+				]
+				if inp [ spec/device-in:  to integer! inp]
+				if out [ spec/device-out: to integer! out]
+			]
+			; make port/spec to be only with midi related keys
+			set port/spec: copy system/standard/port-spec-midi spec
+			;protect/words port/spec ; protect spec object keys of modification
+			true
+		]
+	]
+
 	system/ports/system:   open [scheme: 'system]
 	system/ports/input:    open [scheme: 'console]
 	system/ports/callback: open [scheme: 'callback]

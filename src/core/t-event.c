@@ -210,7 +210,7 @@
 			*val = *Get_System(SYS_VIEW, VIEW_EVENT_PORT);
 		}
 		// Event holds a port:
-		else if (IS_EVENT_MODEL(value, EVM_PORT)) {
+		else if (IS_EVENT_MODEL(value, EVM_PORT) || IS_EVENT_MODEL(value, EVM_MIDI)) {
 			SET_PORT(val, VAL_EVENT_SER(value));
 		}
 		// Event holds an object:
@@ -237,6 +237,9 @@
 				break;
 			}
 		}
+		else if (IS_EVENT_MODEL(value, EVM_MIDI))
+			goto is_none;
+
 		return FALSE;
 
 	case SYM_OFFSET:
