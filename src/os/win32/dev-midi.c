@@ -36,11 +36,11 @@
 **    5. Test everything, then test it again.
 **
 ***********************************************************************/
+#ifdef USE_MIDI_DEVICE
 
-// NOTE: this will be useful for OSX version:
-// https://stackoverflow.com/questions/47660597/using-osx-core-midi-in-a-c-project
-// and this for higher level launchpad schemes (code includes led/key mapping values)
+// NOTE: this will be useful for higher level launchpad schemes:
 // https://github.com/FMMT666/launchpad.py/blob/master/launchpad_py/launchpad.py
+// (code includes led/key mapping values)
 //*********************************************************************/
 
 #include <SDKDDKVer.h>
@@ -536,3 +536,5 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 };
 
 DEFINE_DEV(Dev_MIDI, "MIDI", 1, Dev_Cmds, RDC_MAX, 0);
+
+#endif //USE_MIDI_DEVICE
