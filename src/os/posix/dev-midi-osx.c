@@ -37,7 +37,7 @@
  **
  ***********************************************************************/
 #ifdef USE_MIDI_DEVICE
-#if defined(TO_OSX) || defined(TO_OSX_X64)
+#if defined(TO_OSX) || defined(TO_OSX_X64) || defined(TO_OSXI) //!!! could be made better! 
 
 // NOTE: this will be useful for higher level launchpad schemes:
 // https://github.com/FMMT666/launchpad.py/blob/master/launchpad_py/launchpad.py
@@ -50,7 +50,7 @@
 #include <mach/mach_time.h>
 
 #undef BYTE_SIZE // vm_param.h from above includes define BYTE_SIZE as number of bits
-// sys-value.h use it detect if series is byte-sized
+				 // sys-value.h use it to detect if series is byte-sized
 
 #include "reb-host.h"
 #include "host-lib.h"
