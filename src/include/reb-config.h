@@ -161,6 +161,14 @@ These are now obsolete (as of A107) and should be removed:
 #endif
 
 #ifdef TO_LINUX
+#define TO_ANY_LINUX
+#endif
+
+#ifdef TO_LINUX_X64
+#define TO_ANY_LINUX
+#endif
+
+#ifdef TO_ANY_LINUX
 #undef USE_MIDI_DEVICE          // Not implemented!
 #endif
 
