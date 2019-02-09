@@ -59,4 +59,18 @@ if find system/codecs 'crt [
 	system/codecs/crt/verbose: 0
 ]
 
+if find system/codecs 'swf [
+	system/codecs/swf/verbose: 3
+	===start-group=== "SWF codec"
+		
+		--test-- "Load SWF file"
+			--assert object? swf1: load %units/files/test1-deflate.swf
+			--assert object? swf2: load %units/files/test2-lzma.swf
+			--assert swf1/tags = swf2/tags
+			--assert swf1/header/frames = 25
+
+	===end-group===
+	system/codecs/swf/verbose: 0
+]
+
 ~~~end-file~~~
