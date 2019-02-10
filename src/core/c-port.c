@@ -232,14 +232,18 @@
 			if (time >= timeout) break;	  // done (was dt = 0 before)
 			else if (wt > timeout - time) // use smaller residual time
 				wt = timeout - time;
-
-			if (old_time >= 0
-				&& time - old_time < res) {
-				res = time - old_time;
-				// printf("=== res: %u old_time: %i time: %u \n", res, old_time, time);
+			if (timeout > 16) {
+				// dynamicaly change the resolution to save iterations
+				// https://github.com/zsx/r3/commit/f397faef4d35ee761b56b80ec85061fbc2497d18
+				// now used only when timeout is hight enough, so precise wait is still possible
+				// https://github.com/zsx/r3/issues/42
+				if (old_time >= 0
+					&& time - old_time < res) {
+					res = time - old_time;
+					// printf("=== res: %u old_time: %i time: %u \n", res, old_time, time);
+				}
+				old_time = time;
 			}
-
-			old_time = time;
 		}
 
 		// printf("base: %ull res: %u wt: %u old_time: %i time: %u timeout: %u\n", base, res, wt, old_time, time, timeout);
