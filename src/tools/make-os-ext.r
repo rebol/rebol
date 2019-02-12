@@ -82,6 +82,10 @@ func-header: [
 			spec
 			trim spec
 			not find spec "static"
+			any [  ; make sure we got only functions with "OS_" at the beginning
+				find spec " *OS_"
+				find spec " OS_"
+			]
 			fn: find spec "OS_"
 			find spec #"("
 		][
