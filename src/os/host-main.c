@@ -284,7 +284,7 @@ int main(int argc, char **argv) {
 	if (n == 2) Host_Crash("Host-lib wrong version/checksum");
 
 #ifndef REB_CORE
-	//Init_Windows();
+	Init_Windows();
 	//Init_Graphics();
 #endif
 

@@ -156,21 +156,26 @@ emit-file: func [
 
 ;-- Create Files -------------------------------------------------------------
 
-emit-file %host-ext-graphics [
-	%../boot/graphics.r
+emit-file %host-ext-window [
+	%../boot/window.r
 	%../mezz/view-funcs.r
 ]
 
-emit-file %host-ext-draw [
-	%../boot/draw.r
-]
+;;emit-file %host-ext-graphics [
+;;	%../boot/graphics.r
+;;	%../mezz/view-funcs.r
+;;]
 
-emit-file %host-ext-shape [
-	%../boot/shape.r
-]
-
-emit-file %host-ext-text [
-	%../boot/text.r
-]
+;;emit-file %host-ext-draw [
+;;	%../boot/draw.r
+;;]
+;;
+;;emit-file %host-ext-shape [
+;;	%../boot/shape.r
+;;]
+;;
+;;emit-file %host-ext-text [
+;;	%../boot/text.r
+;;]
 
 print "   "

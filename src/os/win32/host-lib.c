@@ -124,6 +124,42 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
+*/	REBOOL As_OS_Str(REBSER *series, REBCHR **string)
+/*
+**	If necessary, convert a string series to Win32 wide-chars.
+**  (Handy for GOB/TEXT handling).
+**  If the string series is empty the resulting string is set to NULL
+**
+**  Function returns:
+**      TRUE - if the resulting string needs to be deallocated by the caller code
+**      FALSE - if REBOL string is used (no dealloc needed)
+**
+**  Note: REBOL strings are allowed to contain nulls.
+**
+***********************************************************************/
+{
+	int len, n;
+	void *str;
+	wchar_t *wstr;
+
+	if ((len = RL_Get_String(series, 0, &str)) < 0) {
+		// Latin1 byte string - convert to wide chars
+		len = -len;
+		wstr = OS_Make((len + 1) * sizeof(wchar_t));
+		for (n = 0; n < len; n++)
+			wstr[n] = (wchar_t)((unsigned char*)str)[n];
+		wstr[len] = 0;
+		//note: following string needs be deallocated in the code that uses this function
+		*string = (REBCHR*)wstr;
+		return TRUE;
+	}
+	*string = (len == 0) ? NULL : str; //empty string check
+	return FALSE;
+}
+
+
+/***********************************************************************
+**
 **	OS Library Functions
 **
 ***********************************************************************/

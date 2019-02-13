@@ -46,92 +46,112 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
+#define INCLUDE_EXT_DATA
+#include "host-ext-window.h"
+
 #ifndef NO_COMPOSITOR
 #include "agg-compositor.h"
 #endif
 
-//***** Constants *****
+//***** DPI ******//
+#ifndef DPI_ENUMS_DECLARED
+typedef enum PROCESSDPI_AwareNESS
+{
+	PROCESS_DPI_UNAWARE = 0,
+	PROCESS_SYSTEMDPI_Aware = 1,
+	PROCESS_PER_MONITORDPI_Aware = 2
+} PROCESSDPI_AwareNESS;
+typedef enum MONITOR_DPI_TYPE {
+	MDT_EFFECTIVE_DPI = 0,
+	MDT_ANGULAR_DPI = 1,
+	MDT_RAW_DPI = 2,
+	MDT_DEFAULT = MDT_EFFECTIVE_DPI
+} MONITOR_DPI_TYPE;
+#endif /*DPI_ENUMS_DECLARED*/
+
+typedef BOOL(WINAPI * SETPROCESSDPIAWARE_T)(void);
+typedef HRESULT(WINAPI * SETPROCESSDPIAWARENESS_T)(PROCESSDPI_AwareNESS);
+typedef HRESULT(WINAPI * GETDPIFORMONITOR_T)(HMONITOR, MONITOR_DPI_TYPE, UINT*, UINT*);
+
+//***** Constants *****//
 
 #define MAX_WINDOWS 64
 #define GOB_HWIN(gob)	(Find_Window(gob))
 #define GOB_COMPOSITOR(gob)	(Find_Compositor(gob)) //gets handle to window's compositor
 
-struct gob_window {REBGOB *gob; HWND win; void* compositor;}; // Maps gob to window
-
-//***** Externs *****
+//***** Externs *****//
 
 extern HINSTANCE App_Instance;		// Set by winmain function
 extern void Host_Crash(char *reason);
 extern LRESULT CALLBACK REBOL_Window_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-extern MSG Handle_Messages();
+extern REBOOL As_OS_Str(REBSER *series, REBCHR **string);
 
-#ifdef TEMP_REMOVED
-extern void* Create_RichText();
-extern void* Create_Effects();
-#endif
+//***** Locals *****//
 
-//***** Locals *****
-
-static BOOL Registered = FALSE;		// Window has been registered
+static REBOOL Registered = FALSE;		// Window has been registered
 static const REBCHR *Window_Class_Name = TXT("REBOLWindow");
 static struct gob_window *Gob_Windows;
+static REBOOL DPI_Aware = FALSE;
+static REBOOL Custom_Cursor = FALSE;
+
+static u32* window_ext_words;
+
+//***** Globals *****//
 
 REBGOB *Gob_Root;				// Top level GOB (the screen)
 HCURSOR Cursor;					// active cursor image object
 REBXYF Zero_Pair = {0, 0};
-//void* Effects;
+REBXYF log_size = { 1.0, 1.0 };	 // logical pixel size measured in physical pixels (can be changed using GUI-METRIC command)
+REBXYF phys_size = { 1.0, 1.0 }; // physical pixel size measured in logical pixels(reciprocal value of log_size)
+REBINT window_scale;
 
 
 /***********************************************************************
 **
-*/	REBOOL As_OS_Str(REBSER *series, REBCHR **string)
+*/  static void Init_DPI_Awareness(void) 
 /*
-**	If necessary, convert a string series to Win32 wide-chars.
-**  (Handy for GOB/TEXT handling).
-**  If the string series is empty the resulting string is set to NULL
+**      Initialize DPI awareness if available
 **
-**  Function returns:
-**      TRUE - if the resulting string needs to be deallocated by the caller code
-**      FALSE - if REBOL string is used (no dealloc needed)
-**
-**  Note: REBOL strings are allowed to contain nulls.
+**		Based on code from https://github.com/floooh/sokol
 **
 ***********************************************************************/
 {
-	int len, n;
-	void *str;
-	wchar_t *wstr;
+	SETPROCESSDPIAWARE_T     SetProcessDPIAwareFunc;
+	SETPROCESSDPIAWARENESS_T SetProcessDPIAwarenessFunc;
+	GETDPIFORMONITOR_T       GetDpiForMonitorFunc;
+	HINSTANCE user32 = LoadLibraryA("user32.dll");
+	HINSTANCE shcore = LoadLibraryA("shcore.dll");
 
-	if ((len = RL_Get_String(series, 0, &str)) < 0) {
-		// Latin1 byte string - convert to wide chars
-		len = -len;
-		wstr = OS_Make((len+1) * sizeof(wchar_t));
-		for (n = 0; n < len; n++)
-			wstr[n] = (wchar_t)((char*)str)[n];
-		wstr[len] = 0;
-		//note: following string needs be deallocated in the code that uses this function
-		*string = (REBCHR*)wstr;
-		return TRUE;
+	if (!user32 || !shcore) return;
+	
+	SetProcessDPIAwareFunc = (SETPROCESSDPIAWARE_T)GetProcAddress(user32, "SetProcessDPIAware");
+	SetProcessDPIAwarenessFunc = (SETPROCESSDPIAWARENESS_T)GetProcAddress(shcore, "SetProcessDpiAwareness");
+	GetDpiForMonitorFunc = (GETDPIFORMONITOR_T)GetProcAddress(shcore, "GetDpiForMonitor");
+
+	if (SetProcessDPIAwarenessFunc) {
+		SetProcessDPIAwarenessFunc(PROCESS_SYSTEMDPI_Aware);
+		DPI_Aware = TRUE;
 	}
-	*string = (len == 0) ? NULL : str; //empty string check
-	return FALSE;
+	else if (SetProcessDPIAwareFunc) {
+		SetProcessDPIAwareFunc();
+		DPI_Aware = TRUE;
+	}
+	/* get dpi scale factor for main monitor */
+	if (GetDpiForMonitorFunc && DPI_Aware) {
+		POINT pt = { 1, 1 };
+		HMONITOR hm = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
+		UINT dpix, dpiy;
+		HRESULT hr = GetDpiForMonitorFunc(hm, MDT_EFFECTIVE_DPI, &dpix, &dpiy);
+		UNUSED(hr);
+		/* clamp window scale to an integer factor */
+		window_scale = (int)((float)dpix / 96.0f);
+	}
+	else {
+		window_scale = 1;
+	}
+	FreeLibrary(user32);
+	FreeLibrary(shcore);
 }
-
-
-/***********************************************************************
-**
-*/	void Init_Windows(void)
-/*
-**	Initialize special variables of the graphics subsystem.
-**
-***********************************************************************/
-{
-	Gob_Windows = OS_Make(sizeof(struct gob_window) * (MAX_WINDOWS+1));
-	CLEAR(Gob_Windows, sizeof(struct gob_window) * (MAX_WINDOWS+1));
-
-	Cursor = LoadCursor(NULL, IDC_ARROW);
-}
-
 
 /**********************************************************************
 **
@@ -156,7 +176,7 @@ static REBINT Alloc_Window(REBGOB *gob) {
 			Gob_Windows[n].gob = gob;
 #ifndef NO_COMPOSITOR
 			Gob_Windows[n].compositor = Create_Compositor(Gob_Root, gob);
-//			Reb_Print("Create_Compositor %d", Gob_Windows[n].compositor);
+			//			Reb_Print("Create_Compositor %d", Gob_Windows[n].compositor);
 #endif
 			return n;
 		}
@@ -186,12 +206,94 @@ static void Free_Window(REBGOB *gob) {
 		if (Gob_Windows[n].gob == gob) {
 #ifndef NO_COMPOSITOR
 			Destroy_Compositor(Gob_Windows[n].compositor);
-//			Reb_Print("Destroy_Compositor %d", Gob_Windows[n].compositor);
+			//			Reb_Print("Destroy_Compositor %d", Gob_Windows[n].compositor);
 #endif
 			Gob_Windows[n].gob = 0;
 			return;
 		}
 	}
+}
+
+
+/***********************************************************************
+**
+*/	void Blit_Rect(REBGOB *gob, REBXYF d, REBXYF dsize, REBYTE *src, REBXYF s, REBXYF ssize)
+/*
+**		This routine copies a rectangle from a PAN structure to the
+**		current output device.
+**
+***********************************************************************/
+{
+	HDC         hdc;
+	BITMAPINFO  BitmapInfo;
+	REBINT      mode;
+
+	if (!IS_WINDOW(gob)) return;
+
+	hdc = GetDC(GOB_HWIN(gob));
+
+	mode = SetStretchBltMode(hdc, COLORONCOLOR);
+	BitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+#ifdef NO_COMPOSITOR
+	BitmapInfo.bmiHeader.biWidth = ssize.x;
+	BitmapInfo.bmiHeader.biHeight = -(REBINT)dsize.y;
+#else
+	BitmapInfo.bmiHeader.biWidth = ROUND_TO_INT(gob->size.x);
+	BitmapInfo.bmiHeader.biHeight = -ROUND_TO_INT(gob->size.y);
+#endif
+	BitmapInfo.bmiHeader.biPlanes = 1;
+	BitmapInfo.bmiHeader.biBitCount = 32;
+	BitmapInfo.bmiHeader.biCompression = BI_RGB;
+	BitmapInfo.bmiHeader.biSizeImage = 0;
+	BitmapInfo.bmiHeader.biXPelsPerMeter = 1;
+	BitmapInfo.bmiHeader.biYPelsPerMeter = 1;
+	BitmapInfo.bmiHeader.biClrUsed = 0;
+	BitmapInfo.bmiHeader.biClrImportant = 0;
+
+	StretchDIBits(hdc, d.x, d.y, dsize.x, dsize.y, s.x, s.y, ssize.x, ssize.y, src, &BitmapInfo, DIB_PAL_COLORS, SRCCOPY);
+	/* Is this really needed? o.
+	//we need little transformation to get rid of StretchDIBits() quirk when src.x and src.y = 0
+	StretchDIBits(hdc,
+	d.x, d.y + dsize.y - 1, dsize.x, -dsize.y,
+	s.x, s.y + ssize.y + 1, ssize.x, -ssize.y,
+	src, &BitmapInfo, DIB_PAL_COLORS, SRCCOPY);
+	*/
+
+	//	Reb_Print("blit: %dx%d %dx%d %dx%d %dx%d" ,d.x, d.y + dsize.y - 1, dsize.x, -dsize.y,s.x, ssize.y + s.y + 1, ssize.x, -ssize.y);
+
+	SetStretchBltMode(hdc, mode);
+
+	ReleaseDC(GOB_HWIN(gob), hdc);
+}
+
+
+/***********************************************************************
+**
+*/	void Blit_Color(REBGOB *gob, REBXYF d, REBXYF dsize, REBYTE *color)
+/*
+**		Fill color rectangle, a pixel at a time.
+**
+***********************************************************************/
+{
+	HDC hdc;
+	COLORREF clr;
+	RECT rect;
+
+	if (!IS_WINDOW(gob)) return;
+
+	clr = color[C_R] | (color[C_G] << 8) | (color[C_B] << 16);
+
+	hdc = GetDC(GOB_HWIN(gob));
+
+	rect.left = d.x;
+	rect.top = d.y;
+	rect.right = dsize.x + d.x; // see note on FillRect
+	rect.bottom = dsize.y + d.y;
+
+	//Reb_Print("rect: %dx%d %dx%d", rect.left, rect.top, rect.right, rect.bottom);
+
+	FillRect(hdc, &rect, CreateSolidBrush(clr)); // excludes bottom & right borders
+	ReleaseDC(GOB_HWIN(gob), hdc);
 }
 
 
@@ -212,7 +314,7 @@ static void Free_Window(REBGOB *gob) {
 	wc.hInstance     = App_Instance;
 	wc.lpfnWndProc   = REBOL_Window_Proc;
 
-	wc.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
+	wc.hIcon         = LoadIcon(App_Instance, MAKEINTRESOURCE(101));
 	wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = NULL;
 	wc.style         = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
@@ -222,7 +324,7 @@ static void Free_Window(REBGOB *gob) {
 	wc.lpszMenuName  = NULL;
 
 	wc.hIconSm = LoadImage(App_Instance, // small class icon
-		MAKEINTRESOURCE(5),
+		MAKEINTRESOURCE(101),
 		IMAGE_ICON,
 		GetSystemMetrics(SM_CXSMICON),
 		GetSystemMetrics(SM_CYSMICON),
@@ -264,7 +366,7 @@ static void Free_Window(REBGOB *gob) {
 
 /***********************************************************************
 **
-*/  HWND Open_Window(REBGOB *gob)
+*/  void* OS_Open_Window(REBGOB *gob)
 /*
 **      Initialize the graphics window.
 **
@@ -408,7 +510,7 @@ static void Free_Window(REBGOB *gob) {
 
 /***********************************************************************
 **
-*/  void Close_Window(REBGOB *gob)
+*/  void OS_Close_Window(REBGOB *gob)
 /*
 **		Close the window.
 **
@@ -433,7 +535,7 @@ static void Free_Window(REBGOB *gob) {
 
 /***********************************************************************
 **
-*/	REBOOL Resize_Window(REBGOB *gob, REBOOL redraw)
+*/	REBOOL OS_Resize_Window(REBGOB *gob, REBOOL redraw)
 /*
 **		Update window parameters.
 **
@@ -447,8 +549,7 @@ static void Free_Window(REBGOB *gob) {
 	if (redraw) Compose_Gob(compositor, gob, gob);
 	return changed;
 #else
-	REBINT Draw_Window(REBGOB *wingob, REBGOB *gob);
-	Draw_Window(gob, gob);
+	OS_Draw_Window(gob, gob);
 	return TRUE;
 #endif
 }
@@ -456,7 +557,7 @@ static void Free_Window(REBGOB *gob) {
 
 /***********************************************************************
 **
-*/	void Update_Window(REBGOB *gob)
+*/	void OS_Update_Window(REBGOB *gob)
 /*
 **		Update window parameters.
 **
@@ -482,7 +583,7 @@ static void Free_Window(REBGOB *gob) {
 		opts |= SWP_NOSIZE;
 	else
 		//Resize window and/or buffer in case win size changed programatically
-		Resize_Window(gob, FALSE);
+		OS_Resize_Window(gob, FALSE);
 
 	//Get the new window size together with borders, tilebar etc.
 	GetWindowInfo(window, &wi);
@@ -518,91 +619,9 @@ static void Free_Window(REBGOB *gob) {
 	*/
 }
 
-
 /***********************************************************************
 **
-*/	void Blit_Rect(REBGOB *gob, REBXYF d, REBXYF dsize, REBYTE *src, REBXYF s, REBXYF ssize)
-/*
-**		This routine copies a rectangle from a PAN structure to the
-**		current output device.
-**
-***********************************************************************/
-{
-	HDC         hdc;
-	BITMAPINFO  BitmapInfo;
-	REBINT      mode;
-
-	if (!IS_WINDOW(gob)) return;
-
-	hdc = GetDC(GOB_HWIN(gob));
-
-	mode = SetStretchBltMode(hdc, COLORONCOLOR);
-	BitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-#ifdef NO_COMPOSITOR
-	BitmapInfo.bmiHeader.biWidth = ssize.x;
-	BitmapInfo.bmiHeader.biHeight = -(REBINT)dsize.y;
-#else
-	BitmapInfo.bmiHeader.biWidth = ROUND_TO_INT(gob->size.x);
-	BitmapInfo.bmiHeader.biHeight = -ROUND_TO_INT(gob->size.y);
-#endif
-	BitmapInfo.bmiHeader.biPlanes = 1;
-	BitmapInfo.bmiHeader.biBitCount = 32;
-	BitmapInfo.bmiHeader.biCompression = BI_RGB;
-	BitmapInfo.bmiHeader.biSizeImage = 0;
-	BitmapInfo.bmiHeader.biXPelsPerMeter = 1;
-	BitmapInfo.bmiHeader.biYPelsPerMeter = 1;
-	BitmapInfo.bmiHeader.biClrUsed = 0;
-	BitmapInfo.bmiHeader.biClrImportant = 0;
-
-// 	StretchDIBits(hdc, d.x, d.y, dsize.x, dsize.y, s.x, s.y, ssize.x, ssize.y, src, &BitmapInfo, DIB_PAL_COLORS, SRCCOPY);
-
-	//we need little transformation to get rid of StretchDIBits() quirk when src.x and src.y = 0
-  	StretchDIBits(hdc,
-		d.x, d.y + dsize.y - 1, dsize.x, -dsize.y,
-		s.x, s.y + ssize.y + 1, ssize.x, -ssize.y,
-		src, &BitmapInfo, DIB_PAL_COLORS, SRCCOPY);
-
-//	Reb_Print("blit: %dx%d %dx%d %dx%d %dx%d" ,d.x, d.y + dsize.y - 1, dsize.x, -dsize.y,s.x, ssize.y + s.y + 1, ssize.x, -ssize.y);
-
-	SetStretchBltMode(hdc, mode);
-
-	ReleaseDC(GOB_HWIN(gob), hdc);
-}
-
-
-/***********************************************************************
-**
-*/	void Blit_Color(REBGOB *gob, REBXYF d, REBXYF dsize, long color)
-/*
-**		Fill color rectangle, a pixel at a time.
-**
-***********************************************************************/
-{
-	HDC hdc;
-	long clr;
-	RECT rect;
-
-	if (!IS_WINDOW(gob)) return;
-
-	clr = ((color >> 16) & 255) | ((color & 255) << 16) | (color & 255<<8);
-
-	hdc = GetDC(GOB_HWIN(gob));
-
-	rect.left   = d.x;
-	rect.top    = d.y;
-	rect.right  = dsize.x+d.x; // see note on FillRect
-	rect.bottom = dsize.y+d.y;
-
-	//Reb_Print("rect: %dx%d %dx%d", rect.left, rect.top, rect.right, rect.bottom);
-
-	FillRect(hdc, &rect, CreateSolidBrush(clr)); // excludes bottom & right borders
-	ReleaseDC(GOB_HWIN(gob), hdc);
-}
-
-
-/***********************************************************************
-**
-*/	REBINT Draw_Window(REBGOB *wingob, REBGOB *gob)
+*/	REBINT OS_Draw_Window(REBGOB *wingob, REBGOB *gob)
 /*
 **		Refresh the GOB within the given window. If the wingob
 **		is zero, then find the correct window for it.
@@ -636,8 +655,8 @@ static void Free_Window(REBGOB *gob) {
 	if (IS_GOB_IMAGE(gob)) {
 		Blit_Rect(wingob, gob->offset, gob->size, GOB_BITMAP(gob), Zero_Pair, gob->size);
 	}
-	else { //if (IS_GOB_COLOR(gob))
-		Blit_Color(wingob, gob->offset, gob->size, (long)GOB_CONTENT(gob));
+	else if (IS_GOB_COLOR(gob)) {
+		Blit_Color(wingob, gob->offset, gob->size, (REBYTE*)&GOB_CONTENT(gob));
 	}
 
 	// Blit the children:
@@ -645,7 +664,8 @@ static void Free_Window(REBGOB *gob) {
 		len = GOB_TAIL(gob);
 		gp = GOB_HEAD(gob);
 		for (n = 0; n < len; n++, gp++)
-			Draw_Window(wingob, *gp);
+			if (wingob != *gp) // prevent infinite loop (for example when: view system/view/screen-gob)
+				OS_Draw_Window(wingob, *gp);
 	}
 	return 0;
 #else
@@ -681,7 +701,7 @@ static void Free_Window(REBGOB *gob) {
 		BeginPaint(window, (LPPAINTSTRUCT) &ps);
 
 #ifdef NO_COMPOSITOR
-		Draw_Window(gob, gob);
+		OS_Draw_Window(gob, gob);
 #else
 		size.x = ROUND_TO_INT(gob->size.x);
 		size.y = ROUND_TO_INT(gob->size.y);
@@ -695,7 +715,7 @@ static void Free_Window(REBGOB *gob) {
 
 /***********************************************************************
 **
-*/  REBINT Show_Gob(REBGOB *gob)
+*/  REBINT OS_Show_Gob(REBGOB *gob)
 /*
 **	Notes:
 **		1.	Can be called with NONE (0), Gob_Root (All), or a
@@ -722,7 +742,7 @@ static void Free_Window(REBGOB *gob) {
 		for (n = 0; n < MAX_WINDOWS; n++) {
 			if (g = Gob_Windows[n].gob) {
 				if (!GOB_PARENT(g) && GET_GOB_FLAG(g, GOBF_WINDOW))
-					Close_Window(g);
+					OS_Close_Window(g);
 			}
 		}
 
@@ -731,29 +751,406 @@ static void Free_Window(REBGOB *gob) {
 			gp = GOB_HEAD(Gob_Root);
 			for (n = GOB_TAIL(Gob_Root)-1; n >= 0; n--, gp++) {
 				if (!GET_GOB_FLAG(*gp, GOBF_WINDOW))
-					Open_Window(*gp);
-					Draw_Window(0, *gp);
+					OS_Open_Window(*gp);
+					OS_Draw_Window(0, *gp);
 			}
 		}
 		return 0;
 	}
 	// Is it a window gob that needs to be closed?
 	else if (!GOB_PARENT(gob) && GET_GOB_FLAG(gob, GOBF_WINDOW)) {
-		Close_Window(gob);
+		OS_Close_Window(gob);
 		return 0;
 	}
 	// Is it a window gob that needs to be opened or refreshed?
 	else if (GOB_PARENT(gob) == Gob_Root) {
 		if (!GET_GOB_FLAG(gob, GOBF_WINDOW))
-			Open_Window(gob);
+			OS_Open_Window(gob);
 		else
-			Update_Window(gob); // Problem! We may not want this all the time.
+			OS_Update_Window(gob); // Problem! We may not want this all the time.
 	}
 
 	// Otherwise, composite and referesh the gob or all gobs:
-	return Draw_Window(0, gob);  // 0 = window parent of gob
+	return OS_Draw_Window(0, gob);  // 0 = window parent of gob
 }
 
+
+/***********************************************************************
+**
+*/	REBD32 OS_Get_Metrics(METRIC_TYPE type, REBINT display)
+/*
+**	Provide OS specific UI related information.
+**
+***********************************************************************/
+{
+	REBD32 result = 0;
+	switch (type) {
+	case SM_VIRTUAL_SCREEN_WIDTH:
+		result = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+		break;
+	case SM_VIRTUAL_SCREEN_HEIGHT:
+		result = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+		break;
+	case SM_SCREEN_WIDTH:
+		result = GetSystemMetrics(SM_CXSCREEN);
+		break;
+	case SM_SCREEN_HEIGHT:
+		result = GetSystemMetrics(SM_CYSCREEN);
+		break;
+	case SM_WORK_WIDTH:
+	{
+		RECT rect;
+		SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
+		result = rect.right;
+	}
+	break;
+	case SM_WORK_HEIGHT:
+	{
+		RECT rect;
+		SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
+		result = rect.bottom;
+	}
+	break;
+	case SM_TITLE_HEIGHT:
+		result = GetSystemMetrics(SM_CYCAPTION);
+		break;
+	case SM_SCREEN_DPI_X:
+	{
+		HDC hDC = GetDC(NULL);
+		result = GetDeviceCaps(hDC, LOGPIXELSX);
+		ReleaseDC(NULL, hDC);
+	}
+	break;
+	case SM_SCREEN_DPI_Y:
+	{
+		HDC hDC = GetDC(NULL);
+		result = GetDeviceCaps(hDC, LOGPIXELSY);
+		ReleaseDC(NULL, hDC);
+	}
+	break;
+	case SM_BORDER_WIDTH:
+		result = GetSystemMetrics(SM_CXSIZEFRAME);
+		break;
+	case SM_BORDER_HEIGHT:
+		result = GetSystemMetrics(SM_CYSIZEFRAME);
+		break;
+	case SM_BORDER_FIXED_WIDTH:
+		result = GetSystemMetrics(SM_CXFIXEDFRAME);
+		break;
+	case SM_BORDER_FIXED_HEIGHT:
+		result = GetSystemMetrics(SM_CYFIXEDFRAME);
+		break;
+	case SM_WINDOW_MIN_WIDTH:
+		result = GetSystemMetrics(SM_CXMIN);
+		break;
+	case SM_WINDOW_MIN_HEIGHT:
+		result = GetSystemMetrics(SM_CYMIN);
+		break;
+	case SM_WORK_X:
+	{
+		RECT rect;
+		SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
+		result = rect.left;
+	}
+	break;
+	case SM_WORK_Y:
+	{
+		RECT rect;
+		SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
+		result = rect.top;
+	}
+	break;
+	}
+	return result;
+}
+
+
+/***********************************************************************
+**
+*/	void OS_Set_Cursor(void *cursor)
+/*
+**
+**
+***********************************************************************/
+{
+	SetCursor((HCURSOR)cursor);
+}
+
+/***********************************************************************
+**
+*/	void* OS_Load_Cursor(void *cursor)
+/*
+**
+**
+***********************************************************************/
+{
+	return (void*)LoadCursor(NULL, (LPCTSTR)cursor);
+}
+
+/***********************************************************************
+**
+*/	void OS_Destroy_Cursor(void *cursor)
+/*
+**
+**
+***********************************************************************/
+{
+	DestroyCursor((HCURSOR)Cursor);
+}
+
+
+/***********************************************************************
+**
+*/	void* OS_Image_To_Cursor(REBYTE* image, REBINT width, REBINT height)
+/*
+**      Converts REBOL image! to Windows CURSOR
+**
+***********************************************************************/
+{
+	int xHotspot = 0;
+	int yHotspot = 0;
+
+	HICON result = NULL;
+	HBITMAP hSourceBitmap;
+	BITMAPINFO  BitmapInfo;
+	ICONINFO iconinfo;
+
+    //Get the system display DC
+    HDC hDC = GetDC(NULL);
+
+	//Create DIB
+	unsigned char* ppvBits;
+	int bmlen = width * height * 4;
+	int i;
+
+	BitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	BitmapInfo.bmiHeader.biWidth = width;
+	BitmapInfo.bmiHeader.biHeight = -(signed)height;
+	BitmapInfo.bmiHeader.biPlanes = 1;
+	BitmapInfo.bmiHeader.biBitCount = 32;
+	BitmapInfo.bmiHeader.biCompression = BI_RGB;
+	BitmapInfo.bmiHeader.biSizeImage = 0;
+	BitmapInfo.bmiHeader.biXPelsPerMeter = 0;
+	BitmapInfo.bmiHeader.biYPelsPerMeter = 0;
+	BitmapInfo.bmiHeader.biClrUsed = 0;
+	BitmapInfo.bmiHeader.biClrImportant = 0;
+
+	hSourceBitmap = CreateDIBSection(hDC, &BitmapInfo, DIB_RGB_COLORS, (void**)&ppvBits, NULL, 0);
+
+	//Release the system display DC
+    ReleaseDC(NULL, hDC);
+
+	//Copy the image content to DIB
+	COPY_MEM(ppvBits, image, bmlen);
+
+	//Invert alphachannel from the REBOL format
+	for (i = 3;i < bmlen;i+=4){
+		ppvBits[i] ^= 0xff;
+	}
+
+	//Create the cursor using the masks and the hotspot values provided
+	iconinfo.fIcon		= FALSE;
+	iconinfo.xHotspot	= xHotspot;
+	iconinfo.yHotspot	= yHotspot;
+	iconinfo.hbmMask	= hSourceBitmap;
+	iconinfo.hbmColor	= hSourceBitmap;
+
+	result = CreateIconIndirect(&iconinfo);
+
+	DeleteObject(hSourceBitmap);
+
+	return result;
+}
+
+//**********************************************************************
+//** Window commands! dipatcher **************************************
+//**********************************************************************
+
+
+/***********************************************************************
+**
+*/	RXIEXT int RXD_Window(int cmd, RXIFRM *frm, REBCEC *data)
+/*
+**		Window command extension dispatcher.
+**
+***********************************************************************/
+{
+	REBINT display = 0;
+	switch (cmd) {
+	case CMD_WINDOW_SHOW:
+	{
+		REBGOB* gob = (REBGOB*)RXA_SERIES(frm, 1);
+		OS_Show_Gob(gob);
+		RXA_TYPE(frm, 1) = RXT_GOB;
+		return RXR_VALUE;
+	}
+	case CMD_WINDOW_GUI_METRIC:
+	{
+
+		REBD32 x, y;
+		u32 w = RL_FIND_WORD(window_ext_words, RXA_WORD(frm, 1));
+
+		if (RXA_TYPE(frm, 5) == RXT_INTEGER) {
+			display = RXA_INT32(frm, 5);
+		}
+
+		switch (w)
+		{
+		case W_WINDOW_SCREEN_SIZE:
+			x = PHYS_COORD_X(OS_Get_Metrics(SM_SCREEN_WIDTH, display));
+			y = PHYS_COORD_Y(OS_Get_Metrics(SM_SCREEN_HEIGHT, display));
+			break;
+
+		case W_WINDOW_LOG_SIZE:
+#if 0
+			if (RXA_TYPE(frm, 3) == RXT_PAIR) {
+				log_size.x = RXA_PAIR(frm, 3).x;
+				log_size.y = RXA_PAIR(frm, 3).y;
+				phys_size.x = 1 / log_size.x;
+				phys_size.y = 1 / log_size.y;
+			}
+#endif
+			x = log_size.x;
+			y = log_size.y;
+			break;
+
+		case W_WINDOW_PHYS_SIZE:
+			x = phys_size.x;
+			y = phys_size.y;
+			break;
+
+		case W_WINDOW_TITLE_SIZE:
+			x = 0;
+			y = PHYS_COORD_Y(OS_Get_Metrics(SM_TITLE_HEIGHT, display));
+			break;
+
+		case W_WINDOW_BORDER_SIZE:
+			x = OS_Get_Metrics(SM_BORDER_WIDTH, display);
+			y = OS_Get_Metrics(SM_BORDER_HEIGHT, display);
+			break;
+
+		case W_WINDOW_BORDER_FIXED:
+			x = OS_Get_Metrics(SM_BORDER_FIXED_WIDTH, display);
+			y = OS_Get_Metrics(SM_BORDER_FIXED_HEIGHT, display);
+			break;
+
+		case W_WINDOW_WINDOW_MIN_SIZE:
+			x = OS_Get_Metrics(SM_WINDOW_MIN_WIDTH, display);
+			y = OS_Get_Metrics(SM_WINDOW_MIN_HEIGHT, display);
+			break;
+
+		case W_WINDOW_WORK_ORIGIN:
+			x = OS_Get_Metrics(SM_WORK_X, display);
+			y = OS_Get_Metrics(SM_WORK_Y, display);
+			break;
+
+		case W_WINDOW_WORK_SIZE:
+			x = PHYS_COORD_X(OS_Get_Metrics(SM_WORK_WIDTH, display));
+			y = PHYS_COORD_Y(OS_Get_Metrics(SM_WORK_HEIGHT, display));
+			break;
+
+		case W_WINDOW_SCREEN_DPI:
+			x = OS_Get_Metrics(SM_SCREEN_DPI_X, display);
+			y = OS_Get_Metrics(SM_SCREEN_DPI_Y, display);
+			break;
+
+		case W_WINDOW_SCREEN_ORIGIN:
+			x = OS_Get_Metrics(SM_SCREEN_X, display);
+			y = OS_Get_Metrics(SM_SCREEN_Y, display);
+			break;
+		case W_WINDOW_SCREEN_NUM:
+			x = OS_Get_Metrics(SM_SCREEN_NUM, 0);
+			RXA_INT64(frm, 1) = x;
+			RXA_TYPE(frm, 1) = RXT_INTEGER;
+			return RXR_VALUE;
+		default:
+			return RXR_BAD_ARGS;
+		}
+
+		if (w) {
+			RXA_PAIR(frm, 1).x = x;
+			RXA_PAIR(frm, 1).y = y;
+			RXA_TYPE(frm, 1) = RXT_PAIR;
+		}
+		else {
+			RXA_TYPE(frm, 1) = RXT_NONE;
+		}
+		return RXR_VALUE;
+
+	}
+	break;
+
+	case CMD_WINDOW_INIT_TOP_WINDOW:
+		Gob_Root = (REBGOB*)RXA_SERIES(frm, 1); // system/view/screen-gob
+		Gob_Root->parent = NULL;
+		Gob_Root->size.x = OS_Get_Metrics(SM_SCREEN_WIDTH, display);
+		Gob_Root->size.y = OS_Get_Metrics(SM_SCREEN_HEIGHT, display);
+#ifdef unused
+		//Initialize text rendering context
+		if (Rich_Text) Destroy_RichText(Rich_Text);
+		Rich_Text = Create_RichText();
+#endif
+		break;
+
+	case CMD_WINDOW_INIT_WORDS:
+		window_ext_words = RL_MAP_WORDS(RXA_SERIES(frm, 1));
+		break;
+
+	case CMD_WINDOW_CURSOR:
+	{
+		REBUPT n = 0;
+		REBYTE *image = NULL;
+
+		if (RXA_TYPE(frm, 1) == RXT_IMAGE) {
+			image = RXA_IMAGE_BITS(frm, 1);
+		}
+		else {
+			n = RXA_INT64(frm, 1);
+		}
+
+		if (Custom_Cursor) {
+			//Destroy cursor object only if it is a custom image
+			OS_Destroy_Cursor(Cursor);
+			Custom_Cursor = FALSE;
+		}
+
+		if (n > 0)
+			Cursor = OS_Load_Cursor((void*)n);
+		else if (image) {
+			Cursor = OS_Image_To_Cursor(image, RXA_IMAGE_WIDTH(frm, 1), RXA_IMAGE_HEIGHT(frm, 1));
+			Custom_Cursor = TRUE;
+		}
+		else
+			Cursor = NULL;
+
+		OS_Set_Cursor(Cursor);
+	}
+	break;
+
+	default:
+		return RXR_NO_COMMAND;
+	}
+	return RXR_UNSET;
+}
+
+
+
+
+/***********************************************************************
+**
+*/	void Init_Windows(void)
+/*
+**	Initialize special variables of the graphics subsystem.
+**
+***********************************************************************/
+{
+	RL = RL_Extend((REBYTE *)(&RX_window[0]), &RXD_Window);
+
+	Gob_Windows = OS_Make(sizeof(struct gob_window) * (MAX_WINDOWS + 1));
+	CLEAR(Gob_Windows, sizeof(struct gob_window) * (MAX_WINDOWS + 1));
+	Cursor = LoadCursor(NULL, IDC_ARROW);
+	Init_DPI_Awareness();
+}
 
 
 #ifdef NOT_USED_BUT_MAYBE_LATER
@@ -774,7 +1171,7 @@ xx	void Init_Event_Window(void)
 
 	SET_GOB_FLAG(&Main_Window_GOB, GOBF_HIDDEN);
 
-	Main_Event_Window = Open_Window(&Main_Window_GOB);
+	Main_Event_Window = OS_Open_Window(&Main_Window_GOB);
 }
 
 

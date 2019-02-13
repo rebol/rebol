@@ -93,8 +93,7 @@ const REBCNT Key_To_Event[] = {
 extern HCURSOR Cursor;
 extern void Done_Device(int handle, int error);
 extern void Paint_Window(HWND window);
-extern void Close_Window(REBGOB *gob);
-extern REBOOL Resize_Window(REBGOB *gob, REBOOL redraw);
+
 
 
 /***********************************************************************
@@ -239,12 +238,12 @@ static Check_Modifiers(REBINT flags)
 				last_xy = xy;
 				if (mode) {
 					//Resize and redraw the window buffer (when resize dragging)
-					Resize_Window(gob, TRUE);
+					OS_Resize_Window(gob, TRUE);
 					mode = EVT_RESIZE;
 					break;
 				} else {
 					//Resize only the window buffer (when win gob size changed by REBOL code or using min/max buttons)
-					if (!Resize_Window(gob, FALSE)){
+					if (!OS_Resize_Window(gob, FALSE)){
 						//size has been changed programatically - return only 'resize event
 						Add_Event_XY(gob, EVT_RESIZE, xy, flags);
 						break;
@@ -383,8 +382,8 @@ static Check_Modifiers(REBINT flags)
 
 		case WM_CLOSE:
 			Add_Event_XY(gob, EVT_CLOSE, xy, flags);
-			Close_Window(gob);	// Needs to be removed - should be done by REBOL event handling
-//			DestroyWindow(hwnd);// This is done in Close_Window()
+			OS_Close_Window(gob);	// Needs to be removed - should be done by REBOL event handling
+//			DestroyWindow(hwnd);// This is done in OS_Close_Window()
 			break;
 
 		case WM_DESTROY:

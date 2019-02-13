@@ -117,7 +117,7 @@ func-header: [
 			| 
 			none
 		]
-	]
+	] | 1 skip
 ]
 
 process: func [file] [
