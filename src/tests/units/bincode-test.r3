@@ -230,6 +230,20 @@ is-protected-error?: func[code][
 		b: binary 2#{01011011 10110011 11111111}
 		--assert [2 -2 3 -3 255] = binary/read b [SB 3 SB 3 UB 2 SB 4 ALIGN UI8]
 
+	--test-- "BinCode - EncodedU32"
+		b: binary/init none 16
+		binary/write b [
+			EncodedU32 0
+			EncodedU32 1
+			EncodedU32 128
+			EncodedU32 129
+			EncodedU32 130
+			EncodedU32 2214768806
+		]
+		--assert b/buffer = #{0001800181018201A6E18AA008}
+		--assert [0 1 128 129 130 2214768806] = binary/read b [
+			EncodedU32 EncodedU32 EncodedU32 EncodedU32 EncodedU32 EncodedU32]
+
 ===end-group===
 
 

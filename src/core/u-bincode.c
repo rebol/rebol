@@ -114,6 +114,17 @@ system/standard/bincode: make object! [
 ]
 
 ***********************************************************************/
+
+static REBCNT EncodedU32_Size(u32 value) {
+	REBCNT count = 0;
+	if (value == 0) return 1;
+	else while (value > 0) {
+		value = value >> 7;
+		count++;
+	}
+	return count;
+}
+
 /***********************************************************************
 **
 */	REBNATIVE(binary)
@@ -153,7 +164,8 @@ system/standard/bincode: make object! [
 	REBYTE *cp, *bp, *ep;
 	REBCNT n, count, index, tail, tail_new;
 	i32 i, len;
-	//u64 u;
+	u64 u;
+	u32 ulong;
 
 	REBVAL *value, *next;
 	REBVAL *data;
@@ -408,6 +420,14 @@ system/standard/bincode: make object! [
 							continue;
 						}
 						goto error;
+
+					case SYM_ENCODEDU32:
+						if (IS_INTEGER(next)) {
+							count += EncodedU32_Size(VAL_INT64(next));
+							continue;
+						}
+						goto error;
+						
 					case SYM_UNIXTIME_NOW:
 					case SYM_UNIXTIME_NOW_LE:
 						value--; //there is no argument so no next
@@ -654,6 +674,22 @@ system/standard/bincode: make object! [
 						cp = BIN_DATA(bin) + VAL_INDEX(buffer_write);
 						n = 0;
 						break;
+
+					case SYM_ENCODEDU32:
+						ASSERT_U32_RANGE(next);
+						ulong = (u32)VAL_INT64(next);
+						if (ulong == 0) {
+							n = 1;
+							cp[0] = 0;
+						} else {
+							n = EncodedU32_Size(VAL_INT64(next));
+							for (u = 0; u < n-1; u++) {
+								cp[u] = (char)(128 + ((ulong >> (u * 7)) & 127));
+							}
+							cp[n-1] = (char)((ulong >> ((n-1) * 7)) & 255);
+						}
+						break;
+
 					case SYM_UNIXTIME_NOW:
 						value--; // no args
 						n = 4;
@@ -878,6 +914,38 @@ system/standard/bincode: make object! [
 								SET_INT32(temp, len);
 							}
 							n++;
+							break;
+						case SYM_ENCODEDU32:
+							ASSERT_READ_SIZE(value, cp, ep, 1);
+							u = (u64)cp[0];
+							if (!(u & 0x00000080)) {
+								n = 1;
+								goto setEnU32Result;
+							}
+							ASSERT_READ_SIZE(value, cp, ep, 2);
+							u = (u & 0x0000007f) | cp[1] << 7;
+							if (!(u & 0x00004000)) {
+								n = 2;
+								goto setEnU32Result;
+							}
+							ASSERT_READ_SIZE(value, cp, ep, 3);
+							u = (u & 0x00003fff) | cp[2] << 14;
+							if (!(u & 0x00200000)) {
+								n = 3;
+								goto setEnU32Result;
+							}
+							ASSERT_READ_SIZE(value, cp, ep, 4);
+							u = (u & 0x001fffff) | cp[3] << 21;
+							if (!(u & 0x10000000)) {
+								n = 4;
+								goto setEnU32Result;
+							}
+							ASSERT_READ_SIZE(value, cp, ep, 5);
+							u = (u & 0x0fffffff) | cp[4] << 28;
+							n = 5;
+						setEnU32Result:
+							VAL_SET(temp, REB_INTEGER);
+							VAL_UNT64(temp) = u & 0xffffffff; // limits result to 32 bit unsigned integer!
 							break;
 						case SYM_UB:
 							next = ++value;
