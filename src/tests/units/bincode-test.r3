@@ -244,6 +244,25 @@ is-protected-error?: func[code][
 		--assert [0 1 128 129 130 2214768806] = binary/read b [
 			EncodedU32 EncodedU32 EncodedU32 EncodedU32 EncodedU32 EncodedU32]
 
+	--test-- "BinCode - BITSET8, BITSET16, BITSET32 (read)"
+		binary/read #{81800180000001} [
+			f8:  BITSET8
+			f16: BITSET16
+			f32: BITSET32
+		]
+		--assert all [
+			all [f8/0 f8/7]
+			not any [f8/1 f8/2 f8/3 f8/4 f8/5 f8/6]
+		]
+		--assert all [
+			all [f16/0 f16/15]
+			not any [f16/1 f16/2 f16/3 f16/4 f16/5 f16/6 f16/7]
+		]
+		--assert all [
+			all [f32/0 f32/31]
+			not any [f32/1 f32/2 f32/3 f32/4 f32/5 f32/6 f32/7 f32/15]
+		]
+
 ===end-group===
 
 

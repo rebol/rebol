@@ -915,6 +915,21 @@ static REBCNT EncodedU32_Size(u32 value) {
 							}
 							n++;
 							break;
+						case SYM_BITSET8:
+							n = 1;
+							goto readBitsetN;
+						case SYM_BITSET16:
+							n = 2;
+							goto readBitsetN;
+						case SYM_BITSET32:
+							n = 4;
+						readBitsetN:
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							VAL_SET(temp, REB_BITSET);
+							bin_new = Copy_Series_Part(bin, VAL_INDEX(buffer_read), n);
+							VAL_SERIES(temp) = bin_new;
+							VAL_INDEX(temp) = 0;
+							break;
 						case SYM_ENCODEDU32:
 							ASSERT_READ_SIZE(value, cp, ep, 1);
 							u = (u64)cp[0];
