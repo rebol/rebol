@@ -979,9 +979,10 @@ static void Free_Window(REBGOB *gob) {
 	switch (cmd) {
 	case CMD_WINDOW_SHOW:
 	{
-		REBGOB* gob = (REBGOB*)RXA_SERIES(frm, 1);
-		OS_Show_Gob(gob);
-		RXA_TYPE(frm, 1) = RXT_GOB;
+		if (RXA_TYPE(frm, 1) == RXT_GOB) {
+			REBGOB* gob = (REBGOB*)RXA_SERIES(frm, 1);
+			OS_Show_Gob(gob);
+		}
 		return RXR_VALUE;
 	}
 	case CMD_WINDOW_GUI_METRIC:

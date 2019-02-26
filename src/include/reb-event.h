@@ -59,6 +59,7 @@ enum {
 	EVF_DOUBLE,		// double click detected
 	EVF_CONTROL,
 	EVF_SHIFT,
+	EVF_HAS_DATA,   // drop_file event series contains data instead of gob
 };
 
 

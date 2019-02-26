@@ -134,30 +134,29 @@ static void Add_File_Events(REBGOB *gob, REBINT flags, HDROP drop)
 	REBINT num;
 	REBINT len;
 	REBINT i;
-	REBCHR* buf;
+	REBCHR buf[MAX_PATH] = {0};
 	POINT xy;
-
+	
 	//Get the mouse position
 	DragQueryPoint(drop, &xy);
 
 	evt.type  = EVT_DROP_FILE;
-	evt.flags = (u8) (flags | (1<<EVF_HAS_XY));
+	evt.flags = (u8) (flags | (1<<EVF_HAS_XY) | (1<<EVF_COPIED) | (1<<EVF_HAS_DATA));
 	evt.model = EVM_GUI;
-	evt.data = xy.x | xy.y<<16;
-
+	// reporting XY as an absolute position, so the target gob can be located using map-event from Gob_Root
+	evt.data = (xy.x + GOB_X_INT(gob)) | (xy.y + GOB_Y_INT(gob))<<16;
 
 	num = DragQueryFile(drop, -1, NULL, 0);
 
 	for (i = 0; i < num; i++){
-		len = DragQueryFile(drop, i, NULL, 0);
-		buf = OS_Make(len+1);
-		DragQueryFile(drop, i, buf, len+1);
-		//Reb_Print("DROP: %s", buf);
-		buf[len] = 0;
-		// ?! convert to REBOL format? E.g.: evt.ser = OS_To_REBOL_File(buf, &len);
-		OS_Free(buf);
+		// NOTE: originaly the buffer was made using OS_Make and freed when not needed
+		// but for some reason it was causing a crash! Use GlobalAlloc/GlobalLock?
+		len = DragQueryFile(drop, i, buf, MAX_PATH-1);
+		// printf("DROP: %d %ls\n", len, buf);
+		evt.ser = RL_Encode_UTF8_String(buf, len, TRUE, 0);
 		if (!RL_Event(&evt)) break;	// queue is full
 	}
+	DragFinish(drop);
 }
 
 static Check_Modifiers(REBINT flags)
