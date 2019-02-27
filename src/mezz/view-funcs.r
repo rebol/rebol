@@ -44,7 +44,10 @@ view: func [
 	/as-is "Leave window as is. Do not add a parent gob."
 	/local screen tmp xy image
 ][
-	if not screen: system/view/screen-gob [return none]
+	if any [
+		not screen: system/view/screen-gob
+		window = screen
+	][	return none]
 
 	; Convert option block to a map:
 	opts: make map! any [reduce/no-set opts []]
@@ -97,7 +100,7 @@ view: func [
 						unview event/window
 						quit
 					]
-					show event/window
+					;show event/window
 					none ; we handled it
 				]
 			]
