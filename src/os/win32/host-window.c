@@ -5,6 +5,10 @@
 **  Copyright 2012 REBOL Technologies
 **  REBOL is a trademark of REBOL Technologies
 **
+**  Additional code modifications and improvements:
+**	Copyright 2012-2018 Saphirion AG & Atronix
+**	Copyright 2019 Oldes
+**
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
 **  You may obtain a copy of the License at
@@ -49,10 +53,6 @@
 #define INCLUDE_EXT_DATA
 #include "host-ext-window.h"
 
-#ifndef NO_COMPOSITOR
-#include "agg-compositor.h"
-#endif
-
 //***** DPI ******//
 #ifndef DPI_ENUMS_DECLARED
 typedef enum PROCESSDPI_AwareNESS
@@ -76,8 +76,8 @@ typedef HRESULT(WINAPI * GETDPIFORMONITOR_T)(HMONITOR, MONITOR_DPI_TYPE, UINT*, 
 //***** Constants *****//
 
 #define MAX_WINDOWS 64
-#define GOB_HWIN(gob)	(Find_Window(gob))
-#define GOB_COMPOSITOR(gob)	(Find_Compositor(gob)) //gets handle to window's compositor
+#define GOB_HWIN(gob)	(OS_Find_Window(gob))
+#define GOB_COMPOSITOR(gob)	(OS_Find_Compositor(gob)) //gets handle to window's compositor
 
 //***** Externs *****//
 
@@ -155,6 +155,8 @@ REBINT window_scale;
 
 /**********************************************************************
 **
+*/	REBINT Alloc_Window(REBGOB *gob)
+/*
 **	Window Allocator
 **
 **	The window handle is not stored in the gob to avoid wasting
@@ -168,23 +170,26 @@ REBINT window_scale;
 **		2) window events are mapped directly to gobs
 **
 **********************************************************************/
-
-static REBINT Alloc_Window(REBGOB *gob) {
+{
 	int n;
 	for (n = 0; n < MAX_WINDOWS; n++) {
 		if (Gob_Windows[n].gob == 0) {
 			Gob_Windows[n].gob = gob;
-#ifndef NO_COMPOSITOR
-			Gob_Windows[n].compositor = Create_Compositor(Gob_Root, gob);
-			//			Reb_Print("Create_Compositor %d", Gob_Windows[n].compositor);
-#endif
+			Gob_Windows[n].compositor = OS_Create_Compositor(Gob_Root, gob);
 			return n;
 		}
 	}
 	return -1;
 }
 
-static HWND Find_Window(REBGOB *gob) {
+/***********************************************************************
+**
+*/	void* OS_Find_Window(REBGOB *gob)
+/*
+**	Return window handle of given gob.
+**
+***********************************************************************/
+{
 	int n;
 	for (n = 0; n < MAX_WINDOWS; n++) {
 		if (Gob_Windows[n].gob == gob) return Gob_Windows[n].win;
@@ -192,7 +197,14 @@ static HWND Find_Window(REBGOB *gob) {
 	return 0;
 }
 
-static HWND Find_Compositor(REBGOB *gob) {
+/***********************************************************************
+**
+*/	void* OS_Find_Compositor(REBGOB *gob)
+/*
+**	Return compositor handle of given gob.
+**
+***********************************************************************/
+{
 	int n;
 	for (n = 0; n < MAX_WINDOWS; n++) {
 		if (Gob_Windows[n].gob == gob) return Gob_Windows[n].compositor;
@@ -200,102 +212,23 @@ static HWND Find_Compositor(REBGOB *gob) {
 	return 0;
 }
 
-static void Free_Window(REBGOB *gob) {
+/***********************************************************************
+**
+*/	void OS_Free_Window(REBGOB *gob)
+/*
+**	Release the Gob_Windows slot used by given gob.
+**
+***********************************************************************/
+{
 	int n;
 	for (n = 0; n < MAX_WINDOWS; n++) {
 		if (Gob_Windows[n].gob == gob) {
-#ifndef NO_COMPOSITOR
-			Destroy_Compositor(Gob_Windows[n].compositor);
-			//			Reb_Print("Destroy_Compositor %d", Gob_Windows[n].compositor);
-#endif
+			OS_Destroy_Compositor(Gob_Windows[n].compositor);
 			Gob_Windows[n].gob = 0;
 			return;
 		}
 	}
 }
-
-
-/***********************************************************************
-**
-*/	void Blit_Rect(REBGOB *gob, REBXYF d, REBXYF dsize, REBYTE *src, REBXYF s, REBXYF ssize)
-/*
-**		This routine copies a rectangle from a PAN structure to the
-**		current output device.
-**
-***********************************************************************/
-{
-	HDC         hdc;
-	BITMAPINFO  BitmapInfo;
-	REBINT      mode;
-
-	if (!IS_WINDOW(gob)) return;
-
-	hdc = GetDC(GOB_HWIN(gob));
-
-	mode = SetStretchBltMode(hdc, COLORONCOLOR);
-	BitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-#ifdef NO_COMPOSITOR
-	BitmapInfo.bmiHeader.biWidth = ssize.x;
-	BitmapInfo.bmiHeader.biHeight = -(REBINT)dsize.y;
-#else
-	BitmapInfo.bmiHeader.biWidth = ROUND_TO_INT(gob->size.x);
-	BitmapInfo.bmiHeader.biHeight = -ROUND_TO_INT(gob->size.y);
-#endif
-	BitmapInfo.bmiHeader.biPlanes = 1;
-	BitmapInfo.bmiHeader.biBitCount = 32;
-	BitmapInfo.bmiHeader.biCompression = BI_RGB;
-	BitmapInfo.bmiHeader.biSizeImage = 0;
-	BitmapInfo.bmiHeader.biXPelsPerMeter = 1;
-	BitmapInfo.bmiHeader.biYPelsPerMeter = 1;
-	BitmapInfo.bmiHeader.biClrUsed = 0;
-	BitmapInfo.bmiHeader.biClrImportant = 0;
-
-	StretchDIBits(hdc, d.x, d.y, dsize.x, dsize.y, s.x, s.y, ssize.x, ssize.y, src, &BitmapInfo, DIB_PAL_COLORS, SRCCOPY);
-	/* Is this really needed? o.
-	//we need little transformation to get rid of StretchDIBits() quirk when src.x and src.y = 0
-	StretchDIBits(hdc,
-	d.x, d.y + dsize.y - 1, dsize.x, -dsize.y,
-	s.x, s.y + ssize.y + 1, ssize.x, -ssize.y,
-	src, &BitmapInfo, DIB_PAL_COLORS, SRCCOPY);
-	*/
-
-	//	Reb_Print("blit: %dx%d %dx%d %dx%d %dx%d" ,d.x, d.y + dsize.y - 1, dsize.x, -dsize.y,s.x, ssize.y + s.y + 1, ssize.x, -ssize.y);
-
-	SetStretchBltMode(hdc, mode);
-
-	ReleaseDC(GOB_HWIN(gob), hdc);
-}
-
-
-/***********************************************************************
-**
-*/	void Blit_Color(REBGOB *gob, REBXYF d, REBXYF dsize, REBYTE *color)
-/*
-**		Fill color rectangle, a pixel at a time.
-**
-***********************************************************************/
-{
-	HDC hdc;
-	COLORREF clr;
-	RECT rect;
-
-	if (!IS_WINDOW(gob)) return;
-
-	clr = color[C_R] | (color[C_G] << 8) | (color[C_B] << 16);
-
-	hdc = GetDC(GOB_HWIN(gob));
-
-	rect.left = d.x;
-	rect.top = d.y;
-	rect.right = dsize.x + d.x; // see note on FillRect
-	rect.bottom = dsize.y + d.y;
-
-	//Reb_Print("rect: %dx%d %dx%d", rect.left, rect.top, rect.right, rect.bottom);
-
-	FillRect(hdc, &rect, CreateSolidBrush(clr)); // excludes bottom & right borders
-	ReleaseDC(GOB_HWIN(gob), hdc);
-}
-
 
 /***********************************************************************
 **
@@ -467,7 +400,10 @@ static void Free_Window(REBGOB *gob) {
 		DragAcceptFiles(window, TRUE);
 
 	Gob_Windows[windex].win = window;
+	Gob_Windows[windex].compositor = OS_Create_Compositor(Gob_Root, gob);
+
 	SET_GOB_FLAG(gob, GOBF_WINDOW);
+	SET_GOB_FLAG(gob, GOBF_ACTIVE);
 	SET_GOB_STATE(gob, GOBS_OPEN);
 
 	// Provide pointer from window back to REBOL window:
@@ -517,7 +453,7 @@ static void Free_Window(REBGOB *gob) {
 ***********************************************************************/
 {
 	HWND parent = NULL;
-	if (GET_GOB_FLAG(gob, GOBF_WINDOW) && Find_Window(gob)) {
+	if (GET_GOB_FLAG(gob, GOBF_WINDOW) && OS_Find_Window(gob)) {
 		if (GET_GOB_FLAG(gob, GOBF_MODAL)) {
 			parent = GetParent(GOB_HWIN(gob));
 			if (parent) {
@@ -528,7 +464,7 @@ static void Free_Window(REBGOB *gob) {
 		DestroyWindow(GOB_HWIN(gob));
 		CLR_GOB_FLAG(gob, GOBF_WINDOW);
 		CLEAR_GOB_STATE(gob); // set here or in the destory?
-		Free_Window(gob);
+		OS_Free_Window(gob);
 	}
 }
 
@@ -541,17 +477,12 @@ static void Free_Window(REBGOB *gob) {
 **
 ***********************************************************************/
 {
-#ifndef NO_COMPOSITOR
 	void *compositor;
 	REBOOL changed;
 	compositor = GOB_COMPOSITOR(gob);
-	changed = Resize_Window_Buffer(compositor, gob);
-	if (redraw) Compose_Gob(compositor, gob, gob);
+	changed = OS_Resize_Window_Buffer(compositor, gob);
+	if (redraw) OS_Compose_Gob(compositor, gob, gob, FALSE); // what if not actually resized?
 	return changed;
-#else
-	OS_Draw_Window(gob, gob);
-	return TRUE;
-#endif
 }
 
 
@@ -621,23 +552,14 @@ static void Free_Window(REBGOB *gob) {
 
 /***********************************************************************
 **
-*/	REBINT OS_Draw_Window(REBGOB *wingob, REBGOB *gob)
+*/	void OS_Draw_Window(REBGOB *wingob, REBGOB *gob)
 /*
 **		Refresh the GOB within the given window. If the wingob
 **		is zero, then find the correct window for it.
 **
 ***********************************************************************/
 {
-	REBINT len;
-
-#ifdef NO_COMPOSITOR
-	REBINT n;
-	REBGOB **gp;
-	//static int nnn = 0;
-#else
 	void *compositor;
-#endif
-
 	if (!wingob) {
 		wingob = gob;
 		while (GOB_PARENT(wingob) && GOB_PARENT(wingob) != Gob_Root
@@ -645,35 +567,13 @@ static void Free_Window(REBGOB *gob) {
 			wingob = GOB_PARENT(wingob);
 
 		//check if it is really open
-		if (!IS_WINDOW(wingob) || !GET_GOB_STATE(wingob, GOBS_OPEN)) return 0;
+		if (!IS_WINDOW(wingob) || !GET_GOB_STATE(wingob, GOBS_OPEN)) return;
 	}
 
-//	Reb_Print("draw: %d %8x", nnn++, gob);
-
-#ifdef NO_COMPOSITOR
-	// Blit the current gob:
-	if (IS_GOB_IMAGE(gob)) {
-		Blit_Rect(wingob, gob->offset, gob->size, GOB_BITMAP(gob), Zero_Pair, gob->size);
-	}
-	else if (IS_GOB_COLOR(gob)) {
-		Blit_Color(wingob, gob->offset, gob->size, (REBYTE*)&GOB_CONTENT(gob));
-	}
-
-	// Blit the children:
-	if (GOB_PANE(gob)) {
-		len = GOB_TAIL(gob);
-		gp = GOB_HEAD(gob);
-		for (n = 0; n < len; n++, gp++)
-			if (wingob != *gp) // prevent infinite loop (for example when: view system/view/screen-gob)
-				OS_Draw_Window(wingob, *gp);
-	}
-	return 0;
-#else
+	//Reb_Print("draw: %d %8x", nnn++, gob);
 	//render and blit the GOB
 	compositor = GOB_COMPOSITOR(wingob);
-	len = Compose_Gob(compositor, wingob, gob);
-	return len;
-#endif
+	OS_Compose_Gob(compositor, wingob, gob, FALSE);
 }
 
 
@@ -688,7 +588,6 @@ static void Free_Window(REBGOB *gob) {
 {
 	PAINTSTRUCT ps;
 	REBGOB *gob;
-	REBPAR size;
 
 #ifdef __LLP64__
 	gob = (REBGOB *)GetWindowLongPtr(window, GWLP_USERDATA);
@@ -697,17 +596,8 @@ static void Free_Window(REBGOB *gob) {
 #endif
 
 	if (gob) {
-
 		BeginPaint(window, (LPPAINTSTRUCT) &ps);
-
-#ifdef NO_COMPOSITOR
-		OS_Draw_Window(gob, gob);
-#else
-		size.x = ROUND_TO_INT(gob->size.x);
-		size.y = ROUND_TO_INT(gob->size.y);
-		Blit_Rect(gob, Zero_Pair, size, Get_Window_Buffer(GOB_COMPOSITOR(gob)), Zero_Pair, size);
-#endif
-
+		OS_Blit_Window(GOB_COMPOSITOR(gob));
 		EndPaint(window, (LPPAINTSTRUCT) &ps);
 	}
 }
@@ -771,7 +661,8 @@ static void Free_Window(REBGOB *gob) {
 	}
 
 	// Otherwise, composite and referesh the gob or all gobs:
-	return OS_Draw_Window(0, gob);  // 0 = window parent of gob
+	OS_Draw_Window(0, gob);  // 0 = window parent of gob
+	return 0;
 }
 
 
@@ -1135,8 +1026,6 @@ static void Free_Window(REBGOB *gob) {
 }
 
 
-
-
 /***********************************************************************
 **
 */	void Init_Windows(void)
@@ -1152,7 +1041,6 @@ static void Free_Window(REBGOB *gob) {
 	Cursor = LoadCursor(NULL, IDC_ARROW);
 	Init_DPI_Awareness();
 }
-
 
 #ifdef NOT_USED_BUT_MAYBE_LATER
 

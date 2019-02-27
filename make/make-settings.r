@@ -31,6 +31,7 @@ Defines: [
 	;FORCE_ANSI_ESC_EMULATION_ON_WINDOWS ;-- would not try to use MS' built-in VIRTUAL_TERMINAL_PROCESSING
 	;EXCLUDE_VECTOR_MATH ;-- don't include vector math support (like: 3 * #[vector! integer! 8 3 [1 2 3]])
 
-	;DEBUG_MIDI ;-- prints some of internal traces from MIDI device handler
+	;DEBUG_MIDI         ;-- prints some of internal traces from MIDI device handler
+	;DEBUG_DRAW_REGIONS ;-- draws clip region frame
 
 ]

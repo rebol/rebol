@@ -5,7 +5,9 @@
 **  Copyright 2012 REBOL Technologies
 **  REBOL is a trademark of REBOL Technologies
 **
-**  Additional code modifications and improvements Copyright 2012 Saphirion AG
+**  Additional code modifications and improvements:
+**	Copyright 2012-2018 Saphirion AG & Atronix
+**	Copyright 2019 Oldes
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
@@ -22,7 +24,7 @@
 ************************************************************************
 **
 **  Title: Win32 GDI based Compositor abstraction layer API.
-**  Author: Richard Smolak
+**  Author: Oldes, Richard Smolak
 **  File:  host-compositor.c
 **  Purpose: Provides simple gob compositor code for Windows OS.
 ************************************************************************
@@ -36,73 +38,108 @@
 **    5. Test everything, then test it again.
 **
 ***********************************************************************/ 
-
+#ifndef WINVER
 #define WINVER 0x0500  //for AlphaBlend()
 #define _WIN32_WINNT 0x0500  //for DC_BRUSH
+#endif
 #include <windows.h>
 
-#include <math.h>	//for floor()
+#include <math.h> //for floor()
+#ifdef DEBUG_DRAW_REGIONS
 #include <stdlib.h> //for rand()
+#endif
 #include "reb-host.h"
 #include "host-lib.h"
 
 //***** Externs *****
-extern HWND Find_Window(REBGOB *gob);
 
 //***** Macros *****
 
-#define GOB_HWIN(gob)	((HWND)Find_Window(gob))
+#define GOB_HWIN(gob)	((HWND)OS_Find_Window(gob))
 
 //***** Locals *****
 
 static REBXYF Zero_Pair = {0, 0};
 
-typedef struct compositor_ctx {
-	REBYTE *Window_Buffer;
-	REBXYI winBufSize;	
-	REBGOB *Win_Gob;
-	REBGOB *Root_Gob;
-	HDC winDC;
-	HBITMAP Back_Buffer;
-	HDC backDC;
+typedef struct rebol_compositor_ctx {
+	REBYTE    *wind_buffer;
+	REBXYI     wind_size;	
+	REBGOB    *wind_gob;
+	REBGOB    *root_gob;
+	HDC        wind_DC;
+	HBITMAP    back_buffer;
+	HDC        back_DC;
+	HRGN       win_clip;
+	HRGN       new_clip;
+	HRGN       old_clip;	
+	REBXYF     abs_offset;
+	HBRUSH     brush_DC;
 	BITMAPINFO bmpInfo;
-	HRGN Win_Clip;
-	HRGN New_Clip;
-	HRGN Old_Clip;	
-	REBXYF absOffset;
-	HBRUSH DCbrush;
-} REBCMP_CTX;
+} REBCMP;
+
 
 /***********************************************************************
 **
-*/ REBYTE* rebcmp_get_buffer(REBCMP_CTX* ctx)
+*/ void* OS_Create_Compositor(REBGOB* rootGob, REBGOB* gob)
 /*
-**	Provide pointer to window compositing buffer.
-**  Return NULL if buffer not available of call failed.
-**
-**  NOTE: The buffer may be "locked" during this call on some platforms.
-**        Always call rebcmp_release_buffer() to be sure it is released.
+**	Create new Compositor instance.
 **
 ***********************************************************************/
 {
-	return ctx->Window_Buffer;
+	//new compositor struct
+	REBCMP *ctx = (REBCMP*)OS_Make(sizeof(REBCMP));
+
+	//bitmapinfo struct
+	CLEARS(&ctx->bmpInfo);
+	ctx->bmpInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	ctx->bmpInfo.bmiHeader.biPlanes = 1;
+	ctx->bmpInfo.bmiHeader.biBitCount = 32;
+	ctx->bmpInfo.bmiHeader.biCompression = BI_RGB;
+
+	//shortcuts
+	ctx->root_gob = rootGob;
+	ctx->wind_gob = gob;
+	ctx->wind_DC = GetDC(GOB_HWIN(gob));
+	ctx->back_DC = 0;
+	ctx->back_buffer = 0;
+
+	//custom color brush
+	ctx->brush_DC = GetStockObject(DC_BRUSH);
+
+	//initialize clipping regions
+	ctx->win_clip = CreateRectRgn(0, 0, GOB_LOG_W_INT(gob), GOB_LOG_H_INT(gob));
+	ctx->new_clip = CreateRectRgn(0, 0, 0, 0);
+	ctx->old_clip = CreateRectRgn(0, 0, 0, 0);
+
+	//call resize to init rest
+	OS_Resize_Window_Buffer(ctx, gob);
+
+	return ctx;
 }
+
 
 /***********************************************************************
 **
-*/ void rebcmp_release_buffer(REBCMP_CTX* ctx)
+*/ void OS_Destroy_Compositor(REBCMP* ctx)
 /*
-**	Release the window compositing buffer acquired by rebcmp_get_buffer().
-**
-**  NOTE: this call can be "no-op" on platforms that don't need locking.
+**	Destroy existing Compositor instance.
 **
 ***********************************************************************/
 {
+	//do cleanup
+	ReleaseDC(GOB_HWIN(ctx->wind_gob), ctx->wind_DC);
+	DeleteDC(ctx->back_DC);
+	DeleteObject(ctx->back_buffer);
+	DeleteObject(ctx->win_clip);
+	DeleteObject(ctx->new_clip);
+	DeleteObject(ctx->old_clip);
+	OS_Free(ctx);
 }
+
 
 /***********************************************************************
 **
-*/ REBOOL rebcmp_resize_buffer(REBCMP_CTX* ctx, REBGOB* winGob)
+*/ REBOOL OS_Resize_Window_Buffer(REBCMP* ctx, REBGOB* winGob)
 /*
 **	Resize the window compositing buffer.
 **
@@ -111,58 +148,58 @@ typedef struct compositor_ctx {
 ***********************************************************************/
 {
 	//check if window size really changed or buffer needs to be created
-	if ((GOB_LOG_W(winGob) != GOB_WO(winGob)) || (GOB_LOG_H(winGob) != GOB_HO(winGob)) || ctx->Back_Buffer == 0) {
+	if ((GOB_LOG_W(winGob) != GOB_WO(winGob)) || (GOB_LOG_H(winGob) != GOB_HO(winGob)) || ctx->back_buffer == 0) {
 		HBITMAP new_buffer;
-		HDC newDC;
+		HDC     new_DC;
 		REBYTE *new_bytes;
-		REBINT w = GOB_LOG_W_INT(winGob);
-		REBINT h = GOB_LOG_H_INT(winGob);
+		REBINT  w = GOB_LOG_W_INT(winGob);
+		REBINT  h = GOB_LOG_H_INT(winGob);
 		RECT lprc = {0,0,w,h};
 		
-		///set window size in bitmapinfo struct
+		//set window size in bitmapinfo struct
 		ctx->bmpInfo.bmiHeader.biWidth = w;
 		ctx->bmpInfo.bmiHeader.biHeight = -h;
 
 		//create new window backbuffer and DC
-		new_buffer = CreateDIBSection(ctx->winDC, &ctx->bmpInfo, DIB_RGB_COLORS,(VOID **)&new_bytes, 0, 0);
-		newDC = CreateCompatibleDC(ctx->winDC);
+		new_buffer = CreateDIBSection(ctx->wind_DC, &ctx->bmpInfo, DIB_RGB_COLORS,(VOID **)&new_bytes, 0, 0);
+		new_DC = CreateCompatibleDC(ctx->wind_DC);
 
 		//update the buffer size values
-		ctx->winBufSize.x = w;
-		ctx->winBufSize.y = h;
+		ctx->wind_size.x = w;
+		ctx->wind_size.y = h;
 		
 		//select new DC with back buffer and delete old DC(to prevent leak)
-		DeleteObject((HBITMAP)SelectObject(newDC, new_buffer));
+		DeleteObject((HBITMAP)SelectObject(new_DC, new_buffer));
 
 		//fill the background color
-		SetDCBrushColor(newDC, RGB(200,200,200));		
-		FillRect(newDC,&lprc, ctx->DCbrush);
+		SetDCBrushColor(new_DC, RGB(200,200,200));		
+		FillRect(new_DC,&lprc, ctx->brush_DC);
 		
-		if (ctx->backDC != 0) {
+		if (ctx->back_DC != 0) {
 /*		
 			//copy the current content
 			BitBlt(
-				newDC,
+				new_DC,
 				0, 0,
 				w, h,
-				ctx->backDC,
+				ctx->back_DC,
 				0, 0,
 				SRCCOPY
 			);
 */			
 			//cleanup of previously used objects
-			DeleteObject(ctx->Back_Buffer);
-			DeleteDC(ctx->backDC);
+			DeleteObject(ctx->back_buffer);
+			DeleteDC(ctx->back_DC);
 		}
 		
 		//make the new buffer actual
-		ctx->Back_Buffer = new_buffer;
-		ctx->backDC = newDC;
-		ctx->Window_Buffer = new_bytes;
+		ctx->back_buffer = new_buffer;
+		ctx->back_DC = new_DC;
+		ctx->wind_buffer = new_bytes;
 
 		//set window clip region
-//		SetRectRgn(ctx->Win_Clip, 0, 0, w, h);
-//		SelectClipRgn(ctx->backDC, ctx->Win_Clip);
+//		SetRectRgn(ctx->win_clip, 0, 0, w, h);
+//		SelectClipRgn(ctx->back_DC, ctx->win_clip);
 
 		//update old gob area
 		GOB_XO(winGob) = GOB_LOG_X(winGob);
@@ -174,75 +211,19 @@ typedef struct compositor_ctx {
 	return FALSE;
 }
 
-/***********************************************************************
-**
-*/ void* rebcmp_create(REBGOB* rootGob, REBGOB* gob)
-/*
-**	Create new Compositor instance.
-**
-***********************************************************************/
-{
-	//new compositor struct
-	REBCMP_CTX *ctx = (REBCMP_CTX*)OS_Make(sizeof(REBCMP_CTX));
-	
-	//bitmapinfo struct
-	CLEARS(&ctx->bmpInfo);
-    ctx->bmpInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    ctx->bmpInfo.bmiHeader.biPlanes = 1;
-    ctx->bmpInfo.bmiHeader.biBitCount = 32;
-    ctx->bmpInfo.bmiHeader.biCompression = BI_RGB;        
-
-	//shortcuts
-	ctx->Root_Gob = rootGob;
-	ctx->Win_Gob = gob;
-	ctx->winDC = GetDC(GOB_HWIN(gob));
-	ctx->backDC = 0;
-	ctx->Back_Buffer = 0;
-
-	//custom color brush
-	ctx->DCbrush = GetStockObject(DC_BRUSH);
-	
-	//initialize clipping regions
-	ctx->Win_Clip = CreateRectRgn(0, 0, GOB_LOG_W_INT(gob), GOB_LOG_H_INT(gob));
-	ctx->New_Clip = CreateRectRgn(0, 0, 0, 0);
-	ctx->Old_Clip = CreateRectRgn(0, 0, 0, 0);	
-	
-	//call resize to init rest
-	rebcmp_resize_buffer(ctx, gob);
-
-	return ctx;
-}
 
 /***********************************************************************
 **
-*/ void rebcmp_destroy(REBCMP_CTX* ctx)
-/*
-**	Destroy existing Compositor instance.
-**
-***********************************************************************/
-{
-	//do cleanup
-	ReleaseDC(GOB_HWIN(ctx->Win_Gob), ctx->winDC );
-	DeleteDC(ctx->backDC);
-	DeleteObject(ctx->Back_Buffer);
-	DeleteObject(ctx->Win_Clip);
-	DeleteObject(ctx->New_Clip);
-	DeleteObject(ctx->Old_Clip);
-	OS_Free(ctx);
-}
-
-/***********************************************************************
-**
-*/ static void process_gobs(REBCMP_CTX* ctx, REBGOB* gob)
+*/ static void process_gobs(REBCMP* ctx, REBGOB* gob)
 /*
 **	Recursively process and compose gob and its children.
 **
-** NOTE: this function is used internally by rebcmp_compose() call only.
+**  NOTE: this function is used internally by OS_Compose_Gob() call only.
 **
 ***********************************************************************/
 {
-	REBINT x = ROUND_TO_INT(ctx->absOffset.x);
-	REBINT y = ROUND_TO_INT(ctx->absOffset.y);
+	REBINT x = ROUND_TO_INT(ctx->abs_offset.x);
+	REBINT y = ROUND_TO_INT(ctx->abs_offset.y);
 	REBINT intersection_result;
 	RECT gob_clip;
 
@@ -256,54 +237,55 @@ typedef struct compositor_ctx {
 		CLR_GOB_STATE(gob, GOBS_NEW);
 	}
 
-//	RL_Print("oft: %dx%d siz: %dx%d abs_oft: %dx%d \n", GOB_X_INT(gob), GOB_Y_INT(gob), GOB_W_INT(gob), GOB_H_INT(gob), x, y);
+	//RL_Print("type: %d oft: %dx%d siz: %dx%d abs_oft: %dx%d \n", GOB_TYPE(gob), GOB_X_INT(gob), GOB_Y_INT(gob), GOB_W_INT(gob), GOB_H_INT(gob), x, y);
 
 	//intersect gob dimensions with actual window clip region
-	SetRectRgn(ctx->Win_Clip, x, y, x + GOB_LOG_W_INT(gob), y + GOB_LOG_H_INT(gob));
-	intersection_result = ExtSelectClipRgn(ctx->backDC, ctx->Win_Clip, RGN_AND);
+	SetRectRgn(ctx->win_clip, x, y, x + GOB_LOG_W_INT(gob), y + GOB_LOG_H_INT(gob));
+	intersection_result = ExtSelectClipRgn(ctx->back_DC, ctx->win_clip, RGN_AND);
 
 
-	GetClipBox(ctx->backDC, &gob_clip);
-//	RL_Print("clip: %dx%d %dx%d\n", gob_clip.left, gob_clip.top, gob_clip.right, gob_clip.bottom);
+	GetClipBox(ctx->back_DC, &gob_clip);
+	//RL_Print("clip: %dx%d %dx%d\n", gob_clip.left, gob_clip.top, gob_clip.right, gob_clip.bottom);
 	
 	if (intersection_result != NULLREGION)
 	{
-//		RL_Print("clip OK %d %d\n", r, GOB_TYPE(gob));
+		//RL_Print("clip OK %d %d\n", intersection_result, GOB_TYPE(gob));
 		
-//		if (!GET_GOB_FLAG(gob, GOBF_WINDOW))
 		//render GOB content
 		REBXYI offset = {x,y};
 		REBXYI top_left = {gob_clip.left, gob_clip.top};
 		REBXYI bottom_right = {gob_clip.right, gob_clip.bottom};
 		switch (GOB_TYPE(gob)) {
 			case GOBT_COLOR:
-//					RL_Print("draw color gob %dx%d\n", x, y);
-				rebdrw_gob_color(gob, ctx->Window_Buffer, ctx->winBufSize, offset, top_left, bottom_right);
+				//RL_Print("draw color gob %dx%d\n", x, y);
+				OS_Blit_Gob_Color(gob, ctx, offset, top_left, bottom_right);
 				break;
 			
 			case GOBT_IMAGE:
-//				RL_Print("draw image gob\n");
-				rebdrw_gob_image(gob, ctx->Window_Buffer, ctx->winBufSize, offset, top_left, bottom_right);
+				//RL_Print("draw image gob\n");
+				OS_Blit_Gob_Image(gob, ctx, offset, top_left, bottom_right);
 				break;
-
+			
 			case GOBT_DRAW:
-				rebdrw_gob_draw(gob, ctx->Window_Buffer ,ctx->winBufSize,  offset, top_left, bottom_right);
+				//not implemented
 				break;
 
 			case GOBT_TEXT:
 			case GOBT_STRING:
-				rt_gob_text(gob, ctx->Window_Buffer ,ctx->winBufSize,ctx->absOffset, top_left, bottom_right);
+				//not implemented
 				break;
 				
 			case GOBT_EFFECT:
+				//not implemented
 				break;
 		}
-/*
+		
+#ifdef DEBUG_DRAW_REGIONS
 		//draw clip region frame (for debugging)
-		GetClipRgn(ctx->backDC, ctx->Win_Clip); //copy the actual region to Win_Clip
-		SetDCBrushColor(ctx->backDC, RGB(rand() % 256, rand() % 256, rand() % 256));
-		FrameRgn(ctx->backDC, ctx->Win_Clip, ctx->DCbrush, 2, 2);	
-*/
+		GetClipRgn(ctx->back_DC, ctx->win_clip); //copy the actual region to win_clip
+		SetDCBrushColor(ctx->back_DC, RGB(rand() % 256, rand() % 256, rand() % 256));
+		FrameRgn(ctx->back_DC, ctx->win_clip, ctx->brush_DC, 1, 1);	
+#endif
 
 		//recursively process sub GOBs
 		if (GOB_PANE(gob)) {
@@ -313,24 +295,24 @@ typedef struct compositor_ctx {
 			REBGOB **gp = GOB_HEAD(gob);
 			
 			//store clip region coords
-//			GetClipBox(ctx->backDC, &parent_clip);
+//			GetClipBox(ctx->back_DC, &parent_clip);
 
 			for (n = 0; n < len; n++, gp++) {
 				REBINT g_x = GOB_LOG_X(*gp);
 				REBINT g_y = GOB_LOG_Y(*gp);
 
 				//restore the parent clip region
-//				SetRectRgn(ctx->Win_Clip, parent_clip.left, parent_clip.top, parent_clip.right, parent_clip.bottom);
-				SetRectRgn(ctx->Win_Clip, gob_clip.left, gob_clip.top, gob_clip.right, gob_clip.bottom);
-				SelectClipRgn(ctx->backDC, ctx->Win_Clip);
+//				SetRectRgn(ctx->win_clip, parent_clip.left, parent_clip.top, parent_clip.right, parent_clip.bottom);
+				SetRectRgn(ctx->win_clip, gob_clip.left, gob_clip.top, gob_clip.right, gob_clip.bottom);
+				SelectClipRgn(ctx->back_DC, ctx->win_clip);
 				
-				ctx->absOffset.x += g_x;
-				ctx->absOffset.y += g_y;
+				ctx->abs_offset.x += g_x;
+				ctx->abs_offset.y += g_y;
 				
 				process_gobs(ctx, *gp);
 
-				ctx->absOffset.x -= g_x;
-				ctx->absOffset.y -= g_y;
+				ctx->abs_offset.x -= g_x;
+				ctx->abs_offset.y -= g_y;
 			}
 		}
 	} //else {RL_Print("invisible!\n");}
@@ -338,7 +320,7 @@ typedef struct compositor_ctx {
 
 /***********************************************************************
 **
-*/ void rebcmp_compose(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, REBOOL only)
+*/ void OS_Compose_Gob(REBCMP* ctx, REBGOB* winGob, REBGOB* gob, REBOOL only)
 /*
 **	Compose content of the specified gob. Main compositing function.
 **
@@ -356,17 +338,17 @@ typedef struct compositor_ctx {
 	REBGOB* parent_gob = gob;
 	RECT gob_clip;
 
-//	RL_Print("COMPOSE %d %d\n", GetDeviceCaps(ctx->backDC, SHADEBLENDCAPS), GetDeviceCaps(ctx->winDC, SHADEBLENDCAPS));
+	//RL_Print("COMPOSE %d %d\n", GetDeviceCaps(ctx->back_DC, SHADEBLENDCAPS), GetDeviceCaps(ctx->wind_DC, SHADEBLENDCAPS));
 	
 	abs_x = 0;
 	abs_y = 0;
 
 	//reset clip region to window area
-	SetRectRgn(ctx->Win_Clip, 0, 0, GOB_LOG_W_INT(winGob), GOB_LOG_H_INT(winGob));
-	SelectClipRgn(ctx->backDC, ctx->Win_Clip);
+	SetRectRgn(ctx->win_clip, 0, 0, GOB_LOG_W_INT(winGob), GOB_LOG_H_INT(winGob));
+	SelectClipRgn(ctx->back_DC, ctx->win_clip);
 
 	//the offset is shifted to render given gob at offset 0x0 (used by TO-IMAGE)
-	if (only){
+	if (only) {
 		abs_x = 0;
 		abs_y = 0;
 	} else {
@@ -379,32 +361,32 @@ typedef struct compositor_ctx {
 		}
 	}
 
-	ctx->absOffset.x = 0;
-	ctx->absOffset.y = 0;
+	ctx->abs_offset.x = 0;
+	ctx->abs_offset.y = 0;
 	
-	if (!GET_GOB_STATE(gob, GOBS_NEW)){
+	if (!GET_GOB_STATE(gob, GOBS_NEW)) {
 		//calculate absolute old offset of the gob
 		abs_ox = abs_x + (GOB_XO(gob) - GOB_LOG_X(gob));
 		abs_oy = abs_y + (GOB_YO(gob) - GOB_LOG_Y(gob));
 		
-//		RL_Print("OLD: %dx%d %dx%d\n",(REBINT)abs_ox, (REBINT)abs_oy, (REBINT)abs_ox + GOB_WO_INT(gob), (REBINT)abs_oy + GOB_HO_INT(gob));
+		//RL_Print("OLD: %dx%d %dx%d\n",(REBINT)abs_ox, (REBINT)abs_oy, (REBINT)abs_ox + GOB_WO_INT(gob), (REBINT)abs_oy + GOB_HO_INT(gob));
 		
 		//set region with old gob location and dimensions
-		SetRectRgn(ctx->Old_Clip, (REBINT)abs_ox, (REBINT)abs_oy, (REBINT)abs_ox + GOB_WO_INT(gob), (REBINT)abs_oy + GOB_HO_INT(gob));
+		SetRectRgn(ctx->old_clip, (REBINT)abs_ox, (REBINT)abs_oy, (REBINT)abs_ox + GOB_WO_INT(gob), (REBINT)abs_oy + GOB_HO_INT(gob));
 	}
 	
-//	RL_Print("NEW: %dx%d %dx%d\n",(REBINT)abs_x, (REBINT)abs_y, (REBINT)abs_x + GOB_W_INT(gob), (REBINT)abs_y + GOB_H_INT(gob));
+	//RL_Print("NEW: %dx%d %dx%d\n",(REBINT)abs_x, (REBINT)abs_y, (REBINT)abs_x + GOB_W_INT(gob), (REBINT)abs_y + GOB_H_INT(gob));
 	
 	//Create union of "new" and "old" gob location
-	SetRectRgn(ctx->New_Clip, (REBINT)abs_x, (REBINT)abs_y, (REBINT)abs_x + GOB_LOG_W_INT(gob), (REBINT)abs_y + GOB_LOG_H_INT(gob));
-	CombineRgn(ctx->Win_Clip, ctx->Old_Clip, ctx->New_Clip, RGN_OR);
+	SetRectRgn(ctx->new_clip, (REBINT)abs_x, (REBINT)abs_y, (REBINT)abs_x + GOB_LOG_W_INT(gob), (REBINT)abs_y + GOB_LOG_H_INT(gob));
+	CombineRgn(ctx->win_clip, ctx->old_clip, ctx->new_clip, RGN_OR);
 
 	
 	//intersect resulting region with window clip region
-	intersection_result = ExtSelectClipRgn(ctx->backDC, ctx->Win_Clip, RGN_AND);
+	intersection_result = ExtSelectClipRgn(ctx->back_DC, ctx->win_clip, RGN_AND);
 
-	GetClipBox(ctx->backDC, &gob_clip);
-//	RL_Print("old+new clip: %dx%d %dx%d\n", gob_clip.left, gob_clip.top, gob_clip.right, gob_clip.bottom);
+	GetClipBox(ctx->back_DC, &gob_clip);
+	RL_Print("old+new clip: %dx%d %dx%d\n", gob_clip.left, gob_clip.top, gob_clip.right, gob_clip.bottom);
 	
 	if (intersection_result != NULLREGION)
 		//redraw gobs
@@ -419,18 +401,112 @@ typedef struct compositor_ctx {
 
 /***********************************************************************
 **
-*/ void rebcmp_blit(REBCMP_CTX* ctx)
+*/ void OS_Blit_Window(REBCMP* ctx)
 /*
 **	Blit window content on the screen.
 **
 ***********************************************************************/
 {
 	BitBlt(
-		ctx->winDC,
+		ctx->wind_DC,
 		0, 0,
-		GOB_LOG_W_INT(ctx->Win_Gob), GOB_LOG_H_INT(ctx->Win_Gob),
-		ctx->backDC,
+		GOB_LOG_W_INT(ctx->wind_gob), GOB_LOG_H_INT(ctx->wind_gob),
+		ctx->back_DC,
 		0, 0,
 		SRCCOPY
 	);
 }
+
+
+/***********************************************************************
+**
+*/	void OS_Blit_Gob_Color(REBGOB *gob, REBCMP* ctx, REBXYI abs_oft, REBXYI clip_oft, REBXYI clip_siz)
+/*
+**		Fill color rectangle, a pixel at a time.
+**
+***********************************************************************/
+{
+	COLORREF rgb;
+	RECT rect;
+
+	//if (!gob || GOB_TYPE(gob) != GOBT_COLOR) return;
+	//if (!IS_WINDOW(gob)) return;
+
+	REBYTE* color = (REBYTE*)&GOB_CONTENT(gob);
+	rgb = color[C_R] | (color[C_G] << 8) | (color[C_B] << 16);
+
+	rect.left   = clip_oft.x;
+	rect.top    = clip_oft.y;
+	rect.right  = clip_siz.x + clip_oft.x;
+	rect.bottom = clip_siz.y + clip_oft.y;
+
+	//RL_Print("rect: %dx%d %dx%d", rect.left, rect.top, rect.right, rect.bottom);
+
+	FillRect(ctx->back_DC, &rect, CreateSolidBrush(rgb));
+}
+
+/***********************************************************************
+**
+*/	void OS_Blit_Gob_Image(REBGOB *gob, REBCMP* ctx, REBXYI abs_oft, REBXYI dst_oft, REBXYI dst_siz)
+/*
+**		This routine copies a rectangle from a PAN structure to the
+**		current output device.
+**
+***********************************************************************/
+{
+	//if (!gob || GOB_TYPE(gob) != GOBT_IMAGE || !GOB_CONTENT(gob)) return;
+
+	HDC         hdc = ctx->back_DC;
+	BITMAPINFO  BitmapInfo = ctx->bmpInfo;
+	REBINT      mode;
+	REBINT      src_siz_x = ROUND_TO_INT(gob->size.x);
+	REBINT      src_siz_y = ROUND_TO_INT(gob->size.y);
+
+	mode = SetStretchBltMode(hdc, COLORONCOLOR); // returns previous mode
+	BitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	BitmapInfo.bmiHeader.biWidth = src_siz_x;
+	BitmapInfo.bmiHeader.biHeight = -src_siz_y;
+
+	StretchDIBits(
+		hdc,
+		dst_oft.x, dst_oft.y,
+		dst_siz.x, dst_siz.y,
+		0, 0, // always at 0x0 so far; should we support image atlases?
+		src_siz_x, src_siz_y,
+		GOB_BITMAP(gob),
+		&BitmapInfo,
+		DIB_PAL_COLORS,
+		SRCCOPY
+	);
+	SetStretchBltMode(hdc, mode);
+}
+
+
+#ifdef UNUSED_OLD_COMPOSITOR_CODE
+/***********************************************************************
+**
+*/ REBYTE* rebcmp_get_buffer(REBCMP* ctx)
+/*
+**	Provide pointer to window compositing buffer.
+**  Return NULL if buffer not available of call failed.
+**
+**  NOTE: The buffer may be "locked" during this call on some platforms.
+**        Always call rebcmp_release_buffer() to be sure it is released.
+**
+***********************************************************************/
+{
+	return ctx->wind_buffer;
+}
+
+/***********************************************************************
+**
+*/ void rebcmp_release_buffer(REBCMP* ctx)
+/*
+**	Release the window compositing buffer acquired by rebcmp_get_buffer().
+**
+**  NOTE: this call can be "no-op" on platforms that don't need locking.
+**
+***********************************************************************/
+{
+}
+#endif

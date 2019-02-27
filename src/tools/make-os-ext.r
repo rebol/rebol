@@ -38,7 +38,10 @@ if all [
 	not find any [system/options/args []] "no-gfx"
 	find [3] system/version/4
 ][
-	append files [%host-window.c]
+	append files [
+		%host-window.c
+		%host-compositor.c
+	]
 ]
 
 cnt: 0

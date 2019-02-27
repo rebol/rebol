@@ -949,6 +949,7 @@ typedef struct Reb_Gob {
 #define	VAL_GOB_INDEX(v)	((v)->data.gob.index)
 #define SET_GOB(v,g)		VAL_SET(v, REB_GOB), VAL_GOB(v)=g, VAL_GOB_INDEX(v)=0
 
+typedef struct rebol_compositor_ctx REBCMP; // Rebol compositor context
 
 /***********************************************************************
 **

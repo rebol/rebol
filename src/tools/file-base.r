@@ -154,6 +154,7 @@ os-win32g: [
 	host-graphics.c
 	host-event.c
 	host-window.c
+	host-compositor.c
 	host-draw.c
 	host-text.c
 ]
