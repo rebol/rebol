@@ -21,15 +21,10 @@
 **
 ************************************************************************
 **
-**  Title: <platform/backend> Compositor abstraction layer API.
+**  Title: Win32 GDI based Compositor abstraction layer API.
 **  Author: Richard Smolak
 **  File:  host-compositor.c
-**  Purpose: Provides simple example of gfx backend specific compositor.
-**  Note: This is not fully working code, see the notes for insertion
-**        of your backend specific code. Of course the example can be fully
-**        modified according to the specific backend. Only the declarations
-**        of compositor API calls must remain consistent.
-**
+**  Purpose: Provides simple gob compositor code for Windows OS.
 ************************************************************************
 **
 **  NOTE to PROGRAMMERS:
@@ -40,35 +35,42 @@
 **    4. Keep in mind Linux, OS X, BSD, big/little endian CPUs.
 **    5. Test everything, then test it again.
 **
-***********************************************************************/
+***********************************************************************/ 
+
+#define WINVER 0x0500  //for AlphaBlend()
+#define _WIN32_WINNT 0x0500  //for DC_BRUSH
+#include <windows.h>
 
 #include <math.h>	//for floor()
+#include <stdlib.h> //for rand()
 #include "reb-host.h"
+#include "host-lib.h"
+
+//***** Externs *****
+extern HWND Find_Window(REBGOB *gob);
 
 //***** Macros *****
-#define GOB_HWIN(gob)	(Find_Window(gob))
+
+#define GOB_HWIN(gob)	((HWND)Find_Window(gob))
 
 //***** Locals *****
 
 static REBXYF Zero_Pair = {0, 0};
 
-typedef struct {
-	REBINT left;
-	REBINT top;
-	REBINT right;
-	REBINT bottom;
-} REBRECT;
-
-//NOTE: Following structure holds just basic compositor 'instance' values that
-//are used internally by the compositor API.
-//None of the values should be accessed directly from external code.
-//The structure can be extended/modified according to the specific backend needs.
-typedef struct {
+typedef struct compositor_ctx {
 	REBYTE *Window_Buffer;
-	REBXYI winBufSize;
+	REBXYI winBufSize;	
 	REBGOB *Win_Gob;
 	REBGOB *Root_Gob;
+	HDC winDC;
+	HBITMAP Back_Buffer;
+	HDC backDC;
+	BITMAPINFO bmpInfo;
+	HRGN Win_Clip;
+	HRGN New_Clip;
+	HRGN Old_Clip;	
 	REBXYF absOffset;
+	HBRUSH DCbrush;
 } REBCMP_CTX;
 
 /***********************************************************************
@@ -83,7 +85,7 @@ typedef struct {
 **
 ***********************************************************************/
 {
-	return NULL;
+	return ctx->Window_Buffer;
 }
 
 /***********************************************************************
@@ -108,20 +110,59 @@ typedef struct {
 **
 ***********************************************************************/
 {
-
 	//check if window size really changed or buffer needs to be created
-	if ((GOB_LOG_W(winGob) != GOB_WO(winGob)) || (GOB_LOG_H(winGob) != GOB_HO(winGob))) {
-
+	if ((GOB_LOG_W(winGob) != GOB_WO(winGob)) || (GOB_LOG_H(winGob) != GOB_HO(winGob)) || ctx->Back_Buffer == 0) {
+		HBITMAP new_buffer;
+		HDC newDC;
+		REBYTE *new_bytes;
 		REBINT w = GOB_LOG_W_INT(winGob);
 		REBINT h = GOB_LOG_H_INT(winGob);
+		RECT lprc = {0,0,w,h};
+		
+		///set window size in bitmapinfo struct
+		ctx->bmpInfo.bmiHeader.biWidth = w;
+		ctx->bmpInfo.bmiHeader.biHeight = -h;
 
-		//------------------------------
-		//Put backend specific code here
-		//------------------------------
+		//create new window backbuffer and DC
+		new_buffer = CreateDIBSection(ctx->winDC, &ctx->bmpInfo, DIB_RGB_COLORS,(VOID **)&new_bytes, 0, 0);
+		newDC = CreateCompatibleDC(ctx->winDC);
 
 		//update the buffer size values
 		ctx->winBufSize.x = w;
 		ctx->winBufSize.y = h;
+		
+		//select new DC with back buffer and delete old DC(to prevent leak)
+		DeleteObject((HBITMAP)SelectObject(newDC, new_buffer));
+
+		//fill the background color
+		SetDCBrushColor(newDC, RGB(200,200,200));		
+		FillRect(newDC,&lprc, ctx->DCbrush);
+		
+		if (ctx->backDC != 0) {
+/*		
+			//copy the current content
+			BitBlt(
+				newDC,
+				0, 0,
+				w, h,
+				ctx->backDC,
+				0, 0,
+				SRCCOPY
+			);
+*/			
+			//cleanup of previously used objects
+			DeleteObject(ctx->Back_Buffer);
+			DeleteDC(ctx->backDC);
+		}
+		
+		//make the new buffer actual
+		ctx->Back_Buffer = new_buffer;
+		ctx->backDC = newDC;
+		ctx->Window_Buffer = new_bytes;
+
+		//set window clip region
+//		SetRectRgn(ctx->Win_Clip, 0, 0, w, h);
+//		SelectClipRgn(ctx->backDC, ctx->Win_Clip);
 
 		//update old gob area
 		GOB_XO(winGob) = GOB_LOG_X(winGob);
@@ -143,17 +184,32 @@ typedef struct {
 {
 	//new compositor struct
 	REBCMP_CTX *ctx = (REBCMP_CTX*)OS_Make(sizeof(REBCMP_CTX));
+	
+	//bitmapinfo struct
+	CLEARS(&ctx->bmpInfo);
+    ctx->bmpInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    ctx->bmpInfo.bmiHeader.biPlanes = 1;
+    ctx->bmpInfo.bmiHeader.biBitCount = 32;
+    ctx->bmpInfo.bmiHeader.biCompression = BI_RGB;        
 
 	//shortcuts
 	ctx->Root_Gob = rootGob;
 	ctx->Win_Gob = gob;
+	ctx->winDC = GetDC(GOB_HWIN(gob));
+	ctx->backDC = 0;
+	ctx->Back_Buffer = 0;
 
-	//------------------------------
-	//Put backend specific code here
-	//------------------------------
-
-	//call resize to init buffer
+	//custom color brush
+	ctx->DCbrush = GetStockObject(DC_BRUSH);
+	
+	//initialize clipping regions
+	ctx->Win_Clip = CreateRectRgn(0, 0, GOB_LOG_W_INT(gob), GOB_LOG_H_INT(gob));
+	ctx->New_Clip = CreateRectRgn(0, 0, 0, 0);
+	ctx->Old_Clip = CreateRectRgn(0, 0, 0, 0);	
+	
+	//call resize to init rest
 	rebcmp_resize_buffer(ctx, gob);
+
 	return ctx;
 }
 
@@ -165,9 +221,13 @@ typedef struct {
 **
 ***********************************************************************/
 {
-	//------------------------------
-	//Put backend specific code here
-	//------------------------------
+	//do cleanup
+	ReleaseDC(GOB_HWIN(ctx->Win_Gob), ctx->winDC );
+	DeleteDC(ctx->backDC);
+	DeleteObject(ctx->Back_Buffer);
+	DeleteObject(ctx->Win_Clip);
+	DeleteObject(ctx->New_Clip);
+	DeleteObject(ctx->Old_Clip);
 	OS_Free(ctx);
 }
 
@@ -181,9 +241,10 @@ typedef struct {
 **
 ***********************************************************************/
 {
-
 	REBINT x = ROUND_TO_INT(ctx->absOffset.x);
 	REBINT y = ROUND_TO_INT(ctx->absOffset.y);
+	REBINT intersection_result;
+	RECT gob_clip;
 
 	if (GET_GOB_STATE(gob, GOBS_NEW)){
 		//reset old-offset and old-size if newly added
@@ -195,89 +256,84 @@ typedef struct {
 		CLR_GOB_STATE(gob, GOBS_NEW);
 	}
 
+//	RL_Print("oft: %dx%d siz: %dx%d abs_oft: %dx%d \n", GOB_X_INT(gob), GOB_Y_INT(gob), GOB_W_INT(gob), GOB_H_INT(gob), x, y);
+
 	//intersect gob dimensions with actual window clip region
-	REBOOL valid_intersection;
-	//------------------------------
-	//Put backend specific code here
-	//------------------------------
+	SetRectRgn(ctx->Win_Clip, x, y, x + GOB_LOG_W_INT(gob), y + GOB_LOG_H_INT(gob));
+	intersection_result = ExtSelectClipRgn(ctx->backDC, ctx->Win_Clip, RGN_AND);
 
-	//get the current Window clip box
-	REBRECT gob_clip;
-	//------------------------------
-	//Put backend specific code here
-	//------------------------------
 
-	if (valid_intersection)
+	GetClipBox(ctx->backDC, &gob_clip);
+//	RL_Print("clip: %dx%d %dx%d\n", gob_clip.left, gob_clip.top, gob_clip.right, gob_clip.bottom);
+	
+	if (intersection_result != NULLREGION)
 	{
+//		RL_Print("clip OK %d %d\n", r, GOB_TYPE(gob));
+		
+//		if (!GET_GOB_FLAG(gob, GOBF_WINDOW))
 		//render GOB content
+		REBXYI offset = {x,y};
+		REBXYI top_left = {gob_clip.left, gob_clip.top};
+		REBXYI bottom_right = {gob_clip.right, gob_clip.bottom};
 		switch (GOB_TYPE(gob)) {
 			case GOBT_COLOR:
-				//------------------------------
-				//Put backend specific code here
-				//------------------------------
-				// or use the similar draw api call:
-				// rebdrw_gob_color(gob, ctx->Window_Buffer, ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
+//					RL_Print("draw color gob %dx%d\n", x, y);
+				rebdrw_gob_color(gob, ctx->Window_Buffer, ctx->winBufSize, offset, top_left, bottom_right);
 				break;
-
+			
 			case GOBT_IMAGE:
-				{
-					//------------------------------
-					//Put backend specific code here
-					//------------------------------
-					// or use the similar draw api call:
-					// rebdrw_gob_image(gob, ctx->Window_Buffer, ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
-				}
+//				RL_Print("draw image gob\n");
+				rebdrw_gob_image(gob, ctx->Window_Buffer, ctx->winBufSize, offset, top_left, bottom_right);
 				break;
 
 			case GOBT_DRAW:
-				{
-					//------------------------------
-					//Put backend specific code here
-					//------------------------------
-					// or use the similar draw api call:
-					// rebdrw_gob_draw(gob, ctx->Window_Buffer ,ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
-				}
+				rebdrw_gob_draw(gob, ctx->Window_Buffer ,ctx->winBufSize,  offset, top_left, bottom_right);
 				break;
 
 			case GOBT_TEXT:
 			case GOBT_STRING:
-				//------------------------------
-				//Put backend specific code here
-				//------------------------------
-				// or use the similar draw api call:
-				// rt_gob_text(gob, ctx->Window_Buffer ,ctx->winBufSize,ctx->absOffset, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
+				rt_gob_text(gob, ctx->Window_Buffer ,ctx->winBufSize,ctx->absOffset, top_left, bottom_right);
 				break;
-
+				
 			case GOBT_EFFECT:
-				//not yet implemented
 				break;
 		}
+/*
+		//draw clip region frame (for debugging)
+		GetClipRgn(ctx->backDC, ctx->Win_Clip); //copy the actual region to Win_Clip
+		SetDCBrushColor(ctx->backDC, RGB(rand() % 256, rand() % 256, rand() % 256));
+		FrameRgn(ctx->backDC, ctx->Win_Clip, ctx->DCbrush, 2, 2);	
+*/
 
 		//recursively process sub GOBs
 		if (GOB_PANE(gob)) {
 			REBINT n;
+//			RECT parent_clip;		
 			REBINT len = GOB_TAIL(gob);
 			REBGOB **gp = GOB_HEAD(gob);
+			
+			//store clip region coords
+//			GetClipBox(ctx->backDC, &parent_clip);
 
 			for (n = 0; n < len; n++, gp++) {
 				REBINT g_x = GOB_LOG_X(*gp);
 				REBINT g_y = GOB_LOG_Y(*gp);
 
-				//restore the "parent gob" clip region
-				//------------------------------
-				//Put backend specific code here
-				//------------------------------
-
+				//restore the parent clip region
+//				SetRectRgn(ctx->Win_Clip, parent_clip.left, parent_clip.top, parent_clip.right, parent_clip.bottom);
+				SetRectRgn(ctx->Win_Clip, gob_clip.left, gob_clip.top, gob_clip.right, gob_clip.bottom);
+				SelectClipRgn(ctx->backDC, ctx->Win_Clip);
+				
 				ctx->absOffset.x += g_x;
 				ctx->absOffset.y += g_y;
-
+				
 				process_gobs(ctx, *gp);
 
 				ctx->absOffset.x -= g_x;
 				ctx->absOffset.y -= g_y;
 			}
 		}
-	}
+	} //else {RL_Print("invisible!\n");}
 }
 
 /***********************************************************************
@@ -292,71 +348,68 @@ typedef struct {
 ***********************************************************************/
 {
 	REBINT max_depth = 1000; // avoid infinite loops
-	REBD32 abs_x = 0;
-	REBD32 abs_y = 0;
+	REBINT intersection_result;
+	REBD32 abs_x;
+	REBD32 abs_y;
 	REBD32 abs_ox;
 	REBD32 abs_oy;
 	REBGOB* parent_gob = gob;
+	RECT gob_clip;
+
+//	RL_Print("COMPOSE %d %d\n", GetDeviceCaps(ctx->backDC, SHADEBLENDCAPS), GetDeviceCaps(ctx->winDC, SHADEBLENDCAPS));
+	
+	abs_x = 0;
+	abs_y = 0;
 
 	//reset clip region to window area
-	//------------------------------
-	//Put backend specific code here
-	//------------------------------
-
-	//calculate absolute offset of the gob
-	while (GOB_PARENT(parent_gob) && (max_depth-- > 0) && !GET_GOB_FLAG(parent_gob, GOBF_WINDOW))
-	{
-		abs_x += GOB_LOG_X(parent_gob);
-		abs_y += GOB_LOG_Y(parent_gob);
-		parent_gob = GOB_PARENT(parent_gob);
-	}
+	SetRectRgn(ctx->Win_Clip, 0, 0, GOB_LOG_W_INT(winGob), GOB_LOG_H_INT(winGob));
+	SelectClipRgn(ctx->backDC, ctx->Win_Clip);
 
 	//the offset is shifted to render given gob at offset 0x0 (used by TO-IMAGE)
 	if (only){
-		ctx->absOffset.x = -abs_x;
-		ctx->absOffset.y = -abs_y;
 		abs_x = 0;
 		abs_y = 0;
 	} else {
-		ctx->absOffset.x = 0;
-		ctx->absOffset.y = 0;
+		//calculate absolute offset of the gob
+		while (GOB_PARENT(parent_gob) && (max_depth-- > 0) && !GET_GOB_FLAG(parent_gob, GOBF_WINDOW))
+		{
+			abs_x += GOB_LOG_X(parent_gob);
+			abs_y += GOB_LOG_Y(parent_gob);
+			parent_gob = GOB_PARENT(parent_gob);
+		}
 	}
 
-	//handle newly added gob case
+	ctx->absOffset.x = 0;
+	ctx->absOffset.y = 0;
+	
 	if (!GET_GOB_STATE(gob, GOBS_NEW)){
 		//calculate absolute old offset of the gob
 		abs_ox = abs_x + (GOB_XO(gob) - GOB_LOG_X(gob));
 		abs_oy = abs_y + (GOB_YO(gob) - GOB_LOG_Y(gob));
-
+		
+//		RL_Print("OLD: %dx%d %dx%d\n",(REBINT)abs_ox, (REBINT)abs_oy, (REBINT)abs_ox + GOB_WO_INT(gob), (REBINT)abs_oy + GOB_HO_INT(gob));
+		
 		//set region with old gob location and dimensions
-		//------------------------------
-		//Put backend specific code here
-		//------------------------------
+		SetRectRgn(ctx->Old_Clip, (REBINT)abs_ox, (REBINT)abs_oy, (REBINT)abs_ox + GOB_WO_INT(gob), (REBINT)abs_oy + GOB_HO_INT(gob));
 	}
-
+	
+//	RL_Print("NEW: %dx%d %dx%d\n",(REBINT)abs_x, (REBINT)abs_y, (REBINT)abs_x + GOB_W_INT(gob), (REBINT)abs_y + GOB_H_INT(gob));
+	
 	//Create union of "new" and "old" gob location
-	REBOOL valid_intersection;
-	//------------------------------
-	//Put backend specific code here
-	//------------------------------
+	SetRectRgn(ctx->New_Clip, (REBINT)abs_x, (REBINT)abs_y, (REBINT)abs_x + GOB_LOG_W_INT(gob), (REBINT)abs_y + GOB_LOG_H_INT(gob));
+	CombineRgn(ctx->Win_Clip, ctx->Old_Clip, ctx->New_Clip, RGN_OR);
 
+	
 	//intersect resulting region with window clip region
-	//------------------------------
-	//Put backend specific code here
-	//------------------------------
+	intersection_result = ExtSelectClipRgn(ctx->backDC, ctx->Win_Clip, RGN_AND);
 
-	if (valid_intersection)
-	{
-		ctx->Window_Buffer = rebcmp_get_buffer(ctx);
-
+	GetClipBox(ctx->backDC, &gob_clip);
+//	RL_Print("old+new clip: %dx%d %dx%d\n", gob_clip.left, gob_clip.top, gob_clip.right, gob_clip.bottom);
+	
+	if (intersection_result != NULLREGION)
 		//redraw gobs
-		process_gobs(ctx, winGob);
-
-		rebcmp_release_buffer(ctx);
-
-		ctx->Window_Buffer = NULL;
-	}
-
+		process_gobs(ctx, only ? gob : winGob);
+	
 	//update old GOB area
 	GOB_XO(gob) = GOB_LOG_X(gob);
 	GOB_YO(gob) = GOB_LOG_Y(gob);
@@ -372,7 +425,12 @@ typedef struct {
 **
 ***********************************************************************/
 {
-	//------------------------------
-	//Put backend specific code here
-	//------------------------------
+	BitBlt(
+		ctx->winDC,
+		0, 0,
+		GOB_LOG_W_INT(ctx->Win_Gob), GOB_LOG_H_INT(ctx->Win_Gob),
+		ctx->backDC,
+		0, 0,
+		SRCCOPY
+	);
 }
