@@ -168,6 +168,10 @@ These are now obsolete (as of A107) and should be removed:
 #define TO_ANY_LINUX
 #endif
 
+#ifdef TO_LINUX_MIPS
+#define TO_ANY_LINUX
+#endif
+
 #ifdef TO_ANY_LINUX
 #undef USE_MIDI_DEVICE          // Not implemented!
 #endif

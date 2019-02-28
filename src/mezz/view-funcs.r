@@ -98,7 +98,7 @@ view: func [
 					][
 						unhandle-events self
 						unview event/window
-						quit
+						;quit
 					]
 					;show event/window
 					none ; we handled it

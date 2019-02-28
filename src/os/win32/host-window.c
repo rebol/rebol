@@ -49,6 +49,7 @@
 
 #include "reb-host.h"
 #include "host-lib.h"
+#include "host-compositor.h"
 
 #define INCLUDE_EXT_DATA
 #include "host-ext-window.h"
@@ -95,6 +96,8 @@ static REBOOL DPI_Aware = FALSE;
 static REBOOL Custom_Cursor = FALSE;
 
 static u32* window_ext_words;
+
+RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
 //***** Globals *****//
 
@@ -210,6 +213,19 @@ REBINT window_scale;
 		if (Gob_Windows[n].gob == gob) return Gob_Windows[n].compositor;
 	}
 	return 0;
+}
+
+/***********************************************************************
+**
+*/	REBGOB* OS_Get_Gob_Root()
+/*
+**	Return gob root.
+**	Needed to map-event when event does not hold gob, but just data and 
+**	compiled as a standalone library (without host part)
+**
+***********************************************************************/
+{
+	return Gob_Root;
 }
 
 /***********************************************************************
@@ -880,7 +896,7 @@ REBINT window_scale;
 	{
 
 		REBD32 x, y;
-		u32 w = RL_FIND_WORD(window_ext_words, RXA_WORD(frm, 1));
+		u32 w = RL_Find_Word(window_ext_words, RXA_WORD(frm, 1));
 
 		if (RXA_TYPE(frm, 5) == RXT_INTEGER) {
 			display = RXA_INT32(frm, 5);
@@ -985,7 +1001,7 @@ REBINT window_scale;
 		break;
 
 	case CMD_WINDOW_INIT_WORDS:
-		window_ext_words = RL_MAP_WORDS(RXA_SERIES(frm, 1));
+		window_ext_words = RL_Map_Words(RXA_SERIES(frm, 1));
 		break;
 
 	case CMD_WINDOW_CURSOR:

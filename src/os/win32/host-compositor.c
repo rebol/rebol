@@ -50,6 +50,7 @@
 #endif
 #include "reb-host.h"
 #include "host-lib.h"
+#include "host-compositor.h"
 
 //***** Externs *****
 
@@ -60,23 +61,6 @@
 //***** Locals *****
 
 static REBXYF Zero_Pair = {0, 0};
-
-typedef struct rebol_compositor_ctx {
-	REBYTE    *wind_buffer;
-	REBXYI     wind_size;	
-	REBGOB    *wind_gob;
-	REBGOB    *root_gob;
-	HDC        wind_DC;
-	HBITMAP    back_buffer;
-	HDC        back_DC;
-	HRGN       win_clip;
-	HRGN       new_clip;
-	HRGN       old_clip;	
-	REBXYF     abs_offset;
-	HBRUSH     brush_DC;
-	BITMAPINFO bmpInfo;
-} REBCMP;
-
 
 /***********************************************************************
 **
@@ -195,7 +179,7 @@ typedef struct rebol_compositor_ctx {
 		//make the new buffer actual
 		ctx->back_buffer = new_buffer;
 		ctx->back_DC = new_DC;
-		ctx->wind_buffer = new_bytes;
+		//ctx->wind_buffer = new_bytes;
 
 		//set window clip region
 //		SetRectRgn(ctx->win_clip, 0, 0, w, h);

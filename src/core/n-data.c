@@ -1065,7 +1065,9 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	//gob = (VAL_EVENT_TYPE(val) == EVT_DROP_FILE) ? Gob_Root : VAL_EVENT_SER(val);
 	if (GET_FLAG(VAL_EVENT_FLAGS(val), EVF_HAS_DATA)) {
 		CLR_FLAG(VAL_EVENT_FLAGS(val), EVF_HAS_DATA);
-		gob = Gob_Root;
+#ifdef TO_WINDOWS
+		gob = OS_Get_Gob_Root();
+#endif
 	} else {
 		gob = VAL_EVENT_SER(val);
 	}

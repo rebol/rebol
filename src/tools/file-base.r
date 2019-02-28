@@ -139,6 +139,8 @@ os: [
 	host-stdio.c
 	dev-net.c
 	dev-dns.c
+
+	host-ext-test.c
 ]
 
 os-win32: [
@@ -148,15 +150,16 @@ os-win32: [
 	dev-event.c
 	dev-clipboard.c
 	dev-midi.c
-]
 
-os-win32g: [
-	host-graphics.c
 	host-event.c
 	host-window.c
 	host-compositor.c
-	host-draw.c
-	host-text.c
+]
+
+os-win32g: [
+	;host-graphics.c
+	;host-draw.c
+	;host-text.c
 ]
 
 os-posix: [
