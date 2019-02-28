@@ -49,7 +49,7 @@
 
 #include "reb-host.h"
 #include "host-lib.h"
-#include "host-compositor.h"
+#include "reb-compositor.h"
 
 #define INCLUDE_EXT_DATA
 #include "host-ext-window.h"

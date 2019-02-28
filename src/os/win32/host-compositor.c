@@ -50,7 +50,7 @@
 #endif
 #include "reb-host.h"
 #include "host-lib.h"
-#include "host-compositor.h"
+#include "reb-compositor.h"
 
 //***** Externs *****
 

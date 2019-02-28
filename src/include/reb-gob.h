@@ -35,7 +35,7 @@
 #ifndef REB_GOB_H
 #define REB_GOB_H
 
-#include "host-view.h"
+#include "reb-view.h"
 
 enum GOB_FLAGS {		// GOB attribute and option flags
 	GOBF_TOP = 0,		// Top level (window or output image)
