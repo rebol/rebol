@@ -242,7 +242,7 @@ static Check_Modifiers(REBINT flags)
 					break;
 				} else {
 					//Resize only the window buffer (when win gob size changed by REBOL code or using min/max buttons)
-					if (!OS_Resize_Window(gob, FALSE)){
+					if (!OS_Resize_Window(gob, (wParam == SIZE_RESTORED))){
 						//size has been changed programatically - return only 'resize event
 						Add_Event_XY(gob, EVT_RESIZE, xy, flags);
 						break;
