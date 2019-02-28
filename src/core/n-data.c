@@ -1066,7 +1066,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	if (GET_FLAG(VAL_EVENT_FLAGS(val), EVF_HAS_DATA)) {
 		CLR_FLAG(VAL_EVENT_FLAGS(val), EVF_HAS_DATA);
 #ifdef TO_WINDOWS
-		gob = OS_Get_Gob_Root();
+		gob = OS_GET_GOB_ROOT();
 #endif
 	} else {
 		gob = VAL_EVENT_SER(val);
