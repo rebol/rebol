@@ -818,7 +818,7 @@ is_none:
 	case A_TAKE:
 		len = D_REF(2) ? Get_Num_Arg(D_ARG(3)) : 1;
 		if (index + len > tail) len = tail - index;
-		if (index < 0 || index >= tail) goto is_none;
+		if (index >= tail) goto is_none;
 		if (!D_REF(2)) { // just one value
 			VAL_SET(val, REB_GOB);
 			VAL_GOB(val) = *GOB_SKIP(gob, index);
