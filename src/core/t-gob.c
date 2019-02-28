@@ -723,6 +723,8 @@ is_none:
 		gob = VAL_GOB(val);
 		index = VAL_GOB_INDEX(val);
 		tail = GOB_PANE(gob) ? GOB_TAIL(gob) : 0;
+	} else if (!(IS_DATATYPE(val) && action == A_MAKE)){
+		Trap_Arg(val);
 	}
 
 	// unary actions
