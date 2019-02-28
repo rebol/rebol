@@ -1319,27 +1319,3 @@ input_error:
 	return ret;
 }
 
-
-/***********************************************************************
-**
-*/	REBSER *OS_GOB_To_Image(REBGOB *gob)
-/*
-**		Render a GOB into an image. Returns an image or zero if
-**		it cannot be done.
-**
-***********************************************************************/
-{
-
-#ifndef REB_CORE
-
-#ifndef NO_COMPOSITOR
-	return (REBSER*)Gob_To_Image(gob);
-#else
-	return 0;
-#endif
-
-#else
-	return 0;
-#endif
-
-}

@@ -123,6 +123,34 @@ static REBXYF Zero_Pair = {0, 0};
 
 /***********************************************************************
 **
+*/ REBYTE* OS_Get_Window_Buffer(REBCMP* ctx)
+/*
+**	Provide pointer to window compositing buffer.
+**  Return NULL if buffer not available of call failed.
+**
+**  NOTE: The buffer may be "locked" during this call on some platforms.
+**        Always call Os_Release_Window_Buffer(ctx) to be sure it is released.
+**
+***********************************************************************/
+{
+	return ctx->wind_buffer;
+}
+
+/***********************************************************************
+**
+*/ void OS_Release_Window_Buffer(REBCMP* ctx)
+/*
+**	Release the window compositing buffer acquired by Os_Get_Window_Buffer().
+**
+**  NOTE: this call can be "no-op" on platforms that don't need locking.
+**
+***********************************************************************/
+{
+}
+
+
+/***********************************************************************
+**
 */ REBOOL OS_Resize_Window_Buffer(REBCMP* ctx, REBGOB* winGob)
 /*
 **	Resize the window compositing buffer.
@@ -179,7 +207,7 @@ static REBXYF Zero_Pair = {0, 0};
 		//make the new buffer actual
 		ctx->back_buffer = new_buffer;
 		ctx->back_DC = new_DC;
-		//ctx->wind_buffer = new_bytes;
+		ctx->wind_buffer = new_bytes;
 
 		//set window clip region
 //		SetRectRgn(ctx->win_clip, 0, 0, w, h);
@@ -383,6 +411,36 @@ static REBXYF Zero_Pair = {0, 0};
 	GOB_HO(gob) = GOB_LOG_H(gob);
 }
 
+
+/***********************************************************************
+**
+*/  REBSER* OS_Gob_To_Image(REBGOB *gob)
+/*
+**		Render gob into an image.
+**
+***********************************************************************/
+{
+	REBINT w, h;
+	REBSER *img;
+	REBCMP *cmp;
+
+	w = GOB_LOG_W_INT(gob);
+	h = GOB_LOG_H_INT(gob);
+	img = (REBSER*)RL_MAKE_IMAGE(w, h);
+
+	cmp = OS_Create_Compositor(Gob_Root, gob);
+	OS_Compose_Gob(cmp, gob, gob, TRUE);
+
+	//copy the composed result to image
+	memcpy((REBYTE *)RL_SERIES(img, RXI_SER_DATA), OS_Get_Window_Buffer(cmp), w * h * 4);
+
+	OS_Release_Window_Buffer(cmp);
+	OS_Destroy_Compositor(cmp);
+
+	return img;
+}
+
+
 /***********************************************************************
 **
 */ void OS_Blit_Window(REBCMP* ctx)
@@ -466,31 +524,3 @@ static REBXYF Zero_Pair = {0, 0};
 }
 
 
-#ifdef UNUSED_OLD_COMPOSITOR_CODE
-/***********************************************************************
-**
-*/ REBYTE* rebcmp_get_buffer(REBCMP* ctx)
-/*
-**	Provide pointer to window compositing buffer.
-**  Return NULL if buffer not available of call failed.
-**
-**  NOTE: The buffer may be "locked" during this call on some platforms.
-**        Always call rebcmp_release_buffer() to be sure it is released.
-**
-***********************************************************************/
-{
-	return ctx->wind_buffer;
-}
-
-/***********************************************************************
-**
-*/ void rebcmp_release_buffer(REBCMP* ctx)
-/*
-**	Release the window compositing buffer acquired by rebcmp_get_buffer().
-**
-**  NOTE: this call can be "no-op" on platforms that don't need locking.
-**
-***********************************************************************/
-{
-}
-#endif

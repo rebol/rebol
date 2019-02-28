@@ -42,7 +42,7 @@ typedef struct rebol_compositor_ctx {
 	REBGOB    *root_gob;
 	REBGOB    *wind_gob;
 	REBXYI     wind_size;
-	//REBYTE    *wind_buffer; // was used for AGG
+	REBYTE    *wind_buffer; // can be used for conversion to image; was also used with AGG
 	#ifdef TO_WINDOWS
 		HDC        wind_DC;
 		HBITMAP    back_buffer;
