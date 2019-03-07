@@ -85,8 +85,11 @@ view: func [
 				[color: opts/color]
 			] block? opts/draw
 		]
-		; Set up default handler, if user did not provide one:
-		unless opts/handler [
+		; Set up default handler...
+		if all [
+			empty? system/view/event-port/locals/handlers ; ...if there is no other handler
+			not opts/handler                              ; ...and user did not provide one
+		][
 			handle-events [
 				name: 'view-default
 				priority: 50
@@ -185,6 +188,14 @@ handle-events: func [
 ][
 	handler: make base-handler handler
 	sys-hand: system/view/event-port/locals/handlers
+	; First check if there is not any handler with such a name...
+	forall sys-hand [
+		if handler/name = sys-hand/1/name [
+			; ...if so, replace it with the new one
+			change sys-hand handler
+			return handler
+		]
+	]
 	; Insert by priority:
 	unless foreach [here: hand] sys-hand [
 		if handler/priority > hand/priority [
