@@ -59,6 +59,9 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
+extern HINSTANCE App_Instance;		// Set by winmain function
+extern HWND      Focused_Window;
+
 //***** Constants *****
 
 // Virtual key conversion table, sorted by first column.
@@ -128,6 +131,28 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 	RL_Event(&evt);	// returns 0 if queue is full
 }
 
+static void Add_Event_Widget(HWND widget, REBINT id, REBINT flags)
+{
+	REBEVT evt;
+	REBGOB *gob;
+#ifdef __LLP64__
+	gob = (REBGOB *)GetWindowLongPtr(widget, GWLP_USERDATA);
+#else
+	gob = (REBGOB *)GetWindowLong(widget, GWL_USERDATA);
+#endif
+	// fields are throwing CHANGE event during its creation
+	// when there is no GWLP_USERDATA yet available!
+	if (!gob) return; // ... so ignore it in such a case.
+
+	evt.type = id;
+	evt.flags = 0; //(u8)(flags | (1 << EVF_HAS_XY));
+	evt.model = EVM_GUI;
+	evt.data = 0;
+	evt.ser = (void*)gob;
+
+	RL_Event(&evt);	// returns 0 if queue is full
+}
+
 static void Add_File_Events(REBGOB *gob, REBINT flags, HDROP drop)
 {
 	REBEVT evt;
@@ -159,7 +184,7 @@ static void Add_File_Events(REBGOB *gob, REBINT flags, HDROP drop)
 	DragFinish(drop);
 }
 
-static Check_Modifiers(REBINT flags)
+static REBINT Check_Modifiers(REBINT flags)
 {
 	if (GetKeyState(VK_SHIFT) < 0) flags |= (1<<EVF_SHIFT);
 	if (GetKeyState(VK_CONTROL) < 0) flags |= (1<<EVF_CONTROL);
@@ -169,13 +194,14 @@ static Check_Modifiers(REBINT flags)
 
 /***********************************************************************
 **
-*/	LRESULT CALLBACK REBOL_Window_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM xy)
+*/	LRESULT CALLBACK REBOL_Window_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 /*
 **		A Window_Proc() message handler. Simply translate Windows
 **		messages into a generic form that REBOL processes.
 **
 ***********************************************************************/
 {
+	LPARAM xy = lParam;
 	REBGOB *gob;
 	REBCNT flags = 0;
 	REBCNT i;
@@ -185,12 +211,15 @@ static Check_Modifiers(REBINT flags)
 	// resizing is a modal loop and prevents it being a problem.
 	static LPARAM last_xy = 0;
 	static REBINT mode = 0;
+	SCROLLINFO si;
 
 #ifdef __LLP64__
 	gob = (REBGOB *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 #else
 	gob = (REBGOB *)GetWindowLong(hwnd, GWL_USERDATA);
 #endif
+
+	//printf("REBOL_Window_Proc - msg: %0X wParam: %0X lParam: %0X gob: %0Xh\n", msg, wParam, lParam, gob);
 
 	// Not a REBOL window (or early creation):
 	if (!gob || !IS_WINDOW(gob)) {
@@ -204,6 +233,7 @@ static Check_Modifiers(REBINT flags)
 			case WM_DESTROY:
 				PostQuitMessage(0);
 				break;
+			//case WM_GETMINMAXINFO: printf("WM_GETMINMAXINFO\n");
 			default:
 				// Default processing that we do not care about:
 				return DefWindowProc(hwnd, msg, wParam, xy);
@@ -216,13 +246,13 @@ static Check_Modifiers(REBINT flags)
 	{
 		case WM_PAINT:
 			Paint_Window(hwnd);
-			break;
+			return FALSE;
 
 		case WM_MOUSEMOVE:
 			Add_Event_XY(gob, EVT_MOVE, xy, flags);
 			//if (!(WIN_FLAGS(wp) & WINDOW_TRACK_LEAVE))
 			//	Track_Mouse_Leave(wp);
-			break;
+			return FALSE;
 
 		case WM_SIZE:
 //			RL_Print("SIZE %d\n", mode);
@@ -255,7 +285,7 @@ static Check_Modifiers(REBINT flags)
 				Add_Event_XY(gob, EVT_RESIZE, xy, flags);
 				if (i) Add_Event_XY(gob, i, xy, flags);
 			}
-			break;
+			return FALSE;
 
 		case WM_MOVE:
 			// Minimize and maximize call this w/o mode set.
@@ -264,7 +294,17 @@ static Check_Modifiers(REBINT flags)
 			last_xy = xy;
 			if (mode) mode = EVT_OFFSET;
 			else Add_Event_XY(gob, EVT_OFFSET, xy, flags);
-			break;
+			return FALSE;
+
+		case WM_HSCROLL:
+		case WM_VSCROLL:
+			if (lParam == 0) {
+				// standard scroll bar
+				Add_Event_Widget((HWND)wParam, EVT_SCROLL, flags);
+			} else {
+				Add_Event_Widget((HWND)lParam, EVT_CHANGE, flags);
+			}
+			return 0;
 
 		case WM_ENTERSIZEMOVE:
 			mode = -1; // possible to ENTER and EXIT w/o SIZE change
@@ -301,7 +341,8 @@ static Check_Modifiers(REBINT flags)
 			if (LOWORD(xy) == 1) {
 				SetCursor(Cursor);
 				return TRUE;
-			} else goto default_case;
+			}
+			break;
 
 		case WM_LBUTTONDBLCLK:
 			SET_FLAG(flags, EVF_DOUBLE);
@@ -375,23 +416,78 @@ static Check_Modifiers(REBINT flags)
 			Add_Event_Key(gob, EVT_KEY, i, flags);
 			break;
 
+		case WM_COMMAND:
+			//printf("\nWM_COMMAND wParam: %04X %04X %u  lParam: %08X \n", LOWORD(wParam), HIWORD(wParam), HIWORD(wParam),  lParam);
+			switch (HIWORD(wParam))
+			{
+			case EN_CHANGE:
+				Add_Event_Widget((HWND)lParam, EVT_CHANGE, flags);
+				break;
+			//case EN_UPDATE:
+			//		GetScrollInfo((HWND)lParam, SB_HORZ, &si);
+			//		//ShowScrollBar((HWND)lParam, SB_HORZ, si.nPos > 0);
+			//		//printf("EN h: %d\n", si.nPos);
+			//	break;
+			case BN_CLICKED:
+				Add_Event_Widget((HWND)lParam, EVT_CLICK, flags);
+				break;
+			case EN_SETFOCUS:
+				Add_Event_Widget((HWND)lParam, EVT_FOCUS, flags);
+				break;
+			case EN_KILLFOCUS:
+				Add_Event_Widget((HWND)lParam, EVT_UNFOCUS, flags);
+				break;
+			}
+			break;
+		
 		case WM_DROPFILES:
 			Add_File_Events(gob, flags, (HDROP)wParam);
+			return 0;
+
+		case WM_CTLCOLORSTATIC:
+			//SetTextColor((HDC)wParam, RGB(0, 0, 0));
+			//SetBkMode((HDC)wParam, COLOR_BACKGROUND);
+			//return (LRESULT)GetStockObject(COLOR_WINDOW);
+			break;
+
+		case WM_CTLCOLORBTN:
+			//printf("\nWM_CTLCOLORBTN wParam: %08X lParam: %08X \n", wParam, lParam);
+			//SetBkMode((HDC)wParam, COLOR_WINDOW);
+			//SetBkColor((HDC)lParam, RGB(0, 0, 0));
+			//return (LRESULT)GetStockObject(COLOR_WINDOW);
+			break;
+
+		case WM_NOTIFY:
+			//printf("\nWM_NOTIFY wParam: %04X %04X %u  lParam: %08X \n", LOWORD(wParam), HIWORD(wParam), HIWORD(wParam), lParam);
+			switch (((LPNMHDR)lParam)->code) {
+			case DTN_DATETIMECHANGE:
+				Add_Event_Widget(((LPNMHDR)lParam)->hwndFrom, EVT_CHANGE, flags);
+				return 0;
+			}
+			break;
+
+		case WM_GETMINMAXINFO:
+			printf("WM_GETMINMAXINFO\n");
+			break;
+
+		case WM_SETFOCUS:
+			puts("WM_SETFOCUS");
+			Focused_Window = hwnd;
 			break;
 
 		case WM_CLOSE:
 			Add_Event_XY(gob, EVT_CLOSE, xy, flags);
 			OS_Close_Window(gob);	// Needs to be removed - should be done by REBOL event handling
 //			DestroyWindow(hwnd);// This is done in OS_Close_Window()
-			break;
+			return 0;
 
 		case WM_DESTROY:
 			PostQuitMessage(0);
+			return 0;
+		case WM_NCDESTROY:
+			puts("WM_NCDESTROY");
 			break;
 
-		default:
-		default_case:
-			return DefWindowProc(hwnd, msg, wParam, xy);
 	}
-	return 0;
+	return DefWindowProc(hwnd, msg, wParam, xy);
 }

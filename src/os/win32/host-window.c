@@ -44,12 +44,28 @@
 #define WINVER 0x0501        // this is needed to be able use WINDOWINFO struct etc.
 #endif
 
+/* Forces the use of Visual Styles if compiling with VisualStudio */
+#ifdef _MSC_VER
+#pragma comment(linker,"\"/manifestdependency:type='win32' \
+	name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+	processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#endif
+
+
 #include <windows.h>
+#include <commctrl.h>
+#include <uxtheme.h> // used for setting visual defaults
+#include <vssym32.h> // --//--
 #include <math.h>
+
+#include <stdio.h> // used for debuging traces
+
+#undef IS_ERROR // Windows is using this macro name too, we don't need their version
 
 #include "reb-host.h"
 #include "host-lib.h"
 #include "reb-compositor.h"
+#include "reb-types.h"
 
 #define INCLUDE_EXT_DATA
 #include "host-ext-window.h"
@@ -85,15 +101,17 @@ typedef HRESULT(WINAPI * GETDPIFORMONITOR_T)(HMONITOR, MONITOR_DPI_TYPE, UINT*, 
 extern HINSTANCE App_Instance;		// Set by winmain function
 extern void Host_Crash(char *reason);
 extern LRESULT CALLBACK REBOL_Window_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-extern REBOOL As_OS_Str(REBSER *series, REBCHR **string);
 
 //***** Locals *****//
 
 static REBOOL Registered = FALSE;		// Window has been registered
-static const REBCHR *Window_Class_Name = TXT("REBOLWindow");
+static const REBCHR *Class_Name_Window   = TXT("RebWindow");
+static const REBCHR *Class_Name_Button   = TXT("RebButton");
+static const REBCHR *Class_Name_ComboBox = TXT("RebCombo");
 static struct gob_window *Gob_Windows;
 static REBOOL DPI_Aware = FALSE;
 static REBOOL Custom_Cursor = FALSE;
+static HFONT Default_Font = NULL;
 
 static u32* window_ext_words;
 
@@ -108,6 +126,9 @@ REBXYF log_size = { 1.0, 1.0 };	 // logical pixel size measured in physical pixe
 REBXYF phys_size = { 1.0, 1.0 }; // physical pixel size measured in logical pixels(reciprocal value of log_size)
 REBINT window_scale;
 
+//***** Forwards *****//
+
+static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 
 /***********************************************************************
 **
@@ -246,6 +267,30 @@ REBINT window_scale;
 	}
 }
 
+
+/***********************************************************************
+**
+*/  static void Make_Subclass(const REBCHR *new_class, const REBCHR *old_class, WNDPROC *proc, REBOOL system)
+/*
+**      Register super class
+**
+***********************************************************************/
+{
+	HINSTANCE hInstance = system ? NULL : App_Instance;
+	WNDCLASSEX wcex;
+	ZeroMemory(&wcex, sizeof(wcex));
+
+	if(!GetClassInfoEx(hInstance, old_class, &wcex)) {
+		puts("Failed to get old class info!");
+	}
+	wcex.cbSize = sizeof(WNDCLASSEX);
+	wcex.lpszClassName = new_class;
+	wcex.hInstance = App_Instance;
+	if(!RegisterClassEx(&wcex))
+		Host_Crash("Cannot register sub-class");
+}
+
+
 /***********************************************************************
 **
 */  static void Register_Window()
@@ -256,10 +301,11 @@ REBINT window_scale;
 **
 ***********************************************************************/
 {
+	puts("Register_Window");
 	WNDCLASSEX wc;
 
 	wc.cbSize        = sizeof(wc);
-	wc.lpszClassName = Window_Class_Name;
+	wc.lpszClassName = Class_Name_Window;
 	wc.hInstance     = App_Instance;
 	wc.lpfnWndProc   = REBOL_Window_Proc;
 
@@ -281,10 +327,12 @@ REBINT window_scale;
 	);
 
 	// If not already registered:
-	//if (!GetClassInfo(App_Instance, Window_Class_Name, &wclass))
+	//if (!GetClassInfo(App_Instance, Class_Name_Window, &wclass))
 	//  RegisterClass(&wclass);
 
 	if (!RegisterClassEx(&wc)) Host_Crash("Cannot register window");
+
+	Make_Subclass(Class_Name_Button, TEXT("BUTTON"), NULL, TRUE);
 
 	Registered = TRUE;
 }
@@ -384,7 +432,7 @@ REBINT window_scale;
 	}
 
 	if (IS_GOB_STRING(gob))
-        osString = As_OS_Str(GOB_CONTENT(gob), (REBCHR**)&title);
+		RL_Get_String(GOB_CONTENT(gob), 0, (void**)&title, TRUE);
     else
         title = TXT("REBOL Window");
 
@@ -398,18 +446,43 @@ REBINT window_scale;
 
 	// Create the window:
 	window = CreateWindowEx(
-		WS_EX_WINDOWEDGE,
-		Window_Class_Name,
+		WS_EX_WINDOWEDGE, 
+		Class_Name_Window,
 		title,
 		options,
 		x, y, w, h,
 		parent,
 		NULL, App_Instance, NULL
 	);
+	if (!window) {
+		printf("error: %d %d %d %d  %d\n",x,y,w,h, GetLastError());
+		Host_Crash("CreateWindow failed");
+	}
 
-    //don't let the string leak!
-    if (osString) OS_Free(title);
-	if (!window) Host_Crash("CreateWindow failed");
+	if (!Default_Font) {
+		LOGFONTW font;
+		HTHEME *hTheme = NULL;
+		HRESULT res = -1;
+		if (IsThemeActive()) {
+			hTheme = OpenThemeData(window, L"Window");
+			if (hTheme) {
+				res = GetThemeSysFont(hTheme, TMT_MSGBOXFONT, &font);
+			}
+		} else {
+			NONCLIENTMETRICS metrics;
+			ZeroMemory(&metrics, sizeof(metrics));
+			metrics.cbSize = sizeof(metrics);
+			res = SystemParametersInfo(SPI_GETNONCLIENTMETRICS, metrics.cbSize, &metrics, 0);
+			if (res) font = metrics.lfMessageFont;
+		}
+		if ( res >= 0 ) {
+			Default_Font = CreateFontIndirect(&font);
+			printf("font: '%ls'  %08Xh\n", font.lfFaceName, Default_Font);
+		}
+
+		if (hTheme) CloseThemeData(hTheme);
+		if (!Default_Font) Default_Font = GetStockObject(DEFAULT_GUI_FONT);
+	}
 
 	// Enable drag and drop
 	if (GET_GOB_FLAG(gob, GOBF_DROPABLE))
@@ -432,9 +505,9 @@ REBINT window_scale;
 	if (!GET_GOB_FLAG(gob, GOBF_HIDDEN)) {
 		if (GET_GOB_FLAG(gob, GOBF_ON_TOP)) SetWindowPos(window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 		ShowWindow(window, SW_SHOWNORMAL);
+		SendMessage(window, WM_PAINT, 0, 0);
 		SetForegroundWindow(window);
 	}
-
 	return window;
 }
 
@@ -448,7 +521,7 @@ REBINT window_scale;
 	AdjustWindowRect(&rect, options, FALSE);
 
 	// Create window (use parent if specified):
-	GOB_WIN(gob) = CreateWindow(Window_Class_Name, title, options,
+	GOB_WIN(gob) = CreateWindow(Class_Name_Window, title, options,
 		rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
 		(wparent ? GOB_WIN(wparent) : NULL), NULL, App_Instance, NULL);
 
@@ -547,10 +620,8 @@ REBINT window_scale;
 //		SetWindowPos(window, 0, GOB_X(gob), GOB_Y(gob), GOB_W(gob), GOB_H(gob), opts | SWP_NOZORDER);
 
 	if (IS_GOB_STRING(gob)){
-        osString = As_OS_Str(GOB_CONTENT(gob), (REBCHR**)&title);
+		RL_Get_String(GOB_CONTENT(gob), 0, (void**)&title, TRUE);
 		SetWindowText(window, title);
-		//don't let the string leak!
-        if (osString) OS_Free(title);
     }
 
 	/*
@@ -679,6 +750,243 @@ REBINT window_scale;
 	// Otherwise, composite and referesh the gob or all gobs:
 	OS_Draw_Window(0, gob);  // 0 = window parent of gob
 	return 0;
+}
+
+
+/***********************************************************************
+**
+*/  void* OS_Init_Gob_Widget(REBCMP *ctx, REBGOB *gob)
+/*
+**      Creates native GUI widget
+**
+***********************************************************************/
+{
+	puts("OS_Init_Gob_Widget");
+	HWND hWnd;
+	REBCHR *class;
+	REBCHR *text = NULL;
+	REBI64 value_i64 = 0;
+	REBDEC value_dec = 0.0;
+	REBINT range;
+	REBOOL vertical;
+	REBFLG  style = WS_CHILD | WS_VISIBLE;  // common flags
+	REBFLG xstyle = 0;
+	REBVAL *hndl  = GOB_WIDGET_HANDLE(gob);
+	REBVAL *type  = GOB_WIDGET_TYPE(gob);
+	REBVAL *spec  = GOB_WIDGET_SPEC(gob);
+
+	if (!IS_HANDLE(hndl) || !IS_BLOCK(spec)) return NULL;
+	REBVAL *val   = BLK_HEAD(VAL_SERIES(spec));
+
+	if (IS_WORD(val) || IS_LIT_WORD(val)) { // ...where the first value is the type of the widget
+		SET_INTEGER(type, (REBI64)RL_Find_Word(window_ext_words, val->data.word.sym));
+	} else {
+		return NULL;
+	}
+
+	while (!IS_END(++val)) {
+		if (IS_STRING(val)) {
+			RL_Get_String(VAL_SERIES(val), 0, (void**)&text, TRUE);
+		} else if (IS_INTEGER(val)) {
+			value_i64 = VAL_INT64(val);
+		} else if (IS_DECIMAL(val)) {
+			value_dec = VAL_DECIMAL(val);
+		}
+	}
+
+	switch (VAL_INT64(type)) {
+		case W_WINDOW_BUTTON:
+			class = (REBCHR*)Class_Name_Button;
+			style |= WS_TABSTOP | BS_PUSHBUTTON; // | BS_DEFPUSHBUTTON;
+			break;
+		case W_WINDOW_CHECK:
+			class = (REBCHR*)Class_Name_Button;
+			style |= WS_TABSTOP | BS_AUTOCHECKBOX;
+			break;
+		case W_WINDOW_RADIO:
+			class = (REBCHR*)Class_Name_Button;
+			style |= WS_TABSTOP | BS_AUTORADIOBUTTON;
+			break;
+		case W_WINDOW_FIELD:
+			class = TXT("edit");
+			style  |= ES_LEFT | ES_AUTOHSCROLL | ES_NOHIDESEL;
+			xstyle |= WS_EX_CLIENTEDGE;
+			break;
+		case W_WINDOW_AREA:
+			class = TXT("edit");
+			style  |= ES_MULTILINE | ES_AUTOHSCROLL | ES_AUTOVSCROLL
+				   | WS_HSCROLL | WS_VSCROLL | ES_NOHIDESEL;
+			xstyle |= WS_EX_CLIENTEDGE;
+			break;
+		case W_WINDOW_TEXT:
+			class = TXT("STATIC");
+			style |= SS_SIMPLE;
+			break;
+		case W_WINDOW_TEXT_LIST:
+			class = TXT("ListBox");
+			style  |= LBS_NOTIFY | WS_HSCROLL | WS_VSCROLL | LBS_NOINTEGRALHEIGHT;
+			xstyle |= WS_EX_CLIENTEDGE;
+			break;
+		case W_WINDOW_PROGRESS:
+			class = TXT("msctls_progress32");
+			if (gob->size.y > gob->size.x) style |= PBS_VERTICAL;
+			break;
+		case W_WINDOW_SLIDER:
+			class = TXT("msctls_trackbar32");
+			vertical = gob->size.y > gob->size.x;
+			if (vertical) style |= TBS_VERT | TBS_DOWNISLEFT;
+			break;
+		case W_WINDOW_DATE_TIME:
+			class = TXT("SysDateTimePick32");
+			vertical = gob->size.y > gob->size.x;
+			style |= WS_BORDER; //| DTS_SHOWNONE;
+			break;
+		case W_WINDOW_GROUP_BOX:
+			class = TXT("BUTTON");
+			style |= BS_GROUPBOX;
+			break;
+		default:
+			puts("unknown widget name");
+			return NULL;
+	}
+	
+	hWnd = CreateWindowEx(
+		xstyle,
+		class,
+		text,
+		style,
+		gob->offset.x, gob->offset.y,       // position
+		gob->size.x, gob->size.y,           // size
+		WindowFromDC(ctx->wind_DC),         // parent
+		(HMENU)0,
+		App_Instance, NULL);
+
+	VAL_HANDLE(hndl) = (ANYFUNC)hWnd;
+	SendMessage(hWnd, WM_SETFONT, (WPARAM)Default_Font, 0);
+	SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)gob);
+
+	printf("======== NEW widget: %08Xh for gob: %08Xh\n", hWnd, gob);
+
+	switch (VAL_INT64(type)) {
+	case W_WINDOW_BUTTON:
+
+		//SendMessage(hWnd, BCM_FIRST + 0x0009, 0, text);
+		//Button_SetNote(hWnd, text);
+		break;
+	case W_WINDOW_PROGRESS:
+		SendMessage(hWnd, PBM_SETPOS, value_i64, 0);
+		break;
+	case W_WINDOW_SLIDER:
+		range = ROUND_TO_INT(vertical ? gob->size.y : gob->size.x);
+		SendMessage(hWnd, TBM_SETRANGE, 0, (LPARAM)MAKELONG(0, range));
+		SendMessage(hWnd, TBM_SETPAGESIZE, 0, (LPARAM)4);
+		//SendMessage(hWnd, TBM_SETSEL, 0, (LPARAM)MAKELONG(0, range));
+		SendMessage(hWnd, TBM_SETPOS, 1, (LPARAM)(value_dec * (REBDEC)range));
+		RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE);
+		break;
+	}
+
+	return hWnd;
+}
+
+
+/***********************************************************************
+**
+*/	REBOOL OS_Get_Widget_Data(REBGOB *gob, REBVAL *ret)
+/*
+**	Returns data according the widget type
+**
+***********************************************************************/
+{
+	REBVAL *hndl = GOB_WIDGET_HANDLE(gob);
+	REBVAL *type = GOB_WIDGET_TYPE(gob);
+	REBVAL *data;
+
+	HWND hWnd = (HWND)VAL_HANDLE(hndl);
+	LRESULT res;
+	REBDEC range;
+	REBCNT count;
+	SYSTEMTIME dat;
+
+	//printf("OS_Get_Widget_Data type: %d\n", VAL_INT64(type));
+
+	switch (VAL_INT64(type)) {
+
+	case W_WINDOW_PROGRESS:
+		res = SendMessage(hWnd, PBM_GETPOS, 0, 0);
+		SET_INTEGER(ret, (REBU64)res);
+		return TRUE;
+
+	case W_WINDOW_SLIDER:
+		range = (REBDEC)SendMessage(hWnd, TBM_GETRANGEMAX, 0, 0);
+		if (range > 0) {
+			res = SendMessage(hWnd, TBM_GETPOS, 0, 0);
+			range = (REBDEC)res / range;
+		}
+		if (gob->size.y > gob->size.x) range = 1 - range;
+		SET_DECIMAL(ret, range);
+		return TRUE;
+
+	case W_WINDOW_FIELD:
+	case W_WINDOW_AREA:
+		data = GOB_WIDGET_DATA(gob);
+		count = Get_Widget_Text(hWnd, data);
+		SET_STRING(ret, VAL_SERIES(data));
+		VAL_TAIL(ret) = count;
+		return TRUE;
+
+	case W_WINDOW_DATE_TIME:
+		data = GOB_WIDGET_DATA(gob);
+		res = SendMessage(hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM)&dat);
+		if (GDT_VALID == res) {
+			VAL_SET(data, REB_DATE);
+			VAL_YEAR(data) = dat.wYear;
+			VAL_MONTH(data) = dat.wMonth;
+			VAL_DAY(data) = dat.wDay;
+			VAL_ZONE(data) = 0;
+			VAL_TIME(data) = NO_TIME;
+			//VAL_TIME(data) = TIME_SEC(dat.wHour * 3600 + dat.wMinute * 60 + dat.wSecond) + 1000000 * dat.wMilliseconds;
+			*ret = *data;
+			return TRUE;
+		}
+		break;
+	}
+	//@@ throw an error or return NONE when unhandled type?
+	SET_NONE(ret);
+	return TRUE;
+	//return FALSE;
+}
+
+
+/***********************************************************************
+**
+*/	REBOOL OS_Set_Widget_Data(REBGOB *gob, REBVAL *data)
+/*
+**	Returns data according the widget type
+**
+***********************************************************************/
+{
+	REBVAL *hndl = GOB_WIDGET_HANDLE(gob);
+	REBVAL *type = GOB_WIDGET_TYPE(gob);
+	
+	HWND hWnd = (HWND)VAL_HANDLE(hndl);
+
+	switch (VAL_INT64(type)) {
+		case W_WINDOW_PROGRESS:
+			if (IS_INTEGER(data)) {
+				SendMessage(hWnd, PBM_SETPOS, VAL_INT32(data), 0);
+				return TRUE;
+			}
+			break;
+		case W_WINDOW_CHECK:
+		case W_WINDOW_RADIO:
+			if (IS_LOGIC(data)) {
+				SendMessage(hWnd, BM_SETCHECK, VAL_LOGIC(data), 0);
+				return TRUE;
+			}
+			break;
+	}
+	return FALSE;
 }
 
 
@@ -1056,7 +1364,40 @@ REBINT window_scale;
 	CLEAR(Gob_Windows, sizeof(struct gob_window) * (MAX_WINDOWS + 1));
 	Cursor = LoadCursor(NULL, IDC_ARROW);
 	Init_DPI_Awareness();
+
+
+	INITCOMMONCONTROLSEX InitCtrlEx;
+	InitCtrlEx.dwSize = sizeof(INITCOMMONCONTROLSEX);
+	InitCtrlEx.dwICC = ICC_STANDARD_CLASSES
+					 | ICC_LINK_CLASS
+					 | ICC_UPDOWN_CLASS
+					 | ICC_LISTVIEW_CLASSES
+					 | ICC_PROGRESS_CLASS
+					 | ICC_BAR_CLASSES
+					 | ICC_DATE_CLASSES;
+	if (!InitCommonControlsEx(&InitCtrlEx)) {
+		printf("Could not initialize common controls! (%u)\n", GetLastError());
+	}
 }
+
+
+/**************** helpers ********************/
+
+static REBCNT Get_Widget_Text(HWND widget, REBVAL *text)
+{
+	REBCNT count = SendMessage(widget, WM_GETTEXTLENGTH, -1, 0);
+	
+	if (!IS_STRING(text)) {
+		SET_STRING(text, RL_Make_String(count, TRUE));
+	}
+	else if (count > VAL_REST(text)) {
+		RL_Expand_Series(VAL_SERIES(text), VAL_TAIL(text), count - VAL_REST(text));
+	}
+	SendMessage(widget, WM_GETTEXT, count + 1, (LPARAM)VAL_BIN(text));
+	return count;
+}
+
+
 
 #ifdef NOT_USED_BUT_MAYBE_LATER
 

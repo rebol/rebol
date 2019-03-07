@@ -69,6 +69,7 @@ REBARGS Main_Args;
 #ifdef TO_WINDOWS
 #define MAX_TITLE_LENGTH  1024
 HINSTANCE App_Instance = 0;
+HWND      Focused_Window = 0;
 WCHAR     App_Title[MAX_TITLE_LENGTH]; //will be filled later from the resources file
 #endif
 

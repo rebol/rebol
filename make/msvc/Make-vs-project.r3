@@ -20,7 +20,11 @@ VS: context [
 
 	SourcePath:   ""
 
-	AdditionalDependencies: "wsock32.lib;comdlg32.lib;"
+	AdditionalDependencies: rejoin [
+		"wsock32.lib;comdlg32.lib;"
+		"winmm.lib;"                           ;- for MIDI
+		"Gdi32.lib;Comctl32.lib;UxTheme.lib;"  ;- for View
+	]
 
 	Sources: []
 
@@ -448,8 +452,20 @@ vs/Sources: compose/only [
 ]
 vs/IncludePath-x86:
 vs/IncludePath-x64: "..\..\..\src\include;"
-vs/PreprocessorDefinitions-x86: {TO_WIN32;REB_CORE;REB_EXE;ENDIAN_LITTLE;_FILE_OFFSET_BITS=64;_CRT_SECURE_NO_WARNINGS;_UNICODE;UNICODE;USE_LZMA;}
-vs/PreprocessorDefinitions-x64: {UNICODE;_UNICODE;ENDIAN_LITTLE;_CRT_SECURE_NO_WARNINGS;USE_MIDI_DEVICE;USE_PNG_CODEC;USE_JPG_CODEC;USE_LZMA;REB_EXE;TEST_EXTENSIONS;_DEBUG;NO_COMPOSITOR;TO_WIN32_X64;__LLP64__;_FILE_OFFSET_BITS=64;}
+
+common-definitions:  {REB_EXE;ENDIAN_LITTLE;_CRT_SECURE_NO_WARNINGS;_UNICODE;UNICODE;_FILE_OFFSET_BITS=64;}
+optional-components: {USE_MIDI_DEVICE;USE_PNG_CODEC;USE_JPG_CODEC;USE_LZMA;} ;TEST_EXTENSIONS;
+vs/PreprocessorDefinitions-x86: rejoin [
+	common-definitions
+	{TO_WIN32;}
+	optional-components
+]
+vs/PreprocessorDefinitions-x64: rejoin [
+	common-definitions
+	{TO_WIN32_X64;__LLP64__;}
+	optional-components
+]
+
 vs/Prebuild-x86: {
 set REBOL=..\..\prebuild\r3-make-win.exe
 set T=../../../src/tools

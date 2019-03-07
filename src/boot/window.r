@@ -19,7 +19,20 @@ REBOL [
 ]
 
 words: [
-	;gui-metric
+	;- widgets   
+	button
+	check
+	radio
+	field
+	area
+	text
+	text-list
+	progress
+	slider
+	date-time
+	group-box
+
+	;- gui-metric
 	border-fixed
 	border-size
 	screen-size

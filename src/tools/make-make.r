@@ -87,7 +87,7 @@ USE_FLAGS=
 
 # Flags for core and for host:
 RFLAGS= -c -D$(TO_OS) -DREB_API  $(RAPI_FLAGS) $(USE_FLAGS) $I
-HFLAGS= -c -D$(TO_OS) -DREB_CORE $(HOST_FLAGS) $(USE_FLAGS) $I
+HFLAGS= -c -D$(TO_OS) $(HOST_FLAGS) $(USE_FLAGS) $I
 CLIB=
 
 # REBOL is needed to build various include files:

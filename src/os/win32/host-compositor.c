@@ -111,6 +111,7 @@ static REBXYF Zero_Pair = {0, 0};
 ***********************************************************************/
 {
 	//do cleanup
+	puts("OS_Destroy_Compositor");
 	ReleaseDC(GOB_HWIN(ctx->wind_gob), ctx->wind_DC);
 	DeleteDC(ctx->back_DC);
 	DeleteObject(ctx->back_buffer);
@@ -184,7 +185,7 @@ static REBXYF Zero_Pair = {0, 0};
 		DeleteObject((HBITMAP)SelectObject(new_DC, new_buffer));
 
 		//fill the background color
-		SetDCBrushColor(new_DC, RGB(200,200,200));		
+		SetDCBrushColor(new_DC, RGB(240,240,240));		
 		FillRect(new_DC,&lprc, ctx->brush_DC);
 		
 		if (ctx->back_DC != 0) {
@@ -246,6 +247,12 @@ static REBXYF Zero_Pair = {0, 0};
 		GOB_WO(gob) = GOB_LOG_W(gob);
 		GOB_HO(gob) = GOB_LOG_H(gob);
 
+#ifdef HAS_WIDGET_GOB
+		if (GOB_TYPE(gob) == GOBT_WIDGET) {
+			OS_Init_Gob_Widget(ctx, gob);
+		}
+#endif
+
 		CLR_GOB_STATE(gob, GOBS_NEW);
 	}
 
@@ -277,7 +284,13 @@ static REBXYF Zero_Pair = {0, 0};
 				//RL_Print("draw image gob\n");
 				OS_Blit_Gob_Image(gob, ctx, offset, top_left, bottom_right);
 				break;
-			
+	
+#ifdef HAS_WIDGET_GOB
+			case GOBT_WIDGET:
+				//RL_Print("draw widget\n");
+				break;
+#endif
+
 			case GOBT_DRAW:
 				//not implemented
 				break;

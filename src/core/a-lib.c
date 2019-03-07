@@ -545,6 +545,23 @@ RL_API void *RL_Make_Block(u32 size)
 	return Make_Block(size);
 }
 
+RL_API void RL_Expand_Series(REBSER *series, REBCNT index, REBCNT delta)
+/*
+**	Expand a series at a particular index point by the number
+**	number of units specified by delta.
+**
+**	Returns:
+**		
+**	Arguments:
+**		series - series to expand
+**		index - position where to expand
+**		delta - number of UNITS to expand from TAIL (keeping terminator)
+*/
+{
+	Expand_Series(series, index, delta);
+}
+
+
 RL_API void *RL_Make_String(u32 size, int unicode)
 /*
 **	Allocate a new string or binary series.
@@ -630,7 +647,7 @@ RL_API void RL_Protect_GC(REBSER *series, u32 flags)
 	(flags == 1) ? SERIES_SET_FLAG(series, SER_KEEP) : SERIES_CLR_FLAG(series, SER_KEEP);
 }
 
-RL_API int RL_Get_String(REBSER *series, u32 index, void **str)
+RL_API int RL_Get_String(REBSER *series, u32 index, void **str, REBOOL needs_wide)
 /*
 **	Obtain a pointer into a string (bytes or unicode).
 **
@@ -641,6 +658,7 @@ RL_API int RL_Get_String(REBSER *series, u32 index, void **str)
 **		series - string series pointer
 **		index - index from beginning (zero-based)
 **		str   - pointer to first character
+**		needs_wide - unicode string is required, converts if needed
 **	Notes:
 **		If the len is less than zero, then the string is optimized to
 **		codepoints (chars) 255 or less for ASCII and LATIN-1 charsets.
@@ -651,13 +669,14 @@ RL_API int RL_Get_String(REBSER *series, u32 index, void **str)
 	int len = (index >= series->tail) ? 0 : series->tail - index;
 
 	if (BYTE_SIZE(series)) {
-		*str = BIN_SKIP(series, index);
-		len = -len;
+		if (needs_wide) {
+			Widen_String(series);
+		} else {
+			*str = BIN_SKIP(series, index);
+			return -len;
+		}
 	}
-	else {
-		*str = UNI_SKIP(series, index);
-	}
-
+	*str = UNI_SKIP(series, index);
 	return len;
 }
 

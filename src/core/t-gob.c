@@ -324,6 +324,9 @@ const REBCNT Gob_Flag_Words[] = {
 /*
 ***********************************************************************/
 {
+	REBVAL *spec;
+	REBVAL *hndl;
+
 	switch (VAL_WORD_CANON(word)) {
 	case SYM_OFFSET:
 		return Set_Pair(&(gob->offset), val);
@@ -343,6 +346,30 @@ const REBCNT Gob_Flag_Words[] = {
 		else if (IS_NONE(val)) SET_GOB_TYPE(gob, GOBT_NONE);
 		else return FALSE;
 		break;
+#ifdef HAS_WIDGET_GOB
+	case SYM_WIDGET:
+		//printf("WIDGET GOB\n");
+		SET_GOB_TYPE(gob, GOBT_WIDGET);
+		SET_GOB_OPAQUE(gob);
+
+		GOB_CONTENT(gob) = Make_Block(4);      // [handle type spec data]
+		hndl = Append_Value(GOB_CONTENT(gob));
+		       Append_Value(GOB_CONTENT(gob)); // used to cache type on host's side
+		spec = Append_Value(GOB_CONTENT(gob));
+		       Append_Value(GOB_CONTENT(gob)); // used to cache result data
+
+		SET_HANDLE(hndl, 0, SYM_WIDGET, 0);
+		
+		if (IS_WORD(val) || IS_LIT_WORD(val)) {
+			Set_Block(spec, Make_Block(1));
+			Append_Val(VAL_SERIES(spec), val);
+		}
+		else if (IS_BLOCK(val)) {
+			Set_Block(spec, VAL_SERIES(val));
+		}
+		else return FALSE;
+		break;
+#endif // HAS_WIDGET_GOB
 
 	case SYM_DRAW:
 		CLR_GOB_OPAQUE(gob);
@@ -383,7 +410,7 @@ const REBCNT Gob_Flag_Words[] = {
 		if (IS_TUPLE(val)) {
 			SET_GOB_TYPE(gob, GOBT_COLOR);
 			Set_Pixel_Tuple((REBYTE*)&GOB_CONTENT(gob), val);
-			if (VAL_TUPLE_LEN(val) < 4 || VAL_TUPLE(val)[3] == 0)
+			if (VAL_TUPLE_LEN(val) < 4 || VAL_TUPLE(val)[3] == 255)
 				SET_GOB_OPAQUE(gob);
 		}
 		else if (IS_NONE(val)) SET_GOB_TYPE(gob, GOBT_NONE);
@@ -406,6 +433,11 @@ const REBCNT Gob_Flag_Words[] = {
 		break;
 
 	case SYM_DATA:
+#ifdef HAS_WIDGET_GOB
+		if (GOB_TYPE(gob) == GOBT_WIDGET) {
+			OS_SET_WIDGET_DATA(gob, val);
+		} else {
+#endif
 		SET_GOB_DTYPE(gob, GOBD_NONE);
 		if (IS_OBJECT(val)) {
 			SET_GOB_DTYPE(gob, GOBD_OBJECT);
@@ -430,6 +462,9 @@ const REBCNT Gob_Flag_Words[] = {
 		else if (IS_NONE(val))
 			SET_GOB_TYPE(gob, GOBT_NONE);
 		else return FALSE;
+#ifdef HAS_WIDGET_GOB
+		}
+#endif
 		break;
 
 	case SYM_FLAGS:
@@ -462,6 +497,7 @@ const REBCNT Gob_Flag_Words[] = {
 /*
 ***********************************************************************/
 {
+	REBSER *data;
 	switch (VAL_WORD_CANON(word)) {
 
 	case SYM_OFFSET:
@@ -478,6 +514,14 @@ const REBCNT Gob_Flag_Words[] = {
 		}
 		else goto is_none;
 		break;
+
+#ifdef HAS_WIDGET_GOB
+	case SYM_WIDGET:
+		data = VAL_SERIES(GOB_WIDGET_SPEC(gob));
+		Init_Word(val, VAL_WORD_CANON(BLK_HEAD(data)));
+		VAL_SET(val, REB_LIT_WORD);
+		break;
+#endif
 
 	case SYM_DRAW:
 		if (GOB_TYPE(gob) == GOBT_DRAW) {
@@ -531,20 +575,27 @@ is_none:
 		break;
 
 	case SYM_DATA:
+#ifdef HAS_WIDGET_GOB
+		if (GOB_TYPE(gob) == GOBT_WIDGET) {
+			return OS_GET_WIDGET_DATA(gob, val);
+		}
+#endif
+		data = GOB_DATA(gob);
+		
 		if (GOB_DTYPE(gob) == GOBD_OBJECT) {
-			SET_OBJECT(val, GOB_DATA(gob));
+			SET_OBJECT(val, data);
 		}
 		else if (GOB_DTYPE(gob) == GOBD_BLOCK) {
-			Set_Block(val, GOB_DATA(gob));
+			Set_Block(val, data);
 		}
 		else if (GOB_DTYPE(gob) == GOBD_STRING) {
-			Set_String(val, GOB_DATA(gob));
+			Set_String(val, data);
 		}
 		else if (GOB_DTYPE(gob) == GOBD_BINARY) {
-			SET_BINARY(val, GOB_DATA(gob));
+			SET_BINARY(val, data);
 		}
 		else if (GOB_DTYPE(gob) == GOBD_INTEGER) {
-			SET_INTEGER(val, (REBIPT)GOB_DATA(gob));
+			SET_INTEGER(val, (REBIPT)data);
 		}
 		else goto is_none;
 		break;
@@ -591,22 +642,28 @@ is_none:
 {
 	REBSER *ser = Make_Block(10);
 	REBVAL *val;
-	REBINT words[6] = {SYM_OFFSET, SYM_SIZE, SYM_ALPHA, 0};
-	REBVAL *vals[6];
-	REBINT n = 0;
 	REBVAL *val1;
 	REBCNT sym;
 
-	for (n = 0; words[n]; n++) {
-		val = Append_Value(ser);
-		Init_Word(val, words[n]);
-		VAL_SET(val, REB_SET_WORD);
-		vals[n] = Append_Value(ser);
-	}
+	val = Append_Value(ser);
+	Init_Word(val, SYM_OFFSET);
+	VAL_SET(val, REB_SET_WORD);
+	val = Append_Value(ser);
+	SET_PAIR(val, GOB_X(gob), GOB_Y(gob));
 
-	SET_PAIR(vals[0], GOB_X(gob), GOB_Y(gob));
-	SET_PAIR(vals[1], GOB_W(gob), GOB_H(gob));
-	SET_INTEGER(vals[2], GOB_ALPHA(gob));
+	val = Append_Value(ser);
+	Init_Word(val, SYM_SIZE);
+	VAL_SET(val, REB_SET_WORD);
+	val = Append_Value(ser);
+	SET_PAIR(val, GOB_W(gob), GOB_H(gob));
+
+	if (!GET_GOB_FLAG(gob, GOBF_OPAQUE) && GOB_ALPHA(gob) < 255) {
+		val = Append_Value(ser);
+		Init_Word(val, SYM_ALPHA);
+		VAL_SET(val, REB_SET_WORD);
+		val = Append_Value(ser);
+		SET_INTEGER(val, 255 - GOB_ALPHA(gob));
+	}
 
 	if (!GOB_TYPE(gob)) return ser;
 
@@ -620,6 +677,11 @@ is_none:
 		case GOBT_IMAGE:
 			sym = SYM_IMAGE;
 			break;
+#ifdef HAS_WIDGET_GOB
+		case GOBT_WIDGET:
+			sym = SYM_WIDGET;
+			break;
+#endif
 		case GOBT_STRING:
 		case GOBT_TEXT:
 			sym = SYM_TEXT;

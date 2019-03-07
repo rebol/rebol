@@ -101,6 +101,7 @@ These are now obsolete (as of A107) and should be removed:
 #define OS_CRLF TRUE			// uses CRLF as line terminator
 #define OS_DIR_SEP '\\'			// file path separator (Thanks Bill.)
 #define HAS_ASYNC_DNS			// supports it
+#define HAS_WIDGET_GOB			// supports it
 #define ATOI					// supports it
 #define ATOI64					// supports it
 #define ITOA64					// supports it

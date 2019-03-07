@@ -68,6 +68,7 @@ enum GOB_TYPES {		// Types of content
 	GOBT_NONE = 0,
 	GOBT_COLOR,
 	GOBT_IMAGE,
+	GOBT_WIDGET,       // must be between IMAGE and STRING so GC can mark its content!
 	GOBT_STRING,
 	GOBT_DRAW,
 	GOBT_TEXT,
@@ -177,6 +178,11 @@ typedef struct gob_window {				// Maps gob to window
 #define GOB_PANE(g)		((g)->pane)
 #define GOB_PARENT(g)	((g)->parent)
 #define GOB_CONTENT(g)	((g)->content)
+
+#define GOB_WIDGET_HANDLE(g) (BLK_HEAD(GOB_CONTENT(g)))
+#define GOB_WIDGET_TYPE(g) (BLK_SKIP(GOB_CONTENT(g), 1))
+#define GOB_WIDGET_SPEC(g) (BLK_SKIP(GOB_CONTENT(g), 2))
+#define GOB_WIDGET_DATA(g) (BLK_SKIP(GOB_CONTENT(g), 3))
 
 // Control dependencies on series structures:
 #ifdef REB_DEF

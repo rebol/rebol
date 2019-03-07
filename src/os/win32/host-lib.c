@@ -121,7 +121,8 @@ static void *Task_Ready;
 	}
 }
 
-
+#ifdef removing_this_code
+// this function is not needed. Now is possible to use RL_GET_STRING with WIDE flag
 /***********************************************************************
 **
 */	REBOOL As_OS_Str(REBSER *series, REBCHR **string)
@@ -156,7 +157,7 @@ static void *Task_Ready;
 	*string = (len == 0) ? NULL : str; //empty string check
 	return FALSE;
 }
-
+#endif
 
 /***********************************************************************
 **

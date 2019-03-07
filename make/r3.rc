@@ -28,5 +28,5 @@ BEGIN
     101  "Rebol 3 (Oldes branch)"
 END
 
-2 MANIFEST "r3.manifest"
+1 MANIFEST "r3.manifest"
 
