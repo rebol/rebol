@@ -199,7 +199,8 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	for (n = 0; n < MAX_WINDOWS; n++) {
 		if (Gob_Windows[n].gob == 0) {
 			Gob_Windows[n].gob = gob;
-			Gob_Windows[n].compositor = OS_Create_Compositor(Gob_Root, gob);
+			// note: don't create compositor here,
+			// it will be done when its class is registered
 			return n;
 		}
 	}
@@ -261,7 +262,7 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	for (n = 0; n < MAX_WINDOWS; n++) {
 		if (Gob_Windows[n].gob == gob) {
 			OS_Destroy_Compositor(Gob_Windows[n].compositor);
-			Gob_Windows[n].gob = 0;
+			CLEAR(&Gob_Windows[n], sizeof(Gob_Windows[n]));
 			return;
 		}
 	}
@@ -459,6 +460,9 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 		Host_Crash("CreateWindow failed");
 	}
 
+	Gob_Windows[windex].win = window;
+	Gob_Windows[windex].compositor = OS_Create_Compositor(Gob_Root, gob);
+
 	if (!Default_Font) {
 		LOGFONTW font;
 		HTHEME *hTheme = NULL;
@@ -487,9 +491,6 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	// Enable drag and drop
 	if (GET_GOB_FLAG(gob, GOBF_DROPABLE))
 		DragAcceptFiles(window, TRUE);
-
-	Gob_Windows[windex].win = window;
-	Gob_Windows[windex].compositor = OS_Create_Compositor(Gob_Root, gob);
 
 	SET_GOB_FLAG(gob, GOBF_WINDOW);
 	SET_GOB_FLAG(gob, GOBF_ACTIVE);
