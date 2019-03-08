@@ -265,9 +265,9 @@ static REBINT Check_Modifiers(REBINT flags)
 				gob->size.x = (i16)LOWORD(xy);
 				gob->size.y = (i16)HIWORD(xy);
 				last_xy = xy;
+				OS_Resize_Window(gob, TRUE);
 				if (mode) {
 					//Resize and redraw the window buffer (when resize dragging)
-					OS_Resize_Window(gob, TRUE);
 					mode = EVT_RESIZE;
 					break;
 				} else {
