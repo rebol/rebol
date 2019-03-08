@@ -350,6 +350,7 @@ static REBINT Check_Modifiers(REBINT flags)
 			//if (!WIN_CAPTURED(wp)) {
 			flags = Check_Modifiers(flags);
 			Add_Event_XY(gob, EVT_DOWN, xy, flags);
+			SetFocus(hwnd);
 			SetCapture(hwnd);
 			//WIN_CAPTURED(wp) = EVT_BTN1_UP;
 			break;
@@ -368,6 +369,7 @@ static REBINT Check_Modifiers(REBINT flags)
 			//if (!WIN_CAPTURED(wp)) {
 			flags = Check_Modifiers(flags);
 			Add_Event_XY(gob, EVT_ALT_DOWN, xy, flags);
+			SetFocus(hwnd);
 			SetCapture(hwnd);
 			//WIN_CAPTURED(wp) = EVT_BTN2_UP;
 			break;
@@ -386,6 +388,7 @@ static REBINT Check_Modifiers(REBINT flags)
 			//if (!WIN_CAPTURED(wp)) {
 			flags = Check_Modifiers(flags);
 			Add_Event_XY(gob, EVT_AUX_DOWN, xy, flags);
+			SetFocus(hwnd);
 			SetCapture(hwnd);
 			break;
 
