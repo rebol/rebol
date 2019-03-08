@@ -111,7 +111,6 @@ static REBXYF Zero_Pair = {0, 0};
 ***********************************************************************/
 {
 	//do cleanup
-	puts("OS_Destroy_Compositor");
 	ReleaseDC(GOB_HWIN(ctx->wind_gob), ctx->wind_DC);
 	DeleteDC(ctx->back_DC);
 	DeleteObject(ctx->back_buffer);
@@ -363,7 +362,7 @@ static REBXYF Zero_Pair = {0, 0};
 	REBGOB* parent_gob = gob;
 	RECT gob_clip;
 
-	//RL_Print("COMPOSE %d %d\n", GetDeviceCaps(ctx->back_DC, SHADEBLENDCAPS), GetDeviceCaps(ctx->wind_DC, SHADEBLENDCAPS));
+	//RL_Print("OS_Compose_Gob only: %d\n", only);
 	
 	abs_x = 0;
 	abs_y = 0;
@@ -411,7 +410,7 @@ static REBXYF Zero_Pair = {0, 0};
 	intersection_result = ExtSelectClipRgn(ctx->back_DC, ctx->win_clip, RGN_AND);
 
 	GetClipBox(ctx->back_DC, &gob_clip);
-	RL_Print("old+new clip: %dx%d %dx%d\n", gob_clip.left, gob_clip.top, gob_clip.right, gob_clip.bottom);
+	//RL_Print("old+new clip: %dx%d %dx%d\n", gob_clip.left, gob_clip.top, gob_clip.right, gob_clip.bottom);
 	
 	if (intersection_result != NULLREGION)
 		//redraw gobs
@@ -495,7 +494,7 @@ static REBXYF Zero_Pair = {0, 0};
 	rect.right  = clip_siz.x + clip_oft.x;
 	rect.bottom = clip_siz.y + clip_oft.y;
 
-	//RL_Print("rect: %dx%d %dx%d", rect.left, rect.top, rect.right, rect.bottom);
+	//RL_Print("OS_Blit_Gob_Color: %dx%d %dx%d\n", rect.left, rect.top, rect.right, rect.bottom);
 
 	FillRect(ctx->back_DC, &rect, CreateSolidBrush(rgb));
 }

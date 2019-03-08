@@ -467,11 +467,11 @@ static REBINT Check_Modifiers(REBINT flags)
 			break;
 
 		case WM_GETMINMAXINFO:
-			printf("WM_GETMINMAXINFO\n");
+			//printf("WM_GETMINMAXINFO\n");
 			break;
 
 		case WM_SETFOCUS:
-			puts("WM_SETFOCUS");
+			//puts("WM_SETFOCUS");
 			Focused_Window = hwnd;
 			break;
 
@@ -485,7 +485,8 @@ static REBINT Check_Modifiers(REBINT flags)
 			PostQuitMessage(0);
 			return 0;
 		case WM_NCDESTROY:
-			puts("WM_NCDESTROY");
+			//TODO: notify native widgets?
+			//puts("WM_NCDESTROY");
 			break;
 
 	}

@@ -58,7 +58,7 @@
 #include <vssym32.h> // --//--
 #include <math.h>
 
-#include <stdio.h> // used for debuging traces
+//#include <stdio.h> // used for debuging traces
 
 #undef IS_ERROR // Windows is using this macro name too, we don't need their version
 
@@ -282,7 +282,7 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	ZeroMemory(&wcex, sizeof(wcex));
 
 	if(!GetClassInfoEx(hInstance, old_class, &wcex)) {
-		puts("Failed to get old class info!");
+		RL_Print("Failed to get old class info!\n");
 	}
 	wcex.cbSize = sizeof(WNDCLASSEX);
 	wcex.lpszClassName = new_class;
@@ -302,7 +302,6 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 **
 ***********************************************************************/
 {
-	puts("Register_Window");
 	WNDCLASSEX wc;
 
 	wc.cbSize        = sizeof(wc);
@@ -326,10 +325,6 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 		GetSystemMetrics(SM_CYSMICON),
 		LR_DEFAULTCOLOR
 	);
-
-	// If not already registered:
-	//if (!GetClassInfo(App_Instance, Class_Name_Window, &wclass))
-	//  RegisterClass(&wclass);
 
 	if (!RegisterClassEx(&wc)) Host_Crash("Cannot register window");
 
@@ -456,7 +451,6 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 		NULL, App_Instance, NULL
 	);
 	if (!window) {
-		printf("error: %d %d %d %d  %d\n",x,y,w,h, GetLastError());
 		Host_Crash("CreateWindow failed");
 	}
 
@@ -481,7 +475,6 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 		}
 		if ( res >= 0 ) {
 			Default_Font = CreateFontIndirect(&font);
-			printf("font: '%ls'  %08Xh\n", font.lfFaceName, Default_Font);
 		}
 
 		if (hTheme) CloseThemeData(hTheme);
@@ -511,27 +504,6 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	}
 	return window;
 }
-
-/* Removed from above code -- is any of this really needed? -CS
-
-	// Set rectangle coordinates:
-	rect.left   = GOB_X(gob);
-	rect.right  = rect.left + GOB_W(gob);
-	rect.top    = GOB_Y(gob);
-	rect.bottom = rect.top + GOB_H(gob);
-	AdjustWindowRect(&rect, options, FALSE);
-
-	// Create window (use parent if specified):
-	GOB_WIN(gob) = CreateWindow(Class_Name_Window, title, options,
-		rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
-		(wparent ? GOB_WIN(wparent) : NULL), NULL, App_Instance, NULL);
-
-	// Drain startup messages:
-	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-	}
-*/
 
 
 /***********************************************************************
@@ -655,13 +627,15 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 			wingob = GOB_PARENT(wingob);
 
 		//check if it is really open
-		if (!IS_WINDOW(wingob) || !GET_GOB_STATE(wingob, GOBS_OPEN)) return;
+		if (!IS_WINDOW(wingob) || !GET_GOB_STATE(wingob, GOBS_OPEN)) {
+			return;
+		}
 	}
-
-	//Reb_Print("draw: %d %8x", nnn++, gob);
+	
 	//render and blit the GOB
 	compositor = GOB_COMPOSITOR(wingob);
 	OS_Compose_Gob(compositor, wingob, gob, FALSE);
+	OS_Blit_Window(compositor);
 }
 
 
@@ -762,7 +736,6 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 **
 ***********************************************************************/
 {
-	puts("OS_Init_Gob_Widget");
 	HWND hWnd;
 	REBCHR *class;
 	REBCHR *text = NULL;
@@ -847,7 +820,7 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 			style |= BS_GROUPBOX;
 			break;
 		default:
-			puts("unknown widget name");
+			//RL_Print("unknown widget name");
 			return NULL;
 	}
 	
@@ -866,7 +839,7 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	SendMessage(hWnd, WM_SETFONT, (WPARAM)Default_Font, 0);
 	SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)gob);
 
-	printf("======== NEW widget: %08Xh for gob: %08Xh\n", hWnd, gob);
+	//printf("======== NEW widget: %08Xh for gob: %08Xh\n", hWnd, gob);
 
 	switch (VAL_INT64(type)) {
 	case W_WINDOW_BUTTON:
@@ -1377,7 +1350,7 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 					 | ICC_BAR_CLASSES
 					 | ICC_DATE_CLASSES;
 	if (!InitCommonControlsEx(&InitCtrlEx)) {
-		printf("Could not initialize common controls! (%u)\n", GetLastError());
+		RL_Print("Could not initialize common controls! (%u)\n", GetLastError());
 	}
 }
 
