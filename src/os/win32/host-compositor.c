@@ -281,7 +281,7 @@ static REBXYF Zero_Pair = {0, 0};
 			
 			case GOBT_IMAGE:
 				//RL_Print("draw image gob\n");
-				OS_Blit_Gob_Image(gob, ctx, offset, top_left, bottom_right);
+				OS_Blit_Gob_Image(gob, ctx, offset, gob_clip.top, gob_clip.left, gob_clip.bottom, gob_clip.right);
 				break;
 	
 #ifdef HAS_WIDGET_GOB
@@ -501,7 +501,7 @@ static REBXYF Zero_Pair = {0, 0};
 
 /***********************************************************************
 **
-*/	void OS_Blit_Gob_Image(REBGOB *gob, REBCMP* ctx, REBXYI abs_oft, REBXYI dst_oft, REBXYI dst_siz)
+*/	void OS_Blit_Gob_Image(REBGOB *gob, REBCMP* ctx, REBXYI abs_oft, REBINT top, REBINT left, REBINT bottom, REBINT right)
 /*
 **		This routine copies a rectangle from a PAN structure to the
 **		current output device.
@@ -510,11 +510,12 @@ static REBXYF Zero_Pair = {0, 0};
 {
 	//if (!gob || GOB_TYPE(gob) != GOBT_IMAGE || !GOB_CONTENT(gob)) return;
 
+	REBSER     *img = (REBSER*)GOB_CONTENT(gob);
 	HDC         hdc = ctx->back_DC;
 	BITMAPINFO  BitmapInfo = ctx->bmpInfo;
 	REBINT      mode;
-	REBINT      src_siz_x = ROUND_TO_INT(gob->size.x);
-	REBINT      src_siz_y = ROUND_TO_INT(gob->size.y);
+	REBINT      src_siz_x = IMG_WIDE(img); // real image size
+	REBINT      src_siz_y = IMG_HIGH(img);
 
 	mode = SetStretchBltMode(hdc, COLORONCOLOR); // returns previous mode
 	BitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -523,13 +524,13 @@ static REBXYF Zero_Pair = {0, 0};
 
 	StretchDIBits(
 		hdc,
-		dst_oft.x, dst_oft.y,
-		dst_siz.x, dst_siz.y,
+		left, top,
+		right - left, bottom - top,
 		0, 0, // always at 0x0 so far; should we support image atlases?
 		src_siz_x, src_siz_y,
 		GOB_BITMAP(gob),
 		&BitmapInfo,
-		DIB_PAL_COLORS,
+		DIB_RGB_COLORS,
 		SRCCOPY
 	);
 	SetStretchBltMode(hdc, mode);
