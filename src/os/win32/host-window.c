@@ -1358,8 +1358,11 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 
 	// Get information about system version
 	// https://docs.microsoft.com/en-us/windows/desktop/api/winnt/ns-winnt-_osversioninfoa
+#pragma warning( push )
+#pragma warning(disable: 4996) // GetVersionEx is deprecated!
 	OSVERSIONINFO vi;
 	GetVersionEx(&vi);
+#pragma warning( pop )
 
 	if (
 		vi.dwMajorVersion >= 10 // Windows10 and newer
