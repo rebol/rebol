@@ -49,9 +49,7 @@
 
 //OpenGL
 #pragma comment(lib, "opengl32")
-#pragma comment(lib, "glu32")
 #include <gl/gl.h>
-#include <gl/glu.h>
 
 //-- Not currently used:
 //#include <windowsx.h>
@@ -544,7 +542,7 @@ static REBINT Check_Modifiers(REBINT flags)
 			glEnd();
 			glFlush();
 
-			wglSwapBuffers(hdc);
+			SwapBuffers(hdc);
 		//	wglMakeCurrent(hdc, 0);
 			EndPaint(hwnd, &ps);
 		return FALSE;

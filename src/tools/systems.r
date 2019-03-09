@@ -74,7 +74,7 @@ linker-flags: [
 	LLOG:	"-llog"						; on Android, link with liblog.so
 	ARC:	"-arch i386"				; x86 32 bit architecture (OSX)
 	M32:	"-m32"						; use 32-bit memory model (Linux x64)
-	W32:	"-lwsock32 -lcomdlg32 -lgdi32 -lwinmm -lComctl32 -lUxTheme"
+	W32:	"-lwsock32 -lcomdlg32 -lgdi32 -lwinmm -lComctl32 -lUxTheme -lopengl32"
 	WIN:	"-mwindows"					; build as Windows GUI binary
 	CON:	"-mconsole"					; build as Windows Console binary
 	S4M:	"-Wl,--stack=4194300"
