@@ -31,6 +31,7 @@ words: [
 	slider
 	date-time
 	group-box
+	opengl
 
 	;- gui-metric
 	border-fixed

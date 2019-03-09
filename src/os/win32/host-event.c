@@ -47,6 +47,12 @@
 #include <zmouse.h>
 #include <math.h>	//for floor()
 
+//OpenGL
+#pragma comment(lib, "opengl32")
+#pragma comment(lib, "glu32")
+#include <gl/gl.h>
+#include <gl/glu.h>
+
 //-- Not currently used:
 //#include <windowsx.h>
 //#include <mmsystem.h>
@@ -494,4 +500,107 @@ static REBINT Check_Modifiers(REBINT flags)
 
 	}
 	return DefWindowProc(hwnd, msg, wParam, xy);
+}
+
+
+/***********************************************************************
+**
+*/	LRESULT CALLBACK REBOL_OpenGL_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+/*
+**		An OpenGL message handler.
+**
+***********************************************************************/
+{
+	REBGOB *gob;
+	REBCNT flags = 0;
+	HDC hdc;
+	HGLRC hglrc;
+	PIXELFORMATDESCRIPTOR pfd;
+	PAINTSTRUCT ps;
+	
+
+#ifdef __LLP64__
+	gob = (REBGOB *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+#else
+	gob = (REBGOB *)GetWindowLong(hwnd, GWL_USERDATA);
+#endif
+
+	//if(msg != WM_PAINT)
+	//	printf("OpenGL_Proc - msg: %0X wParam: %0X lParam: %0X gob: %0Xh\n", msg, wParam, lParam, gob);
+	
+	// Handle message:
+	switch (msg)
+	{
+	case WM_PAINT: 
+		hdc = BeginPaint(hwnd, &ps);
+		//TODO: retrive context from gob's handle
+		//hglrc = wglGetCurrentContext();
+		//wglMakeCurrent(hdc, hglrc);
+			//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glBegin(GL_TRIANGLES);
+			glColor3ub(255, 0, 0);    glVertex2d(-0.75, -0.75);
+			glColor3ub(0, 255, 0);    glVertex2d(0.0, 0.75);
+			glColor3ub(0, 0, 255);    glVertex2d(0.75, -0.75);
+			glEnd();
+			glFlush();
+
+			wglSwapBuffers(hdc);
+		//	wglMakeCurrent(hdc, 0);
+			EndPaint(hwnd, &ps);
+		return FALSE;
+	case WM_ERASEBKGND:
+		// for testing purposes, set random background so far...
+		glClearColor(((float)rand()/(float)(RAND_MAX))*1.0, 0.0, 0.0, 0.0);
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		break;
+	case WM_SIZE:
+		glViewport(0, 0, LOWORD(lParam), HIWORD(lParam));
+		break;
+	case WM_CREATE:
+		hdc = GetDC(hwnd);
+		ZeroMemory(&pfd, sizeof(pfd));
+		PIXELFORMATDESCRIPTOR pfd = {
+			sizeof(PIXELFORMATDESCRIPTOR),
+			1,
+			PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,    // Flags
+			PFD_TYPE_RGBA,        // The kind of framebuffer. RGBA or palette.
+			32,                   // Colordepth of the framebuffer.
+			0, 0, 0, 0, 0, 0,
+			0,
+			0,
+			0,
+			0, 0, 0, 0,
+			24,                   // Number of bits for the depthbuffer
+			8,                    // Number of bits for the stencilbuffer
+			0,                    // Number of Aux buffers in the framebuffer.
+			PFD_MAIN_PLANE,
+			0,
+			0, 0, 0
+		};
+		int pf = ChoosePixelFormat(hdc, &pfd);
+		if (!pf) {
+			RL_Print("Could not find a pixel format.. OpenGL cannot create its context.\n");
+			return FALSE;
+		}
+		SetPixelFormat(hdc, pf, &pfd);
+		hglrc = wglCreateContext(hdc);
+		if (hglrc) {
+			wglMakeCurrent(hdc, hglrc);
+		}
+		else {
+			RL_Print("Failed to create OpenGL context!\n");
+			return FALSE;
+		}
+		RL_Print("OPENGL CONTEXT CREATED!\n");
+		RL_Print("Version %s\n", glGetString(GL_VERSION));
+		return FALSE;
+
+	case WM_DESTROY:
+		hglrc = wglGetCurrentContext();
+		wglDeleteContext(hglrc);
+		return FALSE;
+	}
+
+	return REBOL_Window_Proc(hwnd, msg, wParam, lParam);
 }

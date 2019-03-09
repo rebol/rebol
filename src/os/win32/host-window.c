@@ -101,6 +101,7 @@ typedef HRESULT(WINAPI * GETDPIFORMONITOR_T)(HMONITOR, MONITOR_DPI_TYPE, UINT*, 
 extern HINSTANCE App_Instance;		// Set by winmain function
 extern void Host_Crash(char *reason);
 extern LRESULT CALLBACK REBOL_Window_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+extern LRESULT CALLBACK REBOL_OpenGL_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 //***** Locals *****//
 
@@ -112,6 +113,7 @@ static struct gob_window *Gob_Windows;
 static REBOOL DPI_Aware = FALSE;
 static REBOOL Custom_Cursor = FALSE;
 static HFONT Default_Font = NULL;
+static REBOOL Windows8_And_Newer = FALSE;
 
 static u32* window_ext_words;
 
@@ -311,7 +313,7 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 
 	wc.hIcon         = LoadIcon(App_Instance, MAKEINTRESOURCE(101));
 	wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
-	wc.hbrBackground = NULL;
+	wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
 	wc.style         = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
 
 	wc.cbClsExtra    = 0;
@@ -327,6 +329,10 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	);
 
 	if (!RegisterClassEx(&wc)) Host_Crash("Cannot register window");
+
+	wc.lpfnWndProc = REBOL_OpenGL_Proc;
+	wc.lpszClassName = TXT("RebOpenGL");
+	if (!RegisterClassEx(&wc)) puts("Failed to register OpenGL class");
 
 	Make_Subclass(Class_Name_Button, TEXT("BUTTON"), NULL, TRUE);
 
@@ -543,7 +549,10 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	REBOOL changed;
 	compositor = GOB_COMPOSITOR(gob);
 	changed = OS_Resize_Window_Buffer(compositor, gob);
-	if (redraw) OS_Compose_Gob(compositor, gob, gob, FALSE); // what if not actually resized?
+	if (redraw) {
+		OS_Compose_Gob(compositor, gob, gob, FALSE); // what if not actually resized?
+		OS_Blit_Window(compositor);
+	}
 	return changed;
 }
 
@@ -635,7 +644,7 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	//render and blit the GOB
 	compositor = GOB_COMPOSITOR(wingob);
 	OS_Compose_Gob(compositor, wingob, gob, FALSE);
-	OS_Blit_Window(compositor);
+	//OS_Blit_Window(compositor); //@@ When used, the content overwrites native widgets which are than invisible:/
 }
 
 
@@ -708,6 +717,10 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 			}
 		}
 		return 0;
+	}
+	// Is it a native widget?
+	else if (GOBT_WIDGET == GOB_TYPE(gob)) {
+		RedrawWindow((HWND)VAL_HANDLE(GOB_WIDGET_HANDLE(gob)), NULL, NULL, RDW_INVALIDATE | RDW_ERASE);
 	}
 	// Is it a window gob that needs to be closed?
 	else if (!GOB_PARENT(gob) && GET_GOB_FLAG(gob, GOBF_WINDOW)) {
@@ -818,6 +831,10 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 		case W_WINDOW_GROUP_BOX:
 			class = TXT("BUTTON");
 			style |= BS_GROUPBOX;
+			break;
+		case W_WINDOW_OPENGL:
+			class = TXT("RebOpenGL");
+			style |= CS_OWNDC;
 			break;
 		default:
 			//RL_Print("unknown widget name");
@@ -1339,18 +1356,32 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	Cursor = LoadCursor(NULL, IDC_ARROW);
 	Init_DPI_Awareness();
 
+	// Get information about system version
+	// https://docs.microsoft.com/en-us/windows/desktop/api/winnt/ns-winnt-_osversioninfoa
+	OSVERSIONINFO vi;
+	GetVersionEx(&vi);
 
-	INITCOMMONCONTROLSEX InitCtrlEx;
-	InitCtrlEx.dwSize = sizeof(INITCOMMONCONTROLSEX);
-	InitCtrlEx.dwICC = ICC_STANDARD_CLASSES
-					 | ICC_LINK_CLASS
-					 | ICC_UPDOWN_CLASS
-					 | ICC_LISTVIEW_CLASSES
-					 | ICC_PROGRESS_CLASS
-					 | ICC_BAR_CLASSES
-					 | ICC_DATE_CLASSES;
-	if (!InitCommonControlsEx(&InitCtrlEx)) {
-		RL_Print("Could not initialize common controls! (%u)\n", GetLastError());
+	if (
+		vi.dwMajorVersion >= 10 // Windows10 and newer
+		| (vi.dwMajorVersion >= 6 && vi.dwMinorVersion >= 2) //Win8
+	) {
+		Windows8_And_Newer = TRUE;
+	}
+	
+	if (!(vi.dwMajorVersion == 5 && vi.dwMinorVersion < 1)) {
+		// Enable visual styles (not for Win2000)
+		INITCOMMONCONTROLSEX InitCtrlEx;
+		InitCtrlEx.dwSize = sizeof(INITCOMMONCONTROLSEX);
+		InitCtrlEx.dwICC = ICC_STANDARD_CLASSES
+						 | ICC_LINK_CLASS
+						 | ICC_UPDOWN_CLASS
+						 | ICC_LISTVIEW_CLASSES
+						 | ICC_PROGRESS_CLASS
+						 | ICC_BAR_CLASSES
+						 | ICC_DATE_CLASSES;
+		if (!InitCommonControlsEx(&InitCtrlEx)) {
+			RL_Print("Could not initialize common controls!\n");
+		}
 	}
 }
 
