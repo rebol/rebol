@@ -94,7 +94,7 @@ round: action [
 	{Rounds a numeric value; halves round up (away from zero) by default.}
 	value [number! pair! money! time!] "The value to round"
 	/to "Return the nearest multiple of the scale parameter"
-	scale [number! money! time!] "Must be a non-zero value"
+	scale [number! money! time!] "Must be a non-zero value (result will be of this type)"
 	/even      "Halves round toward even results"
 	/down      "Round toward zero, ignoring discarded digits. (truncate)"
 	/half-down "Halves round toward zero"

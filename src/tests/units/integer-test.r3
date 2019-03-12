@@ -1,13 +1,10 @@
 Rebol [
 	Title:   "Rebol3 integer test script"
 	Author:  "Oldes, Peter W A Wood"
-	File: 	 %enbase-test.r3
+	File: 	 %integer-test.r3
 	Tabs:	 4
 	Needs:   [%../quick-test-module.r3]
 ]
-
-;; These supplement the bulk of the integer tests which are automatically
-;; generated.
 
 ~~~start-file~~~ "integer"
 
