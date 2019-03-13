@@ -263,7 +263,7 @@ suported-cipher-suites: rejoin [
 ]
 
 supported-signature-algorithms: rejoin [
-	;#{0601} ; rsa_pkcs1_sha512
+	#{0601} ; rsa_pkcs1_sha512
 	#{0602} ; SHA512 DSA
 	;#{0603} ; ecdsa_secp521r1_sha512
 	#{0501} ; rsa_pkcs1_sha384
@@ -1378,8 +1378,8 @@ TLS-read-handshake-message: function [
 							ctx/client-random
 							ctx/server-random
 						]
-						message-hash: checksum/method message 'sha256 
-						;print ["??? signature message length:" length? message]
+
+						message-hash: checksum/method message hash-algorithm
 						;?? message-hash
 
 						either hash-algorithm = 'md5_sha1 [
@@ -1397,12 +1397,11 @@ TLS-read-handshake-message: function [
 									signature: decode 'der signature
 								]
 								;note tls1.3 is different a little bit here!
-								(probe message-hash) <> probe signature/sequence/octet_string
+								message-hash <> signature/sequence/octet_string
 							][
 								log-error "Failed to validate signature"
 								if error? err [print err]
-								halt
-								;@@TODO: alret: TLS_BROKEN_PACKET 
+								return *Alert/Decode_error
 							]
 							log-more "Signature valid!"
 						]
@@ -1415,7 +1414,7 @@ TLS-read-handshake-message: function [
 							"Extra" len "bytes at the end of message:"
 							mold extra
 						]
-						halt
+						return *Alert/Decode_error
 					]
 
 					ctx/dh-key: dh-init dh_g dh_p
@@ -1440,7 +1439,7 @@ TLS-read-handshake-message: function [
 			if ends <> index? ctx/in/buffer [
 				log-error ["Positions:" ends  index? ctx/in/buffer]
 				log-error  "Looks we should read also something else!"
-				halt
+				return *Alert/Decode_error
 			]
 		]
 		;----------------------------------------------------------
