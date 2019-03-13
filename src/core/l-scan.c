@@ -1228,7 +1228,12 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 			Extend_Series(emitbuf, 1024);
 
 		value = BLK_TAIL(emitbuf);
-		SET_END(value);
+		CLEARS(value); // same like SET_END, but resets all fields
+		// At least VAL_INDEX must be reset with the command above, else
+		// it may contain value over VAL_TAIL and than some series may be
+		// recognized with zero length.
+		// See issue: https://github.com/zsx/r3/issues/46
+
 		// Line opt was set here. Moved to end in 3.0.
 
         // If in a path, handle start of path /word or word//word cases:

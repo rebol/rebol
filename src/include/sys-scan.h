@@ -64,6 +64,41 @@ enum Value_Types {
 	TOKEN_MAX
 };
 
+#ifdef TEST_SCAN
+const char *Token_Names[TOKEN_MAX] = {
+ "EOF",
+ "LINE",
+ "BLOCK_END",
+ "PAREN_END",
+ "WORD",
+ "SET",
+ "GET",
+ "LIT",
+ "NONE",
+ "LOGIC",
+ "INTEGER",
+ "DECIMAL",
+ "PERCENT",
+ "MONEY",
+ "TIME",
+ "DATE",
+ "CHAR",
+ "BLOCK",
+ "PAREN",
+ "STRING",
+ "BINARY",
+ "PAIR",
+ "TUPLE",
+ "FILE",
+ "EMAIL",
+ "URL",
+ "ISSUE",
+ "TAG",
+ "PATH",
+ "REFINE",
+ "CONSTRUCT"
+};
+#endif
 
 /*
 **  Lexical Table Entry Encoding
