@@ -1379,17 +1379,16 @@ TLS-read-handshake-message: function [
 							ctx/server-random
 						]
 
-						message-hash: checksum/method message hash-algorithm
-						;?? message-hash
-
 						either hash-algorithm = 'md5_sha1 [
 							;__private_rsa_verify_hash_md5sha1
 							log-error "legacy __private_rsa_verify_hash_md5sha1 not implemented yet!"
-							;halt
+							return *Alert/Decode_error
 						][
 							log-more "Checking signature using RSA"
 							if any [
 								error? err: try [
+									message-hash: checksum/method message hash-algorithm
+									;?? message-hash
 									;decrypt the `signature` with server's public key
 									rsa-key: apply :rsa-init ctx/server-certs/1/public-key/rsaEncryption
 									signature: rsa/verify rsa-key signature
