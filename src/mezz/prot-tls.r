@@ -408,11 +408,31 @@ client-hello: function [
 ] [
 	change-state ctx 'CLIENT_HELLO
 	with ctx [
-		;initialize checksum port(s)
+
+		extensions: make binary! 16
+
+		;- Server Name Indication (extension)
+		;  https://tools.ietf.org/html/rfc6066#section-3
+		if all [
+			ctx/connection
+			host-name: ctx/connection/spec/host
+		][
+			host-name: to binary! host-name
+			length-name: length? host-name
+
+			binary/write extensions compose [
+				UI16  0                ; extension type (server_name=0)
+				UI16 (5 + length-name) 
+				UI16 (3 + length-name)
+				UI8   0
+				UI16  :length-name
+				BYTES :host-name
+			]
+		]
 
 		;precomputing the extension's lengths so I can write them in one WRITE call
 		length-signatures:  2 + length? supported-signature-algorithms
-		length-extensions:  4 + length-signatures
+		length-extensions:  4 + length-signatures + length? extensions
 		length-message:    41 + length-extensions + length? suported-cipher-suites
 		length-record:      4 + length-message
 
@@ -434,6 +454,7 @@ client-hello: function [
 			UI16      13                  ; extension type: signature-algorithms
 			UI16      :length-signatures  ; note: there is another length following
 			UI16BYTES :supported-signature-algorithms
+			BYTES     :extensions
 		]
 
 		out/buffer: head out/buffer
@@ -1376,7 +1397,7 @@ TLS-read-handshake-message: function [
 									signature: decode 'der signature
 								]
 								;note tls1.3 is different a little bit here!
-								message-hash <> signature/sequence/octet_string
+								(probe message-hash) <> probe signature/sequence/octet_string
 							][
 								log-error "Failed to validate signature"
 								if error? err [print err]
