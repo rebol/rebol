@@ -107,6 +107,37 @@ float float16to32(float16_s f16) {
 	return f32.v;
 }
 
+#pragma pack(4) 
+typedef union {
+	u16 num;
+	struct {
+		u32 day   : 5;
+		u32 month : 4;
+		u32 year  : 7;
+	} date;
+} ms_date;
+
+typedef union {
+	u16 num;
+	struct {
+		u32 second : 5;
+		u32 minute : 6;
+		u32 hour   : 5;
+	} time;
+} ms_time;
+
+typedef union {
+	u32 num;
+	struct {
+		u32 second : 5;
+		u32 minute : 6;
+		u32 hour   : 5;
+		u32 day    : 5;
+		u32 month  : 4;
+		u32 year   : 7;
+	} val;
+} ms_datetime;
+#pragma pack() 
 
 #define ASSERT_SI_RANGE(v, n) if (VAL_INT64(v) < (- (i64)n) || VAL_INT64(v) > (i64)n) Trap1(RE_OUT_OF_RANGE, v);
 #define ASSERT_UI_RANGE(v, n) if (VAL_INT32(v) > n) Trap1(RE_OUT_OF_RANGE, v);
@@ -204,7 +235,12 @@ static REBCNT EncodedU32_Size(u32 value) {
 	REBCNT n, count, index, tail, tail_new;
 	i32 i, len;
 	u64 u;
+	i64 si;
 	u32 ulong;
+
+	ms_datetime* msdt = NULL;
+	ms_date*     msd  = NULL;
+	ms_time*     mst  = NULL;
 
 	REBVAL *value, *next;
 	REBVAL *data;
@@ -472,6 +508,24 @@ static REBCNT EncodedU32_Size(u32 value) {
 						value--; //there is no argument so no next
 						count += 4;
 						break;
+
+					case SYM_MSDOS_DATE:
+						if (!IS_DATE(next)) goto error; // only date allowed
+						//continue..
+					case SYM_MSDOS_TIME:
+						if (IS_DATE(next) || IS_TIME(next)) {
+							count += 2;
+							continue;
+						}
+						goto error;
+
+					case SYM_MSDOS_DATETIME:
+						if (IS_DATE(next) || IS_TIME(next)) {
+							count += 4;
+							continue;
+						}
+						goto error;
+
 					case SYM_RANDOM_BYTES:
 						if (IS_INTEGER(next)) {
 							count += VAL_INT32(next);
@@ -751,6 +805,52 @@ static REBCNT EncodedU32_Size(u32 value) {
 						cp[0] = bp[3]; cp[1] = bp[2]; cp[2] = bp[1]; cp[3] = bp[0];
 #endif
 						break;
+
+					case SYM_MSDOS_DATE:
+						msd = (ms_date*)cp;
+						msd->date.year = VAL_YEAR(next) - 1980;
+						msd->date.month = VAL_MONTH(next);
+						msd->date.day = VAL_DAY(next);
+						n = 2;
+						break;
+
+					case SYM_MSDOS_TIME:
+						if (VAL_TIME(next) == NO_TIME) {
+							cp[0] = 0;
+							cp[1] = 0;
+						} else {
+							mst = (ms_time*)cp;
+							si = VAL_TIME(next) / SEC_SEC;
+							mst->time.hour = (u32)(si / 3600);
+							si -= 3600 * (i64)mst->time.hour;
+							mst->time.minute = (u32)(si / 60);
+							si -= 60 * (i64)mst->time.minute;
+							mst->time.second = (u32)si / 2; // this format has only 2 sec resolution!
+						}
+						n = 2;
+						break;
+
+					case SYM_MSDOS_DATETIME:
+						msdt = (ms_datetime*)cp;
+						msdt->val.year = VAL_YEAR(next) - 1980;
+						msdt->val.month = VAL_MONTH(next);
+						msdt->val.day = VAL_DAY(next);
+						if (VAL_TIME(next) == NO_TIME) {
+							msdt->val.hour = 0;
+							msdt->val.minute = 0;
+							msdt->val.second = 0;
+						}
+						else {
+							si = VAL_TIME(next) / SEC_SEC;
+							msdt->val.hour = (u32)(si / 3600);
+							si -= 3600 * (i64)msdt->val.hour;
+							msdt->val.minute = (u32)(si / 60);
+							si -= 60 * (i64)msdt->val.minute;
+							msdt->val.second = (u32)si / 2; // this format has only 2 sec resolution!
+						}
+						n = 4;
+						break;
+
 					case SYM_RANDOM_BYTES:
 						if (IS_INTEGER(next)) {
 							n = (REBCNT)VAL_INT32(next);
@@ -1268,6 +1368,45 @@ static REBCNT EncodedU32_Size(u32 value) {
 								((i32)cp[3] << 24) ;
 							VAL_SET(temp, REB_DECIMAL);
 							VAL_DECIMAL(temp) = ((float)i / 65536.0f);
+							break;
+						case SYM_MSDOS_DATETIME:
+							n = 4;
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							msdt->num = ((u32)cp[0] << 0)  |
+							           ((u32)cp[1] << 8)  |
+							           ((u32)cp[2] << 16) |
+							           ((u32)cp[3] << 24) ;
+							VAL_SET  (temp, REB_DATE);
+							VAL_YEAR (temp) = msdt->val.year + 1980;
+							VAL_MONTH(temp) = msdt->val.month;
+							VAL_DAY  (temp) = msdt->val.day;
+							VAL_ZONE (temp) = 0;
+							VAL_TIME (temp) = TIME_SEC(msdt->val.second * 2
+							                         + msdt->val.minute * 60
+							                         + msdt->val.hour * 3600);
+							break;
+						case SYM_MSDOS_DATE:
+							n = 2;
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							msd->num = ((u16)cp[0] << 0)  |
+							           ((u16)cp[1] << 8)  ;
+							CLEARS(temp);
+							VAL_SET  (temp, REB_DATE);
+							VAL_YEAR (temp) = msd->date.year + 1980;
+							VAL_MONTH(temp) = msd->date.month;
+							VAL_DAY  (temp) = msd->date.day;
+							VAL_TIME (temp) = NO_TIME;
+							break;
+						case SYM_MSDOS_TIME:
+							n = 2;
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							mst->num = ((u16)cp[0] << 0)  |
+							           ((u16)cp[1] << 8)  ;
+							CLEARS(temp);
+							VAL_SET  (temp, REB_TIME);
+							VAL_TIME (temp) = TIME_SEC(mst->time.second * 2 // this format has only 2 sec resolution!
+							                         + mst->time.minute * 60
+							                         + mst->time.hour * 3600);
 							break;
 							
 						default:

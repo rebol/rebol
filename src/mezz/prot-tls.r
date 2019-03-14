@@ -3,7 +3,7 @@ REBOL [
 	name: 'tls
 	type: 'module
 	author: rights: ["Richard 'Cyphre' Smolak" "Oldes" "Brian Dickens (Hostilefork)"]
-	version: 0.6.1
+	version: 0.7.1
 	history: [
 		0.6.1 "Cyphre" "Initial implementation used in old R3-alpha"
 		0.7.0 "Oldes" {
@@ -11,6 +11,10 @@ REBOL [
 			* Using BinCode (binary) dialect to deal with buffers input/output.
 			* Code is now having a lots of traces for deep study of the process.
 			Special thanks to Hostile Fork for implementing TLSv1.2 for his Ren-C before me.
+		}
+		0.7.1 "Oldes" {
+			* Added Server Name Indication extension into TLS scheme
+			* Fixed RSA/SHA message signatures
 		}
 	]
 	todo: {
