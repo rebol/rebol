@@ -323,6 +323,33 @@ is-protected-error?: func[code][
 		--assert 1.0 = binary/read #{0000803F} 'FLOAT
 		--assert 1.0 = binary/read #{000000000000F03F} 'DOUBLE
 
+	--test-- "BinCode - MSDOS-DATETIME"
+		;- old and not much precise format for storing date and time from MS-DOS times
+		;- still used in some file formats, like ZIP
+
+		--assert  4-Apr-2018/18:53:56  = binary/read #{BC96844C} 'msdos-datetime
+		--assert [18:53:56 4-Apr-2018] = binary/read #{BC96844C} [msdos-time msdos-date]
+
+		b: binary 64
+		binary/write b [
+			msdos-time 11:32:20
+			msdos-time 21:23:55 ;<- will be stored as 21:23:54 (2sec resolution only)
+			msdos-time 14-Mar-2019/15:29:52 ;<- only time is used
+			msdos-time 14-Mar-2019 ;<- zero time is used
+
+			msdos-date     14-Mar-2019/15:29:52 ;<- only date is used
+			msdos-datetime 14-Mar-2019/15:29:52
+			msdos-datetime 14-Mar-2019/15:33:18+1:00
+		]
+		--assert 11:32:20 = binary/read b 'msdos-time
+		--assert 21:23:54 = binary/read b 'msdos-time
+		--assert 15:29:52 = binary/read b 'msdos-time
+		--assert 0:0:0    = binary/read b 'msdos-time
+		--assert 14-Mar-2019 = binary/read b 'msdos-date
+		--assert 14-Mar-2019/15:29:52 = binary/read b 'msdos-datetime
+		--assert 14-Mar-2019/14:33:18 = binary/read b 'msdos-datetime
+
+		--assert error? try [binary/write b [msdos-date 15:33:18]] ;<- date required
 
 ===end-group===
 
