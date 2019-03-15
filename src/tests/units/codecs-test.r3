@@ -78,4 +78,22 @@ if find system/codecs 'swf [
 	system/codecs/swf/verbose: 0
 ]
 
+if find system/codecs 'zip [
+	system/codecs/zip/verbose: 3
+	===start-group=== "ZIP codec"
+		
+		--test-- "Load ZIP file"
+			--assert block? load %units/files/test-lzma.zip
+			--assert block? load %units/files/test-stored.zip
+			--assert block? load %units/files/test-deflate.zip
+
+		--test-- "Decode ZIP using the codec directly"
+			--assert block? data: system/codecs/zip/decode/only %units/files/test.aar [%classes.jar]
+			--assert data/2/2 = 646121705
+			--assert block? system/codecs/zip/decode data/2/3
+
+	===end-group===
+	system/codecs/zip/verbose: 1
+]
+
 ~~~end-file~~~
