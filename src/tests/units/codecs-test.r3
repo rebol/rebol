@@ -96,4 +96,20 @@ if find system/codecs 'zip [
 	system/codecs/zip/verbose: 1
 ]
 
+if find system/codecs 'tar [
+	system/codecs/zip/verbose: 3
+	===start-group=== "TAR codec"
+		
+		--test-- "Load TAR file"
+			--assert block? load %units/files/test.tar
+
+		--test-- "Decode TAR using the codec directly"
+			tar-decode: :system/codecs/tar/decode
+			--assert block? data: tar-decode/only %units/files/test.tar %test.txt
+			--assert data/2/1 = #{7465737474657374}
+
+	===end-group===
+	system/codecs/tar/verbose: 1
+]
+
 ~~~end-file~~~
