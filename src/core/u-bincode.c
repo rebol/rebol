@@ -1372,10 +1372,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 						case SYM_MSDOS_DATETIME:
 							n = 4;
 							ASSERT_READ_SIZE(value, cp, ep, n);
-							msdt->num = ((u32)cp[0] << 0)  |
-							           ((u32)cp[1] << 8)  |
-							           ((u32)cp[2] << 16) |
-							           ((u32)cp[3] << 24) ;
+							msdt = (ms_datetime*)cp;
 							VAL_SET  (temp, REB_DATE);
 							VAL_YEAR (temp) = msdt->val.year + 1980;
 							VAL_MONTH(temp) = msdt->val.month;
@@ -1388,8 +1385,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 						case SYM_MSDOS_DATE:
 							n = 2;
 							ASSERT_READ_SIZE(value, cp, ep, n);
-							msd->num = ((u16)cp[0] << 0)  |
-							           ((u16)cp[1] << 8)  ;
+							msd = (ms_date*)cp;
 							CLEARS(temp);
 							VAL_SET  (temp, REB_DATE);
 							VAL_YEAR (temp) = msd->date.year + 1980;
@@ -1400,8 +1396,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 						case SYM_MSDOS_TIME:
 							n = 2;
 							ASSERT_READ_SIZE(value, cp, ep, n);
-							mst->num = ((u16)cp[0] << 0)  |
-							           ((u16)cp[1] << 8)  ;
+							mst = (ms_time*)cp;
 							CLEARS(temp);
 							VAL_SET  (temp, REB_TIME);
 							VAL_TIME (temp) = TIME_SEC(mst->time.second * 2 // this format has only 2 sec resolution!
