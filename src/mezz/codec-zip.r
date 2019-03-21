@@ -21,27 +21,14 @@ register-codec [
 		cmp-size:
 		unc-size: 0
 
-		log-info: func[msg][
-			if block? msg [msg: reform msg]
-			print rejoin [" ^[[1;33m[ZIP] ^[[36m" msg "^[[0m"]
-		]
-		log-more: func[msg][
-			if block? msg [msg: reform msg]
-			print rejoin [" ^[[33m[ZIP] ^[[0;36m" msg "^[[0m"]
-		]
-		log-debug: func[msg][
-			if block? msg [msg: reform msg]
-			print rejoin [" ^[[33m[ZIP] ^[[0;32m" msg "^[[0m"]
-		]
-
 		decompress*: func [
 			data      [binary! ]
 			validate  [logic!]
 			/local output crc2
 		][
 			if verbose > 0 [
-				log-info [
-					"Decompressing: ^[[33m" name
+				sys/log/info 'ZIP [
+					"Extracting: ^[[33m" name
 					" ^[[0mbytes:^[[33m" cmp-size "^[[0m->^[[33m" unc-size
 				]
 			]
@@ -86,7 +73,7 @@ register-codec [
 				zip-data: read zip-data
 			]
 			if verbose > 0 [
-				print ["^[[1;32mDecode ZIP data^[[m (^[[1m" length? zip-data "^[[mbytes )"]
+				sys/log/info 'ZIP ["^[[1;32mDecode ZIP data^[[m (^[[1m" length? zip-data "^[[mbytes )"]
 			]
 			bin: binary zip-data
 
@@ -101,7 +88,7 @@ register-codec [
 				binary/read bin [AT :pos type: UI32LE]
 				switch/default type [
 					134695760 [ ;#{08074B50} 
-						if verbose > 1 [log-more "Data Descriptor"]
+						if verbose > 1 [sys/log/more 'ZIP "Data Descriptor"]
 						binary/read bin [
 							crc:      SI32LE
 							cmp-size: UI32LE   ; compressed size
@@ -109,7 +96,7 @@ register-codec [
 						]
 
 						if all [only not find files name][
-							if verbose > 1 [log-debug "not extracting"]
+							if verbose > 1 [sys/log/debug 'ZIP "not extracting"]
 							continue
 						]
 
@@ -117,7 +104,7 @@ register-codec [
 							data: decompress* at zip-data :data-pos any [validate validate-crc?]
 							repend result [name reduce [modified crc data]]
 						][
-							if verbose > 0 [log-info ["Decompressing: ^[[33m" name]]
+							if verbose > 0 [sys/log/info 'ZIP ["Extracting: ^[[33m" name]]
 							repend result [name none]
 						]
 
@@ -127,7 +114,7 @@ register-codec [
 						]
 					]
 					67324752 [ ;#{04034B50}
-						if verbose > 1 [log-more "Local file header"]
+						if verbose > 1 [sys/log/more 'ZIP "Local file header"]
 						header: binary/read bin [
 									  UI16LE         ; version
 							flags:    BITSET16       ; flags
@@ -142,7 +129,7 @@ register-codec [
 							extr:     BYTES :len-extr
 							data-pos: INDEX
 						]
-						if verbose > 2 [log-debug mold header]
+						if verbose > 2 [sys/log/debug 'ZIP mold header]
 						name: to file! name
 						if all [
 							flags/12 ; bit 3
@@ -152,12 +139,12 @@ register-codec [
 						][
 							; The correct values are put in the data descriptor
 							; immediately following the compressed data.
-							if verbose > 1 [log-debug "waiting for Data Descriptor"]
+							if verbose > 1 [sys/log/debug 'ZIP "waiting for Data Descriptor"]
 							continue
 						]
 
 						if all [only not find files name][
-							if verbose > 1 [log-debug "not extracting"]
+							if verbose > 1 [sys/log/debug 'ZIP "not extracting"]
 							continue
 						]
 
@@ -165,7 +152,7 @@ register-codec [
 							data: decompress* bin/buffer any [validate validate-crc?]
 							repend result [name reduce [modified crc data]]
 						][
-							if verbose > 0 [log-info ["Decompressing: ^[[33m" name]]
+							if verbose > 0 [sys/log/info 'ZIP ["Extracting: ^[[33m" name]]
 							repend result [name none]
 						]
 						if only [
@@ -174,7 +161,7 @@ register-codec [
 						]
 					]
 					33639248 [ ;#{02014B50}
-						if verbose > 1 [log-more "Central directory structure"]
+						if verbose > 1 [sys/log/more 'ZIP "Central directory structure"]
 						cheader: binary/read bin [
 							          UI16LE         ; version made by
 							          UI16LE         ; version needed to extract
@@ -195,11 +182,11 @@ register-codec [
 							extr:     BYTES :len-extr
 							comm:     BYTES :len-comm
 						]
-						if verbose > 2 [log-debug mold cheader]
-						unless empty? comm [log-info ["Comment: ^[[33m" to-string comm "^[[0m" mold to file! name]]
+						if verbose > 2 [sys/log/debug 'ZIP mold cheader]
+						unless empty? comm [sys/log/info 'ZIP ["Comment: ^[[33m" to-string comm "^[[0m" mold to file! name]]
 					]
 					101010256 [ ;#{06054B50}
-						if verbose > 1 [log-more "End of central directory record"]
+						if verbose > 1 [sys/log/more 'ZIP "End of central directory record"]
 						data: binary/read bin [
 							UI16LE      ; number of this disk
 							UI16LE      ; number of the disk with the start of the central directory
@@ -210,10 +197,10 @@ register-codec [
 							len: UI16LE ; .ZIP file comment length
 							BYTES :len  ; .ZIP file comment
 						]
-						if verbose > 2 [log-debug mold data]
+						if verbose > 2 [sys/log/debug 'ZIP mold data]
 					]
 					101075792 [ ;#{06064b50}
-						if verbose > 1 [log-more "Zip64 end of central directory record"]
+						if verbose > 1 [sys/log/more 'ZIP "Zip64 end of central directory record"]
 						data: binary/read bin [
 							UI64LE ; directory record
 							UI16LE ; version made by
@@ -226,10 +213,10 @@ register-codec [
 							UI64LE ; offset of start of central directory with respect to the starting disk number
 							;@@BYTES ?? ; zip64 extensible data sector    (variable size)
 						]
-						if verbose > 2 [log-debug mold data]
+						if verbose > 2 [sys/log/debug 'ZIP mold data]
 					]
 				][
-					if verbose > 1 [log-more ["Unknown ZIP signature:" mold skip to-binary type 4]]
+					if verbose > 1 [sys/log/more 'ZIP ["Unknown ZIP signature:" mold skip to-binary type 4]]
 				]
 			]
 			buffer: none ; cleanup
@@ -251,6 +238,6 @@ register-codec [
 		]
 	]
 	validate-crc?: true
-	verbose: 1
+	verbose: 3
 	level: 9
 ]

@@ -106,4 +106,21 @@ encoding?: function [
 	none
 ]
 
+log: func [
+	"Prints out debug message"
+	id [word!] "Source of the log message"
+	msg        "Output message"
+	/info
+	/more
+	/debug
+][
+	if block? msg [msg: form reduce :msg]
+	case [
+		info  [ print ajoin [" ^[[1;33m[" id "] ^[[36m" msg "^[[0m"]]
+		more  [ print ajoin [" ^[[33m[" id "] ^[[0;36m" msg "^[[0m"]]
+		debug [ print ajoin [" ^[[33m[" id "] ^[[0;32m" msg "^[[0m"]]
+		true  [ print ajoin [" ^[[33m[" id "] " msg "^[[0m"]]
+	]
+]
+
 export [register-codec decode encode encoding?]

@@ -351,6 +351,14 @@ is-protected-error?: func[code][
 
 		--assert error? try [binary/write b [msdos-date 15:33:18]] ;<- date required
 
+	--test-- "BinCode - STRING-BYTES (read)"
+		;- used for fixed size strings (used for example in TAR files)
+		--assert ["test" 1]= binary/read #{746573740000000001} [STRING-BYTES 8 UI8]
+
+	--test-- "BinCode - OCTAL-BYTES (read)"
+		;- used for fixed size octal numbers (used for example in TAR files)
+		--assert 8 = binary/read/with #{3130} 'OCTAL-BYTES 2
+
 ===end-group===
 
 
