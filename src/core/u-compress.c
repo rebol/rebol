@@ -172,6 +172,11 @@ void Trap_ZStream_Error(z_stream *stream, int err, REBOOL while_compression)
 	if (len < 0 || (index + len > BIN_LEN(input))) len = BIN_LEN(input) - index;
 	if (limit > 0) {
 		size = limit;
+	} else if (windowBits < 0) {
+		// limit was not specified, but data are supposed to be raw DEFLATE data
+		// max teoretic DEFLATE ration is 1032:1, but that is quite unrealistic
+		// it will be more around 3:1 or 4:1, so 10:1 could be enough for automatic setup.
+		size = 10 * (REBCNT)len; //@@ fix me, if you don't agree with above claim
 	} else {
 		// Get the uncompressed size from last 4 source data bytes.
 		if (len < 4) Trap0(RE_PAST_END); // !!! better msg needed
@@ -209,8 +214,8 @@ void Trap_ZStream_Error(z_stream *stream, int err, REBOOL while_compression)
 	//printf("total_out: %i\n", stream.total_out);
 	inflateEnd(&stream);
 
-	SET_STR_END(output, size);
-	SERIES_TAIL(output) = size;
+	SET_STR_END(output, stream.total_out);
+	SERIES_TAIL(output) = stream.total_out;
 
 	return output;
 }

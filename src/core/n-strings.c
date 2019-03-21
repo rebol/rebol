@@ -346,6 +346,7 @@ static struct digest {
 //		/zlib {Data are in ZLIB format with Adler32 checksum}
 //		/gzip {Data are in ZLIB format with CRC32 checksum}
 //		/lzma {Data are in LZMA format}
+//		/deflate {Data are raw DEFLATE data}
 //		/size
 //			bytes [integer!] {Number of decompressed bytes. If not used, size is detected from last 4 source data bytes.}
 ]
@@ -357,17 +358,24 @@ static struct digest {
     REBOOL ref_zlib  = D_REF(4);
 	REBOOL ref_gzip  = D_REF(5);
 	REBOOL ref_lzma  = D_REF(6);
-	REBOOL ref_size  = D_REF(7);
-	REBVAL *size     = D_ARG(8);
+	REBOOL ref_defl  = D_REF(7);
+	REBOOL ref_size  = D_REF(8);
+	REBVAL *size     = D_ARG(9);
 
-	REBINT limit = 0;
+	REBCNT limit = 0;
 	REBCNT len;
+	REBINT windowBits = MAX_WBITS;
 
-    if ((ref_zlib && (ref_gzip || ref_lzma)) || (ref_gzip && ref_lzma)) Trap0(RE_BAD_REFINES);
+	// test if only one compression type refinement is used 
+    if (
+		(ref_zlib && (ref_gzip || ref_lzma || ref_defl)) ||
+		(ref_gzip && (ref_zlib || ref_lzma || ref_defl)) ||
+		(ref_lzma && (ref_zlib || ref_gzip || ref_defl))
+	)	Trap0(RE_BAD_REFINES);
     
 	len = Partial1(data, length);
 
-	if (ref_size) limit = Int32s(size, 1); // /limit size
+	if (ref_size) limit = (REBCNT)Int32s(size, 1); // /limit size
 
 	if (ref_lzma) {
 #ifdef USE_LZMA
@@ -376,8 +384,8 @@ static struct digest {
 		Trap0(RE_FEATURE_NA);
 #endif
 	} else {
-		int windowBits = MAX_WBITS;
-		if (ref_gzip) windowBits |= 16;
+		if (ref_defl) windowBits = -windowBits;
+		else if (ref_gzip) windowBits |= 16;
 		Set_Binary(D_RET, DecompressZlib(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit, windowBits));
 	}
 	
