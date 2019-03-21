@@ -1219,27 +1219,23 @@ static REBCNT EncodedU32_Size(u32 value) {
 							}
 							ASSERT_READ_SIZE(value, cp, ep, n);
 						readNBytes:
-							//printf("num: %i\n", n);
-							if (cmd == SYM_BYTES || cmd == SYM_STRING_BYTES) {
-								
-								bin_new = Copy_Series_Part(bin, VAL_INDEX(buffer_read), n);
-								VAL_SERIES(temp) = bin_new;
-								VAL_INDEX(temp) = 0;
-								if (cmd == SYM_BYTES) {
-									VAL_SET(temp, REB_BINARY);
-								}
-								else {
-									VAL_SET(temp, REB_STRING);
-									VAL_TAIL(temp) = strnlen(VAL_BIN(temp), n);
-								}
-							}
-							else {// octal number
+							// WARNING: this piece of code is also used for SYM_UI*BYTES commands! 
+							if (cmd == SYM_OCTAL_BYTES) {
+								// octal number
 								u = 0;
 								i = 0;
 								while ((i < n) && cp[i]) {
 									u = (u << 3) | (u64)(cp[i++] - '0');
 								}
 								SET_INTEGER(temp, u);
+							} else {
+								VAL_SET(temp, (cmd == SYM_STRING_BYTES) ? REB_STRING: REB_BINARY);
+								bin_new = Copy_Series_Part(bin, VAL_INDEX(buffer_read), n);
+								VAL_SERIES(temp) = bin_new;
+								VAL_INDEX(temp) = 0;
+								if (cmd == SYM_STRING_BYTES) {
+									VAL_TAIL(temp) = strnlen(VAL_BIN(temp), n);
+								}
 							}
 							break;
 						case SYM_STRING:
