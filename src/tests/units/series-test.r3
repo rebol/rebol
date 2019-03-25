@@ -165,6 +165,59 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "ICONV"
+;@@TODO: add some tests for exotic codepages?
+
+--test-- "ICONV (conversion to string)"
+	txt: "Přihlásit"
+	--assert txt = iconv #{50F869686CE1736974} "ISO-8859-2"
+	--assert txt = iconv #{50F869686CE1736974} 'ISO-8859-2
+	--assert txt = iconv #{50F869686CE1736974} <ISO-8859-2>
+	--assert txt = iconv #{50F869686CE1736974} 28592
+	--assert txt = iconv #{50005901690068006C00E100730069007400} 1200
+	;--assert txt = iconv #{FFFE50005901690068006C00E100730069007400} 'UTF16
+	--assert (next txt) = iconv next #{50F869686CE1736974} 28592
+
+--test-- "ICONV with empty imput"
+	--assert "" = iconv #{} 28592
+	--assert "" = iconv #{} 'utf8
+
+
+--test-- "ICONV/TO (conversion to different codepage - binary result)"
+	bin: to binary! txt ; normaly conversion is done to UTF-8
+	--assert bin = iconv/to #{50F869686CE1736974} "ISO-8859-2" "utf8"
+	--assert bin = iconv/to #{50F869686CE1736974} 'ISO-8859-2  'utf8
+	--assert bin = iconv/to #{50F869686CE1736974} <ISO-8859-2> <UTF-8>
+	--assert bin = iconv/to #{50F869686CE1736974} 28592 65001
+
+	--assert #{C5A1C3A96D} = iconv/to #{9AE96D} 1250 65001 ; this one internally uses preallocated series data
+	--assert #{C5A1C3A96DC5A1C3A96D} = iconv/to #{9AE96D9AE96D} 1250 65001 ;this one internally extends series
+
+--test-- "ICONV/TO (UTF-16 variants)"
+	;- UTF-16 handling must be coded specially on Windows, so adding these tests here
+	;- using UTF-16LE instead of just UTF-16 as iconv function on posix adds BOM if just UTF16 is used
+	--assert #{50005901} = iconv/to  #{50F8} 28592 'UTF-16LE
+	--assert #{5901} = iconv/to next #{50F8} 28592 'UTF-16LE
+	--assert #{50005100} = iconv/to #{50005100} 'UTF16LE 'UTF16LE
+	--assert #{00500051} = iconv/to #{00500051} 'UTF16BE 'UTF16BE
+
+	--assert #{00500159} = iconv/to  #{50F8} 28592 'UTF-16BE
+	--assert #{0159} = iconv/to next #{50F8} 28592 'UTF-16BE
+	--assert #{00500051} = bin: iconv/to #{50005100} 'UTF16LE 'UTF16BE
+	--assert #{50005100} = iconv/to bin 'UTF16BE 'UTF16LE
+	--assert "PQ" = iconv bin 'UTF16BE
+
+--test-- "ICONV with nonsense codepages"
+	--assert error? try [iconv #{30} 'foo]
+	--assert error? try [iconv/to #{30} 'utf8 'foo]
+
+--test-- "ICONV euro sign"
+	--assert "€"   = iconv #{E282AC} 'utf8
+	--assert #{80} = iconv/to #{E282AC} 'utf8 'cp1252
+	--assert "€"   = iconv #{80} 'cp1252
+
+===end-group===
+
 ;-- VECTOR related tests moved to %vector-test.r3
 
 ~~~end-file~~~
