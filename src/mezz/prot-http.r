@@ -56,7 +56,7 @@ idate-to-date: function [date [string!]] [
 ;@@ just simple trace function
 ;@@net-log: :print
 
-sync-op: func [port body /local state encoding] [
+sync-op: func [port body /local state encoding content-type code-page tmp] [
 	unless port/state [open port port/state/close?: yes]
 	state: port/state
 	state/awake: :read-sync-awake
@@ -112,13 +112,22 @@ sync-op: func [port body /local state encoding] [
 		]
 	]
 
+	if all [
+		content-type: select port/state/info/headers 'Content-Type
+		parse content-type ["text/" [thru "charset=" copy code-page to end] | to end]
+	][
+		unless code-page [code-page: "utf-8"]
+		sys/log/info 'HTTP ["trying to decode from code-page:^[[m" code-page]
+		if string? tmp: try [iconv body code-page][	body: tmp ]
+	]
+
 	if state/close? [
 		sys/log/more 'HTTP ["closing port for:^[[m" port/spec/ref]
 		close port
 	]
 	body
 ]
-read-sync-awake: func [event [event!] /local error encoding] [
+read-sync-awake: func [event [event!] /local error] [
 	sys/log/debug 'HTTP ["read-sync-awake:" event/type]
 	switch/default event/type [
 		connect ready [
