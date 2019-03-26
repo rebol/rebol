@@ -73,6 +73,72 @@
 #include <stdio.h>
 #include <time.h>
 
+// FLOAT16 credits: Steven Pigeon
+// https://hbfs.wordpress.com/2013/02/12/float16/
+typedef union {
+	// float16 v;
+	struct {
+		// type determines alignment!
+		u16 m : 10;
+		u16 e : 5;
+		u16 s : 1;
+	} bits;
+	struct {
+		u8 low;
+		u8 high;
+	} bytes;
+} float16_s;
+
+typedef union {
+	float v;
+	struct {
+		u32 m : 23;
+		u32 e : 8;
+		u32 s : 1;
+	} bits;
+} float32_s;
+
+float float16to32(float16_s f16) {
+	// back to 32
+	float32_s f32;
+	f32.bits.s = f16.bits.s;
+	f32.bits.e = (f16.bits.e - 15) + 127; // safe in this direction
+	f32.bits.m = ((u32)f16.bits.m) << 13;
+	return f32.v;
+}
+
+#pragma pack(4) 
+typedef union {
+	u16 num;
+	struct {
+		u32 day   : 5;
+		u32 month : 4;
+		u32 year  : 7;
+	} date;
+} ms_date;
+
+typedef union {
+	u16 num;
+	struct {
+		u32 second : 5;
+		u32 minute : 6;
+		u32 hour   : 5;
+	} time;
+} ms_time;
+
+typedef union {
+	u32 num;
+	struct {
+		u32 second : 5;
+		u32 minute : 6;
+		u32 hour   : 5;
+		u32 day    : 5;
+		u32 month  : 4;
+		u32 year   : 7;
+	} val;
+} ms_datetime;
+#pragma pack() 
+
 #define ASSERT_SI_RANGE(v, n) if (VAL_INT64(v) < (- (i64)n) || VAL_INT64(v) > (i64)n) Trap1(RE_OUT_OF_RANGE, v);
 #define ASSERT_UI_RANGE(v, n) if (VAL_INT32(v) > n) Trap1(RE_OUT_OF_RANGE, v);
 #define ASSERT_UIBYTES_RANGE(v, n) if (VAL_LEN(v) > n) Trap1(RE_OUT_OF_RANGE, v);
@@ -114,6 +180,17 @@ system/standard/bincode: make object! [
 ]
 
 ***********************************************************************/
+
+static REBCNT EncodedU32_Size(u32 value) {
+	REBCNT count = 0;
+	if (value == 0) return 1;
+	else while (value > 0) {
+		value = value >> 7;
+		count++;
+	}
+	return count;
+}
+
 /***********************************************************************
 **
 */	REBNATIVE(binary)
@@ -130,6 +207,8 @@ system/standard/bincode: make object! [
 //			code [word! block!]   "Input encoding"
 //		/into    "Put READ results in out block, instead of creating a new block"
 //			out  [block!] "Target block for results, when /into is used"
+//		/with    "Additional input argument"
+//			num  [integer!] "Bits/bytes number used with WORD! code type to resolve just single value"
 //	]
 ***********************************************************************/
 {
@@ -142,6 +221,8 @@ system/standard/bincode: make object! [
 	REBVAL *val_read  = D_ARG(7);
 	REBOOL  ref_into  = D_REF(8);
 	REBVAL *val_into  = D_ARG(9);
+	REBOOL  ref_with  = D_REF(10);
+	REBVAL *val_num   = D_ARG(11);
 
     REBVAL *ret = D_RET;
 	//REBVAL *buf;
@@ -153,7 +234,13 @@ system/standard/bincode: make object! [
 	REBYTE *cp, *bp, *ep;
 	REBCNT n, count, index, tail, tail_new;
 	i32 i, len;
-	//u64 u;
+	u64 u;
+	i64 si;
+	u32 ulong;
+
+	ms_datetime* msdt = NULL;
+	ms_date*     msd  = NULL;
+	ms_time*     mst  = NULL;
 
 	REBVAL *value, *next;
 	REBVAL *data;
@@ -408,11 +495,37 @@ system/standard/bincode: make object! [
 							continue;
 						}
 						goto error;
+
+					case SYM_ENCODEDU32:
+						if (IS_INTEGER(next)) {
+							count += EncodedU32_Size(VAL_INT64(next));
+							continue;
+						}
+						goto error;
+						
 					case SYM_UNIXTIME_NOW:
 					case SYM_UNIXTIME_NOW_LE:
 						value--; //there is no argument so no next
 						count += 4;
 						break;
+
+					case SYM_MSDOS_DATE:
+						if (!IS_DATE(next)) goto error; // only date allowed
+						//continue..
+					case SYM_MSDOS_TIME:
+						if (IS_DATE(next) || IS_TIME(next)) {
+							count += 2;
+							continue;
+						}
+						goto error;
+
+					case SYM_MSDOS_DATETIME:
+						if (IS_DATE(next) || IS_TIME(next)) {
+							count += 4;
+							continue;
+						}
+						goto error;
+
 					case SYM_RANDOM_BYTES:
 						if (IS_INTEGER(next)) {
 							count += VAL_INT32(next);
@@ -654,6 +767,22 @@ system/standard/bincode: make object! [
 						cp = BIN_DATA(bin) + VAL_INDEX(buffer_write);
 						n = 0;
 						break;
+
+					case SYM_ENCODEDU32:
+						ASSERT_U32_RANGE(next);
+						ulong = (u32)VAL_INT64(next);
+						if (ulong == 0) {
+							n = 1;
+							cp[0] = 0;
+						} else {
+							n = EncodedU32_Size(VAL_INT64(next));
+							for (u = 0; u < n-1; u++) {
+								cp[u] = (char)(128 + ((ulong >> (u * 7)) & 127));
+							}
+							cp[n-1] = (char)((ulong >> ((n-1) * 7)) & 255);
+						}
+						break;
+
 					case SYM_UNIXTIME_NOW:
 						value--; // no args
 						n = 4;
@@ -676,6 +805,52 @@ system/standard/bincode: make object! [
 						cp[0] = bp[3]; cp[1] = bp[2]; cp[2] = bp[1]; cp[3] = bp[0];
 #endif
 						break;
+
+					case SYM_MSDOS_DATE:
+						msd = (ms_date*)cp;
+						msd->date.year = VAL_YEAR(next) - 1980;
+						msd->date.month = VAL_MONTH(next);
+						msd->date.day = VAL_DAY(next);
+						n = 2;
+						break;
+
+					case SYM_MSDOS_TIME:
+						if (VAL_TIME(next) == NO_TIME) {
+							cp[0] = 0;
+							cp[1] = 0;
+						} else {
+							mst = (ms_time*)cp;
+							si = VAL_TIME(next) / SEC_SEC;
+							mst->time.hour = (u32)(si / 3600);
+							si -= 3600 * (i64)mst->time.hour;
+							mst->time.minute = (u32)(si / 60);
+							si -= 60 * (i64)mst->time.minute;
+							mst->time.second = (u32)si / 2; // this format has only 2 sec resolution!
+						}
+						n = 2;
+						break;
+
+					case SYM_MSDOS_DATETIME:
+						msdt = (ms_datetime*)cp;
+						msdt->val.year = VAL_YEAR(next) - 1980;
+						msdt->val.month = VAL_MONTH(next);
+						msdt->val.day = VAL_DAY(next);
+						if (VAL_TIME(next) == NO_TIME) {
+							msdt->val.hour = 0;
+							msdt->val.minute = 0;
+							msdt->val.second = 0;
+						}
+						else {
+							si = VAL_TIME(next) / SEC_SEC;
+							msdt->val.hour = (u32)(si / 3600);
+							si -= 3600 * (i64)msdt->val.hour;
+							msdt->val.minute = (u32)(si / 60);
+							si -= 60 * (i64)msdt->val.minute;
+							msdt->val.second = (u32)si / 2; // this format has only 2 sec resolution!
+						}
+						n = 4;
+						break;
+
 					case SYM_RANDOM_BYTES:
 						if (IS_INTEGER(next)) {
 							n = (REBCNT)VAL_INT32(next);
@@ -730,6 +905,7 @@ system/standard/bincode: make object! [
 			// if encoding is just a word, simulate block with single value on stack
 			DS_PUSH(val_read);
 			value = DS_TOP;
+			if (IS_INTEGER(val_num)) DS_PUSH(val_num);
 			DS_PUSH_END; // marks end of the block
 			if(ref_into) {
 				blk = VAL_SERIES(val_into);
@@ -742,12 +918,14 @@ system/standard/bincode: make object! [
 		DS_PUSH_NONE;
 		temp = DS_TOP;
 		REBINT ssp = DSP;  // starting stack pointer
+		REBINT cmd;
 		
 		for (; NOT_END(value); value++) {
 			n = 0;
 			switch (VAL_TYPE(value)) {
 				case REB_WORD:
-					switch (VAL_WORD_CANON(value)) {
+					cmd = VAL_WORD_CANON(value);
+					switch (cmd) {
 						case SYM_UI8:
 							n = 1;
 							ASSERT_READ_SIZE(value, cp, ep, n);
@@ -773,6 +951,12 @@ system/standard/bincode: make object! [
 							ASSERT_READ_SIZE(value, cp, ep, n);
 							VAL_SET(temp, REB_INTEGER);
 							SET_INT32(temp, (i16)((i16)cp[1] + ((i16)cp[0] << 8)));
+							break;
+						case SYM_SI16LE:
+							n = 2;
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							VAL_SET(temp, REB_INTEGER);
+							SET_INT32(temp, (i16)((i16)cp[0] + ((i16)cp[1] << 8)));
 							break;
 						case SYM_UI24:
 						case SYM_UI24BE:
@@ -879,53 +1063,107 @@ system/standard/bincode: make object! [
 							}
 							n++;
 							break;
+						case SYM_BITSET8:
+							n = 1;
+							goto readBitsetN;
+						case SYM_BITSET16:
+							n = 2;
+							goto readBitsetN;
+						case SYM_BITSET32:
+							n = 4;
+						readBitsetN:
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							VAL_SET(temp, REB_BITSET);
+							bin_new = Copy_Series_Part(bin, VAL_INDEX(buffer_read), n);
+							VAL_SERIES(temp) = bin_new;
+							VAL_INDEX(temp) = 0;
+							break;
+						case SYM_ENCODEDU32:
+							ASSERT_READ_SIZE(value, cp, ep, 1);
+							u = (u64)cp[0];
+							if (!(u & 0x00000080)) {
+								n = 1;
+								goto setEnU32Result;
+							}
+							ASSERT_READ_SIZE(value, cp, ep, 2);
+							u = (u & 0x0000007f) | cp[1] << 7;
+							if (!(u & 0x00004000)) {
+								n = 2;
+								goto setEnU32Result;
+							}
+							ASSERT_READ_SIZE(value, cp, ep, 3);
+							u = (u & 0x00003fff) | cp[2] << 14;
+							if (!(u & 0x00200000)) {
+								n = 3;
+								goto setEnU32Result;
+							}
+							ASSERT_READ_SIZE(value, cp, ep, 4);
+							u = (u & 0x001fffff) | cp[3] << 21;
+							if (!(u & 0x10000000)) {
+								n = 4;
+								goto setEnU32Result;
+							}
+							ASSERT_READ_SIZE(value, cp, ep, 5);
+							u = (u & 0x0fffffff) | cp[4] << 28;
+							n = 5;
+						setEnU32Result:
+							VAL_SET(temp, REB_INTEGER);
+							VAL_UNT64(temp) = u & 0xffffffff; // limits result to 32 bit unsigned integer!
+							break;
 						case SYM_UB:
 							next = ++value;
 							if (IS_GET_WORD(next)) next = Get_Var(next);
 							if (!IS_INTEGER(next)) Trap1(RE_INVALID_SPEC, value);
 							i = 0;
-							if (inBit == 0) inBit = 0x80;
 							// could be optimized?
 							nbits = VAL_INT32(next);
 							//printf("bits: %i %i\n", nbits, 1 << nbits);
-							nbits = 1 << nbits;
-							ASSERT_READ_SIZE(value, cp, ep, 1);
-							while(nbits > 1) {
-								nbits = nbits >> 1;
-								if(IS_BIT_SET(cp[0], inBit)) i = i | nbits;
-								//printf("?? %i %i\n", inBit, i);
-								NEXT_IN_BIT(inBit);
-								//printf("inBit: %i\n", inBit);
+							if (nbits > 0) {
+								if (inBit == 0) inBit = 0x80;
+								nbits = 1 << nbits;
+								ASSERT_READ_SIZE(value, cp, ep, 1);
+								while(nbits > 1) {
+									nbits = nbits >> 1;
+									if(IS_BIT_SET(cp[0], inBit)) i = i | nbits;
+									//printf("?? %i %i\n", inBit, i);
+									NEXT_IN_BIT(inBit);
+									//printf("inBit: %i\n", inBit);
+								}
+								STORE_IN_BIT(val_ctx, inBit);
 							}
 							VAL_SET(temp, REB_INTEGER);
 							SET_INT32(temp, i);
-							STORE_IN_BIT(val_ctx, inBit);
 							break;
 						case SYM_SB:
+						case SYM_FB:
 							next = ++value;
 							if (IS_GET_WORD(next)) next = Get_Var(next);
 							if (!IS_INTEGER(next)) Trap1(RE_INVALID_SPEC, value);
-							i = 0;
-							if (inBit == 0) inBit = 0x80;
+							u = 0;
 							// could be optimized?
 							nbits = VAL_INT32(next);
-							nbits = 1 << nbits;
 							if (nbits > 0) {
-								//printf("nbits: %i\n", nbits);
-								ASSERT_READ_SIZE(value, cp, ep, 1);
-								BOOL negative = IS_BIT_SET(cp[0], inBit);
-								nbits = nbits >> 1;
-								NEXT_IN_BIT(inBit);
-								while (nbits > 1) {
-									nbits = nbits >> 1;
-									if (IS_BIT_SET(cp[0], inBit)) i = i | nbits;
-									//printf("?? %i %i\n", inBit, i);
-									NEXT_IN_BIT(inBit);
-								}
-								if(negative) i = -i;
+								if (inBit == 0) inBit = 0x80;
+								// http://graphics.stanford.edu/~seander/bithacks.html#VariableSignExtend
+								u64 m = 1U << (nbits - 1); // sign bit mask
+								nbits = 1 << nbits;
+								//if (nbits > 0) {
+									//printf("SB nbits: %i\n", nbits);
+									while (nbits > 1) {
+										nbits >>= 1;
+										if (IS_BIT_SET(cp[0], inBit)) u = u | nbits;
+										//printf("?? %i %i %u\n", nbits, inBit, u);
+										NEXT_IN_BIT(inBit);
+									}
+									u = (u ^ m) - m;
+								//}
+								STORE_IN_BIT(val_ctx, inBit);
 							}
-							VAL_SET(temp, REB_INTEGER);
-							SET_INT32(temp, i);
+							if (cmd == SYM_SB) {
+								SET_INTEGER(temp, u);
+							} else {
+								SET_DECIMAL(temp, (double)u / 65536.0);
+							}
 							break;
 						case SYM_BIT:
 						case SYM_NOT_BIT:
@@ -944,7 +1182,8 @@ system/standard/bincode: make object! [
 							break;
 						case SYM_ALIGN:
 							// aligns bit buffer to byte boundary
-							if (inBit > 0) {
+							//if (inBit == 128) inBit = 0;
+							if (inBit > 0 && inBit < 128) {
 								inBit = 0;
 								cp++;
 								VAL_INDEX(buffer_read)++;
@@ -964,6 +1203,8 @@ system/standard/bincode: make object! [
 							SET_INT32(temp, cp[0] + (cp[1] << 8) + (cp[2] << 16));
 							break;
 						case SYM_BYTES:
+						case SYM_OCTAL_BYTES:
+						case SYM_STRING_BYTES:
 							//puts("bytes");
 							next = ++value;
 							if (IS_GET_WORD(next)) next = Get_Var(next);
@@ -978,11 +1219,24 @@ system/standard/bincode: make object! [
 							}
 							ASSERT_READ_SIZE(value, cp, ep, n);
 						readNBytes:
-							//printf("num: %i\n", n);
-							VAL_SET(temp, REB_BINARY);
-							bin_new = Copy_Series_Part(bin, VAL_INDEX(buffer_read), n);
-							VAL_SERIES(temp) = bin_new;
-							VAL_INDEX(temp) = 0;
+							// WARNING: this piece of code is also used for SYM_UI*BYTES commands! 
+							if (cmd == SYM_OCTAL_BYTES) {
+								// octal number
+								u = 0;
+								i = 0;
+								while ((i < n) && cp[i]) {
+									u = (u << 3) | (u64)(cp[i++] - '0');
+								}
+								SET_INTEGER(temp, u);
+							} else {
+								VAL_SET(temp, (cmd == SYM_STRING_BYTES) ? REB_STRING: REB_BINARY);
+								bin_new = Copy_Series_Part(bin, VAL_INDEX(buffer_read), n);
+								VAL_SERIES(temp) = bin_new;
+								VAL_INDEX(temp) = 0;
+								if (cmd == SYM_STRING_BYTES) {
+									VAL_TAIL(temp) = strnlen(VAL_BIN(temp), n);
+								}
+							}
 							break;
 						case SYM_STRING:
 							bp = cp;
@@ -1062,9 +1316,107 @@ system/standard/bincode: make object! [
 							VAL_INDEX(buffer_read) = i; //TODO: range test
 							cp = BIN_DATA(bin) + VAL_INDEX(buffer_read);
 							continue;
+						case SYM_SKIPBITS:
+							next = ++value;
+							if (IS_GET_WORD(next)) next = Get_Var(next);
+							if (!IS_INTEGER(next)) Trap1(RE_INVALID_SPEC, value);
+							i = VAL_INT32(next);
+							if (i >= 8) {
+								i /= 8;
+								//printf("byte skip: %d\n", i);
+								ASSERT_READ_SIZE(value, cp, ep, i);
+								cp += i;
+								VAL_INDEX(buffer_read) += i;
+								i = VAL_INT32(next) - (i * 8);
+							}
+							if (inBit == 0) inBit = 0x80;
+							while (i > 0) {
+								i--;
+								//printf("inbit %d: %d %d\n",i, inBit, VAL_INDEX(buffer_read));
+								NEXT_IN_BIT(inBit);
+							}
+							continue;
 						case SYM_LENGTHQ:
 							VAL_SET(temp, REB_INTEGER);
 							SET_INT32(temp, VAL_TAIL(buffer_read) - VAL_INDEX(buffer_read));
+							break;
+						case SYM_TUPLE3:
+							n = 3;
+							goto readNTuple;
+						case SYM_TUPLE4:
+							n = 4;
+						readNTuple:
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							Set_Tuple(temp, BIN_DATA(bin) + VAL_INDEX(buffer_read), n);
+							break;
+						case SYM_FLOAT16:
+							n = 2;
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							float16_s f16;
+							f16.bytes.low  = cp[0];
+							f16.bytes.high = cp[1];
+							SET_DECIMAL(temp, float16to32(f16) );
+							break;
+						case SYM_FLOAT:
+							n = 4;
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							SET_DECIMAL(temp, ((float*)cp)[0]);
+							break;
+						case SYM_DOUBLE:
+							n = 8;
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							SET_DECIMAL(temp, ((double*)cp)[0]);
+							break;
+						case SYM_FIXED8:
+							n = 2;
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							i = ((i32)cp[0] << 0)  |
+								((i32)cp[1] << 8)  ;
+							SET_DECIMAL(temp, (float)i / 256.0f);
+							break;
+						case SYM_FIXED16:
+							n = 4;
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							i = ((i32)cp[0] << 0)  |
+								((i32)cp[1] << 8)  |
+								((i32)cp[2] << 16) |
+								((i32)cp[3] << 24) ;
+							VAL_SET(temp, REB_DECIMAL);
+							VAL_DECIMAL(temp) = ((float)i / 65536.0f);
+							break;
+						case SYM_MSDOS_DATETIME:
+							n = 4;
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							msdt = (ms_datetime*)cp;
+							VAL_SET  (temp, REB_DATE);
+							VAL_YEAR (temp) = msdt->val.year + 1980;
+							VAL_MONTH(temp) = msdt->val.month;
+							VAL_DAY  (temp) = msdt->val.day;
+							VAL_ZONE (temp) = 0;
+							VAL_TIME (temp) = TIME_SEC(msdt->val.second * 2
+							                         + msdt->val.minute * 60
+							                         + msdt->val.hour * 3600);
+							break;
+						case SYM_MSDOS_DATE:
+							n = 2;
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							msd = (ms_date*)cp;
+							CLEARS(temp);
+							VAL_SET  (temp, REB_DATE);
+							VAL_YEAR (temp) = msd->date.year + 1980;
+							VAL_MONTH(temp) = msd->date.month;
+							VAL_DAY  (temp) = msd->date.day;
+							VAL_TIME (temp) = NO_TIME;
+							break;
+						case SYM_MSDOS_TIME:
+							n = 2;
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							mst = (ms_time*)cp;
+							CLEARS(temp);
+							VAL_SET  (temp, REB_TIME);
+							VAL_TIME (temp) = TIME_SEC(mst->time.second * 2 // this format has only 2 sec resolution!
+							                         + mst->time.minute * 60
+							                         + mst->time.hour * 3600);
 							break;
 						default:
 							Trap1(RE_INVALID_SPEC, value);
@@ -1101,6 +1453,8 @@ system/standard/bincode: make object! [
 			DS_DROP; // temp
 			DS_DROP; // END of the virtual block
 			DS_DROP; // value
+			if (IS_INTEGER(val_num)) DS_DROP;
+			//@@ could above be done better?
 		}
 
 		if(ref_into) *ret = *val_into;

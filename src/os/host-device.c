@@ -73,7 +73,15 @@ extern REBDEV Dev_DNS;
 extern REBDEV Dev_Checksum;
 #ifndef MIN_OS
 extern REBDEV Dev_Clipboard;
-//extern REBDEV Dev_MIDI;
+#define DEVICE_PTR_CLIPBOARD &Dev_Clipboard
+#else
+#define DEVICE_PTR_CLIPBOARD 0
+#endif
+#ifdef USE_MIDI_DEVICE
+extern REBDEV Dev_MIDI;
+#define DEVICE_PTR_MIDI &Dev_MIDI
+#else
+#define DEVICE_PTR_MIDI 0
 #endif
 
 REBDEV *Devices[RDI_LIMIT] =
@@ -86,12 +94,8 @@ REBDEV *Devices[RDI_LIMIT] =
 	&Dev_Net,
 	&Dev_DNS,
 	0,//&Dev_Checksum,
-#ifndef MIN_OS
-	&Dev_Clipboard,
-//	&Dev_MIDI,
-#else
-	0
-#endif
+	DEVICE_PTR_CLIPBOARD,
+	DEVICE_PTR_MIDI
 };
 
 

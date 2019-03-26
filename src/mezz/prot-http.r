@@ -17,13 +17,15 @@ REBOL [
 		This program defines the HTTP protocol scheme for REBOL 3.
 	}
 	Author: ["Gabriele Santilli" "Richard Smolak" "Oldes"]
-	Date: 21-May-2018
+	Date: 21-Mar-2019
 	History: [
 		0.1.1 22-Jun-2007 "Gabriele Santilli" "Version used in R3-Alpha"
 		0.1.4 26-Nov-2012 "Richard Smolak"    "Version from Atronix's fork"
 		0.1.5 10-May-2018 "Oldes" "FIX: Query on URL was returning just none"
 		0.1.6 21-May-2018 "Oldes" "FEAT: Added support for basic redirection"
 		0.1.7 03-Dec-2018 "Oldes" "FEAT: Added support for QUERY/MODE action"
+		0.1.8 21-Mar-2019 "Oldes" "FEAT: Using system trace outputs"
+		0.1.9 21-Mar-2019 "Oldes" "FEAT: Added support for transfer compression"
 	]
 ]
 
@@ -54,7 +56,7 @@ idate-to-date: function [date [string!]] [
 ;@@ just simple trace function
 ;@@net-log: :print
 
-sync-op: func [port body /local state] [
+sync-op: func [port body /local state encoding content-type code-page tmp] [
 	unless port/state [open port port/state/close?: yes]
 	state: port/state
 	state/awake: :read-sync-awake
@@ -87,12 +89,46 @@ sync-op: func [port body /local state] [
 		]
 	]
 	if state/error [do state/error]
+
 	body: copy port
-	if state/close? [close port]
+
+	sys/log/info 'HTTP ["Done reading:^[[22m" length? body "bytes"]
+
+	if encoding: select port/state/info/headers 'Content-Encoding [
+		sys/log/info 'HTTP 
+		either find ["gzip" "deflate"] encoding [
+			either error? try [
+				body: switch encoding [
+					"gzip"    [ decompress/gzip    body ]
+					"deflate" [ decompress/deflate body ]
+				]
+			][
+				["Failed to decode data using:^[[22m" encoding]
+			][
+				["Extracted using:^[[22m" encoding "^[[1mto:^[[22m" length? body "bytes"]
+			]
+		][
+			["Unknown Content-Encoding:^[[m" encoding]
+		]
+	]
+
+	if all [
+		content-type: select port/state/info/headers 'Content-Type
+		parse content-type ["text/" [thru "charset=" copy code-page to end] | to end]
+	][
+		unless code-page [code-page: "utf-8"]
+		sys/log/info 'HTTP ["trying to decode from code-page:^[[m" code-page]
+		if string? tmp: try [iconv body code-page][	body: tmp ]
+	]
+
+	if state/close? [
+		sys/log/more 'HTTP ["closing port for:^[[m" port/spec/ref]
+		close port
+	]
 	body
 ]
 read-sync-awake: func [event [event!] /local error] [
-	;@@net-log ["[HTTP read-sync-awake]" event/type]
+	sys/log/debug 'HTTP ["read-sync-awake:" event/type]
 	switch/default event/type [
 		connect ready [
 			do-request event/port
@@ -127,7 +163,7 @@ http-awake: func [event /local port http-port state awake res] [
 	if any-function? :http-port/awake [state/awake: :http-port/awake]
 	awake: :state/awake
 
-	;@@net-log ["[HTTP http-awake]"  event/type]
+	sys/log/debug 'HTTP ["awake:" event/type]
 
 	switch/default event/type [
 		read [
@@ -202,7 +238,7 @@ make-http-request: func [
 	result: rejoin [
 		uppercase form method #" "
 		either file? target [next mold target] [target]
-		" HTTP/1.0" CRLF
+		" HTTP/1.1" CRLF
 	]
 	foreach [word string] headers [
 		repend result [mold word #" " string CRLF]
@@ -211,6 +247,8 @@ make-http-request: func [
 		content: to binary! content
 		repend result ["Content-Length: " length? content CRLF]
 	]
+	sys/log/info 'HTTP ["Request:^[[22m" mold result]
+
 	append result CRLF
 	result: to binary! result
 	if content [append result content]
@@ -226,6 +264,7 @@ do-request: func [
 	spec/headers: body-of make make object! [
 		Accept: "*/*"
 		Accept-Charset: "utf-8"
+		Accept-encoding: "gzip,deflate"
 		Host: either not find [80 443] spec/port-id [
 			rejoin [form spec/host #":" spec/port-id]
 		] [
@@ -237,7 +276,7 @@ do-request: func [
 	info/headers: info/response-line: info/response-parsed: port/data:
 	info/size: info/date: info/name: none
 
-	;@@net-log ["[HTTP do-request]" spec/method spec/host spec/path]
+	;sys/log/info 'HTTP ["do-request:^[[22m" spec/method spec/host spec/path]
 
 	write port/state/connection make-http-request spec/method to file! any [spec/path %/] spec/headers spec/content
 ]
@@ -256,26 +295,26 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 	awake: :state/awake
 	spec: port/spec
 	
-	;@@net-log ["[HTTP check-response]" info/response-parsed]
-
 	if all [
 		not headers
 		any [
 			all [
 				d1: find conn/data crlfbin
 				d2: find/tail d1 crlf2bin
-				;@@net-log "server using standard content separator of #{0D0A0D0A}"
+				;sys/log/debug 'HTML "server using standard content separator of #{0D0A0D0A}"
 			]
 			all [
 				d1: find conn/data #{0A}
 				d2: find/tail d1 #{0A0A}
-				;@@net-log "server using malformed line separator of #{0A0A}"
+				sys/log/debug 'HTML "server using malformed line separator of #{0A0A}"
 			]
 		]
 	] [
 		info/response-line: line: to string! copy/part conn/data d1
-		;?? line
+		sys/log/more 'HTTP line
+		;probe to-string copy/part d1 d2
 		info/headers: headers: construct/with d1 http-response-headers
+		sys/log/info 'HTTP ["Headers:^[[22m" mold headers]
 		info/name: spec/ref
 		if headers/content-length [info/size: headers/content-length: to integer! headers/content-length]
 		if headers/last-modified [info/date: attempt [idate-to-date headers/last-modified]]
@@ -320,6 +359,9 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 			| (info/response-parsed: 'version-not-supported)
 		]
 	]
+
+	sys/log/debug 'HTTP ["check-response:" info/response-parsed]
+
 	;?? info/response-parsed
 	;?? spec/method
 
@@ -424,6 +466,7 @@ crlf2bin: #{0D0A0D0A}
 crlf2: to string! crlf2bin
 http-response-headers: context [
 	Content-Length:
+	Content-Encoding:
 	Transfer-Encoding:
 	Last-Modified: none
 ]
@@ -447,7 +490,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state] 
 		[new-uri/scheme "://" new-uri/host new-uri/path]
 	][	[new-uri/scheme "://" new-uri/host #":" new-uri/port-id new-uri/path]]
 
-	;@@net-log ["[HTTP do-redirect] new-uri:" mold new-uri]
+	sys/log/info 'HTTP ["Redirect to:^[[m" mold new-uri]
 	;?? port
 
 	unless find [http https] new-uri/scheme [
@@ -470,7 +513,7 @@ check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer st
 	conn: state/connection
 	res: false
 
-	;@@net-log ["[HTTP check-data] bytes:" length? conn/data]
+	sys/log/more 'HTTP ["check-data; bytes:^[[m" length? conn/data]
 	;? conn
 
 	case [
@@ -559,7 +602,7 @@ sys/make-scheme [
 		read: func [
 			port [port!]
 		] [
-			;@@net-log "[HTTP read]"
+			sys/log/debug 'HTTP "read"
 			either any-function? :port/awake [
 				unless open? port [cause-error 'Access 'not-open port/spec/ref]
 				if port/state/state <> 'ready [http-error "Port not ready"]
@@ -574,7 +617,7 @@ sys/make-scheme [
 			port [port!]
 			value
 		] [
-			;@@net-log "[HTTP write]"
+			sys/log/debug 'HTTP "write"
 			;?? port
 			unless any [block? :value binary? :value any-string? :value] [value: form :value]
 			unless block? value [value: reduce [[Content-Type: "application/x-www-form-urlencoded; charset=utf-8"] value]]
@@ -594,7 +637,7 @@ sys/make-scheme [
 			port [port!]
 			/local conn
 		] [
-			;@@net-log ["[HTTP open] state:" port/state]
+			sys/log/debug 'HTTP ["open, state:" port/state]
 			if port/state [return port]
 			if none? port/spec/host [http-error "Missing host address"]
 			port/state: context [
@@ -615,7 +658,7 @@ sys/make-scheme [
 			;?? conn 
 			conn/awake: :http-awake
 			conn/locals: port
-			;@@net-log ["[HTTP open] scheme:" conn/spec/scheme conn/spec/host]
+			sys/log/info 'HTTP ["Opening connection:^[[22m" conn/spec/ref]
 			;?? conn
 			open conn
 			port
@@ -628,7 +671,7 @@ sys/make-scheme [
 		close: func [
 			port [port!]
 		] [
-			;@@net-log "[HTTP close]"
+			sys/log/debug 'HTTP "close"
 			if port/state [
 				close port/state/connection
 				port/state/connection/awake: none

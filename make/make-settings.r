@@ -15,6 +15,7 @@ Defines: [
 	;USE_WAV_CODEC   ;-- deprecated; using Rebol codec instead
 	;USE_NO_INFINITY ;-- use when you don't want to support IEEE infinity
 	USE_LZMA         ;-- adds support for LZMA [de]compression
+	USE_MIDI_DEVICE  ;-- includes MIDI device when possible (Windows & macOS)
 
 	;@@ optional fine tuning:
 	;DO_NOT_NORMALIZE_MAP_KEYS
@@ -29,5 +30,7 @@ Defines: [
 	;USE_EMPTY_HASH_AS_NONE ;-- A single # means NONE, else error; Used in l-scan.c file
 	;FORCE_ANSI_ESC_EMULATION_ON_WINDOWS ;-- would not try to use MS' built-in VIRTUAL_TERMINAL_PROCESSING
 	;EXCLUDE_VECTOR_MATH ;-- don't include vector math support (like: 3 * #[vector! integer! 8 3 [1 2 3]])
+
+	;DEBUG_MIDI ;-- prints some of internal traces from MIDI device handler
 
 ]

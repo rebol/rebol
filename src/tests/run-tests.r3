@@ -13,6 +13,8 @@ dt [ ;- delta time
 	wrap load %units/enbase-test.r3
 	wrap load %units/map-test.r3
 	wrap load %units/integer-test.r3
+	wrap load %units/decimal-test.r3
+	wrap load %units/money-test.r3
 	wrap load %units/power-test.r3
 	wrap load %units/mezz-crypt-test.r3
 	wrap load %units/rc4-test.r3

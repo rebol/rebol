@@ -53,6 +53,9 @@ REBOL [
 	%codec-crt.r
 	%codec-gzip.r
 	%codec-xml.r
+	%codec-swf.r
+	%codec-zip.r
+	%codec-tar.r
 ]
 
 ;-- protocols:

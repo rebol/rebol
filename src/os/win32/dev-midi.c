@@ -36,11 +36,11 @@
 **    5. Test everything, then test it again.
 **
 ***********************************************************************/
+#ifdef USE_MIDI_DEVICE
 
-// NOTE: this will be useful for OSX version:
-// https://stackoverflow.com/questions/47660597/using-osx-core-midi-in-a-c-project
-// and this for higher level launchpad schemes (code includes led/key mapping values)
+// NOTE: this will be useful for higher level launchpad schemes:
 // https://github.com/FMMT666/launchpad.py/blob/master/launchpad_py/launchpad.py
+// (code includes led/key mapping values)
 //*********************************************************************/
 
 #include <SDKDDKVer.h>
@@ -513,6 +513,25 @@ static void PrintMidiDevices()
 
 /***********************************************************************
 **
+*/	DEVICE_CMD Quit_MIDI(REBREQ *req)
+/*
+***********************************************************************/
+{
+	//printf("Quit_MIDI\n");
+	for (REBCNT n = 0; n < Midi_Ports_Pool.count; n++) {
+		if (Midi_Ports_Pool.ports[n].port != NULL) {
+			req->handle = &Midi_Ports_Pool.ports[n];
+			Close_MIDI(req);
+		}
+	}
+	Midi_Ports_Pool.count = 0;
+	FREE_MEM(Midi_Ports_Pool.ports);
+	return DR_DONE;
+}
+
+
+/***********************************************************************
+**
 **	Command Dispatch Table (RDC_ enum order)
 **
 ***********************************************************************/
@@ -520,7 +539,7 @@ static void PrintMidiDevices()
 static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 {
 	Init_MIDI,
-	0,
+	Quit_MIDI,
 	Open_MIDI,
 	Close_MIDI,
 	Read_MIDI,
@@ -536,3 +555,5 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 };
 
 DEFINE_DEV(Dev_MIDI, "MIDI", 1, Dev_Cmds, RDC_MAX, 0);
+
+#endif //USE_MIDI_DEVICE

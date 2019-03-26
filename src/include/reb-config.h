@@ -160,16 +160,30 @@ These are now obsolete (as of A107) and should be removed:
 #define API_IMPORT
 #endif
 
+#ifdef TO_LINUX
+#define TO_ANY_LINUX
+#endif
+
+#ifdef TO_LINUX_X64
+#define TO_ANY_LINUX
+#endif
+
+#ifdef TO_ANY_LINUX
+#undef USE_MIDI_DEVICE          // Not implemented!
+#endif
+
 #ifdef TO_OSX					// OSX/PPC
 #define OLD_COMPILER
 #endif
 
 #ifdef TO_OBSD					// OpenBSD
+#undef USE_MIDI_DEVICE          // Not implemented!
 #define COPY_STR(d,s,m) strlcpy(d,s,m)
 #define JOIN_STR(d,s,m) strlcat(d,s,m)
 #endif
 
 #ifdef TO_AMIGA					// Target for OS4
+#undef USE_MIDI_DEVICE          // Not implemented!
 #define HAS_BOOL
 #define HAS_SMART_CONSOLE
 #define NO_DL_LIB

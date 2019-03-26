@@ -173,7 +173,7 @@ REBOL [
 register-codec [
 	name:  'XML
 	title: "Extensible Markup Language"
-	suffixes: [%.xml]
+	suffixes: [%.xml %.pom]
 
 	decode: function [
 		"Parses XML code and returns a tree of blocks"

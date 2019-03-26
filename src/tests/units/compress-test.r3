@@ -43,6 +43,9 @@ data: "test test test"
 
 ===start-group=== "GZIP compression / decompression"
 
+	--test-- "DEFLATE decompress"
+		--assert #{74657374} = decompress/deflate #{2B492D2E01000C7E7FD804}
+
 	--test-- "GZIP compress/decompress"
 		--assert  data = to string! decompress/gzip compress/gzip data
 

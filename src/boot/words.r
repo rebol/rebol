@@ -223,3 +223,9 @@ window-rows
 
 devices-in
 devices-out
+
+msdos-datetime
+msdos-date
+msdos-time
+octal-bytes
+string-bytes

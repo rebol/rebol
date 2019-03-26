@@ -3,7 +3,7 @@ REBOL [
 	name: 'tls
 	type: 'module
 	author: rights: ["Richard 'Cyphre' Smolak" "Oldes" "Brian Dickens (Hostilefork)"]
-	version: 0.6.1
+	version: 0.7.1
 	history: [
 		0.6.1 "Cyphre" "Initial implementation used in old R3-alpha"
 		0.7.0 "Oldes" {
@@ -11,6 +11,10 @@ REBOL [
 			* Using BinCode (binary) dialect to deal with buffers input/output.
 			* Code is now having a lots of traces for deep study of the process.
 			Special thanks to Hostile Fork for implementing TLSv1.2 for his Ren-C before me.
+		}
+		0.7.1 "Oldes" {
+			* Added Server Name Indication extension into TLS scheme
+			* Fixed RSA/SHA message signatures
 		}
 	]
 	todo: {
@@ -263,7 +267,7 @@ suported-cipher-suites: rejoin [
 ]
 
 supported-signature-algorithms: rejoin [
-	;#{0601} ; rsa_pkcs1_sha512
+	#{0601} ; rsa_pkcs1_sha512
 	#{0602} ; SHA512 DSA
 	;#{0603} ; ecdsa_secp521r1_sha512
 	#{0501} ; rsa_pkcs1_sha384
@@ -408,11 +412,31 @@ client-hello: function [
 ] [
 	change-state ctx 'CLIENT_HELLO
 	with ctx [
-		;initialize checksum port(s)
+
+		extensions: make binary! 16
+
+		;- Server Name Indication (extension)
+		;  https://tools.ietf.org/html/rfc6066#section-3
+		if all [
+			ctx/connection
+			host-name: ctx/connection/spec/host
+		][
+			host-name: to binary! host-name
+			length-name: length? host-name
+
+			binary/write extensions compose [
+				UI16  0                ; extension type (server_name=0)
+				UI16 (5 + length-name) 
+				UI16 (3 + length-name)
+				UI8   0
+				UI16  :length-name
+				BYTES :host-name
+			]
+		]
 
 		;precomputing the extension's lengths so I can write them in one WRITE call
 		length-signatures:  2 + length? supported-signature-algorithms
-		length-extensions:  4 + length-signatures
+		length-extensions:  4 + length-signatures + length? extensions
 		length-message:    41 + length-extensions + length? suported-cipher-suites
 		length-record:      4 + length-message
 
@@ -434,6 +458,7 @@ client-hello: function [
 			UI16      13                  ; extension type: signature-algorithms
 			UI16      :length-signatures  ; note: there is another length following
 			UI16BYTES :supported-signature-algorithms
+			BYTES     :extensions
 		]
 
 		out/buffer: head out/buffer
@@ -1300,7 +1325,7 @@ TLS-read-handshake-message: function [
 				;probe copy/part ctx/in/buffer 10
 				binary/read ctx/in [cert: UI24BYTES]
 				;probe cert
-				i: i + 1 write rejoin [%/x/cert i %.der] cert
+				;i: i + 1 write rejoin [%/x/cert i %.der] cert
 				append ctx/server-certs decode 'CRT cert
 			]
 			log-more ["Received" length? ctx/server-certs "server certificates."]
@@ -1357,18 +1382,17 @@ TLS-read-handshake-message: function [
 							ctx/client-random
 							ctx/server-random
 						]
-						message-hash: checksum/method message 'sha256 
-						;print ["??? signature message length:" length? message]
-						;?? message-hash
 
 						either hash-algorithm = 'md5_sha1 [
 							;__private_rsa_verify_hash_md5sha1
 							log-error "legacy __private_rsa_verify_hash_md5sha1 not implemented yet!"
-							;halt
+							return *Alert/Decode_error
 						][
 							log-more "Checking signature using RSA"
 							if any [
 								error? err: try [
+									message-hash: checksum/method message hash-algorithm
+									;?? message-hash
 									;decrypt the `signature` with server's public key
 									rsa-key: apply :rsa-init ctx/server-certs/1/public-key/rsaEncryption
 									signature: rsa/verify rsa-key signature
@@ -1380,8 +1404,7 @@ TLS-read-handshake-message: function [
 							][
 								log-error "Failed to validate signature"
 								if error? err [print err]
-								halt
-								;@@TODO: alret: TLS_BROKEN_PACKET 
+								return *Alert/Decode_error
 							]
 							log-more "Signature valid!"
 						]
@@ -1394,7 +1417,7 @@ TLS-read-handshake-message: function [
 							"Extra" len "bytes at the end of message:"
 							mold extra
 						]
-						halt
+						return *Alert/Decode_error
 					]
 
 					ctx/dh-key: dh-init dh_g dh_p
@@ -1419,7 +1442,7 @@ TLS-read-handshake-message: function [
 			if ends <> index? ctx/in/buffer [
 				log-error ["Positions:" ends  index? ctx/in/buffer]
 				log-error  "Looks we should read also something else!"
-				halt
+				return *Alert/Decode_error
 			]
 		]
 		;----------------------------------------------------------
