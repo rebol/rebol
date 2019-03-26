@@ -47,40 +47,40 @@
 
 // Codepage aliases borrowed from: https://github.com/win-iconv/win-iconv/blob/master/win_iconv.c
 // (slightly modified for preferences, because it looks some iconv posix variants does not recognize CP1200 etc)
+// On macOS it looks there are not aliased utf16 variants, one must use utf-16!
 // 
 static struct {
 	REBINT codepage;
 	const char *name;
 } codepage_alias[] = {
-	{65001, "UTF8"},
 	{65001, "UTF-8"},
+	{65001, "UTF8"},
 	{65001, "CP65001"},
 
-	
-	{1200, "UTF16LE"},
 	{1200, "UTF-16LE"},
-	{1200, "UCS2LE"},
+	{1200, "UTF16LE"},
 	{1200, "UCS-2LE"},
+	{1200, "UCS2LE"},
 	{1200, "UCS-2-INTERNAL"},
 	{1200, "CP1200"},
 
-	{1201, "UTF16BE"},
 	{1201, "UTF-16BE"},
-	{1201, "UCS2BE"},
+	{1201, "UTF16BE"},
 	{1201, "UCS-2BE"},
+	{1201, "UCS2BE"},
 	{1201, "unicodeFFFE"},
 	{1201, "CP1201"},
 
 	{12000, "CP12000"},
-	{12000, "UTF32LE"},
 	{12000, "UTF-32LE"},
-	{12000, "UCS4LE"},
+	{12000, "UTF32LE"},
 	{12000, "UCS-4LE"},
+	{12000, "UCS4LE"},
 
-	{12001, "UTF32BE"},
 	{12001, "UTF-32BE"},
-	{12001, "UCS4BE"},
+	{12001, "UTF32BE"},
 	{12001, "UCS-4BE"},
+	{12001, "UCS4BE"},
 	{12001, "CP12001"},
 
 //#ifndef GLIB_COMPILATION
@@ -98,14 +98,14 @@ static struct {
 //    {12001, "UCS4"},
 //#else
 	/* Default is little endian, because the platform is */
-	{1200, "UTF16"},
 	{1200, "UTF-16"},
-	{1200, "UCS2"},
+	{1200, "UTF16"},
 	{1200, "UCS-2"},
-	{12000, "UTF32"},
+	{1200, "UCS2"},
 	{12000, "UTF-32"},
-	{12000, "UCS4"},
+	{12000, "UTF32"},
 	{12000, "UCS-4"},
+	{12000, "UCS4"},
 //#endif
 
 	/* copy from libiconv `iconv -l` */
@@ -715,9 +715,10 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 		if (!tocode) Trap1(RE_INVALID_ARG, val_to);
 		wide = 1; // result is raw binary series
 	} else {
-		tocode = "UTF16LE";
+		tocode = "UTF-16LE";
 		wide = 2; // result is string
 	}
+	//printf("iconv_open %s %s\n", tocode, fromcode);
 	cd = iconv_open(tocode, fromcode);
 	if (cd == (iconv_t)-1) {
 		if (get_codepage_id(val_from) < 0) Trap1(RE_INVALID_ARG, val_from);

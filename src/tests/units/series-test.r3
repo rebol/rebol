@@ -198,14 +198,14 @@ Rebol [
 	;- using UTF-16LE instead of just UTF-16 as iconv function on posix adds BOM if just UTF16 is used
 	--assert #{50005901} = iconv/to  #{50F8} 28592 'UTF-16LE
 	--assert #{5901} = iconv/to next #{50F8} 28592 'UTF-16LE
-	--assert #{50005100} = iconv/to #{50005100} 'UTF16LE 'UTF16LE
-	--assert #{00500051} = iconv/to #{00500051} 'UTF16BE 'UTF16BE
+	--assert #{50005100} = iconv/to #{50005100} 'UTF-16LE 'UTF-16LE
+	--assert #{00500051} = iconv/to #{00500051} 'UTF-16BE 'UTF-16BE
 
 	--assert #{00500159} = iconv/to  #{50F8} 28592 'UTF-16BE
 	--assert #{0159} = iconv/to next #{50F8} 28592 'UTF-16BE
-	--assert #{00500051} = bin: iconv/to #{50005100} 'UTF16LE 'UTF16BE
-	--assert #{50005100} = iconv/to bin 'UTF16BE 'UTF16LE
-	--assert "PQ" = iconv bin 'UTF16BE
+	--assert #{00500051} = bin: iconv/to #{50005100} 'UTF-16LE 'UTF-16BE
+	--assert #{50005100} = iconv/to bin 'UTF-16BE 'UTF-16LE
+	--assert "PQ" = iconv bin 'UTF-16BE
 
 --test-- "ICONV with nonsense codepages"
 	--assert error? try [iconv #{30} 'foo]
