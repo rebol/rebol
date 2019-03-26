@@ -114,7 +114,7 @@ sync-op: func [port body /local state encoding content-type code-page tmp] [
 
 	if all [
 		content-type: select port/state/info/headers 'Content-Type
-		parse content-type ["text/" [thru "charset=" copy code-page to end] | to end]
+		parse content-type ["text/" [thru "charset=" copy code-page to end] to end]
 	][
 		unless code-page [code-page: "utf-8"]
 		sys/log/info 'HTTP ["trying to decode from code-page:^[[m" code-page]
