@@ -546,7 +546,7 @@ parse: native [
 
 set: native [
 	{Sets a word, path, block of words, or object to specified value(s).}
-	word [any-word! any-path! block! object!] {Word, block of words, path, or object to be set (modified)}
+	word [word! lit-word! any-path! block! object!] {Word, block of words, path, or object to be set (modified)}
 	value [any-type!] {Value or block of values}
 	/any {Allows setting words to any value, including unset}
 	/only {Block or object value argument is set as a single value}
