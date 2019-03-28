@@ -91,5 +91,22 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "DATE/TIMEZONE"
+	--test-- "set timezone"
+		;@@ https://github.com/rebol/rebol-issues/issues/2370
+		d: 1-Jan-2000
+		d/zone: 2
+		--assert "1-Jan-2000/0:00+2:00" = mold d
+		d/timezone: 2
+		--assert "1-Jan-2000/0:00+2:00" = mold d
+		d/timezone: 4
+		--assert "1-Jan-2000/2:00+4:00" = mold d
+		d/timezone: -7
+		--assert "31-Dec-1999/15:00-7:00" = mold d
+		d/timezone: -70
+		--assert "29-Dec-1999/0:00-6:00" = mold d
+
+===end-group===
+
 
 ~~~end-file~~~

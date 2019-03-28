@@ -500,7 +500,7 @@
 	REBINT i;
 	REBINT n;
 	REBI64 secs;
-	REBINT tz;
+	REBINT tz, tzp;
 	REBDAT date;
 	REBINT day, month, year;
 	REBINT num;
@@ -525,6 +525,7 @@
 		case SYM_HOUR:	 i = 9; break;
 		case SYM_MINUTE: i = 10; break;
 		case SYM_SECOND: i = 11; break;
+		case SYM_TIMEZONE: i = 12; break;
 		default: return PE_BAD_SELECT;
 		}
 	}
@@ -565,7 +566,8 @@
 			*val = *data;
 			VAL_SET(val, REB_TIME);
 			return PE_USE;
-		case 4:
+		case 4:  // zone
+		case 12: // timezone
 			if (secs == NO_TIME) return PE_NONE;
 			*val = *data;
 			VAL_TIME(val) = (i64)tz * ZONE_MINS * MIN_SEC;
@@ -612,7 +614,10 @@
 
 	} else {
 
-		if (IS_INTEGER(val) || IS_DECIMAL(val)) n = Int32s(val, 0);
+		if (IS_INTEGER(val) || IS_DECIMAL(val)) {
+			// allow negative time zone
+			n = (i == 4 || i == 12) ? Int32(val) : Int32s(val, 0);
+		}
 		else if (IS_NONE(val)) n = 0;
 		else if (IS_TIME(val) && (i == 3 || i == 4));
 		else if (IS_DATE(val) && (i == 3 || i == 5));
@@ -643,13 +648,18 @@
 				secs = DEC_TO_SECS(VAL_DECIMAL(val));
 			else return PE_BAD_SET_TYPE;
 			break;
-		case 4:
-			// zone
+		case 4:	 // zone
+		case 12: // timezone
+			tzp = tz;
 			if (IS_TIME(val)) tz = (REBINT)(VAL_TIME(val) / (ZONE_MINS * MIN_SEC));
 			else if (IS_DATE(val)) tz = VAL_ZONE(val);
 			else tz = n * (60 / ZONE_MINS);
-			if (tz > MAX_ZONE || tz < -MAX_ZONE) return PE_BAD_RANGE;
+			if (i == 4 && (tz > MAX_ZONE || tz < -MAX_ZONE)) return PE_BAD_RANGE;
 			if (secs == NO_TIME) secs = 0;
+			if (i == 12) {
+				//Adjust_Date_Zone(val, FALSE);
+				secs += ((i64)(tz - tzp) * ((i64)ZONE_SECS * SEC_SEC));
+			}
 			break;
 		case 5:
 			// date
