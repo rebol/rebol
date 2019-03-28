@@ -11,13 +11,13 @@ REBOL [
 	}
 	Name: 'http
 	Type: 'module
-	Version: 0.1.6
+	Version: 0.2.0
 	File: %prot-http.r
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
 	}
 	Author: ["Gabriele Santilli" "Richard Smolak" "Oldes"]
-	Date: 21-Mar-2019
+	Date: 28-Mar-2019
 	History: [
 		0.1.1 22-Jun-2007 "Gabriele Santilli" "Version used in R3-Alpha"
 		0.1.4 26-Nov-2012 "Richard Smolak"    "Version from Atronix's fork"
@@ -26,35 +26,9 @@ REBOL [
 		0.1.7 03-Dec-2018 "Oldes" "FEAT: Added support for QUERY/MODE action"
 		0.1.8 21-Mar-2019 "Oldes" "FEAT: Using system trace outputs"
 		0.1.9 21-Mar-2019 "Oldes" "FEAT: Added support for transfer compression"
+		0.2.0 28-Mar-2019 "Oldes" "FIX: close connection in case of errors"
 	]
 ]
-
-;@@ idate-to-date should be moved to other location!
-digit: charset [#"0" - #"9"]
-alpha: charset [#"a" - #"z" #"A" - #"Z"]
-idate-to-date: function [date [string!]] [
-	either parse date [
-		5 skip
-		copy day: 2 digit
-		space
-		copy month: 3 alpha
-		space
-		copy year: 4 digit
-		space
-		copy time: to space
-		space
-		copy zone: to end
-	][
-		if zone = "GMT" [zone: copy "+0"]
-		to date! rejoin [day "-" month "-" year "/" time zone]
-	][
-		none
-	]
-]
-;@@==================================================
-
-;@@ just simple trace function
-;@@net-log: :print
 
 sync-op: func [port body /local state encoding content-type code-page tmp] [
 	unless port/state [open port port/state/close?: yes]
@@ -66,12 +40,12 @@ sync-op: func [port body /local state encoding content-type code-page tmp] [
 	;The timeout should be triggered only when the response from other side exceeds the timeout value.
 	;--Richard
 	while [not find [ready close] state/state][
-		;@@net-log ["########### sync-op.." state/state]
-		unless port? wait [state/connection port/spec/timeout] [http-error "HTTP(s) Timeout"]
-		;@@net-log ["########### sync-op wakeup" state/state]
+		unless port? wait [state/connection port/spec/timeout] [
+			state/error: make-http-error "HTTP(s) Timeout"
+			break
+		]
 		switch state/state [
 			inited [
-				;@@net-log ["state/connection open? ->" open? state/connection]
 				if not open? state/connection [
 					state/error: make-http-error rejoin ["Internal " state/connection/spec/ref " connection closed"]
 					break
@@ -88,7 +62,9 @@ sync-op: func [port body /local state encoding content-type code-page tmp] [
 			]
 		]
 	]
-	if state/error [do state/error]
+	if state/error [
+		state/awake make event! [type: 'error port: port]
+	]
 
 	body: copy port
 
@@ -150,7 +126,11 @@ read-sync-awake: func [event [event!] /local error] [
 		error [
 			error: event/port/state/error
 			event/port/state/error: none
-			do error
+			try [
+				sys/log/debug 'HTTP ["Closing (sync-awake):^[[1m" event/port/spec/ref]
+				close event/port
+			]
+			if error? error [do error]
 		]
 	] [
 		false
@@ -163,7 +143,7 @@ http-awake: func [event /local port http-port state awake res] [
 	if any-function? :http-port/awake [state/awake: :http-port/awake]
 	awake: :state/awake
 
-	sys/log/debug 'HTTP ["awake:" event/type]
+	sys/log/debug 'HTTP ["awake:^[[1m" event/type "^[[22mstate:^[[1m" state/state]
 
 	switch/default event/type [
 		read [
@@ -181,7 +161,8 @@ http-awake: func [event /local port http-port state awake res] [
 			state/state: 'ready
 			awake make event! [type: 'connect port: http-port]
 		]
-		close [
+		close
+		error [
 			;?? state/state
 			res: switch state/state [
 				ready [
@@ -205,7 +186,9 @@ http-awake: func [event /local port http-port state awake res] [
 					]
 				]
 			]
+			sys/log/debug 'HTTP ["Closing:^[[1m" http-port/spec/ref]
 			close http-port
+			if error? state/error [ do state/error ]
 			res
 		]
 	] [true]
@@ -221,12 +204,7 @@ make-http-error: func [
 		arg1: message
 	]
 ]
-http-error: func [
-	"Throw an error for the HTTP protocol"
-	message [string! block!]
-] [
-	do make-http-error message
-]
+
 make-http-request: func [
 	"Create an HTTP request (returns string!)"
 	method [word! string!] "E.g. GET, HEAD, POST etc."
@@ -316,8 +294,14 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 		info/headers: headers: construct/with d1 http-response-headers
 		sys/log/info 'HTTP ["Headers:^[[22m" mold headers]
 		info/name: spec/ref
-		if headers/content-length [info/size: headers/content-length: to integer! headers/content-length]
-		if headers/last-modified [info/date: attempt [idate-to-date headers/last-modified]]
+		if state/error: try [
+			; make sure that values bellow are valid
+			if headers/content-length [info/size: headers/content-length: to integer! headers/content-length]
+			if headers/last-modified  [info/date: to-date/utc headers/last-modified]
+			none ; no error
+		][
+			awake make event! [type: 'error port: port]
+		]
 		remove/part conn/data d2
 		state/state: 'reading-data
 	]
