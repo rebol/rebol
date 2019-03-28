@@ -50,5 +50,16 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Date math"
+	--test-- "adding by integer"
+		;@@ https://github.com/rebol/rebol-issues/issues/213
+		n: now
+		--assert not error? try [now/date + 1]
+		--assert not error? try [d1: n + 1]
+		--assert not error? try [d2: n/date + 1]
+		--assert d1/date = d2/date
+
+===end-group===
+
 
 ~~~end-file~~~
