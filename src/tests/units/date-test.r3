@@ -61,7 +61,7 @@ Rebol [
 
 ===end-group===
 
-===start-group=== "Date and changing time or zone"
+===start-group=== "Various date issues"
 	--test-- "issue 1637"
 		;@@ https://github.com/rebol/rebol-issues/issues/1637
 		d: now/date
@@ -73,6 +73,13 @@ Rebol [
 		--assert none? d/time
 		d: d/date
 		--assert none? d/time
+
+	--test-- "issue 1308"
+		;@@ https://github.com/rebol/rebol-issues/issues/1308
+		d: 28-Oct-2009/10:09:38-7:00
+		--assert 28-Oct-2009/17:09:38 = d/utc
+		--assert 10 = d/hour
+
 ===end-group===
 
 	
