@@ -10,7 +10,7 @@ REBOL [
 register-codec [
 	name:  'ZIP
 	title: "ZIP File Format"
-	suffixes: [%.zip %.aar %.jar %.apk %.zipx %.appx]
+	suffixes: [%.zip %.aar %.jar %.apk %.zipx %.appx %.epub]
 
 	decode: wrap [
 		;- privates
@@ -213,7 +213,7 @@ register-codec [
 					if verbose > 1 [sys/log/more 'ZIP ["Unknown ZIP signature:" mold skip to-binary type 4]]
 				]
 			]
-			new-line/skip result true 4
+			new-line/all result true
 			result
 		][
 			; external `decode` variables
