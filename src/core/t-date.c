@@ -657,7 +657,6 @@
 			if (i == 4 && (tz > MAX_ZONE || tz < -MAX_ZONE)) return PE_BAD_RANGE;
 			if (secs == NO_TIME) secs = 0;
 			if (i == 12) {
-				//Adjust_Date_Zone(val, FALSE);
 				secs += ((i64)(tz - tzp) * ((i64)ZONE_SECS * SEC_SEC));
 			}
 			break;
