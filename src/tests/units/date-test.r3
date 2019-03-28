@@ -61,5 +61,19 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Date and changing time or zone"
+	--test-- "issue 1637"
+		;@@ https://github.com/rebol/rebol-issues/issues/1637
+		d: now/date
+		--assert none? d/time
+		--assert none? d/zone
+		d: make date! [23 7 2010]
+		--assert none? d/time
+		d: now/date
+		--assert none? d/time
+		d: d/date
+		--assert none? d/time
+===end-group===
 
+	
 ~~~end-file~~~
