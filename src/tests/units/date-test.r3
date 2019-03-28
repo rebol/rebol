@@ -80,7 +80,16 @@ Rebol [
 		--assert 28-Oct-2009/17:09:38 = d/utc
 		--assert 10 = d/hour
 
+	--test-- "issue 2369"
+		;@@ https://github.com/rebol/rebol-issues/issues/2369
+		d: 28-Mar-2019
+		--assert not error? try [d/zone: 2]
+		--assert "28-Mar-2019/0:00+2:00" = mold d
+		d: 28-Oct-2009/10:09:38-7:00
+		--assert not error? try [d/zone: 2]
+		--assert "28-Oct-2009/10:09:38+2:00" = mold d
+
 ===end-group===
 
-	
+
 ~~~end-file~~~

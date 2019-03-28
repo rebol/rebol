@@ -649,6 +649,7 @@
 			else if (IS_DATE(val)) tz = VAL_ZONE(val);
 			else tz = n * (60 / ZONE_MINS);
 			if (tz > MAX_ZONE || tz < -MAX_ZONE) return PE_BAD_RANGE;
+			if (secs == NO_TIME) secs = 0;
 			break;
 		case 5:
 			// date
