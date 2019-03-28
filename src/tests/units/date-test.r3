@@ -41,5 +41,14 @@ Rebol [
 		--assert "0200-01-01T01:02:03+10:00" = mold/all 1-1-200/1:2:3+10:0
 
 ===end-group===
-	
+
+===start-group=== "TO DATE!"
+	--test-- "invalid input"
+		;@@ https://github.com/rebol/rebol-issues/issues/878
+		--assert error? try [to date! "31-2-2009"]
+		--assert error? try [to date! [31 2 2009]]
+
+===end-group===
+
+
 ~~~end-file~~~
