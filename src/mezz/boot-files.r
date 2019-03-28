@@ -47,6 +47,7 @@ REBOL [
 	%mezz-banner.r
 	%mezz-colors.r
 	%mezz-crypt.r
+	%mezz-date.r ; Internet date support
 	%mezz-tail.r
 	%codec-wav.r
 	%codec-der.r
