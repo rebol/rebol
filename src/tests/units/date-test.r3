@@ -109,6 +109,10 @@ Rebol [
 ===end-group===
 
 ===start-group=== "Internet date"
+	--test-- "TO-ITIME (Normalized time as used in TO-IDATE"
+		--assert "09:04:05" = to-itime 9:4:5
+		--assert "13:24:05" = to-itime 13:24:5.21
+
 	--test-- "TO-IDATE (Date to Internet date)"
 		--assert "Thu, 28 Mar 2019 20:00:59 +0100" = to-idate 28-Mar-2019/20:00:59+1:00
 		--assert "Thu, 28 Mar 2019 19:00:59 GMT" = to-idate/gmt 28-Mar-2019/20:00:59+1:00
@@ -120,6 +124,7 @@ Rebol [
 		--assert 28-Mar-2019/0:00 = to-date "Thu, 28 Mar 2019 00:00:00 +0000"
 		--assert 28-Mar-2019/0:00 = to-date to-binary "Thu, 28 Mar 2019 00:00:00 +0000"
 		--assert 4-Apr-2019/19:41:46 = to-date "Thu, 04 Apr 2019 19:41:46 GMT"
+
 
 ===end-group===
 

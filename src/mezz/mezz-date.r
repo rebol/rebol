@@ -16,8 +16,8 @@ to-itime: func [
 	time [time! number! block! none!]
 ][
 	time: make time! time
-	format/pad [2 #":" 2 #":" 2] reduce [
-		time/hour  time/minute  round/down time/second
+	format/pad [-2 #":" -2 #":" -2] reduce [
+		time/hour  time/minute  to integer! time/second
 	] #"0"
 ]
 
