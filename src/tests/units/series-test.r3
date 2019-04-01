@@ -218,6 +218,15 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "DEHEX"
+
+--test-- "DEHEX UTF-8 encoded data"
+	;@@ https://github.com/rebol/rebol-issues/issues/1986
+	--assert "řek" = to-string dehex to-binary "%c5%99ek"
+
+===end-group===
+
 ;-- VECTOR related tests moved to %vector-test.r3
 
 ~~~end-file~~~
