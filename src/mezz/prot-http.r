@@ -11,13 +11,13 @@ REBOL [
 	}
 	Name: 'http
 	Type: 'module
-	Version: 0.2.0
+	Version: 0.2.1
 	File: %prot-http.r
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
 	}
 	Author: ["Gabriele Santilli" "Richard Smolak" "Oldes"]
-	Date: 28-Mar-2019
+	Date: 02-Apr-2019
 	History: [
 		0.1.1 22-Jun-2007 "Gabriele Santilli" "Version used in R3-Alpha"
 		0.1.4 26-Nov-2012 "Richard Smolak"    "Version from Atronix's fork"
@@ -27,6 +27,7 @@ REBOL [
 		0.1.8 21-Mar-2019 "Oldes" "FEAT: Using system trace outputs"
 		0.1.9 21-Mar-2019 "Oldes" "FEAT: Added support for transfer compression"
 		0.2.0 28-Mar-2019 "Oldes" "FIX: close connection in case of errors"
+		0.2.1 02-Apr-2019 "Oldes" "FEAT: Reusing connection in redirect when possible"
 	]
 ]
 
@@ -260,7 +261,7 @@ do-request: func [
 ]
 parse-write-dialect: func [port block /local spec] [
 	spec: port/spec
-	parse block [[set block word! (spec/method: block) | (spec/method: 'post)]
+	parse block [[set block word! (spec/method: block) | (spec/method: 'POST)]
 		opt [set block [file! | url!] (spec/path: block)] [set block block! (spec/headers: block) | (spec/headers: [])] [set block [any-string! | binary!] (spec/content: block) | (spec/content: none)]
 	]
 ]
@@ -351,7 +352,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 
 	switch/all info/response-parsed [
 		ok [
-			either spec/method = 'head [
+			either spec/method = 'HEAD [
 				state/state: 'ready
 				res: awake make event! [type: 'done port: port]
 				unless res [res: awake make event! [type: 'ready port: port]]
@@ -366,7 +367,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 			]
 		]
 		redirect see-other [
-			either spec/method = 'head [
+			either spec/method = 'HEAD [
 				state/state: 'ready
 				res: awake make event! [type: 'custom port: port code: 0]
 			] [
@@ -387,7 +388,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 						find [get head] spec/method
 						all [
 							info/response-parsed = 'see-other
-							spec/method: 'get
+							spec/method: 'GET
 						]
 					]
 					in headers 'Location
@@ -400,7 +401,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 			]
 		]
 		unauthorized client-error server-error proxy-auth [
-			either spec/method = 'head [
+			either spec/method = 'HEAD [
 				state/state: 'ready
 			] [
 				check-data port
@@ -454,10 +455,29 @@ http-response-headers: context [
 	Transfer-Encoding:
 	Last-Modified: none
 ]
+
 do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state] [
 	spec: port/spec
 	state: port/state
+
+	clear spec/headers
+	port/data: none
+
+	sys/log/info 'HTTP ["Redirect to:^[[m" mold new-uri]
+
+	state/redirects: state/redirects + 1
+	if state/redirects > 10 [
+		state/error: make-http-error {Too many redirections}
+		return state/awake make event! [type: 'error port: port]
+	]
+
 	if #"/" = first new-uri [
+		; if it's redirection under same url, we can reuse the opened connection
+		if "keep-alive" = select state/info/headers 'Connection [
+			spec/path: new-uri
+			do-request port
+			return true
+		]
 		new-uri: to url! ajoin [spec/scheme "://" spec/host #":" spec/port-id new-uri]
 	]
 	new-uri: decode-url new-uri
@@ -474,23 +494,18 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state] 
 		[new-uri/scheme "://" new-uri/host new-uri/path]
 	][	[new-uri/scheme "://" new-uri/host #":" new-uri/port-id new-uri/path]]
 
-	sys/log/info 'HTTP ["Redirect to:^[[m" mold new-uri]
-	;?? port
-
 	unless find [http https] new-uri/scheme [
 		state/error: make-http-error {Redirect to a protocol different from HTTP or HTTPS not supported}
 		return state/awake make event! [type: 'error port: port]
 	]
 
 	;we need to reset tcp connection here before doing a redirect
-	clear spec/headers
-	port/data: none
 	close port/state/connection
-		
 	port/spec: spec: new-uri
 	port/state: none
 	open port
 ]
+
 check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer state conn] [
 	state: port/state
 	headers: state/info/headers
@@ -572,7 +587,7 @@ sys/make-scheme [
 	title: "HyperText Transport Protocol v1.1"
 	spec: make system/standard/port-spec-net [
 		path: %/
-		method: 'get
+		method: 'GET
 		headers: []
 		content: none
 		timeout: 15
@@ -631,6 +646,7 @@ sys/make-scheme [
 				close?: no
 				info: make port/scheme/info [type: 'url]
 				awake: :port/awake
+				redirects: 0
 			]
 			;? port/state/info
 			port/state/connection: conn: make port! compose [
@@ -666,7 +682,7 @@ sys/make-scheme [
 		copy: func [
 			port [port!]
 		] [
-			either all [port/spec/method = 'head port/state] [
+			either all [port/spec/method = 'HEAD port/state] [
 				reduce bind [name size date] port/state/info
 			] [
 				if port/data [copy port/data]
