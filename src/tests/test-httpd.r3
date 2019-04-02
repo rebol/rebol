@@ -19,6 +19,23 @@ do %../modules/httpd.r3
 system/options/log/httpd: 3 ; for verbose output
 
 my-actor: object [
+	On-Header: func [ctx [object!]][
+		switch ctx/inp/target/file [
+			%form/     [
+				; path rewrite...
+				; http://localhost:8081/form/ is now same like http://localhost:8081/form.html
+				ctx/inp/target/file: %form.html
+				; request processing will continue
+			]
+			%form.htm
+			%form.html [
+				ctx/out/status: 301 ;= Moved Permanently
+				ctx/out/header/Location: %/form/
+				; request processing will stop with redirection response
+			]
+		]
+		? ctx
+	]
 	On-Post-Received: func [ctx [object!]][
 		ctx/out/header/Content-Type: "text/html; charset=UTF-8"
 		ctx/out/content: rejoin either object? ctx/inp/content [
@@ -31,6 +48,7 @@ my-actor: object [
 			[	"Received " length? ctx/inp/content " bytes." ]
 		]
 	]
+
 ]
 
 http-server/config/actor 8081 [

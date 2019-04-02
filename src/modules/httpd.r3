@@ -21,7 +21,6 @@ Rebol [
 		* support for multidomain serving using `Host` header field
 		* add support for other methods - PUT, DELETE, TRACE, CONNECT, OPTIONS?
 		* limit connections per IP
-		* some sort of rewrite-rules
 		* better error handling
 		* standard access log
 		* add list-dir action which shows content of a directory, if allowed
@@ -118,6 +117,8 @@ sys/make-scheme [
 			close port/locals/subport
 		]
 
+		On-Header: func [ctx [object!]][] ;= placeholder; user can use it for early request processing
+
 		On-Get: func [
 			ctx [object!]
 			/local target path info index modified If-Modified-Since
@@ -195,10 +196,6 @@ sys/make-scheme [
 			"Process READ action on client's port"
 			ctx [object!]
 		][
-			unless ctx/state [
-				sys/log/info 'HTTPD ["Request header:^[[22m" ctx/inp/method mold ctx/inp/header]
-			]
-			
 			switch/default ctx/inp/method [
 				"HEAD" ; same like GET, but without sending content
 				"GET"  [ Actor/on-get  ctx ]
@@ -395,25 +392,33 @@ sys/make-scheme [
 				READ [
 					sys/log/more 'HTTPD ["bytes:^[[1m" length? port/data]
 					either header-end: find/tail port/data CRLF2BIN [
-						if none? ctx/state [
-							with inp [
-								parse copy/part port/data header-end [
-									copy method from-method some space
-									copy target some chars some space
-									"HTTP/" copy version some chars thru CRLF
-									copy header to end
-									(
-										method:  to string! method
-										target:  decode-target target
-										version: to string! version
-										header:  construct header
-										try [header/Content-Length: to integer! header/Content-Length]
-									)
-								]
-								content: header-end
-							]
-						]
 						if error? err: try [
+							if none? ctx/state [
+								with inp [
+									parse copy/part port/data header-end [
+										copy method from-method some space
+										copy target some chars some space
+										"HTTP/" copy version some chars thru CRLF
+										copy header to end
+										(
+											method:  to string! method
+											target:  decode-target target
+											version: to string! version
+											header:  construct header
+											try [header/Content-Length: to integer! header/Content-Length]
+										)
+									]
+									content: header-end
+								]
+								sys/log/info 'HTTPD ["Request header:^[[22m" ctx/inp/method mold ctx/inp/header]
+								; on-header actor may be used for rewrite rules (redirection)
+								actor/on-header ctx
+								if ctx/out/status [
+								; if status is defined (probably redirection), than we can send a response now
+									respond port
+									break
+								]
+							]
 							actor/on-read port/locals
 						][
 							print err
@@ -421,7 +426,6 @@ sys/make-scheme [
 							ctx/out/status: 500 ; Internal Server Error
 						]
 						sys/log/debug 'HTTPD ["State:^[[1m" ctx/state "^[[22mstatus:^[[1m" out/status]
-
 						either ctx/state = 'read-data [
 							; posted data not fully read
 							read port
