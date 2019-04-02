@@ -20,7 +20,6 @@ Rebol [
 	TODO: {
 		* support for multidomain serving using `Host` header field
 		* add support for other methods - PUT, DELETE, TRACE, CONNECT, OPTIONS?
-		* limit connections per IP
 		* better error handling
 		* standard access log
 		* add list-dir action which shows content of a directory, if allowed
@@ -117,6 +116,7 @@ sys/make-scheme [
 			close port/locals/subport
 		]
 
+		On-Accept: func [ctx [object!]][ true ]
 		On-Header: func [ctx [object!]][] ;= placeholder; user can use it for early request processing
 
 		On-Get: func [
@@ -495,8 +495,14 @@ sys/make-scheme [
 
 	New-Client: func[port [port!] /local client info err][
 		client: first port
-		client/awake: :Awake-Client
 		info: query client
+		unless Actor/On-Accept info [
+			; connection not allowed
+			sys/log/info 'HTTPD ["Client not accepted:^[[22m" info/remote-ip]
+			close client
+			return false
+		]
+		client/awake: :Awake-Client
 		client/locals: make object! [
 			state: none
 			parent: port

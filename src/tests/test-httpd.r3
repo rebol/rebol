@@ -19,6 +19,11 @@ do %../modules/httpd.r3
 system/options/log/httpd: 3 ; for verbose output
 
 my-actor: object [
+	On-Accept: func [info [object!]][
+		; allow only connections from localhost
+		; TRUE = accepted, FALSE = refuse
+		find [ 127.0.0.1 ] info/remote-ip 
+	]
 	On-Header: func [ctx [object!]][
 		switch ctx/inp/target/file [
 			%form/     [
@@ -34,7 +39,6 @@ my-actor: object [
 				; request processing will stop with redirection response
 			]
 		]
-		? ctx
 	]
 	On-Post-Received: func [ctx [object!]][
 		ctx/out/header/Content-Type: "text/html; charset=UTF-8"
