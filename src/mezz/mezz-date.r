@@ -61,9 +61,9 @@ to-date: wrap [
 			any [string? value binary? value]
 			parse value [
 				5 skip
-				copy day:   2 digit	space
-				copy month: 3 alpha	space
-				copy year:  4 digit space
+				copy day:   1 2 digit space
+				copy month:   3 alpha space
+				copy year:  1 4 digit space
 				copy time: to space space
 				copy zone: to end
 			]
