@@ -10,11 +10,10 @@ REBOL [
 register-codec [
 	name:  'ZIP
 	title: "ZIP File Format"
-	suffixes: [%.zip %.aar %.jar %.apk %.zipx %.appx]
+	suffixes: [%.zip %.aar %.jar %.apk %.zipx %.appx %.epub]
 
 	decode: wrap [
 		;- privates
-		buffer: none ; shared binary used for decompression
 		name:   none
 		method: none
 		crc:
@@ -34,12 +33,7 @@ register-codec [
 			]
 			switch/default method [
 				8 [ ;- deflate
-					;@@ TODO: decompress should be able to deflate even without the header bytes!
-					unless buffer [ buffer: make binary! unc-size ]
-					insert buffer #{789C} ;ZLIB header
-					append buffer copy/part data cmp-size
-					output: decompress/zlib/size buffer unc-size
-					clear buffer
+					output: decompress/deflate/size data unc-size
 				]
 				14 [ ;- LZMA
 					output: decompress/lzma/part/size skip data 4  cmp-size  unc-size
@@ -219,8 +213,7 @@ register-codec [
 					if verbose > 1 [sys/log/more 'ZIP ["Unknown ZIP signature:" mold skip to-binary type 4]]
 				]
 			]
-			buffer: none ; cleanup
-			new-line/skip result true 4
+			new-line/all result true
 			result
 		][
 			; external `decode` variables

@@ -11,50 +11,27 @@ REBOL [
 	}
 	Name: 'http
 	Type: 'module
-	Version: 0.1.6
+	Version: 0.2.1
 	File: %prot-http.r
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
 	}
 	Author: ["Gabriele Santilli" "Richard Smolak" "Oldes"]
-	Date: 21-May-2018
+	Date: 02-Apr-2019
 	History: [
 		0.1.1 22-Jun-2007 "Gabriele Santilli" "Version used in R3-Alpha"
 		0.1.4 26-Nov-2012 "Richard Smolak"    "Version from Atronix's fork"
 		0.1.5 10-May-2018 "Oldes" "FIX: Query on URL was returning just none"
 		0.1.6 21-May-2018 "Oldes" "FEAT: Added support for basic redirection"
 		0.1.7 03-Dec-2018 "Oldes" "FEAT: Added support for QUERY/MODE action"
+		0.1.8 21-Mar-2019 "Oldes" "FEAT: Using system trace outputs"
+		0.1.9 21-Mar-2019 "Oldes" "FEAT: Added support for transfer compression"
+		0.2.0 28-Mar-2019 "Oldes" "FIX: close connection in case of errors"
+		0.2.1 02-Apr-2019 "Oldes" "FEAT: Reusing connection in redirect when possible"
 	]
 ]
 
-;@@ idate-to-date should be moved to other location!
-digit: charset [#"0" - #"9"]
-alpha: charset [#"a" - #"z" #"A" - #"Z"]
-idate-to-date: function [date [string!]] [
-	either parse date [
-		5 skip
-		copy day: 2 digit
-		space
-		copy month: 3 alpha
-		space
-		copy year: 4 digit
-		space
-		copy time: to space
-		space
-		copy zone: to end
-	][
-		if zone = "GMT" [zone: copy "+0"]
-		to date! rejoin [day "-" month "-" year "/" time zone]
-	][
-		none
-	]
-]
-;@@==================================================
-
-;@@ just simple trace function
-;@@net-log: :print
-
-sync-op: func [port body /local state] [
+sync-op: func [port body /local state encoding content-type code-page tmp] [
 	unless port/state [open port port/state/close?: yes]
 	state: port/state
 	state/awake: :read-sync-awake
@@ -64,12 +41,12 @@ sync-op: func [port body /local state] [
 	;The timeout should be triggered only when the response from other side exceeds the timeout value.
 	;--Richard
 	while [not find [ready close] state/state][
-		;@@net-log ["########### sync-op.." state/state]
-		unless port? wait [state/connection port/spec/timeout] [http-error "HTTP(s) Timeout"]
-		;@@net-log ["########### sync-op wakeup" state/state]
+		unless port? wait [state/connection port/spec/timeout] [
+			state/error: make-http-error "HTTP(s) Timeout"
+			break
+		]
 		switch state/state [
 			inited [
-				;@@net-log ["state/connection open? ->" open? state/connection]
 				if not open? state/connection [
 					state/error: make-http-error rejoin ["Internal " state/connection/spec/ref " connection closed"]
 					break
@@ -86,13 +63,49 @@ sync-op: func [port body /local state] [
 			]
 		]
 	]
-	if state/error [do state/error]
+	if state/error [
+		state/awake make event! [type: 'error port: port]
+	]
+
 	body: copy port
-	if state/close? [close port]
+
+	sys/log/info 'HTTP ["Done reading:^[[22m" length? body "bytes"]
+
+	if encoding: select port/state/info/headers 'Content-Encoding [
+		sys/log/info 'HTTP 
+		either find ["gzip" "deflate"] encoding [
+			either error? try [
+				body: switch encoding [
+					"gzip"    [ decompress/gzip    body ]
+					"deflate" [ decompress/deflate body ]
+				]
+			][
+				["Failed to decode data using:^[[22m" encoding]
+			][
+				["Extracted using:^[[22m" encoding "^[[1mto:^[[22m" length? body "bytes"]
+			]
+		][
+			["Unknown Content-Encoding:^[[m" encoding]
+		]
+	]
+
+	if all [
+		content-type: select port/state/info/headers 'Content-Type
+		parse content-type ["text/" [thru "charset=" copy code-page to end] to end]
+	][
+		unless code-page [code-page: "utf-8"]
+		sys/log/info 'HTTP ["trying to decode from code-page:^[[m" code-page]
+		if string? tmp: try [iconv body code-page][	body: tmp ]
+	]
+
+	if state/close? [
+		sys/log/more 'HTTP ["closing port for:^[[m" port/spec/ref]
+		close port
+	]
 	body
 ]
 read-sync-awake: func [event [event!] /local error] [
-	;@@net-log ["[HTTP read-sync-awake]" event/type]
+	sys/log/debug 'HTTP ["read-sync-awake:" event/type]
 	switch/default event/type [
 		connect ready [
 			do-request event/port
@@ -114,7 +127,11 @@ read-sync-awake: func [event [event!] /local error] [
 		error [
 			error: event/port/state/error
 			event/port/state/error: none
-			do error
+			try [
+				sys/log/debug 'HTTP ["Closing (sync-awake):^[[1m" event/port/spec/ref]
+				close event/port
+			]
+			if error? error [do error]
 		]
 	] [
 		false
@@ -127,7 +144,7 @@ http-awake: func [event /local port http-port state awake res] [
 	if any-function? :http-port/awake [state/awake: :http-port/awake]
 	awake: :state/awake
 
-	;@@net-log ["[HTTP http-awake]"  event/type]
+	sys/log/debug 'HTTP ["awake:^[[1m" event/type "^[[22mstate:^[[1m" state/state]
 
 	switch/default event/type [
 		read [
@@ -145,7 +162,8 @@ http-awake: func [event /local port http-port state awake res] [
 			state/state: 'ready
 			awake make event! [type: 'connect port: http-port]
 		]
-		close [
+		close
+		error [
 			;?? state/state
 			res: switch state/state [
 				ready [
@@ -169,7 +187,9 @@ http-awake: func [event /local port http-port state awake res] [
 					]
 				]
 			]
+			sys/log/debug 'HTTP ["Closing:^[[1m" http-port/spec/ref]
 			close http-port
+			if error? state/error [ do state/error ]
 			res
 		]
 	] [true]
@@ -185,12 +205,7 @@ make-http-error: func [
 		arg1: message
 	]
 ]
-http-error: func [
-	"Throw an error for the HTTP protocol"
-	message [string! block!]
-] [
-	do make-http-error message
-]
+
 make-http-request: func [
 	"Create an HTTP request (returns string!)"
 	method [word! string!] "E.g. GET, HEAD, POST etc."
@@ -202,7 +217,7 @@ make-http-request: func [
 	result: rejoin [
 		uppercase form method #" "
 		either file? target [next mold target] [target]
-		" HTTP/1.0" CRLF
+		" HTTP/1.1" CRLF
 	]
 	foreach [word string] headers [
 		repend result [mold word #" " string CRLF]
@@ -211,6 +226,8 @@ make-http-request: func [
 		content: to binary! content
 		repend result ["Content-Length: " length? content CRLF]
 	]
+	sys/log/info 'HTTP ["Request:^[[22m" mold result]
+
 	append result CRLF
 	result: to binary! result
 	if content [append result content]
@@ -226,6 +243,7 @@ do-request: func [
 	spec/headers: body-of make make object! [
 		Accept: "*/*"
 		Accept-Charset: "utf-8"
+		Accept-encoding: "gzip,deflate"
 		Host: either not find [80 443] spec/port-id [
 			rejoin [form spec/host #":" spec/port-id]
 		] [
@@ -237,13 +255,13 @@ do-request: func [
 	info/headers: info/response-line: info/response-parsed: port/data:
 	info/size: info/date: info/name: none
 
-	;@@net-log ["[HTTP do-request]" spec/method spec/host spec/path]
+	;sys/log/info 'HTTP ["do-request:^[[22m" spec/method spec/host spec/path]
 
 	write port/state/connection make-http-request spec/method to file! any [spec/path %/] spec/headers spec/content
 ]
 parse-write-dialect: func [port block /local spec] [
 	spec: port/spec
-	parse block [[set block word! (spec/method: block) | (spec/method: 'post)]
+	parse block [[set block word! (spec/method: block) | (spec/method: 'POST)]
 		opt [set block [file! | url!] (spec/path: block)] [set block block! (spec/headers: block) | (spec/headers: [])] [set block [any-string! | binary!] (spec/content: block) | (spec/content: none)]
 	]
 ]
@@ -256,29 +274,35 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 	awake: :state/awake
 	spec: port/spec
 	
-	;@@net-log ["[HTTP check-response]" info/response-parsed]
-
 	if all [
 		not headers
 		any [
 			all [
 				d1: find conn/data crlfbin
 				d2: find/tail d1 crlf2bin
-				;@@net-log "server using standard content separator of #{0D0A0D0A}"
+				;sys/log/debug 'HTML "server using standard content separator of #{0D0A0D0A}"
 			]
 			all [
 				d1: find conn/data #{0A}
 				d2: find/tail d1 #{0A0A}
-				;@@net-log "server using malformed line separator of #{0A0A}"
+				sys/log/debug 'HTML "server using malformed line separator of #{0A0A}"
 			]
 		]
 	] [
 		info/response-line: line: to string! copy/part conn/data d1
-		;?? line
+		sys/log/more 'HTTP line
+		;probe to-string copy/part d1 d2
 		info/headers: headers: construct/with d1 http-response-headers
+		sys/log/info 'HTTP ["Headers:^[[22m" mold headers]
 		info/name: spec/ref
-		if headers/content-length [info/size: headers/content-length: to integer! headers/content-length]
-		if headers/last-modified [info/date: attempt [idate-to-date headers/last-modified]]
+		if state/error: try [
+			; make sure that values bellow are valid
+			if headers/content-length [info/size: headers/content-length: to integer! headers/content-length]
+			if headers/last-modified  [info/date: to-date/utc headers/last-modified]
+			none ; no error
+		][
+			awake make event! [type: 'error port: port]
+		]
 		remove/part conn/data d2
 		state/state: 'reading-data
 	]
@@ -320,12 +344,15 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 			| (info/response-parsed: 'version-not-supported)
 		]
 	]
+
+	sys/log/debug 'HTTP ["check-response:" info/response-parsed]
+
 	;?? info/response-parsed
 	;?? spec/method
 
 	switch/all info/response-parsed [
 		ok [
-			either spec/method = 'head [
+			either spec/method = 'HEAD [
 				state/state: 'ready
 				res: awake make event! [type: 'done port: port]
 				unless res [res: awake make event! [type: 'ready port: port]]
@@ -340,7 +367,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 			]
 		]
 		redirect see-other [
-			either spec/method = 'head [
+			either spec/method = 'HEAD [
 				state/state: 'ready
 				res: awake make event! [type: 'custom port: port code: 0]
 			] [
@@ -361,7 +388,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 						find [get head] spec/method
 						all [
 							info/response-parsed = 'see-other
-							spec/method: 'get
+							spec/method: 'GET
 						]
 					]
 					in headers 'Location
@@ -374,7 +401,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 			]
 		]
 		unauthorized client-error server-error proxy-auth [
-			either spec/method = 'head [
+			either spec/method = 'HEAD [
 				state/state: 'ready
 			] [
 				check-data port
@@ -424,14 +451,34 @@ crlf2bin: #{0D0A0D0A}
 crlf2: to string! crlf2bin
 http-response-headers: context [
 	Content-Length:
+	Content-Encoding:
 	Transfer-Encoding:
 	Last-Modified: none
 ]
+
 do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state] [
 	spec: port/spec
 	state: port/state
+
+	clear spec/headers
+	port/data: none
+
+	sys/log/info 'HTTP ["Redirect to:^[[m" mold new-uri]
+
+	state/redirects: state/redirects + 1
+	if state/redirects > 10 [
+		state/error: make-http-error {Too many redirections}
+		return state/awake make event! [type: 'error port: port]
+	]
+
 	if #"/" = first new-uri [
-		new-uri: to url! ajoin [spec/scheme "://" spec/host new-uri]
+		; if it's redirection under same url, we can reuse the opened connection
+		if "keep-alive" = select state/info/headers 'Connection [
+			spec/path: new-uri
+			do-request port
+			return true
+		]
+		new-uri: to url! ajoin [spec/scheme "://" spec/host #":" spec/port-id new-uri]
 	]
 	new-uri: decode-url new-uri
 
@@ -447,30 +494,25 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state] 
 		[new-uri/scheme "://" new-uri/host new-uri/path]
 	][	[new-uri/scheme "://" new-uri/host #":" new-uri/port-id new-uri/path]]
 
-	;@@net-log ["[HTTP do-redirect] new-uri:" mold new-uri]
-	;?? port
-
 	unless find [http https] new-uri/scheme [
 		state/error: make-http-error {Redirect to a protocol different from HTTP or HTTPS not supported}
 		return state/awake make event! [type: 'error port: port]
 	]
 
 	;we need to reset tcp connection here before doing a redirect
-	clear spec/headers
-	port/data: none
 	close port/state/connection
-		
 	port/spec: spec: new-uri
 	port/state: none
 	open port
 ]
+
 check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer state conn] [
 	state: port/state
 	headers: state/info/headers
 	conn: state/connection
 	res: false
 
-	;@@net-log ["[HTTP check-data] bytes:" length? conn/data]
+	sys/log/more 'HTTP ["check-data; bytes:^[[m" length? conn/data]
 	;? conn
 
 	case [
@@ -545,7 +587,7 @@ sys/make-scheme [
 	title: "HyperText Transport Protocol v1.1"
 	spec: make system/standard/port-spec-net [
 		path: %/
-		method: 'get
+		method: 'GET
 		headers: []
 		content: none
 		timeout: 15
@@ -559,7 +601,7 @@ sys/make-scheme [
 		read: func [
 			port [port!]
 		] [
-			;@@net-log "[HTTP read]"
+			sys/log/debug 'HTTP "read"
 			either any-function? :port/awake [
 				unless open? port [cause-error 'Access 'not-open port/spec/ref]
 				if port/state/state <> 'ready [http-error "Port not ready"]
@@ -574,7 +616,7 @@ sys/make-scheme [
 			port [port!]
 			value
 		] [
-			;@@net-log "[HTTP write]"
+			sys/log/debug 'HTTP "write"
 			;?? port
 			unless any [block? :value binary? :value any-string? :value] [value: form :value]
 			unless block? value [value: reduce [[Content-Type: "application/x-www-form-urlencoded; charset=utf-8"] value]]
@@ -594,7 +636,7 @@ sys/make-scheme [
 			port [port!]
 			/local conn
 		] [
-			;@@net-log ["[HTTP open] state:" port/state]
+			sys/log/debug 'HTTP ["open, state:" port/state]
 			if port/state [return port]
 			if none? port/spec/host [http-error "Missing host address"]
 			port/state: context [
@@ -604,6 +646,7 @@ sys/make-scheme [
 				close?: no
 				info: make port/scheme/info [type: 'url]
 				awake: :port/awake
+				redirects: 0
 			]
 			;? port/state/info
 			port/state/connection: conn: make port! compose [
@@ -615,7 +658,7 @@ sys/make-scheme [
 			;?? conn 
 			conn/awake: :http-awake
 			conn/locals: port
-			;@@net-log ["[HTTP open] scheme:" conn/spec/scheme conn/spec/host]
+			sys/log/info 'HTTP ["Opening connection:^[[22m" conn/spec/ref]
 			;?? conn
 			open conn
 			port
@@ -628,7 +671,7 @@ sys/make-scheme [
 		close: func [
 			port [port!]
 		] [
-			;@@net-log "[HTTP close]"
+			sys/log/debug 'HTTP "close"
 			if port/state [
 				close port/state/connection
 				port/state/connection/awake: none
@@ -639,7 +682,7 @@ sys/make-scheme [
 		copy: func [
 			port [port!]
 		] [
-			either all [port/spec/method = 'head port/state] [
+			either all [port/spec/method = 'HEAD port/state] [
 				reduce bind [name size date] port/state/info
 			] [
 				if port/data [copy port/data]

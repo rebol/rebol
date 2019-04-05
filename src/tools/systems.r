@@ -21,9 +21,9 @@ REBOL [
 systems: [
 	[plat		os-name			os-base		build-flags]
 	[0.1.03		"amiga"			posix		[NOV BEN HID NPS +SC CMT COP -SP -LM]]
-	[0.2.04		"osx"			posix		[NOV BEN +OS NCM -LM UOP]]				; OSX/PPC; no shared lib possible
-	[0.2.05		"osxi"			posix		[NOV LEN +O1 PIC NPS NCM HID STX -LM UOP ARC FCS FCM]]
-	[0.2.40		"osx_x64"		posix		[NOV LEN +O1 PIC NPS NCM HID STX -LM UOP L64 FCS FCM]]
+	[0.2.04		"osx"			posix		[NOV BEN +OS NCM -LM UOP LIC]]				; OSX/PPC; no shared lib possible
+	[0.2.05		"osxi"			posix		[NOV LEN +O2 PIC NPS NCM HID STX -LM UOP ARC FCS FCM LIC]]
+	[0.2.40		"osx_x64"		posix		[NOV LEN +O2 PIC NPS NCM HID STX -LM UOP L64 FCS FCM LIC]]
 	[0.3.01		"win32"			win32		[    LEN +O2 UNI M32 W32 CON S4M EXE DIR -LM]]
 	[0.3.40		"win32_x64"		win32		[    LEN +O2 UNI M64 W32 CON S4M EXE DIR -LM P64]]
 	[0.4.02		"linux"			posix		[NOV LEN +O2 PIC LDL ST1 -LM]]			; libc 2.3
@@ -71,6 +71,7 @@ linker-flags: [
 	MAP:	"-Wl,-M"					; output a map
 	STA:	"--strip-all"
 	LDL:	"-ldl"						; link with dynamic lib lib
+	LIC:	"-liconv"                   ; macOS (clang?) needs iconv to be explicitly linked (for iconv native function)
 	LLOG:	"-llog"						; on Android, link with liblog.so
 	ARC:	"-arch i386"				; x86 32 bit architecture (OSX)
 	M32:	"-m32"						; use 32-bit memory model (Linux x64)

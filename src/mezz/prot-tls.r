@@ -1325,7 +1325,7 @@ TLS-read-handshake-message: function [
 				;probe copy/part ctx/in/buffer 10
 				binary/read ctx/in [cert: UI24BYTES]
 				;probe cert
-				i: i + 1 write rejoin [%/x/cert i %.der] cert
+				;i: i + 1 write rejoin [%/x/cert i %.der] cert
 				append ctx/server-certs decode 'CRT cert
 			]
 			log-more ["Received" length? ctx/server-certs "server certificates."]

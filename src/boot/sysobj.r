@@ -145,6 +145,15 @@ options: context [  ; Options supplied to REBOL during startup
 	default-suffix: %.reb ; Used by IMPORT if no suffix is provided
 	file-types: []
 	result-types: none
+
+	; verbosity of logs per service (codecs, schemes)
+	; 0 = nothing; 1 = info; 2 = more; 3 = debug
+	log: make object! [
+		http:
+		tls:
+		zip:
+		tar: 1
+	]
 ]
 
 script: context [

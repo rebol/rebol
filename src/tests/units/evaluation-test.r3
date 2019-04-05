@@ -405,6 +405,11 @@ Rebol [
 		--assert d = set/any [A B] d
 		--assert all [a = 4 unset? :b]
 
+	--test-- "Set - issue 2366"
+	;@@https://github.com/rebol/rebol-issues/issues/2366
+		--assert error? try [set #ab 1]
+		--assert error? try [set #12 2]
+
 
 ===end-group===
 

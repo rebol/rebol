@@ -110,6 +110,7 @@ core: [
 	u-dh.c
 	u-dialect.c
 	u-gif.c
+	u-iconv.c
 	u-jpg.c
 	u-lzma.c
 	u-md5.c
