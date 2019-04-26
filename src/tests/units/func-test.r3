@@ -22,6 +22,13 @@ Rebol [
 	fce: func[a [integer!]][probe a]
 	--assert [probe a] = body-of :fce
 
+--test-- "invalid MAKE"
+	;@@ https://github.com/rebol/rebol-issues/issues/1052
+	--assert error? try [make :read [[][]]]
+	--assert error? try [make action! [[][]]]
+	--assert error? try [make native! [[][]]]
+	--assert error? try [make op! [[][]]]
+
 ===end-group===
 
 ~~~end-file~~~
