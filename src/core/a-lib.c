@@ -867,6 +867,38 @@ RL_API u32 RL_Set_Char(REBSER *series, u32 index, u32 chr)
 	return index;
 }
 
+RL_API int RL_Get_Value_Resolved(REBSER *series, u32 index, RXIARG *result)
+/*
+**	Get a value from a block. If value is WORD or PATH, than its value is resolved.
+**
+**	Returns:
+**		Datatype of value or zero if index is past tail.
+**	Arguments:
+**		series - block series pointer
+**		index - index of the value in the block (zero based)
+**		result - set to the value of the field
+*/
+{
+	REBVAL *value;
+	if (index >= series->tail) return 0;
+	value = BLK_SKIP(series, index);
+	switch (VAL_TYPE(value)) {
+	case REB_WORD:
+	case REB_GET_WORD:
+		
+		value = Get_Var(value);
+		//printf("resolved type: %u\n", VAL_TYPE(value));
+		break;
+	case REB_PATH:
+	case REB_GET_PATH:
+		Do_Path(&value, NULL);
+		value = DS_TOP; // only safe for short time!
+		break;
+	}
+	*result = Value_To_RXI(value);
+	return Reb_To_RXT[VAL_TYPE(value)];
+}
+
 RL_API int RL_Get_Value(REBSER *series, u32 index, RXIARG *result)
 /*
 **	Get a value from a block.
