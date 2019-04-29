@@ -60,6 +60,10 @@ Rebol [
 		dir: what-dir
 		--assert error? do %units/files/error.r3
 		--assert dir = what-dir
+
+	--test-- "script returning UNSET value"
+		--assert unset? do %units/files/unset.r3
+
 ===end-group===
 
 ===start-group=== "do function"
