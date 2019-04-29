@@ -232,6 +232,8 @@
 	case SYM_WINDOW:
 	case SYM_GOB:
 		if (IS_EVENT_MODEL(value, EVM_GUI)) {
+			if (GET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_DATA))
+				goto is_none;
 			if (VAL_EVENT_SER(value)) {
 				SET_GOB(val, VAL_EVENT_SER(value));
 				break;
@@ -294,6 +296,7 @@
 
 	case SYM_DATA:
 		// Event holds a file string:
+		if (!GET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_DATA)) goto is_none;
 		if (VAL_EVENT_TYPE(value) != EVT_DROP_FILE) goto is_none;
 		if (!GET_FLAG(VAL_EVENT_FLAGS(value), EVF_COPIED)) {
 			void *str = VAL_EVENT_SER(value);

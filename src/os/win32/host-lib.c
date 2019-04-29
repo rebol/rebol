@@ -121,6 +121,43 @@ static void *Task_Ready;
 	}
 }
 
+#ifdef removing_this_code
+// this function is not needed. Now is possible to use RL_GET_STRING with WIDE flag
+/***********************************************************************
+**
+*/	REBOOL As_OS_Str(REBSER *series, REBCHR **string)
+/*
+**	If necessary, convert a string series to Win32 wide-chars.
+**  (Handy for GOB/TEXT handling).
+**  If the string series is empty the resulting string is set to NULL
+**
+**  Function returns:
+**      TRUE - if the resulting string needs to be deallocated by the caller code
+**      FALSE - if REBOL string is used (no dealloc needed)
+**
+**  Note: REBOL strings are allowed to contain nulls.
+**
+***********************************************************************/
+{
+	int len, n;
+	void *str;
+	wchar_t *wstr;
+
+	if ((len = RL_Get_String(series, 0, &str)) < 0) {
+		// Latin1 byte string - convert to wide chars
+		len = -len;
+		wstr = OS_Make((len + 1) * sizeof(wchar_t));
+		for (n = 0; n < len; n++)
+			wstr[n] = (wchar_t)((unsigned char*)str)[n];
+		wstr[len] = 0;
+		//note: following string needs be deallocated in the code that uses this function
+		*string = (REBCHR*)wstr;
+		return TRUE;
+	}
+	*string = (len == 0) ? NULL : str; //empty string check
+	return FALSE;
+}
+#endif
 
 /***********************************************************************
 **
@@ -1283,27 +1320,3 @@ input_error:
 	return ret;
 }
 
-
-/***********************************************************************
-**
-*/	REBSER *OS_GOB_To_Image(REBGOB *gob)
-/*
-**		Render a GOB into an image. Returns an image or zero if
-**		it cannot be done.
-**
-***********************************************************************/
-{
-
-#ifndef REB_CORE
-
-#ifndef NO_COMPOSITOR
-	return (REBSER*)Gob_To_Image(gob);
-#else
-	return 0;
-#endif
-
-#else
-	return 0;
-#endif
-
-}

@@ -181,7 +181,7 @@ static void CALLBACK MidiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD dwInstance, DW
 		Midi_Push_Buffer(midi_port.inp_buffer, dwParam2);
 		evt.type = EVT_READ;
 		evt.data = dwParam1;
-		RL_UPDATE_EVENT(&evt);
+		RL_Update_Event(&evt);
 		break;
 #ifdef DEBUG_MIDI
 	case MIM_LONGDATA:
@@ -368,8 +368,8 @@ static void PrintMidiDevices()
 		}
 	}
 	if (device_in) {
-		midi_port->inp_buffer = RL_MAKE_STRING(MIDI_BUF_SIZE-1, FALSE); // allocate input binary ...
-		RL_PROTECT_GC(midi_port->inp_buffer, TRUE);     // ... and prevent it from GC
+		midi_port->inp_buffer = RL_Make_String(MIDI_BUF_SIZE-1, FALSE); // allocate input binary ...
+		RL_Protect_GC(midi_port->inp_buffer, TRUE);     // ... and prevent it from GC
 		midi_port->inp_buffer->size = MIDI_BUF_SIZE;    // ... and init it for use as circular buffer
 		midi_port->inp_buffer->rest = 0;                // rest is used as readers TAIL
 	}
@@ -392,7 +392,7 @@ static void PrintMidiDevices()
 		midiInClose(midi_port->inp_device);
 		midi_port->inp_device = NULL;
 	}
-	if (midi_port->inp_buffer) RL_PROTECT_GC(midi_port->inp_buffer, FALSE);
+	if (midi_port->inp_buffer) RL_Protect_GC(midi_port->inp_buffer, FALSE);
 	if (midi_port->out_device) {
 		midiOutClose(midi_port->out_device);
 		midi_port->out_device = NULL;
@@ -494,18 +494,18 @@ static void PrintMidiDevices()
 	nMidiDeviceNum = midiInGetNumDevs();
 	for (i = 0; i < nMidiDeviceNum; ++i) {
 		midiInGetDevCaps(i, &capsInp, sizeof(MIDIINCAPS));
-		arg.series = RL_ENCODE_UTF8_STRING(capsInp.szPname, wcslen(capsInp.szPname), TRUE, FALSE);
+		arg.series = RL_Encode_UTF8_String(capsInp.szPname, wcslen(capsInp.szPname), TRUE, FALSE);
 		arg.index = 0;
-		RL_SET_VALUE(VAL_SERIES(val), i, arg, RXT_STRING);
+		RL_Set_Value(VAL_SERIES(val), i, arg, RXT_STRING);
 	}
 	//output devices block
 	val = FRM_VALUES((REBSER*)req->data) + 2; 
 	nMidiDeviceNum = midiOutGetNumDevs();
 	for (i = 0; i < nMidiDeviceNum; ++i) {
 		midiOutGetDevCaps(i, &capsOut, sizeof(MIDIOUTCAPS));
-		arg.series = RL_ENCODE_UTF8_STRING(capsOut.szPname, wcslen(capsOut.szPname), TRUE, FALSE);
+		arg.series = RL_Encode_UTF8_String(capsOut.szPname, wcslen(capsOut.szPname), TRUE, FALSE);
 		arg.index = 0;
-		RL_SET_VALUE(VAL_SERIES(val), i, arg, RXT_STRING);
+		RL_Set_Value(VAL_SERIES(val), i, arg, RXT_STRING);
 	}
 	return DR_DONE;
 }

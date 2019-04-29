@@ -84,7 +84,7 @@ do*: func [
 			"Date:" select hdr 'date
 		]
 
-		also
+		set/any 'value try [
 			; Eval the block or make the module, returned
 			either mod? [ ; Import the module and set the var
 				spec: reduce [hdr data do-needs/no-user hdr]
@@ -95,8 +95,10 @@ do*: func [
 				intern data   ; Bind the user script
 				catch/quit either var [[do/next data var]] [data]
 			]
-			; Restore system/script and the dir
-			all [system/script: :scr  dir  change-dir dir]
+		]
+		; Restore system/script and the dir
+		all [system/script: :scr  dir  change-dir dir]
+		value
 	]
 ]
 

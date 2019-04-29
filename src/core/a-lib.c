@@ -545,6 +545,23 @@ RL_API void *RL_Make_Block(u32 size)
 	return Make_Block(size);
 }
 
+RL_API void RL_Expand_Series(REBSER *series, REBCNT index, REBCNT delta)
+/*
+**	Expand a series at a particular index point by the number
+**	number of units specified by delta.
+**
+**	Returns:
+**		
+**	Arguments:
+**		series - series to expand
+**		index - position where to expand
+**		delta - number of UNITS to expand from TAIL (keeping terminator)
+*/
+{
+	Expand_Series(series, index, delta);
+}
+
+
 RL_API void *RL_Make_String(u32 size, int unicode)
 /*
 **	Allocate a new string or binary series.
@@ -630,7 +647,7 @@ RL_API void RL_Protect_GC(REBSER *series, u32 flags)
 	(flags == 1) ? SERIES_SET_FLAG(series, SER_KEEP) : SERIES_CLR_FLAG(series, SER_KEEP);
 }
 
-RL_API int RL_Get_String(REBSER *series, u32 index, void **str)
+RL_API int RL_Get_String(REBSER *series, u32 index, void **str, REBOOL needs_wide)
 /*
 **	Obtain a pointer into a string (bytes or unicode).
 **
@@ -641,6 +658,7 @@ RL_API int RL_Get_String(REBSER *series, u32 index, void **str)
 **		series - string series pointer
 **		index - index from beginning (zero-based)
 **		str   - pointer to first character
+**		needs_wide - unicode string is required, converts if needed
 **	Notes:
 **		If the len is less than zero, then the string is optimized to
 **		codepoints (chars) 255 or less for ASCII and LATIN-1 charsets.
@@ -651,13 +669,14 @@ RL_API int RL_Get_String(REBSER *series, u32 index, void **str)
 	int len = (index >= series->tail) ? 0 : series->tail - index;
 
 	if (BYTE_SIZE(series)) {
-		*str = BIN_SKIP(series, index);
-		len = -len;
+		if (needs_wide) {
+			Widen_String(series);
+		} else {
+			*str = BIN_SKIP(series, index);
+			return -len;
+		}
 	}
-	else {
-		*str = UNI_SKIP(series, index);
-	}
-
+	*str = UNI_SKIP(series, index);
 	return len;
 }
 
@@ -846,6 +865,38 @@ RL_API u32 RL_Set_Char(REBSER *series, u32 index, u32 chr)
 	}
 	SET_ANY_CHAR(series, index, chr);
 	return index;
+}
+
+RL_API int RL_Get_Value_Resolved(REBSER *series, u32 index, RXIARG *result)
+/*
+**	Get a value from a block. If value is WORD or PATH, than its value is resolved.
+**
+**	Returns:
+**		Datatype of value or zero if index is past tail.
+**	Arguments:
+**		series - block series pointer
+**		index - index of the value in the block (zero based)
+**		result - set to the value of the field
+*/
+{
+	REBVAL *value;
+	if (index >= series->tail) return 0;
+	value = BLK_SKIP(series, index);
+	switch (VAL_TYPE(value)) {
+	case REB_WORD:
+	case REB_GET_WORD:
+		
+		value = Get_Var(value);
+		//printf("resolved type: %u\n", VAL_TYPE(value));
+		break;
+	case REB_PATH:
+	case REB_GET_PATH:
+		Do_Path(&value, NULL);
+		value = DS_TOP; // only safe for short time!
+		break;
+	}
+	*result = Value_To_RXI(value);
+	return Reb_To_RXT[VAL_TYPE(value)];
 }
 
 RL_API int RL_Get_Value(REBSER *series, u32 index, RXIARG *result)

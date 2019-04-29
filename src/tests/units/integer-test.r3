@@ -22,6 +22,13 @@ Rebol [
 		--assert 2 >> 1 = 1
 		--assert 2 >> 2 = 0
 		--assert 2 >> 3 = 0
+
+	--test-- "shift overflow"
+		;@@ https://github.com/rebol/rebol-issues/issues/2067
+		--assert -9223372036854775808 = shift/logical 1 63
+		--assert error? try [shift 1 63] ; overflow
+		--assert 0 = shift 1 -100
+
 ===end-group===
 	
 ~~~end-file~~~

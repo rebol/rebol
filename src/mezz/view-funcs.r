@@ -38,13 +38,16 @@ system/standard/para: context [
 
 view: func [
 	"Displays a window view."
-	window [gob! block! object!] "Window gob, VID face, or VID layout block"
+	window [gob! block! object! image!] "Window gob, VID face, or VID layout block"
 	/options opts [block!] "Window options spec block"
 	/no-wait "Return immediately. Do not wait and process events."
 	/as-is "Leave window as is. Do not add a parent gob."
-	/local screen tmp xy
+	/local screen tmp xy image
 ][
-	if not screen: system/view/screen-gob [return none]
+	if any [
+		not screen: system/view/screen-gob
+		window = screen
+	][	return none]
 
 	; Convert option block to a map:
 	opts: make map! any [reduce/no-set opts []]
@@ -54,6 +57,16 @@ view: func [
 ;		options [append opts reduce/no-set opts]
 	]
 
+	if image? window [
+		image: window
+		window: make gob! [
+			size: image/size
+			image: image
+		]
+		opts/flags: [resize]
+		opts/offset: 'center
+	]
+
 	; GOB based view:
 	if gob? window [
 		; Build the window:
@@ -61,6 +74,7 @@ view: func [
 			tmp: window
 			tmp/offset: 0x0
 			window: make gob! [size: tmp/size]
+			window/offset: system/view/metrics/title-size
 			append window tmp
 		]
 		; Set optional background:
@@ -73,22 +87,25 @@ view: func [
 				[color: opts/color]
 			] block? opts/draw
 		]
-		; Set up default handler, if user did not provide one:
-		unless opts/handler [
+		; Set up default handler...
+		if all [
+			empty? system/view/event-port/locals/handlers ; ...if there is no other handler
+			not opts/handler                              ; ...and user did not provide one
+		][
 			handle-events [
 				name: 'view-default
 				priority: 50
 				handler: func [event] [
-					print ["view-event:" event/type event/offset]
+					;print ["view-event:" event/type event/offset]
 					if switch event/type [
 						close [true]
 						key [event/key = escape]
 					][
 						unhandle-events self
 						unview event/window
-						quit
+						;quit
 					]
-					show event/window
+					;show event/window
 					none ; we handled it
 				]
 			]
@@ -173,6 +190,14 @@ handle-events: func [
 ][
 	handler: make base-handler handler
 	sys-hand: system/view/event-port/locals/handlers
+	; First check if there is not any handler with such a name...
+	forall sys-hand [
+		if handler/name = sys-hand/1/name [
+			; ...if so, replace it with the new one
+			change sys-hand handler
+			return handler
+		]
+	]
 	; Insert by priority:
 	unless foreach [here: hand] sys-hand [
 		if handler/priority > hand/priority [
@@ -214,7 +239,7 @@ init-view-system: func [
 	/local ep
 ][
 	; The init function called here resides in this module
-	init system/view/screen-gob: make gob! [text: "Top Gob"]
+	init-top-window system/view/screen-gob: make gob! [text: "Top Gob"]
 
 	;update the metrics object (temp - will become mezz later)
 	foreach w words-of system/view/metrics [

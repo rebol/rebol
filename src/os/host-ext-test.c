@@ -201,7 +201,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 		break;
 
 	case 4: //command [{return word from string} str [string!]]
-		RL_GET_STRING(RXA_SERIES(frm, 1), 0, (void*)(&str)); // latin-1 only for test
+		RL_GET_STRING(RXA_SERIES(frm, 1), 0, (void*)(&str), FALSE); // latin-1 only for test
 		RXA_WORD(frm, 1) = RL_MAP_WORD(str);
 		RXA_TYPE(frm, 1) = RXT_WORD;
 		break;

@@ -38,7 +38,10 @@ if all [
 	not find any [system/options/args []] "no-gfx"
 	find [3] system/version/4
 ][
-	append files [%host-window.c]
+	append files [
+		%host-window.c
+		%host-compositor.c
+	]
 ]
 
 cnt: 0
@@ -82,6 +85,10 @@ func-header: [
 			spec
 			trim spec
 			not find spec "static"
+			any [  ; make sure we got only functions with "OS_" at the beginning
+				find spec " *OS_"
+				find spec " OS_"
+			]
 			fn: find spec "OS_"
 			find spec #"("
 		][
@@ -113,7 +120,7 @@ func-header: [
 			| 
 			none
 		]
-	]
+	] | 1 skip
 ]
 
 process: func [file] [

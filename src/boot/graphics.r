@@ -1,9 +1,12 @@
 REBOL [
 	System: "REBOL [R3] Language Interpreter and Run-time Environment"
 	Title: "REBOL Graphics"
+	Author: ["Richard Smolak" "Carl Sassenrath"]
 	Rights: {
 		Copyright 2012 REBOL Technologies
 		REBOL is a trademark of REBOL Technologies
+		
+		Additional code modifications and improvements Copyright 2012 Saphirion AG
 	}
 	License: {
 		Licensed under the Apache License, Version 2.0.
@@ -16,13 +19,6 @@ REBOL [
 ]
 
 words: [
-	;gui-metric
-    screen-size
-    border-size
-    border-fixed
-    title-size
-    work-origin
-    work-size
 ]
 
 ;temp hack - will be removed later
@@ -32,11 +28,6 @@ init-words: command [
 
 init-words words
 
-init: command [
-	"Initialize graphics subsystem."
-	gob [gob!] "The screen gob (root gob)"
-]
-
 caret-to-offset: command [
 	"Returns the xy offset (pair) for a specific string position in a graphics object."
 	gob [gob!]
@@ -44,20 +35,11 @@ caret-to-offset: command [
 	position [integer! string!] "The position within the string"
 ]
 
-cursor: command [
-	"Changes the mouse cursor image."
-	image [integer! image! none!]
-]
 
 offset-to-caret: command [ ;returns pair! instead of the block..needs to be fixed
 	"Returns the richtext block at the string position for an XY offset in the graphics object."
 	gob [gob!]
 	position [pair!]
-]
-
-show: command [
-	"Display or update a graphical object or block of them."
-	gob [gob! none!]
 ]
 
 size-text: command [
@@ -69,11 +51,6 @@ draw: command [
 	"Renders draw dialect (scalable vector graphics) to an image (returned)."
 	image [image! pair!] "Image or size of image"
 	commands [block!] "Draw commands"
-]
-
-gui-metric: command [
-	"Returns specific gui related metric setting."
-	keyword [word!] "Available keywords: SCREEN-SIZE, BORDER-SIZE, BORDER-FIXED, TITLE-SIZE, WORK-ORIGIN and WORK-SIZE."
 ]
 
 ;#not-yet-used [
