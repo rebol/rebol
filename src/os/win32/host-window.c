@@ -505,7 +505,8 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	if (!GET_GOB_FLAG(gob, GOBF_HIDDEN)) {
 		if (GET_GOB_FLAG(gob, GOBF_ON_TOP)) SetWindowPos(window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 		ShowWindow(window, SW_SHOWNORMAL);
-		SendMessage(window, WM_PAINT, 0, 0);
+		OS_Draw_Window(0, gob);              // draw not native widgets
+		SendMessage(window, WM_PAINT, 0, 0); // draw native widgets
 		SetForegroundWindow(window);
 	}
 	return window;
@@ -628,7 +629,7 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 **
 ***********************************************************************/
 {
-	void *compositor;
+	REBCMP* compositor;
 	if (!wingob) {
 		wingob = gob;
 		while (GOB_PARENT(wingob) && GOB_PARENT(wingob) != Gob_Root
@@ -644,7 +645,6 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	//render and blit the GOB
 	compositor = GOB_COMPOSITOR(wingob);
 	OS_Compose_Gob(compositor, wingob, gob, FALSE);
-	//OS_Blit_Window(compositor); //@@ When used, the content overwrites native widgets which are than invisible:/
 }
 
 
@@ -711,9 +711,10 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 		if (GOB_PANE(Gob_Root)) {
 			gp = GOB_HEAD(Gob_Root);
 			for (n = GOB_TAIL(Gob_Root)-1; n >= 0; n--, gp++) {
-				if (!GET_GOB_FLAG(*gp, GOBF_WINDOW))
+				if (!GET_GOB_FLAG(*gp, GOBF_WINDOW)) {
 					OS_Open_Window(*gp);
 					OS_Draw_Window(0, *gp);
+				}
 			}
 		}
 		return 0;
