@@ -63,6 +63,8 @@ view: func [
 			size: image/size
 			image: image
 		]
+		opts/flags: [resize]
+		opts/offset: 'center
 	]
 
 	; GOB based view:
@@ -94,7 +96,7 @@ view: func [
 				name: 'view-default
 				priority: 50
 				handler: func [event] [
-					print ["view-event:" event/type event/offset]
+					;print ["view-event:" event/type event/offset]
 					if switch event/type [
 						close [true]
 						key [event/key = escape]
