@@ -54,6 +54,14 @@ Rebol [
 		
 ===end-group===
 
+===start-group=== "do script"
+	--test-- "script with error"
+	;@@ https://github.com/rebol/rebol-issues/issues/2374
+		dir: what-dir
+		--assert error? do %units/files/error.r3
+		--assert dir = what-dir
+===end-group===
+
 ===start-group=== "do function"
 	
 	--test-- "do-func-1"
