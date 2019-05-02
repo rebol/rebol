@@ -270,7 +270,7 @@ init-schemes: func [
 		title: "DNS Lookup"
 		name: 'dns
 		spec: system/standard/port-spec-net
-		awake: func [event] [print event/type true]
+		awake: func [event] [true]
 	]
 
 	make-scheme [
