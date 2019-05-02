@@ -63,4 +63,5 @@ REBOL [
 [
 	%prot-http.r
 	%prot-tls.r
+	%prot-whois.r
 ]

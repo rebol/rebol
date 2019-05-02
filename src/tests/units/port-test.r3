@@ -59,6 +59,13 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "WHOIS scheme"
+	--test-- "read WHOIS"
+		--assert  string? try [read whois://google.com]
+	--test-- "write WHOIS"
+		--assert string? try [write whois://whois.nic.cz "seznam.cz"]
+===end-group===
+
 if "true" <> get-env "CONTINUOUS_INTEGRATION" [
 	===start-group=== "console port"	
 		--test-- "query input port"
