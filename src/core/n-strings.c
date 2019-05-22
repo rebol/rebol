@@ -30,6 +30,8 @@
 #include "sys-core.h"
 #include "sys-deci-funcs.h"
 
+REBCNT z_adler32_z(REBCNT adler, REBYTE *buf, REBCNT len);
+
 /***********************************************************************
 **
 **	Hash Function Externs
@@ -216,9 +218,9 @@ static struct digest {
 	// If method, secure, or key... find matching digest:
 	if (D_REF(ARG_CHECKSUM_METHOD) || D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) {
 
-		if (sym == SYM_CRC32) {
+		if (sym == SYM_CRC32 || sym == SYM_ADLER32) {
 			if (D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) Trap0(RE_BAD_REFINES);
-			i = CRC32(data, len);
+			i = (sym == SYM_CRC32) ? CRC32(data, len) : z_adler32_z(0x00000001L, data, len);
 			DS_RET_INT(i);
 			return R_RET;
 		}
