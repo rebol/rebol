@@ -374,7 +374,7 @@ collect-words: native [
 
 checksum: native [
 	{Computes a checksum, CRC, or hash.}
-	data [binary!] {Bytes to checksum}
+	data [binary! string!] {Bytes to checksum. String value is first converted to UTF-8!}
 	/part length {Length of data}
 	/tcp {Returns an Internet TCP 16-bit checksum}
 	/secure {Returns a cryptographically secure checksum}

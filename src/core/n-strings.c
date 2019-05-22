@@ -194,9 +194,21 @@ static struct digest {
 	REBSER *digest;
 	REBINT sym = SYM_SHA1;
 	REBCNT len;
-	REBYTE *data = VAL_BIN_DATA(arg);
+	REBYTE *data;
 
 	len = Partial1(arg, D_ARG(ARG_CHECKSUM_LENGTH));
+
+	if (IS_STRING(arg)) {
+		// using `digest` just as a temp variable here!
+		digest = Encode_UTF8_Value(arg, len, 0);
+		data = SERIES_DATA(digest);
+		len = SERIES_LEN(digest) - 1;
+	}
+	else {
+		data = VAL_BIN_DATA(arg);
+	}
+
+	
 
 	// Method word:
 	if (D_REF(ARG_CHECKSUM_METHOD)) sym = VAL_WORD_CANON(D_ARG(ARG_CHECKSUM_WORD));
