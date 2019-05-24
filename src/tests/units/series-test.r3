@@ -115,6 +115,7 @@ Rebol [
 ===start-group=== "SORT"
 
 --test-- "SORT/compare"
+	;@@ https://github.com/rebol/rebol-issues/issues/720
 	--assert [3 2 1] = sort/compare [1 2 3] func [a b] [a > b]
 
 --test-- "SORT/skip/compare"
