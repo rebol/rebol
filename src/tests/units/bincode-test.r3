@@ -337,6 +337,7 @@ is-protected-error?: func[code][
 	--test-- "BinCode - FLOAT16, FLOAT, DOUBLE (write/read NAN)"
 		b: binary/write #{} [float16 1.#NaN float 1.#NaN double 1.#NaN]
 		--assert b/buffer = #{007E0000C07F000000000000F87F}
+		--assert tail? b/buffer-write
 		;@@ using MOLD as: 1.#nan <> 1.#nan 
 		--assert "[1.#NaN 1.#NaN 1.#NaN]" = mold binary/read b [float16 float double]
 

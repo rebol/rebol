@@ -111,10 +111,6 @@ float float16to32(float16_s f16) {
 	return f32.v;
 }
 
-//float float64to16(float16_s f16) {
-//	half s;
-//}
-
 #pragma pack(4) 
 typedef union {
 	u16 num;
@@ -799,12 +795,12 @@ static REBCNT EncodedU32_Size(u32 value) {
 					case SYM_FLOAT:
 						f32.v = (float)(IS_INTEGER(next) ? VAL_INT64(next) : VAL_DECIMAL(next));
 						memcpy(cp, (REBYTE*)&f32, 4);
-						cp += 4;
+						n = 4;
 						break;
 					case SYM_DOUBLE:
 						dbl = (REBDEC)(IS_INTEGER(next) ? VAL_INT64(next) : VAL_DECIMAL(next));
 						memcpy(cp, (REBYTE*)&dbl, 8);
-						cp += 8;
+						n = 8;
 						break;
 					case SYM_FLOAT16:
 						d32 = (REBDEC)(IS_INTEGER(next) ? VAL_INT64(next) : VAL_DECIMAL(next));
@@ -827,7 +823,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 							ushort = (u16)t1;
 						}
 						memcpy(cp, (REBYTE*)&ushort, 2);
-						cp += 2;
+						n = 2;
 						break;
 
 					case SYM_AT:
