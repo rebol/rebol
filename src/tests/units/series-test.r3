@@ -117,6 +117,8 @@ Rebol [
 --test-- "SORT/compare"
 	;@@ https://github.com/rebol/rebol-issues/issues/720
 	--assert [3 2 1] = sort/compare [1 2 3] func [a b] [a > b]
+	;@@ https://github.com/rebol/rebol-issues/issues/2376
+	--assert [1 3 10] = sort/compare [1 10 3] func[x y][case [x > y [1] x < y [-1] true [0]]]
 
 --test-- "SORT/skip/compare"
 	;@@ https://github.com/rebol/rebol-issues/issues/1152

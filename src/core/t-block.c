@@ -415,12 +415,12 @@ static struct {
 		return -1;
 	}
 	if (IS_INTEGER(val)) {
-		if (VAL_INT64(val) > 0) return 1;
+		if (VAL_INT64(val) < 0) return 1;
 		if (VAL_INT64(val) == 0) return 0;
 		return -1;
 	}
 	if (IS_DECIMAL(val)) {
-		if (VAL_DECIMAL(val) > 0) return 1;
+		if (VAL_DECIMAL(val) < 0) return 1;
 		if (VAL_DECIMAL(val) == 0) return 0;
 		return -1;
 	}
