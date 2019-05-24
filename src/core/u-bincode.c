@@ -401,9 +401,10 @@ static REBCNT EncodedU32_Size(u32 value) {
 				case REB_GET_WORD:
 					data = Get_Var(value);
 					break;
-				case REB_GET_PATH:
-					data = Do_Path(&value, NULL);
-					break;
+				//case REB_GET_PATH:
+				//	data = Do_Path(&value, NULL);
+				//	data = DS_POP; // volatile stack reference
+				//	break;
 				default:
 					data = value;
 				}
@@ -415,6 +416,9 @@ static REBCNT EncodedU32_Size(u32 value) {
 					next = ++value;
 					if (IS_GET_WORD(next)) {
 						next = Get_Var(next);
+					} else if (IS_GET_PATH(next)) {	
+						Do_Path(&next, NULL);
+						next = DS_POP; // volatile stack reference
 					}
 
 					switch (VAL_WORD_CANON(data)) {
@@ -613,7 +617,8 @@ static REBCNT EncodedU32_Size(u32 value) {
 					data = Get_Var(value);
 					break;
 				//case REB_GET_PATH:
-				//	data = Do_Path(&value, NULL);
+				//	Do_Path(&value, NULL);
+				//	value = DS_POP; // volatile stack reference
 				//	break;
 				default:
 					data = value;
@@ -631,6 +636,10 @@ static REBCNT EncodedU32_Size(u32 value) {
 				case REB_WORD:
 					next = ++value;
 					if (IS_GET_WORD(next)) next = Get_Var(next);
+					else if (IS_GET_PATH(next)) {
+						Do_Path(&next, NULL);
+						next = DS_POP; // volatile stack reference
+					}
 
 					switch (VAL_WORD_CANON(data)) {
 					case SYM_UI8:

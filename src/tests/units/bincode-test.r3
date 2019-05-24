@@ -154,6 +154,14 @@ is-protected-error?: func[code][
 		--assert object? binary/write b [UI32BYTES #{cafe}]
 		--assert #{00000002CAFE} = binary/read b 'bytes
 
+	--test-- "BinCode - write GET-WORD"
+		a: 42 b: binary/write #{} [ui8 :a]
+		--assert #{2A} = b/buffer
+
+	--test-- "BinCode - write GET-PATH"
+		i: 2 a: [42 255] b: binary/write #{} [UI8 :a/1 UI8 :a/:i]
+		--assert #{2AFF} = b/buffer
+
 	--test-- "BinCode - AT"
 		;AT is using absolute positioning
 		b: binary 8
@@ -376,6 +384,7 @@ is-protected-error?: func[code][
 	--test-- "BinCode - OCTAL-BYTES (read)"
 		;- used for fixed size octal numbers (used for example in TAR files)
 		--assert 8 = binary/read/with #{3130} 'OCTAL-BYTES 2
+
 
 ===end-group===
 
