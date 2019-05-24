@@ -323,6 +323,23 @@ is-protected-error?: func[code][
 		--assert 1.0 = binary/read #{0000803F} 'FLOAT
 		--assert 1.0 = binary/read #{000000000000F03F} 'DOUBLE
 
+	--test-- "BinCode - FLOAT16, FLOAT, DOUBLE (write)"
+		b: binary/write #{} [float16 0.5 float16 1000 float16 32.5 float16 -32.5]
+		--assert b/buffer = #{0038D063105010D0}
+		--assert [0.5 1000.0 32.5 -32.5] = binary/read b [float16 float16 float16 float16]
+		b: binary/write #{} [float   0.5 float   1000 float   32.5 float   -32.5]
+		--assert b/buffer = #{0000003F00007A4400000242000002C2}
+		--assert [0.5 1000.0 32.5 -32.5] = binary/read b [float float float float]
+		b: binary/write #{} [double  0.5 double  1000 double  32.5 double  -32.5]
+		--assert b/buffer = #{000000000000E03F0000000000408F40000000000040404000000000004040C0}
+		--assert [0.5 1000.0 32.5 -32.5] = binary/read b [double double double double]
+
+	--test-- "BinCode - FLOAT16, FLOAT, DOUBLE (write/read NAN)"
+		b: binary/write #{} [float16 1.#NaN float 1.#NaN double 1.#NaN]
+		--assert b/buffer = #{007E0000C07F000000000000F87F}
+		;@@ using MOLD as: 1.#nan <> 1.#nan 
+		--assert "[1.#NaN 1.#NaN 1.#NaN]" = mold binary/read b [float16 float double]
+
 	--test-- "BinCode - MSDOS-DATETIME"
 		;- old and not much precise format for storing date and time from MS-DOS times
 		;- still used in some file formats, like ZIP

@@ -76,7 +76,6 @@
 // FLOAT16 credits: Steven Pigeon
 // https://hbfs.wordpress.com/2013/02/12/float16/
 typedef union {
-	// float16 v;
 	struct {
 		// type determines alignment!
 		u16 m : 10;
@@ -101,11 +100,20 @@ typedef union {
 float float16to32(float16_s f16) {
 	// back to 32
 	float32_s f32;
+#ifndef USE_NO_INFINITY 
+	if (f16.bits.e == 31) { // inifinity or nan
+		return (f16.bits.m == 0) ? (f16.bits.s ? -1.0 : 1.0) * INFINITY : NAN;
+	}
+#endif
 	f32.bits.s = f16.bits.s;
 	f32.bits.e = (f16.bits.e - 15) + 127; // safe in this direction
 	f32.bits.m = ((u32)f16.bits.m) << 13;
 	return f32.v;
 }
+
+//float float64to16(float16_s f16) {
+//	half s;
+//}
 
 #pragma pack(4) 
 typedef union {
@@ -233,10 +241,16 @@ static REBCNT EncodedU32_Size(u32 value) {
 	REBCNT inBit, nbits;
 	REBYTE *cp, *bp, *ep;
 	REBCNT n, count, index, tail, tail_new;
+	REBDEC dbl;
+	REBD32 d32;
 	i32 i, len;
 	u64 u;
 	i64 si;
 	u32 ulong;
+	u16 ushort;
+	float16_s f16;
+	float32_s f32;
+
 
 	ms_datetime* msdt = NULL;
 	ms_date*     msd  = NULL;
@@ -502,7 +516,26 @@ static REBCNT EncodedU32_Size(u32 value) {
 							continue;
 						}
 						goto error;
-						
+
+					case SYM_FLOAT:
+						if (IS_INTEGER(next) || IS_DECIMAL(next)) {
+							count += 4;
+							continue;
+						}
+						goto error;
+					case SYM_DOUBLE:
+						if (IS_INTEGER(next) || IS_DECIMAL(next)) {
+							count += 8;
+							continue;
+						}
+						goto error;
+					case SYM_FLOAT16:
+						if (IS_INTEGER(next) || IS_DECIMAL(next)) {
+							count += 2;
+							continue;
+						}
+						goto error;
+
 					case SYM_UNIXTIME_NOW:
 					case SYM_UNIXTIME_NOW_LE:
 						value--; //there is no argument so no next
@@ -762,6 +795,41 @@ static REBCNT EncodedU32_Size(u32 value) {
 						memcpy(cp, VAL_BIN_AT(next), n);
 						VAL_INDEX(buffer_write) += 4; //for the length byte;
 						break;
+
+					case SYM_FLOAT:
+						f32.v = (float)(IS_INTEGER(next) ? VAL_INT64(next) : VAL_DECIMAL(next));
+						memcpy(cp, (REBYTE*)&f32, 4);
+						cp += 4;
+						break;
+					case SYM_DOUBLE:
+						dbl = (REBDEC)(IS_INTEGER(next) ? VAL_INT64(next) : VAL_DECIMAL(next));
+						memcpy(cp, (REBYTE*)&dbl, 8);
+						cp += 8;
+						break;
+					case SYM_FLOAT16:
+						d32 = (REBDEC)(IS_INTEGER(next) ? VAL_INT64(next) : VAL_DECIMAL(next));
+						if (isnan(d32)) { // 1.#NaN
+							ushort = 0x7e00;
+						} else {
+							// based on: https://stackoverflow.com/a/15118210/494472
+							ulong = *((u32*)&d32);
+							u32 t1 = (ulong & 0x7fffffff) >> 13;   // Non-sign bits; Align mantissa on MSB
+							u32 t2 = (ulong & 0x80000000) >> 16;   // Sign bit; Shift sign bit into position
+							u32 t3 =  ulong & 0x7f800000;          // Exponent
+
+							t1 -= 0x1c000;                         // Adjust bias
+							t1 = (t3 < 0x38800000) ? 0 : t1;       // Flush-to-zero
+							t1 = (t3 > 0x47000000) ? 0x7bff : t1;  // Clamp-to-max
+							// NOTE: now infinity value is also clamped to max, is it ok?
+
+							t1 |= t2;                              // Re-insert sign bit
+
+							ushort = (u16)t1;
+						}
+						memcpy(cp, (REBYTE*)&ushort, 2);
+						cp += 2;
+						break;
+
 					case SYM_AT:
 						VAL_INDEX(buffer_write) = VAL_INT32(next) - 1;
 						cp = BIN_DATA(bin) + VAL_INDEX(buffer_write);
@@ -1352,7 +1420,6 @@ static REBCNT EncodedU32_Size(u32 value) {
 						case SYM_FLOAT16:
 							n = 2;
 							ASSERT_READ_SIZE(value, cp, ep, n);
-							float16_s f16;
 							f16.bytes.low  = cp[0];
 							f16.bytes.high = cp[1];
 							SET_DECIMAL(temp, float16to32(f16) );
