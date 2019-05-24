@@ -117,6 +117,14 @@ Rebol [
 --test-- "SORT/compare"
 	--assert [3 2 1] = sort/compare [1 2 3] func [a b] [a > b]
 
+--test-- "SORT/skip/compare"
+	;@@ https://github.com/rebol/rebol-issues/issues/1152
+	--assert ["A" "a"] = sort/compare ["A" "a"] func [a b] [a < b]
+	--assert ["a" "A"] = sort/compare ["a" "A"] func [a b] [a < b]
+	--assert ["A" "a"] = sort/compare ["A" "a"] func [a b] [a <= b]
+	--assert ["a" "A"] = sort/compare ["a" "A"] func [a b] [a <= b]
+	--assert [1 9 1 5 1 7] = sort/skip/compare [1 9 1 5 1 7] 2 1
+
 --test-- "SORT with invalid compare function"
 	;@@ https://github.com/rebol/rebol-issues/issues/1766
 	--assert error? try [sort/compare [1 2 3]  func [/local loc-1 loc-2][local < loc-1] ]
