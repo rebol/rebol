@@ -112,6 +112,21 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "SORT"
+
+--test-- "SORT/compare"
+	--assert [3 2 1] = sort/compare [1 2 3] func [a b] [a > b]
+
+--test-- "SORT with invalid compare function"
+	;@@ https://github.com/rebol/rebol-issues/issues/1766
+	--assert error? try [sort/compare [1 2 3]  func [/local loc-1 loc-2][local < loc-1] ]
+	;@@ https://github.com/rebol/rebol-issues/issues/1516
+	--assert error? try [sort/compare [1 2 #[unset!]] :>]
+
+
+===end-group===
+
+
 ===start-group=== "REWORD"
 
 --test-- "reword/escape"
