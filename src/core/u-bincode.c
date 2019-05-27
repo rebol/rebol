@@ -420,6 +420,9 @@ static REBCNT EncodedU32_Size(u32 value) {
 						Do_Path(&next, NULL);
 						next = DS_POP; // volatile stack reference
 					}
+					if (IS_STRING(next)) {
+						Set_Binary(next, Encode_UTF8_Value(next, VAL_LEN(next), 0));
+					}
 
 					switch (VAL_WORD_CANON(data)) {
 					case SYM_SI8:
@@ -475,7 +478,6 @@ static REBCNT EncodedU32_Size(u32 value) {
 						}
 						goto error;
 					case SYM_BYTES:
-						if (IS_GET_WORD(next)) next = Get_Var(next);
 						if (IS_BINARY(next)) {
 							count += VAL_LEN(next);
 							continue;
@@ -489,6 +491,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 						else goto error;
 						break;
 					case SYM_UI16BYTES:
+					case SYM_UI16LEBYTES:
 						if (IS_BINARY(next)) {
 							ASSERT_UIBYTES_RANGE(next, 0xFFFF);
 							count += (2 + VAL_LEN(next));
@@ -640,6 +643,9 @@ static REBCNT EncodedU32_Size(u32 value) {
 						Do_Path(&next, NULL);
 						next = DS_POP; // volatile stack reference
 					}
+					if (IS_STRING(next)) {
+						Set_Binary(next, Encode_UTF8_Value(next, VAL_LEN(next), 0));
+					}
 
 					switch (VAL_WORD_CANON(data)) {
 					case SYM_UI8:
@@ -776,6 +782,19 @@ static REBCNT EncodedU32_Size(u32 value) {
 						memcpy(cp, VAL_BIN_AT(next), n);
 						VAL_INDEX(buffer_write)+=2; //for the length byte;
 						break;
+					case SYM_UI16LEBYTES:
+						n = VAL_LEN(next);
+						bp = (REBYTE*)&n;
+#ifdef ENDIAN_LITTLE
+						memcpy(cp, bp, 2);
+#else
+						cp[0] = bp[1]; cp[1] = bp[0];
+#endif
+						cp+=2;
+						memcpy(cp, VAL_BIN_AT(next), n);
+						VAL_INDEX(buffer_write)+=2; //for the length byte;
+						break;
+
 					case SYM_UI24BYTES:
 						n = VAL_LEN(next);
 						bp = (REBYTE*)&n;

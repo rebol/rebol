@@ -147,6 +147,9 @@ is-protected-error?: func[code][
 	--test-- "BinCode - UI16BYTES"
 		--assert object? binary/write b [UI16BYTES #{cafe}]
 		--assert #{0002CAFE} = binary/read b 'bytes
+	--test-- "BinCode - UI16LEBYTES"
+		--assert object? binary/write b [UI16LEBYTES #{cafe}]
+		--assert #{0200CAFE} = binary/read b 'bytes
 	--test-- "BinCode - UI24BYTES"
 		--assert object? binary/write b [UI24BYTES #{cafe}]
 		--assert #{000002CAFE} = binary/read b 'bytes
