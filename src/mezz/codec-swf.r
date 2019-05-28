@@ -1322,7 +1322,7 @@ import module [
 			return swf
 		]
 
-		decode-tag: func [id [integer!] data [binary!] ][
+		decode-tag: func [id [integer!] data [binary! none!] ][
 			tid: id
 			bin: binary data
 			any [tag-decoders/:id data]
