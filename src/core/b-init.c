@@ -685,6 +685,7 @@ extern const REBYTE Str_Banner[];
 	codi->error = 0;
 
 	if (codi->action == CODI_IDENTIFY) {
+		codi->error = 1;   // never identified... would require markup validator
 		return CODI_CHECK; // error code is inverted result
 	}
 

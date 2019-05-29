@@ -407,6 +407,7 @@ err:
 	if (VAL_HANDLE_TYPE(hnd) != SYM_CODEC) Trap0(RE_INVALID_HANDLE);
 
 	CLEAR(&codi, sizeof(codi));
+	codi.action = CODI_DECODE;
 
 	val = D_ARG(3);
 
@@ -416,7 +417,6 @@ err:
 		codi.action = CODI_IDENTIFY;
 	case SYM_DECODE:
 		if (!IS_BINARY(val)) Trap1(RE_INVALID_ARG, val);
-		codi.action = CODI_DECODE;
 		codi.data = VAL_BIN_DATA(D_ARG(3));
 		codi.len  = VAL_LEN(D_ARG(3));
 		break;

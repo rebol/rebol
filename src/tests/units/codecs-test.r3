@@ -8,6 +8,12 @@ Rebol [
 
 ~~~start-file~~~ "Codecs"
 
+===start-group=== "Codec's identify"
+	--test-- "encoding?"
+		--assert 'text = encoding? #{}
+		--assert 'text = encoding? #{6162}
+===end-group===
+
 if find system/codecs 'wav [
 	system/codecs/wav/verbose: 3
 	===start-group=== "WAV codec"
