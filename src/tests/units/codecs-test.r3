@@ -19,10 +19,13 @@ Rebol [
 		--assert "1 2" = encode 'text [1 2]
 		--assert "1 2" = encode 'text #{312032}
 	--test-- "SAVE %test.txt"
-		--assert [1 2] = load save %temp.bin [1 2]
-		--assert "1 2" = load save %temp.txt [1 2]     ;-- note that result is STRING
+		--assert [1 2]   = load save %temp.bin [1 2]
+		--assert "1 2"   = load save %temp.txt [1 2]     ;-- note that result is STRING
+		--assert "1 2^/" = read/string %temp.bin ;@@ should be there the newline char?!
+		--assert "1 2"   = read/string %temp.txt
+
+		--assert #{312032} = load save %temp.bin #{312032}
 		--assert "#{312032}^/" = read/string %temp.bin ;@@ should be there the newline char?!
-		--assert "1 2" = read/string %temp.txt
 		delete %temp.bin
 		delete %temp.txt
 
