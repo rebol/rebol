@@ -14,6 +14,33 @@ Rebol [
 		--assert 'text = encoding? #{6162}
 ===end-group===
 
+===start-group=== "TEXT codec"
+	--test-- "ENCODE text"
+		--assert "1 2" = encode 'text [1 2]
+		--assert "1 2" = encode 'text #{312032}
+	--test-- "SAVE %test.txt"
+		--assert [1 2] = load save %temp.bin [1 2]
+		--assert "1 2" = load save %temp.txt [1 2]     ;-- note that result is STRING
+		--assert "#{312032}^/" = read/string %temp.bin ;@@ should be there the newline char?!
+		--assert "1 2" = read/string %temp.txt
+		delete %temp.bin
+		delete %temp.txt
+
+===end-group===
+
+===start-group=== "Invalid SAVE"
+	--test-- "invalid image SAVE"
+		--assert error? try [save %temp.bmp [1 2]]
+		--assert error? try [save %temp.png [1 2]]
+		--assert error? try [save %temp.jpg [1 2]]
+		--assert error? try [save %temp.bmp "foo"]
+		--assert error? try [save %temp.png "foo"]
+		--assert error? try [save %temp.jpg "foo"]
+		--assert error? try [save %temp.bmp #{00}]
+		--assert error? try [save %temp.png #{00}]
+		--assert error? try [save %temp.jpg #{00}]
+
+
 if find system/codecs 'wav [
 	system/codecs/wav/verbose: 3
 	===start-group=== "WAV codec"
