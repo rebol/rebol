@@ -1254,7 +1254,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 							if (cmd == SYM_SB) {
 								SET_INTEGER(temp, u);
 							} else {
-								SET_DECIMAL(temp, (double)u / 65536.0);
+								SET_DECIMAL(temp, ((double)((i64)u) / 65536.0));
 							}
 							break;
 						case SYM_BIT:

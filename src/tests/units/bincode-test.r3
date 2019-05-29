@@ -247,6 +247,9 @@ is-protected-error?: func[code][
 		--assert [-2 6] = binary/read 2#{1110 0110} [SB 4 SB 4]
 		--assert 14  = binary/read/with 2#{1110 0000} 'UB 4
 		--assert [2.5] = binary/read #{500000} [FB 19]
+		binary/read 2#{11111000 11111000} [x: SB 6 ALIGN y: FB 6]
+		--assert -2   = x
+		--assert -2.0 = (y * 65536.0)
 
 	--test-- "BinCode - bits (variant using sigle value access)"
 		bin: binary #{438E9438}
