@@ -34,6 +34,7 @@ Rebol [
 	--test-- "SAVE %test.txt"
 		--assert [1 2]   = load save %temp.bin [1 2]
 		--assert "1 2"   = load save %temp.txt [1 2]     ;-- note that result is STRING
+		--assert "%a %b" = load save %temp.txt [%a %b] 
 		--assert "1 2^/" = read/string %temp.bin ;@@ should be there the newline char?!
 		--assert "1 2"   = read/string %temp.txt
 

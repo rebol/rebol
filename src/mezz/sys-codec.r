@@ -69,7 +69,7 @@ encode: function [
 		data: either handle? try [cod/entry] [
 			; original codecs were only natives
 			if type = 'text [
-				return either binary? data [to string! data][form data]
+				return either binary? data [to string! data][mold/only data]
 			]
 			do-codec cod/entry 'encode data
 		][
