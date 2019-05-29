@@ -10825,7 +10825,12 @@ extern void Register_Codec(const char *name, codo dispatcher);
 
 	if (codi->action == CODI_IDENTIFY) {
 		int w, h;
-		jpeg_info(s_cast(codi->data), codi->len, &w, &h); // will throw errors
+		// temporary workaround for: https://github.com/rebol/rebol-issues/issues/2377
+		if (codi->len < 125) { // mininamal JPEG size: https://stackoverflow.com/a/2349470/494472
+			codi->error = CODI_ERR_BAD_DATA; 
+		} else {
+			jpeg_info(s_cast(codi->data), codi->len, &w, &h); // will throw errors
+		}
 		return CODI_CHECK;
 	}
 

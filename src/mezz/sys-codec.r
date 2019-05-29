@@ -89,6 +89,7 @@ encoding?: function [
 	"Returns the media codec name for given binary data. (identify)"
 	data [binary!]
 ][
+	if empty? data [return 'text] ;- optimization for an empty data case
 	; using reversed order - the last added codec is compared first
 	; without it the `text` codec takes everything
 	foreach name reverse words-of system/codecs [
