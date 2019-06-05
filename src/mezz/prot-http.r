@@ -249,7 +249,7 @@ do-request: func [
 		] [
 			form spec/host
 		]
-		User-Agent: "REBOL"
+		User-Agent: any [system/schemes/http/User-Agent "REBOL"]
 	] spec/headers
 	port/state/state: 'doing-request
 	info/headers: info/response-line: info/response-parsed: port/data:
@@ -728,6 +728,9 @@ sys/make-scheme [
 			either port/data [length? port/data] [0]
 		]
 	]
+	User-Agent: none
+	;@@ One can set above value for example to: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+	;@@ And so pretend that request is coming from Chrome on Windows10
 ]
 
 sys/make-scheme/with [
