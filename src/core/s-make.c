@@ -319,7 +319,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 	if (!BYTE_SIZE(src)) {
 		up = UNI_SKIP(src, index);
 		for (n = 0; n < length; n++)
-			if (up[n] > 0xff) break;
+			if (up[n] >= 0x80) break;
 		if (n < length) wide = sizeof(REBUNI);
 	}
 
