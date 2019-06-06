@@ -52,6 +52,8 @@ qt-red-only: false
 ;-state
 was-quiet: false
 
+failes: copy ""
+
 
 
 qt-init-group: does [
@@ -66,6 +68,7 @@ qt-init-run: does [
 	qt-run-passes:
 	qt-run-failures:
 	qt-run-incompatible: 0
+	clear failes
 	qt-init-group
 ]
 
@@ -137,8 +140,10 @@ assert: func [
 				prin "===group=== "
 				print qt-group-name
 				qt-group-name-not-printed: false
+				append failes ajoin ["^/^/In group: " qt-group-name]
 			]
 		]
+		append failes ajoin ["^/FAIL: " qt-test-name " (" qt-test-assert #")"]
 		prin "--test-- " 
 		prin [qt-test-name qt-test-assert]
 		print either qt-red-only [
@@ -220,6 +225,7 @@ print-totals: func [
 	print incompat
 	if failures <> 0 [
 	print "****************TEST FAILURES****************"
+	print failes
 	]
 ]
 
