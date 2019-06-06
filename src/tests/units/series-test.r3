@@ -261,6 +261,7 @@ Rebol [
 	--assert "%22%25-.%3C%3E%5C%1F%60%7B%7C%7D~" = enhex {"%-.<>\^_`{|}~}
 	; --assert %%C5%A1ik  = enhex %šik ;<-- this does not work yet!
 	--assert "šik" = to-string dehex enhex to-binary "šik"
+	--assert "%C2%80" = enhex to-string #{80}
 
 
 ===end-group===

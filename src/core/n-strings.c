@@ -676,7 +676,7 @@ static struct digest {
 			REBUNI c = up[0];
 			up++;
 
-			if (c > 0x80) {// all non-ASCII characters *must* be percent encoded
+			if (c >= 0x80) {// all non-ASCII characters *must* be percent encoded
 				encoded_size = Encode_UTF8_Char(encoded, c);
 				goto char_needs_encoding;
 			} else {
