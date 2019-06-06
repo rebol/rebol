@@ -172,6 +172,26 @@ Rebol [
 
 ===end-group=== 
 
+===start-group=== "url"
+	
+	--test-- "mold url"
+		--assert "ftp://"  = mold ftp://
+		--assert "ftp://š" = mold ftp://š
+		--assert "ftp://+" = mold ftp://+
+		--assert "ftp://+" = mold ftp://%2b
+		--assert "ftp://+" = mold ftp://%2B
+		--assert "ftp://%20" = mold ftp://%20
+	--test-- "mold append url"
+		--assert "ftp://a" = mold append ftp:// #"a"
+		--assert "ftp://a" = mold append ftp://  "a"
+		--assert "ftp://š" = mold append ftp://  "š"
+		--assert "ftp://+" = mold append ftp://  "+"
+		--assert "ftp://%2528" = mold append ftp:// "%28"
+		--assert "ftp://%28" = dehex mold append ftp:// "%28"
+
+===end-group=== 
+
+
 ===start-group=== "mold-all"
 	
 	--test-- "mold-true" --assert "true" = mold true
