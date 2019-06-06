@@ -127,6 +127,10 @@ Rebol [
 		b: {"{}{}^{"}
 		--assert b = mold a
 
+	--test-- "mold issue #1486"
+		;@@ https://github.com/rebol/rebol-issues/issues/1486
+		--assert {"^^(1E)"} = mold "^(1E)" ; double ^ because it's a string in a string
+
 ===end-group=== 
 
 ===start-group=== "string"
