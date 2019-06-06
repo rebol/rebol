@@ -524,6 +524,11 @@ dehex: native [
 	value [any-string! binary!] {The string to dehex}
 ]
 
+enhex: native [
+	{Converts string into URL-style hex encodeding (%xx) when needed.}
+	value [any-string! binary!] {The string to encode}
+]
+
 get: native [
 	{Gets the value of a word or path, or values of an object.}
 	word {Word, path, object to get}
@@ -940,7 +945,7 @@ do-codec: native [
 	{Evaluate a CODEC function to encode or decode media types.}
 	handle [handle!] "Internal link to codec"
 	action [word!] "Decode, encode, identify"
-	data [binary! image!]
+	data [binary! image! string!]
 ]
 
 set-scheme: native [

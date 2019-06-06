@@ -245,11 +245,23 @@ Rebol [
 ===end-group===
 
 
-===start-group=== "DEHEX"
+===start-group=== "DEHEX / ENHEX"
 
 --test-- "DEHEX UTF-8 encoded data"
 	;@@ https://github.com/rebol/rebol-issues/issues/1986
 	--assert "řek" = to-string dehex to-binary "%c5%99ek"
+
+	--assert "%3x " = dehex "%3x%20"
+	--assert "++"   = dehex "%2b%2b"
+
+--test-- "ENHEX"
+	--assert "%C2%A3"   = enhex "£"
+	--assert "a%20b%5C" = enhex "a b\"
+	--assert "%C5%A1ik" = enhex "šik"
+	--assert "%22%25-.%3C%3E%5C%1F%60%7B%7C%7D~" = enhex {"%-.<>\^_`{|}~}
+	; --assert %%C5%A1ik  = enhex %šik ;<-- this does not work yet!
+	--assert "šik" = to-string dehex enhex to-binary "šik"
+
 
 ===end-group===
 
