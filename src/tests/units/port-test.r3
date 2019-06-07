@@ -8,6 +8,26 @@ Rebol [
 
 ~~~start-file~~~ "port"
 
+===start-group=== "decode-url"
+	;@@ https://github.com/rebol/rebol-issues/issues/2380
+	--test-- "decode-url-unicode"
+		url: decode-url http://example.com/get?q=ščř#kovtička
+		--assert url/scheme = 'http
+		--assert url/host   = "example.com"
+		--assert url/path   = "/get?q=ščř"
+		--assert url/tag    = "kovtička"
+	--test-- "decode-url-unicode"
+		url: decode-url http://švéd:břéťa@example.com:8080/get?q=ščř#kovtička
+		--assert url/scheme = 'http
+		--assert url/user   = "švéd"
+		--assert url/pass   = "břéťa"
+		--assert url/host   = "example.com"
+		--assert url/port-id = 8080
+		--assert url/path   = "/get?q=ščř"
+		--assert url/tag    = "kovtička"
+
+===end-group===
+
 ===start-group=== "directory port"
 	;@@ https://github.com/rebol/rebol-issues/issues/2320
 	--test-- "port-issue-2320"

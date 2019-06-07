@@ -84,9 +84,9 @@ make-port*: func [
 	digits:      [1 5 digit]
 	alpha-num:   make bitset! [#"a" - #"z" #"A" - #"Z" #"0" - #"9"]
 	scheme-char: insert copy alpha-num "+-."
-	path-char:   insert copy alpha-num "/=+-_.;:&$@%*',~?| []()^"" ; !!! note: space allowed
-	user-char:   insert copy alpha-num "=+-_.;&$%*,'#|"
-	pass-char:   complement make bitset! "^/ ^-@"
+	path-char:   complement make bitset! "#" 
+	user-char:   complement make bitset! ":@"
+	host-char:   complement make bitset! ":/"
 	s1: s2: none ; in R3, input datatype is preserved - these are now URL strings!
 	out: []
 	emit: func ['w v] [reduce/into [to set-word! w if :v [to string! :v]] tail out]
@@ -107,7 +107,7 @@ make-port*: func [
 
 			; optional host [:port]
 			opt [
-				copy s1 any user-char
+				copy s1 any host-char
 				opt [#":" copy s2 digits (compose/into [port-id: (to integer! s2)] tail out)]
 				(unless empty? s1 [attempt [s1: to tuple! s1] emit host s1])
 			]
@@ -117,13 +117,14 @@ make-port*: func [
 		opt [copy s1 some path-char (emit path s1)]
 
 		; optional bookmark
-		opt [#"#" copy s1 some path-char (emit tag s1)]
+		opt [#"#" copy s1 to end (emit tag s1)]
 	]
 
 	decode-url: func ["Decode a URL according to rules of sys/*parse-url." url] [
 		--- "This function is bound in the context of sys/*parse-url."
 		out: make block! 8
 		parse/all url rules
+		probe out
 		out
 	]
 ]
