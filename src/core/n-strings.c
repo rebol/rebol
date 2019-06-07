@@ -637,7 +637,7 @@ static struct digest {
 				if (   (c >= 'a' && c <= 'z')
 					|| (c >= 'A' && c <= 'Z')
 					||  c == '?' || c == '!' || c == '&'
-					||  c == '*' || c == '=' || c == '~'
+					||  c == '*' || c == '=' || c == '~' || c == '_'
 				) break; // no conversion
 				goto byte_needs_encoding;
 			case LEX_CLASS_NUMBER:
@@ -687,7 +687,7 @@ static struct digest {
 					if (   (c >= 'a' && c <= 'z')
 						|| (c >= 'A' && c <= 'Z')
 						||  c == '?' || c == '!' || c == '&'
-						||  c == '*' || c == '=' || c == '~'
+						||  c == '*' || c == '=' || c == '~' || c == '_'
 					) break; // no conversion
 					goto char_needs_encoding;
 				case LEX_CLASS_NUMBER:
