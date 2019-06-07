@@ -255,9 +255,9 @@ do-request: func [
 	info/headers: info/response-line: info/response-parsed: port/data:
 	info/size: info/date: info/name: none
 
-	;sys/log/info 'HTTP ["do-request:^[[22m" spec/method spec/host spec/path]
+	sys/log/info 'HTTP ["do-request:^[[22m" spec/method spec/host spec/path]
 
-	write port/state/connection make-http-request spec/method to file! any [spec/path %/] spec/headers spec/content
+	write port/state/connection make-http-request spec/method enhex any [spec/path %/] spec/headers spec/content
 ]
 parse-write-dialect: func [port block /local spec] [
 	spec: port/spec
@@ -636,6 +636,7 @@ sys/make-scheme [
 			port [port!]
 			/local conn
 		] [
+		? port/spec
 			sys/log/debug 'HTTP ["open, state:" port/state]
 			if port/state [return port]
 			if none? port/spec/host [http-error "Missing host address"]
@@ -661,6 +662,7 @@ sys/make-scheme [
 			sys/log/info 'HTTP ["Opening connection:^[[22m" conn/spec/ref]
 			;?? conn
 			open conn
+
 			port
 		]
 		open?: func [
