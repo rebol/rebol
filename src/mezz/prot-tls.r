@@ -340,7 +340,7 @@ TLS-init-cipher-suite: func [
 make-TLS-error: func [
 	"Make an error for the TLS protocol"
 	message [string! block!]
-] [
+][
 	if block? message [message: ajoin message]
 	make error! [
 		type: 'Access
@@ -409,7 +409,7 @@ TLS-update-messages-hash: function [
 
 client-hello: function [
 	ctx [object!]
-] [
+][
 	change-state ctx 'CLIENT_HELLO
 	with ctx [
 
@@ -478,7 +478,7 @@ client-hello: function [
 
 client-key-exchange: function [
 	ctx [object!]
-] [
+][
 	;log-debug ["client-key-exchange -> method:" ctx/key-method]
 
 	change-state ctx 'CLIENT_KEY_EXCHANGE
@@ -614,7 +614,7 @@ client-key-exchange: function [
 
 change-cipher-spec: function [
 	ctx [object!]
-] [
+][
 	;@@ actually this is not just state, but its own "protocol"
 	;@@ https://tools.ietf.org/html/rfc5246#section-7.1
 
@@ -635,7 +635,7 @@ change-cipher-spec: function [
 application-data: func [
 	ctx [object!]
 	message [binary! string!]
-] [
+][
 	log-more "application-data"
 	;prin "unencrypted: " ?? message
 	message: encrypt-data ctx to binary! message
@@ -651,7 +651,7 @@ application-data: func [
 
 alert-close-notify: func [
 	ctx [object!]
-] [
+][
 	;@@ Not used/tested yet! It should be replaced with ALERT-notify with CLOSE as possible type
 	log-more "alert-close-notify"
 	message: encrypt-data ctx #{0100} ; close notify
@@ -666,7 +666,7 @@ alert-close-notify: func [
 
 finished: function [
 	ctx [object!]
-] [
+][
 	log-info ["FINISHED^[[22m write sequence:" ctx/seq-write]
 	ctx/seq-write: 0
 
@@ -694,7 +694,7 @@ encrypt-handshake-msg: function [
 	unencrypted [binary!]
 	/local
 		plain-msg
-] [
+][
 	log-more ["W[" ctx/seq-write "] encrypting-handshake-msg"]
 
 	encrypted: encrypt-data/type ctx unencrypted 22
@@ -760,7 +760,7 @@ encrypt-data: function [
 	content [binary!]
 	/type
 		msg-type [integer!] "application data is default"
-] [
+][
 	;log-debug "--encrypt-data--"
 	;? ctx
 	msg-type: any [msg-type 23] ;-- default application
@@ -854,7 +854,7 @@ decrypt-data: func [
 	data [binary!]
 	/local
 		crypt-data
-] [
+][
 	switch ctx/crypt-method [
 		RC4_128 [
 			unless ctx/decrypt-stream [
@@ -911,14 +911,14 @@ prf: function [
 
 		p-md5: copy #{}
 		a: seed ; A(0)
-		while [output-length > length? p-md5] [
+		while [output-length > length? p-md5][
 			a: checksum/method/key a 'md5 s-1 ; A(n)
 			append p-md5 checksum/method/key rejoin [a seed] 'md5 s-1
 		]
 
 		p-sha1: copy #{}
 		a: seed ; A(0)
-		while [output-length > length? p-sha1] [
+		while [output-length > length? p-sha1][
 			a: checksum/method/key a 'sha1 s-2 ; A(n)
 			append p-sha1 checksum/method/key rejoin [a seed] 'sha1 s-2
 		]
@@ -936,7 +936,7 @@ prf: function [
 
 	p-sha256: make binary! output-length
 	a: seed ; A(0)
-	while [output-length >= length? p-sha256] [
+	while [output-length >= length? p-sha256][
 		a: checksum/method/key a 'sha256 secret
 		append p-sha256 checksum/method/key rejoin [a seed] 'sha256 secret
 		;?? p-sha256
@@ -952,7 +952,7 @@ do-commands: func [
 	commands [block!]
 	/no-wait
 	/local arg cmd
-] [
+][
 	binary/init ctx/out none ;reset output buffer
 
 	parse commands [
@@ -980,7 +980,7 @@ do-commands: func [
 
 	unless no-wait [
 		log-more "Waiting for responses"
-		unless port? wait [ctx/connection 30] [
+		unless port? wait [ctx/connection 30][
 			log-error "Timeout"
 			;? ctx
 			? ctx/connection
@@ -1007,7 +1007,7 @@ make-TLS-ctx: does [ context [
 	bin: binary 64    ;temporary binary
 
 	port-data:   make binary! 32000 ;this holds received decrypted application data
-	rest:        make binary! 8 ;packet may not e fully processed, this value is used to keep temporary leftover
+	rest:        make binary! 8 ;packet may not be fully processed, this value is used to keep temporary leftover
 	reading?:       false  ;if client is reading or writing data
 	;server?:       false  ;always FALSE now as we have just a client
 	protocol:       none   ;current protocol state. One of: [HANDSHAKE APPLICATION ALERT]
@@ -1066,7 +1066,7 @@ make-TLS-ctx: does [ context [
 TLS-init: func [
 	"Resets existing TLS context"
 	ctx [object!]
-] [
+][
 	ctx/seq-read: ctx/seq-write: 0
 	ctx/protocol: ctx/state: ctx/state-prev: none
 	ctx/cipher-spec-set: 0 ;no encryption yet
@@ -1088,7 +1088,7 @@ TLS-init: func [
 TLS-read-data: function [
 	ctx       [object!]
 	port-data [binary!] 
-] [
+][
 	;log-more ["read-data:^[[1m" length? port-data "^[[22mbytes"]
 
 	inp: ctx/in
@@ -1277,7 +1277,7 @@ TLS-read-handshake-message: function [
 					if any [
 						none? tmp
 						server-version > version
-					] [
+					][
 						return *Alert/Protocol_version
 					]
 
@@ -1319,7 +1319,7 @@ TLS-read-handshake-message: function [
 					]
 				]
 				false ;= no error
-			] [; ctx
+			][; ctx
 				; WITH block catches RETURNs so just throw it again
 				return ctx/critical-error
 			]
@@ -1487,7 +1487,7 @@ send-event: function[
 	]
 ]
 
-TLS-awake: function [event [event!]] [
+TLS-awake: function [event [event!]][
 	log-more ["AWAKE:^[[1m" event/type]
 	port:       event/port
 	TLS-port:   port/locals
@@ -1496,7 +1496,7 @@ TLS-awake: function [event [event!]] [
 	if all [
 		TLS-port/state/protocol = 'APPLICATION
 		not port/data
-	] [
+	][
 		; reset the data field when interleaving port r/w states
 		;@@ TODO: review this part
 		log-debug ["reseting data -> " mold TLS-port/data] 
@@ -1586,14 +1586,14 @@ sys/make-scheme [
 			port [port!]
 			/local
 				resp data msg
-		] [
+		][
 			log-more "READ"
 			;? port
 			read port/state/connection
 			return port
 		]
 
-		write: func [port [port!] value [any-type!]] [
+		write: func [port [port!] value [any-type!]][
 			log-more "WRITE"
 			;?? port/state/protocol
 			if port/state/protocol = 'APPLICATION [ ;encrypted-handshake?
@@ -1604,7 +1604,7 @@ sys/make-scheme [
 			]
 		]
 
-		open: func [port [port!] /local conn] [
+		open: func [port [port!] /local conn][
 			log-more "OPEN"
 			if port/state [return port]
 
@@ -1626,10 +1626,10 @@ sys/make-scheme [
 			open conn
 			port
 		]
-		open?: func [port [port!]] [
+		open?: func [port [port!]][
 			found? all [port/state open? port/state/connection]
 		]
-		close: func [port [port!] /local ctx] [
+		close: func [port [port!] /local ctx][
 			log-more "CLOSE"
 			;? port ? port/scheme
 			unless port/state [return port]
@@ -1676,14 +1676,14 @@ sys/make-scheme [
 			port/state: none
 			port
 		]
-		copy: func [port [port!]] [
+		copy: func [port [port!]][
 			if port/data [copy port/data]
 		]
-		query: func [port [port!]] [
+		query: func [port [port!]][
 			all [port/state query port/state/connection]
 		]
-		length?: func [port [port!]] [
-			either port/data [length? port/data] [0]
+		length?: func [port [port!]][
+			either port/data [length? port/data][0]
 		]
 	]
 	set-verbose: :tls-verbosity
