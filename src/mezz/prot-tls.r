@@ -1007,7 +1007,7 @@ make-TLS-ctx: does [ context [
 	bin: binary 64    ;temporary binary
 
 	port-data:   make binary! 32000 ;this holds received decrypted application data
-
+	rest:        make binary! 8 ;packet may not e fully processed, this value is used to keep temporary leftover
 	reading?:       false  ;if client is reading or writing data
 	;server?:       false  ;always FALSE now as we have just a client
 	protocol:       none   ;current protocol state. One of: [HANDSHAKE APPLICATION ALERT]
@@ -1091,14 +1091,14 @@ TLS-read-data: function [
 ] [
 	;log-more ["read-data:^[[1m" length? port-data "^[[22mbytes"]
 
-	;probe copy/part ctx/in/buffer 10
+	inp: ctx/in
 
-	binary/write ctx/in port-data ;- fills input buffer with received data
+	binary/write inp ctx/rest  ;- possible leftover from previous packet
+	binary/write inp port-data ;- fills input buffer with received data
 	clear port-data
+	clear ctx/rest
 
 	ctx/reading?: true
-
-	inp: ctx/in
 
 	while [ctx/reading? and ((available: length? inp/buffer) >= 5)][
 		;?? available
@@ -1110,7 +1110,16 @@ TLS-read-data: function [
 			version: UI16
 			len:     UI16
 		]
-		log-debug ["fragment type: ^[[1m" type "^[[22mver:^[[1m" version "^[[22mbytes:^[[1m" len "^[[22mbytes"]
+		log-debug ["fragment type: ^[[1m" type "^[[22mver:^[[1m" version *Protocol-version/name version "^[[22mbytes:^[[1m" len "^[[22mbytes"]
+
+		if all [
+			ctx/server-version
+			version <> ctx/server-version
+		][
+			log-error ["Version mismatch:^[[22m" version "<>" ctx/server-version]
+			ctx/critical-error: *Alert/Internal_error
+			return false
+		]
 
 		if available < len [
 			;probe inp/buffer
@@ -1217,6 +1226,10 @@ TLS-read-data: function [
 
 	;?? ctx/state
 	log-debug "continue reading..."
+	unless empty? ctx/in/buffer [
+		; keeping rest of unprocessed data for later use
+		ctx/rest: copy ctx/in/buffer
+	]
 	return true
 ]
 
@@ -1538,25 +1551,23 @@ TLS-awake: function [event [event!]] [
 				TLS-error error-id
 			]
 			log-debug ["Read complete?" complete?]
-			if complete? [
-				;? TLS-Port/state
-				;? TLS-port/state/connection 
-				TLS-port/data: TLS-port/state/port-data
-				binary/init TLS-port/state/in none ; resets input buffer
+			unless complete? [
+				read port
+				return false
 			]
+			TLS-port/data: TLS-port/state/port-data
+			binary/init TLS-port/state/in none ; resets input buffer
 			either 'APPLICATION = TLS-port/state/protocol [
 				send-event 'read TLS-port
-			] [
-				read port
-			]
-			return complete?
+			][	read port ]
+			return true
 		]
 		close [
 			log-info "CLOSE"
 			send-event 'close TLS-port
 			return true
 		]
-	] [
+	][
 		;try [close port/state/connection]
 		close port
 		do make error! rejoin ["Unexpected TLS event: " event/type]

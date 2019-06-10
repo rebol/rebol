@@ -242,8 +242,8 @@ do-request: func [
 	info: port/state/info
 	spec/headers: body-of make make object! [
 		Accept: "*/*"
-		Accept-Charset: "utf-8"
-		Accept-encoding: "gzip,deflate"
+		Accept-charset: "utf-8"
+		Accept-Encoding: "gzip,deflate"
 		Host: either not find [80 443] spec/port-id [
 			rejoin [form spec/host #":" spec/port-id]
 		] [
@@ -513,19 +513,21 @@ check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer st
 	res: false
 
 	sys/log/more 'HTTP ["check-data; bytes:^[[m" length? conn/data]
-	;? conn
 
 	case [
 		headers/transfer-encoding = "chunked" [
 			data: conn/data
+			sys/log/more 'HTTP ["chunked data: " length? data mold copy/part data 30]
 			;clear the port data only at the beginning of the request --Richard
-			unless port/data [port/data: make binary! length? data]
+			unless port/data [ port/data: make binary! 32000 ]
 			out: port/data
 			until [
 				either parse/all data [
-					copy chunk-size some hex-digits thru crlfbin mk1: to end
+					copy chunk-size some hex-digits
+					crlfbin mk1: to end
 				] [
 					chunk-size: to integer! to issue! to string! chunk-size
+					sys/log/more 'HTTP ["chunk-size:^[[m" chunk-size]
 					either chunk-size = 0 [
 						if parse/all mk1 [
 							crlfbin (trailer: "") to end | copy trailer to crlf2bin to end
@@ -607,7 +609,6 @@ sys/make-scheme [
 				if port/state/state <> 'ready [http-error "Port not ready"]
 				port/state/awake: :port/awake
 				do-request port
-				port
 			] [
 				sync-op port []
 			]
@@ -627,7 +628,6 @@ sys/make-scheme [
 				port/state/awake: :port/awake
 				parse-write-dialect port value
 				do-request port
-				port
 			] [
 				sync-op port [parse-write-dialect port value]
 			]
@@ -636,7 +636,6 @@ sys/make-scheme [
 			port [port!]
 			/local conn
 		] [
-		? port/spec
 			sys/log/debug 'HTTP ["open, state:" port/state]
 			if port/state [return port]
 			if none? port/spec/host [http-error "Missing host address"]
