@@ -253,6 +253,7 @@ Rebol [
 
 	--assert "%3x " = dehex "%3x%20"
 	--assert "++"   = dehex "%2b%2b"
+	--assert 127 = to-integer first dehex "%7F"
 
 --test-- "ENHEX"
 	--assert "%C2%A3"   = enhex "£"
@@ -261,7 +262,10 @@ Rebol [
 	--assert "%22%25-.%3C%3E%5C%1F%60%7B%7C%7D~" = enhex {"%-.<>\^_`{|}~}
 	; --assert %%C5%A1ik  = enhex %šik ;<-- this does not work yet!
 	--assert "šik" = to-string dehex enhex to-binary "šik"
+	--assert    "%7F" = enhex to-string #{7F}
 	--assert "%C2%80" = enhex to-string #{80}
+	--assert "%C2%81" = enhex to-string #{81}
+	--assert "%E5%85%83" = enhex {元}
 
 
 ===end-group===
