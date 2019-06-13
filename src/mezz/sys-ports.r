@@ -124,7 +124,6 @@ make-port*: func [
 		--- "This function is bound in the context of sys/*parse-url."
 		out: make block! 8
 		parse/all url rules
-		probe out
 		out
 	]
 ]
