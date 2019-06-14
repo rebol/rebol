@@ -94,18 +94,18 @@ sync-op: func [port body /local state encoding content-type code-page tmp][
 		parse content-type ["text/" [thru "charset=" copy code-page to end] to end]
 	][
 		unless code-page [code-page: "utf-8"]
-		sys/log/info 'HTTP ["trying to decode from code-page:^[[m" code-page]
+		sys/log/info 'HTTP ["Trying to decode from code-page:^[[m" code-page]
 		if string? tmp: try [iconv body code-page][	body: tmp ]
 	]
 
 	if state/close? [
-		sys/log/more 'HTTP ["closing port for:^[[m" port/spec/ref]
+		sys/log/more 'HTTP ["Closing port for:^[[m" port/spec/ref]
 		close port
 	]
 	body
 ]
 read-sync-awake: func [event [event!] /local error][
-	sys/log/debug 'HTTP ["read-sync-awake:" event/type]
+	sys/log/debug 'HTTP ["Read-sync-awake:" event/type]
 	switch/default event/type [
 		connect ready [
 			do-request event/port
@@ -144,7 +144,7 @@ http-awake: func [event /local port http-port state awake res][
 	if any-function? :http-port/awake [state/awake: :http-port/awake]
 	awake: :state/awake
 
-	sys/log/debug 'HTTP ["awake:^[[1m" event/type "^[[22mstate:^[[1m" state/state]
+	sys/log/debug 'HTTP ["Awake:^[[1m" event/type "^[[22mstate:^[[1m" state/state]
 
 	switch/default event/type [
 		read [
@@ -255,7 +255,7 @@ do-request: func [
 	info/headers: info/response-line: info/response-parsed: port/data:
 	info/size: info/date: info/name: none
 
-	sys/log/info 'HTTP ["do-request:^[[22m" spec/method spec/host spec/path]
+	sys/log/info 'HTTP ["Request:^[[22m" spec/method spec/host spec/path]
 
 	write port/state/connection make-http-request spec/method enhex any [spec/path %/] spec/headers spec/content
 ]
@@ -285,7 +285,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 			all [
 				d1: find conn/data #{0A}
 				d2: find/tail d1 #{0A0A}
-				sys/log/debug 'HTML "server using malformed line separator of #{0A0A}"
+				sys/log/debug 'HTML "Server using malformed line separator of #{0A0A}"
 			]
 		]
 	][
@@ -345,7 +345,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 		]
 	]
 
-	sys/log/debug 'HTTP ["check-response:" info/response-parsed]
+	sys/log/debug 'HTTP ["Check-response:" info/response-parsed]
 
 	;?? info/response-parsed
 	;?? spec/method
@@ -512,12 +512,12 @@ check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer st
 	conn: state/connection
 	res: false
 
-	sys/log/more 'HTTP ["check-data; bytes:^[[m" length? conn/data]
+	sys/log/more 'HTTP ["Check-data; bytes:^[[m" length? conn/data]
 
 	case [
 		headers/transfer-encoding = "chunked" [
 			data: conn/data
-			sys/log/more 'HTTP ["chunked data: " length? data mold copy/part data 30]
+			sys/log/more 'HTTP ["Chunked data: " length? data mold copy/part data 30]
 			;clear the port data only at the beginning of the request --Richard
 			unless port/data [ port/data: make binary! 32000 ]
 			out: port/data
@@ -527,7 +527,7 @@ check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer st
 					crlfbin mk1: to end
 				][
 					chunk-size: to integer! to issue! to string! chunk-size
-					sys/log/more 'HTTP ["chunk-size:^[[m" chunk-size]
+					sys/log/more 'HTTP ["Chunk-size:^[[m" chunk-size]
 					either chunk-size = 0 [
 						if parse/all mk1 [
 							crlfbin (trailer: "") to end | copy trailer to crlf2bin to end
@@ -603,7 +603,7 @@ sys/make-scheme [
 		read: func [
 			port [port!]
 		][
-			sys/log/debug 'HTTP "read"
+			sys/log/debug 'HTTP "READ"
 			either any-function? :port/awake [
 				unless open? port [cause-error 'Access 'not-open port/spec/ref]
 				if port/state/state <> 'ready [http-error "Port not ready"]
@@ -617,7 +617,7 @@ sys/make-scheme [
 			port [port!]
 			value
 		][
-			sys/log/debug 'HTTP "write"
+			sys/log/debug 'HTTP "WRITE"
 			;?? port
 			unless any [block? :value binary? :value any-string? :value][value: form :value]
 			unless block? value [value: reduce [[Content-Type: "application/x-www-form-urlencoded; charset=utf-8"] value]]
@@ -636,7 +636,7 @@ sys/make-scheme [
 			port [port!]
 			/local conn
 		][
-			sys/log/debug 'HTTP ["open, state:" port/state]
+			sys/log/debug 'HTTP ["OPEN, state:" port/state]
 			if port/state [return port]
 			if none? port/spec/host [http-error "Missing host address"]
 			port/state: context [
@@ -672,7 +672,7 @@ sys/make-scheme [
 		close: func [
 			port [port!]
 		][
-			sys/log/debug 'HTTP "close"
+			sys/log/debug 'HTTP "CLOSE"
 			if port/state [
 				close port/state/connection
 				port/state/connection/awake: none
