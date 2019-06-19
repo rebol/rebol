@@ -508,3 +508,162 @@
 	return R_RET;
 
 }
+
+
+#include "uECC.h"
+const struct uECC_Curve_t* ECC_curves[5] = {0,0,0,0,0};
+typedef struct {
+	REBCNT  curve_type;
+	uint8_t public[64];
+	uint8_t private[32];
+} ECC_CTX;
+
+/***********************************************************************
+**
+*/	REBNATIVE(ecdh)
+/*
+//  ecdh: native [
+//		"Elliptic-curve Diffie-Hellman key exchange"
+//		key [handle! none!] "Keypair to work with, may be NONE for /init refinement"
+//		/init   "Initialize ECC keypair."
+//			type [word!] "One of supported curves: [secp256k1 secp256r1 secp224r1 secp192r1 secp160r1]"
+//		/curve  "Returns handles curve type"
+//		/public "Returns public key as a binary"
+//		/secret  "Computes secret result using peer's public key"
+//			public-key [binary!] "Peer's public key"
+//		/release "Releases internal ECDH key resources"
+//  ]
+***********************************************************************/
+{
+	REBVAL *val_handle  = D_ARG(1);
+	REBOOL  ref_init    = D_REF(2);
+	REBVAL *val_curve   = D_ARG(3);
+	REBOOL  ref_type    = D_REF(4);
+	REBOOL  ref_public  = D_REF(5);
+	REBOOL  ref_secret  = D_REF(6);
+	REBVAL *val_public  = D_ARG(7);
+	REBOOL  ref_release = D_REF(8);
+
+	REBSER *ecc_ser = NULL;
+	REBSER *bin = NULL;
+	REBVAL *ret;
+	REBCNT curve_type = 0;
+	uECC_Curve curve = NULL;
+	ECC_CTX *ecc = NULL;
+
+	if (IS_HANDLE(val_handle)) {
+		if (VAL_HANDLE_TYPE(val_handle) != SYM_ECDH || VAL_HANDLE_DATA(val_handle) == NULL) {
+			Trap0(RE_INVALID_HANDLE);
+		}
+		ecc_ser = VAL_HANDLE_DATA(val_handle);
+		ecc = (ECC_CTX*)SERIES_DATA(ecc_ser);
+		curve_type = ecc->curve_type;
+	}
+
+	if (ref_init) {
+		if(ecc_ser == NULL) {
+			ecc_ser = Make_Series(sizeof(ECC_CTX), 1, FALSE);
+		}
+		ecc = (ECC_CTX*)SERIES_DATA(ecc_ser);	
+		CLEARS(ecc);
+		curve_type = ecc->curve_type = VAL_WORD_CANON(val_curve);
+		SET_HANDLE(val_handle, ecc_ser, SYM_ECDH, HANDLE_SERIES);
+	}
+
+	switch (curve_type) {
+		case SYM_SECP256K1:
+			curve = ECC_curves[4];
+			if(curve == NULL) {
+				curve = uECC_secp256k1();
+				ECC_curves[4] = curve;
+			}
+			break;
+		case SYM_SECP256R1:
+			curve = ECC_curves[3];
+			if(curve == NULL) {
+				curve = uECC_secp256r1();
+				ECC_curves[3] = curve;
+			}
+			break;
+		case SYM_SECP224R1:
+			curve = ECC_curves[2];
+			if(curve == NULL) {
+				curve = uECC_secp224r1();
+				ECC_curves[2] = curve;
+			}
+			break;
+		case SYM_SECP192R1:
+			curve = ECC_curves[1];
+			if(curve == NULL) {
+				curve = uECC_secp192r1();
+				ECC_curves[1] = curve;
+			}
+			break;		
+		case SYM_SECP160R1:
+			curve = ECC_curves[0];
+			if(curve == NULL) {
+				curve = uECC_secp160r1();
+				ECC_curves[0] = curve;
+			}
+			break;
+		default:
+			return R_NONE;
+	}
+
+	if (ref_init) {
+		if(!uECC_make_key(ecc->public, ecc->private, curve)) {
+			puts("failed to init ECDH key");
+			Trap0(RE_INVALID_HANDLE); //TODO: change to something better!
+		} else return R_ARG1;
+	}
+
+	if (ref_secret) {
+		if (IS_HANDLE(val_handle)) {
+			bin = Make_Binary(32);
+			if (!uECC_shared_secret(VAL_DATA(val_public), ecc->private, BIN_DATA(bin), curve)) {
+				return R_NONE;
+            }
+			if(ref_release) {
+				CLEARS(ecc);
+				HANDLE_SET_FLAG(val_handle, HANDLE_RELEASABLE);
+			}
+			SET_BINARY(D_RET, bin);
+			BIN_LEN(bin) = 32;
+			return R_RET;
+		}
+		else {
+			Trap0(RE_INVALID_HANDLE);
+			return R_NONE;
+		}
+	}
+
+	if (ref_public) {
+		if (IS_HANDLE(val_handle)) {
+			bin = Make_Binary(64);
+			COPY_MEM(BIN_DATA(bin), ecc->public, 64);
+			SET_BINARY(D_RET, bin);
+			BIN_LEN(bin) = 64;
+			return R_RET;
+		}
+		else {
+			return R_NONE;
+		}
+	}
+
+	if(ref_release) {
+		CLEARS(ecc);
+		HANDLE_SET_FLAG(val_handle, HANDLE_RELEASABLE);
+		return R_ARG1;
+	}
+
+	if (ref_type) {
+		if (IS_HANDLE(val_handle)) {
+			Init_Word(val_curve, curve_type);
+			return R_ARG3;
+		}
+		else {
+			return R_NONE;
+		}
+	}
+	return R_ARG1;
+}
