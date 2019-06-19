@@ -120,6 +120,7 @@ core: [
 	u-rsa.c    ;needed in TLS protocol (HTTPS)
 	u-sha1.c
 	u-sha2.c
+	u-uECC.c
 	u-zlib.c
 	u-wav.c
 ]
