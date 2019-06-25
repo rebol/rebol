@@ -148,7 +148,31 @@ REBOL [
 	TLS_DH_anon_WITH_AES_128_CBC_SHA256: #{006C}
 	TLS_DH_anon_WITH_AES_256_CBC_SHA256: #{006D}
 
+;   Elyptic curves:
+
+	TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256:   #{CCA8}
+	TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256: #{CCA9}
+	TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256:         #{C02F}
+	TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384:         #{C030}
+	TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256:       #{C02B}
+	TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384:       #{C02C}
+	TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA:            #{C013}
+	TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA:          #{C009}
+	TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA:            #{C014}
+	TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA:          #{C00A}
+
 ] 'TLS-Cipher-suite
+
+*EllipticCurves: enum [
+	secp192r1: #{0013}
+	secp224k1: #{0014}
+	secp224r1: #{0015}
+	secp256k1: #{0016}
+	secp256r1: #{0017}
+	secp384r1: #{0018}
+	secp521r1: #{0019}
+	x25519:    #{001D}
+] 'EllipticCurves
 
 *SignatureAlgorithm: enum [
 	none:       0
@@ -208,7 +232,11 @@ REBOL [
 ] 'TLS-Alert
 
 *TLS-Extension: enum [
-	RenegotiationInfo: #{FF01} ;@@ https://tools.ietf.org/html/rfc5746
+	ServerName:          #{0000}
+	SupportedGroups:     #{000A}
+	SignatureAlgorithms: #{000D}
+	KeyShare:            #{0033}
+	RenegotiationInfo:   #{FF01} ;@@ https://tools.ietf.org/html/rfc5746
 ] 'TLS-Extension
 
 
@@ -253,20 +281,31 @@ log-error: :_log-error ;- use error logs by default
 ; This list is sent to the server when negotiating which one to use.  Hence
 ; it should be ORDERED BY CLIENT PREFERENCE (more preferred suites first).
 suported-cipher-suites: rejoin [
+	;#{CCA8} ;TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+	;#{CCA9} ;TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+	;#{C02F} ;TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+	;#{C030} ;TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+	;#{C02B} ;TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+	;#{C02C} ;TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+	#{C014} ;TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
+	#{C013} ;TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
+	;#{C009} ;TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA
+	;#{C00A} ;TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
 	#{003D} ;TLS_RSA_WITH_AES_256_CBC_SHA256
 	#{003C} ;TLS_RSA_WITH_AES_128_CBC_SHA256
-	#{002F} ;TLS_RSA_WITH_AES_128_CBC_SHA
 	#{0035} ;TLS_RSA_WITH_AES_256_CBC_SHA
-	#{0032} ;TLS_DHE_DSS_WITH_AES_128_CBC_SHA
+	#{002F} ;TLS_RSA_WITH_AES_128_CBC_SHA
 	#{0038} ;TLS_DHE_DSS_WITH_AES_256_CBC_SHA
-	#{0033} ;TLS_DHE_RSA_WITH_AES_128_CBC_SHA
+	#{0032} ;TLS_DHE_DSS_WITH_AES_128_CBC_SHA
 	#{0039} ;TLS_DHE_RSA_WITH_AES_256_CBC_SHA
+	#{0033} ;TLS_DHE_RSA_WITH_AES_128_CBC_SHA
 	;- RC4 is prohibited by https://tools.ietf.org/html/rfc7465 for insufficient security
 	;#{0004} ;TLS_RSA_WITH_RC4_128_MD5 
 	;#{0005} ;TLS_RSA_WITH_RC4_128_SHA
 ]
 
 supported-signature-algorithms: rejoin [
+	#{0703} ; curve25519 (EdDSA algorithm)
 	#{0601} ; rsa_pkcs1_sha512
 	#{0602} ; SHA512 DSA
 	;#{0603} ; ecdsa_secp521r1_sha512
@@ -282,6 +321,16 @@ supported-signature-algorithms: rejoin [
 	#{0201} ; rsa_pkcs1_sha1
 	#{0202} ; SHA1 DSA
 	;#{0203} ; ecdsa_sha1
+]
+
+supported-elliptic-curves: rejoin [
+	;#{001D} ; x25519
+	;#{0019} ; secp521r1
+	;#{0018} ; secp384r1
+	#{0017} ; secp256r1
+	#{0015} ; secp224r1
+	#{0014} ; secp224k1
+	#{0013} ; secp192r1
 ]
 
 
@@ -313,7 +362,8 @@ TLS-init-cipher-suite: func [
 			| "RC4_128"      (ctx/crypt-size: 16 ctx/IV-size: 0  ctx/block-size: none)
 			| "3DES_EDE_CBC" (ctx/crypt-size: 24 ctx/IV-size: 8  ctx/block-size: 8   )
 			| "AES_128_CBC"  (ctx/crypt-size: 16 ctx/IV-size: 16 ctx/block-size: 16  )
-			| "AES_256_CBC"  (ctx/crypt-size: 32 ctx/IV-size: 16 ctx/block-size: 16  )
+			|["AES_256_CBC" | "AES_256_GCM"]
+			                 (ctx/crypt-size: 32 ctx/IV-size: 16 ctx/block-size: 16  )
 		] #"_" [
 			  "NULL"   end (ctx/hash-method: none    ctx/mac-size: 0 )
 			| "MD5"    end (ctx/hash-method: 'MD5    ctx/mac-size: 16)
@@ -433,6 +483,31 @@ client-hello: function [
 				BYTES :host-name
 			]
 		]
+		;- Supported Groups (extension)
+		append extensions rejoin [
+			#{000A} ; assigned value for extension "supported groups"
+			#{0004} ; 4 bytes of "supported groups" extension data follows
+			#{0002} ; 2 bytes of data are in the curves list
+			;#{001D} ; assigned value for the curve "x25519"
+			#{0017} ; assigned value for the curve "secp256r1"
+			;#{0018} ; assigned value for the curve "secp384r1"
+			;#{0019} ; assigned value for the curve "secp521r1"
+		]
+		;- Renegotiation Info (extension)
+		; The presence of this extension prevents a type of attack performed with TLS renegotiation. 
+		; https://kryptera.se/Renegotiating%20TLS.pdf
+		; Advertise it, but refuse renegotiation
+		append extensions #{ff01 0001 00} ; (extensionID, 1 byte length, zero byte)
+
+		;- Signed certificate timestamp (extension)
+		; The client provides permission for the server to return a signed certificate timestamp. 
+
+		; This form of the client sending an empty extension is necessary because it is a fatal error
+		; for the server to reply with an extension that the client did not provide first. Therefore 
+		; the client sends an empty form of the extension, and the server replies with the extension 
+		; populated with data, or changes behavior based on the client having sent the extension.
+		append extensions #{0012 0000}
+
 
 		;precomputing the extension's lengths so I can write them in one WRITE call
 		length-signatures:  2 + length? supported-signature-algorithms
@@ -442,7 +517,7 @@ client-hello: function [
 
 		binary/write out [
 			UI8       22                  ; protocol type (22=Handshake)
-			UI16      :version            ; protocol version
+			UI16      :version            ; protocol version (minimal supported)
 			UI16      :length-record      ; length of SSL record data
 			;client-hello message:
 			UI8       1                   ; protocol message type	(1=ClientHello)
@@ -499,6 +574,12 @@ client-key-exchange: function [
 		]
 
 		switch key-method [
+			ECDHE_ECDSA
+			ECDHE_RSA [
+				log-more ["W[" ctx/seq-write "] Using ECDH key-method"]
+				insert key-data #{04} ; ECDH key seems to have this byte at its head
+				key-data-len-bytes: 1
+			]
 			RSA [
 				log-more ["W[" ctx/seq-write "] Using RSA key-method"]
 
@@ -523,29 +604,26 @@ client-key-exchange: function [
 
 				; supply encrypted pre-master-secret to server
 				key-data: rsa/encrypt rsa-key pre-master-secret
-
+				key-data-len-bytes: 2
 				log-more ["W[" ctx/seq-write "] key-data:" mold key-data]
 			]
 			DHE_DSS
 			DHE_RSA [
 				log-more ["W[" ctx/seq-write "] Using DH key-method"]
-				; resolve the public key to supply it to server
-				key-data: dh/public dh-key
-				; and release the dh-key handle (as not needed anymore)
-				dh/release dh-key
-				dh-key: none
+				key-data-len-bytes: 2
 			]
 		]
 
 		;compute used lengths
-		length-message: 2 + length? key-data
+		length-message: key-data-len-bytes + length? key-data
 		length-record:  4 + length-message
 
 		;and write them with key data
-		binary/write out [
+		binary/write out compose [
 			AT :pos-record-len UI16 :length-record
 			AT :pos-message    UI24 :length-message
-			AT :pos-key   UI16BYTES :key-data
+			; for ECDH only 1 byte is used to store length!
+			AT :pos-key (pick [UI8BYTES UI16BYTES] key-data-len-bytes) :key-data
 		]
 
 
@@ -980,7 +1058,7 @@ do-commands: func [
 
 	unless no-wait [
 		log-more "Waiting for responses"
-		unless port? wait [ctx/connection 30][
+		unless port? wait [ctx/connection 130][
 			log-error "Timeout"
 			;? ctx
 			? ctx/connection
@@ -1054,8 +1132,7 @@ make-TLS-ctx: does [ context [
 	master-secret:
 	certificate:
 	pub-key: pub-exp:
-	dh-key:		 ;DH key calculated from provided G and P values from server
-	dh-pub: none ;Server's public DH key
+	key-data:
 
 	encrypt-stream:
 	decrypt-stream: none
@@ -1238,7 +1315,7 @@ TLS-read-handshake-message: function [
 ][
 	binary/read ctx/in [type: UI8 len: UI24 start: INDEX]
 	ends: start + len
-	log-debug ["R[" ctx/seq-read "] length:" len "start:" start "ends:" ends]
+	log-debug ["R[" ctx/seq-read "] length:" len "start:" start "ends:" ends "type:" type]
 
 	change-state ctx *Handshake/name type
 
@@ -1252,19 +1329,25 @@ TLS-read-handshake-message: function [
 			assert-prev-state ctx [CLIENT_HELLO]
 
 			if ctx/critical-error: with ctx [
-				;@@TODO: do check if server does not report lengths for session and compressions
-				;@@      above given bounds!
-				binary/read in [
-					server-version: UI16
-					server-random:  BYTES 32
-					server-session: UI8BYTES						
-					cipher-suite:   BYTES 2
-					compressions:   UI8BYTES ;<- must be empty
+				if any [
+					error? try [
+						binary/read in [
+							server-version: UI16
+							server-random:  BYTES 32
+							server-session: UI8BYTES						
+							cipher-suite:   BYTES 2
+							compressions:   UI8BYTES ;<- must be empty
+						]
+					]
+					32 < length? server-session  ;@@ limit session-id size; TLSe has it max 32 bytes
+				][
+					log-error "Failed to read server hello."
+					return *Alert/Handshake_failure
 				]
 
 				log-more ["R[" seq-read "] Version:" *Protocol-version/name server-version "len:" len "cipher-suite:" cipher-suite]
-				log-more ["R[" seq-read "] Random: ^[[1m"      mold server-random ]
-				log-more ["R[" seq-read "] Session:^[[1m"      mold server-session] ;@@ limit session-id size? TLSe has it max 32 bytes
+				log-more ["R[" seq-read "] Random: ^[[1m" mold server-random ]
+				log-more ["R[" seq-read "] Session:^[[1m" mold server-session]
 
 				if server-version <> version [
 					print [
@@ -1342,6 +1425,7 @@ TLS-read-handshake-message: function [
 				append ctx/server-certs decode 'CRT cert
 			]
 			log-more ["Received" length? ctx/server-certs "server certificates."]
+			;? ctx/server-certs
 			if error? try [
 				;?? ctx/server-certs/1/public-key
 				key: ctx/server-certs/1/public-key/2
@@ -1358,86 +1442,120 @@ TLS-read-handshake-message: function [
 			assert-prev-state ctx [CERTIFICATE SERVER_HELLO]
 			log-more ["R[" ctx/seq-read "] Using key method:^[[1m" ctx/key-method]
 			switch ctx/key-method [
+				ECDHE_RSA
+				ECDHE_ECDSA [
+					;? ctx/in/buffer
+					if error? try [
+						binary/read ctx/in [
+						  s: INDEX
+							ECCurveType: UI8  
+							ECCurve:     UI16     ; IANA CURVE NUMBER
+							pub_key:     UI8BYTES 
+						  e: INDEX
+						]
+					][
+						log-error "Error reading elyptic curve"
+						return *Alert/User_cancelled
+					]
+					if any [
+						3 <> ECCurveType
+						4 <> take pub_key
+						none? curve: *EllipticCurves/name ECCurve
+					][
+						log-error ["Unsupported ECurve type:" ECCurveType ECCurve ]
+						return *Alert/User_cancelled
+					]
+					log-more ["R[" ctx/seq-read "] Elyptic curve type:" ECCurve "=>" curve]
+					log-more ["R[" ctx/seq-read "] Elyptic curve data:" pub_key]
+				]
 				DHE_DSS
 				DHE_RSA [
+					;- has DS params
 					binary/read ctx/in [
 						s: INDEX
-							dh_p:  UI16BYTES
-							dh_g:  UI16BYTES
-							dh_Ys: UI16BYTES
+							dh_p:    UI16BYTES
+							dh_g:    UI16BYTES
+							pub_key: UI16BYTES
 						e: INDEX
 					]
-					;store the complete message for signature test later
-					message-len: e - s
-					binary/read ctx/in [
-						AT :s
-						message: BYTES :message-len
-					]
-					;print ["DH:" dh_p dh_g dh_Ys] 
-					;?? message
-					
-					hash-algorithm: 'md5_sha1
-					sign-algorithm: 'rsa_sign
+				]
+			]
 
-
-					;-- check signature
-
-					if not ctx/legacy? [
-						;signature
-						hash-algorithm: *SignatureAlgorithm/name    binary/read ctx/in 'UI8
-						sign-algorithm: *ClientCertificateType/name binary/read ctx/in 'UI8
-						log-more ["R[" ctx/seq-read "] Using algorithm:" hash-algorithm "with" sign-algorithm]
-
-						binary/read ctx/in [signature: UI16BYTES]
-						;?? signature
-
-						insert message rejoin [
-							ctx/client-random
-							ctx/server-random
+			;store the complete message for signature test later
+			message-len: e - s
+			binary/read ctx/in [
+				AT :s
+				message: BYTES :message-len
+			]
+			;print ["DH:" dh_p dh_g dh_Ys] 
+			;?? message
+			
+			hash-algorithm: 'md5_sha1
+			sign-algorithm: 'rsa_sign
+			;-- check signature
+			if not ctx/legacy? [
+				;signature
+				hash-algorithm: *SignatureAlgorithm/name    binary/read ctx/in 'UI8
+				sign-algorithm: *ClientCertificateType/name binary/read ctx/in 'UI8
+				log-more ["R[" ctx/seq-read "] Using algorithm:" hash-algorithm "with" sign-algorithm]
+				binary/read ctx/in [signature: UI16BYTES]
+				;?? signature
+				insert message rejoin [
+					ctx/client-random
+					ctx/server-random
+				]
+				either hash-algorithm = 'md5_sha1 [
+					;__private_rsa_verify_hash_md5sha1
+					log-error "legacy __private_rsa_verify_hash_md5sha1 not implemented yet!"
+					return *Alert/Decode_error
+				][
+					log-more "Checking signature using RSA"
+					if any [
+						error? err: try [
+							message-hash: checksum/method message hash-algorithm
+							;?? message-hash
+							;decrypt the `signature` with server's public key
+							rsa-key: apply :rsa-init ctx/server-certs/1/public-key/rsaEncryption
+							signature: rsa/verify rsa-key signature
+							;?? signature
+							signature: decode 'der signature
 						]
-
-						either hash-algorithm = 'md5_sha1 [
-							;__private_rsa_verify_hash_md5sha1
-							log-error "legacy __private_rsa_verify_hash_md5sha1 not implemented yet!"
-							return *Alert/Decode_error
-						][
-							log-more "Checking signature using RSA"
-							if any [
-								error? err: try [
-									message-hash: checksum/method message hash-algorithm
-									;?? message-hash
-									;decrypt the `signature` with server's public key
-									rsa-key: apply :rsa-init ctx/server-certs/1/public-key/rsaEncryption
-									signature: rsa/verify rsa-key signature
-									;?? signature
-									signature: decode 'der signature
-								]
-								;note tls1.3 is different a little bit here!
-								message-hash <> signature/sequence/octet_string
-							][
-								log-error "Failed to validate signature"
-								if error? err [print err]
-								return *Alert/Decode_error
-							]
-							log-more "Signature valid!"
-						]
-					]
-
-					if ends > pos: binary/read ctx/in 'index [
-						len: ends - pos
-						binary/read ctx/in [extra: BYTES :len]
-						log-error [
-							"Extra" len "bytes at the end of message:"
-							mold extra
-						]
+						;note tls1.3 is different a little bit here!
+						message-hash <> signature/sequence/octet_string
+					][
+						log-error "Failed to validate signature"
+						if error? err [print err]
 						return *Alert/Decode_error
 					]
-
-					ctx/dh-key: dh-init dh_g dh_p
-					ctx/pre-master-secret: dh/secret ctx/dh-key dh_Ys
-					log-more ["DH common secret:" mold ctx/pre-master-secret]
+					log-more "Signature valid!"
 				]
-				;@@ ECDHE_RSA ECDHE_ECDSA []
+
+				if ends > pos: index? ctx/in/buffer [
+					len: ends - pos
+					binary/read ctx/in [extra: BYTES :len]
+					log-error [
+						"Extra" len "bytes at the end of message:"
+						mold extra
+					]
+					return *Alert/Decode_error
+				]
+
+				if dh_p [
+					dh-key: dh-init dh_g dh_p
+					ctx/pre-master-secret: dh/secret dh-key pub_key
+					log-more ["DH common secret:" mold ctx/pre-master-secret]
+					ctx/key-data: dh/public/release dh-key
+				]
+				if curve [
+					;- elyptic curve init
+					;curve is defined above (send from server as well as server's public key)
+					dh-key: ecdh/init none curve
+					ctx/pre-master-secret: ecdh/secret dh-key pub_key
+					log-more ["ECDH common secret:" mold ctx/pre-master-secret]
+					; resolve the public key to supply it to server
+					ctx/key-data: ecdh/public/release dh-key
+
+				]
 			]
 		]
 		;----------------------------------------------------------
