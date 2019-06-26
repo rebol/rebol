@@ -21,6 +21,7 @@ dt [ ;- delta time
 	wrap load %units/rc4-test.r3
 	wrap load %units/aes-test.r3
 	wrap load %units/chacha20-test.r3
+	wrap load %units/poly1305-test.r3
 	wrap load %units/rsa-test.r3
 	wrap load %units/dh-test.r3
 	wrap load %units/port-test.r3
