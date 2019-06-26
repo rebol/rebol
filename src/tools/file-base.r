@@ -117,6 +117,7 @@ core: [
 	u-md5.c
 	u-parse.c
 	u-png.c
+	u-poly1305.c
 	u-rc4.c
 	u-rsa.c    ;needed in TLS protocol (HTTPS)
 	u-sha1.c

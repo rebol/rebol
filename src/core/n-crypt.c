@@ -752,3 +752,66 @@ typedef struct {
     }
 	return R_RET;
 }
+
+
+#include "sys-poly1305.h"
+/***********************************************************************
+**
+*/	REBNATIVE(poly1305)
+/*
+//  poly1305: native [
+//		"poly1305 message-authentication"
+//		ctx [handle! binary!] "poly1305 handle and or binary key for initialization (32 bytes)"
+//		/update data [binary!] "data to authenticate"
+//		/verify mac  [binary!] "16 bytes of verification MAC"
+//  ]
+***********************************************************************/
+{
+	REBVAL *val_ctx       = D_ARG(1);
+	REBOOL  ref_update    = D_REF(2);
+	REBVAL *val_data      = D_ARG(3);
+	REBOOL  ref_verify    = D_REF(4);
+	REBVAL *val_mac       = D_ARG(5);
+    
+    REBVAL *ret = D_RET;
+	REBSER *ctx_ser;
+	REBINT  len;
+	REBCNT  i;
+	REBYTE  mac[16];
+
+	if (IS_BINARY(val_ctx)) {
+		len = VAL_LEN(val_ctx);
+		if (len < 32) {
+			return R_NONE; //TODO: error
+		}
+		//making series from POOL so it will be GCed automaticaly
+		ctx_ser = Make_Series(sizeof(poly1305_context), (REBCNT)1, FALSE);
+
+		poly1305_init((poly1305_context*)ctx_ser->data, VAL_BIN_AT(val_ctx));
+
+		SERIES_TAIL(ctx_ser) = sizeof(poly1305_context);
+		SET_HANDLE(val_ctx, ctx_ser, SYM_POLY1305, HANDLE_SERIES);
+	}
+	else {
+		ctx_ser = VAL_HANDLE_DATA(val_ctx);
+		if (VAL_HANDLE_TYPE(val_ctx) != SYM_POLY1305 || ctx_ser == NULL || SERIES_TAIL(ctx_ser) != sizeof(poly1305_context)){
+    		Trap0(RE_INVALID_HANDLE);
+		}
+	}
+
+	if (ref_update) {
+		poly1305_update((poly1305_context*)ctx_ser->data, VAL_BIN_AT(val_data), VAL_LEN(val_data));
+	}
+
+	if (ref_verify) {
+		if (VAL_LEN(val_mac) != 16)
+			return R_FALSE; // or error?
+		for (i = 0; i < sizeof(mac); i++)
+			mac[i] = 0;
+
+		poly1305_finish((poly1305_context*)ctx_ser->data, mac);
+		return (poly1305_verify(VAL_BIN_AT(val_mac), mac)) ? R_TRUE : R_FALSE;
+	}
+
+	return R_ARG1;
+}
