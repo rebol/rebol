@@ -74,8 +74,11 @@ Rebol [
 		#{f69f2445df4f9b17ad2b417be66c3710}
 		#{b2eb05e2c39be9fcda6c19078c6a9d1b}
 	][
-		--assert handle? k: aes/key key iv
-		--assert cipher = aes/stream k plain
+		--assert handle? k1: aes/key key iv
+		--assert cipher = aes/stream k1 plain
+		
+		--assert handle? k2: aes/key/decrypt key iv
+		--assert plain = aes/stream k2 cipher
 	]
 
 ===end-group===
