@@ -106,6 +106,7 @@ core: [
 	u-bigint.c ;needed for RSA which is needed in TLS protocol (HTTPS)
 	u-bincode.c
 	u-bmp.c
+	u-chacha20.c
 	u-compress.c
 	u-dh.c
 	u-dialect.c

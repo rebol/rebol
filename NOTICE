@@ -15,6 +15,9 @@ ECDH:
 Copyright (c) 2014, Kenneth MacKay - https://github.com/kmackay/micro-ecc
 All rights reserved.
 
+CHACHA20:
+Copyright (c) 2014, insane coder - http://chacha20.insanecoding.org/
+
 MD5: 
 This software contains code derived from the RSA Data Security
 Inc. MD5 Message-Digest Algorithm, including various

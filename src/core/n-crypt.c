@@ -33,6 +33,7 @@
 #include "sys-aes.h"
 #include "sys-rsa.h"
 #include "sys-dh.h"
+#include "sys-chacha20.h"
 
 /***********************************************************************
 **
@@ -666,4 +667,88 @@ typedef struct {
 		}
 	}
 	return R_ARG1;
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(chacha20)
+/*
+//  chacha20: native [
+//		"Encrypt/decrypt data using ChaCha20 algorithm. Returns stream cipher context handle or encrypted/decrypted data."
+//		/key                "Provided only for the first time to get stream HANDLE!"
+//			crypt-key [binary!] "Crypt key (16 or 32 bytes)."
+//			nonce [binary!] "Initialization nonce (8 bytes)."
+//			count [integer!] "A 32-bit block count parameter"
+//		/stream
+//			ctx [handle!]   "Stream cipher context."
+//			data [binary!]  "Data to encrypt/decrypt."
+//		/into
+//			out [binary!]   "Output buffer (NOT YET IMPLEMENTED)"
+//  ]
+***********************************************************************/
+{
+	REBOOL  ref_key       = D_REF(1);
+    REBVAL *val_crypt_key = D_ARG(2);
+    REBVAL *val_nonce     = D_ARG(3);
+	REBVAL *val_count     = D_ARG(4);
+    REBOOL  ref_stream    = D_REF(5);
+    REBVAL *val_ctx       = D_ARG(6);
+    REBVAL *val_data      = D_ARG(7);
+	REBOOL  ref_into      = D_REF(8);
+    
+    REBVAL *ret = D_RET;
+	REBSER *ctx_ser;
+	REBINT  len;
+
+	if (ref_key) {
+    	//key defined - setup new context
+		
+		len = VAL_LEN(val_crypt_key);
+
+		if (len != 16 && len != 32 && VAL_LEN(val_nonce) != 8) {
+			return R_NONE;
+		}
+
+		//making series from POOL so it will be GCed automaticaly
+		ctx_ser = Make_Series(sizeof(chacha20_ctx), (REBCNT)1, FALSE);
+		SERIES_TAIL(ctx_ser) = sizeof(chacha20_ctx);
+
+		chacha20_setup(
+			(chacha20_ctx*)ctx_ser->data,
+			VAL_BIN_AT(val_crypt_key),
+			len,
+			VAL_BIN_AT(val_nonce)
+		);
+		chacha20_counter_set((chacha20_ctx*)ctx_ser->data, VAL_INT64(val_count));
+
+		SET_HANDLE(ret, ctx_ser, SYM_CHACHA20, HANDLE_SERIES);
+		// the ctx in the handle is released by GC once the handle is not referenced
+
+    } else if(ref_stream) {
+
+		ctx_ser = VAL_HANDLE_DATA(val_ctx);
+
+    	if (VAL_HANDLE_TYPE(val_ctx) != SYM_CHACHA20 || ctx_ser == NULL || SERIES_TAIL(ctx_ser) != sizeof(chacha20_ctx)){
+    		Trap0(RE_INVALID_HANDLE);
+    	}
+
+    	len = VAL_LEN(val_data);
+    	if (len == 0) return R_NONE;
+
+		REBYTE *data = VAL_BIN_AT(val_data);
+		REBSER  *binaryOut = Make_Binary(len);
+
+		chacha20_encrypt(
+			(chacha20_ctx *)ctx_ser->data,
+			(const uint8_t*)data,
+			(      uint8_t*)BIN_DATA(binaryOut),
+			len
+		);
+
+		SET_BINARY(ret, binaryOut);
+		VAL_TAIL(ret) = len;
+
+    }
+	return R_RET;
 }
