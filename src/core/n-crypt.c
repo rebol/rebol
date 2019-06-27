@@ -763,18 +763,21 @@ typedef struct {
 //		"poly1305 message-authentication"
 //		ctx [handle! binary!] "poly1305 handle and or binary key for initialization (32 bytes)"
 //		/update data [binary!] "data to authenticate"
-//		/verify mac  [binary!] "16 bytes of verification MAC"
+//		/finish                "finish data stream and return raw result as a binary"
+//		/verify                "finish data stream and compare result with expected result (MAC)"
+//			mac      [binary!] "16 bytes of verification MAC"
 //  ]
 ***********************************************************************/
 {
 	REBVAL *val_ctx       = D_ARG(1);
 	REBOOL  ref_update    = D_REF(2);
 	REBVAL *val_data      = D_ARG(3);
-	REBOOL  ref_verify    = D_REF(4);
-	REBVAL *val_mac       = D_ARG(5);
+	REBOOL  ref_finish    = D_REF(4);
+	REBOOL  ref_verify    = D_REF(5);
+	REBVAL *val_mac       = D_ARG(6);
     
     REBVAL *ret = D_RET;
-	REBSER *ctx_ser;
+	REBSER *ctx_ser, *bin;
 	REBINT  len;
 	REBCNT  i;
 	REBYTE  mac[16];
@@ -782,7 +785,8 @@ typedef struct {
 	if (IS_BINARY(val_ctx)) {
 		len = VAL_LEN(val_ctx);
 		if (len < 32) {
-			return R_NONE; //TODO: error
+			Trap1(RE_INVALID_DATA, val_ctx);
+			return R_NONE;
 		}
 		//making series from POOL so it will be GCed automaticaly
 		ctx_ser = Make_Series(sizeof(poly1305_context), (REBCNT)1, FALSE);
@@ -791,6 +795,7 @@ typedef struct {
 
 		SERIES_TAIL(ctx_ser) = sizeof(poly1305_context);
 		SET_HANDLE(val_ctx, ctx_ser, SYM_POLY1305, HANDLE_SERIES);
+		// the ctx_ser in the handle is released by GC once the handle is not referenced
 	}
 	else {
 		ctx_ser = VAL_HANDLE_DATA(val_ctx);
@@ -803,12 +808,17 @@ typedef struct {
 		poly1305_update((poly1305_context*)ctx_ser->data, VAL_BIN_AT(val_data), VAL_LEN(val_data));
 	}
 
+	if (ref_finish) {
+		SET_BINARY(ret, Make_Series(16, (REBCNT)1, FALSE));
+		VAL_TAIL(ret) = 16;
+		poly1305_finish((poly1305_context*)ctx_ser->data, VAL_BIN(ret));
+		return R_RET;
+	}
+
 	if (ref_verify) {
 		if (VAL_LEN(val_mac) != 16)
 			return R_FALSE; // or error?
-		for (i = 0; i < sizeof(mac); i++)
-			mac[i] = 0;
-
+		CLEARS(mac);
 		poly1305_finish((poly1305_context*)ctx_ser->data, mac);
 		return (poly1305_verify(VAL_BIN_AT(val_mac), mac)) ? R_TRUE : R_FALSE;
 	}
