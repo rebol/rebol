@@ -26,4 +26,31 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "Special tests"
+
+	--test-- "NULLs inside loaded string"
+	;@@ https://github.com/Oldes/Rebol3/commit/6f59240d7d4379a50fec29c4e74290ad61ba73ba
+		out: ""
+		--assert not error? try [
+		;- using CALL as it could be reproduced only when the internal buffer is being extended durring load
+			data: make string! 40000
+			insert/dup data "ABCD" 10000
+
+			dir: join system/options/path %r3/src/tests/units/files/
+
+			save dir/tmp.data reduce [1 data]
+			exe: rejoin [system/options/home last split-path system/options/boot]
+
+			;@@ CALL seems not to work same on all OSes :-(
+			either system/version/4 = 3 [
+				call/wait/output probe rejoin [to-local-file exe { -s } to-local-file dir/bug-load-null.r3] out
+			][	call/wait/output probe reduce [exe dir/bug-load-null.r3] out ]
+
+			probe out
+		]
+		--assert out = "Test OK"
+		error? try [ delete dir/tmp.data ]
+
+===end-group===
 ~~~end-file~~~

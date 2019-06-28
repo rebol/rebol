@@ -457,11 +457,11 @@
 
 		src++;
 
+		if (SERIES_FULL(buf))
+			Extend_Series(buf, 1);
+
 		*UNI_SKIP(buf, buf->tail) = chr;
-
-		if (SERIES_LEN(buf) >= SERIES_REST(buf)) Extend_Series(buf, 1);
-
-		buf->tail ++;
+		buf->tail++;
     }
 
 	src++; // Skip ending quote or brace.
@@ -532,9 +532,11 @@
 
 		src++;
 
-		*UNI_SKIP(buf, buf->tail) = c; // not affected by Extend_Series
+		if (SERIES_FULL(buf))
+			Extend_Series(buf, 1);
 
-		if (++(buf->tail) >= SERIES_REST(buf)) Extend_Series(buf, 1);
+		*UNI_SKIP(buf, buf->tail) = c;
+		buf->tail++;
     }
 
 	if (*src && *src == term) src++;
