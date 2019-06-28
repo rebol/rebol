@@ -676,56 +676,71 @@ typedef struct {
 /*
 //  chacha20: native [
 //		"Encrypt/decrypt data using ChaCha20 algorithm. Returns stream cipher context handle or encrypted/decrypted data."
-//		/key                "Provided only for the first time to get stream HANDLE!"
-//			crypt-key [binary!] "Crypt key (16 or 32 bytes)."
-//			nonce [binary!] "Initialization nonce (8 bytes)."
+//		ctx [handle! binary!] "ChaCha20 handle and or binary key for initialization (16 or 32 bytes)"
+//		/init
+//			nonce [binary!] "Initialization nonce (IV) - 8 or 12 bytes."
 //			count [integer!] "A 32-bit block count parameter"
+//		/aad sequence [integer!] "Sequence number used with /init to modify nonce"
 //		/stream
-//			ctx [handle!]   "Stream cipher context."
 //			data [binary!]  "Data to encrypt/decrypt."
 //		/into
 //			out [binary!]   "Output buffer (NOT YET IMPLEMENTED)"
 //  ]
 ***********************************************************************/
 {
-	REBOOL  ref_key       = D_REF(1);
-    REBVAL *val_crypt_key = D_ARG(2);
+	REBVAL *val_ctx       = D_ARG(1);
+	REBOOL  ref_init      = D_REF(2);
     REBVAL *val_nonce     = D_ARG(3);
-	REBVAL *val_count     = D_ARG(4);
-    REBOOL  ref_stream    = D_REF(5);
-    REBVAL *val_ctx       = D_ARG(6);
-    REBVAL *val_data      = D_ARG(7);
-	REBOOL  ref_into      = D_REF(8);
-    
-    REBVAL *ret = D_RET;
+	REBVAL *val_counter   = D_ARG(4);
+	REBOOL  ref_aad       = D_REF(5);
+	REBVAL *val_sequence  = D_ARG(6);
+    REBOOL  ref_stream    = D_REF(7);
+    REBVAL *val_data      = D_ARG(8);
+	REBOOL  ref_into      = D_REF(9);
+
 	REBSER *ctx_ser;
 	REBINT  len;
+	REBU64  sequence;
 
-	if (ref_key) {
-    	//key defined - setup new context
+	if (IS_BINARY(val_ctx)) {
+		len = VAL_LEN(val_ctx);
+		if (!(len == 32 || len == 16)) {
+			printf("ChaCha20 key must be of size 32 or 16 bytes! Is: %i\n", len);
+			Trap1(RE_INVALID_DATA, val_ctx);
+			return R_NONE;
+		}
+		//making series from POOL so it will be GCed automaticaly
+		ctx_ser = Make_Series(sizeof(chacha20_ctx), (REBCNT)1, FALSE);
+
+		chacha20_keysetup((chacha20_ctx*)ctx_ser->data, VAL_BIN_AT(val_ctx), len);
+
+		SERIES_TAIL(ctx_ser) = sizeof(chacha20_ctx);
+		SET_HANDLE(val_ctx, ctx_ser, SYM_CHACHA20, HANDLE_SERIES);
+		// the ctx_ser in the handle is released by GC once the handle is not referenced
+	}
+	else {
+		ctx_ser = VAL_HANDLE_DATA(val_ctx);
+		if (VAL_HANDLE_TYPE(val_ctx) != SYM_CHACHA20 || ctx_ser == NULL || SERIES_TAIL(ctx_ser) != sizeof(chacha20_ctx)){
+    		Trap0(RE_INVALID_HANDLE);
+		}
+	}
+
+	if (ref_init) {
+		// initialize nonce with counter
 		
-		len = VAL_LEN(val_crypt_key);
+		len = VAL_LEN(val_nonce);
 
-		if (len != 16 && len != 32 && VAL_LEN(val_nonce) != 8) {
+		if (!(len == 12 || len == 8)) {
+			Trap1(RE_INVALID_DATA, val_nonce);
 			return R_NONE;
 		}
 
-		//making series from POOL so it will be GCed automaticaly
-		ctx_ser = Make_Series(sizeof(chacha20_ctx), (REBCNT)1, FALSE);
-		SERIES_TAIL(ctx_ser) = sizeof(chacha20_ctx);
+		sequence = (ref_aad) ? VAL_INT64(val_sequence) : 0;
+		chacha20_ivsetup((chacha20_ctx*)ctx_ser->data, VAL_BIN_AT(val_nonce), len, VAL_INT64(val_counter), (u8 *)&sequence);
 
-		chacha20_setup(
-			(chacha20_ctx*)ctx_ser->data,
-			VAL_BIN_AT(val_crypt_key),
-			len,
-			VAL_BIN_AT(val_nonce)
-		);
-		chacha20_counter_set((chacha20_ctx*)ctx_ser->data, VAL_INT64(val_count));
-
-		SET_HANDLE(ret, ctx_ser, SYM_CHACHA20, HANDLE_SERIES);
-		// the ctx in the handle is released by GC once the handle is not referenced
-
-    } else if(ref_stream) {
+    }
+	
+	if (ref_stream) {
 
 		ctx_ser = VAL_HANDLE_DATA(val_ctx);
 
@@ -746,11 +761,11 @@ typedef struct {
 			len
 		);
 
-		SET_BINARY(ret, binaryOut);
-		VAL_TAIL(ret) = len;
+		SET_BINARY(val_ctx, binaryOut);
+		VAL_TAIL(val_ctx) = len;
 
     }
-	return R_RET;
+	return R_ARG1;
 }
 
 
@@ -777,7 +792,7 @@ typedef struct {
 	REBVAL *val_mac       = D_ARG(6);
     
     REBVAL *ret = D_RET;
-	REBSER *ctx_ser, *bin;
+	REBSER *ctx_ser;
 	REBINT  len;
 	REBCNT  i;
 	REBYTE  mac[16];
@@ -823,5 +838,174 @@ typedef struct {
 		return (poly1305_verify(VAL_BIN_AT(val_mac), mac)) ? R_TRUE : R_FALSE;
 	}
 
+	return R_ARG1;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(chacha20poly1305)
+/*
+//  chacha20poly1305: native [
+//		"..."
+//		ctx [none! handle!]
+//		/init 
+//			local-key     [binary!]
+//			local-iv      [binary!]
+//			remote-key    [binary!]
+//			remote-iv     [binary!]
+//		/encrypt
+//			data-out      [binary!]
+//			aad-out       [binary!]
+//		/decrypt
+//			data-in       [binary!]
+//			aad-in        [binary!]
+//  ]
+***********************************************************************/
+{
+	REBVAL *val_ctx        = D_ARG(1);
+	REBOOL  ref_init       = D_REF(2);
+	REBVAL *val_local_key  = D_ARG(3);
+	REBVAL *val_local_iv   = D_ARG(4);
+	REBVAL *val_remote_key = D_ARG(5);
+	REBVAL *val_remote_iv  = D_ARG(6);
+	REBOOL  ref_encrypt    = D_REF(7);
+	REBVAL *val_plain      = D_ARG(8);
+	REBVAL *val_local_aad  = D_ARG(9);
+	REBOOL  ref_decrypt    = D_REF(10);
+	REBVAL *val_cipher     = D_ARG(11);
+	REBVAL *val_remote_aad = D_ARG(12);
+
+	REBSER *ctx_ser;
+	REBINT  len;
+	chacha20poly1305_ctx *chacha;
+	unsigned char poly1305_key[POLY1305_KEYLEN];
+	size_t aad_size;
+
+	if (ref_init) {
+		ctx_ser = Make_Series(sizeof(chacha20poly1305_ctx), (REBCNT)1, FALSE);
+		SERIES_TAIL(ctx_ser) = sizeof(chacha20poly1305_ctx);
+		SET_HANDLE(val_ctx, ctx_ser, SYM_CHACHA20POLY1305, HANDLE_SERIES);
+		//SET_BINARY(val_ctx, ctx_ser);
+
+		chacha = (chacha20poly1305_ctx*)ctx_ser->data;
+		len = VAL_LEN(val_local_key);
+		if (!(len == 32 || len == 16))
+			Trap1(RE_INVALID_DATA, val_local_key);
+		chacha20_keysetup(&chacha->local_chacha, VAL_BIN_AT(val_local_key), len);
+		len = VAL_LEN(val_remote_key);
+		if (!(len == 32 || len == 16))
+			Trap1(RE_INVALID_DATA, val_remote_key);
+		chacha20_keysetup(&chacha->remote_chacha, VAL_BIN_AT(val_remote_key), len);
+
+		chacha->local_sequence = 0;
+		chacha->remote_sequence = 0;
+
+		len = VAL_LEN(val_local_iv);
+		if (!(len == 12 || len == 8))
+			Trap1(RE_INVALID_DATA, val_local_iv);
+		chacha20_ivsetup(&chacha->local_chacha, VAL_BIN_AT(val_local_iv), len, 1, (u8 *)&chacha->local_sequence);
+		memcpy(chacha->local_iv, VAL_BIN_AT(val_local_iv), len);
+
+		len = VAL_LEN(val_remote_iv);
+		if (!(len == 12 || len == 8))
+			Trap1(RE_INVALID_DATA, val_remote_iv);
+		chacha20_ivsetup(&chacha->remote_chacha, VAL_BIN_AT(val_remote_iv), len, 1, (u8 *)&chacha->remote_sequence);
+		memcpy(chacha->remote_iv, VAL_BIN_AT(val_remote_iv), len);
+		return R_ARG1;
+	}
+
+	ctx_ser = VAL_HANDLE_DATA(val_ctx);
+	if (VAL_HANDLE_TYPE(val_ctx) != SYM_CHACHA20POLY1305 || ctx_ser == NULL || SERIES_TAIL(ctx_ser) != sizeof(chacha20poly1305_ctx)){
+    	Trap0(RE_INVALID_HANDLE);
+		return R_NONE;
+	}
+	chacha = (chacha20poly1305_ctx*)ctx_ser->data;
+
+	if (ref_encrypt) {
+		chacha20_ivsetup(&chacha->local_chacha, chacha->local_iv, 12, 1, (u8 *)&chacha->local_sequence);
+		chacha20_poly1305_key(&chacha->local_chacha, poly1305_key);
+		//puts("poly1305_key:"); Dump_Bytes(poly1305_key, POLY1305_KEYLEN);
+		
+		len = VAL_LEN(val_plain) + POLY1305_TAGLEN;
+		ctx_ser = Make_Series(len, (REBCNT)1, FALSE);
+
+		// AEAD
+		// sequence number (8 bytes)
+		// content type (1 byte)
+		// version (2 bytes)
+		// length (2 bytes)
+		unsigned char aad[13];
+		aad_size = sizeof(aad);
+		unsigned char *sequence = aad;
+
+		chacha20_poly1305_aead(&chacha->local_chacha, VAL_BIN_AT(val_plain), (REBCNT)len-POLY1305_TAGLEN, VAL_BIN_AT(val_local_aad), VAL_LEN(val_local_aad), poly1305_key, ctx_ser->data);
+
+		//chacha->local_sequence++;
+
+		SERIES_TAIL(ctx_ser) = len;
+		SET_BINARY(val_ctx, ctx_ser);
+		return R_ARG1;
+	}
+
+	if (ref_decrypt) {
+		static unsigned char zeropad[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+		unsigned char trail[16];
+		unsigned char mac_tag[POLY1305_TAGLEN];
+
+		chacha20_ivsetup(&chacha->remote_chacha, chacha->remote_iv, 12, 1, VAL_BIN_AT(val_remote_aad));
+
+		len = VAL_LEN(val_cipher) - POLY1305_TAGLEN;
+		if (len <= 0)
+			return R_NONE;
+
+		ctx_ser = Make_Series(len, (REBCNT)1, FALSE);
+
+		//puts("\nDECRYPT:");
+
+		chacha20_encrypt(&chacha->remote_chacha, VAL_BIN_AT(val_cipher), ctx_ser->data, len);
+		//chacha_encrypt_bytes(&chacha->remote_chacha, VAL_BIN_AT(val_cipher), ctx_ser->data, len);
+		chacha20_poly1305_key(&chacha->remote_chacha, poly1305_key);
+		//puts("poly1305_key:"); Dump_Bytes(poly1305_key, POLY1305_KEYLEN);
+
+		poly1305_context aead_ctx;
+		poly1305_init(&aead_ctx, poly1305_key);
+
+		aad_size = VAL_LEN(val_remote_aad);
+		poly1305_update(&aead_ctx, VAL_BIN_AT(val_remote_aad), aad_size);
+		int rem = aad_size % 16;
+        if (rem)
+            poly1305_update(&aead_ctx, zeropad, 16 - rem);
+		//puts("update:"); Dump_Bytes(VAL_BIN_AT(val_cipher), len);
+        poly1305_update(&aead_ctx, VAL_BIN_AT(val_cipher), len);
+        rem = len % 16;
+        if (rem)
+            poly1305_update(&aead_ctx, zeropad, 16 - rem);
+            
+        U32TO8_LE(&trail[0], aad_size == 5 ? 5 : 13);
+        *(int *)&trail[4] = 0;
+        U32TO8_LE(&trail[8], len);
+        *(int *)&trail[12] = 0;
+
+		//puts("trail:"); Dump_Bytes(trail, 16);
+
+        poly1305_update(&aead_ctx, trail, 16);
+        poly1305_finish(&aead_ctx, mac_tag);
+
+		if (!poly1305_verify(mac_tag, VAL_BIN_TAIL(val_cipher) - POLY1305_TAGLEN)) {
+			puts("MAC verification failed!");
+		}
+		else {
+			puts("MAC OK!");
+		}
+
+		//puts("mac result:"); Dump_Bytes(mac_tag, POLY1305_TAGLEN);
+
+		chacha->remote_sequence++;
+
+
+
+		SERIES_TAIL(ctx_ser) = len;
+		SET_BINARY(val_ctx, ctx_ser);
+	}
 	return R_ARG1;
 }
