@@ -34,14 +34,99 @@ foreach [test-id key nonce counter plain cipher] [
 	#{0000000000000002} 42
 	#{2754776173206272696c6c69672c20616e642074686520736c6974687920746f7665730a446964206779726520616e642067696d626c6520696e2074686520776162653a0a416c6c206d696d737920776572652074686520626f726f676f7665732c0a416e6420746865206d6f6d65207261746873206f757467726162652e}
 	#{62e6347f95ed87a45ffae7426f27a1df5fb69110044c0d73118effa95b01e5cf166d3df2d721caf9b21e5fb14c616871fd84c54f9d65b283196c7fe4f60553ebf39c6402c42234e32a356b3e764312a61a5532055716ead6962568f87d3f3f7704c6a8d1bcd1bf4d50d6154b6da731b187b58dfd728afa36757a797ac188d1}
+
+	5
+	#{000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f}
+    #{000000000000004a00000000} 1
+    #{4C616469657320616E642047656E746C656D656E206F662074686520636C617373206F66202739393A204966204920636F756C64206F6666657220796F75206F6E6C79206F6E652074697020666F7220746865206675747572652C2073756E73637265656E20776F756C642062652069742E}
+    #{6e2e359a2568f98041ba0728dd0d6981e97e7aec1d4360c20a27afccfd9fae0bf91b65c5524733ab8f593dabcd62b3571639d624e65152ab8f530c359f0861d807ca0dbf500d6a6156a38e088a22b65e52bc514d16ccf806818ce91ab77937365af90bbf74a35be6b40b8eedf2785e42874d}
 ][
-	--test-- join "ChaCha20 test " test-id
-	--assert handle? k1: chacha20/key key nonce counter
+	--test-- join "ChaCha20 test (A) " test-id
+	; version with multiple steps
+	--assert handle? k1: chacha20 key
+	--assert handle? chacha20/init k1 nonce counter
 	--assert cipher = chacha20/stream k1 plain
 	
-	--assert handle? k2: chacha20/key key nonce counter
+	--assert handle? k2: chacha20 key
+	--assert handle? chacha20/init k2 nonce counter
 	--assert plain = chacha20/stream k2 cipher
+
+	--test-- join "ChaCha20 test (B) " test-id
+	--assert handle? k1: chacha20/init key nonce counter
+	--assert cipher = chacha20/stream k1 plain
+	
+	--assert handle? k2: chacha20/init key nonce counter
+	--assert plain = chacha20/stream k2 cipher
+
+	--test-- join "ChaCha20 test (C) " test-id
+	--assert cipher = chacha20/init/stream key nonce counter plain
+	
+	--assert handle? k2: chacha20/init key nonce counter
+	--assert plain = chacha20/init/stream key nonce counter cipher
 ]
+
+===end-group===
+
+===start-group=== "ChaCha20Poly1305"
+	--test-- "TLS with ChaCha20Poly1305 use-case simulation"
+
+	;- server and client exchange it's keys and initialization vectors
+	server-key: #{AE8A57A15387FD92E9DAA50FECD6CA31044A7EEC9459EC9C6ED6A93EE4F6CC42}
+	client-key: #{438D7027FD611C1A5CD532D1151665EA3BB925CF1F37453C109790B604E7A0C4}
+	server-IV:  #{F01A5EF18B11C15FB97AE808}
+	client-IV:  #{9F45E14C213A3719186DDF50}
+
+	;- client initialize ChaCha20Poly1305 context
+
+	client-ctx: chacha20poly1305/init none client-key client-IV server-key server-IV
+	--assert handle? client-ctx
+
+	;- server initialize ChaCha20Poly1305 context with switched values
+
+	server-ctx: chacha20poly1305/init none server-key server-IV client-key client-IV 
+	--assert handle? server-ctx
+
+	;- client encrypts data for server with AAD
+	data: #{1400000C89F6A49D54518857D140BE74}
+	aad:  #{0000000000000000 16 0303 0010}
+	; AAD structure used in TLS protocol:
+	; 8 bytes - sequence ID (starting from 0)
+	; 1 byte  - sequence type
+	; 2 bytes - TLS version
+	; 2 bytes - length of data
+	; AAD is internally padded to 16 bytes with zeros
+
+	expect: #{AE84B0499E0B7837027C6FD712A68894 3604F4477DCA0C6856559D1DD2EEC03C}
+	result: chacha20poly1305/encrypt client-ctx data aad
+	--assert expect = result
+	; result ends with 16 bytes of MAC used as message authentication
+	; the MAC is internally computed and authenticated, result of decrypt is NONE on fail.
+
+	;- server receives encrypted data and decrypts them using same AAD
+	--assert data = chacha20poly1305/decrypt server-ctx result aad
+
+	;- server responds with encrypted data (also with 16 bytes of MAC at tail):
+	data: #{291EC39A1BAD9E855CA8EB042014C4AFBDE4C13241E44B5B926435BB79EB89AF}
+	; it is a little bit more optimal if AAD is already 16 bytes
+	aad:  #{00000000000000001603030010000000} ; as it is first server's message, the seqence is = 0
+
+	expect: #{1400000C107581DB64B051DA4C250603}
+	result: chacha20poly1305/decrypt client-ctx data aad
+	--assert expect = result
+
+	;- and other data...
+
+	data: #{567E44EDD0CD6C88EEC4187CE3A7323016561788BE45D5246005025F4691B1C415A6B902F8ABD95A6C57A0168E9FAC5FDC6B606477DE4072AE7B5A78C5B5513217CB213F2DBCBFE9D774A916FABCD4690BD8CDE45847A250FF34F28861553BC7514A0EC51205CCC56D9C294033B015BD}
+	aad:  #{00000000000000011703030060000000} ; notice that seqence is now incremented to 1
+
+	expect: #{485454502F312E3120323030204F4B0D0A436F6E74656E742D6C656E6774683A2033310D0A436F6E74656E742D747970653A20746578742F706C61696E0D0A0D0A48656C6C6F20776F726C642066726F6D20544C53652028544C5320312E3229}
+	result: chacha20poly1305/decrypt client-ctx data aad
+	--assert expect = result
+
+
+
+
+
 
 ===end-group===
 
