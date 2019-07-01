@@ -51,10 +51,8 @@ typedef struct chacha20_ctx chacha20_ctx;
 
 typedef struct chacha20poly1305_ctx {
 	chacha20_ctx local_chacha;
-	uint64_t     local_sequence;
 	uint8_t      local_iv[12];
 	chacha20_ctx remote_chacha;
-	uint64_t     remote_sequence;
 	uint8_t      remote_iv[12];
 } chacha20poly1305_ctx;
 

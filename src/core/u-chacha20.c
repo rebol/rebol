@@ -307,10 +307,12 @@ int chacha20_poly1305_aead(struct chacha20_ctx *ctx,  u8 *pt, u32 len, u8 *aad, 
 	if (rem)
 		poly1305_update(&aead_ctx, zeropad, 16 - rem);
 
-	U32TO8_LE(&trail[0], aad_len);
+	U32TO8_LE(&trail[0], (aad_len == 5) ? 5 : 13);
 	*(int *)&trail[4] = 0;
 	U32TO8_LE(&trail[8], len);
 	*(int *)&trail[12] = 0;
+
+	//puts("trail:"); Dump_Bytes(trail, 16);
 
 	poly1305_update(&aead_ctx, trail, 16);
 	poly1305_finish(&aead_ctx, out + len);

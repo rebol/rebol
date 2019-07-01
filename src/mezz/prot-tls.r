@@ -16,11 +16,15 @@ REBOL [
 			* Added Server Name Indication extension into TLS scheme
 			* Fixed RSA/SHA message signatures
 		}
+		0.7.2 "Oldes" {
+			* Basic support for EllipticCurves (x25519 still missing)
+			* Added support for Chacha20-Poly1305 cipher suite
+		}
 	]
 	todo: {
 		* cached sessions
 		* automagic cert data lookup
-		* add more cipher suites (based on DSA, 3DES, ECDH, ECDHE, ECDSA, SHA384 ...)
+		* add more cipher suites (based on DSA, 3DES, ECDSA, ...)
 		* server role support
 		* TLS1.3 support
 		* cert validation
@@ -31,12 +35,17 @@ REBOL [
 
 		https://testssl.sh/openssl-rfc.mapping.html
 		https://fly.io/articles/how-ciphersuites-work/
+		https://tls12.ulfheim.net/
+		https://tls13.ulfheim.net/
 		
 		; If you want to get a report on what suites a particular site has:
 		https://www.ssllabs.com/ssltest/analyze.html
 	]
 	notes: {
 		Tested with:
+			TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+			TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
+			TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
 			TLS_RSA_WITH_AES_128_CBC_SHA256
 			TLS_RSA_WITH_AES_256_CBC_SHA256
 			TLS_RSA_WITH_AES_128_CBC_SHA
@@ -281,7 +290,7 @@ log-error: :_log-error ;- use error logs by default
 ; This list is sent to the server when negotiating which one to use.  Hence
 ; it should be ORDERED BY CLIENT PREFERENCE (more preferred suites first).
 suported-cipher-suites: rejoin [
-	;#{CCA8} ;TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+	#{CCA8} ;TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
 	;#{CCA9} ;TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
 	;#{C02F} ;TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
 	;#{C030} ;TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
@@ -305,7 +314,7 @@ suported-cipher-suites: rejoin [
 ]
 
 supported-signature-algorithms: rejoin [
-	#{0703} ; curve25519 (EdDSA algorithm)
+	;#{0703} ; curve25519 (EdDSA algorithm)
 	#{0601} ; rsa_pkcs1_sha512
 	#{0602} ; SHA512 DSA
 	;#{0603} ; ecdsa_secp521r1_sha512
@@ -358,18 +367,20 @@ TLS-init-cipher-suite: func [
 		opt "TLS_"
 		copy key-method to "_WITH_" 6 skip
 		copy cipher [
-			  "NULL"         (ctx/crypt-size: 0  ctx/IV-size: 0  ctx/block-size: none)
+			  "CHACHA20_POLY1305" (ctx/crypt-size: 32 ctx/IV-size: 12 ctx/block-size: 16  )
+			;| "AES_256_GCM"  (ctx/crypt-size: 32 ctx/IV-size: 4  ctx/block-size: 16  )
+			;| "AES_128_GCM"  (ctx/crypt-size: 16 ctx/IV-size: 4  ctx/block-size: 16  )
+			| "AES_128_CBC"  (ctx/crypt-size: 16 ctx/IV-size: 16 ctx/block-size: 16  ) ; more common than AES_256_CBC
+			| "AES_256_CBC"  (ctx/crypt-size: 32 ctx/IV-size: 16 ctx/block-size: 16  )
+			;| "3DES_EDE_CBC" (ctx/crypt-size: 24 ctx/IV-size: 8  ctx/block-size: 8   )
 			| "RC4_128"      (ctx/crypt-size: 16 ctx/IV-size: 0  ctx/block-size: none)
-			| "3DES_EDE_CBC" (ctx/crypt-size: 24 ctx/IV-size: 8  ctx/block-size: 8   )
-			| "AES_128_CBC"  (ctx/crypt-size: 16 ctx/IV-size: 16 ctx/block-size: 16  )
-			|["AES_256_CBC" | "AES_256_GCM"]
-			                 (ctx/crypt-size: 32 ctx/IV-size: 16 ctx/block-size: 16  )
+			| "NULL"         (ctx/crypt-size: 0  ctx/IV-size: 0  ctx/block-size: none)
 		] #"_" [
-			  "NULL"   end (ctx/hash-method: none    ctx/mac-size: 0 )
-			| "MD5"    end (ctx/hash-method: 'MD5    ctx/mac-size: 16)
-			| "SHA"    end (ctx/hash-method: 'SHA1   ctx/mac-size: 20)
+			  "SHA384" end (ctx/hash-method: 'SHA384 ctx/mac-size: 48)
 			| "SHA256" end (ctx/hash-method: 'SHA256 ctx/mac-size: 32)
-			| "SHA384" end (ctx/hash-method: 'SHA384 ctx/mac-size: 48)
+			| "SHA"    end (ctx/hash-method: 'SHA1   ctx/mac-size: 20)
+			| "MD5"    end (ctx/hash-method: 'MD5    ctx/mac-size: 16)
+			| "NULL"   end (ctx/hash-method: none    ctx/mac-size: 0 )
 			;NOTE: in RFC mac-size is named mac_length and there is also mac_key_length, which has same value
 		]
 		(
@@ -635,7 +646,6 @@ client-key-exchange: function [
 								   (mac-size + crypt-size + iv-size) * 2
 
 			pre-master-secret: none ;-- not needed anymore
-			;@@TODO: should it be released more sefely? Like first overwriting the series with other data?
 
 			;?? master-secret
 			;?? key-expansion
@@ -644,8 +654,11 @@ client-key-exchange: function [
 			;?? iv-size
 		]
 
-		client-mac-key:   take/part key-expansion mac-size
-		server-mac-key:   take/part key-expansion mac-size
+		unless is-aead? [
+			client-mac-key: take/part key-expansion mac-size
+			server-mac-key: take/part key-expansion mac-size
+		]
+
 		client-crypt-key: take/part key-expansion crypt-size
 		server-crypt-key: take/part key-expansion crypt-size
 
@@ -654,36 +667,28 @@ client-key-exchange: function [
 		log-more ["Client-crypt-key: " mold client-crypt-key]
 		log-more ["Server-crypt-key: " mold server-crypt-key]
 
-		if block-size [
-			either *Protocol-version/TLS1.0 = version [
-				; Block ciphers in TLS 1.0 used an implicit initialization vector
-				; (IV) to seed the encryption process.  This has vulnerabilities.
-				client-iv: take/part key-expansion block-size
-				server-iv: take/part key-expansion block-size
-				
-			][
-				; Each encrypted message in TLS 1.1 and above carry a plaintext
-				; initialization vector, so the ctx does not use one for the whole
-				; session.  Unset it to make sure.
-				unset system/contexts/lib/in ctx 'client-iv
-				unset system/contexts/lib/in ctx 'server-iv
-			]
-		]
+		client-iv: take/part key-expansion iv-size
+		server-iv: take/part key-expansion iv-size
+		
+		log-more ["Client-IV: " mold client-iv]
+		log-more ["Server-IV: " mold server-iv]
+
 
 		key-expansion: none
 
-		;@@ TODO: aead will need this:
-		;@@	switch crypt-method [
-		;@@		CHACHA20_POLY1305 [
-		;@@			local-nonce:  copy client-iv
-		;@@			remote_nonce: copy server-iv
-		;@@		]
-		;@@		AES_128_GCM
-		;@@		AES_256_GCM [
-		;@@			local-aead-iv:  copy client-iv
-		;@@			remote-aead-iv: copy server-iv
-		;@@		]
-		;@@	]
+		switch crypt-method [
+			CHACHA20_POLY1305 [
+				aead_ctx: chacha20poly1305/init none client-crypt-key client-iv server-crypt-key server-iv 
+			]
+			RC4_128 [
+				decrypt-stream: rc4/key server-crypt-key
+			]
+			;AES_128_GCM
+			;AES_256_GCM [
+			;	local-aead-iv:  copy client-iv
+			;	remote-aead-iv: copy server-iv
+			;]
+		]
 
 		TLS-update-messages-hash ctx (at head out/buffer pos-record) length-record
 	]
@@ -794,41 +799,55 @@ decrypt-msg: function [
 	;print "CRYPTED message!"
 	;?? data
 	with ctx [
-		if all [
-			block-size
-			version > *Protocol-version/TLS1.0
+		binary/write bin compose [
+			UI64  :seq-read
+			UI8   23
+			UI16  :version
+		]
+		either is-aead? [
+			switch crypt-method [
+				CHACHA20_POLY1305 [
+					binary/write bin reduce ['UI16 (length? data) - 16]
+					data: chacha20poly1305/decrypt aead_ctx data bin/buffer
+				]
+			]
 		][
-			;server's initialization vector is new with each message
-			server-iv: take/part data block-size
-		]
-		;?? data
-		change data decrypt-data ctx data
-		;?? data
-		if block-size [
-			; deal with padding in CBC mode
-			; the padding length is stored in the last byte
-			clear skip tail data (-1 - (to integer! last data))
-			; and at tail of data is MAC value....
-			mac: take/last/part data mac-size
-			;  which MUST be same like following checksum:
-			binary/write bin [
-				UI64      :seq-read
-				UI8       23
-				UI16      :version
-				UI16BYTES :data
+			if all [
+				block-size
+				version > *Protocol-version/TLS1.0
+			][
+				;server's initialization vector is new with each message
+				server-iv: take/part data block-size
 			]
-			mac-check: checksum/method/key bin/buffer hash-method server-mac-key
-			binary/init bin 0 ;clear the temp bin buffer
+			;?? data
+			change data decrypt-data ctx data
+			;?? data
+			if block-size [
+				; deal with padding in CBC mode
+				; the padding length is stored in the last byte
+				clear skip tail data (-1 - (to integer! last data))
+				; and at tail of data is MAC value....
+				mac: take/last/part data mac-size
+				;  which MUST be same like following checksum:
+				binary/write bin [
+					UI16BYTES :data
+				]
+				mac-check: checksum/method/key bin/buffer hash-method server-mac-key
 
-			;?? mac
-			;?? mac-check
+				;?? mac
+				;?? mac-check
 
-			if mac <> mac-check [ critical-error: *Alert/Bad_record_MAC ]
-			
-			if version > *Protocol-version/TLS1.0 [
-				unset 'server-iv ;-- avoid reuse in TLS 1.1 and above
+				if mac <> mac-check [ critical-error: *Alert/Bad_record_MAC ]
+				
+				if version > *Protocol-version/TLS1.0 [
+					unset 'server-iv ;-- avoid reuse in TLS 1.1 and above
+				]
 			]
 		]
+		binary/init  bin 0 ;clear the temp bin buffer
+	]
+	unless data [
+		critical-error: *Alert/Bad_record_MAC
 	]
 	data
 ]
@@ -846,85 +865,97 @@ encrypt-data: function [
 	;?? content
 
 	with ctx [
-		;@@ GenericBlockCipher: https://tools.ietf.org/html/rfc5246#section-6.2.3.2
-
-		if version > *Protocol-version/TLS1.0 [
-			;
-			; "The Initialization Vector (IV) SHOULD be chosen at random, and
-			;  MUST be unpredictable.  Note that in versions of TLS prior to 1.1,
-			;  there was no IV field, and the last ciphertext block of the
-			;  previous record (the "CBC residue") was used as the IV.  This was
-			;  changed to prevent the attacks described in [CBCATT].  For block
-			;  ciphers, the IV length is SecurityParameters.record_iv_length,
-			;  which is equal to the SecurityParameters.block_size."
-			;
-			client-iv: make binary! block-size
-			binary/write client-iv [RANDOM-BYTES :block-size]
+		binary/write bin compose [
+			UI64  :seq-write
+			UI8   :msg-type
+			UI16  :version
+			UI16  (length? content)
 		]
+		either is-aead? [
 
-		;?? ctx/seq-write
-		log-more ["Client-iv:     " client-iv]
-		log-more ["Client-mac-key:" client-mac-key]
-		log-more ["Hash-method:   " hash-method]
-
-		; Message Authentication Code
-		; https://tools.ietf.org/html/rfc5246#section-6.2.3.1
-
-		binary/write bin [
-			UI64      :seq-write
-			UI8       :msg-type
-			UI16      :version
-			UI16BYTES :content
-		]
-
-		MAC: checksum/method/key bin/buffer ctx/hash-method ctx/client-mac-key
-
-		binary/init bin 0 ;clear the bin buffer
-
-		;?? MAC
-		data: rejoin [content MAC]
-		;??  block-size
-
-		if block-size [
-			; add the padding data in CBC mode
-			padding: block-size - (remainder (1 + length? data) block-size)
-			insert/dup tail data (to char! padding) (padding + 1)
-		]
-
-		switch/default crypt-method [
-			RC4_128 [
-				unless encrypt-stream [
-					encrypt-stream: rc4/key client-crypt-key
+			switch crypt-method [
+				CHACHA20_POLY1305 [
+					cipher: chacha20poly1305/encrypt aead_ctx content bin/buffer
 				]
-				rc4/stream encrypt-stream data
-			]
-			AES_128_CBC
-			AES_256_CBC [
-				unless encrypt-stream [
-					encrypt-stream: aes/key client-crypt-key client-iv
-				]
-				data: aes/stream encrypt-stream data
-
-				if version > *Protocol-version/TLS1.0 [
-					; encrypt-stream must be reinitialized each time with the
-					; new initialization vector.
-					encrypt-stream: none
+				AES_256_GCM	
+				AES_128_GCM [
+					;@@ TODO: needs AES_GCM computation			
+					log-error ["Not yet implemented crypt-method:" crypt-method]
 				]
 			]
+
 		][
-			;@@ remove this part.. the check must be done sooner!
-			log-error ["Unsupported TLS crypt-method:" crypt-method]
-			halt
-		]
 
-		;-- TLS versions 1.1 and above include the client-iv in plaintext.
-		if version > *Protocol-version/TLS1.0 [
-			insert data client-iv
-			unset 'client-iv ;-- avoid accidental reuse
+			;@@ GenericBlockCipher: https://tools.ietf.org/html/rfc5246#section-6.2.3.2
+			if version > *Protocol-version/TLS1.0 [
+				;
+				; "The Initialization Vector (IV) SHOULD be chosen at random, and
+				;  MUST be unpredictable.  Note that in versions of TLS prior to 1.1,
+				;  there was no IV field, and the last ciphertext block of the
+				;  previous record (the "CBC residue") was used as the IV.  This was
+				;  changed to prevent the attacks described in [CBCATT].  For block
+				;  ciphers, the IV length is SecurityParameters.record_iv_length,
+				;  which is equal to the SecurityParameters.block_size."
+				;
+				client-iv: make binary! block-size
+				binary/write client-iv [RANDOM-BYTES :block-size]
+			]
+
+			;?? ctx/seq-write
+			log-more ["Client-iv:     " client-iv]
+			log-more ["Client-mac-key:" client-mac-key]
+			log-more ["Hash-method:   " hash-method]
+
+			; Message Authentication Code
+			; https://tools.ietf.org/html/rfc5246#section-6.2.3.1
+
+			binary/write bin content
+
+			MAC: checksum/method/key bin/buffer ctx/hash-method ctx/client-mac-key
+
+			;?? MAC
+			data: rejoin [content MAC]
+			;??  block-size
+
+			if block-size [
+				; add the padding data in CBC mode
+				padding: block-size - (remainder (1 + length? data) block-size)
+				insert/dup tail data (to char! padding) (padding + 1)
+			]
+
+			switch crypt-method [
+			; no need for default in this SWITCH as only available methods will pass
+			; thru TLS-init-cipher-suite function call
+				AES_256_CBC
+				AES_128_CBC [
+					unless encrypt-stream [
+						encrypt-stream: aes/key client-crypt-key client-iv
+					]
+					cipher: aes/stream encrypt-stream data
+
+					if version > *Protocol-version/TLS1.0 [
+						; encrypt-stream must be reinitialized each time with the
+						; new initialization vector.
+						encrypt-stream: none
+					]
+				]
+				RC4_128 [
+					unless encrypt-stream [
+						encrypt-stream: rc4/key client-crypt-key
+					]
+					cipher: rc4/stream encrypt-stream data
+				]
+			]
+
+			;-- TLS versions 1.1 and above include the client-iv in plaintext.
+			if version > *Protocol-version/TLS1.0 [
+				insert cipher client-iv
+				unset 'client-iv ;-- avoid accidental reuse
+			]
 		]
-		;print ["encrypted data size:" length? data]
+		binary/init bin 0 ;clear the bin buffer
 	]
-	data
+	cipher
 ]
 
 decrypt-data: func [
@@ -934,12 +965,6 @@ decrypt-data: func [
 		crypt-data
 ][
 	switch ctx/crypt-method [
-		RC4_128 [
-			unless ctx/decrypt-stream [
-				ctx/decrypt-stream: rc4/key ctx/server-crypt-key
-			]
-			rc4/stream ctx/decrypt-stream data
-		]
 		AES_128_CBC
 		AES_256_CBC [
 			unless ctx/decrypt-stream [
@@ -952,6 +977,9 @@ decrypt-data: func [
 				;@@TODO: it must be possible to reuse the stream instead of recreating it on each message!
 				ctx/decrypt-stream: none
 			]
+		]
+		RC4_128 [
+			rc4/stream ctx/decrypt-stream data
 		]
 	]
 
@@ -1118,6 +1146,8 @@ make-TLS-ctx: does [ context [
 	client-iv:
 	server-iv: none
 
+	aead_ctx: none ; used now for chacha20/poly1305 combo
+
 	server-extensions: copy []
 
 	seq-read:  0 ; sequence counters
@@ -1152,11 +1182,15 @@ TLS-init: func [
 
 	clear ctx/server-certs
 
-	;@@ review code bellow:
+	;@@ review code bellow if reset for other crypt method is not needed:
 	switch ctx/crypt-method [
 		RC4_128 [
-			ctx/encrypt-stream: none
-			ctx/decrypt-stream: none
+			if ctx/encrypt-stream [
+				rc4/stream ctx/encrypt-stream none
+				rc4/stream ctx/decrypt-stream none
+				ctx/encrypt-stream: none
+				ctx/decrypt-stream: none
+			]
 		]
 	]
 ]
@@ -1166,7 +1200,7 @@ TLS-read-data: function [
 	ctx       [object!]
 	port-data [binary!] 
 ][
-	;log-more ["read-data:^[[1m" length? port-data "^[[22mbytes"]
+	log-more ["read-data:^[[1m" length? port-data "^[[22mbytes previous rest:" length? ctx/rest]
 
 	inp: ctx/in
 
@@ -1639,8 +1673,12 @@ TLS-awake: function [event [event!]][
 					finished
 				]
 			]
-			send-event 'connect TLS-port
-			return false
+			either open? TLS-port [
+				send-event 'connect TLS-port
+				return false
+			][
+				TLS-error *Alert/Close_notify
+			]
 		]
 		wrote [
 			switch TLS-port/state/protocol [

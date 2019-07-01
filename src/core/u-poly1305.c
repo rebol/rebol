@@ -86,6 +86,9 @@ poly1305_auth(u8 mac[16], const u8 *m, size_t bytes, const u8 key[32]) {
 int
 poly1305_verify(const u8 mac1[16], const u8 mac2[16]) {
 	size_t i;
+
+	//puts("mac1:"); Dump_Bytes(mac1, 16);
+	//puts("mac2:"); Dump_Bytes(mac2, 16);
 	unsigned int dif = 0;
 	for (i = 0; i < 16; i++)
 		dif |= (mac1[i] ^ mac2[i]);

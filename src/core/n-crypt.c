@@ -894,6 +894,7 @@ typedef struct {
 	chacha20poly1305_ctx *chacha;
 	unsigned char poly1305_key[POLY1305_KEYLEN];
 	size_t aad_size;
+	REBU64 sequence = 0;
 
 	if (ref_init) {
 		ctx_ser = Make_Series(sizeof(chacha20poly1305_ctx), (REBCNT)1, FALSE);
@@ -911,19 +912,16 @@ typedef struct {
 			Trap1(RE_INVALID_DATA, val_remote_key);
 		chacha20_keysetup(&chacha->remote_chacha, VAL_BIN_AT(val_remote_key), len);
 
-		chacha->local_sequence = 0;
-		chacha->remote_sequence = 0;
-
 		len = VAL_LEN(val_local_iv);
 		if (!(len == 12 || len == 8))
 			Trap1(RE_INVALID_DATA, val_local_iv);
-		chacha20_ivsetup(&chacha->local_chacha, VAL_BIN_AT(val_local_iv), len, 1, (u8 *)&chacha->local_sequence);
+		chacha20_ivsetup(&chacha->local_chacha, VAL_BIN_AT(val_local_iv), len, 1, (u8 *)&sequence);
 		memcpy(chacha->local_iv, VAL_BIN_AT(val_local_iv), len);
 
 		len = VAL_LEN(val_remote_iv);
 		if (!(len == 12 || len == 8))
 			Trap1(RE_INVALID_DATA, val_remote_iv);
-		chacha20_ivsetup(&chacha->remote_chacha, VAL_BIN_AT(val_remote_iv), len, 1, (u8 *)&chacha->remote_sequence);
+		chacha20_ivsetup(&chacha->remote_chacha, VAL_BIN_AT(val_remote_iv), len, 1, (u8 *)&sequence);
 		memcpy(chacha->remote_iv, VAL_BIN_AT(val_remote_iv), len);
 		return R_ARG1;
 	}
@@ -936,7 +934,7 @@ typedef struct {
 	chacha = (chacha20poly1305_ctx*)ctx_ser->data;
 
 	if (ref_encrypt) {
-		chacha20_ivsetup(&chacha->local_chacha, chacha->local_iv, 12, 1, (u8 *)&chacha->local_sequence);
+		chacha20_ivsetup(&chacha->local_chacha, chacha->local_iv, 12, 1,  VAL_BIN_AT(val_local_aad));
 		chacha20_poly1305_key(&chacha->local_chacha, poly1305_key);
 		//puts("poly1305_key:"); Dump_Bytes(poly1305_key, POLY1305_KEYLEN);
 		
@@ -1006,17 +1004,11 @@ typedef struct {
         poly1305_finish(&aead_ctx, mac_tag);
 
 		if (!poly1305_verify(mac_tag, VAL_BIN_TAIL(val_cipher) - POLY1305_TAGLEN)) {
-			puts("MAC verification failed!");
-		}
-		else {
-			puts("MAC OK!");
+			//puts("MAC verification failed!");
+			return R_NONE;
 		}
 
 		//puts("mac result:"); Dump_Bytes(mac_tag, POLY1305_TAGLEN);
-
-		chacha->remote_sequence++;
-
-
 
 		SERIES_TAIL(ctx_ser) = len;
 		SET_BINARY(val_ctx, ctx_ser);
