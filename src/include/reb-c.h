@@ -30,6 +30,8 @@
 **      OS_WIDE_CHAR - the OS uses wide chars (not UTF-8)
 **
 ***********************************************************************/
+#ifndef REB_C_H
+#define REB_C_H
 
 #ifndef FALSE
 #define FALSE 0
@@ -97,7 +99,7 @@ typedef unsigned short	u16;
 typedef int				i32;
 typedef unsigned int	u32;
 #else
-typedef long				i32;
+typedef long            i32;
 typedef unsigned long	u32;
 #endif
 #define I32_C(c) c
@@ -344,6 +346,56 @@ typedef void(*CFUNC)(void *);
 #endif
 
 
+/***********************************************************************
+**
+**  Conversion Macros
+**
+***********************************************************************/
+
+/* interpret four 8 bit unsigned integers as a 32 bit unsigned integer in little endian
+   originaly named LE in ChaCha20 code and U8TO32 in Poly1305 code */
+#define U8TO32_LE(p)                  \
+    (((u32)((p)[0]))       |          \
+     ((u32)((p)[1]) << 8)  |          \
+     ((u32)((p)[2]) << 16) |          \
+     ((u32)((p)[3]) << 24))
+
+/* store a 32 bit unsigned integer as four 8 bit unsigned integers in little endian
+   originaly named FROMLE in ChaCha20 code */
+#define U32TO8_LE(p, v)               \
+  do {                                \
+    (p)[0] = (u8)((v));               \
+    (p)[1] = (u8)((v) >> 8);          \
+    (p)[2] = (u8)((v) >> 16);         \
+    (p)[3] = (u8)((v) >> 24);         \
+  } while (0)
+
+/* interpret eight 8 bit unsigned integers as a 64 bit unsigned integer in little endian */
+#define U8TO64_LE(p)                  \
+    (((u64)((p)[0] & 0xff)      ) |   \
+     ((u64)((p)[1] & 0xff) <<  8) |   \
+     ((u64)((p)[2] & 0xff) << 16) |   \
+     ((u64)((p)[3] & 0xff) << 24) |   \
+     ((u64)((p)[4] & 0xff) << 32) |   \
+     ((u64)((p)[5] & 0xff) << 40) |   \
+     ((u64)((p)[6] & 0xff) << 48) |   \
+     ((u64)((p)[7] & 0xff) << 56))
+
+
+/* store a 64 bit unsigned integer as eight 8 bit unsigned integers in little endian */
+#define U64TO8_LE(p, v)               \
+  do {                                \
+    (p)[0] = (u8)((v)      ) & 0xff;  \
+    (p)[1] = (u8)((v) >>  8) & 0xff;  \
+    (p)[2] = (u8)((v) >> 16) & 0xff;  \
+    (p)[3] = (u8)((v) >> 24) & 0xff;  \
+    (p)[4] = (u8)((v) >> 32) & 0xff;  \
+    (p)[5] = (u8)((v) >> 40) & 0xff;  \
+    (p)[6] = (u8)((v) >> 48) & 0xff;  \
+    (p)[7] = (u8)((v) >> 56) & 0xff;  \
+  } while (0)
+
+
 
 //
 // CASTING MACROS
@@ -514,3 +566,5 @@ typedef void(*CFUNC)(void *);
         ));
     }
 #endif
+
+#endif // REB_C_H
