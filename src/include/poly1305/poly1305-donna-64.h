@@ -6,13 +6,13 @@
 	#include <intrin.h>
 
 	typedef struct uint128_t {
-		unsigned long long lo;
-		unsigned long long hi;
+		u64 lo;
+		u64 hi;
 	} uint128_t;
 
 	#define MUL(out, x, y) out.lo = _umul128((x), (y), &out.hi)
-	#define ADD(out, in) { unsigned long long t = out.lo; out.lo += in.lo; out.hi += (out.lo < t) + in.hi; }
-	#define ADDLO(out, in) { unsigned long long t = out.lo; out.lo += in; out.hi += (out.lo < t); }
+	#define ADD(out, in) { u64 t = out.lo; out.lo += in.lo; out.hi += (out.lo < t) + in.hi; }
+	#define ADDLO(out, in) { u64 t = out.lo; out.lo += in; out.hi += (out.lo < t); }
 	#define SHR(in, shift) (__shiftright128(in.lo, in.hi, (shift)))
 	#define LO(in) (in.lo)
 
@@ -27,59 +27,32 @@
 	#define MUL(out, x, y) out = ((uint128_t)x * y)
 	#define ADD(out, in) out += in
 	#define ADDLO(out, in) out += in
-	#define SHR(in, shift) (unsigned long long)(in >> (shift))
-	#define LO(in) (unsigned long long)(in)
+	#define SHR(in, shift) (u64)(in >> (shift))
+	#define LO(in) (u64)(in)
 
 	#define POLY1305_NOINLINE __attribute__((noinline))
 #endif
 
 #define poly1305_block_size 16
 
-/* 17 + sizeof(size_t) + 8*sizeof(unsigned long long) */
+/* 17 + sizeof(size_t) + 8*sizeof(u64) */
 typedef struct poly1305_state_internal_t {
-	unsigned long long r[3];
-	unsigned long long h[3];
-	unsigned long long pad[2];
+	u64 r[3];
+	u64 h[3];
+	u64 pad[2];
 	size_t leftover;
-	unsigned char buffer[poly1305_block_size];
-	unsigned char final;
+	u8 buffer[poly1305_block_size];
+	u8 final;
 } poly1305_state_internal_t;
 
-/* interpret eight 8 bit unsigned integers as a 64 bit unsigned integer in little endian */
-static unsigned long long
-U8TO64(const unsigned char *p) {
-	return
-		(((unsigned long long)(p[0] & 0xff)      ) |
-		 ((unsigned long long)(p[1] & 0xff) <<  8) |
-		 ((unsigned long long)(p[2] & 0xff) << 16) |
-		 ((unsigned long long)(p[3] & 0xff) << 24) |
-		 ((unsigned long long)(p[4] & 0xff) << 32) |
-		 ((unsigned long long)(p[5] & 0xff) << 40) |
-		 ((unsigned long long)(p[6] & 0xff) << 48) |
-		 ((unsigned long long)(p[7] & 0xff) << 56));
-}
-
-/* store a 64 bit unsigned integer as eight 8 bit unsigned integers in little endian */
-static void
-U64TO8(unsigned char *p, unsigned long long v) {
-	p[0] = (v      ) & 0xff;
-	p[1] = (v >>  8) & 0xff;
-	p[2] = (v >> 16) & 0xff;
-	p[3] = (v >> 24) & 0xff;
-	p[4] = (v >> 32) & 0xff;
-	p[5] = (v >> 40) & 0xff;
-	p[6] = (v >> 48) & 0xff;
-	p[7] = (v >> 56) & 0xff;
-}
-
 void
-poly1305_init(poly1305_context *ctx, const unsigned char key[32]) {
+poly1305_init(poly1305_context *ctx, const u8 key[32]) {
 	poly1305_state_internal_t *st = (poly1305_state_internal_t *)ctx;
-	unsigned long long t0,t1;
+	u64 t0,t1;
 
 	/* r &= 0xffffffc0ffffffc0ffffffc0fffffff */
-	t0 = U8TO64(&key[0]);
-	t1 = U8TO64(&key[8]);
+	t0 = U8TO64_LE(&key[0]);
+	t1 = U8TO64_LE(&key[8]);
 
 	st->r[0] = ( t0                    ) & 0xffc0fffffff;
 	st->r[1] = ((t0 >> 44) | (t1 << 20)) & 0xfffffc0ffff;
@@ -91,20 +64,20 @@ poly1305_init(poly1305_context *ctx, const unsigned char key[32]) {
 	st->h[2] = 0;
 
 	/* save pad for later */
-	st->pad[0] = U8TO64(&key[16]);
-	st->pad[1] = U8TO64(&key[24]);
+	st->pad[0] = U8TO64_LE(&key[16]);
+	st->pad[1] = U8TO64_LE(&key[24]);
 
 	st->leftover = 0;
 	st->final = 0;
 }
 
 static void
-poly1305_blocks(poly1305_state_internal_t *st, const unsigned char *m, size_t bytes) {
-	const unsigned long long hibit = (st->final) ? 0 : ((unsigned long long)1 << 40); /* 1 << 128 */
-	unsigned long long r0,r1,r2;
-	unsigned long long s1,s2;
-	unsigned long long h0,h1,h2;
-	unsigned long long c;
+poly1305_blocks(poly1305_state_internal_t *st, const u8 *m, size_t bytes) {
+	const u64 hibit = (st->final) ? 0 : ((u64)1 << 40); /* 1 << 128 */
+	u64 r0,r1,r2;
+	u64 s1,s2;
+	u64 h0,h1,h2;
+	u64 c;
 	uint128_t d0,d1,d2,d;
 
 	r0 = st->r[0];
@@ -119,11 +92,11 @@ poly1305_blocks(poly1305_state_internal_t *st, const unsigned char *m, size_t by
 	s2 = r2 * (5 << 2);
 
 	while (bytes >= poly1305_block_size) {
-		unsigned long long t0,t1;
+		u64 t0,t1;
 
 		/* h += m[i] */
-		t0 = U8TO64(&m[0]);
-		t1 = U8TO64(&m[8]);
+		t0 = U8TO64_LE(&m[0]);
+		t1 = U8TO64_LE(&m[8]);
 
 		h0 += (( t0                    ) & 0xfffffffffff);
 		h1 += (((t0 >> 44) | (t1 << 20)) & 0xfffffffffff);
@@ -152,11 +125,11 @@ poly1305_blocks(poly1305_state_internal_t *st, const unsigned char *m, size_t by
 
 
 POLY1305_NOINLINE void
-poly1305_finish(poly1305_context *ctx, unsigned char mac[16]) {
+poly1305_finish(poly1305_context *ctx, u8 mac[16]) {
 	poly1305_state_internal_t *st = (poly1305_state_internal_t *)ctx;
-	unsigned long long h0,h1,h2,c;
-	unsigned long long g0,g1,g2;
-	unsigned long long t0,t1;
+	u64 h0,h1,h2,c;
+	u64 g0,g1,g2;
+	u64 t0,t1;
 
 	/* process the remaining block */
 	if (st->leftover) {
@@ -184,10 +157,10 @@ poly1305_finish(poly1305_context *ctx, unsigned char mac[16]) {
 	/* compute h + -p */
 	g0 = h0 + 5; c = (g0 >> 44); g0 &= 0xfffffffffff;
 	g1 = h1 + c; c = (g1 >> 44); g1 &= 0xfffffffffff;
-	g2 = h2 + c - ((unsigned long long)1 << 42);
+	g2 = h2 + c - ((u64)1 << 42);
 
 	/* select h if h < p, or h + -p if h >= p */
-	c = (g2 >> ((sizeof(unsigned long long) * 8) - 1)) - 1;
+	c = (g2 >> ((sizeof(u64) * 8) - 1)) - 1;
 	g0 &= c;
 	g1 &= c;
 	g2 &= c;
@@ -208,8 +181,8 @@ poly1305_finish(poly1305_context *ctx, unsigned char mac[16]) {
 	h0 = ((h0      ) | (h1 << 44));
 	h1 = ((h1 >> 20) | (h2 << 24));
 
-	U64TO8(&mac[0], h0);
-	U64TO8(&mac[8], h1);
+	U64TO8_LE(&mac[0], h0);
+	U64TO8_LE(&mac[8], h1);
 
 	/* zero out the state */
 	st->h[0] = 0;

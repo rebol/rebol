@@ -17,39 +17,17 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef CHACHA20_SIMPLE_H
 #define CHACHA20_SIMPLE_H
 #include <stdint.h>
+#include "reb-c.h"
 
-#define U8C(v) (v##U)
-#define U32C(v) (v##U)
-#define U8V(v) ((uint8_t)(v) & U8C(0xFF))
-#define U32TO8_LE(p, v) \
-  do { \
-    (p)[0] = U8V((v)); \
-    (p)[1] = U8V((v) >>  8); \
-    (p)[2] = U8V((v) >> 16); \
-    (p)[3] = U8V((v) >> 24); \
-  } while (0)
-
-#define U8TO32_LE(p) \
-  (((uint32_t)((p)[0])) | \
-   ((uint32_t)((p)[1]) <<  8) | \
-   ((uint32_t)((p)[2]) << 16) | \
-   ((uint32_t)((p)[3]) << 24))
 
 #define ROTL32(v, n) ((v) << (n)) | ((v) >> (32 - (n)))
 
-#define LE(p) (((uint32_t)((p)[0])) | ((uint32_t)((p)[1]) << 8) | ((uint32_t)((p)[2]) << 16) | ((uint32_t)((p)[3]) << 24))
-#define FROMLE(b, i) (b)[0] = i & 0xFF; (b)[1] = (i >> 8) & 0xFF; (b)[2] = (i >> 16) & 0xFF; (b)[3] = (i >> 24) & 0xFF;
 
-#define U32V(v) ((uint32_t)(v) & U32C(0xFFFFFFFF))
+#define U32V(v) ((uint32_t)(v) & U32_C(0xFFFFFFFF))
 #define ROTATE(v,c) (ROTL32(v,c))
 #define XOR(v,w) ((v) ^ (w))
 #define PLUS(v,w) (U32V((v) + (w)))
 #define PLUSONE(v) (PLUS((v),1))
-#define QUARTERROUND2(a,b,c,d) \
-  a = PLUS(a,b); d = ROTATE(XOR(d,a),16); \
-  c = PLUS(c,d); b = ROTATE(XOR(b,c),12); \
-  a = PLUS(a,b); d = ROTATE(XOR(d,a), 8); \
-  c = PLUS(c,d); b = ROTATE(XOR(b,c), 7);
 
 
 #ifndef MIN
@@ -63,10 +41,10 @@ extern "C"
 
 struct chacha20_ctx
 {
-  uint32_t schedule[16];
-  uint32_t keystream[16];
-  size_t available;
-  size_t nonce_length; // may be 8 or 12 
+	uint32_t schedule[16];
+	uint32_t keystream[16];
+	size_t available;
+	size_t nonce_length; // may be 8 or 12 
 };
 
 typedef struct chacha20_ctx chacha20_ctx;
