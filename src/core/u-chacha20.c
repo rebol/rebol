@@ -1,3 +1,4 @@
+#ifndef EXCLUDE_CHACHA20POLY1305
 /***********************************************************************
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
@@ -316,3 +317,4 @@ int chacha20_poly1305_aead(struct chacha20_ctx *ctx,  u8 *pt, u32 len, u8 *aad, 
 	
 	return len + POLY1305_TAGLEN;
 }
+#endif // EXCLUDE_CHACHA20POLY1305

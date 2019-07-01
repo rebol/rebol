@@ -1,3 +1,4 @@
+#ifndef EXCLUDE_CHACHA20POLY1305
 /***********************************************************************
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
@@ -214,3 +215,5 @@ poly1305_power_on_self_test(void) {
 	return result;
 }
 #endif
+
+#endif // EXCLUDE_CHACHA20POLY1305

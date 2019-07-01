@@ -33,7 +33,10 @@
 #include "sys-aes.h"
 #include "sys-rsa.h"
 #include "sys-dh.h"
+#ifndef EXCLUDE_CHACHA20POLY1305
 #include "sys-chacha20.h"
+#include "sys-poly1305.h"
+#endif
 
 /***********************************************************************
 **
@@ -688,6 +691,9 @@ typedef struct {
 //  ]
 ***********************************************************************/
 {
+#ifdef EXCLUDE_CHACHA20POLY1305
+	Trap0(RE_FEATURE_NA);
+#else
 	REBVAL *val_ctx       = D_ARG(1);
 	REBOOL  ref_init      = D_REF(2);
     REBVAL *val_nonce     = D_ARG(3);
@@ -765,11 +771,12 @@ typedef struct {
 		VAL_TAIL(val_ctx) = len;
 
     }
+#endif // EXCLUDE_CHACHA20POLY1305
 	return R_ARG1;
 }
 
 
-#include "sys-poly1305.h"
+
 /***********************************************************************
 **
 */	REBNATIVE(poly1305)
@@ -784,6 +791,9 @@ typedef struct {
 //  ]
 ***********************************************************************/
 {
+#ifdef EXCLUDE_CHACHA20POLY1305
+	Trap0(RE_FEATURE_NA);
+#else
 	REBVAL *val_ctx       = D_ARG(1);
 	REBOOL  ref_update    = D_REF(2);
 	REBVAL *val_data      = D_ARG(3);
@@ -838,6 +848,7 @@ typedef struct {
 		return (poly1305_verify(VAL_BIN_AT(val_mac), mac)) ? R_TRUE : R_FALSE;
 	}
 
+#endif // EXCLUDE_CHACHA20POLY1305
 	return R_ARG1;
 }
 
@@ -862,6 +873,9 @@ typedef struct {
 //  ]
 ***********************************************************************/
 {
+#ifdef EXCLUDE_CHACHA20POLY1305
+	Trap0(RE_FEATURE_NA);
+#else
 	REBVAL *val_ctx        = D_ARG(1);
 	REBOOL  ref_init       = D_REF(2);
 	REBVAL *val_local_key  = D_ARG(3);
@@ -1007,5 +1021,6 @@ typedef struct {
 		SERIES_TAIL(ctx_ser) = len;
 		SET_BINARY(val_ctx, ctx_ser);
 	}
+#endif // EXCLUDE_CHACHA20POLY1305
 	return R_ARG1;
 }
