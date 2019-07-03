@@ -211,12 +211,22 @@ import module [
 					throw true
 				]
 				path? :word [
-					if any [
-						error? set/any 'value try [get :word]
-						not value? :value
-					] [
-						output ["No information on" word "(path has no value)"]
-						throw true
+					if error? set/any 'value try [get :word][
+						;check if value is error or if it was really an invalid or path without value
+						if all [
+							value/id   = 'invalid-path
+							value/arg1 = :word
+						][
+							output ajoin ["There is no ^[[1;32m" value/arg2 "^[[m in path ^[[1;32m" value/arg1 "^[[m"]
+							throw true
+						]
+						if all [
+							value/id = 'no-value
+							value/arg1 = first :word
+						][
+							output ["No information on^[[1;32m" :word "^[[m(path has no value)"]
+							throw true
+						]
 					]
 				]
 				any-function? :value [
