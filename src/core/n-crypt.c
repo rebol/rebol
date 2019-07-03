@@ -522,6 +522,48 @@ typedef struct {
 	uint8_t private[32];
 } ECC_CTX;
 
+static uECC_Curve get_ecc_curve(REBCNT curve_type) {
+	uECC_Curve curve = NULL;
+	switch (curve_type) {
+		case SYM_SECP256K1:
+			curve = ECC_curves[4];
+			if(curve == NULL) {
+				curve = uECC_secp256k1();
+				ECC_curves[4] = curve;
+			}
+			break;
+		case SYM_SECP256R1:
+			curve = ECC_curves[3];
+			if(curve == NULL) {
+				curve = uECC_secp256r1();
+				ECC_curves[3] = curve;
+			}
+			break;
+		case SYM_SECP224R1:
+			curve = ECC_curves[2];
+			if(curve == NULL) {
+				curve = uECC_secp224r1();
+				ECC_curves[2] = curve;
+			}
+			break;
+		case SYM_SECP192R1:
+			curve = ECC_curves[1];
+			if(curve == NULL) {
+				curve = uECC_secp192r1();
+				ECC_curves[1] = curve;
+			}
+			break;		
+		case SYM_SECP160R1:
+			curve = ECC_curves[0];
+			if(curve == NULL) {
+				curve = uECC_secp160r1();
+				ECC_curves[0] = curve;
+			}
+			break;
+	}
+	return curve;
+}
+
 /***********************************************************************
 **
 */	REBNATIVE(ecdh)
@@ -574,45 +616,8 @@ typedef struct {
 		SET_HANDLE(val_handle, ecc_ser, SYM_ECDH, HANDLE_SERIES);
 	}
 
-	switch (curve_type) {
-		case SYM_SECP256K1:
-			curve = ECC_curves[4];
-			if(curve == NULL) {
-				curve = uECC_secp256k1();
-				ECC_curves[4] = curve;
-			}
-			break;
-		case SYM_SECP256R1:
-			curve = ECC_curves[3];
-			if(curve == NULL) {
-				curve = uECC_secp256r1();
-				ECC_curves[3] = curve;
-			}
-			break;
-		case SYM_SECP224R1:
-			curve = ECC_curves[2];
-			if(curve == NULL) {
-				curve = uECC_secp224r1();
-				ECC_curves[2] = curve;
-			}
-			break;
-		case SYM_SECP192R1:
-			curve = ECC_curves[1];
-			if(curve == NULL) {
-				curve = uECC_secp192r1();
-				ECC_curves[1] = curve;
-			}
-			break;		
-		case SYM_SECP160R1:
-			curve = ECC_curves[0];
-			if(curve == NULL) {
-				curve = uECC_secp160r1();
-				ECC_curves[0] = curve;
-			}
-			break;
-		default:
-			return R_NONE;
-	}
+	curve = get_ecc_curve(curve_type);
+	if (!curve) return R_NONE;
 
 	if (ref_init) {
 		if(!uECC_make_key(ecc->public, ecc->private, curve)) {
@@ -670,6 +675,88 @@ typedef struct {
 		}
 	}
 	return R_ARG1;
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(ecdsa)
+/*
+//  ecdsa: native [
+//		"Elliptic Curve Digital Signature Algorithm"
+//		key [handle! binary!] "Keypair to work with, created using ECDH function, or raw binary key (needs /curve)"
+//		hash [binary!] "Data to sign or verify"
+//		/sign   "Use private key to sign data, returns 64 bytes of signature"
+//		/verify "Use public key to verify signed data, returns true or false"
+//			signature [binary!] "Signature (64 bytes)"
+//		/curve "Used if key is just a binary"
+//			type [word!] "One of supported curves: [secp256k1 secp256r1 secp224r1 secp192r1 secp160r1]"
+//  ]
+***********************************************************************/
+{
+	REBVAL *val_key     = D_ARG(1);
+	REBVAL *val_hash    = D_ARG(2);
+	REBOOL  ref_sign    = D_REF(3);
+	REBOOL  ref_verify  = D_REF(4);
+	REBVAL *val_sign    = D_ARG(5);
+	REBOOL  ref_curve   = D_REF(6);
+	REBVAL *val_curve   = D_ARG(7);
+
+	REBSER *ecc_ser = NULL;
+	REBSER *bin = NULL;
+	REBYTE *key = NULL;
+	REBCNT curve_type = 0;
+	uECC_Curve curve = NULL;
+	ECC_CTX *ecc = NULL;
+
+	if (IS_BINARY(val_key)) {
+		if (!ref_curve) Trap0(RE_MISSING_ARG);
+		curve_type = VAL_WORD_CANON(val_curve);
+	}
+	else {
+		if (VAL_HANDLE_TYPE(val_key) != SYM_ECDH || VAL_HANDLE_DATA(val_key) == NULL) {
+			Trap0(RE_INVALID_HANDLE);
+		}
+		ecc_ser = VAL_HANDLE_DATA(val_key);
+		ecc = (ECC_CTX*)SERIES_DATA(ecc_ser);
+		curve_type = ecc->curve_type;
+	}
+
+	curve = get_ecc_curve(curve_type);
+	if (!curve) return R_NONE;
+
+	if (ref_sign) {
+		if (ecc) {
+			key = ecc->private;
+		}
+		else {
+			if (VAL_LEN(val_key) != 32) return R_NONE;
+			key = VAL_BIN(val_key);
+		}
+		bin = Make_Series((REBCNT)64, (REBCNT)1, FALSE);
+		if(!uECC_sign(key, VAL_DATA(val_hash), VAL_LEN(val_hash), BIN_DATA(bin), curve)) {
+			return R_NONE;
+		}
+		SET_BINARY(D_RET, bin);
+		VAL_TAIL(D_RET) = 64;
+		return R_RET;
+	}
+
+	if (ref_verify) {
+		if (ecc) {
+			key = ecc->public;
+		}
+		else {
+			if (VAL_LEN(val_key) != 64) return R_FALSE;
+			key = VAL_BIN(val_key);
+		}
+		if(VAL_LEN(val_sign) == 64 && uECC_verify(key, VAL_DATA(val_hash), VAL_LEN(val_hash), VAL_DATA(val_sign), curve)) {
+			return R_TRUE;
+		}
+		else {
+			return R_FALSE;
+		}
+	}
 }
 
 

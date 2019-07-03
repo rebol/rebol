@@ -81,118 +81,59 @@ C79E915C3277361FBFA587C6DC06FEDE0B7E57FEC0B68F96B3AD651D54264357
 
 
 ===start-group=== "Elliptic-curve Diffie-Hellman key exchange"
+curves: [secp256k1 secp256r1 secp224r1 secp192r1 secp160r1]
+foreach ecurve curves [
+	--test-- rejoin ["ECDH (" ecurve ") keys usage"]
 
---test-- "ECDH (secp256k1) keys usage"
+		;- Boban and Alice both init key with same curve
+		--assert handle? k-Alice: ecdh/init none ecurve
+		--assert handle? k-Boban: ecdh/init none ecurve
+		--assert ecurve = ecdh/curve k-Alice
+		--assert ecurve = ecdh/curve k-Boban
+		;- ... exports and exchange public parts of it
+		--assert binary? pub-Alice: ecdh/public k-Alice
+		--assert binary? pub-Boban: ecdh/public k-Boban
+		;- ... and use them to compute shared secret.
+		--assert binary? secret-Alice: ecdh/secret k-Alice pub-Boban
+		--assert binary? secret-Boban: ecdh/secret k-Boban pub-Alice
+		;- These keys should be same on both sides
+		--assert secret-Alice = secret-Boban
+		;- Once done with the exchange, the ECDH key must be released!
+		--assert handle? ecdh/release k-Alice
+		--assert none? ecdh/public k-Alice
 
-	ecurve: 'secp256k1
-	;- Boban and Alice both init key with same curve
-	--assert handle? k-Alice: ecdh/init none ecurve
-	--assert handle? k-Boban: ecdh/init none ecurve
-	--assert ecurve = ecdh/curve k-Alice
-	--assert ecurve = ecdh/curve k-Boban
-	;- ... exports and exchange public parts of it
-	--assert binary? pub-Alice: ecdh/public k-Alice
-	--assert binary? pub-Boban: ecdh/public k-Boban
-	;- ... and use them to compute shared secret.
-	--assert binary? secret-Alice: ecdh/secret k-Alice pub-Boban
-	--assert binary? secret-Boban: ecdh/secret k-Boban pub-Alice
-	;- These keys should be same on both sides
-	--assert secret-Alice = secret-Boban
-	;- Once done with the exchange, the ECDH key must be released!
-	--assert handle? ecdh/release k-Alice
-	--assert handle? ecdh/release k-Boban
-	--assert none? ecdh/public k-Alice
+		;- re-initialization...
+		--assert handle? ecdh/init k-Alice ecurve ;- using existing key for a new init
+		--assert binary? pub-Alice: ecdh/public k-Alice
+		;- /release may be used with /secret
+		--assert binary? secret-Alice: ecdh/secret/release k-Alice pub-Boban
+		--assert binary? secret-Boban: ecdh/secret/release k-Boban pub-Alice
+		--assert secret-Alice = secret-Boban
 
---test-- "ECDH (secp256r1) keys usage"
+	--test-- rejoin ["ECDSA (" ecurve ") signing"]
 
-	ecurve: 'secp256r1
-	;- Boban and Alice both init key with same curve
-	--assert handle? k-Alice: ecdh/init none ecurve
-	--assert handle? k-Boban: ecdh/init none ecurve
-	--assert ecurve = ecdh/curve k-Alice
-	--assert ecurve = ecdh/curve k-Boban
-	;- ... exports and exchange public parts of it
-	--assert binary? pub-Alice: ecdh/public k-Alice
-	--assert binary? pub-Boban: ecdh/public k-Boban
-	;- ... and use them to compute shared secret.
-	--assert binary? secret-Alice: ecdh/secret k-Alice pub-Boban
-	--assert binary? secret-Boban: ecdh/secret k-Boban pub-Alice
-	;- These keys should be same on both sides
-	--assert secret-Alice = secret-Boban
-	;- Once done with the exchange, the ECDH key must be released!
-	--assert handle? ecdh/release k-Alice
-	--assert handle? ecdh/release k-Boban
-	--assert none? ecdh/public k-Alice
+		;- Alice generates her key-pair
+		k-Alice: ecdh/init none ecurve
+		;- wants to sign some data:
+		data: {Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.}
+		;- computes its hash:
+		hash: checksum/method data 'sha256
+		;- and use ECDSA to sign it using her private key
+		signature: ecdsa/sign k-Alice hash
+		--assert binary? signature
+		--assert 64 = length? signature
+		;- can verify if it really works:
+		--assert ecdsa/verify k-Alice hash signature
 
---test-- "ECDH (secp224r1) keys usage"
+		;- than Alice may send the data with signature, used curve and public key to Boban
+		pub-Alice: ecdh/public k-Alice
+		;- Boban can verify, that the data are really from Alice
+		--assert ecdsa/verify/curve pub-Alice hash signature ecurve
 
-	ecurve: 'secp224r1
-	;- Boban and Alice both init key with same curve
-	--assert handle? k-Alice: ecdh/init none ecurve
-	--assert handle? k-Boban: ecdh/init none ecurve
-	--assert ecurve = ecdh/curve k-Alice
-	--assert ecurve = ecdh/curve k-Boban
-	;- ... exports and exchange public parts of it
-	--assert binary? pub-Alice: ecdh/public k-Alice
-	--assert binary? pub-Boban: ecdh/public k-Boban
-	;- ... and use them to compute shared secret.
-	--assert binary? secret-Alice: ecdh/secret k-Alice pub-Boban
-	--assert binary? secret-Boban: ecdh/secret k-Boban pub-Alice
-	;- These keys should be same on both sides
-	--assert secret-Alice = secret-Boban
-	;- Once done with the exchange, the ECDH key must be released!
-	--assert handle? ecdh/release k-Alice
-	--assert handle? ecdh/release k-Boban
-	--assert none? ecdh/public k-Alice
+]
 
---test-- "ECDH (secp192r1) keys usage"
 
-	ecurve: 'secp192r1
-	;- Boban and Alice both init key with same curve
-	--assert handle? k-Alice: ecdh/init none ecurve
-	--assert handle? k-Boban: ecdh/init none ecurve
-	--assert ecurve = ecdh/curve k-Alice
-	--assert ecurve = ecdh/curve k-Boban
-	;- ... exports and exchange public parts of it
-	--assert binary? pub-Alice: ecdh/public k-Alice
-	--assert binary? pub-Boban: ecdh/public k-Boban
-	;- ... and use them to compute shared secret.
-	--assert binary? secret-Alice: ecdh/secret k-Alice pub-Boban
-	--assert binary? secret-Boban: ecdh/secret k-Boban pub-Alice
-	;- These keys should be same on both sides
-	--assert secret-Alice = secret-Boban
-	;- Once done with the exchange, the ECDH key must be released!
-	--assert handle? ecdh/release k-Alice
-	--assert handle? ecdh/release k-Boban
-	--assert none? ecdh/public k-Alice
 
---test-- "ECDH (secp160r1) keys usage"
-
-	ecurve: 'secp160r1
-	;- Boban and Alice both init key with same curve
-	--assert handle? k-Alice: ecdh/init none ecurve
-	--assert handle? k-Boban: ecdh/init none ecurve
-	--assert ecurve = ecdh/curve k-Alice
-	--assert ecurve = ecdh/curve k-Boban
-	;- ... exports and exchange public parts of it
-	--assert binary? pub-Alice: ecdh/public k-Alice
-	--assert binary? pub-Boban: ecdh/public k-Boban
-	;- ... and use them to compute shared secret.
-	--assert binary? secret-Alice: ecdh/secret k-Alice pub-Boban
-	--assert binary? secret-Boban: ecdh/secret k-Boban pub-Alice
-	;- These keys should be same on both sides
-	--assert secret-Alice = secret-Boban
-	;- Once done with the exchange, the ECDH key must be released!
-	--assert handle? ecdh/release k-Alice
-	--assert none? ecdh/public k-Alice
-
---test-- "ECDH key re-initialization"
-	--assert handle? ecdh/init k-Alice ecurve ;- using existing key for a new init
-	--assert binary? pub-Alice: ecdh/public k-Alice
-	;- /release may be used with /secret
-	--assert binary? secret-Alice: ecdh/secret/release k-Alice pub-Boban
-	--assert binary? secret-Boban: ecdh/secret/release k-Boban pub-Alice
-	--assert secret-Alice = secret-Boban
 
 ===end-group===
 
