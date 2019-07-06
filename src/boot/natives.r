@@ -966,7 +966,7 @@ do-commands: native [
 ]
 
 ds: native ["Temporary stack debug"]
-dump: native ["Temporary debug dump" v]
+dump: native ["Temporary debug dump" v /fmt "only series format"]
 check: native ["Temporary series debug check" val [series!]]
 
 do-callback: native [

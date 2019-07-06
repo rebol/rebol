@@ -938,8 +938,13 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 #ifdef _DEBUG
 	REBVAL *arg = D_ARG(1);
 
-	if (ANY_SERIES(arg)) 
-		Dump_Series(VAL_SERIES(arg), "=>");
+	if (ANY_SERIES(arg)) {
+		if (D_REF(2)) {
+			Dump_Series_Fmt(VAL_SERIES(arg), "=>");
+		} else {
+			Dump_Series(VAL_SERIES(arg), "=>");
+		}
+	}
 	else
 		Dump_Values(arg, 1);
 #endif

@@ -33,7 +33,7 @@
 
 /***********************************************************************
 **
-*/	void Dump_Series(REBSER *series, const char *memo)
+*/	void Dump_Series_Fmt(REBSER *series, const char *memo)
 /*
 ***********************************************************************/
 {
@@ -50,6 +50,16 @@
 		SERIES_REST(series),
 		SERIES_FLAGS(series)
 	);
+}
+
+/***********************************************************************
+**
+*/	void Dump_Series(REBSER *series, const char *memo)
+/*
+***********************************************************************/
+{
+	if (!series) return;
+	Dump_Series_Fmt(series, memo);
 	if (SERIES_WIDE(series) == sizeof(REBVAL)) {
 		Dump_Values(BLK_HEAD(series), SERIES_TAIL(series));
 	} else
