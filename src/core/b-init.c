@@ -685,6 +685,7 @@ extern const REBYTE Str_Banner[];
 	codi->error = 0;
 
 	if (codi->action == CODI_IDENTIFY) {
+		codi->error = 1;   // never identified... would require markup validator
 		return CODI_CHECK; // error code is inverted result
 	}
 
@@ -768,6 +769,21 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	return n;
 }
 
+static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
+{
+	REBSER *ser;
+	REBVAL *val;
+	if (OS_WIDE) {
+		ser = To_REBOL_Path(src, 0, OS_WIDE, dir);
+	}
+	else {
+		ser = Decode_UTF_String(src, LEN_BYTES(src), 8, FALSE);
+		ser = To_REBOL_Path(BIN_DATA(ser), BIN_LEN(ser), (REBOOL)!BYTE_SIZE(ser), dir);
+	}
+	val = Get_System(SYS_OPTIONS, field);
+	Set_Series(REB_FILE, val, ser);
+}
+
 /***********************************************************************
 **
 */	static void Init_Main_Args(REBARGS *rargs)
@@ -803,22 +819,16 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 	// Print("script: %s", rargs->script);
 	if (rargs->script) {
-		ser = To_REBOL_Path(rargs->script, 0, OS_WIDE, 0);
-		val = Get_System(SYS_OPTIONS, OPTIONS_SCRIPT);
-		Set_Series(REB_FILE, val, ser);
+		Set_Option_File(OPTIONS_SCRIPT, (REBYTE*)rargs->script, FALSE);
 	}
 
 	if (rargs->exe_path) {
-		ser = To_REBOL_Path(rargs->exe_path, 0, OS_WIDE, 0);
-		val = Get_System(SYS_OPTIONS, OPTIONS_BOOT);
-		Set_Series(REB_FILE, val, ser);
+		Set_Option_File(OPTIONS_BOOT, (REBYTE*)rargs->exe_path, FALSE);
 	}
 
 	// Print("home: %s", rargs->home_dir);
 	if (rargs->home_dir) {
-		ser = To_REBOL_Path(rargs->home_dir, 0, OS_WIDE, TRUE);
-		val = Get_System(SYS_OPTIONS, OPTIONS_HOME);
-		Set_Series(REB_FILE, val, ser);
+		Set_Option_File(OPTIONS_HOME, (REBYTE*)rargs->home_dir, TRUE);
 	}
 
 	n = Set_Option_Word(rargs->boot, OPTIONS_BOOT_LEVEL);

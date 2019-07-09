@@ -8,9 +8,21 @@ Rebol [
 
 ~~~start-file~~~ "Checksum"
 
+===start-group=== "Checksum of string"
+	--test-- {checksum of string}
+		--assert #{C000CBCECDCD2582B0418B8CF0301A8E} = checksum/method "ščř" 'md5
+		--assert #{900150983CD24FB0D6963F7D28E17F72} = checksum/method "abc" 'md5
+	--test-- {checksum/part of string}
+		--assert #{900150983CD24FB0D6963F7D28E17F72} = checksum/method/part "abc123" 'md5 3
+		--assert #{900150983CD24FB0D6963F7D28E17F72} = checksum/method/part skip "123abc" 3 'md5 3
+===end-group===
+
+
 ===start-group=== "Checksum with binary key (issue #1910)"
 ;@@ https://github.com/rebol/rebol-issues/issues/1910
 	--test-- "checksum-1"
+		--assert  #{800A1BC1B53CAA795F4DF39DC57652209239E1F1}
+					 = checksum/key "Hello world" "mykey"
 		--assert  #{800A1BC1B53CAA795F4DF39DC57652209239E1F1}
 					 = checksum/key to binary! "Hello world" "mykey"
 		--assert  #{800A1BC1B53CAA795F4DF39DC57652209239E1F1}
@@ -20,6 +32,17 @@ Rebol [
 
 ===start-group=== "Checksum basic"
 	--test-- {checksum ""}
+		str: ""
+		--assert #{da39a3ee5e6b4b0d3255bfef95601890afd80709}
+					= checksum/method str 'sha1
+		--assert #{e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855}
+					= checksum/method str 'sha256
+		--assert #{38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b}
+					= checksum/method str 'sha384
+		--assert #{cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e}
+					= checksum/method str 'sha512
+		--assert  1 = checksum/method str 'adler32
+	--test-- {checksum #{}}
 		bin: #{}
 		--assert #{da39a3ee5e6b4b0d3255bfef95601890afd80709}
 					= checksum/method bin 'sha1
@@ -29,6 +52,15 @@ Rebol [
 					= checksum/method bin 'sha384
 		--assert #{cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e}
 					= checksum/method bin 'sha512
+		--assert  1 = checksum/method bin 'adler32
+	--test-- {checksum adler32}
+		--assert       65537 = checksum/method "^@" 'adler32
+		--assert    11731034 = checksum/method "X^A" 'adler32
+		--assert   695534982 = checksum/method "message digest" 'adler32
+		--assert -1965353716 = checksum/method "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" 'adler32
+		--assert -1749675927 = checksum/method "12345678901234567890123456789012345678901234567890123456789012345678901234567890" 'adler32
+
+
 ===end-group===
 
 

@@ -61,13 +61,16 @@ decode: function [
 encode: function [
 	{Encodes a datatype (e.g. image!) into a series of bytes.}
 	type [word!] {Media type (jpeg, png, etc.)}
-	data [image! binary! string!] {The data to encode}
+	data {The data to encode}
 	/options opts [block!] {Special encoding options}
 ][
 	unless all [
 		cod: select system/codecs type
 		data: either handle? try [cod/entry] [
 			; original codecs were only natives
+			if type = 'text [
+				return either binary? data [to string! data][mold/only data]
+			]
 			do-codec cod/entry 'encode data
 		][
 			either function? try [:cod/encode][
@@ -86,6 +89,7 @@ encoding?: function [
 	"Returns the media codec name for given binary data. (identify)"
 	data [binary!]
 ][
+	if empty? data [return 'text] ;- optimization for an empty data case
 	; using reversed order - the last added codec is compared first
 	; without it the `text` codec takes everything
 	foreach name reverse words-of system/codecs [

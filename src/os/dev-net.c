@@ -119,7 +119,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	WSADATA wsaData;
 	// Initialize Windows Socket API with given VERSION.
 	// It is ok to call twice, as long as WSACleanup twice.
-	if (WSAStartup(0x0101, &wsaData)) return DR_ERROR;
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData)) return DR_ERROR;
 #endif
 	SET_FLAG(dev->flags, RDF_INIT);
 	return DR_DONE;
@@ -466,10 +466,14 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 		// prevent SIGPIPE https://stackoverflow.com/q/108183/494472
 		flags |= MSG_NOSIGNAL;
 #endif
+		//i64 tm = OS_Delta_Time(0, 0);
+
 		Set_Addr(&remote_addr, sock->net.remote_ip, sock->net.remote_port);
+		//WATCH1("sendto data: %x\n", sock->data);
 		result = sendto(sock->socket, sock->data, len, flags,
 						(struct sockaddr*)&remote_addr, addr_len);
-		WATCH2("send() len: %d actual: %d\n", len, result);
+		//printf("sento time: %d\n", OS_Delta_Time(tm,  0));
+		//WATCH2("send() len: %d actual: %d\n", len, result);
 
 		if (result >= 0) {
 			sock->data += result;
@@ -509,8 +513,10 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	// Check error code:
 	result = GET_ERROR;
 	WATCH2("get error: %d %s\n", result, strerror(result));
-	if (result == NE_WOULDBLOCK) return DR_PEND; // still waiting
-
+	if (result == NE_WOULDBLOCK) {
+		//printf("timeout: %d\n", sock->timeout);
+		return DR_PEND; // still waiting
+	}
 	WATCH4("ERROR: recv(%d %x) len: %d error: %d\n", sock->socket, sock->data, len, result);
 	// A nasty error happened:
 	sock->error = result;

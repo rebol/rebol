@@ -8,6 +8,7 @@ Rebol [
 dt [ ;- delta time
 	***start-run*** "All tests"
 	;recycle/torture
+	wrap load %units/mold-test.r3
 	wrap load %units/lexer-test.r3
 	wrap load %units/evaluation-test.r3
 	wrap load %units/enbase-test.r3
@@ -19,6 +20,8 @@ dt [ ;- delta time
 	wrap load %units/mezz-crypt-test.r3
 	wrap load %units/rc4-test.r3
 	wrap load %units/aes-test.r3
+	wrap load %units/chacha20-test.r3
+	wrap load %units/poly1305-test.r3
 	wrap load %units/rsa-test.r3
 	wrap load %units/dh-test.r3
 	wrap load %units/port-test.r3

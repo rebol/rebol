@@ -106,6 +106,7 @@ core: [
 	u-bigint.c ;needed for RSA which is needed in TLS protocol (HTTPS)
 	u-bincode.c
 	u-bmp.c
+	u-chacha20.c
 	u-compress.c
 	u-dh.c
 	u-dialect.c
@@ -116,10 +117,12 @@ core: [
 	u-md5.c
 	u-parse.c
 	u-png.c
+	u-poly1305.c
 	u-rc4.c
 	u-rsa.c    ;needed in TLS protocol (HTTPS)
 	u-sha1.c
 	u-sha2.c
+	u-uECC.c
 	u-zlib.c
 	u-wav.c
 ]
@@ -140,6 +143,8 @@ os: [
 	host-stdio.c
 	dev-net.c
 	dev-dns.c
+
+	host-ext-test.c
 ]
 
 os-win32: [
@@ -149,14 +154,16 @@ os-win32: [
 	dev-event.c
 	dev-clipboard.c
 	dev-midi.c
+
+	host-event.c
+	host-window.c
+	host-compositor.c
 ]
 
 os-win32g: [
-	host-graphics.c
-	host-event.c
-	host-window.c
-	host-draw.c
-	host-text.c
+	;host-graphics.c
+	;host-draw.c
+	;host-text.c
 ]
 
 os-posix: [

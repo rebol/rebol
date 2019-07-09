@@ -742,8 +742,9 @@ end_date:
 **
 ***********************************************************************/
 {
-	REBYTE *str;
 	REBUNI n;
+	REBYTE *str = Reset_Buffer(BUF_FORM, len);
+	REBCNT cnt = len;
 
 //  !!! Need to check for any possible scheme followed by ':'
 
@@ -753,22 +754,22 @@ end_date:
 //	if (n >= URL_MAX) return 0;
 //	if (*str != ':') return 0;
 
-	VAL_SERIES(value) = Make_Binary(len);
-	VAL_INDEX(value) = 0;
-
-	str = VAL_BIN(value);
+	
 	for (; len > 0; len--) {
 		//if (*cp == '%' && len > 2 && Scan_Hex2(cp+1, &n, FALSE)) {
 		if (*cp == '%') {
 			if (len <= 2 || !Scan_Hex2(cp+1, &n, FALSE)) return 0;
 			*str++ = (REBYTE)n;
-			cp += 3;
+			cp  += 3;
 			len -= 2;
+			cnt -= 2;
 		}
 		else *str++ = *cp++;
 	}
 	*str = 0;
-	VAL_TAIL(value) = (REBCNT)(str - VAL_BIN(value));
+
+	VAL_SERIES(value) = Decode_UTF_String(BIN_DATA(BUF_FORM), cnt, 8, FALSE);
+	VAL_INDEX(value) = 0;
 	VAL_SET(value, REB_URL);
 	return cp;
 }

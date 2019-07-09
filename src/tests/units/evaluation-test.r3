@@ -54,6 +54,18 @@ Rebol [
 		
 ===end-group===
 
+===start-group=== "do script"
+	--test-- "script with error"
+	;@@ https://github.com/rebol/rebol-issues/issues/2374
+		dir: what-dir
+		--assert error? do %units/files/error.r3
+		--assert dir = what-dir
+
+	--test-- "script returning UNSET value"
+		--assert unset? do %units/files/unset.r3
+
+===end-group===
+
 ===start-group=== "do function"
 	
 	--test-- "do-func-1"
@@ -404,6 +416,11 @@ Rebol [
 		a: b: 1 d: reduce [4 ()] 
 		--assert d = set/any [A B] d
 		--assert all [a = 4 unset? :b]
+
+	--test-- "Set - issue 2366"
+	;@@https://github.com/rebol/rebol-issues/issues/2366
+		--assert error? try [set #ab 1]
+		--assert error? try [set #12 2]
 
 
 ===end-group===

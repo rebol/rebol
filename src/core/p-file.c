@@ -447,6 +447,14 @@ REBINT Mode_Syms[] = {
 		args = Find_Refines(ds, ALL_WRITE_REFS);
 		spec = D_ARG(2); // data (binary, string, or block)
 
+		if (!(IS_BINARY(spec) || IS_STRING(spec) || IS_BLOCK(spec))) {
+			//Trap1(RE_INVALID_ARG, spec);
+			REB_MOLD mo = {0};
+			Reset_Mold(&mo);
+			Mold_Value(&mo, spec, 0);
+			Set_String(spec, mo.series);
+		}
+
 		// Handle the READ %file shortcut case:
 		if (!IS_OPEN(file)) {
 			REBCNT nargs = AM_OPEN_WRITE;

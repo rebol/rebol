@@ -11,6 +11,18 @@ Credits for Non-REBOL orginated C files and modules
 Unicode encoding/decoding functions:
 Copyright 2001-2004 Unicode, Inc.
 
+ECDH:
+Copyright (c) 2014, Kenneth MacKay - https://github.com/kmackay/micro-ecc
+All rights reserved.
+
+CHACHA20:
+Copyright (c) 2014, insane coder - http://chacha20.insanecoding.org/
+Copyright (c) 2016-2018, Eduard Suica
+
+POLY1305:
+Daniel Bernstein (http://cr.yp.to/mac.html)
+Andrew Moon (https://github.com/floodyberry/poly1305-donna)
+
 MD5: 
 This software contains code derived from the RSA Data Security
 Inc. MD5 Message-Digest Algorithm, including various

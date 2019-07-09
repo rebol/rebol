@@ -374,14 +374,14 @@ collect-words: native [
 
 checksum: native [
 	{Computes a checksum, CRC, or hash.}
-	data [binary!] {Bytes to checksum}
+	data [binary! string!] {Bytes to checksum. String value is first converted to UTF-8!}
 	/part length {Length of data}
 	/tcp {Returns an Internet TCP 16-bit checksum}
 	/secure {Returns a cryptographically secure checksum}
 	/hash {Returns a hash value}
 	size [integer!] {Size of the hash table}
 	/method {Method to use}
-	word [word!] {Methods: SHA1 SHA256 SHA384 SHA512 MD5 CRC32}
+	word [word!] {Methods: SHA1 SHA256 SHA384 SHA512 MD5 CRC32 ADLER32}
 	/key {Returns keyed HMAC value}
 	key-value [any-string! binary!] {Key to use}
 ]
@@ -520,8 +520,13 @@ uppercase: native [
 ]
 
 dehex: native [
-	{Converts URL-style hex encoded (%xx) strings.}
-	value [any-string!] {The string to dehex}
+	{Converts URL-style hex encoded (%xx) strings. If input is UTF-8 encode, you should first convert it to binary!}
+	value [any-string! binary!] {The string to dehex}
+]
+
+enhex: native [
+	{Converts string into URL-style hex encodeding (%xx) when needed.}
+	value [any-string! binary!] {The string to encode}
 ]
 
 get: native [
@@ -546,7 +551,7 @@ parse: native [
 
 set: native [
 	{Sets a word, path, block of words, or object to specified value(s).}
-	word [any-word! any-path! block! object!] {Word, block of words, path, or object to be set (modified)}
+	word [word! lit-word! any-path! block! object!] {Word, block of words, path, or object to be set (modified)}
 	value [any-type!] {Value or block of values}
 	/any {Allows setting words to any value, including unset}
 	/only {Block or object value argument is set as a single value}
@@ -940,7 +945,7 @@ do-codec: native [
 	{Evaluate a CODEC function to encode or decode media types.}
 	handle [handle!] "Internal link to codec"
 	action [word!] "Decode, encode, identify"
-	data [binary! image!]
+	data [binary! image! string!]
 ]
 
 set-scheme: native [

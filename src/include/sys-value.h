@@ -536,6 +536,7 @@ typedef struct Reb_Series_Ref
 #define VAL_SERIES(v)	    ((v)->data.series.series)
 #define VAL_INDEX(v)	    ((v)->data.series.index)
 #define	VAL_TAIL(v)		    (VAL_SERIES(v)->tail)
+#define	VAL_REST(v)		    (VAL_SERIES(v)->rest)
 #define VAL_LEN(v)			(Val_Series_Len(v))
 
 #define VAL_DATA(s)			(VAL_BIN_HEAD(s) + (VAL_INDEX(s) * VAL_SERIES_WIDTH(s)))
@@ -600,6 +601,7 @@ typedef struct Reb_Series_Ref
 // Arg is a unicode value:
 #define VAL_UNI(v)		UNI_HEAD(VAL_SERIES(v))
 #define VAL_UNI_HEAD(v) UNI_HEAD(VAL_SERIES(v))
+#define VAL_UNI_TAIL(v)	UNI_SKIP(VAL_SERIES(v), VAL_SERIES(v)->tail)
 #define VAL_UNI_DATA(v) UNI_SKIP(VAL_SERIES(v), VAL_INDEX(v))
 
 // Get a char, from either byte or unicode string:
@@ -949,6 +951,7 @@ typedef struct Reb_Gob {
 #define	VAL_GOB_INDEX(v)	((v)->data.gob.index)
 #define SET_GOB(v,g)		VAL_SET(v, REB_GOB), VAL_GOB(v)=g, VAL_GOB_INDEX(v)=0
 
+typedef struct rebol_compositor_ctx REBCMP; // Rebol compositor context
 
 /***********************************************************************
 **

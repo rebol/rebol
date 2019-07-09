@@ -28,6 +28,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include "reb-evtypes.h" // for EVT_DROP_EVENT
 
 #ifdef REMOVED
 // Removed because it causes more trouble than the benefits it provides.
@@ -1057,8 +1058,19 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 ***********************************************************************/
 {
 	REBVAL *val = D_ARG(1);
-	REBGOB *gob = VAL_EVENT_SER(val);
+	REBGOB *gob;
 	REBXYF xy;
+
+	//O: handle drop_file this way? Or maybe just don't use EVF_HAS_XY?
+	//gob = (VAL_EVENT_TYPE(val) == EVT_DROP_FILE) ? Gob_Root : VAL_EVENT_SER(val);
+	if (GET_FLAG(VAL_EVENT_FLAGS(val), EVF_HAS_DATA)) {
+		CLR_FLAG(VAL_EVENT_FLAGS(val), EVF_HAS_DATA);
+#ifdef TO_WINDOWS
+		gob = OS_GET_GOB_ROOT();
+#endif
+	} else {
+		gob = VAL_EVENT_SER(val);
+	}
 
 	if (gob && GET_FLAG(VAL_EVENT_FLAGS(val), EVF_HAS_XY)) {
 		xy.x = (REBD32)VAL_EVENT_X(val);

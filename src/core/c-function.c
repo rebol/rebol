@@ -197,6 +197,9 @@
 		!IS_BLOCK(def)
 		|| (len = VAL_LEN(def)) < 2
 		|| !IS_BLOCK(spec = VAL_BLK(def))
+		|| type == REB_ACTION //@@ https://github.com/rebol/rebol-issues/issues/1051
+		|| type == REB_NATIVE
+		|| type == REB_OP     //@@ https://github.com/rebol/rebol-issues/issues/1052  (may be implemented later)
 	) return FALSE;
 
 	body = VAL_BLK_SKIP(def, 1);

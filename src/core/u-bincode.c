@@ -76,7 +76,6 @@
 // FLOAT16 credits: Steven Pigeon
 // https://hbfs.wordpress.com/2013/02/12/float16/
 typedef union {
-	// float16 v;
 	struct {
 		// type determines alignment!
 		u16 m : 10;
@@ -101,6 +100,11 @@ typedef union {
 float float16to32(float16_s f16) {
 	// back to 32
 	float32_s f32;
+#ifndef USE_NO_INFINITY 
+	if (f16.bits.e == 31) { // inifinity or nan
+		return (f16.bits.m == 0) ? (f16.bits.s ? -1.0 : 1.0) * INFINITY : NAN;
+	}
+#endif
 	f32.bits.s = f16.bits.s;
 	f32.bits.e = (f16.bits.e - 15) + 127; // safe in this direction
 	f32.bits.m = ((u32)f16.bits.m) << 13;
@@ -233,10 +237,16 @@ static REBCNT EncodedU32_Size(u32 value) {
 	REBCNT inBit, nbits;
 	REBYTE *cp, *bp, *ep;
 	REBCNT n, count, index, tail, tail_new;
+	REBDEC dbl;
+	REBD32 d32;
 	i32 i, len;
 	u64 u;
 	i64 si;
 	u32 ulong;
+	u16 ushort;
+	float16_s f16;
+	float32_s f32;
+
 
 	ms_datetime* msdt = NULL;
 	ms_date*     msd  = NULL;
@@ -391,9 +401,10 @@ static REBCNT EncodedU32_Size(u32 value) {
 				case REB_GET_WORD:
 					data = Get_Var(value);
 					break;
-				case REB_GET_PATH:
-					data = Do_Path(&value, NULL);
-					break;
+				//case REB_GET_PATH:
+				//	data = Do_Path(&value, NULL);
+				//	data = DS_POP; // volatile stack reference
+				//	break;
 				default:
 					data = value;
 				}
@@ -405,6 +416,12 @@ static REBCNT EncodedU32_Size(u32 value) {
 					next = ++value;
 					if (IS_GET_WORD(next)) {
 						next = Get_Var(next);
+					} else if (IS_GET_PATH(next)) {	
+						Do_Path(&next, NULL);
+						next = DS_POP; // volatile stack reference
+					}
+					if (IS_STRING(next)) {
+						Set_Binary(next, Encode_UTF8_Value(next, VAL_LEN(next), 0));
 					}
 
 					switch (VAL_WORD_CANON(data)) {
@@ -461,7 +478,6 @@ static REBCNT EncodedU32_Size(u32 value) {
 						}
 						goto error;
 					case SYM_BYTES:
-						if (IS_GET_WORD(next)) next = Get_Var(next);
 						if (IS_BINARY(next)) {
 							count += VAL_LEN(next);
 							continue;
@@ -475,6 +491,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 						else goto error;
 						break;
 					case SYM_UI16BYTES:
+					case SYM_UI16LEBYTES:
 						if (IS_BINARY(next)) {
 							ASSERT_UIBYTES_RANGE(next, 0xFFFF);
 							count += (2 + VAL_LEN(next));
@@ -502,7 +519,26 @@ static REBCNT EncodedU32_Size(u32 value) {
 							continue;
 						}
 						goto error;
-						
+
+					case SYM_FLOAT:
+						if (IS_INTEGER(next) || IS_DECIMAL(next)) {
+							count += 4;
+							continue;
+						}
+						goto error;
+					case SYM_DOUBLE:
+						if (IS_INTEGER(next) || IS_DECIMAL(next)) {
+							count += 8;
+							continue;
+						}
+						goto error;
+					case SYM_FLOAT16:
+						if (IS_INTEGER(next) || IS_DECIMAL(next)) {
+							count += 2;
+							continue;
+						}
+						goto error;
+
 					case SYM_UNIXTIME_NOW:
 					case SYM_UNIXTIME_NOW_LE:
 						value--; //there is no argument so no next
@@ -584,7 +620,8 @@ static REBCNT EncodedU32_Size(u32 value) {
 					data = Get_Var(value);
 					break;
 				//case REB_GET_PATH:
-				//	data = Do_Path(&value, NULL);
+				//	Do_Path(&value, NULL);
+				//	value = DS_POP; // volatile stack reference
 				//	break;
 				default:
 					data = value;
@@ -602,6 +639,13 @@ static REBCNT EncodedU32_Size(u32 value) {
 				case REB_WORD:
 					next = ++value;
 					if (IS_GET_WORD(next)) next = Get_Var(next);
+					else if (IS_GET_PATH(next)) {
+						Do_Path(&next, NULL);
+						next = DS_POP; // volatile stack reference
+					}
+					if (IS_STRING(next)) {
+						Set_Binary(next, Encode_UTF8_Value(next, VAL_LEN(next), 0));
+					}
 
 					switch (VAL_WORD_CANON(data)) {
 					case SYM_UI8:
@@ -738,6 +782,19 @@ static REBCNT EncodedU32_Size(u32 value) {
 						memcpy(cp, VAL_BIN_AT(next), n);
 						VAL_INDEX(buffer_write)+=2; //for the length byte;
 						break;
+					case SYM_UI16LEBYTES:
+						n = VAL_LEN(next);
+						bp = (REBYTE*)&n;
+#ifdef ENDIAN_LITTLE
+						memcpy(cp, bp, 2);
+#else
+						cp[0] = bp[1]; cp[1] = bp[0];
+#endif
+						cp+=2;
+						memcpy(cp, VAL_BIN_AT(next), n);
+						VAL_INDEX(buffer_write)+=2; //for the length byte;
+						break;
+
 					case SYM_UI24BYTES:
 						n = VAL_LEN(next);
 						bp = (REBYTE*)&n;
@@ -762,6 +819,41 @@ static REBCNT EncodedU32_Size(u32 value) {
 						memcpy(cp, VAL_BIN_AT(next), n);
 						VAL_INDEX(buffer_write) += 4; //for the length byte;
 						break;
+
+					case SYM_FLOAT:
+						f32.v = (float)(IS_INTEGER(next) ? VAL_INT64(next) : VAL_DECIMAL(next));
+						memcpy(cp, (REBYTE*)&f32, 4);
+						n = 4;
+						break;
+					case SYM_DOUBLE:
+						dbl = (REBDEC)(IS_INTEGER(next) ? VAL_INT64(next) : VAL_DECIMAL(next));
+						memcpy(cp, (REBYTE*)&dbl, 8);
+						n = 8;
+						break;
+					case SYM_FLOAT16:
+						d32 = (REBDEC)(IS_INTEGER(next) ? VAL_INT64(next) : VAL_DECIMAL(next));
+						if (isnan(d32)) { // 1.#NaN
+							ushort = 0x7e00;
+						} else {
+							// based on: https://stackoverflow.com/a/15118210/494472
+							ulong = *((u32*)&d32);
+							u32 t1 = (ulong & 0x7fffffff) >> 13;   // Non-sign bits; Align mantissa on MSB
+							u32 t2 = (ulong & 0x80000000) >> 16;   // Sign bit; Shift sign bit into position
+							u32 t3 =  ulong & 0x7f800000;          // Exponent
+
+							t1 -= 0x1c000;                         // Adjust bias
+							t1 = (t3 < 0x38800000) ? 0 : t1;       // Flush-to-zero
+							t1 = (t3 > 0x47000000) ? 0x7bff : t1;  // Clamp-to-max
+							// NOTE: now infinity value is also clamped to max, is it ok?
+
+							t1 |= t2;                              // Re-insert sign bit
+
+							ushort = (u16)t1;
+						}
+						memcpy(cp, (REBYTE*)&ushort, 2);
+						n = 2;
+						break;
+
 					case SYM_AT:
 						VAL_INDEX(buffer_write) = VAL_INT32(next) - 1;
 						cp = BIN_DATA(bin) + VAL_INDEX(buffer_write);
@@ -1162,7 +1254,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 							if (cmd == SYM_SB) {
 								SET_INTEGER(temp, u);
 							} else {
-								SET_DECIMAL(temp, (double)u / 65536.0);
+								SET_DECIMAL(temp, ((double)((i64)u) / 65536.0));
 							}
 							break;
 						case SYM_BIT:
@@ -1352,7 +1444,6 @@ static REBCNT EncodedU32_Size(u32 value) {
 						case SYM_FLOAT16:
 							n = 2;
 							ASSERT_READ_SIZE(value, cp, ep, n);
-							float16_s f16;
 							f16.bytes.low  = cp[0];
 							f16.bytes.high = cp[1];
 							SET_DECIMAL(temp, float16to32(f16) );

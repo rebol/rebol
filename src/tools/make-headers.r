@@ -260,7 +260,7 @@ foreach file files [
 
 symbols: sort unique symbols ;contains all symbols (like: SYM_CALL) used in above processed C files (without the SYM_ part)
 symbols: new-line/skip symbols true 1
-
+if verbose [? symbols]
 save/header %../boot/tmp-symbols.r symbols [
 	title:    "C Symbols"
 	purpose:  "Automaticly collected symbols from C files"
@@ -372,10 +372,10 @@ parse/all data [
 
 write %../include/tmp-strings.h output
 
-]
+] ; tmp context end
 
-if any [dup-found verbose] [
-	print "** NOTE ABOVE PROBLEM!"
+if dup-found [
+	print "***** NOTE ABOVE PROBLEM! (duplicate found)"
 	wait 5
 ]
 

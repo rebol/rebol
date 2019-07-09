@@ -402,7 +402,7 @@ read: action [
 write: action [
 	{Writes to a file, URL, or port - auto-converts text strings.}
 	destination [port! file! url! block!]
-	data [binary! string! block!] {Data to write (non-binary converts to UTF-8)}
+	data  {Data to write (non-binary converts to UTF-8)}
 	/part {Partial write a given number of units}
 		length [number!]
 	/seek {Write at a specific position}

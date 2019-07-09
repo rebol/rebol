@@ -147,12 +147,23 @@ is-protected-error?: func[code][
 	--test-- "BinCode - UI16BYTES"
 		--assert object? binary/write b [UI16BYTES #{cafe}]
 		--assert #{0002CAFE} = binary/read b 'bytes
+	--test-- "BinCode - UI16LEBYTES"
+		--assert object? binary/write b [UI16LEBYTES #{cafe}]
+		--assert #{0200CAFE} = binary/read b 'bytes
 	--test-- "BinCode - UI24BYTES"
 		--assert object? binary/write b [UI24BYTES #{cafe}]
 		--assert #{000002CAFE} = binary/read b 'bytes
 	--test-- "BinCode - UI32BYTES"
 		--assert object? binary/write b [UI32BYTES #{cafe}]
 		--assert #{00000002CAFE} = binary/read b 'bytes
+
+	--test-- "BinCode - write GET-WORD"
+		a: 42 b: binary/write #{} [ui8 :a]
+		--assert #{2A} = b/buffer
+
+	--test-- "BinCode - write GET-PATH"
+		i: 2 a: [42 255] b: binary/write #{} [UI8 :a/1 UI8 :a/:i]
+		--assert #{2AFF} = b/buffer
 
 	--test-- "BinCode - AT"
 		;AT is using absolute positioning
@@ -236,6 +247,9 @@ is-protected-error?: func[code][
 		--assert [-2 6] = binary/read 2#{1110 0110} [SB 4 SB 4]
 		--assert 14  = binary/read/with 2#{1110 0000} 'UB 4
 		--assert [2.5] = binary/read #{500000} [FB 19]
+		binary/read 2#{11111000 11111000} [x: SB 6 ALIGN y: FB 6]
+		--assert -2   = x
+		--assert -2.0 = (y * 65536.0)
 
 	--test-- "BinCode - bits (variant using sigle value access)"
 		bin: binary #{438E9438}
@@ -323,6 +337,24 @@ is-protected-error?: func[code][
 		--assert 1.0 = binary/read #{0000803F} 'FLOAT
 		--assert 1.0 = binary/read #{000000000000F03F} 'DOUBLE
 
+	--test-- "BinCode - FLOAT16, FLOAT, DOUBLE (write)"
+		b: binary/write #{} [float16 0.5 float16 1000 float16 32.5 float16 -32.5]
+		--assert b/buffer = #{0038D063105010D0}
+		--assert [0.5 1000.0 32.5 -32.5] = binary/read b [float16 float16 float16 float16]
+		b: binary/write #{} [float   0.5 float   1000 float   32.5 float   -32.5]
+		--assert b/buffer = #{0000003F00007A4400000242000002C2}
+		--assert [0.5 1000.0 32.5 -32.5] = binary/read b [float float float float]
+		b: binary/write #{} [double  0.5 double  1000 double  32.5 double  -32.5]
+		--assert b/buffer = #{000000000000E03F0000000000408F40000000000040404000000000004040C0}
+		--assert [0.5 1000.0 32.5 -32.5] = binary/read b [double double double double]
+
+	--test-- "BinCode - FLOAT16, FLOAT, DOUBLE (write/read NAN)"
+		b: binary/write #{} [float16 1.#NaN float 1.#NaN double 1.#NaN]
+		--assert b/buffer = #{007E0000C07F000000000000F87F}
+		--assert tail? b/buffer-write
+		;@@ using MOLD as: 1.#nan <> 1.#nan 
+		--assert "[1.#NaN 1.#NaN 1.#NaN]" = mold binary/read b [float16 float double]
+
 	--test-- "BinCode - MSDOS-DATETIME"
 		;- old and not much precise format for storing date and time from MS-DOS times
 		;- still used in some file formats, like ZIP
@@ -358,6 +390,7 @@ is-protected-error?: func[code][
 	--test-- "BinCode - OCTAL-BYTES (read)"
 		;- used for fixed size octal numbers (used for example in TAR files)
 		--assert 8 = binary/read/with #{3130} 'OCTAL-BYTES 2
+
 
 ===end-group===
 

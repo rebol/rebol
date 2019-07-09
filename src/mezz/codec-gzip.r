@@ -20,6 +20,7 @@ register-codec [
 	]
 
 	identify: function [data [binary!]][
+		if 10 > length? data [return none]
 		if verbose > 0 [
 			print ["^[[1;32mDecode GZIP data^[[m (^[[1m" length? data "^[[mbytes )"]
 		]

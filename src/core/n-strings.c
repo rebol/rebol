@@ -28,7 +28,10 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include "sys-scan.h"
 #include "sys-deci-funcs.h"
+
+REBCNT z_adler32_z(REBCNT adler, REBYTE *buf, REBCNT len);
 
 /***********************************************************************
 **
@@ -194,9 +197,21 @@ static struct digest {
 	REBSER *digest;
 	REBINT sym = SYM_SHA1;
 	REBCNT len;
-	REBYTE *data = VAL_BIN_DATA(arg);
+	REBYTE *data;
 
 	len = Partial1(arg, D_ARG(ARG_CHECKSUM_LENGTH));
+
+	if (IS_STRING(arg)) {
+		// using `digest` just as a temp variable here!
+		digest = Encode_UTF8_Value(arg, len, 0);
+		data = SERIES_DATA(digest);
+		len = SERIES_LEN(digest) - 1;
+	}
+	else {
+		data = VAL_BIN_DATA(arg);
+	}
+
+	
 
 	// Method word:
 	if (D_REF(ARG_CHECKSUM_METHOD)) sym = VAL_WORD_CANON(D_ARG(ARG_CHECKSUM_WORD));
@@ -204,9 +219,9 @@ static struct digest {
 	// If method, secure, or key... find matching digest:
 	if (D_REF(ARG_CHECKSUM_METHOD) || D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) {
 
-		if (sym == SYM_CRC32) {
+		if (sym == SYM_CRC32 || sym == SYM_ADLER32) {
 			if (D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) Trap0(RE_BAD_REFINES);
-			i = CRC32(data, len);
+			i = (sym == SYM_CRC32) ? CRC32(data, len) : z_adler32_z(0x00000001L, data, len);
 			DS_RET_INT(i);
 			return R_RET;
 		}
@@ -579,6 +594,135 @@ static struct digest {
 		ser = Copy_String(BUF_MOLD, 0, dp - UNI_HEAD(BUF_MOLD));
 	}
 
+	Set_Series(VAL_TYPE(arg), D_RET, ser);
+
+	return R_RET;
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(enhex)
+/*
+**		Works for any string.
+**		If source is unicode (wide) string, result is ASCII.
+**
+***********************************************************************/
+{
+	REBVAL *arg = D_ARG(1);
+	REBSER *ser;
+	REBINT lex;
+	REBCNT n;
+	REBYTE encoded[4];
+	REBCNT encoded_size;
+
+	// using FORM buffer for intermediate conversion;
+	// counting with the worst scenario, where each single codepoint
+	// might need 4 bytes of UTF-8 data (%XX%XX%XX%XX)
+	REBYTE *dp = Reset_Buffer(BUF_FORM, 12 * VAL_LEN(arg));
+
+	if (VAL_BYTE_SIZE(arg)) {
+		// byte size is 1, so the series should not contain chars with value over 0x80
+		// see: https://github.com/Oldes/Rebol3/commit/aa939ba41fd71efb9f0a97f85993c95129c7e515
+
+		REBYTE *bp = VAL_BIN_DATA(arg);
+		REBYTE *ep = VAL_BIN_TAIL(arg);		
+
+		while (bp < ep) {
+			REBYTE c = bp[0];
+			bp++;
+
+			switch (GET_LEX_CLASS(c)) {
+			case LEX_CLASS_WORD:
+				if (   (c >= 'a' && c <= 'z')
+					|| (c >= 'A' && c <= 'Z')
+					||  c == '?' || c == '!' || c == '&'
+					||  c == '*' || c == '=' || c == '~' || c == '_'
+				) break; // no conversion
+				goto byte_needs_encoding;
+			case LEX_CLASS_NUMBER:
+				break; // no conversion
+			case LEX_CLASS_SPECIAL:
+				lex = GET_LEX_VALUE(c);
+				if (   lex == LEX_SPECIAL_PERCENT
+					|| lex == LEX_SPECIAL_BACKSLASH
+					|| lex == LEX_SPECIAL_LESSER
+					|| lex == LEX_SPECIAL_GREATER
+				) goto byte_needs_encoding;
+				break; // no conversion
+			case LEX_CLASS_DELIMIT:
+				lex = GET_LEX_VALUE(c);
+				if (    lex <= LEX_DELIMIT_RETURN
+					|| (lex >= LEX_DELIMIT_LEFT_BRACKET && lex <= LEX_DELIMIT_RIGHT_BRACE)
+					||  lex == LEX_DELIMIT_QUOTE
+				) goto byte_needs_encoding;
+				break; // no conversion
+			}
+			// leaving char as is
+			*dp++ = c;
+			continue;
+
+		byte_needs_encoding:
+			*dp++ = '%';
+			*dp++ = Hex_Digits[(c & 0xf0) >> 4];
+            *dp++ = Hex_Digits[ c & 0xf];
+		}
+	}
+	else { // UNICODE variant
+		REBUNI *up = VAL_UNI_DATA(arg);
+		REBUNI *ep = (REBUNI*)VAL_UNI_TAIL(arg);
+		
+		while (up < ep) {
+			REBUNI c = up[0];
+			up++;
+
+			if (c >= 0x80) {// all non-ASCII characters *must* be percent encoded
+				encoded_size = Encode_UTF8_Char(encoded, c);
+				goto char_needs_encoding;
+			} else {
+				encoded[0] = cast(REBYTE, c);
+				encoded_size = 1;
+				switch (GET_LEX_CLASS(c)) {
+				case LEX_CLASS_WORD:
+					if (   (c >= 'a' && c <= 'z')
+						|| (c >= 'A' && c <= 'Z')
+						||  c == '?' || c == '!' || c == '&'
+						||  c == '*' || c == '=' || c == '~' || c == '_'
+					) break; // no conversion
+					goto char_needs_encoding;
+				case LEX_CLASS_NUMBER:
+					break; // no conversion
+				case LEX_CLASS_SPECIAL:
+					lex = GET_LEX_VALUE(c);
+					if (   lex == LEX_SPECIAL_PERCENT
+						|| lex == LEX_SPECIAL_BACKSLASH
+						|| lex == LEX_SPECIAL_LESSER
+						|| lex == LEX_SPECIAL_GREATER
+					) goto char_needs_encoding;
+					break; // no conversion
+				case LEX_CLASS_DELIMIT:
+					lex = GET_LEX_VALUE(c);
+					if (    lex <= LEX_DELIMIT_RETURN
+						|| (lex >= LEX_DELIMIT_LEFT_BRACKET && lex <= LEX_DELIMIT_RIGHT_BRACE)
+						||  lex == LEX_DELIMIT_QUOTE
+					) goto char_needs_encoding;
+					break; // no conversion
+				}
+			}
+			// leaving char as is
+			*dp++ = (REBYTE)c;
+			continue;
+
+		char_needs_encoding:
+			for (n = 0; n < encoded_size; ++n) {
+				*dp++ = '%';
+				*dp++ = Hex_Digits[(encoded[n] & 0xf0) >> 4];
+				*dp++ = Hex_Digits[ encoded[n] & 0xf];
+			}
+		}
+	}
+	*dp = 0;
+	ser = Copy_String(BUF_FORM, 0, dp - BIN_HEAD(BUF_FORM));
 	Set_Series(VAL_TYPE(arg), D_RET, ser);
 
 	return R_RET;

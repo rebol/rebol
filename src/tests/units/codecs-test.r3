@@ -8,6 +8,56 @@ Rebol [
 
 ~~~start-file~~~ "Codecs"
 
+===start-group=== "Codec's identify"
+	--test-- "encoding?"
+		--assert 'text = encoding? #{}
+		--assert 'text = encoding? #{6162}
+		--assert do-codec system/codecs/text/entry 'identify #{}
+		if find system/codecs 'png [
+			--assert not do-codec system/codecs/png/entry 'identify #{01}
+		]
+		if find system/codecs 'jpeg [
+			--assert not do-codec system/codecs/jpeg/entry 'identify #{01}
+			--assert not do-codec system/codecs/jpeg/entry 'identify #{010203}
+			bin: insert/dup make binary! 126 #{00} 126
+			--assert not do-codec system/codecs/jpeg/entry 'identify bin
+		]
+		if find system/codecs 'gif [
+			--assert not do-codec system/codecs/gif/entry 'identify #{01}
+		]
+===end-group===
+
+===start-group=== "TEXT codec"
+	--test-- "ENCODE text"
+		--assert "1 2" = encode 'text [1 2]
+		--assert "1 2" = encode 'text #{312032}
+	--test-- "SAVE %test.txt"
+		--assert "%a %b" = load save %temp.txt [%a %b] 
+		--assert [1 2]   = load save %temp.bin [1 2]
+		--assert "1 2"   = load save %temp.txt [1 2]     ;-- note that result is STRING
+		--assert "1 2^/" = read/string %temp.bin ;@@ should be there the newline char?!
+		--assert "1 2"   = read/string %temp.txt
+
+		--assert #{312032} = load save %temp.bin #{312032}
+		--assert "#{312032}^/" = read/string %temp.bin ;@@ should be there the newline char?!
+		delete %temp.bin
+		delete %temp.txt
+
+===end-group===
+
+===start-group=== "Invalid SAVE"
+	--test-- "invalid image SAVE"
+		--assert error? try [save %temp.bmp [1 2]]
+		--assert error? try [save %temp.png [1 2]]
+		--assert error? try [save %temp.jpg [1 2]]
+		--assert error? try [save %temp.bmp "foo"]
+		--assert error? try [save %temp.png "foo"]
+		--assert error? try [save %temp.jpg "foo"]
+		--assert error? try [save %temp.bmp #{00}]
+		--assert error? try [save %temp.png #{00}]
+		--assert error? try [save %temp.jpg #{00}]
+===end-group===
+
 if find system/codecs 'wav [
 	system/codecs/wav/verbose: 3
 	===start-group=== "WAV codec"

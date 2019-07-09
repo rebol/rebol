@@ -42,7 +42,7 @@ import module [
 	
 	readPair: has[n][
 		n: binary/read/with bin 'UB 5
-		to-pair binary/read bin [FB :n FB :n]
+		to pair! binary/read bin [FB :n FB :n]
 	]
 	
 	readSBPair: has[n][
@@ -372,14 +372,19 @@ import module [
 		result
 	]
 
+	;@@ NOTE: to simplify processing, first 6 values returned from PlaceObject* are always:
+	;@@ [Depth move/place ClassName CharacterId Matrix Cxform]
 	read-PlaceObject: has[id depth][
 		binary/read bin [
 			id:    UI16LE   ;ID of character to place
 			depth: UI16LE   ;Depth of character
 		]
 		reduce [
-			id depth
-			readMATRIX   ;Transform matrix data
+			depth
+			none        ; always place
+			none        ; always without ClassName
+			id          ; CharacterId
+			readMATRIX  ; Transform matrix data
 			either tail? bin/buffer [none][readCXFORM]   ;Color transform data
 		]
 	]
@@ -389,6 +394,7 @@ import module [
 		reduce [
 			binary/read bin 'UI16LE                         ;depth
 			flags/7                                         ;TRUE = move, else place
+			none                                            ;ClassName (not exists)
 			either flags/6 [binary/read bin 'UI16LE ][none] ;CharacterId
 			either flags/5 [readMATRIX              ][none] ;HasMatrix
 			either flags/4 [readCXFORMa             ][none] ;HasCxform
@@ -1322,7 +1328,7 @@ import module [
 			return swf
 		]
 
-		decode-tag: func [id [integer!] data [binary!] ][
+		decode-tag: func [id [integer!] data [binary! none!] ][
 			tid: id
 			bin: binary data
 			any [tag-decoders/:id data]

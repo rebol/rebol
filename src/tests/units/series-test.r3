@@ -112,6 +112,32 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "SORT"
+
+--test-- "SORT/compare"
+	;@@ https://github.com/rebol/rebol-issues/issues/720
+	--assert [3 2 1] = sort/compare [1 2 3] func [a b] [a > b]
+	;@@ https://github.com/rebol/rebol-issues/issues/2376
+	--assert [1 3 10] = sort/compare [1 10 3] func[x y][case [x > y [1] x < y [-1] true [0]]]
+
+--test-- "SORT/skip/compare"
+	;@@ https://github.com/rebol/rebol-issues/issues/1152
+	--assert ["A" "a"] = sort/compare ["A" "a"] func [a b] [a < b]
+	--assert ["a" "A"] = sort/compare ["a" "A"] func [a b] [a < b]
+	--assert ["A" "a"] = sort/compare ["A" "a"] func [a b] [a <= b]
+	--assert ["a" "A"] = sort/compare ["a" "A"] func [a b] [a <= b]
+	--assert [1 9 1 5 1 7] = sort/skip/compare [1 9 1 5 1 7] 2 1
+
+--test-- "SORT with invalid compare function"
+	;@@ https://github.com/rebol/rebol-issues/issues/1766
+	--assert error? try [sort/compare [1 2 3]  func [/local loc-1 loc-2][local < loc-1] ]
+	;@@ https://github.com/rebol/rebol-issues/issues/1516
+	--assert error? try [sort/compare [1 2 #[unset!]] :>]
+
+
+===end-group===
+
+
 ===start-group=== "REWORD"
 
 --test-- "reword/escape"
@@ -198,14 +224,14 @@ Rebol [
 	;- using UTF-16LE instead of just UTF-16 as iconv function on posix adds BOM if just UTF16 is used
 	--assert #{50005901} = iconv/to  #{50F8} 28592 'UTF-16LE
 	--assert #{5901} = iconv/to next #{50F8} 28592 'UTF-16LE
-	--assert #{50005100} = iconv/to #{50005100} 'UTF16LE 'UTF16LE
-	--assert #{00500051} = iconv/to #{00500051} 'UTF16BE 'UTF16BE
+	--assert #{50005100} = iconv/to #{50005100} 'UTF-16LE 'UTF-16LE
+	--assert #{00500051} = iconv/to #{00500051} 'UTF-16BE 'UTF-16BE
 
 	--assert #{00500159} = iconv/to  #{50F8} 28592 'UTF-16BE
 	--assert #{0159} = iconv/to next #{50F8} 28592 'UTF-16BE
-	--assert #{00500051} = bin: iconv/to #{50005100} 'UTF16LE 'UTF16BE
-	--assert #{50005100} = iconv/to bin 'UTF16BE 'UTF16LE
-	--assert "PQ" = iconv bin 'UTF16BE
+	--assert #{00500051} = bin: iconv/to #{50005100} 'UTF-16LE 'UTF-16BE
+	--assert #{50005100} = iconv/to bin 'UTF-16BE 'UTF-16LE
+	--assert "PQ" = iconv bin 'UTF-16BE
 
 --test-- "ICONV with nonsense codepages"
 	--assert error? try [iconv #{30} 'foo]
@@ -215,6 +241,32 @@ Rebol [
 	--assert "€"   = iconv #{E282AC} 'utf8
 	--assert #{80} = iconv/to #{E282AC} 'utf8 'cp1252
 	--assert "€"   = iconv #{80} 'cp1252
+
+===end-group===
+
+
+===start-group=== "DEHEX / ENHEX"
+
+--test-- "DEHEX UTF-8 encoded data"
+	;@@ https://github.com/rebol/rebol-issues/issues/1986
+	--assert "řek" = to-string dehex to-binary "%c5%99ek"
+
+	--assert "%3x " = dehex "%3x%20"
+	--assert "++"   = dehex "%2b%2b"
+	--assert 127 = to-integer first dehex "%7F"
+
+--test-- "ENHEX"
+	--assert "%C2%A3"   = enhex "£"
+	--assert "a%20b%5C" = enhex "a b\"
+	--assert "%C5%A1ik" = enhex "šik"
+	--assert "%22%25-.%3C%3E%5C%1F%60%7B%7C%7D~" = enhex {"%-.<>\^_`{|}~}
+	; --assert %%C5%A1ik  = enhex %šik ;<-- this does not work yet!
+	--assert "šik" = to-string dehex enhex to-binary "šik"
+	--assert    "%7F" = enhex to-string #{7F}
+	--assert "%C2%80" = enhex to-string #{80}
+	--assert "%C2%81" = enhex to-string #{81}
+	--assert "%E5%85%83" = enhex {元}
+
 
 ===end-group===
 

@@ -842,7 +842,7 @@ ConversionResult ConvertUTF8toUTF32 (
 		if ((ch = *src) >= 0x80) {
 			ch = Decode_UTF8_Char(&src, &len);
 			if (ch == 0) ch = UNI_REPLACEMENT_CHAR; // temporary!
-			if (ch > 0xff) flag = 1;
+			if (ch >= 0x80) flag = 1;
 		} if (ch == CR && ccr) {
 			if (src[1] == LF) continue;
 			ch = LF;

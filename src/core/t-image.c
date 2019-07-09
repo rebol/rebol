@@ -1034,9 +1034,14 @@ find_none:
 	case A_TO:
 		if (IS_IMAGE(arg)) goto makeCopy;
 		else if (IS_GOB(arg)) {
+			//originally it was returning image without content when conversion failed!
 			//value = Make_Image(ROUND_TO_INT(GOB_W(VAL_GOB(arg))), ROUND_TO_INT(GOB_H(VAL_GOB(arg))));
-			//*D_RET = *value;
+#ifndef TO_WINDOWS
+			//TODO: remove this once OS_GOB_TO_IMAGE will be for all systems
+			Trap0(RE_FEATURE_NA);
+#else
 			series = OS_GOB_TO_IMAGE(VAL_GOB(arg));
+#endif
 			if (!series) Trap_Make(REB_IMAGE, arg);
 			SET_IMAGE(value, series);
 			break;

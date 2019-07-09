@@ -403,6 +403,12 @@ view: context [
 		scroll-page
 
 		drop-file
+
+		click
+		change
+		focus
+		unfocus
+		scroll
 	]
 	event-keys: [
 		; Event types. Order dependent for C and REBOL.

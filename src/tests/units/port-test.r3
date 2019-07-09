@@ -8,6 +8,26 @@ Rebol [
 
 ~~~start-file~~~ "port"
 
+===start-group=== "decode-url"
+	;@@ https://github.com/rebol/rebol-issues/issues/2380
+	--test-- "decode-url-unicode"
+		url: decode-url http://example.com/get?q=ščř#kovtička
+		--assert url/scheme = 'http
+		--assert url/host   = "example.com"
+		--assert url/path   = "/get?q=ščř"
+		--assert url/tag    = "kovtička"
+	--test-- "decode-url-unicode"
+		url: decode-url http://švéd:břéťa@example.com:8080/get?q=ščř#kovtička
+		--assert url/scheme = 'http
+		--assert url/user   = "švéd"
+		--assert url/pass   = "břéťa"
+		--assert url/host   = "example.com"
+		--assert url/port-id = 8080
+		--assert url/path   = "/get?q=ščř"
+		--assert url/tag    = "kovtička"
+
+===end-group===
+
 ===start-group=== "directory port"
 	;@@ https://github.com/rebol/rebol-issues/issues/2320
 	--test-- "port-issue-2320"
@@ -59,7 +79,16 @@ Rebol [
 
 ===end-group===
 
+
 if "true" <> get-env "CONTINUOUS_INTEGRATION" [
+	;- don't do these tests on Travis CI
+	===start-group=== "WHOIS scheme"
+		--test-- "read WHOIS"
+			--assert  string? try [read whois://google.com]
+		--test-- "write WHOIS"
+			--assert string? try [write whois://whois.nic.cz "seznam.cz"]
+	===end-group===
+
 	===start-group=== "console port"	
 		--test-- "query input port"
 			--assert  port? system/ports/input
