@@ -50,6 +50,24 @@
 	req = Use_Port_State(port, RDI_CLIPBOARD, sizeof(REBREQ));
 
 	switch (action) {
+	case A_UPDATE:
+		// Update the port object after a READ or WRITE operation.
+		// This is normally called by the WAKE-UP function.
+		arg = OFV(port, STD_PORT_DATA);
+		if (req->command == RDC_READ) {
+			len = req->actual;
+			if (GET_FLAG(req->flags, RRF_WIDE)) {
+				len /= sizeof(REBUNI); //correct length
+				// Copy the string (convert to latin-8 if it fits):
+				Set_Binary(arg, Copy_Wide_Str(req->data, len));
+			} else {
+				Set_Binary(arg, Copy_OS_Str(req->data, len));
+			}
+		}
+		else if (req->command == RDC_WRITE) {
+			SET_NONE(arg);  // Write is done.
+		}
+		return R_NONE;
 
 	case A_READ:
 		// This device is opened on the READ:
@@ -63,13 +81,15 @@
 
 		// Copy and set the string result:
 		arg = OFV(port, STD_PORT_DATA);
-
-		// If wide, correct length:
+		
 		len = req->actual;
-		if (GET_FLAG(req->flags, RRF_WIDE)) len /= sizeof(REBUNI);
-
-		// Copy the string (convert to latin-8 if it fits):
-		Set_String(arg, Copy_OS_Str(req->data, len));
+		if (GET_FLAG(req->flags, RRF_WIDE)) {
+			len /= sizeof(REBUNI); //correct length
+			// Copy the string (convert to latin-8 if it fits):
+			Set_String(arg, Copy_Wide_Str(req->data, len));
+		} else {
+			Set_String(arg, Copy_OS_Str(req->data, len));
+		}
 
 		OS_FREE(req->data); // release the copy buffer
 		req->data = 0;

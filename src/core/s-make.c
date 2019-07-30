@@ -113,21 +113,14 @@
 
 /***********************************************************************
 **
-*/	REBSER *Copy_OS_Str(void *src, REBINT len)
+*/	REBSER *Copy_Wide_Str(void *src, REBINT len)
 /*
-**		Create a REBOL string series from an OS native string.
-**
-**		For example, in Win32 with the wide char interface, we must
-**		convert wide char strings, minimizing to bytes if possible.
-**
-**		For Linux the char string could be UTF-8, so that must be
-**		converted to REBOL Unicode or Latin byte strings.
-**
-***********************************************************************/
+**		Create a REBOL string series from a wide char string.
+**		Minimize to bytes if possible
+*/
 {
-#ifdef OS_WIDE_CHAR
 	REBSER *dst;
-	REBUNI *str = (REBUNI*)src;	
+	REBUNI *str = (REBUNI*)src;
 	if (Is_Wide(str, len)) {
 		REBUNI *up;
 		dst = Make_Unicode(len);
@@ -145,6 +138,24 @@
 		*bp = 0;
 	}
 	return dst;
+}
+
+/***********************************************************************
+**
+*/	REBSER *Copy_OS_Str(void *src, REBINT len)
+/*
+**		Create a REBOL string series from an OS native string.
+**
+**		For example, in Win32 with the wide char interface, we must
+**		convert wide char strings, minimizing to bytes if possible.
+**
+**		For Linux the char string could be UTF-8, so that must be
+**		converted to REBOL Unicode or Latin byte strings.
+**
+***********************************************************************/
+{
+#ifdef OS_WIDE_CHAR
+	return Copy_Wide_Str(src, len);
 #else
 	return Decode_UTF_String((REBYTE*)src, len, 8, FALSE);
 #endif
