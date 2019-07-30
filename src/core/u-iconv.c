@@ -518,13 +518,13 @@ static REBINT get_codepage_id(REBVAL *cp)
 
 	//printf("get_codepage_id from: %s\n", name);
 #ifdef TO_WINDOWS
-	if (_strnicmp(name, "cp", 2) == 0)
-		return atoi(name + 2); /* CP123 */
+	if (_strnicmp(cs_cast(name), "cp", 2) == 0)
+		return atoi(cs_cast(name + 2)); /* CP123 */
 	else if ('0' <= name[0] && name[0] <= '9')
-		return atoi(name);     /* 123 */
+		return atoi(cs_cast(name));     /* 123 */
 
 	for (i = 0; codepage_alias[i].name != NULL; ++i)
-		if (_stricmp(name, codepage_alias[i].name) == 0)
+		if (_stricmp(cs_cast(name), codepage_alias[i].name) == 0)
 			return codepage_alias[i].codepage;
 #else
 	if (strncasecmp(name, "cp", 2) == 0)
@@ -628,11 +628,11 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 	}
 	
 	if (VAL_LEN(data) > 0) {
-		dst_len = MultiByteToWideChar(cp, 0, VAL_BIN_DATA(data), src_len, NULL, 0);
+		dst_len = MultiByteToWideChar(cp, 0, cs_cast(VAL_BIN_DATA(data)), src_len, NULL, 0);
 		if (dst_len <= 0) return R_NONE; //@@ or error?
 
 		dst_wide = Make_Series(dst_len, 2, FALSE);
-		dst_len = MultiByteToWideChar(cp, 0, VAL_BIN_DATA(data), src_len, (REBCHR*)BIN_HEAD(dst_wide), dst_len);
+		dst_len = MultiByteToWideChar(cp, 0, cs_cast(VAL_BIN_DATA(data)), src_len, (REBCHR*)BIN_HEAD(dst_wide), dst_len);
 		dst_wide->tail = dst_len;
 	} else {
 		dst_wide = Make_Series(1, 2, FALSE);
@@ -670,7 +670,7 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 				if (dst_len <= 0) return R_NONE; //@@ or error?
 
 				dest = Make_Series(dst_len, 1, FALSE);
-				dst_len = WideCharToMultiByte(tp, 0, (REBCHR*)BIN_HEAD(dst_wide), dst_wide->tail, BIN_HEAD(dest), dst_len, 0, &default_char_used);
+				dst_len = WideCharToMultiByte(tp, 0, (REBCHR*)BIN_HEAD(dst_wide), dst_wide->tail, s_cast(BIN_HEAD(dest)), dst_len, 0, &default_char_used);
 				dest->tail = dst_len;
 			}
 			else {

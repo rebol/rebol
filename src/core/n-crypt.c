@@ -621,7 +621,7 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 
 	if (ref_init) {
 		if(!uECC_make_key(ecc->public, ecc->private, curve)) {
-			puts("failed to init ECDH key");
+			//puts("failed to init ECDH key");
 			Trap0(RE_INVALID_HANDLE); //TODO: change to something better!
 		} else return R_ARG1;
 	}
@@ -757,6 +757,7 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 			return R_FALSE;
 		}
 	}
+	return R_UNSET;
 }
 
 
@@ -798,7 +799,7 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 	if (IS_BINARY(val_ctx)) {
 		len = VAL_LEN(val_ctx);
 		if (!(len == 32 || len == 16)) {
-			printf("ChaCha20 key must be of size 32 or 16 bytes! Is: %i\n", len);
+			//printf("ChaCha20 key must be of size 32 or 16 bytes! Is: %i\n", len);
 			Trap1(RE_INVALID_DATA, val_ctx);
 			return R_NONE;
 		}

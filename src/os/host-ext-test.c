@@ -178,7 +178,7 @@ REBCNT Test_Async_Callback(REBSER *obj, REBCNT word)
 RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 	REBYTE *str;
 
-	printf("Context ptr: %08X\n", ctx);
+	printf("Context ptr: %p\n", ctx);
 
 	switch (cmd) {
 
@@ -196,7 +196,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 		break;
 
 	case 3: //command [{return system word from internal string}]
-		RXA_WORD(frm, 1) = RL_MAP_WORD("system"); //?? is frame always long enough??
+		RXA_WORD(frm, 1) = AS_WORD("system"); //?? is frame always long enough??
 		RXA_TYPE(frm, 1) = RXT_WORD;
 		break;
 
@@ -247,7 +247,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 	case 11: //command [{creates a handle}]"
 		{
 			RXA_HANDLE(frm, 1) = (void*)42;
-			RXA_HANDLE_TYPE(frm, 1) = RL_MAP_WORD("xtest");
+			RXA_HANDLE_TYPE(frm, 1) = AS_WORD("xtest");
 			RXA_TYPE(frm, 1) = RXT_HANDLE;
 		}
 		break;
@@ -270,7 +270,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 	case 14: //command [{return vector size in values (from object)} o [object!]]
 		{
 			RXIARG vec;
-			REBCNT type = RL_GET_FIELD(RXA_OBJECT(frm, 1), RL_MAP_WORD("v"), &vec);
+			REBCNT type = RL_GET_FIELD(RXA_OBJECT(frm, 1), AS_WORD("v"), &vec);
 			if(type == RXT_VECTOR) {
 				REBSER *vecs = (REBSER*)vec.series;
 				u16* data = (u16*)vecs->data;
@@ -287,8 +287,8 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			REBSER *blk = RXA_SERIES(frm, 1);
 			REBCNT n, type;
 			RXIARG val;
-			printf("\nBlock with %i values:\n", RL_SERIES(blk, RXI_SER_TAIL));
-			for(n = 0; type = RL_GET_VALUE(blk, n, &val); n++) {
+			printf("\nBlock with %llu values:\n", RL_SERIES(blk, RXI_SER_TAIL));
+			for(n = 0; (type = RL_GET_VALUE(blk, n, &val)); n++) {
 				if(type == RXT_END) break;
 				printf("\t%i -> %i\n", n, type);
 			}
@@ -306,5 +306,5 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 
 void Init_Ext_Test(void)
 {
-	RL = RL_Extend(&RX_Spec[0], (RXICAL)&RX_Call);
+	RL = RL_Extend(b_cast(&RX_Spec[0]), (RXICAL)&RX_Call);
 }

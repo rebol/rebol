@@ -869,7 +869,7 @@ chk_neg:
 	REBSER *blk;
 	REBSER *dir;
 
-	while (n = (REBCNT)LEN_STR(str)) {
+	while ((n = (REBCNT)LEN_STR(str))) {
 		len++;
 		str += n + 1; // next
 	}
@@ -888,7 +888,7 @@ chk_neg:
 		dir = To_REBOL_Path(str, n, -1, TRUE);
 		str += n + 1; // next
 		len = dir->tail;
-		while (n = (REBCNT)LEN_STR(str)) {
+		while ((n = (REBCNT)LEN_STR(str))) {
 			dir->tail = len;
 			Append_Uni_Uni(dir, str, n);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));

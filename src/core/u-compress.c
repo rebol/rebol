@@ -82,7 +82,7 @@ void Trap_ZStream_Error(z_stream *stream, int err, REBOOL while_compression)
 {
 	REBVAL *ret = DS_RETURN;
 	if(stream->msg) {
-		REBSER* msg = Append_UTF8(NULL, cs_cast(stream->msg), cast(REBINT, strlen(stream->msg)));
+		REBSER* msg = Append_UTF8(NULL, cb_cast(stream->msg), cast(REBINT, strlen(stream->msg)));
 		SET_STRING(ret, msg);
 	} else {
 		SET_INTEGER(ret, err);
