@@ -39,7 +39,6 @@
 
 #include "sys-core.h"
 #include "sys-zlib.h"
-#include <ctype.h> // remove this later !!!!
 
 #if defined(ENDIAN_LITTLE)
 #define CVT_END_L(a) a=(a<<24)|(((a>>8)&255)<<16)|(((a>>16)&255)<<8)|(a>>24)
@@ -50,6 +49,7 @@
 #endif
 
 #define int_abs(a) (((a)<0)?(-(a)):(a))
+#define not_alpha(c) (c<'A' || c>'z' || (c>'Z' && c<'a')) // used to validate PNG chunk ID
 
 /**********************************************************************/
 
@@ -148,7 +148,7 @@ static unsigned char *get_chunk(unsigned char **bufp,int *np,char *type,int *len
 	while(1) {
 		if(n<12)
 			trap_png();
-		if((!isalpha(p[4]))||(!isalpha(p[5]))||(!isalpha(p[6]))||(!isalpha(p[7])))
+		if((not_alpha(p[4]))||(not_alpha(p[5]))||(not_alpha(p[6]))||(not_alpha(p[7])))
 			trap_png();
 		memcpy(&len,p,4);
 		CVT_END_L(len);
