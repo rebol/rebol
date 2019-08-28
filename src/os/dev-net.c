@@ -294,7 +294,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 
 #ifdef HAS_ASYNC_DNS
 	// Check if we are polling for completion:
-	if (host = (HOSTENT*)(sock->net.host_info)) {
+	if ((host = (HOSTENT*)(sock->net.host_info))) {
 		// The windows main event handler will change this when it gets WM_DNS event:
 		if (!GET_FLAG(sock->flags, RRF_DONE)) return DR_PEND; // still waiting
 		CLR_FLAG(sock->flags, RRF_DONE);
@@ -512,7 +512,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 
 	// Check error code:
 	result = GET_ERROR;
-	WATCH2("get error: %d %s\n", result, strerror(result));
+	//WATCH2("get error: %d %s\n", result, strerror(result));
 	if (result == NE_WOULDBLOCK) {
 		//printf("timeout: %d\n", sock->timeout);
 		return DR_PEND; // still waiting
