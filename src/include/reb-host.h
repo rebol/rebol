@@ -37,6 +37,7 @@
 #include "reb-evtypes.h"
 #include "reb-net.h"
 #include "reb-filereq.h"
+#include "reb-codec.h"
 
 #include "reb-gob.h"
 #include "reb-lib.h"

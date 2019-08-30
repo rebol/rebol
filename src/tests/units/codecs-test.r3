@@ -13,16 +13,25 @@ Rebol [
 		--assert 'text = encoding? #{}
 		--assert 'text = encoding? #{6162}
 		--assert do-codec system/codecs/text/entry 'identify #{}
-		if find system/codecs 'png [
+		if all [
+			find system/codecs 'png
+			select system/codecs/png 'entry ; original native codec
+		][
 			--assert not do-codec system/codecs/png/entry 'identify #{01}
 		]
-		if find system/codecs 'jpeg [
+		if all [
+			find system/codecs 'jpeg
+			select system/codecs/jpeg 'entry ; original native codec
+		][
 			--assert not do-codec system/codecs/jpeg/entry 'identify #{01}
 			--assert not do-codec system/codecs/jpeg/entry 'identify #{010203}
 			bin: insert/dup make binary! 126 #{00} 126
 			--assert not do-codec system/codecs/jpeg/entry 'identify bin
 		]
-		if find system/codecs 'gif [
+		if all [
+			find system/codecs 'gif
+			select system/codecs/gif 'entry ; original native codec
+		][
 			--assert not do-codec system/codecs/gif/entry 'identify #{01}
 		]
 ===end-group===

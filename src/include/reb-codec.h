@@ -25,7 +25,7 @@
 **  Notes:
 **
 ***********************************************************************/
-
+#ifndef CODI_DEFINED
 #define CODI_DEFINED
 
 // Codec image interface:
@@ -45,21 +45,26 @@
 // the REBNATIVE(do_codec) in n-system.c
 // so the deallocation is left to GC
 //
-typedef struct reb_codec_image {
+struct reb_codec_image {
 	int action;
 	int w;
 	int h;
 	int len;
-	int alpha;
+	union {
+		int alpha;
+		int type;  // used to provide info about prefered image type (codec)
+	};
 	unsigned char *data;
 	union {
-		u32 *bits;
+		unsigned int *bits;
 		void *other;
 	};
 	int error;
-} REBCDI;
+};
 
-typedef REBINT (*codo)(REBCDI *cdi);
+typedef struct reb_codec_image REBCDI;
+
+typedef int (*codo)(REBCDI *cdi);
 
 // Media types:
 enum {
@@ -89,3 +94,23 @@ enum {
 	CODI_ERR_BAD_TABLE,		// Image tables are wrong
 	CODI_ERR_BAD_DATA,		// Generic
 };
+
+enum {
+	CODI_IMG_PNG,           // Portable Network Graphics
+	CODI_IMG_JPEG,          // Joint Photographic Experts Group
+	CODI_IMG_GIF,           // Graphics Interchange Format
+	CODI_IMG_DDS,           // DirectDraw Surface
+	CODI_IMG_DNG,           // Digital Negative
+	CODI_IMG_BMP,           // Device independent bitmap
+	CODI_IMG_ICO,
+	CODI_IMG_TIFF,          // Tagged Image File Format
+	CODI_IMG_JXR,           // Windows Digital Photo (JpegXR)
+	CODI_IMG_HEIF,          // High Efficiency Image Format
+	CODI_IMG_WEBP,          //
+};
+
+#ifndef WINCODEC_ERR_COMPONENTNOTFOUND
+#define WINCODEC_ERR_COMPONENTNOTFOUND  0x88982F50
+#endif
+
+#endif
