@@ -152,12 +152,17 @@ register-codec [
 					'SEQUENCE into [
 						AlgorithmIdentifier ( result/public-key: copy *blk )
 						'BIT_STRING set *val binary! (
-							tmp: der-codec/decode *val
 							append/only result/public-key switch/default *blk/1 [
 								rsaEncryption [
+									tmp: der-codec/decode *val
 									reduce [copy tmp/2/2 copy tmp/2/4] ;@@ or don't copy?
 								]
-							][	tmp ]
+								ecPublicKey [
+									remove next result/public-key
+									result/public-key/2: der-codec/decode-OID result/public-key/2
+									copy *val
+								]
+							][	copy *val ]
 							
 						)
 					]

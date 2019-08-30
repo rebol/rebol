@@ -214,6 +214,16 @@ register-codec [
 				#{05} (name: 'caRepository)
 			]
 			|
+			#{2A8648CE3D} (main: "X9.62") [
+				  #{0201}   (name: 'ecPublicKey)
+				| #{0301} [
+					  #{07}  (name: 'secp256r1)
+					;| #{02}  (name: 'prime192v2)
+					;| #{03}  (name: 'prime192v3)  
+					| #{01}  (name: 'secp192r1)
+				]
+			]
+			|
 			#{2A864886F70D01} [
 				#{01} (main: "PKCS #1") [
 					  #{01} (name: 'rsaEncryption)

@@ -11,7 +11,7 @@ REBOL [
 	}
 	Name: 'http
 	Type: 'module
-	Version: 0.2.1
+	Version: 0.3.0
 	File: %prot-http.r
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -28,6 +28,7 @@ REBOL [
 		0.1.9 21-Mar-2019 "Oldes" "FEAT: Added support for transfer compression"
 		0.2.0 28-Mar-2019 "Oldes" "FIX: close connection in case of errors"
 		0.2.1 02-Apr-2019 "Oldes" "FEAT: Reusing connection in redirect when possible"
+		0.3.0 06-Jul-2019 "Oldes" "FIX: Error handling revisited and improved dealing with chunked data"
 	]
 ]
 
@@ -41,15 +42,16 @@ sync-op: func [port body /local state encoding content-type code-page tmp][
 	;The timeout should be triggered only when the response from other side exceeds the timeout value.
 	;--Richard
 	while [not find [ready close] state/state][
+		;print "HTTP sync-op loop"
 		unless port? wait [state/connection port/spec/timeout][
-			state/error: make-http-error "HTTP(s) Timeout"
-			break
+			throw-http-error port "HTTP(s) Timeout"
+			exit
 		]
 		switch state/state [
 			inited [
 				if not open? state/connection [
-					state/error: make-http-error rejoin ["Internal " state/connection/spec/ref " connection closed"]
-					break
+					throw-http-error port ["Internal " state/connection/spec/ref " connection closed"]
+					exit
 				]
 			]
 			reading-data [
@@ -64,7 +66,8 @@ sync-op: func [port body /local state encoding content-type code-page tmp][
 		]
 	]
 	if state/error [
-		state/awake make event! [type: 'error port: port]
+		throw-http-error port state/error
+		exit
 	]
 
 	body: copy port
@@ -125,13 +128,15 @@ read-sync-awake: func [event [event!] /local error][
 			false
 		]
 		error [
-			error: event/port/state/error
-			event/port/state/error: none
-			try [
+			if all [
+				event/port/state
+				event/port/state/state <> 'closing
+			][
 				sys/log/debug 'HTTP ["Closing (sync-awake):^[[1m" event/port/spec/ref]
 				close event/port
 			]
-			if error? error [do error]
+			if error? event/port/state [do event/port/state]
+			true
 		]
 	][
 		false
@@ -169,14 +174,23 @@ http-awake: func [event /local port http-port state awake res][
 				ready [
 					awake make event! [type: 'close port: http-port]
 				]
+				inited [
+					throw-http-error http-port  any [
+						all [state/connection state/connection/state/error]
+						make error! [
+							code: 500 type: 'access id: 'cannot-open
+							arg1: port/spec/ref
+					]]
+				]
 				doing-request reading-headers [
-					state/error: make-http-error "Server closed connection"
-					awake make event! [type: 'error port: http-port]
+					throw-http-error http-port any [
+						all [state/connection state/connection/state/error]
+						"Server closed connection"
+					]
 				]
 				reading-data [
 					either any [integer? state/info/headers/content-length state/info/headers/transfer-encoding = "chunked"][
-						state/error: make-http-error "Server closed connection"
-						awake make event! [type: 'error port: http-port]
+						throw-http-error http-port "Server closed connection"
 					][
 						;set state to CLOSE so the WAIT loop in 'sync-op can be interrupted --Richard
 						state/state: 'close
@@ -187,23 +201,34 @@ http-awake: func [event /local port http-port state awake res][
 					]
 				]
 			]
+			try [
+				; check if there is some error from inner (connection) layer
+				state/error: state/connection/state/error
+			]
 			sys/log/debug 'HTTP ["Closing:^[[1m" http-port/spec/ref]
 			close http-port
-			if error? state/error [ do state/error ]
+			if error? state [ do state ]
 			res
 		]
 	][true]
 ]
-make-http-error: func [
-	"Make an error for the HTTP protocol"
-	message [string! block!]
+
+throw-http-error: func [
+	http-port  [port!]
+	error [error! string! block!]
 ][
-	if block? message [message: ajoin message]
-	make error! [
-		type: 'Access
-		id: 'Protocol
-		arg1: message
+	sys/log/info 'HTTP ["Throwing error:^[[m" error]
+	unless error? error [
+		error: make error! [
+			type: 'Access
+			id:   'Protocol
+			arg1: either block? error [ajoin error][error]
+		]
 	]
+	either object? http-port/state [
+		http-port/state/error: error
+		http-port/state/awake make event! [type: 'error port: http-port]
+	][  do error ]
 ]
 
 make-http-request: func [
@@ -255,7 +280,7 @@ do-request: func [
 	info/headers: info/response-line: info/response-parsed: port/data:
 	info/size: info/date: info/name: none
 
-	sys/log/info 'HTTP ["Request:^[[22m" spec/method spec/host spec/path]
+	;sys/log/info 'HTTP ["Request:^[[22m" spec/method spec/host spec/path]
 
 	write port/state/connection make-http-request spec/method enhex any [spec/path %/] spec/headers spec/content
 ]
@@ -293,17 +318,20 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 		sys/log/more 'HTTP line
 		;probe to-string copy/part d1 d2
 		info/headers: headers: construct/with d1 http-response-headers
-		sys/log/info 'HTTP ["Headers:^[[22m" mold headers]
+		sys/log/info 'HTTP ["Headers:^[[22m" mold body-of headers]
 		info/name: spec/ref
 		if state/error: try [
 			; make sure that values bellow are valid
 			if headers/content-length [info/size: headers/content-length: to integer! headers/content-length]
-			if headers/last-modified  [info/date: to-date/utc headers/last-modified]
 			none ; no error
 		][
 			awake make event! [type: 'error port: port]
 		]
-		remove/part conn/data d2
+		; allow invalid date, but ignore it on error
+		try [if headers/last-modified  [info/date: to-date/utc headers/last-modified]]
+		;remove/part conn/data d2
+		conn/data: d2
+		state/read-pos: index? d2
 		state/state: 'reading-data
 	]
 	;? state
@@ -395,8 +423,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 				][
 					return awake make event! [type: 'custom port: port code: 300]
 				][
-					state/error: make-http-error "Redirect requires manual intervention"
-					res: awake make event! [type: 'error port: port]
+					res: throw-http-error port "Redirect requires manual intervention"
 				]
 			]
 		]
@@ -408,12 +435,10 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 			]
 		]
 		unauthorized [
-			state/error: make-http-error "Authentication not supported yet"
-			res: awake make event! [type: 'error port: port]
+			res: throw-http-error port "Authentication not supported yet"
 		]
 		client-error server-error [
-			state/error: make-http-error ["Server error: " line]
-			res: awake make event! [type: 'error port: port]
+			res: throw-http-error port ["Server error: " line]
 		]
 		not-modified [state/state: 'ready
 			res: awake make event! [type: 'done port: port]
@@ -421,12 +446,10 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 		]
 		use-proxy [
 			state/state: 'ready
-			state/error: make-http-error "Proxies not supported yet"
-			res: awake make event! [type: 'error port: port]
+			res: throw-http-error port "Proxies not supported yet"
 		]
 		proxy-auth [
-			state/error: make-http-error "Authentication and proxies not supported yet"
-			res: awake make event! [type: 'error port: port]
+			res: throw-http-error port "Authentication and proxies not supported yet"
 		]
 		no-content [
 			state/state: 'ready
@@ -439,14 +462,13 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 			read conn
 		]
 		version-not-supported [
-			state/error: make-http-error "HTTP response version not supported"
-			res: awake make event! [type: 'error port: port]
+			res: throw-http-error port "HTTP response version not supported"
 			close port
 		]
 	]
 	res
 ]
-crlfbin: #{0D0A}
+crlfbin:  #{0D0A}
 crlf2bin: #{0D0A0D0A}
 crlf2: to string! crlf2bin
 http-response-headers: context [
@@ -467,8 +489,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state][
 
 	state/redirects: state/redirects + 1
 	if state/redirects > 10 [
-		state/error: make-http-error {Too many redirections}
-		return state/awake make event! [type: 'error port: port]
+		res: throw-http-error port {Too many redirections}
 	]
 
 	if #"/" = first new-uri [
@@ -495,8 +516,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state][
 	][	[new-uri/scheme "://" new-uri/host #":" new-uri/port-id new-uri/path]]
 
 	unless find [http https] new-uri/scheme [
-		state/error: make-http-error {Redirect to a protocol different from HTTP or HTTPS not supported}
-		return state/awake make event! [type: 'error port: port]
+		return throw-http-error port {Redirect to a protocol different from HTTP or HTTPS not supported}
 	]
 
 	;we need to reset tcp connection here before doing a redirect
@@ -506,54 +526,84 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state][
 	open port
 ]
 
-check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer state conn][
+check-data: func [port /local headers res data available out chunk-size pos1 pos2 trailer state conn][
 	state: port/state
 	headers: state/info/headers
 	conn: state/connection
 	res: false
 
-	sys/log/more 'HTTP ["Check-data; bytes:^[[m" length? conn/data]
+	sys/log/more 'HTTP ["Check-data; bytes:^[[m" length? conn/data "^[[36mfrom:^[[m" state/read-pos]
 
 	case [
 		headers/transfer-encoding = "chunked" [
-			data: conn/data
-			sys/log/more 'HTTP ["Chunked data: " length? data mold copy/part data 30]
-			;clear the port data only at the beginning of the request --Richard
-			unless port/data [ port/data: make binary! 32000 ]
-			out: port/data
+			;data: binary conn/data ;- data from lower layer (TLS or TCP)
+			;available: length? data/buffer
+			data: at head conn/data state/read-pos
+			available: length? data
+
+			sys/log/more 'HTTP ["Chunked data: " state/chunk-size "av:" available index? data state/read-pos mold copy/part data 30]
+			unless port/data [
+				;port/data: binary 32000 ; used to hold output
+				port/data: make binary! 32000
+			]
+			out: port/data 
+
+			if state/chunk-size [
+				either state/chunk-size <= available [
+					; we have enough data to end the chunk
+					;append out binary/read data state/chunk-size
+					append out copy/part data state/chunk-size
+					data: skip data state/chunk-size
+					state/chunk-size: none
+
+					either parse data [crlfbin pos1: to end][
+						data: pos1
+					][
+						throw-http-error port "Missing CRLF after chunk end!"
+					]
+				][
+					append out copy/part data available
+					state/chunk-size: state/chunk-size - available
+					data: tail data
+				]
+			]
+
 			until [
+
 				either parse/all data [
 					copy chunk-size some hex-digits
-					crlfbin mk1: to end
+					crlfbin pos1: to end
 				][
-					chunk-size: to integer! to issue! to string! chunk-size
-					sys/log/more 'HTTP ["Chunk-size:^[[m" chunk-size]
+					state/chunk-size: chunk-size: to integer! to issue! to string! chunk-size
+					data: pos1
+					state/read-pos: index? data
+					sys/log/more 'HTTP ["Chunk-size:^[[m" chunk-size "^[[36mfrom:^[[m" state/read-pos]
 					either chunk-size = 0 [
-						if parse/all mk1 [
+						if parse/all data [
 							crlfbin (trailer: "") to end | copy trailer to crlf2bin to end
 						][
 							trailer: construct trailer
 							append headers body-of trailer
 							state/state: 'ready
 							res: state/awake make event! [type: 'custom port: port code: 0]
-							clear data
+							clear head conn/data
 						]
-						true
+						true ; end of loop
 					][
-						either parse/all mk1 [
-							chunk-size skip mk2: crlfbin to end
+						either parse/all data [
+							chunk-size skip pos2: crlfbin to end
 						][
-							insert/part tail out mk1 mk2
-							remove/part data skip mk2 2
+							;print "chunk ready..."
+							append/part out pos1 pos2
+							data: skip pos2 2
 							empty? data
-						][
-							true
-						]
+						][	true ] ; end of loop
 					]
-				][
-					true
-				]
+				][	true ] ; end of loop
 			]
+			conn/data: data
+			state/read-pos: index? data
+			;print ["-------------> " state/read-pos]
 			unless state/state = 'ready [
 				;Awake from the WAIT loop to prevent timeout when reading big data. --Richard
 				res: true
@@ -606,7 +656,7 @@ sys/make-scheme [
 			sys/log/debug 'HTTP "READ"
 			either any-function? :port/awake [
 				unless open? port [cause-error 'Access 'not-open port/spec/ref]
-				if port/state/state <> 'ready [http-error "Port not ready"]
+				if port/state/state <> 'ready [throw-http-error "Port not ready"]
 				port/state/awake: :port/awake
 				do-request port
 			][
@@ -624,7 +674,7 @@ sys/make-scheme [
 
 			either any-function? :port/awake [
 				unless open? port [cause-error 'Access 'not-open port/spec/ref]
-				if port/state/state <> 'ready [http-error "Port not ready"]
+				if port/state/state <> 'ready [throw-http-error "Port not ready"]
 				port/state/awake: :port/awake
 				parse-write-dialect port value
 				do-request port
@@ -638,7 +688,7 @@ sys/make-scheme [
 		][
 			sys/log/debug 'HTTP ["OPEN, state:" port/state]
 			if port/state [return port]
-			if none? port/spec/host [http-error "Missing host address"]
+			if none? port/spec/host [throw-http-error port "Missing host address"]
 			port/state: context [
 				state: 'inited
 				connection:
@@ -647,6 +697,9 @@ sys/make-scheme [
 				info: make port/scheme/info [type: 'url]
 				awake: :port/awake
 				redirects: 0
+				chunk: none
+				chunk-size: none
+				read-pos: 0
 			]
 			;? port/state/info
 			port/state/connection: conn: make port! compose [
@@ -655,11 +708,10 @@ sys/make-scheme [
 				port-id: port/spec/port-id
 				ref: to url! ajoin [scheme "://" host #":" port-id]
 			]
-			;?? conn 
+			
 			conn/awake: :http-awake
 			conn/locals: port
 			sys/log/info 'HTTP ["Opening connection:^[[22m" conn/spec/ref]
-			;?? conn
 			open conn
 
 			port
@@ -667,17 +719,20 @@ sys/make-scheme [
 		open?: func [
 			port [port!]
 		][
-			found? all [port/state open? port/state/connection]
+			found? all [object? port/state open? port/state/connection]
 		]
 		close: func [
 			port [port!]
 		][
 			sys/log/debug 'HTTP "CLOSE"
-			if port/state [
+			if object? port/state [
+				port/state/state: 'closing
 				close port/state/connection
 				port/state/connection/awake: none
-				port/state: none
+				; release state and if there was error, keep it there
+				port/state: port/state/error
 			]
+			if error? port/state [do port/state]
 			port
 		]
 		copy: func [
