@@ -155,12 +155,21 @@ os-win32: [
 	dev-clipboard.c
 	dev-midi.c
 
-	host-event.c
-	host-window.c
-	host-compositor.c
+;	host-event.c
+;	host-window.c
+;	host-compositor.c
+;	host-image.c
 ]
 
 os-win32g: [
+	host-event.c
+	host-window.c
+	host-compositor.c
+	host-image.c
+
+	sys-utils.c
+	sys-codecs.cpp
+
 	;host-graphics.c
 	;host-draw.c
 	;host-text.c

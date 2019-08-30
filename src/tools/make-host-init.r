@@ -22,18 +22,14 @@ REBOL [
 print "--- Make Host Init Code ---"
 ;print ["REBOL version:" system/version]
 
+do %common.r
+
 ; Options:
 include-vid: off
-proof: off
-
-do %form-header.r
-
-; Output directory for temp files:
-dir: %os/
 
 ; Files to include in the host program:
 files: [
-	%mezz/prot-http.r
+;	%mezz/prot-http.r ;- included in core! (boot-files.r)
 ;	%mezz/view-colors.r
 ]
 
@@ -49,10 +45,6 @@ vid-files: [
 ]
 
 if include-vid [append files vid-files]
-
-; Change back to the main souce directory:
-change-dir %../
-make-dir dir
 
 ;** Utility Functions **************************************************
 
@@ -123,11 +115,7 @@ write-c-file: func [
 	insert data reduce ["; Copyright REBOL Technologies " now newline]
 	insert tail data make char! 0 ; zero termination required
 
-	if proof [
-		write %tmp.r to-binary data
-		;ask "wrote tmp.r for proofreading (press return)"
-		;probe data
-	]
+	write temp-dir/tmp-host-init.r data
 
 	comp-data: compress data
 	comp-size: length? comp-data

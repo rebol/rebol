@@ -22,54 +22,57 @@ REBOL [
 print "--- Make Boot : System Embedded Script ---"
 
 do %common.r
+do %tools/systems.r
 
-; Set platform TARGET
-do %systems.r
-target: config-system/define ; default
 
-; Include graphics for these systems:
-graphics-targets: [
-	TO_WIN32
-]
-has-graphics: false ;not not find graphics-targets target
+;-- Args passed: platform, product
 
-opts: system/options/args
+? system/options/args
 
-if all [block? opts opts/1 = ">"] [opts: none] ; cw editor
-
-if block? opts [
-	if find opts "no-gfx" [
-		has-graphics: false
-		opts: next opts
-	]
-	if not tail? opts [
-		opts: load first opts
-		unless tuple? opts [print "Invalid version arg." wait 2 quit]
-		target: config-system/platform opts
+if none? args: system/options/args [
+	print "Using default target options!"
+	args: reduce [
+		to tuple! reduce [0 system/version/4 system/version/5]
+		'core
 	]
 ]
 
-write-if: func [file data] [
-	if data <> attempt [read file][
-		print ["UPDATE:" file]
-		write file data
-	]
+try [
+	platform: load args/1
+	target: config-system/platform platform
 ]
+
+if none? target [
+	do error ["Failed to find target for platform: " platform]
+]
+os-name: target/2
+os-base: target/3
+
+product: to-word any [args/2 'core]
+
+? platform
+? product
+? target
+
+platform-data: context [type: 'windows]
+build: context [features: [help-strings]]
 
 ;-- SETUP --------------------------------------------------------------
 
-change-dir %../boot/
-;dir: %../core/temp/  ; temporary definition
+change-dir %boot/
 inc: %../include/
 src: %../core/
 
 version: load %version.r
-either tuple? opts [
-	version/4: opts/2
-	version/5: opts/3
-][
-	version/4: system/version/4
-	version/5: system/version/5
+version/4: platform/2
+version/5: platform/3
+
+save temp-dir/tmp-options.r compose [
+	platform: (platform)
+	version:  (version )
+	os-name:  (os-name )
+	os-base:  (os-base )
+	product:  (product )
 ]
 
 ;-- Title string put into boot.h file checksum:
@@ -102,17 +105,6 @@ sections: [
 
 include-protocols: false      ; include protocols in build
 
-;-- Error handler:
-error: func [msg arg] [print ["*** Make-boot error:" msg arg] halt]
-
-;-- Args passed: platform, product
-if none? args: system/options/args [error "No platform specified." ""]
-
-if args/1 = ">" [args: ["Win32" "VIEW-PRO"]] ; for debugging only
-product: to-word any [args/2  "core"]
-
-platform-data: context [type: 'windows]
-build: context [features: [help-strings]]
 
 ;-- Fetch platform specifications:
 ;init-build-objects/platform platform
@@ -202,9 +194,7 @@ remove-tests: func [d] [
 ]
 
 ;----------------------------------------------------------------------------
-;
-; Evaltypes.h - Evaluation Dispatch Maps
-;
+;- Evaltypes.h - Evaluation Dispatch Maps                                    
 ;----------------------------------------------------------------------------
 
 boot-types: load %types.r
@@ -284,9 +274,7 @@ write inc/tmp-evaltypes.h out
 
 
 ;----------------------------------------------------------------------------
-;
-; Maketypes.h - Dispatchers for Make (used by construct)
-;
+;- Maketypes.h - Dispatchers for Make (used by construct)                    
 ;----------------------------------------------------------------------------
 
 emit-head "Datatype Makers" %maketypes.h
@@ -330,9 +318,7 @@ emit-end
 write inc/tmp-maketypes.h out
 
 ;----------------------------------------------------------------------------
-;
-; Comptypes.h - compare functions
-;
+;- Comptypes.h - compare functions                                           
 ;----------------------------------------------------------------------------
 
 emit-head "Datatype Comparison Functions" %comptypes.h
@@ -370,9 +356,7 @@ write inc/tmp-comptypes.h out
 
 
 ;----------------------------------------------------------------------------
-;
-; Moldtypes.h - Dispatchers for Mold and Form
-;
+;- Moldtypes.h - Dispatchers for Mold and Form                               
 ;----------------------------------------------------------------------------
 
 ;emit-head "Mold Dispatchers"
@@ -429,9 +413,7 @@ write inc/tmp-comptypes.h out
 ;write inc/tmp-moldtypes.h out
 
 ;----------------------------------------------------------------------------
-;
-; Bootdefs.h - Boot include file
-;
+;- Bootdefs.h - Boot include file                                            
 ;----------------------------------------------------------------------------
 
 emit-head "Datatype Definitions" %reb-types.h
@@ -512,9 +494,7 @@ foreach [ts types] typeset-sets [
 write-if inc/reb-types.h out
 
 ;----------------------------------------------------------------------------
-;
-; Extension Related Tables
-;
+;- Extension Related Tables                                                  
 ;----------------------------------------------------------------------------
 
 ext-types: load %types-ext.r
@@ -631,9 +611,7 @@ write inc/tmp-exttypes.h out
 
 
 ;----------------------------------------------------------------------------
-;
-; Bootdefs.h - Boot include file
-;
+;- Bootdefs.h - Boot include file                                            
 ;----------------------------------------------------------------------------
 
 emit-head "Boot Definitions" %bootdefs.h
@@ -714,10 +692,11 @@ foreach word boot-words [
 	n: n + 1
 ]
 
-if exists? %../boot/tmp-symbols.r [
+;- tmp-symbols.r is file generated by make-headers.r script!
+if exists? temp-dir/tmp-symbols.r [
 	emit {^/    // follows symbols used in C sources, but not defined in %words.r list...^/}
 
-	foreach word load %../boot/tmp-symbols.r [
+	foreach word load temp-dir/tmp-symbols.r [
 		if not find used-words word [
 			append boot-words to word! lowercase word
 			emit-line "SYM_" word form n
@@ -725,7 +704,7 @@ if exists? %../boot/tmp-symbols.r [
 		]
 	]
 
-	delete %../boot/tmp-symbols.r
+	;delete temp-dir/tmp-symbols.r
 ]
 
 emit-end
@@ -762,9 +741,7 @@ print [n "actions"]
 write inc/tmp-bootdefs.h out
 
 ;----------------------------------------------------------------------------
-;
-; Sysobj.h - System Object Selectors
-;
+;- Sysobj.h - System Object Selectors                                        
 ;----------------------------------------------------------------------------
 
 emit-head "System Object" %sysobj.h
@@ -850,9 +827,7 @@ write inc/reb-dialect.h out
 
 
 ;----------------------------------------------------------------------------
-;
-; Event Types
-;
+;- Event Types                                                               
 ;----------------------------------------------------------------------------
 
 emit-head "Event Types" %reb-evtypes.h
@@ -877,12 +852,10 @@ write inc/reb-evtypes.h out
 
 
 ;----------------------------------------------------------------------------
-;
-; Error Constants
-;
+;- Error Constants                                                           
 ;----------------------------------------------------------------------------
 
-;-- Error Structure ----------------------------------------------------------
+;-- Error Structure ----------------------------------------------------- ---
 
 emit-head "Error Structure and Constants" %errnums.h
 
@@ -965,15 +938,24 @@ emit-end
 write inc/tmp-portmodes.h out
 
 ;----------------------------------------------------------------------------
-;
-; Load Boot Mezzanine Functions - Base, Sys, and Plus
-;
+;- Load Boot Mezzanine Functions - Base, Sys, and Plus                       
 ;----------------------------------------------------------------------------
 
 ;-- Add other MEZZ functions:
 mezz-files: load %../mezz/boot-files.r ; base lib, sys, mezz
 
-;append boot-mezz+ none ?? why was this needed?
+; fine tuning what to add into mezzanine per product/os (could be done better!)
+if product = 'view [
+	append mezz-files/3 [
+		%codec-wav.r
+		%codec-swf.r
+	]
+	if os-base = 'win32 [
+		append mezz-files/3 [
+			%codec-image.r
+		]
+	]
+]
 
 foreach section [boot-base boot-sys boot-mezz] [
 	set section make block! 200
@@ -997,12 +979,10 @@ write inc/tmp-sysctx.h out
 
 
 ;----------------------------------------------------------------------------
-;
-; b-boot.c - Boot data file
-;
+;- b-boot.c - Boot data file                                                 
 ;----------------------------------------------------------------------------
 
-;-- Build b-boot.c output file -------------------------------------------------
+;-- Build b-boot.c output file ----------------------------------------------
 
 
 emit-head "Natives and Bootstrap" %b-boot.c
@@ -1015,10 +995,8 @@ externs: make string! 2000
 boot-booters: load %booters.r
 boot-natives: load %natives.r
 
-if has-graphics [append boot-natives load %graphics.r]
-
 nats: append copy boot-booters boot-natives
-nats-collected: load %tmp-natives.r
+nats-collected: load temp-dir/tmp-natives.r
 
 n: boot-sys
 ;while [n: find n 'native] [
@@ -1136,9 +1114,7 @@ print [
 ;;dir: to-file rejoin [%../to- platform "/" product "/temp/"]
 
 ;----------------------------------------------------------------------------
-;
-; Boot.h - Boot header file
-;
+;- Boot.h - Boot header file                                                 
 ;----------------------------------------------------------------------------
 
 emit-head "Bootstrap Structure and Root Module" %boot.h

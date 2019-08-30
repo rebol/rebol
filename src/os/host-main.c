@@ -73,7 +73,13 @@ HWND      Focused_Window = 0;
 WCHAR     App_Title[MAX_TITLE_LENGTH]; //will be filled later from the resources file
 #endif
 
-#ifndef REB_CORE
+#ifdef REB_GTK
+
+extern void Init_Windows(void);
+
+#endif
+
+#ifdef REB_VIEW
 extern void Init_Windows(void);
 extern void Init_Graphics(void);
 #endif
@@ -288,7 +294,7 @@ int main(int argc, char **argv) {
 	if (n == 1) Host_Crash("Host-lib wrong size");
 	if (n == 2) Host_Crash("Host-lib wrong version/checksum");
 
-#ifndef REB_CORE
+#ifdef REB_VIEW
 	Init_Windows();
 	//Init_Graphics();
 #endif

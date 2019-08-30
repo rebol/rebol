@@ -147,35 +147,35 @@ emit-file: func [
 	emit ["const unsigned char RX_" name "[] = {^/" to-cstr data "^/};^/^/"]
 	emit "#endif^/"
 
-	write rejoin [%../include/ file %.h] out
+	write rejoin [%include/ file %.h] out
 
 ;	clear out
 ;	emit form-header/gen join title " - Module Initialization" second split-path file %make-host-ext.r
-;	write rejoin [%../os/ file %.c] out
+;	write rejoin [%os/ file %.c] out
 ]
 
 ;-- Create Files -------------------------------------------------------------
 
 emit-file %host-ext-window [
-	%../boot/window.r
-	%../mezz/view-funcs.r
+	%boot/window.r
+	%mezz/view-funcs.r
 ]
 
 ;;emit-file %host-ext-graphics [
-;;	%../boot/graphics.r
-;;	%../mezz/view-funcs.r
+;;	%boot/graphics.r
+;;	%mezz/view-funcs.r
 ;;]
 
 ;;emit-file %host-ext-draw [
-;;	%../boot/draw.r
+;;	%boot/draw.r
 ;;]
 ;;
 ;;emit-file %host-ext-shape [
-;;	%../boot/shape.r
+;;	%boot/shape.r
 ;;]
 ;;
 ;;emit-file %host-ext-text [
-;;	%../boot/text.r
+;;	%boot/text.r
 ;;]
 
 print "   "

@@ -101,13 +101,22 @@ These are now obsolete (as of A107) and should be removed:
 #define OS_CRLF TRUE			// uses CRLF as line terminator
 #define OS_DIR_SEP '\\'			// file path separator (Thanks Bill.)
 #define HAS_ASYNC_DNS			// supports it
-#define HAS_WIDGET_GOB			// supports it
 #define ATOI					// supports it
 #define ATOI64					// supports it
 #define ITOA64					// supports it
 #define NO_TTY_ATTRIBUTES		// used in read-line.c
 #define FINITE _finite			// name used for it
 #define INLINE __inline			// name used for it
+
+#ifdef REB_VIEW
+#define HAS_WIDGET_GOB			// supports it
+// use native image codecs only in VIEW version so far
+#define USE_NATIVE_IMAGE_CODECS
+#undef	USE_BMP_CODEC
+#undef	USE_PNG_CODEC
+#undef	USE_GIF_CODEC
+#undef	USE_JPG_CODEC
+#endif
 
 #ifdef THREADED
 #ifndef __MINGW32__

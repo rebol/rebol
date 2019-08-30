@@ -18,21 +18,24 @@ REBOL [
 
 print "------ Building headers"
 
+file-base: load %file-base.r
+
+do %common.r
+
+
 r3: system/version > 2.100.0
 
 zero-index?: not none? pick next system/platform 0 ;@@ used to be able compile using old R3 versions which were using path/0 instead of path/-1
 
-verbose: false
 chk-dups: true
 dups: make block! 10000 ; get pick [map! hash!] r3 1000
 dup-found: false
 
-do %common.r
-file-base: load %file-base.r
+
 
 tmp: context [
 
-change-dir %../core/
+change-dir %core/
 
 count: 0
 output:  make string! 20000
@@ -261,14 +264,14 @@ foreach file files [
 symbols: sort unique symbols ;contains all symbols (like: SYM_CALL) used in above processed C files (without the SYM_ part)
 symbols: new-line/skip symbols true 1
 if verbose [? symbols]
-save/header %../boot/tmp-symbols.r symbols [
+save/header temp-dir/tmp-symbols.r symbols [
 	title:    "C Symbols"
 	purpose:  "Automaticly collected symbols from C files"
 	commment: "AUTO-GENERATED FILE - Do not modify. (From: make-headers.r)"
 
 ]
 write %../mezz/base-collected.r base-code
-write %../boot/tmp-natives.r natives
+write temp-dir/tmp-natives.r natives
 write %../include/tmp-funcs.h output
 
 print [count "function prototypes"]

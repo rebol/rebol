@@ -23,6 +23,16 @@ VS: context [
 	AdditionalDependencies: rejoin [
 		"wsock32.lib;comdlg32.lib;"
 		"winmm.lib;"                           ;- for MIDI
+		;"Gdi32.lib;Comctl32.lib;UxTheme.lib;"  ;- for View
+		;- For View:
+		"Msimg32.lib;"         ;- for AlphaBlend
+		"Ole32.lib;"           ;- for COM access
+		"Comctl32.lib;"        ;- for native widgets
+		"UxTheme.lib;"         ;- used for visual defaults
+
+		;%opengl32 %glu32 ;- OpenGL
+		;%Shell32         ;- for drag and drop (DragQueryPoint, DragQueryFileW, DragFinish, DragAcceptFiles)
+
 	]
 
 	Sources: []
@@ -132,10 +142,10 @@ VS: context [
 		write-file [dir-vs name %.vcxproj] tmp
 
 		tmp: replace/all copy build-vs-release-x86 "#PROJECT-NAME#" name
-		write-file [dir %build-vs-release-x86.bat] tmp
+		write-file [dir %build-vs-release-x86-view.bat] tmp
 
 		tmp: replace/all copy build-vs-release-x64 "#PROJECT-NAME#" name
-		write-file [dir %build-vs-release-x64.bat] tmp
+		write-file [dir %build-vs-release-x64-view.bat] tmp
 
 		if all [Prebuild-x86 not exists? dir/prebuild.bat] [
 			write-file dir-vs/prebuild.bat Prebuild-x86
@@ -204,10 +214,17 @@ EndGlobal
   <PropertyGroup Label="Globals">
 	<VCProjectVersion>15.0</VCProjectVersion>
 	<ProjectGuid>{#PROJECT-GUID#}</ProjectGuid>
-	<RootNamespace>SDLtest</RootNamespace>
-	<WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+	<RootNamespace>SDLtest</RootNamespace> 
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(WindowsTargetPlatformVersion)'==''">
+    <!-- Latest Target Version property -->
+    <LatestTargetPlatformVersion>$([Microsoft.Build.Utilities.ToolLocationHelper]::GetLatestSDKTargetPlatformVersion('Windows', '10.0'))</LatestTargetPlatformVersion>
+    <WindowsTargetPlatformVersion Condition="'$(WindowsTargetPlatformVersion)' == ''">$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
+    <TargetPlatformVersion>$(WindowsTargetPlatformVersion)</TargetPlatformVersion>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
 	<ConfigurationType>Application</ConfigurationType>
 	<UseDebugLibraries>true</UseDebugLibraries>
@@ -397,7 +414,7 @@ pause}
 	build-vs-release-x64: {@echo off
 call "c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
 cd %~dp0 & cd VisualC
-msbuild "Rebol3.sln" /p:Configuration=Release /p:Platform="x64"
+msbuild "#PROJECT-NAME#.sln" /p:Configuration=Release /p:Platform="x64"
 cd %~dp0
 pause}
 
@@ -431,6 +448,9 @@ STRINGTABLE
 BEGIN
     101  "Rebol 3 (Oldes branch)"
 END
+
+
+1 MANIFEST "../../r3-view.manifest"
 }
 ]
 
@@ -442,16 +462,17 @@ do %../../src/tools/file-base.r
 forall core      [change core join %../../../src/core/ core/1]
 forall os        [change os   join %../../../src/os/     os/1]
 forall os-win32  [change os-win32  join %../../../src/os/win32/  os-win32/1]
+forall os-win32g [change os-win32g join %../../../src/os/win32/ os-win32g/1]
 
 probe core
 vs/Sources: compose/only [
-	"Source Core Files" (core)
-	"Source Host Files" (union os os-win32)
+	"Source Files" (core)
+	"Source Host Files" (union union os os-win32 os-win32g)
 ]
 vs/IncludePath-x86:
 vs/IncludePath-x64: "..\..\..\src\include;"
 
-common-definitions:  {REB_EXE;ENDIAN_LITTLE;_CRT_SECURE_NO_WARNINGS;_UNICODE;UNICODE;_FILE_OFFSET_BITS=64;NDEBUG;}
+common-definitions:  {REB_EXE;REB_VIEW;ENDIAN_LITTLE;_CRT_SECURE_NO_WARNINGS;_UNICODE;UNICODE;_FILE_OFFSET_BITS=64;}
 optional-components: {USE_MIDI_DEVICE;USE_LZMA;} ;TEST_EXTENSIONS;
 vs/PreprocessorDefinitions-x86: rejoin [
 	common-definitions
@@ -470,7 +491,7 @@ set T=../../../src/tools
 set OS_ID=0.3.1
 
 %REBOL% %T%/make-headers.r
-%REBOL% %T%/make-boot.r %OS_ID%
+%REBOL% %T%/make-boot.r "%OS_ID% view"
 %REBOL% %T%/make-host-init.r
 %REBOL% %T%/make-os-ext.r
 %REBOL% %T%/make-host-ext.r
@@ -483,13 +504,13 @@ set T=../../../src/tools
 set OS_ID=0.3.40
 
 %REBOL% %T%/make-headers.r
-%REBOL% %T%/make-boot.r %OS_ID%
+%REBOL% %T%/make-boot.r "%OS_ID% view"
 %REBOL% %T%/make-host-init.r
 %REBOL% %T%/make-os-ext.r
 %REBOL% %T%/make-host-ext.r
 %REBOL% %T%/make-reb-lib.r
 }
 
-vs/make-project/type "Rebol3" %./ "Console"
+vs/make-project/type "Rebol3_View" %./ "Console"
 
 if not system/options/quiet [ask "^/Press ENTER to end."]

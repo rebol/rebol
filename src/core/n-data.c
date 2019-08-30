@@ -1063,14 +1063,14 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 ***********************************************************************/
 {
 	REBVAL *val = D_ARG(1);
-	REBGOB *gob;
+	REBGOB *gob = NULL;
 	REBXYF xy;
 
 	//O: handle drop_file this way? Or maybe just don't use EVF_HAS_XY?
 	//gob = (VAL_EVENT_TYPE(val) == EVT_DROP_FILE) ? Gob_Root : VAL_EVENT_SER(val);
 	if (GET_FLAG(VAL_EVENT_FLAGS(val), EVF_HAS_DATA)) {
 		CLR_FLAG(VAL_EVENT_FLAGS(val), EVF_HAS_DATA);
-#ifdef TO_WINDOWS
+#ifdef REB_VIEW
 		gob = OS_GET_GOB_ROOT();
 #endif
 	} else {

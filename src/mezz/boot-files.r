@@ -49,14 +49,16 @@ REBOL [
 	%mezz-crypt.r
 	%mezz-date.r ; Internet date support
 	%mezz-tail.r
-	%codec-wav.r
 	%codec-der.r
 	%codec-crt.r
 	%codec-gzip.r
 	%codec-xml.r
-	%codec-swf.r
 	%codec-zip.r
 	%codec-tar.r
+	; optional files added in make-boot.r per os and product
+	;%codec-wav.r
+	;%codec-swf.r
+	;%codec-image.r
 ]
 
 ;-- protocols:

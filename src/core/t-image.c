@@ -1036,7 +1036,7 @@ find_none:
 		else if (IS_GOB(arg)) {
 			//originally it was returning image without content when conversion failed!
 			//value = Make_Image(ROUND_TO_INT(GOB_W(VAL_GOB(arg))), ROUND_TO_INT(GOB_H(VAL_GOB(arg))));
-#ifndef TO_WINDOWS
+#ifndef REB_VIEW
 			//TODO: remove this once OS_GOB_TO_IMAGE will be for all systems
 			Trap0(RE_FEATURE_NA);
 #else

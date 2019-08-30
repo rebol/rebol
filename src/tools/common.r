@@ -12,9 +12,42 @@ REBOL [
 	Author: "Carl Sassenrath"
 ]
 
-do %form-header.r
+; Change back to the main souce directory:
+change-dir %../ ;- make sure you call it just once at start!
+
+; Output directory for temp files:
+make-dir temp-dir: join what-dir %tmp/
+
+do %tools/form-header.r
+
+
+;-- Options:
+verbose: false
+
+platform: none
+version:  none
+os-name:  none
+os-base:  none
+product:  none
+
+if exists? opts: temp-dir/tmp-options.r [
+	opts: load opts
+	platform: opts/platform
+	version:  opts/version
+	os-name:  opts/os-name
+	os-base:  opts/os-base
+	product:  opts/product
+]
+
+
+
 
 ;-- UTILITIES ----------------------------------------------------------
+
+error: func[msg [string! block!]][
+	if block? msg [msg: reform msg]
+	make error! msg
+]
 
 up-word: func [w] [
 	w: uppercase form w
@@ -37,4 +70,11 @@ to-c-name: func [word] [
 		#"|" "or_bar"
 	][replace/all word f t]
 	word
+]
+
+write-if: func [file data] [
+	if data <> attempt [read file][
+		print ["UPDATE:" file]
+		write file data
+	]
 ]

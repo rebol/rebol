@@ -15,23 +15,22 @@ REBOL [
 
 print "--- Make Reb-Lib Headers ---"
 
-verbose: true
+do %common.r
 
 lib-ver: 2
 
 preface: "RL_"
 
-src-dir: %../core/
-reb-lib: src-dir/a-lib.c
-ext-lib: src-dir/f-extension.c
+reb-lib: %core/a-lib.c
+ext-lib: %core/f-extension.c
 
-out-dir: %../include/
-reb-ext-lib:  out-dir/reb-lib.h   ; for Host usage
-reb-ext-defs: out-dir/reb-lib-lib.h  ; for REBOL usage
+; outputs:
+reb-ext-lib:  %include/reb-lib.h      ; for Host usage
+reb-ext-defs: %include/reb-lib-lib.h  ; for REBOL usage
 
-ver: load %../boot/version.r
+ver: load %boot/version.r
 
-do %common.r
+
 
 ;-----------------------------------------------------------------------------
 ;-----------------------------------------------------------------------------

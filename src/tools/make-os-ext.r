@@ -13,34 +13,27 @@ REBOL [
 	Needs: 2.100.100
 ]
 
-verbose: false
-
-version: load %../boot/version.r
+do %common.r
 
 lib-version: version/3
 print ["--- Make OS Ext Lib --- Version:" lib-version]
 
-; Set platform TARGET
-do %systems.r
-target: config-system/os-dir
-
-do %common.r
-
-change-dir append %../os/ target
+change-dir append %os/ os-base
 
 files: [
 	%host-lib.c
 	%../host-device.c
 ]
 
-; If it is graphics enabled:
-if all [
-	not find any [system/options/args []] "no-gfx"
-	find [3] system/version/4
-][
-	append files [
-		%host-window.c
-		%host-compositor.c
+switch os-base [
+	win32 [
+		if product = 'view [
+			append files [
+				%host-window.c
+				%host-compositor.c
+				%host-image.c
+			]
+		]
 	]
 ]
 
