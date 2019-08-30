@@ -298,7 +298,7 @@ REBINT Mode_Syms[] = {
 		// append temporary CRLF on Windows or LF on Posix
 		// @@ https://github.com/rebol/rebol-issues/issues/2102
 #ifdef TO_WINDOWS
-		Append_Bytes_Len(VAL_SERIES(data), "\r\n", 2);
+		Append_Bytes_Len(VAL_SERIES(data), cb_cast("\r\n"), 2);
 		n = 2;
 #else
 		Append_Byte(VAL_SERIES(data), '\n');

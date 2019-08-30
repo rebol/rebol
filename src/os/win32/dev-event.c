@@ -41,7 +41,7 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
-void Done_Device(int handle, int error);
+void Done_Device(REBUPT handle, int error);
 
 // Move or remove globals? !?
 HWND Event_Handle = 0;			// Used for async DNS

@@ -189,8 +189,8 @@
 	REBYTE	*vp = NULL;
 	REBYTE	*ap = NULL;
 	REBCNT	len = 0;
-	REBINT	alen;
-	REBINT	v;
+	REBCNT	alen;
+	REBCNT	v;
 	REBINT	a;
 	REBDEC	dec;
 
