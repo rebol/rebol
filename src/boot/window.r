@@ -32,6 +32,7 @@ words: [
 	date-time
 	group-box
 	opengl
+	base
 
 	;- gui-metric
 	border-fixed
@@ -41,7 +42,7 @@ words: [
 	log-size
 	phys-size
 	screen-dpi
-	screen-num
+	screens
     screen-origin
 	title-size
 	window-min-size
@@ -72,12 +73,12 @@ cursor: command [
 
 show: command [
 	"Display or update a graphical object or block of them."
-	gob [gob! none!]
+	gob [gob! none! block!]
 ]
 
 gui-metric: command [
 	"Returns specific gui related metric setting."
-	keyword [word!] "Available keywords: BORDER-FIXED, BORDER-SIZE, SCREEN-DPI, LOG-SIZE, PHYS-SIZE, SCREEN-SIZE, VIRTUAL-SCREEN-SIZE, TITLE-SIZE, WINDOW-MIN-SIZE, WORK-ORIGIN and WORK-SIZE."
+	keyword [word!] "Available keywords: SCREENS, BORDER-FIXED, BORDER-SIZE, SCREEN-DPI, LOG-SIZE, PHYS-SIZE, SCREEN-SIZE, VIRTUAL-SCREEN-SIZE, TITLE-SIZE, WINDOW-MIN-SIZE, WORK-ORIGIN and WORK-SIZE."
 	/set
 		val "Value used to set specific setting(works only on 'writable' keywords)."
     /display

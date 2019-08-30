@@ -57,6 +57,7 @@
 #include <uxtheme.h> // used for setting visual defaults
 #include <vssym32.h> // --//--
 #include <math.h>
+#include <versionhelpers.h> // for OS version detection
 
 //#include <stdio.h> // used for debuging traces
 
@@ -69,6 +70,12 @@
 
 #define INCLUDE_EXT_DATA
 #include "host-ext-window.h"
+
+//***** Extra data stored with hWnd struct ******//
+//typedef struct reb_wnd_extra {
+//	// nothing yet
+//} WNDEXTRA;
+
 
 //***** DPI ******//
 #ifndef DPI_ENUMS_DECLARED
@@ -102,12 +109,14 @@ extern HINSTANCE App_Instance;		// Set by winmain function
 extern void Host_Crash(char *reason);
 extern LRESULT CALLBACK REBOL_Window_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 extern LRESULT CALLBACK REBOL_OpenGL_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+extern LRESULT CALLBACK REBOL_Base_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 //***** Locals *****//
 
 static REBOOL Registered = FALSE;		// Window has been registered
 static const REBCHR *Class_Name_Window   = TXT("RebWindow");
-static const REBCHR *Class_Name_Button   = TXT("RebButton");
+static const REBCHR *Class_Name_Base     = TXT("RebBase");
+//static const REBCHR *Class_Name_Button   = TXT("RebButton");
 static const REBCHR *Class_Name_ComboBox = TXT("RebCombo");
 static struct gob_window *Gob_Windows;
 static REBOOL DPI_Aware = FALSE;
@@ -131,6 +140,7 @@ REBINT window_scale;
 //***** Forwards *****//
 
 static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
+void Paint_Window(HWND window);
 
 /***********************************************************************
 **
@@ -287,6 +297,7 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 		RL_Print("Failed to get old class info!\n");
 	}
 	wcex.cbSize = sizeof(WNDCLASSEX);
+	wcex.cbWndExtra = 0; //sizeof(WNDEXTRA);
 	wcex.lpszClassName = new_class;
 	wcex.hInstance = App_Instance;
 	if(!RegisterClassEx(&wcex))
@@ -317,7 +328,7 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	wc.style         = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
 
 	wc.cbClsExtra    = 0;
-	wc.cbWndExtra    = 0;
+	wc.cbWndExtra    = 0; //sizeof(WNDEXTRA);
 	wc.lpszMenuName  = NULL;
 
 	wc.hIconSm = LoadImage(App_Instance, // small class icon
@@ -334,7 +345,11 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	wc.lpszClassName = TXT("RebOpenGL");
 	if (!RegisterClassEx(&wc)) puts("Failed to register OpenGL class");
 
-	Make_Subclass(Class_Name_Button, TEXT("BUTTON"), NULL, TRUE);
+	wc.lpfnWndProc = REBOL_Base_Proc;
+	wc.lpszClassName = TXT("RebBase");
+	if (!RegisterClassEx(&wc)) puts("Failed to register Base class");
+
+	//Make_Subclass(Class_Name_Button, TEXT("BUTTON"), NULL, TRUE);
 
 	Registered = TRUE;
 }
@@ -378,13 +393,14 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 ***********************************************************************/
 {
 	REBINT options;
+	REBINT ws_flags;
 	REBINT windex;
 	HWND window;
 	REBCHR *title;
 	int x, y, w, h;
 	HWND parent = NULL;
 	REBYTE osString = FALSE;
-    REBPAR metric;
+	RECT rect;
 
 	if (!Registered) Register_Window();
 
@@ -402,35 +418,19 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	// Setup window options:
 
 	options = WS_POPUP;
+	ws_flags = 0;
 
 	if (!GET_FLAGS(gob->flags, GOBF_NO_TITLE, GOBF_NO_BORDER)) {
-	    metric.y = GetSystemMetrics(SM_CYCAPTION);
 		options |= WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU;
-		h += metric.y;
-		y -= metric.y;
 	}
 
 	if (GET_GOB_FLAG(gob, GOBF_RESIZE)) {
-	    metric.x = GetSystemMetrics(SM_CXSIZEFRAME);
-	    metric.y = GetSystemMetrics(SM_CYSIZEFRAME);
 		options |= WS_SIZEBOX | WS_BORDER;
-		x -= metric.x;
-		y -= metric.y;
-		w += metric.x * 2;
-		h += metric.y * 2;
 		if (!GET_GOB_FLAG(gob, GOBF_NO_TITLE))
 			options |= WS_MAXIMIZEBOX;
 	}
 	else if (!GET_GOB_FLAG(gob, GOBF_NO_BORDER)) {
-	    metric.x = GetSystemMetrics(SM_CXFIXEDFRAME);
-	    metric.y = GetSystemMetrics(SM_CYFIXEDFRAME);
 		options |= WS_BORDER;
-		if (!GET_GOB_FLAG(gob, GOBF_NO_TITLE)){
-			x -= metric.x;
-			y -= metric.y;
-			w += metric.x * 2;
-			h += metric.y * 2;
-		}
 	}
 
 	if (IS_GOB_STRING(gob))
@@ -439,16 +439,46 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
         title = TXT("REBOL Window");
 
 	if (GET_GOB_FLAG(gob, GOBF_POPUP)) {
+		ws_flags |= WS_EX_TOOLWINDOW;
 		parent = GOB_HWIN(GOB_TMP_OWNER(gob));
 		if (GET_GOB_FLAG(gob, GOBF_MODAL)) {
 			EnableWindow(parent, FALSE);
 			EnumWindows(EnumWindowsProc, (LPARAM)parent);
 		}
 	}
+	if (GET_GOB_FLAG(gob, GOBF_ON_TOP)) {
+		ws_flags |= WS_EX_TOPMOST;
+	}
+	//if (!GET_GOB_FLAG(gob, GOBF_NO_BORDER)) {
+	//	ws_flags |= WS_EX_WINDOWEDGE;
+	//}
+
+	if (GOB_ALPHA(gob) < 255) {
+		puts("semi-transparent window");
+		ws_flags |= WS_EX_LAYERED;
+	}
+
+	/* QUESTION:
+	** When opening window at position 0x0, should it be position of the content,
+	** or of the top-left window corner? I'm choosing the second variant for now (oldes).
+	*/
+	rect.left = 0;
+	rect.top = 0;
+	rect.right = w;
+	rect.bottom = h;
+
+	AdjustWindowRectEx(&rect, options, FALSE, ws_flags); // not DPI aware!
+
+	//printf("%i %i %i %i\n", rect.left, rect.top, rect.right, rect.bottom);
+
+	x += rect.left;     // else window will be placed at position, where shadow on the left side is fully visible
+	w = rect.right - rect.left; // update the size so client area has the requested size + window borders
+	h = rect.bottom - rect.top;
+	//----------------------------------------------------
 
 	// Create the window:
 	window = CreateWindowEx(
-		WS_EX_WINDOWEDGE, 
+		ws_flags, 
 		Class_Name_Window,
 		title,
 		options,
@@ -496,17 +526,17 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	SET_GOB_STATE(gob, GOBS_OPEN);
 
 	// Provide pointer from window back to REBOL window:
-#ifdef __LLP64__
 	SetWindowLongPtr(window, GWLP_USERDATA, (REBUPT)gob);
-#else
-	SetWindowLong(window, GWL_USERDATA, (REBUPT)gob);
-#endif
+
+	if (GOB_ALPHA(gob) < 255) {
+		SetLayeredWindowAttributes(window, 0, GOB_ALPHA(gob), LWA_ALPHA);
+	}
 
 	if (!GET_GOB_FLAG(gob, GOBF_HIDDEN)) {
 		if (GET_GOB_FLAG(gob, GOBF_ON_TOP)) SetWindowPos(window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 		ShowWindow(window, SW_SHOWNORMAL);
-		OS_Draw_Window(0, gob);              // draw not native widgets
-		SendMessage(window, WM_PAINT, 0, 0); // draw native widgets
+		//UpdateWindow(window);
+		RedrawWindow(window, NULL, NULL, RDW_UPDATENOW); 
 		SetForegroundWindow(window);
 	}
 	return window;
@@ -546,14 +576,17 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 **
 ***********************************************************************/
 {
-	void *compositor;
+	REBCMP *compositor;
 	REBOOL changed;
 	compositor = GOB_COMPOSITOR(gob);
+	compositor->win_rect.right = GOB_LOG_W_INT(gob);
+	compositor->win_rect.bottom = GOB_LOG_H_INT(gob);
 	changed = OS_Resize_Window_Buffer(compositor, gob);
-	if (redraw) {
-		OS_Compose_Gob(compositor, gob, gob, FALSE); // what if not actually resized?
-		OS_Blit_Window(compositor);
-	}
+	//InvalidateRect()
+	//if (redraw) {
+	//	OS_Compose_Gob(compositor, gob, gob, FALSE); // what if not actually resized?
+	//	OS_Blit_Window(compositor);
+	//}
 	return changed;
 }
 
@@ -622,7 +655,7 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 
 /***********************************************************************
 **
-*/	void OS_Draw_Window(REBGOB *wingob, REBGOB *gob)
+*/	void OS_Draw_Window(REBGOB *wingob, REBGOB *gob, REBOOL invalidate)
 /*
 **		Refresh the GOB within the given window. If the wingob
 **		is zero, then find the correct window for it.
@@ -634,17 +667,31 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 		wingob = gob;
 		while (GOB_PARENT(wingob) && GOB_PARENT(wingob) != Gob_Root
 			&& GOB_PARENT(wingob) != wingob) // avoid infinite loop
+		{
 			wingob = GOB_PARENT(wingob);
-
+		}
 		//check if it is really open
 		if (!IS_WINDOW(wingob) || !GET_GOB_STATE(wingob, GOBS_OPEN)) {
 			return;
 		}
 	}
 	
-	//render and blit the GOB
-	compositor = GOB_COMPOSITOR(wingob);
-	OS_Compose_Gob(compositor, wingob, gob, FALSE);
+	//if (invalidate) {
+	//	RECT rect;
+	//	rect.left   = GOB_X_INT(gob);
+	//	rect.right  = rect.left + GOB_W_INT(gob);
+	//	rect.top    = GOB_Y_INT(gob);
+	//	rect.bottom = rect.top + GOB_H_INT(gob);
+	//	InvalidateRect(GOB_HWIN(wingob), NULL, FALSE);
+	//	UpdateWindow(GOB_HWIN(wingob));
+	//} else {
+		//render and blit the GOB
+	//	compositor = GOB_COMPOSITOR(wingob);
+	//	OS_Compose_Gob(compositor, wingob, gob, FALSE);
+	//}
+
+	InvalidateRect(GOB_HWIN(wingob), NULL, FALSE);
+	//	UpdateWindow(GOB_HWIN(wingob));
 }
 
 
@@ -658,17 +705,45 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 ***********************************************************************/
 {
 	PAINTSTRUCT ps;
-	REBGOB *gob;
+	REBGOB *wingob;
+	REBCMP* cmp;
 
-#ifdef __LLP64__
-	gob = (REBGOB *)GetWindowLongPtr(window, GWLP_USERDATA);
-#else
-	gob = (REBGOB *)GetWindowLong(window, GWL_USERDATA);
-#endif
+	wingob = (REBGOB *)GetWindowLongPtr(window, GWLP_USERDATA);
 
-	if (gob) {
+	if (wingob) {
 		BeginPaint(window, (LPPAINTSTRUCT) &ps);
-		OS_Blit_Window(GOB_COMPOSITOR(gob));
+
+		cmp = GOB_COMPOSITOR(wingob);
+
+		//printf("PS: %f %f %f %f - %x %x\n", ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom, ps.hdc, cmp->wind_DC);
+
+		
+
+		//printf("erase %i %i %i %i\n", cmp->win_rect.left, cmp->win_rect.top, cmp->win_rect.right, cmp->win_rect.bottom);
+		//HBRUSH TransperrantBrush = CreateSolidBrush(GetSysColor(COLOR_ACTIVECAPTION)); //(HBRUSH)GetStockObject(NULL_BRUSH); //
+		//SetBkMode(cmp->back_DC, OPAQUE);
+		//FillRect(cmp->back_DC, &cmp->win_rect, TransperrantBrush);
+		//FillRect(cmp->wind_DC, &cmp->win_rect, TransperrantBrush);
+		//DeleteObject(TransperrantBrush);
+
+		BitBlt( cmp->wind_DC, 0, 0, GOB_LOG_W_INT(cmp->wind_gob), GOB_LOG_H_INT(cmp->wind_gob), cmp->wind_DC, 0, 0, SRCERASE); 
+//		BitBlt( cmp->back_DC, 0, 0, GOB_LOG_W_INT(cmp->wind_gob), GOB_LOG_H_INT(cmp->wind_gob), cmp->back_DC, 0, 0, SRCERASE); 
+
+		FillRect(cmp->back_DC, &cmp->win_rect, cmp->brush_DC);
+		
+		OS_Compose_Gob(cmp, wingob, wingob, FALSE);
+
+		//OS_Blit_Window(compositor);
+		
+		BitBlt(
+			cmp->wind_DC,
+			0, 0,
+			GOB_LOG_W_INT(cmp->wind_gob), GOB_LOG_H_INT(cmp->wind_gob),
+			cmp->back_DC,
+			0, 0,
+			SRCCOPY
+		);
+		
 		EndPaint(window, (LPPAINTSTRUCT) &ps);
 	}
 }
@@ -713,7 +788,7 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 			for (n = GOB_TAIL(Gob_Root)-1; n >= 0; n--, gp++) {
 				if (!GET_GOB_FLAG(*gp, GOBF_WINDOW)) {
 					OS_Open_Window(*gp);
-					OS_Draw_Window(0, *gp);
+					OS_Draw_Window(0, *gp, FALSE);
 				}
 			}
 		}
@@ -721,7 +796,7 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	}
 	// Is it a native widget?
 	else if (GOBT_WIDGET == GOB_TYPE(gob)) {
-		RedrawWindow((HWND)VAL_HANDLE(GOB_WIDGET_HANDLE(gob)), NULL, NULL, RDW_INVALIDATE | RDW_ERASE);
+		RedrawWindow((HWND)VAL_HANDLE(GOB_WIDGET_HANDLE(gob)), NULL, NULL, RDW_INVALIDATE);// | RDW_ERASE);
 	}
 	// Is it a window gob that needs to be closed?
 	else if (!GOB_PARENT(gob) && GET_GOB_FLAG(gob, GOBF_WINDOW)) {
@@ -737,7 +812,8 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	}
 
 	// Otherwise, composite and referesh the gob or all gobs:
-	OS_Draw_Window(0, gob);  // 0 = window parent of gob
+	OS_Draw_Window(0, gob, TRUE);  // 0 = window parent of gob
+	
 	return 0;
 }
 
@@ -783,16 +859,19 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	}
 
 	switch (VAL_INT64(type)) {
+		//case W_WINDOW_BASE:
+
+		//	break;
 		case W_WINDOW_BUTTON:
-			class = (REBCHR*)Class_Name_Button;
+			class = TEXT("BUTTON"); //(REBCHR*)Class_Name_Button;
 			style |= WS_TABSTOP | BS_PUSHBUTTON; // | BS_DEFPUSHBUTTON;
 			break;
 		case W_WINDOW_CHECK:
-			class = (REBCHR*)Class_Name_Button;
+			class = TEXT("BUTTON"); //(REBCHR*)Class_Name_Button;
 			style |= WS_TABSTOP | BS_AUTOCHECKBOX;
 			break;
 		case W_WINDOW_RADIO:
-			class = (REBCHR*)Class_Name_Button;
+			class = TEXT("BUTTON"); //(REBCHR*)Class_Name_Button;
 			style |= WS_TABSTOP | BS_AUTORADIOBUTTON;
 			break;
 		case W_WINDOW_FIELD:
@@ -1266,9 +1345,11 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 			x = OS_Get_Metrics(SM_SCREEN_X, display);
 			y = OS_Get_Metrics(SM_SCREEN_Y, display);
 			break;
-		case W_WINDOW_SCREEN_NUM:
-			x = OS_Get_Metrics(SM_SCREEN_NUM, 0);
-			RXA_INT64(frm, 1) = x;
+
+		case W_WINDOW_SCREENS:
+			// get number of display monitors
+			// NOTE: it shoould be provided in some better way!
+			RXA_INT64(frm, 1) = GetSystemMetrics(SM_CMONITORS);
 			RXA_TYPE(frm, 1) = RXT_INTEGER;
 			return RXR_VALUE;
 		default:
@@ -1357,22 +1438,9 @@ static REBCNT Get_Widget_Text(HWND widget, REBVAL *text);
 	Cursor = LoadCursor(NULL, IDC_ARROW);
 	Init_DPI_Awareness();
 
-	// Get information about system version
-	// https://docs.microsoft.com/en-us/windows/desktop/api/winnt/ns-winnt-_osversioninfoa
-#pragma warning( push )
-#pragma warning(disable: 4996) // GetVersionEx is deprecated!
-	OSVERSIONINFO vi;
-	GetVersionEx(&vi);
-#pragma warning( pop )
-
-	if (
-		vi.dwMajorVersion >= 10 // Windows10 and newer
-		| (vi.dwMajorVersion >= 6 && vi.dwMinorVersion >= 2) //Win8
-	) {
-		Windows8_And_Newer = TRUE;
-	}
+	Windows8_And_Newer = IsWindows8OrGreater();
 	
-	if (!(vi.dwMajorVersion == 5 && vi.dwMinorVersion < 1)) {
+	if (IsWindowsXPOrGreater()) {
 		// Enable visual styles (not for Win2000)
 		INITCOMMONCONTROLSEX InitCtrlEx;
 		InitCtrlEx.dwSize = sizeof(INITCOMMONCONTROLSEX);

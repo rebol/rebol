@@ -53,5 +53,8 @@ typedef struct rebol_compositor_ctx {
 		REBXYF     abs_offset;
 		HBRUSH     brush_DC;
 		BITMAPINFO bmpInfo;
+		RECT       win_rect;
+		REBCNT     flags; // base flags:
 	#endif
 } REBCMP;
+

@@ -95,6 +95,11 @@ static REBXYF Zero_Pair = {0, 0};
 	ctx->new_clip = CreateRectRgn(0, 0, 0, 0);
 	ctx->old_clip = CreateRectRgn(0, 0, 0, 0);
 
+	ctx->win_rect.left = 0;
+	ctx->win_rect.top = 0;
+	ctx->win_rect.right = GOB_LOG_W_INT(gob);
+	ctx->win_rect.bottom = GOB_LOG_H_INT(gob);
+
 	//call resize to init rest
 	OS_Resize_Window_Buffer(ctx, gob);
 
@@ -166,7 +171,6 @@ static REBXYF Zero_Pair = {0, 0};
 		REBYTE *new_bytes;
 		REBINT  w = GOB_LOG_W_INT(winGob);
 		REBINT  h = GOB_LOG_H_INT(winGob);
-		RECT lprc = {0,0,w,h};
 		
 		//set window size in bitmapinfo struct
 		ctx->bmpInfo.bmiHeader.biWidth = w;
@@ -185,7 +189,7 @@ static REBXYF Zero_Pair = {0, 0};
 
 		//fill the background color
 		SetDCBrushColor(new_DC, RGB(240,240,240));		
-		FillRect(new_DC,&lprc, ctx->brush_DC);
+		FillRect(new_DC, &ctx->win_rect, ctx->brush_DC);
 		
 		if (ctx->back_DC != 0) {
 /*		
@@ -517,15 +521,88 @@ static REBXYF Zero_Pair = {0, 0};
 	REBINT      src_siz_x = IMG_WIDE(img); // real image size
 	REBINT      src_siz_y = IMG_HIGH(img);
 
-	mode = SetStretchBltMode(hdc, COLORONCOLOR); // returns previous mode
+#define alphaBlend
+#ifdef alphaBlend
+	BLENDFUNCTION bf;      // structure for alpha blending 
+	HBITMAP hbitmap;       // bitmap handle 
+	BITMAPINFO bmi;        // bitmap header 
+	// zero the memory for the bitmap info 
+    ZeroMemory(&bmi, sizeof(BITMAPINFO));
+
+	// setup bitmap info  
+    // set the bitmap width and height to 60% of the width and height of each of the three horizontal areas. Later on, the blending will occur in the center of each of the three areas. 
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = src_siz_x;
+    bmi.bmiHeader.biHeight = -src_siz_y;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;         // four 8-bit components 
+    bmi.bmiHeader.biCompression = BI_RGB;
+    bmi.bmiHeader.biSizeImage = src_siz_x * src_siz_y * 4;
+
+	REBYTE *pixels = IMG_DATA(img); 
+	//printf("p>: %x\n", ((int*)IMG_DATA(img))[0]);
+
+	REBYTE *pvBits;          // pointer to DIB section 
+	REBYTE *p;
+
+	// create a DC for our bitmap -- the source DC for AlphaBlend 
+	HDC hdcbmp = CreateCompatibleDC(hdc);
+	//hbitmap = CreateDIBitmap(hdcbmp, &bmi.bmiHeader, CBM_INIT, IMG_DATA(img), &bmi, DIB_RGB_COLORS);
+	//if (hbitmap == NULL) {
+	//	puts("faild to init bmp");
+	//	return;
+	//}
+	//HBITMAP hbitmap   = CreateCompatibleBitmap(hdc, src_siz_x, src_siz_y);
+	   
+
+	// create our DIB section and select the bitmap into the dc 
+    hbitmap = CreateDIBSection(hdcbmp, &bmi, DIB_RGB_COLORS, &pvBits , NULL, 0x0);
+ 	SelectObject(hdcbmp, hbitmap);
+
+//	memcpy(pvBits, pixels, src_siz_x * src_siz_y * 4 );
+	p = pvBits;
+	//printf("p0: %x\n", ((int*)p)[0]);
+	for( int y = 0; y < src_siz_y; y++ ) {
+      for( int x = 0; x < src_siz_x; x++ ) {
+         p[0] = (BYTE)((DWORD)pixels[0] * pixels[3] / 255);
+         p[1] = (BYTE)((DWORD)pixels[1] * pixels[3] / 255);
+         p[2] = (BYTE)((DWORD)pixels[2] * pixels[3] / 255);
+		 p[3] = (BYTE)pixels[3];
+         p += 4;
+		 pixels += 4;
+      }
+   }
+	//printf("p1: %x\n", ((int*)pvBits)[0]);
+
+	bf.BlendOp = AC_SRC_OVER;
+    bf.BlendFlags = 0;
+    bf.SourceConstantAlpha = 0xFF; //0x7f;  // half of 0xff = 50% transparency 
+    bf.AlphaFormat = AC_SRC_ALPHA; //0;     // ignore source alpha channel 
+
+	//RL_Print("AlphaBlend: %dx%d %dx%d\n", left, top, src_siz_x, src_siz_y);
+
+	if (!AlphaBlend(hdc, left, top,
+		src_siz_x, src_siz_y,
+		hdcbmp, 0, 0, src_siz_x, src_siz_y, bf)) {
+		puts("alphaBlend failed!");
+	}
+	
+	// do cleanup 
+    DeleteObject(hbitmap);
+    DeleteDC(hdcbmp);
+
+#else
+
 	BitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	BitmapInfo.bmiHeader.biWidth = src_siz_x;
 	BitmapInfo.bmiHeader.biHeight = -src_siz_y;
-
+	
+	mode = SetStretchBltMode(hdc, COLORONCOLOR); // returns previous mode
 	StretchDIBits(
 		hdc,
 		left, top,
-		right - left, bottom - top,
+		//right - left, bottom - top,
+		src_siz_x, src_siz_y,
 		0, 0, // always at 0x0 so far; should we support image atlases?
 		src_siz_x, src_siz_y,
 		GOB_BITMAP(gob),
@@ -534,6 +611,7 @@ static REBXYF Zero_Pair = {0, 0};
 		SRCCOPY
 	);
 	SetStretchBltMode(hdc, mode);
+#endif
 }
 
 

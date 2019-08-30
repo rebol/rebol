@@ -66,6 +66,9 @@
 extern HINSTANCE App_Instance;		// Set by winmain function
 extern HWND      Focused_Window;
 
+#define IS_LAYERED(hwnd) ((WS_EX_LAYERED & GetWindowLongPtr(hwnd, GWL_EXSTYLE)) > 0)
+#define GOB_FROM_HWND(hwnd) (REBGOB *)GetWindowLongPtr(hwnd, GWLP_USERDATA)
+
 //***** Constants *****
 
 // Virtual key conversion table, sorted by first column.
@@ -139,11 +142,9 @@ static void Add_Event_Widget(HWND widget, REBINT id, REBINT flags)
 {
 	REBEVT evt;
 	REBGOB *gob;
-#ifdef __LLP64__
-	gob = (REBGOB *)GetWindowLongPtr(widget, GWLP_USERDATA);
-#else
-	gob = (REBGOB *)GetWindowLong(widget, GWL_USERDATA);
-#endif
+	
+	gob = GOB_FROM_HWND(widget);
+
 	// fields are throwing CHANGE event during its creation
 	// when there is no GWLP_USERDATA yet available!
 	if (!gob) return; // ... so ignore it in such a case.
@@ -195,6 +196,55 @@ static REBINT Check_Modifiers(REBINT flags)
 	return flags;
 }
 
+static int modal_timer_id;
+static void onModalBlock(
+  HWND Arg1,
+  UINT Arg2,
+  UINT_PTR Arg3,
+  DWORD Arg4
+) {
+	puts("o");
+	//Add_Event_XY(gob, EVT_RESIZE, xy, 0);
+}
+
+/***********************************************************************
+**
+*/	LRESULT CALLBACK REBOL_Base_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+/*
+**		A Base_Proc() message handler. Simply translate Windows
+**		messages into a generic form that REBOL processes.
+**
+***********************************************************************/
+{
+	LPARAM xy = lParam;
+	REBGOB *gob;
+
+	// Handle message:
+	switch(msg)
+	{
+	case WM_MOUSEACTIVATE:
+		if (IS_LAYERED(hwnd)) {
+			SetForegroundWindow(GetParent(hwnd));
+			return 3; // do not make it activated when click it
+		}
+		break;
+	case WM_LBUTTONDOWN:
+		SetCapture(hwnd);
+		return 0;
+	case WM_LBUTTONUP:
+		ReleaseCapture();
+		return 0;
+	case WM_ERASEBKGND:
+		return TRUE; // drawing in WM_PAINT to avoid flickering
+	case WM_SIZE:
+		gob = GOB_FROM_HWND(hwnd);
+		//TODO: finish me!
+		break;
+
+
+
+	}
+}
 
 /***********************************************************************
 **
@@ -217,11 +267,7 @@ static REBINT Check_Modifiers(REBINT flags)
 	static REBINT mode = 0;
 	SCROLLINFO si;
 
-#ifdef __LLP64__
-	gob = (REBGOB *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-#else
-	gob = (REBGOB *)GetWindowLong(hwnd, GWL_USERDATA);
-#endif
+	gob = GOB_FROM_HWND(hwnd);
 
 	//printf("REBOL_Window_Proc - msg: %0X wParam: %0X lParam: %0X gob: %0Xh\n", msg, wParam, lParam, gob);
 
@@ -249,6 +295,7 @@ static REBINT Check_Modifiers(REBINT flags)
 	switch(msg)
 	{
 		case WM_PAINT:
+		case WM_DISPLAYCHANGE:
 			Paint_Window(hwnd);
 			return FALSE;
 
@@ -258,8 +305,15 @@ static REBINT Check_Modifiers(REBINT flags)
 			//	Track_Mouse_Leave(wp);
 			return FALSE;
 
+		case WM_ERASEBKGND:
+			//if (!IS_WINDOW(gob))
+				return TRUE;
+			break;
+
 		case WM_SIZE:
-//			RL_Print("SIZE %d\n", mode);
+		
+		//case WM_SIZING:
+			RL_Print("SIZE %d\n", mode);
 			if (wParam == SIZE_MINIMIZED) {
 				//Invalidate the size but not win buffer
 				gob->old_size.x = 0;
@@ -312,11 +366,16 @@ static REBINT Check_Modifiers(REBINT flags)
 
 		case WM_ENTERSIZEMOVE:
 			mode = -1; // possible to ENTER and EXIT w/o SIZE change
+			//modal_timer_id = SetTimer(hwnd, 0, USER_TIMER_MINIMUM , (TIMERPROC)NULL);
 			break;
 
 		case WM_EXITSIZEMOVE:
-			if (mode > 0) Add_Event_XY(gob, mode, last_xy, flags);
+			if (mode > 0) 
+				Add_Event_XY(gob, mode, last_xy, flags);
+			//else
+			//	KillTimer(hwnd, modal_timer_id);
 			mode = 0;
+			
 			break;
 
 		case WM_MOUSELEAVE:
@@ -338,7 +397,8 @@ static REBINT Check_Modifiers(REBINT flags)
 			break;
 
 		case WM_TIMER:
-			//Add_Event_XY(gob, EVT_TIME, xy, flags);
+			//printf("t");
+			Add_Event_XY(gob, EVT_TIME, xy, flags);
 			break;
 
 		case WM_SETCURSOR:
@@ -488,6 +548,8 @@ static REBINT Check_Modifiers(REBINT flags)
 //			DestroyWindow(hwnd);// This is done in OS_Close_Window()
 			return 0;
 
+
+
 		case WM_DESTROY:
 			PostQuitMessage(0);
 			return 0;
@@ -516,12 +578,7 @@ static REBINT Check_Modifiers(REBINT flags)
 	PIXELFORMATDESCRIPTOR pfd;
 	PAINTSTRUCT ps;
 	
-
-#ifdef __LLP64__
-	gob = (REBGOB *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-#else
-	gob = (REBGOB *)GetWindowLong(hwnd, GWL_USERDATA);
-#endif
+	gob = GOB_FROM_HWND(hwnd);
 
 	//if(msg != WM_PAINT)
 	//	printf("OpenGL_Proc - msg: %0X wParam: %0X lParam: %0X gob: %0Xh\n", msg, wParam, lParam, gob);
@@ -549,7 +606,6 @@ static REBINT Check_Modifiers(REBINT flags)
 	case WM_ERASEBKGND:
 		// for testing purposes, set random background so far...
 		glClearColor(((float)rand()/(float)(RAND_MAX))*1.0, 0.0, 0.0, 0.0);
-
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		break;
 	case WM_SIZE:
