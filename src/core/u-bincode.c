@@ -208,7 +208,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 //		/write   "Write data into output buffer"
 //			data [binary! block!] "Data dialect"
 //		/read    "Read data from the input buffer"
-//			code [word! block!]   "Input encoding"
+//			code [word! block! integer!]   "Input encoding"
 //		/into    "Put READ results in out block, instead of creating a new block"
 //			out  [block!] "Target block for results, when /into is used"
 //		/with    "Additional input argument"
@@ -420,8 +420,10 @@ static REBCNT EncodedU32_Size(u32 value) {
 						Do_Path(&next, NULL);
 						next = DS_POP; // volatile stack reference
 					}
-					if (IS_STRING(next)) {
-						Set_Binary(next, Encode_UTF8_Value(next, VAL_LEN(next), 0));
+					if (IS_STRING(next) || IS_FILE(next) || IS_URL(next)) {
+						DS_PUSH_NONE;
+						Set_Binary(DS_TOP, Encode_UTF8_Value(next, VAL_LEN(next), 0));
+						next = DS_POP;
 					}
 
 					switch (VAL_WORD_CANON(data)) {
@@ -492,6 +494,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 						break;
 					case SYM_UI16BYTES:
 					case SYM_UI16LEBYTES:
+					case SYM_UI16BEBYTES:
 						if (IS_BINARY(next)) {
 							ASSERT_UIBYTES_RANGE(next, 0xFFFF);
 							count += (2 + VAL_LEN(next));
@@ -499,6 +502,8 @@ static REBCNT EncodedU32_Size(u32 value) {
 						}
 						goto error;
 					case SYM_UI24BYTES:
+					case SYM_UI24LEBYTES:
+					case SYM_UI24BEBYTES:
 						if (IS_BINARY(next)) {
 							ASSERT_UIBYTES_RANGE(next, 0xFFFFFF);
 							count += (3 + VAL_LEN(next));
@@ -506,6 +511,8 @@ static REBCNT EncodedU32_Size(u32 value) {
 						}
 						goto error;
 					case SYM_UI32BYTES:
+					case SYM_UI32LEBYTES:
+					case SYM_UI32BEBYTES:
 						if (IS_BINARY(next)) {
 							ASSERT_UIBYTES_RANGE(next, 0xFFFFFFFF);
 							count += (4 + VAL_LEN(next));
@@ -643,8 +650,10 @@ static REBCNT EncodedU32_Size(u32 value) {
 						Do_Path(&next, NULL);
 						next = DS_POP; // volatile stack reference
 					}
-					if (IS_STRING(next)) {
-						Set_Binary(next, Encode_UTF8_Value(next, VAL_LEN(next), 0));
+					if (IS_STRING(next) || IS_FILE(next) || IS_URL(next)) {
+						DS_PUSH_NONE;
+						Set_Binary(DS_TOP, Encode_UTF8_Value(next, VAL_LEN(next), 0));
+						next = DS_POP;
 					}
 
 					switch (VAL_WORD_CANON(data)) {
@@ -771,6 +780,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 						VAL_INDEX(buffer_write)++; //for the length byte;
 						break;
 					case SYM_UI16BYTES:
+					case SYM_UI16BEBYTES:
 						n = VAL_LEN(next);
 						bp = (REBYTE*)&n;
 #ifdef ENDIAN_LITTLE
@@ -796,6 +806,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 						break;
 
 					case SYM_UI24BYTES:
+					case SYM_UI24BEBYTES:
 						n = VAL_LEN(next);
 						bp = (REBYTE*)&n;
 #ifdef ENDIAN_LITTLE
@@ -807,13 +818,38 @@ static REBCNT EncodedU32_Size(u32 value) {
 						memcpy(cp, VAL_BIN_AT(next), n);
 						VAL_INDEX(buffer_write) += 3; //for the length byte;
 						break;
+					case SYM_UI24LEBYTES:
+						n = VAL_LEN(next);
+						bp = (REBYTE*)&n;
+#ifdef ENDIAN_LITTLE
+						memcpy(cp, bp, 3);
+#else
+						cp[0] = bp[2]; cp[1] = bp[1]; cp[2] = bp[0];
+#endif
+						cp += 3;
+						memcpy(cp, VAL_BIN_AT(next), n);
+						VAL_INDEX(buffer_write) += 3; //for the length byte;
+						break;
 					case SYM_UI32BYTES:
+					case SYM_UI32BEBYTES:
 						n = VAL_LEN(next);
 						bp = (REBYTE*)&n;
 #ifdef ENDIAN_LITTLE
 						cp[0] = bp[3]; cp[1] = bp[2]; cp[2] = bp[1]; cp[3] = bp[0];
 #else
 						memcpy(cp, bp, 4);
+#endif
+						cp += 4;
+						memcpy(cp, VAL_BIN_AT(next), n);
+						VAL_INDEX(buffer_write) += 4; //for the length byte;
+						break;
+					case SYM_UI32LEBYTES:
+						n = VAL_LEN(next);
+						bp = (REBYTE*)&n;
+#ifdef ENDIAN_LITTLE
+						memcpy(cp, bp, 4);
+#else
+						cp[0] = bp[3]; cp[1] = bp[2]; cp[2] = bp[1]; cp[3] = bp[0];
 #endif
 						cp += 4;
 						memcpy(cp, VAL_BIN_AT(next), n);
@@ -978,6 +1014,17 @@ static REBCNT EncodedU32_Size(u32 value) {
 
 		inBit = IS_OBJECT(val_ctx) ? VAL_INT32(VAL_OBJ_VALUE(val_ctx, BINCODE_READ_BITMASK)): 0;
 
+		if (IS_INTEGER(val_read)) {
+			n = VAL_INT64(val_read);
+			ASSERT_READ_SIZE(val_read, cp, ep, n);
+			if(ref_into) {
+				Trap0(RE_FEATURE_NA);
+			}
+			Set_Binary(D_RET, Copy_Series_Part(bin, VAL_INDEX(buffer_read), n));
+			VAL_TAIL(D_RET) = n;
+			VAL_INDEX(buffer_read) += n;
+			return R_RET;
+		}
 		as_block = IS_BLOCK(val_read);
 
 		if(as_block) {
@@ -1237,7 +1284,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 							if (nbits > 0) {
 								if (inBit == 0) inBit = 0x80;
 								// http://graphics.stanford.edu/~seander/bithacks.html#VariableSignExtend
-								u64 m = 1U << (nbits - 1); // sign bit mask
+								u64 m = (u64)1 << (nbits - 1); // sign bit mask
 								nbits = 1 << nbits;
 								//if (nbits > 0) {
 									//printf("SB nbits: %i\n", nbits);
@@ -1326,7 +1373,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 								VAL_SERIES(temp) = bin_new;
 								VAL_INDEX(temp) = 0;
 								if (cmd == SYM_STRING_BYTES) {
-									VAL_TAIL(temp) = strnlen(VAL_BIN(temp), n);
+									VAL_TAIL(temp) = strnlen(cs_cast(VAL_BIN(temp)), n);
 								}
 							}
 							break;

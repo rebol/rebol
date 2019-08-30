@@ -141,6 +141,8 @@ is-protected-error?: func[code][
 	--test-- "BinCode - BYTES"
 	     --assert object? binary/write b [#{cafe}]
 	     --assert #{CAFE} = binary/read b 'bytes
+	     --assert object? binary/write b [BYTES %ščř%20 BYTES http://foo]
+	     --assert "ščř http://foo" = to string! binary/read b 'bytes
 	--test-- "BinCode - UI8BYTES"
 		--assert object? binary/write b [UI8BYTES #{cafe}]
 		--assert #{02CAFE} = binary/read b 'bytes
@@ -240,6 +242,17 @@ is-protected-error?: func[code][
 		binary/read b [str: STRING i: UI8]
 		--assert str = "test"
 		--assert   i = 42
+
+	--test-- "BinCode - read using integer argument"
+		b: #{010203}
+		--assert #{0102}   = binary/read b 2
+		--assert #{010203} = b
+		--assert #{0203}   = binary/read next b 2
+		b: binary #{01020304}
+		--assert #{0102}   = binary/read b 2
+		--assert #{0304}   = binary/read b 2
+		--assert error? try [binary/read b 2] ;value out of range 
+
 
 	--test-- "BinCode - bits (SB, UB, FB, ALIGN)"
 		b: binary 2#{01011011 10110011 11111111}
@@ -350,7 +363,10 @@ is-protected-error?: func[code][
 
 	--test-- "BinCode - FLOAT16, FLOAT, DOUBLE (write/read NAN)"
 		b: binary/write #{} [float16 1.#NaN float 1.#NaN double 1.#NaN]
-		--assert b/buffer = #{007E0000C07F000000000000F87F}
+		--assert found? find [
+			#{007E0000C07F000000000000F87F}
+			#{007E0000C0FF000000000000F8FF} ; when used clang compiler (should it be normalized?)
+		] b/buffer
 		--assert tail? b/buffer-write
 		;@@ using MOLD as: 1.#nan <> 1.#nan 
 		--assert "[1.#NaN 1.#NaN 1.#NaN]" = mold binary/read b [float16 float double]
