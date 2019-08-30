@@ -675,6 +675,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 {
 #ifndef NO_DL_LIB
 	void *dll = dlopen(path, RTLD_LAZY/*|RTLD_GLOBAL*/);
+	// if(!dll) printf("dlerror: %s\n", dlerror());
 	*error = 0; // dlerror() returns a char* error message, so there's
 				// no immediate way to return an "error code" in *error
 	return dll;
@@ -1323,14 +1324,3 @@ static int Try_Browser(char *browser, REBCHR *url)
 
 
 
-/***********************************************************************
-**
-*/	REBSER *OS_GOB_To_Image(REBGOB *gob)
-/*
-**		Render a GOB into an image. Returns an image or zero if
-**		it cannot be done.
-**
-***********************************************************************/
-{
-	return 0;
-}
