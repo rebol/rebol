@@ -39,6 +39,7 @@
 **
 ***********************************************************************/
 
+#ifdef TEST_EXTENSIONS
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -308,3 +309,4 @@ void Init_Ext_Test(void)
 {
 	RL = RL_Extend(b_cast(&RX_Spec[0]), (RXICAL)&RX_Call);
 }
+#endif //TEST_EXTENSIONS
