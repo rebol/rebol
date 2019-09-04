@@ -49,6 +49,10 @@
 **
 ***********************************************************************/
 
+#if defined(__cplusplus) && __cplusplus >= 201103L
+#include <type_traits> // used in CASTING MACROS
+#endif
+
 #if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 /* C-code types: use C99 */
 
