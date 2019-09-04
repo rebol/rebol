@@ -40,6 +40,7 @@
 #define CRCINIT  0xB704CE	/* Init value for CRC accumulator */
 
 static REBCNT *CRC_Table;
+static REBCNT *CRC32_Table = 0;
 
 /***********************************************************************
 **
@@ -357,14 +358,11 @@ static REBCNT *CRC_Table;
 
 
 
-
-static u32 *crc32_table = 0;
-
 static void Make_CRC32_Table(void) {
 	unsigned long c;
 	int n,k;
 
-	crc32_table = Make_Mem(256 * sizeof(u32));
+	CRC32_Table = Make_Mem(256 * sizeof(u32));
 
 	for(n=0;n<256;n++) {
 		c=(unsigned long)n;
@@ -374,7 +372,7 @@ static void Make_CRC32_Table(void) {
 			else
 				c=c>>1;
 		}
-		crc32_table[n]=c;
+		CRC32_Table[n]=c;
 	}
 }
 
@@ -382,10 +380,10 @@ REBCNT Update_CRC32(u32 crc, REBYTE *buf, int len) {
 	u32 c = ~crc;
 	int n;
 
-	if(!crc32_table) Make_CRC32_Table();
+	if(!CRC32_Table) Make_CRC32_Table();
 
 	for(n = 0; n < len; n++)
-		c = crc32_table[(c^buf[n])&0xff]^(c>>8);
+		c = CRC32_Table[(c^buf[n])&0xff]^(c>>8);
 
 	return ~c;
 }
