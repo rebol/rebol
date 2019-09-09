@@ -33,6 +33,7 @@
 #include "sys-codecs.h"
 
 IWICImagingFactory *pIWICFactory = NULL;
+static LARGE_INTEGER zero = { 0 };
 
 CODECS_API int codecs_init()
 {
@@ -101,6 +102,10 @@ CODECS_API int DecodeImageFromFile(PCWSTR *uri, UINT frame, REBCDI *codi)
 			ULONG written;
 			hr = pStream->Write(codi->data, codi->len, &written);
 			ASSERT_HR("pStream->Write");
+
+			// WIC JPEG decoder needs the stream to seek to head manually!
+			// https://stackoverflow.com/a/12928336/494472
+			pStream->Seek(zero, STREAM_SEEK_SET, NULL); 
 			
 			hr = pIWICFactory->CreateDecoderFromStream(
 				pStream
@@ -306,7 +311,6 @@ CODECS_API int EncodeImageToFile(PCWSTR *uri, REBCDI *codi)
 			}
 
 			ULONG read;
-			LARGE_INTEGER zero = { 0 };
 			outStream->Seek(zero, STREAM_SEEK_SET, NULL);
 			hr = outStream->Read(codi->data, stat.cbSize.LowPart, &read);
 			ASSERT_HR("outStream->Read");
