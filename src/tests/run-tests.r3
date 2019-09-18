@@ -49,6 +49,12 @@ dt [ ;- delta time
 	print dump-obj stats/profile
 
 	print "------------------------------------------------------------"
+	prin "Checking memory...   " evoke 2 print "OK"
+	prin "Checking bindings... " evoke 3 print "OK"
+	print "------------------------------------------------------------"
+	
 	***end-run***
 	recycle/on
+
+
 ]
