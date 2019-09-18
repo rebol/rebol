@@ -22,8 +22,10 @@ func: funco [
 	make function! copy/deep reduce [spec body] ; (now it deep copies)
 ]
 
-;- Shortcut for home directory
+;- some shortcuts (aliases)
 ~: system/options/home
+codecs: :system/codecs 
+keys-of: :words-of ; as it sounds better when used with some objects
 
 ; Quick test runner (temporary):
 run-tests: qt: function["Runs quick test"][
@@ -41,5 +43,8 @@ t: function["Test script shortcut"][
 		exists? script: ~/../../test.r3
 	][	do script ]
 ]
+
+; Just a shortcut to evaluate content of the clipboard (temporary):
+drc: does [do read clipboard://]
 
 protect system/standard
