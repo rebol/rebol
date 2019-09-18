@@ -59,50 +59,52 @@ extern const REBYTE Str_Banner[];
 
 	VAL_SET(&val, 123);
 #ifdef WATCH_BOOT
-	printf("TYPE(123)=%d val=%d dat=%d gob=%d\n",
-		VAL_TYPE(&val), sizeof(REBVAL), sizeof(REBDAT), sizeof(REBGOB));
+	printf("TYPE(123)=%d val=%u dat=%u gob=%u\n",
+		VAL_TYPE(&val), (REBCNT)sizeof(REBVAL), (REBCNT)sizeof(REBDAT), (REBCNT)sizeof(REBGOB));
 #endif
 
 #ifdef SHOW_SIZEOFS
 	// For debugging ports to some systems:
-	printf("%d %s\n", sizeof(REBWRD), "word");
-	printf("%d %s\n", sizeof(REBSRI), "series");
-	printf("%d %s\n", sizeof(REBCNT), "logic");
-	printf("%d %s\n", sizeof(REBI64), "integer");
-	printf("%d %s\n", sizeof(REBU64), "unteger");
-	printf("%d %s\n", sizeof(REBINT), "int32");
-	printf("%d %s\n", sizeof(REBDEC), "decimal");
-	printf("%d %s\n", sizeof(REBUNI), "uchar");
-	printf("%d %s\n", sizeof(REBERR), "error");
-	printf("%d %s\n", sizeof(REBTYP), "datatype");
-	printf("%d %s\n", sizeof(REBFRM), "frame");
-	printf("%d %s\n", sizeof(REBWRS), "wordspec");
-	printf("%d %s\n", sizeof(REBTYS), "typeset");
-	printf("%d %s\n", sizeof(REBSYM), "symbol");
-	printf("%d %s\n", sizeof(REBTIM), "time");
-	printf("%d %s\n", sizeof(REBTUP), "tuple");
-	printf("%d %s\n", sizeof(REBFCN), "func");
-	printf("%d %s\n", sizeof(REBOBJ), "object");
-	printf("%d %s\n", sizeof(REBXYF), "pair");
-	printf("%d %s\n", sizeof(REBEVT), "event");
-	printf("%d %s\n", sizeof(REBLIB), "library");
-	printf("%d %s\n", sizeof(REBROT), "routine");
-	printf("%d %s\n", sizeof(REBSTU), "structure");
-	printf("%d %s\n", sizeof(REBGOB), "gob");
-	printf("%d %s\n", sizeof(REBGBO), "gbo");
-	printf("%d %s\n", sizeof(REBUDT), "utype");
-	printf("%d %s\n", sizeof(REBDCI), "deci");
-	printf("%d %s\n", sizeof(REBHAN), "handle");
-	printf("%d %s\n", sizeof(REBALL), "all");
+	printf("%u %s\n", (REBCNT)sizeof(REBVAL), "rebval");
+	printf("%u %s\n", (REBCNT)sizeof(REBSER), "rebser");
+	printf("%u %s\n", (REBCNT)sizeof(REBWRD), "word");
+	printf("%u %s\n", (REBCNT)sizeof(REBSRI), "series");
+	printf("%u %s\n", (REBCNT)sizeof(REBCNT), "logic");
+	printf("%u %s\n", (REBCNT)sizeof(REBI64), "integer");
+	printf("%u %s\n", (REBCNT)sizeof(REBU64), "unteger");
+	printf("%u %s\n", (REBCNT)sizeof(REBINT), "int32");
+	printf("%u %s\n", (REBCNT)sizeof(REBDEC), "decimal");
+	printf("%u %s\n", (REBCNT)sizeof(REBUNI), "uchar");
+	printf("%u %s\n", (REBCNT)sizeof(REBERR), "error");
+	printf("%u %s\n", (REBCNT)sizeof(REBTYP), "datatype");
+	printf("%u %s\n", (REBCNT)sizeof(REBFRM), "frame");
+	printf("%u %s\n", (REBCNT)sizeof(REBWRS), "wordspec");
+	printf("%u %s\n", (REBCNT)sizeof(REBTYS), "typeset");
+	printf("%u %s\n", (REBCNT)sizeof(REBSYM), "symbol");
+	printf("%u %s\n", (REBCNT)sizeof(REBTIM), "time");
+	printf("%u %s\n", (REBCNT)sizeof(REBTUP), "tuple");
+	printf("%u %s\n", (REBCNT)sizeof(REBFCN), "func");
+	printf("%u %s\n", (REBCNT)sizeof(REBOBJ), "object");
+	printf("%u %s\n", (REBCNT)sizeof(REBXYF), "pair");
+	printf("%u %s\n", (REBCNT)sizeof(REBEVT), "event");
+	printf("%u %s\n", (REBCNT)sizeof(REBLIB), "library");
+	printf("%u %s\n", (REBCNT)sizeof(REBROT), "routine");
+	printf("%u %s\n", (REBCNT)sizeof(REBSTU), "structure");
+	printf("%u %s\n", (REBCNT)sizeof(REBGOB), "gob");
+	printf("%u %s\n", (REBCNT)sizeof(REBGBO), "gbo");
+	printf("%u %s\n", (REBCNT)sizeof(REBUDT), "utype");
+	printf("%u %s\n", (REBCNT)sizeof(REBDCI), "deci");
+	printf("%u %s\n", (REBCNT)sizeof(REBHAN), "handle");
+	printf("%u %s\n", (REBCNT)sizeof(REBALL), "all");
 #endif
 
 	ASSERT(VAL_TYPE(&val) == 123,  RP_REBVAL_ALIGNMENT);
 	if (sizeof(void *) == 8) {
 		ASSERT(sizeof(REBVAL) == 32,   RP_REBVAL_ALIGNMENT);
-		ASSERT1(sizeof(REBGOB) == 84,  RP_BAD_SIZE);
+		//ASSERT1(sizeof(REBGOB) == 84,  RP_BAD_SIZE);
 	} else {
 		ASSERT(sizeof(REBVAL) == 16,   RP_REBVAL_ALIGNMENT);
-		ASSERT1(sizeof(REBGOB) == 64,  RP_BAD_SIZE);
+		//ASSERT1(sizeof(REBGOB) == 64,  RP_BAD_SIZE);
 	}
 	ASSERT1(sizeof(REBDAT) == 4,   RP_BAD_SIZE);
 }
