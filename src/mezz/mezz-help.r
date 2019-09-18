@@ -295,9 +295,9 @@ import module [
 									set arg [word! | lit-word! | get-word!] 
 									set def opt block! 
 									copy des any string! (
-										output [
-											"^/    "
-											"^[[1;33m" pad form arg 11  
+										output ajoin [
+											"^/      "
+											"^[[1;33m" pad form arg 13  
 											"^[[0;32m" either def [mold def]["[any-type!]"] "^[[m"
 										]
 										out-description des
