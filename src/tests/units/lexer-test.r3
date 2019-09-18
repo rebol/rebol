@@ -32,13 +32,16 @@ Rebol [
 	--test-- "NULLs inside loaded string"
 	;@@ https://github.com/Oldes/Rebol3/commit/6f59240d7d4379a50fec29c4e74290ad61ba73ba
 		out: ""
-		--assert not error? try [
+		--assert not error? set/any 'err try [
 		;- using CALL as it could be reproduced only when the internal buffer is being extended durring load
 			data: make string! 40000
 			insert/dup data "ABCD" 10000
 
-			dir: join system/options/path %r3/src/tests/units/files/
-
+			any [
+				exists? dir: join system/options/path %r3/src/tests/units/files/
+				exists? dir: join system/options/path %../r3/src/tests/units/files/
+				exists? dir: join system/options/path %../../src/tests/units/files/
+			]
 			save dir/tmp.data reduce [1 data]
 			exe: rejoin [system/options/home last split-path system/options/boot]
 
@@ -49,7 +52,8 @@ Rebol [
 
 			probe out
 		]
-		--assert out = "Test OK"
+		if error? err [ probe err ]
+		--assert parse out ["Test OK" to end]
 		error? try [ delete dir/tmp.data ]
 
 ===end-group===
