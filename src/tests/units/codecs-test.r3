@@ -171,4 +171,32 @@ if find system/codecs 'tar [
 	system/codecs/tar/verbose: 1
 ]
 
+if find system/codecs 'unixtime [
+	===start-group=== "unixtime codec"
+		date: 18-Sep-2019/8:52:31+2:00
+		--test-- "encode 32bit unixtime"
+			--assert 1568789551  = encode 'unixtime date
+			--assert 1568789551  = system/codecs/unixtime/encode date
+			--assert  "5D81D42F" = encode/as 'unixtime date string!
+			--assert #{5D81D42F} = encode/as 'unixtime date binary!
+			--assert 1568789551  = encode/as 'unixtime date integer!
+			--assert error? try  [ encode/as 'unixtime date url! ]
+
+		--test-- "decode 32bit unixtime"
+			--assert date = decode 'unixtime 1568789551
+			--assert date = decode 'unixtime  "5D81D42F"
+			--assert date = decode 'unixtime #{5D81D42F}
+			--assert date = system/codecs/unixtime/decode 1568789551
+
+		date: 1-1-2056/1:2:3
+		--test-- "encode 64bit unixtime"
+			--assert 2713914123 = encode 'unixtime date
+			--assert "A1C30B0B" = encode/as 'unixtime date string!
+
+		--test-- "decode 64bit unixtime"
+			--assert date = decode 'unixtime 2713914123
+			--assert date = decode 'unixtime "A1C30B0B"
+	===end-group===
+]
+
 ~~~end-file~~~

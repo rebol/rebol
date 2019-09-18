@@ -49,6 +49,7 @@ REBOL [
 	%mezz-crypt.r
 	%mezz-date.r ; Internet date support
 	%mezz-tail.r
+	%codec-unixtime.r
 	%codec-der.r
 	%codec-crt.r
 	%codec-gzip.r

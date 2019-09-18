@@ -38,7 +38,7 @@ register-codec: function [
 decode: function [
  	{Decodes a series of bytes into the related datatype (e.g. image!).}
 	type [word!] {Media type (jpeg, png, etc.)}
-	data [binary! string!] {The data to decode}
+	data {The data to decode}
 ][
 	unless all [
 		cod: select system/codecs type
@@ -62,7 +62,8 @@ encode: function [
 	{Encodes a datatype (e.g. image!) into a series of bytes.}
 	type [word!] {Media type (jpeg, png, etc.)}
 	data {The data to encode}
-	/options opts [block!] {Special encoding options}
+	/as {Special encoding options}
+	 options {Value specific to type of codec}
 ][
 	unless all [
 		cod: select system/codecs type
@@ -74,7 +75,9 @@ encode: function [
 			do-codec cod/entry 'encode data
 		][
 			either function? try [:cod/encode][
-				cod/encode data
+				either as [
+					apply :cod/encode [data 'as options]
+				][	cod/encode data ]
 			][
 				cause-error 'internal 'not-done type
 			]
