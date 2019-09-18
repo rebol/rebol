@@ -114,14 +114,14 @@ Rebol [
 ===end-group===
 
 ===start-group=== "Save/load image"
-	if find words-of system/codecs 'png [
+	if find codecs 'png [
 		--test-- "save/load PNG"
 			img1: make image! [2x2 255.0.0.10]
 			save %units/files/test.png img1
 			img2: load %units/files/test.png
 			--assert #{FF00000AFF00000AFF00000AFF00000A} = to binary! img2
 	]
-	if find words-of system/codecs 'bmp [
+	if find codecs 'bmp [
 		--test-- "save/load BMP"
 			img1: make image! [2x2 255.0.0.10]
 			save %units/files/test.bmp img1
