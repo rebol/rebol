@@ -178,23 +178,18 @@ register-codec [
 	decode: function [
 		"Parses XML code and returns a tree of blocks"
 		data [binary! string!] "XML code to parse"
-		/no-trim "Don't removes whitespaces"
+		/trim "Removes whitespaces (from head of strings)"
 	][
 		if binary? data [data: to string! data]
-		do bind [
-			xmlTrimSpace: either any [
-				no-trim
-				all [
-					block? options
-					find options 'no-trim
-				]
-			] [none][[any xmlSpace]]
-			parse-xml data
-		] parser
+		parser/xmlTrimSpace: any [
+			trim
+			select options 'trim
+		]
+		parser/parse-xml data
 	]
 
 	verbose: 0 ;not used so far, but could be later
-	options: none
+	options: object [trim: false]
 
 
 	;-- follows content of the original xml-parse object:
@@ -988,7 +983,7 @@ register-codec [
 									(element-q-name: element-ns-prefix: "")
 								]
 							]       
-		xmlTrimSpace: none
+		xmlTrimSpace: none ;- no trim by default
 		;
 		;
 		; Private XML Parser Methods
@@ -1038,6 +1033,9 @@ register-codec [
 			xml-string [string!] 
 			/local parse-result
 		][
+
+			if true? xmlTrimSpace [xmlTrimSpace: [any xmlSpace]]
+
 			;
 			; Parse the document and capture the return code from the REBOL
 			; parse.
