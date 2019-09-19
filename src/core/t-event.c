@@ -210,7 +210,7 @@
 			*val = *Get_System(SYS_VIEW, VIEW_EVENT_PORT);
 		}
 		// Event holds a port:
-		else if (IS_EVENT_MODEL(value, EVM_PORT) || IS_EVENT_MODEL(value, EVM_MIDI)) {
+		else if (IS_PORT(value) && (IS_EVENT_MODEL(value, EVM_PORT) || IS_EVENT_MODEL(value, EVM_MIDI))) {
 			SET_PORT(val, VAL_EVENT_SER(value));
 		}
 		// Event holds an object:
@@ -239,17 +239,14 @@
 				break;
 			}
 		}
-		else if (IS_EVENT_MODEL(value, EVM_MIDI))
-			goto is_none;
-
-		return FALSE;
+		goto is_none;
 
 	case SYM_OFFSET:
-		if (VAL_EVENT_TYPE(value) == EVT_KEY || VAL_EVENT_TYPE(value) == EVT_KEY_UP)
-			goto is_none;
-		VAL_SET(val, REB_PAIR);
-		VAL_PAIR_X(val) = (REBD32)VAL_EVENT_X(value);
-		VAL_PAIR_Y(val) = (REBD32)VAL_EVENT_Y(value);
+		if (IS_EVENT_MODEL(value, EVM_GUI) && VAL_EVENT_TYPE(value) != EVT_KEY && VAL_EVENT_TYPE(value) != EVT_KEY_UP) {
+			VAL_SET(val, REB_PAIR);
+			VAL_PAIR_X(val) = (REBD32)VAL_EVENT_X(value);
+			VAL_PAIR_Y(val) = (REBD32)VAL_EVENT_Y(value);
+		} else goto is_none;
 		break;
 
 	case SYM_KEY:
@@ -263,7 +260,7 @@
 				*val = *VAL_BLK_SKIP(arg, n);
 				break;
 			}
-			return FALSE;
+			goto is_none;
 		}
 		SET_CHAR(val, n);
 		break;
@@ -284,7 +281,7 @@
 				Init_Word(arg, SYM_SHIFT);
 			}
 			Set_Block(val, ser);
-		} else SET_NONE(val);
+		} else goto is_none;
 		break;
 
 	case SYM_CODE:
@@ -522,8 +519,7 @@ enum rebol_event_fields {
 	mold->indent++;
 
 	for (field = 0; fields[field]; field++) {
-		Get_Event_Var(value, fields[field], &val);
-		if (!IS_NONE(&val)) {
+		if (Get_Event_Var(value, fields[field], &val) && !IS_NONE(&val)) {
 			New_Indented_Line(mold);
 			Append_UTF8(mold->series, Get_Sym_Name(fields[field]), -1);
 			Append_Bytes(mold->series, ": ");
