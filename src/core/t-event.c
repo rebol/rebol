@@ -513,6 +513,7 @@ enum rebol_event_fields {
 		SYM_TYPE, SYM_PORT, SYM_GOB, SYM_OFFSET, SYM_KEY,
 		SYM_FLAGS, SYM_CODE, SYM_DATA, 0
 	};
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
 
 	Pre_Mold(value, mold);
 	Append_Byte(mold->series, '[');
@@ -520,7 +521,10 @@ enum rebol_event_fields {
 
 	for (field = 0; fields[field]; field++) {
 		if (Get_Event_Var(value, fields[field], &val) && !IS_NONE(&val)) {
-			New_Indented_Line(mold);
+			if(indented)
+				New_Indented_Line(mold);
+			else if (field > 0)
+				Append_Byte(mold->series, ' ');
 			Append_UTF8(mold->series, Get_Sym_Name(fields[field]), -1);
 			Append_Bytes(mold->series, ": ");
 			if (IS_WORD(&val)) Append_Byte(mold->series, '\'');
@@ -529,7 +533,7 @@ enum rebol_event_fields {
 	}
 
 	mold->indent--;
-	New_Indented_Line(mold);
+	if (indented) New_Indented_Line(mold);
 	Append_Byte(mold->series, ']');
 
 	End_Mold(mold);
