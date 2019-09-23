@@ -189,28 +189,98 @@
 
 /***********************************************************************
 **
-*/	void RGB_To_Bin(REBYTE *bin, REBYTE *rgba, REBINT len, REBOOL alpha)
+*/	void Color_To_Bin(REBYTE *bin, REBYTE *rgba, REBINT len, REBCNT format)
 /*
+**	Convert internal image (integer) to binary string according requested order
+**
 ***********************************************************************/
 {
-	// Convert internal image (integer) to RGB/A order binary string:
-	if (alpha) {
+	REBINT c0, c1, c2, c3;
+	REBINT alpha = 0;
+
+	switch(format) {
+	case SYM_RGB:  c0 = C_R; c1 = C_G; c2 = C_B; c3 = C_A; break;
+	case SYM_RGBA: c0 = C_R; c1 = C_G; c2 = C_B; c3 = C_A; alpha =  1; break;
+	case SYM_RGBO: c0 = C_R; c1 = C_G; c2 = C_B; c3 = C_A; alpha = -1; break;
+	case SYM_ARGB: c0 = C_A; c1 = C_R; c2 = C_G; c3 = C_B; alpha =  1; break;
+	case SYM_ORGB: c0 = C_A; c1 = C_R; c2 = C_G; c3 = C_B; alpha = -1; break;
+	
+	case SYM_BGRA: c0 = C_B; c1 = C_G; c2 = C_R; c3 = C_A; alpha =  1; break;
+	case SYM_BGRO: c0 = C_B; c1 = C_G; c2 = C_R; c3 = C_A; alpha = -1; break;
+	case SYM_ABGR: c0 = C_A; c1 = C_B; c2 = C_G; c3 = C_R; alpha =  1; break;
+	case SYM_OBGR: c0 = C_A; c1 = C_B; c2 = C_G; c3 = C_R; alpha = -1; break;
+	case SYM_BGR:  c0 = C_B; c1 = C_G; c2 = C_R; c3 = C_A; break;
+	default: return;
+	}
+
+	if (alpha > 0) {
 		for (; len > 0; len--, rgba += 4, bin += 4) {
-			bin[0] = rgba[C_R];
-			bin[1] = rgba[C_G];
-			bin[2] = rgba[C_B];
-			bin[3] = rgba[C_A];
+			bin[0] = rgba[c0];
+			bin[1] = rgba[c1];
+			bin[2] = rgba[c2];
+			bin[3] = rgba[c3];
+		}
+	} else if (alpha < 0) {
+		if (c0 == C_A) {
+			for (; len > 0; len--, rgba += 4, bin += 4) {
+				bin[0] = 255 - rgba[c0];
+				bin[1] = rgba[c1];
+				bin[2] = rgba[c2];
+				bin[3] = rgba[c3];
+			}
+		} else {
+			for (; len > 0; len--, rgba += 4, bin += 4) {
+				bin[0] = rgba[c0];
+				bin[1] = rgba[c1];
+				bin[2] = rgba[c2];
+				bin[3] = 255 - rgba[c3];
+			}
 		}
 	} else {
-		// Only the RGB part:
+		// Result without alpha 
 		for (; len > 0; len--, rgba += 4, bin += 3) {
-			bin[0] = rgba[C_R];
-			bin[1] = rgba[C_G];
-			bin[2] = rgba[C_B];
+			bin[0] = rgba[c0];
+			bin[1] = rgba[c1];
+			bin[2] = rgba[c2];
 		}
 	}
 }
 
+/***********************************************************************
+**
+*/	void Bin_To_Color(REBYTE *trg, REBYTE *src, REBINT len, REBCNT format)
+/*
+**	Convert external binary is specified color format to internal image
+**
+***********************************************************************/
+{
+	REBINT r, g, b, a;
+	REBINT alpha = 0;
+	REBCNT *clr = (REBCNT*)trg;
+
+	switch(format) {
+	case SYM_RGBA: r = 0; g = 1; b = 2; a = 3; alpha =  1; break;
+	case SYM_RGBO: r = 0; g = 1; b = 2; a = 3; alpha = -1; break;
+	case SYM_ARGB: a = 0; r = 1; g = 2; b = 3; alpha =  1; break;
+	case SYM_ORGB: a = 0; r = 1; g = 2; b = 3; alpha = -1; break;
+	
+	case SYM_BGRA: b = 0; g = 1; r = 2; a = 3; alpha =  1; break;
+	case SYM_BGRO: b = 0; g = 1; r = 2; a = 3; alpha = -1; break;
+	case SYM_ABGR: a = 0; b = 1; g = 2; r = 3; alpha =  1; break;
+	case SYM_OBGR: a = 0; b = 1; g = 2; r = 3; alpha = -1; break;
+	default: return;
+	}
+
+	if (alpha > 0) {
+		for (; len > 0; len--, src += 4, clr++) {
+			clr[0] = TO_PIXEL_COLOR(src[r], src[g], src[b], src[a]);
+		}
+	} else {
+		for (; len > 0; len--, src += 4, clr++) {
+			clr[0] = TO_PIXEL_COLOR(src[r], src[g], src[b], 255 - src[a]);
+		}
+	}
+}
 
 /***********************************************************************
 **
@@ -249,25 +319,34 @@
 
 /***********************************************************************
 **
-*/	void Alpha_To_Bin(REBYTE *bin, REBYTE *rgba, REBINT len)
+*/	void Alpha_To_Bin(REBYTE *bin, REBYTE *rgba, REBINT len, REBCNT type)
 /*
 ***********************************************************************/
 {
-	for (; len > 0; len--, rgba += 4)
-		*bin++ = rgba[C_A];
+	if (type == SYM_ALPHA) {
+		for (; len > 0; len--, rgba += 4)
+			*bin++ = rgba[C_A];
+	} else { // SYM_OPACITY
+		for (; len > 0; len--, rgba += 4)
+			*bin++ = 255 - rgba[C_A];
+	}
 }
-
 
 /***********************************************************************
 **
-*/	void Bin_To_Alpha(REBYTE *rgba, REBCNT size, REBYTE *bin, REBINT len)
+*/	void Bin_To_Alpha(REBYTE *rgba, REBCNT size, REBYTE *bin, REBINT len, REBCNT type)
 /*
 ***********************************************************************/
 {
 	if (len > (REBINT)size) len = size; // avoid over-run
 
-	for (; len > 0; len--, rgba += 4)
-		rgba[C_A] = *bin++;
+	if (type == SYM_ALPHA) {
+		for (; len > 0; len--, rgba += 4)
+			rgba[C_A] = *bin++;
+	} else { // SYM_OPACITY
+		for (; len > 0; len--, rgba += 4)
+			rgba[C_A] = 255 - *bin++;
+	}
 }
 
 
@@ -288,6 +367,14 @@
 	return 0;
 }
 
+/***********************************************************************
+**
+*/	void Tuple_To_Color(REBCNT format, REBVAL *tuple, REBCNT *rgba)
+/*
+***********************************************************************/
+{
+	Bin_To_Color((REBYTE*)rgba, VAL_TUPLE(tuple), 1, format);
+}
 
 /***********************************************************************
 **
@@ -474,7 +561,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 
 		// Load alpha channel data:
 		if (IS_BINARY(block)) {
-			Bin_To_Alpha(ip, size, VAL_BIN_DATA(block), VAL_LEN(block));
+			Bin_To_Alpha(ip, size, VAL_BIN_DATA(block), VAL_LEN(block), SYM_ALPHA);
 //			VAL_IMAGE_TRANSP(value)=VITT_ALPHA;
 			block++;
 		}
@@ -1182,6 +1269,7 @@ is_true:
 	REBSER *nser;
 	REBSER *series = VAL_SERIES(data);
 	REBCNT *dp;
+	REBCNT sym;
 
 	len = VAL_TAIL(data) - index;
 	len = MAX(len, 0);
@@ -1192,9 +1280,10 @@ is_true:
 	else if (IS_DECIMAL(sel)) n = (REBINT)VAL_DECIMAL(sel);
 	else if (IS_LOGIC(sel))   n = (VAL_LOGIC(sel) ? 1 : 2);
 	else if (IS_WORD(sel)) {
+		sym = VAL_WORD_CANON(sel);
 		if (val == 0) {
 			val = pvs->value = pvs->store;
-			switch (VAL_WORD_CANON(sel)) {
+			switch (sym) {
 
 			case SYM_SIZE:
 				VAL_SET(val, REB_PAIR);
@@ -1203,16 +1292,32 @@ is_true:
 				break;
 
 			case SYM_RGB:
+			case SYM_BGR:
 				nser = Make_Binary(len * 3);
 				SERIES_TAIL(nser) = len * 3;
-				RGB_To_Bin(QUAD_HEAD(nser), src, len, FALSE);
+				Color_To_Bin(QUAD_HEAD(nser), src, len, sym);
+				Set_Binary(val, nser);
+				break;
+
+			case SYM_RGBA:
+			case SYM_RGBO:
+			case SYM_BGRA:
+			case SYM_BGRO:
+			case SYM_ARGB:
+			case SYM_ABGR:
+			case SYM_ORGB:
+			case SYM_OBGR:
+				nser = Make_Binary(len * 4);
+				SERIES_TAIL(nser) = len * 4;
+				Color_To_Bin(QUAD_HEAD(nser), src, len, sym);
 				Set_Binary(val, nser);
 				break;
 
 			case SYM_ALPHA:
+			case SYM_OPACITY:
 				nser = Make_Binary(len);
 				SERIES_TAIL(nser) = len;
-				Alpha_To_Bin(QUAD_HEAD(nser), src, len);
+				Alpha_To_Bin(QUAD_HEAD(nser), src, len, sym);
 				Set_Binary(val, nser);
 				break;
 
@@ -1223,7 +1328,7 @@ is_true:
 
 		} else {
 
-			switch (VAL_WORD_CANON(sel)) {
+			switch (sym) {
 
 			case SYM_SIZE:
 				if (!IS_PAIR(val) || !VAL_PAIR_X(val)) return PE_BAD_SET;
@@ -1243,13 +1348,36 @@ is_true:
 				} else return PE_BAD_SET;
 				break;
 
+			case SYM_RGBA:
+			case SYM_RGBO:
+			case SYM_BGRA:
+			case SYM_BGRO:
+			case SYM_ARGB:
+			case SYM_ABGR:
+			case SYM_ORGB:
+			case SYM_OBGR:
+				if (IS_TUPLE(val)) {
+					if (VAL_TUPLE_LEN(val) != 4) return PE_BAD_ARGUMENT;
+					REBCNT color = 0;
+					Tuple_To_Color(sym, val, &color);
+					Fill_Line((REBCNT *)src, color, len, FALSE);
+				} else if (IS_INTEGER(val)) {
+					n = VAL_INT32(val);
+					if (n < 0 || n > 255) return PE_BAD_RANGE;
+					Fill_Line((REBCNT *)src, TO_PIXEL_COLOR(n,n,n,n), len, FALSE);
+				} else if (IS_BINARY(val)) {
+					Bin_To_Color(src, VAL_BIN_DATA(val), VAL_LEN(val) / 4, sym);
+				} else return PE_BAD_SET;
+				break;
+
 			case SYM_ALPHA:
+			case SYM_OPACITY:
 				if (IS_INTEGER(val)) {
 					n = VAL_INT32(val);
 					if (n < 0 || n > 255) return PE_BAD_RANGE;
 					Fill_Alpha_Line(src, (REBYTE)n, len);
 				} else if (IS_BINARY(val)) {
-					Bin_To_Alpha(src, len, VAL_BIN_DATA(val), VAL_LEN(val));
+					Bin_To_Alpha(src, len, VAL_BIN_DATA(val), VAL_LEN(val), sym);
 				} else return PE_BAD_SET;
 				break;
 

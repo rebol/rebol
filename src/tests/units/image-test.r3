@@ -81,7 +81,38 @@ Rebol [
 		--assert error? try [img/1: #"^(260)"]
 ===end-group===
 
+===start-group=== "raw image data getters"
+	img: make image! 2x1 img/1: 1.2.3.100 img/2: 4.5.6.200
+	tests: [
+		rgba    #{01020364040506C8}
+		rgbo    #{0102039B04050637}
+		argb    #{64010203C8040506}
+		orgb    #{9B01020337040506}
+		bgra    #{03020164060504C8}
+		bgro    #{0302019B06050437}
+		abgr    #{64030201C8060504}
+		obgr    #{9B03020137060504}
+		opacity #{9B37}
+		alpha   #{64C8}
+	]
+	foreach [format bin] tests [
+		--test-- reform ["get raw image" format "data"]
+			--assert img/:format = bin
+	]
+===end-group===
+
+===start-group=== "raw image data setters"
+	foreach [format bin] tests [
+		--test-- reform ["set raw image" format "data"]
+			img/1: 1.2.3
+			img/:format: bin
+			--assert img/1 = 1.2.3.100
+	]
+===end-group===
+
+
 ===start-group=== "image pixel assignment validity"
+	img: make image! 2x2
 	--test-- "image pixel 3-tuple assignment"
 		--assert 255.255.255 = img/1: 255.255.255
 	--test-- "image pixel 4-tuple assignment"
