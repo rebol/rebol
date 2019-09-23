@@ -214,4 +214,17 @@ Rebol [
 ===end-group=== 
 
 
+===start-group=== "mold object!"
+
+	--test-- "mold/flat object!"
+	;@@ https://github.com/rebol/rebol-issues/issues/2357
+		o: make object! [
+			a: [ 1 2 
+				 3 4
+			]
+		]
+		--assert "make object! [a: [1 2 3 4]]" = mold/flat o
+
+===end-group===
+
 ~~~end-file~~~
