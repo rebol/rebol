@@ -241,4 +241,24 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "mold block!"
+	b: [
+		1 2
+		3 4
+	]
+	c: reduce [
+		"A"
+		b
+	]
+	--test-- "mold/flat block!"
+	;@@ https://github.com/rebol/rebol-issues/issues/2388
+		--assert (mold/flat b) = "[1 2 3 4]" 
+		--assert (mold/flat c) = {["A" [1 2 3 4]]}
+
+	--test-- "mold/flat/all block!"
+		--assert (mold/flat/all c) = {["A" [1 2 3 4]]}
+		--assert (mold/flat/all next c) = {#[block! ["A" [1 2 3 4]] 2]}
+
+===end-group===
+
 ~~~end-file~~~

@@ -604,6 +604,7 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 	REBOOL line_flag = FALSE; // newline was part of block
 	REBOOL had_lines = FALSE;
 	REBVAL *value = BLK_SKIP(series, index);
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
 
 	if (!sep) sep = b_cast("[]");
 
@@ -631,7 +632,7 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 	value = BLK_SKIP(series, index);
 	while (NOT_END(value)) {
 		if (VAL_GET_LINE(value)) {
-			if (sep[1] || line_flag) New_Indented_Line(mold);
+			if (indented && (sep[1] || line_flag)) New_Indented_Line(mold);
 			had_lines = TRUE;
 		}
 		line_flag = TRUE;
@@ -643,7 +644,7 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 
 	if (sep[1]) {
 		mold->indent--;
-		if (VAL_GET_LINE(value) || had_lines) New_Indented_Line(mold);
+		if (indented && (VAL_GET_LINE(value) || had_lines)) New_Indented_Line(mold);
 		Append_Byte(out, sep[1]);
 	}
 
@@ -656,6 +657,7 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 	REBOOL all = GET_MOPT(mold, MOPT_MOLD_ALL);
 	REBSER *series = mold->series;
 	REBFLG over = FALSE;
+
 
 	if (SERIES_WIDE(VAL_SERIES(value)) == 0)
 		Crash(RP_BAD_WIDTH, sizeof(REBVAL), 0, VAL_TYPE(value));
