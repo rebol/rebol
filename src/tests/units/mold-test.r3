@@ -233,6 +233,11 @@ Rebol [
 	;@@ https://github.com/rebol/rebol-issues/issues/2387
 		--assert "make event! [type: 'lookup]" = mold/flat make event! [type: 'lookup]
 
+	--test-- "issues/2362"
+	;@@ https://github.com/rebol/rebol-issues/issues/2362
+		p: make object! [x: "foo"]
+		e: make event! [type: 'lookup port: p]
+		--assert {make event! [type: 'lookup port: make object! [x: "foo"]]} = mold/flat e
 
 ===end-group===
 
