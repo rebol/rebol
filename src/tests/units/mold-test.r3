@@ -261,6 +261,20 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "mold binary!"
+	bb: system/options/binary-base ;store original value
+	bin: #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}
+	--test-- "mold/flat binary!"
+		system/options/binary-base: 2
+		--assert (mold/flat bin) = {2#{11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111}}
+		system/options/binary-base: 16
+		--assert (mold/flat bin) = {#{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}}
+		system/options/binary-base: 64
+		--assert (mold/flat bin) = {64#{/////////////////////////////////////////////w==}}
+	; restore options
+	system/options/binary-base: bb
+
+===end-group===
 
 ===start-group=== "mold image!"
 
@@ -277,7 +291,7 @@ Rebol [
 	--test-- "mold/flat/all image!"
 		--assert (mold/all/flat make image! 8x1) = {#[image! 8x1 #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}]}
 		--assert (mold/all/flat next make image! 8x1) = {#[image! 8x1 #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF} 2]}
-		
+
 ===end-group===
 
 ~~~end-file~~~

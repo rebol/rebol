@@ -552,19 +552,20 @@ STOID Mold_Handle(REBVAL *value, REB_MOLD *mold)
 {
 	REBCNT len = VAL_LEN(value);
 	REBSER *out;
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
 
 	switch (Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16)) {
 	default:
 	case 16:
-		out = Encode_Base16(value, 0, len > 32);
+		out = Encode_Base16(value, 0, indented && len > 32);
 		break;
 	case 64:
 		Append_Bytes(mold->series, "64");
-		out = Encode_Base64(value, 0, len > 64, FALSE);
+		out = Encode_Base64(value, 0, indented && len > 64, FALSE);
 		break;
 	case 2:
 		Append_Byte(mold->series, '2');
-		out = Encode_Base2(value, 0, len > 8);
+		out = Encode_Base2(value, 0, indented && len > 8);
 		break;
 	}
 
