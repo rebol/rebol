@@ -261,4 +261,14 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "mold image!"
+
+	--test-- "mold empty image"
+		--assert "make image! [0x0 #{}]"  = mold make image! 0x0
+		--assert "make image! [10x0 #{}]" = mold make image! 10x0
+		--assert "make image! [0x10 #{}]" = mold make image! 0x10
+
+===end-group===
+
 ~~~end-file~~~

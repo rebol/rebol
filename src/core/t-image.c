@@ -438,6 +438,11 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 
 	// Output RGB image:
 	size = VAL_IMAGE_LEN(value); // # pixels (from index to tail)
+
+	if (size == 0) {
+		Append_Byte(mold->series, '}');
+		return;
+	}
 	data = (REBCNT *)VAL_IMAGE_DATA(value);
 	up = Prep_Uni_Series(mold, (size * 6) + ((size - 1) / 10) + 1);
 
