@@ -433,6 +433,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	REBCNT size;
 	REBCNT *data;
 	REBYTE* pixel;
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
 	
 	Emit(mold, "IxI #{", VAL_IMAGE_WIDE(value), VAL_IMAGE_HIGH(value));
 
@@ -444,18 +445,18 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		return;
 	}
 	data = (REBCNT *)VAL_IMAGE_DATA(value);
-	up = Prep_Uni_Series(mold, (size * 6) + ((size - 1) / 10) + 1);
+	up = Prep_Uni_Series(mold, indented ? ((size * 6) + ((size - 1) / 10) + 1) : (size * 6));
 
 	for (len = 0; len < size; len++) {
 		pixel = (REBYTE*)data++;
-		if ((len % 10) == 0) *up++ = LF;
+		if (indented && (len % 10) == 0) *up++ = LF;
 		up = Form_RGB_Uni(up, TO_RGBA_COLOR(pixel[C_R], pixel[C_G], pixel[C_B], pixel[C_A]));
 	}
 
 	// Output Alpha channel, if it has one:
 	if (Image_Has_Alpha(value, FALSE)) {
-
-		Append_Bytes(mold->series, "\n} #{");
+		if (indented) Append_Byte(mold->series, '\n');
+		Append_Bytes(mold->series, "} #{");
 
 		up = Prep_Uni_Series(mold, (size * 2) + (size / 10) + 1);
 
@@ -467,7 +468,10 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	}
 	*up = 0; // tail already set from Prep.
 
-	Append_Bytes(mold->series, "\n}");
+	if (indented) 
+		Append_Bytes(mold->series, "\n}");
+	else
+		Append_Byte(mold->series, '}');
 }
 
 
