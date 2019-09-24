@@ -111,6 +111,29 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "image/color"
+
+	--test-- "image/color getter"
+		;-- counts average image color
+		img: make image! 2x1
+		--assert img/color = 255.255.255.255 ; default image color is white
+		img/1: 0.0.0
+		--assert img/color = 127.127.127.255
+		img/2: 50.130.60.200
+		--assert img/color = 25.65.30.227
+
+	--test-- "image/color setter"
+		;-- just for consistency, fills image as if /rgb would be used
+		;-- alpha channel is ignored!
+		; using image state from previous test..
+		--assert img/rgba = #{000000FF32823CC8}
+		img/color: 25.65.30.227
+		--assert img/1 = 25.65.30.255
+		--assert img/2 = 25.65.30.200
+
+===end-group===
+
+
 ===start-group=== "image pixel assignment validity"
 	img: make image! 2x2
 	--test-- "image pixel 3-tuple assignment"

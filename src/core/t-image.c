@@ -411,6 +411,39 @@
 	}
 }
 
+/***********************************************************************
+**
+*/	void Average_Image_Color(REBYTE *rgba, REBVAL *clr, REBINT len)
+/*
+***********************************************************************/
+{
+	REBU64 r = 0, g = 0, b = 0, a = 0;
+	REBU64 n = (REBU64)len;
+
+	VAL_SET(clr, REB_TUPLE);
+	VAL_TUPLE_LEN(clr) = 4;
+	if (n > 0) {
+		for (; len > 0; len--, rgba += 4) {
+			r += rgba[C_R];
+			g += rgba[C_G];
+			b += rgba[C_B];
+			a += rgba[C_A];
+		}
+		VAL_TUPLE(clr)[0] = (REBYTE)(r / n);
+		VAL_TUPLE(clr)[1] = (REBYTE)(g / n);
+		VAL_TUPLE(clr)[2] = (REBYTE)(b / n);
+		VAL_TUPLE(clr)[3] = (REBYTE)(a / n);
+	}
+	else {
+		// returning transparent black when image is empty
+		VAL_TUPLE(clr)[0] = 0;
+		VAL_TUPLE(clr)[1] = 0;
+		VAL_TUPLE(clr)[2] = 0;
+		VAL_TUPLE(clr)[3] = 0;
+		//.. or should it return none instead?
+	}
+}
+
 
 #ifdef ndef
 INLINE REBCNT ARGB_To_BGR(REBCNT i)
@@ -1330,6 +1363,10 @@ is_true:
 				Set_Binary(val, nser);
 				break;
 
+			case SYM_COLOR:
+				Average_Image_Color(src, val, len);
+				break;
+
 			default:
 				return PE_BAD_SELECT;
 			}
@@ -1346,6 +1383,9 @@ is_true:
 				break;
 
 			case SYM_RGB:
+			case SYM_COLOR:
+				// SYM_COLOR as a setter is used to count average color of the image,
+				// here we can will all pixels with it for consistency
 				if (IS_TUPLE(val)) {
 					Fill_Line((REBCNT *)src, TO_PIXEL_TUPLE(val), len, 1);
 				} else if (IS_INTEGER(val)) {
