@@ -1064,7 +1064,7 @@ boot-ops: load %ops.r
 ;boot-script: load %script.r
 
 write %boot-code.r mold reduce sections
-data: mold/flat reduce sections
+data: mold reduce sections
 insert data reduce ["; Copyright (C) REBOL Technologies " now newline]
 insert tail data make char! 0 ; scanner requires zero termination
 
