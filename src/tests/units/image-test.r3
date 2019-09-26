@@ -133,6 +133,41 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "change image"
+	--test-- "change image by image"
+		img: make image! 4x4
+		change img make image! [2x2 0.0.0]
+		--assert img/rgb = #{
+000000000000FFFFFFFFFFFF
+000000000000FFFFFFFFFFFF
+FFFFFFFFFFFFFFFFFFFFFFFF
+FFFFFFFFFFFFFFFFFFFFFFFF}
+		change at img 1x1 make image! [2x2 220.22.22]
+		--assert img/rgb = #{
+000000000000FFFFFFFFFFFF
+000000DC1616DC1616FFFFFF
+FFFFFFDC1616DC1616FFFFFF
+FFFFFFFFFFFFFFFFFFFFFFFF}
+		change at img 2x2 make image! [3x3 33.33.33]
+		--assert img/rgb = #{
+000000000000FFFFFFFFFFFF
+000000DC1616DC1616FFFFFF
+FFFFFFDC1616212121212121
+FFFFFFFFFFFF212121212121}
+		change at img 0x3 make image! [4x4 66.166.66]
+		--assert img/rgb = #{
+000000000000FFFFFFFFFFFF
+000000DC1616DC1616FFFFFF
+FFFFFFDC1616212121212121
+42A64242A64242A64242A642}
+
+		change at img 3x0 make image! [2x1 #{AAAAAABBBBBB}]
+		--assert img/rgb = #{
+000000000000FFFFFFAAAAAA
+000000DC1616DC1616FFFFFF
+FFFFFFDC1616212121212121
+42A64242A64242A64242A642}
+===end-group===
 
 ===start-group=== "image pixel assignment validity"
 	img: make image! 2x2
