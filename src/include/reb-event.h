@@ -60,6 +60,7 @@ enum {
 	EVF_CONTROL,
 	EVF_SHIFT,
 	EVF_HAS_DATA,   // drop_file event series contains data instead of gob
+	EVF_HAS_CODE,   // XY value is interpreted as integer instead of pair
 };
 
 

@@ -79,6 +79,13 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "HTTP scheme"
+	--test-- "read HTTP"
+		--assert  string? try [read http://google.com]
+	--test-- "read HTTPS"
+		--assert  string? try [read https://www.google.com]
+===end-group===
+
 
 if "true" <> get-env "CONTINUOUS_INTEGRATION" [
 	;- don't do these tests on Travis CI

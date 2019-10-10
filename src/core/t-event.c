@@ -120,15 +120,24 @@
 	case SYM_OFFSET:
 		if (IS_PAIR(val)) {
 			SET_EVENT_XY(value, Float_Int16(VAL_PAIR_X(val)), Float_Int16(VAL_PAIR_Y(val)));
+			CLR_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_CODE);
+			SET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY);
+			break;
 		}
-		else return FALSE;
-		break;
+		//O: should it be possible to remove offset value from event?
+		//else if (IS_NONE(val)) {
+		//	CLR_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY);
+		//}
+		return FALSE;
 
 	case SYM_KEY:
 		//VAL_EVENT_TYPE(value) != EVT_KEY && VAL_EVENT_TYPE(value) != EVT_KEY_UP)
 		VAL_EVENT_MODEL(value) = EVM_GUI;
 		if (IS_CHAR(val)) {
 			VAL_EVENT_DATA(value) = VAL_CHAR(val);
+			CLR_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY);
+			SET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_CODE);
+			break;
 		}
 		else if (IS_LIT_WORD(val) || IS_WORD(val)) {
 			arg = Get_System(SYS_VIEW, VIEW_EVENT_KEYS);
@@ -143,20 +152,21 @@
 				if (IS_END(arg)) return FALSE;
 				break;
 			}
-			return FALSE;
 		}
-		else return FALSE;
-		break;
+		return FALSE;
 
 	case SYM_CODE:
+		//if (GET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY)) return FALSE;
 		if (IS_INTEGER(val)) {
-			VAL_EVENT_DATA(value) = VAL_INT32(val);
+			VAL_EVENT_DATA(value) = VAL_INT64(val);
+			CLR_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY);
+			SET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_CODE);
+			break;
 		}
-		else return FALSE;
-		break;
+		return FALSE;
 
 	default:
-			return FALSE;
+		return FALSE;
 	}
 
 	return TRUE;
@@ -210,7 +220,7 @@
 			*val = *Get_System(SYS_VIEW, VIEW_EVENT_PORT);
 		}
 		// Event holds a port:
-		else if (IS_PORT(value) && (IS_EVENT_MODEL(value, EVM_PORT) || IS_EVENT_MODEL(value, EVM_MIDI))) {
+		else if (IS_EVENT_MODEL(value, EVM_PORT) || IS_EVENT_MODEL(value, EVM_MIDI)) {
 			SET_PORT(val, VAL_EVENT_SER(value));
 		}
 		// Event holds an object:
@@ -242,12 +252,13 @@
 		goto is_none;
 
 	case SYM_OFFSET:
-		if (IS_EVENT_MODEL(value, EVM_GUI) && VAL_EVENT_TYPE(value) != EVT_KEY && VAL_EVENT_TYPE(value) != EVT_KEY_UP) {
+		if (GET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY)) {
 			VAL_SET(val, REB_PAIR);
 			VAL_PAIR_X(val) = (REBD32)VAL_EVENT_X(value);
 			VAL_PAIR_Y(val) = (REBD32)VAL_EVENT_Y(value);
-		} else goto is_none;
-		break;
+			break;
+		}
+		goto is_none;
 
 	case SYM_KEY:
 		if (VAL_EVENT_TYPE(value) != EVT_KEY && VAL_EVENT_TYPE(value) != EVT_KEY_UP)
@@ -285,11 +296,11 @@
 		break;
 
 	case SYM_CODE:
-		if (VAL_EVENT_TYPE(value) != EVT_KEY && VAL_EVENT_TYPE(value) != EVT_KEY_UP)
-			goto is_none;
-		n = VAL_EVENT_DATA(value); // key-words in top 16, chars in lower 16
-		SET_INTEGER(val, n);
-		break;
+		if (GET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_CODE)) {
+			SET_INTEGER(val, VAL_EVENT_DATA(value)); // key-words in top 16, chars in lower 16
+			break;
+		}
+		goto is_none;
 
 	case SYM_DATA:
 		// Event holds a file string:

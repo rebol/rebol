@@ -237,7 +237,15 @@ Rebol [
 	;@@ https://github.com/rebol/rebol-issues/issues/2362
 		p: make object! [x: "foo"]
 		e: make event! [type: 'lookup port: p]
-		--assert {make event! [type: 'lookup port: make object! [x: "foo"]]} = mold/flat e
+		--assert (mold/flat e) = {make event! [type: 'lookup port: make object! [x: "foo"]]}
+		e: make event! [type: 'move offset: 10x20]
+		--assert (mold/flat e) = {make event! [type: 'move offset: 10x20]}
+		
+		; only code or offset may be used!
+		e: make event! [type: 'move code: 100 offset: 10x20]
+		--assert (mold/flat e) = {make event! [type: 'move offset: 10x20]}
+		e: make event! [type: 'move offset: 10x20 code: 100]
+		--assert (mold/flat e) = {make event! [type: 'move code: 100]}
 
 ===end-group===
 
