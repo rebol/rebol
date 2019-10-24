@@ -138,7 +138,8 @@ if find codecs 'swf [
 ]
 
 if find codecs 'zip [
-	codecs/zip/verbose: 3
+	v: system/options/log/zip
+	system/options/log/zip: 3
 	===start-group=== "ZIP codec"
 		
 		--test-- "Load ZIP file"
@@ -151,8 +152,16 @@ if find codecs 'zip [
 			--assert data/2/2 = 646121705
 			--assert block? codecs/zip/decode data/2/3
 
+		--test-- "Decode ZIP using info"
+			bin: read %units/files/test-lzma.zip
+			--assert block? info: codecs/zip/decode/info bin
+			--assert info/1   = %xJSFL.komodoproject
+			--assert info/2/1 = 18-Aug-2012/5:20:28
+			data: codecs/zip/decompress-file at bin info/2/2 reduce [info/2/5 info/2/3 info/2/4]
+			--assert info/2/6 = checksum/method data 'crc32 
+
 	===end-group===
-	codecs/zip/verbose: 1
+	system/options/log/zip: v
 ]
 
 if find codecs 'tar [
