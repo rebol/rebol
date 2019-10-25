@@ -2,13 +2,14 @@ REBOL [
 	title: "REBOL 3 codec for ZIP files"
 	name: 'codec-zip
 	author: rights: "Oldes"
-	version: 0.0.2
+	version: 0.0.3
 	specification: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
 	history: [
 		24-Oct-2019 "Oldes" {
 			* Refactored decoder so it is using central directory structure
 			* Added decode/info refinement used to resolve just the info about files without decompressing
 			* Added access to decompress-file function which may be used to decompress single file using info from the info records
+			* Added basic extra field data decoder
 		}
 		15-Mar-2019 "Oldes" {Initial version of the ZIP decoder}]
 ]
@@ -97,11 +98,13 @@ register-codec [
 			if verbose [
 				sys/log/debug 'ZIP "Central directory structure"
 				sys/log/debug 'ZIP mold cheader
+				de-extra-fields extr
 			]
 			if all [only not find files name][
 				if verbose [ sys/log/more 'ZIP ["Not extracting: ^[[33m" name] ]
 				continue
 			]
+
 
 			either info [
 				repend result [name reduce [modified offset cmp-size unc-size method crc extr comm]]
@@ -191,7 +194,7 @@ register-codec [
 		data: at head buffer :data-pos
 
 		switch/default method [
-			8 [ ;- deflate
+			8  [ ;- deflate
 				output: decompress/deflate/size data unc-size
 			]
 			14 [ ;- LZMA
@@ -205,6 +208,69 @@ register-codec [
 		]
 
 		return output
+	]
+
+	de-extra-fields: function [
+		"Decodes extra field data of the ZIP record"
+		extra [binary!] "Extra field data"
+	][
+		sys/log/debug 'ZIP ["Decode extra fields:" mold extra]
+		bin: binary extra
+		fields: copy []
+		while [not tail? bin/buffer][
+			binary/read bin [id: UI16LE len: UI16LE data: BYTES :len]
+			repend fields [id data]
+		]
+		sys/log/more 'ZIP ["Extra fields:" mold fields]
+		fields
+		
+		;- Extra field info:
+		; https://opensource.apple.com/source/zip/zip-6/unzip/unzip/proginfo/extra.fld
+
+		;- List of extra field ids as defined in Info-ZIP utility:
+		;#define EF_PKSZ64    0x0001    /* PKWARE's 64-bit filesize extensions */
+		;#define EF_AV        0x0007    /* PKWARE's authenticity verification */
+		;#define EF_EFS       0x0008    /* PKWARE's extended language encoding */
+		;#define EF_OS2       0x0009    /* OS/2 extended attributes */
+		;#define EF_PKW32     0x000a    /* PKWARE's Win95/98/WinNT filetimes */
+		;#define EF_PKVMS     0x000c    /* PKWARE's VMS */
+		;#define EF_PKUNIX    0x000d    /* PKWARE's Unix */
+		;#define EF_PKFORK    0x000e    /* PKWARE's future stream/fork descriptors */
+		;#define EF_PKPATCH   0x000f    /* PKWARE's patch descriptor */
+		;#define EF_PKPKCS7   0x0014    /* PKWARE's PKCS#7 store for X.509 Certs */
+		;#define EF_PKFX509   0x0015    /* PKWARE's file X.509 Cert&Signature ID */
+		;#define EF_PKCX509   0x0016    /* PKWARE's central dir X.509 Cert ID */
+		;#define EF_PKENCRHD  0x0017    /* PKWARE's Strong Encryption header */
+		;#define EF_PKRMCTL   0x0018    /* PKWARE's Record Management Controls*/
+		;#define EF_PKLSTCS7  0x0019    /* PKWARE's PKCS#7 Encr. Recipient Cert List */
+		;#define EF_PKIBM     0x0065    /* PKWARE's IBM S/390 & AS/400 attributes */
+		;#define EF_PKIBM2    0x0066    /* PKWARE's IBM S/390 & AS/400 compr. attribs */
+		;#define EF_IZVMS     0x4d49    /* Info-ZIP's VMS ("IM") */
+		;#define EF_IZUNIX    0x5855    /* Info-ZIP's first Unix[1] ("UX") */
+		;#define EF_IZUNIX2   0x7855    /* Info-ZIP's second Unix[2] ("Ux") */
+		;#define EF_IZUNIX3   0x7875    /* Info-ZIP's newest Unix[3] ("ux") */
+		;#define EF_TIME      0x5455    /* universal timestamp ("UT") */
+		;#define EF_UNIPATH   0x7075    /* Info-ZIP Unicode Path ("up") */
+		;#define EF_UNICOMNT  0x6375    /* Info-ZIP Unicode Comment ("uc") */
+		;#define EF_MAC3      0x334d    /* Info-ZIP's new Macintosh (= "M3") */
+		;#define EF_JLMAC     0x07c8    /* Johnny Lee's old Macintosh (= 1992) */
+		;#define EF_ZIPIT     0x2605    /* Thomas Brown's Macintosh (ZipIt) */
+		;#define EF_ZIPIT2    0x2705    /* T. Brown's Mac (ZipIt) v 1.3.8 and newer ? */
+		;#define EF_SMARTZIP  0x4d63    /* Mac SmartZip by Marco Bambini */
+		;#define EF_VMCMS     0x4704    /* Info-ZIP's VM/CMS ("\004G") */
+		;#define EF_MVS       0x470f    /* Info-ZIP's MVS ("\017G") */
+		;#define EF_ACL       0x4c41    /* (OS/2) access control list ("AL") */
+		;#define EF_NTSD      0x4453    /* NT security descriptor ("SD") */
+		;#define EF_ATHEOS    0x7441    /* AtheOS ("At") */
+		;#define EF_BEOS      0x6542    /* BeOS ("Be") */
+		;#define EF_QDOS      0xfb4a    /* SMS/QDOS ("J\373") */
+		;#define EF_AOSVS     0x5356    /* AOS/VS ("VS") */
+		;#define EF_SPARK     0x4341    /* David Pilling's Acorn/SparkFS ("AC") */
+		;#define EF_TANDEM    0x4154    /* Tandem NSK ("TA") */
+		;#define EF_THEOS     0x6854    /* Jean-Michel Dubois' Theos "Th" */
+		;#define EF_THEOSO    0x4854    /* old Theos port */
+		;#define EF_MD5       0x4b46    /* Fred Kantor's MD5 ("FK") */
+		;#define EF_ASIUNIX   0x756e    /* ASi's Unix ("nu") */ 
 	]
 
 	validate-crc?: true
