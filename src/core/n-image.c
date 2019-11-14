@@ -173,6 +173,61 @@ typedef struct REBCLR {
 	return R_ARG1;
 }
 
+
+/***********************************************************************
+**
+*/	REBNATIVE(tint)
+/*
+//	tint: native [
+//		"Mixing colors (tint and or brightness)"
+//		target [tuple! image!] "Target RGB color or image (modifed)"
+//		rgb    [tuple!]        "Color to use for mixture"
+//		amount [number!]       "Effect amount"
+//	]
+***********************************************************************/
+{
+	REBVAL *val_trg = D_ARG(1);
+	REBCLR *rgb = (REBCLR*)VAL_TUPLE(D_ARG(2));
+	REBVAL *val_amount = D_ARG(3);
+	REBCLR *clr_trg;
+	REBDEC r, g, b, r1, g1, b1, r2, g2, b2, amount0, amount1;
+
+	r2 = rgb->r;
+	g2 = rgb->g;
+	b2 = rgb->b;
+
+	amount0 = Clip_Dec(IS_INTEGER(val_amount) ? (REBDEC)VAL_INT64(val_amount) : VAL_DECIMAL(val_amount), 0.0, 1.0);
+	amount1 = 1.0 - amount0;
+
+	if (IS_TUPLE(val_trg)) {
+		clr_trg = (REBCLR*)VAL_TUPLE(val_trg);
+		r1 = clr_trg->r;
+		g1 = clr_trg->g;
+		b1 = clr_trg->b;
+		r = (r1 >= r2) ? r2 + ((r1 - r2) * amount1) : r1 + ((r2 - r1) * amount0);
+		g = (g1 >= g2) ? g2 + ((g1 - g2) * amount1) : g1 + ((g2 - g1) * amount0);
+		b = (b1 >= b2) ? b2 + ((b1 - b2) * amount1) : b1 + ((b2 - b1) * amount0);
+		clr_trg->r = (REBYTE)Clip_Int((int)(0.5 + r), 0, 255);
+		clr_trg->g = (REBYTE)Clip_Int((int)(0.5 + g), 0, 255);
+		clr_trg->b = (REBYTE)Clip_Int((int)(0.5 + b), 0, 255);
+	} else {
+		REBINT len = VAL_IMAGE_LEN(val_trg);
+		REBYTE *rgba = VAL_IMAGE_DATA(val_trg);
+		for (; len > 0; len--, rgba += 4) {
+			r1 = rgba[C_R];
+			g1 = rgba[C_G];
+			b1 = rgba[C_B];
+			r = (r1 >= r2) ? r2 + ((r1 - r2) * amount1) : r1 + ((r2 - r1) * amount0);
+			g = (g1 >= g2) ? g2 + ((g1 - g2) * amount1) : g1 + ((g2 - g1) * amount0);
+			b = (b1 >= b2) ? b2 + ((b1 - b2) * amount1) : b1 + ((b2 - b1) * amount0);
+			rgba[C_R] = (REBYTE)Clip_Int((int)(0.5 + r), 0, 255);
+			rgba[C_G] = (REBYTE)Clip_Int((int)(0.5 + g), 0, 255);
+			rgba[C_B] = (REBYTE)Clip_Int((int)(0.5 + b), 0, 255);
+		}
+	}
+	return R_ARG1;
+}
+
 /***********************************************************************
 **
 */	REBNATIVE(image)

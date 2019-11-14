@@ -202,6 +202,25 @@ FFFFFFDC1616212121212121
 
 ===end-group===
 
+
+===start-group=== "Tint color"
+
+--test-- "Tint tuple"
+	c: 100.200.255
+	--assert 100.200.255 = tint c 128.128.128 0
+	--assert 114.164.192 = tint c 128.128.128 50%
+	--assert 128.128.128 = tint c 128.128.128 1.0
+	--assert 178.228.255 = tint c 255.255.255 0.5
+	--assert  50.100.128 = tint c 0.0.0 50%
+	--assert 100.200.255 = c ;<- tuple value is not modified
+
+--test-- "Tint image"
+	i: make image! [2x1 100.200.255]
+	--assert 114.164.192.255 = first  tint i 128.128.128 50% ;@@ image is being modified!
+	--assert 121.146.160.255 = second tint i 128.128.128 50%
+
+===end-group===
+
 ===start-group=== "Save/load image"
 	if find codecs 'png [
 		--test-- "save/load PNG"

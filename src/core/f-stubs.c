@@ -813,6 +813,17 @@
 
 /***********************************************************************
 **
+*/	REBDEC Clip_Dec(REBDEC val, REBDEC mind, REBDEC maxd)
+/*
+***********************************************************************/
+{
+	if (val < mind) val = mind;
+	else if (val > maxd) val = maxd;
+	return val;
+}
+
+/***********************************************************************
+**
 */	void memswapl(void *m1, void *m2, size_t len)
 /*
 **		For long integer memory units, not chars. It is assumed that
