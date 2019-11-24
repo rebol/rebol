@@ -34,8 +34,7 @@ join: func [
 	value "Base value"
 	rest "Value or block of values"
 ][
-	value: either series? :value [copy value] [form :value]
-	repend value :rest
+	append either series? :value [copy value] [form :value] reduce :rest
 ]
 
 reform: func [
