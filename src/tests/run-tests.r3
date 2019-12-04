@@ -40,6 +40,7 @@ dt [ ;- delta time
 	wrap load %units/image-test.r3
 	wrap load %units/file-test.r3
 	wrap load %units/func-test.r3
+	wrap load %units/typeset-test.r3
 
 	recycle/torture
 	recycle

@@ -140,7 +140,7 @@ head?: action [
 
 tail?: action [
 	{Returns TRUE if series is at or past its end; or empty for other types.}
-	series [series! gob! port! bitset! map!]
+	series [series! gob! port! bitset! typeset! map!]
 ]
 
 past?: action [
