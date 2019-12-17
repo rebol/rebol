@@ -243,6 +243,7 @@ load-boot-exts: function [
 			'else [export-words mod hdr/exports]
 		]
 	]
+	set 'boot-exts 'done
 	set 'load-boot-exts 'done ; only once
 ]
 

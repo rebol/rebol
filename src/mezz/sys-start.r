@@ -86,7 +86,7 @@ start: func [
 
 		foreach [spec body] boot-prot [module spec body]
 		;do bind-lib boot-prot
-		;boot-prot: 'done
+		boot-prot: 'done
 
 		;-- User is requesting usage info:
 		if flags/help [lib/usage quiet: true]
