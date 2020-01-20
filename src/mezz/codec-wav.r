@@ -47,7 +47,7 @@ register-codec [
 					size:   UI32LE
 					starts: INDEX
 				]
-				ends: starts +  size
+				ends: starts + size
 				chunk: any [ try [to tag! id]  id ]
 				if verbose > 0 [
 					printf [
@@ -152,6 +152,59 @@ register-codec [
 			]
 		]
 	]
+
+	encode: function [
+		spec [object!]
+	][
+		if 'wave <> select spec 'type [ return none ]
+		out: binary (128 + length? spec/data)
+		binary/write out [
+			#{52494646 00000000 57415645}
+		]
+
+		index: index? spec/data ; stores original data position
+		
+		foreach [tag value] spec/chunks [
+			switch tag [
+				<fmt > [
+					binary/write out reduce [
+						'BYTES  "fmt "
+						'UI32LE 16 + length? value/7
+						'UI16LE value/1      ; compression
+						'UI16LE value/2      ; channels
+						'UI32LE value/3      ; sampleRate
+						'UI32LE value/4      ; bytesPerSec
+						'UI16LE value/5      ; blockAlign
+						'UI16LE value/6      ; bitsPerSample
+						'BYTES  value/7
+					]
+				]
+				<data> [
+					binary/write out reduce [
+						'BYTES  "data"
+						'UI32LE value
+						'BYTES copy/part spec/data value
+					]
+					spec/data: skip spec/data value
+				]
+				<fact> [
+					value: to binary! value
+					binary/write out reduce [
+						'BYTES  "fact"
+						'UI32LE length? value
+						'BYTES  value
+					]
+				]
+			]
+		]
+		
+		spec/data: at head spec/data index ;resets the data series to original position
+
+		bytes: (length? out/buffer) - 8
+		binary/write out reduce ['at 5 'UI32LE bytes]
+		out/buffer
+	]
+
 	identify: func [
 		"Returns TRUE if binary looks like WAV data"
 		data [binary!]
