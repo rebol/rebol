@@ -260,7 +260,7 @@
 	/* handle sign */
 	if (sgn) *cp++ = '-';
 
-	if (trim == DEC_MOLD_PERCENT) e += 2;
+	if (trim == DEC_MOLD_PERCENT && (digits_obtained > 1 || sig[0] != '0')) e += 2;
 
 	if ((e > decimal_digits) || (e <= -6)) {
 		/* e-format */
