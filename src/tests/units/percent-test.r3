@@ -1,7 +1,7 @@
 Rebol [
 	Title:   "Rebol3 percent test script"
 	Author:  "Oldes, Peter W A Wood"
-	File: 	 %decimal-test.r3
+	File: 	 %percent-test.r3
 	Tabs:	 4
 	Needs:   [%../quick-test-module.r3]
 ]
