@@ -139,6 +139,7 @@ import module [
 	]
 
 	readFILLSTYLEARRAY: has[n result][
+		align
 		n: binary/read bin 'UI8
 		if n = 255 [ n: binary/read bin 'UI16LE ] ;FillStyleCountExtended
 		result: make block! n
