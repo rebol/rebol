@@ -30,5 +30,232 @@ Rebol [
 		--assert 0 = shift 1 -100
 
 ===end-group===
+
+===start-group=== "multiply"
+	--test-- "0 * 1"
+		i: 0
+		j: 1
+		--assert strict-equal? 0 0 * 1
+		--assert strict-equal? 0 multiply 0 1
+		--assert strict-equal? 0 i * j
+		--assert strict-equal? 0 multiply i j
+
+	--test-- "0 * -1"
+		i: 0
+		j: -1
+		--assert strict-equal? 0 0 * -1
+		--assert strict-equal? 0 multiply 0 -1
+		--assert strict-equal? 0 i * j
+		--assert strict-equal? 0 multiply i j
+
+	--test-- "0 * -2147483648"
+		i: 0
+		j: -2147483648
+		--assert strict-equal? 0 0 * -2147483648
+		--assert strict-equal? 0 multiply 0 -2147483648
+		--assert strict-equal? 0 i * j
+		--assert strict-equal? 0 multiply i j
+
+	--test-- "0 * 2147483647"
+		i: 0
+		j: 2147483647
+		--assert strict-equal? 0 0 * 2147483647
+		--assert strict-equal? 0 multiply 0 2147483647
+		--assert strict-equal? 0 i * j
+		--assert strict-equal? 0 multiply i j
+
+	--test-- "0 * 65536"
+		i: 0
+		j: 65536
+		--assert strict-equal? 0 0 * 65536
+		--assert strict-equal? 0 multiply 0 65536
+		--assert strict-equal? 0 i * j
+		--assert strict-equal? 0 multiply i j
+
+	--test-- "0 * 256"
+		i: 0
+		j: 256
+		--assert strict-equal? 0 0 * 256
+		--assert strict-equal? 0 multiply 0 256
+		--assert strict-equal? 0 i * j
+		--assert strict-equal? 0 multiply i j
+
+	--test-- "0 * 16777216"
+		i: 0
+		j: 16777216
+		--assert strict-equal? 0 0 * 16777216
+		--assert strict-equal? 0 multiply 0 16777216
+		--assert strict-equal? 0 i * j
+		--assert strict-equal? 0 multiply i j
+
+	--test-- "1 * -1"
+		i: 1
+		j: -1
+		--assert strict-equal? -1 1 * -1
+		--assert strict-equal? -1 multiply 1 -1
+		--assert strict-equal? -1 i * j
+		--assert strict-equal? -1 multiply i j
+
+	--test-- "1 * -2147483648"
+		i: 1
+		j: -2147483648
+		--assert strict-equal? -2147483648 1 * -2147483648
+		--assert strict-equal? -2147483648 multiply 1 -2147483648
+		--assert strict-equal? -2147483648 i * j
+		--assert strict-equal? -2147483648 multiply i j
+
+	--test-- "1 * 2147483647"
+		i: 1
+		j: 2147483647
+		--assert strict-equal? 2147483647 1 * 2147483647
+		--assert strict-equal? 2147483647 multiply 1 2147483647
+		--assert strict-equal? 2147483647 i * j
+		--assert strict-equal? 2147483647 multiply i j
+
+	--test-- "1 * 65536"
+		i: 1
+		j: 65536
+		--assert strict-equal? 65536 1 * 65536
+		--assert strict-equal? 65536 multiply 1 65536
+		--assert strict-equal? 65536 i * j
+		--assert strict-equal? 65536 multiply i j
+
+	--test-- "1 * 256"
+		i: 1
+		j: 256
+		--assert strict-equal? 256 1 * 256
+		--assert strict-equal? 256 multiply 1 256
+		--assert strict-equal? 256 i * j
+		--assert strict-equal? 256 multiply i j
+
+	--test-- "1 * 16777216"
+		i: 1
+		j: 16777216
+		--assert strict-equal? 16777216 1 * 16777216
+		--assert strict-equal? 16777216 multiply 1 16777216
+		--assert strict-equal? 16777216 i * j
+		--assert strict-equal? 16777216 multiply i j
+
+	--test-- "-1 * -2147483648"
+		i: -1
+		j: -2147483648
+		--assert strict-equal? 2147483648 -1 * -2147483648
+		--assert strict-equal? 2147483648 multiply -1 -2147483648
+		--assert strict-equal? 2147483648 i * j
+		--assert strict-equal? 2147483648 multiply i j
+
+	--test-- "-1 * 2147483647"strict-equal? 
+		i: -1
+		j: 2147483647
+		--assert strict-equal? -2147483647 -1 * 2147483647
+		--assert strict-equal? -2147483647 multiply -1 2147483647
+		--assert strict-equal? -2147483647 i * j
+		--assert strict-equal? -2147483647 multiply i j
+
+	--test-- "-1 * 65536"
+		i: -1
+		j: 65536
+		--assert strict-equal? -65536 -1 * 65536
+		--assert strict-equal? -65536 multiply -1 65536
+		--assert strict-equal? -65536 i * j
+		--assert strict-equal? -65536 multiply i j
+
+	--test-- "-1 * 256"
+		i: -1
+		j: 256
+		--assert strict-equal? -256 -1 * 256
+		--assert strict-equal? -256 multiply -1 256
+		--assert strict-equal? -256 i * j
+		--assert strict-equal? -256 multiply i j
+
+	--test-- "-1 * 16777216"
+		i: -1
+		j: 16777216
+		--assert strict-equal? -16777216 -1 * 16777216
+		--assert strict-equal? -16777216 multiply -1 16777216
+		--assert strict-equal? -16777216 i * j
+		--assert strict-equal? -16777216 multiply i j
+
+	--test-- "-2147483648 * 2147483647"
+		i: -2147483648
+		j: 2147483647
+		--assert strict-equal? -4611686016279904256 -2147483648 * 2147483647
+		--assert strict-equal? -4611686016279904256 multiply -2147483648 2147483647
+		--assert strict-equal? -4611686016279904256 i * j
+		--assert strict-equal? -4611686016279904256 multiply i j
+
+	--test-- "-2147483648 * 65536"
+		i: -2147483648
+		j: 65536
+		--assert strict-equal? -140737488355328 -2147483648 * 65536
+		--assert strict-equal? -140737488355328 multiply -2147483648 65536
+		--assert strict-equal? -140737488355328 i * j
+		--assert strict-equal? -140737488355328 multiply i j
+
+	--test-- "-2147483648 * 256"
+		i: -2147483648
+		j: 256
+		--assert strict-equal? -549755813888 -2147483648 * 256
+		--assert strict-equal? -549755813888 multiply -2147483648 256
+		--assert strict-equal? -549755813888 i * j
+		--assert strict-equal? -549755813888 multiply i j
+
+	--test-- "-2147483648 * 16777216"
+		i: -2147483648
+		j: 16777216
+		--assert strict-equal? -36028797018963968 -2147483648 * 16777216
+		--assert strict-equal? -36028797018963968 multiply -2147483648 16777216
+		--assert strict-equal? -36028797018963968 i * j
+		--assert strict-equal? -36028797018963968 multiply i j
+
+	--test-- "2147483647 * 65536"
+		i: 2147483647
+		j: 65536
+		--assert strict-equal? 140737488289792 2147483647 * 65536
+		--assert strict-equal? 140737488289792 multiply 2147483647 65536
+		--assert strict-equal? 140737488289792 i * j
+		--assert strict-equal? 140737488289792 multiply i j
+
+	--test-- "2147483647 * 256"
+		i: 2147483647
+		j: 256
+		--assert strict-equal? 549755813632 2147483647 * 256
+		--assert strict-equal? 549755813632 multiply 2147483647 256
+		--assert strict-equal? 549755813632 i * j
+		--assert strict-equal? 549755813632 multiply i j
+
+	--test-- "2147483647 * 16777216"
+		i: 2147483647
+		j: 16777216
+		--assert strict-equal? 36028797002186752 2147483647 * 16777216
+		--assert strict-equal? 36028797002186752 multiply 2147483647 16777216
+		--assert strict-equal? 36028797002186752 i * j
+		--assert strict-equal? 36028797002186752 multiply i j
+
+	--test-- "65536 * 256"
+		i: 65536
+		j: 256
+		--assert strict-equal? 16777216 65536 * 256
+		--assert strict-equal? 16777216 multiply 65536 256
+		--assert strict-equal? 16777216 i * j
+		--assert strict-equal? 16777216 multiply i j
+
+	--test-- "65536 * 16777216"
+		i: 65536
+		j: 16777216
+		--assert strict-equal? 1099511627776 65536 * 16777216
+		--assert strict-equal? 1099511627776 multiply 65536 16777216
+		--assert strict-equal? 1099511627776 i * j
+		--assert strict-equal? 1099511627776 multiply i j
+
+	--test-- "256 * 16777216"
+		i: 256
+		j: 16777216
+		--assert strict-equal? 4294967296 256 * 16777216
+		--assert strict-equal? 4294967296 multiply 256 16777216
+		--assert strict-equal? 4294967296 i * j
+		--assert strict-equal? 4294967296 multiply i j
+
+===end-group===
 	
 ~~~end-file~~~
