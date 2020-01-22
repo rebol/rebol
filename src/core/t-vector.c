@@ -484,10 +484,12 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	REBSER *vect;
 	REBVAL *iblk = 0;
 
-	// UNSIGNED
-	if (IS_WORD(bp) && VAL_WORD_CANON(bp) == SYM_UNSIGNED) { 
-		sign = 1;
-		bp++;
+	// SIGNED / UNSIGNED
+	if (IS_WORD(bp)) {
+		switch (VAL_WORD_CANON(bp)) {
+		case SYM_UNSIGNED: sign = 1; bp++; break;
+		case SYM_SIGNED:   sign = 0; bp++; break;
+		}
 	}
 
 	// INTEGER! or DECIMAL!

@@ -92,6 +92,11 @@ Rebol [
 	--assert 2 = index? v: make vector! [integer! 16 [1 2] 2]
 	--assert 2 = index? v: make vector! [integer! 16 #{01000200} 2]
 
+--test-- "issue/2395"
+	;@@ https://github.com/rebol/rebol-issues/issues/2395
+	--assert "make vector! [integer! 32 2 [0 0]]" = mold make vector! [signed integer! 32 2]
+	--assert "make vector! [unsigned integer! 32 2 [0 0]]" = mold make vector! [unsigned integer! 32 2]
+
 --test-- "MOLD/flat on vector"
 	;@@ https://github.com/rebol/rebol-issues/issues/2349
 	--assert (mold/flat make vector! [integer! 8 12]) = {make vector! [integer! 8 12 [0 0 0 0 0 0 0 0 0 0 0 0]]}
