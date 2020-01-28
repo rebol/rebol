@@ -477,6 +477,10 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		Append_Byte(mold->series, '}');
 		return;
 	}
+
+	// use `flat` result for images with less than 10 pixels (looks better in console) 
+	if (size < 10) indented = FALSE;
+
 	data = (REBCNT *)VAL_IMAGE_DATA(value);
 	up = Prep_Uni_Series(mold, indented ? ((size * 6) + ((size - 1) / 10) + 1) : (size * 6));
 
