@@ -491,11 +491,11 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		if (indented) Append_Byte(mold->series, '\n');
 		Append_Bytes(mold->series, "} #{");
 
-		up = Prep_Uni_Series(mold, (size * 2) + (size / 10) + 1);
+		up = Prep_Uni_Series(mold, indented ? (size * 2) + (size / 10) + 1 : size * 2);
 
 		data = (REBCNT *)VAL_IMAGE_DATA(value);
 		for (len = 0; len < size; len++) {
-			if ((len % 10) == 0) *up++ = LF;
+			if (indented && (len % 10) == 0) *up++ = LF;
 			up = Form_Hex2_Uni(up, *data++ >> 24);
 		}
 	}

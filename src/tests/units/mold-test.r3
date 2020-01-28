@@ -295,7 +295,8 @@ Rebol [
 	;@@ https://github.com/rebol/rebol-issues/issues/2389
 		--assert (mold/flat make image! 8x1) = {make image! [8x1 #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}]}
 		--assert (mold/flat make image! 8x2) = {make image! [8x2 #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}]}
-
+		--assert (mold/flat make image! [1x1 0.0.0.66]) = {make image! [1x1 #{000000} #{42}]}
+		
 	--test-- "mold/flat/all image!"
 		--assert (mold/all/flat make image! 8x1) = {#[image! 8x1 #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}]}
 		--assert (mold/all/flat next make image! 8x1) = {#[image! 8x1 #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF} 2]}
