@@ -215,82 +215,82 @@ Rebol [
 ===start-group=== "VECTOR math"
 
 --test-- "VECTOR 8bit integer add/subtract"
-	v: make vector! [unsigned integer! 8 [1 2 3 4]]
-	--assert (v + 200) = make vector! [unsigned integer! 8 [201 202 203 204]]
+	v: #[ui8![1 2 3 4]]
+	--assert (v + 200) = #[ui8![201 202 203 204]]
 	; the values are truncated on overflow:
-	--assert (v + 200) = make vector! [unsigned integer! 8 [145 146 147 148]]
-	--assert (v - 400) = make vector! [unsigned integer! 8 [1 2 3 4]]
+	--assert (v + 200) = #[ui8![145 146 147 148]]
+	--assert (v - 400) = #[ui8![1 2 3 4]]
 	subtract (add v 10) 10
-	--assert v = make vector! [unsigned integer! 8 [1 2 3 4]]
+	--assert v = #[ui8![1 2 3 4]]
 	1 + v
-	--assert v = make vector! [unsigned integer! 8 [2 3 4 5]]
+	--assert v = #[ui8![2 3 4 5]]
 	-1.0 + v
-	--assert v = make vector! [unsigned integer! 8 [1 2 3 4]]
+	--assert v = #[ui8![1 2 3 4]]
 
-	v: make vector! [integer! 8 [1 2 3 4]]
-	--assert (v + 125) = make vector! [integer! 8 [126 127 -128 -127]]
-	--assert (v - 125) = make vector! [integer! 8 [1 2 3 4]]
+	v: #[si8![1 2 3 4]]
+	--assert (v + 125) = #[si8![126 127 -128 -127]]
+	--assert (v - 125) = #[si8![1 2 3 4]]
 
 --test-- "VECTOR 8bit integer multiply"
-	v: make vector! [unsigned integer! 8 [1 2 3 4]]
-	--assert (v * 4) = make vector! [unsigned integer! 8 [4 8 12 16]]
+	v: #[ui8![1 2 3 4]]
+	--assert (v * 4) = #[ui8![4 8 12 16]]
 	; the values are truncated on overflow:
-	--assert (v * 20) = make vector! [unsigned integer! 8 [80 160 240 64]] ;64 = (16 * 20) - 256
+	--assert (v * 20) = #[ui8![80 160 240 64]] ;64 = (16 * 20) - 256
 
-	v: make vector! [integer! 8 [1 2 3 4]]
-	--assert (v * 2.0) = make vector! [integer! 8 [2 4 6 8]]
+	v: #[si8![1 2 3 4]]
+	--assert (v * 2.0) = #[si8![2 4 6 8]]
 	; the decimal is first converted to integer (2):
-	--assert (v * 2.4) = make vector! [integer! 8 [4 8 12 16]]
+	--assert (v * 2.4) = #[si8![4 8 12 16]]
 	subtract (add v 10) 10
-	--assert v = make vector! [integer! 8 [4 8 12 16]]
+	--assert v = #[si8![4 8 12 16]]
 
 --test-- "VECTOR 16bit integer multiply"
-	v: make vector! [unsigned integer! 16 [1 2 3 4]]
-	--assert (v * 4) = make vector! [unsigned integer! 16 [4 8 12 16]]
-	--assert (v * 20) = make vector! [unsigned integer! 16 [80 160 240 320]]
+	v: #[ui16![1 2 3 4]]
+	--assert (v * 4)  = #[ui16![4 8 12 16]]
+	--assert (v * 20) = #[ui16![80 160 240 320]]
 	multiply v 2
-	--assert v = make vector! [unsigned integer! 16 [160 320 480 640]]
+	--assert v = #[ui16![160 320 480 640]]
 
-	v: make vector! [unsigned integer! 16 [1 2 3 4]]
-	--assert (10   * copy v) = make vector! [unsigned integer! 16 [10 20 30 40]]
-	--assert (10.0 * copy v) = make vector! [unsigned integer! 16 [10 20 30 40]]
+	v: #[ui16![1 2 3 4]]
+	--assert (10   * copy v) = #[ui16![10 20 30 40]]
+	--assert (10.0 * copy v) = #[ui16![10 20 30 40]]
 
 	; the values are truncated on overflow:
-	v: make vector! [unsigned integer! 16 [1 2 3 4]]
-	--assert (v * 10000) = make vector! [unsigned integer! 16 [10000 20000 30000 40000]]
-	--assert (v * 10.0)  = make vector! [unsigned integer! 16 [34464 3392 37856 6784]]
+	v: #[ui16![1 2 3 4]]
+	--assert (v * 10000) = #[ui16![10000 20000 30000 40000]]
+	--assert (v * 10.0)  = #[ui16![34464 3392 37856 6784]]
 
 --test-- "VECTOR 16bit integer divide"
-	v: make vector! [unsigned integer! 16 [80 160 240 320]]
+	v: #[ui16![80 160 240 320]]
 	v / 20 / 2
 	divide v 2
-	--assert v = make vector! [unsigned integer! 16 [1 2 3 4]]
+	--assert v = #[ui16![1 2 3 4]]
 	--assert error? try [10 / v]
 	--assert error? try [ v / 0] 
 
 --test-- "VECTOR 32bit decimal add/subtract"
-	v: make vector! [decimal! 32 [1 2 3 4]]
-	--assert (v + 200) = make vector! [decimal! 32 [201 202 203 204]]
-	--assert (v + 0.5) = make vector! [decimal! 32 [201.5 202.5 203.5 204.5]]
+	v: #[f32![1 2 3 4]]
+	--assert (v + 200) = #[f32![201 202 203 204]]
+	--assert (v + 0.5) = #[f32![201.5 202.5 203.5 204.5]]
 	; notice the precision lost with 32bit decimal value:
 	v - 0.1
 	--assert 2013 = to integer! 10 * v/1 ; result is not 201.4 as would be with 64bit
 
 --test-- "VECTOR 64bit decimal add/subtract"
-	v: make vector! [decimal! 64 [1 2 3 4]]
-	--assert (v + 200) = make vector! [decimal! 64 [201 202 203 204]]
-	--assert (v + 0.5) = make vector! [decimal! 64 [201.5 202.5 203.5 204.5]]
-	--assert (v - 0.1) = make vector! [decimal! 64 [201.4 202.4 203.4 204.4]]
+	v: #[f64![1 2 3 4]]
+	--assert (v + 200) = #[f64![201 202 203 204]]
+	--assert (v + 0.5) = #[f64![201.5 202.5 203.5 204.5]]
+	--assert (v - 0.1) = #[f64![201.4 202.4 203.4 204.4]]
 
 --test-- "VECTOR 64bit decimal multiply/divide"
-	v: make vector! [decimal! 64 [1 2 3 4]]
-	--assert (v * 20.5) = make vector! [decimal! 64 [20.5 41.0 61.5 82.0]]
-	--assert (v / 20.5) = make vector! [decimal! 64 [1.0 2.0 3.0 4.0]]
+	v: #[f64![1 2 3 4]]
+	--assert (v * 20.5) = #[f64![20.5 41.0 61.5 82.0]]
+	--assert (v / 20.5) = #[f64![1.0 2.0 3.0 4.0]]
 
 --test-- "VECTOR math operation with vector not at head"
-	v: make vector! [integer! 8 [1 2 3 4]]
-	--assert (2 + skip v 2) = make vector! [integer! 8 [5 6]]
-	--assert v = make vector! [integer! 8 [1 2 5 6]]
+	v: #[si8![1 2 3 4]]
+	--assert (2 + skip v 2) = #[si8![5 6]]
+	--assert v = #[si8![1 2 5 6]]
 
 ===end-group===
 
