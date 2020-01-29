@@ -487,6 +487,17 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	// SIGNED / UNSIGNED
 	if (IS_WORD(bp)) {
 		switch (VAL_WORD_CANON(bp)) {
+		case SYM_SI8X:  type = 0; sign = 0; bits =  8; bp++; goto size_spec;
+		case SYM_UI8X:  type = 0; sign = 1; bits =  8; bp++; goto size_spec;
+		case SYM_SI16X: type = 0; sign = 0; bits = 16; bp++; goto size_spec;
+		case SYM_UI16X: type = 0; sign = 1; bits = 16; bp++; goto size_spec;
+		case SYM_SI32X: type = 0; sign = 0; bits = 32; bp++; goto size_spec;
+		case SYM_UI32X: type = 0; sign = 1; bits = 32; bp++; goto size_spec;
+		case SYM_SI64X: type = 0; sign = 0; bits = 64; bp++; goto size_spec;
+		case SYM_UI64X: type = 0; sign = 1; bits = 64; bp++; goto size_spec;
+		case SYM_F32X:  type = 1; sign = 0; bits = 32; bp++; goto size_spec;
+		case SYM_F64X:  type = 1; sign = 0; bits = 64; bp++; goto size_spec;
+
 		case SYM_UNSIGNED: sign = 1; bp++; break;
 		case SYM_SIGNED:   sign = 0; bp++; break;
 		}
@@ -517,6 +528,8 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 		) bp++;
 		else return 0;
 	} else return 0;
+
+size_spec:
 
 	// SIZE
 	if (IS_INTEGER(bp)) {
