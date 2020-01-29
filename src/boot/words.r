@@ -27,7 +27,7 @@ any-object!
 any-block!
 
 ;- numeric types (used for "short" vector! construction)
-;- like: #[ui8 4] which is same like: make vector! [unsigned integer! 8 4]
+;- like: #[ui8! 4] which is same like: make vector! [unsigned integer! 8 4]
 ;  these numeric files are used in l-types.c and t-vector.c sources
 ;  and can be used for future struct! and routine! implementations
 si8!
