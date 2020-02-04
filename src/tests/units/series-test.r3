@@ -112,6 +112,126 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "REMOVE"
+	--test-- "remove-blk-1"
+		a: [1 2 3]
+		--assert [2 3] = remove a
+		--assert [2 3] = a
+
+	--test-- "remove-blk-2"
+		a: [1 2 3]
+		--assert [3] = remove next a
+		--assert [1 3] = a
+
+	--test-- "remove-blk-3"
+		--assert tail? head remove []
+
+	--test-- "remove-blk-4"
+		a: [1 2 3]
+		--assert [3] = remove/part a 2
+		--assert [3] = a
+
+	--test-- "remove-blk-5"
+		a: [1 2 3]
+		--assert [1 2 3] = remove/part a a
+
+	--test-- "remove-blk-6"
+		a: [1 2 3]
+		--assert [2 3] = remove/part a next a
+		--assert [2 3] = a
+	
+	--test-- "remove-blk-7"
+		a: [1 2 3]
+		--assert [1 2 3] =  remove/part a 0
+
+;	--test-- "remove-blk-8"
+;		blk: [a 1 b 2 c 3]
+;		--assert [a 1 c 3] =  remove/key blk 'b
+;
+;	--test-- "remove-blk-9"
+;		blk: [a 1 1 b 2 2 c 3 3]
+;		--assert [a 1 1 c 3 3] =  remove/key/part blk 'b 2
+;
+;	--test-- "remove-hash-1"
+;		hs-remove-1: make hash! [a 2 3]
+;		--assert (make hash! [2 3]) = remove hs-remove-1
+;		--assert none? hs-remove-1/a
+;
+;	--test-- "remove-hash-2"
+;		hs-remove-1: make hash! [a 2 3]
+;		remove next hs-remove-1
+;		--assert 3 = hs-remove-1/a
+;
+;	--test-- "remove-hash-3"
+;		--assert tail? head remove make hash! []
+;
+;	--test-- "remove-hash-4"
+;		hs-remove-1: make hash! [a b c 2]
+;		remove/part hs-remove-1 2
+;		--assert 2 = hs-remove-1/c
+;
+;	--test-- "remove-hash-5"
+;		hs-remove-1: make hash! [a b c 2]
+;		remove/part next hs-remove-1 2
+;		--assert 2 = hs-remove-1/a
+;		--assert none? hs-remove-1/b
+;		--assert none? hs-remove-1/c
+;
+;	--test-- "remove-hash-6"
+;		hs: make hash! [a 1 b 2 c 3]
+;		--assert (make hash! [a 1 c 3]) =  remove/key hs 'b
+;
+;	--test-- "remove-hash-7"
+;		hs: make hash! [a 1 1 b 2 2 c 3 3]
+;		--assert (make hash! [a 1 1 c 3 3]) =  remove/key/part hs 'b 2
+
+	--test-- "remove-str-1"
+		a: "123"
+		--assert "23" = remove a
+		--assert "23" = a
+
+	--test-- "remove-str-2"
+		a: "123"
+		--assert "3" = remove next a
+		--assert "13" = a
+
+	--test-- "remove-str-3"
+		--assert tail? head remove ""
+
+	--test-- "remove-str-4"
+		a: "123"
+		--assert "3" = remove/part a 2
+		--assert "3" = a
+
+	--test-- "remove-str-5"
+		a: "123"
+		--assert "123" = remove/part a a
+
+	--test-- "remove-str-6"
+		a: "123"
+		--assert "23"= remove/part a next a
+		--assert "23" = a
+	
+	--test-- "remove-str-7"
+		a: "123"
+		--assert "123" = remove/part a 0
+	
+	--test-- "remove-str-8"
+		a: "str123"
+		--assert "" = remove back tail a
+		--assert "str12" = head a
+
+	--test-- "remove-bin-1"
+		b: #{00010203}
+		--assert #{010203} = remove b
+	--test-- "remove-bin-2"
+		--assert #{0203} = remove next #{00010203}
+	--test-- "remove-bin-3"
+		--assert #{000203} = head remove next #{00010203}
+	--test-- "remove-bin-4"
+		--assert #{0003} = head remove/part next #{00010203} 2
+===end-group===
+
 ===start-group=== "SORT"
 
 --test-- "SORT/compare"
