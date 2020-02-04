@@ -230,6 +230,14 @@ Rebol [
 		--assert #{000203} = head remove next #{00010203}
 	--test-- "remove-bin-4"
 		--assert #{0003} = head remove/part next #{00010203} 2
+
+	--test-- "issue-146"
+		;@@ https://github.com/rebol/rebol-issues/issues/146
+		b: append [] 0
+		repeat n 10 [ append b n remove b]
+		--assert 1 = length? b
+		--assert 10 = first b
+
 ===end-group===
 
 ===start-group=== "SORT"
