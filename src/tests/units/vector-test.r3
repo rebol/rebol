@@ -81,6 +81,8 @@ Rebol [
 	--assert none? v/3
 	--assert 1 = length? v: make vector! [integer! 16 1 #{01000200}]
 	--assert none? v/2
+	--assert 1 = length? v: #[si16! 1 #{01000200}]
+	--assert none? v/2
 
 --test-- "Extending input specification when size and series is provided"
 	--assert 4 = length? v: make vector! [integer! 16 4 [1 2]]
@@ -91,6 +93,8 @@ Rebol [
 --test-- "Vector created with specified index"
 	--assert 2 = index? v: make vector! [integer! 16 [1 2] 2]
 	--assert 2 = index? v: make vector! [integer! 16 #{01000200} 2]
+	--assert 2 = index? v: #[si16! [1 2] 2]
+	--assert 2 = index? v: #[si16! #{01000200} 2]
 
 --test-- "issue/2395"
 	;@@ https://github.com/rebol/rebol-issues/issues/2395
