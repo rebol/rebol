@@ -242,6 +242,7 @@ Rebol [
 		;@@ https://github.com/rebol/rebol-issues/issues/2397
 		b: make binary! 40000 insert/dup b 0 40000
 		remove/part b to integer! #{8000}
+		--assert 7232 = length? b
 
 ===end-group===
 
