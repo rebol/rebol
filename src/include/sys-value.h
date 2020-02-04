@@ -448,7 +448,7 @@ static REBCNT bit_sizes[4] = { 8, 16, 32, 64 };
 #define VAL_STR_IS_ASCII(v) (VAL_BYTE_SIZE(v) && !Is_Not_ASCII(VAL_BIN_DATA(v), VAL_LEN(v)))
 
 // Bias is empty space in front of head:
-#define	SERIES_BIAS(s)	   (REBCNT)(SERIES_FLAGS(s) >> 16)
+#define	SERIES_BIAS(s)	   (REBCNT)((SERIES_FLAGS(s) >> 16) & 0xffff)
 #define MAX_SERIES_BIAS    0x1000
 #define SERIES_SET_BIAS(s,b) (SERIES_FLAGS(s) = (SERIES_FLAGS(s) & 0xffff) | (b << 16))
 #define SERIES_ADD_BIAS(s,b) (SERIES_FLAGS(s) += (b << 16))

@@ -238,6 +238,11 @@ Rebol [
 		--assert 1 = length? b
 		--assert 10 = first b
 
+	--test-- "issue-2397"
+		;@@ https://github.com/rebol/rebol-issues/issues/2397
+		b: make binary! 40000 insert/dup b 0 40000
+		remove/part b to integer! #{8000}
+
 ===end-group===
 
 ===start-group=== "SORT"
