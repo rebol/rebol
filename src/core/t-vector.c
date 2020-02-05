@@ -586,15 +586,15 @@ size_spec:
 /*
 ***********************************************************************/
 {
+	REBINT num;
+
 	if (mode == 3)
 		return VAL_SERIES(a) == VAL_SERIES(b) && VAL_INDEX(a) == VAL_INDEX(b);
 
-	REBINT n = Compare_Vector(a, b);  // needs to be expanded for equality
-	if (mode >= 0) {
-		return n == 0;
-	}
-	if (mode == -1) return n >= 0;
-	return n > 0;
+	num = Compare_Vector(a, b);
+	if (mode >= 0) return (num == 0);
+	if (mode == -1) return (num >= 0);
+	return (num > 0);
 }
 
 
