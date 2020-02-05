@@ -357,4 +357,15 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "VECTOR copy"
+
+--test-- "COPY/PART"
+	;@@ https://github.com/rebol/rebol-issues/issues/2399
+	v: #[ui16! [1 2 3 4]]
+	--assert           2 = length? copy/part v 2
+	--assert #{01000200} = to-binary copy/part v 2
+	--assert #{03000400} = to-binary copy/part skip v 2 2
+
+===end-group===
+
 ~~~end-file~~~

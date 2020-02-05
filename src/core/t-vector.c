@@ -683,6 +683,7 @@ size_spec:
 	REBSER *ser;
 	REBSER *blk;
 	REBVAL *val;
+	REBINT	len;
 
 	type = Do_Series_Action(action, value, arg);
 	if (type >= 0) return type;
@@ -742,7 +743,8 @@ size_spec:
 		return R_RET;
 
 	case A_COPY:
-		ser = Copy_Series(vect);
+		len = Partial(value, 0, D_ARG(3), 0); // Can modify value index.
+		ser = Copy_Series_Part(vect, VAL_INDEX(value), len);
 		ser->size = vect->size; // attributes
 		SET_VECTOR(value, ser);
 		break;
