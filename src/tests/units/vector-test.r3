@@ -359,6 +359,18 @@ Rebol [
 
 ===start-group=== "VECTOR copy"
 
+--test-- "COPY"
+	;@@ https://github.com/rebol/rebol-issues/issues/2400
+	v1: #[ui16! [1 2]]
+	v2: v1
+	v3: copy v2
+	--assert     same? v1 v2
+	--assert not same? v1 v3
+	v2/1: 3
+	--assert v1/1 = 3
+	--assert v3/1 = 1
+	
+
 --test-- "COPY/PART"
 	;@@ https://github.com/rebol/rebol-issues/issues/2399
 	v: #[ui16! [1 2 3 4]]
