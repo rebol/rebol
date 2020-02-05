@@ -32,20 +32,23 @@ sys: system/contexts/sys
 lib: system/contexts/lib
 
 ;-- Char constants:
-null:      #"^(NULL)"
+null:      #"^@"
 space:     #" "
 sp:        space
-backspace: #"^(BACK)"
+backspace: #"^H"
 bs:        backspace
 tab:       #"^-"
 newline:   #"^/"
 newpage:   #"^l"
 slash:     #"/"
 backslash: #"\"
-escape:    #"^(ESC)"
+escape:    #"^["
 cr:        #"^M"
 lf:        newline
 crlf:      "^M^J"
+
+;-- Bitset constants
+whitespace: #[bitset! #{0064000080}] ;= charset [#" " #"^-" #"^/" #"^M"]
 
 ;-- Function synonyms:
 q: :quit
