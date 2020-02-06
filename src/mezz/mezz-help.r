@@ -126,9 +126,10 @@ import module [
 		/weak "Provides sorting and does not displays unset values"
 		/match "Include only those that match a string or datatype"
 			pattern
+		/only {Do not display "no info" message}
 		/local start wild type str result
 	][
-		result: make string! 250
+		result: clear ""
 		; Search for matching strings:
 		wild: all [string? pattern  find pattern "*"]
 		foreach [word val] obj [
@@ -162,9 +163,9 @@ import module [
 				]
 			]
 		]
-		either all [pattern empty? result] [
+		either all [pattern empty? result not only] [
 			ajoin ["No information on: ^[[32m" pattern "^[[m^/"]
-		][	result ]
+		][	copy result ]
 	]
 
 	out-description: func [des [block!]][
@@ -185,7 +186,7 @@ import module [
 		try [
 			max-desc-width: (query/mode system/ports/input 'buffer-cols) - 36
 		]
-		buffer: any [string  make string! 1024]
+		buffer: any [string  clear ""]
 		catch [
 			case/all [
 				unset? :word [
@@ -202,8 +203,23 @@ import module [
 					throw true
 				]
 				datatype? :value [
-					output ajoin ["^[[1;32m" uppercase mold :word "^[[m is a datatype of value: ^[[32m" mold :value "^[[m^/"]
-					output dump-obj/match system/contexts/lib :word
+					spec: spec-of :value
+					either :word <> to word! :value [
+						; for example: value: string! help value 
+						output ajoin [
+						 "^[[1;32m" uppercase mold :word "^[[m is a datatype of value: ^[[32m" mold :value "^[[m^/"
+						]
+					][
+						; for example: help string! 
+						output ajoin [
+						 "^[[1;32m" uppercase mold :word "^[[m is a datatype.^[[m^/"
+						 "It is defined as" either find "aeiou" first spec/title [" an "] [" a "] spec/title ".^/"
+						 "It is of the general type ^[[1;32m" spec/type "^[[m.^/^/"
+						]
+						unless empty? value: dump-obj/match/only system/contexts/lib :word [
+							output ajoin ["Found these related words:^/" value]
+						]
+					]
 					throw true
 				]
 				not any [word? :word path? :word] [
@@ -320,9 +336,7 @@ import module [
 				]
 			]
 		]
-		also
-			either into [buffer][print head buffer]
-			buffer: none
+		either into [buffer][print head buffer]
 	]
 
 	about: func [
