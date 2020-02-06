@@ -9,6 +9,17 @@ Rebol [
 
 ~~~start-file~~~ "decimal"
 
+===start-group=== "max/min"
+	--test-- "max"
+		--assert  3.0 == max  3.0 1
+		--assert  3.0 == max  3.0 1.0
+		--assert  3.0 == max  3.0 $1
+	--test-- "min"
+		--assert -3.0 == min -3.0 2
+		--assert -3.0 == min -3.0 1.0
+		--assert -3.0 == min -3.0 $1
+===end-group===
+
 ===start-group=== "round"
 	--test-- "round"
 	--assert  1.0 = round  1.4999

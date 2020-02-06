@@ -8,6 +8,17 @@ Rebol [
 
 ~~~start-file~~~ "integer"
 
+===start-group=== "max/min"
+	--test-- "max"
+		--assert  3 == max  3 1
+		--assert  3 == max  3 1.0
+		--assert  3 == max  3 $1
+	--test-- "min"
+		--assert -3 == min -3 2
+		--assert -3 == min -3 1.0
+		--assert -3 == min -3 $1
+===end-group===
+
 ===start-group=== "shift op!"
 	--test-- "shift-op-left"
 		--assert 2 << 3 = 16

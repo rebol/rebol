@@ -9,6 +9,17 @@ Rebol [
 
 ~~~start-file~~~ "money"
 
+===start-group=== "max/min"
+	--test-- "max"
+		--assert  $3 == max  $3 1
+		--assert  $3 == max  $3 1.0
+		--assert  $3 == max  $3 $1
+	--test-- "min"
+		--assert -$3 == min -$3 2
+		--assert -$3 == min -$3 1.0
+		--assert -$3 == min -$3 $1
+===end-group===
+
 ===start-group=== "round"
 	--test-- "round"
 	--assert  $1 = round  $1.4999
