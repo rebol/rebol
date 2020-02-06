@@ -65,5 +65,12 @@ Rebol [
 	--assert -$1 = round/half-ceiling -$1.5
 
 ===end-group===
+
+===start-group=== "money issues"
+	--test-- "issue-1441"
+	;@@ https://github.com/rebol/rebol-issues/issues/1441
+	--assert error? try [load {1 + $}]
+	
+===end-group===
 	
 ~~~end-file~~~
