@@ -503,6 +503,10 @@
 		Append_Map(series, arg, Partial1(arg, D_ARG(AN_LENGTH)));
 		break;
 
+	case A_PUT:
+		Find_Entry(series, arg, D_ARG(3));
+		return R_ARG3;
+
 	case A_POKE:  // CHECK all pokes!!! to be sure they check args now !!!
 		Find_Entry(series, arg, D_ARG(3));
 		*D_RET = *D_ARG(3);

@@ -268,9 +268,17 @@ take: action [
 	/last {Take it from the tail end}
 ]
 
+put: action [
+	{Replaces the value following a key, and returns the new value.}
+	series [any-block! map!] {(modified)}
+	key    [scalar! any-string! any-word! binary!] 
+	value  [any-type!] {The new value (returned)}
+	/case  {Perform a case-sensitive search (only on block so far!)}
+]
+
 insert: action [
 	{Inserts element(s); for series, returns just past the insert.}
-	series [series! port! map! gob! object! bitset! port!] {At position (modified)}
+	series [series! port! map! gob! object! bitset!] {At position (modified)}
 	value [any-type!] {The value to insert}
 	/part {Limits to a given length or position}
 	length [number! series! pair!]

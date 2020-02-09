@@ -31,6 +31,25 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "PUT"
+	--test-- "PUT into map"
+		m: map [a: 42]
+		--assert "foo" = put m 'b "foo"
+		--assert "baz" = put m 'a "baz"
+		--assert "foo" = m/b
+		--assert "baz" = m/a
+
+	--test-- "PUT into protected map"
+		m: map [a: 42]
+		protect m
+		--assert error? err: try [put m 'b "foo"]
+		--assert err/id = 'protected
+		--assert error? err: try [put m 'a "baz"]
+		--assert err/id = 'protected
+		unprotect m
+
+===end-group===
+
 ===start-group=== "reflection"
 	m: make map! b: [a 1 b: 2 :c 3 'd 4 #e 5 /f 6 "a" 7 <b> 8 9 9 #"c" 10 a@b 11]
 	--test-- "body of map"

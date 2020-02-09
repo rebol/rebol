@@ -112,6 +112,52 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "PUT"
+	--test-- "PUT into BLOCK"
+	v: [a 1 b 2 c]
+	--assert 3 = put v 'a 3
+	--assert 4 = put v 'b 4
+	--assert 5 = put v 'c 5
+	--assert 6 = put v 'd 6
+	--assert v = [a 3 b 4 c 5 d 6]
+
+	--test-- "PUT into PAREN"
+	v: quote (a 1 b 2 c)
+	--assert 3 = put v 'a 3
+	--assert 4 = put v 'b 4
+	--assert 5 = put v 'c 5
+	--assert 6 = put v 'd 6
+	--assert v = quote (a 3 b 4 c 5 d 6)
+
+	--test-- "PUT into PATH"
+	v: to path! [a 1 b 2 c]
+	--assert 3 = put v 'a 3
+	--assert 4 = put v 'b 4
+	--assert 5 = put v 'c 5
+	--assert 6 = put v 'd 6
+	--assert v = 'a/3/b/4/c/5/d/6
+
+	--test-- "PUT/CASE words"
+	v: [a 1 b 2]
+	--assert 3 = put v 'a 3
+	--assert 4 = put/case v quote :a 4
+	--assert 5 = put/case v quote 'b 5
+	--assert v = [a 3 b 2 :a 4 'b 5]
+
+	--test-- "PUT/CASE strings"
+	v: ["a" 1 "b" 2]
+	--assert 3 = put v "a" 3
+	--assert 4 = put/case v "A" 4
+	--assert 5 = put/case v "B" 5
+	--assert v = ["a" 3 "b" 2 "A" 4 "B" 5]
+
+	--test-- "PUT on protected block"
+	v: protect [a 1]
+	--assert error? err: try [ put v 'a 2 ]
+	--assert 'protected = err/id
+
+===end-group===
+
 ===start-group=== "REMOVE"
 	--test-- "remove-blk-1"
 		a: [1 2 3]

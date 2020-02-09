@@ -608,6 +608,7 @@ static struct {
 {
 	REBVAL	*value = D_ARG(1);
 	REBVAL  *arg = D_ARG(2);
+	REBVAL  *arg2;
 	REBSER  *ser;
 	REBINT	index;
 	REBINT	tail;
@@ -722,6 +723,25 @@ zero_blk:
 //		else Set_Block(D_RET, Copy_Block_Deep(ser, index, len, D_REF(4) ? COPY_DEEP: 0));
 		Remove_Series(ser, index, len);
 		return R_RET;
+
+	case A_PUT:
+		arg2 = D_ARG(3);
+		args = D_REF(4) ? AM_FIND_CASE : 0;
+		ret = Find_Block(ser, index, tail, arg, len, args, 1);
+		if(ret != NOT_FOUND) {
+			ret++;
+			if (ret >= tail) {
+				// when key is last value in the block
+				Expand_Series(ser, tail, 1);
+			}
+			*BLK_SKIP(ser, ret) = *arg2;
+		}
+		else {
+			Expand_Series(ser, tail, 2);
+			*BLK_SKIP(ser, tail) = *arg;
+			*BLK_SKIP(ser, tail+1) = *arg2;
+		}
+		return R_ARG3;
 
 	//-- Search:
 
