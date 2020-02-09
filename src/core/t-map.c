@@ -291,6 +291,8 @@
 	REBVAL *val = 0;
 	REBINT n = 0;
 
+	if (pvs->setval) TRAP_PROTECT(VAL_SERIES(data));
+
 	if (IS_END(pvs->path+1)) val = pvs->setval;
 	if (IS_NONE(pvs->select)) return PE_NONE;
 
@@ -302,7 +304,6 @@
 
 	if (!n) return PE_NONE;
 
-	TRAP_PROTECT(VAL_SERIES(data));
 	pvs->value = VAL_BLK_SKIP(data, ((n-1)*2)+1);
 	return PE_OK;
 }

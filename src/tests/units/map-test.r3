@@ -20,6 +20,15 @@ Rebol [
 	--test-- "map-issue-598"
 		--assert error? try [make map! [[a] 1]]
 
+	;@@ https://github.com/rebol/rebol-issues/issues/1872
+	--test-- "map-issue-1872"
+		m: map [a: 42]
+		protect m
+		--assert error? err: try [m/a: 0]
+		--assert err/id = 'protected
+		--assert 42 = try [m/a]
+		unprotect m
+
 ===end-group===
 
 ===start-group=== "reflection"
