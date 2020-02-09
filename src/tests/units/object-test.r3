@@ -51,6 +51,13 @@ Rebol [
 		--assert o/x = 1
 		--assert o/y = 2
 
+	--test-- "append on protected object"
+		o: object [a: 1]
+		protect o
+		--assert error? err: try [append o [a: 2]] 
+		--assert err/id = 'protected
+		unprotect o
+
 ===end-group===
 
 ~~~end-file~~~
