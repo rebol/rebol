@@ -83,8 +83,8 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 			if ((VAL_WORD_CANON(arg) == SYM_SELF) && !IS_SELFLESS(obj))
 				Trap0(RE_SELF_PROTECTED);
 			Expand_Frame(obj, 1, 1); // copy word table also
-			Append_Frame(obj, 0, VAL_WORD_SYM(arg));
-			// val is UNSET
+			val = Append_Frame(obj, 0, VAL_WORD_SYM(arg));
+			SET_NONE(val);
 		}
 		return;
 	}

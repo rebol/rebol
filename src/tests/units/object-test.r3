@@ -39,4 +39,18 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "APPEND on OBJECT"
+	;@@ https://github.com/rebol/rebol-issues/issues/708
+	--test-- "issue-708"
+		o: object []
+		append o 'x
+		--assert none? o/x
+		append o [y]
+		--assert none? o/y
+		append o [x: 1 y: 2]
+		--assert o/x = 1
+		--assert o/y = 2
+
+===end-group===
+
 ~~~end-file~~~
