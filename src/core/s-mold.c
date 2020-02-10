@@ -841,6 +841,7 @@ STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 {
 	REBSER *mapser = VAL_SERIES(value);
 	REBVAL *val;
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
 
 	// Prevent endless mold loop:
 	if (Find_Same_Block(MOLD_LOOP, value) > 0) {
@@ -858,7 +859,12 @@ STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	mold->indent++;
 	for (val = BLK_HEAD(mapser); NOT_END(val) && NOT_END(val+1); val += 2) {
 		if (!IS_NONE(val+1)) {
-			if (molded) New_Indented_Line(mold);
+			if (molded) {
+				if(indented) 
+					New_Indented_Line(mold);
+				else if (val > BLK_HEAD(mapser))
+					Append_Byte(mold->series, ' ');
+			}
 			Emit(mold, "V V", val, val+1);
 			if (!molded) Append_Byte(mold->series, '\n');
 		}
@@ -866,7 +872,7 @@ STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	mold->indent--;
 
 	if (molded) {
-		New_Indented_Line(mold);
+		if(indented) New_Indented_Line(mold);
 		Append_Byte(mold->series, ']');
 	}
 

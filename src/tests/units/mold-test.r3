@@ -269,6 +269,31 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "mold map!"
+	--test-- "mold map!"
+	m: make map! [
+		a: 1
+		b: 2
+		c: [
+			3 4
+		]
+	]
+
+	--assert (mold m) = {make map! [
+    a: 1
+    b: 2
+    c: [
+        3 4
+    ]
+]}
+
+	--test-- "mold/flat map!"
+	;@@ https://github.com/rebol/rebol-issues/issues/2401
+
+		--assert "make map! [a: 1 b: 2 c: [3 4]]" = mold/flat m
+
+===end-group===
+
 ===start-group=== "mold binary!"
 	bb: system/options/binary-base ;store original value
 	bin: #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}
