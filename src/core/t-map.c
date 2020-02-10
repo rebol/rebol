@@ -324,10 +324,9 @@
 	}
 }
 
-
 /***********************************************************************
 **
-*/	REBFLG Copy_Map(REBVAL *out, REBVAL *data, REBU64 types)
+*/	REBFLG MT_Map(REBVAL *out, REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
 {
@@ -344,24 +343,13 @@
 	//COPY_BLK_PART(series, VAL_BLK_DATA(data), n);
 	Append_Map(series, data, UNKNOWN);
 
-	if (types != 0) Copy_Deep_Values(series, 0, SERIES_TAIL(series), types);
+	if (type != 0) Copy_Deep_Values(series, 0, SERIES_TAIL(series), type);
 
 	Rehash_Hash(series);
 
 	Set_Series(REB_MAP, out, series);
 
 	return TRUE;
-}
-
-
-/***********************************************************************
-**
-*/	REBFLG MT_Map(REBVAL *out, REBVAL *data, REBCNT type)
-/*
-***********************************************************************/
-{
-	//Oldes: MT means "make type" and has fixed arguments
-	return Copy_Map(out, data, 0);
 }
 
 
@@ -521,7 +509,7 @@
 	case A_TO:
 		// make map! [word val word val]
 		if (IS_BLOCK(arg) || IS_PAREN(arg) || IS_MAP(arg)) {
-			if (Copy_Map(D_RET, arg, 0)) return R_RET;
+			if (MT_Map(D_RET, arg, 0)) return R_RET;
 			Trap_Arg(arg);
 //		} else if (IS_NONE(arg)) {
 //			n = 3; // just a start
@@ -547,7 +535,7 @@
 			if (IS_DATATYPE(arg)) types |= TYPESET(VAL_DATATYPE(arg));
 			else types |= VAL_TYPESET(arg);
 		}
-		if (Copy_Map(D_RET, val, types)) return R_RET;
+		if (MT_Map(D_RET, val, types)) return R_RET;
 		Trap_Arg(val);
 	}
 	case A_CLEAR:
