@@ -8,6 +8,28 @@ Rebol [
 
 ~~~start-file~~~ "map"
 
+===start-group=== "MAP construction"
+	--test-- "map []"
+		m: map [a: 1 b: 2]
+		--assert 1 = m/a
+
+	--test-- "make map! []"
+		m: make map! [a: 1 b: 2]
+		--assert 1 = m/a
+		--assert empty? make map! []
+
+	--test-- "#[map! []]"
+		m: #[map! [a: 1 b: 2]]
+		--assert 2 = m/b
+		--assert empty? #[map! []]
+
+	--test-- "#()"
+		m: #(a: 1 b: 2)
+		--assert 2 = m/b
+		--assert empty? #()
+
+===end-group===
+
 ===start-group=== "map issues"
 	;@@ https://github.com/rebol/rebol-issues/issues/770
 	--test-- "map-issue-770"
@@ -31,16 +53,17 @@ Rebol [
 
 ===end-group===
 
+
 ===start-group=== "PUT"
 	--test-- "PUT into map"
-		m: map [a: 42]
+		m: #(a: 42)
 		--assert "foo" = put m 'b "foo"
 		--assert "baz" = put m 'a "baz"
 		--assert "foo" = m/b
 		--assert "baz" = m/a
 
 	--test-- "PUT into protected map"
-		m: map [a: 42]
+		m: #(a: 42)
 		protect m
 		--assert error? err: try [put m 'b "foo"]
 		--assert err/id = 'protected

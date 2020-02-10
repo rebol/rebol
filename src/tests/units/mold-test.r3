@@ -271,26 +271,30 @@ Rebol [
 
 ===start-group=== "mold map!"
 	--test-- "mold map!"
-	m: make map! [
-		a: 1
-		b: 2
-		c: [
-			3 4
+		m: make map! [
+			a: 1
+			b: 2
+			c: [
+				3 4
+			]
 		]
-	]
 
-	--assert (mold m) = {make map! [
+		--assert (mold m) = {#(
     a: 1
     b: 2
     c: [
         3 4
     ]
-]}
+)}
 
 	--test-- "mold/flat map!"
-	;@@ https://github.com/rebol/rebol-issues/issues/2401
+		;@@ https://github.com/rebol/rebol-issues/issues/2401
+		--assert       "#(a: 1 b: 2 c: [3 4])"  = mold/flat m
+		--assert "#[map! [a: 1 b: 2 c: [3 4]]]" = mold/flat/all m
 
-		--assert "make map! [a: 1 b: 2 c: [3 4]]" = mold/flat m
+	--test-- "mold with recursive value"
+		m/c: m
+		--assert "#(a: 1 b: 2 c: #(...))" = mold/flat m
 
 ===end-group===
 

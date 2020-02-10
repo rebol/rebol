@@ -841,18 +841,22 @@ STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 {
 	REBSER *mapser = VAL_SERIES(value);
 	REBVAL *val;
+	REBOOL all = GET_MOPT(mold, MOPT_MOLD_ALL);
 	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
 
 	// Prevent endless mold loop:
 	if (Find_Same_Block(MOLD_LOOP, value) > 0) {
-		Append_Bytes(mold->series, "...]");
+		Append_Bytes(mold->series, "#(...)");
 		return;
 	}
 	Append_Val(MOLD_LOOP, value);
 
 	if (molded) {
-		Pre_Mold(value, mold);
-		Append_Byte(mold->series, '[');
+		if (all) {
+			Emit(mold, "#[T [", value);
+		} else {
+			Append_Bytes(mold->series, "#(");
+		}
 	}
 
 	// Mold all non-none entries
@@ -873,7 +877,7 @@ STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	if (molded) {
 		if(indented) New_Indented_Line(mold);
-		Append_Byte(mold->series, ']');
+		Append_Byte(mold->series, all ? ']' : ')');
 	}
 
 	End_Mold(mold);

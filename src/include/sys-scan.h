@@ -61,6 +61,7 @@ enum Value_Types {
 	TOKEN_PATH,
 	TOKEN_REFINE,
 	TOKEN_CONSTRUCT,
+	TOKEN_MAP,
 	TOKEN_MAX
 };
 
@@ -96,7 +97,8 @@ const char *Token_Names[TOKEN_MAX] = {
  "TAG",
  "PATH",
  "REFINE",
- "CONSTRUCT"
+ "CONSTRUCT",
+ "MAP"
 };
 #endif
 

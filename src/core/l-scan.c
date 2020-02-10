@@ -933,6 +933,10 @@
 					return -TOKEN_BINARY;
 				}
 			}
+			if (*cp == '(') {
+				scan_state->end = ++cp;
+				return TOKEN_MAP;
+			}
 			if (cp-1 == scan_state->begin) return TOKEN_ISSUE;
 			else return -TOKEN_INTEGER;
 
@@ -1469,6 +1473,15 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 				Trap1(RE_MALCONSTRUCT, value);
 			}
 			emitbuf->tail--; // Unprotect
+			break;
+
+		case TOKEN_MAP:
+			block = Scan_Block(scan_state, ')');
+			// (above line could have realloced emitbuf)
+			ep = scan_state->end;
+			value = BLK_TAIL(emitbuf);
+			Set_Block(value, block);
+			if(!MT_Map(value, value, 0)) Trap1(RE_INVALID_ARG, value);
 			break;
 
 		case TOKEN_EOF: continue;
