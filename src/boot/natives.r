@@ -342,6 +342,12 @@ while: native [
 ;	string [any-string!]
 ;]
 
+as: native [
+	{Coerce a series into a compatible datatype without copying it.}
+	type [any-block! any-string! datatype!] "The datatype or example value"
+	spec [any-block! any-string!] "The series to coerce"
+]
+
 bind: native [
 	{Binds words to the specified context.}
 	word [block! any-word!] {A word or block (modified) (returned)}

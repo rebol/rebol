@@ -450,6 +450,57 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "AS coercion"
+
+--test-- "AS datatype! any-string!"
+	s: "hell"
+	--assert file?  f: as file!  s
+	--assert email? e: as email! s
+	--assert url?   u: as url!   s
+	--assert tag?   t: as tag!   s
+	append s #"o"
+	--assert f = %hello
+	--assert e = to-email %hello
+	--assert u = #[url! "hello"]
+	--assert t = <hello>
+
+--test-- "AS datatype! any-block!"
+	b: [a b]
+	--assert paren?    pa: as paren!    b
+	--assert path?     p:  as path!     b
+	--assert set-path? sp: as set-path! b
+	--assert get-path? gp: as get-path! b
+	--assert lit-path? lp: as lit-path! b
+	append b 'c
+	--assert pa = quote (a b c)
+	--assert p  = quote a/b/c
+	--assert sp = quote a/b/c:
+	--assert gp = quote :a/b/c
+	--assert lp = quote 'a/b/c
+
+--test-- "AS example any-string!"
+	s: "hell"
+	--assert file?  f: as %file  s
+	--assert email? e: as e@mail s
+	--assert url?   u: as #[url! ""] s
+	--assert tag?   t: as <tag>  s
+
+--test-- "AS with protect"
+	b: protect [a b]
+	--assert path? try [p: as path! b]
+	--assert error? e: try [append b 'c]
+	--assert e/id = 'protected
+	--assert error? e: try [append p 'c]
+	--assert e/id = 'protected
+
+--test-- "AS coercion error"
+	--assert error? e: try [as string! []]
+	--assert e/id = 'not-same-class
+	--assert error? e: try [as block! ""]
+	--assert e/id = 'not-same-class
+
+===end-group===
+
 ;-- VECTOR related tests moved to %vector-test.r3
 
 ~~~end-file~~~

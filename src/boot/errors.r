@@ -66,6 +66,7 @@ Script: [
 	no-op-arg:          [:arg1 {operator is missing an argument}]
 	invalid-data:       [{data not in correct format:} :arg1]
 	not-same-type:      {values must be of the same type}
+	not-same-class:     [{cannot coerce} :arg1 {to} :arg2]
 	not-related:        [{incompatible argument for} :arg1 {of} :arg2]
 	bad-func-def:       [{invalid function definition:} :arg1]
 	bad-func-arg:       [{function argument} :arg1 {is not valid}] ; can be a number
@@ -126,7 +127,6 @@ Script: [
 
 	invalid-handle:     {invalid handle}
 	invalid-value-for:  [{invalid value} :arg1 {for:} :arg2]
-
 ]
 
 Math: [

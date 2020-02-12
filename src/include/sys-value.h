@@ -1211,6 +1211,9 @@ typedef struct Reb_All {
 #define ANY_EVAL_BLOCK(v)	(VAL_TYPE(v) >= REB_BLOCK  && VAL_TYPE(v) <= REB_PAREN)
 #define ANY_OBJECT(v)		(VAL_TYPE(v) >= REB_OBJECT && VAL_TYPE(v) <= REB_PORT)
 
+#define ANY_BLOCK_TYPE(t)   (t >= REB_BLOCK   && t <= REB_LIT_PATH)
+#define ANY_STR_TYPE(t)     (t >= REB_STRING  && t <= REB_TAG)
+
 #pragma pack()
 
 #endif // value.h

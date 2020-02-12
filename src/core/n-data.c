@@ -214,6 +214,26 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 /***********************************************************************
 **
+*/	REBNATIVE(as)
+/*
+***********************************************************************/
+{
+	REBVAL *type = D_ARG(1);
+	REBVAL *spec = D_ARG(2);
+	REBCNT target = IS_DATATYPE(type)? VAL_DATATYPE(type) : VAL_TYPE(type);
+	if ((ANY_BLOCK(spec) && ANY_BLOCK_TYPE(target)) || (ANY_STR(spec) && ANY_STR_TYPE(target))) {
+		SET_TYPE(spec, target);
+	} else {
+		Set_Datatype(spec, VAL_TYPE(spec));
+		Set_Datatype(type, target);
+		Trap2(RE_NOT_SAME_CLASS, spec, type);
+	}
+	return R_ARG2;
+}
+
+
+/***********************************************************************
+**
 */	REBNATIVE(as_pair)
 /*
 ***********************************************************************/
