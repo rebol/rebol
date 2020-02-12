@@ -134,21 +134,51 @@ static BOOL Seek_File_64(REBREQ *file)
 	WIN32_FIND_DATA info;
 	HANDLE h= (HANDLE)(dir->handle);
 	REBCHR *cp = 0;
+	REBCNT len;
 
 	if (!h) {
-
-		// Read first file entry:
-		h = FindFirstFile(dir->file.path, &info);
-		if (h == INVALID_HANDLE_VALUE) {
-			dir->error = -RFE_OPEN_FAIL;
-			return DR_ERROR;
+		file->modes = 0;		
+		if (dir->file.path[0] == 0) {
+			// Reading drives.. Rebol code: read %/
+			len = (1 + GetLogicalDriveStrings(0, NULL)) << 1;
+			h = MAKE_MEM(len);
+			GetLogicalDriveStrings(len, h);
+			dir->length = len;
+			dir->actual = 0;
+			file->modes = 0;
+			SET_FLAG(file->modes, RFM_DIR);
+		} else {
+			// Read first file entry:
+			h = FindFirstFile(dir->file.path, &info);
+			if (h == INVALID_HANDLE_VALUE) {
+				dir->error = -RFE_OPEN_FAIL;
+				return DR_ERROR;
+			}
+			cp = info.cFileName;
 		}
 		dir->handle = h;
 		CLR_FLAG(dir->flags, RRF_DONE);
-		cp = info.cFileName;
-
 	}
 
+	if (dir->length > 0) {
+		// Drive names processing...
+		cp = (REBCHR*)h + dir->actual;
+		file->file.path = cp;
+		if (cp[0] == 0 || dir->length <= dir->actual) {
+			// end
+			FREE_MEM(dir->handle);
+			dir->handle = NULL;
+			SET_FLAG(dir->flags, RRF_DONE); // no more files
+			return DR_DONE;
+		}
+		while (cp[0] != 0 && dir->length > dir->actual) {
+			cp++; dir->actual++;
+		}
+		cp[-2] = 0;    // the names are as: "C:\" but we want just "C", so just terminate the string sooner
+		dir->actual++; // skip the null after current drive name
+		return DR_DONE;
+	}
+	// regular DIR processing follows...
 	// Skip over the . and .. dir cases:
 	while (cp == 0 || (cp[0] == '.' && (cp[1] == 0 || (cp[1] == '.' && cp[2] == 0)))) {
 

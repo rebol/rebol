@@ -143,6 +143,13 @@
 		out = UNI_HEAD(dst);
 #ifdef TO_WINDOWS
 		i++;
+		if (len == 1) {
+			// special case: reading drive letters -> read %/
+			// https://github.com/rebol/rebol-issues/issues/2031
+			out[0] = 0;
+			SERIES_TAIL(dst) = 0;
+			return dst;
+		}
 		if (i < len) {
 			c = GET_CHAR_UNI(uni, bp, i);
 			i++;
