@@ -208,4 +208,13 @@ if find codecs 'unixtime [
 	===end-group===
 ]
 
+if find codecs 'JSON [
+	===start-group=== "JSON codec"
+	--test-- "JSON encode/decode"
+		data: #(a: 1 b: #(c: 2.0) d: "^/^-")
+		str: encode 'JSON data
+		--assert data = decode 'JSON str
+	===end-group===
+]
+
 ~~~end-file~~~
