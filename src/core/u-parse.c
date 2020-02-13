@@ -1061,7 +1061,11 @@ post:
 						item = rules++;
 					}
 					// CHECK FOR QUOTE!!
-					item = Get_Parse_Value(item); // new value
+					if (IS_PAREN(item)) {
+						item = Do_Block_Value_Throw(item); // might GC
+					} else {
+						item = Get_Parse_Value(item); // new value
+					}
 					if (IS_UNSET(item)) Trap1(RE_NO_VALUE, rules-1);
 					if (IS_END(item)) goto bad_end;
 					if (IS_BLOCK_INPUT(parse)) {
