@@ -1,53 +1,20 @@
 Red [
 	Title:   "JSON codec"
+	Author:  "Gabriele Santilli"
 	File:    %json.red
-	Version: 0.1.0
-	Author: [
-		"Gregg Irwin" {
-			Ported from %json.r by Romano Paolo Tenca, Douglas Crockford, 
-			and Gregg Irwin.
-			Further research: json libs by Chris Ross-Gill, Kaj de Vos, and
-			@WiseGenius.
-		}
-        "Gabriele Santilli" {
-        	See History.
-       	}
-       	"Oldes" {
-       		Slightly modified Red's version (0.0.4) for use in Rebol (Oldes' branch).
-       	}
-	]
-	History: [
-		0.0.1 10-Sep-2016 "Gregg"    "First release. Based on %json.r"    
-        0.0.2  9-Aug-2018 "Gabriele" "Refactoring and minor improvements"
-        0.0.3 31-Aug-2018 "Gabriele" "Converted to non-recursive version"
-        0.0.4  9-Oct-2018 "Gabriele" "Back to an easier to read recursive version"
-        0.1.0 13-Feb-2020 "Oldes"    "Ported Red's version back to Rebol"
-	]
-	
-	Purpose: "Convert Rebol value into JSON format and back."
-	License: [
-        http://www.apache.org/licenses/LICENSE-2.0
-        and "The Software shall be used for Good, not Evil."
-    ]
-
-	Repository: https://github.com/giesse/red-json
-    References: [
-        http://www.json.org/
-        https://www.ietf.org/rfc/rfc4627.txt
-        http://www.rfc-editor.org/rfc/rfc7159.txt
-        http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf
-        https://github.com/rebolek/red-tools/blob/master/json.red
-        https://github.com/rgchris/Scripts/blob/master/red/altjson.red
-    ]
-
-	Type: 'module
-	Exports: [to-json load-json]
+	Purpose: "Adds JSON as a valid data type to use with LOAD/AS and SAVE/AS"
+	Rights:  "Copyright (C) 2019 Red Foundation. All rights reserved."
+	License: {
+		Distributed under the Boost Software License, Version 1.0.
+		See https://github.com/red/red/blob/master/BSL-License.txt
+	}
 ]
 
-;----------------------------------------------------------------
-;@@ load-json                                                    
+do [
 
+; -- load-json
 
+context [
 ;-----------------------------------------------------------
 ;-- Generic support funcs
 
@@ -72,11 +39,11 @@ BOM-UTF-32?: func [data [string! binary!]][
 enquote: func [str [string!] "(modified)"][append insert str {"} {"}]
 
 high-surrogate?: func [codepoint [integer!]][
-	all [codepoint >= 55296  codepoint <= 56319] ;D800h DBFFh 
+	all [codepoint >= D800h  codepoint <= DBFFh]
 ]
 
 low-surrogate?: func [codepoint [integer!]][
-	all [codepoint >= 56320  codepoint <= 57343] ;DC00h DFFFh
+	all [codepoint >= DC00h  codepoint <= DFFFh]
 ]
 
 translit: func [
@@ -88,10 +55,11 @@ translit: func [
 ][
 	parse string [
 		some [
-			change copy val rule (either block? :xlat [xlat/:val][xlat val])
+			change copy val rule (val either block? :xlat [xlat/:val][xlat val])
 			| skip
 		]
 	]
+	string
 ]
 
 ;-----------------------------------------------------------
@@ -283,7 +251,7 @@ emit: func [value][_res: insert/only _res value]
 ;-----------------------------------------------------------
 ;-- Main decoder func
 
-load-json: func [
+set 'load-json func [
 	"Convert a JSON string to Red data"
 	input [string!] "The JSON string"
 ] [
@@ -296,18 +264,14 @@ load-json: func [
 		]
 	]
 ]
+]
+; -- to-json
 
-
-
-
-
-;----------------------------------------------------------------
-;@@ to-json                                                      
-
+context [
 indent: none
 indent-level: 0
 normal-chars: none
-escapes: #[map! [
+escapes: #(
 	#"^"" {\"}
 	#"\"  "\\"
 	#"^H" "\b"
@@ -315,7 +279,7 @@ escapes: #[map! [
 	#"^/" "\n"
 	#"^M" "\r"
 	#"^-" "\t"
-]]
+)
 
 init-state: func [ind ascii?] [
 	indent: ind
@@ -348,8 +312,8 @@ red-to-json-value: function [output value] [
 	switch/default type?/word :value [
 		none!           [append output "null"]
 		logic!          [append output pick ["true" "false"] value]
-		integer! decimal! [append output value]
-		percent!        [append output to decimal! value]
+		integer! float! [append output value]
+		percent!        [append output to float! value]
 		string! [
 			append output #"^""
 			parse value [
@@ -430,7 +394,7 @@ red-to-json-value: function [output value] [
 	output
 ]
 
-to-json: function [
+set 'to-json function [
 	"Convert Red data to a JSON string"
 	data
 	/pretty indent [string!] "Pretty format the output, using given indentation"
@@ -440,15 +404,15 @@ to-json: function [
 	init-state indent ascii
 	red-to-json-value result data
 ]
+]
 
 
-
-register-codec [
-	name:  'JSON
-	title: "JavaScript Object Notation"
-	suffixes: [%.json]
-
-	encode: func [data [any-type!]] [
+put system/codecs 'json context [
+	Title:     "JSON codec"
+	Name:      'JSON
+	Mime-Type: [application/json]
+	Suffixes:  [%.json]
+	encode: func [data [any-type!] where [file! url! none!]] [
 		to-json data
 	]
 	decode: func [text [string! binary! file!]] [
@@ -456,4 +420,5 @@ register-codec [
 		if binary? text [text: to string! text]
 		load-json text
 	]
+]
 ]
