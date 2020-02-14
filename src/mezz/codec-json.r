@@ -1,5 +1,6 @@
 Red [
 	Title:   "JSON codec"
+	Purpose: "Convert Rebol value into JSON format and back."
 	File:    %json.red
 	Version: 0.1.0
 	Author: [
@@ -23,14 +24,17 @@ Red [
 		0.0.4  9-Oct-2018 "Gabriele" "Back to an easier to read recursive version"
 		0.1.0 13-Feb-2020 "Oldes"    "Ported Red's version back to Rebol"
 	]
-	
-	Purpose: "Convert Rebol value into JSON format and back."
-	License: [
-		http://www.apache.org/licenses/LICENSE-2.0
-		and "The Software shall be used for Good, not Evil."
-	]
 
-	Repository: https://github.com/giesse/red-json
+	Rights:  "Copyright (C) 2019 Red Foundation. All rights reserved."
+	License: {
+		Distributed under the Boost Software License, Version 1.0.
+		See https://github.com/red/red/blob/master/BSL-License.txt
+	}
+
+	Repository: [
+		https://github.com/red/red/blob/master/environment/codecs/json.red
+		https://github.com/giesse/red-json
+	]
 	References: [
 		http://www.json.org/
 		https://www.ietf.org/rfc/rfc4627.txt
@@ -92,6 +96,7 @@ translit: func [
 			| skip
 		]
 	]
+	string
 ]
 
 ;-----------------------------------------------------------

@@ -52,6 +52,9 @@ JPEG decoder:
 Copyright 1994-1996, Thomas G. Lane.
 This file is part of the Independent JPEG Group's software.
 
+JSON codec:
+Copyright (C) 2019 Red Foundation. All rights reserved.
+
 dtoa:
 The author of this software is David M. Gay.
 Copyright (c) 1991, 2000, 2001 by Lucent Technologies.
