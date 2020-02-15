@@ -191,7 +191,7 @@ REBOL [
 	x25519:    #{001D}
 ] 'EllipticCurves
 
-*SignatureAlgorithm: enum [
+*HashAlgorithm: enum [
 	none:       0
 	md5:        1
 	sha1:       2
@@ -200,7 +200,7 @@ REBOL [
 	sha384:     5
 	sha512:     6
 	md5_sha1: 255
-] 'TLSSignatureAlgorithm
+] 'TLSHashAlgorithm
 
 *ClientCertificateType: enum [
 	rsa_sign:                  1
@@ -1511,14 +1511,23 @@ TLS-parse-handshake-message: function [
 							pub_key:     UI8BYTES 
 						  e: INDEX
 						]
-						if not empty? msg/buffer [
-							binary/read msg [
-								sign-algorithm: UI16
-								der: UI16BYTES
-							]
-							;? sign-algorithm ; should be 1027 (ecdsa_secp256r1_sha256)
-							der: system/codecs/der/decode der
-						]
+						;@@ TODO: remove this if there will not be any issues!
+						;if not empty? msg/buffer [
+						;	binary/read msg [
+						;		hash-algorithm: UI8
+						;		sign-algorithm: UI8
+						;		der: UI16BYTES
+						;	]
+						;	log-info [
+						;		"Algorithms-> hash:" *HashAlgorithm/name hash-algorithm "(" hash-algorithm ")"
+						;		"sign:" *ClientCertificateType/name sign-algorithm "(" sign-algorithm ")"
+						;	]
+						;	;? sign-algorithm ; should be 1027 (ecdsa_secp256r1_sha256)
+						;	if sign-algorithm = *SignatureAlgorithm/ecdsa
+						;		der: system/codecs/der/decode der
+						;		?? der
+						;	]
+						;]
 					][
 						log-error "Error reading elyptic curve"
 						? err
@@ -1535,9 +1544,10 @@ TLS-parse-handshake-message: function [
 					]
 					log-more ["R[" ctx/seq-read "] Elyptic curve type:" ECCurve "=>" curve]
 					log-more ["R[" ctx/seq-read "] Elyptic curve data:" pub_key]
-					if der [
-						log-more ["R[" ctx/seq-read "] Elyptic curve signature:" mold der]
-					]
+					;@@ TODO: remove this if there will not be any issues!
+					;if der [
+					;	log-more ["R[" ctx/seq-read "] Elyptic curve signature:" mold der]
+					;]
 				]
 				DHE_DSS
 				DHE_RSA [
@@ -1564,9 +1574,9 @@ TLS-parse-handshake-message: function [
 			hash-algorithm: 'md5_sha1
 			sign-algorithm: 'rsa_sign
 			;-- check signature
-			if not ctx/legacy? [
+			unless ctx/legacy? [
 				;signature
-				hash-algorithm: *SignatureAlgorithm/name    binary/read msg 'UI8
+				hash-algorithm:         *HashAlgorithm/name binary/read msg 'UI8
 				sign-algorithm: *ClientCertificateType/name binary/read msg 'UI8
 				log-more ["R[" ctx/seq-read "] Using algorithm:" hash-algorithm "with" sign-algorithm]
 				binary/read msg [signature: UI16BYTES]
@@ -1598,6 +1608,7 @@ TLS-parse-handshake-message: function [
 							]
 							rsa_fixed_dh [
 								log-more "Checking signature using RSA_fixed_DH"
+								der: decode 'der signature
 								signature: join der/2/2 der/2/4
 								;? ctx/pub-key
 								;? signature
