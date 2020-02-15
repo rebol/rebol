@@ -559,7 +559,8 @@ bad_target:
 	return i;
 }
 
-
+#ifdef USE_DO_PARSE_RULE
+//@@ https://github.com/Oldes/Rebol-issues/issues/2083
 /***********************************************************************
 **
 */	static REBCNT Do_Eval_Rule(REBPARSE *parse, REBCNT index, REBVAL **rule)
@@ -653,7 +654,7 @@ bad_target:
 	UNSAVE_SERIES(newparse.series);
 	return n;
 }
-
+#endif // USE_DO_PARSE_RULE
 
 /***********************************************************************
 **
@@ -931,13 +932,13 @@ bad_target:
 						&& (Parse_Series(val, VAL_BLK_DATA(item), parse->flags, depth+1) == VAL_TAIL(val))
 					) ? index+1 : NOT_FOUND;
 					break;
-
+#ifdef USE_DO_PARSE_RULE
 				case SYM_DO:
 					if (!IS_BLOCK_INPUT(parse)) goto bad_rule;
 					i = Do_Eval_Rule(parse, index, &rules);
 					rulen = 1;
 					break;
-
+#endif
 				default:
 					goto bad_rule;
 				}

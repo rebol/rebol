@@ -60,5 +60,15 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "DO"
+
+--test-- "issue-2083"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2083
+;@@ https://github.com/Oldes/Rebol-issues/issues/2085
+	--assert error? err: try [parse [1 + 1] [set result do integer!]]
+	--assert err/id = 'parse-rule
+
+===end-group===
+
 
 ~~~end-file~~~
