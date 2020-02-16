@@ -360,6 +360,16 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "FOREACH"
+
+--test-- "FOREACH on string"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/15
+	data: copy ""
+	foreach x "123" [append data x]
+	--assert "123" = data
+
+===end-group===
+
 ===start-group=== "STRING conversion"
 
 --test-- "issues/2336"
