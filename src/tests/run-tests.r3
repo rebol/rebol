@@ -10,6 +10,7 @@ dt [ ;- delta time
 	;recycle/torture
 	wrap load %units/mold-test.r3
 	wrap load %units/lexer-test.r3
+	wrap load %units/load-test.r3
 	wrap load %units/evaluation-test.r3
 	wrap load %units/enbase-test.r3
 	wrap load %units/map-test.r3
