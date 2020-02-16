@@ -425,4 +425,14 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "STACK"
+	--test-- "issue-1623"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1623
+		--assert block? b: stack 0
+		--assert 'stack = first b
+		--assert 'stack = stack/word 0
+
+===end-group===
+
+
 ~~~end-file~~~
