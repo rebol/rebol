@@ -960,7 +960,17 @@ if product = 'view [
 foreach section [boot-base boot-sys boot-mezz] [
 	set section make block! 200
 	foreach file first mezz-files [
-		append get section load join %../mezz/ file
+		file: load/header join %../mezz/ file
+		append get section either 'module = select file/1 'type [
+			compose/deep/only [
+				import module [
+					Title:   (select file/1 'title)
+					Name:    (select file/1 'name)
+					Version: (select file/1 'version)
+					Exports: (select file/1 'exports)
+				] ( next file )
+			]
+		][	next file ]
 	]
 	remove-tests get section
 	mezz-files: next mezz-files

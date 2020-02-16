@@ -1,7 +1,8 @@
-Red [
+Rebol [
 	Title:   "JSON codec"
+	Name:    'JSON
 	Purpose: "Convert Rebol value into JSON format and back."
-	File:    %json.red
+	File:    %codec-json.r
 	Version: 0.1.0
 	Author: [
 		"Gregg Irwin" {
