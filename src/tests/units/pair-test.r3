@@ -220,4 +220,12 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "pair - issues"
+
+	--test-- "invalid construction"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/17
+		--assert error? try [to-pair [,4]]
+
+===end-group===
+
 ~~~end-file~~~
