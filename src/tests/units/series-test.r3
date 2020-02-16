@@ -112,6 +112,12 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "REVERSE"
+	--test-- "issue-19"
+		--assert "4321" = sort/reverse "1234"
+		--assert "4321" = sort/reverse/reverse "1234"
+===end-group===
+
 ===start-group=== "PUT"
 	--test-- "PUT into BLOCK"
 	v: [a 1 b 2 c]
