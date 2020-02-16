@@ -22,6 +22,18 @@ Rebol [
 		--assert image? to image! make gob! []
 ===end-group===
 
+===start-group=== "FOREACH"
+	--test-- "issue-1479"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1479
+	pix: copy []
+	img: make image! [1x2 #{010203040506} #{0102}]
+	foreach p img[ append pix p ]
+	--assert img/1 = pix/1
+	--assert img/2 = pix/2
+	--assert img/1 = 1.2.3.1
+	--assert img/2 = 4.5.6.2
+===end-group===
+
 ===start-group=== "image range"
 	img: make image! 2x2
 	--test-- "image range (integer index)"

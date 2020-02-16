@@ -414,7 +414,7 @@
 							SET_INTEGER(vars, (REBI64)(BIN_HEAD(series)[index]));
 						}
 						else if (IS_IMAGE(value)) {
-							Set_Tuple_Pixel(BIN_SKIP(series, index), vars);
+							Set_Tuple_Pixel(BIN_SKIP(series, index<<2), vars);
 						}
 						else {
 							VAL_SET(vars, REB_CHAR);
