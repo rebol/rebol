@@ -501,6 +501,15 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "TAG"
+
+--test-- "Join tags"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/10
+	--assert "<a<b b>>" = form append <a> <b b>
+	--assert "<a<b b>>" = join <a> <b b>
+
+===end-group===
+
 ;-- VECTOR related tests moved to %vector-test.r3
 
 ~~~end-file~~~
