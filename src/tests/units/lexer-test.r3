@@ -14,6 +14,12 @@ Rebol [
 		--assert err/id = 'invalid-arg
 		--assert error? err: try [load {#(x}]
 		--assert all [err/id = 'missing err/arg1 = "end-of-script" err/arg2 = ")"]
+
+	--test-- "Invalid word"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/22
+		--assert error? try [load "':a"]
+		--assert error? try [load "':a:"]
+
 ===end-group===
 
 ===start-group=== "SIGN before POUND char (issue #2319)"
