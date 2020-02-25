@@ -116,6 +116,14 @@ if "true" <> get-env "CONTINUOUS_INTEGRATION" [
 			--assert block?   v: query/mode system/ports/input m
 			--assert 4 = length? v
 	===end-group===
+
+	===start-group=== "HTTP"	
+		--test-- "exists? url"
+			;@@ https://github.com/Oldes/Rebol3/issues/14
+			--assert     exists? http://httpbin.org/
+			--assert not exists? http://httpbin.org/not-exists
+
+	===end-group===
 ]
 
 ~~~end-file~~~

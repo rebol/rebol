@@ -20,7 +20,9 @@ exists?: func [
 	{Determines if a file or URL exists.}
 	target [file! url!]
 ][
-	not none? query/mode target 'type
+	either error? try [
+		target: query/mode target 'type
+	][	false ][ not none? target ]
 ]
 
 size?: func [
