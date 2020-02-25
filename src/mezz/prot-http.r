@@ -11,7 +11,7 @@ REBOL [
 	}
 	Name: 'http
 	Type: 'module
-	Version: 0.3.0
+	Version: 0.3.2
 	File: %prot-http.r
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -29,6 +29,8 @@ REBOL [
 		0.2.0 28-Mar-2019 "Oldes" "FIX: close connection in case of errors"
 		0.2.1 02-Apr-2019 "Oldes" "FEAT: Reusing connection in redirect when possible"
 		0.3.0 06-Jul-2019 "Oldes" "FIX: Error handling revisited and improved dealing with chunked data"
+		0.3.1 13-Feb-2020 "Oldes" "FEAT: Possible auto conversion to text if found charset specification in content-type"
+		0.3.2 25-Feb-2020 "Oldes" "FIX: Properly handling chunked data"
 	]
 ]
 
@@ -44,7 +46,12 @@ sync-op: func [port body /local state encoding content-type code-page tmp][
 	while [not find [ready close] state/state][
 		;print "HTTP sync-op loop"
 		unless port? wait [state/connection port/spec/timeout][
-			throw-http-error port "HTTP(s) Timeout"
+			throw-http-error port make error! [
+				type: 'Access
+				id:   'no-connect
+				arg1: port/spec/ref
+				arg2: 'timeout
+			]
 			exit
 		]
 		switch state/state [
@@ -94,7 +101,12 @@ sync-op: func [port body /local state encoding content-type code-page tmp][
 
 	if all [
 		content-type: select port/state/info/headers 'Content-Type
-		parse content-type ["text/" [thru "charset=" copy code-page to end] to end]
+		any [
+			; consider content to be a text if charset specification is included
+			parse content-type [to #";" thru "charset=" copy code-page to end]
+			; or when it is without charset, but of type text/*
+			parse content-type ["text/" to end]
+		]
 	][
 		unless code-page [code-page: "utf-8"]
 		sys/log/info 'HTTP ["Trying to decode from code-page:^[[m" code-page]
@@ -162,7 +174,8 @@ http-awake: func [event /local port http-port state awake res][
 			read port
 			false
 		]
-		lookup [open port false]
+		lookup [
+			open port false]
 		connect [
 			state/state: 'ready
 			awake make event! [type: 'connect port: http-port]
@@ -175,27 +188,33 @@ http-awake: func [event /local port http-port state awake res][
 					awake make event! [type: 'close port: http-port]
 				]
 				inited [
-					throw-http-error http-port  any [
-						all [state/connection state/connection/state/error]
+					throw-http-error http-port any [
+						http-port/state/error
+						all [object? state/connection/state state/connection/state/error]
 						make error! [
-							code: 500 type: 'access id: 'cannot-open
-							arg1: port/spec/ref
-					]]
+							type: 'Access
+							id:   'no-connect
+							arg1: http-port/spec/ref
+						]
+					]
 				]
 				doing-request reading-headers [
 					throw-http-error http-port any [
-						all [state/connection state/connection/state/error]
+						all [object? state/connection/state state/connection/state/error]
 						"Server closed connection"
 					]
 				]
 				reading-data [
-					either any [integer? state/info/headers/content-length state/info/headers/transfer-encoding = "chunked"][
+					either any [
+						integer? state/info/headers/content-length
+						state/info/headers/transfer-encoding = "chunked"
+					][
 						throw-http-error http-port "Server closed connection"
 					][
 						;set state to CLOSE so the WAIT loop in 'sync-op can be interrupted --Richard
 						state/state: 'close
 						any [
-							awake make event! [type: 'done port: http-port]
+							awake make event! [type: 'done  port: http-port]
 							awake make event! [type: 'close port: http-port]
 						]
 					]
@@ -217,7 +236,7 @@ throw-http-error: func [
 	http-port  [port!]
 	error [error! string! block!]
 ][
-	sys/log/info 'HTTP ["Throwing error:^[[m" error]
+	sys/log/debug 'HTTP ["Throwing error:^[[m" error]
 	unless error? error [
 		error: make error! [
 			type: 'Access
@@ -235,8 +254,8 @@ make-http-request: func [
 	"Create an HTTP request (returns string!)"
 	method [word! string!] "E.g. GET, HEAD, POST etc."
 	target [file! string!] {In case of string!, no escaping is performed (eg. useful to override escaping etc.). Careful!}
-	headers [block!] "Request headers (set-word! string! pairs)"
-	content [any-string! binary! none!] {Request contents (Content-Length is created automatically). Empty string not exactly like none.}
+	headers [block! map!] "Request headers (set-word! string! pairs)"
+	content [any-string! binary! map! none!] {Request contents (Content-Length is created automatically). Empty string not exactly like none.}
 	/local result
 ][
 	result: rejoin [
@@ -248,6 +267,7 @@ make-http-request: func [
 		repend result [mold word #" " string CRLF]
 	]
 	if content [
+		if map? content [content: to-json content]
 		content: to binary! content
 		repend result ["Content-Length: " length? content CRLF]
 	]
@@ -275,7 +295,7 @@ do-request: func [
 			form spec/host
 		]
 		User-Agent: any [system/schemes/http/User-Agent "REBOL"]
-	] spec/headers
+	] to block! spec/headers
 	port/state/state: 'doing-request
 	info/headers: info/response-line: info/response-parsed: port/data:
 	info/size: info/date: info/name: none
@@ -286,8 +306,11 @@ do-request: func [
 ]
 parse-write-dialect: func [port block /local spec][
 	spec: port/spec
-	parse block [[set block word! (spec/method: block) | (spec/method: 'POST)]
-		opt [set block [file! | url!] (spec/path: block)][set block block! (spec/headers: block) | (spec/headers: [])][set block [any-string! | binary!] (spec/content: block) | (spec/content: none)]
+	parse block [
+		[set block word! (spec/method: block) | (spec/method: 'POST)]
+		opt [set block [file! | url!] (spec/path: block)]
+		[set block [block! | map!] (spec/headers: block) | (spec/headers: [])]
+		[set block [any-string! | binary! | map!] (spec/content: block) | (spec/content: none)]
 	]
 ]
 check-response: func [port /local conn res headers d1 d2 line info state awake spec][
@@ -329,13 +352,9 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 		]
 		; allow invalid date, but ignore it on error
 		try [if headers/last-modified  [info/date: to-date/utc headers/last-modified]]
-		;remove/part conn/data d2
-		conn/data: d2
-		state/read-pos: index? d2
+		remove/part conn/data d2
 		state/state: 'reading-data
 	]
-	;? state
-	;?? headers
 	unless headers [
 		read conn
 		return false
@@ -499,7 +518,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state][
 			do-request port
 			return true
 		]
-		new-uri: to url! ajoin [spec/scheme "://" spec/host #":" spec/port-id new-uri]
+		new-uri: as url! ajoin [spec/scheme "://" spec/host #":" spec/port-id new-uri]
 	]
 	new-uri: decode-url new-uri
 
@@ -511,7 +530,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state][
 	]
 	new-uri: construct/with new-uri port/scheme/spec
 	new-uri/method: spec/method
-	new-uri/ref: to url! ajoin either find [#[none] 80 443] new-uri/port-id [
+	new-uri/ref: as url! ajoin either find [#[none] 80 443] new-uri/port-id [
 		[new-uri/scheme "://" new-uri/host new-uri/path]
 	][	[new-uri/scheme "://" new-uri/host #":" new-uri/port-id new-uri/path]]
 
@@ -526,7 +545,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state][
 	open port
 ]
 
-check-data: func [port /local headers res data available out chunk-size pos1 pos2 trailer state conn][
+check-data: func [port /local headers res data available out chunk-size pos trailer state conn][
 	state: port/state
 	headers: state/info/headers
 	conn: state/connection
@@ -536,74 +555,71 @@ check-data: func [port /local headers res data available out chunk-size pos1 pos
 
 	case [
 		headers/transfer-encoding = "chunked" [
-			;data: binary conn/data ;- data from lower layer (TLS or TCP)
-			;available: length? data/buffer
-			data: at head conn/data state/read-pos
+			data: conn/data ;- data from lower layer (TLS or TCP)
 			available: length? data
 
-			sys/log/more 'HTTP ["Chunked data: " state/chunk-size "av:" available index? data state/read-pos mold copy/part data 30]
-			unless port/data [
-				;port/data: binary 32000 ; used to hold output
-				port/data: make binary! 32000
-			]
+			sys/log/more 'HTTP ["Chunked data: " state/chunk-size "av:" available]
+
+			unless port/data [ port/data: make binary! 32000 ]
 			out: port/data 
 
 			if state/chunk-size [
+				;- rests from previous unfinished chunk
 				either state/chunk-size <= available [
 					; we have enough data to end the chunk
-					;append out binary/read data state/chunk-size
-					append out copy/part data state/chunk-size
-					data: skip data state/chunk-size
+					append out take/part data state/chunk-size
 					state/chunk-size: none
-
-					either parse data [crlfbin pos1: to end][
-						data: pos1
-					][
+					if crlfbin <> take/part data 2 [
 						throw-http-error port "Missing CRLF after chunk end!"
 					]
 				][
-					append out copy/part data available
+					append out take/part data available
 					state/chunk-size: state/chunk-size - available
-					data: tail data
 				]
 			]
-
-			until [
-
-				either parse/all data [
-					copy chunk-size some hex-digits
-					crlfbin pos1: to end
-				][
-					state/chunk-size: chunk-size: to integer! to issue! to string! chunk-size
-					data: pos1
-					state/read-pos: index? data
-					sys/log/more 'HTTP ["Chunk-size:^[[m" chunk-size "^[[36mfrom:^[[m" state/read-pos]
-					either chunk-size = 0 [
-						if parse/all data [
-							crlfbin (trailer: "") to end | copy trailer to crlf2bin to end
-						][
-							trailer: construct trailer
-							append headers body-of trailer
-							state/state: 'ready
-							res: state/awake make event! [type: 'custom port: port code: 0]
-							clear head conn/data
-						]
-						true ; end of loop
+			if not empty? data [
+				until [
+					either parse/all data [
+						copy chunk-size some hex-digits
+						crlfbin pos: to end
 					][
-						either parse/all data [
-							chunk-size skip pos2: crlfbin to end
+						;- ugly conversion of the chunk size from hexadecimal string to integer
+						chunk-size: to integer! to issue! to string! :chunk-size
+						remove/part data pos
+						available: length? data
+						sys/log/more 'HTTP ["Chunk-size:^[[m" chunk-size " ^[[36mavailable:^[[m " available]
+						either chunk-size = 0 [
+							if parse/all data [
+								crlfbin (trailer: "") to end | copy trailer to crlf2bin to end
+							][
+								trailer: construct trailer
+								append headers body-of trailer
+								state/state: 'ready
+								res: state/awake make event! [type: 'custom port: port code: 0]
+								clear head conn/data
+							]
+							true ; end of loop
 						][
-							;print "chunk ready..."
-							append/part out pos1 pos2
-							data: skip pos2 2
-							empty? data
-						][	true ] ; end of loop
-					]
-				][	true ] ; end of loop
+							available: length? data
+							either chunk-size <= available [
+								append out take/part data :chunk-size
+								if crlfbin <> take/part data 2 [
+									throw-http-error port "Missing CRLF after chunk end!???"
+								]
+								empty? data
+							][
+								;print "unfinished chunk.."
+								state/chunk-size: chunk-size - available
+								append out take/part data available
+								true ; end of loop
+							]
+						]
+					][
+						throw-http-error port "Invalid chunk data!"
+						true ; end of loop
+					] 
+				]
 			]
-			conn/data: data
-			state/read-pos: index? data
-			;print ["-------------> " state/read-pos]
 			unless state/state = 'ready [
 				;Awake from the WAIT loop to prevent timeout when reading big data. --Richard
 				res: true
@@ -652,6 +668,7 @@ sys/make-scheme [
 	actor: [
 		read: func [
 			port [port!]
+			/binary 
 		][
 			sys/log/debug 'HTTP "READ"
 			either any-function? :port/awake [
@@ -706,7 +723,7 @@ sys/make-scheme [
 				scheme: (to lit-word! either port/spec/scheme = 'http ['tcp]['tls])
 				host: port/spec/host
 				port-id: port/spec/port-id
-				ref: to url! ajoin [scheme "://" host #":" port-id]
+				ref: as url! ajoin [scheme "://" host #":" port-id]
 			]
 			
 			conn/awake: :http-awake
