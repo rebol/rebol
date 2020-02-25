@@ -160,7 +160,10 @@ sys/make-scheme [
 							thru "^/   Registrar WHOIS Server: "
 						] copy refer to LF to end
 					]
-					find port/spec/path #"." ;- follow only if request is TLD
+					any [
+						tuple? port/spec/path    ;- follow if request is IP...
+						find port/spec/path #"." ;- ... or TLD
+					]
 					port/spec/host <> refer: trim/all refer
 				][
 					close port/state/connection
