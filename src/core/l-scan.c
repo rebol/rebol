@@ -782,12 +782,12 @@
         }
 
     case LEX_CLASS_SPECIAL:
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT) && *cp != '<') return TOKEN_EMAIL;
+        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT) && *cp != '<') return TOKEN_EMAIL; // for case like: %61@b which is actually: a@b
     next_ls:
         switch (GET_LEX_VALUE(*cp)) {
 
-        case LEX_SPECIAL_AT:
-            return -TOKEN_EMAIL;
+        case LEX_SPECIAL_AT:            /* @username */
+            return TOKEN_EMAIL;
 
         case LEX_SPECIAL_PERCENT:       /* %filename */
             cp = scan_state->end;

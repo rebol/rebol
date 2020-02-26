@@ -22,6 +22,13 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Email"
+	--test-- "valid `emails`"
+		--assert email? load {name@where}
+		--assert email? load {@name} ;@@ https://github.com/Oldes/Rebol-issues/issues/1962
+
+===end-group===
+
 ===start-group=== "SIGN before POUND char (issue #2319)"
 ;@@ https://github.com/rebol/rebol-issues/issues/2319
 	--test-- "sign-before-pound-1"	--assert  [- #"a"] = (load {-#"a"})
