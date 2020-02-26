@@ -313,6 +313,12 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "mold email!"
+	--test-- "issue-159"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/159
+		--assert "a@b" = mold a@b
+===end-group===
+
 ===start-group=== "mold image!"
 
 	--test-- "mold empty image"
