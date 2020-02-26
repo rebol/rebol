@@ -317,6 +317,11 @@ Rebol [
 	--test-- "issue-159"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/159
 		--assert "a@b" = mold a@b
+	--test-- "issue-2406"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2406
+		--assert "a@šiška" = mold a@šiška
+		--assert "a@š" = mold a@%C5%A1
+
 ===end-group===
 
 ===start-group=== "mold image!"

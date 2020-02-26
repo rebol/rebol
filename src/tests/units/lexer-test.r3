@@ -26,6 +26,8 @@ Rebol [
 	--test-- "valid `emails`"
 		--assert email? load {name@where}
 		--assert email? load {@name} ;@@ https://github.com/Oldes/Rebol-issues/issues/1962
+		--assert email? load {a@šiška}
+		--assert email? load {@%C5%A1}
 
 ===end-group===
 

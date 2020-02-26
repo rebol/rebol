@@ -705,14 +705,11 @@ end_date:
 **
 ***********************************************************************/
 {
-	REBYTE *str;
+	REBYTE *str = Reset_Buffer(BUF_FORM, len);
 	REBOOL at = FALSE;
 	REBUNI n;
+	REBCNT cnt = len;
 
-	VAL_SERIES(value) = Make_Binary(len);
-	VAL_INDEX(value) = 0;
-
-	str = VAL_BIN(value);
 	for (; len > 0; len--) {
 		if (*cp == '@') {
 			if (at) return 0;
@@ -721,14 +718,17 @@ end_date:
 		if (*cp == '%') {
 			if (len <= 2 || !Scan_Hex2(cp+1, &n, FALSE)) return 0;
 			*str++ = (REBYTE)n;
-			cp += 3;
+			cp  += 3;
 			len -= 2;
+			cnt -= 2;
 		}
 		else *str++ = *cp++;
 	}
 	*str = 0;
 	if (!at) return 0;
-	VAL_TAIL(value) = (REBCNT)(str - VAL_BIN(value));
+
+	VAL_SERIES(value) = Decode_UTF_String(BIN_DATA(BUF_FORM), cnt, 8, FALSE);
+	VAL_INDEX(value) = 0;
 	VAL_SET(value, REB_EMAIL);
 	return cp;
 }
