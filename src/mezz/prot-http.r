@@ -11,13 +11,13 @@ REBOL [
 	}
 	Name: 'http
 	Type: 'module
-	Version: 0.3.2
+	Version: 0.3.3
+	Date: 25-Feb-2020
 	File: %prot-http.r
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
 	}
 	Author: ["Gabriele Santilli" "Richard Smolak" "Oldes"]
-	Date: 02-Apr-2019
 	History: [
 		0.1.1 22-Jun-2007 "Gabriele Santilli" "Version used in R3-Alpha"
 		0.1.4 26-Nov-2012 "Richard Smolak"    "Version from Atronix's fork"
@@ -31,10 +31,11 @@ REBOL [
 		0.3.0 06-Jul-2019 "Oldes" "FIX: Error handling revisited and improved dealing with chunked data"
 		0.3.1 13-Feb-2020 "Oldes" "FEAT: Possible auto conversion to text if found charset specification in content-type"
 		0.3.2 25-Feb-2020 "Oldes" "FIX: Properly handling chunked data"
+		0.3.3 25-Feb-2020 "Oldes" "FEAT: support for read/binary and write/binary to force raw data result"
 	]
 ]
 
-sync-op: func [port body /local state encoding content-type code-page tmp][
+sync-op: func [port body /local header state encoding content-type code-page tmp][
 	unless port/state [open port port/state/close?: yes]
 	state: port/state
 	state/awake: :read-sync-awake
@@ -49,7 +50,7 @@ sync-op: func [port body /local state encoding content-type code-page tmp][
 			throw-http-error port make error! [
 				type: 'Access
 				id:   'no-connect
-				arg1: port/spec/ref
+				arg1:  port/spec/ref
 				arg2: 'timeout
 			]
 			exit
@@ -99,26 +100,16 @@ sync-op: func [port body /local state encoding content-type code-page tmp][
 		]
 	]
 
-	if all [
-		content-type: select port/state/info/headers 'Content-Type
-		any [
-			; consider content to be a text if charset specification is included
-			parse content-type [to #";" thru "charset=" copy code-page to end]
-			; or when it is without charset, but of type text/*
-			parse content-type ["text/" to end]
-		]
-	][
-		unless code-page [code-page: "utf-8"]
-		sys/log/info 'HTTP ["Trying to decode from code-page:^[[m" code-page]
-		if string? tmp: try [iconv body code-page][	body: tmp ]
-	]
+	header: copy port/state/info/headers
 
 	if state/close? [
 		sys/log/more 'HTTP ["Closing port for:^[[m" port/spec/ref]
 		close port
 	]
-	body
+
+	reduce [header body]
 ]
+
 read-sync-awake: func [event [event!] /local error][
 	sys/log/debug 'HTTP ["Read-sync-awake:" event/type]
 	switch/default event/type [
@@ -551,7 +542,7 @@ check-data: func [port /local headers res data available out chunk-size pos trai
 	conn: state/connection
 	res: false
 
-	sys/log/more 'HTTP ["Check-data; bytes:^[[m" length? conn/data "^[[36mfrom:^[[m" state/read-pos]
+	sys/log/more 'HTTP ["Check-data; bytes:^[[m" length? conn/data]
 
 	case [
 		headers/transfer-encoding = "chunked" [
@@ -649,6 +640,27 @@ check-data: func [port /local headers res data available out chunk-size pos trai
 	]
 	res
 ]
+
+decode-result: func[
+	result [block!] {[header body]}
+	/local body content-type code-page 
+][
+	if all [
+		content-type: select result/1 'Content-Type
+		any [
+			; consider content to be a text if charset specification is included
+			parse content-type [to #";" thru "charset=" copy code-page to end]
+			; or when it is without charset, but of type text/*
+			parse content-type [["text/" | "application/json"] to end]
+		]
+	][
+		unless code-page [code-page: "utf-8"]
+		sys/log/info 'HTTP ["Trying to decode from code-page:^[[m" code-page]
+		try [result/2: iconv result/2 code-page]
+	]
+	result
+]
+
 hex-digits: charset "1234567890abcdefABCDEF"
 sys/make-scheme [
 	name: 'http
@@ -668,7 +680,8 @@ sys/make-scheme [
 	actor: [
 		read: func [
 			port [port!]
-			/binary 
+			/binary
+			/local result
 		][
 			sys/log/debug 'HTTP "READ"
 			either any-function? :port/awake [
@@ -677,12 +690,16 @@ sys/make-scheme [
 				port/state/awake: :port/awake
 				do-request port
 			][
-				sync-op port []
+				result: sync-op port []
+				unless binary [decode-result result]
+				result/2
 			]
 		]
 		write: func [
 			port [port!]
 			value
+			/binary
+			/local result
 		][
 			sys/log/debug 'HTTP "WRITE"
 			;?? port
@@ -696,7 +713,9 @@ sys/make-scheme [
 				parse-write-dialect port value
 				do-request port
 			][
-				sync-op port [parse-write-dialect port value]
+				result: sync-op port [parse-write-dialect port value]
+				unless binary [decode-result result]
+				result/2
 			]
 		]
 		open: func [
@@ -711,12 +730,12 @@ sys/make-scheme [
 				connection:
 				error: none
 				close?: no
+				binary?: no
 				info: make port/scheme/info [type: 'url]
 				awake: :port/awake
 				redirects: 0
 				chunk: none
 				chunk-size: none
-				read-pos: 0
 			]
 			;? port/state/info
 			port/state/connection: conn: make port! compose [

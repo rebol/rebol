@@ -402,6 +402,7 @@ read: action [
 	/seek {Read from a specific position (source relative)}
 		index [number!]
 	/string {Convert UTF and line terminators to standard text string}
+	/binary {Preserves contents exactly}
 	/lines {Convert to block of strings (implies /string)}
 ;	/as {Convert to string using a specified encoding}
 ;		encoding [none! number!] {UTF number (0 8 16 -16)}
@@ -419,6 +420,7 @@ write: action [
 	/allow {Specifies protection attributes}
 		access [block!]
 	/lines {Write each value in a block as a separate line}
+	/binary {Preserves contents exactly}
 ;	/as {Convert string to a specified encoding}
 ;		encoding [none! number!] {UTF number (0 8 16 -16)}
 ]
@@ -430,7 +432,7 @@ open?: action [
 
 query: action [
 	{Returns information about target if possible.}
-	target [port! file! url! block! vector!]
+	target [port! file! url! block! vector! date!]
 	/mode "Get mode information"
 	field [word! block! none!] "NONE will return valid modes for target type"
 ]
