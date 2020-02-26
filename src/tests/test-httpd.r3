@@ -38,6 +38,12 @@ my-actor: object [
 				ctx/out/header/Location: %/form/
 				; request processing will stop with redirection response
 			]
+			%plain/ [
+				ctx/out/status: 200
+				ctx/out/header/Content-Type: "text/plain; charset=UTF-8"
+				ctx/out/content: "hello"
+				; request processing will stop with response 200 serving the plain text content
+			]
 		]
 	]
 	On-Post-Received: func [ctx [object!]][

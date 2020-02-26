@@ -11,7 +11,7 @@ REBOL [
 	}
 	Name: 'http
 	Type: 'module
-	Version: 0.3.3
+	Version: 0.3.4
 	Date: 25-Feb-2020
 	File: %prot-http.r
 	Purpose: {
@@ -32,6 +32,7 @@ REBOL [
 		0.3.1 13-Feb-2020 "Oldes" "FEAT: Possible auto conversion to text if found charset specification in content-type"
 		0.3.2 25-Feb-2020 "Oldes" "FIX: Properly handling chunked data"
 		0.3.3 25-Feb-2020 "Oldes" "FEAT: support for read/binary and write/binary to force raw data result"
+		0.3.4 26-Feb-2020 "Oldes" "FIX: limit input data according Content-Length (#issues/2386)"
 	]
 ]
 
@@ -617,10 +618,10 @@ check-data: func [port /local headers res data available out chunk-size pos trai
 			]
 		]
 		integer? headers/content-length [
-			port/data: conn/data
-			either headers/content-length <= length? port/data [
+			either headers/content-length <= length? conn/data [
 				state/state: 'ready
-				conn/data: make binary! 32000 ;@@ Oldes: why not just none?
+				port/data: copy/part conn/data headers/content-length
+				conn/data: none
 				res: state/awake make event! [type: 'custom port: port code: 0]
 			][
 				;Awake from the WAIT loop to prevent timeout when reading big data. --Richard
