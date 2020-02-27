@@ -75,6 +75,10 @@ Rebol [
 		a: make map! []
 		--assert map? make map! a
 
+	;@@ https://github.com/Oldes/Rebol-issues/issues/472
+	--test-- "clear map"
+		--assert empty? clear make map! [a: 1]
+
 ===end-group===
 
 
