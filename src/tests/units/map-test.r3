@@ -58,6 +58,18 @@ Rebol [
 		n: copy/deep m
 		--assert not same? n/b m/b
 
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2220
+	--test-- "map-issue-2220"
+		; using at least 8 keys (initial map implemention was using internally block for small maps)
+		keys: ["a" #{} #{00} a@b http://a http://b %file1 %file2]
+		m: map collect [repeat i 8 [keep keys/:i keep i]]
+		--assert keys = keys-of m
+		repeat i 8 [
+			--assert i = select m keys/:i
+			append keys/:i #"X"
+			--assert none? select m keys/:i
+		]
+
 ===end-group===
 
 

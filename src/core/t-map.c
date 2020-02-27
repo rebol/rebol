@@ -221,6 +221,7 @@
 	REBCNT *hashes;
 	REBCNT hash;
 	REBCNT n;
+	REBVAL *set;
 
 	if (IS_NONE(key) || hser == NULL) return 0;
 
@@ -248,14 +249,26 @@
 	// append key
 	if(ANY_WORD(key) && VAL_TYPE(key) != REB_SET_WORD) {
 		// Normalize the KEY (word) to be a SET-WORD
-		REBVAL *set = Append_Value(series);
+		set = Append_Value(series);
 		*set = *key;
 		VAL_SET(set, REB_SET_WORD);
+	} else if (ANY_BINSTR(key) && !IS_LOCK_SERIES(VAL_SERIES(key))) {
+		// copy the key if it is any-series (except when it is permanently locked)
+		set = Append_Value(series);
+		VAL_SERIES(set) = Copy_String(VAL_SERIES(key), VAL_INDEX(key), VAL_LEN(key));
+		VAL_TYPE(set) = VAL_TYPE(key);
 	} else {
 		Append_Val(series, key);
 	}
 #else
-	Append_Val(series, key);
+	if (ANY_BINSTR(key) && !IS_LOCK_SERIES(VAL_SERIES(key))) {
+		// copy the key if it is any-series (except when it is permanently locked)
+		set = Append_Value(series);
+		VAL_SERIES(set) = Copy_String(VAL_SERIES(key), VAL_INDEX(key), VAL_LEN(key));
+		VAL_TYPE(set) = VAL_TYPE(key);
+	} else {
+		Append_Val(series, key);
+	}
 #endif
 	// append value
 	Append_Val(series, val);  // no Copy_Series_Value(val) on strings
