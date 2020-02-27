@@ -70,6 +70,11 @@ Rebol [
 			--assert none? select m keys/:i
 		]
 
+	;@@ https://github.com/Oldes/Rebol-issues/issues/555
+	--test-- "map-issue-555"
+		a: make map! []
+		--assert map? make map! a
+
 ===end-group===
 
 
