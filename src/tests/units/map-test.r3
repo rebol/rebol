@@ -51,6 +51,13 @@ Rebol [
 		--assert 42 = try [m/a]
 		unprotect m
 
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2293
+	--test-- "map-issue-2293"
+		m: make map! []
+		m/b: copy [1 2]
+		n: copy/deep m
+		--assert not same? n/b m/b
+
 ===end-group===
 
 
