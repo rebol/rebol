@@ -60,6 +60,30 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Modifiers on protected series"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2290
+	s: protect "aaa"
+	b: protect [1 2]
+	--test-- "INSERT"
+		--assert error? err: try [parse s [insert "a" to end]]
+		--assert err/id = 'protected
+		--assert error? err: try [parse b [insert "a" to end]]
+		--assert err/id = 'protected
+
+	--test-- "REMOVE"
+		--assert error? err: try [parse s [remove "a" to end]]
+		--assert err/id = 'protected
+		--assert error? err: try [parse b [remove integer! to end]]
+		--assert err/id = 'protected
+
+	--test-- "CHANGE"
+		--assert error? err: try [parse s [change "a" "b" to end]]
+		--assert err/id = 'protected
+		--assert error? err: try [parse s [change integer! "b" to end]]
+		--assert err/id = 'protected
+
+===end-group===
+
 ===start-group=== "DO"
 
 --test-- "issue-2083"

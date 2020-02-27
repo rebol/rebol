@@ -1047,7 +1047,10 @@ post:
 					Throw_Return_Series(parse->type, ser);
 				}
 				if (GET_FLAG(flags, PF_REMOVE)) {
-					if (count) Remove_Series(series, begin, count);
+					if (count) {
+						if (IS_PROTECT_SERIES(series)) Trap0(RE_PROTECTED);
+						Remove_Series(series, begin, count);
+					}
 					index = begin;
 				}
 				if (flags & (1<<PF_INSERT | 1<<PF_CHANGE)) {
@@ -1069,6 +1072,7 @@ post:
 					}
 					if (IS_UNSET(item)) Trap1(RE_NO_VALUE, rules-1);
 					if (IS_END(item)) goto bad_end;
+					if (IS_PROTECT_SERIES(series)) Trap0(RE_PROTECTED);
 					if (IS_BLOCK_INPUT(parse)) {
 						index = Modify_Block(GET_FLAG(flags, PF_CHANGE) ? A_CHANGE : A_INSERT,
 								series, begin, item, cmd, count, 1);
