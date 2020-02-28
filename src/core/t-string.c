@@ -717,7 +717,7 @@ zero_str:
 	case A_RANDOM:
 		if(IS_PROTECT_SERIES(VAL_SERIES(value))) Trap0(RE_PROTECTED);
 		if (D_REF(2)) { // seed
-			Set_Random(Compute_CRC(VAL_BIN_DATA(value), VAL_LEN(value)));
+			Set_Random(Compute_CRC24(VAL_BIN_DATA(value), VAL_LEN(value)));
 			return R_UNSET;
 		}
 		if (D_REF(4)) { // /only

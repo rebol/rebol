@@ -291,7 +291,7 @@ static struct digest {
 		i = Hash_String(data, len) % sum;
 	}
 	else {
-		i = Compute_CRC(data, len);
+		i = Compute_CRC24(data, len);
 	}
 
 	DS_RET_INT(i);
