@@ -408,7 +408,7 @@ fail:
 
 	if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 		SET_FLAG(file->modes, RFM_DIR);
-		file->file.size = 0;
+		file->file.size = MIN_I64; // using MIN_I64 to notify, that size should be reported as NONE
 	}
 	else {
 		CLR_FLAG(file->modes, RFM_DIR);

@@ -106,7 +106,11 @@
 {
 	switch (mode) {
 	case SYM_SIZE:
-		SET_INTEGER(ret, file->file.size);
+		if(file->file.size == MIN_I64) {
+			SET_NONE(ret);
+		} else {
+			SET_INTEGER(ret, file->file.size);
+		}
 		break;
 	case SYM_TYPE:
 		Init_Word(ret, GET_FLAG(file->modes, RFM_DIR) ? SYM_DIR : SYM_FILE);
