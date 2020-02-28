@@ -31,6 +31,12 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Tag"
+	--test-- "valid `tags`"
+		--assert tag? load {<a '"'>} ;@@ https://github.com/Oldes/Rebol-issues/issues/1873
+
+===end-group===
+
 ===start-group=== "SIGN before POUND char (issue #2319)"
 ;@@ https://github.com/rebol/rebol-issues/issues/2319
 	--test-- "sign-before-pound-1"	--assert  [- #"a"] = (load {-#"a"})

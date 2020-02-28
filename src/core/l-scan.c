@@ -563,6 +563,10 @@
 			cp++;
 			while (*cp && *cp != '"') cp++;
 			if (!*cp) return 0;
+		} else if (*cp == '\'') {
+			cp++;
+			while (*cp && *cp != '\'') cp++;
+			if (!*cp) return 0;
 		}
 		cp++;
 	}
