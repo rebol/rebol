@@ -65,5 +65,26 @@ Rebol [
 	--assert -1.0 = round/half-ceiling -1.5
 
 ===end-group===
+
+===start-group=== "to-degrees & to-radians"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2408
+	--test-- "to-degrees to-radians"
+		foreach [d r] [
+			0   0.0
+			30	0.5235987756
+			45	0.7853981634
+			60	1.0471975512
+			90	1.5707963268
+			120	2.0943951024
+			135	2.3561944902
+			150	2.6179938780
+			180	3.1415926536
+			270	4.7123889804
+			360	6.2831853072
+		][
+			--assert r = round/to r: to-radians d 0.0000000001
+			--assert d = to-degrees r
+		]
+===end-group===
 	
 ~~~end-file~~~

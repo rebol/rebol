@@ -490,6 +490,35 @@ enum {SINE, COSINE, TANGENT};
 	return R_ARG1;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(to_radians)
+/*
+//	to-radians: native [
+//		"Converts degrees to radians"
+//		degrees [integer! decimal!] "Degrees to convert"
+//	]
+***********************************************************************/
+{
+	REBDEC degrees = AS_DECIMAL(D_ARG(1));
+	SET_DECIMAL(D_RET, degrees * pi1 / 180.0 );
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(to_degrees)
+/*
+//	to-degrees: native [
+//		"Converts radians to degrees"
+//		radians [integer! decimal!] "Radians to convert"
+//	]
+***********************************************************************/
+{
+	REBDEC radians = AS_DECIMAL(D_ARG(1));
+	SET_DECIMAL(D_RET, radians * 180.0 / pi1 );
+	return R_RET;
+}
 
 /***********************************************************************
 **
