@@ -331,6 +331,7 @@ acts: load %../boot/actions.r
 foreach word [
 	copy
 	find
+	put
 	select
 	insert
 	trim

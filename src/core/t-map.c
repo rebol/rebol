@@ -162,7 +162,7 @@
 	} else {
 		while (NZ(n = hashes[hash])) {
 			val = BLK_SKIP(series, (n-1) * wide);
-			if (VAL_TYPE(val) == VAL_TYPE(key) && 0 == Cmp_Value(key, val, !cased)) return hash;
+			if (VAL_TYPE(val) == VAL_TYPE(key) && 0 == Cmp_Value(key, val, cased)) return hash;
 			hash += skip;
 			if (hash >= len) hash -= len;
 		}
@@ -199,7 +199,7 @@
 
 	val = BLK_HEAD(series);
 	for (n = 0; n < series->tail; n += 2, val += 2) {
-		key = Find_Key(series, series->series, val, 2, 0, 0);
+		key = Find_Key(series, series->series, val, 2, TRUE, 0);
 		hashes[key] = n/2+1;
 	}
 }
@@ -207,7 +207,7 @@
 
 /***********************************************************************
 **
-*/	static REBCNT Find_Entry(REBSER *series, REBVAL *key, REBVAL *val)
+*/	static REBCNT Find_Entry(REBSER *series, REBVAL *key, REBVAL *val, REBOOL cased)
 /*
 **		Try to find the entry in the map. If not found
 **		and val is SET, create the entry and store the key and
@@ -231,7 +231,7 @@
 		Rehash_Hash(series);
 	}
 
-	hash = Find_Key(series, hser, key, 2, 0, 0);
+	hash = Find_Key(series, hser, key, 2, cased, 0);
 	hashes = (REBCNT*)hser->data;
 	n = hashes[hash];
 
@@ -313,7 +313,7 @@
 		!IS_INTEGER(pvs->select) && !IS_CHAR(pvs->select))
 		return PE_BAD_SELECT;
 
-	n = Find_Entry(VAL_SERIES(data), pvs->select, val);
+	n = Find_Entry(VAL_SERIES(data), pvs->select, val, FALSE);
 
 	if (!n) return PE_NONE;
 
@@ -333,7 +333,7 @@
 
 	val = VAL_BLK_DATA(arg);
 	for (n = 0; n < len && NOT_END(val) && NOT_END(val+1); val += 2, n += 2) {
-		Find_Entry(ser, val, val+1);
+		Find_Entry(ser, val, val+1, TRUE);
 	}
 }
 
@@ -488,7 +488,7 @@
 
 	case A_PICK:		// same as SELECT for MAP! datatype
 	case A_SELECT:
-		n = Find_Entry(series, arg, 0);
+		n = Find_Entry(series, arg, 0, Find_Refines(ds, AM_SELECT_CASE) ? AM_FIND_CASE : 0);
 		if (!n) return R_NONE;
 		*D_RET = *VAL_BLK_SKIP(val, ((n-1)*2)+1);
 		break;
@@ -505,11 +505,11 @@
 		break;
 
 	case A_PUT:
-		Find_Entry(series, arg, D_ARG(3));
+		Find_Entry(series, arg, D_ARG(3), Find_Refines(ds, AM_PUT_CASE) ? AM_FIND_CASE : 0);
 		return R_ARG3;
 
 	case A_POKE:  // CHECK all pokes!!! to be sure they check args now !!!
-		Find_Entry(series, arg, D_ARG(3));
+		Find_Entry(series, arg, D_ARG(3), FALSE);
 		*D_RET = *D_ARG(3);
 		break;
 

@@ -28,6 +28,39 @@ Rebol [
 		--assert 2 = m/b
 		--assert empty? #()
 
+	--test-- "case sensitivity"
+		m: #(
+			 <a> 1   <A> 2   <ab> 3   <Ab> 4
+			 %a  5   %A  6   %ab  7   %Ab  8
+			 "a" 9   "A" 10  "ab" 11  "Ab" 12
+			  a  13   A  14   ab  15   Ab  16
+			 @a  17  @A  18   @ab 19  @Ab  20
+			#"a" 21 #"A" 22 #{61} 23 #{41} 24
+		)
+		--assert 24 = length? m
+		--assert 1  = select m <A>
+		--assert 5  = select m %A
+		--assert 9  = select m "A"
+		--assert 13 = select m 'A
+		--assert 17 = select m @A
+		--assert 21 = select m #"A"
+		--assert 24 = select m #{41} ; always case sensitive
+		--assert 24 = length? m
+		--assert 2  = select/case m <A>
+		--assert 6  = select/case m %A
+		--assert 10 = select/case m "A"
+		--assert 14 = select/case m 'A
+		--assert 18 = select/case m @A
+		--assert 22 = select/case m #"A"
+		--assert 24 = select/case m #{41}
+		--assert 1  = m/(<A>)
+		--assert 5  = m/(%A)
+		--assert 9  = m/("A")
+		--assert 13 = m/('A)
+		--assert 17 = m/(@A)
+		--assert 21 = m/(#"A")
+
+
 ===end-group===
 
 ===start-group=== "map issues"
