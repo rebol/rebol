@@ -20,5 +20,21 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Load/header"
+	--test-- "issue-663"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/663
+		--assert block? b: load/header "1"
+		--assert none? b/1
+		--assert 1 = b/2
+
+		--assert block? b: load/header "rebol [title: {foo}] 1"
+		--assert object? b/1
+		--assert "foo" = b/1/title
+
+
+===end-group===
+
+
+
 ~~~end-file~~~
 
