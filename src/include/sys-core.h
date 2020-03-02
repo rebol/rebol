@@ -212,6 +212,7 @@ enum Reb_Reflectors {
 	OF_BODY,
 	OF_SPEC,
 	OF_VALUES,
+	OF_TYPE,
 	OF_TYPES,
 	OF_TITLE,
 };

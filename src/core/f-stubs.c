@@ -958,6 +958,7 @@
 		case SYM_VALUES: return OF_VALUES;
 		case SYM_TYPES:  return OF_TYPES;
 		case SYM_TITLE:  return OF_TITLE;
+		case SYM_TYPE:   return OF_TYPE;
 		}
 	}
 	return 0;
