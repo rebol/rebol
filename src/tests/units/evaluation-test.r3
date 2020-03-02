@@ -51,6 +51,10 @@ Rebol [
 		--assert unset? do/next code 'code
 		--assert tail? code
 		--assert (head code) = [3 4 + 5 length? mold 8 + 9 append copy "hel" form 'lo]
+
+	--test-- "issue-661"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/661
+		--assert [print 'hello] = do "[print 'hello]"
 		
 ===end-group===
 
