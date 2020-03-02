@@ -42,6 +42,9 @@ Rebol [
 	--test-- "issue-858"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/858
 		--assert [<] = load mold [ < ]
+	--test-- "issue-658"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/658
+		--assert [[print now]] = load [{rebol [] print now}]
 ===end-group===
 
 
