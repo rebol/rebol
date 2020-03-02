@@ -55,6 +55,10 @@ Rebol [
 	--test-- "issue-661"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/661
 		--assert [print 'hello] = do "[print 'hello]"
+
+	--test-- "issue-662"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/662
+		--assert not error? try [do "rebol [type: module] 1 + 1"]
 		
 ===end-group===
 
