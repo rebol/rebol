@@ -31,8 +31,17 @@ Rebol [
 		--assert object? b/1
 		--assert "foo" = b/1/title
 
-
 ===end-group===
+
+===start-group=== "Load of a block!"
+	--test-- "wish-691"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/691
+		--assert block? b: load ["print 'hello" "print 'there"]
+		--assert [print 'hello] = b/1
+		--assert [print 'there] = b/2
+===end-group===
+
+
 
 
 
