@@ -33,12 +33,15 @@ Rebol [
 
 ===end-group===
 
-===start-group=== "Load of a block!"
-	--test-- "wish-691"
+===start-group=== "Load issues/wishes"
+	--test-- "Load of a block!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/691
 		--assert block? b: load ["print 'hello" "print 'there"]
 		--assert [print 'hello] = b/1
 		--assert [print 'there] = b/2
+	--test-- "issue-858"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/858
+		--assert [<] = load mold [ < ]
 ===end-group===
 
 
