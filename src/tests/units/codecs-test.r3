@@ -77,14 +77,24 @@ if find codecs 'wav [
 			--assert   44100 = snd/rate
 			--assert       1 = snd/channels
 			--assert      16 = snd/bits
-			--assert 3097828 = checksum snd/data
+			--assert 3097828 = checksum to-binary snd/data
 			snd: none
 		--test-- "Decode WAV data"
 			--assert binary? bin: read %units/files/zblunk_02.wav
 			--assert object? snd: decode 'WAV bin
-			--assert 4283614 = checksum snd/data
+			--assert 4283614 = checksum to-binary snd/data
 			snd: none
 			bin: none
+			
+		--test-- "Encode WAV"
+			samples: #[si16! [0 -1000 -2000 -1000 0 1000 2000 1000 0]]
+			--assert binary? bin: encode 'wav :samples
+			--assert object? snd: decode 'wav :bin
+			--assert   'wave = snd/type
+			--assert   44100 = snd/rate
+			--assert       1 = snd/channels
+			--assert      16 = snd/bits
+			--assert samples = snd/data
 
 	===end-group===
 	codecs/wav/verbose: 0

@@ -2,13 +2,15 @@ REBOL [
 	title:  "REBOL 3 codec for WAV file format"
 	name:   'codec-WAV
 	author: "Oldes"
-	version: 0.1.0
-	date:    11-Oct-2018
+	version: 0.2.0
+	date:    2-Mar-2020
 	history: [
 		0.1.0 11-Oct-2018 "Oldes" {
 			Initial version with DECODE and IDENTIFY functions.
-			Not all chunks are parsed.
-		}
+			Not all chunks are parsed.}
+		0.2.0 2-Mar-2020 "Oldes" {
+			Sound data are now as a vector! instead of raw binary!
+			Support for encoding wav data.}
 	]
 ]
 
@@ -148,44 +150,85 @@ register-codec [
 				channels: (format/2)
 				bits:     (format/6)
 				chunks:   (chunks)
-				data:     (either empty? data [none][rejoin data])
+				data:     (either empty? data [none][make vector! reduce ['integer! format/6 rejoin data]])
 			]
 		]
 	]
 
 	encode: function [
-		spec [object!]
+		spec [object! vector!]
 	][
-		if 'wave <> select spec 'type [ return none ]
-		out: binary (128 + length? spec/data)
-		binary/write out [
-			#{52494646 00000000 57415645}
+		case [
+			vector? spec [
+				bitsPerSample: spec/size
+				data: to binary! spec
+				spec: []
+			]
+			vector? spec/data [
+				bitsPerSample: spec/data/size
+				data: to binary! spec/data
+			]
+			binary? spec/data [
+				bitsPerSample: select spec 'bits
+				data: spec/data
+			]
+			'else [
+				print "*** Unsupported data!"
+				return none
+			]
+		]
+		
+		out: binary (128 + length? data)
+		binary/write out [ #{52494646 00000000 57415645} ]
+
+		if bitsPerSample [blockAlign: bitsPerSample / 8]
+		chunks: select spec 'chunks
+
+		unless chunks [
+			;- creates main WAV chunks (format & data length) if not provided by user
+			channels:      any [select spec 'channels  1]
+			sampleRate:    any [select spec 'rate  44100]
+			bitsPerSample: any [bitsPerSample         16]
+			blockAlign:    bitsPerSample / 8
+
+			chunks: reduce [
+				<fmt > reduce [
+					1
+					channels
+					sampleRate
+					(channels * sampleRate * blockAlign) ; bytesPerSec
+					blockAlign 
+					bitsPerSample
+				]
+				<data> length? data
+			]
 		]
 
-		index: index? spec/data ; stores original data position
-		
-		foreach [tag value] spec/chunks [
+		foreach [tag value] chunks [
 			switch tag [
 				<fmt > [
 					binary/write out reduce [
 						'BYTES  "fmt "
-						'UI32LE 16 + length? value/7
-						'UI16LE value/1      ; compression
-						'UI16LE value/2      ; channels
-						'UI32LE value/3      ; sampleRate
-						'UI32LE value/4      ; bytesPerSec
-						'UI16LE value/5      ; blockAlign
-						'UI16LE value/6      ; bitsPerSample
-						'BYTES  value/7
+						'UI32LE 16 + any [length? value/7 0]
+						'UI16LE value/1                     ; compression
+						'UI16LE value/2                     ; channels
+						'UI32LE value/3                     ; sampleRate
+						'UI32LE value/4                     ; bytesPerSec
+						'UI16LE value/2 * any [blockAlign    value/5] ; uses real values where possible
+						'UI16LE any [bitsPerSample value/6] 
+						'BYTES  any [value/7 #{}]
 					]
 				]
 				<data> [
+					; not using `value` directly as a reported length, because it can be wrong.
+					value: copy/part data value
+					bytes: length? value
 					binary/write out reduce [
 						'BYTES  "data"
-						'UI32LE value
-						'BYTES copy/part spec/data value
+						'UI32LE bytes
+						'BYTES  value
 					]
-					spec/data: skip spec/data value
+					data: skip data bytes
 				]
 				<fact> [
 					value: to binary! value
@@ -198,8 +241,6 @@ register-codec [
 			]
 		]
 		
-		spec/data: at head spec/data index ;resets the data series to original position
-
 		bytes: (length? out/buffer) - 8
 		binary/write out reduce ['at 5 'UI32LE bytes]
 		out/buffer
