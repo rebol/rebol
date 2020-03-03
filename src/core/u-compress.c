@@ -181,7 +181,7 @@ void Trap_ZStream_Error(z_stream *stream, int err, REBOOL while_compression)
 		// Get the uncompressed size from last 4 source data bytes.
 		if (len < 4) Trap0(RE_PAST_END); // !!! better msg needed
 		size = cast(REBU64, Bytes_To_REBCNT(BIN_SKIP(input, len) - sizeof(REBCNT)));
-		if (size > len * 6) Trap_Num(RE_SIZE_LIMIT, size);
+		if (size > len * 10) Trap_Num(RE_SIZE_LIMIT, size); // check for a realistic limit
 	}
 
 	output = Make_Binary(size);
