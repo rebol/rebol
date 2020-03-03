@@ -268,5 +268,12 @@ Rebol [
 		--assert strict-equal? 4294967296 multiply i j
 
 ===end-group===
-	
+
+===start-group=== "integer issues"
+	--test-- "issue-502"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/502
+		--assert error? e: try [set 1 1]
+		--assert e/id = 'expect-arg
+===end-group===
+
 ~~~end-file~~~
