@@ -45,6 +45,10 @@ Rebol [
 		--assert what-dir = query/mode %. 'name
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2305
 		--assert      none? query/mode %. 'size
+	--test-- "READ on non-existing dir-name"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/500
+		--assert error? e: try [read %carl-for-president/]
+		--assert e/id = 'cannot-open
 ===end-group===
 
 ===start-group=== "file port"
