@@ -295,6 +295,25 @@ FFFFFFDC1616212121212121
 	--assert     single? make image! 1x1
 	--assert not single? make image! 1x2
 
+--test-- "FIND tuple on image"
+;@@ https://github.com/Oldes/Rebol-issues/issues/818
+	img: make image! 2x2 img/2: 66.66.66
+	--assert image? pos: find img 66.66.66
+	--assert   2 = index? pos
+	--assert 2x1 = index?/xy pos
+	--assert image? pos: find/tail img 66.66.66
+	--assert   3 = index? pos
+	--assert 1x2 = index?/xy pos
+	--assert   2 = index? find/only img 66.66.66
+	--assert   2 = index? find/only img 66.66.66.22
+	--assert none? find img 66.66.66.22
+	--assert   2 = index? find/match img 255.255.255
+
+--test-- "FIND integer on image (alpha)"
+	img: make image! 2x2 img/2: 66.66.66.66
+	--assert image? pos: find img 66
+	--assert   2 = index? pos
+
 ===end-group===
 
 

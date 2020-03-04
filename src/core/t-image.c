@@ -164,6 +164,7 @@
 ***********************************************************************/
 {
 	if (only) { // only RGB, do not touch Alpha
+		color &= 0x00ffffff;
 		for (; len > 0; len--, ip++)
 			if (color == (*ip & 0x00ffffff)) return ip;
 	} else {
@@ -811,22 +812,6 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 /*
 **	Finds a value in a series and returns the series at the start of it.
 **
-**		 1 image
-**		 2 value [any-type!]
-**		 3 /part {Limits the search to a given length or position.}
-**		 4 range [number! series! port!]
-**		 5 /only {ignore alpha value.}
-**		 6 /case - ignored
-**		 7 /any  - ignored
-**		 8 /with - ignored
-**		 9 wild  - ignored
-**		10 /skip - ignored
-**		11 size  - ignored
-**		12 /match {Performs comparison and returns the tail of the match.}
-**		13 /tail  {Returns the end of the string.}
-**		14 /last  {Backwards from end of string.}
-**		15 /reverse {Backwards from the current position.}
-**
 ***********************************************************************/
 {
 	REBVAL	*value = D_ARG(1);
@@ -838,38 +823,38 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	REBCNT  *p = NULL;
 	REBINT  n;
 	REBOOL  only = FALSE;
-	REBYTE  no_refs[10] = {5, 6, 7, 8, 9, 10, 13, 14}; // ref - 1 (invalid refinements)
+	REBCNT	refs = Find_Refines(ds, ALL_FIND_REFS);
 
 	len = tail - index;
 	if (!len) goto find_none;
 
-	for (n = 0; n < 8; n++) // (zero based)
-		if (D_REF((REBINT)no_refs[n]))
-			Trap0(RE_BAD_REFINE);
-//			Trap2(RE_CANNOT_USE, FRM_WORDS(me, (REBINT)no_refs[n]), Get_Global(REB_IMAGE));
+	// FIND on image now supports only `/only` refinement (used that comparison should not check alpha)
+	// TODO: At least `/part`, `/last` and `/reverse` should be also supported.
+	if (refs & (AM_FIND_PART|AM_FIND_CASE|AM_FIND_ANY|AM_FIND_WITH|AM_FIND_SKIP|AM_FIND_LAST|AM_FIND_REVERSE))
+		Trap0(RE_BAD_REFINES);
 
 	if (IS_TUPLE(arg)) {
 		only = (REBOOL)(VAL_TUPLE_LEN(arg) < 4);
-		if (D_REF(5)) only = TRUE; // /only flag
+		if (refs & AM_FIND_ONLY) only = TRUE; // /only flag
 		p = Find_Color(ip, TO_PIXEL_TUPLE(arg), len, only);
 	} else if (IS_INTEGER(arg)) {
 		n = VAL_INT32(arg);
 		if (n < 0 || n > 255) Trap_Range(arg);
 		p = Find_Alpha(ip, n, len);
 	} else if (IS_IMAGE(arg)) {
-		p = 0;
+		Trap0(RE_NOT_DONE);
 	} else if (IS_BINARY(arg)) {
-		p = 0;
+		Trap0(RE_NOT_DONE);
 	} else
 		Trap_Type(arg);
 
 	// Post process the search (failure or apply /match and /tail):
 	if (p) {
 		n = (REBCNT)(p - (REBCNT *)VAL_IMAGE_HEAD(value));
-		if (D_REF(11)) { // match
+		if (refs & AM_FIND_MATCH) { // match
 			if (n != (REBINT)index) goto find_none;
 			n++;
-		} else if (D_REF(12)) n++; // /tail
+		} else if (refs & AM_FIND_TAIL) n++; // /tail
 		index = n;
 		VAL_INDEX(value) = index;
 		return value;
@@ -1046,8 +1031,9 @@ find_none:
 	case A_INDEXQ:
 		if (D_REF(2)) {
 			VAL_SET(D_RET, REB_PAIR);
-			VAL_PAIR_X(D_RET) = (REBD32)(index % VAL_IMAGE_WIDE(value));
-			VAL_PAIR_Y(D_RET) = (REBD32)(index / VAL_IMAGE_WIDE(value));
+			// 1-based result! -> https://github.com/Oldes/Rebol-issues/issues/2409
+			VAL_PAIR_X(D_RET) = (REBD32)(index % VAL_IMAGE_WIDE(value)) + 1;
+			VAL_PAIR_Y(D_RET) = (REBD32)(index / VAL_IMAGE_WIDE(value)) + 1;
 			return R_RET;
 		} else {
 			DS_RET_INT(index + 1);
@@ -1161,7 +1147,7 @@ find_none:
 		break;
 
 	case A_FIND:	// find   ser val /part len /only /case /any /with wild /match /tail
-		Find_Image(ds); // sets DS_RETURN
+		value = Find_Image(ds); // sets DS_RETURN
 		break;
 
 	case A_TO:
