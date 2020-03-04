@@ -762,11 +762,12 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		Expand_Series(VAL_SERIES(value), index, dup * part);
 		CLEAR_IMAGE(VAL_BIN(value) + (index * 4), dup, part);
 		Reset_Height(value);
-		if (action == A_INSERT)
-			VAL_INDEX(value) = index + (dup * part); // so it is on position after insertion
 		tail = VAL_TAIL(value);
 		only = 0;
 	}
+	if (action != A_APPEND)
+		VAL_INDEX(value) = index + (dup * part); // so it is on position after insertion or change
+	
 	ip = VAL_IMAGE_HEAD(value);
 
 	// Handle the datatype of the argument.
