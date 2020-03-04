@@ -349,6 +349,14 @@ FFFFFFDC1616212121212121
 	img: head img
 	--assert #{AAAAAABBBBBB} = img/rgb
 
+--test-- "INSERT invalid"
+;@@ https://github.com/Oldes/Rebol-issues/issues/817
+	img: make image! 2x0
+	--assert 0 = length? img
+	--assert error? try [append img "a"]
+	--assert 0 = length? img
+
+
 ===end-group===
 
 
