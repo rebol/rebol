@@ -37,6 +37,11 @@ Rebol [
 		--assert  empty? make typeset! []
 		--assert  not empty? types
 
+	--test-- "bitset! is not a series!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/782
+		--assert not find series! bitset!
+
 ===end-group===
+
 
 ~~~end-file~~~
