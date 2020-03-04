@@ -541,6 +541,9 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/402
 	--assert "123" = unique "123"
 	--assert "123" = unique "123123"
+--test-- "unique/skip on string"
+	--assert "abca"   = unique/skip "ababca" 2
+	--assert "ababca" = unique/skip "ababca" 3
 
 ===end-group===
 
