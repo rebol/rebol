@@ -70,6 +70,12 @@ Rebol [
 	--test-- "issue-1441"
 	;@@ https://github.com/rebol/rebol-issues/issues/1441
 	--assert error? try [load {1 + $}]
+
+	--test-- "issue-492"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/492
+	--assert $123  = round $123.123
+	--assert 0.1231 = round/to to-money 0.123123 0.0001
+	--assert 12.12 = round/to $12.1231 0.01
 	
 ===end-group===
 	
