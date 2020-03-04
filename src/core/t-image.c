@@ -392,7 +392,7 @@
 		rgba[C_R] = bin[0];
 		rgba[C_G] = bin[1];
 		rgba[C_B] = bin[2];
-		rgba[C_A] = bin[3];
+		rgba[C_A] = 255 - bin[3];
 	}
 }
 
@@ -669,7 +669,6 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 
 	if (action == A_APPEND) {
 		index = tail;
-		action = A_INSERT;
 	}
 
 	x = index % w; // offset on the line
@@ -758,11 +757,13 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	}
 
 	// Expand image data if necessary:
-	if (action == A_INSERT) {
+	if (action == A_INSERT || action == A_APPEND) {
 		if (index > tail) index = tail;
 		Expand_Series(VAL_SERIES(value), index, dup * part);
 		CLEAR_IMAGE(VAL_BIN(value) + (index * 4), dup, part);
 		Reset_Height(value);
+		if (action == A_INSERT)
+			VAL_INDEX(value) = index + (dup * part); // so it is on position after insertion
 		tail = VAL_TAIL(value);
 		only = 0;
 	}
