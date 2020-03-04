@@ -1317,6 +1317,8 @@ is_true:
 	REBCNT *dp;
 	REBCNT sym;
 
+	if(pvs->path && !IS_END(pvs->path+1)) val = NULL;
+
 	len = VAL_TAIL(data) - index;
 	len = MAX(len, 0);
 	src = VAL_IMAGE_DATA(data);
@@ -1456,7 +1458,33 @@ is_true:
 
 	// Get the pixel:
 	if (val == 0) {
-		Set_Tuple_Pixel(QUAD_SKIP(series, index), pvs->store);
+		if (pvs->setval && IS_INTEGER(pvs->path+1)) {
+			// special case when pixel is directly modified like: `img/1/2: 100`
+			// https://github.com/Oldes/Rebol-issues/issues/505
+			// NOTE: something like `img/1/(c): 100` or `img/1/:c: 100` is not supported!
+
+			val = pvs->setval;
+			if (IS_INTEGER(val) && VAL_INT64(val) >= 0 && VAL_INT64(val) <= 255) {
+				n = VAL_INT64(++pvs->path);
+				if(
+					!IS_END(pvs->path+1) // `img/1/1/1`
+					|| n < 1 || n > 4    // `img/1/200`
+				) return PE_BAD_SET;
+
+				REBYTE *bp = QUAD_SKIP(series, index);
+				switch(n) {
+					case 1: bp[C_R] = VAL_INT64(val); break;
+					case 2: bp[C_G] = VAL_INT64(val); break;
+					case 3: bp[C_B] = VAL_INT64(val); break;
+					case 4: bp[C_A] = VAL_INT64(val); break;
+				}
+				pvs->store = val;
+			}
+			else return PE_BAD_ARGUMENT;
+			
+		} else {
+			Set_Tuple_Pixel(QUAD_SKIP(series, index), pvs->store);
+		}
 		return PE_USE;
 	}
 

@@ -96,6 +96,34 @@ Rebol [
 		--assert error? try [img/1: #"^(260)"]
 ===end-group===
 
+===start-group=== "adjusting tuple parts in images"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/505
+	img: make image! 2x1
+	--test-- "set R using path and integer"
+		img/1/1: 10
+		img/2/1: 20
+		--assert 10 = img/1/1
+		--assert 20 = img/2/1
+	--test-- "set G using path and integer"
+		img/1/2: 10
+		img/2/2: 20
+		--assert 10 = img/1/2
+		--assert 20 = img/2/2
+	--test-- "set B using path and integer"
+		img/1/3: 10
+		img/2/3: 20
+		--assert 10 = img/1/3
+		--assert 20 = img/2/3
+	--test-- "set A using path and integer"
+		img/1/4: 10
+		img/2/4: 20
+		--assert 10 = img/1/4
+		--assert 20 = img/2/4
+	--test-- "errors"
+		--assert error? try [img/1/1/1: 10]
+		--assert error? try [img/1/10:  10]
+===end-group===
+
 ===start-group=== "raw image data getters"
 	img: make image! 2x1 img/1: 1.2.3.100 img/2: 4.5.6.200
 	tests: [
