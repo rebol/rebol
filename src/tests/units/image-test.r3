@@ -281,6 +281,17 @@ FFFFFFDC1616212121212121
 	]
 ===end-group===
 
+===start-group=== "REPEAT on image"
+
+--test-- "repeat on image"
+	img: make image! 1x2
+	repeat n img [n/1: 1.2.3 n/1: index? n]
+	--assert img/1 = 1.2.3.1
+	--assert img/2 = 1.2.3.2
+
+===end-group===
+
+
 ~~~end-file~~~
 
 ;clean up
