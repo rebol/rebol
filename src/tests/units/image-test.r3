@@ -356,6 +356,19 @@ FFFFFFDC1616212121212121
 	--assert error? try [append img "a"]
 	--assert 0 = length? img
 
+--test-- "CHANGE on image"
+	a: make image! [2x1 170.170.170]
+	b: make image! [2x1 187.187.187]
+	--assert a/rgb = #{AAAAAAAAAAAA}
+	--assert b/rgb = #{BBBBBBBBBBBB}
+	--assert not error? try [change a b]
+	--assert a/rgb = #{BBBBBBBBBBBB}
+	--assert not error? try [change at a 2 0.0.0]
+	--assert a/rgb = #{BBBBBB000000}
+	;change should return series just past the change
+	--assert tail? change/dup a 200.200.200 2
+	--assert a/rgb = #{C8C8C8C8C8C8}
+
 
 ===end-group===
 
