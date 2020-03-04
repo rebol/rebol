@@ -526,6 +526,15 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "UNION"
+
+--test-- "union on 2 strings"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/400
+	--assert "123" = union "12" "13"
+
+===end-group===
+
 ;-- VECTOR related tests moved to %vector-test.r3
 
 ~~~end-file~~~
