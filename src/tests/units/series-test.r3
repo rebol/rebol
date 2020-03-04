@@ -535,6 +535,15 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "UNIQUE"
+
+--test-- "unique on string"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/402
+	--assert "123" = unique "123"
+	--assert "123" = unique "123123"
+
+===end-group===
+
 ;-- VECTOR related tests moved to %vector-test.r3
 
 ~~~end-file~~~
