@@ -314,6 +314,41 @@ FFFFFFDC1616212121212121
 	--assert image? pos: find img 66
 	--assert   2 = index? pos
 
+--test-- "APPEND on image"
+;@@ https://github.com/Oldes/Rebol-issues/issues/344
+	img: make image! 2x0
+	append img 170.170.170
+	--assert 2x0 = img/size ; size not updated yet as the row is not full
+	append img 187.187.187
+	--assert 2x1 = img/size ; size was updated now
+	--assert #{AAAAAABBBBBB} = img/rgb
+	append img [1.1.1 2.2.2]
+	--assert #{AAAAAABBBBBB010101020202} = img/rgb
+
+--test-- "INSERT on image"
+	img: make image! 2x0
+	--assert 1 = index? img
+	--assert 2 = index? insert img 170.170.170
+	--assert 2 = index? insert img 187.187.187
+	--assert 3 = index? tail img
+	--assert #{BBBBBBAAAAAA} = img/rgb
+	--assert 3 = index? insert img [1.1.1 2.2.2]
+	--assert #{010101020202BBBBBBAAAAAA} = img/rgb
+
+--test-- "INSERT/tail on image"
+;@@ https://github.com/Oldes/Rebol-issues/issues/783
+	img: make image! 2x0
+	img: insert tail img 170.170.170
+	--assert 2x0 = img/size ; size not updated yet as the row is not full
+	--assert tail? img
+	--assert empty? img/rgb
+	img: insert img 187.187.187
+	--assert 2x1 = img/size ; size was updated now
+	--assert tail? img
+	--assert empty? img/rgb
+	img: head img
+	--assert #{AAAAAABBBBBB} = img/rgb
+
 ===end-group===
 
 
