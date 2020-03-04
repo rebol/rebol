@@ -281,13 +281,19 @@ FFFFFFDC1616212121212121
 	]
 ===end-group===
 
-===start-group=== "REPEAT on image"
+===start-group=== "Image as a series"
 
---test-- "repeat on image"
+--test-- "REPEAT on image"
+;@@ https://github.com/Oldes/Rebol-issues/issues/996
 	img: make image! 1x2
 	repeat n img [n/1: 1.2.3 n/1: index? n]
 	--assert img/1 = 1.2.3.1
 	--assert img/2 = 1.2.3.2
+
+--test-- "SINGLE? on image"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1000
+	--assert     single? make image! 1x1
+	--assert not single? make image! 1x2
 
 ===end-group===
 
