@@ -66,6 +66,16 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "reminder on money"
+	--test-- "issue-401"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/401
+	--assert $0.100000000 = $.100000000 // $1
+	--assert $0.1000000000 = $.1000000000 // $1
+	--assert $0.10000000000 = $.10000000000 // $1
+	--assert $0.100000000000 = $.100000000000 // $1
+	
+===end-group===
+
 ===start-group=== "money issues"
 	--test-- "issue-1441"
 	;@@ https://github.com/rebol/rebol-issues/issues/1441
