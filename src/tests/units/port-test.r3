@@ -80,8 +80,10 @@ Rebol [
 	--test-- "write file result - wish/2337"
 		;@@ https://github.com/rebol/rebol-issues/issues/2337
 		--assert file? write %foo "hello"
-		--assert "hello" = read/string write %foo "hello"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/67
+		--assert "test" = read/string write %foo "test"
 		delete %foo
+
 
 ===end-group===
 
