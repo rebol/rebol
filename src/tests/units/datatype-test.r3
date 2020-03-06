@@ -16,6 +16,12 @@ Rebol [
 		--assert  sp/type  = reflect integer! 'type
 		--assert  sp/type = 'scalar
 
+	--test-- "to word! datatype!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/38
+		--assert 'logic! = to word! logic!
+		--assert 'logic! = to word! percent!
+		--assert 'money! = to word! money!
+
 ===end-group===
 
 ~~~end-file~~~
