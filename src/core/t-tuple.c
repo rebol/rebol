@@ -226,10 +226,20 @@
 			case A_ADD:	v += a; break;
 			case A_SUBTRACT: v -= a; break;
 			case A_MULTIPLY:
-				if (IS_DECIMAL(arg) || IS_PERCENT(arg))
+				if ( v == 0 ) break;
+				if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
+					if (dec > 255.0) {
+						*vp = (REBYTE)255;
+						continue;
+					}
 					v=(REBI64)(v*dec);
-				else
+				} else {
+					if (a > 255) {
+						*vp = (REBYTE)255;
+						continue;
+					}
 					v *= a;
+				}
 				break;
 			case A_DIVIDE:
 				if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
