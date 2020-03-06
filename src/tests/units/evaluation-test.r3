@@ -121,6 +121,12 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "attempt"
+	--test-- "issue-41"
+		--assert none? attempt [2 / 0] ;@@ https://github.com/Oldes/Rebol-issues/issues/41
+
+===end-group===
+
 ===start-group=== "reduce"
 
 	--test-- "reduce-1"
