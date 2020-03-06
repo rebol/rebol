@@ -272,15 +272,7 @@
 		}
 		goto ret_value;
 	}
-/*
-	if (action == A_ZEROQ) {
-		for (;len > 0; len--, vp++) {
-			if (*vp != 0)
-				goto is_false;
-		}
-		goto is_true;
-	}
-*/
+
 	//a = 1; //???
 	switch (action) {
 	case A_LENGTHQ:
