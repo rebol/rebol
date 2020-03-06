@@ -347,4 +347,13 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "mold closure!"
+
+	--test-- "mold/flat closure!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/23
+		x: closure [a] [print a]
+		--assert "make closure! [[a /local][print a]]" = mold/flat :x
+
+===end-group===
+
 ~~~end-file~~~
