@@ -119,6 +119,16 @@ data: "test test test"
 	]
 ===end-group===
 
+===start-group=== "ENCLOAK/DECLOAK"
+	--test-- "issue-48"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/48
+	--assert (a: compress  "a") = #{789C4B04000062006201000000}
+	--assert (b: encloak a "a") = #{2DD7F778DDDD45E040016E2B5E}
+	--assert (c: decloak b "a") = #{789C4B04000062006201000000}
+	--assert (d: decompress c ) = #{61}
+
+===end-group===
+
 
 
 ~~~end-file~~~
