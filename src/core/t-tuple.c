@@ -190,8 +190,8 @@
 	REBYTE	*ap = NULL;
 	REBCNT	len = 0;
 	REBCNT	alen;
-	REBCNT	v;
-	REBINT	a;
+	REBI64	v;
+	REBI64	a;
 	REBDEC	dec;
 
 	value = D_ARG(1);
@@ -205,11 +205,11 @@
 		ASSERT2(vp != NULL, RP_MISC);
 
 		if (IS_INTEGER(arg)) {
-			a = VAL_INT32(arg);
+			a = VAL_INT64(arg);
 			ap = 0;
 		} else if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
 			dec=VAL_DECIMAL(arg);
-			a = (REBINT)dec;
+			a = (REBI64)dec;
 			ap = 0;
 		} else if (IS_TUPLE(arg)) {
 			ap = VAL_TUPLE(arg);
@@ -219,22 +219,22 @@
 		} else Trap_Math_Args(REB_TUPLE, action);
 
 		for (;len > 0; len--, vp++) {
-			v = *vp;
+			v = (REBI64)*vp;
 			if (ap)
-				a = (REBINT) *ap++;
+				a = (REBI64) *ap++;
 			switch (action) {
 			case A_ADD:	v += a; break;
 			case A_SUBTRACT: v -= a; break;
 			case A_MULTIPLY:
 				if (IS_DECIMAL(arg) || IS_PERCENT(arg))
-					v=(REBINT)(v*dec);
+					v=(REBI64)(v*dec);
 				else
 					v *= a;
 				break;
 			case A_DIVIDE:
 				if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
 					if (dec == 0.0) Trap0(RE_ZERO_DIVIDE);
-					v=(REBINT)Round_Dec(v/dec, 0, 1.0);
+					v=(REBI64)Round_Dec(v/dec, 0, 1.0);     //@@ https://github.com/Oldes/Rebol-issues/issues/1974
 				} else {
 					if (a == 0) Trap0(RE_ZERO_DIVIDE);
 					v /= a;
