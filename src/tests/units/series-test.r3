@@ -527,6 +527,16 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "BLOCK"
+
+--test-- "path in block"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/26
+	b: [b 1]
+	--assert 1 = b/b
+
+===end-group===
+
+
 ===start-group=== "UNION"
 
 --test-- "union on 2 strings"
