@@ -59,6 +59,7 @@
 
 #include "sys-core.h"
 
+#ifdef INCLUDE_TASK
 /***********************************************************************
 **
 */	static void Launch_Task(REBVAL *task)
@@ -76,7 +77,7 @@
 
 	Debug_Str("End Task");
 }
-
+#endif
 
 /***********************************************************************
 **
@@ -84,5 +85,10 @@
 /*
 ***********************************************************************/
 {
+#ifdef INCLUDE_TASK
 	OS_CREATE_THREAD((void*)Launch_Task, task, 50000);
+#else 
+	puts("** Build using INCLUDE_TASK define to experiment with task!");
+	Trap0(RE_FEATURE_NA);
+#endif
 }

@@ -17,6 +17,8 @@ Defines: [
 	USE_LZMA         ;-- adds support for LZMA [de]compression
 	USE_MIDI_DEVICE  ;-- includes MIDI device when possible (Windows & macOS)
 
+	;INCLUDE_TASK ;-- tasks are not implemented yet, so include it only on demand
+
 	;@@ optional fine tuning:
 	;DO_NOT_NORMALIZE_MAP_KEYS
 	; with above define you would get:

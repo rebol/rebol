@@ -46,6 +46,7 @@ dt [ ;- delta time
 	wrap load %units/typeset-test.r3
 	wrap load %units/datatype-test.r3
 	wrap load %units/parse-test.r3
+	wrap load %units/task-test.r3
 
 	recycle/torture
 	recycle
