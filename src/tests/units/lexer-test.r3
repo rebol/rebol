@@ -37,6 +37,12 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Integer"
+	--test-- "-0"
+		--assert 0 = load "-0" ;@@ https://github.com/Oldes/Rebol-issues/issues/33
+
+===end-group===
+
 ===start-group=== "SIGN before POUND char (issue #2319)"
 ;@@ https://github.com/rebol/rebol-issues/issues/2319
 	--test-- "sign-before-pound-1"	--assert  [- #"a"] = (load {-#"a"})
