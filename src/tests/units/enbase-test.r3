@@ -114,4 +114,69 @@ Rebol [
 
 ===end-group===
 
+if any [
+	not error? err: try [enbase/base "a" 85]
+	err/id <> 'feature-na
+][
+	base85-str-tests: [
+		""             ""
+		"h"            "BE"
+		"he"           "BOq"
+		"hel"          "BOtu"
+		"hell"         "BOu!r"
+		"hello"        "BOu!rDZ"
+		"hello "       "BOu!rD]f"
+		"hello w"      "BOu!rD]j6"
+		"hello wo"     "BOu!rD]j7B"
+		"hello wor"    "BOu!rD]j7BEW"
+		"hello worl"   "BOu!rD]j7BEbk"
+		"hello world"  "BOu!rD]j7BEbo7"
+		"hello world!" "BOu!rD]j7BEbo80"
+	]
+	base85-bin-tests: [
+		#{00}                 {!!}
+		#{0000}               {!!!}
+		#{000000}             {!!!!}
+		#{00000000}           {z}
+		#{0000000000000000}   {zz}
+		#{000000000000000000} {zz!!}
+		#{0100000000}         {!<<*"!!}
+		#{ffd8ffe0}           {s4IA0}
+		#{ffffffff}           {s8W-!}
+	]
+	base85-spaces-tests: [
+		#{68}         "B E"
+		#{68}         "B^-E"
+		#{68}         "B^/E"
+		#{68}         "B^ME"
+		#{68656C6C6F} "BOu!rDZ "
+		#{68656C6C6F} "BOu!rDZ^-"
+		#{68656C6C6F} "BOu!rDZ^/"
+		#{68656C6C6F} "BOu!rDZ^M"
+	]
+
+	
+	===start-group=== "enbase-85"
+		--test-- "enbase/base str 85"    
+			foreach [inp out] base85-str-tests [
+				--assert out = enbase/base inp 85
+			]
+	===end-group===
+
+	===start-group=== "debase-85"
+		--test-- "debase/base str 85"    
+			foreach [out inp] base85-str-tests [
+				--assert out = probe to-string debase/base inp 85
+			]
+		--test-- "debase 85 with spaces"
+			foreach [out inp] base85-spaces-tests [
+				--assert out = debase/base inp 85
+			]
+		--test-- "invalid debase85 input"
+			--assert error? try [debase/base "abcx" 85]
+			--assert error? try [debase/base "~>" 85]
+			--assert error? try [debase/base {s8W-"} 85]
+	===end-group===
+]
+
 ~~~end-file~~~

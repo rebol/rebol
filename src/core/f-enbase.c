@@ -40,7 +40,7 @@
 ***********************************************************************/
 {
 	#define	BIN_ERROR	(REBYTE)0x80
-	#define BIN_SPACE	(REBYTE)0x40
+	#define BIN_SPACE	(REBYTE)0x55
 	#define BIN_VALUE	(REBYTE)0x3f
 	#define	IS_BIN_SPACE(c) (Debase64[c] & BIN_SPACE)
 
@@ -279,6 +279,124 @@
 	/* 7F DEL */    BIN_ERROR,
 };
 
+#ifdef INCLUDE_BASE85
+#define BASE85_DIGITS	5	 /* log85 (2^32) is 4.9926740807112 */
+/***********************************************************************
+**
+*/	static const REBYTE Debase85[128] =
+/*
+**		Base-85 (ASCII85) binary decoder table.
+**
+***********************************************************************/
+{
+	/* Control Chars */
+	BIN_ERROR,BIN_ERROR,BIN_ERROR,BIN_ERROR,    /* 80 */
+	BIN_ERROR,BIN_ERROR,BIN_ERROR,BIN_ERROR,
+	BIN_SPACE,BIN_SPACE,BIN_SPACE,BIN_ERROR,
+	BIN_SPACE,BIN_SPACE,BIN_ERROR,BIN_ERROR,
+	BIN_ERROR,BIN_ERROR,BIN_ERROR,BIN_ERROR,
+	BIN_ERROR,BIN_ERROR,BIN_ERROR,BIN_ERROR,
+	BIN_ERROR,BIN_ERROR,BIN_ERROR,BIN_ERROR,
+	BIN_ERROR,BIN_ERROR,BIN_ERROR,BIN_ERROR,
+
+        /* 20     */    BIN_SPACE,
+        /* 21 !   */    0,
+        /* 22 "   */    1,
+        /* 23 #   */    2,
+        /* 24 $   */    3,
+        /* 25 %   */    4,
+        /* 26 &   */    5,
+        /* 27 '   */    6,
+        /* 28 (   */    7,
+        /* 29 )   */    8,
+        /* 2A *   */    9,
+        /* 2B +   */    10,
+        /* 2C ,   */    11,
+        /* 2D -   */    12,
+        /* 2E .   */    13,
+        /* 2F /   */    14,
+        /* 30 0   */    15,
+        /* 31 1   */    16,
+        /* 32 2   */    17,
+        /* 33 3   */    18,
+        /* 34 4   */    19,
+        /* 35 5   */    20,
+        /* 36 6   */    21,
+        /* 37 7   */    22,
+        /* 38 8   */    23,
+        /* 39 9   */    24,
+        /* 3A :   */    25,
+        /* 3B ;   */    26,
+        /* 3C <   */    27,
+        /* 3D =   */    28,
+        /* 3E >   */    29,
+        /* 3F ?   */    30,
+        /* 40 @   */    31,
+        /* 41 A   */    32,
+        /* 42 B   */    33,
+        /* 43 C   */    34,
+        /* 44 D   */    35,
+        /* 45 E   */    36,
+        /* 46 F   */    37,
+        /* 47 G   */    38,
+        /* 48 H   */    39,
+        /* 49 I   */    40,
+        /* 4A J   */    41,
+        /* 4B K   */    42,
+        /* 4C L   */    43,
+        /* 4D M   */    44,
+        /* 4E N   */    45,
+        /* 4F O   */    46,
+        /* 50 P   */    47,
+        /* 51 Q   */    48,
+        /* 52 R   */    49,
+        /* 53 S   */    50,
+        /* 54 T   */    51,
+        /* 55 U   */    52,
+        /* 56 V   */    53,
+        /* 57 W   */    54,
+        /* 58 X   */    55,
+        /* 59 Y   */    56,
+        /* 5A Z   */    57,
+        /* 5B [   */    58,
+        /* 5C \   */    59,
+        /* 5D ]   */    60,
+        /* 5E ^   */    61,
+        /* 5F _   */    62,
+        /* 60 `   */    63,
+        /* 61 a   */    64,
+        /* 62 b   */    65,
+        /* 63 c   */    66,
+        /* 64 d   */    67,
+        /* 65 e   */    68,
+        /* 66 f   */    69,
+        /* 67 g   */    70,
+        /* 68 h   */    71,
+        /* 69 i   */    72,
+        /* 6A j   */    73,
+        /* 6B k   */    74,
+        /* 6C l   */    75,
+        /* 6D m   */    76,
+        /* 6E n   */    77,
+        /* 6F o   */    78,
+        /* 70 p   */    79,
+        /* 71 q   */    80,
+        /* 72 r   */    81,
+        /* 73 s   */    82,
+        /* 74 t   */    83,
+        /* 75 u   */    84,
+        /* 76 v   */    BIN_ERROR,
+        /* 77 w   */    BIN_ERROR,
+        /* 78 x   */    BIN_ERROR,
+        /* 79 y   */    BIN_ERROR,
+        /* 7A z   */    BIN_ERROR,
+        /* 7B {   */    BIN_ERROR,
+        /* 7C |   */    BIN_ERROR,
+        /* 7D }   */    BIN_ERROR,
+        /* 7E ~   */    BIN_ERROR,
+        /* 7F DEL */    BIN_ERROR
+};
+#endif
 
 /***********************************************************************
 **
@@ -305,6 +423,22 @@
 	"abcdefghijklmnopqrstuvwxyz"
 	"0123456789-_"
 };
+
+
+#ifdef INCLUDE_BASE85
+/***********************************************************************
+**
+*/	static const REBYTE Enbase85[85] =
+/*
+**		Base-85 binary encoder table.
+**
+***********************************************************************/
+{
+	"!\"#$%&'()*+,-./0123456789:;<=>?@"
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`"
+	"abcdefghijklmnopqrstu"
+};
+#endif
 
 
 /***********************************************************************
@@ -511,6 +645,89 @@ err:
 }
 
 
+#ifdef INCLUDE_BASE85
+/***********************************************************************
+**
+*/	static REBSER *Decode_Base85(const REBYTE **src, REBCNT len, REBYTE delim)
+/*
+***********************************************************************/
+{
+	REBYTE *bp;
+	const REBYTE *cp;
+	REBSER *ser;
+	REBCNT ser_size;
+	REBCNT chunk;
+	REBCNT pos, c;
+	REBINT pad=0;
+
+	// Allocate buffer large enough to hold result:
+	ser = Make_Binary(((len + 4) / 5) * 4);
+	ser_size = SERIES_AVAIL(ser);
+
+	bp = STR_HEAD(ser);
+	cp = *src;
+	
+	pos = 0;
+	while(len > 0) {
+		if(pos >= ser_size) {
+			// in extreme cases (a lot of 'z' chars) initialy computed size may not be enough
+			SERIES_TAIL(ser) = ser_size;     // sets current series' tail (used by expand function bellow)
+			Expand_Series(ser, ser_size, 8); // may expand more than 8 bytes
+			bp = STR_HEAD(ser);              // because above could reallocate
+			ser_size = SERIES_AVAIL(ser);
+		}
+		/* 'z' is a special way to encode 4 bytes of 0s */
+		if(*cp=='z') {
+			cp++;
+			len--;
+			bp[pos++] = 0u;
+			bp[pos++] = 0u;
+			bp[pos++] = 0u;
+			bp[pos++] = 0u;
+			continue;
+		}
+		chunk = 0;
+		for(c=0; c<BASE85_DIGITS; c++) {
+			REBYTE d = 0;
+			if(len > 0) {
+				len--;
+				d=Debase85[(REBYTE)*cp++];
+				if (d == BIN_SPACE) {
+					// ignore spaces
+					c--; continue;
+				}
+				if (d > 127) goto err; /* failure - invalid character */
+			}
+			else {
+				if(!pad) chunk++;
+				pad++;
+			}
+			if(c == 4) {
+				// math overflow checking.. for example input: {s8W-"}
+				if (chunk > (MAX_U32 / 85u)) goto err;
+				chunk *= 85;
+				if (chunk > (MAX_U32 - d)) goto err;
+				chunk += d;
+			} else chunk = chunk * 85 + d;
+		}
+		bp[pos  ] = (REBYTE)(chunk >> 24);
+		bp[pos+1] = (REBYTE)(chunk >> 16);
+		bp[pos+2] = (REBYTE)(chunk >>  8);
+		bp[pos+3] = (REBYTE)(chunk      );
+		pos += 4;
+	}
+	bp[pos] = 0;
+	ser->tail = pos - pad;
+	return ser;
+
+err:
+	Free_Series(ser);
+	*src = cp;
+	return 0;
+}
+#endif
+
+
 /***********************************************************************
 **
 */	const REBYTE *Decode_Binary(REBVAL *value, const REBYTE *src, REBCNT len, REBINT base, REBYTE delim, REBOOL urlSafe)
@@ -530,6 +747,13 @@ err:
 		break;
 	case 2:
 		ser = Decode_Base2 (&src, len, delim);
+		break;
+	case 85:
+#ifdef INCLUDE_BASE85
+		ser = Decode_Base85 (&src, len, delim);
+#else
+		Trap0(RE_FEATURE_NA);
+#endif
 		break;
 	}
 
@@ -674,3 +898,64 @@ err:
 
 	return series;
 }
+
+
+#ifdef INCLUDE_BASE85
+/***********************************************************************
+**
+*/  REBSER *Encode_Base85(REBVAL *value, REBSER *series, REBFLG brk)
+/*
+**		Base85 encode a given series. Must be BYTES, not UNICODE.
+**
+***********************************************************************/
+{
+	REBCNT len;
+	REBYTE *bp;
+	REBYTE *src;
+	REBCNT x=0;
+	REBINT loop;
+	REBCNT i, chunk;
+
+	len = VAL_LEN(value);
+	src = VAL_BIN_DATA(value);
+
+	// Account for hex, lines, and extra syntax:
+	series = Prep_String(series, &bp, ((len + 3) / 4) * 5);
+	// (Note: tail not properly set yet)
+
+	//if (len >= 32 && brk) *bp++ = LF;
+	loop = (len / 4) - 1;
+	if(loop >= 0) {
+		for (x = 0; x <= 4 * loop;) {
+			chunk  = ((REBCNT)src[x++]) << 24u;
+			chunk |= ((REBCNT)src[x++]) << 16u;
+			chunk |= ((REBCNT)src[x++]) <<  8u;
+			chunk |= ((REBCNT)src[x++])       ;
+			if(chunk==0) {
+				*bp++='z'; /* this is a special zero character */
+			} else {
+				for(i = BASE85_DIGITS;i--;) {
+					bp[i] = Enbase85[chunk%85];
+					chunk /= 85;
+				}
+				bp += 5;
+			}
+		}
+	}
+	if ((len % 4) != 0) {
+        chunk  =                      (((REBCNT)src[x++]) << 24u);
+        chunk |= ((x < (REBCNT)len) ? (((REBCNT)src[x++]) << 16u): 0u);
+        chunk |= ((x < (REBCNT)len) ? (((REBCNT)src[x++]) <<  8u): 0u);
+        chunk |= ((x < (REBCNT)len) ? (((REBCNT)src[x++])       ): 0u);
+		for(i = BASE85_DIGITS;i--;) {
+			bp[i] = Enbase85[chunk%85];
+			chunk /= 85;
+		}
+		bp += (len % 4) + 1;
+	}
+	*bp = 0;
+	SERIES_TAIL(series) = DIFF_PTRS(bp, series->data);
+
+	return series;
+}
+#endif

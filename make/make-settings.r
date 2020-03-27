@@ -18,6 +18,7 @@ Defines: [
 	USE_MIDI_DEVICE  ;-- includes MIDI device when possible (Windows & macOS)
 
 	;INCLUDE_TASK ;-- tasks are not implemented yet, so include it only on demand
+	INCLUDE_BASE85 ;-- adds support for enbase/debase with base 85 (ASCII85)
 
 	;@@ optional fine tuning:
 	;DO_NOT_NORMALIZE_MAP_KEYS

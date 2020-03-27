@@ -498,6 +498,14 @@ static struct digest {
 	case 2:
 		ser = Encode_Base2(arg, 0, FALSE);
 		break;
+	case 85:
+#ifdef INCLUDE_BASE85
+		ser = Encode_Base85(arg, 0, FALSE);
+#else
+		Trap0(RE_FEATURE_NA);
+#endif
+		
+		break;
 	default:
 		Trap_Arg(D_ARG(3));
 	}
