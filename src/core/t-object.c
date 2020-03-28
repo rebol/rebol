@@ -316,6 +316,7 @@ static REBSER *Trim_Object(REBSER *obj)
 				// make task! [init]
 				if (type == REB_TASK) {
 					// Does it include a spec?
+					VAL_SET(value, REB_TASK);
 					if (IS_BLOCK(VAL_BLK(arg))) {
 						arg = VAL_BLK(arg);
 						if (!IS_BLOCK(arg+1)) Trap_Make(REB_TASK, value);
@@ -325,7 +326,9 @@ static REBSER *Trim_Object(REBSER *obj)
 						obj = Make_Module_Spec(0);
 						VAL_MOD_BODY(value) = VAL_SERIES(arg);
 					}
-					break; // returns obj
+					VAL_MOD_FRAME(value) = obj;
+					DS_RET_VALUE(value);
+					return R_RET;
 				}
 			}
 
