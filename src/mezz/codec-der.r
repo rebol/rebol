@@ -19,7 +19,7 @@ REBOL [
 register-codec [
 	name:  'DER
 	title: "Distinguished Encoding Rules"
-	suffixes: [%.p12 %.pfx %.cer %.der]
+	suffixes: [%.p12 %.pfx %.cer %.der %.jks]
 	decode: function[data [binary!]][
 		if verbose > 0 [
 			print ["^/^[[1;32mDecode DER data^[[m (^[[1m" length? data "^[[mbytes )"]
@@ -112,7 +112,7 @@ register-codec [
 					;]
 					BIT_STRING [
 						if data/1 = 0 [data: next data]
-						;data: enbase/base data 2
+						;data: enbase data 2
 					]
 					INTEGER [
 						if data/1 = 0 [data: next data]
