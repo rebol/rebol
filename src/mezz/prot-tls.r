@@ -1474,7 +1474,7 @@ TLS-parse-handshake-message: function [
 			]
 			log-more ["Received" length? ctx/server-certs "server certificates."]
 			;? ctx/server-certs
-			if error? try [
+			try/except [
 				;?? ctx/server-certs/1/public-key
 				;?? ctx/server-certs/1
 				key: ctx/server-certs/1/public-key
@@ -1503,7 +1503,7 @@ TLS-parse-handshake-message: function [
 				ECDHE_RSA
 				ECDHE_ECDSA [
 					;? msg/buffer
-					if error? err:  try [
+					try/except [
 						binary/read msg [
 						  s: INDEX
 							ECCurveType: UI8  
@@ -1511,26 +1511,8 @@ TLS-parse-handshake-message: function [
 							pub_key:     UI8BYTES 
 						  e: INDEX
 						]
-						;@@ TODO: remove this if there will not be any issues!
-						;if not empty? msg/buffer [
-						;	binary/read msg [
-						;		hash-algorithm: UI8
-						;		sign-algorithm: UI8
-						;		der: UI16BYTES
-						;	]
-						;	log-info [
-						;		"Algorithms-> hash:" *HashAlgorithm/name hash-algorithm "(" hash-algorithm ")"
-						;		"sign:" *ClientCertificateType/name sign-algorithm "(" sign-algorithm ")"
-						;	]
-						;	;? sign-algorithm ; should be 1027 (ecdsa_secp256r1_sha256)
-						;	if sign-algorithm = *SignatureAlgorithm/ecdsa
-						;		der: system/codecs/der/decode der
-						;		?? der
-						;	]
-						;]
 					][
 						log-error "Error reading elyptic curve"
-						? err
 						return *Alert/User_cancelled
 					]
 
@@ -1544,10 +1526,6 @@ TLS-parse-handshake-message: function [
 					]
 					log-more ["R[" ctx/seq-read "] Elyptic curve type:" ECCurve "=>" curve]
 					log-more ["R[" ctx/seq-read "] Elyptic curve data:" pub_key]
-					;@@ TODO: remove this if there will not be any issues!
-					;if der [
-					;	log-more ["R[" ctx/seq-read "] Elyptic curve signature:" mold der]
-					;]
 				]
 				DHE_DSS
 				DHE_RSA [
