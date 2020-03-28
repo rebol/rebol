@@ -79,7 +79,7 @@ Rebol [
 	--test-- "CHANGE"
 		--assert error? err: try [parse s [change "a" "b" to end]]
 		--assert err/id = 'protected
-		--assert error? err: try [parse s [change integer! "b" to end]]
+		--assert error? err: try [parse b [change integer! "b" to end]]
 		--assert err/id = 'protected
 
 ===end-group===

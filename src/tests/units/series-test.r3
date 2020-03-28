@@ -521,8 +521,8 @@ Rebol [
 
 --test-- "Join tags"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/10
-	--assert "<a<b b>>" = form append <a> <b b>
-	--assert "<a<b b>>" = join <a> <b b>
+	--assert "<a<b b>>" = mold append <a> <b b>
+	--assert "<a<b b>>" = mold join <a> <b b>
 
 ===end-group===
 
