@@ -126,7 +126,6 @@ sys/make-scheme [
 			target: ctx/inp/target
 			target/file: path: join dirize ctx/config/root  clean-path/only target/file
 			ctx/out/header/Date: to-idate/gmt now
-			? target
 			either exists? path [
 				if dir? path [
 					foreach file ctx/config/index [
