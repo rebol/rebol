@@ -36,7 +36,7 @@ REBOL [
 	]
 ]
 
-sync-op: func [port body /local header state encoding content-type code-page tmp][
+sync-op: func [port body /local header state][
 	unless port/state [open port port/state/close?: yes]
 	state: port/state
 	state/awake: :read-sync-awake
@@ -82,24 +82,6 @@ sync-op: func [port body /local header state encoding content-type code-page tmp
 	body: copy port
 
 	sys/log/info 'HTTP ["Done reading:^[[22m" length? body "bytes"]
-
-	if encoding: select port/state/info/headers 'Content-Encoding [
-		sys/log/info 'HTTP 
-		either find ["gzip" "deflate"] encoding [
-			either error? try [
-				body: switch encoding [
-					"gzip"    [ decompress/gzip    body ]
-					"deflate" [ decompress/deflate body ]
-				]
-			][
-				["Failed to decode data using:^[[22m" encoding]
-			][
-				["Extracted using:^[[22m" encoding "^[[1mto:^[[22m" length? body "bytes"]
-			]
-		][
-			["Unknown Content-Encoding:^[[m" encoding]
-		]
-	]
 
 	header: copy port/state/info/headers
 
@@ -644,8 +626,24 @@ check-data: func [port /local headers res data available out chunk-size pos trai
 
 decode-result: func[
 	result [block!] {[header body]}
-	/local body content-type code-page 
+	/local body content-type code-page encoding
 ][
+	if encoding: select result/1 'Content-Encoding [
+		either find ["gzip" "deflate"] encoding [
+			try/except [
+				result/2: switch encoding [
+					"gzip"    [ decompress/gzip    result/2 ]
+					"deflate" [ decompress/deflate result/2 ]
+				]
+			][
+				sys/log/info 'HTTP ["Failed to decode data using:^[[22m" encoding]
+				return result
+			]
+			sys/log/info 'HTTP ["Extracted using:^[[22m" encoding "^[[1mto:^[[22m" length? result/2 "bytes"]
+		][
+			sys/log/info 'HTTP ["Unknown Content-Encoding:^[[m" encoding]
+		]
+	]
 	if all [
 		content-type: select result/1 'Content-Type
 		any [
