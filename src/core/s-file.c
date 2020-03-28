@@ -143,7 +143,7 @@
 		out = UNI_HEAD(dst);
 #ifdef TO_WINDOWS
 		i++;
-		if (len == 1) {
+		if (len == 1 && !full) {
 			// special case: reading drive letters -> read %/
 			// https://github.com/rebol/rebol-issues/issues/2031
 			out[0] = 0;
