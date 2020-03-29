@@ -269,6 +269,18 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "integer to binary conversion"
+	--test-- "issue-550"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/550
+		--assert #{0000000000000001} = to binary! 1
+		--assert #{00000000000000FF} = to binary! 255
+		--assert #{0000000000000100} = to binary! 256
+		--assert #{FFFFFFFFFFFFFFFF} = to binary! -1
+		--assert #{FFFFFFFFFFFFFFFE} = to binary! -2
+===end-group===
+
+
 ===start-group=== "integer issues"
 	--test-- "issue-502"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/502
