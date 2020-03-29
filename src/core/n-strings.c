@@ -453,16 +453,14 @@ static struct digest {
 **
 ***********************************************************************/
 {
-	REBINT base = 64;
+	REBINT base = VAL_INT32(D_ARG(2));
 	REBSER *ser;
 	REBCNT index;
 	REBCNT len = 0;
 
 	ser = Prep_Bin_Str(D_ARG(1), &index, &len); // result may be a SHARED BUFFER!
 
-	if (D_REF(2)) base = VAL_INT32(D_ARG(3)); // /base
-
-	if (!Decode_Binary(D_RET, BIN_SKIP(ser, index), len, base, 0, D_REF(4)))
+	if (!Decode_Binary(D_RET, BIN_SKIP(ser, index), len, base, 0, D_REF(3)))
  		Trap1(RE_INVALID_DATA, D_ARG(1));
 
 	return R_RET;
@@ -478,19 +476,17 @@ static struct digest {
 **
 ***********************************************************************/
 {
-	REBINT base = 64;
 	REBSER *ser = NULL;
 	REBCNT index;
 	REBVAL *arg = D_ARG(1);
+	REBINT base = VAL_INT32(D_ARG(2));
 
 	Set_Binary(arg, Prep_Bin_Str(arg, &index, 0)); // may be SHARED buffer
 	VAL_INDEX(arg) = index;
 
-	if (D_REF(2)) base = VAL_INT32(D_ARG(3));
-
 	switch (base) {
 	case 64:
-		ser = Encode_Base64(arg, 0, FALSE, D_REF(4));
+		ser = Encode_Base64(arg, 0, FALSE, D_REF(3));
 		break;
 	case 16:
 		ser = Encode_Base16(arg, 0, FALSE);
@@ -507,7 +503,7 @@ static struct digest {
 		
 		break;
 	default:
-		Trap_Arg(D_ARG(3));
+		Trap_Arg(D_ARG(2));
 	}
 
 	Set_String(D_RET, ser);

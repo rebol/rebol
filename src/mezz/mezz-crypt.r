@@ -68,11 +68,11 @@ import module [
 		][	return none ]
 		
 		either binary [
-			try [debase base64-data]
+			try [debase base64-data 64]
 		][
 			compose/only [
 				label:     (trim/tail label)
-				binary:    (try [debase base64-data])
+				binary:    (try [debase base64-data 64])
 				header:    (new-line/skip header true 2)
 				pre-text:  (trim/head/tail pre-text)
 				post-text: (trim/head/tail post-text)

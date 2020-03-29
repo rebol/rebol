@@ -154,11 +154,11 @@ sync-smtp-handler: func [ event
 						case [
 							find/part response "334 VXNlcm5hbWU6" 16 [
 								; username being requested
-								write client to-binary net-log/C join enbase client/spec/user CRLF
+								write client to-binary net-log/C join enbase client/spec/user 64 CRLF
 							]
 							find/part response "334 UGFzc3dvcmQ6" 16 [
 								; pass being requested
-								write client to-binary net-log/C join enbase client/spec/pass CRLF
+								write client to-binary net-log/C join enbase client/spec/pass 64 CRLF
 								client/spec/state: 'PASSWORD
 							]
 							true [
@@ -172,11 +172,11 @@ sync-smtp-handler: func [ event
 						case [
 							find/part response "334 " 4 [
 								auth-key: skip response 4
-								auth-key: debase auth-key
+								auth-key: debase auth-key 64
 								; compute challenge response
 								auth-key: checksum/method/key auth-key 'md5 client/spec/pass
 								write client to-binary net-log/C join 
-								enbase reform [client/spec/user lowercase enbase/base auth-key 16] CRLF
+								enbase reform [client/spec/user lowercase enbase auth-key 16] 64 CRLF
 								client/spec/state: 'PASSWORD
 							]
 							true [ 
@@ -238,7 +238,7 @@ any
 								write client to-binary net-log/C rejoin ["MAIL FROM: <" client/spec/email/from ">" CRLF]					   ][
 							switch/default client/spec/state [
 								PLAIN [
-									write client to-binary net-log/C rejoin [ "AUTH PLAIN " enbase rejoin [client/spec/user #"^@" client/spec/user #"^@" client/spec/pass] CRLF  ]
+									write client to-binary net-log/C rejoin [ "AUTH PLAIN " enbase rejoin [client/spec/user #"^@" client/spec/user #"^@" client/spec/pass] 64 CRLF  ]
 									client/spec/state: 'PASSWORD
 									]
 								LOGIN [

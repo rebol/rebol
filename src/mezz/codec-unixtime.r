@@ -23,7 +23,7 @@ register-codec [
 		epoch [number! string! binary!] "Date in unix time format (string is uspposed to be in base-16 format)"
 		/utc {Will not add time zone}
 	][
-		if string? epoch [ epoch: debase/base epoch 16 ]
+		if string? epoch [ epoch: debase epoch 16 ]
 		if binary? epoch [ epoch: to integer! epoch ]
 		days: to integer! tmp: epoch / 86400
 		hours: to integer! time: (tmp - days) * 24
@@ -54,7 +54,7 @@ register-codec [
 			binary/write bin: #{} [ui32 :unix]
 			switch type [
 				binary!  [ return bin ]
-				string!  [ return enbase/base bin 16]
+				string!  [ return enbase bin 16]
 				integer! [ return unix ] ; just for consistency
 			]
 			cause-error 'script 'invalid-arg type

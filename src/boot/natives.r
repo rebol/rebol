@@ -403,18 +403,16 @@ construct: native [
 ]
 
 debase: native [
-	{Decodes binary-coded string (BASE-64 default) to binary value.}
+	{Decodes binary-coded string to binary value.}
 	value [binary! string!] {The string to decode}
-	/base {Binary base to use}
-	base-value [integer!] {The base to convert from: 85, 64, 16, or 2}
+	base  [integer!] {Binary base to use: 85, 64, 16, or 2}
 	/url  {Base 64 Decoding with URL and Filename Safe Alphabet}
 ]
 
 enbase: native [
-	{Encodes a string into a binary-coded string (BASE-64 default).}
+	{Encodes a string into a binary-coded string.}
 	value [binary! string!] {If string, will be UTF8 encoded}
-	/base {Binary base to use}
-	base-value [integer!] {The base to convert to: 85, 64, 16, or 2}
+	base  [integer!] {Binary base to use: 85, 64, 16, or 2}
 	/url  {Base 64 Encoding with URL and Filename Safe Alphabet}
 ]
 

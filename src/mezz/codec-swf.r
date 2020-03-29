@@ -328,7 +328,7 @@ import module [
 				][
 					lineType: none
 					;StyleChangeRecord
-					;print ["SCR:" mold copy/part bin/buffer 5 (enbase/base to-binary to-char states 2)]
+					;print ["SCR:" mold copy/part bin/buffer 5 (enbase to-binary to-char states 2)]
 					append records 'style
 					insert/only tail records reduce [
 						either 0 < (states and 1 ) [ readSBPair ][none] ;move
