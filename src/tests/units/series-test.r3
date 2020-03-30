@@ -543,6 +543,11 @@ Rebol [
 	--assert error? try [append #{} 256]
 	--assert error? try [append #{} -1]
 
+--test-- "TAKE binary!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/963
+	--assert 32 = take #{20}
+	--assert  4 = take #{04}
+
 --test-- "any-string? binary!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/820
 	--assert not any-string? #{}
