@@ -548,6 +548,13 @@ Rebol [
 	--assert 32 = take #{20}
 	--assert  4 = take #{04}
 
+--test-- "REPLACE binary! integer! integer!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2412
+	b: #{010201}
+	--assert #{010301} = replace b 2 3
+	--assert #{000300} = replace/all b 1 0
+	--assert error? try [replace b 257 0]
+
 --test-- "any-string? binary!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/820
 	--assert not any-string? #{}

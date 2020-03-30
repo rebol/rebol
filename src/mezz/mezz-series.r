@@ -145,7 +145,15 @@ replace: func [
 			length? :search
 		]
 		binary? target [
-			unless binary? :search [search: to-binary :search] ; Must be convertable
+			unless binary? :search [ ; Must be convertable
+				if integer? :search [
+					if any [:search > 255 :search < 0] [
+						cause-error 'Script 'out-of-range :search
+					]
+					search: to char! :search
+				]
+				search: to binary! :search
+			] 
 			length? :search
 		]
 		any-block? :search [length? :search]
