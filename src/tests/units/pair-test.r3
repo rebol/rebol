@@ -226,6 +226,16 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/17
 		--assert error? try [to-pair [,4]]
 
+	--test-- "pair with infinities"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1717
+		--assert pair? p: as-pair 1e300 -1e300
+		--assert decimal? p/1
+		--assert p/1 = 1.#INF
+		--assert p = p
+		--assert pair? p: random p
+		--assert p/1 <  1.#INF
+		--assert p/2 > -1.#INF
+
 ===end-group===
 
 ~~~end-file~~~
