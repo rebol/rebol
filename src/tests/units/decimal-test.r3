@@ -86,5 +86,12 @@ Rebol [
 			--assert d = to-degrees r
 		]
 ===end-group===
+
+===start-group=== "decimal issues"
+	--test-- "issue-1753"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1753
+	--assert "399405206703547.0" = mold tangent 89.99999999999986
+	--assert 1.#INF = tangent 89.99999999999987
+===end-group===
 	
 ~~~end-file~~~
