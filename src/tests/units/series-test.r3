@@ -529,6 +529,17 @@ Rebol [
 
 ===start-group=== "BLOCK"
 
+--test-- "CHANGE binary! integer!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/966
+	--assert #{00} = head change #{} 0
+	--assert #{FF} = head change #{} 255
+	--assert error? try [head change #{} 256]
+
+===end-group===
+
+
+===start-group=== "BINARY"
+
 --test-- "path in block"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/26
 	b: [b 1]
