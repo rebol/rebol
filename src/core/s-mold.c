@@ -1126,11 +1126,16 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		break;
 
 	case REB_BINARY:
-		if (GET_MOPT(mold, MOPT_MOLD_ALL) && VAL_INDEX(value) != 0) {
-			Mold_All_String(value, mold);
-			return;
+		if (molded) {
+			if (GET_MOPT(mold, MOPT_MOLD_ALL) && VAL_INDEX(value) != 0) {
+				Mold_All_String(value, mold);
+				return;
+			}
+			Mold_Binary(value, mold);
 		}
-		Mold_Binary(value, mold);
+		else {
+			Emit(mold, "E",  Encode_Base16(value, 0, FALSE));
+		}
 		break;
 
 	case REB_FILE:

@@ -313,6 +313,15 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "form binary!"
+	;-- form on binary! removes decoration..
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2413
+	--test-- "form binary!"
+		--assert "DEADBEEF" = form #{DEADBEEF}
+		--assert "DEADBEEF" = append "" #{DEADBEEF}
+
+===end-group===
+
 ===start-group=== "mold email!"
 	--test-- "issue-159"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/159
