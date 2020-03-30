@@ -527,7 +527,7 @@ Rebol [
 ===end-group===
 
 
-===start-group=== "BLOCK"
+===start-group=== "BINARY"
 
 --test-- "CHANGE binary! integer!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/966
@@ -566,7 +566,7 @@ Rebol [
 ===end-group===
 
 
-===start-group=== "BINARY"
+===start-group=== "BLOCK"
 
 --test-- "path in block"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/26
@@ -584,17 +584,36 @@ Rebol [
 
 ===end-group===
 
-===start-group=== "UNIQUE"
+===start-group=== "UNIQUE & DEDUPLICATE"
 
 --test-- "unique on string"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/402
 	--assert "123" = unique "123"
-	--assert "123" = unique "123123"
+	--assert "123" = unique s: "123123"
+	--assert s = "123123"                    ;- unique does not modify its input
+	--assert "123" = deduplicate s: "123123" ;- while deduplicate does
+	--assert "123" = s                       ;- https://github.com/Oldes/Rebol-issues/issues/1573
 --test-- "unique/skip on string"
 	--assert "abca"   = unique/skip "ababca" 2
-	--assert "ababca" = unique/skip "ababca" 3
+	--assert "ababca" = unique/skip s: "ababcaaba" 3
+	--assert s = "ababcaaba"
+	--assert "ababca" = deduplicate/skip s: "ababcaaba" 3
+	--assert "ababca" = s
+
+--test-- "unique on block"
+	--assert [1 2] = unique [1 2]
+	--assert [1 2] = unique b: [1 2 2 1]
+	--assert b = [1 2 2 1]                   ;- unique does not modify its input
+	--assert [1 2] = deduplicate b: [1 2 2 1]
+	--assert [1 2] = b                       ;- while deduplicate does
+--test-- "unique/skip on block"
+	--assert [1 2 3 4] = unique/skip b: [1 2 1 2 3 4] 2
+	--assert b = [1 2 1 2 3 4]
+	--assert [1 2 3 4] = deduplicate/skip b: [1 2 1 2 3 4] 2
+	--assert [1 2 3 4] = b
 
 ===end-group===
+
 
 ;-- VECTOR related tests moved to %vector-test.r3
 

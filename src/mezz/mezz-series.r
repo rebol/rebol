@@ -351,6 +351,16 @@ extract: func [
 	either into [output] [head output]
 ]
 
+deduplicate: func [
+    "Removes duplicates from the data set."
+    set [block! string! binary!] "The data set (modified)"
+    /case "Use case-sensitive comparison"
+    /skip "Treat the series as records of fixed size"
+    size [integer!]
+] [
+    head insert set also apply :unique [set case skip size] clear set
+]
+
 alter: func [
 	"Append value if not found, else remove it; returns true if added."
 	series [series! port! bitset!] {(modified)}
