@@ -546,7 +546,11 @@ Rebol [
 --test-- "any-string? binary!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/820
 	--assert not any-string? #{}
-	
+
+--test-- "binary not allowed with latin1? and ascii?"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/908
+	--assert error? try [latin1? #{}]
+	--assert error? try [ascii? #{}]
 ===end-group===
 
 
