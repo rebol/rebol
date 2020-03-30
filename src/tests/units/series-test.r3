@@ -543,6 +543,10 @@ Rebol [
 	--assert error? try [append #{} 256]
 	--assert error? try [append #{} -1]
 
+--test-- "any-string? binary!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/820
+	--assert not any-string? #{}
+	
 ===end-group===
 
 
