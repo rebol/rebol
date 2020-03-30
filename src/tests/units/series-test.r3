@@ -534,6 +534,14 @@ Rebol [
 	--assert #{00} = head change #{} 0
 	--assert #{FF} = head change #{} 255
 	--assert error? try [head change #{} 256]
+	--assert error? try [head change #{} -1]
+
+--test-- "APPEND binary! integer!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/965
+	--assert #{00} = append #{} 0
+	--assert #{FF} = append #{} 255
+	--assert error? try [append #{} 256]
+	--assert error? try [append #{} -1]
 
 ===end-group===
 
