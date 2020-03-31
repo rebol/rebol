@@ -34,6 +34,7 @@ REBOL [
 
 ;-- lib: mid-level lib context:
 [
+	%mezz-secure.r
 	%mezz-types.r
 	%mezz-func.r
 	%mezz-debug.r

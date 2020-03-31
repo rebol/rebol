@@ -119,5 +119,5 @@ default: func [
 	unless all [value? word not none? get word] [set word :value] :value
 ]
 
-secure: func ['d] [boot-print "SECURE is disabled"]
+;secure: func ['d] [boot-print "SECURE is disabled"]
 

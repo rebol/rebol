@@ -29,20 +29,21 @@ secure: function/with [
 	pol-obj: get-policies ; a deep copy
 
 	if policy = 'help [
-		print "You can set policies for:"
-		foreach [target pol] pol-obj [print ["  " target]]
-		print "These can be set to:"
-		foreach [t d] [
-			allow "no security"
-			ask   "ask user for permission"
-			throw "throw as an error"
-			quit  "exit the program immediately"
-			file  "a file path"
-			url   "a file path"
-			other "other value, such as integer"
-		] [print ["  " t "-" d]]
-		print "Settings for read, write, and execute are also available."
-		print "Type: help/doc secure for detailed documentation and examples."
+		print " You can set policies for:^[[1;32m"
+		foreach [target pol] pol-obj [print ["    " target]]
+		print " ^[[mThese can be set to:"
+		print [
+			"^[[1;32m     allow ^[[m - no security^/"
+			;"^[[1;32m     ask   "ask user for permission" ;-- yet not implemented!
+			"^[[1;32m     throw ^[[m - throw as an error^/"
+			"^[[1;32m     quit  ^[[m - exit the program immediately^/"
+			"^[[1;32m     file  ^[[m - a file path^/"
+			"^[[1;32m     url   ^[[m - a file path^/"
+			"^[[1;32m     other ^[[m - other value, such as integer"
+		]
+		print " Settings for read, write, and execute are also available."
+		print "^/ ^[[1;35mNOTE: ^[[1;31mSecure is not fully implemented!^/"
+		;print "Type: help/doc secure for detailed documentation and examples."
 		exit
 	]
 
