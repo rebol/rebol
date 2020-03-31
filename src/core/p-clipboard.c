@@ -39,6 +39,7 @@
 	REBREQ *req;
 	REBINT result;
 	REBVAL *arg;
+	REBCNT args = 0;
 	REBCNT refs;	// refinement argument flags
 	REBINT len;
 	REBSER *ser;
@@ -70,6 +71,7 @@
 		return R_NONE;
 
 	case A_READ:
+		args = Find_Refines(ds, ALL_READ_REFS);
 		// This device is opened on the READ:
 		if (!IS_OPEN(req)) {
 			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
@@ -93,7 +95,12 @@
 
 		OS_FREE(req->data); // release the copy buffer
 		req->data = 0;
-		*D_RET = *arg;
+
+		if (args & AM_READ_LINES) {
+			Set_Block(D_RET, Split_Lines(arg));
+		} else {
+			*D_RET = *arg;
+		}
 		return R_RET;
 
 	case A_WRITE:
