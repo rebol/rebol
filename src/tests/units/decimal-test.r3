@@ -92,6 +92,12 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1753
 	--assert "399405206703547.0" = mold tangent 89.99999999999986
 	--assert 1.#INF = tangent 89.99999999999987
+
+	--test-- "issue-95"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/95
+	--assert 2.1 = 1 + 1.1
+	--assert 0.1 = 1.1 - 1
+	--assert 1.1 = 1 * 1.1
 ===end-group===
 	
 ~~~end-file~~~
