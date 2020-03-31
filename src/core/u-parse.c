@@ -1103,6 +1103,9 @@ post:
 		mincount = maxcount = 1;
 
 	}
+	
+	if (Eval_Signals) Do_Signals();
+
 	return index;
 
 bad_rule:
