@@ -453,7 +453,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 
 	// Get first block value:
 	pvs.orig = *path_val;
-	pvs.path = VAL_BLK_DATA(*path_val);
+	pvs.path = VAL_BLK_DATA(pvs.orig);
 
 	// Lookup the value of the variable:
 	if (IS_WORD(pvs.path)) {
