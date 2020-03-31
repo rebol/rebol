@@ -5,6 +5,8 @@ Rebol [
 	Needs:   [%quick-test-module.r3]
 ]
 
+secure [file allow]
+
 dt [ ;- delta time
 	***start-run*** "All tests"
 	;recycle/torture
