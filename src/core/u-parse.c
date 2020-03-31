@@ -1104,7 +1104,7 @@ post:
 
 	}
 	
-	if (Eval_Signals) Do_Signals();
+	if (--Eval_Count <= 0 || Eval_Signals) Do_Signals();
 
 	return index;
 
