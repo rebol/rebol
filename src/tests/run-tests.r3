@@ -40,6 +40,7 @@ dt [ ;- delta time
     wrap load %units/tuple-test.r3
     wrap load %units/typeset-test.r3
     wrap load %units/vector-test.r3
+    wrap load %units/word-test.r3
     ;- cryptography tests:
     wrap load %units/aes-test.r3
     wrap load %units/chacha20-test.r3

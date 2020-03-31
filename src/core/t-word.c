@@ -84,8 +84,8 @@
 
 	switch (action) {
 	case A_LENGTHQ:
-		diff = (REBINT)LEN_BYTES(Get_Sym_Name(VAL_WORD_SYM(val)));
-		if (type != REB_WORD) diff++;
+		diff = (REBINT)Length_As_UTF8_Code_Points(Get_Sym_Name(VAL_WORD_SYM(val)));
+		//if (type != REB_WORD) diff++; // in case that the _decoration_ should be also counted (#abc :abc abc: 'abc)
 		DS_Ret_Int(diff);
 		break;
 

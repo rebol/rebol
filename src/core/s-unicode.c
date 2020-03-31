@@ -972,6 +972,20 @@ ConversionResult ConvertUTF8toUTF32 (
 	return dst;
 }
 
+/***********************************************************************
+**
+*/	REBCNT Length_As_UTF8_Code_Points(REBYTE *src)
+/*
+**		Returns number of code points encoded in UTF-8.
+**
+***********************************************************************/
+{
+	REBCNT size = 0;
+	while (*src) {
+        size += (*src++ & 0xC0) != 0x80;
+    }
+	return size;
+}
 
 /***********************************************************************
 **
