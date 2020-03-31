@@ -466,6 +466,23 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "DETAB / ENTAB"
+
+--test-- "DETAB"
+	--assert "    A^/    B" = detab      "^-A^/^-B"
+	--assert "    A^/    Š" = detab      "^-A^/^-Š"
+	--assert "  A^/  B"     = detab/size "^-A^/^-B" 2
+	--assert "  A^/  Š"     = detab/size "^-A^/^-Š" 2
+--test-- "ENTAB"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2216
+	--assert "^-A^/^-B"     = entab      {    A^/    B}
+	--assert "^-A^/^-Š"     = entab      {    A^/    Š}
+	--assert "^-^-A^/^-^-B" = entab/size {    A^/    B} 2
+	--assert "^-^-A^/^-^-Š" = entab/size {    A^/    Š} 2
+	--assert "^-^-^- A"     = entab      {    ^-     A}
+
+===end-group===
+
 ===start-group=== "AS coercion"
 
 --test-- "AS datatype! any-string!"

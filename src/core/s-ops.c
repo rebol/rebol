@@ -541,7 +541,10 @@ static REBYTE seed_str[SEED_LEN] = {
 
 			// Copy chars thru end-of-line (or end of buffer):
 			while (index < len) {
-				if ((*dp++ = bp[index++]) == '\n') break;
+				if ((*dp++ = bp[index++]) == '\n') {
+					index--;
+					break;
+				}
 			}
 		}
 	}
@@ -588,7 +591,10 @@ static REBYTE seed_str[SEED_LEN] = {
 
 			// Copy chars thru end-of-line (or end of buffer):
 			while (index < len) {
-				if ((*dp++ = bp[index++]) == '\n') break;
+				if ((*dp++ = bp[index++]) == '\n') {
+					index--;
+					break;
+				}
 			}
 		}
 	}
