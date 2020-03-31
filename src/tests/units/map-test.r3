@@ -112,6 +112,19 @@ Rebol [
 	--test-- "clear map"
 		--assert empty? clear make map! [a: 1]
 
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1864
+	--test-- "copy/deep map"
+		m1: #(b: [1])
+		m2: copy m1
+		m3: copy/deep m1
+		--assert     same? m1/b m2/b
+		--assert not same? m1/b m3/b
+		append m1/b 2
+		--assert m1/b = [1 2]
+		--assert m2/b = [1 2]
+		--assert m3/b = [1]
+
+
 ===end-group===
 
 
