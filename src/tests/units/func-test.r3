@@ -31,4 +31,25 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Other issues"
+
+--test-- "issue-2025"
+	f: make function! reduce [[x /local x-v y-v] body: [
+	    x-v: either error? try [get/any 'x] [
+	        "x does not have a value"
+	    ] [
+	        rejoin ["x: " mold/all :x]
+	    ]
+	    y-v: either error? try [get/any 'y] [
+	        "y does not have a value"
+	    ] [
+	        rejoin ["y: " mold/all :y]
+	    ]
+	    ;print [x-v y-v]
+	]]
+	g: make function! reduce [[y /local x-v y-v] body]
+
+	--assert error? try [f 1]
+===end-group===
+
 ~~~end-file~~~
