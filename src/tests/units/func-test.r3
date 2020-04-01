@@ -34,6 +34,7 @@ Rebol [
 ===start-group=== "Other issues"
 
 --test-- "issue-2025"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2025
 	f: make function! reduce [[x /local x-v y-v] body: [
 	    x-v: either error? try [get/any 'x] [
 	        "x does not have a value"
@@ -50,6 +51,14 @@ Rebol [
 	g: make function! reduce [[y /local x-v y-v] body]
 
 	--assert error? try [f 1]
+
+--test-- "issue-2044"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2044
+	body: [x + y]
+    f: make function! reduce [[x] body]
+    g: make function! reduce [[y] body]
+    --assert error? try [f 1]
+
 ===end-group===
 
 ~~~end-file~~~
