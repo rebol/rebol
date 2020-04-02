@@ -39,6 +39,13 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "EXTEND object"
+	--test-- "extend object"
+		obj: object []
+		--assert 1 = extend obj 'a 1
+		--assert 1 = obj/a
+===end-group===
+
 ===start-group=== "APPEND on OBJECT"
 	;@@ https://github.com/rebol/rebol-issues/issues/708
 	--test-- "issue-708"
@@ -58,11 +65,41 @@ Rebol [
 		--assert err/id = 'protected
 		unprotect o
 
-	--test-- "issue-1170"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/1170
-		obj: protect object [a: object [b: 10]]
-		--assert     error? try [obj/a: 0]
-		--assert not error? try [obj/a/b: 0]
+===end-group===
+
+===start-group=== "PROTECT object!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1014
+	--test-- "protect object"
+		; To prevent adding words to o, and prevent modification of words already in o: 
+		o: protect object [a: object [b: 10]]
+		--assert     error? try [extend o 'c 3]
+		--assert     error? try [append o 'd]
+		--assert     error? try [o/a: 0]
+		--assert not error? try [o/a/b: 0] ;;@@ https://github.com/Oldes/Rebol-issues/issues/1170
+
+	--test-- "protect/words object!"
+		; To allow adding words to o, but prevent modification to words already in o:
+		o: protect/words object [a: object [b: 10]]
+		--assert not error? try [extend o 'c 3]
+		--assert not error? try [append o 'd]
+		--assert     error? try [o/a: 0]
+		--assert not error? try [o/a/b: 0]
+
+	--test-- "protect/deep object!"
+		; To prevent adding words to o, modification of words already in o, or their contents:
+		o: protect/deep object [a: object [b: 10]]
+		--assert     error? try [extend o 'c 3]
+		--assert     error? try [append o 'd]
+		--assert     error? try [o/a: 0]
+		--assert     error? try [o/a/b: 0]
+
+	--test-- "protect/words/deep object!"
+		; To allow adding words to o, but prevent modification of words already in o or their contents: 
+		o: protect/words/deep object [a: object [b: 10]]
+		--assert not error? try [extend o 'c 3]
+		--assert not error? try [append o 'd]
+		--assert     error? try [o/a: 0]
+		--assert     error? try [o/a/b: 0]
 
 ===end-group===
 

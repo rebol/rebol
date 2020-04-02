@@ -37,6 +37,7 @@ enum {
 	PROT_DEEP,
 	PROT_HIDE,
 	PROT_WORD,
+	PROT_WORDS,
 	PROT_PERMANENTLY
 };
 
@@ -135,16 +136,17 @@ enum {
 {
 	REBSER *series = VAL_OBJ_FRAME(value);
 
-	if (IS_MARK_SERIES(series)) return; // avoid loop
-
-	if (GET_FLAG(flags, PROT_SET)) {
-		PROTECT_SERIES(series);
-		if (GET_FLAG(flags, PROT_PERMANENTLY)) LOCK_SERIES(series);
+	if (!GET_FLAG(flags, PROT_WORDS)) {
+		if (IS_MARK_SERIES(series)) return; // avoid loop
+		if (GET_FLAG(flags, PROT_SET)) {
+			PROTECT_SERIES(series);
+			if (GET_FLAG(flags, PROT_PERMANENTLY)) LOCK_SERIES(series);
+		}
+		else 
+			//unprotect series only when not locked (using protect/permanently)
+			if (!IS_LOCK_SERIES(series))
+				UNPROTECT_SERIES(series);
 	}
-	else 
-		//unprotect series only when not locked (using protect/permanently)
-		if (!IS_LOCK_SERIES(series))
-			UNPROTECT_SERIES(series);
 
 	for (value = FRM_WORDS(series)+1; NOT_END(value); value++) {
 		Protect_Word(value, flags);
@@ -213,7 +215,7 @@ enum {
 	Check_Security(SYM_PROTECT, POL_WRITE, val);
 
 	if (D_REF(2)) SET_FLAG(flags, PROT_DEEP);
-	//if (D_REF(3)) SET_FLAG(flags, PROT_WORD);
+	if (D_REF(3)) SET_FLAG(flags, PROT_WORDS);
 
 	if (D_REF(5)) SET_FLAG(flags, PROT_HIDE);
 	else SET_FLAG(flags, PROT_WORD); // there is no unhide
