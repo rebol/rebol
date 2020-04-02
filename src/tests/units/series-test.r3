@@ -118,6 +118,15 @@ Rebol [
 		--assert "4321" = sort/reverse/reverse "1234"
 ===end-group===
 
+
+===start-group=== "REPLACE"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/54
+	--test-- "issue-54"
+		--assert "ABCDE456" = replace "123456" "123" "ABCDE"
+		--assert "1!!2!!3"  = replace/all "1 2 3" " " "!!"
+===end-group===
+
+
 ===start-group=== "PUT"
 	--test-- "PUT into BLOCK"
 	v: [a 1 b 2 c]
