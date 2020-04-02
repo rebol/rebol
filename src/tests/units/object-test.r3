@@ -58,6 +58,12 @@ Rebol [
 		--assert err/id = 'protected
 		unprotect o
 
+	--test-- "issue-1170"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1170
+		obj: protect object [a: object [b: 10]]
+		--assert     error? try [obj/a: 0]
+		--assert not error? try [obj/a/b: 0]
+
 ===end-group===
 
 ~~~end-file~~~
