@@ -103,4 +103,41 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "UNPROTECT object!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1015
+	--test-- "unprotect object"
+		; To allow adding words to o, and allow modification of words already in o, but not affect their values:
+		o: unprotect protect/deep o: object [a: 10 b: [20]]
+		--assert not error? try [extend o 'c 3]
+		--assert not error? try [append o 'd]
+		--assert not error? try [o/a: 0]
+		--assert     error? try [append o/b 0]
+
+	--test-- "unprotect/words object!"
+		; To allow modification of words already in o, but not affect their values or the object itself: 
+		o: unprotect/words protect/deep o: object [a: 10 b: [20]]
+		--assert     error? try [extend o 'c 3]
+		--assert     error? try [append o 'd]
+		--assert not error? try [o/a: 0]
+		--assert     error? try [append o/b 0]
+
+	--test-- "unprotect/deep object!"
+		; To allow adding words to o, and allow modification of words already in o or their values:
+		o: unprotect/deep protect/deep o: object [a: 10 b: [20]]
+		--assert not error? try [extend o 'c 3]
+		--assert not error? try [append o 'd]
+		--assert not error? try [o/a: 0]
+		--assert not error? try [append o/b 0]
+
+	--test-- "unprotect/words/deep object!"
+		; To allow modification of words already in o and their contents, but not affect the object itself: 
+		o: unprotect/words/deep protect/deep o: object [a: 10 b: [20]]
+		--assert     error? try [extend o 'c 3]
+		--assert     error? try [append o 'd]
+		--assert not error? try [o/a: 0]
+		--assert not error? try [append o/b 0]
+
+===end-group===
+
 ~~~end-file~~~

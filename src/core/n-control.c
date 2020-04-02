@@ -135,27 +135,27 @@ enum {
 ***********************************************************************/
 {
 	REBSER *series = VAL_OBJ_FRAME(value);
-
-	if (!GET_FLAG(flags, PROT_WORDS)) {
-		if (IS_MARK_SERIES(series)) return; // avoid loop
-		if (GET_FLAG(flags, PROT_SET)) {
-			PROTECT_SERIES(series);
-			if (GET_FLAG(flags, PROT_PERMANENTLY)) LOCK_SERIES(series);
-		}
-		else 
-			//unprotect series only when not locked (using protect/permanently)
-			if (!IS_LOCK_SERIES(series))
-				UNPROTECT_SERIES(series);
-	}
-
+	if (IS_MARK_SERIES(series)) return; // avoid loop
 	for (value = FRM_WORDS(series)+1; NOT_END(value); value++) {
 		Protect_Word(value, flags);
 	}
-
+	if (GET_FLAG(flags, PROT_SET)) {
+		// protecting...
+		if (!GET_FLAG(flags, PROT_WORDS)) {
+			PROTECT_SERIES(series);
+			if (GET_FLAG(flags, PROT_PERMANENTLY))
+				LOCK_SERIES(series);
+		}
+	} else {
+		// unprotecting...
+		if(!GET_FLAG(flags, PROT_WORDS)) {
+			//unprotect series only when not locked (using protect/permanently)
+			if (!IS_LOCK_SERIES(series))
+				UNPROTECT_SERIES(series);
+		}
+	}
 	if (!GET_FLAG(flags, PROT_DEEP)) return;
-
 	MARK_SERIES(series); // recursion protection
-
 	for (value = FRM_VALUES(series)+1; NOT_END(value); value++) {
 		Protect_Value(value, flags);
 	}
