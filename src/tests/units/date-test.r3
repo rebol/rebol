@@ -89,6 +89,11 @@ Rebol [
 		--assert not error? try [d/zone: 2]
 		--assert "28-Oct-2009/10:09:38+2:00" = mold d
 
+	--test-- "issue 1145"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1145
+		test-issue-1145: does [for n 1 100 1 [if error? try [random/secure now][ return false ]] true]
+		--assert test-issue-1145
+
 ===end-group===
 
 ===start-group=== "DATE/TIMEZONE"
