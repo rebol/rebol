@@ -19,6 +19,11 @@ Rebol [
 	o: object [ f: func[/a][] ]
 	--assert error? try [ apply 'o/f [true] ]
 
+--test-- "apply with refinements"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/167
+	f: func [a /b c] [reduce [a b c]]
+	--assert [1 #[true] 3] = apply :f [1 2 3]
+
 ===start-group=== "body-of"
 
 --test-- "body-of NATIVE or ACTION"
