@@ -14,6 +14,11 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1950
 	--assert 2 = try [apply :do [:add 1 1]]
 
+--test-- "apply 'path/to/func []"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/44
+	o: object [ f: func[/a][] ]
+	--assert error? try [ apply 'o/f [true] ]
+
 ===start-group=== "body-of"
 
 --test-- "body-of NATIVE or ACTION"
