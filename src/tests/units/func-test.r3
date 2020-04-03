@@ -23,6 +23,8 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/167
 	f: func [a /b c] [reduce [a b c]]
 	--assert [1 #[true] 3] = apply :f [1 2 3]
+===end-group===
+
 
 ===start-group=== "body-of"
 
@@ -43,9 +45,38 @@ Rebol [
 	--assert error? try [make :read [[][]]]
 	--assert error? try [make action! [[][]]]
 	--assert error? try [make native! [[][]]]
+	;- op! requires at least 2 args
 	--assert error? try [make op! [[][]]]
+	--assert error? try [make op! [[a][]]]
+	--assert error? try [make op! [[/local a b][]]]
+	--assert error? try [make op! [[a /local b][]]]
 
 ===end-group===
+
+
+===start-group=== "OP!"
+
+--test-- "make op!"
+	--assert op? +*: try [ make op! [[a b][a + (a * b)]] ]
+	--assert 3 = (1 +* 2)
+	--assert 6 = (2 +* 2)
+--test-- "make op! with /local"
+	c: 1
+	--assert op? try [.: make op! [[a "val1" b "val2" /local c ][ c: none join a b ]]]
+	--assert "a"."b" = "ab"
+	--assert "a".["b" "c"] = "abc"
+--test-- "body-of op!"
+	--assert (body-of :+*) = [a + (a * b)]
+	--assert (body-of :. ) = [c: none join a b]
+
+--test-- "spec-of op!"
+	--assert [a b]         = spec-of :+*
+	--assert (spec-of :. ) = [a "val1" b "val2" /local c]
+
+	
+===end-group===
+
+
 
 ===start-group=== "Other issues"
 

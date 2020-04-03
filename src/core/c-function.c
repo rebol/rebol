@@ -199,7 +199,6 @@
 		|| !IS_BLOCK(spec = VAL_BLK(def))
 		|| type == REB_ACTION //@@ https://github.com/rebol/rebol-issues/issues/1051
 		|| type == REB_NATIVE
-		|| type == REB_OP     //@@ https://github.com/rebol/rebol-issues/issues/1052  (may be implemented later)
 	) return FALSE;
 
 	body = VAL_BLK_SKIP(def, 1);
@@ -216,7 +215,20 @@
 
 	VAL_SET(value, type);
 
-	if (type == REB_FUNCTION || type == REB_CLOSURE)
+	if (type == REB_OP) {
+		// make sure that there are at least 2 args
+		REBVAL *args = BLK_HEAD(VAL_FUNC_ARGS(value))+1;
+		REBCNT w = 0;
+		for (; NOT_END(args); args++) {
+			if(IS_REFINEMENT(args) && VAL_WORD_CANON(args) == SYM_LOCAL) break;
+			else if(IS_WORD(args))
+				w++;
+		}
+		if (w < 2) return FALSE;
+		VAL_SET_EXT(value, REB_FUNCTION);
+	}
+
+	if (type == REB_FUNCTION || type == REB_CLOSURE || type == REB_OP)
 		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value));
 
 	return TRUE;
