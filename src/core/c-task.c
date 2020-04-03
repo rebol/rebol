@@ -58,7 +58,6 @@
 */
 
 #include "sys-core.h"
-#include "sys-state.h"
 //#define INCLUDE_TASK
 
 #ifdef INCLUDE_TASK
