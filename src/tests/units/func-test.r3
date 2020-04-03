@@ -106,6 +106,11 @@ Rebol [
     g: make function! reduce [[y] body]
     --assert error? try [f 1]
 
+ --test-- "op! as a path"
+ 	;@@ https://github.com/Oldes/Rebol-issues/issues/1236
+ 	math: make object! [ plus: :+ ]
+ 	--assert error? try [1 math/plus 2]
+
 ===end-group===
 
 ~~~end-file~~~
