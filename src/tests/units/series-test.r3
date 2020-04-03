@@ -654,9 +654,14 @@ Rebol [
 	--assert (mold to-path [1 2 3]) = "1/2/3"
 	--assert (mold to-path [1 none 3]) = "1/none/3"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/477
-	--assert error? try [to-path [1 #[none] 3]]
-	--assert error? try [to-path [1 #[true] 3]]
-	--assert error? try [to-path [1 #[false] 3]]
+	--assert path? p: try [to-path b: [1 #[none] #[true] [] () #{}]]
+	--assert integer? p/1
+	--assert none?    p/2
+	--assert true?    p/3
+	--assert block?   p/4
+	--assert paren?   p/5
+	--assert binary?  p/6
+	--assert b = to-block p 
 
 ===end-group===
 
