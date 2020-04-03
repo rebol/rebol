@@ -33,6 +33,12 @@ Rebol [
 	catch/quit [ attempt [ quit ] ]
 	--assert error? try [print x] ;- no crash, just error!
 
+--test-- "2x mold system"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/14
+	;@@ https://github.com/Oldes/Rebol-issues/issues/73
+	--assert string? mold system
+	--assert integer? length? loop 2 [mold system]
+
 ===end-group===
 
 ~~~end-file~~~
