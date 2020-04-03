@@ -33,7 +33,6 @@
 
 #include "sys-core.h"
 #include <stdio.h>
-#include "sys-state.h"
 
 REBNATIVE(do);  // Forward declaration for detection and special cases
 #define IS_DO(v) (IS_NATIVE(v) && (VAL_FUNC_CODE(v) == &N_do))

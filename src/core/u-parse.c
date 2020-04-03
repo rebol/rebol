@@ -28,7 +28,6 @@
 ***********************************************************************/
 
 #include "sys-core.h"
-#include "sys-state.h"
 
 // Parser flags:
 enum Parse_Flags {

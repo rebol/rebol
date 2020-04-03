@@ -96,8 +96,6 @@
 
 #include "sys-core.h"
 
-#include "sys-state.h"
-
 // Globals or Threaded???
 static REBOL_STATE Top_State; // Boot var: holds error state during boot
 

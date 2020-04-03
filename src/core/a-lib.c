@@ -31,7 +31,6 @@
 #include "reb-dialect.h"
 #include "reb-ext.h"
 #include "reb-evtypes.h"
-#include "sys-state.h"
 
 // Linkage back to HOST functions. Needed when we compile as a DLL
 // in order to use the OS_* macro functions.

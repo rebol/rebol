@@ -117,6 +117,7 @@ typedef struct rebol_mold {
 #include "tmp-errnums.h"
 #include "host-lib.h"
 #include "sys-stack.h"
+#include "sys-state.h"
 
 /***********************************************************************
 **
