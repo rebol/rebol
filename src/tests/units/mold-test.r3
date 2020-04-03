@@ -319,6 +319,7 @@ Rebol [
 	--test-- "form binary!"
 		--assert "DEADBEEF" = form #{DEADBEEF}
 		--assert "DEADBEEF" = append "" #{DEADBEEF}
+		--assert     "BEEF" = form skip #{DEADBEEF} 2
 
 ===end-group===
 
