@@ -63,6 +63,22 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "APPEND on map!"
+	--test-- "appen on map with /part and /dup"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1158
+	m: make map! [a 1]
+	--assert 1 = length? m
+	--assert 1 = length? append/part m [b 2] 0
+	--assert 2 = length? append/part m [b 2] 2
+	--assert 2 = length? append/dup  m [c 3] 0
+	--assert 3 = length? append/dup  m [c 3] 1
+	--assert 4 = length? append/dup  m [d 4] 2
+	--assert 5 = length? append/part m [e 5 f 6] 1
+	--assert [1 2 3 4 5] = values-of m
+
+===end-group===
+
+
 ===start-group=== "map issues"
 	;@@ https://github.com/rebol/rebol-issues/issues/770
 	--test-- "map-issue-770"
