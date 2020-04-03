@@ -119,11 +119,18 @@ Rebol [
 ===end-group===
 
 
-===start-group=== "REPLACE"
+===start-group=== "REPLACE string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/54
 	--test-- "issue-54"
 		--assert "ABCDE456" = replace "123456" "123" "ABCDE"
 		--assert "1!!2!!3"  = replace/all "1 2 3" " " "!!"
+===end-group===
+
+
+===start-group=== "CHANGE string!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/55
+	--test-- "issue-55"
+		--assert "456" = change/part "123456" "99" 3
 ===end-group===
 
 
