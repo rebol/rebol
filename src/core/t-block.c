@@ -47,10 +47,10 @@
 	return (num > 0);
 }
 
-static void No_Nones(REBVAL *arg) {
+static void No_Nones_Or_Logic(REBVAL *arg) {
 	arg = VAL_BLK_DATA(arg);
 	for (; NOT_END(arg); arg++) {
-		if (IS_NONE(arg)) Trap_Arg(arg);
+		if (IS_NONE(arg) || IS_LOGIC(arg)) Trap_Arg(arg);
 	}
 }
 
@@ -289,7 +289,7 @@ static void No_Nones(REBVAL *arg) {
 	if (ANY_BLOCK(arg)) {
 		len = VAL_BLK_LEN(arg);
 		if (len > 0 && type >= REB_PATH && type <= REB_LIT_PATH)
-			No_Nones(arg);
+			No_Nones_Or_Logic(arg);
 		ser = Copy_Values(VAL_BLK_DATA(arg), len);
 		goto done;
 	}

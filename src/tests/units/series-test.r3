@@ -648,6 +648,19 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "TO-*"
+
+--test-- "to-path"
+	--assert (mold to-path [1 2 3]) = "1/2/3"
+	--assert (mold to-path [1 none 3]) = "1/none/3"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/477
+	--assert error? try [to-path [1 #[none] 3]]
+	--assert error? try [to-path [1 #[true] 3]]
+	--assert error? try [to-path [1 #[false] 3]]
+
+===end-group===
+
+
 ;-- VECTOR related tests moved to %vector-test.r3
 
 ~~~end-file~~~
