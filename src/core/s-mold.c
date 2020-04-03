@@ -843,6 +843,7 @@ STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	REBVAL *val;
 	REBOOL all = GET_MOPT(mold, MOPT_MOLD_ALL);
 	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
+	REBCNT count = 0;
 
 	// Prevent endless mold loop:
 	if (Find_Same_Block(MOLD_LOOP, value) > 0) {
@@ -863,20 +864,23 @@ STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	mold->indent++;
 	for (val = BLK_HEAD(mapser); NOT_END(val) && NOT_END(val+1); val += 2) {
 		if (!IS_NONE(val+1)) {
+			count++;
 			if (molded) {
 				if(indented) 
 					New_Indented_Line(mold);
 				else if (val > BLK_HEAD(mapser))
 					Append_Byte(mold->series, ' ');
 			}
+			else if (count > 1) {
+				Append_Byte(mold->series, '\n');
+			}
 			Emit(mold, "V V", val, val+1);
-			if (!molded) Append_Byte(mold->series, '\n');
 		}
 	}
 	mold->indent--;
 
 	if (molded) {
-		if(indented) New_Indented_Line(mold);
+		if(indented && count>0) New_Indented_Line(mold);
 		Append_Byte(mold->series, all ? ']' : ')');
 	}
 
@@ -1148,6 +1152,10 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_EMAIL:
 	case REB_URL:
+		if (VAL_LEN(value) == 0) {
+			Append_Bytes(ser, VAL_TYPE(value) == REB_EMAIL ? "#[email! \"\"]" : "#[url! \"\"]");
+			break;
+		}
 		Mold_Url(value, mold);
 		break;
 

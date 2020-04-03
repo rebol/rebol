@@ -144,6 +144,16 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "FORM map!"
+	--test-- "form empty map"
+		--assert "" = form #()
+	--test-- "form single key map"
+		--assert "a: 1" = form #(a: 1)
+	--test-- "form map with multiple keys"
+		--assert "a: 1^/b: 2" = form #(a: 1 b: 2) ; there should not be line break at tail
+===end-group===
+
+
 ===start-group=== "PUT"
 	--test-- "PUT into map"
 		m: #(a: 42)

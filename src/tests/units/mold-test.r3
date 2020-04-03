@@ -296,6 +296,11 @@ Rebol [
 		m/c: m
 		--assert "#(a: 1 b: 2 c: #(...))" = mold/flat m
 
+	--test-- "mold #()"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/725
+		--assert "#()" = mold #()
+		--assert "#[map! []]" = mold/all #()
+
 ===end-group===
 
 ===start-group=== "mold binary!"
