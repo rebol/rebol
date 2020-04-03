@@ -99,8 +99,11 @@ static REBVAL *Func_Word(REBINT dsf)
 **
 ***********************************************************************/
 {
-	if (SERIES_REST(DS_Series) >= STACK_LIMIT) Trap0(RE_STACK_OVERFLOW);
+	if (SERIES_REST(DS_Series) >= STACK_LIMIT) Trap_Stack();
 	DS_Series->tail = DSP+1;
+	if((amount + SERIES_REST(DS_Series)) >= STACK_LIMIT) {
+		amount = STACK_LIMIT - SERIES_REST(DS_Series) - 1;
+	}
 	Extend_Series(DS_Series, amount);
 	DS_Base = BLK_HEAD(DS_Series);
 	Debug_Fmt(BOOT_STR(RS_STACK, 0), DSP, SERIES_REST(DS_Series));
