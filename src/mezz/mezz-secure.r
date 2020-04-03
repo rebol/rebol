@@ -183,8 +183,7 @@ unless system/options/flags/secure-min [
 protect-system-object: func [
 	"Protect the system object and selected sub-objects."
 ][
-	protect 'system
-	protect system
+	protect/words system
 
 	"full protection:"
 	protect/words/deep [
@@ -196,6 +195,7 @@ protect-system-object: func [
 
 	"mild protection:"
 	protect/words [
+		system/standard
 		system/license
 		system/contexts
 	]

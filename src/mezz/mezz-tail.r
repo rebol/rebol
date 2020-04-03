@@ -47,4 +47,5 @@ t: function["Test script shortcut"][
 ; Just a shortcut to evaluate content of the clipboard (temporary):
 drc: does [do read clipboard://]
 
-protect system/standard
+;protect system/standard
+protect-system-object
