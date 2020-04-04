@@ -133,6 +133,42 @@ Rebol [
 		--assert "456" = change/part "123456" "99" 3
 ===end-group===
 
+===start-group=== "TAKE"
+	--test-- "take string!"
+	s: "a"
+	--assert #"a" = take s
+	--assert none?  take s
+
+	--test-- "take/part string!"
+	s: "123456"
+	--assert "12" = take/part s 2
+	--assert "34" = take/part skip s 2 -5 ;@@ https://github.com/Oldes/Rebol-issues/issues/373
+	--assert "56" = take/part s 10
+
+	--test-- "take block!"
+	s: [1]
+	--assert 1   =  take s
+	--assert none?  take s
+
+	--test-- "take/part block!"
+	s: [1 2 3 4 5 6]
+	--assert [1 2] = take/part s 2
+	--assert [3 4] = take/part skip s 2 -5 ;@@ https://github.com/Oldes/Rebol-issues/issues/373
+	--assert [5 6] = take/part s 10
+
+	--test-- "take binary!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/963
+	--assert 32 = take #{20}
+	--assert  4 = take #{04}
+
+	--test-- "take/part binary!"
+	s: #{010203040506}
+	--assert #{0102} = take/part s 2
+	--assert #{0304} = take/part skip s 2 -5 ;@@ https://github.com/Oldes/Rebol-issues/issues/373
+	--assert #{0506} = take/part s 10
+
+===end-group===
+
 
 ===start-group=== "PUT"
 	--test-- "PUT into BLOCK"
@@ -575,11 +611,6 @@ Rebol [
 	--assert #{FF} = append #{} 255
 	--assert error? try [append #{} 256]
 	--assert error? try [append #{} -1]
-
---test-- "TAKE binary!"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/963
-	--assert 32 = take #{20}
-	--assert  4 = take #{04}
 
 --test-- "REPLACE binary! integer! integer!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2412
