@@ -267,6 +267,9 @@ Rebol [
 		--assert (mold/flat/all c) = {["A" [1 2 3 4]]}
 		--assert (mold/flat/all next c) = {#[block! ["A" [1 2 3 4]] 2]}
 
+	--test-- "mold/only"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/732
+		--assert "1 2^/3 4" = mold/only b
 ===end-group===
 
 ===start-group=== "mold map!"
