@@ -19,6 +19,11 @@ Rebol [
 		--test-- "issues-47"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/47
 		--assert  task? do make task! [1 / 0] ; trying to evaluate a task should not crash!
+
+		--test-- "issues-204"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/204
+		--assert string? mold test-task
+		--assert string? append "" test-task
 	]
 
 ===end-group===
