@@ -50,6 +50,11 @@ Rebol [
 	--assert 1 = v/1
 	--assert 3 = v/3
 
+--test-- "to-block vector!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/865
+	--assert [0 0] = to-block make vector! [integer! 32 2]
+	--assert [1 2] = to block! #[ui16! [1 2]]
+
 --test-- "LOAD/MOLD on vector"
 	--assert v = load mold/all v
 	--assert v = do load mold v
