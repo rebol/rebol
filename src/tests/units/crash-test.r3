@@ -39,6 +39,14 @@ Rebol [
 	--assert string? mold system
 	--assert integer? length? loop 2 [mold system]
 
+--test-- "self in object!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/595
+	--assert error? try [o: make object! [self: 0]]
+	--assert error? try [o: make object! [] extend o 'self 0]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1050
+	--assert error? try [o: make object! [] append o 'self]
+
+
 ===end-group===
 
 ~~~end-file~~~
