@@ -58,7 +58,6 @@
 */
 
 #include "sys-core.h"
-//#define INCLUDE_TASK
 
 #ifdef INCLUDE_TASK
 /***********************************************************************
@@ -99,8 +98,6 @@
 {
 #ifdef INCLUDE_TASK
 	OS_CREATE_THREAD((void*)Launch_Task, task, 50000);
-#else 
-	puts("** Build using INCLUDE_TASK define to experiment with task!");
-	Trap0(RE_FEATURE_NA);
 #endif
 }
+

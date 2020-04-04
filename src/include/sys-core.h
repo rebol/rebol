@@ -49,6 +49,7 @@
 #define HAS_SHA1				// allow it
 #define HAS_SHA2				// allow SHA 256/384/512
 #define HAS_MD5					// allow it
+//#define INCLUDE_TASK
 
 // External system includes:
 #include <stdlib.h>

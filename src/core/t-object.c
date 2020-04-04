@@ -315,6 +315,7 @@ static REBSER *Trim_Object(REBSER *obj)
 
 				// make task! [init]
 				if (type == REB_TASK) {
+#ifdef INCLUDE_TASK
 					// Does it include a spec?
 					VAL_SET(value, REB_TASK);
 					if (IS_BLOCK(VAL_BLK(arg))) {
@@ -328,6 +329,9 @@ static REBSER *Trim_Object(REBSER *obj)
 					}
 					VAL_MOD_FRAME(value) = obj;
 					DS_RET_VALUE(value);
+#else
+					Trap0(RE_FEATURE_NA);
+#endif
 					return R_RET;
 				}
 			}

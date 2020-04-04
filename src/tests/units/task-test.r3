@@ -9,9 +9,17 @@ Rebol [
 ~~~start-file~~~ "TASK!"
 
 ===start-group=== "task"
-	--test-- "issues-47"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/47
-	--assert error? try [do make task! [2 / 0]] ; trying to evaluate a task should not crash!
+	if any [
+		not error? test-task: try [make task! []] ; task may be disabled
+		test-task/id <> 'feature-na
+	][
+		--test-- "empty task"
+		--assert task? do test-task
+
+		--test-- "issues-47"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/47
+		--assert  task? do make task! [1 / 0] ; trying to evaluate a task should not crash!
+	]
 
 ===end-group===
 
