@@ -9,7 +9,7 @@ Rebol [
 ~~~start-file~~~ "port"
 
 ===start-group=== "decode-url"
-	;@@ https://github.com/rebol/rebol-issues/issues/2380
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2380
 	--test-- "decode-url-unicode"
 		url: decode-url http://example.com/get?q=ščř#kovtička
 		--assert url/scheme = 'http
@@ -29,7 +29,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "directory port"
-	;@@ https://github.com/rebol/rebol-issues/issues/2320
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2320
 	--test-- "port-issue-2320"
 		--assert  %port-issue-2320/ = make-dir %port-issue-2320/
 		--assert  port? p: open %port-issue-2320/
@@ -72,13 +72,13 @@ Rebol [
 		close file
 
 	--test-- "write/lines - issue/2102"
-		;@@ https://github.com/rebol/rebol-issues/issues/2102
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2102
 		write/lines %tmp.txt {a^/}
 		--assert ["a" ""] = read/lines %tmp.txt
 		delete %tmp.txt
 
 	--test-- "write file result - wish/2337"
-		;@@ https://github.com/rebol/rebol-issues/issues/2337
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2337
 		--assert file? write %foo "hello"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/67
 		--assert "test" = read/string write %foo "test"

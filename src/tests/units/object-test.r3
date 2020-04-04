@@ -11,7 +11,7 @@ Rebol [
 ===start-group=== "Set OBJECT"
 
 --test-- "set OBJECT OBJECT"
-	;@@ https://github.com/rebol/rebol-issues/issues/2358
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2358
 	
 	 def: object [int: ser: fce: none dec: 42.0]
 	data: object [ser: "ah" foo: 'nothing int: 1 fce: does [int: int * 2] ]
@@ -47,7 +47,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "APPEND on OBJECT"
-	;@@ https://github.com/rebol/rebol-issues/issues/708
+	;@@ https://github.com/Oldes/Rebol-issues/issues/708
 	--test-- "issue-708"
 		o: object []
 		append o 'x

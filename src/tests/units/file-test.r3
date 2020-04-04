@@ -11,7 +11,7 @@ Rebol [
 ===start-group=== "to-local-file"
 
 --test-- "issues/2351"
-	;@@ https://github.com/rebol/rebol-issues/issues/2351
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2351
 	f: first read what-dir
 	--assert  (to-rebol-file to-local-file/full f) = join what-dir f
 

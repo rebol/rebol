@@ -76,7 +76,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "set alpha using path"
-	;@@ https://github.com/rebol/rebol-issues/issues/2343
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2343
 	img: make image! 2x2
 	--test-- "set alpha using path and integer"
 		img/1: 0
@@ -230,7 +230,7 @@ FFFFFFDC1616212121212121
 ===end-group===
 
 ===start-group=== "RGB - HSV conversions"
-;@@ https://github.com/rebol/rebol-issues/issues/2342
+;@@ https://github.com/Oldes/Rebol-issues/issues/2342
 
 --test-- "RGB-TO-HSV"
 	--assert 36.235.134     = rgb-to-hsv 134.116.10

@@ -28,7 +28,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "enbase with position not at head"
-	;@@ https://github.com/rebol/rebol-issues/issues/319
+	;@@ https://github.com/Oldes/Rebol-issues/issues/319
 	bin: #{FF00FF00}
 	--test-- "enbase-2"  --assert #{00FF00} = debase enbase next bin 2 2
 	--test-- "enbase-16" --assert #{00FF00} = debase enbase next bin 16 16

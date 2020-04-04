@@ -62,7 +62,7 @@ Rebol [
 	--assert "d"     = find/any/reverse/tail tail "ažcdažcd" "žc"
 
 --test-- "FIND/PART"
-;@@ https://github.com/rebol/rebol-issues/issues/2329
+;@@ https://github.com/Oldes/Rebol-issues/issues/2329
 ;@@ need to decide, which result is correct
 ;	--assert none? find/part "abcd" "bc" 2
 ;	--assert none? find/part/any "abcd" "*c" 2
@@ -78,14 +78,14 @@ Rebol [
 	--assert "b"  = find/case str #"b"
 	--assert none?  find/case str #"B"
 
---test-- https://github.com/rebol/rebol-issues/issues/66
+--test-- https://github.com/Oldes/Rebol-issues/issues/66
 	--assert none? find/skip [1 2 3 4 5 6] 2 3
 
---test-- https://github.com/rebol/rebol-issues/issues/88
+--test-- https://github.com/Oldes/Rebol-issues/issues/88
 	--assert "c" = find "abc" charset ["c"]
 	--assert none? find/part "ab" "b" 1
 
---test-- https://github.com/rebol/rebol-issues/issues/2324
+--test-- https://github.com/Oldes/Rebol-issues/issues/2324
 	str: "1.1.1"
 	--assert "1.1.1" == find/part str "1." 2
 	str: skip str 2
@@ -336,14 +336,14 @@ Rebol [
 		--assert #{0003} = head remove/part next #{00010203} 2
 
 	--test-- "issue-146"
-		;@@ https://github.com/rebol/rebol-issues/issues/146
+		;@@ https://github.com/Oldes/Rebol-issues/issues/146
 		b: append [] 0
 		repeat n 10 [ append b n remove b]
 		--assert 1 = length? b
 		--assert 10 = first b
 
 	--test-- "issue-2397"
-		;@@ https://github.com/rebol/rebol-issues/issues/2397
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2397
 		b: make binary! 40000 insert/dup b 0 40000
 		remove/part b to integer! #{8000}
 		--assert 7232 = length? b
@@ -353,13 +353,13 @@ Rebol [
 ===start-group=== "SORT"
 
 --test-- "SORT/compare"
-	;@@ https://github.com/rebol/rebol-issues/issues/720
+	;@@ https://github.com/Oldes/Rebol-issues/issues/720
 	--assert [3 2 1] = sort/compare [1 2 3] func [a b] [a > b]
-	;@@ https://github.com/rebol/rebol-issues/issues/2376
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2376
 	--assert [1 3 10] = sort/compare [1 10 3] func[x y][case [x > y [1] x < y [-1] true [0]]]
 
 --test-- "SORT/skip/compare"
-	;@@ https://github.com/rebol/rebol-issues/issues/1152
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1152
 	--assert ["A" "a"] = sort/compare ["A" "a"] func [a b] [a < b]
 	--assert ["a" "A"] = sort/compare ["a" "A"] func [a b] [a < b]
 	--assert ["A" "a"] = sort/compare ["A" "a"] func [a b] [a <= b]
@@ -367,9 +367,9 @@ Rebol [
 	--assert [1 9 1 5 1 7] = sort/skip/compare [1 9 1 5 1 7] 2 1
 
 --test-- "SORT with invalid compare function"
-	;@@ https://github.com/rebol/rebol-issues/issues/1766
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1766
 	--assert error? try [sort/compare [1 2 3]  func [/local loc-1 loc-2][local < loc-1] ]
-	;@@ https://github.com/rebol/rebol-issues/issues/1516
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1516
 	--assert error? try [sort/compare [1 2 #[unset!]] :>]
 
 
@@ -379,7 +379,7 @@ Rebol [
 ===start-group=== "REWORD"
 
 --test-- "reword/escape"
-	;@@ https://github.com/rebol/rebol-issues/issues/2333
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2333
 	subs: ["1" "foo" "10" "bar"]
 	--assert "bar" = reword/escape "$<10>" subs ["$<" ">"]
 
@@ -398,7 +398,7 @@ Rebol [
 	--assert 4 = forall data [data/1]
 	--assert data = [2 3 4]
 
-;@@ https://github.com/rebol/rebol-issues/issues/2331
+;@@ https://github.com/Oldes/Rebol-issues/issues/2331
 --test-- "Escaping from FORALL loop using THROW"
 	data: [1 2 3 4]
 	--assert "yes" = catch [forall data [if data/1 = 3 [throw "yes"]]]
@@ -431,7 +431,7 @@ Rebol [
 ===start-group=== "STRING conversion"
 
 --test-- "issues/2336"
-	;@@ https://github.com/rebol/rebol-issues/issues/2336
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2336
 	--assert "^M"   = to-string to-binary "^M"
 	--assert "^/"   = to-string to-binary "^/"
 	--assert "^M^/" = to-string to-binary "^M^/"
@@ -496,7 +496,7 @@ Rebol [
 ===start-group=== "DEHEX / ENHEX"
 
 --test-- "DEHEX UTF-8 encoded data"
-	;@@ https://github.com/rebol/rebol-issues/issues/1986
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1986
 	--assert "řek" = to-string dehex to-binary "%c5%99ek"
 
 	--assert "%3x " = dehex "%3x%20"

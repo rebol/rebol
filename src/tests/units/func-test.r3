@@ -29,7 +29,7 @@ Rebol [
 ===start-group=== "body-of"
 
 --test-- "body-of NATIVE or ACTION"
-	;@@ https://github.com/rebol/rebol-issues/issues/1577
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1577
 	; body-of NATIVE or ACTION should return NONE 
 	--assert none? body-of :equal?
 	--assert none? body-of :add
@@ -41,7 +41,7 @@ Rebol [
 	--assert [probe a] = body-of :fce
 
 --test-- "invalid MAKE"
-	;@@ https://github.com/rebol/rebol-issues/issues/1052
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1052
 	--assert error? try [make :read [[][]]]
 	--assert error? try [make action! [[][]]]
 	--assert error? try [make native! [[][]]]

@@ -78,7 +78,7 @@ Rebol [
 
 ===start-group=== "money issues"
 	--test-- "issue-1441"
-	;@@ https://github.com/rebol/rebol-issues/issues/1441
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1441
 	--assert error? try [load {1 + $}]
 
 	--test-- "issue-492"

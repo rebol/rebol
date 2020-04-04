@@ -25,7 +25,7 @@ Rebol [
 		--assert error? try [load "2013/11/08T17:01Z0100"]
 
 	--test-- "Using ISO88601 datetime in a path"
-		;@@ https://github.com/rebol/rebol-issues/issues/2089
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2089
 		b: [8-Nov-2013/17:01 "foo"]
 		--assert "foo" = b/2013-11-08T17:01
 
@@ -44,7 +44,7 @@ Rebol [
 
 ===start-group=== "TO DATE!"
 	--test-- "invalid input"
-		;@@ https://github.com/rebol/rebol-issues/issues/878
+		;@@ https://github.com/Oldes/Rebol-issues/issues/878
 		--assert error? try [to date! "31-2-2009"]
 		--assert error? try [to date! [31 2 2009]]
 
@@ -52,7 +52,7 @@ Rebol [
 
 ===start-group=== "Date math"
 	--test-- "adding by integer"
-		;@@ https://github.com/rebol/rebol-issues/issues/213
+		;@@ https://github.com/Oldes/Rebol-issues/issues/213
 		n: now
 		--assert not error? try [now/date + 1]
 		--assert not error? try [d1: n + 1]
@@ -63,7 +63,7 @@ Rebol [
 
 ===start-group=== "Various date issues"
 	--test-- "issue 1637"
-		;@@ https://github.com/rebol/rebol-issues/issues/1637
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1637
 		d: now/date
 		--assert none? d/time
 		--assert none? d/zone
@@ -75,13 +75,13 @@ Rebol [
 		--assert none? d/time
 
 	--test-- "issue 1308"
-		;@@ https://github.com/rebol/rebol-issues/issues/1308
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1308
 		d: 28-Oct-2009/10:09:38-7:00
 		--assert 28-Oct-2009/17:09:38 = d/utc
 		--assert 10 = d/hour
 
 	--test-- "issue 2369"
-		;@@ https://github.com/rebol/rebol-issues/issues/2369
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2369
 		d: 28-Mar-2019
 		--assert not error? try [d/zone: 2]
 		--assert "28-Mar-2019/0:00+2:00" = mold d
@@ -98,7 +98,7 @@ Rebol [
 
 ===start-group=== "DATE/TIMEZONE"
 	--test-- "set timezone"
-		;@@ https://github.com/rebol/rebol-issues/issues/2370
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2370
 		d: 1-Jan-2000
 		d/zone: 2
 		--assert "1-Jan-2000/0:00+2:00" = mold d

@@ -64,7 +64,7 @@ Rebol [
 
 ===start-group=== "do script"
 	--test-- "script with error"
-	;@@ https://github.com/rebol/rebol-issues/issues/2374
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2374
 		dir: what-dir
 		--assert error? do %units/files/error.r3
 		--assert dir = what-dir
@@ -432,7 +432,7 @@ Rebol [
 		--assert all [a = 4 unset? :b]
 
 	--test-- "Set - issue 2366"
-	;@@https://github.com/rebol/rebol-issues/issues/2366
+	;@@https://github.com/Oldes/Rebol-issues/issues/2366
 		--assert error? try [set #ab 1]
 		--assert error? try [set #12 2]
 

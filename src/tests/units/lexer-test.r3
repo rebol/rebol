@@ -53,7 +53,7 @@ Rebol [
 
 
 ===start-group=== "SIGN before POUND char (issue #2319)"
-;@@ https://github.com/rebol/rebol-issues/issues/2319
+;@@ https://github.com/Oldes/Rebol-issues/issues/2319
 	--test-- "sign-before-pound-1"	--assert  [- #"a"] = (load {-#"a"})
 	--test-- "sign-before-pound-2"	--assert  [+ #"a"] = (load {+#"a"})
 	--test-- "sign-before-pound-3"	--assert  [- #{00}]   = try [load {-#{00}}]

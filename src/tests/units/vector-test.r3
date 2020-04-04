@@ -11,15 +11,15 @@ Rebol [
 ===start-group=== "VECTOR"
 
 --test-- "issue/2346"
-	;@@ https://github.com/rebol/rebol-issues/issues/2346
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2346
 	--assert [] = to-block make vector! 0
 
 --test-- "issue/1036"
-	;@@ https://github.com/rebol/rebol-issues/issues/1036
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1036
 	--assert 2 = index? load mold/all next make vector! [integer! 32 4 [1 2 3 4]]
 
 --test-- "VECTOR can be initialized using a block with CHARs"
-	;@@ https://github.com/rebol/rebol-issues/issues/2348
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2348
 	--assert vector? v: make vector! [integer! 8 [#"^(00)" #"^(01)" #"^(02)" #"a" #"b"]]
 	--assert  0 = v/1
 	--assert 98 = v/5
@@ -29,7 +29,7 @@ Rebol [
 	--assert 98 = v/5
 
 --test-- "Random shuffle of vector vs. block"
-	;@@ https://github.com/rebol/rebol-issues/issues/947
+	;@@ https://github.com/Oldes/Rebol-issues/issues/947
 	v1: make vector! [integer! 32 5 [1 2 3 4 5]]
 	v2: random v1
 	--assert same? v1 v2
@@ -38,12 +38,12 @@ Rebol [
 	--assert same? b1 b2
 
 --test-- "Some vector! formats are invalid"
-	;@@ https://github.com/rebol/rebol-issues/issues/350
+	;@@ https://github.com/Oldes/Rebol-issues/issues/350
 	--assert error? try [make vector! [- decimal! 32]]
 	--assert error? try [make vector! [- integer! 32]]
 
 --test-- "FIRST, LAST on vector"
-	;@@ https://github.com/rebol/rebol-issues/issues/459
+	;@@ https://github.com/Oldes/Rebol-issues/issues/459
 	v: make vector! [integer! 8 [1 2 3]]
 	--assert 1 = first v
 	--assert 3 = last v
@@ -55,7 +55,7 @@ Rebol [
 	--assert v = do load mold v
 
 --test-- "Conversion from VECTOR to BINARY"
-	;@@ https://github.com/rebol/rebol-issues/issues/2347
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2347
 	--assert #{0102} = to binary! make vector! [integer! 8 [1 2]]
 	--assert #{01000200} = to binary! make vector! [integer! 16 [1 2]]
 	--assert #{0100000002000000} = to binary! make vector! [integer! 32 [1 2]]
@@ -64,7 +64,7 @@ Rebol [
 	--assert 1.0 = to decimal! head reverse to binary! make vector! [decimal! 64 [1.0]]
 
 --test-- "VECTOR can be initialized using binary data"
-	;@@ https://github.com/rebol/rebol-issues/issues/1410
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1410
 	--assert vector? v: make vector! [integer! 16 #{010002000300}]
 	--assert 1 = v/1
 	--assert 3 = v/3
@@ -96,13 +96,13 @@ Rebol [
 	--assert 2 = index? v: #[si16! [1 2] 2]
 	--assert 2 = index? v: #[si16! #{01000200} 2]
 
---test-- "issue/2395"
-	;@@ https://github.com/rebol/rebol-issues/issues/2395
+--test-- "MOLD of unsigned vector"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/756
 	--assert "make vector! [integer! 32 2 [0 0]]" = mold make vector! [signed integer! 32 2]
 	--assert "make vector! [unsigned integer! 32 2 [0 0]]" = mold make vector! [unsigned integer! 32 2]
 
 --test-- "MOLD/flat on vector"
-	;@@ https://github.com/rebol/rebol-issues/issues/2349
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2349
 	--assert (mold/flat make vector! [integer! 8 12]) = {make vector! [integer! 8 12 [0 0 0 0 0 0 0 0 0 0 0 0]]}
 	--assert (mold/all/flat make vector! [integer! 8 12]) = "#[vector! integer! 8 12 [0 0 0 0 0 0 0 0 0 0 0 0]]"
 	--assert (mold make vector! [integer! 8  2]) = {make vector! [integer! 8 2 [0 0]]}
@@ -124,7 +124,7 @@ Rebol [
 ]}
 
 --test-- "QUERY on vector"
-	;@@ https://github.com/rebol/rebol-issues/issues/2352
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2352
 	v: make vector! [unsigned integer! 16 2]
 	o: query v
 	--assert object? o
@@ -154,7 +154,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "VECTOR compact construction"
-	;@@ https://github.com/rebol/rebol-issues/issues/2396
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2396
 	--test-- "Compact construction syntax (empty)"
 		--assert (mold #[si8! ]) = "make vector! [integer! 8 0 []]"
 		--assert (mold #[si16!]) = "make vector! [integer! 16 0 []]"
@@ -215,7 +215,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "VECTOR semi-compact construction"
-	;@@ https://github.com/rebol/rebol-issues/issues/2396
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2396
 	--test-- "Compact construction syntax (empty)"
 		--assert (mold make vector! [si8! ]) = "make vector! [integer! 8 0 []]"
 		--assert (mold make vector! [si16!]) = "make vector! [integer! 16 0 []]"
@@ -360,7 +360,7 @@ Rebol [
 ===start-group=== "VECTOR copy"
 
 --test-- "COPY"
-	;@@ https://github.com/rebol/rebol-issues/issues/2400
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2400
 	v1: #[ui16! [1 2]]
 	v2: v1
 	v3: copy v2
@@ -372,7 +372,7 @@ Rebol [
 	
 
 --test-- "COPY/PART"
-	;@@ https://github.com/rebol/rebol-issues/issues/2399
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2399
 	v: #[ui16! [1 2 3 4]]
 	--assert           2 = length? copy/part v 2
 	--assert #{01000200} = to-binary copy/part v 2

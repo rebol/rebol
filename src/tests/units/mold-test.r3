@@ -128,7 +128,7 @@ Rebol [
 		--assert b = mold a
 
 	--test-- "mold issue #1486"
-		;@@ https://github.com/rebol/rebol-issues/issues/1486
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1486
 		--assert {"^^(1E)"} = mold "^(1E)" ; double ^ because it's a string in a string
 
 ===end-group=== 
@@ -217,7 +217,7 @@ Rebol [
 ===start-group=== "mold object!"
 
 	--test-- "mold/flat object!"
-	;@@ https://github.com/rebol/rebol-issues/issues/2357
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2357
 		o: make object! [
 			a: [ 1 2 
 				 3 4
@@ -230,11 +230,11 @@ Rebol [
 ===start-group=== "mold event!"
 
 	--test-- "mold/flat event!"
-	;@@ https://github.com/rebol/rebol-issues/issues/2387
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2387
 		--assert "make event! [type: 'lookup]" = mold/flat make event! [type: 'lookup]
 
 	--test-- "issues/2362"
-	;@@ https://github.com/rebol/rebol-issues/issues/2362
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2362
 		p: make object! [x: "foo"]
 		e: make event! [type: 'lookup port: p]
 		--assert (mold/flat e) = {make event! [type: 'lookup port: make object! [x: "foo"]]}
@@ -259,7 +259,7 @@ Rebol [
 		b
 	]
 	--test-- "mold/flat block!"
-	;@@ https://github.com/rebol/rebol-issues/issues/2388
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2388
 		--assert (mold/flat b) = "[1 2 3 4]" 
 		--assert (mold/flat c) = {["A" [1 2 3 4]]}
 
@@ -288,7 +288,7 @@ Rebol [
 )}
 
 	--test-- "mold/flat map!"
-		;@@ https://github.com/rebol/rebol-issues/issues/2401
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2401
 		--assert       "#(a: 1 b: 2 c: [3 4])"  = mold/flat m
 		--assert "#[map! [a: 1 b: 2 c: [3 4]]]" = mold/flat/all m
 
@@ -351,7 +351,7 @@ Rebol [
 		--assert (mold make image! 2x2) = {make image! [2x2 #{FFFFFFFFFFFFFFFFFFFFFFFF}]}
 
 	--test-- "mold/flat image!"
-	;@@ https://github.com/rebol/rebol-issues/issues/2389
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2389
 		--assert (mold/flat make image! 8x1) = {make image! [8x1 #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}]}
 		--assert (mold/flat make image! 8x2) = {make image! [8x2 #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}]}
 		--assert (mold/flat make image! [1x1 0.0.0.66]) = {make image! [1x1 #{000000} #{42}]}

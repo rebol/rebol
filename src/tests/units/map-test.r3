@@ -80,18 +80,18 @@ Rebol [
 
 
 ===start-group=== "map issues"
-	;@@ https://github.com/rebol/rebol-issues/issues/770
+	;@@ https://github.com/Oldes/Rebol-issues/issues/770
 	--test-- "map-issue-770"
 		--assert  map? m: make map! [a: 1]
 		--assert  1 = m/a
 		--assert  not empty? m
 		--assert  empty? clear m
 
-	;@@ https://github.com/rebol/rebol-issues/issues/598
+	;@@ https://github.com/Oldes/Rebol-issues/issues/598
 	--test-- "map-issue-598"
 		--assert error? try [make map! [[a] 1]]
 
-	;@@ https://github.com/rebol/rebol-issues/issues/1872
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1872
 	--test-- "map-issue-1872"
 		m: map [a: 42]
 		protect m
