@@ -65,6 +65,14 @@ Rebol [
 		--assert err/id = 'protected
 		unprotect o
 
+	--test-- "issue-75"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/75
+		o: make object! [a: 1]
+		o2: make o [] ; no new words, so words block shared!
+		append o2 [b 2]
+		--assert [a b] = words-of o2
+		--assert [a] = words-of o
+
 ===end-group===
 
 ===start-group=== "PROTECT object!"
