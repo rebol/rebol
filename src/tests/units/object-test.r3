@@ -46,6 +46,18 @@ Rebol [
 		--assert 1 = obj/a
 ===end-group===
 
+
+===start-group=== "Compare object"
+	--test-- "issue-281"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/281
+		a: context [b: "test" c: 123]
+		b: context [b: "test" c: 123]
+		--assert a = b
+		--assert equal? a b
+		--assert not same? a b
+===end-group===
+
+
 ===start-group=== "APPEND on OBJECT"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/708
 	--test-- "issue-708"
