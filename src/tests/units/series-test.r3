@@ -152,6 +152,11 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/490
 		--assert "REBOL Rules" = head change/part data: "C# Rules" "REBOL" 2
 
+	--test-- "change/dup"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/383
+		mem: make string! 5 loop 10 [change/dup mem "x" 5] mem
+		--assert mem = "xxxxx"
+
 ===end-group===
 
 ===start-group=== "TAKE"
