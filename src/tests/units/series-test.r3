@@ -112,6 +112,18 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "PATH notation"
+	--test-- "issue-64"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/64
+		b: [[1 2] [3 4]]
+		i: 1
+		--assert [1 2] = b/:i
+		--assert 1 = b/1/:i
+		b/:i: "foo"
+		--assert "foo" = b/1
+===end-group===
+
+
 ===start-group=== "REVERSE"
 	--test-- "issue-19"
 		--assert "4321" = sort/reverse "1234"
