@@ -144,9 +144,12 @@ Rebol [
 
 
 ===start-group=== "CHANGE string!"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/55
-	--test-- "issue-55"
+	--test-- "change/part"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/55
 		--assert "456" = change/part "123456" "99" 3
+		;@@ https://github.com/Oldes/Rebol-issues/issues/257
+		--assert "123cd" = head change/part "abcd" "123" 2
+
 ===end-group===
 
 ===start-group=== "TAKE"
