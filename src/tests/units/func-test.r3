@@ -23,6 +23,13 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/167
 	f: func [a /b c] [reduce [a b c]]
 	--assert [1 #[true] 3] = apply :f [1 2 3]
+
+--test-- "apply/only"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/105
+	f: func[a][a]
+	--assert date?  apply :f [now]
+	--assert 'now = apply/only :f [now]
+
 ===end-group===
 
 
