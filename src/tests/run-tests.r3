@@ -40,6 +40,7 @@ dt [ ;- delta time
     wrap load %units/protect-test.r3
     wrap load %units/series-test.r3
     wrap load %units/task-test.r3
+    wrap load %units/time-test.r3
     wrap load %units/tuple-test.r3
     wrap load %units/typeset-test.r3
     wrap load %units/vector-test.r3
