@@ -172,6 +172,14 @@ Rebol [
 	--assert [3 4] = take/part skip s 2 -5 ;@@ https://github.com/Oldes/Rebol-issues/issues/373
 	--assert [5 6] = take/part s 10
 
+	;@@ https://github.com/Oldes/Rebol-issues/issues/141
+	s: [1 2 3 4]
+	--assert [1]   = take/part b 1
+	--assert [2 3] = take/part b 2
+	--assert [4]   = take/part b 3
+	--assert []    = take/part b 1
+
+
 	--test-- "take binary!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/963
 	--assert 32 = take #{20}
@@ -652,7 +660,7 @@ Rebol [
 	b: #{01020304}
 	--assert #{0102} = copy/part b 2
 	--assert #{01020304} = copy/part b 100
-	
+
 ===end-group===
 
 
