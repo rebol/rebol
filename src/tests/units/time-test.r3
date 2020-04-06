@@ -12,7 +12,13 @@ Rebol [
 
 ===start-group=== "time"
 
-	--test-- "sub-second"
+	--test-- "issue-90"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/90
+		--assert -23:00 = (1:0:0 - 24:00)
+		--assert 0:0 = subtract 1:0:0  1:0:0
+		--assert -2:01:02 = (3:0:0 - 5:1:2)
+
+	--test-- "issue-108"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/108
 		--assert "0:00:00.0001"   = mold 0:0:0.0001
 		--assert "0:00:00.001"    = mold 0:0:0.0001 * 10
