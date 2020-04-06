@@ -149,6 +149,8 @@ Rebol [
 		--assert "456" = change/part "123456" "99" 3
 		;@@ https://github.com/Oldes/Rebol-issues/issues/257
 		--assert "123cd" = head change/part "abcd" "123" 2
+		;@@ https://github.com/Oldes/Rebol-issues/issues/490
+		--assert "REBOL Rules" = head change/part data: "C# Rules" "REBOL" 2
 
 ===end-group===
 
