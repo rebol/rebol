@@ -46,6 +46,13 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1050
 	--assert error? try [o: make object! [] append o 'self]
 
+--test-- "issue-143"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/143
+	d: system/options/decimal-digits
+	system/options/decimal-digits: 100
+	--assert not error? try [mold 1.7976931348623157E+308] ;- no crash!
+	system/options/decimal-digits: d
+
 
 ===end-group===
 
