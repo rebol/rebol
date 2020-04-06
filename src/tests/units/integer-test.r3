@@ -286,6 +286,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/502
 		--assert error? e: try [set 1 1]
 		--assert e/id = 'expect-arg
+
+	--test-- "issue-126"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/126
+		--assert error? try [to integer! "11111111111111111111111"]
 ===end-group===
 
 ~~~end-file~~~
