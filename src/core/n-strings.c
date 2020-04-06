@@ -894,8 +894,9 @@ static struct digest {
 
 	len = -1;
 	if (D_REF(2)) {	// /size
+		//@@ https://github.com/Oldes/Rebol-issues/issues/127
 		len = (REBINT) VAL_INT64(D_ARG(3));
-		if (len < 0) Trap_Arg(D_ARG(3));
+		if (len <= 0) Trap_Arg(D_ARG(3));
 	}
 	if (IS_INTEGER(arg)) { // || IS_DECIMAL(arg)) {
 		if (len < 0 || len > MAX_HEX_LEN) len = MAX_HEX_LEN;

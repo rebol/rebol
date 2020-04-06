@@ -24,6 +24,7 @@ dt [ ;- delta time
     wrap load %units/func-test.r3
     wrap load %units/image-test.r3
     wrap load %units/integer-test.r3
+    wrap load %units/issue-test.r3
     wrap load %units/lexer-test.r3
     wrap load %units/load-test.r3
     wrap load %units/map-test.r3
