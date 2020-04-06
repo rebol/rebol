@@ -111,6 +111,33 @@ Rebol [
  	math: make object! [ plus: :+ ]
  	--assert error? try [1 math/plus 2]
 
+ --test-- "issue-87"
+ 	;@@ https://github.com/Oldes/Rebol-issues/issues/87
+ 	f1: func [a][b]
+ 	--assert [a] = spec-of :f1
+ 	--assert [b] = body-of :f1
+
+ 	--assert function? f2: copy :f1
+ 	--assert [a] = spec-of :f2
+ 	--assert [b] = body-of :f2
+
+ 	--assert function? f2: make :f1 [] ; same as copy
+ 	--assert [a] = spec-of :f2
+ 	--assert [b] = body-of :f2
+
+	--assert function? f2: make :f1 [ [x] ]
+	--assert [x] = spec-of :f2
+ 	--assert [b] = body-of :f2
+
+	--assert function? f2: make :f1 [ [x] [y] ]
+	--assert [x] = spec-of :f2
+ 	--assert [y] = body-of :f2
+
+ 	--assert function? f2: make :f1 [ * [y] ]
+	--assert [a] = spec-of :f2
+ 	--assert [y] = body-of :f2
+	
+
 ===end-group===
 
 ~~~end-file~~~
