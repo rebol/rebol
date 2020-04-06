@@ -16,6 +16,7 @@ dt [ ;- delta time
     wrap load %units/datatype-test.r3
     wrap load %units/date-test.r3
     wrap load %units/decimal-test.r3
+    wrap load %units/delect-test.r3
     wrap load %units/enbase-test.r3
     wrap load %units/enum-test.r3
     wrap load %units/evaluation-test.r3
