@@ -59,6 +59,10 @@ Rebol [
 	--test-- "issue-662"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/662
 		--assert not error? try [do "rebol [type: module] 1 + 1"]
+
+	--test-- "issue-121"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/121
+		--assert logic? do 'true
 		
 ===end-group===
 
