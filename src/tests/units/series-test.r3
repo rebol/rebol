@@ -97,6 +97,10 @@ Rebol [
 	--assert none? select/part [1 2 1 3 1 2] 2 2
 	--assert 3 = select/part (skip [1 2 1 3 1 2] 2) 1 2
 
+--test-- "SELECT/skip"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/101
+	--assert none? select/skip [1 2 3 4 5 6] 5 3
+
 --test-- "SELECT on string"
 	--assert #"e" = select     "abcde" "bcd"
 	--assert #"e" = select/any "abcde" "b?d"
