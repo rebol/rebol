@@ -3794,4 +3794,11 @@ Red [
 		
 ===end-group===
 
+===start-group=== "issues"
+	--test-- "issue-131"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/131
+	--assert 1099511627776 = to integer!  1099511627776.0
+
+===end-group===
+
 ~~~end-file~~~
