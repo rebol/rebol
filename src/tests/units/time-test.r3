@@ -34,6 +34,11 @@ Rebol [
 		--assert "0:00:01.001"    = mold 0:0:1.001
 		--assert "0:00:01.01"     = mold 0:0:1.01
 		--assert "0:00:01.1"      = mold 0:0:1.1
+
+	--test-- "issue-150"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/150
+		--assert error? try [0:0:0 /  0] ;- no crash
+		--assert error? try [0:0:0 // 0] ;- no crash
 		
 
 
