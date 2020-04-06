@@ -9,6 +9,20 @@ Rebol [
 
 ~~~start-file~~~ "percent"
 
+===start-group=== "to conversion"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/137
+	--test-- "to percent!"
+		--assert (to percent! 1   ) == 100%
+		--assert (to percent! 1.0 ) == 100%
+	--test-- "to decimal!"
+		--assert (to decimal! 100%) == 1.0
+		--assert (to decimal! 1%  ) == 0.01
+	--test-- "to integer!"
+		--assert (to integer! 100%) == 1
+		--assert (to integer! 1%  ) == 0
+
+===end-group===
+
 ===start-group=== "form/mold"
 	--test-- "form"
 		--assert    "0%" = form   0%
