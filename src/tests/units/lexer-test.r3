@@ -20,6 +20,10 @@ Rebol [
 		--assert error? try [load "':a"]
 		--assert error? try [load "':a:"]
 
+	--test-- "Invalid issue!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/122
+		--assert error? try [load "1234#"]
+
 ===end-group===
 
 ===start-group=== "Email"
