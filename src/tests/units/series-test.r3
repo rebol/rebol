@@ -643,6 +643,16 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/908
 	--assert error? try [latin1? #{}]
 	--assert error? try [ascii? #{}]
+
+--test-- "copy/part binary!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/138
+	b: make binary! 10
+	--assert #{} = copy/part b 1
+	--assert #{} = copy/part b 100
+	b: #{01020304}
+	--assert #{0102} = copy/part b 2
+	--assert #{01020304} = copy/part b 100
+	
 ===end-group===
 
 
