@@ -299,6 +299,24 @@ standard: context [
 			none
 	]
 
+	date-info: context [
+		year:
+		month:
+		day:
+		time:
+		zone:
+		date:
+		weekday:
+		julian:
+		yearday:
+		utc:
+		hour:
+		minute:
+		second:
+		timezone:
+			none
+	]
+
 	midi-info: context [
 		devices-in:
 		devices-out:

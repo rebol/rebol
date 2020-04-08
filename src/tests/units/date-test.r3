@@ -134,4 +134,21 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "QUERY date"
+	date: 8-Apr-2020/12:04:32+2:00
+	--test-- "query date"
+		--assert object? o: query date
+		--assert o/date = 8-Apr-2020
+
+	--test-- "query/mode date"
+		all-date-words: words-of system/standard/date-info
+		--assert all-date-words = query/mode date none
+		--assert date/time = query/mode date 'time
+		--assert [2020 4] = query/mode now [year month]
+		--assert [month: 4 year: 2020] = query/mode now [month: year:]
+		--assert [2020 4 8 12:04:32 2:00 8-Apr-2020 3 99 99 8-Apr-2020/10:04:32 12 4 32 2:00] = query/mode date all-date-words
+
+===end-group===
+
 ~~~end-file~~~

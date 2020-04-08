@@ -487,6 +487,22 @@
 	return TRUE;
 }
 
+/***********************************************************************
+**
+*/	static REBOOL Query_Date_Field(REBVAL *data, REBVAL *select, REBVAL *ret)
+/*
+**		Set a value with date data according specified mode
+**
+***********************************************************************/
+{
+	REBPVS pvs;
+	pvs.value = data;
+	pvs.select = select;
+	pvs.setval = 0;
+	pvs.store = ret;
+
+	return (PE_USE == PD_Date(&pvs));
+}
 
 /***********************************************************************
 **
@@ -509,7 +525,7 @@
 
 	// !zone! - adjust date by zone (unless /utc given)
 
-	if (IS_WORD(arg)) {
+	if (IS_WORD(arg) || IS_SET_WORD(arg)) {
 		//!!! change this to an array!?
 		switch (VAL_WORD_CANON(arg)) {
 		case SYM_YEAR:	i = 0; break;
@@ -718,6 +734,7 @@ setDate:
 	REBVAL	*val;
 	REBVAL	*arg = NULL;
 	REBINT	num;
+	REBVAL *spec;
 
 	val = D_ARG(1);
 	if (IS_DATE(val)) {
@@ -829,6 +846,60 @@ setDate:
 
 		case A_ABSOLUTE:
 			goto setDate;
+
+		case A_REFLECT:
+			if (SYM_SPEC == VAL_WORD_SYM(D_ARG(2))) {
+				return R_ARG1;
+			}
+			if(!Query_Date_Field(val, D_ARG(2), D_RET)) {
+				Trap_Reflect(VAL_TYPE(val), D_ARG(2));
+			}
+			return R_RET;
+		case A_QUERY:
+			spec = Get_System(SYS_STANDARD, STD_DATE_INFO);
+			if (!IS_OBJECT(spec)) Trap_Arg(spec);
+			if (D_REF(2)) { // query/mode refinement
+				REBVAL *field = D_ARG(3);
+				if(IS_WORD(field)) {
+					if (SYM_SPEC == VAL_WORD_CANON(field)) {
+						return R_ARG1;
+					}
+					if (!Query_Date_Field(val, field, D_RET))
+						Trap_Reflect(VAL_TYPE(val), field); // better error?
+				}
+				else if (IS_BLOCK(field)) {
+					REBVAL *out = D_RET;
+					REBSER *values = Make_Block(2 * BLK_LEN(VAL_SERIES(field)));
+					REBVAL *word = VAL_BLK_DATA(field);
+					for (; NOT_END(word); word++) {
+						if (ANY_WORD(word)) {
+							if (IS_SET_WORD(word)) {
+								// keep the set-word in result
+								out = Append_Value(values);
+								*out = *word;
+								VAL_SET_LINE(out);
+							}
+							out = Append_Value(values);
+							if (!Query_Date_Field(val, word, out))
+								Trap1(RE_INVALID_ARG, word);
+						}
+						else  Trap1(RE_INVALID_ARG, word);
+					}
+					Set_Series(REB_BLOCK, D_RET, values);
+				}
+				else {
+					Set_Block(D_RET, Get_Object_Words(spec));
+				}
+			} else {
+				REBSER *obj = CLONE_OBJECT(VAL_OBJ_FRAME(spec));
+				REBSER *words = VAL_OBJ_WORDS(spec);
+				REBVAL *word = BLK_HEAD(words);
+				for (num=0; NOT_END(word); word++,num++) {
+					Query_Date_Field(val, word, OFV(obj, num));
+				}
+				SET_OBJECT(D_RET, obj);
+			}
+			return R_RET;
 		}
 	}
 	Trap_Action(REB_DATE, action);
