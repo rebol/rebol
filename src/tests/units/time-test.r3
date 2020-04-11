@@ -45,6 +45,11 @@ Rebol [
 		--assert time? t: try [load "596523:00"]
 		--assert t = load "596522:60"
 
+	--test-- "issue-1032"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1032
+		--assert -3723.0 = to-decimal make time! [-1 2 3]
+		--assert -3723.4 = to-decimal make time! [-1 2 3.4]
+
 	--test-- "issue-1033"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1033
 		--assert "-1:02:03.45" = mold make time! [-1 2 3.45]
