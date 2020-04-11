@@ -513,7 +513,7 @@
 	REBVAL *data = pvs->value;
 	REBVAL *arg = pvs->select;
 	REBVAL *val = pvs->setval;
-	REBINT i;
+	REBINT sym = 0;
 	REBINT n;
 	REBI64 secs;
 	REBINT tz, tzp;
@@ -522,96 +522,88 @@
 	REBINT num;
 	REBVAL dat;
 	REB_TIMEF time;
+	REBOOL asTimezone = FALSE;
 
 	if (!IS_DATE(data)) return PE_BAD_ARGUMENT;
 
 	if (IS_WORD(arg) || IS_SET_WORD(arg)) {
 		//!!! change this to an array!?
-		switch (VAL_WORD_CANON(arg)) {
-		case SYM_YEAR:	i = 0; break;
-		case SYM_MONTH:	i = 1; break;
-		case SYM_DAY:	i = 2; break;
-		case SYM_TIME:	i = 3; break;
-		case SYM_ZONE:	i = 4; break;
-		case SYM_DATE:	i = 5; break;
-		case SYM_WEEKDAY: i = 6; break;
-		case SYM_JULIAN:
-		case SYM_YEARDAY: i = 7; break;
-		case SYM_UTC:    i = 8; break;
-		case SYM_HOUR:	 i = 9; break;
-		case SYM_MINUTE: i = 10; break;
-		case SYM_SECOND: i = 11; break;
-		case SYM_TIMEZONE: i = 12; break;
-		default: return PE_BAD_SELECT;
-		}
+		sym = VAL_WORD_CANON(arg);
 	}
 	else if (IS_INTEGER(arg)) {
-		i = Int32(arg) - 1;
-		if (i < 0 || i > 8) return PE_BAD_SELECT;
+		sym =  SYM_YEAR + Int32(arg) - 1;
 	}
-	else
+
+	if (sym < SYM_YEAR || sym > SYM_JULIAN)
 		return PE_BAD_SELECT;
 
+	if (sym == SYM_TIMEZONE) {
+		asTimezone = TRUE;
+		sym = SYM_ZONE;
+	}
+	
 	dat = *data; // recode!
 	data = &dat;
-	if (i != 8) Adjust_Date_Zone(data, FALSE); // adjust for timezone
+	if (sym != SYM_UTC) Adjust_Date_Zone(data, FALSE); // adjust for timezone
 	date  = VAL_DATE(data);
 	day   = VAL_DAY(data) - 1;
 	month = VAL_MONTH(data) - 1;
 	year  = VAL_YEAR(data);
 	secs  = VAL_TIME(data);
 	tz    = VAL_ZONE(data);
-	if (i > 8) Split_Time(secs, &time);
+	if (sym >= SYM_HOUR && sym <= SYM_SECOND) Split_Time(secs, &time);
 
 	if (val == 0) {
-		if (secs == NO_TIME && (i > 8 || i == 3 || i == 4)) return PE_NONE;
+
+		if (secs == NO_TIME	&& (
+			sym == SYM_TIME ||
+			(sym >= SYM_HOUR && sym <= SYM_SECOND) ||
+			sym == SYM_ZONE)
+		) return PE_NONE;
+		
 		val = pvs->store;
-		switch(i) {
-		case 0:
+		switch(sym) {
+		case SYM_YEAR:
 			num = year;
 			break;
-		case 1:
+		case SYM_MONTH:
 			num = month + 1;
 			break;
-		case 2:
+		case SYM_DAY:
 			num = day + 1;
 			break;
-		case 3:
+		case SYM_TIME:
 			*val = *data;
 			VAL_SET(val, REB_TIME);
 			return PE_USE;
-		case 4:  // zone
-		case 12: // timezone
+		case SYM_ZONE:
 			*val = *data;
 			VAL_TIME(val) = (i64)tz * ZONE_MINS * MIN_SEC;
 			VAL_SET(val, REB_TIME);
 			return PE_USE;
-		case 5:
-			// date
+		case SYM_DATE:
 			*val = *data;
 			VAL_TIME(val) = NO_TIME;
 			VAL_ZONE(val) = 0;
 			return PE_USE;
-		case 6:
-			// weekday
+		case SYM_WEEKDAY:
 			num = Week_Day(date);
 			break;
-		case 7:
-			// yearday
+		case SYM_YEARDAY:
+		case SYM_JULIAN:
 			num = (REBINT)Julian_Date(date);
 			break;
-		case 8:
-			// utc
+		case SYM_UTC:
 			*val = *data;
 			VAL_ZONE(val) = 0;
 			return PE_USE;
-		case 9:
+		case SYM_HOUR:
 			num = time.h;
 			break;
-		case 10:
+		case SYM_MINUTE:
 			num = time.m;
 			break;
-		case 11:
+		case SYM_SECOND:
 			if (time.n == 0) num = time.s;
 			else {
 				SET_DECIMAL(val, (REBDEC)time.s + (time.n * NANO));
@@ -629,30 +621,29 @@
 
 		if (IS_INTEGER(val) || IS_DECIMAL(val)) {
 			// allow negative time zone
-			n = (i == 4 || i == 12) ? Int32(val) : Int32s(val, 0);
+			n = (sym == SYM_ZONE) ? Int32(val) : Int32s(val, 0);
 		}
 		else if (IS_NONE(val)) n = 0;
-		else if (IS_TIME(val) && (i == 3 || i == 4));
-		else if (IS_DATE(val) && (i == 3 || i == 5));
+		else if (IS_TIME(val) && (sym == SYM_TIME || sym == SYM_ZONE));
+		else if (IS_DATE(val) && (sym == SYM_TIME || sym == SYM_DATE));
 		else return PE_BAD_SET_TYPE;
 
-		if (secs == NO_TIME && (i > 8 || i == 3 || i == 4)) {
+		if (secs == NO_TIME && ((sym >= SYM_HOUR && sym <= SYM_SECOND) || sym == SYM_TIME || sym == SYM_ZONE)) {
 			// init time with 0:0:0.0 as we are going to set time related part
 			time.h = 0;	time.m = 0;	time.s = 0;	time.n = 0;
 		}
 
-		switch(i) {
-		case 0:
+		switch(sym) {
+		case SYM_YEAR:
 			year = n;
 			break;
-		case 1:
+		case SYM_MONTH:
 			month = n - 1;
 			break;
-		case 2:
+		case SYM_DAY:
 			day = n - 1;
 			break;
-		case 3:
-			// time
+		case SYM_TIME:
 			if (IS_NONE(val)) {
 				secs = NO_TIME;
 				tz = 0;
@@ -666,32 +657,30 @@
 				secs = DEC_TO_SECS(VAL_DECIMAL(val));
 			else return PE_BAD_SET_TYPE;
 			break;
-		case 4:	 // zone
-		case 12: // timezone
+		case SYM_ZONE:
 			tzp = tz;
 			if (IS_TIME(val)) tz = (REBINT)(VAL_TIME(val) / (ZONE_MINS * MIN_SEC));
 			else if (IS_DATE(val)) tz = VAL_ZONE(val);
 			else tz = n * (60 / ZONE_MINS);
-			if (i == 4 && (tz > MAX_ZONE || tz < -MAX_ZONE)) return PE_BAD_RANGE;
+			if (tz > MAX_ZONE || tz < -MAX_ZONE) return PE_BAD_RANGE;
 			if (secs == NO_TIME) secs = 0;
-			if (i == 12) {
+			if (asTimezone) {
 				secs += ((i64)(tz - tzp) * ((i64)ZONE_SECS * SEC_SEC));
 			}
 			break;
-		case 5:
-			// date
+		case SYM_DATE:
 			if (!IS_DATE(val)) return PE_BAD_SET_TYPE;
 			date = VAL_DATE(val);
 			goto setDate;
-		case 9:
+		case SYM_HOUR:
 			time.h = n;
 			secs = Join_Time(&time);
 			break;
-		case 10:
+		case SYM_MINUTE:
 			time.m = n;
 			secs = Join_Time(&time);
 			break;
-		case 11:
+		case SYM_SECOND:
 			if (IS_INTEGER(val)) {
 				time.s = n;
 				time.n = 0;
@@ -850,20 +839,19 @@ setDate:
 			goto setDate;
 
 		case A_REFLECT:
-			if (SYM_SPEC == VAL_WORD_SYM(D_ARG(2))) {
-				return R_ARG1;
-			}
-			if(!Query_Date_Field(val, D_ARG(2), D_RET)) {
-				Trap_Reflect(VAL_TYPE(val), D_ARG(2));
-			}
-			return R_RET;
+			*D_ARG(3) = *D_ARG(2);
+			// continue..
 		case A_QUERY:
 			spec = Get_System(SYS_STANDARD, STD_DATE_INFO);
 			if (!IS_OBJECT(spec)) Trap_Arg(spec);
 			if (D_REF(2)) { // query/mode refinement
 				REBVAL *field = D_ARG(3);
 				if(IS_WORD(field)) {
-					if (SYM_SPEC == VAL_WORD_CANON(field)) {
+					switch(VAL_WORD_CANON(field)) {
+					case SYM_WORDS:
+						Set_Block(D_RET, Get_Object_Words(spec));
+						return R_RET;
+					case SYM_SPEC:
 						return R_ARG1;
 					}
 					if (!Query_Date_Field(val, field, D_RET))

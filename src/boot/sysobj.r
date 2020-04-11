@@ -39,7 +39,7 @@ catalog: context [
 	reflectors: [
 		spec   [any-function! any-object! vector! datatype!]
 		body   [any-function! any-object! map!]
-		words  [any-function! any-object! map!]
+		words  [any-function! any-object! map! date!]
 		values [any-object! map!]
 		types  [any-function!]
 		title  [any-function! datatype!]
@@ -304,16 +304,18 @@ standard: context [
 		month:
 		day:
 		time:
-		zone:
 		date:
-		weekday:
-		julian:
-		yearday:
-		utc:
+		zone:
 		hour:
 		minute:
 		second:
+		weekday:
+		yearday:
 		timezone:
+		;week:
+		;isoweek:
+		utc:
+		julian:
 			none
 	]
 

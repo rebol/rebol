@@ -100,22 +100,24 @@ extension
 ;dir - below
 ;file - below
 
-; Time:
-hour
-minute
-second
-
-; Date:
+; Date & time:
 year
 month
 day
 time
 date
-weekday
-julian
-yearday
 zone
+hour
+minute
+second
+weekday
+yearday
+timezone
+;week
+;isoweek
 utc
+julian
+
 
 ; Parse: - These words must not reserved above!!
 parse

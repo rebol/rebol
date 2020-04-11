@@ -117,15 +117,17 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2370
 		d: 1-Jan-2000
 		d/zone: 2
-		--assert "1-Jan-2000/0:00+2:00" = mold d
+		--assert d = 1-Jan-2000/0:00+2:00
 		d/timezone: 2
-		--assert "1-Jan-2000/0:00+2:00" = mold d
+		--assert d = 1-Jan-2000/0:00+2:00
 		d/timezone: 4
-		--assert "1-Jan-2000/2:00+4:00" = mold d
+		--assert d = 1-Jan-2000/2:00+4:00
 		d/timezone: -7
-		--assert "31-Dec-1999/15:00-7:00" = mold d
-		d/timezone: -70
-		--assert "29-Dec-1999/0:00-6:00" = mold d
+		--assert d = 31-Dec-1999/15:00-7:00
+		d/timezone: 0
+		--assert d = 31-Dec-1999/22:00
+
+		--assert error? try [d/timezone: -70]
 
 ===end-group===
 
@@ -157,15 +159,20 @@ Rebol [
 		--assert object? o: query date
 		--assert o/date = 8-Apr-2020
 
-	--test-- "query/mode date"
+	--test-- "query/mode datetime"
 		all-date-words: words-of system/standard/date-info
 		--assert all-date-words = query/mode date none
 		--assert date/time = query/mode date 'time
 		--assert [2020 4] = query/mode now [year month]
 		--assert [month: 4 year: 2020] = query/mode now [month: year:]
-		--assert [2020 4 8 12:04:32 2:00 8-Apr-2020 3 99 99 8-Apr-2020/10:04:32 12 4 32 2:00] = query/mode date all-date-words
-
+		--assert equal? query/mode date all-date-words [2020 4 8 12:04:32 8-Apr-2020 2:00 12 4 32 3 99 2:00 8-Apr-2020/10:04:32 99]
+	
+	--test-- "query/mode date"
+		date: 8-Apr-2020 ; no time!
+		--assert equal? query/mode date all-date-words [2020 4 8 #[none] 2020-04-08 #[none] #[none] #[none] #[none] 3 99 #[none] 2020-04-08 99]
+		
 ===end-group===
+
 
 
 ===start-group=== "NOW"
