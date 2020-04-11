@@ -269,6 +269,25 @@
 	return result;
 }
 
+/***********************************************************************
+**
+*/	void Assert_Max_Refines(REBVAL *ds, REBCNT limit)
+/*
+**		Scans the stack for function refinements
+**		and throw an error if exeeds given limit
+**
+***********************************************************************/
+{
+	REBINT n;
+	REBCNT count=0;
+	REBINT len = DS_ARGC;
+
+	for (n = 1; n <= len; n++) {
+		if (D_REF(n))
+			if(count++ == limit) Trap0(RE_BAD_REFINES);
+	}
+}
+
 
 /***********************************************************************
 **

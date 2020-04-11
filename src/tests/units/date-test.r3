@@ -151,4 +151,31 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "NOW"
+	--test-- "now"
+ 		--assert integer? now/year
+        --assert integer? now/month
+        --assert integer? now/day
+        --assert time?    now/time
+        --assert time?    now/zone
+        --assert date?    now/date
+        --assert integer? now/weekday
+        --assert integer? now/yearday
+        --assert date?    now/utc
+        
+    --test-- "now/precise"
+    	--assert time?    now/time/precise
+    	--assert date?    now/utc/precise
+        --assert date?    now/precise
+        --assert integer? now/year/precise ; precise ignored
+
+	--test-- "now with too many refines"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2286
+		--assert error? try [now/time/day]
+		--assert error? try [now/time/day/precise]
+		--assert error? try [now/utc/month]
+
+===end-group===
+
 ~~~end-file~~~

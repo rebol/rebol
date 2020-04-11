@@ -237,6 +237,8 @@ static REBSER *Read_All_File(char *fname)
 	REBINT n = -1;
 	REBVAL *ret = D_RET;
 
+	Assert_Max_Refines(ds, D_REF(9) ? 2 : 1); // prevent too many refines like: now/year/month
+
 	OS_GET_TIME(&dat);
 	if (!D_REF(9)) dat.nano = 0; // Not /precise
 	Set_Date(ret, &dat);
