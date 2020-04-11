@@ -39,6 +39,11 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/150
 		--assert error? try [0:0:0 /  0] ;- no crash
 		--assert error? try [0:0:0 // 0] ;- no crash
+
+	--test-- "issue-263"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/263
+		--assert time? t: try [load "596523:00"]
+		--assert t = load "596522:60"
 		
 
 
