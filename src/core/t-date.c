@@ -534,8 +534,10 @@
 		sym =  SYM_YEAR + Int32(arg) - 1;
 	}
 
-	if (sym < SYM_YEAR || sym > SYM_JULIAN)
-		return PE_BAD_SELECT;
+	if (sym < SYM_YEAR || sym > SYM_JULIAN) {
+		//@@ https://github.com/Oldes/Rebol-issues/issues/1375
+		return (val) ? PE_BAD_SELECT : PE_NONE;
+	}
 
 	if (sym == SYM_TIMEZONE) {
 		asTimezone = TRUE;

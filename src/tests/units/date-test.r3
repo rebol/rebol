@@ -110,6 +110,19 @@ Rebol [
 		--assert d/time = 0:10
 		--assert d/date = 1-Jan-2000
 
+	--test-- "issue 1375"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1375
+		; none instead of error for an out-of-range ordinal selector
+		d: now
+		--assert none? try [d/0]
+		--assert none? try [d/-1]
+		--assert none? try [d/100]
+		; consistent with time:
+		t: now/time
+		--assert none? try [t/0]
+		--assert none? try [t/-1]
+		--assert none? try [t/100]
+
 ===end-group===
 
 ===start-group=== "DATE/TIMEZONE"
@@ -170,7 +183,7 @@ Rebol [
 	--test-- "query/mode date"
 		date: 8-Apr-2020 ; no time!
 		--assert equal? query/mode date all-date-words [2020 4 8 #[none] 2020-04-08 #[none] #[none] #[none] #[none] 3 99 #[none] 2020-04-08 99]
-		
+
 ===end-group===
 
 
