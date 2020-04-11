@@ -94,6 +94,22 @@ Rebol [
 		test-issue-1145: does [for n 1 100 1 [if error? try [random/secure now][ return false ]] true]
 		--assert test-issue-1145
 
+	--test-- "issue 2414"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2414
+		d: 1-1-2000
+		--assert none? d/zone
+		--assert none? d/time
+		--assert none? d/hour
+		--assert none? d/minute
+		--assert none? d/second
+		--assert integer? d/year
+		d/hour: 2
+		--assert d/time = 2:00
+		--assert d/date = 1-Jan-2000
+		d: 1-1-2000 d/minute: 10
+		--assert d/time = 0:10
+		--assert d/date = 1-Jan-2000
+
 ===end-group===
 
 ===start-group=== "DATE/TIMEZONE"
@@ -154,21 +170,21 @@ Rebol [
 
 ===start-group=== "NOW"
 	--test-- "now"
- 		--assert integer? now/year
-        --assert integer? now/month
-        --assert integer? now/day
-        --assert time?    now/time
-        --assert time?    now/zone
-        --assert date?    now/date
-        --assert integer? now/weekday
-        --assert integer? now/yearday
-        --assert date?    now/utc
+		--assert integer? now/year
+		--assert integer? now/month
+		--assert integer? now/day
+		--assert time?    now/time
+		--assert time?    now/zone
+		--assert date?    now/date
+		--assert integer? now/weekday
+		--assert integer? now/yearday
+		--assert date?    now/utc
         
     --test-- "now/precise"
-    	--assert time?    now/time/precise
-    	--assert date?    now/utc/precise
-        --assert date?    now/precise
-        --assert integer? now/year/precise ; precise ignored
+		--assert time?    now/time/precise
+		--assert date?    now/utc/precise
+		--assert date?    now/precise
+		--assert integer? now/year/precise ; precise ignored
 
 	--test-- "now with too many refines"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2286

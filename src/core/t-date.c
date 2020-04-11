@@ -501,7 +501,7 @@
 	pvs.setval = 0;
 	pvs.store = ret;
 
-	return (PE_USE == PD_Date(&pvs));
+	return (PE_BAD_SELECT > PD_Date(&pvs));
 }
 
 /***********************************************************************
@@ -523,7 +523,7 @@
 	REBVAL dat;
 	REB_TIMEF time;
 
-	// !zone! - adjust date by zone (unless /utc given)
+	if (!IS_DATE(data)) return PE_BAD_ARGUMENT;
 
 	if (IS_WORD(arg) || IS_SET_WORD(arg)) {
 		//!!! change this to an array!?
@@ -552,20 +552,19 @@
 	else
 		return PE_BAD_SELECT;
 
-	if (IS_DATE(data)) {
-		dat = *data; // recode!
-		data = &dat;
-		if (i != 8) Adjust_Date_Zone(data, FALSE); // adjust for timezone
-		date  = VAL_DATE(data);
-		day   = VAL_DAY(data) - 1;
-		month = VAL_MONTH(data) - 1;
-		year  = VAL_YEAR(data);
-		secs  = VAL_TIME(data);
-		tz    = VAL_ZONE(data);
-		if (i > 8) Split_Time(secs, &time);
-	}
+	dat = *data; // recode!
+	data = &dat;
+	if (i != 8) Adjust_Date_Zone(data, FALSE); // adjust for timezone
+	date  = VAL_DATE(data);
+	day   = VAL_DAY(data) - 1;
+	month = VAL_MONTH(data) - 1;
+	year  = VAL_YEAR(data);
+	secs  = VAL_TIME(data);
+	tz    = VAL_ZONE(data);
+	if (i > 8) Split_Time(secs, &time);
 
 	if (val == 0) {
+		if (secs == NO_TIME && (i > 8 || i == 3 || i == 4)) return PE_NONE;
 		val = pvs->store;
 		switch(i) {
 		case 0:
@@ -578,13 +577,11 @@
 			num = day + 1;
 			break;
 		case 3:
-			if (secs == NO_TIME) return PE_NONE;
 			*val = *data;
 			VAL_SET(val, REB_TIME);
 			return PE_USE;
 		case 4:  // zone
 		case 12: // timezone
-			if (secs == NO_TIME) return PE_NONE;
 			*val = *data;
 			VAL_TIME(val) = (i64)tz * ZONE_MINS * MIN_SEC;
 			VAL_SET(val, REB_TIME);
@@ -638,6 +635,11 @@
 		else if (IS_TIME(val) && (i == 3 || i == 4));
 		else if (IS_DATE(val) && (i == 3 || i == 5));
 		else return PE_BAD_SET_TYPE;
+
+		if (secs == NO_TIME && (i > 8 || i == 3 || i == 4)) {
+			// init time with 0:0:0.0 as we are going to set time related part
+			time.h = 0;	time.m = 0;	time.s = 0;	time.n = 0;
+		}
 
 		switch(i) {
 		case 0:
