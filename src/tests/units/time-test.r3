@@ -44,6 +44,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/263
 		--assert time? t: try [load "596523:00"]
 		--assert t = load "596522:60"
+
+	--test-- "issue-1033"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1033
+		--assert "-1:02:03.45" = mold make time! [-1 2 3.45]
 		
 
 
