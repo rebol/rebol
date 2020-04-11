@@ -49,6 +49,11 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1033
 		--assert "-1:02:03.45" = mold make time! [-1 2 3.45]
 		
+	--test-- "issue-958"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/958
+		--assert error? try [make time! (2 ** 32) - 1]
+		--assert error? try [make time! (2 ** 32) - 0.99]
+		--assert error? try [make time! (2 ** 32) - 1.01]
 
 
 ===end-group===
