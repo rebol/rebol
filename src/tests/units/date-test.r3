@@ -123,6 +123,13 @@ Rebol [
 		--assert none? try [t/-1]
 		--assert none? try [t/100]
 
+	--test-- "issue-1412"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1412
+		--assert date? try [load "3-Jan-2010/10:00+2:00"]
+		--assert error? try [load "3-Jan-2010/10:00+2:00:"]
+		--assert error? try [load "3-Jan-2010/10:00+2:00:56"]
+		--assert error? try [load "3-Jan-2010/10:00+2:00:56.1234pm"]
+
 ===end-group===
 
 ===start-group=== "DATE/TIMEZONE"
