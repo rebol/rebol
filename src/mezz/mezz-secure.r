@@ -184,6 +184,7 @@ protect-system-object: func [
 	"Protect the system object and selected sub-objects."
 ][
 	protect/words system
+	protect 'system ; to make sure, that lib/system is always available (user channot unset it)
 
 	"full protection:"
 	protect/words/deep [
