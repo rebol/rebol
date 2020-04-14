@@ -202,10 +202,12 @@ protect-system-object: func [
 	]
 
 	unprotect/values [
+		system/options ; some are modified by scripts
+	]
+	unprotect/words [
 		system/script
 		;system/schemes
 		;system/ports   ; should not be modified, fix this
-		system/options ; some are modified by scripts
 		;system/view    ; should not be modified!
 	]
 ]
