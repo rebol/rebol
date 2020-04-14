@@ -385,4 +385,14 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "mold unset!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/567
+	--test-- "mold unset!"
+		--assert   "unset!"  = mold ()
+		--assert "#[unset!]" = mold/all ()
+	--test-- "form unset!"
+		--assert "" = form ()
+
+===end-group===
+
 ~~~end-file~~~
