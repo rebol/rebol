@@ -47,6 +47,33 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "MAKE object"
+
+	;@@ https://github.com/Oldes/Rebol-issues/issues/711
+	--test-- "make object bounds-check v1"
+		a: make object! [a: 1 b: func [c] [exit]]
+		d: 0
+		--assert error? try [make a [set 'd b]]
+		--assert d = 0
+		protect/hide in a 'a
+		--assert error? try [make a [set 'd b]]
+		--assert d = 0
+
+	--test-- "make object bounds-check v2"
+		a: make object! [b: func [c] [exit] a: 1]
+		protect in a 'a
+		--assert error? try [make a [set 'd b]]
+		--assert d = 0
+
+	--test-- "make object bounds-check v3"
+		a: make object! [a: 1] b: func [c] [exit]
+		protect in a 'a
+		--assert error? try [make a [set 'd b]]
+		--assert d = 0
+
+===end-group===
+
+
 ===start-group=== "Compare object"
 	--test-- "issue-281"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/281
