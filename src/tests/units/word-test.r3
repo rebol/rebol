@@ -22,4 +22,14 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "word issues"
+	--test-- "issue-368"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/368
+	--assert (type? :set) = (type? :SET)
+	--assert (type? :print) = (type? :PRINT)
+	--assert 'set = 'SET
+	--assert 'print = 'PRINT
+
+===end-group===
+
 ~~~end-file~~~
