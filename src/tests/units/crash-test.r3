@@ -53,6 +53,10 @@ Rebol [
 	--assert not error? try [mold 1.7976931348623157E+308] ;- no crash!
 	system/options/decimal-digits: d
 
+--test-- "issue-599"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/599
+	--assert error? try [action []] ;- no crash!
+	--assert error? try [make action! []]
 
 ===end-group===
 
