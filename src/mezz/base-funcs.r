@@ -121,6 +121,7 @@ default: func [
 
 ;@@ https://github.com/Oldes/Rebol-issues/issues/599
 unset 'action ; this native was only for internal use, co unset it now!
+unset 'native ; no crash, but not useful -> https://github.com/Oldes/Rebol-issues/issues/918
 
 
 ;secure: func ['d] [boot-print "SECURE is disabled"]
