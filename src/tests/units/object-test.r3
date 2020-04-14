@@ -148,6 +148,12 @@ Rebol [
 		--assert     error? try [o/a: 0]
 		--assert     error? try [o/a/b: 0]
 
+	--test-- "unset with protected value"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/961
+		o: protect/deep make object! [w: 0]
+		--assert error? try [unset in o 'w]
+
+
 ===end-group===
 
 
