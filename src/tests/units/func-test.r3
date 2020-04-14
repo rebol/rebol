@@ -143,7 +143,15 @@ Rebol [
  	--assert function? f2: make :f1 [ * [y] ]
 	--assert [a] = spec-of :f2
  	--assert [y] = body-of :f2
-	
+
+ --test-- "unset as a function argument"
+ ;@@ https://github.com/Oldes/Rebol-issues/issues/293
+	f: func [v [unset!]] [type? v]
+	--assert error? try [f make unset! none]
+	f: func [v [any-type!]] [type? get/any 'v]
+	--assert unset! = f make unset! none
+	f: func [v [unset!]] [type? get/any 'v]
+	--assert unset! = f #[unset!]
 
 ===end-group===
 
