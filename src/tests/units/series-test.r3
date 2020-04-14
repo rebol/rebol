@@ -406,6 +406,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1516
 	--assert error? try [sort/compare [1 2 #[unset!]] :>]
 
+--test-- "SORT with unset!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1124
+	--assert [#[unset!] 2 3] = sort reduce [2 #[unset!] 3 ]
+
 
 ===end-group===
 
@@ -689,6 +693,8 @@ Rebol [
 --test-- "union on 2 strings"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/400
 	--assert "123" = union "12" "13"
+--test-- "union with none and unset"
+	--assert [#[none!] #[unset!]] = union [#[none!]] [#[unset!]]
 
 ===end-group===
 
@@ -720,8 +726,19 @@ Rebol [
 	--assert [1 2 3 4] = deduplicate/skip b: [1 2 1 2 3 4] 2
 	--assert [1 2 3 4] = b
 
+--test-- "unique with unset and none"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1124
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1592
+	--assert [#[unset!] #[none!]] = unique reduce [unset 'a unset 'a none none]
+
 ===end-group===
 
+===start-group=== "INTERSECT"
+--test-- "intersect"
+	--assert [#[none] 1 #[unset!]] = intersect [#[none] 1 #[unset!]] [#[none] #[unset!] 1]
+	--assert [] = intersect [#[none]] [1 #[unset!]]
+
+===end-group===
 
 ===start-group=== "TO-*"
 
