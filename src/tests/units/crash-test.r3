@@ -58,6 +58,9 @@ Rebol [
 	--assert error? try [action []] ;- no crash!
 	--assert error? try [make action! []]
 
+--test-- "issue-170"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/170
+	--assert error? try [foreach :a [1 2 3 4] [print a]] ;- no crash!
 ===end-group===
 
 ~~~end-file~~~
