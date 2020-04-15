@@ -11,6 +11,18 @@ Rebol [
 ~~~start-file~~~ "TIME"
 
 ===start-group=== "time"
+	--test-- "round time"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/162
+		--assert 1:30 = round/to 1:32:0 0:10
+		--assert 2:00 = round/to 1:32:0 1:00
+		--assert 0:00:01 = round/to 0:0:1.4 0:0:1
+		--assert 12:35:23 = round/to 12:34:56 0:1:1
+		--red-- --assert 12:35:23 = round/to 12:34:56 to integer! 0:1:1
+		--red-- --assert 12:35:23 = round/to 12:34:56 to decimal! 0:1:1
+		;Red also supports this (don't know why):
+		; --assert 12:34:56.1 = round/to 12:34:56 0.3
+		; --assert 12:34:56.1 = round/to 12:34:56 30%
+
 
 	--test-- "issue-90"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/90
