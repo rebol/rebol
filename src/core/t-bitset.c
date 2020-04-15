@@ -149,7 +149,7 @@
 			for (; n < (REBINT)VAL_TAIL(val); n++)
 				if (up[n] > maxi) maxi = up[n];
 		}
-		maxi++;
+		//maxi++; //@@ https://github.com/Oldes/Rebol-issues/issues/2415
 		break;
 
 	case REB_BINARY:
