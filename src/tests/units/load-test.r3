@@ -48,7 +48,19 @@ Rebol [
 ===end-group===
 
 
-
+===start-group=== "find-script native"
+	--test-- "find-script"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/182
+		--assert 1 = index? find-script to-binary {Rebol [] print now}
+		--assert 2 = index? find-script to-binary { Rebol[] print now}
+		--assert 2 = index? find-script to-binary { Rebol [] print now}
+		--assert 2 = index? find-script to-binary {^/Rebol [] print now}
+		--assert 2 = index? find-script to-binary {^/REBOL [] print now}
+		--assert 4 = index? find-script to-binary {   Rebol [] print now}
+		--assert 4 = index? find-script to-binary {   RebOL [] print now}
+		--assert 6 = index? find-script to-binary {^/bla^/Rebol [] print now}
+		--assert none? find-script to-binary {bla Rebol [] print now}
+===end-group===
 
 
 ~~~end-file~~~
