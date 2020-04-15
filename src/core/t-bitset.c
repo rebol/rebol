@@ -511,6 +511,19 @@ found:
 	SERIES_TAIL(ser) = tail;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(complementq)
+/*
+//	complement?: native [
+//		"Returns TRUE if the bitset is complemented"
+//		value [bitset!]
+//	]
+***********************************************************************/
+{
+	return (BITS_NOT(VAL_SERIES(D_ARG(1))) ? R_TRUE : R_FALSE);
+}
+
 
 /***********************************************************************
 **
