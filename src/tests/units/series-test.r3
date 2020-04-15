@@ -184,10 +184,10 @@ Rebol [
 
 	;@@ https://github.com/Oldes/Rebol-issues/issues/141
 	s: [1 2 3 4]
-	--assert [1]   = take/part b 1
-	--assert [2 3] = take/part b 2
-	--assert [4]   = take/part b 3
-	--assert []    = take/part b 1
+	--assert [1]   = take/part s 1
+	--assert [2 3] = take/part s 2
+	--assert [4]   = take/part s 3
+	--assert []    = take/part s 1
 
 
 	--test-- "take binary!"
