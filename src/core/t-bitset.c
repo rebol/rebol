@@ -33,6 +33,9 @@
 
 #define BITS_NOT(s) ((s)->size)
 
+// use if you want compatibility with R3-alpha for returning NONE on non existing bit
+// #define PICK_BITSET_AS_NONE
+
 /***********************************************************************
 **
 */	REBINT CT_Bitset(REBVAL *a, REBVAL *b, REBINT mode)
@@ -478,11 +481,16 @@ found:
 	REBFLG t;
 
 	if (val == 0) {
+#ifdef PICK_BITSET_AS_NONE
 		if (Check_Bits(ser, pvs->select, 0)) {
 			SET_TRUE(pvs->store);
 			return PE_USE;
 		}
 		return PE_NONE;
+#else
+		SET_LOGIC(pvs->store, Check_Bits(ser, pvs->select, 0));
+		return PE_USE;
+#endif
 	}
 
 	t = IS_TRUE(val);
@@ -569,7 +577,12 @@ found:
 
 	case A_PICK:
 	case A_FIND:
-		if (!Check_Bits(VAL_SERIES(value), arg, D_REF(ARG_FIND_CASE))) return R_NONE;
+		if (!Check_Bits(VAL_SERIES(value), arg, D_REF(ARG_FIND_CASE)))
+#ifdef PICK_BITSET_AS_NONE
+			return R_NONE;
+#else
+			return R_FALSE; // returning FALSE instead of NONE like Red does
+#endif
 		return R_TRUE;
 
 	case A_COMPLEMENT:
