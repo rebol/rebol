@@ -179,6 +179,14 @@ Rebol [
 	--assert "34" = take/part skip s 2 -5 ;@@ https://github.com/Oldes/Rebol-issues/issues/373
 	--assert "56" = take/part s 10
 
+	--test-- "take/last"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/177
+	--assert #"c" = take/last str: "abc"
+	--assert "ab" = str
+	--assert 3    = take/last blk: [1 2 3]
+	--assert [1 2] = blk
+
+
 	--test-- "take block!"
 	s: [1]
 	--assert 1   =  take s
