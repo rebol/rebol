@@ -21,6 +21,7 @@ dt [ ;- delta time
     wrap load %units/enum-test.r3
     wrap load %units/evaluation-test.r3
     wrap load %units/event-test.r3
+    wrap load %units/gob-test.r3
     wrap load %units/file-test.r3
     wrap load %units/func-test.r3
     wrap load %units/image-test.r3
