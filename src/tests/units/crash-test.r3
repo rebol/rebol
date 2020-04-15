@@ -65,6 +65,10 @@ Rebol [
 	a: [x] b: "" foreach :a [1 2 3][append b x]
 	--assert "123" = b
 
+--test-- "issue-188"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/188
+	--assert try [c: closure [n][if n > 0 [c n - 1]] c 306 true] ;- no crash
+
 ===end-group===
 
 ~~~end-file~~~
