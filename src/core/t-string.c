@@ -528,7 +528,10 @@ find:
 
 		if (args & AM_FIND_PART) tail = index + Partial(value, 0, D_ARG(ARG_FIND_LENGTH), 0);
 		ret = 1; // skip size
-		if (args & AM_FIND_SKIP) ret = Partial(value, 0, D_ARG(ARG_FIND_SIZE), 0);
+		if (args & AM_FIND_SKIP) {
+			ret = Partial(value, 0, D_ARG(ARG_FIND_SIZE), 0);
+			if(!ret) goto is_none;
+		}
 
 		if (action == A_SELECT) args |= AM_FIND_TAIL;
 

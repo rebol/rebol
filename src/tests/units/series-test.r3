@@ -78,6 +78,14 @@ Rebol [
 	--assert "b"  = find/case str #"b"
 	--assert none?  find/case str #"B"
 
+--test-- "FIND with negative skip"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2291
+	--assert none? find/skip "acdcde" "cd" -3
+	--assert "cde" = find/skip/reverse tail "acd000cde" "cd" -3
+	--assert "cde111" = find/skip/reverse tail "acd000cde111" "cd" -3
+	; I'm not sure with the next one, but I will keep it:
+	--assert "cde" = find/reverse/skip tail "acde" make bitset! #"c" -2
+
 --test-- https://github.com/Oldes/Rebol-issues/issues/66
 	--assert none? find/skip [1 2 3 4 5 6] 2 3
 
