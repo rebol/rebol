@@ -87,6 +87,12 @@ Rebol [
 	--assert 0.1231 = round/to to-money 0.123123 0.0001
 	--assert 12.12 = round/to $12.1231 0.01
 	
+	--test-- "issue-116"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/116
+	--assert  $8.00 == add      $4.00 $4.00
+	--assert  $0.00 == subtract $4.00 $4.00
+	--assert $16.00 == multiply $4.00 $4.00    ;@@ error?
+	--assert  $1.00 == divide   $4.00 $4.00    ;@@ 1.0?
 ===end-group===
 	
 ~~~end-file~~~
