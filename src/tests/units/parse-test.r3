@@ -102,6 +102,13 @@ Rebol [
 	--assert parse [x][set val pos: word!]
 	--assert pos = [x]
 
+--test-- "issue-1938"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1938
+	--assert parse "a" reduce [charset "a"]
+	--assert parse/case "a" reduce [charset "a"]
+	--assert parse "A" reduce [charset "a"]
+	--assert not parse/case "A" reduce [charset "a"]
+
 ===end-group===
 
 ~~~end-file~~~
