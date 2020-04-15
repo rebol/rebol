@@ -109,6 +109,18 @@ Rebol [
 	--assert parse "A" reduce [charset "a"]
 	--assert not parse/case "A" reduce [charset "a"]
 
+--test-- "issue-2141"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2141
+	x: charset "x"
+	y: charset "y"
+	--assert parse "x" [thru [x | y]]
+	--assert parse "y" [thru [x | y]]
+	--assert parse "zx" [thru [x | y]]
+	--assert parse "zy" [thru [x | y]]
+	--assert parse "xz" [thru [x | y] #"z"]
+	--assert parse "yz" [thru [x | y] #"z"]
+	--assert parse "xy" [some thru [x | y]]
+
 ===end-group===
 
 ~~~end-file~~~
