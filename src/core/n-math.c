@@ -803,5 +803,9 @@ compare:
 		VAL_SET(val, type);
 		if (Compare_Values(D_ARG(1), D_ARG(2), 1)) return R_TRUE;
 	}
+	else if (type == REB_BITSET && Is_Zero_Bitset(VAL_SERIES(D_ARG(1)))) {
+		return R_TRUE;
+	}
+		
 	return R_FALSE;
 }

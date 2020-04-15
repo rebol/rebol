@@ -493,6 +493,22 @@ found:
 	return PE_BAD_SET;
 }
 
+/***********************************************************************
+**
+*/	REBOOL Is_Zero_Bitset(REBSER *bset)
+/*
+**		Check if all bits are unset.
+**
+***********************************************************************/
+{
+	REBCNT i;
+	REBYTE *bp = BIN_HEAD(bset);
+
+	for(i = 0;  i < SERIES_TAIL(bset); i++) {
+		if(bp[i] != 0) return FALSE;
+	}
+	return TRUE;
+}
 
 /***********************************************************************
 **
