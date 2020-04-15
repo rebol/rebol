@@ -503,9 +503,10 @@ found:
 {
 	REBCNT i;
 	REBYTE *bp = BIN_HEAD(bset);
+	REBYTE b = BITS_NOT(bset) ? 0xFF : 0; 
 
 	for(i = 0;  i < SERIES_TAIL(bset); i++) {
-		if(bp[i] != 0) return FALSE;
+		if(bp[i] != b) return FALSE;
 	}
 	return TRUE;
 }
