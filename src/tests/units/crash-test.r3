@@ -61,6 +61,10 @@ Rebol [
 --test-- "issue-170"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/170
 	--assert error? try [foreach :a [1 2 3 4] [print a]] ;- no crash!
+	;@@ https://github.com/Oldes/Rebol-issues/issues/179
+	a: [x] b: "" foreach :a [1 2 3][append b x]
+	--assert "123" = b
+
 ===end-group===
 
 ~~~end-file~~~
