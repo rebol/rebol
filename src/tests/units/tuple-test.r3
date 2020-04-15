@@ -23,6 +23,10 @@ Rebol [
 	--assert (1.1.1 * 4656612873077)         == 255.255.255
 	--assert (0.0.0 * 4656612873077)         == 0.0.0
 
+	--test-- "to-tuple tuple!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/180
+	--assert 1.1.1 = to-tuple 1.1.1
+
 ===end-group===
 
 ~~~end-file~~~
