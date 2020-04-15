@@ -41,6 +41,10 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/782
 		--assert not find series! bitset!
 
+	--test-- "unique"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/819
+		--assert typeset? try [make typeset! [number! integer!]]
+
 ===end-group===
 
 
