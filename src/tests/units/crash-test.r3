@@ -86,6 +86,11 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/231
 	clear head s: tail "s"
 	--assert {""} = mold s ;- no crash
+
+--test-- "issue-261"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/261
+	--assert percent? p: to percent! to decimal! #{7FEFFFFFFFFFFFFF} ;- no crash
+	--assert #{7FEFFFFFFFFFFFFF} = to binary! to decimal! p
 ===end-group===
 
 ~~~end-file~~~
