@@ -27,6 +27,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/180
 	--assert 1.1.1 = to-tuple 1.1.1
 
+	--test-- "reverse tuple"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/211
+	--assert 3.2.1 = reverse 1.2.3
+
 ===end-group===
 
 ~~~end-file~~~
