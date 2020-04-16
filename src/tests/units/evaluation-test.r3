@@ -453,4 +453,12 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "BOOT"
+	--test-- "issue-232"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/232
+		--assert file? system/options/home
+		--assert file? system/options/boot
+		--assert any [none? system/options/script file? system/options/script]
+===end-group===
+
 ~~~end-file~~~
