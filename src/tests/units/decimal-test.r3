@@ -98,6 +98,14 @@ Rebol [
 	--assert 2.1 = (1 + 1.1)
 	--assert 0.1 = (1.1 - 1)
 	--assert 1.1 = (1 * 1.1)
+
+	--test-- "issue-241"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/241
+		--assert  0.0 == to decimal! #{0000000000000000}
+		--assert  0.0 == to decimal! #{8000000000000000}
+		--assert  1.#INF = to decimal! #{7FF0000000000000}
+		--assert -1.#INF = to decimal! #{FFF0000000000000}
+		--assert "1.#NaN" = mold to decimal! #{7FFFFFFFFFFFFFFF}
 ===end-group===
 	
 ~~~end-file~~~
