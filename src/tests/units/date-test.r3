@@ -130,6 +130,10 @@ Rebol [
 		--assert error? try [load "3-Jan-2010/10:00+2:00:56"]
 		--assert error? try [load "3-Jan-2010/10:00+2:00:56.1234pm"]
 
+	--test-- "issue-276"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/276
+		--assert error? try [0 - 1-jan-0000] ;- no crash!
+
 ===end-group===
 
 ===start-group=== "DATE/TIMEZONE"
