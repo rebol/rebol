@@ -290,6 +290,10 @@ Rebol [
 	--test-- "issue-126"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/126
 		--assert error? try [to integer! "11111111111111111111111"]
+
+	--test-- "issue-260"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/260
+		--assert not same? 97 #"a"
 ===end-group===
 
 ~~~end-file~~~
