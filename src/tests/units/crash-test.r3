@@ -81,6 +81,11 @@ Rebol [
 	--assert not error? try [trace on f1 trace off] ;- no crash
 	--assert not error? try [trace on f2 trace off] ;- no crash
 	--assert not error? try [trace on f3 trace off] ;- no crash
+
+--test-- "issue-231"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/231
+	clear head s: tail "s"
+	--assert {""} = mold s ;- no crash
 ===end-group===
 
 ~~~end-file~~~
