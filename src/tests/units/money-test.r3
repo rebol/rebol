@@ -97,6 +97,9 @@ Rebol [
 	--test-- "issue-236"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/236
 		--assert 1.0 = to decimal! $1
+	--test-- "issue-238"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/238
+		--assert $1 = to money! $1
 ===end-group===
 	
 ~~~end-file~~~
