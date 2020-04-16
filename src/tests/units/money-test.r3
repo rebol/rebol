@@ -93,6 +93,10 @@ Rebol [
 	--assert  $0.00 == subtract $4.00 $4.00
 	--assert $16.00 == multiply $4.00 $4.00    ;@@ error?
 	--assert  $1.00 == divide   $4.00 $4.00    ;@@ 1.0?
+
+	--test-- "issue-236"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/236
+		--assert 1.0 = to decimal! $1
 ===end-group===
 	
 ~~~end-file~~~
