@@ -121,6 +121,11 @@ Rebol [
 	--assert parse "yz" [thru [x | y] #"z"]
 	--assert parse "xy" [some thru [x | y]]
 
+--test-- "issue-206"
+;@@ https://github.com/Oldes/Rebol-issues/issues/206
+	any-char: complement charset ""
+	--assert parse/all "^(80)" [any-char]
+
 ===end-group===
 
 ~~~end-file~~~
