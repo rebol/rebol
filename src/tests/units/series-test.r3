@@ -769,7 +769,13 @@ Rebol [
 	--assert block?   p/4
 	--assert paren?   p/5
 	--assert binary?  p/6
-	--assert b = to-block p 
+	--assert b = to-block p
+
+--test-- "to-string"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/207
+	--assert "^@" = to-string to-char 0
+	--assert "^@" = to-string #"^(00)"
+	--assert "^@" = to-string #"^@"
 
 ===end-group===
 
