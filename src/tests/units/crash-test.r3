@@ -73,6 +73,14 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/198
 	--assert #00000000 = repeat i 1000 [to-hex 0.0.0.0] ;- no crash
 
+--test-- "issue-229"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/229
+	f1: func [][exit]
+	f2: func [][break]
+	f3: func [][return 0]
+	--assert not error? try [trace on f1 trace off] ;- no crash
+	--assert not error? try [trace on f2 trace off] ;- no crash
+	--assert not error? try [trace on f3 trace off] ;- no crash
 ===end-group===
 
 ~~~end-file~~~
