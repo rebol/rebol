@@ -144,6 +144,16 @@ Rebol [
 	--assert [a] = spec-of :f2
  	--assert [y] = body-of :f2
 
+ --test-- "issue-168"
+ 	;@@ https://github.com/Oldes/Rebol-issues/issues/168
+ 	a: "foo"
+ 	f1: func [a][a + 1]
+ 	f2: make :f1 [[b][reduce [b a]]]
+ 	f3: make :f1 [[b /local a][reduce [b a]]]
+ 	--assert 2 = f1 1
+ 	--assert [2 "foo"] = f2 2
+ 	--assert [3 #[none]] = f3 3
+
  --test-- "unset as a function argument"
  ;@@ https://github.com/Oldes/Rebol-issues/issues/293
 	f: func [v [unset!]] [type? v]
