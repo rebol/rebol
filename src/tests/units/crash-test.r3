@@ -69,6 +69,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/188
 	--assert try [c: closure [n][if n > 0 [c n - 1]] c 306 true] ;- no crash
 
+--test-- "issue-198"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/198
+	--assert #00000000 = repeat i 1000 [to-hex 0.0.0.0] ;- no crash
+
 ===end-group===
 
 ~~~end-file~~~
