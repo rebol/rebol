@@ -56,6 +56,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/227
 		--assert? number? 1%
 
+	--test-- "issue-262"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/262
+		--assert? 100% = try [load {1E+2%}]
+
 ===end-group===
 
 
