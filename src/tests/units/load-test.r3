@@ -45,6 +45,9 @@ Rebol [
 	--test-- "issue-658"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/658
 		--assert [[print now]] = load [{rebol [] print now}]
+	--test-- "issue-234"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/234
+		--assert [] = load to-string []
 ===end-group===
 
 
