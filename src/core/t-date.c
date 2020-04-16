@@ -746,7 +746,7 @@ setDate:
 
 		if (type == REB_DATE) {
 			if (action == A_SUBTRACT) {
-				if(!IS_DATE(val)) Trap_Math_Args(REB_INTEGER, A_SUBTRACT);
+				if(!IS_DATE(val)) Trap_Math_Args(VAL_TYPE(val), A_SUBTRACT);
 				num = Diff_Date(date, VAL_DATE(arg));
 				goto ret_int;
 			}
