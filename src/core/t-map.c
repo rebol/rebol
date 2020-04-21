@@ -488,9 +488,10 @@
 
 	case A_PICK:		// same as SELECT for MAP! datatype
 	case A_SELECT:
+	case A_FIND:
 		n = Find_Entry(series, arg, 0, Find_Refines(ds, AM_SELECT_CASE) ? AM_FIND_CASE : 0);
 		if (!n) return R_NONE;
-		*D_RET = *VAL_BLK_SKIP(val, ((n-1)*2)+1);
+		*D_RET = *VAL_BLK_SKIP(val, ((n-1)*2)+((action == A_FIND)?0:1));
 		break;
 
 	case A_INSERT:

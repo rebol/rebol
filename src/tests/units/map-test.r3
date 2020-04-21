@@ -79,6 +79,35 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "find"
+
+	--test-- "map-find-1"
+		mf1-m: #(a: none b: 1 c: 2)
+		--assert 'a		= find mf1-m 'a
+		--assert 'b		= find mf1-m 'b
+		--assert 'c		= find mf1-m 'c
+		--assert none	= find mf1-m 'd
+		
+	--test-- "map-find-2"
+		mf2-m: #(a: 1 b: 2 c: 3)
+		mf2-m/a: 'none
+		mf2-m/b: none
+		--assert 'a = find mf2-m 'a
+		--assert 'b = find mf2-m 'b
+		--assert 'c = find mf2-m 'c
+
+	--test-- "map-find-3"
+		mf3-m: #(aB: 1 ab: 2 AB: 3)
+		--assert 'ab = find/case mf3-m 'ab
+		--assert none = find/case mf3-m 'Ab
+
+	--test-- "map-find-4"
+		mf4-m: make map! [b 1]
+		--assert 'b	= find mf4-m first [b:]
+		--assert 'b	= find mf4-m first [b:]
+===end-group===
+
+
 ===start-group=== "map issues"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/770
 	--test-- "map-issue-770"

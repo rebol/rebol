@@ -193,7 +193,7 @@ pick: action [
 
 find: action [
 	{Searches for a value; for series returns where found, else none.}
-	series [series! gob! port! bitset! typeset! object! none!]
+	series [series! gob! port! bitset! typeset! object! map! none!]
 	value [any-type!]
 	/part {Limits the search to a given length or position}
 	length [number! series! pair!]
