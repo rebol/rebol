@@ -324,3 +324,16 @@ register-codec [
 
 	verbose: 0
 ]
+
+register-codec [
+	name:  'mobileprovision
+	title: "Apple's mobileprovision file"
+	suffixes: [%.mobileprovision]
+	decode: function[data [binary!]][
+		try [
+			der: codecs/DER/decode data
+			result: to string! der/sequence/cs0/sequence/sequence/cs0/2
+		]
+		result
+	]
+]
