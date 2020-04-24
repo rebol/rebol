@@ -88,9 +88,9 @@ encode-value: func[value [any-string!] /local out tmp][
 	out: copy ""
 	parse/all value [
 		any [
-			pos: ;(probe pos)
+			;pos: ;(probe pos)
 			[ 
-				#"'" (append out "&apos;") |
+				#"'"  (append out "&apos;") |
 				#"^"" (append out "&quot;")
 			]
 			|
@@ -187,7 +187,7 @@ emit-tag: func[tag][
 ]
 
 enabled-tags: [
-	"b" "i" "s" "u" "del" "h1" "h2" "h3" "h4" "h5" "span" "class"
+	"b" "i" "s" "u" "del" "h1" "h2" "h3" "h4" "h5" "h6" "span" "class"
 	"ins" "dd" "dt" "ol" "ul" "li" "url" "list" "br" "hr"
 	"color" "quote" "img" "size" "rebol" "align" "email" "ignore"
 ]
@@ -350,7 +350,7 @@ bbcode: func [
 									tmp
 								]
 							][
-								if find ["h1" "h2" "h3" "h4" "h5" "ul" "ol"] tag [
+								if find ["h1" "h2" "h3" "h4" "h5" "h6" "ul" "ol"] tag [
 									close-p-if-possible
 								]
 								append opened-tags tag
