@@ -83,7 +83,7 @@ import module [
 	register-codec [
 		name:  'PKIX
 		title: "Public-Key Infrastructure (X.509)"
-		suffixes: [%.pem %.ssh]
+		suffixes: [%.pem %.ssh %.certSigningRequest]
 		decode: function[data [string! binary!]][
 			load-PKIX data
 		]
