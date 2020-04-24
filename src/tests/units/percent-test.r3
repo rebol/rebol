@@ -54,11 +54,11 @@ Rebol [
 ===start-group=== "percent issues"
 	--test-- "issue-227"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/227
-		--assert? number? 1%
+		--assert number? 1%
 
 	--test-- "issue-262"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/262
-		--assert? 100% = try [load {1E+2%}]
+		--assert 100% = try [load {1E+2%}]
 
 ===end-group===
 
