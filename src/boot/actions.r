@@ -273,7 +273,7 @@ put: action [
 	series [any-block! map!] {(modified)}
 	key    [scalar! any-string! any-word! binary!] 
 	value  [any-type!] {The new value (returned)}
-	/case  {Perform a case-sensitive search (only on block so far!)}
+	/case  {Perform a case-sensitive search}
 ]
 
 insert: action [
