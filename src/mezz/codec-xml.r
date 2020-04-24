@@ -382,7 +382,7 @@ register-codec [
 			;
 			; Seed the document
 			;
-			xml-block: reduce ['document copy #() none]
+			xml-block: reduce ['document make map! [] none]
 		]
 		xml-decl: func [
 			version-info [string! none!] 
