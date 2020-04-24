@@ -6,8 +6,8 @@
 REBOL [
 	Title: "A more XML 1.0 compliant set of XML parsing tools."
 	File:  %codec-xml.r
-	Date:  19-Nov-2018
-	Version: 0.8.0
+	Date:  24-Apr-2020
+	Version: 0.8.1
 	Author: ["Gavin F. McKenzie" "Oldes"]
 	Email:  %brianwisti--yahoo--com
 	Purpose: {
@@ -137,6 +137,7 @@ REBOL [
 		   @@TBD: say more here
 	}
 	History: [
+	0.8.1 { Oldes: fixed Prolog parsing in some cases}
 	0.8.0 { Oldes: used original script as a Rebol3 codec}
 	0.7.6 { Version from 1-jul-2009 downloaded from rebol.org}
 	0.7.4 { Fixed a defect to allow optional space around
@@ -374,26 +375,14 @@ register-codec [
 	;
 	block-handler: make xml-parse-handler [
 		xml-doc: copy []
-		xml-block: copy []
+		xml-block: none
 		xml-content: copy ""
 
-		start-document: func [
-		][
+		start-document: does [
 			;
 			; Seed the document
 			;
-			xml-block: reduce copy/deep [
-				'document [
-					version none
-					encoding none 
-					standalone none
-					doctype none
-					pubid none
-					sysid none
-					subset none
-				]
-				none
-			]
+			xml-block: reduce ['document copy #() none]
 		]
 		xml-decl: func [
 			version-info [string! none!] 
@@ -821,15 +810,12 @@ register-codec [
 								any xmlMisc
 								opt [xmlDocTypeDecl any xmlMisc]
 							]
-		xmlDocTypeDecl:     [   "<!DOCTYPE" 
-								xmlS
+		xmlDocTypeDecl:     [   (public-id: system-id: internal-subset: none)
+								"<!DOCTYPE" xmlS
 								copy document-type xmlName
 								opt [xmlS xmlExternalID]
 								any xmlSpace
-								"["
-								copy internal-subset
-								to "]"
-								"]"
+								opt [#"[" copy internal-subset to #"]" 1 skip] ;@@ this can be unsafe!
 								any xmlSpace ">"
 								(handler/document-type
 									document-type
@@ -907,16 +893,14 @@ register-codec [
 									]
 								)
 							]
-		xmlExternalID:      [   ["SYSTEM" xmlSpace xmlSystemLiteral] | 
-								["PUBLIC" xmlSpace xmlPubIDLiteral
-								 xmlSpace xmlSystemLiteral
-								]
+		xmlExternalID:      [   ["SYSTEM" xmlS xmlSystemLiteral] | 
+								["PUBLIC" xmlS xmlPubIDLiteral xmlS xmlSystemLiteral]
 							]
-		xmlSystemLiteral:   [   [#"^"" copy system-id to #"^"" #"^""] | 
-								[#"'" copy system-id to #"'" #"'"]
+		xmlSystemLiteral:   [   [#"^"" copy system-id to #"^"" 1 skip] | 
+								[#"'"  copy system-id to #"'"  1 skip]
 							] 
-		xmlPubIDLiteral:    [   [#"^"" copy public-id to #"^"" #"^""] |
-								[#"'" copy public-id to #"'" #"'"]
+		xmlPubIDLiteral:    [   [#"^"" copy public-id to #"^"" 1 skip] |
+								[#"'"  copy public-id to #"'"  1 skip]
 							] 
 		xmlNDataDecl:       [xmlS "NDATA" xmlS xmlNameProd]
 		xmlCDSect:          [   "<![CDATA[" 
@@ -1008,13 +992,9 @@ register-codec [
 				"apos"      [ return #"'" ]
 			][
 				either (first entity-ref) = #"#" [
-					either (second entity-ref) = #"x" [
-						to char! to integer! to issue! 
-							skip entity-ref 2
-					][
-						to char! to integer!
-							skip entity-ref 1
-					]
+					to char! to integer! either (second entity-ref) = #"x" [
+						to issue! skip entity-ref 2
+					][	skip entity-ref 1 ]
 				][
 					none
 				]

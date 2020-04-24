@@ -227,4 +227,36 @@ if find codecs 'JSON [
 	===end-group===
 ]
 
+if find codecs 'XML [
+	===start-group=== "XML codec"
+	--test-- "XML decode test1"
+		--assert block? data: load %units/files/test1.xml
+		--assert none? data/document/version
+		--assert none? data/document/encoding
+		--assert none? data/document/standalone
+		--assert none? data/document/pubid
+		--assert none? data/document/subset
+		--assert data/document/doctype = "document"
+		--assert data/document/sysid = "subjects.dtd"
+		--assert 1 = length? data/3
+		--assert data/3/1/1 = "document"
+		--assert 17 = length? data/3/1/3
+
+	--test-- "XML decode test2"
+		--assert block? data: load %units/files/test2.xml
+		--assert data/document/version = "1.0"
+		--assert none? data/document/encoding
+		--assert data/document/standalone = "no"
+		--assert data/document/doctype = "HTML"
+		--assert data/document/pubid = "-//W3C//DTD HTML 4.0 Transitional//EN"
+		--assert data/document/sysid = "http://www.w3.org/TR/REC-html40/loose.dtd"
+		--assert none? data/document/subset
+		--assert 1 = length? data/3
+		--assert data/3/1/1 = "HTML"
+		--assert 5 = length? data/3/1/3
+
+
+	===end-group===
+]
+
 ~~~end-file~~~
