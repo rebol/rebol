@@ -31,7 +31,7 @@ VS: context [
 	make-guid: func[name [string!] /local id] [
 		;using `name` variable for better randomness
 		id: form checksum/method to binary! (append (copy name) now/precise) 'md5
-		remove back tail remove/part id 2
+		if system/version < 3.0.2 [remove back tail remove/part id 2]
 		insert at id 9 "-"
 		insert at id 14 "-"
 		insert at id 19 "-"
