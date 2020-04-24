@@ -8,6 +8,7 @@ Rebol [
 dt [ ;- delta time
 	***start-run*** "All tests"
 	;recycle/torture
+    wrap load %units/bbcode-test.r3
     wrap load %units/bincode-test.r3
     wrap load %units/codecs-test.r3
     wrap load %units/compress-test.r3

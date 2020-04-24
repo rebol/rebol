@@ -949,6 +949,7 @@ if product = 'view [
 	append mezz-files/3 [
 		%codec-wav.r
 		%codec-swf.r
+		%codec-bbcode.r
 	]
 	if os-base = 'win32 [
 		append mezz-files/3 [
