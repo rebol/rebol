@@ -198,94 +198,117 @@ register-codec [
 	][
 		parse/all oid [
 			#{2B0E0302} (main: "Oddball OIW OID") [
-				#{1A} (name: 'sha1)
-				#{1D} (name: 'sha1WithRSAEncryption)
+				;http://oid-info.com/get/1.3.14.3.2
+				  #"^(01)" (name: 'rsa)
+				| #"^(02)" (name: 'md4WitRSA)
+				| #"^(03)" (name: 'md5WithRSA)
+				| #"^(04)" (name: 'md4WithRSAEncryption)
+				| #"^(06)" (name: 'desECB)
+				| #"^(07)" (name: 'desCBC)
+				| #"^(0B)" (name: 'rsaSignature)
+				| #"^(1A)" (name: 'sha1)
+				| #"^(1D)" (name: 'sha1WithRSAEncryption)
 			]
 			|
 			#{2B060105050701} (main: "PKIX private extension") [
-				#{01} (name: 'authorityInfoAccess)
+				#"^(01)" (name: 'authorityInfoAccess)
 			]
 			|
 			#{2B060105050730} (main: "PKIX") [
 				;- access descriptor definitions
-				#{01} (name: 'ocsp)         ; Online Certificate Status Protocol
-				#{02} (name: 'caIssuers)    ; Certificate authority issuers 
-				#{03} (name: 'timeStamping)
-				#{05} (name: 'caRepository)
+				  #"^(01)" (name: 'ocsp)         ; Online Certificate Status Protocol
+				| #"^(02)" (name: 'caIssuers)    ; Certificate authority issuers 
+				| #"^(03)" (name: 'timeStamping)
+				| #"^(05)" (name: 'caRepository)
 			]
 			|
 			#{2A8648CE3D} (main: "X9.62") [
 				  #{0201}   (name: 'ecPublicKey)
 				| #{0301} [
-					  #{07}  (name: 'secp256r1)
-					;| #{02}  (name: 'prime192v2)
-					;| #{03}  (name: 'prime192v3)  
-					| #{01}  (name: 'secp192r1)
+					  #"^(07)"  (name: 'secp256r1)
+					;| #"^(02)"  (name: 'prime192v2)
+					;| #"^(03)"  (name: 'prime192v3)  
+					| #"^(01)"  (name: 'secp192r1)
 				]
 			]
 			|
 			#{2A864886F70D01} [
 				#{01} (main: "PKCS #1") [
-					  #{01} (name: 'rsaEncryption)
-					| #{02} (name: 'md2WithRSAEncryption)
-					| #{03} (name: 'md4withRSAEncryption)
-					| #{04} (name: 'md5withRSAEncryption)
-					| #{05} (name: 'sha1WithRSAEncrption)
-					| #{0B} (name: 'sha256WithRSAEncryption)
+					  #"^(01)" (name: 'rsaEncryption)
+					| #"^(02)" (name: 'md2WithRSAEncryption)
+					| #"^(03)" (name: 'md4withRSAEncryption)
+					| #"^(04)" (name: 'md5withRSAEncryption)
+					| #"^(05)" (name: 'sha1WithRSAEncrption)
+					| #"^(0B)" (name: 'sha256WithRSAEncryption)
 
 				] end
 				|
 				#{07} (main: "PKCS #7") [
-					  #{01} (name: 'data)
-					| #{02} (name: 'signedData)
-					| #{06} (name: 'encryptedData)
+					  #"^(01)" (name: 'data)
+					| #"^(02)" (name: 'signedData)
+					| #"^(06)" (name: 'encryptedData)
 				] end
 				|
 				#{09} (main: "PKCS #9") [
-					  #{01} (name: 'emailAddress warn: "Deprecated, use an altName extension instead")
-					| #{14} (name: 'friendlyName)
-					| #{15} (name: 'localKeyID)
+				;http://oid-info.com/get/1.2.840.113549.1.9
+					  #"^(01)" (name: 'emailAddress warn: "Deprecated, use an altName extension instead")
+					| #"^(03)" (name: 'contentType)
+					| #"^(04)" (name: 'messageDigest)
+					| #"^(05)" (name: 'signingTime)
+					| #"^(0F)" (name: 'smimeCapabilities) 
+					| #"^(14)" (name: 'friendlyName)
+					| #"^(15)" (name: 'localKeyID)
+					| #"^(34)" (name: 'CMSAlgorithmProtect)
 				] end
 				|
 				#{0C} (main: "PKCS #12") [
-					  #{0106} (name: 'pbeWithSHAAnd40BitRC2-CBC)
-					| #{0103} (name: 'pbeWithSHAAnd3-KeyTripleDES-CBC)
+					  #{0106}   (name: 'pbeWithSHAAnd40BitRC2-CBC)
+					| #{0103}   (name: 'pbeWithSHAAnd3-KeyTripleDES-CBC)
 					| #{0A0102} (name: 'pkcs-12-pkcs-8ShroudedKeyBag)
 				] end
 			] end
 			|
+			#{2A864886F70D03} (main: "Encryption algorithm") [
+			;http://oid-info.com/get/1.2.840.113549.3
+				  #"^(02)" (name: "rc2CBC")
+				| #"^(03)" (name: "rc2ECB")
+				| #"^(04)" (name: "rc4")
+				| #"^(07)" (name: "des-ede3-cbc")
+			] end
+			|
+
 			#{5504} (main: "X.520 DN component") [
-				  #{03} (name: 'commonName)
-				| #{06} (name: 'countryName)
-				| #{07} (name: 'localityName)
-				| #{08} (name: 'stateOrProvinceName)
-				| #{0A} (name: 'organizationName)
-				| #{0B} (name: 'organizationalUnitName)
-				| #{0D} (name: 'description)
-				| #{0F} (name: 'businessCategory)
+				  #"^(03)" (name: 'commonName)
+				| #"^(06)" (name: 'countryName)
+				| #"^(07)" (name: 'localityName)
+				| #"^(08)" (name: 'stateOrProvinceName)
+				| #"^(0A)" (name: 'organizationName)
+				| #"^(0B)" (name: 'organizationalUnitName)
+				| #"^(0D)" (name: 'description)
+				| #"^(0F)" (name: 'businessCategory)
 			] end
 			|
 			#{551D} (main: "X.509 extension") [
-				  #{01} (name: 'authorityKeyIdentifier warn: "Deprecated, use 2 5 29 35 instead")
-				| #{04} (name: 'keyUsageRestriction warn: "Obsolete, use keyUsage/extKeyUsage instead")
-				| #{0E} (name: 'subjectKeyIdentifier)
-				| #{0F} (name: 'keyUsage)
-				| #{11} (name: 'subjectAltName)
-				| #{13} (name: 'basicConstraints)
-				| #{1F} (name: 'cRLDistributionPoints)
-				| #{20} (name: 'certificatePolicies)
-				| #{23} (name: 'authorityKeyIdentifier)
-				| #{25} (name: 'extKeyUsage)
+				  #"^(01)" (name: 'authorityKeyIdentifier warn: "Deprecated, use 2 5 29 35 instead")
+				| #"^(04)" (name: 'keyUsageRestriction warn: "Obsolete, use keyUsage/extKeyUsage instead")
+				| #"^(0E)" (name: 'subjectKeyIdentifier)
+				| #"^(0F)" (name: 'keyUsage)
+				| #"^(11)" (name: 'subjectAltName)
+				| #"^(13)" (name: 'basicConstraints)
+				| #"^(1F)" (name: 'cRLDistributionPoints)
+				| #"^(20)" (name: 'certificatePolicies)
+				| #"^(23)" (name: 'authorityKeyIdentifier)
+				| #"^(25)" (name: 'extKeyUsage)
 			] end
 			|
 			#{2B060105050703} (main: "PKIX key purpose") [
-				  #{01} (name: 'serverAuth)
-				  #{02} (name: 'clientAuth)
-				| #{03} (name: 'codeSigning)
+				  #"^(01)" (name: 'serverAuth)
+				  #"^(02)" (name: 'clientAuth)
+				| #"^(03)" (name: 'codeSigning)
 			] end
 			|
 			#{2B0601040182370201} (main: "Microsoft") [
-				  #{15} (name: 'individualCodeSigning)
+				  #"^(15)" (name: 'individualCodeSigning)
 			] end
 		]
 		;?? main
