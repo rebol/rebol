@@ -17,6 +17,10 @@ REBOL [
 		does most of the serious work. It generates most of the C include
 		files required to compile REBOL.
 	}
+	Note: {
+		Some code may look strange, but that is because this code may be evaluated
+		by older bootstrap executables, which may be not fully functional!
+	}
 ]
 
 print "--- Make Boot : System Embedded Script ---"
@@ -749,12 +753,34 @@ emit newline
 
 at-value: func ['field] [next find boot-sysobj to-set-word field]
 
+get-git: function[][
+	git: none
+	if exists? dir: %../../.git/ [
+		try [
+			git-head: read/string dir/HEAD
+			?? git-head
+			parse git-head [thru "ref:" any #" " copy git-head to lf]
+			git: object [
+				repository: none
+				branch: find/reverse/tail tail probe git-head #"/"
+				commit:  trim/tail read/string dir/(git-head)
+				message: trim/tail read/string dir/COMMIT_EDITMSG
+			]
+			try [
+				git/repository: trim/tail read/string dir/description
+			]
+			?? git
+		]
+	]
+	git
+]
+
 boot-sysobj: load %sysobj.r
 change at-value version version
 when: now
 when: when - when/zone
 when/zone: 0:00
-change at-value build when
+change at-value build object [date: when git: get-git]
 change at-value product to lit-word! product
 
 

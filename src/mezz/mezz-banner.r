@@ -58,7 +58,7 @@ sys/boot-banner: make-banner [
 	-
 	= Version:  system/version
 	= Platform: system/platform
-	= Build:    system/build
+	= Build:    system/build/date
 	= Warning:  "For testing purposes only. Use at your own risk."
 	-
 	= Language: system/locale/language*

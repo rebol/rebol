@@ -188,6 +188,7 @@ protect-system-object: func [
 
 	"full protection:"
 	protect/words/deep [
+		system/build
 		system/catalog
 		;system/standard
 		system/dialects
