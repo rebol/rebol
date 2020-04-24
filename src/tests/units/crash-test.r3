@@ -76,11 +76,12 @@ Rebol [
 --test-- "issue-229"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/229
 	f1: func [][exit]
-	f2: func [][break]
+;	f2: func [][break] ; this one is impossible to catch by `try` so hard to test
 	f3: func [][return 0]
 	--assert not error? try [trace on f1 trace off] ;- no crash
-	--assert not error? try [trace on f2 trace off] ;- no crash
+;	--assert not error? try [trace on f2 trace off] ;- no crash
 	--assert not error? try [trace on f3 trace off] ;- no crash
+	trace off
 
 --test-- "issue-231"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/231
