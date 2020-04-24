@@ -41,6 +41,10 @@ if find codecs 'BBCode [
 		{[img]1.gif [img]2.gif}            {<p><img src="1.gif" alt=""> <img src="2.gif" alt=""></p>}
 		{text [size=tiny]tiny}             {<p>text <span style="font-size: xx-small;">tiny</span></p>}
 		{[h1]header[/h1]}                  {<h1>header</h1>}
+		{[h6]header[/h6]}                  {<h6>header</h6>}
+		{[h1]big[h3]smaller[h6]small}      {<h1>big<h3>smaller<h6>small</h6></h3></h1>}
+		{[h1]big[h3]smaller[h6]small}      {<h1>big<h3>smaller<h6>small</h6></h3></h1>}
+		{[h2]header2^/^/[h4]header4}       {<h2>header2</h2>^/^/<h4>header4</h4>}
 		{[color]ee[/color][color=#F00]red[color=#00FF00]green}
 										   {<p>ee<span style="color: #F00;">red<span style="color: #00FF00;">green</span></span></p>}
 		{<a>}                              {<p>&lt;a></p>}
