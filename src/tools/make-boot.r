@@ -755,20 +755,23 @@ at-value: func ['field] [next find boot-sysobj to-set-word field]
 
 get-git: function[][
 	git: none
-	if exists? dir: %../../.git/ [
+	if any [
+		exists? git-dir: %../../.git/
+		exists? git-dir: %../../../.git/
+	][
+		?? git-dir
 		try [
-			ls/l/r/i dir #" " ;@@ for checking how it looks in travis environment
-			git-head: read/string dir/HEAD
+			git-head: read/string git-dir/HEAD
 			?? git-head
 			parse git-head [thru "ref:" any #" " copy git-head to lf]
 			git: object [
 				repository: none
-				branch: find/reverse/tail tail probe git-head #"/"
-				commit:  trim/tail read/string dir/(git-head)
-				message: trim/tail read/string dir/COMMIT_EDITMSG
+				branch: find/reverse/tail tail git-head #"/"
+				commit:  trim/tail read/string git-dir/(git-head)
+				message: trim/tail read/string git-dir/COMMIT_EDITMSG
 			]
 			try [
-				git/repository: trim/tail read/string dir/description
+				git/repository: trim/tail read/string git-dir/description
 			]
 			?? git
 		]
