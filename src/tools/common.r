@@ -12,6 +12,10 @@ REBOL [
 	Author: "Carl Sassenrath"
 ]
 
+; as security was enabled recently, make sure that
+; we can access files outside the home dir as before 
+secure [ file allow ]
+
 ; Change back to the main souce directory:
 change-dir %../ ;- make sure you call it just once at start!
 
