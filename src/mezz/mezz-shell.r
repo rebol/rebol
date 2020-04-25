@@ -11,7 +11,8 @@ REBOL [
 	}
 ]
 
-ls:		:list-dir
+ls:
+dir:    :list-dir
 pwd:	:what-dir
 rm:		:delete
 mkdir:	:make-dir

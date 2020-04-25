@@ -219,50 +219,65 @@ dir-tree: func [
 	exit
 ]
 
-list-dir: func [
+list-dir: closure/with [
 	"Print contents of a directory (ls)."
 	'path [file! word! path! string! unset!] "Accepts %file, :variables, and just words (as dirs)"
-	/l "Line of info format"
 	/f "Files only"
 	/d "Dirs only"
-;	/t "Time order"
 	/r "Recursive"
-	/i indent
-	/local files save-dir info
+	/i indent [string! char!]
+	/l "Limit recursive output to given maximal depth"
+		max-depth [integer!] 
 ][
-	save-dir: what-dir
-	switch type?/word :path [
-		unset! [] ; Stay here
-		file! [change-dir path]
-		string! [change-dir to-rebol-file path]
-		word! path! [change-dir to-file path]
+	if f [r: l: false]
+	recursive?: any [r max-depth]
+	files-only?: f
+	apply :dir-tree [
+		:path d i indent
+		true either recursive? [:max-depth][1]
+		true :on-value
+		i indent
 	]
-	if r [l: true]
-	unless l [l: make string! 62] ; approx width
-	unless indent [indent: ""]
-	files: attempt [read %./]
-	if not files [print ["Not found:" :path] change-dir save-dir exit]
-	foreach file files [
-		if any [
-			all [f dir? file]
-			all [d not dir? file]
-		][continue]
-		either string? l [
-			append l file
-			append/dup l #" " 15 - remainder length? l 15
-			if greater? length? l 60 [print l clear l]
+][
+	recursive?: files-only?: none
+	on-value: func[
+		value depth
+		/local info date time size
+	][
+		info: query/mode value [name size date]
+		if depth = 0 [
+			return ajoin ["^[[33;1mDIR: ^[[32;1m" to-local-file info/1 "^[[m"]
+		]
+		;@@ TODO: rewrite this date/time formating once it will be possible
+		;@@       with some better method!
+		date: info/3
+		date/zone: 0
+		time: date/time
+		time: format/pad [2 #":" 2 ] reduce [time/hour time/minute] #"0"
+		date: format/pad [-11] date/date #"0"
+		date: ajoin ["^[[32m" date "  " time "^[[m "]
+
+		size: any [info/2 0]
+		if size >= 100'000'000 [size: join to integer! round (size / 1'000'000) "M"]
+
+		either dir? value [
+			if files-only? [return none]
+			ajoin [
+				date "^[[32;1m"
+				either recursive? [
+					to-local-file info/1
+				][  join "         " dirize second split-path info/1]
+				"^[[m"
+			]
 		][
-			info: get query file
-			change info second split-path info/1
-			printf [indent 16 -8 #" " 24 #" " 6] info
-			if all [r dir? file] [
-				list-dir/l/r/i :file join indent "    "
+			format [date $33 -8 $0 #" "] reduce [
+				size
+				"^[[33;1m"
+				second split-path info/1
+				"^[[m"
 			]
 		]
 	]
-	if all [string? l not empty? l] [print l]
-	change-dir save-dir
-	exit
 ]
 
 undirize: func [
