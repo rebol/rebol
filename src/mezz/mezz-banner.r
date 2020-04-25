@@ -52,7 +52,7 @@ sys/boot-banner: make-banner [
 	"REBOL 3.0 (Oldes branch)"
 	-
 	= Copyright: "2012 REBOL Technologies"
-	= "" "2012-2019 Rebol Open Source Contributors"
+	= "" "2012-2020 Rebol Open Source Contributors"
 	= "" "Apache 2.0 License, see LICENSE."
 	= Website:  "https://github.com/Oldes/Rebol3"
 	-
@@ -61,8 +61,7 @@ sys/boot-banner: make-banner [
 	= Build:    system/build/date
 	= Warning:  "For testing purposes only. Use at your own risk."
 	-
-	= Language: system/locale/language*
-	= Locale:   system/locale/locale*
+	= Language: [reform [system/locale/language* "-" system/locale/locale*]]
 	= Home:     [to-local-file system/options/home]
 	-
 	*
@@ -71,7 +70,7 @@ sys/boot-banner: make-banner [
 sys/boot-help:
 {^[[1;33;49mImportant notes^[[0m:
 
-  * Sandbox and security are not available.
+  * Sandbox and security are not fully available.
   * Direct access to TCP HTTP required (no proxies).
 
 ^[[1;33;49mSpecial functions^[[0m:
