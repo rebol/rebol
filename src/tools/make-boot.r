@@ -757,6 +757,7 @@ get-git: function[][
 	git: none
 	if exists? dir: %../../.git/ [
 		try [
+			ls/l/r/i dir #" " ;@@ for checking how it looks in travis environment
 			git-head: read/string dir/HEAD
 			?? git-head
 			parse git-head [thru "ref:" any #" " copy git-head to lf]
