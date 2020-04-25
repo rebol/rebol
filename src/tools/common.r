@@ -82,3 +82,9 @@ write-if: func [file data] [
 		write file data
 	]
 ]
+
+enbase-16: func[data][
+	either system/version >= 3.1.0 [
+		enbase data 16
+	][	enbase/base data 16]
+]

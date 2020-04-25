@@ -43,7 +43,7 @@ to-cstr: either system/version/4 = 3 [
 		forall str [
 			data: copy/part str 16
 			str: skip str 15
-			data: enbase/base data 16
+			data: enbase-16 data
 			forall data [
 				insert data "\x"
 				data: skip data 3

@@ -179,7 +179,7 @@ binary-to-c: either system/version/4 = 3 [
 		forall comp-data [
 			data: copy/part comp-data 16
 			comp-data: skip comp-data 15
-			data: enbase/base data 16
+			data: enbase-16 data
 			forall data [
 				insert data "\x"
 				data: skip data 3
@@ -754,7 +754,7 @@ emit newline
 at-value: func ['field] [next find boot-sysobj to-set-word field]
 
 get-git: function[][
-	git: none
+	git: ref: none
 	if any [
 		exists? git-dir: %../../.git/
 		exists? git-dir: %../../../.git/
@@ -763,16 +763,16 @@ get-git: function[][
 		try [
 			git-head: read/string git-dir/HEAD
 			?? git-head
-			parse git-head [thru "ref:" any #" " copy git-head to lf]
+			parse git-head [thru "ref:" any #" " copy ref to lf]
+			if ref []
 			git: object [
 				repository: none
-				branch: find/reverse/tail tail git-head #"/"
+				branch:  none
 				commit:  trim/tail read/string git-dir/(git-head)
 				message: trim/tail read/string git-dir/COMMIT_EDITMSG
 			]
-			try [
-				git/repository: trim/tail read/string git-dir/description
-			]
+			try [git/branch: find/reverse/tail tail ref #"/"]
+			try [git/repository: trim/tail read/string git-dir/description]
 			?? git
 		]
 	]
