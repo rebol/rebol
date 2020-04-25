@@ -154,8 +154,8 @@ dir-tree: func [
 			any [none? max-depth max-depth >= depth]	; is depth limited?
 			formed: either :on-value [
 				on-value directory/:value depth
-			][	join either dir? value ["^[[32;1m"]["^[[33;1m"][value "^[[m"] ]
-			print ajoin [indent prefix "[^[[m " formed ]
+			][	join either dir? value [" ^[[32;1m"][" ^[[33;1m"][value "^[[m"] ]
+			print ajoin [indent prefix "[^[[m" formed ]
 		]
 		all [
 			dir? value									; if this is directory
@@ -255,7 +255,7 @@ list-dir: closure/with [
 		time: date/time
 		time: format/pad [2 #":" 2 ] reduce [time/hour time/minute] #"0"
 		date: format/pad [-11] date/date #"0"
-		date: ajoin ["^[[32m" date "  " time "^[[m "]
+		date: ajoin [" ^[[32m" date "  " time "^[[m "]
 
 		size: any [info/2 0]
 		if size >= 100'000'000 [size: join to integer! round (size / 1'000'000) "M"]
