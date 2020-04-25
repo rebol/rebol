@@ -109,6 +109,116 @@ confirm: func [
 	]
 ]
 
+dir-tree: func [
+	;----------------------------------------------------------------------
+	;-- This function is based on Toomas Vooglaid's %dir-tree.red script --
+	;-- https://gist.github.com/toomasv/f2bcf320800ca340379457c1c4036338 --
+	;----------------------------------------------------------------------
+	"Prints a directory tree"
+	'path [file! word! path! string! unset!] "Accepts %file, :variables, and just words (as dirs)"
+	/d "Dirs only"
+	/i indent [string! char!]
+	/l max-depth
+	/callback on-value [function!] "Function with [value depth] args - responsible to format value line"
+	/local
+		; using these as hidden args!
+		value prefix changeprefix directory depth
+		; --
+		newprefix addprefix formed
+		filtered contents str
+][
+	unless value [
+		directory: dirize switch type?/word :path [
+			unset!      [path: what-dir] ; Stay here
+			file!       [path]
+			string!     [to-rebol-file path]
+			word! path! [to-file path]
+		]
+		if #"/" <> first directory [insert directory what-dir]
+		value: contents: try/except [read directory][
+			print ["Not found:" :directory]
+			exit
+		]
+		set [directory value] split-path directory
+		prin "^[[31;1m"
+	]
+
+	prefix:       any [prefix ""]
+	changeprefix: any [changeprefix ""]
+	directory: 	  any [directory none]
+	depth:        any [depth 0]							
+	indent:       any [indent ""]
+
+	if file? value [
+		all [
+			any [none? max-depth max-depth >= depth]	; is depth limited?
+			formed: either :on-value [
+				on-value directory/:value depth
+			][	join either dir? value ["^[[32;1m"]["^[[33;1m"][value "^[[m"] ]
+			print ajoin [indent prefix "[^[[m " formed ]
+		]
+		all [
+			dir? value									; if this is directory
+			any [none? max-depth max-depth > depth]		; and and we have to dig deeper
+			try [
+				contents: read directory/:value			; and it is not a fake directory
+				apply :dir-tree [
+					path d i indent l max-depth callback :on-value
+					/local
+					contents
+					changeprefix
+					changeprefix
+					directory/:value
+					depth + 1
+				]
+			]
+		]
+	]
+	unless block? value [exit]
+
+	str: [
+		"^[[31;1m├───"
+		"^[[31;1m│   "
+		"^[[31;1m└───"
+		"^[[31;1m    "
+	]
+
+	if d [ ; are we considering directories only?
+		filtered: make block! length? value
+		forall value [
+			if dir? value/1 [append filtered value/1]
+		]
+		value: :filtered
+	]						
+	forall value [
+		either 1 = length? value [							; if this is last element
+			newprefix: copy str/3							; set new prefix to 'corner'
+			if dir? value/1 [								; and if this is a directory
+				changeprefix: append copy prefix copy str/4	; append some empty space to previous prefix for next items
+			]
+		][													; if this is not last piece
+			newprefix: copy str/1							; set new prefix to '|-'
+			if dir? value/1 [								; and if this is a directory
+				changeprefix: append copy prefix copy str/2	; append '| ' to previous prefix for next items
+			]
+		]
+		addprefix: append copy prefix copy newprefix		; this is printed before the current item
+		; send current item to the printing house
+		if any [dir? value/1 not d][
+			apply :dir-tree [
+				path d i indent l max-depth callback :on-value
+				/local
+				value/1
+				copy addprefix
+				copy changeprefix
+				directory
+				depth
+			]
+		]
+	]
+	exit
+]
+
 list-dir: func [
 	"Print contents of a directory (ls)."
 	'path [file! word! path! string! unset!] "Accepts %file, :variables, and just words (as dirs)"
