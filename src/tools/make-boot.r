@@ -761,19 +761,22 @@ get-git: function[][
 	][
 		?? git-dir
 		try [
-			ls/r git-dir
+			ls/r :git-dir
+			
+			try [print read/string  git-dir/config ]
+
 			git-head: read/string git-dir/HEAD
 			?? git-head
 			parse git-head [thru "ref:" any #" " copy ref to lf]
 			
-			git: object [
-				repository: 
-				branch:  
-				commit: 
-				message: none
+			git: object [repository: branch: commit: message: none]
+			try [
+				git/repository: trim/tail read/string git-dir/description
+				if find git/repository "Unnamed repository;" [
+					git/repository: none
+				]
 			]
 			try [git/branch: find/reverse/tail tail ref #"/"]
-			try [git/repository: trim/tail read/string git-dir/description]
 			try [git/commit: trim/tail either ref [read/string git-dir/(ref)][git-head]]
 			try [git/message: trim/tail read/string git-dir/COMMIT_EDITMSG]
 			?? git
