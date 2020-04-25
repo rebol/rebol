@@ -761,18 +761,21 @@ get-git: function[][
 	][
 		?? git-dir
 		try [
+			ls/r git-dir
 			git-head: read/string git-dir/HEAD
 			?? git-head
 			parse git-head [thru "ref:" any #" " copy ref to lf]
-			if ref []
+			
 			git: object [
-				repository: none
-				branch:  none
-				commit:  trim/tail read/string git-dir/(git-head)
-				message: trim/tail read/string git-dir/COMMIT_EDITMSG
+				repository: 
+				branch:  
+				commit: 
+				message: none
 			]
 			try [git/branch: find/reverse/tail tail ref #"/"]
 			try [git/repository: trim/tail read/string git-dir/description]
+			try [git/commit: trim/tail either ref [read/string git-dir/(ref)][git-head]]
+			try [git/message: trim/tail read/string git-dir/COMMIT_EDITMSG]
 			?? git
 		]
 	]
