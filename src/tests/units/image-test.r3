@@ -19,7 +19,7 @@ Rebol [
 		--assert 255.0.0.10 = img/1
 	--test-- "make image from gob"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/12
-		--assert image? to image! make gob! []
+		--assert-er try [image? to image! make gob! []]
 ===end-group===
 
 ===start-group=== "FOREACH"

@@ -19,6 +19,7 @@ Rebol [
 		--red--
 		--assert
 		--assertf~=
+		--assert-er
 		===end-group===
 		~~~end-file~~~
 		***end-run***
@@ -152,6 +153,16 @@ assert: func [
 	]
 ]
 
+assert-er: func[
+	assertion [logic! none! error!]
+][
+	if error? assertion [
+		if assertion/id = 'feature-na [ exit ]
+		assertion = false
+	]
+	assert assertion
+]
+
 assertf~=: func[
 	x         [decimal!]
 	y         [decimal!]
@@ -237,6 +248,7 @@ print-totals: func [
 --red--:           :as-red-only
 --assert:          :assert
 --assertf~=:       :assertf~=
+--assert-er:       :assert-er
 ===end-group===:   :end-group
 ~~~end-file~~~:    :end-file
 ***end-run***:     :end-run
