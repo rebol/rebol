@@ -10,7 +10,7 @@ Rebol [
 
 ===start-group=== "to-local-file"
 
---test-- "issues/2351"
+--test-- "issue-2351"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2351
 	f: first read what-dir
 	--assert  (to-rebol-file to-local-file/full f) = join what-dir f
@@ -19,6 +19,13 @@ Rebol [
 	cd %/ f: first read %/
 	--assert  (to-rebol-file to-local-file/full f) = join what-dir f
 	cd d
+
+--test-- "issue-1115"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1115
+	--assert "\\rodan\shareddocs"  = to-local-file %/rodan/shareddocs
+	--assert "\\rodan\shareddocs\" = to-local-file %/rodan/shareddocs/
+	--assert %/rodan/shareddocs    = to-rebol-file "\\rodan\shareddocs"
+	--assert %/rodan/shareddocs/   = to-rebol-file "\\rodan\shareddocs\"
 
 ===end-group===
 
