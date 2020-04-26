@@ -28,6 +28,17 @@ Rebol [
 	--assert c/1 = b
 	--assert c/2 = a
 
+	--test-- "simple paths inside GOB"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/165
+	try [
+		wh: 100x100
+		g1: make gob! [size: wh]
+		g2: make gob! [size: g1/size]
+	]
+	--assert g1/size = wh
+	--assert g2/size = wh
+
+
 ===end-group===
 
 ~~~end-file~~~
