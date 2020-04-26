@@ -109,6 +109,14 @@ Rebol [
 
 
 ===start-group=== "map issues"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/699
+	--test-- "map-issue-699"
+		m: make map! []
+		--assert 1 = m/(#{01}): 1
+		--assert 1 = m/(#{01}): 1
+		--assert 2 = m/("a"): 2
+		--assert 2 = m/("a"): 2
+
 	;@@ https://github.com/Oldes/Rebol-issues/issues/770
 	--test-- "map-issue-770"
 		--assert  map? m: make map! [a: 1]
