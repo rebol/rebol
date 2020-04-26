@@ -723,7 +723,7 @@ zero_blk:
 
 		// if no /part, just return value, else return block:
 		if (!D_REF(2)) *D_RET = BLK_HEAD(ser)[index];
-		else Set_Block(D_RET, Copy_Block_Len(ser, index, len)); // no more /DEEP
+		else Set_Series(VAL_TYPE(value), D_RET, Copy_Block_Len(ser, index, len)); // no more /DEEP
 //		else Set_Block(D_RET, Copy_Block_Deep(ser, index, len, D_REF(4) ? COPY_DEEP: 0));
 		Remove_Series(ser, index, len);
 		return R_RET;

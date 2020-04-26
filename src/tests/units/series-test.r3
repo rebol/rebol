@@ -179,6 +179,15 @@ Rebol [
 	--assert "34" = take/part skip s 2 -5 ;@@ https://github.com/Oldes/Rebol-issues/issues/373
 	--assert "56" = take/part s 10
 
+	--test-- "take/part any-block!"
+		--assert [1 2] = take/part [1 2 3 4] 2
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2174
+		--assert "(1 2)" = mold take/part quote (1 2 3 4) 2
+		--assert "a/b"   = mold take/part quote a/b/c 2
+		--assert "'a/b"  = mold take/part quote 'a/b/c 2
+		--assert ":a/b"  = mold take/part quote :a/b/c 2
+		--assert "a/b:"  = mold take/part quote a/b/c: 2
+
 	--test-- "take/last"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/177
 	--assert #"c" = take/last str: "abc"
