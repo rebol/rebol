@@ -426,6 +426,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1124
 	--assert [#[unset!] 2 3] = sort reduce [2 #[unset!] 3 ]
 
+--test-- "SORT/reverse"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/128
+	--assert [9 3 2 1] = sort/reverse [9 1 2 3] 
+
 
 ===end-group===
 
