@@ -321,6 +321,17 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "INSERT"
+	--test-- "insert/dup"
+		x: copy [] insert/dup x 5 3
+		--assert x = [5 5 5]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/200
+		x: copy [] insert/dup x 5 3.9
+		--assert 3 = length? x
+		x: copy [] insert/dup x 5 -1
+		--assert 0 = length? x
+
+
 ===start-group=== "REMOVE"
 	--test-- "remove-blk-1"
 		a: [1 2 3]
