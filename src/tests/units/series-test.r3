@@ -481,6 +481,8 @@ Rebol [
 	--assert ["A" "a"] = sort/compare ["A" "a"] func [a b] [a <= b]
 	--assert ["a" "A"] = sort/compare ["a" "A"] func [a b] [a <= b]
 	--assert [1 9 1 5 1 7] = sort/skip/compare [1 9 1 5 1 7] 2 1
+	;@@ https://github.com/Oldes/Rebol-issues/issues/161
+	--assert [3 2 1] = sort/compare [1 2 3] func [a b] [return a > b]
 
 --test-- "SORT with invalid compare function"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1766
@@ -495,6 +497,8 @@ Rebol [
 --test-- "SORT/reverse"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/128
 	--assert [9 3 2 1] = sort/reverse [9 1 2 3] 
+
+
 
 
 ===end-group===
