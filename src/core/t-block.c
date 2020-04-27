@@ -703,8 +703,8 @@ pick_it:
 
 	case A_TAKE:
 		// take/part:
-		if (D_REF(2)) {
-			len = Partial1(value, D_ARG(3));
+		if (D_REF(ARG_TAKE_PART)) {
+			len = Partial1(value, D_ARG(ARG_TAKE_LENGTH));
 			if (len == 0) {
 zero_blk:
 				Set_Block(D_RET, Make_Block(0));
@@ -715,22 +715,35 @@ zero_blk:
 
 		index = VAL_INDEX(value); // /part can change index
 		// take/last:
-		if (D_REF(5)) index = tail - len;
+		if (D_REF(ARG_TAKE_LAST)) index = tail - len;
 		if (index < 0 || index >= tail) {
-			if (!D_REF(2)) goto is_none;
+			if (!D_REF(ARG_TAKE_PART)) goto is_none;
 			goto zero_blk;
 		}
 
 		// if no /part, just return value, else return block:
-		if (!D_REF(2)) *D_RET = BLK_HEAD(ser)[index];
-		else Set_Series(VAL_TYPE(value), D_RET, Copy_Block_Len(ser, index, len)); // no more /DEEP
-//		else Set_Block(D_RET, Copy_Block_Deep(ser, index, len, D_REF(4) ? COPY_DEEP: 0));
+		if (!D_REF(ARG_TAKE_PART)) {
+			*D_RET = BLK_HEAD(ser)[index];
+			if (D_REF(ARG_TAKE_DEEP) && ANY_SERIES(D_RET)) {
+				VAL_SERIES(D_RET) = ANY_BLOCK(D_RET)
+					? Clone_Block(VAL_SERIES(D_RET))
+					: Copy_Series(VAL_SERIES(D_RET));
+			}
+		}
+		else {
+			Set_Series(
+				VAL_TYPE(value), D_RET,
+				D_REF(ARG_TAKE_DEEP)
+					? Copy_Block_Values(ser, 0, len, CP_DEEP | TS_STD_SERIES)
+					: Copy_Block_Len(ser, index, len)
+			);
+		}
 		Remove_Series(ser, index, len);
 		return R_RET;
 
 	case A_PUT:
-		arg2 = D_ARG(3);
-		args = D_REF(4) ? AM_FIND_CASE : 0;
+		arg2 = D_ARG(ARG_PUT_VALUE);
+		args = D_REF(ARG_PUT_CASE) ? AM_FIND_CASE : 0;
 		ret = Find_Block(ser, index, tail, arg, len, args, 1);
 		if(ret != NOT_FOUND) {
 			ret++;

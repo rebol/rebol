@@ -339,6 +339,7 @@ foreach word [
 	read
 	write
 	query
+	take
 ] [make-arg-enums word]
 
 acts: load %../boot/natives.r

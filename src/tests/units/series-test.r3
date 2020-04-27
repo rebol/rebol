@@ -195,6 +195,52 @@ Rebol [
 	--assert 3    = take/last blk: [1 2 3]
 	--assert [1 2] = blk
 
+	;@@ https://github.com/Oldes/Rebol-issues/issues/171
+	--test-- "take/deep block!"
+		a: [1 [2] "3"] b: reduce [a] c: take b
+		--assert same? a c
+		a: [1 [2] "3"] b: reduce [a] c: take/deep b
+		--assert not same? a c
+		--assert not same? a/2 c/2
+		--assert not same? a/3 c/3
+		--assert [2 3] = append c/2 3
+		--assert [2] = a/2
+	--test-- "take/deep block with string!"
+		a: "1" b: reduce [a 2] c: take b
+		--assert same? a c
+		a: "1" b: reduce [a 2] c: take/deep b
+		--assert "1" = a
+		--assert "1" = c
+		--assert not same? a c
+		--assert "12" = append c 2
+		--assert "1"  = a
+	--test-- "take/deep block with object!"
+		a: object [] b: reduce [a 2] c: take b
+		--assert same? a c
+		a: object [] b: reduce [a 2] c: take/deep b
+		--assert same? a c ; object are not copied
+	--test-- "take/deep/part block!"
+		a: [1 [2] "3"] b: reduce [a] c: take/part b 1
+		--assert same? a c/1
+		--assert [] = b
+		a: [1 [2] "3"] b: reduce [a] c: take/deep/part b 1
+		--assert not same? a c/1
+		--assert not same? a/2 c/1/2
+		--assert not same? a/3 c/1/3
+		--assert [2 3] = append c/1/2 3
+		--assert "34"  = append c/1/3 4
+		--assert "3"   = a/3
+	--test-- "take/deep/part block with string!"
+		a: "1" b: reduce [a 2] c: take/part b 1
+		--assert same? a c/1
+		--assert [2] = b
+		a: "1" b: reduce [a 2] c: take/deep/part b 1
+		--assert [2] = b
+		--assert "1" = a
+		--assert "1" = c/1
+		--assert not same? a c/1
+		--assert "12" = append c/1 2
+		--assert "1"  = a
 
 	--test-- "take block!"
 	s: [1]
