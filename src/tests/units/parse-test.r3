@@ -97,6 +97,14 @@ Rebol [
 
 ===start-group=== "Other parse issues"
 
+--test-- "issue-215"
+;@@ https://github.com/Oldes/Rebol-issues/issues/215
+	--assert ["a" "b" "c"] = parse     "a/b/c" #"/"
+	--assert ["a" "b" "c"] = parse     "a/b/c"  "/"
+	--assert ["a" "b" "c"] = parse/all "a/b/c" #"/"
+	--assert ["a" "b" "c"] = parse/all "a/b/c"  "/"
+
+
 --test-- "issue-2130"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/2130
 	--assert parse [x][set val pos: word!]
