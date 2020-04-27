@@ -163,6 +163,10 @@ Rebol [
 	f: func [v [unset!]] [type? get/any 'v]
 	--assert unset! = f #[unset!]
 
+--test-- "issue-196"
+;@@ https://github.com/Oldes/Rebol-issues/issues/196
+	--assert do func [a] [bind? 'a] 1 ;-no crash
+
 ===end-group===
 
 ~~~end-file~~~
