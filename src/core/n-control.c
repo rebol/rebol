@@ -176,8 +176,10 @@ enum {
 		Protect_Word(wrd, flags);
 		if (GET_FLAG(flags, PROT_DEEP)) {
 			val = Get_Var(word);
-			Protect_Value(val, flags);
-			Unmark(val);
+			if(!IS_SCALAR(val)) {
+				Protect_Value(val, flags);
+				Unmark(val);
+			}
 		}
 	}
 	else if (ANY_PATH(word)) {

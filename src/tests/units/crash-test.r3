@@ -92,6 +92,15 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/261
 	--assert percent? p: to percent! to decimal! #{7FEFFFFFFFFFFFFF} ;- no crash
 	--assert #{7FEFFFFFFFFFFFFF} = to binary! to decimal! p
+
+--test-- "issue-2417"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2417
+	--assert block? protect/words [aaaa]
+	--assert block? protect/words/deep [bbbb]         ;- no crash
+	cccc: 1
+	dddd: 2
+	--assert block? protect/words [cccc]
+	--assert block? protect/words/deep [dddd] ;- no crash
 ===end-group===
 
 ~~~end-file~~~
