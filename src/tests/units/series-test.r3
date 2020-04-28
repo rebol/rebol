@@ -316,6 +316,7 @@ Rebol [
 
 	--test-- "PUT on protected block"
 	v: protect [a 1]
+	--assert protected? v
 	--assert error? err: try [ put v 'a 2 ]
 	--assert 'protected = err/id
 
@@ -701,6 +702,8 @@ Rebol [
 --test-- "AS with protect"
 	b: protect [a b]
 	--assert path? try [p: as path! b]
+	--assert protected? b
+	--assert protected? p ;@@ <--- fails!
 	--assert error? e: try [append b 'c]
 	--assert e/id = 'protected
 	--assert error? e: try [append p 'c]

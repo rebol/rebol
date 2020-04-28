@@ -254,6 +254,36 @@ enum {
 	return R_ARG1;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(protectedq)
+/*
+***********************************************************************/
+{
+	REBVAL *value = D_ARG(1);
+	if (IS_WORD(value) || IS_PATH(value)) {
+		REBVAL *wrd = NULL;
+		if (ANY_WORD(value) && HAS_FRAME(value) && VAL_WORD_INDEX(value) > 0) {
+			wrd = FRM_WORDS(VAL_WORD_FRAME(value))+VAL_WORD_INDEX(value);
+		}
+		else if (ANY_PATH(value)) {
+			REBCNT index;
+			REBSER *obj;
+			if (NZ(obj = Resolve_Path(value, &index))) {
+				wrd = FRM_WORD(obj, index);
+			}
+		}
+		if(wrd && VAL_GET_OPT(wrd, OPTS_LOCK)) return R_TRUE;
+	}
+	else if (ANY_SERIES(value) || IS_MAP(value)) {
+		if(IS_PROTECT_SERIES(VAL_SERIES(value))) return R_TRUE;
+	}
+	else if (IS_OBJECT(value) || IS_MODULE(value)) {
+		if(IS_PROTECT_SERIES(VAL_OBJ_FRAME(value))) return R_TRUE;
+	}
+	
+	return R_FALSE;
+}
 
 /***********************************************************************
 **

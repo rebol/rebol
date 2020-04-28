@@ -237,6 +237,11 @@ unprotect: native [
 	/values "Process list of values (implied GET)"
 ]
 
+protected?: native [
+	"Return true if immediate argument is protected from modification."
+	value [word! series! bitset! map! object! module!]
+]
+
 recycle: native [
 	{Recycles unused memory.}
 	/off {Disable auto-recycling}

@@ -1958,6 +1958,7 @@ push_arg:
 {
 	REBVAL *sel; // selector
 	REBVAL *val;
+	REBVAL *tmp;
 	REBSER *blk;
 	REBCNT i;
 
@@ -1976,6 +1977,9 @@ push_arg:
 			*index = i;
 			return VAL_OBJ_FRAME(val);
 		}
+		tmp = VAL_OBJ_VALUE(val, i);
+		if(ANY_OBJECT(tmp))
+			val = tmp;
 	}
 
 	return 0; // never happens

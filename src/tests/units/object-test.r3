@@ -119,6 +119,10 @@ Rebol [
 	--test-- "protect object"
 		; To prevent adding words to o, and prevent modification of words already in o: 
 		o: protect object [a: object [b: 10]]
+		--assert     protected?  o
+		--assert not protected? 'o
+		--assert     protected? 'o/a
+		--assert not protected? 'o/a/b
 		--assert     error? try [extend o 'c 3]
 		--assert     error? try [append o 'd]
 		--assert     error? try [o/a: 0]
@@ -152,6 +156,13 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/961
 		o: protect/deep make object! [w: 0]
 		--assert error? try [unset in o 'w]
+
+	--test-- "protected inner object"
+		o: object [a: 1 o: object [a: 2]]
+		protect/words/deep 'o/o
+		--assert not protected? 'o/a
+		--assert     protected? 'o/o
+		--assert     protected? 'o/o/a
 
 
 ===end-group===
