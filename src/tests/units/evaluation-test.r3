@@ -75,6 +75,7 @@ Rebol [
 
 	--test-- "script returning UNSET value"
 		--assert unset? do %units/files/unset.r3
+		--assert dir = what-dir
 
 ===end-group===
 
