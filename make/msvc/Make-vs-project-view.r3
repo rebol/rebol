@@ -473,7 +473,7 @@ vs/IncludePath-x86:
 vs/IncludePath-x64: "..\..\..\src\include;"
 
 common-definitions:  {REB_EXE;REB_VIEW;ENDIAN_LITTLE;_CRT_SECURE_NO_WARNINGS;_UNICODE;UNICODE;_FILE_OFFSET_BITS=64;}
-optional-components: {USE_MIDI_DEVICE;USE_LZMA;} ;TEST_EXTENSIONS;
+optional-components: {USE_MIDI_DEVICE;USE_LZMA;USE_IMAGE_NATIVES;} ;TEST_EXTENSIONS;
 vs/PreprocessorDefinitions-x86: rejoin [
 	common-definitions
 	{TO_WIN32;}
