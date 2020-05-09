@@ -644,6 +644,10 @@ Rebol [
 	--assert "%C2%81" = enhex to-string #{81}
 	--assert "%E5%85%83" = enhex {元}
 
+--test-- "DEHEX/escape"
+	--assert "C# #XX" = dehex/escape "C#23#20#XX" #"#"
+	--assert "(š)"    = dehex/escape "#28š#29"    #"#"
+
 
 ===end-group===
 

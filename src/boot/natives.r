@@ -531,6 +531,7 @@ uppercase: native [
 dehex: native [
 	{Converts URL-style hex encoded (%xx) strings. If input is UTF-8 encode, you should first convert it to binary!}
 	value [any-string! binary!] {The string to dehex}
+	/escape char [char!] {Can be used to change the default escape char #"%"}
 ]
 
 enhex: native [

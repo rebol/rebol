@@ -560,17 +560,21 @@ static struct digest {
 **
 ***********************************************************************/
 {
-	REBVAL *arg = D_ARG(1);
+	REBVAL *arg        = D_ARG(1);
+//	REBOOL  ref_escape = D_REF(2);
+	REBVAL *val_escape = D_ARG(3);
 	REBINT len = (REBINT)VAL_LEN(arg); // due to len -= 2 below
 	REBUNI n;
 	REBSER *ser;
+
+	const REBCHR escape_char = (IS_CHAR(val_escape)) ? VAL_CHAR(val_escape) : '%';
 
 	if (VAL_BYTE_SIZE(arg)) {
 		REBYTE *bp = VAL_BIN_DATA(arg);
 		REBYTE *dp = Reset_Buffer(BUF_FORM, len);
 
 		for (; len > 0; len--) {
-			if (*bp == '%' && len > 2 && Scan_Hex2(bp+1, &n, FALSE)) {
+			if (*bp == escape_char && len > 2 && Scan_Hex2(bp+1, &n, FALSE)) {
 				*dp++ = (REBYTE)n;
 				bp += 3;
 				len -= 2;
@@ -586,7 +590,7 @@ static struct digest {
 		REBUNI *dp = (REBUNI*)Reset_Buffer(BUF_MOLD, len);
 
 		for (; len > 0; len--) {
-			if (*up == '%' && len > 2 && Scan_Hex2((REBYTE*)(up+1), &n, TRUE)) {
+			if (*up == escape_char && len > 2 && Scan_Hex2((REBYTE*)(up+1), &n, TRUE)) {
 				*dp++ = (REBUNI)n;
 				up += 3;
 				len -= 2;
