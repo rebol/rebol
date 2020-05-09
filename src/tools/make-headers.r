@@ -217,7 +217,7 @@ process: func [file /local sym p comm spec commented?] [
 	parse data [
 		any [
 			;Search only in /*...*/ comments
-			thru "^//*" copy comm to "*/" (
+			thru "/*" copy comm to "*/" (
 				parse/all comm [any [
 					thru {^/**} [
 						any [#" " | #"^-"]
