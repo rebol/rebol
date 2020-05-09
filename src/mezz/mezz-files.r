@@ -297,7 +297,9 @@ in-dir: func [
 ] [
 	old-dir: what-dir
 	change-dir dir
-	also do block change-dir old-dir
+	also
+		attempt [do block]
+		change-dir old-dir
 ] ; You don't want the block to be done if the change-dir fails, for safety.
 
 to-relative-file: func [
