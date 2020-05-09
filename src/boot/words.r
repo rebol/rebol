@@ -163,6 +163,23 @@ double
 control
 shift
 
+; Filters (used in image resizing so far)
+point
+box
+triangle
+hermite
+hanning
+hamming
+blackman
+gaussian
+quadratic
+cubic
+catrom
+mitchell
+lanczos
+bessel
+sinc
+
 ; Checksum
 sha1
 sha256

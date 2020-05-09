@@ -112,6 +112,7 @@ core: [
 	u-dialect.c
 	u-gif.c
 	u-iconv.c
+	u-image-resize.c
 	u-jpg.c
 	u-lzma.c
 	u-md5.c

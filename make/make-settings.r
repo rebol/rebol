@@ -12,10 +12,11 @@ Defines: [
 	USE_PNG_CODEC
 	USE_GIF_CODEC
 	USE_JPG_CODEC
-	;USE_WAV_CODEC   ;-- deprecated; using Rebol codec instead
-	;USE_NO_INFINITY ;-- use when you don't want to support IEEE infinity
-	USE_LZMA         ;-- adds support for LZMA [de]compression
-	USE_MIDI_DEVICE  ;-- includes MIDI device when possible (Windows & macOS)
+	;USE_WAV_CODEC    ;-- deprecated; using Rebol codec instead
+	;USE_NO_INFINITY  ;-- use when you don't want to support IEEE infinity
+	USE_LZMA          ;-- adds support for LZMA [de]compression
+	USE_MIDI_DEVICE   ;-- includes MIDI device when possible (Windows & macOS)
+	USE_IMAGE_NATIVES ;-- additional image native functions (for example `resize`)
 
 	;INCLUDE_TASK ;-- tasks are not implemented yet, so include it only on demand
 	INCLUDE_BASE85 ;-- adds support for enbase/debase with base 85 (ASCII85)

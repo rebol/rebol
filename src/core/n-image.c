@@ -1,3 +1,4 @@
+#ifdef USE_IMAGE_NATIVES
 /***********************************************************************
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
@@ -30,6 +31,7 @@
 
 #include "sys-core.h"
 #include "reb-codec.h"
+#include "sys-magick.h" // used for `resize` native
 
 
 typedef struct REBCLR {
@@ -196,7 +198,7 @@ typedef struct REBCLR {
 	g2 = rgb->g;
 	b2 = rgb->b;
 
-	amount0 = Clip_Dec(IS_INTEGER(val_amount) ? (REBDEC)VAL_INT64(val_amount) : VAL_DECIMAL(val_amount), 0.0, 1.0);
+	amount0 = Clip_Dec(AS_DECIMAL(val_amount), 0.0, 1.0);
 	amount1 = 1.0 - amount0;
 
 	if (IS_TUPLE(val_trg)) {
@@ -226,6 +228,80 @@ typedef struct REBCLR {
 		}
 	}
 	return R_ARG1;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(resize)
+/*
+//	resize: native [
+//		"Resizes an image to the given size."
+//		 image    [image!]         "Image to resize"
+//		 size     [pair! percent! integer!]
+//		                           "Size of the new image (integer value is used as width)"
+//		/filter                    "Using given filter type (default is Lanczos)"
+//		 name     [word! integer!] "One of: system/catalog/filters"
+//		/blur
+//		 factor  [number!]   "The blur factor where > 1 is blurry, < 1 is sharp"
+//	]
+***********************************************************************/
+{
+	REBVAL *val_img    = D_ARG(1);
+	REBVAL *val_size   = D_ARG(2);
+//	REBOOL  ref_filter = D_REF(3);
+	REBVAL *val_filter = D_ARG(4);
+	REBOOL  ref_blur   = D_REF(5);
+	REBVAL *val_blur   = D_ARG(6);
+	REBSER *result;
+	REBCNT  filter = 0;
+	REBDEC  blur = 1.0;
+	REBOOL  has_alpha = Image_Has_Alpha(val_img, FALSE);
+	REBINT  wide, high;
+	
+	if (IS_INTEGER(val_filter))
+		filter = VAL_INT32(val_filter);
+	else if (IS_WORD(val_filter)) {
+		filter = VAL_WORD_CANON(val_filter) - SYM_POINT + 1;
+	}
+
+	if (filter < 0 || filter > 15)
+		Trap1(RE_INVALID_ARG, val_filter);
+
+	if (ref_blur) {
+		blur = AS_DECIMAL(val_blur);
+		blur = MIN(blur, MAX_RESIZE_BLUR);
+	}
+
+	if (IS_PAIR(val_size)) {
+		wide = VAL_PAIR_X_INT(val_size);
+		high = VAL_PAIR_Y_INT(val_size);
+	}
+	else if (IS_INTEGER(val_size)) {
+		wide = VAL_INT32(val_size);
+		high = 0; // will be computed later
+	}
+	else if (IS_PERCENT(val_size)) {
+		wide = ROUND_TO_INT(VAL_DECIMAL(val_size) * VAL_IMAGE_WIDE(val_img));
+		high = ROUND_TO_INT(VAL_DECIMAL(val_size) * VAL_IMAGE_HIGH(val_img));
+	}
+	if (wide < 0 || high < 0 || (wide == 0 && high == 0)) 
+		Trap1(RE_INVALID_ARG, val_size);
+
+	if (wide == 0) {
+		wide = ROUND_TO_INT( VAL_IMAGE_WIDE(val_img) * high / VAL_IMAGE_HIGH(val_img) );
+	}
+	if (high == 0) {
+		high = ROUND_TO_INT( VAL_IMAGE_HIGH(val_img) * wide / VAL_IMAGE_WIDE(val_img) );
+	}
+		
+	result = ResizeImage(VAL_SERIES(val_img), wide, high, filter, blur, has_alpha);
+
+	if (result == NULL) {
+		Trap1(RE_NO_CREATE, Get_Type_Word(REB_IMAGE));
+	}
+
+	SET_IMAGE(D_RET, result);
+	return R_RET;
 }
 
 /***********************************************************************
@@ -388,3 +464,5 @@ typedef struct REBCLR {
 #endif
 	return R_RET;
 }
+
+#endif // USE_IMAGE_NATIVES
