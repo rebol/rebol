@@ -1,9 +1,9 @@
 Rebol [
 	Title: "Test HTTPD Scheme"
-	Date: 1-Apr-2019
+	Date: 10-May-2020
 	Author: "Oldes"
 	File: %test-httpd.r3
-	Version: 0.4.0
+	Version: 0.5.0
 	Note: {
 		To test POST method from Rebol console, try this:
 		```
@@ -13,7 +13,7 @@ Rebol [
 		```
 	}
 ]
-
+secure [%../modules/ allow]
 do %../modules/httpd.r3
 
 system/options/log/httpd: 3 ; for verbose output
@@ -47,22 +47,23 @@ my-actor: object [
 		]
 	]
 	On-Post-Received: func [ctx [object!]][
-		ctx/out/header/Content-Type: "text/html; charset=UTF-8"
-		ctx/out/content: rejoin either object? ctx/inp/content [
-			[
-				"URL-encoded data:<pre>" to-string ctx/inp/content/original </pre>
-				"<br/>Parsed:<pre>" mold ctx/inp/content/values </pre>
-				"<br/>Request header:<pre>" mold ctx/inp/header </pre>
-			]
-		][
-			[	"Received " length? ctx/inp/content " bytes." ]
+		ctx/out/content: ajoin [
+			"<br/>Request header:<pre>" mold ctx/inp/header </pre>
+			"Received <code>" ctx/inp/header/Content-Type/1 
+			"</code> data:<pre>" mold ctx/inp/content </pre>
 		]
 	]
 
+
 ]
+
+make-dir/deep %httpd-root/logs/
 
 http-server/config/actor 8081 [
 	root: %httpd-root/
 	server-name: "nginx"  ;= it's possible to hide real server name
 	keep-alive: [15 100] ;= [timeout max-requests] or FALSE to turn it off
+	log-access: %httpd-root/logs/test-access.log
+	log-errors: %httpd-root/logs/test-errors.log
+	list-dir?:  #[true]
 ] my-actor

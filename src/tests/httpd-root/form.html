@@ -5,7 +5,9 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head>
 <body>
-<h1>Just  a simple test form</h1>
+<h1>Simple form test</h1>
+
+<h2>Post <code>application/x-www-form-urlencoded</code> data form</h2>
 <form action="/result/" method="post">
   First name: <input type="text" name="fname"><br>
   Last name: <input type="text" name="lname"><br>
@@ -16,7 +18,40 @@
   <option value="audi">Audi</option>
 </select><br>
 <input type="check" name="c"><input type="check" name="c"><input type="check" name="c"><br>
-  <input type="submit" value="Submit">
+<p>
+<input type="file" multiple name="uploads" id="uploads">
+</p>
+<input type="submit" value="Submit">
+</form>
+
+<h2>Post <code>multipart/form-data</code> data form</h2>
+<form action="/result/" method="post" enctype="multipart/form-data">
+  First name: <input type="text" name="fname"><br>
+  Last name: <input type="text" name="lname"><br>
+<select name="car">
+  <option value="volvo">Volvo</option>
+  <option value="saab">Saab</option>
+  <option value="opel">Opel</option>
+  <option value="audi">Audi</option>
+</select><br>
+<input type="check" name="c"><input type="check" name="c"><input type="check" name="c"><br>
+<p>
+<label for="avatar">Choose a first picture:</label><br>
+<input type="file"
+       id="avatar" name="first"><br>
+<label for="avatar2">Choose a second picture:</label><br>
+<input type="file"
+       id="avatar2" name="second">
+</p>
+<p><input type="file" multiple name="uploads" id="uploads"></p>
+<input type="submit" value="Submit">
+</form>
+
+<h2>Post <code>text/plain</code> data form</h2>
+<form action="/result/" method="post" enctype="text/plain">
+  First name: <input type="text" name="fname"><br>
+  Last name: <input type="text" name="lname"><br>
+<input type="submit" value="Submit">
 </form>
 </body>
 </html>

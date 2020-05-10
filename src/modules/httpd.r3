@@ -1,12 +1,12 @@
 Rebol [
 	Title: "HTTPD Scheme"
-	Date: 1-Apr-2019
+	Date: 10-May-2020
 	Author: ["Andreas Bolka" "Christopher Ross-Gill" "Oldes"]
 	File: %httpd.r3
 	Name: 'httpd
 	Type: 'module
-	Version: 0.4.0
-	Exports: [http-server decode-target]
+	Version: 0.5.0
+	Exports: [http-server decode-target to-CLF-idate]
 	Rights: http://opensource.org/licenses/Apache-2.0
 	Purpose: {
 		A Tiny Webserver Scheme for Rebol 3 (Oldes' branch)
@@ -21,32 +21,35 @@ Rebol [
 		* support for multidomain serving using `Host` header field
 		* add support for other methods - PUT, DELETE, TRACE, CONNECT, OPTIONS?
 		* better error handling
-		* standard access log
-		* add list-dir action which shows content of a directory, if allowed
 		* test in real life
 	}
 	Usage: {Check %tests/test-httpd.r3 script how to start a simple server}
 	History: [
-		4-Nov-2009 "Andreas Bolka" {A Tiny HTTP Server
+		04-Nov-2009 "Andreas Bolka" {A Tiny HTTP Server
 		https://github.com/earl/rebol3/blob/master/scripts/shttpd.r}
-		4-Jan-2017 "Christopher Ross-Gill" {Adaptation to Scheme
+		04-Jan-2017 "Christopher Ross-Gill" {Adaptation to Scheme
 		https://gist.github.com/rgchris/73510e7d643eb0a6b9fa69b849cd9880}
-		1-Apr-2019 "Oldes" {Rewritten to be usable in real life situations.}
+		01-Apr-2019 "Oldes" {Rewritten to be usable in real life situations.}
+		10-May-2020 "Oldes" {Implemented directory listing, logging and multipart POST processing}
 	]
 ]
 
 append system/options/log [httpd: 1]
 
-;-helper utils:
+;------------------------------------------------------------------------
+;-- Net utils:                                                         --
+;------------------------------------------------------------------------
 ;@@ move elsewhere and with different name?
+
 decode-target: wrap [
 	control: charset [#"?" #"&" #"=" #"#"]
 	chars: complement control
 	func [
 		"Splits target into file part and key/pair query values if any"
 		target [file! string! binary!]
-		/local val
+		/local key val
 	][
+		
 		result: object [file: none values: make block! 8 fragment: none original: target]
 		parse/all to binary! target [
 			opt [
@@ -57,11 +60,14 @@ decode-target: wrap [
 				] 
 			]
 			any [
-				copy val some chars [
-					#"=" ( append result/values to set-word! to string! dehex val )
-					|    ( append result/values to string! dehex val )
-					[#"&" | #"#" copy val to end (result/fragment: dehex val)]
-				]
+				copy key some chars #"=" copy val any chars (
+					unless empty? val [
+						append result/values to set-word! to string! dehex key
+						append result/values to string! dehex val
+					]
+				) opt #"&"
+				| #"&"
+				| #"#" copy val to end (result/fragment: dehex val)
 			]
 		]
 		result/file: to file! dehex either all [
@@ -77,8 +83,114 @@ decode-target: wrap [
 	]
 ]
 
-;- scheme definition:
+;- Multipart data related code:
+; token:       https://tools.ietf.org/html/rfc7230#section-3.2.6
+;              ["!#$%&'*+-.^^_`|~" #"0"-#"9" #"a"-#"z" #"A"-#"Z"]
+; whitespace:  https://tools.ietf.org/html/rfc7230#section-3.2.3
+ch_token: make bitset! #{000000005F36FFC07FFFFFE3FFFFFFEA}
+ch_ws:    make bitset! #{0040000080}
 
+rl_q-string: [#"^"" any [ #"\" 1 skip | some ch_token ] #"^""]
+
+trim-q-string: func[str][
+	parse str [
+		remove #"^""
+		any [ some ch_token
+			| remove #"\" 1 skip
+		]
+		remove #"^""
+	]
+]
+decode-content-params: func[
+	str
+	/local params type subtype key val
+][
+	if none? str [ return reduce [none none] ]
+	str: to string! str
+	params: clear []
+	either parse str [
+		any ch_ws
+		copy type some ch_token
+		opt [#"/" copy subtype some ch_token]
+		any [
+			any ch_ws
+			#";"
+			any ch_ws
+			  copy key some ch_token #"="
+			[ copy val some ch_token
+			| copy val rl_q-string (trim-q-string val)]
+			( put params key val )
+		]
+	][
+		reduce [type subtype copy params]
+	][	str ] ;- returns original in case of error
+]
+
+decode-multipart-data: func[
+	{Decodes multipart encoded data (used with POST method)}
+	type [binary! string! block!] "Content-type header value"
+	data [binary!] "Raw data after HTTP header"
+	/local boundary header body key val result boundary-end
+][	;@@NOTE: this may be used with emails too! Where it should live?
+
+	unless block? type [ type: decode-content-params type ]
+
+	if any [
+		not block? type
+		not block? type/3
+		type/1 <> "multipart"
+		not boundary: select type/3 "boundary"
+	][ return data ]  ;- returns original in case of error
+
+	boundary-end: join "^M^/--" boundary
+	result: copy []
+	probe parse data [
+		any [
+			"--" boundary CRLF
+			(header: copy [])
+			some [
+				copy key some ch_token #":"
+				copy val to CRLF 2 skip
+				( put header to string! key decode-content-params val )
+			]
+			( append/only result header )
+			CRLF
+			copy body to boundary-end
+			( append result either empty? body [none][body] )
+			CRLF
+		]
+		"--" boundary "--" CRLF end
+	]
+	new-line/all result true
+	result
+]
+
+to-CLF-idate: func [
+	"Returns a standard Common Log Format date string."
+	date [date!]
+	/local zone
+][
+	zone: form date/zone
+	remove find zone ":"
+	if #"-" <> first zone [insert zone #"+"]
+	if 4 >= length? zone [insert next zone #"0"]
+	ajoin [
+		either date/day < 10 [#"0"][]
+		date/day
+		#"/"
+		pick ["Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"] date/month
+		#"/"
+		date/year
+		#":"
+		to-itime any [date/time 0:00]
+		#" "
+		zone
+	]
+]
+
+;------------------------------------------------------------------------
+;-- Scheme definition:                                                 --
+;------------------------------------------------------------------------
 sys/make-scheme [
 	Title: "HTTP Server"
 	Name: 'httpd
@@ -126,6 +238,7 @@ sys/make-scheme [
 			target: ctx/inp/target
 			target/file: path: join dirize ctx/config/root  clean-path/only target/file
 			ctx/out/header/Date: to-idate/gmt now
+			ctx/out/status: 200
 			either exists? path [
 				if dir? path [
 					foreach file ctx/config/index [
@@ -167,20 +280,30 @@ sys/make-scheme [
 			]
 		]
 
-		On-Post: func[ctx [object!] /local tmp Content-Length Content-Type][
-			;TODO: handle `Expect` header: https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.20
-			Content-Length: select ctx/inp/header 'Content-Length
+		On-Post: func[ctx [object!] /local content header length type][
+			;@@ TODO: handle `Expect` header: https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.20
+			header: ctx/inp/header
+			length: select header 'Content-Length
 			either all [
-				integer? Content-Length
-				Content-Length > length? ctx/inp/content
+				integer? length
+				length > length? content: ctx/inp/content
 			][
 				ctx/state: 'read-data
 			][
 				ctx/state: 'data-received
 				ctx/out/status: 200
-				Content-Type: select ctx/inp/header 'Content-Type
-				if parse Content-Type ["application/x-www-form-urlencoded" to end]  [
-					ctx/inp/content: decode-target ctx/inp/content
+				type: header/Content-Type: decode-content-params select header 'Content-Type
+				case [
+					type/2 = "x-www-form-urlencoded" [
+						; using full target decoder, although only values are needed
+						ctx/inp/content: select decode-target content 'values
+					]
+					type/1 = "multipart" [
+						ctx/inp/content: decode-multipart-data type content
+					]
+					type/1 = "text" [
+						ctx/inp/content: to string! content
+					]
 				]
 				Actor/On-Post-Received ctx
 			]
@@ -205,10 +328,56 @@ sys/make-scheme [
 			]
 		]
 
-		On-List-Dir: func[ctx [object!] target [object!]][
-			sys/log/more 'HTTPD ["Listing dir not allowed:^[[1m" mold target/file]
-			ctx/out/status: 404
-			return false
+		On-List-Dir: func[
+			ctx [object!] target [object!]
+			/local path dir out size date files dirs
+		][
+			unless ctx/config/list-dir? [
+				sys/log/more 'HTTPD ["Listing dir not allowed:^[[1m" mold target/file]
+				ctx/out/status: 404 ; using not-found response!
+				return false
+			]
+			dir: target/file
+			path: find/match dir ctx/config/root
+		
+			try/except [
+				out: make string! 2000
+				append out ajoin [{<html>
+	<head><title>Index of /} path {</title></head>
+	<body bgcolor="white">
+	<h1>Index of /} path {</h1><hr><pre>}]
+				unless empty? path [
+					append out {<a href="../">../</a>^/}
+				]
+
+				files: copy []
+				dirs:  copy []
+				foreach file read dir [
+					; reversed naming bellow intended!
+					append either dir? file [files][dirs] file
+				]
+				append files dirs
+
+				foreach file files [
+					set [size date] query/mode dir/:file [size date]
+					append out ajoin [
+						{<a href="} file {">} file {</a> }
+						format 50 - length? file ""
+						format/pad -11 date/date #"0"
+						#" "
+						format/pad [-2 #":" -2] reduce [date/hour date/minute] #"0"
+						#" "
+						format -19 any [size "-"]
+						lf
+					]
+				]
+				append out {</pre><hr></body></html>}
+				ctx/out/content: out
+				return true
+			][
+				ctx/out/status: 404 ; using not-found response!
+				return false
+			]
 		]
 
 		On-Not-Found: func[ctx [object!] target [object!]][
@@ -320,6 +489,18 @@ sys/make-scheme [
 		buffer: make binary! 1024
 		append buffer ajoin ["HTTP/" ctx/inp/version #" " out/status #" " status-codes/(out/status) CRLF]
 
+		unless out/header/Content-Type [
+			if out/target [
+				out/header/Content-Type: pick MIME-Types suffix? out/target
+			]
+			if all [
+				none? out/header/Content-Type ; no mime found above
+				string? out/content
+			][
+				out/header/Content-Type: "text/html; charset=UTF-8"
+			]
+		]		
+
 		out/header/Content-Length: either out/content [
 			if string? out/content [
 				; must be converted to binary to have proper length if not ascii
@@ -329,12 +510,7 @@ sys/make-scheme [
 		][
 			0
 		]
-		if all [
-			out/target
-			none? out/header/Content-Type
-		][
-			out/header/Content-Type: pick MIME-Types suffix? out/target
-		]
+
 		if keep-alive: ctx/config/keep-alive [
 			if logic? keep-alive  [
 				; using defaults
@@ -367,6 +543,29 @@ sys/make-scheme [
 			print "Write failed!"
 			probe copy/part buffer 100
 			Awake-Client make event! [type: 'close port: port ]
+		]
+	]
+
+	Do-log: function [ctx][
+		msg: ajoin [
+			ctx/remote-ip
+			{ - - [} to-CLF-idate now {] "}
+			ctx/inp/method #" "
+			to string! ctx/inp/target/original
+			" HTTP/" ctx/inp/version {" }
+			ctx/out/status #" "
+			any [ctx/out/header/Content-Length #"-"]
+			#"^/"
+		]
+		prin msg
+		if file? ctx/config/log-access [
+			try [write/append ctx/config/log-access msg]
+		]
+		if all [
+			ctx/out/status >= 400
+			file? ctx/config/log-errors
+		][
+			try [write/append ctx/config/log-errors msg]
 		]
 	]
 
@@ -403,7 +602,9 @@ sys/make-scheme [
 											method:  to string! method
 											target:  decode-target target
 											version: to string! version
+											? header
 											header:  construct header
+											? header
 											try [header/Content-Length: to integer! header/Content-Length]
 										)
 									]
@@ -505,6 +706,7 @@ sys/make-scheme [
 		client/locals: make object! [
 			state: none
 			parent: port
+			remote-ip: info/remote-ip
 			remote: rejoin [tcp:// info/remote-ip #":" info/remote-port]
 			inp: object [
 				method:
@@ -537,6 +739,7 @@ sys/make-scheme [
 
 	End-Client: function [port [port!]][
 		ctx: port/locals
+		Do-log ctx
 		clients: ctx/parent/locals/clients
 		keep-alive: ctx/config/keep-alive
 		either all [

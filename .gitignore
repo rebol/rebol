@@ -24,6 +24,8 @@ src/tools/reb-lib-doc.txt
 src/reb-lib-doc.txt
 src/mezz/base-collected.r
 
+src/tests/httpd-root/logs/
+
 #################
 ## Eclipse
 #################
