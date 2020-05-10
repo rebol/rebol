@@ -602,9 +602,7 @@ sys/make-scheme [
 											method:  to string! method
 											target:  decode-target target
 											version: to string! version
-											? header
 											header:  construct header
-											? header
 											try [header/Content-Length: to integer! header/Content-Length]
 										)
 									]
