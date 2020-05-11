@@ -4,7 +4,7 @@
 # Rebol [R3] Source Code Distribution
 
 Purpose of this **Rebol fork** is to push the origial [Carl's source](https://github.com/rebol/rebol) to be usable at least like Rebol 2,
-but keep the source code clean and project easy to build.
+but keep the source code clean and project easy to build. Use [CHANGES.md](https://github.com/Oldes/Rebol3/blob/master/CHANGES.md) file to see changes made in this branch.
 
 ### Issues reporting
 
