@@ -498,10 +498,18 @@ Rebol [
 --test-- "SORT/reverse"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/128
 	--assert [9 3 2 1] = sort/reverse [9 1 2 3] 
+===end-group===
 
 
-
-
+===start-group=== "PAD"
+--test-- "pad"
+	--assert "ab  " = pad "ab"  4
+	--assert "  ab" = pad "ab" -4
+	--assert "12  " = pad  12   4
+	--assert "  12" = pad  12  -4
+--test-- "pad/with"
+	--assert "1200" = pad/with  12   4 #"0"
+	--assert "0012" = pad/with  12  -4 #"0"
 ===end-group===
 
 

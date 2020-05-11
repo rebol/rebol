@@ -393,6 +393,21 @@ collect: func [
 	either into [output] [head output]
 ]
 
+pad: func [
+	"Pad a FORMed value on right side with spaces" 
+    str "Value to pad, FORM it if not a string" 
+    n [integer!] "Total size (in characters) of the new string (pad on left side if negative)" 
+    /with "Pad with char" 
+    c [char!] 
+    return: [string!] "Modified input string at head"
+][
+    unless string? str [str: form str] 
+    head insert/dup 
+    any [all [n < 0 n: negate n str] tail str] 
+    any [c #" "] 
+    (n - length? str)
+]
+
 format: function [
 	"Format a string according to the format dialect."
 	rules {A block in the format dialect. E.g. [10 -10 #"-" 4 $32 "green" $0]}
