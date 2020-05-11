@@ -175,8 +175,7 @@ to-CLF-idate: func [
 	if #"-" <> first zone [insert zone #"+"]
 	if 4 >= length? zone [insert next zone #"0"]
 	ajoin [
-		either date/day < 10 [#"0"][]
-		date/day
+		pad/with date/day -2 #"0"
 		#"/"
 		pick ["Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"] date/month
 		#"/"
@@ -342,10 +341,11 @@ sys/make-scheme [
 		
 			try/except [
 				out: make string! 2000
-				append out ajoin [{<html>
-	<head><title>Index of /} path {</title></head>
-	<body bgcolor="white">
-	<h1>Index of /} path {</h1><hr><pre>}]
+				append out ajoin [
+					{<html><head><title>Index of /}	path
+					{</title></head><body bgcolor="white"><h1>Index of /} path
+					{</h1><hr><pre>^/}
+				]
 				unless empty? path [
 					append out {<a href="../">../</a>^/}
 				]
@@ -362,12 +362,11 @@ sys/make-scheme [
 					set [size date] query/mode dir/:file [size date]
 					append out ajoin [
 						{<a href="} file {">} file {</a> }
-						format 50 - length? file ""
-						format/pad -11 date/date #"0"
-						#" "
-						format/pad [-2 #":" -2] reduce [date/hour date/minute] #"0"
-						#" "
-						format -19 any [size "-"]
+						pad copy "" 50 - length? file
+						pad/with date/date  -11 #"0" #" "
+						pad/with date/hour   -2 #"0" #":"
+						pad/with date/minute -2 #"0" #" "
+						pad  any [size "-"] -19
 						lf
 					]
 				]
