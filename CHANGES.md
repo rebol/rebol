@@ -217,7 +217,6 @@ This is just generated output from commits in [this repository](https://github.c
   At this stage it is not fully protecting system object, but it is a good start to see possible issues with it.. like https://github.com/Oldes/Rebol-issues/issues/1348
 * [`127a5a`](https://github.com/Oldes/Rebol3/commit/127a5a89964c6e6518d39d15ac5867eccceff8fb) Move sys-state.h to be included by sys-core.h
 
-  (cherry picked from commit cb52713acf46ddf9c516df7a2269245bafa9a035)
 
 ## 2020 February
 
@@ -315,8 +314,6 @@ This is just generated output from commits in [this repository](https://github.c
   For a compatibility with Red language and also because it may be useful in dialects.
   Although `@name` is not a valid real email according RFC, one can construct invalid email values in many ways and so in real use for email apps, there should be a real additional email validation anyway.
 * [`f3dfa7`](https://github.com/Oldes/Rebol3/commit/f3dfa7b40b887c07d886df88d35bbd979a9c67c4) Possible auto conversion to text if found charset specification in content-type
-
-  FIX: Properly handling chunked data in HTTP protocol
 * [`f45e86`](https://github.com/Oldes/Rebol3/commit/f45e86c24856920fc9e9b6d352411e530fc766bb) Ported JSON codec from Red language
 
   Main credits belongs to: Gabriele Santilli and Gregg Irwin.
@@ -431,9 +428,7 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Changes:
 
-* [`651219`](https://github.com/Oldes/Rebol3/commit/6512190e8cf23af76fe54eb442d71708aebef127) Renaming CRC_Table to CRC24_Table
-
-  So it has same naming as CRC32_Table.
+* [`651219`](https://github.com/Oldes/Rebol3/commit/6512190e8cf23af76fe54eb442d71708aebef127) Renaming CRC_Table to CRC24_Table, so it has same naming as CRC32_Table.
 
 ## 2019 December
 
@@ -661,8 +656,7 @@ This is just generated output from commits in [this repository](https://github.c
 
 * [`4e8896`](https://github.com/Oldes/Rebol3/commit/4e8896ab934fbce26cd1488b1a787f9c0a5f0d9b) SWF codec - allow none! as a valid input to decode-tag function
 * [`4e3eef`](https://github.com/Oldes/Rebol3/commit/4e3eefa37125002e258d600a04db0adf46240661) When value of string type is used to be written, it is converted to UTF-8 automatically
-
-  FEAT: added UI16LEBYTES command
+* [`4e3eef`](https://github.com/Oldes/Rebol3/commit/4e3eefa37125002e258d600a04db0adf46240661) Added UI16LEBYTES command
 * [`4a4418`](https://github.com/Oldes/Rebol3/commit/4a4418b72318da82a08b6a5b6fb2c1f82ee8f190) Bincode - value to write defined as GET-WORD! or GET-PATH!
 * [`1029ea`](https://github.com/Oldes/Rebol3/commit/1029eaea7795cec1fce5638de1fe29d07b56c1b4) Bincode - added support for writing FLOAT16, FLOAT and DOUBLE values
 * [`c1c1f2`](https://github.com/Oldes/Rebol3/commit/c1c1f2108f075887b65edbcf8332b34ac8ece6e0) Added support for ADLER32 checksum method
@@ -1079,14 +1073,14 @@ This is just generated output from commits in [this repository](https://github.c
 * [`94ed18`](https://github.com/Oldes/Rebol3/commit/94ed18f21dce04ba701c1acea2d44dbece2b7156) Added compilation define to exclude math operation with vectors: EXCLUDE_VECTOR_MATH
 * [`79673b`](https://github.com/Oldes/Rebol3/commit/79673b667f20220c11ab691c9df4d05e9e2c631c) Windows: Console Virtual Terminal Sequences
 
-  If available (since Win10) using ENABLE_VIRTUAL_TERMINAL_PROCESSING output mode to process ANSI Escape Sequences. On older Windows versions it keeps using the ANSI emulation like before.
+  If available (since Win10) using `ENABLE_VIRTUAL_TERMINAL_PROCESSING` output mode to process ANSI Escape Sequences. On older Windows versions it keeps using the ANSI emulation like before.
   
-  It's possible to disable use of ENABLE_VIRTUAL_TERMINAL_PROCESSING mode by defining FORCE_ANSI_ESC_EMULATION_ON_WINDOWS compiler definition.
+  It's possible to disable use of `ENABLE_VIRTUAL_TERMINAL_PROCESSING` mode by defining `FORCE_ANSI_ESC_EMULATION_ON_WINDOWS` compiler definition.
   
   Related documentation: https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences
   
   Known issues:
-  The VIRTUAL_TERMINAL_PROCESSING mode is not handling escape codes for hiding input (^[[8m and ^[[28m), which is currently used in ASK/HIDE function. As these sequences are also not fully supported on some POSIX systems, the hiding input should be solved using other way.
+  `The VIRTUAL_TERMINAL_PROCESSING` mode is not handling escape codes for hiding input (`^[[8m` and `^[[28m`), which is currently used in ASK/HIDE function. As these sequences are also not fully supported on some POSIX systems, the hiding input should be solved using other way.
   https://github.com/Oldes/Rebol-issues/issues/476
 * [`0b95e4`](https://github.com/Oldes/Rebol3/commit/0b95e4a7c78061711a3120ca467cd5af7865a38a) Enable displaying MODULE value as a result in console
 * [`729705`](https://github.com/Oldes/Rebol3/commit/72970568a0284934d5aa5a313ed5d3495aded18f) Display a few values of any-block type, when using HELP on object with block values
@@ -1167,7 +1161,6 @@ This is just generated output from commits in [this repository](https://github.c
   ```
   Originally the size was extended instead and so behaving like when there was no size specified.
     
-Related: https://github.com/Oldes/Rebol-issues/issues/2347
 * [`4dd601`](https://github.com/Oldes/Rebol3/commit/4dd60134fa706aacdd091dcb6d955e615b36c79b) Conversion from VECTOR to BINARY
 
   It provides copy of raw internal vector data (in little-endian).
@@ -1260,7 +1253,7 @@ Related: https://github.com/Oldes/Rebol-issues/issues/2347
   https://github.com/Oldes/Rebol-issues/issues/438
   https://github.com/Oldes/Rebol-issues/issues/2089
   https://github.com/Oldes/Rebol-issues/issues/2092
-* [`1ebbbc`](https://github.com/Oldes/Rebol3/commit/1ebbbc3d4607b84a004df5de330b0e5d1120c777) Enabling T as a delimiter between date and time and Z as a zero timezone, so subset of ISO8601 datetime values are loadable from Rebol.
+* [`1ebbbc`](https://github.com/Oldes/Rebol3/commit/1ebbbc3d4607b84a004df5de330b0e5d1120c777) Enabling `T` as a delimiter between date and time and `Z` as a zero timezone, so subset of ISO8601 datetime values are loadable from Rebol.
 
   Example:
   ```rebol
@@ -1271,19 +1264,16 @@ Related: https://github.com/Oldes/Rebol-issues/issues/2347
   >> 2013-11-08T17:01Z
   == 8-Nov-2013/17:01
   ```
-    
-https://github.com/Oldes/Rebol-issues/issues/438
-  https://github.com/Oldes/Rebol-issues/issues/2089
-  https://github.com/Oldes/Rebol-issues/issues/2092
 * [`035df2`](https://github.com/Oldes/Rebol3/commit/035df2a2f72578c514b26ebd7843d4cc7cc51a1d) New BINCODE's read functions: SB (signed bits) and ALIGN (aligns bit stream to byte)
 * [`4f6c2e`](https://github.com/Oldes/Rebol3/commit/4f6c2eb6bb056dc6286ec7e60addf5736429ccb5) Exported new library functions for better UTF8 text conversions from Rebol extension code
 
   New functions:
-  
+  ```C  
   RL_Get_UTF8_String
   RL_Encode_UTF8
   RL_Encode_UTF8_String
   RL_Decode_UTF_String
+  ```
 * [`823158`](https://github.com/Oldes/Rebol3/commit/823158057ab8c3f786523e3c05956988771d5917) Introduced new `command` error
 * [`dbd6f6`](https://github.com/Oldes/Rebol3/commit/dbd6f6513c0da088c96a5ce6068f93607d974623) Improved support for dealing with HANDLE types in extensions
 
@@ -1347,8 +1337,6 @@ https://github.com/Oldes/Rebol-issues/issues/438
   not take the parameters. Uses an internal function option for efficiency.
   
   See https://github.com/Oldes/Rebol-issues/issues/2193 for details.
-  
-  (cherry picked from commit c08295333315c10284b95cede880c4a15bfe3ae3)
 * [`e977b2`](https://github.com/Oldes/Rebol3/commit/e977b2e591049d61860dba08dcd9bb38423e1df7) Re-factored reb-config.h a little bit by moving __LP64__ definitions into system.r script and reverting definition of HAS_LL_CONSTS (now enabled by default and undefined where needed (old MSVC compiler only?)
 * [`38f5ab`](https://github.com/Oldes/Rebol3/commit/38f5ab3c054372d6262c49a08fee42527ffda77c) Allow one RETURN: […] specification in function's spec-block, so one could use (some) Red functions without code modifications
 
@@ -1434,7 +1422,7 @@ https://github.com/Oldes/Rebol-issues/issues/438
   
   would print red text on gray background (depending on color palette of the terminal)
   
-  The string returned by format function would look like: "^[[32;47msome text^[[0m"
+  The string returned by format function would look like: `"^[[32;47msome text^[[0m"`
 * [`23f22a`](https://github.com/Oldes/Rebol3/commit/23f22a2c08a4ead607fa60f0928359e5adaf91bc) Added a few test vectors for AES128 and AES256 cipher suite
 * [`902547`](https://github.com/Oldes/Rebol3/commit/902547531daef1ff50c0b7ec7d15753e71c8bb25) Added recommendation note not to use RC4 as it is prohibited by https://tools.ietf.org/html/rfc7465
 * [`cf740c`](https://github.com/Oldes/Rebol3/commit/cf740c4cd0670271ca7265e4c418890421059e1f) Making UNSET! as a conditionally "TRUTHY"
@@ -1842,11 +1830,12 @@ https://github.com/Oldes/Rebol-issues/issues/438
 * [`aa10d1`](https://github.com/Oldes/Rebol3/commit/aa10d1221ed6e3ac075be453d3f9e23bc31cd89b) Image codecs are now included only when requested using compilation defines
 
   To enable these codecs one must use these defines:
-  
+  ```C
   USE_PNG_CODEC
   USE_BMP_CODEC
   USE_JPG_CODEC
   USE_GIF_CODEC
+  ```
 * [`a7b056`](https://github.com/Oldes/Rebol3/commit/a7b05627a3d31621732add94e8f76f9307e8bffb) Automatically collecting base code from C sources
 
   If such a comment is used in C file:
