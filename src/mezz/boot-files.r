@@ -49,6 +49,7 @@ REBOL [
 	%mezz-colors.r
 	%mezz-crypt.r
 	%mezz-date.r ; Internet date support
+	;%mezz-tag.r  ; build-tag
 	%mezz-tail.r
 	%codec-json.r
 	%codec-unixtime.r
