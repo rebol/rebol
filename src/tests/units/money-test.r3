@@ -100,6 +100,10 @@ Rebol [
 	--test-- "issue-238"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/238
 		--assert $1 = to money! $1
+
+	--test-- "issue-392"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/392
+		--assert $1e-100 = ($1.00 / 1e100) ; no crash
 ===end-group===
 	
 ~~~end-file~~~
