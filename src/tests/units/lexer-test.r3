@@ -23,6 +23,8 @@ Rebol [
 	--test-- "Invalid issue!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/122
 		--assert error? try [load "1234#"]
+	;@@ https://github.com/oldes/rebol-issues/issues/2297
+		--assert error? try [load {#}] ; originally (in R3-alpha) it was same like #[none]
 
 ===end-group===
 
