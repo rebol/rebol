@@ -165,6 +165,12 @@ Rebol [
 		mem: make string! 5 loop 10 [change/dup mem "x" 5] mem
 		--assert mem = "xxxxx"
 
+	--test-- "issue-404"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/404
+		str: "abc"
+		--assert #"Á" = str/1: str/1 + 96
+		--assert "Ábc" = str
+
 ===end-group===
 
 ===start-group=== "TAKE"
