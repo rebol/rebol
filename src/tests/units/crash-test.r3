@@ -101,6 +101,11 @@ Rebol [
 	dddd: 2
 	--assert block? protect/words [cccc]
 	--assert block? protect/words/deep [dddd] ;- no crash
+
+--test-- "issue-371"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/371
+	--assert module? module [] ['self]        ;- no crash
+	--assert module? module [] [test: [self]] ;- no crash
 ===end-group===
 
 ~~~end-file~~~
