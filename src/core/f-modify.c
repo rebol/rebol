@@ -125,9 +125,12 @@
 	if (dups < 0) return (action == A_APPEND) ? 0 : dst_idx;
 	if (action == A_APPEND || dst_idx > tail) dst_idx = tail;
 
-	// If the src_val is not a string, then we need to create a string:
+	// If the src_val is not same type like trg_val, we must convert it
 	if (GET_FLAG(flags, AN_SERIES)) { // used to indicate a BINARY series
-		if (IS_INTEGER(src_val)) {
+		if (IS_BINARY(src_val)) {
+			// use as it is
+		}
+		else if (IS_INTEGER(src_val)) {
 			src_ser = Append_Byte(0, Int8u(src_val)); // creates a binary
 		}
 		else if (IS_BLOCK(src_val)) {
@@ -137,7 +140,19 @@
 			src_ser = Make_Binary(6); // (I hate unicode)
 			src_ser->tail = Encode_UTF8_Char(BIN_HEAD(src_ser), VAL_CHAR(src_val));
 		}
-		else if (!ANY_BINSTR(src_val)) Trap_Arg(src_val);
+		else if (ANY_STR(src_val)) {
+			// here is used temporary src_len, used to limit conversion of the string to binary
+			// If /part is used, not complete src is converted to binary (UTF8).
+			// This src_len is modified by purpose later so the result may be shorter.
+			// Like in this case: #{E1} == append/part #{} "^(1234)" 1
+			if (action != A_CHANGE && GET_FLAG(flags, AN_PART)) {
+				src_len = dst_len;
+			} else {
+				src_len = VAL_LEN(src_val);
+			}
+			src_ser = Encode_UTF8_Value(src_val, src_len, FALSE); // NOTE: uses shared FORM buffer!
+		}
+		else Trap_Arg(src_val);
 	}
 	else if (IS_CHAR(src_val)) {
 		src_ser = Append_Byte(0, VAL_CHAR(src_val)); // unicode ok too

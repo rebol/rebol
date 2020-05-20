@@ -173,6 +173,57 @@ Rebol [
 
 ===end-group===
 
+;@@ https://github.com/Oldes/Rebol-issues/issues/1791
+===start-group=== "APPEND binary!"
+	--test-- "APPEND binary! binary!"
+		--assert #{0102}     = append #{01} #{02}
+		--assert #{0102}     = append next #{01} #{02}
+	--test-- "APPEND binary! string!"
+		--assert #{0001}     = append #{00} "^(01)"
+		--assert #{0001}     = append next #{00} "^(01)"
+		--assert #{00E28690} = append #{00} "^(2190)"
+		--assert #{00E28690} = append next #{00} "^(2190)"
+	--test-- "APPEND binary! file!"
+		--assert #{616263}   = append #{} %abc
+		--assert #{C3A162}   = append #{} %áb
+	--test-- "APPEND binary! char!"
+		--assert #{0001}     = append #{00} #"^(01)"
+		--assert #{00E28690} = append #{00} #"^(2190)"
+	--test-- "APPEND/part binary!"
+		--assert #{01} = append/part #{} #{0102} 1
+		--assert #{01} = append/part #{} "^(01)^(02)" 1
+		--assert #{E2} = append/part #{} "^(2190)" 1 ;-- by design!
+===end-group===
+
+===start-group=== "INSERT binary!"
+	--test-- "INSERT binary! binary!"
+		--assert #{0201}     = head insert #{01} #{02}
+		--assert #{0102}     = head insert next #{01} #{02}
+	--test-- "INSERT binary! string!"
+		--assert #{0100}     = head insert #{00} "^(01)"
+		--assert #{0001}     = head insert next #{00} "^(01)"
+		--assert #{E2869000} = head insert #{00} "^(2190)"
+		--assert #{00E28690} = head insert next #{00} "^(2190)"
+	--test-- "INSERT binary! file!"
+		--assert #{61626300} = head insert #{00} %abc
+		--assert #{C3A16200} = head insert #{00} %áb
+	--test-- "INSERT binary! char!"
+		--assert #{0100}     = head insert #{00} #"^(01)"
+		--assert #{E2869000} = head insert #{00} #"^(2190)"
+	--test-- "INSERT/part binary!"
+		--assert #{0100} = head insert/part #{00} #{0102} 1
+		--assert #{0100} = head insert/part #{00} "^(01)^(02)" 1
+		--assert #{E200} = head insert/part #{00} "^(2190)" 1 ;-- by design!
+===end-group===
+
+===start-group=== "CHANGE binary!"
+	--test-- "CHANGE binary! string!"
+		--assert #{E188B4} = head change #{} "^(1234)"
+		--assert #{E188B4} = head change #{00} "^(1234)"
+		--assert #{E188B4} = head change #{0000} "^(1234)"
+		--assert #{E188B403} = head change/part #{010203} "^(1234)" 2
+===end-group===
+
 ===start-group=== "TAKE"
 	--test-- "take string!"
 	s: "a"

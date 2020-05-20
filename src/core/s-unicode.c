@@ -1189,8 +1189,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 		size = Length_As_UTF8(up, len, TRUE, (REBOOL)ccr);
 		cp = Reset_Buffer(ser, size + (GET_FLAG(opts, ENC_OPT_BOM) ? 3 : 0));
-        UNUSED(cp);
-		Encode_UTF8(Reset_Buffer(ser, size), size, up, &len, TRUE, ccr);
+		Encode_UTF8(cp, size, up, &len, TRUE, ccr);
 	}
 	else {
 		REBYTE *bp = (REBYTE*)src;
