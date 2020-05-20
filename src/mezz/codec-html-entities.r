@@ -3,11 +3,9 @@ Rebol [
 	Purpose: "To decode HTML entities in a text"
 	Date: 12-May-2020
 	Author: "Oldes"
-	File: %httpd.r3
 	Name: 'html-entities
 	Type: 'module
 	Version: 1.0.0
-	;Exports: [decode-html-entities]
 	Rights: http://opensource.org/licenses/Apache-2.0
 	Usage: [
 		"Test: ♠ & ¢ <a> and Δδ ¾" =
