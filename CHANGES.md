@@ -6,6 +6,17 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Features:
 
+* [`61596e`](https://github.com/Oldes/Rebol3/commit/61596e22c9975d1878f1194c3856493eb1c30246) `HTML-entities` decoder
+
+  For decoding HTML entities into text:
+  ```rebol
+  >> decode 'html-entities {Test: &spades; & &#162; &lt;a&gt;&#32;and &Delta;&delta; &frac34;}
+  == "Test: ♠ & ¢ <a> and Δδ ¾"
+  
+  ```
+* [`640f91`](https://github.com/Oldes/Rebol3/commit/640f916d849be6442cdc4db296389d4e7986ac1c) Including R2's version of the `build-tag` function
+
+  (but not enabled by default in boot-files)
 * [`09d560`](https://github.com/Oldes/Rebol3/commit/09d56000dab875a4f19d534d118b6291fe050716) Added `pad` mezzanine function
 * [`3f08fa`](https://github.com/Oldes/Rebol3/commit/3f08fa6894fbe6805dbcb72259a9e8eb91e69708) Updated HTTPD scheme with directory listing, logging and multipart POST processing
 * [`ae88f0`](https://github.com/Oldes/Rebol3/commit/ae88f041fd2e48d2d6e94d0c4a97e278c803b69e) Enhanced `DEHEX` with `/escape` refinement for changing the escape character
