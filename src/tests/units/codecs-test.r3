@@ -259,4 +259,14 @@ if find codecs 'XML [
 	===end-group===
 ]
 
+if find codecs 'html-entities [
+	===start-group=== "HTML-entities codec"
+	--test-- "decode html-entities"
+		test: {Test: &spades; & &#162; &lt;a&gt;&#32;and &Delta;&delta; &frac34;}
+		--assert "Test: ♠ & ¢ <a> and Δδ ¾" = decode 'html-entities test
+		--assert "Test: ♠ & ¢ <a> and Δδ ¾" = decode 'html-entities to binary! test
+
+	===end-group===
+]
+
 ~~~end-file~~~

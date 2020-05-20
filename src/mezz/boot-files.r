@@ -59,6 +59,7 @@ REBOL [
 	%codec-xml.r
 	%codec-zip.r
 	%codec-tar.r
+	%codec-html-entities.r
 	; optional files added in make-boot.r per os and product
 	;%codec-wav.r
 	;%codec-swf.r
