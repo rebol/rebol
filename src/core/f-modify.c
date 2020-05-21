@@ -131,13 +131,15 @@
 			// use as it is
 		}
 		else if (IS_INTEGER(src_val)) {
-			src_ser = Append_Byte(0, Int8u(src_val)); // creates a binary
+			src_ser = BUF_FORM;
+			SERIES_DATA(src_ser)[0] = Int8u(src_val);
+			SERIES_TAIL(src_ser) = 1;
 		}
 		else if (IS_BLOCK(src_val)) {
 			src_ser = Join_Binary(src_val); // NOTE: it's the shared FORM buffer!
 		}
 		else if (IS_CHAR(src_val)) {
-			src_ser = Make_Binary(6); // (I hate unicode)
+			src_ser = BUF_FORM;
 			src_ser->tail = Encode_UTF8_Char(BIN_HEAD(src_ser), VAL_CHAR(src_val));
 		}
 		else if (ANY_STR(src_val)) {
@@ -155,7 +157,9 @@
 		else Trap_Arg(src_val);
 	}
 	else if (IS_CHAR(src_val)) {
-		src_ser = Append_Byte(0, VAL_CHAR(src_val)); // unicode ok too
+		src_ser = BUF_FORM;
+		RESET_TAIL(src_ser);
+		src_ser = Append_Byte(src_ser, VAL_CHAR(src_val)); // unicode ok too
 	}
 	else if (IS_BLOCK(src_val)) {
 		src_ser = Form_Tight_Block(src_val);

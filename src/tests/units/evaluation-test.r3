@@ -479,6 +479,28 @@ Rebol [
 		--assert 0 = p/made-blocks
 		--assert 0 = p/made-objects
 
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1606
+	--test-- "dp [change binary! integer!]"
+		b: #{000000}
+		--assert 0 = select dp [change b 255] 'series-made
+		--assert b = #{FF0000}
+		--assert 0 = select dp [change/dup b 255 3] 'series-made
+		--assert b = #{FFFFFF}
+	--test-- "dp [change binary! char!]"
+		b: #{000000}
+		--assert 0 = select dp [change b #"a"] 'series-made
+		--assert b = #{610000}
+		--assert 0 = select dp [change/dup b #"a" 3] 'series-made
+		--assert b = #{616161}
+		--assert 0 = select dp [change/dup b #"á" 3] 'series-made
+		--assert b = #{C3A1C3A1C3A1}
+	--test-- "dp [change string! char!]"
+		b: "xxx"
+		--assert 0 = select dp [change b #"a"] 'series-made
+		--assert b = "axx"
+		--assert 0 = select dp [change/dup b #"a" 3] 'series-made
+		--assert b = "aaa"
+
 ===end-group===
 
 ~~~end-file~~~
