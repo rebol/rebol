@@ -462,4 +462,23 @@ Rebol [
 		--assert any [none? system/options/script file? system/options/script]
 ===end-group===
 
+
+===start-group=== "delta-profile"
+
+	--test-- "delta-profile []"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/574
+		p: delta-profile []
+		--assert 0 = p/evals
+		--assert 0 = p/eval-natives
+		--assert 0 = p/eval-functions
+		--assert 0 = p/series-made
+		--assert 0 = p/series-freed
+		--assert 0 = p/series-expanded
+		--assert 0 = p/series-bytes
+		--assert 0 = p/series-recycled
+		--assert 0 = p/made-blocks
+		--assert 0 = p/made-objects
+
+===end-group===
+
 ~~~end-file~~~

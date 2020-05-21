@@ -23,17 +23,22 @@ dt: delta-time: function [
 dp: delta-profile: func [
 	{Delta-profile of running a specific block.}
 	block [block!]
-	/local start end
-][
-	start: values-of stats/profile
-	do block
-	end: values-of stats/profile
-	foreach num start [
-		change end end/1 - num
-		end: next end
+	/local start end adjust
+][ 
+	adjust: [
+		;- profiler's overhead
+		evals:        4
+		eval-natives: 3
+		series-made:  1
+		series-bytes: 448
+		made-blocks:  1
 	]
-	start: make system/standard/stats []
-	set start head end
+	start: copy end: stats/profile 
+	do block 
+	stats/profile 
+	foreach [key num] start [
+		set key end/:key - num - any [adjust/:key 0]
+	] 
 	start
 ]
 
