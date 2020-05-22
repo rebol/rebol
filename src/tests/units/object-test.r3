@@ -71,6 +71,20 @@ Rebol [
 		--assert error? try [make a [set 'd b]]
 		--assert d = 0
 
+	--test-- "issue-2049"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2049
+		; when cloning an object, functions are cloned:
+		o: make object! [n: 'o f: func [] [n]]
+		--assert 'o = o/f
+		p: make o [n: 'p]
+		--assert 'p = p/f
+
+		; while closures are ignored:
+		o: make object! [n: 'o f: closure [] [n]]
+		--assert 'o = o/f
+		p: make o [n: 'p]
+		--assert 'p = p/f
+
 	--test-- "issue-2050"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2050
 		o: make object! [n: 'o b: reduce [func [] [n]]]
