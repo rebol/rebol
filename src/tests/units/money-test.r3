@@ -101,6 +101,13 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/238
 		--assert $1 = to money! $1
 
+	--test-- "issue-253"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/253
+		--assert "$1234"  = mold to money! 1234
+		--assert "$987"   = mold m: to money! 987
+		--assert "$11844" = mold to money! m * 12
+
+
 	--test-- "issue-254"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/254
 		m: $1 for i 1 508 1 [m: m * 2]
