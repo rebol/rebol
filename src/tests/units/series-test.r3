@@ -22,6 +22,10 @@ Rebol [
 	--assert equal? [x] find/last [x] 'x
 	--assert equal? [x] find/last [x x x] 'x
 
+--test-- "FIND string! integer!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/237
+	--assert "23" = find "123" 2
+
 --test-- "FIND/ANY on string"
 	--assert "abcd"  = find/any "abcd" "abc"
 	--assert "abcd"  = find/any "abcd" "*c"
