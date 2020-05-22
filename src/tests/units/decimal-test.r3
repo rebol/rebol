@@ -111,6 +111,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/267
 		--assert 97.0 = try [1.0 * #"a"]
 
+	--test-- "issue-271"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/271
+		--assert not same? 0.1 0.3 - 0.2
+
 ===end-group===
 	
 ~~~end-file~~~
