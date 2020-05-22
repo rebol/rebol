@@ -71,6 +71,12 @@ Rebol [
 		--assert error? try [make a [set 'd b]]
 		--assert d = 0
 
+	--test-- "issue-2050"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2050
+		o: make object! [n: 'o b: reduce [func [] [n]]]
+		p: make o [n: 'p]
+		--assert 'o = o/b/1
+
 ===end-group===
 
 
