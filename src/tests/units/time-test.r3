@@ -23,7 +23,6 @@ Rebol [
 		; --assert 12:34:56.1 = round/to 12:34:56 0.3
 		; --assert 12:34:56.1 = round/to 12:34:56 30%
 
-
 	--test-- "issue-90"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/90
 		--assert -23:00 = (1:0:0 - 24:00)
@@ -62,6 +61,11 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/263
 		--assert time? t: try [load "596523:00"]
 		--assert t = load "596522:60"
+
+	--test-- "issue-277"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/277
+		--assert error? e: try [-1.0 + -596523:14:07.999999999]
+		--assert e/id = 'type-limit
 
 	--test-- "issue-1032"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1032
