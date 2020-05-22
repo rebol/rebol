@@ -3791,6 +3791,7 @@ Red [
 	--test-- " lesser-or-equal? 2"	--assert lesser-or-equal? 0 1
 	--test-- " lesser-or-equal? 3"	--assert lesser-or-equal? -1 0
 	--test-- " lesser-or-equal? 4"	--assert lesser-or-equal? -2147483648 2147483647
+	--test-- "issue-2054"           --assert -9223372036854775808 < 9223372036854775807
 		
 ===end-group===
 
