@@ -77,6 +77,8 @@ Rebol [
 	--assert "b"  = find str #"B"
 	--assert "b"  = find/case str #"b"
 	--assert none?  find/case str #"B"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/118
+	--assert "abc" = find/last "abcabcabc" #"a"
 
 --test-- "FIND with negative skip"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2291
