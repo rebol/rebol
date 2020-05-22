@@ -106,6 +106,11 @@ Rebol [
 		--assert  1.#INF = to decimal! #{7FF0000000000000}
 		--assert -1.#INF = to decimal! #{FFF0000000000000}
 		--assert "1.#NaN" = mold to decimal! #{7FFFFFFFFFFFFFFF}
+		
+	--test-- "issue-267"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/267
+		--assert 97.0 = try [1.0 * #"a"]
+
 ===end-group===
 	
 ~~~end-file~~~
