@@ -172,6 +172,14 @@ Rebol [
 	f: func [a code] [do bind code 'a]
 	--assert 1 = try [f 1 [a]]
 
+--test-- "issue-217"
+;@@ https://github.com/Oldes/Rebol-issues/issues/217
+	f: func [c] [make function! reduce [copy [a] compose/deep [print a/1 (c)]]]
+	f1: f [print 1]
+	f2: f [print 2]
+	--assert error? e: try [f1 1]
+	--assert e/id = 'bad-path-type
+
 ===end-group===
 
 ~~~end-file~~~
