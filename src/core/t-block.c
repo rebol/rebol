@@ -158,7 +158,7 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 			}
 			if (IS_TYPESET(target)) {
 				if (TYPE_CHECK(target, VAL_TYPE(value))) return index;
-				if (IS_DATATYPE(value) && TYPE_CHECK(target, VAL_DATATYPE(value))) return index;
+				//if (IS_DATATYPE(value) && TYPE_CHECK(target, VAL_DATATYPE(value))) return index; //@@ issues/256
 				if (IS_TYPESET(value) && EQUAL_TYPESET(value, target)) return index;
 			}
 			if (flags & AM_FIND_MATCH) break;
