@@ -67,6 +67,11 @@ Rebol [
 		--assert error? e: try [-1.0 + -596523:14:07.999999999]
 		--assert e/id = 'type-limit
 
+	--test-- "issue-289"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/289
+		t: 225:00 --assert 224:59:59 = t - 1
+		t: 226:00 --assert 225:59:59 = t - 1
+
 	--test-- "issue-1032"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1032
 		--assert -3723.0 = to-decimal make time! [-1 2 3]
