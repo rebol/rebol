@@ -22,6 +22,10 @@ Rebol [
 		--assert 'percent! = to word! percent!
 		--assert 'money!   = to word! money!
 
+	--test-- "find datatype!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/256
+		--assert found? find [#[datatype! string!] #[datatype! binary!]] #[datatype! binary!]
+
 ===end-group===
 
 ~~~end-file~~~
