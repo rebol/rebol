@@ -167,6 +167,11 @@ Rebol [
 ;@@ https://github.com/Oldes/Rebol-issues/issues/196
 	--assert do func [a] [bind? 'a] 1 ;-no crash
 
+--test-- "issue-216"
+;@@ https://github.com/Oldes/Rebol-issues/issues/216
+	f: func [a code] [do bind code 'a]
+	--assert 1 = try [f 1 [a]]
+
 ===end-group===
 
 ~~~end-file~~~
