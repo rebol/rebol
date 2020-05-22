@@ -2,7 +2,7 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
-## 2020 April
+## 2020 May
 
 ### Features:
 
@@ -64,7 +64,7 @@ This is just generated output from commits in [this repository](https://github.c
 
   used to receive decimal value, when argument may be decimal or integer
 
-## 2020 March
+## 2020 April
 
 ### Features:
 
@@ -229,7 +229,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`127a5a`](https://github.com/Oldes/Rebol3/commit/127a5a89964c6e6518d39d15ac5867eccceff8fb) Move sys-state.h to be included by sys-core.h
 
 
-## 2020 February
+## 2020 March
 
 ### Features:
 
@@ -311,7 +311,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`427733`](https://github.com/Oldes/Rebol3/commit/427733c21f1188ff601eb9a6f834507033c8a931) Maximum uncompressed size for GZIP decompression was not large enough
 * [`338a0f`](https://github.com/Oldes/Rebol3/commit/338a0f2590dcdfe7239f5e9c435d50642f5d56a0) Added 'type reflector to datatype!
 
-## 2020 January
+## 2020 February
 
 ### Features:
 
@@ -441,7 +441,7 @@ This is just generated output from commits in [this repository](https://github.c
 
 * [`651219`](https://github.com/Oldes/Rebol3/commit/6512190e8cf23af76fe54eb442d71708aebef127) Renaming CRC_Table to CRC24_Table, so it has same naming as CRC32_Table.
 
-## 2019 December
+## 2020 January
 
 ### Features:
 
@@ -465,7 +465,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`2b1f17`](https://github.com/Oldes/Rebol3/commit/2b1f17491cdd979e895cac3a9707f8e061dafdbb) SWF codec - missing bit aligning in fill style array
 * [`d076b3`](https://github.com/Oldes/Rebol3/commit/d076b3dc8d1ce0fe8cc2b3314d39bd65a9c4d967) Math error when multiplying negative integer with zero integer
 
-## 2019 November
+## 2019 December
 
 ### Features:
 
@@ -474,14 +474,14 @@ This is just generated output from commits in [this repository](https://github.c
 
   It was already accepting bitsets, so why not to support typesets too. Added a few `typeset!` unit tests (not complete)
 
-## 2019 October
+## 2019 November
 
 ### Features:
 
 * [`6632c6`](https://github.com/Oldes/Rebol3/commit/6632c61a1632f44a71a953c54d431659fcf6ffa2) A little bit optimized `JOIN` mezzanine function (not using `repend` mezzanine)
 * [`4ecd93`](https://github.com/Oldes/Rebol3/commit/4ecd934d51671d069e12f82784c4fb6d29ff05f7) New `tint` native for color mixtures
 
-## 2019 September
+## 2019 October
 
 ### Features:
 
@@ -498,7 +498,7 @@ This is just generated output from commits in [this repository](https://github.c
 
 * [`2c152b`](https://github.com/Oldes/Rebol3/commit/2c152b83748f50d3fb651032ecfc3cc300569b79) System crash when reading any http request
 
-## 2019 August
+## 2019 September
 
 ### Features:
 
@@ -567,7 +567,7 @@ This is just generated output from commits in [this repository](https://github.c
   ```
 * [`80597e`](https://github.com/Oldes/Rebol3/commit/80597e46f22521bac0572b19cb977f7cc30c0c2f) Renamed crc32_table to CRC32_Table so it has same case as similar CRC_Table
 
-## 2019 July
+## 2019 August
 
 ### Features:
 
@@ -596,7 +596,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`61c138`](https://github.com/Oldes/Rebol3/commit/61c138334d9fd93ca5760fdf685080f285251193) Errors should not HALT to the console but QUIT to the system
 * [`89642e`](https://github.com/Oldes/Rebol3/commit/89642e5faa66c2cf9f9e55d36ff7ffd41a2cde51) Warning: using the result of an assignment as a condition without parentheses
 
-## 2019 June
+## 2019 July
 
 ### Features:
 
@@ -615,7 +615,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`3e9dce`](https://github.com/Oldes/Rebol3/commit/3e9dce6ec28a6e44572df5b94a7a896942609a13) Separate Copy_Wide_Str from Copy_OS_Str
 * [`362fe7`](https://github.com/Oldes/Rebol3/commit/362fe7e1be1571d4fb10b0bf92c2407d1c13edf0) HELP was providing invalid info if value of path was of ERROR! type
 
-## 2019 May
+## 2019 June
 
 ### Features:
 
@@ -661,7 +661,7 @@ This is just generated output from commits in [this repository](https://github.c
 
 * [`b774da`](https://github.com/Oldes/Rebol3/commit/b774dac68d4a64725573bd83fb44fb11d21ef45e) SWF codec - all three read-PlaceObject* functions now returns first 6 values pointing to same data [Depth move/place ClassName CharacterId Matrix Cxform], to simplify its processing, event when the values may be NONE in older PlaceObject tag versions.
 
-## 2019 April
+## 2019 May
 
 ### Features:
 
@@ -695,7 +695,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`254b78`](https://github.com/Oldes/Rebol3/commit/254b78be6ca551385ca59dc05df28a97fb8879bd) Rebol cannot run a script that has UTF-8 chars in its filename or path
 * [`d10845`](https://github.com/Oldes/Rebol3/commit/d10845761cd10f9b4a7785c8fd738d99751cf80d) Removed printed output in case of DNS awake
 
-## 2019 March
+## 2019 April
 
 ### Features:
 
@@ -739,7 +739,7 @@ This is just generated output from commits in [this repository](https://github.c
 
 * [`77bd60`](https://github.com/Oldes/Rebol3/commit/77bd6065742144a14298c10ddc0711f46a6d699d) Initialize Winsock with version 2.2
 
-## 2019 February
+## 2019 March
 
 ### Features:
 
@@ -956,7 +956,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`68bdaa`](https://github.com/Oldes/Rebol3/commit/68bdaa7e15be1c9a4a2754477299f5e931a0d067) Fixed memory leak in window compositor
 * [`12a1ac`](https://github.com/Oldes/Rebol3/commit/12a1ac120926bc9ed245a75976917a6b6b33ae3b) Handle-events is replacing existing event handler with the same name as a new one instead of adding it multiple times, and view is not adding a default handler if, there is already any handler registered.
 
-## 2019 January
+## 2019 February
 
 ### Features:
 
@@ -1075,7 +1075,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`9e2846`](https://github.com/Oldes/Rebol3/commit/9e2846c64619803e8d71a964a9673c808d3eccd9) Removing not ready leaked files
 * [`873e2a`](https://github.com/Oldes/Rebol3/commit/873e2a4c44bf12021253d212db86cb1eaf2057fd) Removing not ready leaked files
 
-## 2018 December
+## 2019 January
 
 ### Features:
 
@@ -1238,7 +1238,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`f59f31`](https://github.com/Oldes/Rebol3/commit/f59f31e9f37ef9b81919704e02e26abe223d48e6) Moved some of VECTOR related definitions to sys-value.h so they can be shared with extensions.
 * [`da8353`](https://github.com/Oldes/Rebol3/commit/da8353a165fca9a7fd3e7f708b56d7e23bb9ac62) Reorganizing system value definitions so they may be shared when making extensions
 
-## 2018 November
+## 2018 December
 
 ### Features:
 
@@ -1334,7 +1334,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`a0f697`](https://github.com/Oldes/Rebol3/commit/a0f697ce72c0873292de5759692e54719382092c) REWORD with multi-character delimiter bug
 * [`1beb0d`](https://github.com/Oldes/Rebol3/commit/1beb0db1c2093305b1d84d96d6c923ad9eb1924c) Not using temp variable in ASK function
 
-## 2018 October
+## 2018 November
 
 ### Features:
 
@@ -1388,7 +1388,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`00b1c9`](https://github.com/Oldes/Rebol3/commit/00b1c9aed29747669616ded266c1507c756aa08a) Trying to fix some of lzma related issues reported by Travis
 * [`902973`](https://github.com/Oldes/Rebol3/commit/90297372773e7bfca128bd8f2ebc26c668e3ff6b) Trying to fix some of lzma related issues reported by Travis
 
-## 2018 September
+## 2018 October
 
 ### Features:
 
@@ -1510,7 +1510,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`badbba`](https://github.com/Oldes/Rebol3/commit/badbbac40173f632caa8ab08918d144d73e77e7f) Fixed crash with CHECKSUM/key with /method using SHA384 and SHA512
 * [`e2d866`](https://github.com/Oldes/Rebol3/commit/e2d866ba510f8fe15c5b3568e92aeee25868871c) Keeping spec/ref value in CHECKSUM scheme specification as some HELP functions are looking for it.
 
-## 2018 August
+## 2018 September
 
 ### Features:
 
@@ -1639,13 +1639,13 @@ This is just generated output from commits in [this repository](https://github.c
 * [`a01c68`](https://github.com/Oldes/Rebol3/commit/a01c6836aa1fc3039e70ad14a63814c64a64c5fb) Additional fix for previous feature
 * [`8ca681`](https://github.com/Oldes/Rebol3/commit/8ca68199884915728ffb9d7296c1c3469214392e) DEBASE is not able to decode valid input in some cases
 
-## 2018 July
+## 2018 August
 
 ### Fixes:
 
 * [`dde29e`](https://github.com/Oldes/Rebol3/commit/dde29ee2bcda0da61e38320236bf7c6131fcd630) Added missing copyrights for implementation of SHA256, RC4 and AES algorithms
 
-## 2018 June
+## 2018 July
 
 ### Features:
 
@@ -1660,7 +1660,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`fc5b8a`](https://github.com/Oldes/Rebol3/commit/fc5b8a46f12d3bbd30239c13a02875efa3f789b9) DELECT Bypasses PROTECT
 * [`942470`](https://github.com/Oldes/Rebol3/commit/942470a847915c63a67834402b0fe9d15a3a4d0d) Better handling ANSI escape sequences (on Windows)
 
-## 2018 May
+## 2018 June
 
 ### Features:
 
@@ -1960,7 +1960,7 @@ This is just generated output from commits in [this repository](https://github.c
   ```
 * [`c87742`](https://github.com/Oldes/Rebol3/commit/c87742be41377edcfd72a6e146578948e79ba873) Lone hash sign is not none! anymore (if not defined using USE_EMPTY_HASH_AS_NONE define) to be compatible with Red language
 
-## 2018 April
+## 2018 May
 
 ### Features:
 
@@ -2009,7 +2009,7 @@ This is just generated output from commits in [this repository](https://github.c
 
 * [`8eda0e`](https://github.com/Oldes/Rebol3/commit/8eda0ef7493e42cf0ca38a1974a10fe825b8a2c5) Removing `info?` function (as it duplicates `query`), and having `exists?` returning logic value.
 
-## 2018 March
+## 2018 April
 
 ### Fixes:
 
@@ -2022,7 +2022,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`5613da`](https://github.com/Oldes/Rebol3/commit/5613dabea37cbb0d04d21177bd02586a5d5c8755) REBNATIVE(browse) should trap on OS_BROWSE failure, not success.
 * [`008708`](https://github.com/Oldes/Rebol3/commit/008708abb1c3e9475b26eb362693875fffe056a5) Add check for 64-bit macOS in Try_Browser.
 
-## 2018 February
+## 2018 March
 
 ### Features:
 
@@ -2033,7 +2033,7 @@ This is just generated output from commits in [this repository](https://github.c
 
 * [`259b25`](https://github.com/Oldes/Rebol3/commit/259b2525578a0634acc2a07ac0f3abe4d4935452) MT_Map must have only 3 args
 
-## 2018 January
+## 2018 February
 
 ### Fixes:
 
@@ -2044,7 +2044,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`04e7a1`](https://github.com/Oldes/Rebol3/commit/04e7a1444f56f35a12a1fb6849b595e36b9034af) ATRONIX: Check for error in port CLOSE
 * [`755395`](https://github.com/Oldes/Rebol3/commit/7553959f543954f36fa07af1c0a4451701552e48) ATRONIX: Do not free port/state
 
-## 2017 November
+## 2018 January
 
 ### Features:
 
@@ -2056,7 +2056,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`7ce369`](https://github.com/Oldes/Rebol3/commit/7ce36996bc895a0802cf658702998824a422dab6) [Linux] Save signal mask when jumpping
 * [`e06825`](https://github.com/Oldes/Rebol3/commit/e0682549574d95221d23ffa59d679b0c76be3476) Use {STDIN,STDOUT}_FILENO instead of 0, 1
 
-## 2017 October
+## 2017 November
 
 ### Features:
 
@@ -2125,7 +2125,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`ff41a1`](https://github.com/Oldes/Rebol3/commit/ff41a13441d9ec96329b5d551b07f2a68c1674b8) Locally disabling warning C4146: unary minus operator applied to unsigned type, result still unsigned, as it blocks compilation in Visual Studio
 * [`d90604`](https://github.com/Oldes/Rebol3/commit/d90604a348f738d6e5d4d0bc143c4904e2a9f8f2) Do not use the system qsort
 
-## 2015 August
+## 2017 October
 
 ### Features:
 
@@ -2167,7 +2167,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`65200d`](https://github.com/Oldes/Rebol3/commit/65200ddfe4c79b75d095e719e44f991191ab1861) Correct path to Visual Studio 2017 dev command
 * [`973d39`](https://github.com/Oldes/Rebol3/commit/973d3943197d65a6fe7a95a3de1978bad9f0b885) ANSI escape sequence handling was not working if compiled with Windows subsystem
 
-## 2014 May
+## 2014 July
 
 ### Features:
 
