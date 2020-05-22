@@ -195,6 +195,11 @@ Rebol [
 		--assert #{01} = append/part #{} #{0102} 1
 		--assert #{01} = append/part #{} "^(01)^(02)" 1
 		--assert #{E2} = append/part #{} "^(2190)" 1 ;-- by design!
+	--test-- "APPEND to same value"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/226
+		a: "x" b: #{FF}
+		--assert "xx" = append a a
+		--assert #{FFFF} = append b b
 ===end-group===
 
 ===start-group=== "INSERT binary!"
