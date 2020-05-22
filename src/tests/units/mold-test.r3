@@ -395,4 +395,12 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "mold/all"
+	--test-- "mold/all datatype!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/219
+		--assert "#[datatype! integer!]" = mold/all integer!
+
+===end-group===
+
 ~~~end-file~~~
