@@ -101,6 +101,13 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/238
 		--assert $1 = to money! $1
 
+	--test-- "issue-254"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/254
+		m: $1 for i 1 508 1 [m: m * 2]
+		--assert m = $83798799562141231872337704e127
+		--assert error? try [m * 2]
+		--assert error? try [m: to money! 2 ** 509]
+
 	--test-- "issue-392"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/392
 		--assert $1e-100 = ($1.00 / 1e100) ; no crash
