@@ -115,6 +115,11 @@ Rebol [
 		--assert error? try [m * 2]
 		--assert error? try [m: to money! 2 ** 509]
 
+	--test-- "issue-255"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/255
+		--assert error? try [to-money #0]
+		--assert error? try [pick $1 2]
+
 	--test-- "issue-392"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/392
 		--assert $1e-100 = ($1.00 / 1e100) ; no crash
