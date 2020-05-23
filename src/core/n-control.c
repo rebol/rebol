@@ -394,7 +394,7 @@ enum {
 			ds = DS_POP;  // volatile stack reference
 			if (IS_BLOCK(ds)) {
 				ds = DO_BLK(ds);
-				if (IS_UNSET(ds) && !all_flag) return R_TRUE;
+				if (IS_UNSET(ds) && !all_flag) return R_UNSET;
 			}
 			if (THROWN(ds) || !all_flag || index >= SERIES_TAIL(block))
 				return R_TOS1;

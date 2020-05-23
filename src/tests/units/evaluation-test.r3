@@ -346,6 +346,14 @@ Rebol [
 		]
 		test-unset
 
+	--test-- "unset? if true []"
+		--assert unset? if true []
+	--test-- "unset? case [true []]"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2246
+		--assert unset? case [true []]
+		--assert unset? case/all [true [1] true []]
+
+
 ===end-group===
 
 ===start-group=== "SET tests"
