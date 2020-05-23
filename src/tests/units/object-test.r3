@@ -91,6 +91,30 @@ Rebol [
 		p: make o [n: 'p]
 		--assert 'o = o/b/1
 
+	--test-- "issue-2045-a"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2045
+		a: 1
+		f: func [] [a]
+		g: :f
+		o1: make object! [a: 2 g: :f]
+		o2: make o1 [a: 3 g: :f]
+		o3: make o1 [a: 4]
+		--assert 1 = g
+		--assert 1 = o1/g
+		--assert 1 = o2/g
+		--assert 1 = o3/g
+	--test-- "issue-2045-b"
+		a: 1
+		b: [a]
+		c: b
+		o1: make object! [a: 2 c: b]
+		o2: make o1 [a: 3 c: b]
+		o3: make o1 [a: 4]
+		--assert 1 = do c
+		--assert 1 = do o1/c
+		--assert 1 = do o2/c
+		--assert 1 = do o3/c
+
 ===end-group===
 
 
