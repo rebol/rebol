@@ -937,6 +937,17 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "NEW-LINE"
+--test-- "new-line paren!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1940
+	foo: quote (a b c)
+	--assert not new-line? next foo
+	new-line next foo true
+	--assert new-line? next foo
+
+===end-group===
+
+
 ;-- VECTOR related tests moved to %vector-test.r3
 
 ~~~end-file~~~
