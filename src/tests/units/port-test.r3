@@ -130,4 +130,15 @@ if "true" <> get-env "CONTINUOUS_INTEGRATION" [
 	===end-group===
 ]
 
+
+===start-group=== "DNS"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1935
+	--test-- "read dns://"
+		--assert string? try [probe read dns://] ;- no crash!
+	--test-- "read dns://8.8.8.8"
+		--assert "dns.google" = try [probe read dns://8.8.8.8]
+	--test-- "read dns://google.com"
+		--assert tuple? try [read dns://google.com]
+===end-group===
+
 ~~~end-file~~~

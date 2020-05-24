@@ -65,13 +65,22 @@
 		}
 
 		arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
-
-		if (IS_TUPLE(arg) && Scan_Tuple(VAL_BIN(arg), (REBCNT)LEN_BYTES(VAL_BIN(arg)), &tmp)) {
+		if (IS_NONE(arg)) {
+			// case: read dns://
+			sock->data = NULL;
+		}
+		else if (IS_TUPLE(arg)) {
 			SET_FLAG(sock->modes, RST_REVERSE);
-			memcpy(&sock->net.remote_ip, VAL_TUPLE(&tmp), 4);
+			memcpy(&sock->net.remote_ip, VAL_TUPLE(arg), 4);
 		}
 		else if (IS_STRING(arg)) {
-			sock->data = VAL_BIN(arg);
+			if (Scan_Tuple(VAL_BIN(arg), (REBCNT)LEN_BYTES(VAL_BIN(arg)), &tmp)) {
+				SET_FLAG(sock->modes, RST_REVERSE);
+				memcpy(&sock->net.remote_ip, VAL_TUPLE(&tmp), 4);
+			}
+			else {
+				sock->data = VAL_BIN(arg);
+			}
 		}
 		else Trap_Port(RE_INVALID_SPEC, port, -10);
 

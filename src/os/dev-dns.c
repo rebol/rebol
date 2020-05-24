@@ -106,11 +106,24 @@ extern HWND Event_Handle;
 #endif
 
 	host = OS_Make(MAXGETHOSTSTRUCT); // be sure to free it
+	sock->net.host_info = host; // stores allocated buffer, deallocated on close or on error
 
 #ifdef HAS_ASYNC_DNS
-	if (!GET_FLAG(sock->modes, RST_REVERSE)) // hostname lookup
-		handle = WSAAsyncGetHostByName(Event_Handle, WM_DNS, sock->data, host, MAXGETHOSTSTRUCT);
-	else
+	// WINDOWS version
+	if (!GET_FLAG(sock->modes, RST_REVERSE)) {// hostname lookup
+		if (sock->data == NULL) {
+			DWORD dwSize = MAXGETHOSTSTRUCT;
+			if (GetComputerNameExA(ComputerNameDnsFullyQualified, host, &dwSize)) {
+				((REBYTE*)host)[dwSize] = 0;
+				sock->data = host;
+				SET_FLAG(sock->modes, RST_REVERSE);
+				SET_FLAG(sock->flags, RRF_DONE);
+				return DR_DONE;
+			}
+			goto error;
+		}
+		handle = WSAAsyncGetHostByName(Event_Handle, WM_DNS, cs_cast(sock->data), host, MAXGETHOSTSTRUCT);
+	} else
 		handle = WSAAsyncGetHostByAddr(Event_Handle, WM_DNS, (char*)&(sock->net.remote_ip), 4, AF_INET, host, MAXGETHOSTSTRUCT);
 
 	if (handle != 0) {
@@ -119,12 +132,20 @@ extern HWND Event_Handle;
 		return DR_PEND; // keep it on pending list
 	}
 #else
+	// POSIX version
 	// Use old-style blocking DNS (mainly for testing purposes):
 	if (GET_FLAG(sock->modes, RST_REVERSE)) {
 		he = gethostbyaddr((char*)&sock->net.remote_ip, 4, AF_INET);
 		if (he) {
-			sock->net.host_info = host; //???
 			sock->data = he->h_name;
+			SET_FLAG(sock->flags, RRF_DONE);
+			return DR_DONE;
+		}
+	}
+	else if (sock->data == NULL) {
+		if(0 == gethostname(host, MAXGETHOSTSTRUCT)) {
+			sock->data = host;
+			SET_FLAG(sock->modes, RST_REVERSE);
 			SET_FLAG(sock->flags, RRF_DONE);
 			return DR_DONE;
 		}
@@ -132,14 +153,13 @@ extern HWND Event_Handle;
 	else {
 		he = gethostbyname(sock->data);
 		if (he) {
-			sock->net.host_info = host; // ?? who deallocs?
 			COPY_MEM((char*)&(sock->net.remote_ip), (char *)(*he->h_addr_list), 4); //he->h_length);
 			SET_FLAG(sock->flags, RRF_DONE);
 			return DR_DONE;
 		}
 	}
 #endif
-
+error:
 	OS_Free(host);
 	sock->net.host_info = 0;
 
@@ -178,7 +198,7 @@ extern HWND Event_Handle;
 			if (!req->error) { // success!
 				host = (HOSTENT*)req->net.host_info;
 				if (GET_FLAG(req->modes, RST_REVERSE))
-					req->data = host->h_name;
+					req->data = (REBYTE*)host->h_name;
 				else
 					COPY_MEM((char*)&(req->net.remote_ip), (char *)(*host->h_addr_list), 4); //he->h_length);
 				Signal_Device(req, EVT_READ);
