@@ -110,6 +110,11 @@ Rebol [
 --test-- "issue-1934"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1934
 	--assert error? try [do reduce [1 :+ 2]] ;- no crash
+
+--test-- "issue-1865"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1865
+	--assert object? resolve/extend/only context [] context [a1: a2: a3: a4: a5: a6: none] [a] ;- no crash!
+	
 ===end-group===
 
 ~~~end-file~~~
