@@ -661,6 +661,10 @@ Rebol [
 	--assert "" = iconv #{} 28592
 	--assert "" = iconv #{} 'utf8
 
+--test-- "ICONV from UTF-16 with BOM"
+	--assert "Writer" = iconv #{FEFF005700720069007400650072} 'UTF-16BE
+	--assert "Writer" = iconv #{FFFE570072006900740065007200} 'UTF-16LE
+
 
 --test-- "ICONV/TO (conversion to different codepage - binary result)"
 	bin: to binary! txt ; normaly conversion is done to UTF-8
