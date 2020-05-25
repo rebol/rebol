@@ -115,6 +115,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1865
 	--assert object? resolve/extend/only context [] context [a1: a2: a3: a4: a5: a6: none] [a] ;- no crash!
 	
+--test-- "issue-2017"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2017
+	--assert object? resolve/extend/only context [] context [a: none] [a] ;- no crash!
+
 ===end-group===
 
 ~~~end-file~~~
