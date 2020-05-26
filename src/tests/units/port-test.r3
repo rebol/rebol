@@ -84,6 +84,12 @@ Rebol [
 		--assert "test" = read/string write %foo "test"
 		delete %foo
 
+	--test-- "write non binary data to file"
+		;@@ https://github.com/Oldes/Rebol3/issues/16
+		--assert "make object! [^/    type: 'foo^/]" = read/string write %foo object [type: 'foo]
+		--assert "[a: 1]" = read/string write %foo [a: 1]
+		--assert "<foo>"  = read/string write %foo <foo>
+		delete %foo
 
 ===end-group===
 
