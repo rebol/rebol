@@ -785,21 +785,20 @@ get-git: function[][
 	git
 ]
 
+plats: load %platforms.r
 boot-sysobj: load %sysobj.r
 change at-value version version
 when: now
 when: when - when/zone
 when/zone: 0:00
-change at-value build object [date: when git: get-git]
+change at-value build object [
+	os: any [select third any [find/skip plats version/4 3 []] version/5 ""]
+	date: when
+	git: get-git
+]
 change at-value product to lit-word! product
 
-
-plats: load %platforms.r
-
-change/only at-value platform reduce [
-	any [select plats version/4 "Unknown"]
-	any [select third any [find/skip plats version/4 3 []] version/5 ""]
-]
+change/only at-value platform to lit-word! any [select plats version/4 'Unknown]
 
 ob: context boot-sysobj
 

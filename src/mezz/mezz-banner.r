@@ -57,11 +57,10 @@ sys/boot-banner: make-banner [
 	= Website:  "https://github.com/Oldes/Rebol3"
 	-
 	= Version:  system/version
-	= Platform: system/platform
+	= Platform: [ajoin [system/platform " (" system/build/os ")"]]
 	= Build:    system/build/date
 	= Warning:  "For testing purposes only. Use at your own risk."
 	-
-	= Language: [reform [system/locale/language* "-" system/locale/locale*]]
 	= Home:     [to-local-file system/options/home]
 	-
 	*

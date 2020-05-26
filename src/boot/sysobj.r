@@ -19,9 +19,9 @@ REBOL [
 product:  'core
 
 ; Next three fields are updated during build:
+platform: none
 version:  0.0.0
 build:    1
-platform: none
 
 license: {Copyright 2012 REBOL Technologies
 REBOL is a trademark of REBOL Technologies
