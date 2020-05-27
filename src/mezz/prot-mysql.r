@@ -723,6 +723,33 @@ mysql-driver: make object! [
 		]
 	]
 
+	on-error-packet: func[
+		port [port!]
+		/local pl
+	][
+		pl: port/locals
+		parse next port/data case [
+			pl/capabilities and defs/client/protocol-41 [
+				[
+					read-int 	(pl/error-code: int)
+					6 skip
+					read-string (pl/error-msg: string)
+				]
+			]
+			any [none? pl/protocol pl/protocol > 9][
+				[
+					read-int 	(pl/error-code: int)
+					read-string (pl/error-msg: string)
+				]
+			]
+			true [
+				pl/error-code: 0
+				[read-string (pl/error-msg: string)]
+			]
+		]
+		cause-error 'mysql 'message reduce [pl/error-code pl/error-msg]
+	]
+
 	parse-a-packet: func [
 		port [port!]
 		/local pl status rules
@@ -735,27 +762,8 @@ mysql-driver: make object! [
 
 		switch status [
 			255 [
-				parse/all next port/data case [
-					pl/capabilities and defs/client/protocol-41 [
-						[
-							read-int 	(pl/error-code: int)
-							6 skip
-							read-string (pl/error-msg: string)
-						]
-					]
-					any [none? pl/protocol pl/protocol > 9][
-						[
-							read-int 	(pl/error-code: int)
-							read-string (pl/error-msg: string)
-						]
-					]
-					true [
-						pl/error-code: 0
-						[read-string (pl/error-msg: string)]
-					]
-				]
 				pl/state: 'idle
-				cause-error 'mysql 'message reduce [pl/error-code pl/error-msg]
+				on-error-packet port
 				return 'ERR
 			]
 			254 [
@@ -867,11 +875,8 @@ mysql-driver: make object! [
 					sys/log/more 'MySQL["state changed to sending-old-auth-pack"]
 				][
 					if buf/1 = 255 [;error packet
-						parse/all skip buf 1 [
-							read-int    (pl/error-code: int)
-							read-string (pl/error-msg: string)
-						]
-						cause-error 'mysql 'message reduce [pl/error-code pl/error-msg ]
+						pl/state: 'init
+						on-error-packet port
 					]
 					sys/log/more 'MySQL "handshaked"
 					;OK?
@@ -1694,12 +1699,16 @@ send-sql: func [
 					print ["******* Unexpected wakeup from tcp-port *********"]
 				]
 				;sys/log/more 'MySQL"wait returned none"
-				cause-error 'Access 'timeout reduce [port none none]
+				throw-timeout port
 			]
 			;sys/log/more 'MySQL["trying again..."]
 		]
-		cause-error 'Access 'timeout reduce [port none none]
+		throw-timeout port
 	]
+]
+
+throw-timeout: func[port [port!]] [
+	cause-error 'Access 'timeout to url! rejoin [port/spec/scheme "://" port/spec/host #":" port/spec/port-id]
 ]
 
 connect-sql: func [
@@ -1711,6 +1720,6 @@ connect-sql: func [
 	port/locals/exit-wait-after-handshaked?: true
 	p: wait/only [port port/locals/tcp-port port/spec/timeout]
 	if port? p [return port]
-	cause-error 'Access 'timeout reduce [port none none]
+	throw-timeout port
 ]
 
