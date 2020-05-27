@@ -761,7 +761,7 @@ get-git: function[][
 	][
 		?? git-dir
 		try [
-			ls/r :git-dir
+			;ls/r :git-dir
 			
 			try [print read/string  git-dir/config ]
 
@@ -1014,8 +1014,27 @@ foreach section [boot-base boot-sys boot-mezz] [
 
 boot-protocols: make block! 20
 foreach file first mezz-files [
-	m: load/all join %../mezz/ file ; not REBOL word
-	append/only append/only boot-protocols m/2 skip m 2
+	file: next load/all join %../mezz/ file
+	either all [
+		;- if protocol exports some function, import must be used so
+		;- the functions are available in user's context
+		select file/1 'exports
+		select file/1 'name
+		'module  = select file/1 'type
+	][
+		;- using boot-mezz as this section is binded into lib context
+		append boot-mezz compose/deep/only [
+			import module [
+				Title:   (select file/1 'title)
+				Name:    (select file/1 'name)
+				Version: (select file/1 'version)
+				Exports: (select file/1 'exports)
+			] ( next file )
+		]
+	][
+		;- else hidden module is used by default (see sys-start.r)
+		append/only append/only boot-protocols file/1 next file
+	]
 ]
 
 emit-head "Sys Context" %sysctx.h
