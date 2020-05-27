@@ -997,6 +997,7 @@ typedef struct Reb_Path_Value {
 	REBVAL *select;	// modified
 	REBVAL *path;	// modified
 	REBVAL *store;  // modified (holds constructed values)
+	REBSER *setfrm; // modified
 	REBVAL *setval;	// static
 	REBVAL *orig;	// static
 } REBPVS;
