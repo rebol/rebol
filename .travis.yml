@@ -17,6 +17,8 @@ env:
     matrix:
         # Linux x86
         - OS_ID=0.4.4
+        # Linux ARM
+        - OS_ID=0.4.20
         # Linux x64
         - OS_ID=0.4.40
 
