@@ -516,7 +516,7 @@ chk_neg:
 
 	if(IS_FILE(arg)) {
 		// Convert file to full local os path
-		url = UNI_HEAD(Value_To_OS_Path(arg, TRUE));
+		url = (REBCHR*)SERIES_DATA(Value_To_OS_Path(arg, TRUE));
 	} else {
 		url = Val_Str_To_OS(arg);
 	}
