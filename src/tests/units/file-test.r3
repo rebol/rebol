@@ -22,8 +22,13 @@ Rebol [
 
 --test-- "issue-1115"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1115
-	--assert "\\rodan\shareddocs"  = to-local-file %/rodan/shareddocs
-	--assert "\\rodan\shareddocs\" = to-local-file %/rodan/shareddocs/
+	either system/platform = 'Windows [
+		--assert "\\rodan\shareddocs"  = to-local-file %/rodan/shareddocs
+		--assert "\\rodan\shareddocs\" = to-local-file %/rodan/shareddocs/
+	][
+		--assert "/rodan/shareddocs"  = to-local-file %/rodan/shareddocs
+		--assert "/rodan/shareddocs/" = to-local-file %/rodan/shareddocs/
+	]
 	--assert %/rodan/shareddocs    = to-rebol-file "\\rodan\shareddocs"
 	--assert %/rodan/shareddocs/   = to-rebol-file "\\rodan\shareddocs\"
 
