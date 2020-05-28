@@ -179,6 +179,14 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "APPEND string!"
+	--test-- "APPEND string! char!"
+		--assert "a" = append "" #"a"
+		--assert "←" = append "" #"^(2190)" ; wide char
+===end-group===
+
+
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1791
 ===start-group=== "APPEND binary!"
 	--test-- "APPEND binary! binary!"

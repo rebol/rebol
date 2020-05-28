@@ -157,9 +157,15 @@
 		else Trap_Arg(src_val);
 	}
 	else if (IS_CHAR(src_val)) {
-		src_ser = BUF_FORM;
-		RESET_TAIL(src_ser);
-		src_ser = Append_Byte(src_ser, VAL_CHAR(src_val)); // unicode ok too
+		if (VAL_CHAR(src_val) < 256) {
+			src_ser = BUF_FORM;
+			*SERIES_DATA(src_ser) = (REBYTE)VAL_CHAR(src_val);
+		}
+		else {
+			src_ser = BUF_UTF8;
+			*(REBUNI*)SERIES_DATA(src_ser) = (REBUNI)VAL_CHAR(src_val);
+		}
+		SERIES_TAIL(src_ser) = 1;
 	}
 	else if (IS_BLOCK(src_val)) {
 		src_ser = Form_Tight_Block(src_val);
