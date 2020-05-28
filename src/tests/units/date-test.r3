@@ -187,8 +187,8 @@ Rebol [
 		all-date-words: words-of system/standard/date-info
 		--assert all-date-words = query/mode date none
 		--assert date/time = query/mode date 'time
-		--assert [2020 4] = query/mode now [year month]
-		--assert [month: 4 year: 2020] = query/mode now [month: year:]
+		--assert [2020 4] = query/mode date [year month]
+		--assert [month: 4 year: 2020] = query/mode date [month: year:]
 		--assert equal? query/mode date all-date-words [2020 4 8 12:04:32 8-Apr-2020 2:00 12 4 32 3 99 2:00 8-Apr-2020/10:04:32 99]
 	
 	--test-- "query/mode date"
