@@ -8,54 +8,62 @@ Rebol [
 dt [ ;- delta time
 	***start-run*** "All tests"
 	;recycle/torture
-    wrap load %units/bbcode-test.r3
-    wrap load %units/bincode-test.r3
-    wrap load %units/codecs-test.r3
-    wrap load %units/compress-test.r3
-    wrap load %units/conditional-test.r3
-    wrap load %units/crash-test.r3
-    wrap load %units/datatype-test.r3
-    wrap load %units/date-test.r3
-    wrap load %units/decimal-test.r3
-    wrap load %units/delect-test.r3
-    wrap load %units/enbase-test.r3
-    wrap load %units/enum-test.r3
-    wrap load %units/evaluation-test.r3
-    wrap load %units/event-test.r3
-    wrap load %units/gob-test.r3
-    wrap load %units/file-test.r3
-    wrap load %units/func-test.r3
-    wrap load %units/image-test.r3
-    wrap load %units/integer-test.r3
-    wrap load %units/issue-test.r3
-    wrap load %units/lexer-test.r3
-    wrap load %units/load-test.r3
-    wrap load %units/map-test.r3
-    wrap load %units/mold-test.r3
-    wrap load %units/money-test.r3
-    wrap load %units/object-test.r3
-    wrap load %units/pair-test.r3
-    wrap load %units/parse-test.r3
-    wrap load %units/percent-test.r3
-    wrap load %units/port-test.r3
-    wrap load %units/power-test.r3
-    wrap load %units/protect-test.r3
-    wrap load %units/series-test.r3
-    wrap load %units/task-test.r3
-    wrap load %units/time-test.r3
-    wrap load %units/tuple-test.r3
-    wrap load %units/typeset-test.r3
-    wrap load %units/vector-test.r3
-    wrap load %units/word-test.r3
-    ;- cryptography tests:
-    wrap load %units/aes-test.r3
-    wrap load %units/chacha20-test.r3
-    wrap load %units/checksum-test.r3
-    wrap load %units/dh-test.r3
-    wrap load %units/mezz-crypt-test.r3
-    wrap load %units/poly1305-test.r3
-    wrap load %units/rc4-test.r3
-    wrap load %units/rsa-test.r3
+	failed-units: copy []
+	foreach file [
+		%units/bbcode-test.r3
+		%units/bincode-test.r3
+		%units/codecs-test.r3
+		%units/compress-test.r3
+		%units/conditional-test.r3
+		%units/crash-test.r3
+		%units/datatype-test.r3
+		%units/date-test.r3
+		%units/decimal-test.r3
+		%units/delect-test.r3
+		%units/enbase-test.r3
+		%units/enum-test.r3
+		%units/evaluation-test.r3
+		%units/event-test.r3
+		%units/gob-test.r3
+		%units/file-test.r3
+		%units/func-test.r3
+		%units/image-test.r3
+		%units/integer-test.r3
+		%units/issue-test.r3
+		%units/lexer-test.r3
+		%units/load-test.r3
+		%units/map-test.r3
+		%units/mold-test.r3
+		%units/money-test.r3
+		%units/object-test.r3
+		%units/pair-test.r3
+		%units/parse-test.r3
+		%units/percent-test.r3
+		%units/port-test.r3
+		%units/power-test.r3
+		%units/protect-test.r3
+		%units/series-test.r3
+		%units/task-test.r3
+		%units/time-test.r3
+		%units/tuple-test.r3
+		%units/typeset-test.r3
+		%units/vector-test.r3
+		%units/word-test.r3
+		;- cryptography tests:
+		%units/aes-test.r3
+		%units/chacha20-test.r3
+		%units/checksum-test.r3
+		%units/dh-test.r3
+		%units/mezz-crypt-test.r3
+		%units/poly1305-test.r3
+		%units/rc4-test.r3
+		%units/rsa-test.r3
+	][
+		try/except [wrap load file] func[error][
+			repend failed-units [file error]
+		]
+	]
+
 
 	recycle/torture
 	recycle
@@ -71,6 +79,15 @@ dt [ ;- delta time
 	
 	***end-run***
 	recycle/on
+
+	unless empty? failed-units [
+		print "------------------------------------------------------------"
+		print "FAILED units files:"
+		foreach [file error] failed-units [
+			?? file
+			?? error
+		]
+	]
 
 
 ]
