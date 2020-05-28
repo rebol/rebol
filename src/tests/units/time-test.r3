@@ -69,8 +69,8 @@ Rebol [
 
 	--test-- "issue-289"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/289
-		t: 225:00 --assert 224:59:59 = t - 1
-		t: 226:00 --assert 225:59:59 = t - 1
+		t: 225:00 --assert 224:59:59 = (t - 1)
+		t: 226:00 --assert 225:59:59 = (t - 1)
 
 	--test-- "issue-1032"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1032
