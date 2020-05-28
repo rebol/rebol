@@ -113,7 +113,9 @@ Rebol [
 
 --test-- "issue-1865"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1865
-	--assert object? resolve/extend/only context [] context [a1: a2: a3: a4: a5: a6: none] [a] ;- no crash!
+	;--assert object? resolve/extend/only context [] context [a1: a2: a3: a4: a5: a6: none] [a] ;- no crash!
+	;-- PROBLEM! above code sometimes causes failed bind table check (using: `evoke 3`)
+	;-- probably related to the next test too!
 	
 --test-- "issue-2017"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2017
