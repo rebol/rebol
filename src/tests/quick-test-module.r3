@@ -54,6 +54,7 @@ qt-red-only: false
 was-quiet: false
 
 failes: copy ""
+incomp: copy ""
 
 
 
@@ -70,6 +71,7 @@ qt-init-run: does [
 	qt-run-failures:
 	qt-run-incompatible: 0
 	clear failes
+	clear incomp
 	qt-init-group
 ]
 
@@ -141,15 +143,19 @@ assert: func [
 				prin "===group=== "
 				print qt-group-name
 				qt-group-name-not-printed: false
-				append failes ajoin ["^/^/In group: " qt-group-name]
+				append either qt-red-only [incomp][failes] ajoin ["^/^/In group: " qt-group-name]
 			]
 		]
-		append failes ajoin ["^/FAIL: " qt-test-name " (" qt-test-assert #")"]
 		prin "--test-- " 
 		prin [qt-test-name qt-test-assert]
+
 		print either qt-red-only [
-			" not like Red********"
-		][	" FAILED**************"]
+			append incomp ajoin ["^/^[[1;35mTest:^[[0m " qt-test-name " (" qt-test-assert #")"]
+			"^[[1;35m not like Red********^[[0m"
+		][
+			append failes ajoin ["^/^[[1;31mFAIL:^[[0m " qt-test-name " (" qt-test-assert #")"]
+			"^[[1;31m FAILED**************^[[0m"
+		]
 	]
 ]
 
@@ -215,6 +221,15 @@ end-run: func [][
 	             qt-run-passes
 	             qt-run-failures
 	             qt-run-incompatible
+
+	if qt-run-failures <> 0 [
+	prin "^/^/****************TEST FAILURES****************"
+	print failes
+	]
+	if qt-run-incompatible <> 0 [
+	prin "^/^/***********NOT COMPATIBLE WITH RED***********"
+	print incomp
+	]
 ]
 
 print-totals: func [
@@ -234,10 +249,6 @@ print-totals: func [
 	print failures
 	prin  "  Number of Assertions Red-diff:  "
 	print incompat
-	if failures <> 0 [
-	print "****************TEST FAILURES****************"
-	print failes
-	]
 ]
 
 ;- exported functions used as a "test dialect"
