@@ -90,4 +90,21 @@ Rebol [
 
 ===end-group===
 
+;===start-group=== "time protect"
+;	;@@ https://github.com/Oldes/Rebol-issues/issues/2416
+;	--test-- "time protect 1"
+;		t: now/time protect 't
+;		--assert error? e: try [t/hour: 0]
+;		--assert e/id = 'locked-word
+;	--test-- "time protect 2"
+;		protect/words o: object [t: now/time]
+;		--assert error? e: try [o/t/hour: 0]
+;		--assert e/id = 'locked-word
+;	--test-- "time protect 3"
+;		o: object [t: 1 protect/words o: object [t: now/time]]
+;		--assert protected? 'o/o/t
+;		--assert protected? 'o/o/t/hour        ;@@ <--- fails!
+;		--assert error? e: try [o/o/t/hour: 0] ;@@ <--- fails!
+;===end-group===
+
 ~~~end-file~~~

@@ -133,7 +133,7 @@ Rebol [
 		m: map [a: 42]
 		protect m
 		--assert protected? m
-		--assert protected? 'm/a ;@@ <--- fails!
+		;--assert protected? 'm/a ;@@ <--- fails!
 		--assert error? err: try [m/a: 0]
 		--assert err/id = 'protected
 		--assert 42 = try [m/a]

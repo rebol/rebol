@@ -60,6 +60,14 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "REMOVE"
+--test-- "remove"
+	;--assert parse v: "yx" [some [remove #"y" | #"x"] ]
+	;--assert v = "x"
+	;--assert parse "yx" [copy v any [ remove #"y" | #"x" ] ]
+	;--assert v = "x"
+===end-group===
+
 ===start-group=== "Modifiers on protected series"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/2290
 	s: protect "aaa"

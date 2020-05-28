@@ -58,6 +58,8 @@ dt [ ;- delta time
 		%units/poly1305-test.r3
 		%units/rc4-test.r3
 		%units/rsa-test.r3
+		;- known issues - waiting for fix
+		;%units/_known-issues_.r3
 	][
 		try/except [wrap load file] func[error][
 			repend failed-units [file error]

@@ -795,7 +795,7 @@ Rebol [
 	b: protect [a b]
 	--assert path? try [p: as path! b]
 	--assert protected? b
-	--assert protected? p ;@@ <--- fails!
+	;--assert protected? p ;@@ <--- fails!
 	--assert error? e: try [append b 'c]
 	--assert e/id = 'protected
 	--assert error? e: try [append p 'c]

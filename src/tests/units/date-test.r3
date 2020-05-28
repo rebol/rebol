@@ -134,6 +134,25 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/276
 		--assert error? try [0 - 1-jan-0000] ;- no crash!
 
+
+===end-group===
+
+===start-group=== "date protect"
+;	;@@ https://github.com/Oldes/Rebol-issues/issues/2416
+;	--test-- "date protect 1"
+;		d: now protect 'd
+;		--assert error? e: try [d/year: 0]
+;		--assert e/id = 'locked-word
+;		unprotect 'd
+;	--test-- "date protect 2"
+;		protect/words o: object [d: now]
+;		--assert error? e: try [o/d/year: 0]
+;		--assert e/id = 'locked-word
+;	--test-- "date protect 3"
+;		o: object [d: 1 protect/words o: object [d: now]]
+;		--assert protected? 'o/o/d
+;		--assert protected? 'o/o/d/year        ;@@ <--- fails!
+;		--assert error? e: try [o/o/d/year: 0] ;@@ <--- fails!
 ===end-group===
 
 ===start-group=== "DATE/TIMEZONE"
