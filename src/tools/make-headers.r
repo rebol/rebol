@@ -25,7 +25,7 @@ do %common.r
 
 r3: system/version > 2.100.0
 
-zero-index?: not none? pick next system/platform 0 ;@@ used to be able compile using old R3 versions which were using path/0 instead of path/-1
+zero-index?: not none? pick next [1] 0 ;@@ used to be able compile using old R3 versions which were using path/0 instead of path/-1
 
 chk-dups: true
 dups: make block! 10000 ; get pick [map! hash!] r3 1000
