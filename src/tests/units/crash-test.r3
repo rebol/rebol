@@ -121,6 +121,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2017
 	--assert object? resolve/extend/only context [] context [a: none] [a] ;- no crash!
 
+--test-- "issue-1514"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1514
+	--assert error? try [try/except [1 / 0] :add] ;- no crash
+
 ===end-group===
 
 ~~~end-file~~~
