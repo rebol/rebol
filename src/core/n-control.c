@@ -837,6 +837,10 @@ got_err:
 
 	if (Try_Block(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
 		if (except) {
+			// save it for access from the block handler or explain
+			REBVAL *val = Get_System(SYS_STATE, STATE_LAST_ERROR);
+			*val = *DS_NEXT;
+
 			if (IS_BLOCK(&handler)) {
 				DO_BLK(&handler);
 			}

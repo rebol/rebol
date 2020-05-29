@@ -471,6 +471,23 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "TRY/except"
+	--test-- "try/except [1 / 0] block!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2419
+		system/state/last-error: none
+		try/except [1 / 0][
+			--assert error? system/state/last-error
+			--assert system/state/last-error/id = 'zero-divide
+		]
+	--test-- "try/except [1 / 0] function!"
+		system/state/last-error: none
+		--assert string? try/except [1 / 0] :mold
+		--assert system/state/last-error/id = 'zero-divide
+
+
+===end-group===
+
+
 ===start-group=== "delta-profile"
 
 	--test-- "delta-profile []"
