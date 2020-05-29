@@ -547,41 +547,47 @@ sys/make-scheme [
 			out/content: none
 		]
 
-		if error? err: try [
+		try/except [
 			write port buffer
 		][
 			;@@TODO: handle it without `print`; using on-error?
-			print "Write failed!"
-			probe copy/part buffer 100
+			print "** Write failed!"
+			;probe copy/part buffer 100
 			Awake-Client make event! [type: 'close port: port ]
 		]
 	]
 
 	Do-log: function [ctx][
-		msg: ajoin [
-			ctx/remote-ip
-			{ - - [} to-CLF-idate now {] "}
-			ctx/inp/method #" "
-			to string! ctx/inp/target/original
-			" HTTP/" ctx/inp/version {" }
-			ctx/out/status #" "
-			any [ctx/out/header/Content-Length #"-"]
-			#"^/"
-		]
-		prin msg
-		if file? ctx/config/log-access [
-			try [write/append ctx/config/log-access msg]
-		]
-		if all [
-			ctx/out/status >= 400
-			file? ctx/config/log-errors
+		try/except [
+			msg: ajoin [
+				ctx/remote-ip
+				{ - - [} to-CLF-idate now {] "}
+				ctx/inp/method #" "
+				to string! ctx/inp/target/original
+				" HTTP/" ctx/inp/version {" }
+				ctx/out/status #" "
+				any [ctx/out/header/Content-Length #"-"]
+				#"^/"
+			]
+			prin msg
+			if file? ctx/config/log-access [
+				write/append ctx/config/log-access msg
+			]
+			if all [
+				ctx/out/status >= 400
+				file? ctx/config/log-errors
+			][
+				write/append ctx/config/log-errors msg
+			]
 		][
-			try [write/append ctx/config/log-errors msg]
+			print "** Failed to write a log"
+			print system/state/last-error
 		]
 	]
 
 	Awake-Client: wrap [
-		from-method: ["GET" | "POST" | "HEAD" | "PUT" | "DELETE" | "TRACE" | "CONNECT" | "OPTIONS"]
+		chars-method: #[bitset! #{00000000000000007FFFFFE0}] ; #"A" - #"Z"
+		;from-method: ["GET" | "POST" | "HEAD" | "PUT" | "DELETE" | "TRACE" | "CONNECT" | "OPTIONS"]
 		chars: complement union space: charset " " charset [#"^@" - #"^_"]
 		CRLF2BIN: #{0D0A0D0A}
 
@@ -601,12 +607,12 @@ sys/make-scheme [
 				READ [
 					sys/log/more 'HTTPD ["bytes:^[[1m" length? port/data]
 					either header-end: find/tail port/data CRLF2BIN [
-						if error? err: try [
+						try/except [
 							if none? ctx/state [
 								with inp [
 									parse copy/part port/data header-end [
-										copy method from-method some space
-										copy target some chars some space
+										copy method some chars-method some space
+										copy target some chars        some space
 										"HTTP/" copy version some chars thru CRLF
 										copy header to end
 										(
@@ -630,7 +636,7 @@ sys/make-scheme [
 							]
 							actor/on-read port/locals
 						][
-							print err
+							print system/state/last-error
 							ctx/state: 'error
 							ctx/out/status: 500 ; Internal Server Error
 						]
@@ -659,10 +665,10 @@ sys/make-scheme [
 									close out/content ; closing source port
 									End-Client port
 								][
-									if error? err: try [
+									try/except [
 										write port buffer
 									][
-										print "Write failed (2)!"
+										print "** Write failed (2)!"
 										;probe buffer
 										End-Client port
 									]
@@ -740,9 +746,9 @@ sys/make-scheme [
 		append port/locals/clients client
 
 		sys/log/info 'HTTPD ["New client:^[[1;31m" client/locals/remote]
-		if error? err: try [read client][
-			print ["Failed to read new client:" client/locals/remote]
-			print err
+		try/except [read client][
+			print ["** Failed to read new client:" client/locals/remote]
+			print system/state/last-error
 		]
 	]
 
