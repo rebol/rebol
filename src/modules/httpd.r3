@@ -279,10 +279,14 @@ sys/make-scheme [
 			]
 		]
 
-		On-Post: func[ctx [object!] /local content header length type][
+		On-Post: func[ctx [object!] /local content header length type temp][
 			;@@ TODO: handle `Expect` header: https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.20
 			header: ctx/inp/header
 			length: select header 'Content-Length
+			unless find header 'Content-Type [
+				;make sure there is any Content-Type
+				extend header 'Content-Type "application/octet-stream"
+			]
 			either all [
 				integer? length
 				length > length? content: ctx/inp/content
@@ -291,11 +295,19 @@ sys/make-scheme [
 			][
 				ctx/state: 'data-received
 				ctx/out/status: 200
-				type: header/Content-Type: decode-content-params select header 'Content-Type
+				type: header/Content-Type: decode-content-params header/Content-Type
+				;@@ TODO: handle charset if not utf-8!
 				case [
 					type/2 = "x-www-form-urlencoded" [
 						; using full target decoder, although only values are needed
-						ctx/inp/content: select decode-target content 'values
+						temp: decode-target content
+						ctx/inp/content: reduce [
+							select temp 'values   ; parsed [key value ...]
+							select temp 'original ; raw data
+						]
+					]
+					type/2 = "json" [
+						ctx/inp/content: decode 'json content
 					]
 					type/1 = "multipart" [
 						ctx/inp/content: decode-multipart-data type content

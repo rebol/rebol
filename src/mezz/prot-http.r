@@ -702,8 +702,17 @@ sys/make-scheme [
 		][
 			sys/log/debug 'HTTP "WRITE"
 			;?? port
-			unless any [block? :value binary? :value any-string? :value][value: form :value]
-			unless block? value [value: reduce [[Content-Type: "application/x-www-form-urlencoded; charset=utf-8"] value]]
+			case [
+				map? value [
+					value: reduce [[Content-Type: "application/json; charset=utf-8"] encode 'JSON value]
+				]
+				binary? value [
+					value: reduce [[Content-Type: "application/octet-stream"] value]
+				]
+				not block? value [
+					value: reduce [[Content-Type: "application/x-www-form-urlencoded; charset=utf-8"] form value]
+				]
+			]
 
 			either any-function? :port/awake [
 				unless open? port [cause-error 'Access 'not-open port/spec/ref]
