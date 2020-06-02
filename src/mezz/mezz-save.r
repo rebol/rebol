@@ -112,7 +112,7 @@ save: function [
 		file? where [write where data] ; WRITE converts to UTF-8, saves overhead
 		url? where [write where data]  ; But some schemes don't support it
 		none? where [data] ; just return the UTF-8 binary
-		'else [insert tail where data] ; string! or binary!, insert data
+		'else [append where data] ; string! or binary!, insert data
 	]
 ]
 

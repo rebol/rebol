@@ -54,7 +54,13 @@ Rebol [
 
 ===end-group===
 
-===start-group=== "Invalid SAVE"
+===start-group=== "SAVE function"
+	--test-- "SAVE to binary!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1909
+		--assert "1"     = load save #{} "1"
+		--assert #{CAFE} = load save #{} #{CAFE}
+		--assert [1 2]   = load save #{} [1 2]
+
 	--test-- "invalid image SAVE"
 		--assert error? try [save %temp.bmp [1 2]]
 		--assert error? try [save %temp.png [1 2]]
