@@ -860,6 +860,13 @@ Rebol [
 	--assert #{0102} = copy/part b 2
 	--assert #{01020304} = copy/part b 100
 
+--test-- "to-string to-binary"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1517
+	--assert "^M" = to-string to-binary "^M"
+	--assert "^/" = to-string to-binary "^/"
+	--assert "^M^/"  = to-string to-binary "^M^/"
+	--assert #{0D0A} = to-binary to-string #{0D0A}
+
 ===end-group===
 
 
