@@ -377,7 +377,7 @@ static REBYTE seed_str[SEED_LEN] = {
 
 /***********************************************************************
 **
-*/	REBCNT Deline_Bytes(REBYTE *buf, REBCNT len)
+*/	REBCNT Replace_CRLF_to_LF_Bytes(REBYTE *buf, REBCNT len)
 /*
 **		This function converts any combination of CR and
 **		LF line endings to the internal REBOL line ending.
@@ -406,7 +406,7 @@ static REBYTE seed_str[SEED_LEN] = {
 
 /***********************************************************************
 **
-*/	REBCNT Deline_Uni(REBUNI *buf, REBCNT len)
+*/	REBCNT Replace_CRLF_to_LF_Uni(REBUNI *buf, REBCNT len)
 /*
 ***********************************************************************/
 {
@@ -428,10 +428,26 @@ static REBYTE seed_str[SEED_LEN] = {
 	return (REBCNT)(tp - buf);
 }
 
+/***********************************************************************
+**
+*/	void Replace_CRLF_to_LF(REBVAL *val, REBCNT len)
+/*
+***********************************************************************/
+{
+	REBINT n;
+	if (VAL_BYTE_SIZE(val)) {
+		REBYTE *bp = VAL_BIN_DATA(val);
+		n = Replace_CRLF_to_LF_Bytes(bp, len);
+	} else {
+		REBUNI *up = VAL_UNI_DATA(val);
+		n = Replace_CRLF_to_LF_Uni(up, len);
+	}
+	VAL_TAIL(val) -= (len - n);
+}
 
 /***********************************************************************
 **
-*/	void Enline_Bytes(REBSER *ser, REBCNT idx, REBCNT len)
+*/	void Replace_LF_To_CRLF_Bytes(REBSER *ser, REBCNT idx, REBCNT len)
 /*
 ***********************************************************************/
 {
@@ -453,7 +469,7 @@ static REBYTE seed_str[SEED_LEN] = {
 	len = SERIES_TAIL(ser); // before expansion
 	EXPAND_SERIES_TAIL(ser, cnt);
 	tail = SERIES_TAIL(ser); // after expansion
-	bp = BIN_HEAD(ser); // expand may change it
+	bp = BIN_SKIP(ser, idx); // expand may change it
 
 	// Add missing CRs:
 	while (cnt > 0) {
@@ -469,7 +485,7 @@ static REBYTE seed_str[SEED_LEN] = {
 
 /***********************************************************************
 **
-*/	void Enline_Uni(REBSER *ser, REBCNT idx, REBCNT len)
+*/	void Replace_LF_To_CRLF_Uni(REBSER *ser, REBCNT idx, REBCNT len)
 /*
 ***********************************************************************/
 {
@@ -491,7 +507,7 @@ static REBYTE seed_str[SEED_LEN] = {
 	len = SERIES_TAIL(ser); // before expansion
 	EXPAND_SERIES_TAIL(ser, cnt);
 	tail = SERIES_TAIL(ser); // after expansion
-	bp = UNI_HEAD(ser); // expand may change it
+	bp = UNI_SKIP(ser, idx); // expand may change it
 
 	// Add missing CRs:
 	while (cnt > 0) {

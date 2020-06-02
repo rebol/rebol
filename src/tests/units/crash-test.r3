@@ -128,6 +128,8 @@ Rebol [
 --test-- {enline "^/"}
 	--assert string? enline "^/"  ;- no crash
 	--assert string? enline "^/č" ;- no crash (unicode version)
+	--assert string? enline next "^M^/"  ;- no crash
+	--assert string? enline next "^M^/č" ;- no crash
 
 ===end-group===
 

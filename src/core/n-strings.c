@@ -756,15 +756,7 @@ static struct digest {
 		return R_RET;
 	}
 
-	if (VAL_BYTE_SIZE(val)) {
-		REBYTE *bp = VAL_BIN_DATA(val);
-		n = Deline_Bytes(bp, len);
-	} else {
-		REBUNI *up = VAL_UNI_DATA(val);
-		n = Deline_Uni(up, len);
-	}
-
-	VAL_TAIL(val) -= (len - n);
+	Replace_CRLF_to_LF(val, len);
 
 	return R_ARG1;
 }
@@ -782,12 +774,17 @@ static struct digest {
 	REBSER *ser = VAL_SERIES(val);
 
 	if (IS_PROTECT_SERIES(VAL_SERIES(val))) Trap0(RE_PROTECTED);
+	if (IS_BLOCK(val)) Trap0(RE_NOT_DONE);
 
 	if (SERIES_TAIL(ser)) {
+#ifdef TO_WINDOWS
 		if (VAL_BYTE_SIZE(val))
-			Enline_Bytes(ser, VAL_INDEX(val), VAL_LEN(val));
+			Replace_LF_To_CRLF_Bytes(ser, VAL_INDEX(val), VAL_LEN(val));
 		else
-			Enline_Uni(ser, VAL_INDEX(val), VAL_LEN(val));
+			Replace_LF_To_CRLF_Uni(ser, VAL_INDEX(val), VAL_LEN(val));
+#else
+		Replace_CRLF_to_LF(val, VAL_LEN(val));
+#endif
 	}
 
 	return R_ARG1;

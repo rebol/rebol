@@ -935,13 +935,12 @@ end_date:
 	VAL_SET(value, type);
 	VAL_SERIES(value) = Append_UTF8(0, cp, len);
 
-	if (VAL_BYTE_SIZE(value)) {
-		n = Deline_Bytes(VAL_BIN(value), VAL_LEN(value));
-	} else {
-		n = Deline_Uni(VAL_UNI(value), VAL_LEN(value));
-	}
-	VAL_TAIL(value) = n;
-
+	//O: is it really needed to normalize the string using DELINE how it was done in R3-alpha?
+	//O: Rebol2 was not using any LF normalization.
+	//O: in R2: `#{610D0A62} = to-binary load "<a^M^/b>"`
+	//O: in R3: `#{610A62}   = to-binary load "<a^M^/b>"` (if next line is enabled!)
+	//Replace_CRLF_to_LF(value, VAL_LEN(value)); // keep commented for compatibility with R2 & Red!
+	
 	return cp + len;
 }
 
