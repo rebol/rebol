@@ -125,6 +125,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1514
 	--assert error? try [try/except [1 / 0] :add] ;- no crash
 
+--test-- {enline "^/"}
+	--assert string? enline "^/"  ;- no crash
+	--assert string? enline "^/č" ;- no crash (unicode version)
+
 ===end-group===
 
 ~~~end-file~~~
