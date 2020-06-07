@@ -146,7 +146,7 @@ foreach file files [
 
 remit "} REBOL_HOST_LIB;"
 
-out: reduce [
+out: rejoin [
 	form-header/gen "Host Access Library" %host-lib.h %make-os-ext.r
 {
 #define HOST_LIB_VER } lib-version {
