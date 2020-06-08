@@ -688,7 +688,9 @@ foreach :type-record boot-types [
 
 boot-words: load %words.r
 
-replace boot-words '*port-modes* load %modes.r
+foreach [group words] load %modes.r [
+	replace boot-words group words
+]
 
 foreach word boot-words [
 	append used-words to-c-name word
@@ -961,13 +963,12 @@ emit-head "Port Modes" %port-modes.h
 
 data: load %modes.r
 
-emit {
-enum port_modes ^{
-}
+emit {^/enum reb_port_modes ^{^/}
+foreach word select data '*port-modes* [ emit-enum join "MODE_PORT_" up-word word ]
+emit-end
 
-foreach word data [
-	emit-enum word
-]
+emit {^/enum reb_console_modes ^{^/}
+foreach word select data '*console-modes* [	emit-enum join "MODE_CONSOLE_" up-word word ]
 emit-end
 
 write inc/tmp-portmodes.h out

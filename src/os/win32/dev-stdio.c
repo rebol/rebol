@@ -65,6 +65,9 @@
 #ifndef ENABLE_QUICK_EDIT_MODE
 #define ENABLE_QUICK_EDIT_MODE             0x0040
 #endif
+#ifndef MOUSE_HWHEELED
+#define MOUSE_HWHEELED 0x0008
+#endif
 
 
 #define CONSOLE_MODES ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT | ENABLE_ECHO_INPUT \
@@ -154,13 +157,13 @@ BOOL WINAPI Handle_Break(DWORD dwCtrlType)
 	return TRUE;	// We handled it
 }
 
-void Set_Echo_Mode(boolean set) {
-	DWORD mode = 0;
-	GetConsoleMode(Std_Inp, &mode);
+void Set_Input_Mode(DWORD mode, boolean set) {
+	DWORD modes = 0;
+	GetConsoleMode(Std_Inp, &modes);
 	if (set) 
-		SetConsoleMode(Std_Inp, mode | ENABLE_ECHO_INPUT);
+		SetConsoleMode(Std_Inp, modes | mode);
 	else
-		SetConsoleMode(Std_Inp, mode & (~ENABLE_ECHO_INPUT));
+		SetConsoleMode(Std_Inp, modes & (~mode));
 }
 void Set_Cursor_Visible(boolean visible) {
 	CONSOLE_CURSOR_INFO cursorInfo;
@@ -281,6 +284,7 @@ static void close_stdio(void)
 		if (GET_FLAG(dev->flags, SF_DEV_NULL))
 			SET_FLAG(req->modes, RDM_NULL);
 		SET_FLAG(req->flags, RRF_OPEN);
+		SET_FLAG(req->modes, RDM_READ_LINE);
 		return DR_DONE; // Do not do it again
 	}
 
@@ -342,12 +346,12 @@ static void close_stdio(void)
 			DWORD dwInpMode = CONSOLE_MODES;
 			DWORD dwOutMode = dwOriginalOutMode;
 
-			if(!SetConsoleMode(Std_Inp, dwInpMode)) {
-				printf("Failed to set input ConsoleMode! Error: %i\n", GetLastError());
+			if (!SetConsoleMode(Std_Inp, dwInpMode)) {
+				printf("Failed to set input ConsoleMode! Error: %li\n", GetLastError());
 				return DR_ERROR;
 			}
 
-			if(!Emulate_ANSI) {
+			if (!Emulate_ANSI) {
 				//dwInpMode |= ENABLE_VIRTUAL_TERMINAL_INPUT;
 				dwOutMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 				if (SetConsoleMode(Std_Out, dwOutMode)) {
@@ -378,6 +382,7 @@ static void close_stdio(void)
 
 	SET_FLAG(req->flags, RRF_OPEN);
 	SET_FLAG(dev->flags, RDF_OPEN);
+	SET_FLAG(req->modes, RDM_READ_LINE);
 
 	return DR_DONE;
 }
@@ -412,7 +417,7 @@ static void close_stdio(void)
 ***********************************************************************/
 {
 	long len;
-	long total = 0;
+	unsigned long total = 0;
 	BOOL ok = FALSE;
 	const REBYTE *bp;
 	const REBYTE *cp;
@@ -453,10 +458,10 @@ static void close_stdio(void)
 				else { // for Windows SubSystem - must be converted to Win32 wide-char format
 					//if found, write to the console content before it starts, else everything
 					if (cp) {
-						len = MultiByteToWideChar(CP_UTF8, 0, bp, cp - bp, Std_Buf, BUF_SIZE);
+						len = MultiByteToWideChar(CP_UTF8, 0, cs_cast(bp), cp - bp, Std_Buf, BUF_SIZE);
 					}
 					else {
-						len = MultiByteToWideChar(CP_UTF8, 0, bp, ep - bp, Std_Buf, BUF_SIZE);
+						len = MultiByteToWideChar(CP_UTF8, 0, cs_cast(bp), ep - bp, Std_Buf, BUF_SIZE);
 						bp = ep;
 					}
 					if (len > 0) {// no error
@@ -483,7 +488,7 @@ static void close_stdio(void)
 				// however, if our buffer overflows, it's an error. There's no
 				// efficient way at this level to split-up the input data,
 				// because its UTF-8 with variable char sizes.
-				len = MultiByteToWideChar(CP_UTF8, 0, req->data, req->length, Std_Buf, BUF_SIZE);
+				len = MultiByteToWideChar(CP_UTF8, 0, cs_cast(req->data), req->length, Std_Buf, BUF_SIZE);
 				if (len > 0) // no error
 					ok = WriteConsoleW(Std_Out, Std_Buf, len, &total, 0);
 			}
@@ -516,7 +521,7 @@ static void close_stdio(void)
 **
 ***********************************************************************/
 {
-	long total = 0;
+	unsigned long total = 0;
 	int len;
 	BOOL ok;
 
@@ -532,9 +537,9 @@ static void close_stdio(void)
 		if (Redir_Inp) { // always UTF-8
 			len = MIN(req->length, BUF_SIZE);
 			ok = ReadFile(Std_Inp, req->data, len, &total, 0);
-			printf("%i\n", total);
+			//printf("%li\n", total);
 		}
-		else {
+		else if (GET_FLAG(req->modes, RDM_READ_LINE)) {
 			ok = ReadConsoleW(Std_Inp, Std_Buf, BUF_SIZE-1, &total, 0);
 			if (ok) {
 				if (total == 0) {
@@ -548,8 +553,23 @@ static void close_stdio(void)
 					req->actual = 1;
 					return DR_DONE;
 				}
-				total = WideCharToMultiByte(CP_UTF8, 0, Std_Buf, total, req->data, req->length, 0, 0);
+				total = WideCharToMultiByte(CP_UTF8, 0, Std_Buf, total, s_cast(req->data), req->length, 0, 0);
 				if (!total) ok = FALSE;
+			}
+		}
+		else {
+			DWORD cNumRead, fdwMode, i; 
+			INPUT_RECORD irInBuf[128]; 
+			int counter=0;
+			ok = ReadConsoleInputW(Std_Inp, irInBuf, 128, &cNumRead);
+			for (i = 0; i < cNumRead; i++) 
+			{
+				printf("et: %u\n", irInBuf[i].EventType);
+				switch(irInBuf[i].EventType) 
+				{ 
+					case KEY_EVENT: // keyboard input 
+						puts("key");
+				}
 			}
 		}
 
@@ -559,6 +579,114 @@ static void close_stdio(void)
 		}
 
 		req->actual = total;
+	}
+
+	return DR_DONE;
+}
+
+
+/***********************************************************************
+**
+*/	DEVICE_CMD Poll_IO(REBREQ *req)
+/*
+**		Read console input and convert it to system events
+**
+***********************************************************************/
+{
+	REBEVT evt;
+	DWORD  cNumRead, i, c, repeat; 
+	INPUT_RECORD irInBuf[8]; 
+	if (ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), irInBuf, 8, &cNumRead)) {
+		//printf("cNumRead: %u\n", cNumRead);
+		for (i = 0; i < cNumRead; i++) 
+		{
+			//printf("peek: %u\n", irInBuf[i].EventType);
+			evt.flags = 0;
+			evt.model = EVM_CONSOLE;
+			switch (irInBuf[i].EventType) 
+			{ 
+				case KEY_EVENT:
+				{ 
+					KEY_EVENT_RECORD ker = irInBuf[i].Event.KeyEvent;
+					//printf("key: %u %u %u %u %u\n", ker.uChar.UnicodeChar, ker.bKeyDown, ker.wRepeatCount, ker.wVirtualKeyCode, sizeof(REBEVT));
+					evt.data  = (u32)ker.uChar.UnicodeChar;
+					if (ker.bKeyDown) {
+						if (evt.data == VK_CANCEL) {
+							RL_Escape(0);
+							return DR_DONE; // so stop sending other events
+						}
+						evt.type = EVT_KEY;
+					} else {
+						evt.type = EVT_KEY_UP;
+					}
+					
+					repeat = ker.wRepeatCount;
+					break;
+				}
+				case MOUSE_EVENT:
+				{
+					MOUSE_EVENT_RECORD mer = irInBuf[i].Event.MouseEvent;
+					repeat = 1;
+					evt.data = (u32)MAKELONG(mer.dwMousePosition.X, mer.dwMousePosition.Y);
+					SET_FLAG(evt.flags, EVF_HAS_XY);
+					//printf("mou: %u %u\n", mer.dwEventFlags, mer.dwButtonState);
+					switch (mer.dwEventFlags) {
+						case MOUSE_MOVED:
+							evt.type = EVT_MOVE;
+							break;
+						case 0:
+							if (!mer.dwButtonState) {
+								continue;
+							} else if (mer.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED) {
+								evt.type = EVT_DOWN;
+							} else if (mer.dwButtonState == RIGHTMOST_BUTTON_PRESSED) {
+								evt.type = EVT_ALT_DOWN;
+							} else {
+								evt.type = EVT_AUX_DOWN;
+							}
+							break;
+						case DOUBLE_CLICK:
+							evt.type = EVT_DOWN;
+							SET_FLAG(evt.flags, EVF_DOUBLE);
+							break;
+						case MOUSE_HWHEELED:
+							//printf("horizontal mouse wheel\n");
+							continue;
+						case MOUSE_WHEELED:
+							//printf("vertical mouse wheel\n");
+							continue;
+						default:
+							//printf("unknown\n");
+							continue;
+					}
+					break;
+				}
+				case WINDOW_BUFFER_SIZE_EVENT:
+				{
+					WINDOW_BUFFER_SIZE_RECORD bsr = irInBuf[i].Event.WindowBufferSizeEvent;
+					evt.type = EVT_RESIZE;
+					evt.data = (u32)MAKELONG(bsr.dwSize.X, bsr.dwSize.Y);
+					SET_FLAG(evt.flags, EVF_HAS_XY);
+					repeat = 1;
+					break;
+				}
+				case FOCUS_EVENT:
+				{
+					FOCUS_EVENT_RECORD fer = irInBuf[i].Event.FocusEvent;
+					evt.type  = fer.bSetFocus ? EVT_FOCUS : EVT_UNFOCUS;
+					evt.data  = 0;
+					repeat = 1;
+					break;
+				}
+                //case MENU_EVENT:
+                //    break; 
+				default: // ignore other events
+					continue;
+			}
+			while (repeat-->0) 
+				if (!RL_Event(&evt)) // returns 0 if queue is full
+					return DR_DONE; // so stop sending other events
+		}
 	}
 
 	return DR_DONE;
@@ -581,6 +709,35 @@ static void close_stdio(void)
 	req->console.buffer_cols = csbiInfo.dwSize.X;
 	req->console.window_rows = csbiInfo.srWindow.Bottom - csbiInfo.srWindow.Top + 1;
 	req->console.window_cols = csbiInfo.srWindow.Right - csbiInfo.srWindow.Left + 1;
+	return DR_DONE;
+}
+
+/***********************************************************************
+**
+*/	DEVICE_CMD Modify_IO(REBREQ *req)
+/*
+**		Change console's mode.
+**
+***********************************************************************/
+{
+	boolean value = req->modify.value;
+	switch (req->modify.mode) {
+	case MODE_CONSOLE_ECHO:
+		Set_Input_Mode(ENABLE_ECHO_INPUT, value);
+		break;
+	case MODE_CONSOLE_LINE:
+		Set_Input_Mode(ENABLE_LINE_INPUT | ENABLE_QUICK_EDIT_MODE | ENABLE_PROCESSED_INPUT, value);
+		Set_Input_Mode(ENABLE_MOUSE_INPUT, !value);
+		if(req->modify.value) {
+			SET_FLAG(req->modes, RDM_READ_LINE);
+		}
+		else {
+			CLR_FLAG(req->modes, RDM_READ_LINE);
+			SET_FLAG(req->flags, RRF_PENDING);
+			SET_FLAG(Devices[1]->flags, RDO_AUTO_POLL);
+		}
+		break;
+	}
 	return DR_DONE;
 }
 
@@ -624,10 +781,10 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 	Close_IO,
 	Read_IO,
 	Write_IO,
-	0,	// poll
+	Poll_IO,	// poll
 	0,	// connect
 	Query_IO,
-	0,	// modify
+	Modify_IO,	// modify
 	Open_Echo,	// CREATE used for opening echo file
 };
 
@@ -656,10 +813,10 @@ DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);
 		case 4: attribute = attribute | COMMON_LVB_UNDERSCORE;         break;
 		case 7: tmp = (attribute & 0xFFF0) >> 4;
 				attribute = ((attribute & 0xFF0F) << 4) | tmp;           break; //reverse
-		case 8: Set_Echo_Mode(FALSE);                                    break; //Conceal (turn off echo)
+		case 8: Set_Input_Mode(ENABLE_ECHO_INPUT, FALSE);              break; //Conceal (turn off echo)
 		case 22: attribute = attribute & 0xFFF7;                         break; //FOREGROUND_INTENSITY reset
 		case 24: attribute = attribute & 0x7FFF;                         break; //reset underscore
-		case 28: Set_Echo_Mode(TRUE);                                    break; //Reveal (Conceal off)
+		case 28: Set_Input_Mode(ENABLE_ECHO_INPUT, TRUE);              break; //Reveal (Conceal off)
 		case 30: attribute =  attribute & 0xFFF8;                        break;
 		case 31: attribute = (attribute & 0xFFF8) | FOREGROUND_RED;      break;
 		case 32: attribute = (attribute & 0xFFF8) | FOREGROUND_GREEN;    break;
@@ -878,11 +1035,11 @@ DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);
 					// 256-color lookup
 					ANSI_Value1 = -ANSI_Value1 - 8;
 					if(ANSI_Value2 < 8) {
-						// standard colors (as in ESC [ 30–37 m)
+						// standard colors (as in ESC [ 30ï¿½37 m)
 						ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, ANSI_Value2 + ANSI_Value1, TRUE);
 						
 					} else if(ANSI_Value2 < 16) {
-						// high intensity colors (as in ESC [ 90–97 m)
+						// high intensity colors (as in ESC [ 90ï¿½97 m)
 						ANSI_Attr = Update_Graphic_Mode(ANSI_Attr, ANSI_Value2 + ANSI_Value1 + 60 - 8, TRUE);
 					} else {
 						// on POSIX it is 216 colors and or 24 grey colors

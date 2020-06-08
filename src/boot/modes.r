@@ -1,6 +1,6 @@
 REBOL [
 	System: "REBOL [R3] Language Interpreter and Run-time Environment"
-	Title: "Port modes"
+	Title: "Port & console modes"
 	Rights: {
 		Copyright 2012 REBOL Technologies
 		REBOL is a trademark of REBOL Technologies
@@ -11,12 +11,19 @@ REBOL [
 	}
 ]
 
-owner-read
-owner-write
-owner-execute
-group-read
-group-write
-group-execute
-world-read
-world-write
-world-execute
+*port-modes* [
+	owner-read
+	owner-write
+	owner-execute
+	group-read
+	group-write
+	group-execute
+	world-read
+	world-write
+	world-execute
+]
+
+*console-modes* [
+	echo
+	line
+]

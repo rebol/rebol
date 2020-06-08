@@ -230,6 +230,9 @@
 		else if (IS_EVENT_MODEL(value, EVM_CALLBACK)) {
 			*val = *Get_System(SYS_PORTS, PORTS_CALLBACK);
 		}
+		else if (IS_EVENT_MODEL(value, EVM_CONSOLE)) {
+			*val = *Get_System(SYS_PORTS, PORTS_INPUT);
+		}
 		else {
 			// assumes EVM_DEVICE
 			// Event holds the IO-Request, which has the PORT:

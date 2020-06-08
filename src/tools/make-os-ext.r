@@ -131,7 +131,8 @@ remit {
 typedef struct REBOL_Host_Lib ^{
 	int size;
 	unsigned int ver_sum;
-	REBDEV **devices;}
+	REBDEV **devices;
+	REBREQ *std_io;}
 
 memit {
 extern	REBOL_HOST_LIB *Host_Lib;
@@ -172,6 +173,7 @@ REBOL_HOST_LIB Host_Lib_Init = ^{  // Host library function vector table.
 	HOST_LIB_SIZE,
 	(HOST_LIB_VER << 16) + HOST_LIB_SUM,
 	(REBDEV**)&Devices,
+	NULL, // Std_IO_Req is set on start-up
 }
 dlib
 {^};

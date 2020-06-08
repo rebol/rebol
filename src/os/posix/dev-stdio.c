@@ -300,6 +300,31 @@ static void Close_Stdio(void)
 
 /***********************************************************************
 **
+*/	DEVICE_CMD Modify_IO(REBREQ *req)
+/*
+**		Change console's mode.
+**
+***********************************************************************/
+{
+	long total;
+	if (req->modify.mode == MODE_CONSOLE_ECHO) {
+		if (Std_Out >= 0) {
+			if(req->modify.value) {
+				total = write(Std_Out, "\x1B[28m", 5);
+			} else {
+				total = write(Std_Out, "\x1B[8m", 4);
+			}
+			if (total < 0) {
+				req->error = errno;
+				return DR_ERROR;
+			}
+		}
+	}
+	return DR_DONE;
+}
+
+/***********************************************************************
+**
 */	DEVICE_CMD Open_Echo(REBREQ *req)
 /*
 **		Open a file for low-level console echo (output).
@@ -340,7 +365,7 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 	0,	// poll
 	0,	// connect
 	Query_IO,
-	0,	// modify
+	Modify_IO,	// modify
 	Open_Echo,	// CREATE used for opening echo file
 };
 

@@ -196,8 +196,12 @@ init-schemes: func [
 				][
 					remove event-list ;avoid event overflow caused by wake-up recursively calling into wait
 					if wake-up port event [
-						; Add port to wake list:
+						;@@ `wake-up` function is natively calling UPDATE action on current port
+						;@@ this is processed in port's actor function,                         
+						;@@ for example in `Console_Actor` in p-console.c file                  
+						;@@ If result of this action is truethy, port is waked up here          
 						;print ["==System-waked:" port/spec/ref]
+						; Add port to wake list:
 						unless find waked port [append waked port]
 					]
 					++ n-event
@@ -229,6 +233,11 @@ init-schemes: func [
 	make-scheme [
 		title: "Console Access"
 		name: 'console
+		;awake: func [event] [
+		;	print ["Console event:" event/type mold event/key event/offset]
+		;	;probe event
+		;	false
+		;]
 	]
 
 	make-scheme [

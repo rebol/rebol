@@ -57,7 +57,9 @@
 	arg = D_ARG(2);
 	*D_RET = *D_ARG(1);
 
-	req = Use_Port_State(port, RDI_STDIO, sizeof(REBREQ));
+	//O: known limitation: works only with default system's imput port (not for custom console ports) 
+	req = Host_Lib->std_io;
+	req->port = port;
 
 	switch (action) {
 
@@ -85,7 +87,7 @@
 		if (req->actual == 1 && req->data[0] == '\x1B') return R_NONE; // CTRL-C
 
 #ifdef TO_WINDOWS
-		if (req->actual > 1) req->actual -= 2; // remove CRLF from tail
+		if (req->actual > 1 && GET_FLAG(req->modes, RDM_READ_LINE)) req->actual -= 2; // remove CRLF from tail
 #else
 		if (req->actual > 0) req->actual -= 1; // remove LF from tail
 #endif
@@ -93,9 +95,14 @@
 		Set_Binary(ds, Copy_Bytes(req->data, req->actual));
 		break;
 
+	case A_UPDATE:
+		// do nothing here, no wake-up, events should be handled by user defined port's awake function
+		// ==>> SYSTEM/PORTS/INPUT/SCHEME/AWAKE
+		return R_NONE;
+
 	case A_OPEN:
 		// ?? why???
-		//if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port);
+		if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
 		SET_OPEN(req);
 		break;
 
@@ -107,6 +114,18 @@
 	case A_OPENQ:
 		if (IS_OPEN(req)) return R_TRUE;
 		return R_FALSE;
+
+	case A_MODIFY:
+		if (IS_WORD(arg)
+			&& (VAL_WORD_CANON(arg) == SYM_ECHO || VAL_WORD_CANON(arg) == SYM_LINE)
+		) {
+			spec = D_ARG(3);
+			if (!IS_LOGIC(spec)) Trap2(RE_INVALID_VALUE_FOR, spec, arg);
+			req->modify.mode = (VAL_WORD_CANON(arg) == SYM_ECHO) ? MODE_CONSOLE_ECHO : MODE_CONSOLE_LINE;
+			req->modify.value = VAL_LOGIC(spec);
+			OS_DO_DEVICE(req, RDC_MODIFY);
+		} else Trap1(RE_BAD_FILE_MODE, arg);
+		return R_ARG3;
 
 	case A_QUERY:
 		spec = Get_System(SYS_STANDARD, STD_CONSOLE_INFO);

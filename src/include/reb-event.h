@@ -73,6 +73,7 @@ enum {
 	EVM_GUI,		// GUI event uses system/view/event/port
 	EVM_CALLBACK,	// Callback event uses system/ports/callback port
 	EVM_MIDI,		// event holds midi port pointer
+	EVM_CONSOLE,    // native console events
 };
 
 // Special messages

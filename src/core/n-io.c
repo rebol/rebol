@@ -409,11 +409,13 @@ chk_neg:
 
 	val = OFV(port, STD_PORT_ACTOR);
 	if (IS_NATIVE(val)) {
+		//  Makes the port object fully consistent with internal native structures (e.g. the actual length of data read).
 		Do_Port_Action(port, A_UPDATE); // uses current stack frame
 	}
 
 	val = OFV(port, STD_PORT_AWAKE);
 	if (ANY_FUNC(val)) {
+		// Calls the port's awake function with the event as an argument.
 		val = Apply_Func(0, val, D_ARG(2), 0);
 		if (!(IS_LOGIC(val) && VAL_LOGIC(val))) return R_FALSE;
 	}

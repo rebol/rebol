@@ -49,7 +49,9 @@
 void Host_Crash(char *reason);
 
 // Temporary globals: (either move or remove?!)
-REBREQ Std_IO_Req;
+// O: where it should be moved?
+// O: as the Std_IO_Req is shared with lib (DLL), I'm now storing it also in Host_Lib struct
+static REBREQ Std_IO_Req;
 static REBYTE *inbuf;
 static REBCNT inbuf_len = 32*1024;
 
@@ -105,7 +107,7 @@ static int Fetch_Buf()
 
 /***********************************************************************
 **
-*/	void Open_StdIO(void)
+*/	REBREQ *Open_StdIO()
 /*
 **		Open REBOL's standard IO device. This same device is used
 **		by both the host code and the R3 DLL itself.
@@ -125,6 +127,7 @@ static int Fetch_Buf()
 
 	inbuf = OS_Make(inbuf_len);
 	inbuf[0] = 0;
+	return &Std_IO_Req;
 }
 
 /***********************************************************************
@@ -152,6 +155,13 @@ static int Fetch_Buf()
 {
 	REBYTE *line;
 
+	// make sure that we are in LINE reading mode!
+	if (!GET_FLAG(Std_IO_Req.modes, RDM_READ_LINE)) {
+		// if not, set it back
+		Std_IO_Req.modify.mode = RDM_READ_LINE;
+		Std_IO_Req.modify.value = TRUE;
+		OS_Do_Device(&Std_IO_Req, RDC_MODIFY);
+	}
 	if ((line = Get_Next_Line())) return line;
 
 	if (Fetch_Buf()) return Get_Next_Line();

@@ -108,6 +108,7 @@ enum {
 
 enum {
 	RDM_NULL,		// Null device
+	RDM_READ_LINE,
 };
 
 #pragma pack(4)
@@ -191,6 +192,10 @@ struct rebol_devreq {
 			u32 device_in;  // requested device ID (1-based; 0 = none)
 			u32 device_out;
 		} midi;
+		struct {
+			u32 mode;
+			u32 value;
+		} modify;
 	};
 };
 #pragma pack()

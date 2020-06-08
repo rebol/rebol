@@ -90,7 +90,7 @@ extern void Init_Ext_Test(void);	// see: host-ext-test.c
 #endif
 
 // Host bare-bones stdio functs:
-extern void Open_StdIO(void);
+extern REBREQ *Open_StdIO();
 extern void Close_StdIO(void);
 extern void Put_Str(REBYTE *buf);
 extern REBYTE *Get_Str(void);
@@ -268,10 +268,11 @@ int main(int argc, char **argv) {
 #endif
 	REBYTE vers[8];
 	REBINT n;
+	REBREQ *std_io;
 
 	// Must be done before an console I/O can occur. Does not use reb-lib,
 	// so this device should open even if there are other problems.
-	Open_StdIO();  // also sets up interrupt handler
+	std_io = Open_StdIO();  // also sets up interrupt handler
 
 	Host_Lib = &Host_Lib_Init;
 
@@ -290,6 +291,7 @@ int main(int argc, char **argv) {
 	if (!Host_Lib) Host_Crash("Missing host lib");
 	// !!! Second part will become vers[2] < RL_REV on release!!!
 	if (vers[1] != RL_VER || vers[2] != RL_REV) Host_Crash("Incompatible reb-lib DLL");
+	Host_Lib->std_io = std_io;
 	n = RL_Init(&Main_Args, Host_Lib);
 	if (n == 1) Host_Crash("Host-lib wrong size");
 	if (n == 2) Host_Crash("Host-lib wrong version/checksum");

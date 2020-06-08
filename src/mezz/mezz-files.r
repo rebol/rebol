@@ -62,17 +62,21 @@ clean-path: func [
 	reverse out
 ]
 
-input: function [
+input: func [
 	{Inputs a string from the console.}
-;	/hide "Mask input with a * character"
+	/hide "Turns off echoing inputs"
+	/local line port
 ][
+	port: system/ports/input
 	if any [
-		not port? system/ports/input
-		not open? system/ports/input
+		not port? port
+		not open? port
 	][
-		system/ports/input: open [scheme: 'console]
+		system/ports/input: port: open [scheme: 'console]
 	]
-	if line: read system/ports/input [ line: to string! line ]
+	if hide [ modify port 'echo false ]
+	if line: read port [ line: to string! line ]
+	if hide [ modify port 'echo true ]
 	line
 ]
 
@@ -80,13 +84,10 @@ ask: func [
 	"Ask the user for input."
 	question [series!] "Prompt to user"
 	/hide "Turns off echoing inputs"
+	/char "Waits only on single key press and returns char as a result"
 ][
 	prin question
-	either hide [
-		prin  "^[[8m"  ; ANSI conceal command
-		also input
-		print "^[[28m" ; ANSI reveal command
-	][	input ]
+	also apply :input [hide] prin LF
 ]
 
 confirm: func [
