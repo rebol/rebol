@@ -146,18 +146,25 @@ is-protected-error?: func[code][
 	--test-- "BinCode - UI8BYTES"
 		--assert object? binary/write b [UI8BYTES #{cafe}]
 		--assert #{02CAFE} = binary/read b 'bytes
+		--assert #{CAFE} = binary/read #{02CAFE} 'UI8BYTES
 	--test-- "BinCode - UI16BYTES"
 		--assert object? binary/write b [UI16BYTES #{cafe}]
 		--assert #{0002CAFE} = binary/read b 'bytes
+		--assert #{CAFE} = binary/read #{0002CAFE} 'UI16BYTES
 	--test-- "BinCode - UI16LEBYTES"
 		--assert object? binary/write b [UI16LEBYTES #{cafe}]
 		--assert #{0200CAFE} = binary/read b 'bytes
+		--assert #{CAFE} = binary/read #{0200CAFE} 'UI16LEBYTES
 	--test-- "BinCode - UI24BYTES"
 		--assert object? binary/write b [UI24BYTES #{cafe}]
 		--assert #{000002CAFE} = binary/read b 'bytes
+		--assert #{CAFE} = binary/read #{000002CAFE} 'UI24BYTES
+		--assert #{CAFE} = binary/read #{020000CAFE} 'UI24LEBYTES
 	--test-- "BinCode - UI32BYTES"
 		--assert object? binary/write b [UI32BYTES #{cafe}]
 		--assert #{00000002CAFE} = binary/read b 'bytes
+		--assert #{CAFE} = binary/read #{00000002CAFE} 'UI32BYTES
+		--assert #{CAFE} = binary/read #{02000000CAFE} 'UI32LEBYTES
 
 	--test-- "BinCode - write GET-WORD"
 		a: 42 b: binary/write #{} [ui8 :a]

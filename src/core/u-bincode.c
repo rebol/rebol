@@ -1431,6 +1431,26 @@ static REBCNT EncodedU32_Size(u32 value) {
 							cp += 3;
 							VAL_INDEX(buffer_read) += 3;
 							goto readNBytes;
+						case SYM_UI32BYTES:
+							ASSERT_READ_SIZE(value, cp, ep, 4);
+							n = ((u64)cp[3]      ) |
+							    ((u64)cp[2] << 8 ) |
+							    ((u64)cp[1] << 16) |
+							    ((u64)cp[0] << 24) ;
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							cp += 4;
+							VAL_INDEX(buffer_read) += 4;
+							goto readNBytes;
+						case SYM_UI32LEBYTES:
+							ASSERT_READ_SIZE(value, cp, ep, 4);
+							n = ((u64)cp[0]      ) |
+							    ((u64)cp[1] << 8 ) |
+							    ((u64)cp[2] << 16) |
+							    ((u64)cp[3] << 24) ;
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							cp += 4;
+							VAL_INDEX(buffer_read) += 4;
+							goto readNBytes;
 						case SYM_AT:
 							// uses absolute positioning from series HEAD!
 							next = ++value;
