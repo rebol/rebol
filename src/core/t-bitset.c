@@ -641,7 +641,11 @@ set_bits:
 		return (VAL_TAIL(value) == 0) ? R_TRUE : R_FALSE;
 
 	case A_CLEAR:
+		//O: which version is better?
+		// version 1: clearing series and resetting length as well -> clear make bitset! {01} == make bitset! #{}
 		Clear_Series(VAL_SERIES(value));
+		// version 2: clearing series but keeping its length -> ... == make bitset! #{00}
+		// CLEAR(SERIES_DATA(VAL_SERIES(value)), SERIES_SPACE(VAL_SERIES(value)));
 		break;
 
 	case A_AND:
