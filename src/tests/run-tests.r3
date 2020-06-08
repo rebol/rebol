@@ -12,6 +12,7 @@ dt [ ;- delta time
 	foreach file [
 		%units/bbcode-test.r3
 		%units/bincode-test.r3
+		%units/bitset-test.r3
 		%units/codecs-test.r3
 		%units/compress-test.r3
 		%units/conditional-test.r3
