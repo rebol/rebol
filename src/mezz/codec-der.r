@@ -86,6 +86,11 @@ register-codec [
 				insert tails (data-pos + length)
 			][
 				;- primitive
+				;print ["tag:" tag-name "len: " length length? der/buffer]
+				if length > length? der/buffer [
+					print "Tag length expects more bytes than available!"
+					length: length? der/buffer
+				]
 				binary/read der [data: BYTES :length]
 				switch tag-name [
 					OBJECT_IDENTIFIER [
