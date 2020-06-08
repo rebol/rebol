@@ -594,6 +594,10 @@ found:
 
 	case A_MAKE:
 	case A_TO:
+		if (IS_BITSET(arg)) {
+			VAL_SERIES(arg) = Copy_Series_Value(arg);
+			return R_ARG2;
+		}
 		// Determine size of bitset. Returns -1 for errors.
 		len = Find_Max_Bit(arg);
 		if (len < 0 || len > 0x0FFFFFFF) Trap_Arg(arg);
