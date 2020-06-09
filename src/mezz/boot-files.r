@@ -47,12 +47,13 @@ REBOL [
 	%mezz-help.r ; move dump-obj!
 	%mezz-banner.r
 	%mezz-colors.r
-	%mezz-crypt.r
 	%mezz-date.r ; Internet date support
 	;%mezz-tag.r  ; build-tag
 	%mezz-tail.r
 	%codec-json.r
 	%codec-unixtime.r
+	%codec-utc-time.r
+	%codec-pkix.r
 	%codec-der.r
 	%codec-crt.r
 	%codec-gzip.r

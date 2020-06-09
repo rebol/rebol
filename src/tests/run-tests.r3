@@ -55,7 +55,7 @@ dt [ ;- delta time
 		%units/chacha20-test.r3
 		%units/checksum-test.r3
 		%units/dh-test.r3
-		%units/mezz-crypt-test.r3
+		%units/crypt-test.r3
 		%units/poly1305-test.r3
 		%units/rc4-test.r3
 		%units/rsa-test.r3
