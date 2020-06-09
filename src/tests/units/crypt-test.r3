@@ -221,8 +221,24 @@ sY29ouezv4Xz2PuMch5VGPP+CDqzCM4loWgV
 
 
 ===start-group=== "SSH-key codec"
-	--test-- "Init RSA key from file"
+--test-- "Init RSA key from file"
 	--assert handle? try [key: decode 'ssh-key read %units/files/rebol-public.ppk]
 	rsa key none ; release it, as it is not GCed yet.
+===end-group===
+
+===start-group=== "PPK codec"
+--test-- "Init RSA key from PPK file"
+	--assert handle? try [key: load %units/files/rebol-private-no-pass.ppk]
+	rsa key none ; release it, as it is not GCed yet.
+
+--test-- "Init RSA key from encrypted PPK file"
+	--assert handle? try [key: codecs/ppk/decode/password %units/files/rebol-private.ppk "Rebol"]
+	rsa key none ; release it, as it is not GCed yet.
+
+--test-- "Init public RSA key from SSH2 PPK file"
+	--assert handle? try [key: load %units/files/rebol-public.ppk]
+	rsa key none ; release it, as it is not GCed yet.
+===end-group===
+
 
 ~~~end-file~~~

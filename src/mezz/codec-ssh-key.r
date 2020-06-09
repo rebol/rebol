@@ -1,7 +1,7 @@
 REBOL [
 	Title:   "REBOL 3 codec: Secure Shell Key"
 	Author:  "Oldes"
-	Rights:  "Copyright (C) 2018 Oldes. All rights reserved."
+	Rights:  "Copyright (C) 2020 Oldes. All rights reserved."
 	License: "BSD-3"
 	Test:    %tests/units/crypt-test.r3
 	Note: {
@@ -35,7 +35,7 @@ wrap [
 		decode: function [
 			"Decodes and initilize SSH key"
 			key [binary! string! file!]
-			/password p [string! binary!] "Optional password"
+			/password p [string! binary! none!] "Optional password"
 		][
 			case [
 				file?   key [ key: read key ]
@@ -59,7 +59,7 @@ wrap [
 						"AES-128-CBC" #"," copy iv to end
 					]
 					iv: debase iv 16
-					unless password [p: ask/hide "Pasword: "]
+					unless p [p: ask/hide "Pasword: "]
 					p: checksum/method
 						join to binary! p copy/part iv 8
 						'md5

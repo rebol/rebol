@@ -56,6 +56,7 @@ REBOL [
 	%codec-pkix.r
 	%codec-der.r
 	%codec-crt.r
+	%codec-ppk.r
 	%codec-ssh-key.r
 	;- compression
 	%codec-gzip.r

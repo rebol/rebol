@@ -99,4 +99,26 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "RSA initialization using codecs"
+	--test-- "RSA sign/verify using external file"
+	; Bob has data, which wants to sign, so it's clear, that nobody modifies them
+	data: "Hello!"
+	; As RSA is slow, it is used on hashes.. for example SHA1
+	hash: checksum/secure data
+	; Bob uses private key which keeps secret...
+	--assert handle? try [private-key: load %units/files/rebol-private-no-pass.ppk]
+	; .. to sign the hash..
+	--assert binary? signed-hash: rsa/sign private-key hash
+
+	; than sends data, and signed hash to Eve, who have his public key 
+	--assert handle? try [public-key: load %units/files/rebol-public.ppk]
+	; Eve uses the key to verify the checksum...
+	--assert (checksum/secure data) = rsa/verify public-key signed-hash
+	; so she know, that data were not modified
+
+	; cleanup:
+	rsa public-key none
+	rsa private-key none
+
 ~~~end-file~~~
