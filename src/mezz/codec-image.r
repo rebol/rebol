@@ -11,7 +11,7 @@ REBOL [
 ]
 
 register-codec [
-	name:  'ICO
+	name:  'ico
 	title: "Computer icons in MS Windows"
 	suffixes: [%.ico]
 
@@ -21,7 +21,7 @@ register-codec [
 ]
 
 register-codec [
-	name:  'DNG
+	name:  'dng
 	title: "Digital Negative"
 	suffixes: [%.dng]
 	comment: {Decodes only thumbnail, not RAW data!}
@@ -32,7 +32,7 @@ register-codec [
 ]
 
 register-codec [
-	name:  'DDS
+	name:  'dds
 	title: "DirectDraw Surface"
 	suffixes: [%.dds]
 
@@ -42,7 +42,7 @@ register-codec [
 ]
 
 register-codec [
-	name:  'TIFF
+	name:  'tiff
 	title: "Tagged Image File Format"
 	suffixes: [%.tif %.tiff]
 
@@ -52,7 +52,7 @@ register-codec [
 ]
 
 register-codec [
-	name:  'GIF
+	name:  'gif
 	title: "Graphics Interchange Format"
 	suffixes: [%.gif]
 
@@ -62,7 +62,7 @@ register-codec [
 ]
 
 register-codec [
-	name:  'BMP
+	name:  'bmp
 	title: "Portable Bitmap"
 	suffixes: [%.bmp]
 
@@ -72,7 +72,7 @@ register-codec [
 ]
 
 register-codec [
-	name:  'JPEGXR
+	name:  'jpegxr
 	title: "JPEG extended range"
 	suffixes: [%.jxr %.hdp %.wdp]
 
@@ -82,7 +82,7 @@ register-codec [
 ]
 
 register-codec [
-	name:  'JPEG
+	name:  'jpeg
 	title: "Joint Photographic Experts Group"
 	suffixes: [%.jpg %.jpeg]
 
@@ -92,7 +92,7 @@ register-codec [
 ]
 
 register-codec [
-	name:  'PNG
+	name:  'png
 	title: "Portable Network Graphics"
 	suffixes: [%.png]
 

@@ -426,7 +426,7 @@ bbcode: func [
 ]
 
 register-codec [
-	name:  'BBCode
+	name:  'bbcode
 	title: "Bulletin Board Code"
 	suffixes: [%.bbcode]
 

@@ -1223,7 +1223,7 @@ import module [
 	]
 
 	register-codec [
-		name:  'SWF
+		name:  'swf
 		title: "ShockWave Flash"
 		suffixes: [%.swf]
 

@@ -17,7 +17,7 @@ REBOL [
 ]
 
 register-codec [
-	name:  'DER
+	name:  'der
 	title: "Distinguished Encoding Rules"
 	suffixes: [%.p12 %.pfx %.cer %.der %.jks]
 	decode: function[data [binary!]][

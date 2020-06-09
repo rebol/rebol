@@ -15,7 +15,7 @@ REBOL [
 ]
 
 register-codec [
-	name:  'ZIP
+	name:  'zip
 	title: "ZIP File Format"
 	suffixes: [%.zip %.aar %.jar %.apk %.zipx %.appx %.epub]
 
