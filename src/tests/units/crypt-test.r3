@@ -176,6 +176,8 @@ sY29ouezv4Xz2PuMch5VGPP+CDqzCM4loWgV
 
 	--assert block? Load-PKIX pkix
 	--assert binary? Load-PKIX/binary pkix
+	--assert error? try [decode 'ssh-key pkix] ;- because it contains unsupported ssh-dss
+
 
 --test-- "SSH-public-key-3"	
 	pkix:
@@ -216,5 +218,11 @@ sY29ouezv4Xz2PuMch5VGPP+CDqzCM4loWgV
 	--assert "9-Jul-2012/3:10+2:00" = mold decode 'utc-time "1207090310+0200"
 
 ===end-group===
+
+
+===start-group=== "SSH-key codec"
+	--test-- "Init RSA key from file"
+	--assert handle? try [key: decode 'ssh-key read %units/files/rebol-public.ppk]
+	rsa key none ; release it, as it is not GCed yet.
 
 ~~~end-file~~~

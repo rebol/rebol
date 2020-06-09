@@ -50,16 +50,20 @@ REBOL [
 	%mezz-date.r ; Internet date support
 	;%mezz-tag.r  ; build-tag
 	%mezz-tail.r
-	%codec-json.r
 	%codec-unixtime.r
+	;- cryptographic
 	%codec-utc-time.r
 	%codec-pkix.r
 	%codec-der.r
 	%codec-crt.r
+	%codec-ssh-key.r
+	;- compression
 	%codec-gzip.r
-	%codec-xml.r
 	%codec-zip.r
 	%codec-tar.r
+	;- other
+	%codec-json.r
+	%codec-xml.r
 	%codec-html-entities.r
 	; optional files added in make-boot.r per os and product
 	;%codec-wav.r
