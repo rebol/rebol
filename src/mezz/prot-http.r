@@ -655,7 +655,8 @@ decode-result: func[
 	][
 		unless code-page [code-page: "utf-8"]
 		sys/log/info 'HTTP ["Trying to decode from code-page:^[[m" code-page]
-		try [result/2: iconv result/2 code-page]
+		; using also deline to normalize possible CRLF to LF
+		try [result/2: deline iconv result/2 code-page]
 	]
 	result
 ]
@@ -703,11 +704,11 @@ sys/make-scheme [
 			sys/log/debug 'HTTP "WRITE"
 			;?? port
 			case [
-				map? value [
-					value: reduce [[Content-Type: "application/json; charset=utf-8"] encode 'JSON value]
-				]
 				binary? value [
 					value: reduce [[Content-Type: "application/octet-stream"] value]
+				]
+				map? value [
+					value: reduce [[Content-Type: "application/json; charset=utf-8"] encode 'JSON value]
 				]
 				not block? value [
 					value: reduce [[Content-Type: "application/x-www-form-urlencoded; charset=utf-8"] form value]
