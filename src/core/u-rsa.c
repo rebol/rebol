@@ -50,61 +50,83 @@
 #include "sys-rsa.h"
 
 void RSA_priv_key_new(RSA_CTX *rsa_ctx,
-        const uint8_t *modulus, int mod_len,
-        const uint8_t *pub_exp, int pub_len,
-        const uint8_t *priv_exp, int priv_len
+		const uint8_t *modulus, int mod_len,
+		const uint8_t *pub_exp, int pub_len,
+		const uint8_t *priv_exp, int priv_len
 #if CONFIG_BIGINT_CRT
-      , const uint8_t *p, int p_len,
-        const uint8_t *q, int q_len,
-        const uint8_t *dP, int dP_len,
-        const uint8_t *dQ, int dQ_len,
-        const uint8_t *qInv, int qInv_len
+	  , const uint8_t *p, int p_len,
+		const uint8_t *q, int q_len,
+		const uint8_t *dP, int dP_len,
+		const uint8_t *dQ, int dQ_len,
+		const uint8_t *qInv, int qInv_len
 #endif
-    )
+	)
 {
-    BI_CTX *bi_ctx;
-    RSA_pub_key_new(rsa_ctx, modulus, mod_len, pub_exp, pub_len);
+	BI_CTX *bi_ctx;
+	RSA_pub_key_new(rsa_ctx, modulus, mod_len, pub_exp, pub_len);
 
-    bi_ctx = rsa_ctx->bi_ctx;
-    rsa_ctx->d = bi_import(bi_ctx, priv_exp, priv_len);
-    bi_permanent(rsa_ctx->d);
+	bi_ctx = rsa_ctx->bi_ctx;
+	rsa_ctx->d = bi_import(bi_ctx, priv_exp, priv_len);
+	bi_permanent(rsa_ctx->d);
 
 #ifdef CONFIG_BIGINT_CRT
-    if (dP && dQ && p && q && qInv)
-    {
-        rsa_ctx->p = bi_import(bi_ctx, p, p_len);
-        rsa_ctx->q = bi_import(bi_ctx, q, q_len);
-        rsa_ctx->dP = bi_import(bi_ctx, dP, dP_len);
-        rsa_ctx->dQ = bi_import(bi_ctx, dQ, dQ_len);
-        rsa_ctx->qInv = bi_import(bi_ctx, qInv, qInv_len);
-        bi_permanent(rsa_ctx->dP);
-        bi_permanent(rsa_ctx->dQ);
-        bi_permanent(rsa_ctx->qInv);
-        bi_set_mod(bi_ctx, rsa_ctx->p, BIGINT_P_OFFSET);
-        bi_set_mod(bi_ctx, rsa_ctx->q, BIGINT_Q_OFFSET);
-    }
+	if (p && q && qInv)
+	{
+		rsa_ctx->p = bi_import(bi_ctx, p, p_len);
+		rsa_ctx->q = bi_import(bi_ctx, q, q_len);
+		if (dP && dQ) {
+			rsa_ctx->dP = bi_import(bi_ctx, dP, dP_len); //32 .. 115...
+			rsa_ctx->dQ = bi_import(bi_ctx, dQ, dQ_len); //32 .. 221...
+		} else {
+			bigint *bi_one = int_to_bi(bi_ctx, 1);
+			bi_permanent(bi_one);
+			// dp = d mod (p - 1) 
+			rsa_ctx->dP = bi_divide(
+				bi_ctx,
+				bi_clone(bi_ctx, rsa_ctx->d),
+				bi_subtract(bi_ctx, bi_clone(bi_ctx, rsa_ctx->p), bi_one, NULL),
+				
+				TRUE
+			);
+			// dq = d mod (q - 1) 
+			rsa_ctx->dQ = bi_divide(
+				bi_ctx,
+				bi_clone(bi_ctx, rsa_ctx->d),
+				bi_subtract(bi_ctx, bi_clone(bi_ctx, rsa_ctx->q), bi_one, NULL),
+				TRUE
+			);
+			bi_depermanent(bi_one);
+			bi_free(bi_ctx, bi_one);
+		}
+		rsa_ctx->qInv = bi_import(bi_ctx, qInv, qInv_len);
+		bi_permanent(rsa_ctx->dP);
+		bi_permanent(rsa_ctx->dQ);
+		bi_permanent(rsa_ctx->qInv);
+		bi_set_mod(bi_ctx, rsa_ctx->p, BIGINT_P_OFFSET);
+		bi_set_mod(bi_ctx, rsa_ctx->q, BIGINT_Q_OFFSET);
+	}
 #endif
 }
 
 void RSA_pub_key_new(RSA_CTX *rsa_ctx,
-        const uint8_t *modulus, int mod_len,
-        const uint8_t *pub_exp, int pub_len)
+		const uint8_t *modulus, int mod_len,
+		const uint8_t *pub_exp, int pub_len)
 {
  //   RSA_CTX *rsa_ctx;
-    BI_CTX *bi_ctx;
+	BI_CTX *bi_ctx;
 
  //   if (*ctx)   /* if we load multiple certs, dump the old one */
  //       RSA_free(*ctx);
 
-    bi_ctx = bi_initialize();
+	bi_ctx = bi_initialize();
  //  *ctx = (RSA_CTX *)calloc(1, sizeof(RSA_CTX));
  //  rsa_ctx = *ctx;
-    rsa_ctx->bi_ctx = bi_ctx;
-    rsa_ctx->num_octets = mod_len;
-    rsa_ctx->m = bi_import(bi_ctx, modulus, mod_len);
-    bi_set_mod(bi_ctx, rsa_ctx->m, BIGINT_M_OFFSET);
-    rsa_ctx->e = bi_import(bi_ctx, pub_exp, pub_len);
-    bi_permanent(rsa_ctx->e);
+	rsa_ctx->bi_ctx = bi_ctx;
+	rsa_ctx->num_octets = mod_len;
+	rsa_ctx->m = bi_import(bi_ctx, modulus, mod_len);
+	bi_set_mod(bi_ctx, rsa_ctx->m, BIGINT_M_OFFSET);
+	rsa_ctx->e = bi_import(bi_ctx, pub_exp, pub_len);
+	bi_permanent(rsa_ctx->e);
 }
 
 /**
@@ -112,40 +134,40 @@ void RSA_pub_key_new(RSA_CTX *rsa_ctx,
  */
 void RSA_free(RSA_CTX *rsa_ctx)
 {
-    BI_CTX *bi_ctx;
-    if (rsa_ctx == NULL)                /* deal with ptrs that are null */
-        return;
+	BI_CTX *bi_ctx;
+	if (rsa_ctx == NULL)                /* deal with ptrs that are null */
+		return;
 
-    bi_ctx = rsa_ctx->bi_ctx;
+	bi_ctx = rsa_ctx->bi_ctx;
 
-    bi_depermanent(rsa_ctx->e);
-    bi_free(bi_ctx, rsa_ctx->e);
-    bi_free_mod(rsa_ctx->bi_ctx, BIGINT_M_OFFSET);
+	bi_depermanent(rsa_ctx->e);
+	bi_free(bi_ctx, rsa_ctx->e);
+	bi_free_mod(rsa_ctx->bi_ctx, BIGINT_M_OFFSET);
 
-    if (rsa_ctx->d)
-    {
-        bi_depermanent(rsa_ctx->d);
-        bi_free(bi_ctx, rsa_ctx->d);
+	if (rsa_ctx->d)
+	{
+		bi_depermanent(rsa_ctx->d);
+		bi_free(bi_ctx, rsa_ctx->d);
 
 		bi_free(bi_ctx, rsa_ctx->p);
 		bi_free(bi_ctx, rsa_ctx->q);
 #ifdef CONFIG_BIGINT_CRT
-        if (rsa_ctx->dP) //it is enough to check only one value - complete check is in already in RSA_priv_key_new()
-        {
-            bi_depermanent(rsa_ctx->dP);
-            bi_depermanent(rsa_ctx->dQ);
-            bi_depermanent(rsa_ctx->qInv);
-            bi_free(bi_ctx, rsa_ctx->dP);
-            bi_free(bi_ctx, rsa_ctx->dQ);
-            bi_free(bi_ctx, rsa_ctx->qInv);
-            bi_free_mod(rsa_ctx->bi_ctx, BIGINT_P_OFFSET);
-            bi_free_mod(rsa_ctx->bi_ctx, BIGINT_Q_OFFSET);
-        }
+		if (rsa_ctx->dP) //it is enough to check only one value - complete check is in already in RSA_priv_key_new()
+		{
+			bi_depermanent(rsa_ctx->dP);
+			bi_depermanent(rsa_ctx->dQ);
+			bi_depermanent(rsa_ctx->qInv);
+			bi_free(bi_ctx, rsa_ctx->dP);
+			bi_free(bi_ctx, rsa_ctx->dQ);
+			bi_free(bi_ctx, rsa_ctx->qInv);
+			bi_free_mod(rsa_ctx->bi_ctx, BIGINT_P_OFFSET);
+			bi_free_mod(rsa_ctx->bi_ctx, BIGINT_Q_OFFSET);
+		}
 #endif
-    }
+	}
 
-    bi_terminate(bi_ctx);
-    //free(rsa_ctx); //<-- it is now freed on REBOL side
+	bi_terminate(bi_ctx);
+	//free(rsa_ctx); //<-- it is now freed on REBOL side
 }
 
 /**
@@ -158,26 +180,26 @@ void RSA_free(RSA_CTX *rsa_ctx)
  * @see http://www.rsasecurity.com/rsalabs/node.asp?id=2125
  */
 int RSA_decrypt(const RSA_CTX *ctx, const uint8_t *in_data,
-                            uint8_t *out_data, int is_decryption, int padding)
+							uint8_t *out_data, int is_decryption, int padding)
 {
-    const int byte_size = ctx->num_octets;
-    int i, size;
-    bigint *decrypted_bi, *dat_bi;
-    uint8_t *block = (uint8_t *)alloca(byte_size);
+	const int byte_size = ctx->num_octets;
+	int i, size;
+	bigint *decrypted_bi, *dat_bi;
+	uint8_t *block = (uint8_t *)alloca(byte_size);
 
-    memset(out_data, 0, byte_size); /* initialise */
+	memset(out_data, 0, byte_size); /* initialise */
 
-    /* decrypt */
-    dat_bi = bi_import(ctx->bi_ctx, in_data, byte_size);
+	/* decrypt */
+	dat_bi = bi_import(ctx->bi_ctx, in_data, byte_size);
 #ifdef CONFIG_SSL_CERT_VERIFICATION
-    decrypted_bi = is_decryption ?  /* decrypt or verify? */
-            RSA_private(ctx, dat_bi) : RSA_public(ctx, dat_bi);
+	decrypted_bi = is_decryption ?  /* decrypt or verify? */
+			RSA_private(ctx, dat_bi) : RSA_public(ctx, dat_bi);
 #else   /* always a decryption */
-    decrypted_bi = RSA_private(ctx, dat_bi);
+	decrypted_bi = RSA_private(ctx, dat_bi);
 #endif
 
-    /* convert to a normal block */
-    bi_export(ctx->bi_ctx, decrypted_bi, block, byte_size);
+	/* convert to a normal block */
+	bi_export(ctx->bi_ctx, decrypted_bi, block, byte_size);
 
 	if (padding)
 	{
@@ -202,13 +224,13 @@ int RSA_decrypt(const RSA_CTX *ctx, const uint8_t *in_data,
 			while (block[i++] && i < byte_size);
 		}
 	}
-    size = byte_size - i;
+	size = byte_size - i;
 
-    /* get only the bit we want */
-    if (size > 0)
-        memcpy(out_data, &block[i], size);
+	/* get only the bit we want */
+	if (size > 0)
+		memcpy(out_data, &block[i], size);
 
-    return size ? size : -1;
+	return size ? size : -1;
 }
 
 /**
@@ -217,17 +239,17 @@ int RSA_decrypt(const RSA_CTX *ctx, const uint8_t *in_data,
 bigint *RSA_private(const RSA_CTX *c, bigint *bi_msg)
 {
 #ifdef CONFIG_BIGINT_CRT
-    if (c->dP) //it is enough to check only one value - complete check is in already in RSA_priv_key_new()
-        return bi_crt(c->bi_ctx, bi_msg, c->dP, c->dQ, c->p, c->q, c->qInv);
-    else {
-        BI_CTX *ctx = c->bi_ctx;
-        ctx->mod_offset = BIGINT_M_OFFSET;
-        return bi_mod_power(ctx, bi_msg, c->d);
-    }
+	if (c->dP) //it is enough to check only one value - complete check is in already in RSA_priv_key_new()
+		return bi_crt(c->bi_ctx, bi_msg, c->dP, c->dQ, c->p, c->q, c->qInv);
+	else {
+		BI_CTX *ctx = c->bi_ctx;
+		ctx->mod_offset = BIGINT_M_OFFSET;
+		return bi_mod_power(ctx, bi_msg, c->d);
+	}
 #else
-    BI_CTX *ctx = c->bi_ctx;
-    ctx->mod_offset = BIGINT_M_OFFSET;
-    return bi_mod_power(ctx, bi_msg, c->d);
+	BI_CTX *ctx = c->bi_ctx;
+	ctx->mod_offset = BIGINT_M_OFFSET;
+	return bi_mod_power(ctx, bi_msg, c->d);
 #endif
 }
 
@@ -237,15 +259,15 @@ bigint *RSA_private(const RSA_CTX *c, bigint *bi_msg)
  */
 void RSA_print(const RSA_CTX *rsa_ctx)
 {
-    if (rsa_ctx == NULL)
-        return;
+	if (rsa_ctx == NULL)
+		return;
 
-    printf("-----------------   RSA DEBUG   ----------------\n");
-    printf("Size:\t%d\n", rsa_ctx->num_octets);
+	printf("-----------------   RSA DEBUG   ----------------\n");
+	printf("Size:\t%d\n", rsa_ctx->num_octets);
 #ifdef CONFIG_BIGINT_DEBUG
-    bi_print("Modulus", rsa_ctx->m);
-    bi_print("Public Key", rsa_ctx->e);
-    bi_print("Private Key", rsa_ctx->d);
+	bi_print("Modulus", rsa_ctx->m);
+	bi_print("Public Key", rsa_ctx->e);
+	bi_print("Private Key", rsa_ctx->d);
 #endif
 }
 #endif
@@ -256,8 +278,8 @@ void RSA_print(const RSA_CTX *rsa_ctx)
  */
 bigint *RSA_public(const RSA_CTX * c, bigint *bi_msg)
 {
-    c->bi_ctx->mod_offset = BIGINT_M_OFFSET;
-    return bi_mod_power(c->bi_ctx, bi_msg, c->e);
+	c->bi_ctx->mod_offset = BIGINT_M_OFFSET;
+	return bi_mod_power(c->bi_ctx, bi_msg, c->e);
 }
 
 /**
@@ -265,10 +287,10 @@ bigint *RSA_public(const RSA_CTX * c, bigint *bi_msg)
  * see http://www.rsasecurity.com/rsalabs/node.asp?id=2125
  */
 int RSA_encrypt(const RSA_CTX *ctx, const uint8_t *in_data, uint16_t in_len,
-        uint8_t *out_data, int is_signing, int padding)
+		uint8_t *out_data, int is_signing, int padding)
 {
-    int byte_size = ctx->num_octets;
-    bigint *dat_bi, *encrypt_bi;
+	int byte_size = ctx->num_octets;
+	bigint *dat_bi, *encrypt_bi;
 
 	if (padding)
 	{
@@ -299,15 +321,15 @@ int RSA_encrypt(const RSA_CTX *ctx, const uint8_t *in_data, uint16_t in_len,
 		memcpy(out_data, in_data, in_len);
 	}
 
-    /* now encrypt it */
-    dat_bi = bi_import(ctx->bi_ctx, out_data, byte_size);
-    encrypt_bi = is_signing ? RSA_private(ctx, dat_bi) :
-                              RSA_public(ctx, dat_bi);
-    bi_export(ctx->bi_ctx, encrypt_bi, out_data, byte_size);
+	/* now encrypt it */
+	dat_bi = bi_import(ctx->bi_ctx, out_data, byte_size);
+	encrypt_bi = is_signing ? RSA_private(ctx, dat_bi) :
+							  RSA_public(ctx, dat_bi);
+	bi_export(ctx->bi_ctx, encrypt_bi, out_data, byte_size);
 
-    /* save a few bytes of memory */
-    bi_clear_cache(ctx->bi_ctx);
-    return byte_size;
+	/* save a few bytes of memory */
+	bi_clear_cache(ctx->bi_ctx);
+	return byte_size;
 }
 
 #endif  /* CONFIG_SSL_CERT_VERIFICATION */

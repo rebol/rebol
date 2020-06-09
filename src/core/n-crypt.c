@@ -213,9 +213,9 @@
 //			d [binary!] "Private exponent"
 //			p [binary!] "Prime number 1"
 //			q [binary!] "Prime number 2"
-//			dP [binary!]
-//			dQ [binary!]
-//			qInv [binary!]
+//			dP [binary! none!] "Exponent1: d mod (p-1)"
+//			dQ [binary! none!] "Exponent2: d mod (q-1)"
+//			qInv [binary!] "Coefficient: (inverse of q) mod p"
 //  ]
 ***********************************************************************/
 {
@@ -225,9 +225,14 @@
 	REBSER *d       = VAL_SERIES(D_ARG(4));
 	REBSER *p       = VAL_SERIES(D_ARG(5));
 	REBSER *q       = VAL_SERIES(D_ARG(6));
-	REBSER *dP      = VAL_SERIES(D_ARG(7));
-	REBSER *dQ      = VAL_SERIES(D_ARG(8));
+	REBVAL *val_dp  =            D_ARG(7) ;
+	REBVAL *val_dq  =            D_ARG(8) ;
 	REBSER *qInv    = VAL_SERIES(D_ARG(9));
+
+	REBYTE *dp = NULL;
+	REBYTE *dq = NULL;
+	REBCNT len_dp = 0;
+	REBCNT len_dq = 0;
 
 	REBVAL *ret = D_RET;
 	REBSER *ser = Make_Series(sizeof(RSA_CTX), 1, FALSE);
@@ -239,6 +244,14 @@
 	SET_HANDLE(ret, ser, SYM_RSA, HANDLE_SERIES);
 
 	if(ref_private) {
+		if (IS_BINARY(val_dp)) {
+			dp     = BIN_DATA(VAL_SERIES(val_dp));
+			len_dp = BIN_LEN(VAL_SERIES(val_dp));
+		}
+		if (IS_BINARY(val_dq)) {
+			dq     = BIN_DATA(VAL_SERIES(val_dq));
+			len_dq = BIN_LEN(VAL_SERIES(val_dq));
+		}
 		RSA_priv_key_new(
 			rsa_ctx,
 			BIN_DATA(n), BIN_LEN(n),
@@ -246,8 +259,7 @@
 			BIN_DATA(d), BIN_LEN(d),
 			BIN_DATA(p), BIN_LEN(p),
 			BIN_DATA(q), BIN_LEN(q),
-			BIN_DATA(dP), BIN_LEN(dP),
-			BIN_DATA(dQ), BIN_LEN(dQ),
+			dp, len_dp, dq, len_dq,
 			BIN_DATA(qInv), BIN_LEN(qInv)
 		);
 	} else {
