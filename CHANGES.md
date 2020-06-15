@@ -2,10 +2,95 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+## 2020 June
+
+### Features:
+
+* [`962382`](https://github.com/Oldes/Rebol3/commit/96238234691cdfd08ab2d133e502db75e4e6f426) Added `ppk` (PuTTY Private Key) codec (so far only RSA keys)
+* [`4c07b7`](https://github.com/Oldes/Rebol3/commit/4c07b7a0fee9fd0277cb2018c3878acd1850ae35) Added `ssh-key` (Secure Shell Key) codec (so far only RSA keys)
+* [`90ecb3`](https://github.com/Oldes/Rebol3/commit/90ecb3dddfc980fd981f409a0c868a422d6c7a3c) Added missing `UI32BYTES` and `UI32LEBYTES` _bincode_ read commands
+* [`df2c2a`](https://github.com/Oldes/Rebol3/commit/df2c2abe48ba335cd961862568a28cbfce36ca2a) Implemented proper `ask/hide` and `input/hide`
+
+  That was not working well on Windows (with enabled virtual terminal processing), now it successfully hides user input.
+  
+  As a bonus this change contain a way how to turn off read-line console input and enter use the console as a key-stroke (and mouse as well) input. Simple use example is available here:
+  https://gist.github.com/Oldes/face8a5790df7121a78ba606a3e150f4
+
+### Fixes:
+
+* [`652045`](https://github.com/Oldes/Rebol3/commit/6520457a3bdcf4a121076c40ead3923fc94be313) Using `deline` to normalize CRLF to LF when reading text HTML content
+* [`6238d2`](https://github.com/Oldes/Rebol3/commit/6238d23e53a0329a5b36c8673da926e248b35c69) Allow incomplete tag in DER codec (because it looks it can happen)
+* [`9f6b34`](https://github.com/Oldes/Rebol3/commit/9f6b349a724a36bf8c5129ae9ff970db6a4248e6) Allow to `make bitset!` from `bitset!`
+* [`e5442e`](https://github.com/Oldes/Rebol3/commit/e5442ebd1b8c540426ec95f3079b117c61075775) Fixed special case of `pick bitset! integer!`
+* [`cb5867`](https://github.com/Oldes/Rebol3/commit/cb586701c0dd8e627e83195817d8a29a4baabb46) Using rejoin instead of reduce for compatibility with newer R3 versions (write %f [..])
+* [`f09962`](https://github.com/Oldes/Rebol3/commit/f099629adfab50b31a01f6a200aacc12afad6c95) ENLINE does not convert line endings to native OS format (Posix)
+* [`70c51b`](https://github.com/Oldes/Rebol3/commit/70c51ba9dff10c967b7bde3de781d1b12939d98a) Crash in `enline`
+
+### Changes:
+
+* [`2b2352`](https://github.com/Oldes/Rebol3/commit/2b23527852526ac9d510ce49e6d3ccd67c7053d9) Allow private RSA exponents optional (may be computed and are not in PPK files)
+* [`3d1436`](https://github.com/Oldes/Rebol3/commit/3d1436ab57ae6f0e9d26a28cc5c0a9315d6f2d36) Using lowercase in codec names (it looks better)
+* [`db5b44`](https://github.com/Oldes/Rebol3/commit/db5b44a6a9376a061c3d36b95de0edc2936a52cb) Replaced `mezz-crypt` module with `pkix` and `utc-time` codecs
+* [`4d8866`](https://github.com/Oldes/Rebol3/commit/4d88668b47fb545dbeb7a598268f765315418d3b) Using `append` instead of `insert tail` when saving data to binary
+
 ## 2020 May
 
 ### Features:
 
+* [`55a8f9`](https://github.com/Oldes/Rebol3/commit/55a8f921935386e10028b74fd0bf502571e34fb7) Enable raw `map!` and `binary!` data in HTTP scheme's `write` action
+
+  Using this:
+  ```
+  write http://localhost:8081/result/ #{0102}
+  write http://localhost:8081/result/ #(a: 1)
+  
+  ```
+  is now same like:
+  ```
+  write http://localhost:8081/result/ [POST #(Content-Type: "application/octet-stream") #{0102}]
+  write http://localhost:8081/result/ [POST #(Content-Type: "application/json; charset=utf-8") #(a: 1)]
+  
+  ```
+* [`01284d`](https://github.com/Oldes/Rebol3/commit/01284d6b966511902396f7837a27b6ec34425ff6) Ported Nenad's MySQL driver to be compatible with this Rebol3 version as a module/scheme
+
+  It's just a quick rewrite, which replaces original `debug` function in the protocol with system logging and some of required modifications. There is also minnor change in error reporting. It would deserve better rewrite, but I don't have much need for this, so it's left for future or someone else.
+  
+  It was tested only with this so far:
+  ```
+  >> mysql: connect-sql mysql://root:rur@localhost/
+   [MySQL] Connected: mysql://root@localhost:3306/
+  >> send-sql mysql "show databases"
+  == [["information_schema"] ["mysql"] ["performance_schema"] ["sys"] ["test"]]
+  
+  >> send-sql mysql "create database test"
+  ** mysql error: [ 1007 ] "Can't create database 'test'; database exists"
+  
+  >> send-sql mysql "drop database test"
+  == []
+  
+  >> send-sql/flat mysql "show databases"
+  == ["information_schema" "mysql" "performance_schema" "sys"]
+  
+  >> close mysql
+   [MySQL] Closed: mysql://root@localhost:3306/
+  >>
+  ```
+* [`46810b`](https://github.com/Oldes/Rebol3/commit/46810b3fd487cc180b8ad7542a3d4b7afacc94a8) Allow protocols to be modules accessible from user context, if exports some functions
+* [`f367ee`](https://github.com/Oldes/Rebol3/commit/f367ee5260f2af27989c470f77fd812089e76efc) It's again possible to `read dns://` to resolve a hostname
+
+  ```
+  >> read dns://
+  == "Oldes-Aero"
+  ```
+  
+  It also fixes a bug introduce in https://github.com/rebol/rebol/pull/66, that resolving domain name from ip was not possible at all. Now it's again working properly:
+  ```
+  >> read dns://rebol.com
+  == 162.216.18.225
+  >> read dns://162.216.18.225
+  == "rebol.com"
+  
+  ```
 * [`61596e`](https://github.com/Oldes/Rebol3/commit/61596e22c9975d1878f1194c3856493eb1c30246) `HTML-entities` decoder
 
   For decoding HTML entities into text:
