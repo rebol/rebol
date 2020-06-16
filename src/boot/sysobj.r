@@ -122,8 +122,8 @@ locale: context [
 
 options: context [  ; Options supplied to REBOL during startup
 	boot:           ; The path to the executable
-	home:           ; Path of home directory
 	path:           ; Where script was started or the startup dir
+	home:           ; Path of home directory
 		none
 
 	flags:          ; Boot flag bits (see system/catalog/boot-flags)

@@ -46,7 +46,13 @@ start: func [
 	path: dirize any [path home]
 	home: dirize home
 	;if slash <> first boot [boot: clean-path boot] ;;;;; HAVE C CODE DO IT PROPERLY !!!!
-	home: file: first split-path boot
+	file: first split-path boot
+	home: dirize to-rebol-file any [
+		get-env "REBOL_HOME"  ; User can set this environment variable with own location
+		get-env "USERPROFILE" ; Default user's home directory on Windows
+		get-env "HOME"        ; Default user's home directory on Linux
+		home
+	]
 	if file? script [ ; Get the path (needed for SECURE setup)
 		script-path: split-path script
 		case [
