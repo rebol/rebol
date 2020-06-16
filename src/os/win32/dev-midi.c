@@ -43,8 +43,8 @@
 // (code includes led/key mapping values)
 //*********************************************************************/
 
-#include <SDKDDKVer.h>
-#include <Windows.h>
+#include <sdkddkver.h>
+#include <windows.h>
 #include <stdio.h>
 #include <conio.h>
 
