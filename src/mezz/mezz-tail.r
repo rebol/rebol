@@ -27,25 +27,8 @@ func: funco [
 codecs: :system/codecs 
 keys-of: :words-of ; as it sounds better when used with some objects
 
-; Quick test runner (temporary):
-run-tests: qt: function["Runs quick test"][
-	if any [
-		exists? script: ~/../src/tests/run-tests.r3
-		exists? script: ~/../../src/tests/run-tests.r3
-		exists? script: ~/../r3/src/tests/run-tests.r3
-		exists? script: ~/../../r3/src/tests/run-tests.r3
-	][	do script ]
-]
-
-t: function["Test script shortcut"][
-	if any [
-		exists? script: ~/../test.r3
-		exists? script: ~/../../test.r3
-	][	do script ]
-]
-
-; Just a shortcut to evaluate content of the clipboard (temporary):
-drc: does [do read clipboard://]
-
 ;protect system/standard
 protect-system-object
+
+;- try to execute file with user preferences
+if exists? ~/user.r3 [ try [do ~/user.r3] ]
