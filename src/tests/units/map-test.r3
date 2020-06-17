@@ -219,19 +219,25 @@ Rebol [
 
 ===start-group=== "reflection"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/774
-	m: make map! b: [a 1 b: 2 :c 3 'd 4 #e 5 /f 6 "a" 7 <b> 8 9 9 #"c" 10 a@b 11 3.14 12 1x0 13]
+	m: make map! b: [a 1 b: 2 :c 3 'd 4 #e 5 /f 6 "a" 7 <b> 8 9 9 #"c" 10 a@b 11 3.14 12 1x0 13 $1 14]
 	--test-- "body of map"
-		--assert  [a  1 b: 2 :c 3 'd 4 #e 5 /f 6 "a" 7 <b> 8 9 9 #"c" 10 a@b 11 3.14 12 1x0 13] = b
-		--assert  [a: 1 b: 2 c: 3 d: 4 e: 5 f: 6 "a" 7 <b> 8 9 9 #"c" 10 a@b 11 3.14 12 1x0 13] = body-of m
-		--assert  [a: 1 b: 2 c: 3 d: 4 e: 5 f: 6 "a" 7 <b> 8 9 9 #"c" 10 a@b 11 3.14 12 1x0 13] = reflect m 'body
+		--assert  [a  1 b: 2 :c 3 'd 4 #e 5 /f 6 "a" 7 <b> 8 9 9 #"c" 10 a@b 11 3.14 12 1x0 13 $1 14] = b
+		--assert  [a: 1 b: 2 c: 3 d: 4 e: 5 f: 6 "a" 7 <b> 8 9 9 #"c" 10 a@b 11 3.14 12 1x0 13 $1 14] = body-of m
+		--assert  [a: 1 b: 2 c: 3 d: 4 e: 5 f: 6 "a" 7 <b> 8 9 9 #"c" 10 a@b 11 3.14 12 1x0 13 $1 14] = reflect m 'body
 
 	--test-- "values of map"
-		--assert  [1 2 3 4 5 6 7 8 9 10 11 12 13] = values-of m
-		--assert  [1 2 3 4 5 6 7 8 9 10 11 12 13] = reflect m 'values
+		--assert  [1 2 3 4 5 6 7 8 9 10 11 12 13 14] = values-of m
+		--assert  [1 2 3 4 5 6 7 8 9 10 11 12 13 14] = reflect m 'values
 
 	--test-- "keys of map"
-		--assert  [a b c d e f "a" <b> 9 #"c" a@b 3.14 1x0] = keys-of m
-		--assert  [a b c d e f "a" <b> 9 #"c" a@b 3.14 1x0] = reflect m 'words
+		--assert  [a b c d e f "a" <b> 9 #"c" a@b 3.14 1x0 $1] = keys-of m
+		--assert  [a b c d e f "a" <b> 9 #"c" a@b 3.14 1x0 $1] = reflect m 'words
+
+	--test-- "path expression on map!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2421
+		foreach k keys-of m [ 
+			--assert not error? try [m/:k]
+		]
 
 ===end-group===
 

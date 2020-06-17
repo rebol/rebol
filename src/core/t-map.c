@@ -309,9 +309,11 @@
 	if (IS_END(pvs->path+1)) val = pvs->setval;
 	if (IS_NONE(pvs->select)) return PE_NONE;
 
-	if (!ANY_WORD(pvs->select) && !ANY_BINSTR(pvs->select) &&
-		!IS_INTEGER(pvs->select) && !IS_CHAR(pvs->select))
-		return PE_BAD_SELECT;
+	// O: No type limit enymore!
+	// O: https://github.com/Oldes/Rebol-issues/issues/2421
+	//if (!ANY_WORD(pvs->select) && !ANY_BINSTR(pvs->select) &&
+	//	!IS_INTEGER(pvs->select) && !IS_CHAR(pvs->select))
+	//	return PE_BAD_SELECT;
 
 	n = Find_Entry(VAL_SERIES(data), pvs->select, val, FALSE);
 
