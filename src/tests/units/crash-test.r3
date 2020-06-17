@@ -131,6 +131,11 @@ Rebol [
 	--assert string? enline next "^M^/"  ;- no crash
 	--assert string? enline next "^M^/č" ;- no crash
 
+--test-- {set-path! with no value}
+	;@@ https://github.com/Oldes/Rebol-issues/issues/610
+	m: [a 1]
+	--assert error? try [m/a:]
+
 ===end-group===
 
 ~~~end-file~~~
