@@ -179,6 +179,11 @@ Rebol [
 		--assert m2/b = [1 2]
 		--assert m3/b = [1]
 
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1315
+	--test-- "map string sensitivity"
+		m: make map! ["foo" 1 "FOO" 2 %foo 1 %FOO 2]
+		--assert ["foo" "FOO" %foo %FOO] = keys-of m
+
 
 ===end-group===
 
