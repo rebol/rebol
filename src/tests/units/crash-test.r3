@@ -136,6 +136,10 @@ Rebol [
 	m: [a 1]
 	--assert error? try [m/a:]
 
+--test-- {#[map! 0]}
+	;@@ https://github.com/Oldes/Rebol-issues/issues/940
+	--assert error? try [#[map! 0]] ;- no crash
+
 ===end-group===
 
 ~~~end-file~~~
