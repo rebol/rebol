@@ -764,6 +764,8 @@ Rebol [
 	--assert "a^/b^/" = deline "a^M^/b^M^/"
 	--assert ["a" "b"] = deline/lines "a^M^/b^M^/"
 	--assert ["" ""] = deline/lines "^M^/^M^/"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/648
+	--assert ["a"] = deline/lines "a"
 --test-- "DELINE modifies"
 	str: "a^/b^M^/c"
 	--assert str = deline str
