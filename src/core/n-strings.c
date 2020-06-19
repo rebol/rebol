@@ -486,13 +486,13 @@ static struct digest {
 
 	switch (base) {
 	case 64:
-		ser = Encode_Base64(arg, 0, FALSE, D_REF(3));
+		ser = Encode_Base64(arg, 0, NO_LIMIT, FALSE, D_REF(3));
 		break;
 	case 16:
-		ser = Encode_Base16(arg, 0, FALSE);
+		ser = Encode_Base16(arg, 0, NO_LIMIT, FALSE);
 		break;
 	case 2:
-		ser = Encode_Base2(arg, 0, FALSE);
+		ser = Encode_Base2(arg, 0, NO_LIMIT, FALSE);
 		break;
 	case 85:
 #ifdef INCLUDE_BASE85

@@ -446,7 +446,11 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		if (!IS_ERROR(top)) {
 			types = Get_System(SYS_OPTIONS, OPTIONS_RESULT_TYPES);
 			if (IS_TYPESET(types) && TYPE_CHECK(types, VAL_TYPE(top))) {
-				if (marker) Out_Str(marker, 0);
+				if (marker) {
+					DS_SKIP; // protect `top` from modification
+					Out_Str(marker, 0);
+					DS_DROP; 
+				}
 				Out_Value(top, 500, TRUE, 1); // limit, molded
 			}
 //			else {

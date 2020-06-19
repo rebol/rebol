@@ -767,7 +767,7 @@ err:
 
 /***********************************************************************
 **
-*/  REBSER *Encode_Base2(REBVAL *value, REBSER *series, REBFLG brk)
+*/  REBSER *Encode_Base2(REBVAL *value, REBSER *series, REBCNT len, REBFLG brk)
 /*
 **		Base2 encode a given series. Must be BYTES, not UNICODE.
 **
@@ -775,12 +775,11 @@ err:
 {
 	REBYTE *p;	// ?? should it be REBYTE? Same with below functions?
 	REBYTE *src;
-	REBINT len;
-	REBINT i;
-	REBINT n;
+	REBCNT i;
+	REBCNT n;
 	REBYTE b;
 
-	len = VAL_LEN(value);
+	if(len > VAL_LEN(value)) len = VAL_LEN(value);
 	src = VAL_BIN_DATA(value);
 
 	// Add slop-factor
@@ -809,18 +808,17 @@ err:
 
 /***********************************************************************
 **
-*/  REBSER *Encode_Base16(REBVAL *value, REBSER *series, REBFLG brk)
+*/  REBSER *Encode_Base16(REBVAL *value, REBSER *series, REBCNT len, REBFLG brk)
 /*
 **		Base16 encode a given series. Must be BYTES, not UNICODE.
 **
 ***********************************************************************/
 {
 	REBCNT count;
-	REBCNT len;
 	REBYTE *bp;
 	REBYTE *src;
 
-	len = VAL_LEN(value);
+	if(len > VAL_LEN(value)) len = VAL_LEN(value);
 	src = VAL_BIN_DATA(value);
 
 	// Account for hex, lines, and extra syntax:
@@ -844,7 +842,7 @@ err:
 
 /***********************************************************************
 **
-*/  REBSER *Encode_Base64(REBVAL *value, REBSER *series, REBFLG brk, REBOOL urlSafe)
+*/  REBSER *Encode_Base64(REBVAL *value, REBSER *series, REBCNT len, REBFLG brk, REBOOL urlSafe)
 /*
 **		Base64 encode a given series. Must be BYTES, not UNICODE.
 **
@@ -852,10 +850,9 @@ err:
 {
 	REBYTE *p;
 	REBYTE *src;
-	REBCNT len;
 	REBINT x, loop;
 
-	len = VAL_LEN(value);
+	if(len > VAL_LEN(value)) len = VAL_LEN(value);
 	src = VAL_BIN_DATA(value);
 
 	const REBYTE *table;

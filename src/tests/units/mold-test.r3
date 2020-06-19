@@ -133,7 +133,7 @@ Rebol [
 
 ===end-group=== 
 
-===start-group=== "string"
+===start-group=== "mold string!"
 	
 	--test-- "mold-string-1"
 		a: "abc"			;-- literal: "abc"
@@ -170,9 +170,15 @@ Rebol [
 		b: {"a{}bc"}
 		--assert b = mold a
 
+	--test-- "mold/part string!"
+		--assert     {"a} = mold/part "abcd" 2
+		--assert       "" = mold/part "abcd" 0
+		--assert       "" = mold/part "abcd" -2
+		--assert {"abcd"} = mold/part "abcd" 10
+
 ===end-group=== 
 
-===start-group=== "url"
+===start-group=== "mold url!"
 	
 	--test-- "mold url"
 		--assert "ftp://"  = mold ftp://
@@ -225,6 +231,10 @@ Rebol [
 		]
 		--assert "make object! [a: [1 2 3 4]]" = mold/flat o
 
+	--test-- "mold system"
+		--assert "make" = mold/part system 4
+		--assert (mold/part system 12) = (copy/part mold system 12)
+
 ===end-group===
 
 ===start-group=== "mold event!"
@@ -270,6 +280,11 @@ Rebol [
 	--test-- "mold/only"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/732
 		--assert "1 2^/3 4" = mold/only b
+
+	--test-- "mold/part block!"
+		--assert "[1 2" = mold/part/flat b 4
+		--assert "[1 2 3 4]" = mold/part/flat b 100
+
 ===end-group===
 
 ===start-group=== "mold map!"
@@ -316,9 +331,19 @@ Rebol [
 		--assert (mold/flat bin) = {#{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}}
 		system/options/binary-base: 64
 		--assert (mold/flat bin) = {64#{/////////////////////////////////////////////w==}}
-	; restore options
-	system/options/binary-base: bb
 
+	--test-- "mold/part binary!"
+		bin: to-binary make image! 2 * 1920x1080
+		system/options/binary-base: 2
+		--assert "2#{11111" = mold/part bin 8
+		system/options/binary-base: 16
+		--assert "#{FFFFFF" = mold/part bin 8
+		system/options/binary-base: 64
+		--assert "64#{////" = mold/part bin 8
+
+	; restore options
+	bin: none
+	system/options/binary-base: bb
 ===end-group===
 
 ===start-group=== "form binary!"
@@ -362,6 +387,11 @@ Rebol [
 	--test-- "mold/flat/all image!"
 		--assert (mold/all/flat make image! 8x1) = {#[image! 8x1 #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}]}
 		--assert (mold/all/flat next make image! 8x1) = {#[image! 8x1 #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF} 2]}
+
+	--test-- "mold/part image!"
+		img: make image! 2 * 1920x1080
+		--assert "make image! [3840x2160 #{FFFFF" = mold/part img 30
+		--assert "#[image! 3840x2160 #{FFFFFFFFF" = mold/part/all img 30
 
 ===end-group===
 

@@ -479,6 +479,9 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		return;
 	}
 
+	// reduce size if mold/part is used, so not all pixels are processed
+	CHECK_MOLD_LIMIT(mold, size);
+
 	// use `flat` result for images with less than 10 pixels (looks better in console) 
 	if (size < 10) indented = FALSE;
 
@@ -491,6 +494,9 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		up = Form_RGB_Uni(up, TO_RGBA_COLOR(pixel[C_R], pixel[C_G], pixel[C_B], pixel[C_A]));
 	}
 
+	// don't waste time with alpha if we are over limit
+	if (MOLD_HAS_LIMIT(mold) && MOLD_OVER_LIMIT(mold)) return;
+	
 	// Output Alpha channel, if it has one:
 	if (Image_Has_Alpha(value, FALSE)) {
 		if (indented) Append_Byte(mold->series, '\n');

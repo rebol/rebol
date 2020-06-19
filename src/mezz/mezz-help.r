@@ -68,9 +68,10 @@ import module [
 
 	clip-str: func [str] [
 		; Keep string to one line.
-		unless string? str [str: mold str]
-		trim/lines str
-		if (length? str) > max-desc-width [str: append copy/part str max-desc-width "..."]
+		unless string? str [str: mold/part/flat str max-desc-width]
+		replace/all str LF "^^/"
+		replace/all str CR "^^M"
+		if (length? str) > (max-desc-width - 1) [str: append copy/part str max-desc-width "..."]
 		str
 	]
 
@@ -93,20 +94,20 @@ import module [
 		a-an head clear back tail mold type? :value
 	]
 
-	form-val: func [val] [
+	form-val: func [val /local limit] [
 		; Form a limited string from the value provided.
 		val: case [
-			string?       :val [ mold val ]
-			any-block?    :val [ reform ["length:" length? val mold/flat val] ]
+			string?       :val [ mold/part/flat val max-desc-width]
+			any-block?    :val [ reform ["length:" length? val mold/part/flat val max-desc-width] ]
 			object?       :val [ words-of val ]
 			module?       :val [ words-of val ]
 			any-function? :val [ any [title-of :val spec-of :val] ]
 			datatype?     :val [ get in spec-of val 'title ]
 			typeset?      :val [ to block! val]
 			port?         :val [ reduce [val/spec/title val/spec/ref] ]
-			image?        :val [ return reform ["size:" val/size] ]
+			image?        :val [ mold/part/all/flat val max-desc-width]
 			gob?          :val [ return reform ["offset:" val/offset "size:" val/size] ]
-			vector?       :val [ mold/all val ]
+			vector?       :val [ mold/part/all/flat val max-desc-width]
 			;none?         :val [ mold/all val]
 			true [:val]
 		]
@@ -184,7 +185,7 @@ import module [
 		/local value spec args refs rets type ret desc arg def des ref
 	][
 		try [
-			max-desc-width: (query/mode system/ports/input 'buffer-cols) - 36
+			max-desc-width: (query/mode system/ports/input 'buffer-cols) - 35
 		]
 		buffer: any [string  clear ""]
 		catch [

@@ -384,6 +384,8 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 		return;
 	}
 
+	CHECK_MOLD_LIMIT(mold, len);
+
 	Sniff_String(ser, idx, &sf);
 	if (!GET_MOPT(mold, MOPT_ANSI_ONLY)) sf.paren = 0;
 
@@ -415,7 +417,7 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 
 	*dp++ = '{';
 
-	for (n = idx; n < VAL_TAIL(value); n++) {
+	for (n = idx; n < (len + idx); n++) {
 
 		c = uni ? up[n] : (REBUNI)(bp[n]);
 		switch (c) {
@@ -554,18 +556,20 @@ STOID Mold_Handle(REBVAL *value, REB_MOLD *mold)
 	REBSER *out;
 	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
 
+	CHECK_MOLD_LIMIT(mold, len);
+
 	switch (Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16)) {
 	default:
 	case 16:
-		out = Encode_Base16(value, 0, indented && len > 32);
+		out = Encode_Base16(value, 0, len, indented && len > 32);
 		break;
 	case 64:
 		Append_Bytes(mold->series, "64");
-		out = Encode_Base64(value, 0, indented && len > 64, FALSE);
+		out = Encode_Base64(value, 0, len, indented && len > 64, FALSE);
 		break;
 	case 2:
 		Append_Byte(mold->series, '2');
-		out = Encode_Base2(value, 0, indented && len > 8);
+		out = Encode_Base2(value, 0, len, indented && len > 8);
 		break;
 	}
 
@@ -632,6 +636,8 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 
 	value = BLK_SKIP(series, index);
 	while (NOT_END(value)) {
+		// check if we can end sooner with molding..
+		if (MOLD_HAS_LIMIT(mold) && MOLD_OVER_LIMIT(mold)) return;
 		if (VAL_GET_LINE(value)) {
 			if (indented && (sep[1] || line_flag)) New_Indented_Line(mold);
 			had_lines = TRUE;
@@ -955,12 +961,16 @@ STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
 			Append_Bytes(mold->series, ": ");
 			if (IS_WORD(vals+n) && !GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Byte(mold->series, '\'');
 			Mold_Value(mold, vals+n, TRUE);
+			if (MOLD_HAS_LIMIT(mold) && MOLD_OVER_LIMIT(mold)) {
+				// early escape
+				Remove_Last(MOLD_LOOP);
+				return;
+			}
 		}
 	}
 	mold->indent--;
 	if (indented) New_Indented_Line(mold);
 	Append_Byte(mold->series, ']');
-
 	End_Mold(mold);
 	Remove_Last(MOLD_LOOP);
 }
@@ -1061,7 +1071,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 		// Forming a string:
 		if (!molded) {
-			Insert_String(ser, -1, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
+			Insert_String(ser, NO_LIMIT, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
 			return;
 		}
 
@@ -1138,7 +1148,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 			Mold_Binary(value, mold);
 		}
 		else {
-			Emit(mold, "E",  Encode_Base16(value, 0, FALSE));
+			Emit(mold, "E",  Encode_Base16(value, 0, NO_LIMIT, FALSE));
 		}
 		break;
 
@@ -1194,10 +1204,10 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_BLOCK:
 	case REB_PAREN:
-		if (!molded)
-			Form_Block_Series(VAL_SERIES(value), VAL_INDEX(value), mold, 0);
-		else
+		if (molded)
 			Mold_Block(value, mold);
+		else
+			Form_Block_Series(VAL_SERIES(value), VAL_INDEX(value), mold, 0);
 		break;
 
 	case REB_PATH:
@@ -1445,6 +1455,7 @@ append:
 		else if (len < 0) len = 0;
 	}
 	mold->digits = len;
+	mold->limit = NO_LIMIT;
 }
 
 
@@ -1461,6 +1472,7 @@ append:
 	REB_MOLD mo = {0};
 
 	Reset_Mold(&mo);
+	mo.limit = limit;
 
 	Mold_Value(&mo, value, mold);
 

@@ -615,6 +615,16 @@ typedef struct Reb_Series_Ref
 //#define VAL_STR_LAST(v)	STR_LAST(VAL_SERIES(v))
 //#define	VAL_MEM_LEN(v)	(VAL_TAIL(v) * VAL_SERIES_WIDTH(v))
 
+// `mold` limit related defines
+#define NO_LIMIT (REBCNT)-1
+#define MOLD_HAS_LIMIT(mold)  (mold->limit != NO_LIMIT)
+#define MOLD_OVER_LIMIT(mold) (mold->series->tail >= mold->limit)
+#define MOLD_REST(mold) (mold->limit - mold->series->tail)
+#define CHECK_MOLD_LIMIT(mold, len)                           \
+		if (MOLD_HAS_LIMIT(mold)) {                           \
+			if (MOLD_OVER_LIMIT(mold)) return;                \
+			if (MOLD_REST(mold) < len) len = MOLD_REST(mold); \
+		}
 
 /***********************************************************************
 **

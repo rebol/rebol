@@ -124,22 +124,34 @@ static REBSER *Read_All_File(char *fname)
 **		/only   "For a block value, give only contents, no outer [ ]"
 **		/all	"Mold in serialized format"
 **		/flat	"No line indentation"
+**		/part	"Limit the length of the result"
+**		 limit [integer!]
 **
 ***********************************************************************/
 {
 	REBVAL *val = D_ARG(1);
 	REB_MOLD mo = {0};
+	REBINT  len = -1; // no limit
 
 	if (D_REF(3)) SET_FLAG(mo.opts, MOPT_MOLD_ALL);
 	if (D_REF(4)) SET_FLAG(mo.opts, MOPT_INDENT);
+	if (D_REF(5)) {
+		if (VAL_INT64(D_ARG(6)) > (i64)MAX_I32)
+			len = MAX_I32;
+		else if (VAL_INT64(D_ARG(6)) < 0)
+			len = 0;
+		else
+			len = VAL_INT32(D_ARG(6));
+	}
 
 	Reset_Mold(&mo);
+	mo.limit = (REBINT)len;
 
 	if (D_REF(2) && IS_BLOCK(val)) SET_FLAG(mo.opts, MOPT_ONLY);
 
 	Mold_Value(&mo, val, TRUE);
-
-	Set_String(D_RET, Copy_String(mo.series, 0, -1));
+	if (len > mo.series->tail) len = mo.series->tail;
+	Set_String(D_RET, Copy_String(mo.series, 0, len));
 
 	return R_RET;
 }

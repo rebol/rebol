@@ -101,6 +101,7 @@ typedef struct rebol_mold {
 	REBYTE period;		// for decimal point
 	REBYTE dash;		// for date fields
 	REBYTE digits;		// decimal digits
+	REBCNT limit;       // optional length limit of the result (-1 = no limit)
 } REB_MOLD;
 
 #include "reb-file.h"

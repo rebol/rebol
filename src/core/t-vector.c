@@ -865,10 +865,12 @@ bad_make:
 			mold->indent++;
 			New_Indented_Line(mold);
 		}
+		CHECK_MOLD_LIMIT(mold, len);
 	}
 
 	c = 0;
 	for (; n < vect->tail; n++) {
+		if (MOLD_HAS_LIMIT(mold) && MOLD_OVER_LIMIT(mold)) return;
 		v.i = get_vect(bits, data, n);
 		if (bits < VTSF08) {
 			l = Emit_Integer(buf, v.i);
