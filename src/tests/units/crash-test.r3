@@ -138,7 +138,7 @@ Rebol [
 
 --test-- {#[map! 0]}
 	;@@ https://github.com/Oldes/Rebol-issues/issues/940
-	--assert error? try [#[map! 0]] ;- no crash
+	--assert error? try [load {#[map! 0]}] ;- no crash
 
 ===end-group===
 

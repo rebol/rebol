@@ -93,7 +93,7 @@ Rebol [
 				exists? dir: join system/options/path %../../src/tests/units/files/
 			]
 			save dir/tmp.data reduce [1 data]
-			exe: rejoin [system/options/home last split-path system/options/boot]
+			exe: system/options/boot
 
 			;@@ CALL seems not to work same on all OSes :-(
 			either system/version/4 = 3 [
