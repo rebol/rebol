@@ -80,6 +80,13 @@ Rebol [
 	--test-- "read/lines - issue/1794"
 		--assert 1 = length? read/lines %units/files/issue-1794.txt
 
+	--test-- "read/string - issue/622"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/622
+			--assert "a^M^/b^/c" = to string! read %units/files/issue-622.txt
+			--assert "a^/b^/c" = deline to string! read %units/files/issue-622.txt
+			--assert "a^/b^/c" = read/string %units/files/issue-622.txt
+
+
 	--test-- "write file result - wish/2337"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2337
 		--assert file? write %foo "hello"
