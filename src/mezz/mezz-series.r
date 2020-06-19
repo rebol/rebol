@@ -472,7 +472,7 @@ split: func [
 	"Split a series into pieces; fixed or variable size, fixed number, or at delimiters"
 	series	[series!] "The series to split"
 	dlm		[block! integer! char! bitset! any-string!] "Split size, delimiter(s), or rule(s)."
-	/into	"If dlm is an integer, split into n pieces, rather than pieces of length n."
+	/skip	"If dlm is an integer, split into n pieces, rather than pieces of length n."
 	/local size piece-size count mk1 mk2 res fill-val add-fill-val
 ][
 	either all [block? dlm  parse dlm [some integer!]] [
@@ -489,7 +489,7 @@ split: func [
 		size: dlm   ; alias for readability
 		res: collect [
 			parse/all series case [
-				all [integer? size  into] [
+				all [integer? size  skip] [
 					if size < 1 [cause-error 'Script 'invalid-arg size]
 					count: size - 1
 					piece-size: to integer! round/down divide length? series size
@@ -509,13 +509,13 @@ split: func [
 			]
 		]
 		;-- Special processing, to handle cases where the spec'd more items in
-		;   /into than the series contains (so we want to append empty items),
+		;   /skip than the series contains (so we want to append empty items),
 		;   or where the dlm was a char/string/charset and it was the last char
 		;   (so we want to append an empty field that the above rule misses).
 		fill-val: does [copy either any-block? series [[]] [""]]
 		add-fill-val: does [append/only res fill-val]
 		case [
-			all [integer? size  into] [
+			all [integer? size  skip] [
 				; If the result is too short, i.e., less items than 'size, add
 				; empty items to fill it to 'size.
 				; We loop here, because insert/dup doesn't copy the value inserted.

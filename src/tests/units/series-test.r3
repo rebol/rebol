@@ -877,6 +877,17 @@ Rebol [
 	b: [b 1]
 	--assert 1 = b/b
 
+--test-- "split block!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2051
+	b: [a b c d e f]
+	--assert [[a b c d e f]]              = split/skip b 1
+	--assert [[a b c] [d e f]]            = split/skip b 2
+	--assert [[a b] [c d] [e f]]          = split/skip b 3
+	--assert [[a] [b] [c] [d e f]]        = split/skip b 4
+	--assert [[a] [b] [c] [d] [e f]]      = split/skip b 5
+	--assert [[a] [b] [c] [d] [e] [f]]    = split/skip b 6
+	--assert [[a] [b] [c] [d] [e] [f] []] = split/skip b 7
+
 ===end-group===
 
 
