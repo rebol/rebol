@@ -140,6 +140,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/940
 	--assert error? try [load {#[map! 0]}] ;- no crash
 
+--test-- {reduce reduce [:self]}
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1756
+	--assert error? try [reduce reduce [:self]] ;- no crash
+
 ===end-group===
 
 ~~~end-file~~~
