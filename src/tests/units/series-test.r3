@@ -759,9 +759,29 @@ Rebol [
 
 ===start-group=== "DELINE / ENLINE"
 
+--test-- "DELINE"
+	--assert "^/^/" = deline "^M^/^/"
+	--assert "a^/b^/" = deline "a^M^/b^M^/"
+	--assert ["a" "b"] = deline/lines "a^M^/b^M^/"
+	--assert ["" ""] = deline/lines "^M^/^M^/"
+--test-- "DELINE modifies"
+	str: "a^/b^M^/c"
+	--assert str = deline str
+	--assert str = "a^/b^/c"
+
 --test-- "deline/lines issue 1794"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1794
 	--assert 1 = length? deline/lines "Slovenščina"
+
+--test-- "ENLINE"
+	either 'Windows = system/platform [
+		--assert "a^M^/b" = enline "a^/b"
+	][
+		--assert "a^/b" = enline "a^/b"
+	]
+--test-- "ENLINE modifies"
+	str: "a^/b^M^/c"
+	--assert str = enline str
 	
 ===end-group===
 
