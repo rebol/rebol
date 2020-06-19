@@ -374,8 +374,8 @@ typedef struct REBCLR {
 			codi.data = VAL_BIN(val_src_file);
 			codi.len  = VAL_LEN(val_src_file);
 		}
-
-		OS_Load_Image(ser ? SERIES_DATA(ser) : NULL, frm, &codi);
+		
+		OS_LOAD_IMAGE(ser ? SERIES_DATA(ser) : NULL, frm, &codi);
 
 		if(codi.error) {
 			switch (codi.error) {
@@ -435,7 +435,7 @@ typedef struct REBCLR {
 		//	}
 		//}
 		
-		OS_Save_Image(IS_FILE(val_dest) ? SERIES_DATA(ser) : NULL, &codi);
+		OS_SAVE_IMAGE(IS_FILE(val_dest) ? SERIES_DATA(ser) : NULL, &codi);
 
 		if(codi.error) {
 			switch (codi.error) {
