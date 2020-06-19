@@ -217,6 +217,11 @@ Rebol [
 		--assert [2] = head reduce/into b []
 		--assert ["a"] = head reduce/into "a" []
 
+	--test-- "reduce/no-set"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2122
+		--assert [x: 3] = reduce/no-set [x: 1 + 2]
+		--assert [x/1: 3] = reduce/no-set [x/1: 1 + 2]
+
 ===end-group===
 
 ===start-group=== "compose"
