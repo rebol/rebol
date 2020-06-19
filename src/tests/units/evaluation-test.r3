@@ -357,7 +357,11 @@ Rebol [
 		--assert unset? case [true []]
 		--assert unset? case/all [true [1] true []]
 
-
+	--test-- "to-value"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2003
+		--assert none? to-value #[unset!]
+		--assert integer? to-value 1
+		
 ===end-group===
 
 ===start-group=== "SET tests"
