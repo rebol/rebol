@@ -626,6 +626,8 @@ mold: native [
 	/only {For a block value, mold only its contents, no outer []}
 	/all  {Use construction syntax}
 	/flat {No indentation}
+	/part {Limit the length of the result}
+	limit [integer!]
 ]
 
 form: native [
