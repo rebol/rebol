@@ -756,6 +756,16 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "DELINE / ENLINE"
+
+--test-- "deline/lines issue 1794"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1794
+	--assert 1 = length? deline/lines "Slovenščina"
+	
+===end-group===
+
+
 ===start-group=== "AS coercion"
 
 --test-- "AS datatype! any-string!"

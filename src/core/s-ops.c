@@ -771,7 +771,7 @@ static REBYTE seed_str[SEED_LEN] = {
 	REBCNT idx = VAL_INDEX(val);
 	REBCNT start = idx;
 	REBSER *out;
-	REBCHR c;
+	REBUNI c; // don't use REBCHR!!! it is only for OS strings! see issue#1794 
 
 	BLK_RESET(ser);
 

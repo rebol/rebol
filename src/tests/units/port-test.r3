@@ -77,6 +77,9 @@ Rebol [
 		--assert ["a" ""] = read/lines %tmp.txt
 		delete %tmp.txt
 
+	--test-- "read/lines - issue/1794"
+		--assert 1 = length? read/lines %units/files/issue-1794.txt
+
 	--test-- "write file result - wish/2337"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2337
 		--assert file? write %foo "hello"
