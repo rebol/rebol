@@ -120,6 +120,36 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/271
 		--assert not same? 0.1 0.3 - 0.2
 
+	--test-- "decimal pick"
+		b: [1 2]
+		--assert 1 = b/1.0
+		--assert 1 = b/1.1
+		--assert 1 = b/1.6
+		--assert 2 = b/2.0
+		--assert 2 = b/2.1
+		--assert 2 = b/2.6
+		s: "12"
+		--assert #"1" = s/1.0
+		--assert #"1" = s/1.1
+		--assert #"1" = s/1.6
+		--assert #"2" = s/2.0
+		--assert #"2" = s/2.1
+		--assert #"2" = s/2.6
+		p: 1x2
+		--assert 1 = p/1.0
+		--assert 1 = p/1.1
+		--assert 1 = p/1.6
+		--assert 2 = p/2.0
+		--assert 2 = p/2.1
+		--assert 2 = p/2.6
+		t: 1.2.3
+		--assert 1 = t/1.0
+		--assert 1 = t/1.1
+		--assert 1 = t/1.6
+		--assert 2 = t/2.0
+		--assert 2 = t/2.1
+		--assert 2 = t/2.6
+
 ===end-group===
 	
 ~~~end-file~~~

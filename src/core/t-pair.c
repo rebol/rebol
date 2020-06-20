@@ -148,7 +148,7 @@
 		else if (VAL_WORD_CANON(sel) == SYM_Y) n = 2;
 		else return PE_BAD_SELECT;
 	}
-	else if (IS_INTEGER(sel)) {
+	else if (IS_INTEGER(sel) || IS_DECIMAL(sel)) {
 		n = Int32(sel);
 		if (n != 1 && n !=2) return PE_BAD_SELECT;
 	}
