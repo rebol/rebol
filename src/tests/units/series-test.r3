@@ -611,7 +611,7 @@ Rebol [
 	--assert 4 = forall data [data/1]
 	--assert data = [2 3 4]
 
-;@@ https://github.com/Oldes/Rebol-issues/issues/2331
+;@@ https://github.com/Oldes/Rebol-issues/issues/2332
 --test-- "Escaping from FORALL loop using THROW"
 	data: [1 2 3 4]
 	--assert "yes" = catch [forall data [if data/1 = 3 [throw "yes"]]]
