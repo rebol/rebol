@@ -458,6 +458,16 @@ static struct digest {
 	REBCNT index;
 	REBCNT len = 0;
 
+	if (D_REF(4)) {
+		if (VAL_INT64(D_ARG(5)) > (i64)MAX_I32) {
+			len = MAX_I32;
+		} else if (VAL_INT64(D_ARG(5)) <= 0) {
+			Set_Binary(D_RET, Make_Binary(0));
+			return R_RET;
+		} else
+			len = VAL_INT32(D_ARG(5));
+	}
+
 	ser = Prep_Bin_Str(D_ARG(1), &index, &len); // result may be a SHARED BUFFER!
 
 	if (!Decode_Binary(D_RET, BIN_SKIP(ser, index), len, base, 0, D_REF(3)))
@@ -480,23 +490,34 @@ static struct digest {
 	REBCNT index;
 	REBVAL *arg = D_ARG(1);
 	REBINT base = VAL_INT32(D_ARG(2));
+	REBCNT limit = NO_LIMIT;
 
-	Set_Binary(arg, Prep_Bin_Str(arg, &index, 0)); // may be SHARED buffer
+	if (D_REF(4)) {
+		if (VAL_INT64(D_ARG(5)) > (i64)MAX_I32) {
+			limit = MAX_I32;
+		} else if (VAL_INT64(D_ARG(5)) <= 0) {
+			Set_String(D_RET, Make_Binary(0));
+			return R_RET;
+		} else
+			limit = VAL_INT32(D_ARG(5));
+	}
+
+	Set_Binary(arg, Prep_Bin_Str(arg, &index, (limit == NO_LIMIT) ? 0 : &limit)); // may be SHARED buffer
 	VAL_INDEX(arg) = index;
 
 	switch (base) {
 	case 64:
-		ser = Encode_Base64(arg, 0, NO_LIMIT, FALSE, D_REF(3));
+		ser = Encode_Base64(arg, 0, limit, FALSE, D_REF(3));
 		break;
 	case 16:
-		ser = Encode_Base16(arg, 0, NO_LIMIT, FALSE);
+		ser = Encode_Base16(arg, 0, limit, FALSE);
 		break;
 	case 2:
-		ser = Encode_Base2(arg, 0, NO_LIMIT, FALSE);
+		ser = Encode_Base2(arg, 0, limit, FALSE);
 		break;
 	case 85:
 #ifdef INCLUDE_BASE85
-		ser = Encode_Base85(arg, 0, FALSE);
+		ser = Encode_Base85(arg, 0, limit, FALSE);
 #else
 		Trap0(RE_FEATURE_NA);
 #endif

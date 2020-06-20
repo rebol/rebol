@@ -109,6 +109,55 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "enbase/part"
+	--test-- "enbase/part 2"
+		--assert ""  = enbase/part #{0401} 2 0
+		--assert "00000100"  = enbase/part #{0401} 2 1
+		--assert "0000010000000001"  = enbase/part #{0401} 2 2
+		--assert "0000010000000001"  = enbase/part #{0401} 2 3
+		--assert "0000010000000001"  = enbase/part #{0401FF} 2 2
+		--assert "00000001"  = enbase/part skip #{0401FF} 1 2 1
+	--test-- "enbase/part 16"
+		--assert ""  = enbase/part #{0401} 16 0
+		--assert "04"  = enbase/part #{0401} 16 1
+		--assert "0401"  = enbase/part #{0401} 16 2
+		--assert "0401"  = enbase/part #{0401} 16 3
+		--assert "0401"  = enbase/part #{0401FF} 16 2
+		--assert "01"  = enbase/part skip #{0401FF} 1 16 1
+	--test-- "enbase/part 64"
+		--assert ""  = enbase/part #{666F6F666F6F} 64 0
+		--assert "Zm9v"  = enbase/part #{666F6F666F6F} 64 3
+		--assert "Zm9vZm9v"  = enbase/part #{666F6F666F6F} 64 6
+		--assert "Zm9v"  = enbase/part skip #{666F6F666F6F} 3 64 3
+		--assert "Zm9v"  = enbase/part "foofoo" 64 3
+		--assert "Zm9vZm9v"  = enbase/part "foofoo" 64 6
+		--assert "Zm9v"  = enbase/part "foošřž" 64 3
+		--assert "Zm9v"  = enbase/part skip "šřžfoo" 3 64 3
+===end-group===
+
+===start-group=== "debase/part"
+	--test-- "debase/part 2"
+		--assert #{}  = debase/part "0000010000000001" 2 0
+		--assert #{04} = debase/part "0000010000000001" 2 8
+		--assert #{0401} = debase/part "0000010000000001" 2 16
+		--assert #{0401} = debase/part "0000010000000001" 2 32
+		--assert #{01} = debase/part skip "0000010000000001" 8 2 8
+		--assert #{01} = debase/part skip "čččččččč00000001" 8 2 8
+	--test-- "debase/part 16"
+		--assert #{}  = debase/part "01020304" 16 0
+		--assert #{01} = debase/part "01020304" 16 2
+		--assert #{010203} = debase/part "01020304" 16 6
+		--assert #{01020304} = debase/part "01020304" 16 100
+		--assert #{02} = debase/part skip "01020304" 2 16 2
+		--assert #{02} = debase/part skip "čč020304" 2 16 2
+	--test-- "debase/part 64"
+		--assert #{}  = debase/part "Zm9vZm9v" 64 0
+		--assert #{666F6F}  = debase/part "Zm9vZm9v" 64 4
+		--assert #{666F6F666F6F}  = debase/part "Zm9vZm9v" 64 8
+		--assert #{666F6F666F6F}  = debase/part "Zm9vZm9v!!!" 64 8
+		--assert #{666F6F666F6F}  = debase/part "Zm9vZm9vščř" 64 8
+===end-group===
+
 if any [
 	not error? err: try [enbase "a" 85]
 	err/id <> 'feature-na
@@ -156,6 +205,13 @@ if any [
 			foreach [inp out] base85-str-tests [
 				--assert out = enbase inp 85
 			]
+		--test-- "enbase bin 85"    
+			foreach [inp out] base85-bin-tests [
+				--assert out = enbase inp 85
+			]
+		--test-- "enbase/part 85"
+			--assert "BOu!rDZ" = enbase/part "hello world!" 85 5
+
 	===end-group===
 
 	===start-group=== "debase-85"
@@ -171,6 +227,8 @@ if any [
 			--assert error? try [debase "abcx"  85]
 			--assert error? try [debase "~>"    85]
 			--assert error? try [debase {s8W-"} 85]
+		--test-- "debase/part 85"
+			--assert #{68656C6C6F} = debase/part "BOu!rDZ!!!!!" 85 7
 	===end-group===
 ]
 

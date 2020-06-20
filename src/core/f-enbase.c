@@ -900,20 +900,19 @@ err:
 #ifdef INCLUDE_BASE85
 /***********************************************************************
 **
-*/  REBSER *Encode_Base85(REBVAL *value, REBSER *series, REBFLG brk)
+*/  REBSER *Encode_Base85(REBVAL *value, REBSER *series, REBCNT len, REBFLG brk)
 /*
 **		Base85 encode a given series. Must be BYTES, not UNICODE.
 **
 ***********************************************************************/
 {
-	REBCNT len;
 	REBYTE *bp;
 	REBYTE *src;
 	REBCNT x=0;
 	REBINT loop;
 	REBCNT i, chunk;
 
-	len = VAL_LEN(value);
+	if(len > VAL_LEN(value)) len = VAL_LEN(value);
 	src = VAL_BIN_DATA(value);
 
 	// Account for hex, lines, and extra syntax:

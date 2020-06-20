@@ -163,7 +163,12 @@
 	REBCNT len;
 	REBSER *ser = 0;
 
-	len = (length && *length) ? *length : VAL_LEN(val);
+	if (length && *length) {
+		len = *length;
+		if (len > VAL_LEN(val)) len = VAL_LEN(val);
+	} else {
+		len = VAL_LEN(val);
+	}
 
 	// Is it binary? If so, then no conversion needed.
 	if (IS_BINARY(val) || len == 0)
