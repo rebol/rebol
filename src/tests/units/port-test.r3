@@ -49,6 +49,15 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/500
 		--assert error? e: try [read %carl-for-president/]
 		--assert e/id = 'cannot-open
+	--test-- "DELETE-DIR"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1545
+		--assert all [
+			not error? try [make-dir/deep %units/temp-dir/sub-dir/]
+			not error? try [write %units/temp-dir/file "hello"]
+			not error? try [delete-dir %units/temp-dir/]
+			not exists? %units/temp-dir/
+		]
+
 ===end-group===
 
 ===start-group=== "file port"
