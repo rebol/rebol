@@ -429,7 +429,7 @@ if all [settings block? settings/defines][
 either flag? EXE [
 	macro+ BIN_SUFFIX %.exe
 	macro+ LIB_SUFFIX %.dll
-	macro+ RES {"objs\r3.res"}
+	macro+ RES {"objs/r3.res"}
 	macro+ RM  "@-rm -rf"
 ][
 	macro+ LIB_SUFFIX %.so
