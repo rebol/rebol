@@ -38,6 +38,7 @@ enum {
 	RFM_RESEEK,			// file index has moved, reseek
 	RFM_NAME_MEM,		// converted name allocated in mem
 	RFM_DIR = 16,
+	RFM_DRIVES,         // used only on Windows to get logical drives letters (read %/)
 };
 
 // RFE - REBOL File Error

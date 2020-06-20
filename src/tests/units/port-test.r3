@@ -57,6 +57,16 @@ Rebol [
 			not error? try [delete-dir %units/temp-dir/]
 			not exists? %units/temp-dir/
 		]
+if system/platform = 'Windows [
+	--test-- "read %/"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2031
+		--assert all [
+			block? drives: read %/
+			not empty? drives
+			2 = length? drives/1
+			#"/" = last drives/1
+		]
+]
 
 ===end-group===
 

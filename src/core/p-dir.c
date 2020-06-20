@@ -60,6 +60,15 @@
 
 	dir->data = (REBYTE*)(&file);
 
+#ifdef TO_WINDOWS
+	REBCHR *cp = file.file.path;
+	if (cp[0] == '/' && cp[1] == 0) {
+		// special case: reading drive letters -> read %/
+		// https://github.com/Oldes/Rebol-issues/issues/2031
+		SET_FLAG(dir->modes, RFM_DRIVES);
+	}
+#endif
+
 	while ((result = OS_DO_DEVICE(dir, RDC_READ)) == 0 && !GET_FLAG(dir->flags, RRF_DONE)) {
 		len = (REBCNT)LEN_STR(file.file.path);
 		if (GET_FLAG(file.modes, RFM_DIR)) len++;
