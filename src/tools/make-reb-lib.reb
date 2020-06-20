@@ -15,7 +15,7 @@ REBOL [
 
 print "--- Make Reb-Lib Headers ---"
 
-do %common.r
+do %common.reb
 
 lib-ver: 2
 
@@ -28,7 +28,7 @@ ext-lib: %core/f-extension.c
 reb-ext-lib:  %include/reb-lib.h      ; for Host usage
 reb-ext-defs: %include/reb-lib-lib.h  ; for REBOL usage
 
-ver: load %boot/version.r
+ver: load %boot/version.reb
 
 
 
@@ -224,7 +224,7 @@ process ext-lib
 remit "} RL_LIB;"
 
 out: to-string reduce [
-form-header/gen "REBOL Host and Extension API" %reb-lib.r %make-reb-lib.r
+form-header/gen "REBOL Host and Extension API" %reb-lib.reb %make-reb-lib.reb
 {
 // These constants are created by the release system and can be used to check
 // for compatiblity with the reb-lib DLL (using RL_Version.)
@@ -284,7 +284,7 @@ write-if reb-ext-lib out
 ;-----------------------------------------------------------------------------
 
 out: to-string reduce [
-form-header/gen "REBOL Host/Extension API" %reb-lib-lib.r %make-reb-lib.r
+form-header/gen "REBOL Host/Extension API" %reb-lib-lib.reb %make-reb-lib.reb
 {RL_LIB Ext_Lib = ^{
 }
 dlib

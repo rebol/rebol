@@ -22,7 +22,7 @@ change-dir %../ ;- make sure you call it just once at start!
 ; Output directory for temp files:
 make-dir temp-dir: join what-dir %tmp/
 
-do %tools/form-header.r
+do %tools/form-header.reb
 
 
 ;-- Options:
@@ -34,7 +34,7 @@ os-name:  none
 os-base:  none
 product:  none
 
-if exists? opts: temp-dir/tmp-options.r [
+if exists? opts: temp-dir/tmp-options.reb [
 	opts: load opts
 	platform: opts/platform
 	version:  opts/version

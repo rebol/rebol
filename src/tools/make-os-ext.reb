@@ -13,7 +13,7 @@ REBOL [
 	Needs: 2.100.100
 ]
 
-do %common.r
+do %common.reb
 
 lib-version: version/3
 print ["--- Make OS Ext Lib --- Version:" lib-version]
@@ -148,7 +148,7 @@ foreach file files [
 remit "} REBOL_HOST_LIB;"
 
 out: rejoin [
-	form-header/gen "Host Access Library" %host-lib.h %make-os-ext.r
+	form-header/gen "Host Access Library" %host-lib.h %make-os-ext.reb
 {
 #define HOST_LIB_VER } lib-version {
 #define HOST_LIB_SUM } checksum/tcp to-binary xsum {

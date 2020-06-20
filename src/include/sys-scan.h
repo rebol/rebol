@@ -27,7 +27,7 @@
 ***********************************************************************/
 
 /*
-**  Tokens returned by the scanner.  Keep in sync with boot.r strings area.
+**  Tokens returned by the scanner.  Keep in sync with boot.reb strings area.
 */
 enum Value_Types {
 	TOKEN_EOF = 0,

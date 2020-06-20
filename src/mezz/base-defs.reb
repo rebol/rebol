@@ -71,10 +71,10 @@ foreach [codec handler] system/codecs [
 
 ; Special import case for extensions:
 append system/options/file-types switch/default fourth system/version [
-	3 [[%.rx %.dll extension]]  ; Windows
-	2 [[%.rx %.dylib %.so extension]]  ; OS X
-	4 7 [[%.rx %.so extension]]  ; Other Posix
-] [[%.rx extension]]
+	3 [[%.rebx %.dll extension]]  ; Windows
+	2 [[%.rebx %.dylib %.so extension]]  ; OS X
+	4 7 [[%.rebx %.so extension]]  ; Other Posix
+] [[%.rebx extension]]
 
 internal!: make typeset! [
 	end! unset! frame! handle!

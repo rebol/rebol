@@ -12,7 +12,7 @@ REBOL [
 	Name: draw
 	Type: extension
 	Exports: none
-	Note: "Run make-host-ext.r to convert"
+	Note: "Run make-host-ext.reb to convert"
 ]
 
 ;don't change order of already defined words unless you know what you are doing

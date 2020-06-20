@@ -129,12 +129,12 @@ core: [
 ]
 
 made: [
-	make-boot.r			core/b-boot.c
-	make-headers.r		include/tmp-funcs.h
-	make-host-ext.r		include/host-ext-graphics.h
-	make-host-init.r	include/host-init.h
-	make-os-ext.r		include/host-lib.h
-	make-reb-lib.r		include/reb-lib.h
+	make-boot.reb			core/b-boot.c
+	make-headers.reb		include/tmp-funcs.h
+	make-host-ext.reb		include/host-ext-graphics.h
+	make-host-init.reb	include/host-init.h
+	make-os-ext.reb		include/host-lib.h
+	make-reb-lib.reb		include/reb-lib.h
 ]
 
 os: [
@@ -188,17 +188,17 @@ os-posix: [
 ]
 
 boot-files: [
-	version.r
-	graphics.r
-	draw.r
-	shape.r
-	text.r
+	version.reb
+	graphics.reb
+	draw.reb
+	shape.reb
+	text.reb
 ]
 
 mezz-files: [
-;	prot-http.r
-;	view-colors.r
-	view-funcs.r
+;	prot-http.reb
+;	view-colors.reb
+	view-funcs.reb
 ]
 
 agg-files: [
@@ -234,8 +234,8 @@ agg-files: [
 ]
 
 tools: [
-	make-host-init.r
-	make-host-ext.r
-	form-header.r
+	make-host-init.reb
+	make-host-ext.reb
+	form-header.reb
 ]
 

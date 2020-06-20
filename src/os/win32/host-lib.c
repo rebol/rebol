@@ -1294,7 +1294,7 @@ input_error:
 	OPENFILENAME ofn = {0};
 	BOOL ret;
 	//int err;
-	REBCHR *filters = TEXT("All files\0*.*\0REBOL scripts\0*.r\0Text files\0*.txt\0"	);
+	REBCHR *filters = TEXT("All files\0*.*\0REBOL scripts\0*.reb\0Text files\0*.txt\0"	);
 
 	ofn.lStructSize = sizeof(ofn);
 

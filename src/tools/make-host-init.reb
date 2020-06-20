@@ -22,26 +22,26 @@ REBOL [
 print "--- Make Host Init Code ---"
 ;print ["REBOL version:" system/version]
 
-do %common.r
+do %common.reb
 
 ; Options:
 include-vid: off
 
 ; Files to include in the host program:
 files: [
-;	%mezz/prot-http.r ;- included in core! (boot-files.r)
-;	%mezz/view-colors.r
+;	%mezz/prot-http.reb ;- included in core! (boot-files.reb)
+;	%mezz/view-colors.reb
 ]
 
 vid-files: [
-	%mezz/dial-draw.r
-	%mezz/dial-text.r
-	%mezz/dial-effect.r
-	%mezz/view-funcs.r
-	%mezz/vid-face.r
-	%mezz/vid-events.r
-	%mezz/vid-styles.r
-	%mezz/mezz-splash.r
+	%mezz/dial-draw.reb
+	%mezz/dial-text.reb
+	%mezz/dial-effect.reb
+	%mezz/view-funcs.reb
+	%mezz/vid-face.reb
+	%mezz/vid-events.reb
+	%mezz/vid-styles.reb
+	%mezz/mezz-splash.reb
 ]
 
 if include-vid [append files vid-files]
@@ -53,7 +53,7 @@ emit: func [data] [repend out data]
 
 emit-head: func [title file] [
 	clear out
-	emit form-header/gen title file %make-host-init.r
+	emit form-header/gen title file %make-host-init.reb
 ]
 
 emit-end: func [/easy] [
@@ -115,7 +115,7 @@ write-c-file: func [
 	insert data reduce ["; Copyright REBOL Technologies " now newline]
 	insert tail data make char! 0 ; zero termination required
 
-	write temp-dir/tmp-host-init.r data
+	write temp-dir/tmp-host-init.reb data
 
 	comp-data: compress data
 	comp-size: length? comp-data
@@ -179,7 +179,7 @@ load-files: func [
 
 code: load-files files
 
-save %boot/host-init.r code
+save %boot/host-init.reb code
 
 write-c-file %include/host-init.h code
 

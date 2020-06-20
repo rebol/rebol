@@ -14,8 +14,8 @@ REBOL [
 	}
 	Name: graphics
 	Type: extension
-	Exports: [] ; added by make-host-ext.r
-	Note: "Run make-host-ext.r to convert"
+	Exports: [] ; added by make-host-ext.reb
+	Note: "Run make-host-ext.reb to convert"
 ]
 
 words: [

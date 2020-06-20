@@ -311,7 +311,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	Append_Byte(text, 0);
 
 #ifdef DUMP_INIT_SCRIPT
-	f = _open("host-boot.r", _O_CREAT | _O_RDWR, _S_IREAD | _S_IWRITE );
+	f = _open("host-boot.reb", _O_CREAT | _O_RDWR, _S_IREAD | _S_IWRITE );
 	_write(f, STR_HEAD(text), LEN_BYTES(STR_HEAD(text)));
 	_close(f);
 #endif

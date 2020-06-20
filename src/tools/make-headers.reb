@@ -18,9 +18,9 @@ REBOL [
 
 print "------ Building headers"
 
-file-base: load %file-base.r
+file-base: load %file-base.reb
 
-do %common.r
+do %common.reb
 
 
 r3: system/version > 2.100.0
@@ -44,7 +44,7 @@ base-code: make string! 2000
 insert base-code {REBOL [
 	title:    "Rebol base code collected from C sources"
 	purpose:  "This is code which must be evaluated just after code from base-defs.r file"
-	commment: "AUTO-GENERATED FILE - Do not modify. (From: make-headers.r)"
+	commment: "AUTO-GENERATED FILE - Do not modify. (From: make-headers.reb)"
 ]
 }
 
@@ -53,13 +53,13 @@ emit-rl: func [d] [append repend rlib    d newline]
 emit-n:  func [d] [append repend natives d newline]
 
 emit-header: func [t f] [emit form-header/gen t f %make-headers]
-rlib: form-header/gen "REBOL Interface Library" %reb-lib.h %make-headers.r
+rlib: form-header/gen "REBOL Interface Library" %reb-lib.h %make-headers.reb
 append rlib newline
 
 emit-n {REBOL [
 	Title:   "REBOL automatically collected natives."
 	Purpose: {Data in format: [c-name {rebol-specification}]}
-	Note:    "AUTO-GENERATED FILE - Do not modify. (From: make-headers.r)"
+	Note:    "AUTO-GENERATED FILE - Do not modify. (From: make-headers.reb)"
 ]}
 
 c-file: none
@@ -264,14 +264,14 @@ foreach file files [
 symbols: sort unique symbols ;contains all symbols (like: SYM_CALL) used in above processed C files (without the SYM_ part)
 symbols: new-line/skip symbols true 1
 if verbose [? symbols]
-save/header temp-dir/tmp-symbols.r symbols [
+save/header temp-dir/tmp-symbols.reb symbols [
 	title:    "C Symbols"
 	purpose:  "Automaticly collected symbols from C files"
 	commment: "AUTO-GENERATED FILE - Do not modify. (From: make-headers.r)"
 
 ]
-write %../mezz/base-collected.r base-code
-write temp-dir/tmp-natives.r natives
+write %../mezz/base-collected.reb base-code
+write temp-dir/tmp-natives.reb natives
 write %../include/tmp-funcs.h output
 
 print [count "function prototypes"]
@@ -322,11 +322,11 @@ make-arg-enums: func [word] [
 	]
 	remove back tail output
 	append output ")^/^/"
-	
+
 	;?? output halt
 ]
 
-acts: load %../boot/actions.r
+acts: load %../boot/actions.reb
 
 foreach word [
 	copy
@@ -342,7 +342,7 @@ foreach word [
 	take
 ] [make-arg-enums word]
 
-acts: load %../boot/natives.r
+acts: load %../boot/natives.reb
 
 foreach word [
 	checksum

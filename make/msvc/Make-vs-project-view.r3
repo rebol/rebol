@@ -457,7 +457,7 @@ END
 
 
 
-do %../../src/tools/file-base.r
+do %../../src/tools/file-base.reb
 
 forall core      [change core join %../../../src/core/ core/1]
 forall os        [change os   join %../../../src/os/     os/1]
@@ -490,12 +490,12 @@ set REBOL=..\..\prebuild\r3-make-win.exe
 set T=../../../src/tools
 set OS_ID=0.3.1
 
-%REBOL% %T%/make-headers.r
-%REBOL% %T%/make-boot.r "%OS_ID% view"
-%REBOL% %T%/make-host-init.r
-%REBOL% %T%/make-os-ext.r
-%REBOL% %T%/make-host-ext.r
-%REBOL% %T%/make-reb-lib.r
+%REBOL% %T%/make-headers.reb
+%REBOL% %T%/make-boot.reb "%OS_ID% view"
+%REBOL% %T%/make-host-init.reb
+%REBOL% %T%/make-os-ext.reb
+%REBOL% %T%/make-host-ext.reb
+%REBOL% %T%/make-reb-lib.reb
 }
 
 vs/Prebuild-x64: {
@@ -503,12 +503,12 @@ set REBOL=..\..\prebuild\r3-make-win.exe
 set T=../../../src/tools
 set OS_ID=0.3.40
 
-%REBOL% %T%/make-headers.r
-%REBOL% %T%/make-boot.r "%OS_ID% view"
-%REBOL% %T%/make-host-init.r
-%REBOL% %T%/make-os-ext.r
-%REBOL% %T%/make-host-ext.r
-%REBOL% %T%/make-reb-lib.r
+%REBOL% %T%/make-headers.reb
+%REBOL% %T%/make-boot.reb "%OS_ID% view"
+%REBOL% %T%/make-host-init.reb
+%REBOL% %T%/make-os-ext.reb
+%REBOL% %T%/make-host-ext.reb
+%REBOL% %T%/make-reb-lib.reb
 }
 
 vs/make-project/type "Rebol3_View" %./ "Console"

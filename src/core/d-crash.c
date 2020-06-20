@@ -85,7 +85,7 @@ enum Crash_Msg_Nums {
 
 	// "REBOL PANIC #nnn: put error message here"
 	// The first few error types only print general error message.
-	// Those errors > RP_STR_BASE have specific error messages (from boot.r).
+	// Those errors > RP_STR_BASE have specific error messages (from boot.reb).
 	if      (id < RP_BOOT_DATA) n = CM_DEBUG;
 	else if (id < RP_INTERNAL) n = CM_BOOT;
 	else if (id < RP_ASSERTS)  n = CM_INTERNAL;
@@ -93,7 +93,7 @@ enum Crash_Msg_Nums {
 	else if (id < RP_STR_BASE) n = CM_DATATYPE;
 	else if (id > RP_STR_BASE + RS_MAX - RS_ERROR) n = CM_DEBUG;
 
-	// Use the above string or the boot string for the error (in boot.r):
+	// Use the above string or the boot string for the error (in boot.reb):
 	msg = (REBYTE*)(n >= 0 ? Crash_Msgs[n] : BOOT_STR(RS_ERROR, id - RP_STR_BASE - 1));
 	Form_Var_Args(buf + LEN_BYTES(buf), (REBCNT)(CRASH_BUF_SIZE - 1 - LEN_BYTES(buf)), msg, args);
 

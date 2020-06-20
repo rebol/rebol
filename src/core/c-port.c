@@ -616,7 +616,7 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 **
 **	In order to add a port scheme:
 **
-**		In mezz-ports.r add a make-scheme.
+**		In mezz-ports.reb add a make-scheme.
 **		Add an Init_*_Scheme() here.
 **		Be sure host-devices.c has the device enabled.
 **
