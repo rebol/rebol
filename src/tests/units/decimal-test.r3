@@ -64,6 +64,11 @@ Rebol [
 	--assert  2.0 = round/half-ceiling  1.5
 	--assert -1.0 = round/half-ceiling -1.5
 
+	--test-- "round/even/to"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2324
+	--assert 2 = round/even/to 1.555555 1
+	--assert "1.55556" = mold round/even/to 1.555555 1E-5
+
 ===end-group===
 
 ===start-group=== "to-degrees & to-radians"
