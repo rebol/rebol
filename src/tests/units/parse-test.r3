@@ -121,6 +121,11 @@ Rebol [
 	--assert parse [x][set val pos: word!]
 	--assert pos = [x]
 
+--test-- "issue-2138"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2138
+	--assert not parse "test<a>" [ copy content to [<a>] ]
+	--assert content = "test"
+
 --test-- "issue-1938"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1938
 	--assert parse "a" reduce [charset "a"]
