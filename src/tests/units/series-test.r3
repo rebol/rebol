@@ -650,6 +650,12 @@ Rebol [
 	--assert "^M^/" = to-string to-binary "^M^/"
 	--assert "^/^M" = to-string to-binary "^/^M"
 
+--test-- "issue-2186"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2186
+	--assert "äöü^/" = to-string #{FFFE0000E4000000F6000000FC0000000A000000}
+	--assert "äöü^/" = to-string #{0000FEFF000000E4000000F6000000FC0000000A}
+
+; additional tests which also contain CRLF
 --test-- "issue-2186 read UCS16-LE"
 	bin: read %units/files/issue-2186-UTF16-LE.txt
 	--assert all [
@@ -695,9 +701,6 @@ Rebol [
 		string? try [str: read/string %units/files/issue-2186-UTF32-BE.txt]
 		11709824 = checksum str
 	]
-
-
-
 
 ===end-group===
 
