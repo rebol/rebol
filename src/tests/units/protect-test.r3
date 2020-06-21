@@ -44,6 +44,13 @@ Rebol [
 	--test-- "deline string"  --assert is-protected-error? [deline str]
 	--test-- "enline string"  --assert is-protected-error? [enline str]
 
+	--test-- "delect"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1783
+	dialect: context [default: [tuple!]]
+	inp: [1.2.3]
+	out: make block! 4
+	protect out
+	--assert is-protected-error? [delect dialect inp out]
 
 ===end-group===
 
