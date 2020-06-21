@@ -650,6 +650,55 @@ Rebol [
 	--assert "^M^/" = to-string to-binary "^M^/"
 	--assert "^/^M" = to-string to-binary "^/^M"
 
+--test-- "issue-2186 read UCS16-LE"
+	bin: read %units/files/issue-2186-UTF16-LE.txt
+	--assert all [
+		string? try [str: to-string bin]
+		3160989 = checksum str
+	]
+--test-- "issue-2186 read UCS16-BE"
+	bin: read %units/files/issue-2186-UTF16-BE.txt
+	--assert all [
+		string? try [str: to-string bin]
+		3160989 = checksum str
+	]
+--test-- "issue-2186 read UCS32-LE"
+	bin: read %units/files/issue-2186-UTF32-LE.txt
+	--assert all [
+		string? try [str: to-string bin]
+		3160989 = checksum str
+	]
+--test-- "issue-2186 read UCS32-BE"
+	bin: read %units/files/issue-2186-UTF32-BE.txt
+	--assert all [
+		string? try [str: to-string bin]
+		3160989 = checksum str
+	]
+;- read/string converts CRLF to LF, so the checksum is different
+--test-- "issue-2186 read/string UCS16-LE"
+	--assert all [
+		string? try [str: read/string %units/files/issue-2186-UTF16-LE.txt]
+		11709824 = checksum str
+	]
+--test-- "issue-2186 read/string UCS16-BE"
+	--assert all [
+		string? try [str: read/string %units/files/issue-2186-UTF16-BE.txt]
+		11709824 = checksum str
+	]
+--test-- "issue-2186 read/string UCS32-LE"
+	--assert all [
+		string? try [str: read/string %units/files/issue-2186-UTF32-LE.txt]
+		11709824 = checksum str
+	]
+--test-- "issue-2186 read/string UCS32-BE"
+	--assert all [
+		string? try [str: read/string %units/files/issue-2186-UTF32-BE.txt]
+		11709824 = checksum str
+	]
+
+
+
+
 ===end-group===
 
 ===start-group=== "ICONV"

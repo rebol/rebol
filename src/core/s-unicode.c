@@ -888,13 +888,13 @@ ConversionResult ConvertUTF8toUTF32 (
 		// Skip CR, but add LF (even if missing)
 		if (ccr) {
 			if (ccr == EXPECT_LF && ch != LF) {
-				ccr = 1;
 				*dst++ = LF;
 			}
 			if (ch == CR) {
 				ccr = EXPECT_LF;
 				continue;
 			}
+			ccr = 1;
 		}
 
 		// check for surrogate pair ??
@@ -914,8 +914,56 @@ ConversionResult ConvertUTF8toUTF32 (
 /*
 ***********************************************************************/
 {
-	Trap0(RE_BAD_DECODE); // not yet supported 
-	return 0;
+	REBCNT ch;
+	REBUNI *start = dst;
+	int flag = -1;
+	if (ccr) ccr = 1;
+	for (; len > 0; len-=4, src+=4) {
+		if (lee) {
+			ch = (REBCNT)src[3]<<24 | (REBCNT)src[2] << 16 | (REBCNT)src[1] << 8 | (REBCNT)src[0];
+		} else {
+			ch = (REBCNT)src[0]<<24 | (REBCNT)src[1] << 16 | (REBCNT)src[2] << 8 | (REBCNT)src[3];
+		}
+		if (ch <= UNI_MAX_BMP) { /* Target is a character <= 0xFFFF */
+			/* UTF-16 surrogate values are illegal in UTF-32; 0xffff or 0xfffe are both reserved values */
+			if (ch >= UNI_SUR_HIGH_START && ch <= UNI_SUR_LOW_END) {
+				ch = UNI_REPLACEMENT_CHAR;
+			}
+		} else if (ch > UNI_MAX_LEGAL_UTF32) {
+			ch = UNI_REPLACEMENT_CHAR;
+		} else {
+			/* target is a character in range 0xFFFF - 0x10FFFF. */
+			//O: there must be change in function definition to support this
+			//O: because now we have no info how many available bytes there is in dst
+			Trap0(RE_BAD_DECODE); // not yet supported
+
+			//if (dst + 1 >= dstEnd) {
+			//	--source; /* Back up source pointer! */
+			//	result = targetExhausted; break;
+			//}
+			//ch -= 0x0010000UL;
+			//*dst++ = (UTF16)((ch >> 10) + UNI_SUR_HIGH_START);
+			//*dst++ = (UTF16)((ch & 0x3FFUL) + UNI_SUR_LOW_START);
+			//continue;
+		}
+		
+		// Skip CR, but add LF (even if missing)
+		if (ccr) {
+			if (ccr == EXPECT_LF && ch != LF) {
+				*dst++ = LF;
+			}
+			if (ch == CR) {
+				ccr = EXPECT_LF;
+				continue;
+			}
+			ccr = 1;
+		}
+
+		if (ch > 0xff) flag = 1;
+		*dst++ = (REBUNI)ch;
+	}
+
+	return (dst - start) * flag;
 }
 
 

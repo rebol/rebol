@@ -152,19 +152,7 @@ static REBSER *make_string(REBVAL *arg, REBOOL make)
 	}
 	// MAKE/TO <type> <binary!>
 	else if (IS_BINARY(arg)) {
-		REBYTE *bp = VAL_BIN_DATA(arg);
-		REBCNT len = VAL_LEN(arg);
-		switch (What_UTF(bp, len)) {
-		case 0:
-			break;
-		case 8: // UTF-8 encoded
-			bp  += 3;
-			len -= 3;
-			break;
-		default:
-			Trap0(RE_BAD_DECODE);
-		}
-		ser = Decode_UTF_String(bp, len, 8, FALSE); // UTF-8
+		ser = Decode_UTF_String(VAL_BIN_DATA(arg), VAL_LEN(arg), -1, FALSE);
 	}
 	// MAKE/TO <type> <any-string>
 	else if (ANY_BINSTR(arg)) {
