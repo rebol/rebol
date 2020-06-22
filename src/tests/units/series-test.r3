@@ -702,6 +702,17 @@ Rebol [
 		11709824 = checksum str
 	]
 
+--test-- "invalid UTF8 char"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1216
+	--assert 1 = length? str: to-string #{C2E0}
+	--assert "^(FFFD)" = str
+	--assert #{EFBFBD} = to-binary str
+	--assert #{C2E0} = invalid-utf? #{C2E0}
+	--assert #{C2E0} = invalid-utf? #{01C2E0}
+	--assert none? invalid-utf? bin: read %units/files/quickbrown.txt
+	--assert 5367801 = checksum to-string bin
+	--assert 5367801 = checksum read/string %units/files/quickbrown.txt
+
 ===end-group===
 
 ===start-group=== "ICONV"
@@ -778,10 +789,10 @@ Rebol [
 	--assert "%C5%A1ik" = enhex "šik"
 	--assert "%22%25-.%3C%3E%5C%1F%60%7B%7C%7D~" = enhex {"%-.<>\^_`{|}~}
 	; --assert %%C5%A1ik  = enhex %šik ;<-- this does not work yet!
-	--assert "šik" = to-string dehex enhex to-binary "šik"
-	--assert    "%7F" = enhex to-string #{7F}
-	--assert "%C2%80" = enhex to-string #{80}
-	--assert "%C2%81" = enhex to-string #{81}
+	--assert       "šik" = to-string dehex enhex to-binary "šik"
+	--assert       "%7F" = enhex to-string #{7F}
+	--assert "%EF%BF%BD" = enhex to-string #{80} ; #{80} is not valid UTF-8!
+	--assert "%EF%BF%BD" = enhex to-string #{81}
 	--assert "%E5%85%83" = enhex {元}
 
 --test-- "DEHEX/escape"
