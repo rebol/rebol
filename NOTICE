@@ -61,3 +61,6 @@ Copyright (c) 1991, 2000, 2001 by Lucent Technologies.
 
 qsort:
 Copyright (c) 1992, 1993 The Regents of the University of California.
+
+UTF-8 decoder:
+Copyright (c) 2008-2010 Bjoern Hoehrmann <bjoern@hoehrmann.de>
