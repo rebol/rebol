@@ -6,6 +6,11 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Features:
 
+* [`36fee1`](https://github.com/Oldes/Rebol3/commit/36fee1d2ac96c2cfaca833903118760f60ca5440) Added support for missing UTF-32 encoded binary to string conversion
+* [`499a93`](https://github.com/Oldes/Rebol3/commit/499a93e4aadfa6e5df9a72c7532198e2d976ae8d) Added support for decimap pick on `pair!` and `any-string!`
+* [`b6ea7f`](https://github.com/Oldes/Rebol3/commit/b6ea7fa7566f212431997e765a9efbd108d4434e) Add `enbase/part` and `debase/part`
+* [`b78129`](https://github.com/Oldes/Rebol3/commit/b7812968a56e804da7ee594407972005a49319ad) `mold/part` to limit the length of the result
+* [`217fce`](https://github.com/Oldes/Rebol3/commit/217fce7606dcc2c56ca6f03c6f8aa0eb9fc1fa75) Optionally execute `user.r3` file in user's home directory on startup and removing temporary help functions which now may be defined in user's file.
 * [`962382`](https://github.com/Oldes/Rebol3/commit/96238234691cdfd08ab2d133e502db75e4e6f426) Added `ppk` (PuTTY Private Key) codec (so far only RSA keys)
 * [`4c07b7`](https://github.com/Oldes/Rebol3/commit/4c07b7a0fee9fd0277cb2018c3878acd1850ae35) Added `ssh-key` (Secure Shell Key) codec (so far only RSA keys)
 * [`90ecb3`](https://github.com/Oldes/Rebol3/commit/90ecb3dddfc980fd981f409a0c868a422d6c7a3c) Added missing `UI32BYTES` and `UI32LEBYTES` _bincode_ read commands
@@ -16,8 +21,41 @@ This is just generated output from commits in [this repository](https://github.c
   As a bonus this change contain a way how to turn off read-line console input and enter use the console as a key-stroke (and mouse as well) input. Simple use example is available here:
   https://gist.github.com/Oldes/face8a5790df7121a78ba606a3e150f4
 
+### Changes:
+
+* [`c8799b`](https://github.com/Oldes/Rebol3/commit/c8799b73fa7d4df9735b1d56e412848882ac3cf4) Using Bjoern Hoehrmann's UTF-8 decoder
+
+  http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+  It is shorter and faster.
+* [`6416be`](https://github.com/Oldes/Rebol3/commit/6416be56b9bac994405da65cec54cd29e8fd2719) Migrate extensions: *.r => *.reb & *.rx => *.rebx
+
+  This change was proposed years ago by @onetom in https://github.com/rebol/rebol/pull/140 and I agree, that the `.r` extension is lost in this century and so lets start with the new one. I'm personally still preferring `.r3` for run-able scripts which requires Rebol3.
+  
+  (cherry picked from commit 298ee3787659bc39d093042c6df911d5e6103e28)
+* [`1e1dfa`](https://github.com/Oldes/Rebol3/commit/1e1dfa3282c0f8fd2f184bf81cbcdf358ac182b5) Rename `split/into` to `split/skip`
+* [`214790`](https://github.com/Oldes/Rebol3/commit/2147901da9398b0d150ccefba0f02105a1ff1cb1) Setup `system/options/home` to default user's system home location or to one defined in `REBOL_HOME` environment variable
+
+  For example to define custom location one can use on Windows:
+  ```
+  set REBOL_HOME=C:\Rebol\
+  ```
+  or on Linux:
+  ```
+  export REBOL_HOME=~/Rebol/
+  ```
+* [`2b2352`](https://github.com/Oldes/Rebol3/commit/2b23527852526ac9d510ce49e6d3ccd67c7053d9) Allow private RSA exponents optional (may be computed and are not in PPK files)
+* [`3d1436`](https://github.com/Oldes/Rebol3/commit/3d1436ab57ae6f0e9d26a28cc5c0a9315d6f2d36) Using lowercase in codec names (it looks better)
+* [`db5b44`](https://github.com/Oldes/Rebol3/commit/db5b44a6a9376a061c3d36b95de0edc2936a52cb) Replaced `mezz-crypt` module with `pkix` and `utc-time` codecs
+* [`4d8866`](https://github.com/Oldes/Rebol3/commit/4d88668b47fb545dbeb7a598268f765315418d3b) Using `append` instead of `insert tail` when saving data to binary
+
 ### Fixes:
 
+* [`4774ea`](https://github.com/Oldes/Rebol3/commit/4774eaf0f17c13719b4cdec6c6571e23251f2aa6) Better fix of reading list of logical drives on Windows
+* [`ea39f8`](https://github.com/Oldes/Rebol3/commit/ea39f8ea976cf2225f32eea5d4389589f43adc2f) Update travis file and remove unrelated mezzanine file
+* [`5e32c5`](https://github.com/Oldes/Rebol3/commit/5e32c54a850b7cb03328f5f54cb27064458a8918) `deline/lines` and `read/lines` misinterprets UTF-8 character as newline
+* [`e7e72b`](https://github.com/Oldes/Rebol3/commit/e7e72b54489eab5910bf3315719525cea0d47f19) Missing file with `mold/part` native specification
+* [`3f4b93`](https://github.com/Oldes/Rebol3/commit/3f4b93e55219a7560e7ffcc501d3e9010f4a888a) Wrong macro in host calls (failed standalone library compilation)
+* [`1317e1`](https://github.com/Oldes/Rebol3/commit/1317e13a8ad80bade1e37a1c7224e2d3be2aa314) Path expression with path! does not work with all supported key types
 * [`652045`](https://github.com/Oldes/Rebol3/commit/6520457a3bdcf4a121076c40ead3923fc94be313) Using `deline` to normalize CRLF to LF when reading text HTML content
 * [`6238d2`](https://github.com/Oldes/Rebol3/commit/6238d23e53a0329a5b36c8673da926e248b35c69) Allow incomplete tag in DER codec (because it looks it can happen)
 * [`9f6b34`](https://github.com/Oldes/Rebol3/commit/9f6b349a724a36bf8c5129ae9ff970db6a4248e6) Allow to `make bitset!` from `bitset!`
@@ -25,13 +63,6 @@ This is just generated output from commits in [this repository](https://github.c
 * [`cb5867`](https://github.com/Oldes/Rebol3/commit/cb586701c0dd8e627e83195817d8a29a4baabb46) Using rejoin instead of reduce for compatibility with newer R3 versions (write %f [..])
 * [`f09962`](https://github.com/Oldes/Rebol3/commit/f099629adfab50b31a01f6a200aacc12afad6c95) ENLINE does not convert line endings to native OS format (Posix)
 * [`70c51b`](https://github.com/Oldes/Rebol3/commit/70c51ba9dff10c967b7bde3de781d1b12939d98a) Crash in `enline`
-
-### Changes:
-
-* [`2b2352`](https://github.com/Oldes/Rebol3/commit/2b23527852526ac9d510ce49e6d3ccd67c7053d9) Allow private RSA exponents optional (may be computed and are not in PPK files)
-* [`3d1436`](https://github.com/Oldes/Rebol3/commit/3d1436ab57ae6f0e9d26a28cc5c0a9315d6f2d36) Using lowercase in codec names (it looks better)
-* [`db5b44`](https://github.com/Oldes/Rebol3/commit/db5b44a6a9376a061c3d36b95de0edc2936a52cb) Replaced `mezz-crypt` module with `pkix` and `utc-time` codecs
-* [`4d8866`](https://github.com/Oldes/Rebol3/commit/4d88668b47fb545dbeb7a598268f765315418d3b) Using `append` instead of `insert tail` when saving data to binary
 
 ## 2020 May
 
@@ -135,19 +166,52 @@ This is just generated output from commits in [this repository](https://github.c
   ]
   ```
 
+### Changes:
+
+* [`8b0e6a`](https://github.com/Oldes/Rebol3/commit/8b0e6a7ce25ab0a2a6fc190753ec3882ccffa784) Using `system/platform` just as a `word!`
+
+  Before:
+  ```
+  >> system/platform
+  == [Windows win32-x64]
+  ```
+  Now:
+  ```
+  >> system/platform
+  == Windows
+  
+  >> system/build/os
+  == win32-x64
+  
+  ```
+  
+  Reason is, that in most cases only the `platform` name is needed so one had to use for example `switch system/platform/1 [...]`, which was a little bit cryptic. It is now also compatible with Red language.
+* [`a55673`](https://github.com/Oldes/Rebol3/commit/a55673f2a159e6c561525de6901db0b262237c1a) Moved AS_DECIMAL define
+
+  used to receive decimal value, when argument may be decimal or integer
+  
 ### Fixes:
 
+* [`7ee3e3`](https://github.com/Oldes/Rebol3/commit/7ee3e30c703abce71133c67cf6f0cff9f23650a5) Not using `system/platform` for `zero-index?` functionality
+* [`9f2548`](https://github.com/Oldes/Rebol3/commit/9f2548d5fa5452e4a2ccc95df8f17fe088ecab79) Improved error handling in HTTPd (catches invalid requests)
+* [`3d068a`](https://github.com/Oldes/Rebol3/commit/3d068ab1c1a274a6555e9e8bce3253af5aa1994c) `TRY/except` should store the `last-error`
+* [`c4c374`](https://github.com/Oldes/Rebol3/commit/c4c3747a2d16a9fad8b810ccc011c7eca40f5ec9) Resolve incompatible pointer type compilation warning on posix targets in `browse` native function
+* [`447525`](https://github.com/Oldes/Rebol3/commit/447525287f3230bb7dacc01d796d8b7961f2b8f2) Optimized (and fixed regression) when appending char on string
+* [`b26700`](https://github.com/Oldes/Rebol3/commit/b267009605056f4c9ab4b87db84d674d84814ae9) Make sure that Linux ARM build is not trying to use not implemented MIDI device
+* [`149aeb`](https://github.com/Oldes/Rebol3/commit/149aebe6fac5c38693a6e867f489e98a068f1ae0) Minor modifications of `MySQL` protocol error messages.
+* [`3360da`](https://github.com/Oldes/Rebol3/commit/3360daccc3444b45560e1bf3876db0c7675d9979) WRITE should use MOLD instead of FORM when writing an object into a file
+* [`0bb9d9`](https://github.com/Oldes/Rebol3/commit/0bb9d95d479cd11d3de437ff6a32eec457f1329c) `ICONV` from `UTF16` with BOM does not skip the BOM on Windows
+* [`0020ec`](https://github.com/Oldes/Rebol3/commit/0020ec8c47225106c7be9d377f233fdbdb21c4c6) Make `case [true []]` return `unset!`
+* [`eaeb6c`](https://github.com/Oldes/Rebol3/commit/eaeb6c6eaec51a8771503abb76d2b897691372b2) Using typeset should not found datatype value inside a block
+* [`853cd8`](https://github.com/Oldes/Rebol3/commit/853cd8abf5e0e21c2a34579d7b47f122564870de) Optimization of CHANGE/INSERT/APPEND integer! or char!
+* [`47d904`](https://github.com/Oldes/Rebol3/commit/47d9043dd9ac61218488a4a3d19eb926a356be7a) `DELTA-PROFILE` includes profiler overhead
+* [`625044`](https://github.com/Oldes/Rebol3/commit/62504411f9f42a383b405ea1d84631c8fbdc6b1c) Insert/append/change binary! string!
 * [`07d4e3`](https://github.com/Oldes/Rebol3/commit/07d4e37904eac5ac28b2a2955c7581510d5004c0) Small code refactoring of the `httpd` scheme
 * [`b75a0e`](https://github.com/Oldes/Rebol3/commit/b75a0eb38ba25b2cb013f59d57debaec7e6c1e4a) Removed debug traces in HTTPD scheme
 * [`95b454`](https://github.com/Oldes/Rebol3/commit/95b4541702397c3e5093064d72c92022e3afbee5) Include USE_IMAGE_NATIVES define in VS build
 * [`b415fe`](https://github.com/Oldes/Rebol3/commit/b415fe5f80c540a2400f16d6c144831833c71d21) Catch possible evaluation errors in `in-dir` call
 * [`26b19a`](https://github.com/Oldes/Rebol3/commit/26b19aaaeb32d76323b6cba3fbf83d255b5ab8bd) Catch `base code` even when comment is at file's head
 
-### Changes:
-
-* [`a55673`](https://github.com/Oldes/Rebol3/commit/a55673f2a159e6c561525de6901db0b262237c1a) Moved AS_DECIMAL define
-
-  used to receive decimal value, when argument may be decimal or integer
 
 ## 2020 April
 
