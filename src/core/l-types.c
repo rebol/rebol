@@ -736,6 +736,23 @@ end_date:
 
 /***********************************************************************
 **
+*/	const REBYTE *Scan_Ref(const REBYTE *cp, REBCNT len, REBVAL *value)
+/*
+**		Scan and convert ref!
+**
+***********************************************************************/
+{
+	if (*cp != '@') return 0;
+	VAL_SERIES(value) = Decode_UTF_String(cp+1, len-1, 8, FALSE);
+	VAL_INDEX(value) = 0;
+	VAL_SET(value, REB_REF);
+	cp += len;
+	return cp;
+}
+
+
+/***********************************************************************
+**
 */	const REBYTE *Scan_URL(const REBYTE *cp, REBCNT len, REBVAL *value)
 /*
 **		Scan and convert a URL.

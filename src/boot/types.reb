@@ -49,6 +49,7 @@ REBOL [
 	string      self        string      +        f*      *      *   [series string]
 	file        self        string      +        f*      file   *   [series string]
 	email       self        string      +        f*      *      *   [series string]  
+	ref         self        string      +        f*      *      *   [series string] 
 	url         self        string      +        f*      file   *   [series string]
 	tag         self        string      +        +       *      *   [series string]  
 

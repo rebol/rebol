@@ -594,6 +594,50 @@ STOID Mold_All_String(REBVAL *value, REB_MOLD *mold)
 	Post_Mold(value, mold);
 }
 
+// Same as Mold_All_String, but forcing contruction syntax like #[file ...]
+STOID Mold_All_Constr_String(REBVAL *value, REB_MOLD *mold)
+{
+	// The string that is molded for /all option:
+	REBVAL val;
+	// prep...
+	Emit(mold, "#[T ", value); // #[file! part
+	// string...
+	val = *value;
+	VAL_INDEX(&val) = 0;
+	VAL_SET(&val, REB_STRING);
+	Mold_String_Series(&val, mold);
+	// post...
+	if (VAL_INDEX(value)) {
+		Append_Byte(mold->series, ' ');
+		Append_Int(mold->series, VAL_INDEX(value)+1);
+	}
+	Append_Byte(mold->series, ']');
+}
+
+STOID Mold_Ref(REBVAL *value, REB_MOLD *mold)
+{
+	if (GET_MOPT(mold, MOPT_MOLD_ALL)) goto mold_ref_all;
+
+	// Scan to find out what special chars the string contains?
+	REBYTE *bp = VAL_BIN(value);
+	REBUNI *up = (REBUNI*)bp;
+	REBUNI c;
+	REBCNT n;
+
+	for (n = VAL_INDEX(value); n < VAL_TAIL(value); n++) {
+		c = (BYTE_SIZE(VAL_SERIES(value))) ? (REBUNI)(bp[n]) : up[n];
+		if (c == '@') goto mold_ref_all;
+		if (IS_LEX_WORD(c) || IS_LEX_NUMBER(c)) continue;
+		if (c < 21 || IS_LEX_ANY_SPACE(c) || IS_LEX_DELIMIT(c)) goto mold_ref_all;
+	}
+
+	Append_Byte(mold->series, '@');
+	Insert_String(mold->series, AT_TAIL, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
+	return;
+mold_ref_all:
+	Mold_All_Constr_String(value, mold);
+}
+
 
 /***********************************************************************
 ************************************************************************
@@ -1256,6 +1300,11 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 			Emit(mold, "\'W", value);
 		else
 			Append_UTF8(ser, Get_Sym_Name(VAL_WORD_SYM(value)), -1);
+		break;
+
+	case REB_REF:
+		// FORM happens in top section.
+		Mold_Ref(value, mold);
 		break;
 
 	case REB_REFINEMENT:

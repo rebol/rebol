@@ -209,6 +209,7 @@ static REBCNT *CRC32_Table = 0;
 	case REB_EMAIL:
 	case REB_URL:
 	case REB_TAG:
+	case REB_REF:
 		ret = Hash_String(VAL_BIN_DATA(val), Val_Byte_Len(val));
 		break;
 

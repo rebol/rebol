@@ -357,6 +357,7 @@ mark_obj:
 		case REB_URL:
 		case REB_TAG:
 		case REB_BITSET:
+		case REB_REF:
 			ser = VAL_SERIES(val);
 			if (SERIES_WIDE(ser) > sizeof(REBUNI))
 				Crash(RP_BAD_WIDTH, sizeof(REBUNI), SERIES_WIDE(ser), VAL_TYPE(val));

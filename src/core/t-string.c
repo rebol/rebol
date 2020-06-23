@@ -218,6 +218,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	case REB_EMAIL:
 	case REB_URL:
 	case REB_TAG:
+	case REB_REF:
 //	case REB_ISSUE:
 		ser = Encode_UTF8_Value(arg, VAL_LEN(arg), 0);
 		break;

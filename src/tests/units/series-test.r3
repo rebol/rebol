@@ -186,6 +186,12 @@ Rebol [
 		--assert "←" = append "" #"^(2190)" ; wide char
 ===end-group===
 
+===start-group=== "APPEND ref!"
+	--test-- "APPEND ref! char!"
+		--assert @a = append @ #"a"
+		--assert @← = append @ #"^(2190)" ; wide char
+===end-group===
+
 
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1791
 ===start-group=== "APPEND binary!"
@@ -859,11 +865,13 @@ Rebol [
 	--assert email? e: as email! s
 	--assert url?   u: as url!   s
 	--assert tag?   t: as tag!   s
+	--assert ref?   r: as ref!   s
 	append s #"o"
 	--assert f = %hello
 	--assert e = to-email %hello
 	--assert u = #[url! "hello"]
 	--assert t = <hello>
+	--assert r = @hello
 
 --test-- "AS datatype! any-block!"
 	b: [a b]
@@ -885,6 +893,7 @@ Rebol [
 	--assert email? e: as e@mail s
 	--assert url?   u: as #[url! ""] s
 	--assert tag?   t: as <tag>  s
+	--assert ref?   r: as @ref   s
 
 --test-- "AS with protect"
 	b: protect [a b]
@@ -1058,6 +1067,15 @@ Rebol [
 	--assert "^@" = to-string to-char 0
 	--assert "^@" = to-string #"^(00)"
 	--assert "^@" = to-string #"^@"
+
+--test-- "to-ref"
+	--assert @123 = to-ref 123
+	--assert @1.3 = to-ref 1.3
+	--assert @1x3 = to-ref 1x3
+	--assert @abc = to-ref "abc"
+	--assert @ščř = to-ref "ščř"
+	--assert @ščř = to-ref to-binary "ščř"
+	--assert 2 = length? to-ref #{0102} ; should this be allowed?
 
 ===end-group===
 

@@ -40,6 +40,7 @@ issue		*	sym
 string		24	ser
 file		*	ser
 email		*	ser
+ref			*	ser
 url			*	ser
 tag			*	ser
 

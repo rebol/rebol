@@ -31,6 +31,7 @@ Rebol [
 		--assert found? find ["test"] series!
 		--assert  none? find reduce [integer! binary!] series!
 		--assert ["aha"] = find reduce [integer! "aha"] series!
+		--assert found? find any-string! ref!
 
 ===end-group===
 

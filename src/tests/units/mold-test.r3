@@ -364,6 +364,21 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2406
 		--assert "a@šiška" = mold a@šiška
 		--assert "a@š" = mold a@%C5%A1
+===end-group===
+
+===start-group=== "mold ref!"
+	--test-- "mold ref"
+		--assert "@name"  = mold @name
+		--assert "@ame"   = mold next @name
+		--assert "@šiška" = mold @šiška
+		--assert {#[ref! "a@"]} = mold to ref! "a@"
+		--assert {#[ref! "a^^/b"]} = mold append @a "^/b"
+	--test-- "form ref"
+		--assert "name"  = form @name
+		--assert "ame"   = form next @name
+		--assert "šiška" = form @šiška
+		--assert {a@}    = form to ref! "a@"
+		--assert {a^/b}  = form append @a "^/b"
 
 ===end-group===
 

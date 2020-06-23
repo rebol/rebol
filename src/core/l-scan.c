@@ -791,7 +791,7 @@
         switch (GET_LEX_VALUE(*cp)) {
 
         case LEX_SPECIAL_AT:            /* @username */
-            return TOKEN_EMAIL;
+            return TOKEN_REF;
 
         case LEX_SPECIAL_PERCENT:       /* %filename */
             cp = scan_state->end;
@@ -1453,6 +1453,11 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 		case TOKEN_EMAIL:
 			Scan_Email(bp, len, value);
 			LABEL_SERIES(VAL_SERIES(value), "scan email");
+			break;
+
+		case TOKEN_REF:
+			Scan_Ref(bp, len, value);
+			LABEL_SERIES(VAL_SERIES(value), "scan ref");
 			break;
 
 		case TOKEN_URL:
