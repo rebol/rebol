@@ -34,4 +34,17 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "suffix?"
+	--test-- "suffix? file!"
+	--assert %.c = suffix? %b.c
+	--assert %.c = suffix? %a/b.c
+
+	--test-- "suffix? url!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2136
+	--assert %.c = suffix? http://a/b.c
+	--assert %.c = suffix? http://a/b.c?d.e
+	--assert %.c = suffix? http://a/b.c#d.e
+	--assert %.c = suffix? http://a/b.c?d#e.f
+===end-group===
+
 ~~~end-file~~~
