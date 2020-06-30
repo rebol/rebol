@@ -110,6 +110,14 @@ Rebol [
 	--assert    "12" = load save %tmp.txt #{3132}
 	--assert #{3132} = load save %tmp.reb #{3132}
 
+--test-- "loading a binary longer than 32262 bytes"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1677
+	--assert 32733 = length? do %units/files/issue-1677.txt
+	--assert 32733 = length? do bin: read %units/files/issue-1677.txt
+	write %tmp.reb bin
+	--assert 32733 = length? do %tmp.reb
+
+
 	delete %tmp.txt
 	delete %tmp.reb
 
