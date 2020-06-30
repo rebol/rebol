@@ -142,6 +142,11 @@
 		dst = Make_Unicode(len+FN_PAD);
 		out = UNI_HEAD(dst);
 #ifdef TO_WINDOWS
+		if (len == 1) {
+			// it was really just: %/
+			// so return empty string in such a case
+			goto term_out;
+		}
 		i++;
 		if (i < len) {
 			c = GET_CHAR_UNI(uni, bp, i);
@@ -223,6 +228,7 @@
 			out[n++] = c;
 		}
 	}
+term_out:
 	out[n] = 0;
 	SERIES_TAIL(dst) = n;
 //	TERM_SERIES(dst);

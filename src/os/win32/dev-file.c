@@ -412,6 +412,19 @@ fail:
 	WIN32_FILE_ATTRIBUTE_DATA info;
 
 	if (!GetFileAttributesEx(file->file.path, GetFileExInfoStandard, &info)) {
+		if (file->file.path[0] == 0) {
+			// special case: query %/
+			// report it still as a dir...
+			SET_FLAG(file->modes, RFM_DIR);
+			// but without size and date
+			file->file.size = MIN_I64;
+			file->file.time.l = 0;
+			file->file.time.h = 0;
+			// put back removed slash
+			file->file.path[0] = '/';
+			file->file.path[1] = 0;
+			return DR_DONE;
+		}
 		file->error = GetLastError();
 		return DR_ERROR;
 	}

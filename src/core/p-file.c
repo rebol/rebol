@@ -91,9 +91,12 @@
 ***********************************************************************/
 {
 	REBOL_DAT dat;
-
-	OS_FILE_TIME(file, &dat);
-	Set_Date(val, &dat);
+	if (file->file.time.h == 0 && file->file.time.l == 0) {
+		SET_NONE(val);
+	} else {
+		OS_FILE_TIME(file, &dat);
+		Set_Date(val, &dat);
+	}
 }
 
 /***********************************************************************

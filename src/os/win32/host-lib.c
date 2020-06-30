@@ -630,7 +630,7 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	return SetCurrentDirectory(path);
+	return SetCurrentDirectory( path[0]==0 ? L"\\" : path );
 }
 
 

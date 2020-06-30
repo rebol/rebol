@@ -61,8 +61,7 @@
 	dir->data = (REBYTE*)(&file);
 
 #ifdef TO_WINDOWS
-	REBCHR *cp = file.file.path;
-	if (cp[0] == '/' && cp[1] == 0) {
+	if (dir->file.path[0] == 0) {
 		// special case: reading drive letters -> read %/
 		// https://github.com/Oldes/Rebol-issues/issues/2031
 		SET_FLAG(dir->modes, RFM_DRIVES);
@@ -180,6 +179,7 @@
 
 	Secure_Port(SYM_FILE, dir, path, ser);
 
+	if (len == 0) return;
 	if (len == 1 && dir->file.path[0] == '.') {
 		if (wild > 0) {
 			dir->file.path[0] = '*';
@@ -346,7 +346,7 @@ create:
 			return R_RET;
 		}
 		SET_NONE(state);
-		Init_Dir_Path(&dir, path, -1, REMOVE_TAIL_SLASH | POL_READ);
+		Init_Dir_Path(&dir, path, -1, POL_READ);
 		if (OS_DO_DEVICE(&dir, RDC_QUERY) < 0) return R_NONE;
 		Ret_Query_File(port, &dir, D_RET, D_ARG(ARG_QUERY_FIELD));
 		///OS_FREE(dir.file.path);

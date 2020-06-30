@@ -67,6 +67,20 @@ if system/platform = 'Windows [
 			#"/" = last drives/1
 		]
 ]
+	--test-- "exists? %/"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2317
+		--assert exists? %/
+		--assert object? info: query %/
+		--assert info/name = %/
+		--assert info/type = 'dir
+		--assert none? info/size
+		either system/platform = 'Windows [
+			--assert none? info/date
+		][
+			; on linux %/ is just a normal directory root
+			--assert date? info/date
+		]
+		
 
 ===end-group===
 
