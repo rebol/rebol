@@ -73,6 +73,48 @@ Rebol [
 		--assert error? try [save %temp.jpg #{00}]
 ===end-group===
 
+
+===start-group=== "TEXT codec"
+;- loading *.txt file does also conversion CRLF to LF
+;- it is actually same like using read/string
+;@@ https://github.com/Oldes/Rebol-issues/issues/2424
+--test-- "load UCS16-LE txt"
+	--assert all [
+		string? try [str: load %units/files/issue-2186-UTF16-LE.txt]
+		11709824 = checksum str
+	]
+--test-- "load UCS16-BE txt"
+	--assert all [
+		string? try [str: load %units/files/issue-2186-UTF16-BE.txt]
+		11709824 = checksum str
+	]
+--test-- "load UCS32-LE txt"
+	--assert all [
+		string? try [str: load %units/files/issue-2186-UTF32-LE.txt]
+		11709824 = checksum str
+	]
+--test-- "load UCS32-BE txt"
+	--assert all [
+		string? try [str: load %units/files/issue-2186-UTF32-BE.txt]
+		11709824 = checksum str
+	]
+--test-- "load/save issue! as .txt"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1937
+	;- notice that result is a string! and not an issue!
+	--assert "#00000002" = load save %tmp.txt #00000002
+	--assert  #00000002  = load save %tmp.reb #00000002
+--test-- "load/save block! as .txt"
+	--assert {1 "aha"} = load save %tmp.txt [1 "aha"]
+	--assert [1 "aha"] = load save %tmp.reb [1 "aha"]
+--test-- "load/save binary! as .txt"
+	--assert    "12" = load save %tmp.txt #{3132}
+	--assert #{3132} = load save %tmp.reb #{3132}
+
+	delete %tmp.txt
+	delete %tmp.reb
+
+===end-group===
+
 if find codecs 'wav [
 	codecs/wav/verbose: 3
 	===start-group=== "WAV codec"

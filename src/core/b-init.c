@@ -666,10 +666,12 @@ extern const REBYTE Str_Banner[];
 	}
 
 	if (codi->action == CODI_DECODE) {
-		return CODI_TEXT;
+		codi->other = (void*)Decode_UTF_String(codi->data, codi->len, -1, TRUE);
+		return CODI_STRING;
 	}
 
 	if (codi->action == CODI_ENCODE) {
+		//O: This does not happen as in n-system.c only image is allowed to be encoded!
 		return CODI_BINARY;
 	}
 

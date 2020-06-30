@@ -476,6 +476,9 @@ err:
 	case CODI_BLOCK:
 		Set_Block(D_RET, codi.other);
 		break;
+	case CODI_STRING:
+		Set_String(D_RET, codi.other);
+		break;
 
 	default:
 		Trap0(RE_BAD_MEDIA); // need better!!!

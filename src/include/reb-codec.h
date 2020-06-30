@@ -75,6 +75,7 @@ enum {
 	CODI_IMAGE,
 	CODI_SOUND,
 	CODI_BLOCK,
+	CODI_STRING,			// result is in codi->other as a series (no need to copy).
 };
 
 // Codec commands:
