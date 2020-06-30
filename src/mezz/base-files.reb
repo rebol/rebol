@@ -45,7 +45,7 @@ suffix?: func [
 	/local end
 ][
 	either all [
-		url? path end: find path make bitset! "?#"
+		url? path end: find path #[bitset! #{0000000010000001}] ; "?#"
 	][
 		all [
 			path: find/reverse end #"."
