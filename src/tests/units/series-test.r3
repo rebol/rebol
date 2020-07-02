@@ -738,9 +738,16 @@ Rebol [
 	--assert "" = iconv #{} 28592
 	--assert "" = iconv #{} 'utf8
 
+--test-- "ICONV from UTF-16 without BOM"
+	--assert "Writer" = iconv #{005700720069007400650072} 'UTF-16BE
+	--assert "Writer" = iconv #{570072006900740065007200} 'UTF-16LE
+
 --test-- "ICONV from UTF-16 with BOM"
-	--assert "Writer" = iconv #{FEFF005700720069007400650072} 'UTF-16BE
-	--assert "Writer" = iconv #{FFFE570072006900740065007200} 'UTF-16LE
+	;@@ https://github.com/Oldes/Rebol3/issues/19
+	--assert "^(FEFF)Writer" = iconv #{FEFF005700720069007400650072} 'UTF-16BE
+	--assert "^(FEFF)Writer" = iconv #{FFFE570072006900740065007200} 'UTF-16LE
+	--assert "Writer" = decode 'text #{FEFF005700720069007400650072}
+	--assert "Writer" = decode 'text #{FFFE570072006900740065007200}
 
 
 --test-- "ICONV/TO (conversion to different codepage - binary result)"

@@ -615,13 +615,6 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 
 	if (cp == 1200 || cp == 1201) { // data are already wide (UTF-16LE or UTF-16BE)
 		bp = VAL_BIN_AT(data);
-		if ( src_len >= 2 && (
-			(0xFF == bp[0] && 0xFE == bp[1]) ||
-			(0xFE == bp[0] && 0xFF == bp[1])
-		)) { // skip BOM
-			src_len -= 2;
-			bp += 2;
-		}
 		dst_len = src_len / 2;
 		dst_wide = Make_Series(dst_len + 1, 2, FALSE);
 		memcpy(BIN_HEAD(dst_wide), bp, src_len);
