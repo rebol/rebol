@@ -1,11 +1,11 @@
 Rebol [
 	Title: "HTTPD Scheme"
-	Date: 10-May-2020
+	Date: 02-Jul-2020
 	Author: ["Andreas Bolka" "Christopher Ross-Gill" "Oldes"]
 	File: %httpd.r3
 	Name: 'httpd
 	Type: 'module
-	Version: 0.5.0
+	Version: 0.6.0
 	Exports: [http-server decode-target to-CLF-idate]
 	Rights: http://opensource.org/licenses/Apache-2.0
 	Purpose: {
@@ -16,6 +16,7 @@ Rebol [
 		* using _actors_ for main actions which may be customized
 		* implemented `keep-alive` behaviour
 		* sends `Not modified` response if file was not modified in given time
+		* client can stop server
 	}
 	TODO: {
 		* support for multidomain serving using `Host` header field
@@ -31,6 +32,7 @@ Rebol [
 		https://gist.github.com/rgchris/73510e7d643eb0a6b9fa69b849cd9880}
 		01-Apr-2019 "Oldes" {Rewritten to be usable in real life situations.}
 		10-May-2020 "Oldes" {Implemented directory listing, logging and multipart POST processing}
+		02-Jul-2020 "Oldes" {Added possibility to stop server and return data from client (useful for OAuth2)}
 	]
 ]
 
@@ -570,14 +572,14 @@ sys/make-scheme [
 				#"^/"
 			]
 			prin msg
-			if file? ctx/config/log-access [
-				write/append ctx/config/log-access msg
+			if file? file: select ctx/config 'log-access [
+				write/append file msg
 			]
 			if all [
 				ctx/out/status >= 400
-				file? ctx/config/log-errors
+				file? file: select ctx/config 'log-errors
 			][
-				write/append ctx/config/log-errors msg
+				write/append file msg
 			]
 		][
 			print "** Failed to write a log"
@@ -701,9 +703,12 @@ sys/make-scheme [
 		sys/log/debug 'HTTPD ["Awake (server):^[[22m" event/type]
 		switch event/type [
 			ACCEPT [ New-Client event/port ]
-			CLOSE  [ ]
+			CLOSE  [
+				close event/port
+				close event/port/locals/parent
+			]
 		]
-		false
+		true
 	]
 
 
@@ -739,6 +744,7 @@ sys/make-scheme [
 			]
 			config: none
 			timeout: none
+			done?: none
 			requests: 0   ; number of already served requests per connection
 		]
 		;? port
@@ -778,6 +784,11 @@ sys/make-scheme [
 			;try [remove find clients port]
 		]
 		sys/log/debug 'HTTPD ["Ports open:" length? clients]
+		if all [ctx/done? zero? length? clients][
+			sys/log/info 'HTTPD "Server's job done, closing initiated"
+			ctx/parent/data: ctx/done?
+			Awake-Server make event! [type: 'CLOSE port: ctx/parent]
+		]
 	]
 
 	Check-Clients: func[
@@ -821,15 +832,21 @@ http-server: function [
 		append server/locals/config spec
 	]
 	
-	? server/locals/config
+	unless system/options/quiet [
+		? server/locals/config
+	]
 
 	if actor [
-		if object? actions [ actions: body-of actions ]
-		append server/actor actions
+		append server/actor either block? actions [
+			reduce/no-set actions
+		][	body-of actions ]
 	]
 	unless no-wait [
 		forever [
-			wait [server 15]
+			p: wait [server server/locals/subport 15]
+			if all [port? p not open? p] [
+				return p/data
+			]
 			server/scheme/Check-Clients server
 		]
 	]
