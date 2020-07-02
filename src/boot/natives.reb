@@ -226,7 +226,7 @@ protect: native [
 	/words  "Process list as words (and path words)"
 	/values "Process list of values (implied GET)"
 	/hide "Hide variables (avoid binding and lookup)"
-	/permanently "Protect permanently (unprotect will fail)"
+	/lock "Protect permanently (unprotect will fail)"
 ]
 
 unprotect: native [

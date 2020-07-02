@@ -38,7 +38,7 @@ enum {
 	PROT_HIDE,
 	PROT_WORD,
 	PROT_WORDS,
-	PROT_PERMANENTLY
+	PROT_LOCK
 };
 
 
@@ -109,7 +109,7 @@ enum {
 
 	if (GET_FLAG(flags, PROT_SET)) {
 		PROTECT_SERIES(series);
-		if (GET_FLAG(flags, PROT_PERMANENTLY)) LOCK_SERIES(series);
+		if (GET_FLAG(flags, PROT_LOCK)) LOCK_SERIES(series);
 	} 
 	else
 		//unprotect series only when not locked (using protect/permanently)
@@ -143,7 +143,7 @@ enum {
 		// protecting...
 		if (!GET_FLAG(flags, PROT_WORDS)) {
 			PROTECT_SERIES(series);
-			if (GET_FLAG(flags, PROT_PERMANENTLY))
+			if (GET_FLAG(flags, PROT_LOCK))
 				LOCK_SERIES(series);
 		}
 	} else {
@@ -222,7 +222,7 @@ enum {
 	if (D_REF(5)) SET_FLAG(flags, PROT_HIDE);
 	else SET_FLAG(flags, PROT_WORD); // there is no unhide
 
-	if (D_REF(6)) SET_FLAG(flags, PROT_PERMANENTLY);
+	if (D_REF(6)) SET_FLAG(flags, PROT_LOCK);
 
 	if (IS_WORD(val) || IS_PATH(val)) {
 		Protect_Word_Value(val, flags); // will unmark if deep
