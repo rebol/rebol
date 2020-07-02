@@ -2,7 +2,7 @@ Rebol [
 	Title: "HTTPD Scheme"
 	Date: 02-Jul-2020
 	Author: ["Andreas Bolka" "Christopher Ross-Gill" "Oldes"]
-	File: %httpd.r3
+	File: %httpd.reb
 	Name: 'httpd
 	Type: 'module
 	Version: 0.6.0

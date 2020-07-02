@@ -1,9 +1,9 @@
 Rebol [
 	Title: "Test HTTPD Scheme"
-	Date: 10-May-2020
+	Date: 02-Jul-2020
 	Author: "Oldes"
 	File: %test-httpd.r3
-	Version: 0.5.0
+	Version: 0.6.0
 	Note: {
 		To test POST method from Rebol console, try this:
 		```
@@ -14,11 +14,26 @@ Rebol [
 	}
 ]
 secure [%../modules/ allow]
-do %../modules/httpd.r3
+do %../modules/httpd.reb
 
 system/options/log/httpd: 3 ; for verbose output
 
-my-actor: object [
+; make sure that there is the directory for logs
+make-dir/deep %httpd-root/logs/
+
+http-server/config/actor 8081 [
+	;- Main server configuration
+	
+	root: %httpd-root/
+	server-name: "nginx"  ;= it's possible to hide real server name
+	keep-alive: [15 100] ;= [timeout max-requests] or FALSE to turn it off
+	log-access: %httpd-root/logs/test-access.log
+	log-errors: %httpd-root/logs/test-errors.log
+	list-dir?:  #[true]
+
+] [
+	;- Server's actor functions
+
 	On-Accept: func [info [object!]][
 		; allow only connections from localhost
 		; TRUE = accepted, FALSE = refuse
@@ -53,17 +68,4 @@ my-actor: object [
 			"</code> data:<pre>" mold ctx/inp/content </pre>
 		]
 	]
-
-
 ]
-
-make-dir/deep %httpd-root/logs/
-
-http-server/config/actor 8081 [
-	root: %httpd-root/
-	server-name: "nginx"  ;= it's possible to hide real server name
-	keep-alive: [15 100] ;= [timeout max-requests] or FALSE to turn it off
-	log-access: %httpd-root/logs/test-access.log
-	log-errors: %httpd-root/logs/test-errors.log
-	list-dir?:  #[true]
-] my-actor
