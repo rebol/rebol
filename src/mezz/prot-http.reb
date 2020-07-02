@@ -431,7 +431,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 			res: throw-http-error port "Authentication not supported yet"
 		]
 		client-error server-error [
-			res: throw-http-error port ["Server error: " line]
+			res: throw-http-error port reduce ["Server error: " line]
 		]
 		not-modified [state/state: 'ready
 			res: awake make event! [type: 'done port: port]
