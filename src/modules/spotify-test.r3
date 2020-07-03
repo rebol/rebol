@@ -3,7 +3,7 @@ Rebol [
 	Date: 02-Jul-2020
 	Author: "Oldes"
 	File: %test-spotify.r3
-	Version: 0.1.0
+	Version: 0.1.1
 	Require: 3.1.2
 	Note: {
 		Spotify API is still in Beta, and some bugs still happens...
@@ -14,7 +14,6 @@ Rebol [
 do %spotify.reb
 
 system/options/log/http: 1 ; for verbose output
-try/except [
 spotify: system/modules/spotify/authorize [
 	client-id:     {8a01eb3b22ee4ba3b310e5e4fe10fd68}
 	; optional client-secret may be used for classic "Authorization Code Flow"
@@ -52,16 +51,14 @@ spotify: system/modules/spotify/authorize [
 		@user-follow-modify           ; Write/delete access to the list of artists and other users that the user follows.
 	]
 ]
-][ probe system/state/last-error ]
 
 unless spotify [
 	print "*** Access to Spotify API failed!"
 	halt
 ]
 
-
 spot?: function [
-	"Prints information what is currently playin thru Spotify"
+	"Prints information what is currently playing on user's Spotify"
 ][
 	log: system/options/log/http
 	system/options/log/http: 0 
@@ -84,8 +81,6 @@ spot?: function [
 
 print {^/Get Current User's Profile:}
 print spotify/get %me
-
-halt
 
 print {^/Get Information About The User's Current Playback:}
 print spotify/get %me/player
