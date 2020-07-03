@@ -81,8 +81,9 @@ Rebol [
 ===start-group=== "do script"
 	--test-- "script with error"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2374
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2425
 		dir: what-dir
-		--assert error? do %units/files/error.r3
+		--assert error? try [do %units/files/error.r3]
 		--assert dir = what-dir
 
 	--test-- "script returning UNSET value"

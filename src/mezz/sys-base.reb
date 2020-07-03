@@ -98,6 +98,7 @@ do*: func [
 		]
 		; Restore system/script and the dir
 		all [system/script: :scr  dir  change-dir dir]
+		if error? :value [ do :value ]
 		:value
 	]
 ]
