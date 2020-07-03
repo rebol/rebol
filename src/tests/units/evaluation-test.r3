@@ -505,6 +505,13 @@ Rebol [
 			--assert error? system/state/last-error
 			--assert system/state/last-error/id = 'zero-divide
 		]
+		; any TRY call resets system/state/last-error to none:
+		--assert not error? try [1 + 1]
+		--assert none? system/state/last-error
+		; the last-error is stored also when /except is not used:
+		--assert error? try [this-is-error]
+		--assert error? system/state/last-error
+
 	--test-- "try/except [1 / 0] function!"
 		system/state/last-error: none
 		--assert string? try/except [1 / 0] :mold

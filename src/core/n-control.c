@@ -834,13 +834,13 @@ got_err:
 {
 	REBFLG except = D_REF(2);
 	REBVAL handler = *D_ARG(3); // TRY exception will trim the stack
+	REBVAL *last_error = Get_System(SYS_STATE, STATE_LAST_ERROR);
+	SET_NONE(last_error);
 
 	if (Try_Block(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
+		// save the error as a system/state/last-error value
+		*last_error = *DS_NEXT;
 		if (except) {
-			// save it for access from the block handler or explain
-			REBVAL *val = Get_System(SYS_STATE, STATE_LAST_ERROR);
-			*val = *DS_NEXT;
-
 			if (IS_BLOCK(&handler)) {
 				DO_BLK(&handler);
 			}
