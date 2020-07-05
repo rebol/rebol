@@ -276,7 +276,7 @@ do-request: func [
 
 	;sys/log/info 'HTTP ["Request:^[[22m" spec/method spec/host spec/path]
 
-	write port/state/connection make-http-request spec/method enhex any [spec/path %/] spec/headers spec/content
+	write port/state/connection make-http-request spec/method enhex as file! any [spec/path %/] spec/headers spec/content
 ]
 parse-write-dialect: func [port block /local spec][
 	spec: port/spec
@@ -478,6 +478,8 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state][
 	clear spec/headers
 	port/data: none
 
+	new-uri: as url! new-uri
+
 	sys/log/info 'HTTP ["Redirect to:^[[m" mold new-uri]
 
 	state/redirects: state/redirects + 1
@@ -661,7 +663,7 @@ decode-result: func[
 	result
 ]
 
-hex-digits: charset "1234567890abcdefABCDEF"
+hex-digits: system/catalog/bitsets/hex-digits
 sys/make-scheme [
 	name: 'http
 	title: "HyperText Transport Protocol v1.1"

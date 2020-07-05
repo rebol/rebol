@@ -51,6 +51,17 @@ catalog: context [
 		help vers quiet verbose
 		secure-min secure-max trace halt cgi boot-level no-window
 	]
+	bitsets: context [
+		crlf:          #[bitset! #{0024}]                             ;charset "^/^M"
+		whitespace:    #[bitset! #{0064000080}]                       ;charset "^/^M^- "
+		numeric:       #[bitset! #{000000000000FFC0}]                 ;0-9
+		alpha:         #[bitset! #{00000000000000007FFFFFE07FFFFFE0}] ;A-Z a-z
+		alpha-numeric: #[bitset! #{000000000000FFC07FFFFFE07FFFFFE0}] ;A-Z a-z 0-9
+		hex-digits:    #[bitset! #{000000000000FFC07E0000007E}]       ;A-F a-f 0-9
+		; chars which does not have to be url-encoded:
+		uri:           #[bitset! #{000000005BFFFFF5FFFFFFE17FFFFFE2}] ;A-Z a-z 0-9 !#$&'()*+,-./:;=?@_~
+		uri-component: #[bitset! #{0000000041E6FFC07FFFFFE17FFFFFE2}] ;A-Z a-z 0-9 !'()*-._~
+	]
 ]
 
 contexts: context [

@@ -217,6 +217,27 @@ retry:
 
 /***********************************************************************
 **
+*/	REBFLG Check_Bit_Cased(REBSER *bset, REBCNT c)
+/*
+**		Check bit indicated. Returns TRUE if set.
+**		This is light variant of the Check_Bit function above (cased version only)
+**
+***********************************************************************/
+{
+	REBCNT i, n = c;
+	REBCNT tail = SERIES_TAIL(bset);
+	REBFLG flag = 0;
+
+	i = n >> 3;
+	if (i < tail)
+		flag = (0 != (BIN_HEAD(bset)[i] & (1 << (7 - ((n) & 7)))));
+
+	return (BITS_NOT(bset)) ? !flag : flag;
+}
+
+
+/***********************************************************************
+**
 */	REBFLG Check_Bit_Str(REBSER *bset, REBVAL *val, REBFLG uncased)
 /*
 **		If uncased is TRUE, try to match either upper or lower case.

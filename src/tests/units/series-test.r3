@@ -803,6 +803,9 @@ Rebol [
 	--assert "%C5%A1ik" = enhex "šik"
 	--assert "%D1%88%D0%B5%D0%BB%D0%BB%D1%8B" = enhex "шеллы"
 	--assert "%22%23%24%25%26%2B%2C%2F%3A%3B%3D%3F%40%5B%5D%5C" = enhex {"#$%&+,/:;=?@[]\}
+	--assert "%22#$%25&+,/:;=?@%5B%5D%5C" = form enhex as url! {"#$%&+,/:;=?@[]\}
+	--assert ";,/?:@&=+$#" = form enhex as url! {;,/?:@&=+$#}
+	--assert "%3B%2C%2F%3F%3A%40%26%3D%2B%24%23" = enhex {;,/?:@&=+$#}
 	--assert "!'()*_.-~" = enhex {!'()*_.-~}
 	--assert "%C5%A1ik"  = to-string enhex %šik
 	--assert       "šik" = to-string dehex enhex to-binary "šik"
@@ -811,17 +814,15 @@ Rebol [
 	--assert "%EF%BF%BD" = enhex to-string #{81}
 	--assert "%E5%85%83" = enhex {元}
 
---test-- "ENHEX/url"
-	--assert "a+b" = enhex/url "a b"
---test-- "DEHEX/url"
-	--assert "a b" = dehex/url "a+b"
-
 --test-- "ENHEX/escape"
 	--assert "(#23)"    = enhex/escape "(#)" #"#"
 	--assert "(#C5#A1)" = enhex/escape "(š)" #"#"
 --test-- "DEHEX/escape"
 	--assert "C# #XX" = dehex/escape "C#23#20#XX" #"#"
 	--assert "(š)"    = dehex/escape "#28š#29"    #"#"
+
+--test-- "ENHEX/except"
+	--assert "12%20%61%62" = enhex/except "12 ab" charset "12"
 
 
 ===end-group===

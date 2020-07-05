@@ -600,10 +600,6 @@ static struct digest {
 				*dp++ = (REBYTE)n;
 				bp += 3;
 				len -= 2;
-			}
-			else if (as_url && *bp == '+') {
-				*dp++ = ' ';
-				bp++;
 			} else {
 				*dp++ = *bp++;
 			}
@@ -621,9 +617,6 @@ static struct digest {
 				*dp++ = (REBUNI)n;
 				up += 3;
 				len -= 2;
-			} else if (as_url && *up == '+') {
-				*dp++ = ' ';
-				up++;
 			} else {
 				*dp++ = *up++;
 			}
@@ -644,25 +637,34 @@ static struct digest {
 */	REBNATIVE(enhex)
 /*
 **		Works for any string.
-**		Compatible with encodeURIComponent http://es5.github.io/#x15.1.3.4
+**		Compatible with https://tc39.es/ecma262/#sec-encodeuri-uri
 **		If source is unicode (wide) string, result is ASCII.
 **			value [any-string! binary!] {The string to encode}
 **			/escape char [char!] {Can be used to change the default escape char #"%"}
-**			/url {Encode space as a #"+"}
+**			/unescaped set [bitset!] {Can be used to specify, which chars can be unescaped}
+**
 **
 ***********************************************************************/
 {
 	REBVAL *arg = D_ARG(1);
 //	REBOOL  ref_escape = D_REF(2);
 //	REBVAL *val_escape = D_ARG(3);
-	REBOOL as_url = D_REF(4);
-	REBSER *ser;
-	REBINT lex;
-	REBCNT n;
+	REBOOL  ref_bitset = D_REF(4);
+	REBVAL *val_bitset = D_ARG(5);
 	REBYTE encoded[4];
-	REBCNT encoded_size;
-
+	REBCNT n, encoded_size;
+	REBSER *ser;
 	const REBCHR escape_char = D_REF(2) ? VAL_CHAR(D_ARG(3)) : '%';
+
+	if (!ref_bitset) {
+		// use bitset value from system/catalog/bitsets
+		// use URI bitset when value is file or url
+		// else use URI_COMPONENT
+		val_bitset = Get_Object(
+			Get_System(SYS_CATALOG, CAT_BITSETS),
+			(IS_URL(arg) || IS_FILE(arg)) ? CAT_BITSETS_URI : CAT_BITSETS_URI_COMPONENT
+		);
+	}
 
 	// using FORM buffer for intermediate conversion;
 	// counting with the worst scenario, where each single codepoint
@@ -679,18 +681,8 @@ static struct digest {
 		while (bp < ep) {
 			REBYTE c = bp[0];
 			bp++;
-
-			if((c >= 'a' && c <= 'z')
-			|| (c >= 'A' && c <= 'Z')
-			|| (c >= '0' && c <= '9')
-			|| (c >= 40  && c <=  42)  // ()*
-			|| (c == '-' || c == '.' || c == '_' || c == '!' || c == '~' || c == '\'')
-			) {	// leaving char as is
+			if (Check_Bit_Cased(VAL_SERIES(val_bitset), c)) {
 				*dp++ = c;
-				continue;
-			}
-			if (as_url && c == ' ') {
-				*dp++ = '+';
 				continue;
 			}
 			*dp++ = escape_char;
@@ -709,17 +701,8 @@ static struct digest {
 			if (c >= 0x80) {// all non-ASCII characters *must* be percent encoded
 				encoded_size = Encode_UTF8_Char(encoded, c);
 			} else {
-				if((c >= 'a' && c <= 'z')
-				|| (c >= 'A' && c <= 'Z')
-				|| (c >= '0' && c <= '9')
-				|| (c >= 40  && c <=  42)  // ()*
-				|| (c == '-' || c == '.' || c == '_' || c == '!' || c == '~' || c == '\'')
-				) {	// leaving char as is
+				if (Check_Bit_Cased(VAL_SERIES(val_bitset), c)) {
 					*dp++ = (REBYTE)c;
-					continue;
-				}
-				if (as_url && c == ' ') {
-					*dp++ = '+';
 					continue;
 				}
 				encoded[0] = cast(REBYTE, c);
