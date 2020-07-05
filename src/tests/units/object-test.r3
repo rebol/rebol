@@ -156,6 +156,11 @@ Rebol [
 		--assert [a b] = words-of o2
 		--assert [a] = words-of o
 
+	--test-- "issue-2076"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2076
+		--assert object? o: bound? use [x] ['x]
+		--assert object? append o 'self
+
 ===end-group===
 
 ===start-group=== "PROTECT object!"
