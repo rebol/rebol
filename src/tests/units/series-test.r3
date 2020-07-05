@@ -813,7 +813,7 @@ Rebol [
 
 --test-- "ENHEX/url"
 	--assert "a+b" = enhex/url "a b"
---yesy-- "DEHEX/url"
+--test-- "DEHEX/url"
 	--assert "a b" = dehex/url "a+b"
 
 --test-- "ENHEX/escape"
