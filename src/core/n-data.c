@@ -678,10 +678,11 @@ next_obj_val:
 			Protected(word);
 			value = Get_Var(word);
 			SET_UNSET(value);
-		}
+		} else Trap1(RE_NOT_DEFINED, word);
 	} else {
 		for (word = VAL_BLK_DATA(word); NOT_END(word); word++) {
-			if (IS_WORD(word) && VAL_WORD_FRAME(word)) {
+			if (IS_WORD(word)) {
+				if (!VAL_WORD_FRAME(word)) Trap1(RE_NOT_DEFINED, word);
 				Protected(word);
 				value = Get_Var(word);
 				SET_UNSET(value);

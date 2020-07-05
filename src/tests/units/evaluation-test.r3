@@ -379,6 +379,10 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2003
 		--assert none? to-value #[unset!]
 		--assert integer? to-value 1
+
+	--test-- "unset unbind 'x"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2219
+		--assert error? try [unset unbind 'x]
 		
 ===end-group===
 
