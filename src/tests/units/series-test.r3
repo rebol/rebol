@@ -797,17 +797,28 @@ Rebol [
 	--assert 127 = to-integer first dehex "%7F"
 
 --test-- "ENHEX"
+	;@@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent
 	--assert "%C2%A3"   = enhex "£"
 	--assert "a%20b%5C" = enhex "a b\"
 	--assert "%C5%A1ik" = enhex "šik"
-	--assert "%22%25-.%3C%3E%5C%1F%60%7B%7C%7D~" = enhex {"%-.<>\^_`{|}~}
-	; --assert %%C5%A1ik  = enhex %šik ;<-- this does not work yet!
+	--assert "%D1%88%D0%B5%D0%BB%D0%BB%D1%8B" = enhex "шеллы"
+	--assert "%22%23%24%25%26%2B%2C%2F%3A%3B%3D%3F%40%5B%5D%5C" = enhex {"#$%&+,/:;=?@[]\}
+	--assert "!'()*_.-~" = enhex {!'()*_.-~}
+	--assert "%C5%A1ik"  = to-string enhex %šik
 	--assert       "šik" = to-string dehex enhex to-binary "šik"
 	--assert       "%7F" = enhex to-string #{7F}
 	--assert "%EF%BF%BD" = enhex to-string #{80} ; #{80} is not valid UTF-8!
 	--assert "%EF%BF%BD" = enhex to-string #{81}
 	--assert "%E5%85%83" = enhex {元}
 
+--test-- "ENHEX/url"
+	--assert "a+b" = enhex/url "a b"
+--yesy-- "DEHEX/url"
+	--assert "a b" = dehex/url "a+b"
+
+--test-- "ENHEX/escape"
+	--assert "(#23)"    = enhex/escape "(#)" #"#"
+	--assert "(#C5#A1)" = enhex/escape "(š)" #"#"
 --test-- "DEHEX/escape"
 	--assert "C# #XX" = dehex/escape "C#23#20#XX" #"#"
 	--assert "(š)"    = dehex/escape "#28š#29"    #"#"

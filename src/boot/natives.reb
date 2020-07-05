@@ -536,11 +536,14 @@ dehex: native [
 	{Converts URL-style hex encoded (%xx) strings. If input is UTF-8 encode, you should first convert it to binary!}
 	value [any-string! binary!] {The string to dehex}
 	/escape char [char!] {Can be used to change the default escape char #"%"}
+	/url {Decode + as a space}
 ]
 
 enhex: native [
 	{Converts string into URL-style hex encodeding (%xx) when needed.}
 	value [any-string! binary!] {The string to encode}
+	/escape char [char!] {Can be used to change the default escape char #"%"}
+	/url {Encode space as +}
 ]
 
 get: native [

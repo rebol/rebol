@@ -583,12 +583,13 @@ static struct digest {
 {
 	REBVAL *arg        = D_ARG(1);
 //	REBOOL  ref_escape = D_REF(2);
-	REBVAL *val_escape = D_ARG(3);
+//	REBVAL *val_escape = D_ARG(3);
+	REBOOL as_url      = D_REF(4);
 	REBINT len = (REBINT)VAL_LEN(arg); // due to len -= 2 below
 	REBUNI n;
 	REBSER *ser;
 
-	const REBCHR escape_char = (IS_CHAR(val_escape)) ? VAL_CHAR(val_escape) : '%';
+	const REBCHR escape_char = D_REF(2) ? VAL_CHAR(D_ARG(3)) : '%';
 
 	if (VAL_BYTE_SIZE(arg)) {
 		REBYTE *bp = VAL_BIN_DATA(arg);
@@ -600,7 +601,12 @@ static struct digest {
 				bp += 3;
 				len -= 2;
 			}
-			else *dp++ = *bp++;
+			else if (as_url && *bp == '+') {
+				*dp++ = ' ';
+				bp++;
+			} else {
+				*dp++ = *bp++;
+			}
 		}
 
 		*dp = 0;
@@ -615,8 +621,12 @@ static struct digest {
 				*dp++ = (REBUNI)n;
 				up += 3;
 				len -= 2;
+			} else if (as_url && *up == '+') {
+				*dp++ = ' ';
+				up++;
+			} else {
+				*dp++ = *up++;
 			}
-			else *dp++ = *up++;
 		}
 
 		*dp = 0;
@@ -634,16 +644,25 @@ static struct digest {
 */	REBNATIVE(enhex)
 /*
 **		Works for any string.
+**		Compatible with encodeURIComponent http://es5.github.io/#x15.1.3.4
 **		If source is unicode (wide) string, result is ASCII.
+**			value [any-string! binary!] {The string to encode}
+**			/escape char [char!] {Can be used to change the default escape char #"%"}
+**			/url {Encode space as a #"+"}
 **
 ***********************************************************************/
 {
 	REBVAL *arg = D_ARG(1);
+//	REBOOL  ref_escape = D_REF(2);
+//	REBVAL *val_escape = D_ARG(3);
+	REBOOL as_url = D_REF(4);
 	REBSER *ser;
 	REBINT lex;
 	REBCNT n;
 	REBYTE encoded[4];
 	REBCNT encoded_size;
+
+	const REBCHR escape_char = D_REF(2) ? VAL_CHAR(D_ARG(3)) : '%';
 
 	// using FORM buffer for intermediate conversion;
 	// counting with the worst scenario, where each single codepoint
@@ -661,40 +680,22 @@ static struct digest {
 			REBYTE c = bp[0];
 			bp++;
 
-			switch (GET_LEX_CLASS(c)) {
-			case LEX_CLASS_WORD:
-				if (   (c >= 'a' && c <= 'z')
-					|| (c >= 'A' && c <= 'Z')
-					||  c == '?' || c == '!' || c == '&'
-					||  c == '*' || c == '=' || c == '~' || c == '_'
-				) break; // no conversion
-				goto byte_needs_encoding;
-			case LEX_CLASS_NUMBER:
-				break; // no conversion
-			case LEX_CLASS_SPECIAL:
-				lex = GET_LEX_VALUE(c);
-				if (   lex == LEX_SPECIAL_PERCENT
-					|| lex == LEX_SPECIAL_BACKSLASH
-					|| lex == LEX_SPECIAL_LESSER
-					|| lex == LEX_SPECIAL_GREATER
-				) goto byte_needs_encoding;
-				break; // no conversion
-			case LEX_CLASS_DELIMIT:
-				lex = GET_LEX_VALUE(c);
-				if (    lex <= LEX_DELIMIT_RETURN
-					|| (lex >= LEX_DELIMIT_LEFT_BRACKET && lex <= LEX_DELIMIT_RIGHT_BRACE)
-					||  lex == LEX_DELIMIT_QUOTE
-				) goto byte_needs_encoding;
-				break; // no conversion
+			if((c >= 'a' && c <= 'z')
+			|| (c >= 'A' && c <= 'Z')
+			|| (c >= '0' && c <= '9')
+			|| (c >= 40  && c <=  42)  // ()*
+			|| (c == '-' || c == '.' || c == '_' || c == '!' || c == '~' || c == '\'')
+			) {	// leaving char as is
+				*dp++ = c;
+				continue;
 			}
-			// leaving char as is
-			*dp++ = c;
-			continue;
-
-		byte_needs_encoding:
-			*dp++ = '%';
+			if (as_url && c == ' ') {
+				*dp++ = '+';
+				continue;
+			}
+			*dp++ = escape_char;
 			*dp++ = Hex_Digits[(c & 0xf0) >> 4];
-            *dp++ = Hex_Digits[ c & 0xf];
+			*dp++ = Hex_Digits[ c & 0xf];
 		}
 	}
 	else { // UNICODE variant
@@ -707,44 +708,25 @@ static struct digest {
 
 			if (c >= 0x80) {// all non-ASCII characters *must* be percent encoded
 				encoded_size = Encode_UTF8_Char(encoded, c);
-				goto char_needs_encoding;
 			} else {
+				if((c >= 'a' && c <= 'z')
+				|| (c >= 'A' && c <= 'Z')
+				|| (c >= '0' && c <= '9')
+				|| (c >= 40  && c <=  42)  // ()*
+				|| (c == '-' || c == '.' || c == '_' || c == '!' || c == '~' || c == '\'')
+				) {	// leaving char as is
+					*dp++ = (REBYTE)c;
+					continue;
+				}
+				if (as_url && c == ' ') {
+					*dp++ = '+';
+					continue;
+				}
 				encoded[0] = cast(REBYTE, c);
 				encoded_size = 1;
-				switch (GET_LEX_CLASS(c)) {
-				case LEX_CLASS_WORD:
-					if (   (c >= 'a' && c <= 'z')
-						|| (c >= 'A' && c <= 'Z')
-						||  c == '?' || c == '!' || c == '&'
-						||  c == '*' || c == '=' || c == '~' || c == '_'
-					) break; // no conversion
-					goto char_needs_encoding;
-				case LEX_CLASS_NUMBER:
-					break; // no conversion
-				case LEX_CLASS_SPECIAL:
-					lex = GET_LEX_VALUE(c);
-					if (   lex == LEX_SPECIAL_PERCENT
-						|| lex == LEX_SPECIAL_BACKSLASH
-						|| lex == LEX_SPECIAL_LESSER
-						|| lex == LEX_SPECIAL_GREATER
-					) goto char_needs_encoding;
-					break; // no conversion
-				case LEX_CLASS_DELIMIT:
-					lex = GET_LEX_VALUE(c);
-					if (    lex <= LEX_DELIMIT_RETURN
-						|| (lex >= LEX_DELIMIT_LEFT_BRACKET && lex <= LEX_DELIMIT_RIGHT_BRACE)
-						||  lex == LEX_DELIMIT_QUOTE
-					) goto char_needs_encoding;
-					break; // no conversion
-				}
 			}
-			// leaving char as is
-			*dp++ = (REBYTE)c;
-			continue;
-
-		char_needs_encoding:
 			for (n = 0; n < encoded_size; ++n) {
-				*dp++ = '%';
+				*dp++ = escape_char;
 				*dp++ = Hex_Digits[(encoded[n] & 0xf0) >> 4];
 				*dp++ = Hex_Digits[ encoded[n] & 0xf];
 			}
