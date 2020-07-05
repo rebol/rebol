@@ -25,6 +25,10 @@ Rebol [
 		--assert url/port-id = 8080
 		--assert url/path   = "/get?q=ščř"
 		--assert url/tag    = "kovtička"
+	--test-- "decode-url http://host?query"
+		url: decode-url http://host?query
+		--assert url/host = "host"
+		--assert url/path = "?query"
 
 ===end-group===
 

@@ -86,7 +86,7 @@ make-port*: func [
 	scheme-char: insert copy alpha-num "+-."
 	path-char:   complement make bitset! "#" 
 	user-char:   complement make bitset! ":@"
-	host-char:   complement make bitset! ":/"
+	host-char:   complement make bitset! ":/?"
 	s1: s2: none ; in R3, input datatype is preserved - these are now URL strings!
 	out: []
 	emit: func ['w v] [reduce/into [to set-word! w if :v [to string! :v]] tail out]
