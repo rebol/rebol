@@ -807,6 +807,7 @@ Rebol [
 	--assert ";,/?:@&=+$#" = form enhex as url! {;,/?:@&=+$#}
 	--assert "%3B%2C%2F%3F%3A%40%26%3D%2B%24%23" = enhex {;,/?:@&=+$#}
 	--assert "!'()*_.-~" = enhex {!'()*_.-~}
+	--assert http://a?b=%25C5%25A1 = enhex http://a?b=š
 	--assert "%C5%A1ik"  = to-string enhex %šik
 	--assert       "šik" = to-string dehex enhex to-binary "šik"
 	--assert       "%7F" = enhex to-string #{7F}
@@ -823,6 +824,7 @@ Rebol [
 
 --test-- "ENHEX/except"
 	--assert "12%20%61%62" = enhex/except "12 ab" charset "12"
+	--assert "12 %61%62"   = enhex/except "12 ab" charset "12 "
 
 
 ===end-group===
@@ -1000,6 +1002,11 @@ Rebol [
 	b: [b 1]
 	--assert 1 = b/b
 
+===end-group===
+
+
+===start-group=== "SPLIT"
+
 --test-- "split block!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2051
 	b: [a b c d e f]
@@ -1010,6 +1017,11 @@ Rebol [
 	--assert [[a] [b] [c] [d] [e f]]      = split/skip b 5
 	--assert [[a] [b] [c] [d] [e] [f]]    = split/skip b 6
 	--assert [[a] [b] [c] [d] [e] [f] []] = split/skip b 7
+
+--test-- "split string!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1886
+	--assert ["a" "b" "c"]    = split "a.b.c"  "."
+	--assert ["a" "b" "c" ""] = split "a.b.c." "."
 
 ===end-group===
 
