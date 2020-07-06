@@ -47,4 +47,10 @@ Rebol [
 	--assert %.c = suffix? http://a/b.c?d#e.f
 ===end-group===
 
+===start-group=== "script?"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1885
+	--test-- "script? string!"
+	--assert #{5245424F4C5B5D2031} = script? {REBOL[] 1}
+	--assert #{5245424F4C5B5D2031} = script? {bla^/REBOL[] 1}
+
 ~~~end-file~~~
