@@ -150,6 +150,10 @@ Rebol [
 	any-char: complement charset ""
 	--assert parse/all "^(80)" [any-char]
 
+--test-- "issue-1895"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1895
+	--assert false? parse #{f0} reduce [charset [#{d0}]]
+
 ===end-group===
 
 ~~~end-file~~~
