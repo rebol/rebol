@@ -6,7 +6,7 @@ Rebol [
 	File: %spotify.reb
 	Name: 'spotify
 	Type: 'module
-	Version: 0.1.0
+	Version: 0.1.1
 	Require: 'httpd
 	Note: {
 		Useful info:
@@ -26,9 +26,10 @@ spotify: object [
 	scope:         ""
 	port-id:       8989
 	token:         none
-	get: func [what [any-string!]][system/modules/spotify/request self 'GET what none]
-	put: func [what [any-string!] /with data][system/modules/spotify/request self 'PUT what data]
-	del: func [what [any-string!]][system/modules/spotify/request self 'DELETE what none]
+	get: func [what [any-string!]][request self 'GET what none]
+	put: func [what [any-string!] /with data][request self 'PUT what data]
+	del: func [what [any-string!]][request self 'DELETE what none]
+	request: none
 ]
 
 authorize: function [
@@ -36,6 +37,7 @@ authorize: function [
 	ctx [block! object!] "Data used for initialization (at least client-id is needed)"
 ][
 	ctx: make spotify ctx
+	ctx/request: :request
 
 	unless ctx/client-id [ 
 		print ajoin ["*** `" value "` is needed to authorize with Spotify!"]
@@ -68,8 +70,10 @@ authorize: function [
 	]
 	; if client-secret was not specified, create challenge for PKCE extension
 	if code-challenge [
-		append append url "&state=" state: form random 99999999999
-		append append url "&code_challenge_method=S256&code_challenge=" code-challenge
+		append url reduce [
+			"&state=" state: form random 99999999999
+			"&code_challenge_method=S256&code_challenge=" code-challenge
+		]
 	]
 	; and open the url in user's default browser
 	browse url
@@ -80,7 +84,7 @@ authorize: function [
 	result: system/modules/httpd/http-server/config/actor ctx/port-id [
 		root:       #[false] ; we are not serving any content!
 		keep-alive: #[false]
-	] object [
+	] [
 		
 		;- Server's actor functions
 
@@ -95,12 +99,11 @@ authorize: function [
 				%spotify-callback/ [
 					ctx/out/status: 200
 					ctx/out/content: ajoin [
-						"<h1>OAuth2 Callback</h1>"
+						"<h1>OAuth2 Spotify Callback</h1>"
 						"<br/>Request header:<pre>" mold ctx/inp/header </pre>
 						"<br/>Values:<pre>" mold ctx/inp/target/values </pre>
-						;<pre> mold ctx </pre>
+						"<h2>You can close this window and return back to Rebol</h2>"
 					]
-					;wake-up ctx/parent make event! [type: 'CLOSE port: port]
 					ctx/done?: ctx/inp/target/values
 				]
 			][
@@ -145,7 +148,7 @@ authorize: function [
 		ctx/token/expires_in: time + (to time! ctx/token/expires_in)
 	][
 		print "*** Failed to receive Spotify token!"
-		;probe system/state/last-error
+		probe system/state/last-error
 		return none
 	]
 	; return Spotify context 
