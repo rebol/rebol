@@ -75,7 +75,7 @@ sys/make-scheme [
 
 			if none? port/spec/host [ port/spec/host: "whois.iana.org" ]
 
-			port/state: context [
+			port/state: object [
 				state: 'inited
 				connection:
 				awake: :port/awake

@@ -15,7 +15,7 @@ REBOL [
 ; operations.  Normally VID provides the contents for these, but users are
 ; also allowed to build and display their own windows directly.
 
-system/standard/font: context [
+system/standard/font: construct [
 	name: "arial"
 	style: none
 	size: 12
@@ -25,7 +25,7 @@ system/standard/font: context [
 	shadow: none
 ]
 
-system/standard/para: context [
+system/standard/para: construct [
 	origin: 2x2
 	margin: 2x2
 	indent: 0x0
@@ -178,7 +178,7 @@ unview: func [
 	show window ; closes it, none ok
 ]
 
-base-handler: context [
+base-handler: construct [
 	name: 'no-name
 	priority: 0
 ]
@@ -254,7 +254,7 @@ init-view-system: func [
 	system/view/event-port: ep
 
 	; Create block of event handlers:
-	ep/locals: context [handlers: copy []]
+	ep/locals: object [handlers: copy []]
 
 	; Global event handler for view system:
 	ep/awake: func [event /local h] [

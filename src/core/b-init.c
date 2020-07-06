@@ -337,7 +337,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	REBNATIVE(context)
+*/	REBNATIVE(object)
 /*
 **		The spec block has already been bound to Lib_Context, to
 **		allow any embedded values and functions to evaluate.
@@ -347,7 +347,7 @@ extern const REBYTE Str_Banner[];
 	REBVAL *spec = D_ARG(1);
 
 	SET_OBJECT(ds, Make_Object(0, VAL_BLK(spec)));
-	Bind_Block(VAL_OBJ_FRAME(ds), VAL_BLK(spec), BIND_ONLY); // not deep
+	Bind_Block(VAL_OBJ_FRAME(ds), VAL_BLK(spec), D_REF(2)?BIND_ONLY:BIND_DEEP); // not deep
 	Do_Blk(VAL_SERIES(spec), 0); // result ignored
 	return R_RET;
 }

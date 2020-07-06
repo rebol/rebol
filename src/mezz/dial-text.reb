@@ -12,7 +12,7 @@ REBOL [
 	Note: "Modification requires recompiling affected source files."
 ]
 
-system/dialects/text: context [
+system/dialects/text: construct [
 
 	type-spec:		[string! tuple!]
 
@@ -37,6 +37,4 @@ system/dialects/text: context [
 	i:
 	u:
 	nl:
-		none
-
 ]

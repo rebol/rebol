@@ -464,11 +464,11 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 crlfbin:  #{0D0A}
 crlf2bin: #{0D0A0D0A}
 crlf2: to string! crlf2bin
-http-response-headers: context [
+http-response-headers: construct [
 	Content-Length:
 	Content-Encoding:
 	Transfer-Encoding:
-	Last-Modified: none
+	Last-Modified:
 ]
 
 do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state][
@@ -736,7 +736,7 @@ sys/make-scheme [
 			sys/log/debug 'HTTP ["OPEN, state:" port/state]
 			if port/state [return port]
 			if none? port/spec/host [throw-http-error port "Missing host address"]
-			port/state: context [
+			port/state: object [
 				state: 'inited
 				connection:
 				error: none

@@ -96,9 +96,10 @@ compose: native [
 	out [any-block!]
 ]
 
-context: native [
+object: native [
 	{Creates an object.}
-	spec ; [block!] -- no check required, we know it is correct
+	spec  [block!]
+	/only {Do not bind nested blocks}
 ]
 
 continue: native [

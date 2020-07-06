@@ -363,10 +363,10 @@ sys/make-scheme [
 				make-smtp-error "Missing host address when opening smtp server"
 			]
 			; set the port state to hold the tcp port
-			port/state: context [
+			port/state: construct [
 				state:
 				connection:
-				error: none
+				error:
 				awake: none  ;-- so port/state/awake will hold the awake handler :port/awake
 				close?: no   ;-- flag for us to decide whether to close the port eg in syn mode
 			]

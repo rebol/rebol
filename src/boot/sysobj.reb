@@ -29,12 +29,12 @@ Licensed under the Apache License, Version 2.0.
 See: http://www.apache.org/licenses/LICENSE-2.0
 }
 
-catalog: context [
+catalog: object [
 	; Static (non-changing) values, blocks, objects
 	datatypes: []
 	actions: none
 	natives: none
-	errors: none
+	errors:  none
 	; Reflectors are used on boot to create *-of functions
 	reflectors: [
 		spec   [any-function! any-object! vector! datatype!]
@@ -51,7 +51,7 @@ catalog: context [
 		help vers quiet verbose
 		secure-min secure-max trace halt cgi boot-level no-window
 	]
-	bitsets: context [
+	bitsets: object [
 		crlf:          #[bitset! #{0024}]                             ;charset "^/^M"
 		whitespace:    #[bitset! #{0064000080}]                       ;charset "^/^M^- "
 		numeric:       #[bitset! #{000000000000FFC0}]                 ;0-9
@@ -64,18 +64,17 @@ catalog: context [
 	]
 ]
 
-contexts: context [
+contexts: construct [
 	root:
 	sys:
 	lib:
 	user:
-		none
 ]
 
-state: context [
+state: object [
 	; Mutable system state variables
 	note: "contains protected hidden fields"
-	policies: context [ ; Security policies
+	policies: construct [ ; Security policies
 		file:    ; file access
 		net:     ; network access
 		eval:    ; evaluation limit
@@ -94,20 +93,19 @@ state: context [
 
 modules: []
 
-codecs: context []
+codecs: object []
 
-dialects: context [
+dialects: construct [
 	secure:
 	draw:
 	effect:
 	text:
 	rebcode:
-		none
 ]
 
-schemes: context []
+schemes: object []
 
-ports: context [
+ports: object [
 	wait-list: []	; List of ports to add to 'wait
 	input:          ; Port for user input.
 	output:         ; Port for user output
@@ -117,7 +115,7 @@ ports: context [
 ;	serial: none	; serial device name block
 ]
 
-locale: context [
+locale: object [
 	language: 	; Human language locale
 	language*:
 	locale:
@@ -131,7 +129,7 @@ locale: context [
 	]
 ]
 
-options: context [  ; Options supplied to REBOL during startup
+options: object [  ; Options supplied to REBOL during startup
 	boot:           ; The path to the executable
 	path:           ; Where script was started or the startup dir
 	home:           ; Path of home directory
@@ -159,7 +157,7 @@ options: context [  ; Options supplied to REBOL during startup
 
 	; verbosity of logs per service (codecs, schemes)
 	; 0 = nothing; 1 = info; 2 = more; 3 = debug
-	log: make object! [
+	log: construct [
 		http:
 		tls:
 		zip:
@@ -167,51 +165,47 @@ options: context [  ; Options supplied to REBOL during startup
 	]
 ]
 
-script: context [
+script: construct [
 	title:          ; Title string of script
 	header:         ; Script header as evaluated
 	parent:         ; Script that loaded the current one
 	path:           ; Location of the script being evaluated
 	args:           ; args passed to script
-		none
 ]
 
-standard: context [
+standard: object [
 
-	codec: context [
+	codec: construct [
 		name:       ;word!
 		title:      ;string!
 		suffixes:   ;block!
 		decode:     ;[any-function! none!]
 		encode:     ;[any-function! none!]
 		identify:   ;[any-function! none!]
-			none
 	]
 
 	enum: none ; is defined later in %mezz-func.r file
 
-	error: context [ ; Template used for all errors:
+	error: construct [ ; Template used for all errors:
 		code: 0
-		type: 'user
-		id:   'message
+		type: user
+		id:   message
 		arg1:
 		arg2:
 		arg3:
 		near:
 		where:
-			none
 	]
  
-	script: context [
+	script: construct [
 		title:
 		header:
 		parent: 
 		path:
 		args:
-			none
 	]
 
-	header: context [
+	header: construct [
 		title: {Untitled}
 		name:
 		type:
@@ -225,10 +219,9 @@ standard: context [
 ;		compress:
 ;		exports:
 ;		content:
-			none
 	]
 
-	scheme: context [
+	scheme: construct [
 		name:		; word of http, ftp, sound, etc.
 		title:		; user-friendly title for the scheme
 		spec:		; custom spec for scheme (if needed)
@@ -237,10 +230,9 @@ standard: context [
 ;		type:		; bytes, integers, objects, values, block
 		actor:		; standard action handler for scheme port functions
 		awake:		; standard awake handler for this scheme's ports
-			none
 	]
 
-	port: context [ ; Port specification object
+	port: construct [ ; Port specification object
 		spec:		; published specification of the port
 		scheme:		; scheme object used for this port
 		actor:		; port action handler (script driven)
@@ -249,14 +241,13 @@ standard: context [
 		data:		; data buffer (usually binary or block)
 		locals:		; user-defined storage of local data
 ;		stats:		; stats on operation (optional)
-			none
 	]
 
-	port-spec-head: context [
+	port-spec-head: construct [
 		title:		; user-friendly title for port
 		scheme:		; reference to scheme that defines this port
 		ref:		; reference path or url (for errors)
-		   none 	; (extended here)
+		            ; (extended here)
 	]
 
 	port-spec-file: make port-spec-head [
@@ -279,38 +270,35 @@ standard: context [
 		device-out: none
 	]
 
-	file-info: context [
+	file-info: construct [
 		name:
 		size:
 		date:
 		type:
-			none
 	]
 
-	net-info: context [
+	net-info: construct [
 		local-ip:
 		local-port:
 		remote-ip:
 		remote-port:
-			none
 	]
 
-	console-info: context [
-		buffer-cols: none
-		buffer-rows: none
-		window-cols: none
-		window-rows: none
+	console-info: construct [
+		buffer-cols:
+		buffer-rows:
+		window-cols:
+		window-rows:
 	]
 
-	vector-info: context [
+	vector-info: construct [
 		signed:     ; false if unsigned (always true for decimals)
 		type:       ; integer! or decimal! so far
 		size:       ; size per value in bits
 		length:     ; number of values
-			none
 	]
 
-	date-info: context [
+	date-info: construct [
 		year:
 		month:
 		day:
@@ -327,26 +315,23 @@ standard: context [
 		;isoweek:
 		utc:
 		julian:
-			none
 	]
 
-	midi-info: context [
+	midi-info: construct [
 		devices-in:
 		devices-out:
-			none
 	]
 
-	extension: context [
+	extension: construct [
 		lib-base:	; handle to DLL
 		lib-file:	; file name loaded
 		lib-boot:	; module header and body
 		command:	; command function
 		cmd-index:	; command index counter
 		words:		; symbol references
-			none
 	]
 
-	stats: context [ ; port stats
+	stats: construct [ ; port stats
 		timer:		; timer (nanos)
 		evals:		; evaluations
 		eval-natives:
@@ -359,13 +344,11 @@ standard: context [
 		made-blocks:
 		made-objects:
 		recycles:
-			none
 	]
 
-	type-spec: context [
+	type-spec: construct [
 		title:
 		type:
-			none
 	]
 
 	bincode: none
@@ -374,16 +357,16 @@ standard: context [
 	para: none	; mezz-graphics.h
 ]
 
-view: context [
+view: object [
 	screen-gob: none
 	handler: none
 	event-port: none
-	metrics: context [
-		screen-size: 0x0
-		border-size: 0x0
-		border-fixed: 0x0
-		title-size: 0x0
-		work-origin: 0x0
+	metrics: construct [
+		screen-size:
+		border-size:
+		border-fixed:
+		title-size:
+		work-origin:
 		work-size: 0x0
 	]
 	event-types: [

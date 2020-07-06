@@ -12,7 +12,7 @@ REBOL [
 	Note: "Modification requires recompiling affected source files."
 ]
 
-system/dialects/effect: context [
+system/dialects/effect: construct [
 
 	type-spec:	[]
 

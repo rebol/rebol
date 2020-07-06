@@ -57,12 +57,7 @@ has: func [
 	make function! reduce [head insert copy/deep vars /local copy/deep body]
 ]
 
-context: func [
-	{Defines a unique object.}
-	blk [block!] {Object words and values (modified)}
-][
-	make object! blk
-]
+context: :object
 
 map: func [
 	{Make a map value (hashed associative block).}
@@ -112,7 +107,7 @@ enum: function [
 	enum
 ]
 
-system/standard/enum: context [
+system/standard/enum: object [
 	title*: none
 	assert: func[
 		"Checks if value exists as an enumeration. Throws error if not."

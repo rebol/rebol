@@ -70,13 +70,6 @@ use: func [
 	apply make closure! reduce [to block! vars copy/deep body] []
 ]
 
-object: func [
-	{Defines a unique object.}
-	blk [block!] {Object words and values (modified)}
-][
-	make object! blk  ; blk modified by deep-binding
-]
-
 module: func [
 	"Creates a new module."
 	spec [block!] "The header block of the module (modified)"

@@ -12,7 +12,7 @@ REBOL [
 	Note: "Modification requires recompiling affected source files."
 ]
 
-system/dialects/draw: context [
+system/dialects/draw: construct [
 
 	type-spec:		[block!]
 
@@ -121,5 +121,4 @@ system/dialects/draw: context [
 
 	;TEXT
 	vectorial:
-		none
 ]
