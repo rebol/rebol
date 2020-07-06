@@ -115,6 +115,15 @@ Rebol [
 		--assert 1 = do o2/c
 		--assert 1 = do o3/c
 
+	--test-- "issue-2118"
+	;@@ https://github.com/oldes/rebol-issues/issues/2118
+		--assert error? try [object [a: b:]]
+		--assert all [
+			not error? try [o: construct [a: b:]]
+			none? o/a
+			none? o/b
+		]
+
 ===end-group===
 
 
