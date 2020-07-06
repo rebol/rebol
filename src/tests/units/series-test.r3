@@ -1004,6 +1004,11 @@ Rebol [
 	b: [b 1]
 	--assert 1 = b/b
 
+--test-- "random next block"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1875
+	--assert block?   random      next [1 2]
+	--assert integer? random/only next [1 2]
+
 ===end-group===
 
 
