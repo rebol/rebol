@@ -26,6 +26,10 @@ Rebol [
 	;@@ https://github.com/oldes/rebol-issues/issues/2297
 		--assert error? try [load {#}] ; originally (in R3-alpha) it was same like #[none]
 
+	--test-- "Multiple leading / in refinement!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1855
+		--assert error? try [load {////a}]
+
 ===end-group===
 
 ===start-group=== "Email"
