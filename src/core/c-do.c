@@ -375,12 +375,12 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	func = Path_Dispatch[VAL_TYPE(pvs->value)];
 	if (!func) return; // unwind, then check for errors
 
-	pvs->path++;
+	path = ++pvs->path;
 
 	//Debug_Fmt("Next_Path: %r/%r", pvs->path-1, pvs->path);
 
 	// object/:field case:
-	if (IS_GET_WORD(path = pvs->path)) {
+	if (IS_GET_WORD(path)) {
 		pvs->select = Get_Var(path);
 		if (IS_UNSET(pvs->select)) Trap1(RE_NO_VALUE, path);
 	}
@@ -399,6 +399,21 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
     // .store - storage (usually TOS) for constructed values
 	// .setval - non-zero for SET-PATH (set to zero after SET is done)
 	// .orig - original path for error messages
+
+#ifdef WIP
+
+	if (pvs->setfrm && IS_WORD(pvs->path-1)
+		&& (IS_DATE(pvs->value) || IS_TIME(pvs->value))
+		//&& pvs->setfrm->series
+	) {
+		REBCNT index = Find_Word_Index(pvs->setfrm, VAL_WORD_SYM(pvs->path-1), FALSE);
+		if (index > 0 && VAL_PROTECTED(FRM_WORD(pvs->setfrm, index))) {
+			SET_END(pvs->path);
+			VAL_TYPE(pvs->orig) = REB_PATH;
+			Trap1(RE_LOCKED_WORD, pvs->orig);
+		}
+	}
+#endif
 	switch (func(pvs)) {
 	case PE_OK:
 		break;
@@ -456,11 +471,15 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	// Get first block value:
 	pvs.orig = *path_val;
 	pvs.path = VAL_BLK_DATA(pvs.orig);
+	pvs.setfrm = NULL;
 
 	// Lookup the value of the variable:
 	if (IS_WORD(pvs.path)) {
 		pvs.value = Get_Var(pvs.path);
 		if (IS_UNSET(pvs.value)) Trap1(RE_NO_VALUE, pvs.path);
+		if (pvs.setval) {
+			pvs.setfrm = IS_OBJECT(pvs.value) ? VAL_OBJ_FRAME(pvs.value) : VAL_WORD_FRAME(pvs.path);
+		}
 	} else pvs.value = pvs.path; //Trap2(RE_INVALID_PATH, pvs.orig, pvs.path);
 
 	// Start evaluation of path:
@@ -1970,6 +1989,7 @@ push_arg:
 
 	sel = BLK_SKIP(blk, 1);
 	while (TRUE) {
+		//TODO: handle map! val
 		if (!ANY_OBJECT(val) || !IS_WORD(sel)) return 0;
 		i = Find_Word_Index(VAL_OBJ_FRAME(val), VAL_WORD_SYM(sel), FALSE);
 		sel++;
