@@ -184,6 +184,40 @@ Rebol [
 	f: func [] []
 	--assert function? copy :f
 
+--test-- "function rebinding (closure compatibility)"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2048
+	; example of an R3 function with "special binding" of its body
+	; create a function with "normally" bound body
+	; and keep the original of its body for future use
+	f: make function! reduce [[value] f-body: [value + value]]
+	; some tests
+	--assert 2 = f 1
+	--assert 4 = f 2
+	--assert 6 = f 3
+	; adjust the binding
+	change f-body 'value
+	value: 1
+	; some tests
+	--assert 2 = f 1
+	--assert 3 = f 2
+	--assert 4 = f 3
+
+	; example of an R3 closure with "special binding" of its body
+	; create a "normal" closure
+	; and keep the original of its body for future use
+	f: make closure! reduce [[value] f-body: [value + value]]
+	; some tests
+	--assert 2 = f 1
+	--assert 4 = f 2
+	--assert 6 = f 3
+	; adjust the binding
+	change f-body 'value
+	value: 1
+	; some tests
+	--assert 2 = f 1
+	--assert 3 = f 2
+	--assert 4 = f 3
+
 ===end-group===
 
 ~~~end-file~~~
