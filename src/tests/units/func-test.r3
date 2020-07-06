@@ -179,6 +179,10 @@ Rebol [
 	f2: f [print 2]
 	--assert error? e: try [f1 1]
 	--assert e/id = 'bad-path-type
+--test-- "copy function"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2043
+	f: func [] []
+	--assert function? copy :f
 
 ===end-group===
 
