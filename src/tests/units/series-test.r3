@@ -718,8 +718,9 @@ Rebol [
 	--assert #{C2E0} = invalid-utf? #{C2E0}
 	--assert #{C2E0} = invalid-utf? #{01C2E0}
 	--assert none? invalid-utf? bin: read %units/files/quickbrown.txt
-	--assert 5367801 = checksum to-string bin
-	--assert 5367801 = checksum read/string %units/files/quickbrown.txt
+	--assert 13806406 = checksum str: to-string bin ; does not normalize CRLF
+	--assert 5367801 = checksum deline str
+	--assert 5367801 = checksum read/string %units/files/quickbrown.txt ;converts CRLF to LF
 
 ===end-group===
 

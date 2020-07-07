@@ -119,9 +119,12 @@ if system/platform = 'Windows [
 
 	--test-- "read/string - issue/622"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/622
+			; making file where is one CRLF and one LF
+			write %units/files/issue-622.txt to-binary "a^M^/b^/c"
 			--assert "a^M^/b^/c" = to string! read %units/files/issue-622.txt
 			--assert "a^/b^/c" = deline to string! read %units/files/issue-622.txt
 			--assert "a^/b^/c" = read/string %units/files/issue-622.txt
+			delete %units/files/issue-622.txt
 
 
 	--test-- "write file result - wish/2337"
