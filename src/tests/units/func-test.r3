@@ -198,9 +198,9 @@ Rebol [
 	value: 1
 	change f-body 'value
 	; some tests
-	--assert 2 = probe f 1
-	--assert 3 = probe f 2
-	--assert 4 = probe f 3
+	--assert 2 = f 1
+	--assert 3 = f 2
+	--assert 4 = f 3
 
 	; example of an R3 closure with "special binding" of its body
 	; create a "normal" closure
