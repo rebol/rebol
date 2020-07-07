@@ -144,6 +144,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1756
 	--assert error? try [reduce reduce [:self]] ;- no crash
 
+--test-- "to-hex tuple!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1662
+	--assert #0102030405060708090A = to-hex 1.2.3.4.5.6.7.8.9.10 ;- no crash
+
 ===end-group===
 
 ~~~end-file~~~
