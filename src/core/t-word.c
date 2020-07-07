@@ -108,7 +108,7 @@
 				if (!sym) Trap1(RE_BAD_CHAR, arg);
 			}
 			else if (IS_CHAR(arg)) {
-				REBYTE buf[8];
+				REBYTE buf[8] = {0};
 				sym = Encode_UTF8_Char(&buf[0], VAL_CHAR(arg)); //returns length
 				sym = Scan_Word(&buf[0], sym);
 				if (!sym) Trap1(RE_BAD_CHAR, arg);
