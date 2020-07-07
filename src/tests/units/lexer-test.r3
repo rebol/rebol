@@ -62,6 +62,16 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Refinement" 
+	--test-- "/+"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1856
+		--assert refinement? load "/+"
+		--assert refinement? load "/+123"
+		--assert refinement? load "/-"
+		--assert refinement? load "/."
+		--assert refinement? load "/.123"
+
+===end-group===
 
 ===start-group=== "Char"
 	--test-- {#"^(1)"}
