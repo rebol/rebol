@@ -30,6 +30,11 @@ Rebol [
 	--assert 'set = 'SET
 	--assert 'print = 'PRINT
 
+	--test-- "to-word char!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1840
+	--assert word? try [to-word #"d"]
+	--assert word? try [to-word  "d"]
+
 ===end-group===
 
 ~~~end-file~~~
