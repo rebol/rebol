@@ -152,7 +152,7 @@ Rebol [
 
 --test-- "issue-1895"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1895
-	--assert false? parse #{f0} reduce [charset [#{d0}]]
+	--assert not parse #{f0} reduce [charset [#{d0}]]
 
 ===end-group===
 
