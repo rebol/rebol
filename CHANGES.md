@@ -2,10 +2,49 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+## 2020 July
+
+### Features:
+
+* [`2854c4`](https://github.com/Oldes/Rebol3/commit/2854c46851970a7defa7ce552ff4c85100885083) Tiny code optimization
+* [`c4162f`](https://github.com/Oldes/Rebol3/commit/c4162f9cacc922d62de4376caa2d76cb983f1172) Modified `ENHEX` again.
+
+  * the `/url` refine was removed as I decided, that it should not be part of this encoding (ECMA-262 specification does not do it either)
+  * added `/except unescaped [bitset!]` to be able specify, which chars must be encoded and which can be leave without encoding
+  * added some predefined bitsets into new `system/catalog/bitsets` (will use them later in other places)
+  * modified HTTP scheme to coop with these modifications
+* [`a63bfc`](https://github.com/Oldes/Rebol3/commit/a63bfccb2c92bd32c44480ec8e6dfc8bf3cacc88) Making `ENHEX` compatible with `encodeURIComponent`, adding `/url` refine and possibility to change escape character
+* [`88cd91`](https://github.com/Oldes/Rebol3/commit/88cd91b97d4a1c117cfa7826d0c27a2df333ffe1) Any `TRY` call resets `system/state/last-error` to `none`
+* [`83cd93`](https://github.com/Oldes/Rebol3/commit/83cd939d87c53b48f812efa0c5b8a5ebc825511f) Added experimental Spotify module for access to Spotify's Web API using OAuth2 authorization mechanism
+* [`755e8e`](https://github.com/Oldes/Rebol3/commit/755e8e92e577dae1d9e1b9d4b5451d33879894f2) HTTPD - Added possibility to stop server and return data from client (useful for OAuth2)
+
+### Changes:
+
+* [`d92049`](https://github.com/Oldes/Rebol3/commit/d9204910e0ba1488a2331413f10b7e9e92113548) Replacing some `context` usage with `construct` or `object`
+* [`12454f`](https://github.com/Oldes/Rebol3/commit/12454ff4504c16c3cf41329dec427bdad3158632) Rename `protect/permanently` to `protect/lock` (wip)
+* [`59576c`](https://github.com/Oldes/Rebol3/commit/59576cafe07993e0b7f35054c76f8c38b968d755) Renamed httpd module to have .reb extension and small improvements in its test file
+
+### Fixes:
+
+* [`196256`](https://github.com/Oldes/Rebol3/commit/19625652588048936a994c4a8420ec9c7c23a1d3) Minor code improvements in Spotify module
+* [`7525f8`](https://github.com/Oldes/Rebol3/commit/7525f8257e2d66cee1667d1cb5413622ad793dd6) Make UNSET of unbound words cause error vs. fail silently
+* [`c5b3de`](https://github.com/Oldes/Rebol3/commit/c5b3debeb32ae45236edfb685747771e4359e767) `decode-url http://host?query`
+* [`7291eb`](https://github.com/Oldes/Rebol3/commit/7291eb357a6a1368b3e769359161eafbc4213c17) `print` of objects truncating strings
+* [`16bebe`](https://github.com/Oldes/Rebol3/commit/16bebebdc761e7056500983f6026b867f37901a1) Spotify test file cleanup
+* [`f68e85`](https://github.com/Oldes/Rebol3/commit/f68e8555a2443693e6cd28a4a0dc622db0a77e80) DO script with error should throw the error and not just pass it as a result
+* [`2b1449`](https://github.com/Oldes/Rebol3/commit/2b1449bcc6c204805869acade7dfb93c5b1f4d03) `ICONV` from `UTF16` must ignore BOM
+* [`64553a`](https://github.com/Oldes/Rebol3/commit/64553ac12fc76bf87502ca5494a65989c6edfbca) Small fix in HTTP scheme error reporting
+
 ## 2020 June
 
 ### Features:
 
+* [`a7d02d`](https://github.com/Oldes/Rebol3/commit/a7d02dae51242b39af025c75d3d3c677d19ce6eb) Loading .txt files with unicode encodings
+
+  Text files (.txt) are now loaded just as a string and not as a Rebol code. Unicode decoding is handled correctly if specified in BOM. Files (.txt) are always saved as UTF-8.
+  
+  fixes: https://github.com/Oldes/Rebol-issues/issues/2424
+* [`afebd2`](https://github.com/Oldes/Rebol3/commit/afebd212f3d81e28a6b756b4e329ee9ddd814fb2) Added a new `ref!` datatype like: `@username`
 * [`36fee1`](https://github.com/Oldes/Rebol3/commit/36fee1d2ac96c2cfaca833903118760f60ca5440) Added support for missing UTF-32 encoded binary to string conversion
 * [`499a93`](https://github.com/Oldes/Rebol3/commit/499a93e4aadfa6e5df9a72c7532198e2d976ae8d) Added support for decimap pick on `pair!` and `any-string!`
 * [`b6ea7f`](https://github.com/Oldes/Rebol3/commit/b6ea7fa7566f212431997e765a9efbd108d4434e) Add `enbase/part` and `debase/part`
@@ -31,7 +70,6 @@ This is just generated output from commits in [this repository](https://github.c
 
   This change was proposed years ago by @onetom in https://github.com/rebol/rebol/pull/140 and I agree, that the `.r` extension is lost in this century and so lets start with the new one. I'm personally still preferring `.r3` for run-able scripts which requires Rebol3.
   
-  (cherry picked from commit 298ee3787659bc39d093042c6df911d5e6103e28)
 * [`1e1dfa`](https://github.com/Oldes/Rebol3/commit/1e1dfa3282c0f8fd2f184bf81cbcdf358ac182b5) Rename `split/into` to `split/skip`
 * [`214790`](https://github.com/Oldes/Rebol3/commit/2147901da9398b0d150ccefba0f02105a1ff1cb1) Setup `system/options/home` to default user's system home location or to one defined in `REBOL_HOME` environment variable
 
@@ -50,6 +88,8 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`6f8324`](https://github.com/Oldes/Rebol3/commit/6f8324fc38e53505fe0950ca673b296dedec7890) Avoid making a new bitset! on each `suffix?` call
+* [`2d1a66`](https://github.com/Oldes/Rebol3/commit/2d1a66ba4ce37592dcf575f9cbfd9c55845f7f1c) `exists %/` must return `true` and not `none`
 * [`4774ea`](https://github.com/Oldes/Rebol3/commit/4774eaf0f17c13719b4cdec6c6571e23251f2aa6) Better fix of reading list of logical drives on Windows
 * [`ea39f8`](https://github.com/Oldes/Rebol3/commit/ea39f8ea976cf2225f32eea5d4389589f43adc2f) Update travis file and remove unrelated mezzanine file
 * [`5e32c5`](https://github.com/Oldes/Rebol3/commit/5e32c54a850b7cb03328f5f54cb27064458a8918) `deline/lines` and `read/lines` misinterprets UTF-8 character as newline
@@ -63,6 +103,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`cb5867`](https://github.com/Oldes/Rebol3/commit/cb586701c0dd8e627e83195817d8a29a4baabb46) Using rejoin instead of reduce for compatibility with newer R3 versions (write %f [..])
 * [`f09962`](https://github.com/Oldes/Rebol3/commit/f099629adfab50b31a01f6a200aacc12afad6c95) ENLINE does not convert line endings to native OS format (Posix)
 * [`70c51b`](https://github.com/Oldes/Rebol3/commit/70c51ba9dff10c967b7bde3de781d1b12939d98a) Crash in `enline`
+
 
 ## 2020 May
 
@@ -189,7 +230,7 @@ This is just generated output from commits in [this repository](https://github.c
 * [`a55673`](https://github.com/Oldes/Rebol3/commit/a55673f2a159e6c561525de6901db0b262237c1a) Moved AS_DECIMAL define
 
   used to receive decimal value, when argument may be decimal or integer
-  
+
 ### Fixes:
 
 * [`7ee3e3`](https://github.com/Oldes/Rebol3/commit/7ee3e30c703abce71133c67cf6f0cff9f23650a5) Not using `system/platform` for `zero-index?` functionality
