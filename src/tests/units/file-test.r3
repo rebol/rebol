@@ -6,7 +6,20 @@ Rebol [
 	Needs:   [%../quick-test-module.r3]
 ]
 
+secure [%/ allow]
+
 ~~~start-file~~~ "FILE tests"
+
+===start-group=== "cd"
+--test-- "cd / cd ~"
+	dir: what-dir
+	--assert all [
+		not error? try [cd /]
+		not error? try [cd ~]
+	]
+	change-dir dir
+===end-group===
+
 
 ===start-group=== "to-local-file"
 
