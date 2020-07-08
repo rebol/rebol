@@ -1561,3 +1561,17 @@ append:
 	dc = b_cast(";%\"()[]{}<>");
 	for (c = (REBYTE)LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
 }
+
+
+/***********************************************************************
+**
+*/  void Dispose_Mold()
+/*
+***********************************************************************/
+{
+	// TASK_MOLD_LOOP and TASK_BUF_MOLD are released in Dispose_Core
+	Free_Mem(Char_Escapes, 0);
+	Free_Mem( URL_Escapes, 0);
+	Char_Escapes = NULL;
+	URL_Escapes = NULL;
+}

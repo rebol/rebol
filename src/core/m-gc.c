@@ -689,3 +689,26 @@ mark_obj:
 	GC_Series = Make_Series(60, sizeof(REBSER *), FALSE);
 	KEEP_SERIES(GC_Series, "gc guarded");
 }
+
+/***********************************************************************
+**
+*/	void Dispose_Memory(void)
+/*
+**		Dispose memory system when application quits.
+**
+***********************************************************************/
+{
+	REBCNT n;
+	GC_Disabled = 0;
+	/* remove everything from GC_Infants (GC protection) */
+	for (n = 0; n < MAX_SAFE_SERIES; n++) {
+		GC_Infants[n] = NULL;
+	}
+	Free_Series(GC_Protect);
+	Free_Series(GC_Series);
+	Sweep_Series();
+	Sweep_Gobs();
+	Free_Mem(GC_Infants, 0);
+	Free_Mem(Prior_Expand, 0);
+	Dispose_Pools();
+}

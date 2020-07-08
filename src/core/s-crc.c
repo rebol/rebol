@@ -332,6 +332,17 @@ static REBCNT *CRC32_Table = 0;
 
 /***********************************************************************
 **
+*/	void Dispose_CRC(void)
+/*
+***********************************************************************/
+{
+	Free_Mem(CRC24_Table, 0);
+	Free_Mem(CRC32_Table, 0);
+}
+
+
+/***********************************************************************
+**
 */	REBINT Compute_IPC(REBYTE *data, REBCNT length)
 /*
 **		Compute an IP checksum given some data and a length.

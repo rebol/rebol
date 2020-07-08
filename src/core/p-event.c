@@ -212,8 +212,7 @@ act_blk:
 	case A_CLOSE:
 		OS_ABORT_DEVICE(req);
 		OS_DO_DEVICE(req, RDC_CLOSE);
-		// free req!!!
-		SET_CLOSED(req);
+		OS_FREE(req);
 		req = 0;
 		break;
 

@@ -74,6 +74,7 @@ extern STD_TERM *Init_Terminal(void);
 extern void Quit_Terminal(STD_TERM*);
 extern int  Read_Line(STD_TERM*, char*, int);
 #endif
+extern void Close_StdIO(void);
 
 
 static void Handle_Signal(int sig)
@@ -90,7 +91,7 @@ static void Init_Signals(void)
 	signal(SIGTERM, Handle_Signal);
 }
 
-static void Close_Stdio(void)
+static void Close_StdIO_Local(void)
 {
 #ifndef HAS_SMART_CONSOLE
 	if (Term_IO) {
@@ -112,7 +113,8 @@ static void Close_Stdio(void)
 {
 	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy above
 
-	Close_Stdio();
+	Close_StdIO_Local();
+	Close_StdIO(); // frees host's input buffer
 
 	CLR_FLAG(dev->flags, RDF_OPEN);
 	return DR_DONE;
@@ -166,7 +168,7 @@ static void Close_Stdio(void)
 {
 	REBDEV *dev = Devices[req->device];
 
-	Close_Stdio();
+	Close_StdIO_Local();
 
 	CLR_FLAG(dev->flags, RRF_OPEN);
 

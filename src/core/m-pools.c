@@ -721,16 +721,16 @@ crash:
 			if (!SERIES_FREED(series)) {
 				if (pool_id < 0 || FIND_POOL(SERIES_TOTAL(series)) == pool_id) {
 					Debug_Fmt(
-							  Str_Dump[0], //"%s Series %x %s: Wide: %2d Size: %6d - Bias: %d Tail: %d Rest: %d Flags: %x"
+							  Str_Dump[0], //"%s Series %x: Wide: %2d Size: %6d - Bias: %d Tail: %d Rest: %d Flags: %x %s"
 							  "Dump",
 							  series,
-							  (SERIES_LABEL(series) ? SERIES_LABEL(series) : "-"),
 							  SERIES_WIDE(series),
 							  SERIES_TOTAL(series),
 							  SERIES_BIAS(series),
 							  SERIES_TAIL(series),
 							  SERIES_REST(series),
-							  SERIES_FLAGS(series)
+							  SERIES_FLAGS(series),
+							  (SERIES_LABEL(series) ? SERIES_LABEL(series) : "-")
 							 );
 					//Dump_Series(series, "Dump");
 					if (SERIES_WIDE(series) == sizeof(REBVAL)) {
@@ -907,3 +907,34 @@ crash:
 	return tot_size;
 }
 
+/***********************************************************************
+**
+*/	void Dispose_Pools(void)
+/*
+**		Free memory pool array when application quits.
+**
+***********************************************************************/
+{
+	REBSEG	*seg, *next;
+	REBCNT  used;
+	REBCNT  n;
+
+	//Dump_Pools();
+	//Dump_Series_In_Pool(-1);
+
+	FOREACH(n, SYSTEM_POOL) {
+		if (Mem_Pools[n].has == Mem_Pools[n].free) {
+			seg = Mem_Pools[n].segs;
+			while (seg) {
+				next = seg->next;
+				Free_Mem(seg, seg->size);
+				seg = next;
+			}
+		}
+		else {
+			//printf(cb_cast("Mem_Pool[%u] not empty! Has: %u free: %u\n"), n, Mem_Pools[n].has, Mem_Pools[n].free);
+		}
+	}
+	Free_Mem(Mem_Pools, 0);
+	Free_Mem(PG_Pool_Map, 0);
+}

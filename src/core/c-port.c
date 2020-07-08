@@ -639,3 +639,13 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	Init_MIDI_Scheme();
 #endif
 }
+
+/***********************************************************************
+**
+*/	void Dispose_Ports(void)
+/*
+***********************************************************************/
+{
+	Free_Mem(Scheme_Actions, 0);
+	Scheme_Actions = 0;
+}

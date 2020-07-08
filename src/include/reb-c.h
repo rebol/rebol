@@ -266,7 +266,7 @@ typedef void(*CFUNC)(void *);
 
 // Memory related functions:
 #define MAKE_MEM(n)     malloc(n)
-#define MAKE_NEW(s)     malloc(sizeof(s))
+#define MAKE_NEW(s)     MAKE_MEM(sizeof(s))
 #define FREE_MEM(m)     free(m)
 #define CLEAR(m, s)     memset((void*)(m), 0, s);
 #define CLEAR_WTH(m, s, v)     memset((void*)(m), v, s);
@@ -298,7 +298,7 @@ typedef void(*CFUNC)(void *);
 #define FROM_OS_STR(s1,s2,l) strncpy(s1,(const char*)s2,l)
 #endif
 
-#define MAKE_STR(n) (REBCHR*)(malloc((n) * sizeof(REBCHR)))  // OS chars!
+#define MAKE_STR(n) (REBCHR*)(MAKE_MEM((n) * sizeof(REBCHR)))  // OS chars!
 
 #define ROUND_TO_INT(d) (REBINT)(floor((d) + 0.5))
 

@@ -81,7 +81,7 @@ extern void Init_Windows(void);
 
 #ifdef REB_VIEW
 extern void Init_Windows(void);
-extern void Init_Graphics(void);
+//extern void Init_Graphics(void);
 #endif
 
 //#define TEST_EXTENSIONS
@@ -329,12 +329,7 @@ int main(int argc, char **argv) {
 		Host_Repl();
 	}
 
-	//OS_Call_Device(RDI_STDIO, RDC_CLOSE);
-	OS_Quit_Devices(0);
-
-	Close_StdIO();
-
-	// A QUIT does not exit this way, so the only valid return code is zero.
+	OS_Exit(0);
 	return 0;
 }
 

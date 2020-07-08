@@ -833,6 +833,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	// Print("home: %s", rargs->home_dir);
 	if (rargs->home_dir) {
 		Set_Option_File(OPTIONS_HOME, (REBYTE*)rargs->home_dir, TRUE);
+		OS_FREE(rargs->home_dir);
 	}
 
 	n = Set_Option_Word(rargs->boot, OPTIONS_BOOT_LEVEL);
@@ -1023,4 +1024,48 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	DS_RESET;
 
 	DOUT("Boot done");
+}
+
+
+/***********************************************************************
+**
+*/	void Dispose_Core(void)
+/*
+**		Release Core resources (used before application quits)
+**
+***********************************************************************/
+{
+	DOUT("Dispose Core");
+	if(!Task_Series)
+		return; // can happen when close button, shutdown, etc.
+
+	Free_Series(Task_Series);
+	Free_Series(Bind_Table);
+	Free_Series(PG_Word_Table.hashes);
+	Free_Series(PG_Word_Table.series);
+	Free_Series(PG_Word_Names);
+	Free_Series(VAL_SERIES(ROOT_ROOT));
+	Free_Series(VAL_SERIES(ROOT_SYSTEM));
+	Free_Series(VAL_SERIES(ROOT_ERROBJ));
+	Free_Series(VAL_SERIES(ROOT_STRINGS));
+	Free_Series(VAL_SERIES(ROOT_TYPESETS));
+	Free_Series(VAL_SERIES(ROOT_BOOT));
+	Free_Series(VAL_SERIES(TASK_STACK));
+	Free_Series(VAL_SERIES(TASK_BUF_EMIT));
+	Free_Series(VAL_SERIES(TASK_BUF_WORDS));
+	Free_Series(VAL_SERIES(TASK_BUF_UTF8));
+	Free_Series(VAL_SERIES(TASK_BUF_PRINT));
+	Free_Series(VAL_SERIES(TASK_BUF_FORM));
+	Free_Series(VAL_SERIES(TASK_BUF_MOLD));
+	Free_Series(VAL_SERIES(TASK_MOLD_LOOP));
+
+	Dispose_Memory();
+	Dispose_Char_Cases();
+	Dispose_Ports();
+	Dispose_Mold();
+	Dispose_CRC();
+	Dispose_StdIO();
+	Free_Mem(PG_Reb_Stats, 0);
+	Free_Mem(PG_Boot_Strs, 0);
+	Free_Mem(Reb_Opts, 0);
 }

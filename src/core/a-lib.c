@@ -133,6 +133,26 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
+*/	RL_API void RL_Dispose(void)
+/*
+**	Disposes the REBOL interpreter.
+**
+**	Returns:
+**		nothing
+**	Arguments:
+**		none
+**	Notes:
+**		This function will deallocate and release all memory
+**		structures used by the REBOL interpreter.
+**
+***********************************************************************/
+{
+	Dispose_Core();
+}
+
+
+/***********************************************************************
+**
 */	RL_API int RL_Start(REBYTE *bin, REBINT len, REBCNT flags)
 /*
 **	Evaluate the default boot function.

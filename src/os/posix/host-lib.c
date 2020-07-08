@@ -369,13 +369,16 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 **
 */	void OS_Exit(int code)
 /*
-**		Called in cases where REBOL needs to quit immediately
-**		without returning from the main() function.
+**		Called in all cases when REBOL quits
+**
+**		If there would be case when freeing resources is not wanted,
+**		it should be signalised by a new argument.
 **
 ***********************************************************************/
 {
 	//OS_Call_Device(RDI_STDIO, RDC_CLOSE); // close echo
 	OS_Quit_Devices(0);
+	RL_Dispose();
 	exit(code);
 }
 

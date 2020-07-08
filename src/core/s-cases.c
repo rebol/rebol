@@ -939,3 +939,16 @@ static const REBUNI Char_Cases[] = {
 	}
 }
 
+/***********************************************************************
+**
+*/	void Dispose_Char_Cases(void)
+/*
+***********************************************************************/
+{
+	Free_Mem(White_Chars, 0);
+	Free_Mem(Upper_Cases, 0);
+	Free_Mem(Lower_Cases, 0);
+	White_Chars = NULL;
+	Upper_Cases = NULL;
+	Lower_Cases = NULL;
+}

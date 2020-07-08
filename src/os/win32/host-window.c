@@ -1457,6 +1457,18 @@ void Paint_Window(HWND window);
 	}
 }
 
+/***********************************************************************
+**
+*/	void Dispose_Windows(void)
+/*
+***********************************************************************/
+{
+	OS_Free(Gob_Windows);
+	OS_Free(window_ext_words);
+	Gob_Windows = NULL;
+	window_ext_words = NULL;
+}
+
 
 /**************** helpers ********************/
 

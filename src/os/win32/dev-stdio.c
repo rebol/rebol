@@ -194,7 +194,7 @@ static void attach_console(void) {
 }
 #endif
 
-static void close_stdio(void)
+static void Close_StdIO_Local(void)
 {
 	if (Std_Buf) {
 		OS_Free(Std_Buf);
@@ -223,7 +223,8 @@ static void close_stdio(void)
 		SetConsoleTextAttribute(Std_Out, wOriginalAttributes);
 	}
 
-	close_stdio();
+	Close_StdIO_Local();
+	Close_StdIO();  // frees host's input buffer
 	//if (GET_FLAG(dev->flags, RDF_OPEN)) FreeConsole();
 	CLR_FLAG(dev->flags, RDF_OPEN);
 	return DR_DONE;
@@ -396,7 +397,7 @@ static void close_stdio(void)
 {
 	REBDEV *dev = Devices[req->device];
 
-	close_stdio();
+	Close_StdIO_Local();
 
 	CLR_FLAG(dev->flags, RRF_OPEN);
 
