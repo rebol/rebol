@@ -143,7 +143,7 @@ static const REBYTE utf8d[] = {
   12,36,12,12,12,12,12,12,12,12,12,12, 
 };
 
-REBCNT inline
+REBCNT static inline
 decode_UTF8(REBCNT* state, REBCNT* codep, REBCNT byte) {
   REBCNT type = utf8d[byte];
 
@@ -335,7 +335,7 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 
 /***********************************************************************
 **
-*/	REBINT What_UTF(REBYTE *bp, REBCNT len)
+*/	REBINT What_UTF(const REBYTE *bp, REBCNT len)
 /*
 **		Tell us what UTF encoding the string has. Negative for LE.
 **
@@ -522,7 +522,7 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 
 /***********************************************************************
 **
-*/	int Decode_UTF16(REBUNI *dst, REBYTE *src, REBCNT len, REBFLG lee, REBFLG ccr)
+*/	int Decode_UTF16(REBUNI *dst, const REBYTE *src, REBCNT len, REBFLG lee, REBFLG ccr)
 /*
 **		dst: the desination array, must always be large enough!
 **		src: source binary data
@@ -576,7 +576,7 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 
 /***********************************************************************
 **
-*/	int Decode_UTF32(REBUNI *dst, REBYTE *src, REBINT len, REBFLG lee, REBFLG ccr)
+*/	int Decode_UTF32(REBUNI *dst, const REBYTE *src, REBINT len, REBFLG lee, REBFLG ccr)
 /*
 ***********************************************************************/
 {
@@ -635,7 +635,7 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 
 /***********************************************************************
 **
-*/	REBSER *Decode_UTF_String(REBYTE *bp, REBCNT len, REBINT utf, REBFLG ccr)
+*/	REBSER *Decode_UTF_String(const REBYTE *bp, REBCNT len, REBINT utf, REBFLG ccr)
 /*
 **		Do all the details to decode a string.
 **		Input is a byte series. Len is len of input.
