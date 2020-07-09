@@ -529,7 +529,7 @@ Rebol [
 
 	--test-- "delta-profile []"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/574
-		p: delta-profile []
+		probe p: delta-profile []
 		--assert 0 = p/evals
 		--assert 0 = p/eval-natives
 		--assert 0 = p/eval-functions
