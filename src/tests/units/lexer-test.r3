@@ -122,7 +122,7 @@ Rebol [
 			;@@ CALL seems not to work same on all OSes :-(
 			either system/version/4 = 3 [
 				call/wait/output probe rejoin [to-local-file exe { -s } to-local-file dir/bug-load-null.r3] out
-			][	call/wait/output probe reduce [exe dir/bug-load-null.r3] out ]
+			][	call/wait/output probe reduce [exe "-s" dir/bug-load-null.r3] out ]
 
 			probe out
 			parse out ["Test OK" to end]
