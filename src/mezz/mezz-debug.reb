@@ -24,21 +24,22 @@ dp: delta-profile: func [
 	{Delta-profile of running a specific block.}
 	block [block!]
 	/local start end adjust
-][ 
-	adjust: [
-		;- profiler's overhead
-		evals:        4
-		eval-natives: 3
-		series-made:  1
-		series-bytes: 448
-		made-blocks:  1
+][
+	; first count adjustments for empty code
+	adjust: copy end: stats/profile 
+	do [] 
+	stats/profile 
+	foreach [key num] adjust [
+		set key end/:key - num
 	]
+	adjust/timer: 0:0:0
+	; and now count real stats
 	start: copy end: stats/profile 
 	do block 
 	stats/profile 
 	foreach [key num] start [
-		set key end/:key - num - any [adjust/:key 0]
-	] 
+		set key end/:key - num - adjust/:key
+	]
 	start
 ]
 
