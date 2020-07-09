@@ -116,7 +116,7 @@ Rebol [
 				exists? dir: join system/options/path %../../src/tests/units/files/
 			]
 			dir: clean-path dir
-			save dir/tmp.data reduce [1 data]
+			save %units/files/tmp.data reduce [1 data]
 			exe: system/options/boot
 
 			;@@ CALL seems not to work same on all OSes :-(
@@ -125,7 +125,7 @@ Rebol [
 			][	call/wait/output probe reduce [exe "-s" dir/bug-load-null.r3] out ]
 
 			probe out
-			parse out ["Test OK" to end]
+			parse out [thru "Test OK" to end]
 		][
 			probe system/state/last-error
 			false
