@@ -174,6 +174,9 @@ check:
 	$(STRIP) -X -o r3.X r3$(BIN_SUFFIX)
 	$(LS) r3*
 
+strip:
+	$(STRIP) r3$(BIN_SUFFIX)
+	
 }
 
 ;******************************************************************************
@@ -187,7 +190,6 @@ makefile-link: {
 # Directly linked r3 executable:
 r3$(BIN_SUFFIX):	tmps objs $(OBJS) $(HOST) $(RES)
 	$(CC) -o r3$(BIN_SUFFIX) $(OBJS) $(HOST) $(RES) $(CLIB)
-	$(STRIP) r3$(BIN_SUFFIX)
 	-$(NM) -a r3$(BIN_SUFFIX)
 
 objs:
