@@ -101,6 +101,10 @@ Rebol [
 
 
 ===start-group=== "Special tests"
+;if "true" <> get-env "CONTINUOUS_INTEGRATION" [
+	;- don't do this test on Travis CI
+	;- it passes in my local tests, but fails on Travis because unknown reason
+	;- WHY?
 
 	--test-- "NULLs inside loaded string"
 	;@@ https://github.com/Oldes/Rebol3/commit/6f59240d7d4379a50fec29c4e74290ad61ba73ba
@@ -115,9 +119,9 @@ Rebol [
 				exists? dir: join system/options/path %../r3/src/tests/units/files/
 				exists? dir: join system/options/path %../../src/tests/units/files/
 			]
-			dir: clean-path dir
-			save %units/files/tmp.data reduce [1 data]
-			exe: system/options/boot
+			probe dir: clean-path dir
+			probe save %units/files/tmp.data reduce [1 data]
+			probe exe: system/options/boot
 
 			;@@ CALL seems not to work same on all OSes :-(
 			either system/version/4 = 3 [
@@ -131,6 +135,6 @@ Rebol [
 			false
 		]
 		error? try [ delete dir/tmp.data ]
-
+;]
 ===end-group===
 ~~~end-file~~~
