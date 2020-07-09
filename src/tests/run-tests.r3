@@ -23,7 +23,7 @@ dt [ ;- delta time
 		;%units/delect-test.r3
 		;%units/enbase-test.r3
 		;%units/enum-test.r3
-		%units/evaluation-test.r3
+		;%units/evaluation-test.r3
 		;%units/event-test.r3
 		;%units/gob-test.r3
 		;%units/file-test.r3
