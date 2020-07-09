@@ -717,10 +717,11 @@ Rebol [
 	--assert #{EFBFBD} = to-binary str
 	--assert #{C2E0} = invalid-utf? #{C2E0}
 	--assert #{C2E0} = invalid-utf? #{01C2E0}
-	--assert none? invalid-utf? bin: read %units/files/quickbrown.txt
+	;- using quickbrown.bin instead of quickbrown.txt beacause GIT modifies CRLF to LF on posix
+	--assert none? invalid-utf? bin: read %units/files/quickbrown.bin
 	--assert 13806406 = checksum str: to-string bin ; does not normalize CRLF
 	--assert 5367801 = checksum deline str
-	--assert 5367801 = checksum read/string %units/files/quickbrown.txt ;converts CRLF to LF
+	--assert 5367801 = checksum read/string %units/files/quickbrown.bin ;converts CRLF to LF
 
 ===end-group===
 
