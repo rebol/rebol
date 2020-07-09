@@ -130,6 +130,7 @@ typedef struct rebol_mold {
 
 enum Boot_Phases {
 	BOOT_START = 0,
+	BOOT_STARTED,
 	BOOT_LOADED,
 	BOOT_ERRORS,
 	BOOT_MEZZ,
