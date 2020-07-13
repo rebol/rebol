@@ -711,12 +711,16 @@ Rebol [
 	]
 
 --test-- "invalid UTF8 char"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1064
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1216
 	--assert 1 = length? str: to-string #{C2E0}
 	--assert "^(FFFD)" = str
 	--assert #{EFBFBD} = to-binary str
 	--assert #{C2E0} = invalid-utf? #{C2E0}
 	--assert #{C2E0} = invalid-utf? #{01C2E0}
+	--assert 2 = index? invalid-utf? #{20C2E030}
+	--assert 2 = index? invalid-utf? #{20C3}
+	--assert none? invalid-utf? #{20C3A030}
 	;- using quickbrown.bin instead of quickbrown.txt beacause GIT modifies CRLF to LF on posix
 	--assert none? invalid-utf? bin: read %units/files/quickbrown.bin
 	--assert 13806406 = checksum str: to-string bin ; does not normalize CRLF
