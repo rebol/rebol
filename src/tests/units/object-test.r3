@@ -137,6 +137,17 @@ Rebol [
 		--assert not same? a b
 ===end-group===
 
+===start-group=== "Object actions"
+	--test-- "empty?"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1669
+	--assert empty? object []
+	--assert empty? #[object! []]
+	--test-- "length?"
+	--assert 0 = length? object []
+	--assert 0 = length? #[object! []]
+
+===end-group===
+
 
 ===start-group=== "APPEND on OBJECT"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/708
