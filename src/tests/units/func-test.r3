@@ -144,6 +144,10 @@ Rebol [
 	--assert [a] = spec-of :f2
  	--assert [y] = body-of :f2
 
+ --test-- "body-of native!"
+ 	;@@ https://github.com/Oldes/Rebol-issues/issues/1578
+ 	--assert none? body-of :print
+
  --test-- "issue-168"
  	;@@ https://github.com/Oldes/Rebol-issues/issues/168
  	a: "foo"
