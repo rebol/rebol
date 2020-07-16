@@ -1134,6 +1134,17 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "ARRAY"
+--test-- "array"
+	--assert [#[none] #[none]] = array 2
+--test-- "array/initial"
+	--assert [0 0] = array/initial 2 0
+--test-- "array/initial func"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2193
+	--assert [10 9 8 7 6 5 4 3 2 1] = array/initial length: 10 func [] [-- length]
+	--assert [["1 1" "1 2"] ["2 1" "2 2"]] = array/initial [2 2] func [x y] [ajoin [x " " y]]
+===end-group===
+
 
 ;-- VECTOR related tests moved to %vector-test.r3
 
