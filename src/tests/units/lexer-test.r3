@@ -99,6 +99,23 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Construction syntax"
+	--test-- {any-string!}
+		--assert "ab" = load {#[string! "ab"]}
+		--assert  "b" = load {#[string! "ab" 2]}
+		--assert %ab  = load {#[file! "ab"]}
+		--assert  %b  = load {#[file! "ab" 2]}
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1034
+		--assert error? try [load {#[string! "ab" 2 x]}]
+		--assert error? try [load {#[file! "ab" x]}]
+		--assert error? try [load {#[file! "ab" 2 x]}]
+		--assert error? try [load {#[string! "ab" x]}]
+		--assert error? try [load {#[string! "ab" 2 x]}]
+		--assert error? try [load {#[file! "ab" x]}]
+		--assert error? try [load {#[file! "ab" 2 x]}]
+
+===end-group===
+
 
 ===start-group=== "Special tests"
 ;if "true" <> get-env "CONTINUOUS_INTEGRATION" [
