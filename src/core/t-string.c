@@ -276,8 +276,9 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 ***********************************************************************/
 {
 	REBCNT i;
-
-	if (!ANY_BINSTR(data)) return FALSE;
+	// allow only #[string! "data"] or #[string! "data" index]
+	if (!(ANY_BINSTR(data) && (IS_END(data+1) || (IS_INTEGER(data+1) && IS_END(data+2)))))
+		return FALSE;
 	*out = *data++;
 	VAL_SET(out, type);
 	i = IS_INTEGER(data) ? Int32(data) - 1 : 0;
