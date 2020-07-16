@@ -1052,7 +1052,8 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 		Free_Series(VAL_SERIES(ROOT_ERROBJ));
 		Free_Series(VAL_SERIES(ROOT_STRINGS));
 		Free_Series(VAL_SERIES(ROOT_TYPESETS));
-		Free_Series(VAL_SERIES(ROOT_BOOT));
+		if (!IS_NONE(ROOT_BOOT))
+			Free_Series(VAL_SERIES(ROOT_BOOT));
 		Free_Series(VAL_SERIES(TASK_STACK));
 		Free_Series(VAL_SERIES(TASK_BUF_EMIT));
 		Free_Series(VAL_SERIES(TASK_BUF_WORDS));

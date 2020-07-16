@@ -273,6 +273,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	if (!pool->first) Fill_Pool(pool);
 	node = pool->first;
 	pool->first = *node;
+#ifdef WATCH_SERIES_POOL
+	printf(cs_cast("*** SERIES_POOL Make_Node=> has: %u free: %u\n"), Mem_Pools[SERIES_POOL].has, Mem_Pools[SERIES_POOL].free);
+#endif
 	pool->free--;
 	return (void *)node;
 }
@@ -290,6 +293,14 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	*node = Mem_Pools[pool_id].first;
 	Mem_Pools[pool_id].first = node;
 	Mem_Pools[pool_id].free++;
+#ifdef WATCH_SERIES_POOL
+	if(pool_id == SERIES_POOL) {
+		//if(Mem_Pools[SERIES_POOL].has == Mem_Pools[SERIES_POOL].free) {
+		//	puts("last?");
+		//}
+		printf(cs_cast("*** SERIES_POOL Free_Node=> has: %u free: %u\n"), Mem_Pools[SERIES_POOL].has, Mem_Pools[SERIES_POOL].free);
+	}
+#endif
 }
 
 
@@ -320,6 +331,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		pool->first = *node;
 		pool->free--;
 		length = pool->wide;
+#ifdef WATCH_SERIES_POOL
+		if(pool_num == SERIES_POOL) printf(cs_cast("*** SERIES_POOL Make_Series_Data=> has: %u free: %u (size: %u)\n"), Mem_Pools[SERIES_POOL].has, Mem_Pools[SERIES_POOL].free, length);
+#endif
 	} else {
 		length = ALIGN(length, 2048);
 #ifdef DEBUGGING
@@ -338,6 +352,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #endif
 		Mem_Pools[SYSTEM_POOL].has += length;
 		Mem_Pools[SYSTEM_POOL].free++;
+#ifdef WATCH_SYSTEM_POOL
+		printf(cs_cast("*** SYSTEM_POOL Make_Series_Data=> has: %u free: %u (size: %u)\n"), Mem_Pools[SYSTEM_POOL].has, Mem_Pools[SYSTEM_POOL].free, length);
+#endif
 	}
 #ifdef CHAFF
 	memset((REBYTE *)node, 0xff, length);
@@ -387,6 +404,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		pool->free--;
 		length = pool->wide;
 		memset(node, 0, length);
+#ifdef WATCH_SERIES_POOL
+		if(pool_num == SERIES_POOL) printf(cs_cast("*** SERIES_POOL Make_Series=> has: %u free: %u (size: %u)\n"), Mem_Pools[SERIES_POOL].has, Mem_Pools[SERIES_POOL].free, length);
+#endif
 	} else {
 		if (powerof2) {
 			// !!! WHO added this and why??? Just use a left shift and mask!
@@ -415,6 +435,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #endif
 		Mem_Pools[SYSTEM_POOL].has += length;
 		Mem_Pools[SYSTEM_POOL].free++;
+#ifdef WATCH_SYSTEM_POOL
+		printf(cs_cast("*** SYSTEM_POOL Make_Series => has: %u free: %u (size: %u)\n"), Mem_Pools[SYSTEM_POOL].has, Mem_Pools[SYSTEM_POOL].free, length);
+#endif
 	}
 #ifdef CHAFF
 	memset((REBYTE *)node, 0xff, length);
@@ -487,6 +510,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		*node = pool->first;
 		pool->first = node;
 		pool->free++;
+#ifdef WATCH_SERIES_POOL
+		if(pool_num == SERIES_POOL) printf(cs_cast("*** SERIES_POOL Free_Series_Data=> has: %u free: %u (size: %u)\n"), Mem_Pools[SERIES_POOL].has, Mem_Pools[SERIES_POOL].free, size);
+#endif
 	} else {
 #ifdef MUNGWALL
 		Free_Mem(((REBYTE *)node)-MUNG_SIZE, size + MUNG_SIZE*2);
@@ -495,6 +521,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #endif
 		Mem_Pools[SYSTEM_POOL].has -= size;
 		Mem_Pools[SYSTEM_POOL].free--;
+#ifdef WATCH_SYSTEM_POOL
+		printf(cs_cast("*** SYSTEM_POOL Free_Series_Data=> has: %u free: %u (size: %u)\n"), Mem_Pools[SYSTEM_POOL].has, Mem_Pools[SYSTEM_POOL].free, size);
+#endif
 	}
 
 	CHECK_MEMORY(2);
@@ -516,7 +545,11 @@ clear_header:
 ***********************************************************************/
 {
 	REBCNT n;
-
+#ifdef WATCH_SERIES_POOL
+	if (SERIES_FREED(series)) {
+		puts("series already free!");
+	}
+#endif
 	PG_Reb_Stats->Series_Freed++;
 	PG_Reb_Stats->Series_Memory -= SERIES_TOTAL(series);
 
@@ -923,6 +956,7 @@ crash:
 	//Dump_Series_In_Pool(-1);
 
 	FOREACH(n, SYSTEM_POOL) {
+		//printf(cs_cast("*** Dispose_Pools[%u] Has: %u free: %u\n"), n, Mem_Pools[n].has, Mem_Pools[n].free);
 		if (Mem_Pools[n].has == Mem_Pools[n].free) {
 			seg = Mem_Pools[n].segs;
 			while (seg) {
@@ -932,9 +966,12 @@ crash:
 			}
 		}
 		else {
-			//printf(cb_cast("Mem_Pool[%u] not empty! Has: %u free: %u\n"), n, Mem_Pools[n].has, Mem_Pools[n].free);
+			printf(cs_cast("!!! Mem_Pools[%u] not empty! Has: %u free: %u\n"), n, Mem_Pools[n].has, Mem_Pools[n].free);
 		}
 	}
+	// SYSTEM_POOL contains not system series sizes (big series), at this state it should be empty!
+	if (Mem_Pools[SYSTEM_POOL].has > 0)
+		printf(cs_cast("!!! Mem_Pools[SYSTEM_POOL].has: %u\n"), Mem_Pools[SYSTEM_POOL].has);
 	Free_Mem(Mem_Pools, 0);
 	Free_Mem(PG_Pool_Map, 0);
 }
