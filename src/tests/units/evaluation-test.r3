@@ -492,6 +492,22 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "SWITCH"
+	--test-- "issue-2242"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2242
+		out: copy ""
+		foo: does [
+			switch/all 10 [
+				10 [append out "Hello" return "Returning"]
+				10 [append out "World"]
+			]
+			"End"
+		]
+		append out foo
+		--assert "HelloReturning" = out
+===end-group===
+
+
 ===start-group=== "BOOT"
 	--test-- "issue-232"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/232
@@ -529,14 +545,14 @@ Rebol [
 
 	--test-- "delta-profile []"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/574
-		probe p: delta-profile []
+		p: delta-profile []
 		--assert 0 = p/evals
 		--assert 0 = p/eval-natives
 		--assert 0 = p/eval-functions
 		--assert 0 = p/series-made
 		--assert 0 = p/series-freed
 		--assert 0 = p/series-expanded
-		--assert 0 = p/series-bytes
+		--assert 0 >= p/series-bytes ; may 
 		--assert 0 = p/series-recycled
 		--assert 0 = p/made-blocks
 		--assert 0 = p/made-objects
