@@ -120,6 +120,11 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/271
 		--assert not same? 0.1 0.3 - 0.2
 
+	--test-- "decimal construction"
+	;@@  https://github.com/Oldes/Rebol-issues/issues/1034
+		--assert 1.0 = #[decimal! 1]
+		--assert error? try [load {#[decimal! 1 2]}]
+
 	--test-- "decimal pick"
 		b: [1 2]
 		--assert 1 = b/1.0
