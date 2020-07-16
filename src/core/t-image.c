@@ -582,7 +582,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 **
 */	REBVAL *Create_Image(REBVAL *block, REBVAL *val, REBCNT modes)
 /*
-**	Create an image value from components block [pair rgb alpha].
+**	Create an image value from components block [pair rgb alpha index].
 **
 ***********************************************************************/
 {
@@ -1218,7 +1218,7 @@ find_none:
 		else if (IS_BLOCK(arg)) {
 			if (Create_Image(VAL_BLK_DATA(arg), value, 0)) break;
 		}
-		Trap_Type(arg);
+		Trap1(RE_MALCONSTRUCT, arg);
 		break;
 
 	case A_COPY:  // copy series /part len
