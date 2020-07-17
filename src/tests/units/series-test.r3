@@ -605,6 +605,13 @@ Rebol [
 --test-- "SORT/reverse"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/128
 	--assert [9 3 2 1] = sort/reverse [9 1 2 3] 
+
+--test-- "SORT block of strings"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/681
+	--assert ["Fred" "fred" "FRED"] == sort      ["Fred" "fred" "FRED"]
+	--assert ["fred" "Fred" "FRED"] == sort      ["fred" "Fred" "FRED"]
+	--assert ["FRED" "Fred" "fred"] == sort/case ["Fred" "fred" "FRED"]
+
 ===end-group===
 
 
