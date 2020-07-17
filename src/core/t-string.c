@@ -290,7 +290,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 /***********************************************************************
 **
-*/	static int Compare_Chr(const void *v1, const void *v2)
+*/	static int Compare_Chr_Cased(const void *v1, const void *v2)
 /*
 ***********************************************************************/
 {
@@ -300,11 +300,30 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 /***********************************************************************
 **
-*/	static int Compare_Chr_Rev(const void *v1, const void *v2)
+*/	static int Compare_Chr_Cased_Rev(const void *v1, const void *v2)
 /*
 ***********************************************************************/
 {
 	return ((int)*(REBYTE*)v2) - ((int)*(REBYTE*)v1);
+}
+
+/***********************************************************************
+**
+*/	static int Compare_Chr_Uncased(const void *v1, const void *v2)
+/*
+***********************************************************************/
+{
+	return ((int)LO_CASE(*(REBYTE*)v1)) - ((int)LO_CASE(*(REBYTE*)v2));
+}
+
+
+/***********************************************************************
+**
+*/	static int Compare_Chr_Uncased_Rev(const void *v1, const void *v2)
+/*
+***********************************************************************/
+{
+	return ((int)LO_CASE(*(REBYTE*)v2)) - ((int)LO_CASE(*(REBYTE*)v1));
 }
 
 
@@ -332,7 +351,11 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 	// Use fast quicksort library function:
 	if (skip > 1) len /= skip, size *= skip;
-	sfunc = rev ? Compare_Chr_Rev : Compare_Chr;
+	if (ccase) {
+		sfunc = rev ? Compare_Chr_Cased_Rev : Compare_Chr_Cased;
+	} else {
+		sfunc = rev ? Compare_Chr_Uncased_Rev : Compare_Chr_Uncased;
+	}
 
 	//!!uni - needs to compare wide chars too
 	reb_qsort((void *)VAL_DATA(string), len, size * SERIES_WIDE(VAL_SERIES(string)), sfunc);
