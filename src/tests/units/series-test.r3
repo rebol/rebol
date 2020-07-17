@@ -608,6 +608,16 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "RANDOM"
+	--test-- "random/only string!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1083
+	    s: "0123456789" b: copy []
+    	loop 100 [append b random/only s]
+		--assert [#"0" #"1" #"2" #"3" #"4" #"5" #"6" #"7" #"8" #"9"] = sort unique b 
+
+===end-group===
+
+
 ===start-group=== "PAD"
 --test-- "pad"
 	--assert "ab  " = pad "ab"  4
