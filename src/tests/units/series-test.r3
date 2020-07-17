@@ -731,6 +731,12 @@ Rebol [
 	--assert 2 = index? invalid-utf? #{20C2E030}
 	--assert 2 = index? invalid-utf? #{20C3}
 	--assert none? invalid-utf? #{20C3A030}
+	--assert #{EF} = invalid-utf? #{20EF}
+	--assert #{EFBF} = invalid-utf? #{20EFBF}
+	--assert "^(FFFD)" = to-string #{C3}
+	--assert "^(FFFD)" = to-string #{EF}
+	--assert "^(FFFD)" = to-string #{EFBF}
+	--assert "^(FFFD)" = to-string #{EFBFBD}
 	;- using quickbrown.bin instead of quickbrown.txt beacause GIT modifies CRLF to LF on posix
 	--assert none? invalid-utf? bin: read %units/files/quickbrown.bin
 	--assert 13806406 = checksum str: to-string bin ; does not normalize CRLF

@@ -389,17 +389,21 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 ***********************************************************************/
 {
 	REBYTE *end = str + len;
+	REBYTE *acc = str - 1;
 #ifdef USE_NEW_UTF8_DECODE
 	REBCNT codepoint;
-	REBCNT state = 0;
+	REBCNT state = UTF8_ACCEPT;
 
-	for (;str < end; ++str) {
-		decode_UTF8(&state, &codepoint, *str); 
-		if (state == UTF8_REJECT) {
-			return str-1;
+	for (; str < end; ++str) {
+		switch (decode_UTF8(&state, &codepoint, *str)) {
+		case UTF8_ACCEPT: acc = str; break; // remember last accepted char position
+		case UTF8_REJECT: return acc+1;
 		}
 	}
-	return 0;
+	if (state == UTF8_ACCEPT) return 0;
+	// if state is not accepted, we must have incomplete utf-8 sequence
+	// not using str-1, because the sequence may have more than 2 bytes!
+	return acc+1;
 #else
 	REBINT n;
 	for (;str < end; str += n) {
@@ -431,10 +435,7 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 
 	for (; *src; ++src, ++slen) {
 		if (decode_UTF8(&state, &codepoint, *src)) {
-			if (state == UTF8_REJECT) {
-				codepoint = 0; //UNI_REPLACEMENT_CHAR;
-				break;
-			}
+			if (state == UTF8_REJECT) break;
 			continue;
 		}
 		break;
@@ -443,6 +444,7 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 		*len -= slen;
 	}
 	*str = src;
+	if (state != UTF8_ACCEPT) return 0; //UNI_REPLACEMENT_CHAR;
 	return codepoint;
 #else
 	const UTF8 *source = *str;
@@ -507,7 +509,15 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 	for (; len > 0; len--, src++) {
 		if ((ch = *src) >= 0x80) {
 			ch = Decode_UTF8_Char(&src, &len);
-			if (ch == 0) ch = UNI_REPLACEMENT_CHAR; // temporary!
+			if (ch == 0) {
+				ch = UNI_REPLACEMENT_CHAR; // temporary!
+				if (len == 0) {
+					// incomplete utf-8 sequence
+					flag = 1;
+					*dst++ = (REBUNI)ch;
+					break;
+				}
+			}
 			if (ch >= 0x80) flag = 1;
 		} if (ch == CR && ccr) {
 			if (src[1] == LF) continue;
