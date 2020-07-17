@@ -598,6 +598,13 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/161
 	--assert [3 2 1] = sort/compare [1 2 3] func [a b] [return a > b]
 
+--test-- "SORT/skip with negative skip"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/736
+	--assert all [
+		error? e: try [sort/skip [2 1] -2]
+		e/id = 'out-of-range
+	]
+
 --test-- "SORT with invalid compare function"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1766
 	--assert error? try [sort/compare [1 2 3]  func [/local loc-1 loc-2][local < loc-1] ]
@@ -1098,6 +1105,13 @@ Rebol [
 	--assert "123" = union "12" "13"
 --test-- "union with none and unset"
 	--assert [#[none!] #[unset!]] = union [#[none!]] [#[unset!]]
+
+--test-- "union/skip with negative skip"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/736
+	--assert all [
+		error? e: try [union/skip [2 1][2 1] -2]
+		e/id = 'out-of-range
+	]
 
 ===end-group===
 
