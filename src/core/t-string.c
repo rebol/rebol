@@ -351,8 +351,8 @@ static struct {
 	DS_SKIP; v2 = DS_TOP;
 
 	if (sort_flags.wide) {
-		SET_CHAR(v1, (int)(*(REBCHR*)p2));
-		SET_CHAR(v2, (int)(*(REBCHR*)p1));
+		SET_CHAR(v1, (int)(*(REBUNI*)p2));
+		SET_CHAR(v2, (int)(*(REBUNI*)p1));
 	} else {
 		SET_CHAR(v1, (int)(*(REBYTE*)p2));
 		SET_CHAR(v2, (int)(*(REBYTE*)p1));
