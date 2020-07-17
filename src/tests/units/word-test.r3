@@ -22,6 +22,20 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "word compare"
+	--test-- "lesser-or-equal?"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2251
+	--assert not lesser-or-equal? 'C 'a
+	--assert     lesser-or-equal? 'c 'C
+	--assert not lesser-or-equal? 'c 'a
+
+	--test-- "equal?"
+	--assert not equal? 'a 'b
+	--assert     equal? 'a 'A
+	--assert 'a = 'A
+
+===end-group===
+
 ===start-group=== "word issues"
 	--test-- "issue-368"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/368

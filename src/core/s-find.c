@@ -279,7 +279,7 @@
 		if (c1 != c2) {
 			if (c1 >= UNICODE_CASES || c2 >= UNICODE_CASES ||
 				LO_CASE(c1) != LO_CASE(c2)) {
-				return (c1 > c2) ? -1 : -3;
+				return (LO_CASE(c1) > LO_CASE(c2)) ? -1 : -3;
 			}
 			if (!result) result = (c1 > c2) ? 3 : 1;
 		}

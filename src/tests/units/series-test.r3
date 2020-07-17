@@ -144,6 +144,16 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "SORT"
+	--test-- "sort block of words"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2218
+	b: [A b C a B c]
+	--assert [A a b B C c] = sort b
+	--assert [A B C a b c] = sort/case b
+	--assert [A a B b C c] = sort b
+		
+===end-group===
+
 ===start-group=== "REVERSE"
 	--test-- "issue-19"
 		--assert "4321" = sort/reverse "1234"
