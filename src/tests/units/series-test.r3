@@ -568,11 +568,19 @@ Rebol [
 	--assert "ABCDEFabcdef" == sort/case s
 	--assert "AaBbCcDdEeFf" == sort s
 
---test-- "SORT/compare"
+--test-- "SORT/compare block!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/720
 	--assert [3 2 1] = sort/compare [1 2 3] func [a b] [a > b]
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2376
 	--assert [1 3 10] = sort/compare [1 10 3] func[x y][case [x > y [1] x < y [-1] true [0]]]
+
+--test-- "SORT/compare string!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1100
+	comp: func [a b] [a > b]
+	--assert "zyxcba" == sort/compare "abczyx" :comp
+	--assert %54321 == sort/compare %21543 :comp
+	--assert #{050403020100} == sort/compare #{000102030405} :comp
+	--assert "šřba" == sort/compare "ašbř" :comp
 
 --test-- "SORT/skip/compare"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1152

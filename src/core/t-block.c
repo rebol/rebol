@@ -428,7 +428,6 @@ static struct {
 		if (VAL_DECIMAL(val) == 0) return 0;
 		return -1;
 	}
-	if (IS_TRUE(val)) return 1;
 	return -1;
 }
 
