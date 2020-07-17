@@ -233,6 +233,14 @@ Rebol [
 		--assert  [a b c d e f "a" <b> 9 #"c" a@b 3.14 1x0 $1] = keys-of m
 		--assert  [a b c d e f "a" <b> 9 #"c" a@b 3.14 1x0 $1] = reflect m 'words
 
+	--test-- "spec of map"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1859
+		--assert all [
+			error? e: try [ spec-of #() ]
+			e/id = 'expect-arg
+			e/arg2 = 'value
+			e/arg3 = map!
+		]
 	--test-- "path expression on map!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2421
 		foreach k keys-of m [ 
