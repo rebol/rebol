@@ -560,6 +560,10 @@ Rebol [
 	--assert [A B C a b c] == sort/case b
 	--assert [A a B b C c] == sort b
 
+--test-- "sort block of datatypes"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/406
+	--assert (reduce [integer! string!]) == (sort reduce [string! integer!])
+	
 --test-- "sort string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2170
 	s: "ABCabcdefDEF"
