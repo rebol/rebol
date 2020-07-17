@@ -1157,6 +1157,13 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "EXTRACT"
+--test-- "extract with unset"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1540
+	--assert [5 1 #[unset!]] = extract [5 3 1 #[unset!] #[unset!] #[unset!]] 2
+
+===end-group===
+
 ===start-group=== "TO-*"
 
 --test-- "to-path"
