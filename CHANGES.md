@@ -6,9 +6,11 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Features:
 
+* [`260f59`](https://github.com/Oldes/Rebol3/commit/260f595f1c4b27c7ba714f34e8c6d378f8eaa5ec) Implement `SORT/COMPARE` on `any-string!` values
+* [`aedd6b`](https://github.com/Oldes/Rebol3/commit/aedd6bbc3850e112a26c9122a988a81aa305b79e) Implemented _shutdown sequence_ to release allocated memory on exit
+  That is useful with tools like Valgrind to find possible memory leaks)
 * [`2854c4`](https://github.com/Oldes/Rebol3/commit/2854c46851970a7defa7ce552ff4c85100885083) Tiny code optimization
 * [`c4162f`](https://github.com/Oldes/Rebol3/commit/c4162f9cacc922d62de4376caa2d76cb983f1172) Modified `ENHEX` again.
-
   * the `/url` refine was removed as I decided, that it should not be part of this encoding (ECMA-262 specification does not do it either)
   * added `/except unescaped [bitset!]` to be able specify, which chars must be encoded and which can be leave without encoding
   * added some predefined bitsets into new `system/catalog/bitsets` (will use them later in other places)
@@ -26,6 +28,20 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`30feb0`](https://github.com/Oldes/Rebol3/commit/30feb050cf2065e4c6f309bc3a1174c8776246ad) Sorting Unicode string not working correctly on Posix
+* [`0465a5`](https://github.com/Oldes/Rebol3/commit/0465a5e801968240063093d8d29c1f412e8401eb) Use case insensitivity when sorting a string by default
+* [`e84c99`](https://github.com/Oldes/Rebol3/commit/e84c9962ec5ada9f5fa8f43d398317bb386330aa) Handle incomplete utf-8 sequences at tail
+* [`8bd6d0`](https://github.com/Oldes/Rebol3/commit/8bd6d01bd70198bd508d8a44471e2391bfe4243d) Use case insensitivity on word comparison by default
+* [`2269b5`](https://github.com/Oldes/Rebol3/commit/2269b56f1dde761e595b78929599236ee98314f6) Better error message when using bad image construction
+* [`d0073c`](https://github.com/Oldes/Rebol3/commit/d0073c46ef203a90bf2b6ce8dda00b012eecc689) Throw an error on excess values in any-string construction syntax
+* [`2babc5`](https://github.com/Oldes/Rebol3/commit/2babc5f81b06b35964825c933aca00c269a5d558) Throw error on invalid image! construction syntax
+* [`cb7cf1`](https://github.com/Oldes/Rebol3/commit/cb7cf1e71965117c072e234919083eeced5e3841) Not freeing ROOT_BOOT if it is already NONE.. adding some memory related traces
+* [`b687c2`](https://github.com/Oldes/Rebol3/commit/b687c20e186211a7661d40fe739b8964dfc51a14) Fine tune exit sequence to be nice with `-v` argument (early exit)
+* [`7b39aa`](https://github.com/Oldes/Rebol3/commit/7b39aa67fd57698f6282697e3064e06bca26b4ac) Improve `delta-profile` to use computed adjustments
+* [`31f922`](https://github.com/Oldes/Rebol3/commit/31f922003d7cf0d185903d8f1035087e4af8790e) Normalize `system/options/boot` so the path is always absolute
+* [`359ca0`](https://github.com/Oldes/Rebol3/commit/359ca00dad9f59312c341a0cd26617d1f4e0e563) Resolving some Unicode related compiler's warnings
+* [`b2fb60`](https://github.com/Oldes/Rebol3/commit/b2fb60095f81bbfe0bbea6f6c5dc8fa76471ff35) Valgrind's warning: Use of uninitialised value
+* [`ed20ac`](https://github.com/Oldes/Rebol3/commit/ed20ac3c2438217b5b6d3fddce8804e09d18b23d) Modify `cd` to accept `cd /`
 * [`196256`](https://github.com/Oldes/Rebol3/commit/19625652588048936a994c4a8420ec9c7c23a1d3) Minor code improvements in Spotify module
 * [`7525f8`](https://github.com/Oldes/Rebol3/commit/7525f8257e2d66cee1667d1cb5413622ad793dd6) Make UNSET of unbound words cause error vs. fail silently
 * [`c5b3de`](https://github.com/Oldes/Rebol3/commit/c5b3debeb32ae45236edfb685747771e4359e767) `decode-url http://host?query`
