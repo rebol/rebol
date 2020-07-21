@@ -37,6 +37,7 @@ dt [ ;- delta time
 		%units/mold-test.r3
 		%units/money-test.r3
 		%units/object-test.r3
+		%units/os-test.r3
 		%units/pair-test.r3
 		%units/parse-test.r3
 		%units/percent-test.r3

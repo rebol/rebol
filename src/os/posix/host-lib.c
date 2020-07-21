@@ -474,7 +474,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 	if (value == 0) return 0;
 
 	len = LEN_STR(value);
-	if (len == 0) return -1; // shouldn't have saved an empty env string
+	//if (len == 0) return -1; // shouldn't have saved an empty env string
 
 	if (len + 1 > valsize) {
 		return len + 1;
