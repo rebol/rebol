@@ -1094,6 +1094,15 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1886
 	--assert ["a" "b" "c"]    = split "a.b.c"  "."
 	--assert ["a" "b" "c" ""] = split "a.b.c." "."
+	--assert ["1234" "5678" "1234" "5678"] = split "1234567812345678" 4
+	--assert ["123" "456" "781" "234" "567" "8"] = split "1234567812345678" 3
+	--assert ["abc" "de" "fghi" "jk"] = split "abc<br>de<br>fghi<br>jk" <br>
+	--assert ["abc" "de" "fghi" "jk"] = split "abc|de/fghi:jk" charset "|/:"
+	--assert ["abc" "de" "fghi" "jk"] = split "abc^M^Jde^Mfghi^Jjk" [crlf | #"^M" | newline]
+	--assert ["abc" "de" "fghi" "jk"] = split "abc     de fghi  jk" [some #" "]
+	--assert ["12345678" "12345678"] = split/skip "1234567812345678" 2
+	--assert ["12345" "67812" "345678"] = split/skip "1234567812345678" 3
+	--assert ["123" "456" "781" "234" "5678"] = split/skip "1234567812345678" 5
 	;@@ https://github.com/Oldes/Rebol-issues/issues/573
 	--assert ["c" "c"] = split "c c" " "
 	--assert ["1,2"]   = split "1,2" " "
