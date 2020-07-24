@@ -43,6 +43,14 @@ Rebol [
 		g: make gob! [flags: [hidden]]
 		--assert g/flags = [hidden]
 
+	--test-- "gob require set-word!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/976
+		--assert all [
+			error? err: try [make gob! [color 127.0.127]]
+			err/id = 'expect-val
+			err/arg1 = set-word!
+		]
+
 ===end-group===
 
 ~~~end-file~~~
