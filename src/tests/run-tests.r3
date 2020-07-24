@@ -33,6 +33,7 @@ dt [ ;- delta time
 		%units/issue-test.r3
 		%units/lexer-test.r3
 		%units/load-test.r3
+		%units/make-test.r3
 		%units/map-test.r3
 		%units/mold-test.r3
 		%units/money-test.r3
