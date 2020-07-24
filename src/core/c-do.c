@@ -1317,10 +1317,14 @@ eval_func2:
 **
 ***********************************************************************/
 {
-	REBVAL *value;
+	REBVAL *value = VAL_BLK_DATA(block);
 	REBINT start = DSP + 1;
+	
+	if (start + VAL_LEN(block) + 100 > SERIES_REST(DS_Series)) {
+		Expand_Stack(VAL_LEN(block));
+	}
 
-	for (value = VAL_BLK_DATA(block); NOT_END(value); value++) {
+	for (; NOT_END(value); value++) {
 		if (IS_PAREN(value)) {
 			// Eval the paren, and leave result on the stack:
 			DO_BLK(value);
