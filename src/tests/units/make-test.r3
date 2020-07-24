@@ -15,6 +15,12 @@ Rebol [
 			error? err: try [make char! ""]
 			err/id = 'bad-make-arg
 		]
+	--test-- "make char! binary!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1043
+		--assert all [
+			error? err: try [make char! #{}]
+			err/id = 'bad-make-arg
+		]
 ===end-group===
 
 ~~~end-file~~~
