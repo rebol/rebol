@@ -16,6 +16,7 @@ Rebol [
 			err/id = 'bad-make-arg
 		]
 	--test-- "make char! binary!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1031
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1045
 		--assert #"1" = make char! #{3132}
 		--assert #"š" = make char! to-binary "ša"
