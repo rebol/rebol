@@ -38,6 +38,10 @@ Rebol [
 	--assert g1/size = wh
 	--assert g2/size = wh
 
+	--test-- "gob hidden flag"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1579
+		g: make gob! [flags: [hidden]]
+		--assert g/flags = [hidden]
 
 ===end-group===
 
