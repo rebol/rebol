@@ -235,6 +235,14 @@ Rebol [
 		--assert [x: 3] = reduce/no-set [x: 1 + 2]
 		--assert [x/1: 3] = reduce/no-set [x/1: 1 + 2]
 
+	--test-- "reduce/only"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/359
+		--assert [1 #[unset!] 2] = reduce/only [1 no-such-word 2] []
+		--assert [1 #[unset!] 2] = reduce/only [1 no-such-word 2] none
+		--assert [1 some-word 2] = reduce/only [1 some-word 2] [some-word]
+		--assert native? second reduce/only [1 now 2] none
+		--assert word?   second reduce/only [1 now 2] [now]
+
 ===end-group===
 
 ===start-group=== "compose"
