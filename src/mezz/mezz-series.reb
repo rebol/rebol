@@ -26,12 +26,13 @@ offset?: func [
 	subtract index? series2 index? series1
 ]
 
-found?: func [
-	"Returns TRUE if value is not NONE."
-	value
-][
-	not none? :value
-]
+;@@ https://github.com/Oldes/Rebol-issues/issues/2053
+;found?: func [
+;	"Returns TRUE if value is not NONE."
+;	value
+;][
+;	not none? :value
+;]
 
 last?: single?: func [
 	"Returns TRUE if the series length is 1."
@@ -374,7 +375,7 @@ alter: func [
 			append series :value true
 		]
 	]
-	found? unless remove (
+	to logic! unless remove (
 		either case [find/case series :value] [find series :value]
 	) [append series :value]
 ]

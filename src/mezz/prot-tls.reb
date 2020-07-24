@@ -399,7 +399,7 @@ TLS-init-cipher-suite: func [
 		(
 			ctx/key-method:   to word! key-method
 			ctx/crypt-method: to word! cipher
-			ctx/is-aead?: found? find [AES_128_GCM AES_256_GCM CHACHA20_POLY1305] ctx/crypt-method
+			ctx/is-aead?: to logic! find [AES_128_GCM AES_256_GCM CHACHA20_POLY1305] ctx/crypt-method
 
 			log-more [
 				"Key:^[[1m" ctx/key-method
@@ -1871,7 +1871,7 @@ sys/make-scheme [
 			port
 		]
 		open?: func [port [port!]][
-			found? all [port/state open? port/state/connection]
+			all [port/state open? port/state/connection true]
 		]
 		close: func [port [port!] /local ctx check1 check2][
 			log-more "CLOSE"

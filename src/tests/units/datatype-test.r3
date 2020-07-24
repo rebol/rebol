@@ -24,14 +24,14 @@ Rebol [
 
 	--test-- "find datatype!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/256
-		--assert found? find [#[datatype! string!] #[datatype! binary!]] #[datatype! binary!]
-		--assert found? find reduce [string! binary!] binary!
-		--assert found? find [#[datatype! string!] #[datatype! binary!]] #[datatype! binary!]
-		--assert found? find ["test"] string!
-		--assert found? find ["test"] series!
+		--assert not none? find [#[datatype! string!] #[datatype! binary!]] #[datatype! binary!]
+		--assert not none? find reduce [string! binary!] binary!
+		--assert not none? find [#[datatype! string!] #[datatype! binary!]] #[datatype! binary!]
+		--assert not none? find ["test"] string!
+		--assert not none? find ["test"] series!
 		--assert  none? find reduce [integer! binary!] series!
 		--assert ["aha"] = find reduce [integer! "aha"] series!
-		--assert found? find any-string! ref!
+		--assert not none? find any-string! ref!
 
 ===end-group===
 

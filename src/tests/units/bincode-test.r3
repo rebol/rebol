@@ -370,7 +370,7 @@ is-protected-error?: func[code][
 
 	--test-- "BinCode - FLOAT16, FLOAT, DOUBLE (write/read NAN)"
 		b: binary/write #{} [float16 1.#NaN float 1.#NaN double 1.#NaN]
-		--assert found? find [
+		--assert not none? find [
 			#{007E0000C07F000000000000F87F}
 			#{007E0000C0FF000000000000F8FF} ; when used clang compiler (should it be normalized?)
 		] b/buffer

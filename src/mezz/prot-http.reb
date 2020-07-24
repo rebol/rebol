@@ -766,7 +766,7 @@ sys/make-scheme [
 		open?: func [
 			port [port!]
 		][
-			found? all [object? port/state open? port/state/connection]
+			all [object? port/state  open? port/state/connection  true]
 		]
 		close: func [
 			port [port!]

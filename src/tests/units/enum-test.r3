@@ -25,7 +25,7 @@ Rebol [
 	--assert object? *FX-DX8
 	--assert 0 = *FX-DX8/CHORUS
 	--assert 8 = *FX-DX8/REVERB
-	--assert found? find [ECHO FLANGER] *FX-DX8/name 4
+	--assert not none? find [ECHO FLANGER] *FX-DX8/name 4
 
 
 --test-- "enum with mixed specification"
