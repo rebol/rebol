@@ -1094,6 +1094,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1886
 	--assert ["a" "b" "c"]    = split "a.b.c"  "."
 	--assert ["a" "b" "c" ""] = split "a.b.c." "."
+	;@@ https://github.com/Oldes/Rebol-issues/issues/573
+	--assert ["c" "c"] = split "c c" " "
+	--assert ["1,2"]   = split "1,2" " "
+	--assert ["c" "c "] = split "c,c " ","
 
 ===end-group===
 
