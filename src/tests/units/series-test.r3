@@ -786,6 +786,25 @@ Rebol [
 	--assert 5367801 = checksum deline str
 	--assert 5367801 = checksum read/string %units/files/quickbrown.bin ;converts CRLF to LF
 
+--test-- "LOAD Unicode encoded text with BOM"
+	--assert "Writer" = form load #{FEFF005700720069007400650072}     ;UTF-16BE
+	--assert "Writer" = form load #{FFFE570072006900740065007200}     ;UTF-16LE
+	--assert "ěšč"    = form load #{0000feff0000011b000001610000010d} ;UTF-32BE
+	--assert "ěšč"    = form load #{fffe00001b010000610100000d010000} ;UTF-32LE
+	--assert "esc"    = form load #{0000feff000000650000007300000063} ;UTF-32BE
+	--assert "esc"    = form load #{fffe0000650000007300000063000000} ;UTF-32LE
+	--assert [a b]    = load #{0000feff000000610000002000000062}
+	--assert [a b]    = load #{fffe0000610000002000000062000000}
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2280
+	--assert "äöü"    = form load #{EFBBBFC3A4C3B6C3BC}               ;UTF-8
+	--assert "aou"    = form load #{EFBBBF616F75}                     ;UTF-8
+	--assert "1 2"    = load #{EFBBBF2231203222}
+	--assert "1 2"    = load #{2231203222}
+	;@@ https://github.com/Oldes/Rebol-issues/issues/474
+	write %temp #{EFBBBF612062}
+	--assert [a b] = load %temp
+	delete %temp
+
 ===end-group===
 
 ===start-group=== "ICONV"

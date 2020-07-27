@@ -113,7 +113,17 @@ load-header: function/with [
 	; Commented assert statements are for documentation and testing.
 	;
 	case/all [
-		binary? source [tmp: assert-utf8 source]
+		binary? source [
+			parse source [
+				; utf-16 & utf-32
+				  #{0000FEFF} tmp: (tmp: iconv/to tmp 'utf-32BE 'utf8)
+				| #{FFFE0000} tmp: (tmp: iconv/to tmp 'utf-32LE 'utf8)
+				| #{FEFF}     tmp: (tmp: iconv/to tmp 'utf-16BE 'utf8)
+				| #{FFFE}     tmp: (tmp: iconv/to tmp 'utf-16LE 'utf8)
+				| ; utf-8 (skip the BOM if found)
+				opt [#{EFBBBF} source:] (tmp: assert-utf8 source)
+			]
+		]
 		string? source [tmp: to binary! source]
 		not data: script? tmp [ ; no script header found
 			return either required ['no-header] [reduce [none tmp tail tmp]]
