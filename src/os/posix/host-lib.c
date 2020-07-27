@@ -495,7 +495,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 ***********************************************************************/
 {
 	if (envval) {
-#ifdef setenv
+#ifdef USE_SETENV
 		// we pass 1 for overwrite (make call to OS_Get_Env if you 
 		// want to check if already exists)
 
@@ -530,7 +530,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 		return TRUE;
 	}
 
-#ifdef unsetenv
+#ifdef USE_SETENV
 	if (unsetenv(envname) == -1)
 		return FALSE;
 #else

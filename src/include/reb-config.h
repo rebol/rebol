@@ -188,10 +188,12 @@ These are now obsolete (as of A107) and should be removed:
 
 #ifdef TO_ANY_LINUX
 #undef USE_MIDI_DEVICE          // Not implemented!
+#define USE_SETENV 
 #endif
 
 #ifdef TO_OSX					// OSX/PPC
 #define OLD_COMPILER
+#define USE_SETENV 
 #endif
 
 #ifdef TO_OBSD					// OpenBSD
