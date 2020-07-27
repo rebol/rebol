@@ -157,7 +157,7 @@
 #ifdef OS_WIDE_CHAR
 	return Copy_Wide_Str(src, len);
 #else
-	return Decode_UTF_String((REBYTE*)src, len, 8, FALSE);
+	return Decode_UTF_String((REBYTE*)src, len, 8, FALSE, FALSE);
 #endif
 }
 

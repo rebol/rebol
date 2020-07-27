@@ -816,6 +816,23 @@ Rebol [
 	--assert "Writer" = decode 'text #{FEFF005700720069007400650072}
 	--assert "Writer" = decode 'text #{FFFE570072006900740065007200}
 
+--test-- "ICONV from UTF-32 without BOM"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2426
+	--assert "ěšč" = iconv #{0000011b000001610000010d} 'UTF-32BE
+	--assert "ěšč" = iconv #{1b010000610100000d010000} 'UTF-32LE
+	--assert  "šč" = iconv skip #{0000011b000001610000010d} 4 'UTF-32BE
+	--assert  "šč" = iconv skip #{1b010000610100000d010000} 4 'UTF-32LE
+--test-- "ICONV from UTF-32 without BOM (ascii content)"
+	--assert "esc" = iconv #{000000650000007300000063} 'UTF-32BE
+	--assert "esc" = iconv #{650000007300000063000000} 'UTF-32LE
+	--assert  "sc" = iconv skip #{000000650000007300000063} 4 'UTF-32BE
+	--assert  "sc" = iconv skip #{650000007300000063000000} 4 'UTF-32LE
+--test-- "ICONV from UTF-32 with BOM"
+	--assert "^(FEFF)ěšč" = iconv #{0000feff0000011b000001610000010d} 'UTF-32BE
+	--assert "^(FEFF)ěšč" = iconv #{fffe00001b010000610100000d010000} 'UTF-32LE
+--test-- "ICONV from UTF-32 to UTF-8"	
+	--assert #{C49BC5A1C48D} = iconv/to #{1b010000610100000d010000} 'UTF-32LE 'UTF-8
+	--assert #{C49BC5A1C48D} = iconv/to #{0000011b000001610000010d} 'UTF-32BE 'UTF-8
 
 --test-- "ICONV/TO (conversion to different codepage - binary result)"
 	bin: to binary! txt ; normaly conversion is done to UTF-8

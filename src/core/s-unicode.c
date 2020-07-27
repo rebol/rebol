@@ -645,12 +645,13 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 
 /***********************************************************************
 **
-*/	REBSER *Decode_UTF_String(const REBYTE *bp, REBCNT len, REBINT utf, REBFLG ccr)
+*/	REBSER *Decode_UTF_String(const REBYTE *bp, REBCNT len, REBINT utf, REBFLG ccr, REBFLG uni)
 /*
 **		Do all the details to decode a string.
 **		Input is a byte series. Len is len of input.
 **		The utf is 0, 8, +/-16, +/-32.
 **		A special -1 means use the BOM.
+**		Use `uni = TRUE` not to shorten ASCII result
 **
 ***********************************************************************/
 {
@@ -682,7 +683,7 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
     else {
         return NULL;
     }
-
+	if (uni && size < 0) size = -size;
 	if (size < 0) {
 		size = -size;
 		dst = Make_Binary(size);

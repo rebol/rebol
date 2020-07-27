@@ -666,7 +666,7 @@ extern const REBYTE Str_Banner[];
 	}
 
 	if (codi->action == CODI_DECODE) {
-		codi->other = (void*)Decode_UTF_String(codi->data, codi->len, -1, TRUE);
+		codi->other = (void*)Decode_UTF_String(codi->data, codi->len, -1, TRUE, FALSE);
 		return CODI_STRING;
 	}
 
@@ -781,7 +781,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 		ser = To_REBOL_Path(src, 0, OS_WIDE, dir);
 	}
 	else {
-		ser = Decode_UTF_String(src, LEN_BYTES(src), 8, FALSE);
+		ser = Decode_UTF_String(src, LEN_BYTES(src), 8, FALSE, FALSE);
 		ser = To_REBOL_Path(BIN_DATA(ser), BIN_LEN(ser), (REBOOL)!BYTE_SIZE(ser), dir);
 	}
 	val = Get_System(SYS_OPTIONS, field);

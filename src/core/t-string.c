@@ -152,7 +152,7 @@ static REBSER *make_string(REBVAL *arg, REBOOL make)
 	}
 	// MAKE/TO <type> <binary!>
 	else if (IS_BINARY(arg)) {
-		ser = Decode_UTF_String(VAL_BIN_DATA(arg), VAL_LEN(arg), -1, FALSE);
+		ser = Decode_UTF_String(VAL_BIN_DATA(arg), VAL_LEN(arg), -1, FALSE, FALSE);
 	}
 	// MAKE/TO <type> <any-string>
 	else if (ANY_BINSTR(arg)) {

@@ -727,7 +727,7 @@ end_date:
 	*str = 0;
 	if (!at) return 0;
 
-	VAL_SERIES(value) = Decode_UTF_String(BIN_DATA(BUF_FORM), cnt, 8, FALSE);
+	VAL_SERIES(value) = Decode_UTF_String(BIN_DATA(BUF_FORM), cnt, 8, FALSE, FALSE);
 	VAL_INDEX(value) = 0;
 	VAL_SET(value, REB_EMAIL);
 	return cp;
@@ -743,7 +743,7 @@ end_date:
 ***********************************************************************/
 {
 	if (*cp != '@') return 0;
-	VAL_SERIES(value) = Decode_UTF_String(cp+1, len-1, 8, FALSE);
+	VAL_SERIES(value) = Decode_UTF_String(cp+1, len-1, 8, FALSE, FALSE);
 	VAL_INDEX(value) = 0;
 	VAL_SET(value, REB_REF);
 	cp += len;
@@ -785,7 +785,7 @@ end_date:
 	}
 	*str = 0;
 
-	VAL_SERIES(value) = Decode_UTF_String(BIN_DATA(BUF_FORM), cnt, 8, FALSE);
+	VAL_SERIES(value) = Decode_UTF_String(BIN_DATA(BUF_FORM), cnt, 8, FALSE, FALSE);
 	VAL_INDEX(value) = 0;
 	VAL_SET(value, REB_URL);
 	return cp;

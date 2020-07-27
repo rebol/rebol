@@ -273,7 +273,7 @@ REBINT Mode_Syms[] = {
 	// Convert to string or block of strings.
 	// NOTE: This code is incorrect for files read in chunks!!!
 	if (args & (AM_READ_STRING | AM_READ_LINES)) {
-		ser = Decode_UTF_String(BIN_HEAD(ser), file->actual, -1, TRUE);
+		ser = Decode_UTF_String(BIN_HEAD(ser), file->actual, -1, TRUE, FALSE);
 		Set_String(ds, ser);
 		if (args & AM_READ_LINES) Set_Block(ds, Split_Lines(ds));
 	}

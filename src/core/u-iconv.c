@@ -629,6 +629,16 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 		SET_STRING(D_RET, dst_wide);
 		return R_RET;
 	}
+	else if (cp == 12000 || cp == 12001) {  // data are UTF-32LE or UTF-32BE
+		// this codepage is not supported by `MultiByteToWideChar`
+		dst_wide = Decode_UTF_String(VAL_BIN_AT(data), src_len, cp == 12000 ? -32 : 32, FALSE, TRUE);
+		dst_len = SERIES_TAIL(dst_wide);
+		if (ref_to) {
+			goto convert_to;
+		}
+		SET_STRING(D_RET, dst_wide);
+		return R_RET;
+	}
 	
 	if (VAL_LEN(data) > 0) {
 		dst_len = MultiByteToWideChar(cp, 0, cs_cast(VAL_BIN_DATA(data)), src_len, NULL, 0);
@@ -666,7 +676,7 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 			}
 		} else {
 			if (cp == 1201) {
-				Swap_Endianess_U16((u16*)BIN_HEAD(dst_wide), dst_wide->tail / 2);
+				Swap_Endianess_U16((u16*)BIN_HEAD(dst_wide), dst_wide->tail);
 			}
 			if (dst_wide->tail > 0) {
 				dst_len = WideCharToMultiByte(tp, 0, (REBCHR*)BIN_HEAD(dst_wide), dst_wide->tail, NULL, 0, 0, &default_char_used);
