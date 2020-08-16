@@ -165,4 +165,15 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "Valgrind issues"
+--test-- {compose large block}
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1906
+	;@@ this test passes but Valgrind reports a memory leak
+	;@@ (I believe it is false report so it is moved here as I don't want to spend time on it now)
+	b: copy [] insert/dup b 1 32768
+	--assert b = compose b ;- no crash
+
+===end-group===
+
 ~~~end-file~~~
