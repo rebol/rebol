@@ -416,6 +416,15 @@ Rebol [
 		error? err: try [poke v 0 1]
 		err/id = 'out-of-range
 	]
+
+	--test-- "POKE into decimal vector"
+	;@@ https://github.com/metaeducation/rebol-issues/issues/2508
+	--assert all [
+		vector? a: make vector! [decimal! 32 3]
+		1.0 = poke a 1 1.0
+		1.0 = a/1
+		1.0 = pick a 1
+	]
 ===end-group===
 
 
