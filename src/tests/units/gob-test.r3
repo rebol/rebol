@@ -51,6 +51,16 @@ Rebol [
 			err/arg1 = set-word!
 		]
 
+	--test-- "gob parent changes"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1671
+		g: make gob! []
+		append g g2: make gob! []
+		--assert g2/parent = g
+		change g g3: make gob! []
+		--assert g3/parent = g
+		poke g 1 g4: make gob! []
+		--assert g4/parent = g
+
 ===end-group===
 
 ~~~end-file~~~
