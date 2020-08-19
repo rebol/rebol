@@ -549,6 +549,17 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "WAIT"
+	--test-- "wait -1"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/342
+		--assert all [
+			error? err: try [wait -1]
+			err/id = 'out-of-range'
+		]
+
+===end-group===
+
+
 ===start-group=== "delta-profile"
 
 	--test-- "delta-profile []"
