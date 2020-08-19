@@ -61,6 +61,14 @@ Rebol [
 		poke g 1 g4: make gob! []
 		--assert g4/parent = g
 
+	--test-- "gob/flags"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/332
+		g: make gob! []
+		g/flags: [resize]
+		g/flags: [popup]
+		--assert g/flags = [popup]
+
+
 ===end-group===
 
 ~~~end-file~~~
