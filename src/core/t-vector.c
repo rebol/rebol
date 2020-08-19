@@ -618,7 +618,7 @@ size_spec:
 
 	if (IS_INTEGER(sel) || IS_DECIMAL(sel)) {
 		n = Int32(sel);
-		if (n == 0) return PE_NONE;
+		if (n == 0) return (pvs->setval) ? PE_BAD_RANGE : PE_NONE; // allow PICK with zero index but not for POKE
 		if (n < 0) n++;
 	} else if (IS_WORD(sel)) {
 		if (set == 0) {

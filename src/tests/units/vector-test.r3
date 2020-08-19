@@ -399,4 +399,24 @@ Rebol [
 	]
 ===end-group===
 
+
+===start-group=== "POKE"
+	--test-- "POKE into vector!"
+	v: #[ui32! [1 2 3]]
+	--assert all [
+		10 = poke v 1 10
+		10 = pick v 1
+	]
+	;@@  https://github.com/Oldes/Rebol-issues/issues/2427
+	--assert all [
+		error? err: try [poke v 10 1]
+		err/id = 'out-of-range
+	]
+	--assert all [
+		error? err: try [poke v 0 1]
+		err/id = 'out-of-range
+	]
+===end-group===
+
+
 ~~~end-file~~~

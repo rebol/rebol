@@ -549,6 +549,9 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	case PE_BAD_SET:
 		Trap2(RE_BAD_PATH_SET, pvs.value, pvs.select);
 		break;
+	case PE_BAD_RANGE:
+		Trap_Range(selector);
+		break;
 	}
 }
 
