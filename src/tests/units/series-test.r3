@@ -361,6 +361,7 @@ Rebol [
 
 ===start-group=== "PICK"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/608
+	;@@ https://github.com/Oldes/Rebol-issues/issues/857
 	--test-- "PICK of block!"
 	b: [1 2 3]
 	--assert all [
@@ -378,7 +379,11 @@ Rebol [
 		2   = pick b -1
 		1   = pick b -2
 	]
-	
+	--assert all [
+		none? pick tail b 0
+		3   = pick tail b -1
+	]
+
 	--test-- "PICK of string!"
 	s: "123"
 	--assert all [
@@ -395,6 +400,10 @@ Rebol [
 		none? pick s 0
 		#"2"= pick s -1
 		#"1"= pick s -2
+	]
+	--assert all [
+		none? pick tail s 0
+		#"3"= pick tail s -1
 	]
 
 ===end-group===
