@@ -359,6 +359,30 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "++ & --"
+	--test-- "++ & -- on block!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/340
+		a: [ 1 2 ]
+		--assert all [
+			[2] = (++ a ++ a)
+			a = []
+			3 = index? a
+			[] = (-- a)
+			2 = index? a
+		]
+		a: [ 1 2 ]
+		--assert all [
+			[1 2] = (-- a)
+			[1 2] = a
+			1 = index? a
+			[1 2] = (++ a)
+			[  2] = a
+			2 = index? a
+		]
+		
+===end-group===
+
+
 ===start-group=== "PICK"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/608
 	;@@ https://github.com/Oldes/Rebol-issues/issues/857
@@ -466,6 +490,7 @@ Rebol [
 		x: copy [] insert/dup x 5 -1
 		--assert 0 = length? x
 
+===end-group===
 
 ===start-group=== "REMOVE"
 	--test-- "remove-blk-1"
