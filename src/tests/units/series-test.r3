@@ -359,6 +359,47 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "PICK"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/608
+	--test-- "PICK of block!"
+	b: [1 2 3]
+	--assert all [
+		1   = pick b 1
+		2   = pick b 2
+		none? pick b -1
+		none? pick b 0
+		none? pick b 10
+	]
+	b: skip b 2
+	--assert all [
+		none? pick b 2
+		3   = pick b 1
+		none? pick b 0
+		2   = pick b -1
+		1   = pick b -2
+	]
+	
+	--test-- "PICK of string!"
+	s: "123"
+	--assert all [
+		#"1"= pick s 1
+		#"2"= pick s 2
+		none? pick s -1
+		none? pick s 0
+		none? pick s 10
+	]
+	s: skip s 2
+	--assert all [
+		none? pick s 2
+		#"3"= pick s 1
+		none? pick s 0
+		#"2"= pick s -1
+		#"1"= pick s -2
+	]
+
+===end-group===
+
+
 ===start-group=== "PUT"
 	--test-- "PUT into BLOCK"
 	v: [a 1 b 2 c]
