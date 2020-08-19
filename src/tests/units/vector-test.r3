@@ -385,4 +385,18 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "PICK"
+	--test-- "PICK of vector!"
+	;@@  https://github.com/Oldes/Rebol-issues/issues/748
+	v: #[ui32! [1 2 3]]
+	--assert all [
+		1   = pick v 1
+		2   = pick v 2
+		none? pick v -1
+		none? pick v 0
+		none? pick v 10
+	]
+===end-group===
+
 ~~~end-file~~~
