@@ -310,17 +310,19 @@ typedef struct REBCLR {
 /*
 //	premultiply: native [
 //		"Premultiplies RGB channel with its alpha channel"
-//		 image    [image!]         "Image to premultiply"
+//		 image    [image!]         "Image to premultiply (modified)"
 //	]
 ***********************************************************************/
 {
-	REBVAL *val_img    = D_ARG(1);
-	REBINT len = VAL_IMAGE_LEN(val_img);
-	REBYTE *rgba = VAL_IMAGE_DATA(val_img);
-	REBYTE a;
+	// All pixels are modified even when the input image is not at its head!
+	REBVAL *val_img = D_ARG(1);
+	REBINT len      = VAL_IMAGE_WIDE(val_img) * VAL_IMAGE_HIGH(val_img);
+	REBYTE *rgba    = VAL_IMAGE_HEAD(val_img);
+	REBINT a;
 	// Note: could be optimized!
 	for (; len > 0; len--, rgba += 4) {
 		a = (REBINT)rgba[C_A];
+		if (a == 0xFF) continue;
 		rgba[C_R] = (REBYTE)(((REBINT)rgba[C_R] * a) / 255);
 		rgba[C_G] = (REBYTE)(((REBINT)rgba[C_G] * a) / 255);
 		rgba[C_B] = (REBYTE)(((REBINT)rgba[C_B] * a) / 255);

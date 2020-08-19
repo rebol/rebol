@@ -300,6 +300,25 @@ FFFFFFDC1616212121212121
 
 ===end-group===
 
+
+===start-group=== "PREMULTIPLY"
+
+--test-- "premultiply image 1 (no alpha)"
+	i: make image! [3x1 #{C864FFC864FFC864FF}]
+	--assert image? premultiply i
+	--assert i/rgb = #{C864FFC864FFC864FF}
+--test-- "premultiply image 2"
+	i: make image! [3x1 #{C864FFC864FFC864FF} #{0080FF}]
+	--assert image? premultiply i ;@@ image is being modified!
+	--assert i/rgb = #{000000643280C864FF}
+--test-- "premultiply image 3 (input not at its head)"
+	i: make image! [3x1 #{C864FFC864FFC864FF} #{0080FF}]
+	--assert image? premultiply next i
+	--assert i/rgb = #{000000643280C864FF}
+
+===end-group===
+
+
 ===start-group=== "Save/load image"
 	if find codecs 'png [
 		--test-- "save/load PNG"
