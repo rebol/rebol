@@ -66,6 +66,13 @@ Rebol [
 	;--assert v = "x"
 	;--assert parse "yx" [copy v any [ remove #"y" | #"x" ] ]
 	;--assert v = "x"
+	remove-any-y: [while [remove #"y" | #"x"]] 
+	--assert parse v: "" remove-any-y
+	--assert parse v: "yx" remove-any-y
+	--assert v = "x"
+	--assert parse v: "yxxyyx" remove-any-y
+	--assert v = "xxx"
+
 ===end-group===
 
 ===start-group=== "Modifiers on protected series"
@@ -153,6 +160,14 @@ Rebol [
 --test-- "issue-1895"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1895
 	--assert not parse #{f0} reduce [charset [#{d0}]]
+
+--test-- "issue-297"
+;@@ https://github.com/Oldes/Rebol-issues/issues/297
+	a: none
+	--assert all [
+		parse "" [some [(a: true)]] ;- no infinite loop as in R2!
+		a
+	]
 
 ===end-group===
 
