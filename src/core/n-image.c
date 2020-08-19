@@ -306,6 +306,30 @@ typedef struct REBCLR {
 
 /***********************************************************************
 **
+*/	REBNATIVE(premultiply)
+/*
+//	premultiply: native [
+//		"Premultiplies RGB channel with its alpha channel"
+//		 image    [image!]         "Image to premultiply"
+//	]
+***********************************************************************/
+{
+	REBVAL *val_img    = D_ARG(1);
+	REBINT len = VAL_IMAGE_LEN(val_img);
+	REBYTE *rgba = VAL_IMAGE_DATA(val_img);
+	REBYTE a;
+	// Note: could be optimized!
+	for (; len > 0; len--, rgba += 4) {
+		a = (REBINT)rgba[C_A];
+		rgba[C_R] = (REBYTE)(((REBINT)rgba[C_R] * a) / 255);
+		rgba[C_G] = (REBYTE)(((REBINT)rgba[C_G] * a) / 255);
+		rgba[C_B] = (REBYTE)(((REBINT)rgba[C_B] * a) / 255);
+	}
+	return R_ARG1;
+}
+
+/***********************************************************************
+**
 */	REBNATIVE(image)
 /*
 //  image: native [
