@@ -227,11 +227,10 @@ import module [
 					output [mold :word "is" form-type :word "used in these functions:^/^/"]
 					str: copy ""
 					foreach [name val] system/contexts/lib [
-						;probe word
 						if all [
 							any-function? :val
 							spec: spec-of :val
-							desc: find/tail spec :word
+							desc: find/case/tail spec :word
 						][
 							str: join "^[[1;32m" form-pad name 15
 							append str "^[[m "
