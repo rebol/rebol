@@ -182,7 +182,7 @@ import module [
 		'word [any-type!]
 		/into "Help text will be inserted into provided string instead of printed"
 			string [string!] "Returned series will be past the insertion"
-		/local value spec args refs rets type ret desc arg def des ref
+		/local value spec args refs rets type ret desc arg def des ref str
 	][
 		try [
 			max-desc-width: (query/mode system/ports/input 'buffer-cols) - 35
@@ -219,6 +219,29 @@ import module [
 						]
 						unless empty? value: dump-obj/match/only system/contexts/lib :word [
 							output ajoin ["Found these related words:^/" value]
+						]
+					]
+					throw true
+				]
+				refinement? :word [
+					output [mold :word "is" form-type :word "used in these functions:^/^/"]
+					str: copy ""
+					foreach [name val] system/contexts/lib [
+						;probe word
+						if all [
+							any-function? :val
+							spec: spec-of :val
+							desc: find/tail spec :word
+						][
+							str: join "^[[1;32m" form-pad name 15
+							append str "^[[m "
+							append str form-pad type? :val 11 - min 0 ((length? str) - 15)
+							append str join "^[[1;32m" mold :word
+							if string? desc/1 [
+								append str " ^[[0;32m"
+								append str desc/1
+							]
+							output ajoin ["  " str "^[[m^/"]
 						]
 					]
 					throw true
