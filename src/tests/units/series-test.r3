@@ -1343,6 +1343,63 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "REWORD"
+--test-- "reword"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1990
+
+	--assert (reword/escape "ba" [a 1 b 2] none)
+		== "21"  ; /escape none like /escape ""
+
+	--assert (reword "$a$A$a" [a 1 A 2])
+		== "222"  ; case-insensitive, last value wins
+	--assert (reword/case "$a$A$a" [a 1 A 2])
+		== "121"  ; case-sensitive, even with words
+
+	--assert (reword/escape "<bang>" [bang "!"] ["<" ">"])
+		== "!"  ; Leading and trailing delimiters considered
+	--assert (reword/escape "<bang>bang>" [bang "!"] ["<" ">"])
+		== "!bang>"  ; One-pass, continues after the replacement
+	--assert (reword/escape "!bang;bang;" [bang "!"] ["!"])
+		== "!;bang;"  ; No trailing delimiter specified
+
+	--assert (reword "$a" ["a" ["A" "B" "C"]])
+		== "C"  ; evaluate a block value as code by default
+	--assert (reword/only "$a" ["a" ["A" "B" "C"]])
+		== "ABC"  ; Just insert a block value with /only
+
+	--assert (reword "$a$b$+" [a 1 + 1 b 2 + 2])
+		== "24$+"  ; Value expressions evaluated, keys treated as literals
+	--assert (reword/only "$a$b$+" [a 1 + 1 b 2 + 2])
+		== "122"   ; With /only, treated as raw values, + keyword defined twice in this case
+	--assert (reword "$a ($b)" ["a" does ["AAA"] "b" ()])
+		== "AAA ($b)"  ; Evaluates function builders and parens too. Note that b was undefined because () evaluates to unset
+	--assert (reword/only "$a ($b)" reduce ["a" does ["AAA"] "b" ["B" "B" "B"]])
+		== "AAA (BBB)"  ; With /only of explicitly reduced spec, functions still called even though blocks are just inserted
+
+	--assert (reword "$a" [a: 1])
+		== "1"  ; It should be easy to switch from block to object specs
+	--assert (reword "$a" context [a: 1])
+		== "1"  ; ... like this, so we should special-case set-words
+	--assert (reword "$a" ['a 1])
+		== "1"  ; It should be easy to explicitly reduce the same spec
+	--assert (reword "$a" reduce ['a 1])
+		== "1"  ; ... like this, so we should special-case lit-words
+	--assert (reword/escape "a :a /a #a" [a 1 :a 2 /a 3 #a 4] none)
+		== "1 2 3 4"  ; But otherwise let word types be distinct
+
+	--assert (reword to-binary "$a$A$a" [a 1 A 2])
+		== #{010201}  ; binaries supported, note the case-sensitivity, same key rules, values inserted by binary rules
+	--assert (tail? reword/into to-binary "$a$A$a" [a 1 A 2] #{})
+		== true  ; /into option behaves the same
+	--assert (head reword/into "$a$A$a" [a 1 A 2] #{})
+		== #{020202}  ; string templates can insert into binaries, note the case-insensitivity
+	--assert (head reword/case/into "$a$A$a" [a 1 A 2] #{})
+		== #{010201}  ; ... and this time it's case-sensitive
+	--assert (head reword/into to-binary "b$a$A$ac" [a 1 A 2] "")
+		== "b121c"  ; Binary templates can insert into strings, using string insert rules, still case-sensitive
+
+===end-group===
+
 ;-- VECTOR related tests moved to %vector-test.r3
 
 ~~~end-file~~~
