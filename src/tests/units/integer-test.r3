@@ -294,6 +294,15 @@ Rebol [
 	--test-- "issue-260"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/260
 		--assert not same? 97 #"a"
+
+
+	--test-- "issue-288"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/288
+		--assert all [
+			error? e: try [1 + "2"]
+			e/id = 'expect-arg
+		]
+		
 ===end-group===
 
 ~~~end-file~~~
