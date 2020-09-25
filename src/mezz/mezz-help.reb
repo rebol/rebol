@@ -274,6 +274,8 @@ import module [
 					refs: none
 					rets: none
 					type: type? :value
+
+					if path? word [word: first word]
 					
 					clear find spec /local
 					parse spec [
