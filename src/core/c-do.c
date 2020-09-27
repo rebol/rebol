@@ -679,6 +679,11 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 	tos = DS_NEXT;
 	DSP += ds;
 	for (; ds > 0; ds--) SET_NONE(tos++);
+	//O: Note that in Red, unspecified refinements have value `false` instead of `none`
+	//O: for example:     `f: func[/a b /c][reduce [a b c]] f`
+	//O: returns in Red:  `[false none false]`
+	//O: while in R3 its: `[none none none]`
+	//O: I'm keeping R3's result as it would add too much processing to be compatible with Red;
 
 	// Go thru the word list args:
 	ds = dsp;
@@ -911,7 +916,8 @@ eval_func2:
 		// Evaluate the function:
 		DSF = dsf;	// Set new DSF
 		if (!THROWN(DS_TOP)) {
-			if (Trace_Flags) Trace_Func(word, value);
+			//if (Trace_Flags) 
+				Trace_Func(word, value);
 			Func_Dispatch[ftype](value);
 		}
 		else {
