@@ -28,7 +28,7 @@ cd: func [
 		string! [path]
 		word! path! [
 			form either all [
-				not error? try [set/any 'val get/any path]
+				not error? try [set 'val get/any path]
 				not any-function? :val
 				probe val
 			][  val ][ path ]
