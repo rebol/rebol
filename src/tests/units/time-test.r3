@@ -87,6 +87,13 @@ Rebol [
 		--assert error? try [make time! (2 ** 32) - 0.99]
 		--assert error? try [make time! (2 ** 32) - 1.01]
 
+	--test-- "issue-1391"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1391
+		--assert 5:0 = (50% * 10:0:0)
+		--assert error? try [50% + 10:0]
+		--assert error? try [50% - 10:0]
+		--assert error? try [50% / 10:0]
+
 
 ===end-group===
 

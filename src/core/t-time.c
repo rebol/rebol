@@ -477,6 +477,13 @@
 			T_Date(ds, action);
 			return R_RET;
 		}
+		else if (type == REB_PERCENT && action == A_MULTIPLY) { // handle PERCENT * TIME case
+			// https://github.com/Oldes/Rebol-issues/issues/1391
+			//O: this could be handled like REB_DECIMAL above, but I think that support
+			//O: for actions like A_ADD does not make sense, so only MULTIPLY is supported!
+			secs = (REBI64)(secs * VAL_DECIMAL(arg));
+			goto setTime;
+		}
 		Trap_Math_Args(REB_TIME, action);
 	}
 	else {
