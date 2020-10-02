@@ -35,6 +35,7 @@ dt [ ;- delta time
 		%units/load-test.r3
 		%units/make-test.r3
 		%units/map-test.r3
+		%units/module-test.r3
 		%units/mold-test.r3
 		%units/money-test.r3
 		%units/object-test.r3
