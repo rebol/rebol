@@ -45,6 +45,10 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/819
 		--assert typeset? try [make typeset! [number! integer!]]
 
+	--test-- "scalar!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2428
+		--assert empty? exclude reduce [integer! decimal! percent! money! char! pair! tuple! time! date!] to-block scalar!
+
 ===end-group===
 
 

@@ -42,7 +42,7 @@ REBOL [
 	pair        self        pair        *        *       *      *   scalar
 	tuple       self        tuple       *        *       *      *   scalar
 	time        self        time        *        *       *      *   scalar
-	date        self        date        *        *       *      *   -
+	date        self        date        *        *       *      *   scalar
 
 	;Series
 	binary      self        string      +        +       *      *   [series]
