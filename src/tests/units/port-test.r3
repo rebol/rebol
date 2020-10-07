@@ -108,10 +108,12 @@ if system/platform = 'Windows [
 		--assert [type: file size: 51732] = query/mode file [type: size:]
 		close file
 
-	--test-- "write/lines - issue/2102"
+	--test-- "write/lines"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2102
 		write/lines %tmp.txt {a^/}
 		--assert ["a" ""] = read/lines %tmp.txt
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2429
+		--assert "a^/b^/" = read/string write/lines %tmp.txt ["a" "b"]
 		delete %tmp.txt
 
 	--test-- "read/lines - issue/1794"
