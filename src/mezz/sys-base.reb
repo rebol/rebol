@@ -192,7 +192,14 @@ make-module*: func [
 ]
 
 ; MOVE some of these to SYSTEM?
-boot-banner: ajoin ["REBOL 3.0 A" system/version/3 " " system/build newline]
+boot-banner: ajoin [
+	"REBOL 3." system/version/2 #"." system/version/3
+	" for "    system/platform
+	" built "  system/build/date
+]
+if system/build/git [
+	append append boot-banner " commit #" copy/part system/build/git/commit 8
+]
 boot-help: "Boot-sys level - no extra features."
 boot-host: none ; any host add-ons to the lib (binary)
 boot-mezz: none ; built-in mezz code (put here on boot)
