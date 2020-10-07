@@ -382,7 +382,7 @@ import module [
   
       ^[[1;32m--args data^[[m      Explicit arguments to script (quoted)
       ^[[1;32m--do expr^[[m        Evaluate expression (quoted)
-      ^[[1;32m--help (-?)^[[m      Display this usage information
+      ^[[1;32m--help (-?)^[[m      Display this usage information (then quit)
       ^[[1;32m--script file^[[m    Explicit script filename
       ^[[1;32m--version tuple^[[m  Script must be this version or greater
   

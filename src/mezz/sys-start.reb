@@ -90,12 +90,17 @@ start: func [
 		do bind-lib boot-mezz
 		boot-mezz: 'done
 
+		;loud-print "Init protocols..."
 		foreach [spec body] boot-prot [module spec body]
 		;do bind-lib boot-prot
 		boot-prot: 'done
 
 		;-- User is requesting usage info:
-		if flags/help [lib/usage quiet: true]
+		if flags/help [
+			lib/usage
+			unless flags/halt [quit/now]
+			quiet: true
+		]
 
 		;-- Print fancy banner (created by mezz plus):
 		if any [
