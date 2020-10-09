@@ -548,6 +548,33 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "FOR"
+	--test-- "FOR boundary tests fail"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1136
+		num: 0
+		--assert all [
+			error? e: try [
+				for i 9223372036854775807 9223372036854775807 1 [
+					num: num + 1
+					either num > 1 [break/return false] [true]
+				]
+			]
+			e/id = 'overflow
+			num = 1
+		]
+		num: 0
+		--assert all [
+			error? e: try [
+				for i -9223372036854775808 -9223372036854775808 -1 [
+					num: num + 1
+					either num > 1 [break/return false] [true]
+				]
+			]
+			e/id = 'overflow
+			num = 1
+		]
+===end-group===
+
 ===start-group=== "BREAK"
 	--test-- "break returns unset"
 		--assert unset?   loop 1 [break 2]
