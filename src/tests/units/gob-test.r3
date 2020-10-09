@@ -68,6 +68,13 @@ Rebol [
 		g/flags: [popup]
 		--assert g/flags = [popup]
 
+	--test-- "issue-1714"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1714
+		g: make gob! []
+		g/color: red
+		g/color: none
+		--assert not error? try [mold g] ; no crash
+
 
 ===end-group===
 
