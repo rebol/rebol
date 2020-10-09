@@ -71,5 +71,22 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "transcode"
+	--test-- "issue-1594"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1594
+		--assert error? try [transcode to-binary {["test^/]}]
+		--assert all [
+			block? e: transcode/error to-binary {"test^/}
+			error? e/1
+			e/2 = #{0A}
+		]
+		--assert all [
+			block? e: transcode/error to-binary {["test^/]}
+			error? e/1
+			e/2 = #{0A5D}
+		]
+===end-group===
+
+
 ~~~end-file~~~
 
