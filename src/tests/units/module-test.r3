@@ -87,6 +87,14 @@ Rebol [
 		]
 		--assert module? import/version m 1.0.0
 
+	--test-- "import string!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1721
+		unset in system/contexts/user 'issue-1721-a
+		unset in system/contexts/user 'issue-1721-b
+		import {rebol [type: 'module] issue-1721-a: 1 export issue-1721-b: 2}
+		--assert unset? :system/contexts/user/issue-1721-a
+		--assert system/contexts/user/issue-1721-b = 2
+
 ===end-group===
 
 ===start-group=== "module issues"
