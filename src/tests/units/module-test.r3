@@ -68,14 +68,23 @@ Rebol [
 		]
 
 
-
 ===end-group===
 
 ===start-group=== "module issues"
+	--test-- "issue-1005"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1005
+		m: module [] [a: 1 2]
+		--assert [ ] = body-of m
+		--assert [a] = keys-of m
+		--assert [1] = values-of m
+		m: module [exports: [a]] [a: 1 2]
+		--assert [a: 1] = body-of m
+		--assert [a] = keys-of m
+		--assert [1] = values-of m
+
 	--test-- "issue-1708"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1708
 		--assert none? find system/modules module [] []
-
 
 ===end-group===
 
