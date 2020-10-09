@@ -595,7 +595,7 @@ load-module: function [
 
 		; Verify /check and /version
 		all [check sum !== modsum] [cause-error 'access 'invalid-check module]
-		all [version ver > modver] [cause-error 'syntax 'needs reduce [name ver]]
+		all [version ver > modver] [cause-error 'syntax 'needs reduce [any [name 'version] ver]]
 
 		; If no further processing is needed, shortcut return
 		all [not override? any [mod delay]] [return reduce [name mod]]
