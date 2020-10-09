@@ -232,6 +232,13 @@ Rebol [
 	word: do func [x] ['x] 1
 	--assert same? word try [bind 'x word]
 
+--test-- "issue-1047"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1047
+	-assert all [
+		error? e: try [f: func [a:][print a]]
+		e/id = 'bad-func-def
+	]
+
 ===end-group===
 
 ~~~end-file~~~
