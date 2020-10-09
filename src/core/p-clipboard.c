@@ -104,7 +104,16 @@
 		return R_RET;
 
 	case A_WRITE:
-		if (!IS_STRING(arg) && !IS_BINARY(arg)) Trap1(RE_INVALID_PORT_ARG, arg);
+		if (!(IS_STRING(arg) || IS_BINARY(arg))) {
+#ifdef WRITE_ANY_VALUE_TO_CLIPBOARD
+			REB_MOLD mo = {0};
+			Reset_Mold(&mo);
+			Mold_Value(&mo, arg, TRUE);
+			Set_String(arg, mo.series);
+#else
+			Trap1(RE_INVALID_PORT_ARG, arg);
+#endif
+		}
 		// This device is opened on the WRITE:
 		if (!IS_OPEN(req)) {
 			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
