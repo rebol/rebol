@@ -150,6 +150,13 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/276
 		--assert error? try [0 - 1-jan-0000] ;- no crash!
 
+	--test-- "poke on date not supported"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1074
+		d: 2009-jul-09
+		--assert all [
+			error? e: try [poke d 1 2000]
+			e/id = 'expect-arg
+		]
 
 ===end-group===
 
