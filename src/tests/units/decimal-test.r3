@@ -71,6 +71,29 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "even? / odd?"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1775
+	--test-- "even?"
+	--assert even? 0.0
+	--assert not even? 1.0
+	--assert even? 2.0
+	--assert not even? -1.0
+	--assert even? -2.0
+	--assert even? 1.7976931348623157e308
+	--assert even? -1.7976931348623157e308
+
+	--test-- "odd?"
+	--assert not odd? 0.0
+	--assert odd? 1.0
+	--assert not odd? 2.0
+	--assert odd? -1.0
+	--assert not odd? -2.0
+	--assert not odd? 1.7976931348623157e308
+	--assert not odd? -1.7976931348623157e308
+	--assert odd? 1000000000.0
+	--assert odd? 10000000000.0
+===end-group===
+
 ===start-group=== "to-degrees & to-radians"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/2408
 	--test-- "to-degrees to-radians"
