@@ -70,6 +70,18 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "module import"
+	--test-- "import/version"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1687
+		m: module [version: 1.0.0 name: 'Foo][a: 1]
+		--assert all [
+			error? e: try [import/version m 2.2.2]
+			e/id = 'needs
+		]
+		--assert module? import/version m 1.0.0
+
+===end-group===
+
 ===start-group=== "module issues"
 	--test-- "issue-1005"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1005
