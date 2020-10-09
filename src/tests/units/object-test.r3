@@ -71,6 +71,15 @@ Rebol [
 		--assert error? try [make a [set 'd b]]
 		--assert d = 0
 
+	--test-- "issue-1863"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1863
+		--assert all [
+			o1: make object! [a: 1 f: does [a]]
+			o2: make object! [a: 2]
+			o3: make o1 o2
+			2 == o3/f
+		]
+
 	--test-- "issue-2049"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2049
 		; when cloning an object, functions are cloned:
