@@ -124,7 +124,7 @@ Rebol [
 			none? o/b
 		]
 
-	--test-- "issue-651"
+	--test-- "construct"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/651
 		--assert logic? get in construct [a: true] 'a
 		--assert logic? get in construct [a: false] 'a
@@ -138,6 +138,21 @@ Rebol [
 		--assert word? get in construct [a: 'b] 'a
 		--assert path? get in construct [a: b/c] 'a
 		--assert path? get in construct [a: 'b/c] 'a
+
+	--test-- "construct/only"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/687
+		--assert word? get in construct/only [a: true] 'a
+		--assert word? get in construct/only [a: false] 'a
+		--assert word? get in construct/only [a: on] 'a
+		--assert word? get in construct/only [a: off] 'a
+		--assert word? get in construct/only [a: yes] 'a
+		--assert word? get in construct/only [a: no] 'a
+		--assert word? get in construct/only [a: none] 'a
+		--assert unset? get/any in construct/only head insert tail [a:]() 'a
+		--assert word? get in construct/only [a: b] 'a
+		--assert lit-word? get in construct/only [a: 'b] 'a
+		--assert path? get in construct/only [a: b/c] 'a
+		--assert lit-path? get in construct/only [a: 'b/c] 'a
 
 ===end-group===
 
