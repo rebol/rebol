@@ -65,5 +65,15 @@ secure [%/ allow]
 	--test-- "script? string!"
 	--assert #{5245424F4C5B5D2031} = script? {REBOL[] 1}
 	--assert #{5245424F4C5B5D2031} = script? {bla^/REBOL[] 1}
+===end-group===
+
+===start-group=== "file://"
+	--test-- "issue-834"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/834
+	write %temp.txt #{}
+	--assert #{} = read %temp.txt
+	--assert #{} = read file://temp.txt
+	delete %temp.txt
+===end-group===
 
 ~~~end-file~~~
