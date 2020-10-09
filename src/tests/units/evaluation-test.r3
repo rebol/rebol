@@ -601,6 +601,12 @@ Rebol [
 	--test-- "the `result` of break should not be caught by try"
 		a: 1 loop 1 [a: error? try [break]]
 		--assert :a =? 1
+	--test-- "reduce [break]"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1760
+		a: 1 loop 1 [a: reduce [break]]
+		--assert :a =? 1
+		a: 1 loop 1 [a: compose [(break)]]
+		--assert :a =? 1
 
 ===end-group===
 
