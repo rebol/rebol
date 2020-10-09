@@ -554,7 +554,7 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/342
 		--assert all [
 			error? err: try [wait -1]
-			err/id = 'out-of-range'
+			err/id = 'out-of-range
 		]
 
 ===end-group===
