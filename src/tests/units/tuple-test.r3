@@ -35,6 +35,18 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1810
 	--assert 3.2.1.4.5 = reverse/part 1.2.3.4.5 3
 
+	--test-- "poke on tuple not supported"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1070
+	t: 1.2.3.4
+	--assert all [
+		error? e: try [poke t 2 99]
+		e/id = 'expect-arg
+	]
+	--assert all [
+		99 = (t/2: 99)
+		t = 1.99.3.4
+	]
+
 ===end-group===
 
 ~~~end-file~~~
