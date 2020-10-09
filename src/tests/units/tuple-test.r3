@@ -31,6 +31,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/211
 	--assert 3.2.1 = reverse 1.2.3
 
+	--test-- "reverse/part tuple"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1810
+	--assert 3.2.1.4.5 = reverse/part 1.2.3.4.5 3
+
 ===end-group===
 
 ~~~end-file~~~
