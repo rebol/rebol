@@ -20,6 +20,12 @@ Rebol [
 	--test-- "make image from gob"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/12
 		--assert-er try [image? to image! make gob! []]
+	--test-- "maximum limit"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1660
+		--assert all [
+			error? e: try [make image! 65536.0x1]
+			e/id = 'size-limit
+		]
 ===end-group===
 
 ===start-group=== "construct image"
