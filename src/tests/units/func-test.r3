@@ -222,6 +222,11 @@ Rebol [
 	--assert 3 = f 2
 	--assert 4 = f 3
 
+--test-- "issue-1893"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1893
+	word: do func [x] ['x] 1
+	--assert same? word try [bind 'x word]
+
 ===end-group===
 
 ~~~end-file~~~
