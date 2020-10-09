@@ -79,6 +79,13 @@ Rebol [
 			o3: make o1 o2
 			2 == o3/f
 		]
+	--test-- "issue-1874"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1874
+		a: make object! [b: []]
+		c: make a []
+		d: make a make object! []
+		--assert not same? a/b c/b
+		--assert not same? a/b d/b
 
 	--test-- "issue-2049"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2049
