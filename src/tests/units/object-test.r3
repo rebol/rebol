@@ -154,6 +154,13 @@ Rebol [
 		--assert path? get in construct/only [a: b/c] 'a
 		--assert lit-path? get in construct/only [a: 'b/c] 'a
 
+	--test-- "construct {a: 1}"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1554
+		--assert ["1"] = values-of construct "a: 1"
+		--assert ["1"] = values-of construct to-binary "a: 1"
+		--assert ["1" "yes"] = values-of construct "a: 1^/b: yes"
+		--assert ["1 b: yes"] = values-of construct "a: 1 b: yes" ; there is not the newline!
+
 ===end-group===
 
 
