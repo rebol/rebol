@@ -151,6 +151,10 @@ Rebol [
 	--assert #0102030405060708090A = to-hex/size 1.2.3.4.5.6.7.8.9.10 20
 	--assert #0102030405           = to-hex/size 1.2.3.4.5.6.7.8.9.10 10
 
+--test-- "write clipboard:// [a]"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1619
+	--assert value? try [write clipboard:// [a]] ;- no crash
+
 ===end-group===
 
 ~~~end-file~~~
