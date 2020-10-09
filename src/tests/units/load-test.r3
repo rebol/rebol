@@ -31,6 +31,11 @@ Rebol [
 		--assert object? b/1
 		--assert "foo" = b/1/title
 
+	--test-- "issue-655"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/655
+		o: first load/header "rebol [a: true b: yes c: no d: false e: none f: foo] print 'hello"
+		--assert all [logic? o/a logic? o/b logic? o/c logic? o/d none? o/e word? o/f]
+
 ===end-group===
 
 ===start-group=== "Load issues/wishes"
