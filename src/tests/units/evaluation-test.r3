@@ -548,6 +548,62 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "BREAK"
+	--test-- "break returns unset"
+		--assert unset?   loop 1 [break 2]
+	--test-- "break/return should return argument"
+		--assert none?    loop 1 [break/return none 2]
+		--assert false =? loop 1 [break/return false 2]
+		--assert true  =? loop 1 [break/return true 2]
+		--assert unset?   loop 1 [break/return () 2]
+		--assert error?   loop 1 [break/return try [1 / 0] 2]
+	--test-- "break - the `result` of break should not be assignable"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1515
+		a: 1 loop 1 [a: break]
+		--assert :a =? 1
+		a: 1 loop 1 [set 'a break]
+		--assert :a =? 1
+		a: 1 loop 1 [set/any 'a break]
+		--assert :a =? 1
+		a: 1 loop 1 [a: break/return 2]
+		--assert :a =? 1
+		a: 1 loop 1 [set 'a break/return 2]
+		--assert :a =? 1
+		a: 1 loop 1 [set/any 'a break/return 2]
+		--assert :a =? 1
+	--test-- "break - the `result` of break should not be passable to functions"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1509
+		a: 1 loop 1 [a: error? break] ; error? function takes 1 arg
+		--assert :a =? 1
+		a: 1 loop 1 [a: error? break/return 2]
+		--assert :a =? 1
+		a: 1 loop 1 [a: type? break] ; type? function takes 1-2 args
+		--assert :a =? 1
+		foo: func [x y] [9] a: 1 loop 1 [a: foo break 5] ; foo takes 2 args
+		--assert :a =? 1
+		foo: func [x y] [9] a: 1 loop 1 [a: foo 5 break]
+		--assert :a =? 1
+		foo: func [x y] [9] a: 1 loop 1 [a: foo break break]
+		--assert :a =? 1
+	--test-- "check that BREAK is evaluated (and not CONTINUE)"
+		foo: func [x y] [] a: 1 loop 2 [a: a + 1 foo break continue a: a + 10]
+		--assert :a =? 2
+	--test-- "check that BREAK is not evaluated (but CONTINUE is)"
+		foo: func [x y] [] a: 1 loop 2 [a: a + 1 foo continue break a: a + 10]
+		--assert :a =? 3
+	--test-- "issue-1535"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1535
+		--assert (loop 1 [words-of  break] true)
+		--assert (loop 1 [values-of break] true)
+	--test-- "issue-1945"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1945
+		--assert (loop 1 [spec-of   break] true)
+	--test-- "the `result` of break should not be caught by try"
+		a: 1 loop 1 [a: error? try [break]]
+		--assert :a =? 1
+
+===end-group===
+
 
 ===start-group=== "WAIT"
 	--test-- "wait -1"
