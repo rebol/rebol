@@ -222,6 +222,11 @@ Rebol [
 	--assert 3 = f 2
 	--assert 4 = f 3
 
+--test-- "clos vs closure"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2002
+	--assert empty? spec-of clos [] [a: 1]
+	--assert [/local a] = spec-of closure [] [a: 1]
+
 --test-- "issue-1893"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1893
 	word: do func [x] ['x] 1
