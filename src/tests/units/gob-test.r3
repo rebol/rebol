@@ -75,6 +75,20 @@ Rebol [
 		g/color: none
 		--assert not error? try [mold g] ; no crash
 
+	--test-- "issue-1617"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1617
+		--assert all [
+			error? e: try [make gob! [data:]]
+			e/id = 'need-value
+		]
+		--assert all [
+			error? e: try [make gob! [data: size: 10x10]]
+			e/id = 'need-value
+		]
+		--assert all [
+			error? e: try [make gob! append [data:] make unset! none]
+			e/id = 'need-value
+		]
 
 ===end-group===
 
