@@ -101,7 +101,7 @@ Rebol [
 	--test-- "issue-1005"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1005
 		m: module [] [a: 1 2]
-		--assert [ ] = body-of m
+		--assert [a: 1] = body-of m
 		--assert [a] = keys-of m
 		--assert [1] = values-of m
 		m: module [exports: [a]] [a: 1 2]
