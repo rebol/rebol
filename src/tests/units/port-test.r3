@@ -191,6 +191,7 @@ if "true" <> get-env "CONTINUOUS_INTEGRATION" [
 
 ===start-group=== "DNS"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1827
+;@@ https://github.com/Oldes/Rebol-issues/issues/1860
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1935
 	--test-- "read dns://"
 		--assert string? try [probe read dns://] ;- no crash!
