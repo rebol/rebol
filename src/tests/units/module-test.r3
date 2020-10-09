@@ -20,51 +20,58 @@ Rebol [
 			error? try [m/a]
 			m/b = 2
 		]
+
 	--test-- "export"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1446
-		unset [a b c]
+		unset in system/contexts/user 'a
+		unset in system/contexts/user 'b
+		unset in system/contexts/user 'c
 		m: module [][export a: 1 b: 2 export c: does [a + b]]
 		--assert all [
 			object? spec: spec-of m
 			[a c] = spec/exports
 			m/c = 3
-			unset? :a
-			unset? :b
-			unset? :c
+			unset? :system/contexts/user/a
+			unset? :system/contexts/user/b
+			unset? :system/contexts/user/c
 			module? import m
-			a = 1
-			unset? :b
-			c = 3
+			system/contexts/user/a = 1
+			unset? :system/contexts/user/b
+			system/contexts/user/c = 3
 		]
 
-		unset [a b c]
+		unset in system/contexts/user 'a
+		unset in system/contexts/user 'b
+		unset in system/contexts/user 'c
 		m: module [][a: 1 b: 2  c: does [a + b] export [a c]]
 		--assert all [
 			object? spec: spec-of m
 			[a c] = spec/exports
 			m/c = 3
-			unset? :a
-			unset? :b
-			unset? :c
+			unset? :system/contexts/user/a
+			unset? :system/contexts/user/b
+			unset? :system/contexts/user/c
 			module? import m
-			a = 1
-			unset? :b
-			c = 3
+			system/contexts/user/a = 1
+			unset? :system/contexts/user/b
+			system/contexts/user/c = 3
 		]
 
-		unset [a b c]
+		unset in system/contexts/user 'a
+		unset in system/contexts/user 'b
+		unset in system/contexts/user 'c
 		m: module [][set export [a c] none]
 		--assert all [
 			object? spec: spec-of m
 			[a c] = spec/exports
 			none? m/c
-			unset? :a
-			unset? :b
-			unset? :c
+			unset? :system/contexts/user/a
+			unset? :system/contexts/user/b
+			unset? :system/contexts/user/c
 			module? import m
-			none? a
-			unset? :b
-			none? c
+			none? system/contexts/user/a
+			unset? :system/contexts/user/b
+			none? system/contexts/user/c
 		]
 
 
