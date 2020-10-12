@@ -2,15 +2,69 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+## 2020 October
+
+### Features:
+
+* [`c563d4`](https://github.com/Oldes/Rebol3/commit/c563d429f00d3a0ac215da1726007fa43fc5621b) Optionally write any (molded) value into clipboard (by default disabled)
+* [`5f28c9`](https://github.com/Oldes/Rebol3/commit/5f28c9ac01c0e7f9d9b7a431144e89e7c51013e5) Improve `import/version` error message in case when module has no name
+
+  before:
+  ```
+  >> import/version module [version: 1.0.0][a: 1] 2.0.0
+  ** syntax error: this script needs none 2.0.0 or better to run correctly
+  ```
+  now:
+  ```
+  ** syntax error: this script needs version 2.0.0 or better to run correctly
+  ```
+* [`57384f`](https://github.com/Oldes/Rebol3/commit/57384f4c2fb793a437a5843f1430b22ee46385b5) Improve shortened banner
+* [`eabe4a`](https://github.com/Oldes/Rebol3/commit/eabe4a66b2b9da743607316c068d1b6e47ea569e) Take a percentage of a time! value
+
+### Fixes:
+
+* [`3c006a`](https://github.com/Oldes/Rebol3/commit/3c006a72493a50110dc80833ee4589d1707f47f3) Potentially SPA-vulnerability
+* [`ceed8d`](https://github.com/Oldes/Rebol3/commit/ceed8dde6523b8e515c4cd3ddbe9c14b89ec9e99) Fix static annotation for uECC_valid_point
+* [`81e9e0`](https://github.com/Oldes/Rebol3/commit/81e9e0a4e877a91295c3d7fcc337db69fcd82ff6) Quit after using `--help` startup option
+* [`b440b3`](https://github.com/Oldes/Rebol3/commit/b440b351d94eecca0d7e6f1a1188bf71752d7e9e) `write/lines` regression
+* [`fcc4fa`](https://github.com/Oldes/Rebol3/commit/fcc4fa11d7f1e71e9167be99e4e1fc7d8143dceb) `date!` is not listed as a `scalar!` value
+
+## 2020 September
+
+### Features:
+
+* [`e82b70`](https://github.com/Oldes/Rebol3/commit/e82b7006cac4b5c172e361061402af0ff060b4ba) `? /refinement` should list function refinements
+
+### Fixes:
+
+* [`688ecc`](https://github.com/Oldes/Rebol3/commit/688ecc71e6a3f39fed7ac560dff57b8f13258be5) Handle use of `cd ..` in console properly
+* [`289829`](https://github.com/Oldes/Rebol3/commit/289829ea6f355bba175fd9ff7c16201d4c35f223) `?` allows functions with nonsensical refinements, which can be misleading
+* [`a2b61a`](https://github.com/Oldes/Rebol3/commit/a2b61a86e7fdef522500ff2cc21939ed39f32726) Limit search only to refinements!
+
+## 2020 August
+
+### Features:
+
+* [`07fbf2`](https://github.com/Oldes/Rebol3/commit/07fbf25e4162ac375c78467d1e5cb0ecf55d3a9f) Simple `premultiply` function which premultiplies image's RGB channel with its ALPHA
+
+### Fixes:
+
+* [`0bb90c`](https://github.com/Oldes/Rebol3/commit/0bb90c5fb6496fc65355bd514a8100a7a9736845) `POKE` into `vector!` does not throw out of range error
+* [`ede6fd`](https://github.com/Oldes/Rebol3/commit/ede6fdf19e73a13e74031cd4ae2e7babfc5e2cb2) `premultiply` should affect all pixels of the input image (even when input is not at head)
+
 ## 2020 July
 
 ### Features:
 
 * [`260f59`](https://github.com/Oldes/Rebol3/commit/260f595f1c4b27c7ba714f34e8c6d378f8eaa5ec) Implement `SORT/COMPARE` on `any-string!` values
+
+  fixes: https://github.com/Oldes/Rebol-issues/issues/1100
 * [`aedd6b`](https://github.com/Oldes/Rebol3/commit/aedd6bbc3850e112a26c9122a988a81aa305b79e) Implemented _shutdown sequence_ to release allocated memory on exit
+
   That is useful with tools like Valgrind to find possible memory leaks)
 * [`2854c4`](https://github.com/Oldes/Rebol3/commit/2854c46851970a7defa7ce552ff4c85100885083) Tiny code optimization
 * [`c4162f`](https://github.com/Oldes/Rebol3/commit/c4162f9cacc922d62de4376caa2d76cb983f1172) Modified `ENHEX` again.
+
   * the `/url` refine was removed as I decided, that it should not be part of this encoding (ECMA-262 specification does not do it either)
   * added `/except unescaped [bitset!]` to be able specify, which chars must be encoded and which can be leave without encoding
   * added some predefined bitsets into new `system/catalog/bitsets` (will use them later in other places)
@@ -22,12 +76,18 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Changes:
 
+* [`3b9afc`](https://github.com/Oldes/Rebol3/commit/3b9afc00c011674af42c00c16a8adc4059446af4) Remove `found?` mezzanine
 * [`d92049`](https://github.com/Oldes/Rebol3/commit/d9204910e0ba1488a2331413f10b7e9e92113548) Replacing some `context` usage with `construct` or `object`
 * [`12454f`](https://github.com/Oldes/Rebol3/commit/12454ff4504c16c3cf41329dec427bdad3158632) Rename `protect/permanently` to `protect/lock` (wip)
 * [`59576c`](https://github.com/Oldes/Rebol3/commit/59576cafe07993e0b7f35054c76f8c38b968d755) Renamed httpd module to have .reb extension and small improvements in its test file
 
 ### Fixes:
 
+* [`8d2458`](https://github.com/Oldes/Rebol3/commit/8d24585df409e515d7da701b54dcdbb8760d6427) Force use of `setenv` function instead of `putenv` on Posix targets
+* [`5a3cbe`](https://github.com/Oldes/Rebol3/commit/5a3cbe5075efd96fa530e9ad9dcd935f2e566d1e) `LOAD` Unicode encoded text with BOM
+* [`28b47d`](https://github.com/Oldes/Rebol3/commit/28b47d3315393b5cf8934620d22139c70d02a45a) Add support for `iconv` `UTF-32` conversion on Windows
+* [`7c030c`](https://github.com/Oldes/Rebol3/commit/7c030cf7a2da39f15f9a51270c6b8f2bdab2320e) Crash when composing large block
+* [`6191f4`](https://github.com/Oldes/Rebol3/commit/6191f4fc5017d6284ed224edeb743b124f284aee) Allow getting empty environmental string on Posix platforms
 * [`30feb0`](https://github.com/Oldes/Rebol3/commit/30feb050cf2065e4c6f309bc3a1174c8776246ad) Sorting Unicode string not working correctly on Posix
 * [`0465a5`](https://github.com/Oldes/Rebol3/commit/0465a5e801968240063093d8d29c1f412e8401eb) Use case insensitivity when sorting a string by default
 * [`e84c99`](https://github.com/Oldes/Rebol3/commit/e84c9962ec5ada9f5fa8f43d398317bb386330aa) Handle incomplete utf-8 sequences at tail
