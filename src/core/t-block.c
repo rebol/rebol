@@ -119,7 +119,7 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 			value = BLK_SKIP(series, index);
 			if (ANY_WORD(value)) {
 				cnt = (VAL_WORD_SYM(value) == VAL_WORD_SYM(target));
-				if (flags & AM_FIND_CASE) {
+				if (flags & (AM_FIND_CASE | AM_FIND_SAME)) {
 					// Must be same type and spelling:
 					if (cnt && VAL_TYPE(value) == VAL_TYPE(target)) return index;
 				}

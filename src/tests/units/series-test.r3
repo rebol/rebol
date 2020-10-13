@@ -77,6 +77,14 @@ Rebol [
 	--assert 2 = index? find b :obj1
 	--assert 2 = index? find b :obj2
 	--assert 2 = index? find/case b :obj2 ;/case is not /same in this case
+	b: [a a: 'a :a]
+	--assert 1 = index? find/same b b/1
+	--assert 2 = index? find/same b b/2
+	--assert 3 = index? find/same b b/3
+	--assert 4 = index? find/same b b/4
+	--assert 1 = index? find b b/1
+	--assert 1 = index? find b b/2
+	--assert 1 = index? find b b/3
 
 --test-- "FIND/SAME in string!"
 	--assert "AbcdAe" = find/same "aAbcdAe" "A"
