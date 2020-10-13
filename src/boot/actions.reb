@@ -199,6 +199,7 @@ find: action [
 	length [number! series! pair!]
 	/only {Treats a series value as only a single value}
 	/case {Characters are case-sensitive}
+	/same {Use "same?" as comparator}
 	/any  {Enables the * and ? wildcards}
 	/with {Allows custom wildcards}
 	wild [string!] "Specifies alternates for * and ?"
@@ -218,6 +219,7 @@ select: action [
 	length [number! series! pair!]
 	/only {Treats a series value as only a single value}
 	/case {Characters are case-sensitive}
+	/same {Use "same?" as comparator}
 	/any  {Enables the * and ? wildcards}
 	/with {Allows custom wildcards}
 	wild [string!] "Specifies alternates for * and ?"

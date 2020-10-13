@@ -65,6 +65,23 @@ Rebol [
 	--assert "d"     = find/any/reverse/tail tail "ažcdažcd" "?c"
 	--assert "d"     = find/any/reverse/tail tail "ažcdažcd" "žc"
 
+--test-- "FIND/SAME in block!"
+	a: "a"
+	obj1: context [a: 1 b: 2]
+	obj2: context [a: 1 b: 2]
+	b: reduce  ["a" obj1 a obj2]
+	--assert 1 = index? find b :a
+	--assert 3 = index? find/same b :a
+	--assert 2 = index? find/same b :obj1
+	--assert 4 = index? find/same b :obj2
+	--assert 2 = index? find b :obj1
+	--assert 2 = index? find b :obj2
+	--assert 2 = index? find/case b :obj2 ;/case is not /same in this case
+
+--test-- "FIND/SAME in string!"
+	--assert "AbcdAe" = find/same "aAbcdAe" "A"
+	--assert "Ae" = find/same/last "aAbcdAe" "A"
+
 --test-- "FIND/PART"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/2329
 ;@@ need to decide, which result is correct
@@ -129,6 +146,8 @@ Rebol [
 	--assert #"2" = select/last "ab1ab2" "ab"
 	--assert #"2" = select/last/any "ab1ab2" "?b"
 	--assert #"2" = select/last/any "ab1ab2" "ab"
+	--assert #"b" = select/same "aAbcdAe" "A"
+	--assert #"e" = select/same/last "aAbcdAe" "A"
 
 ===end-group===
 

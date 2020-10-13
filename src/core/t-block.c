@@ -167,10 +167,18 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 	}
 	// All other cases:
 	else {
-		for (; index >= start && index < end; index += skip) {
-			value = BLK_SKIP(series, index);
-			if (0 == Cmp_Value(value, target, (REBOOL)(flags & AM_FIND_CASE))) return index;
-			if (flags & AM_FIND_MATCH) break;
+		if (flags & AM_FIND_SAME) {
+			for (; index >= start && index < end; index += skip) {
+				value = BLK_SKIP(series, index);
+				if (Compare_Values(target, value, 3)) return index;
+				if (flags & AM_FIND_MATCH) break;
+			}
+		} else {
+			for (; index >= start && index < end; index += skip) {
+				value = BLK_SKIP(series, index);
+				if (0 == Cmp_Value(value, target, (REBOOL)(flags & AM_FIND_CASE))) return index;
+				if (flags & AM_FIND_MATCH) break;
+			}
 		}
 		return NOT_FOUND;
 	}
