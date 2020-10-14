@@ -573,6 +573,15 @@ Rebol [
 			e/id = 'overflow
 			num = 1
 		]
+	--test-- "FOR with series! start and number! end"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1601
+		out: copy ""
+		for x "abcde" 3 1 [append out x]
+		--assert "abcdebcdecde" == out
+		clear out
+		for x "abcde" tail "ab" 1 [append out x]
+		--assert "abcdebcdecde" == out
+
 ===end-group===
 
 ===start-group=== "BREAK"
