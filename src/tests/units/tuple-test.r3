@@ -47,6 +47,12 @@ Rebol [
 		t = 1.99.3.4
 	]
 
+	--test-- "tuple shortening"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1639
+	t: 1.2.3.4 t/4: none
+	--assert t == 1.2.3
+	--assert (t + 0.0.0.0) == 1.2.3.0
+	
 ===end-group===
 
 ~~~end-file~~~
