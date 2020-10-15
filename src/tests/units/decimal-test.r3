@@ -115,6 +115,16 @@ Rebol [
 		]
 ===end-group===
 
+
+===start-group=== "square-root"
+	--test-- "square-root 4"
+		--assert 2.0 = square-root 4
+	--test-- "square-root -1"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2431
+		--assert "1.#NaN" = mold try [square-root -1]
+===end-group===
+
+
 ===start-group=== "decimal issues"
 	--test-- "issue-1753"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1753

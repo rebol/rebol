@@ -391,7 +391,9 @@ enum {SINE, COSINE, TANGENT};
 ***********************************************************************/
 {
 	REBDEC dval = AS_DECIMAL(D_ARG(1));
+#ifdef USE_NO_INFINITY
 	if (dval < 0) Trap0(RE_POSITIVE);
+#endif
 	SET_DECIMAL(D_RET, sqrt(dval));
 	return R_RET;
 }
