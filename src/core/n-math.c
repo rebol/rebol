@@ -301,6 +301,20 @@ enum {SINE, COSINE, TANGENT};
 	return R_RET;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(sqrt)
+/*
+//	sqrt: native [
+//		{Returns the square root of a number.}
+//		value [decimal!]
+//	]
+***********************************************************************/
+{
+	SET_DECIMAL(D_RET, sqrt(VAL_DECIMAL(D_ARG(1))));
+	return R_RET;
+}
+
 #endif //!USE_NO_INFINITY
 
 /***********************************************************************
