@@ -125,6 +125,28 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "log"
+	--test-- "log-* -1"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2431
+		--assert "1.#NaN" = mold try [log-2  -1]
+		--assert "1.#NaN" = mold try [log-e  -1]
+		--assert "1.#NaN" = mold try [log-10 -1]
+		
+	--test-- "log-* 0"
+		--assert "-1.#INF" = mold try [log-2  0]
+		--assert "-1.#INF" = mold try [log-e  0]
+		--assert "-1.#INF" = mold try [log-10 0]
+
+	--test-- "log-2 32"
+		--assert 5.0 = log-2 32
+	--test-- "log-10 100"
+		--assert 2.0 = log-10 100
+	--test-- "log-e 123"
+		--assert 4.812184355372417 = log-e 123
+
+===end-group===
+
+
 ===start-group=== "decimal issues"
 	--test-- "issue-1753"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1753
