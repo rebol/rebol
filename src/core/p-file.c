@@ -91,38 +91,107 @@
 ***********************************************************************/
 {
 	REBOL_DAT dat;
-
-	OS_FILE_TIME(file, &dat);
-	Set_Date(val, &dat);
+	if (file->file.time.h == 0 && file->file.time.l == 0) {
+		SET_NONE(val);
+	} else {
+		OS_FILE_TIME(file, &dat);
+		Set_Date(val, &dat);
+	}
 }
-
 
 /***********************************************************************
 **
-*/	void Ret_Query_File(REBSER *port, REBREQ *file, REBVAL *ret)
+*/	static REBOOL Set_File_Mode_Value(REBREQ *file, REBCNT mode, REBVAL *ret)
+/*
+**		Set a value with file data according specified mode 
+**
+***********************************************************************/
+{
+	switch (mode) {
+	case SYM_SIZE:
+		if(file->file.size == MIN_I64) {
+			SET_NONE(ret);
+		} else {
+			SET_INTEGER(ret, file->file.size);
+		}
+		break;
+	case SYM_TYPE:
+		Init_Word(ret, GET_FLAG(file->modes, RFM_DIR) ? SYM_DIR : SYM_FILE);
+		break;
+	case SYM_DATE:
+		Set_File_Date(file, ret);
+		break;
+	case SYM_NAME:
+		Set_Series(REB_FILE, ret, To_REBOL_Path(file->file.path, 0, OS_WIDE, 0));
+		break;
+	default:
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/***********************************************************************
+**
+*/	void Ret_Query_File(REBSER *port, REBREQ *file, REBVAL *ret, REBVAL *info)
 /*
 **		Query file and set RET value to resulting STD_FILE_INFO object.
 **
 ***********************************************************************/
 {
-	REBVAL *info = In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0);
 	REBSER *obj;
-	REBSER *ser;
+	REBVAL *val;
 
-	if (!info || !IS_OBJECT(info)) Trap_Port(RE_INVALID_SPEC, port, -10);
+	if ( IS_WORD(info) ) {
+		if(!Set_File_Mode_Value(file, VAL_WORD_CANON(info), ret))
+			Trap1(RE_INVALID_ARG, info);
+	} else if (IS_BLOCK(info)) {
+		// example:
+		//	query/mode file [type size] ;== [file 1234]
+		// or:
+		//	 query/mode file [type: size:] ;== [type: file size: 1234]
+		// or combined:
+		//	 query/mode file [type: size] ;== [type: file 1234]
+		// When not supported word is used, if will throw an error
 
-	obj = CLONE_OBJECT(VAL_OBJ_FRAME(info));
-
-	SET_OBJECT(ret, obj);
-	Init_Word(OFV(obj, STD_FILE_INFO_TYPE), GET_FLAG(file->modes, RFM_DIR) ? SYM_DIR : SYM_FILE);
-	SET_INTEGER(OFV(obj, STD_FILE_INFO_SIZE), file->file.size);
-	Set_File_Date(file, OFV(obj, STD_FILE_INFO_DATE));
-
-	ser = To_REBOL_Path(file->file.path, 0, OS_WIDE, 0);
-
-	Set_Series(REB_FILE, OFV(obj, STD_FILE_INFO_NAME), ser);
+		REBSER *values = Make_Block(2 * BLK_LEN(VAL_SERIES(info)));
+		REBVAL *word = VAL_BLK_DATA(info);
+		for (; NOT_END(word); word++) {
+			if(ANY_WORD(word)) {
+				if (IS_SET_WORD(word)) {
+					// keep the set-word in result
+					val = Append_Value(values);
+					*val = *word;
+					VAL_SET_LINE(val);
+				}
+				val = Append_Value(values);
+				if(!Set_File_Mode_Value(file, VAL_WORD_CANON(word), val))
+					Trap1(RE_INVALID_ARG, word);
+			} else  Trap1(RE_INVALID_ARG, word);
+		}
+		Set_Series(REB_BLOCK, ret, values);
+	} else {
+		//@@ oldes: is returning object really still needed?
+		info = In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0);
+		if (!info || !IS_OBJECT(info)) Trap_Port(RE_INVALID_SPEC, port, -10);
+		obj = CLONE_OBJECT(VAL_OBJ_FRAME(info));
+		Set_File_Mode_Value(file, SYM_TYPE, OFV(obj, STD_FILE_INFO_TYPE));
+		Set_File_Mode_Value(file, SYM_SIZE, OFV(obj, STD_FILE_INFO_SIZE));
+		Set_File_Mode_Value(file, SYM_DATE, OFV(obj, STD_FILE_INFO_DATE));
+		Set_File_Mode_Value(file, SYM_NAME, OFV(obj, STD_FILE_INFO_NAME));
+		SET_OBJECT(ret, obj);
+	}
 }
 
+/***********************************************************************
+**
+*/	void Ret_File_Modes(REBSER *port, REBVAL *ret)
+/*
+**		Sets value with block of possible file mode names
+**
+***********************************************************************/
+{
+	Set_Block(ret, Get_Object_Words(In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0)));
+}
 
 /***********************************************************************
 **
@@ -204,7 +273,7 @@ REBINT Mode_Syms[] = {
 	// Convert to string or block of strings.
 	// NOTE: This code is incorrect for files read in chunks!!!
 	if (args & (AM_READ_STRING | AM_READ_LINES)) {
-		ser = Decode_UTF_String(BIN_HEAD(ser), file->actual, -1);
+		ser = Decode_UTF_String(BIN_HEAD(ser), file->actual, -1, TRUE, FALSE);
 		Set_String(ds, ser);
 		if (args & AM_READ_LINES) Set_Block(ds, Split_Lines(ds));
 	}
@@ -218,6 +287,8 @@ REBINT Mode_Syms[] = {
 ***********************************************************************/
 {
 	REBSER *ser;
+	REBOOL lines = (args & AM_WRITE_LINES) != 0;
+	REBINT n = 0;
 
 	if (IS_BLOCK(data)) {
 		// Form the values of the block
@@ -225,12 +296,22 @@ REBINT Mode_Syms[] = {
 		// into 32K chunks for writing.
 		REB_MOLD mo = {0};
 		Reset_Mold(&mo);
-		if (args & AM_WRITE_LINES) {
-			mo.opts = 1 << MOPT_LINES;
-		}
+		if (lines) mo.opts = 1 << MOPT_LINES;
 		Mold_Value(&mo, data, 0);
 		Set_String(data, mo.series); // fall into next section
 		len = SERIES_TAIL(mo.series);
+	} else if (lines) {
+		// if there was: WRITE/LINES "string"
+		// append temporary CRLF on Windows or LF on Posix
+		// @@ https://github.com/rebol/rebol-issues/issues/2102
+#ifdef TO_WINDOWS
+		Append_Bytes_Len(VAL_SERIES(data), cb_cast("\r\n"), 2);
+		n = 2;
+#else
+		Append_Byte(VAL_SERIES(data), '\n');
+		n = 1;
+#endif
+		len += n;
 	}
 
 	// Auto convert string to UTF-8
@@ -244,6 +325,13 @@ REBINT Mode_Syms[] = {
 	}
 	file->length = len;
 	OS_DO_DEVICE(file, RDC_WRITE);
+	
+	if(n > 0) {
+		// remove the temporary added newline from the series
+		len -= n;
+		SET_STR_END(VAL_SERIES(data), len);
+		VAL_SERIES(data)->tail = len;
+	}
 }
 
 
@@ -326,7 +414,7 @@ REBINT Mode_Syms[] = {
 	path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
 	if (!path) Trap1(RE_INVALID_SPEC, spec);
 
-	if (IS_URL(path)) path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
+	if (IS_URL(path)) path = Obj_Value(spec, STD_PORT_SPEC_FILE_PATH);
 	else if (!IS_FILE(path)) Trap1(RE_INVALID_SPEC, path);
 
 	// Get or setup internal state data:
@@ -366,6 +454,14 @@ REBINT Mode_Syms[] = {
 		args = Find_Refines(ds, ALL_WRITE_REFS);
 		spec = D_ARG(2); // data (binary, string, or block)
 
+		if (!(IS_BINARY(spec) || IS_STRING(spec) || (IS_BLOCK(spec) && (args & AM_WRITE_LINES)))) {
+			//Trap1(RE_INVALID_ARG, spec);
+			REB_MOLD mo = {0};
+			Reset_Mold(&mo);
+			Mold_Value(&mo, spec, TRUE);
+			Set_String(spec, mo.series);
+		}
+
 		// Handle the READ %file shortcut case:
 		if (!IS_OPEN(file)) {
 			REBCNT nargs = AM_OPEN_WRITE;
@@ -401,6 +497,7 @@ REBINT Mode_Syms[] = {
 		}
 
 		if (file->error) Trap1(RE_WRITE_ERROR, path);
+		*D_RET = *path;
 		break;
 
 	case A_OPEN:
@@ -461,11 +558,16 @@ REBINT Mode_Syms[] = {
 		break;
 
 	case A_QUERY:
+		args = Find_Refines(ds, ALL_QUERY_REFS);
+		if ((args & AM_QUERY_MODE) && IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
+			Ret_File_Modes(port, D_RET);
+			return R_RET;
+		}
 		if (!IS_OPEN(file)) {
 			Setup_File(file, 0, path);
 			if (OS_DO_DEVICE(file, RDC_QUERY) < 0) return R_NONE;
 		}
-		Ret_Query_File(port, file, D_RET);
+		Ret_Query_File(port, file, D_RET, D_ARG(ARG_QUERY_FIELD));
 		// !!! free file path?
 		break;
 
@@ -476,7 +578,6 @@ REBINT Mode_Syms[] = {
 			if (OS_DO_DEVICE(file, RDC_MODIFY) < 0) return R_NONE;
 		}
 		return R_TRUE;
-		break;
 
 	case A_INDEXQ:
 		SET_INTEGER(D_RET, file->file.index + 1);
@@ -535,7 +636,6 @@ REBINT Mode_Syms[] = {
 		A_REMOVE,				// 52
 		A_CHANGE,				// 53
 		A_POKE,					// 54
-		A_QUERY,				// 64
 		A_FLUSH,				// 65
 	*/
 

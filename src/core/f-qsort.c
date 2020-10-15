@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4267)   /* conversion from 'size_t' to 'int', possible loss of data */
+#endif
 /* This file was downloaded from
  * https://raw.github.com/android/platform_bionic/master/libc/upstream-freebsd/lib/libc/stdlib/qsort.c
  */
@@ -212,3 +216,7 @@ loop:	SWAPINIT(a, es);
 	}
 /*		qsort(pn - r, r / es, es, cmp);*/
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif

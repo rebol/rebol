@@ -47,12 +47,14 @@
 	return (num > 0);
 }
 
-static void No_Nones(REBVAL *arg) {
+#ifdef not_used
+static void No_Nones_Or_Logic(REBVAL *arg) {
 	arg = VAL_BLK_DATA(arg);
 	for (; NOT_END(arg); arg++) {
-		if (IS_NONE(arg)) Trap_Arg(arg);
+		if (IS_NONE(arg) || IS_LOGIC(arg)) Trap_Arg(arg);
 	}
 }
+#endif
 
 /***********************************************************************
 **
@@ -156,7 +158,7 @@ static void No_Nones(REBVAL *arg) {
 			}
 			if (IS_TYPESET(target)) {
 				if (TYPE_CHECK(target, VAL_TYPE(value))) return index;
-				if (IS_DATATYPE(value) && TYPE_CHECK(target, VAL_DATATYPE(value))) return index;
+				//if (IS_DATATYPE(value) && TYPE_CHECK(target, VAL_DATATYPE(value))) return index; //@@ issues/256
 				if (IS_TYPESET(value) && EQUAL_TYPESET(value, target)) return index;
 			}
 			if (flags & AM_FIND_MATCH) break;
@@ -165,10 +167,18 @@ static void No_Nones(REBVAL *arg) {
 	}
 	// All other cases:
 	else {
-		for (; index >= start && index < end; index += skip) {
-			value = BLK_SKIP(series, index);
-			if (0 == Cmp_Value(value, target, (REBOOL)(flags & AM_FIND_CASE))) return index;
-			if (flags & AM_FIND_MATCH) break;
+		if (flags & AM_FIND_SAME) {
+			for (; index >= start && index < end; index += skip) {
+				value = BLK_SKIP(series, index);
+				if (Compare_Values(target, value, 3)) return index;
+				if (flags & AM_FIND_MATCH) break;
+			}
+		} else {
+			for (; index >= start && index < end; index += skip) {
+				value = BLK_SKIP(series, index);
+				if (0 == Cmp_Value(value, target, (REBOOL)(flags & AM_FIND_CASE))) return index;
+				if (flags & AM_FIND_MATCH) break;
+			}
 		}
 		return NOT_FOUND;
 	}
@@ -207,9 +217,8 @@ static void No_Nones(REBVAL *arg) {
 	REBFLG is_blk = FALSE; // arg is a block not a value
 
 	// Length of target (may modify index): (arg can be anything)
-	rlen = Partial1((action == A_CHANGE) ? block : arg, DS_ARG(AN_LENGTH));
+	rlen = (REBINT)Partial1((action == A_CHANGE) ? block : arg, DS_ARG(AN_LENGTH));
 
-	index = VAL_INDEX(block);
 	if (action == A_APPEND || index > tail) index = tail;
 
 	// Check /PART, compute LEN:
@@ -289,8 +298,10 @@ static void No_Nones(REBVAL *arg) {
 	// make block! [1 2 3]
 	if (ANY_BLOCK(arg)) {
 		len = VAL_BLK_LEN(arg);
+#ifdef not_used
 		if (len > 0 && type >= REB_PATH && type <= REB_LIT_PATH)
-			No_Nones(arg);
+			No_Nones_Or_Logic(arg);
+#endif
 		ser = Copy_Values(VAL_BLK_DATA(arg), len);
 		goto done;
 	}
@@ -382,32 +393,49 @@ static struct {
 
 /***********************************************************************
 **
-*/	static int Compare_Call(const void *v1, const void *v2)
+*/	static int Compare_Call(const void *p1, const void *p2)
 /*
 ***********************************************************************/
 {
+	REBVAL *v1 = (REBVAL*)p1;
+	REBVAL *v2 = (REBVAL*)p2;
 	REBVAL *val;
 	
-	if (sort_flags.reverse)
-		val = Apply_Func(0, sort_flags.compare, v1, v2, 0);	
-	else
-		val = Apply_Func(0, sort_flags.compare, v2, v1, 0);	
+	REBVAL *tmp;
+	REBSER *args;
+
+	if (!sort_flags.reverse) {
+		tmp = v1;
+		v1 = v2;
+		v2 = tmp;
+	}
+
+	// Check argument types of comparator function.
+	// TODO: The below results in an error message such as "op! does not allow
+	// unset! for its value1 argument". A better message would be more like
+	// "compare handler does not allow error! for its value1 argument."
+	args = VAL_FUNC_ARGS(sort_flags.compare);
+	if (BLK_LEN(args) > 1 && !TYPE_CHECK(BLK_SKIP(args, 1), VAL_TYPE(v1)))
+		Trap3(RE_EXPECT_ARG, Of_Type(sort_flags.compare), BLK_SKIP(args, 1), Of_Type(v1));
+	if (BLK_LEN(args) > 2 && !TYPE_CHECK(BLK_SKIP(args, 2), VAL_TYPE(v2)))
+		Trap3(RE_EXPECT_ARG, Of_Type(sort_flags.compare), BLK_SKIP(args, 2), Of_Type(v2));
+
+	val = Apply_Func(0, sort_flags.compare, v1, v2, 0);
 
 	if (IS_LOGIC(val)) {
 		if (IS_TRUE(val)) return 1;
 		return -1;
 	}
 	if (IS_INTEGER(val)) {
-		if (VAL_INT64(val) > 0) return 1;
+		if (VAL_INT64(val) < 0) return 1;
 		if (VAL_INT64(val) == 0) return 0;
 		return -1;
 	}
 	if (IS_DECIMAL(val)) {
-		if (VAL_DECIMAL(val) > 0) return 1;
+		if (VAL_DECIMAL(val) < 0) return 1;
 		if (VAL_DECIMAL(val) == 0) return 0;
 		return -1;
 	}
-	if (IS_TRUE(val)) return 1;
 	return -1;
 }
 
@@ -591,6 +619,7 @@ static struct {
 {
 	REBVAL	*value = D_ARG(1);
 	REBVAL  *arg = D_ARG(2);
+	REBVAL  *arg2;
 	REBSER  *ser;
 	REBINT	index;
 	REBINT	tail;
@@ -681,8 +710,8 @@ pick_it:
 
 	case A_TAKE:
 		// take/part:
-		if (D_REF(2)) {
-			len = Partial1(value, D_ARG(3));
+		if (D_REF(ARG_TAKE_PART)) {
+			len = Partial1(value, D_ARG(ARG_TAKE_LENGTH));
 			if (len == 0) {
 zero_blk:
 				Set_Block(D_RET, Make_Block(0));
@@ -693,18 +722,50 @@ zero_blk:
 
 		index = VAL_INDEX(value); // /part can change index
 		// take/last:
-		if (D_REF(5)) index = tail - len;
+		if (D_REF(ARG_TAKE_LAST)) index = tail - len;
 		if (index < 0 || index >= tail) {
-			if (!D_REF(2)) goto is_none;
+			if (!D_REF(ARG_TAKE_PART)) goto is_none;
 			goto zero_blk;
 		}
 
 		// if no /part, just return value, else return block:
-		if (!D_REF(2)) *D_RET = BLK_HEAD(ser)[index];
-		else Set_Block(D_RET, Copy_Block_Len(ser, index, len)); // no more /DEEP
-//		else Set_Block(D_RET, Copy_Block_Deep(ser, index, len, D_REF(4) ? COPY_DEEP: 0));
+		if (!D_REF(ARG_TAKE_PART)) {
+			*D_RET = BLK_HEAD(ser)[index];
+			if (D_REF(ARG_TAKE_DEEP) && ANY_SERIES(D_RET)) {
+				VAL_SERIES(D_RET) = ANY_BLOCK(D_RET)
+					? Clone_Block(VAL_SERIES(D_RET))
+					: Copy_Series(VAL_SERIES(D_RET));
+			}
+		}
+		else {
+			Set_Series(
+				VAL_TYPE(value), D_RET,
+				D_REF(ARG_TAKE_DEEP)
+					? Copy_Block_Values(ser, 0, len, CP_DEEP | TS_STD_SERIES)
+					: Copy_Block_Len(ser, index, len)
+			);
+		}
 		Remove_Series(ser, index, len);
 		return R_RET;
+
+	case A_PUT:
+		arg2 = D_ARG(ARG_PUT_VALUE);
+		args = D_REF(ARG_PUT_CASE) ? AM_FIND_CASE : 0;
+		ret = Find_Block(ser, index, tail, arg, len, args, 1);
+		if(ret != NOT_FOUND) {
+			ret++;
+			if (ret >= tail) {
+				// when key is last value in the block
+				Expand_Series(ser, tail, 1);
+			}
+			*BLK_SKIP(ser, ret) = *arg2;
+		}
+		else {
+			Expand_Series(ser, tail, 2);
+			*BLK_SKIP(ser, tail) = *arg;
+			*BLK_SKIP(ser, tail+1) = *arg2;
+		}
+		return R_ARG3;
 
 	//-- Search:
 
@@ -713,7 +774,7 @@ zero_blk:
 		args = Find_Refines(ds, ALL_FIND_REFS);
 //		if (ANY_BLOCK(arg) || args) {
 			len = ANY_BLOCK(arg) ? VAL_BLK_LEN(arg) : 1;
-			if (args & AM_FIND_PART) tail = Partial1(value, D_ARG(ARG_FIND_LENGTH));
+			if (args & AM_FIND_PART) tail = index + Partial1(value, D_ARG(ARG_FIND_LENGTH));
 			ret = 1;
 			if (args & AM_FIND_SKIP) ret = Int32s(D_ARG(ARG_FIND_SIZE), 1);
 			ret = Find_Block(ser, index, tail, arg, len, args, ret);
@@ -833,6 +894,7 @@ zero_blk:
 		break;
 
 	case A_RANDOM:
+		if (IS_PROTECT_SERIES(VAL_SERIES(value))) Trap0(RE_PROTECTED);
 		if (!IS_BLOCK(value)) Trap_Action(VAL_TYPE(value), action);
 		if (D_REF(2)) Trap0(RE_BAD_REFINES); // seed
 		if (D_REF(4)) { // /only

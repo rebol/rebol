@@ -44,6 +44,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 
 #include "reb-host.h"
 
@@ -69,10 +70,11 @@ typedef struct term_data {
 
 STD_TERM *Term_IO;
 
-extern STD_TERM *Init_Terminal();
+extern STD_TERM *Init_Terminal(void);
 extern void Quit_Terminal(STD_TERM*);
 extern int  Read_Line(STD_TERM*, char*, int);
 #endif
+extern void Close_StdIO(void);
 
 
 static void Handle_Signal(int sig)
@@ -89,7 +91,7 @@ static void Init_Signals(void)
 	signal(SIGTERM, Handle_Signal);
 }
 
-static void Close_Stdio(void)
+static void Close_StdIO_Local(void)
 {
 #ifndef HAS_SMART_CONSOLE
 	if (Term_IO) {
@@ -111,7 +113,8 @@ static void Close_Stdio(void)
 {
 	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy above
 
-	Close_Stdio();
+	Close_StdIO_Local();
+	Close_StdIO(); // frees host's input buffer
 
 	CLR_FLAG(dev->flags, RDF_OPEN);
 	return DR_DONE;
@@ -165,7 +168,7 @@ static void Close_Stdio(void)
 {
 	REBDEV *dev = Devices[req->device];
 
-	Close_Stdio();
+	Close_StdIO_Local();
 
 	CLR_FLAG(dev->flags, RRF_OPEN);
 
@@ -205,7 +208,7 @@ static void Close_Stdio(void)
 			//FLUSH();
 		//}
 
-		req->actual = total;
+		req->actual = (u32)total;
 	}
 
 	if (Std_Echo) {
@@ -260,6 +263,67 @@ static void Close_Stdio(void)
 	return DR_DONE;
 }
 
+/***********************************************************************
+**
+*/	DEVICE_CMD Query_IO(REBREQ *req)
+/*
+**		Resolve port information. Currently just size of console.
+**		Note: Windows console have BUFFER size, which may be bigger than
+**		visible window size. There seems to be nothing like it on POSIX,
+**		so the `buffer-size` info is reported same as `window-info`
+**
+***********************************************************************/
+{
+#ifdef TIOCGWINSZ
+	struct winsize w;
+	if (ioctl(Std_Out, TIOCGWINSZ, &w) != 0) {
+		req->error = errno;
+		return DR_ERROR;
+	}
+	req->console.window_rows =
+	req->console.buffer_rows = w.ws_row;
+	req->console.window_cols =
+	req->console.buffer_cols = w.ws_col;
+#else
+#ifdef WIOCGETD
+	struct uwdata w;
+	if (ioctl(Std_Out, WIOCGETD, &w) != 0) {
+		req->error = errno;
+		return DR_ERROR;
+	}
+	req->console.window_rows =
+	req->console.buffer_rows = w.uw_height / w.uw_vs;
+	req->console.window_cols =
+	req->console.buffer_cols = w.uw_width / w.uw_hs;
+#endif
+#endif
+	return DR_DONE;
+}
+
+/***********************************************************************
+**
+*/	DEVICE_CMD Modify_IO(REBREQ *req)
+/*
+**		Change console's mode.
+**
+***********************************************************************/
+{
+	long total;
+	if (req->modify.mode == MODE_CONSOLE_ECHO) {
+		if (Std_Out >= 0) {
+			if(req->modify.value) {
+				total = write(Std_Out, "\x1B[28m", 5);
+			} else {
+				total = write(Std_Out, "\x1B[8m", 4);
+			}
+			if (total < 0) {
+				req->error = errno;
+				return DR_ERROR;
+			}
+		}
+	}
+	return DR_DONE;
+}
 
 /***********************************************************************
 **
@@ -302,8 +366,8 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 	Write_IO,
 	0,	// poll
 	0,	// connect
-	0,	// query
-	0,	// modify
+	Query_IO,
+	Modify_IO,	// modify
 	Open_Echo,	// CREATE used for opening echo file
 };
 

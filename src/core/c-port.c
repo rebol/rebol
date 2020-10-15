@@ -101,11 +101,13 @@
 		REBREQ *req = (REBREQ*)STR_HEAD(data);
 		req->clen = size;
 		CLEAR(STR_HEAD(data), size);
-		//data->tail = size; // makes it easier for ACCEPT to clone the port
+		data->tail = size; // makes it easier for ACCEPT to clone the port
 		SET_FLAG(req->flags, RRF_ALLOC); // not on stack
 		req->port = port;
 		req->device = device;
 		Set_Binary(state, data);
+		PROTECT_SERIES(data); // protect state from modification...
+		LOCK_SERIES(data);    // ... permanently
 	}
 
 	return (void *)VAL_BIN(state);
@@ -205,11 +207,12 @@
 	REBINT result;
 	REBCNT wt = 1;
 	REBCNT res = (timeout >= 1000) ? 0 : 16;  // OS dependent?
-	REBCNT old_time = -1;
+	REBINT old_time = -1;
 
 	while (wt) {
 		if (GET_SIGNAL(SIG_ESCAPE)) {
 			CLR_SIGNAL(SIG_ESCAPE);
+			Out_Str(cb_cast("[ESC]"), 1);
 			Halt_Code(RE_HALT, 0); // Throws!
 		}
 
@@ -229,16 +232,21 @@
 			if (time >= timeout) break;	  // done (was dt = 0 before)
 			else if (wt > timeout - time) // use smaller residual time
 				wt = timeout - time;
-
-			if (old_time >= 0
-				&& time - old_time < res) {
-				res = time - old_time;
+			if (timeout > 16) {
+				// dynamicaly change the resolution to save iterations
+				// https://github.com/zsx/r3/commit/f397faef4d35ee761b56b80ec85061fbc2497d18
+				// now used only when timeout is hight enough, so precise wait is still possible
+				// https://github.com/zsx/r3/issues/42
+				if (old_time >= 0
+					&& time - old_time < res) {
+					res = time - old_time;
+					// printf("=== res: %u old_time: %i time: %u \n", res, old_time, time);
+				}
+				old_time = time;
 			}
-
-			old_time = time;
 		}
 
-		//printf("%d %d %d\n", dt, time, timeout);
+		// printf("base: %ull res: %u wt: %u old_time: %i time: %u timeout: %u\n", base, res, wt, old_time, time, timeout);
 
 		// Wait for events or time to expire:
 		//Debug_Num("OSW", wt);
@@ -508,7 +516,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 **
 ***********************************************************************/
 
-#define MAX_SCHEMES 10		// max native schemes
+#define MAX_SCHEMES 12		// max native schemes
 
 typedef struct rebol_scheme_actions {
 	REBCNT sym;
@@ -564,7 +572,7 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 		if (Scheme_Actions[n].sym == VAL_WORD_SYM(act)) break;
 	}
 	if (n == MAX_SCHEMES || !Scheme_Actions[n].sym) return R_NONE;
-
+	
 	// The scheme uses a native actor:
 	if (Scheme_Actions[n].fun) {
 		//Make_Native(actor, Make_Block(0), (REBFUN)(Scheme_Actions[n].fun), REB_NATIVE);
@@ -608,7 +616,7 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 **
 **	In order to add a port scheme:
 **
-**		In mezz-ports.r add a make-scheme.
+**		In mezz-ports.reb add a make-scheme.
 **		Add an Init_*_Scheme() here.
 **		Be sure host-devices.c has the device enabled.
 **
@@ -623,7 +631,21 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	Init_TCP_Scheme();
 	Init_UDP_Scheme();
 	Init_DNS_Scheme();
+	Init_Checksum_Scheme();
 #ifndef MIN_OS
 	Init_Clipboard_Scheme();
 #endif
+#ifdef USE_MIDI_DEVICE
+	Init_MIDI_Scheme();
+#endif
+}
+
+/***********************************************************************
+**
+*/	void Dispose_Ports(void)
+/*
+***********************************************************************/
+{
+	Free_Mem(Scheme_Actions, 0);
+	Scheme_Actions = 0;
 }

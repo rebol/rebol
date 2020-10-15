@@ -1,3 +1,4 @@
+#ifdef USE_GIF_CODEC
 /***********************************************************************
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
@@ -26,6 +27,14 @@
 **    This is an optional part of R3. This file can be replaced by
 **    library function calls into an updated implementation.
 **
+***********************************************************************
+**  Base-code:
+
+	if find system/codecs 'gif [
+		system/codecs/gif/suffixes: [%.gif]
+		append append system/options/file-types system/codecs/gif/suffixes 'gif
+	]
+
 ***********************************************************************/
 
 #include "sys-core.h"
@@ -179,7 +188,7 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 			}
 			top_stack--;
 			rp = colortab + 3 * *top_stack;
-			*dp++ = rp[2] | (rp[1] << 8) | (rp[0] << 16);
+			*dp++ = TO_PIXEL_COLOR(rp[0], rp[1], rp[2], 0xff);
 			x++;
 		}
 		if (interlaced) {
@@ -345,3 +354,5 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 {
 	Register_Codec("gif", Codec_GIF_Image);
 }
+
+#endif //USE_GIF_CODEC

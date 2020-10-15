@@ -29,6 +29,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include "sys-int-funcs.h" //REB_I64_ADD_OF
 
 
 /***********************************************************************
@@ -125,12 +126,41 @@
 
 	VAL_SET(var, REB_INTEGER);
 	
-	for (; (incr > 0) ? start <= end : start >= end; start += incr) {
+	while ((incr > 0) ? start <= end : start >= end) {
 		VAL_INT64(var) = start;
 		result = Do_Blk(body, 0);
 		if (THROWN(result) && Check_Error(result) >= 0) break;
 		if (!IS_INTEGER(var)) Trap_Type(var);
 		start = VAL_INT64(var);
+		
+		if (REB_I64_ADD_OF(start, incr, &start)) {
+			Trap0(RE_OVERFLOW);
+		}
+	}
+}
+
+
+/***********************************************************************
+**
+*/	static void Loop_Pair(REBVAL *var, REBSER* body, REBD32 xstart, REBD32 ystart, REBD32 xend, REBD32 yend, REBD32 xincr, REBD32 yincr)
+/*
+***********************************************************************/
+{
+	REBD32 xi;
+	REBD32 yi;
+	REBVAL *result;
+
+	VAL_SET(var, REB_PAIR);
+	for (yi = ystart; (yincr > 0.) ? yi <= yend : yi >= yend; yi += yincr) {
+		for (xi = xstart; (xincr > 0.) ? xi <= xend : xi >= xend; xi += xincr) {
+			VAL_PAIR_X(var) = xi;
+			VAL_PAIR_Y(var) = yi;
+			result = Do_Blk(body, 0);
+			if (THROWN(result) && Check_Error(result) >= 0) return;
+			if (!IS_PAIR(var)) Trap_Type(var);
+			xi = VAL_PAIR_X(var);
+			yi = VAL_PAIR_Y(var);
+		}
 	}
 }
 
@@ -224,8 +254,8 @@
 
 			if (THROWN(ds)) {	// Break, throw, continue, error.
 				if (Check_Error(ds) >= 0) {
-					*DS_RETURN = *DS_NEXT;
-					break;
+					*DS_RETURN = *DS_NEXT; // use thrown result as a return
+					return R_RET; // does not resets series position
 				}
 			}
 			*DS_RETURN = *ds;
@@ -237,9 +267,7 @@
 	}
 	else Trap_Arg(var);
 
-	// !!!!! ???? allowed to write VAR????
-	*var = *DS_ARG(1);
-
+	*var = *DS_ARG(1); // restores starting value position
 	return R_RET;
 }
 
@@ -270,6 +298,8 @@
 	REBINT err;
 	REBCNT i;
 	REBCNT j;
+
+	ASSERT2(mode >= 0 && mode < 3, RP_MISC);
 
 	value = D_ARG(2); // series
 	if (IS_NONE(value)) return R_NONE;
@@ -384,7 +414,7 @@
 							SET_INTEGER(vars, (REBI64)(BIN_HEAD(series)[index]));
 						}
 						else if (IS_IMAGE(value)) {
-							Set_Tuple_Pixel(BIN_SKIP(series, index), vars);
+							Set_Tuple_Pixel(BIN_SKIP(series, index<<2), vars);
 						}
 						else {
 							VAL_SET(vars, REB_CHAR);
@@ -396,7 +426,7 @@
 				else SET_NONE(vars);
 			}
 
-			// var spec is WORD:
+			// var spec is SET_WORD:
 			else if (IS_SET_WORD(words)) {
 				if (ANY_OBJECT(value) || IS_MAP(value)) {
 					*vars = *value;
@@ -409,11 +439,15 @@
 			}
 			else Trap_Arg(words);
 		}
+		if (index == rindex) index++; //the word block has only set-words: foreach [a:] [1 2 3][]
 
 		ds = Do_Blk(body, 0);
 
 		if (THROWN(ds)) {
-			if ((err = Check_Error(ds)) >= 0) break;
+			if ((err = Check_Error(ds)) >= 0) {
+				index = rindex;
+				break;
+			}
 			// else CONTINUE:
 			if (mode == 1) SET_FALSE(ds); // keep the value (for mode == 1)
 		} else {
@@ -488,6 +522,12 @@ skip_hidden: ;
 		// Check that start and end are same type and series:
 		//if (ANY_SERIES(end) && VAL_SERIES(start) != VAL_SERIES(end)) Trap_Arg(end);
 		Loop_Series(var, body, start, ANY_SERIES(end) ? VAL_INDEX(end) : (Int32s(end, 1) - 1), Int32(incr));
+	}
+	else if (IS_PAIR(start) && IS_PAIR(end) && IS_PAIR(incr)) {
+		Loop_Pair(var, body,
+			VAL_PAIR_X(start), VAL_PAIR_Y(start),
+			VAL_PAIR_X(end), VAL_PAIR_Y(end),
+			VAL_PAIR_X(incr), VAL_PAIR_Y(incr));
 	}
 	else
 		Loop_Number(var, body, start, end, incr);
@@ -632,6 +672,9 @@ skip_hidden: ;
 	}
 	else if (IS_INTEGER(count)) {
 		Loop_Integer(var, body, 1, VAL_INT64(count), 1);
+	}
+	else if (IS_PAIR(count)) {
+		Loop_Pair(var, body, 1., 1., VAL_PAIR_X(count), VAL_PAIR_Y(count), 1., 1.);
 	}
 
 	return R_TOS1;

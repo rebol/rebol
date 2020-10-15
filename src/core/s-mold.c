@@ -75,7 +75,7 @@ enum {
 
 /***********************************************************************
 **
-*/  REBSER *Emit(REB_MOLD *mold, REBYTE *fmt, ...)
+*/  REBSER *Emit(REB_MOLD *mold, char *fmt, ...)
 /*
 ***********************************************************************/
 {
@@ -96,7 +96,7 @@ enum {
 			Mold_Value(mold, va_arg(args, REBVAL*), TRUE);
 			break;
 		case 'S':	// String of bytes
-			Append_Bytes(series, va_arg(args, REBYTE*));
+			Append_Bytes(series, va_arg(args, const char*));
 			break;
 		case 'C':	// Char
 			Append_Byte(series, va_arg(args, REBCNT));
@@ -384,6 +384,8 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 		return;
 	}
 
+	CHECK_MOLD_LIMIT(mold, len);
+
 	Sniff_String(ser, idx, &sf);
 	if (!GET_MOPT(mold, MOPT_ANSI_ONLY)) sf.paren = 0;
 
@@ -415,7 +417,7 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 
 	*dp++ = '{';
 
-	for (n = idx; n < VAL_TAIL(value); n++) {
+	for (n = idx; n < (len + idx); n++) {
 
 		c = uni ? up[n] : (REBUNI)(bp[n]);
 		switch (c) {
@@ -533,10 +535,10 @@ STOID Mold_Tag(REBVAL *value, REB_MOLD *mold)
 
 STOID Mold_Handle(REBVAL *value, REB_MOLD *mold)
 {
-	REBYTE *name = VAL_HANDLE_NAME(value);
+	const REBYTE *name = VAL_HANDLE_NAME(value);
 	if (name != NULL) {
 		Append_Bytes(mold->series, "#[handle! ");
-		Append_Bytes(mold->series, name);
+		Append_Bytes(mold->series, cs_cast(name));
 		Append_Byte(mold->series, ']');
 	}
 	else {
@@ -552,19 +554,22 @@ STOID Mold_Handle(REBVAL *value, REB_MOLD *mold)
 {
 	REBCNT len = VAL_LEN(value);
 	REBSER *out;
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
+
+	CHECK_MOLD_LIMIT(mold, len);
 
 	switch (Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16)) {
 	default:
 	case 16:
-		out = Encode_Base16(value, 0, len > 32);
+		out = Encode_Base16(value, 0, len, indented && len > 32);
 		break;
 	case 64:
 		Append_Bytes(mold->series, "64");
-		out = Encode_Base64(value, 0, len > 64);
+		out = Encode_Base64(value, 0, len, indented && len > 64, FALSE);
 		break;
 	case 2:
 		Append_Byte(mold->series, '2');
-		out = Encode_Base2(value, 0, len > 8);
+		out = Encode_Base2(value, 0, len, indented && len > 8);
 		break;
 	}
 
@@ -589,6 +594,50 @@ STOID Mold_All_String(REBVAL *value, REB_MOLD *mold)
 	Post_Mold(value, mold);
 }
 
+// Same as Mold_All_String, but forcing contruction syntax like #[file ...]
+STOID Mold_All_Constr_String(REBVAL *value, REB_MOLD *mold)
+{
+	// The string that is molded for /all option:
+	REBVAL val;
+	// prep...
+	Emit(mold, "#[T ", value); // #[file! part
+	// string...
+	val = *value;
+	VAL_INDEX(&val) = 0;
+	VAL_SET(&val, REB_STRING);
+	Mold_String_Series(&val, mold);
+	// post...
+	if (VAL_INDEX(value)) {
+		Append_Byte(mold->series, ' ');
+		Append_Int(mold->series, VAL_INDEX(value)+1);
+	}
+	Append_Byte(mold->series, ']');
+}
+
+STOID Mold_Ref(REBVAL *value, REB_MOLD *mold)
+{
+	if (GET_MOPT(mold, MOPT_MOLD_ALL)) goto mold_ref_all;
+
+	// Scan to find out what special chars the string contains?
+	REBYTE *bp = VAL_BIN(value);
+	REBUNI *up = (REBUNI*)bp;
+	REBUNI c;
+	REBCNT n;
+
+	for (n = VAL_INDEX(value); n < VAL_TAIL(value); n++) {
+		c = (BYTE_SIZE(VAL_SERIES(value))) ? (REBUNI)(bp[n]) : up[n];
+		if (c == '@') goto mold_ref_all;
+		if (IS_LEX_WORD(c) || IS_LEX_NUMBER(c)) continue;
+		if (c < 21 || IS_LEX_ANY_SPACE(c) || IS_LEX_DELIMIT(c)) goto mold_ref_all;
+	}
+
+	Append_Byte(mold->series, '@');
+	Insert_String(mold->series, AT_TAIL, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
+	return;
+mold_ref_all:
+	Mold_All_Constr_String(value, mold);
+}
+
 
 /***********************************************************************
 ************************************************************************
@@ -604,11 +653,12 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 	REBOOL line_flag = FALSE; // newline was part of block
 	REBOOL had_lines = FALSE;
 	REBVAL *value = BLK_SKIP(series, index);
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
 
-	if (!sep) sep = "[]";
+	if (!sep) sep = b_cast("[]");
 
 	if (IS_END(value)) {
-		Append_Bytes(out, sep);
+		Append_Bytes(out, cs_cast(sep));
 		return;
 	}
 
@@ -630,8 +680,10 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 
 	value = BLK_SKIP(series, index);
 	while (NOT_END(value)) {
+		// check if we can end sooner with molding..
+		if (MOLD_HAS_LIMIT(mold) && MOLD_OVER_LIMIT(mold)) return;
 		if (VAL_GET_LINE(value)) {
-			if (sep[1] || line_flag) New_Indented_Line(mold);
+			if (indented && (sep[1] || line_flag)) New_Indented_Line(mold);
 			had_lines = TRUE;
 		}
 		line_flag = TRUE;
@@ -643,7 +695,7 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 
 	if (sep[1]) {
 		mold->indent--;
-		if (VAL_GET_LINE(value) || had_lines) New_Indented_Line(mold);
+		if (indented && (VAL_GET_LINE(value) || had_lines)) New_Indented_Line(mold);
 		Append_Byte(out, sep[1]);
 	}
 
@@ -656,6 +708,7 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 	REBOOL all = GET_MOPT(mold, MOPT_MOLD_ALL);
 	REBSER *series = mold->series;
 	REBFLG over = FALSE;
+
 
 	if (SERIES_WIDE(VAL_SERIES(value)) == 0)
 		Crash(RP_BAD_WIDTH, sizeof(REBVAL), 0, VAL_TYPE(value));
@@ -686,18 +739,18 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 		case REB_BLOCK:
 			if (GET_MOPT(mold, MOPT_ONLY)) {
 				CLR_FLAG(mold->opts, MOPT_ONLY); // only top level
-				sep = "\000\000";
+				sep = b_cast("\000\000");
 			}
 			else sep = 0;
 			break;
 
 		case REB_PAREN:
-			sep = "()";
+			sep = b_cast("()");
 			break;
 
 		case REB_GET_PATH:
 			series = Append_Byte(series, ':');
-			sep = "/";
+			sep = b_cast("/");
 			break;
 
 		case REB_LIT_PATH:
@@ -705,11 +758,11 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 			/* fall through */
 		case REB_PATH:
 		case REB_SET_PATH:
-			sep = "/";
+			sep = b_cast("/");
 			break;
 		}
 
-		if (over) Append_Bytes(mold->series, sep ? sep : (REBYTE*)("[]"));
+		if (over) Append_Bytes(mold->series, sep ? cs_cast(sep) : "[]");
 		else Mold_Block_Series(mold, VAL_SERIES(value), VAL_INDEX(value), sep);
 
 		if (VAL_TYPE(value) == REB_SET_PATH)
@@ -838,33 +891,47 @@ STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 {
 	REBSER *mapser = VAL_SERIES(value);
 	REBVAL *val;
+	REBOOL all = GET_MOPT(mold, MOPT_MOLD_ALL);
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
+	REBCNT count = 0;
 
 	// Prevent endless mold loop:
 	if (Find_Same_Block(MOLD_LOOP, value) > 0) {
-		Append_Bytes(mold->series, "...]");
+		Append_Bytes(mold->series, "#(...)");
 		return;
 	}
 	Append_Val(MOLD_LOOP, value);
 
 	if (molded) {
-		Pre_Mold(value, mold);
-		Append_Byte(mold->series, '[');
+		if (all) {
+			Emit(mold, "#[T [", value);
+		} else {
+			Append_Bytes(mold->series, "#(");
+		}
 	}
 
 	// Mold all non-none entries
 	mold->indent++;
 	for (val = BLK_HEAD(mapser); NOT_END(val) && NOT_END(val+1); val += 2) {
 		if (!IS_NONE(val+1)) {
-			if (molded) New_Indented_Line(mold);
+			count++;
+			if (molded) {
+				if(indented) 
+					New_Indented_Line(mold);
+				else if (val > BLK_HEAD(mapser))
+					Append_Byte(mold->series, ' ');
+			}
+			else if (count > 1) {
+				Append_Byte(mold->series, '\n');
+			}
 			Emit(mold, "V V", val, val+1);
-			if (!molded) Append_Byte(mold->series, '\n');
 		}
 	}
 	mold->indent--;
 
 	if (molded) {
-		New_Indented_Line(mold);
-		Append_Byte(mold->series, ']');
+		if(indented && count>0) New_Indented_Line(mold);
+		Append_Byte(mold->series, all ? ']' : ')');
 	}
 
 	End_Mold(mold);
@@ -900,6 +967,7 @@ STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
 	REBVAL *words;
 	REBVAL *vals; // first value is context
 	REBCNT n;
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
 
 	ASSERT(VAL_OBJ_FRAME(value), RP_NO_OBJECT_FRAME);
 
@@ -927,18 +995,26 @@ STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
 			!VAL_GET_OPT(words+n, OPTS_HIDE) &&
 			((VAL_TYPE(vals+n) > REB_NONE) || !GET_MOPT(mold, MOPT_NO_NONE))
 		){
-			New_Indented_Line(mold);
+			if(indented)
+				New_Indented_Line(mold);
+			else if (n > 1)
+				Append_Byte(mold->series, ' ');
+
 			Append_UTF8(mold->series, Get_Sym_Name(VAL_WORD_SYM(words+n)), -1);
 			//Print("Slot: %s", Get_Sym_Name(VAL_WORD_SYM(words+n)));
 			Append_Bytes(mold->series, ": ");
 			if (IS_WORD(vals+n) && !GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Byte(mold->series, '\'');
 			Mold_Value(mold, vals+n, TRUE);
+			if (MOLD_HAS_LIMIT(mold) && MOLD_OVER_LIMIT(mold)) {
+				// early escape
+				Remove_Last(MOLD_LOOP);
+				return;
+			}
 		}
 	}
 	mold->indent--;
-	New_Indented_Line(mold);
+	if (indented) New_Indented_Line(mold);
 	Append_Byte(mold->series, ']');
-
 	End_Mold(mold);
 	Remove_Last(MOLD_LOOP);
 }
@@ -1039,7 +1115,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 		// Forming a string:
 		if (!molded) {
-			Insert_String(ser, -1, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
+			Insert_String(ser, NO_LIMIT, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
 			return;
 		}
 
@@ -1095,7 +1171,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_TIME:
 		//len = Emit_Time(value, buf, Punctuation[GET_MOPT(mold, MOPT_COMMA_PT) ? PUNCT_COMMA : PUNCT_DOT]);
-		Emit_Time(mold, value);
+		Emit_Time(mold, value, FALSE);
 		break;
 
 	case REB_DATE:
@@ -1108,11 +1184,16 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		break;
 
 	case REB_BINARY:
-		if (GET_MOPT(mold, MOPT_MOLD_ALL) && VAL_INDEX(value) != 0) {
-			Mold_All_String(value, mold);
-			return;
+		if (molded) {
+			if (GET_MOPT(mold, MOPT_MOLD_ALL) && VAL_INDEX(value) != 0) {
+				Mold_All_String(value, mold);
+				return;
+			}
+			Mold_Binary(value, mold);
 		}
-		Mold_Binary(value, mold);
+		else {
+			Emit(mold, "E",  Encode_Base16(value, 0, NO_LIMIT, FALSE));
+		}
 		break;
 
 	case REB_FILE:
@@ -1125,6 +1206,10 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_EMAIL:
 	case REB_URL:
+		if (VAL_LEN(value) == 0) {
+			Append_Bytes(ser, VAL_TYPE(value) == REB_EMAIL ? "#[email! \"\"]" : "#[url! \"\"]");
+			break;
+		}
 		Mold_Url(value, mold);
 		break;
 
@@ -1163,10 +1248,10 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_BLOCK:
 	case REB_PAREN:
-		if (!molded)
-			Form_Block_Series(VAL_SERIES(value), VAL_INDEX(value), mold, 0);
-		else
+		if (molded)
 			Mold_Block(value, mold);
+		else
+			Form_Block_Series(VAL_SERIES(value), VAL_INDEX(value), mold, 0);
 		break;
 
 	case REB_PATH:
@@ -1215,6 +1300,11 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 			Emit(mold, "\'W", value);
 		else
 			Append_UTF8(ser, Get_Sym_Name(VAL_WORD_SYM(value)), -1);
+		break;
+
+	case REB_REF:
+		// FORM happens in top section.
+		Mold_Ref(value, mold);
 		break;
 
 	case REB_REFINEMENT:
@@ -1414,6 +1504,7 @@ append:
 		else if (len < 0) len = 0;
 	}
 	mold->digits = len;
+	mold->limit = NO_LIMIT;
 }
 
 
@@ -1430,6 +1521,7 @@ append:
 	REB_MOLD mo = {0};
 
 	Reset_Mold(&mo);
+	mo.limit = limit;
 
 	Mold_Value(&mo, value, mold);
 
@@ -1452,8 +1544,8 @@ append:
 	REBYTE c;
 	REBYTE *dc;
 
-	Set_Root_Series(TASK_MOLD_LOOP, Make_Block(size/10), "mold loop");
-	Set_Root_Series(TASK_BUF_MOLD, Make_Unicode(size), "mold buffer");
+	Set_Root_Series(TASK_MOLD_LOOP, Make_Block(size/10), cb_cast("mold loop"));
+	Set_Root_Series(TASK_BUF_MOLD, Make_Unicode(size), cb_cast("mold buffer"));
 
 	// Create quoted char escape table:
 	Char_Escapes = cp = Make_Mem(MAX_ESC_CHAR+1); // cleared
@@ -1466,6 +1558,20 @@ append:
 	URL_Escapes = cp = Make_Mem(MAX_URL_CHAR+1); // cleared
 	//for (c = 0; c <= MAX_URL_CHAR; c++) if (IS_LEX_DELIMIT(c)) cp[c] = ESC_URL;
 	for (c = 0; c <= ' '; c++) cp[c] = ESC_URL | ESC_FILE;
-	dc = ";%\"()[]{}<>";
-	for (c = LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
+	dc = b_cast(";%\"()[]{}<>");
+	for (c = (REBYTE)LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
+}
+
+
+/***********************************************************************
+**
+*/  void Dispose_Mold()
+/*
+***********************************************************************/
+{
+	// TASK_MOLD_LOOP and TASK_BUF_MOLD are released in Dispose_Core
+	Free_Mem(Char_Escapes, 0);
+	Free_Mem( URL_Escapes, 0);
+	Char_Escapes = NULL;
+	URL_Escapes = NULL;
 }

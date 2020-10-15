@@ -47,6 +47,10 @@
 #include <zmouse.h>
 #include <math.h>	//for floor()
 
+//OpenGL
+#pragma comment(lib, "opengl32")
+#include <gl/gl.h>
+
 //-- Not currently used:
 //#include <windowsx.h>
 //#include <mmsystem.h>
@@ -58,6 +62,12 @@
 
 #include "reb-host.h"
 #include "host-lib.h"
+
+extern HINSTANCE App_Instance;		// Set by winmain function
+extern HWND      Focused_Window;
+
+#define IS_LAYERED(hwnd) ((WS_EX_LAYERED & GetWindowLongPtr(hwnd, GWL_EXSTYLE)) > 0)
+#define GOB_FROM_HWND(hwnd) (REBGOB *)GetWindowLongPtr(hwnd, GWLP_USERDATA)
 
 //***** Constants *****
 
@@ -93,8 +103,7 @@ const REBCNT Key_To_Event[] = {
 extern HCURSOR Cursor;
 extern void Done_Device(int handle, int error);
 extern void Paint_Window(HWND window);
-extern void Close_Window(REBGOB *gob);
-extern REBOOL Resize_Window(REBGOB *gob, REBOOL redraw);
+
 
 
 /***********************************************************************
@@ -129,55 +138,124 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 	RL_Event(&evt);	// returns 0 if queue is full
 }
 
+static void Add_Event_Widget(HWND widget, REBINT id, REBINT flags)
+{
+	REBEVT evt;
+	REBGOB *gob;
+	
+	gob = GOB_FROM_HWND(widget);
+
+	// fields are throwing CHANGE event during its creation
+	// when there is no GWLP_USERDATA yet available!
+	if (!gob) return; // ... so ignore it in such a case.
+
+	evt.type = id;
+	evt.flags = 0; //(u8)(flags | (1 << EVF_HAS_XY));
+	evt.model = EVM_GUI;
+	evt.data = 0;
+	evt.ser = (void*)gob;
+
+	RL_Event(&evt);	// returns 0 if queue is full
+}
+
 static void Add_File_Events(REBGOB *gob, REBINT flags, HDROP drop)
 {
 	REBEVT evt;
 	REBINT num;
 	REBINT len;
 	REBINT i;
-	REBCHR* buf;
+	REBCHR buf[MAX_PATH] = {0};
 	POINT xy;
-
+	
 	//Get the mouse position
 	DragQueryPoint(drop, &xy);
 
 	evt.type  = EVT_DROP_FILE;
-	evt.flags = (u8) (flags | (1<<EVF_HAS_XY));
+	evt.flags = (u8) (flags | (1<<EVF_HAS_XY) | (1<<EVF_COPIED) | (1<<EVF_HAS_DATA));
 	evt.model = EVM_GUI;
-	evt.data = xy.x | xy.y<<16;
-
+	// reporting XY as an absolute position, so the target gob can be located using map-event from Gob_Root
+	evt.data = (xy.x + GOB_X_INT(gob)) | (xy.y + GOB_Y_INT(gob))<<16;
 
 	num = DragQueryFile(drop, -1, NULL, 0);
 
 	for (i = 0; i < num; i++){
-		len = DragQueryFile(drop, i, NULL, 0);
-		buf = OS_Make(len+1);
-		DragQueryFile(drop, i, buf, len+1);
-		//Reb_Print("DROP: %s", buf);
-		buf[len] = 0;
-		// ?! convert to REBOL format? E.g.: evt.ser = OS_To_REBOL_File(buf, &len);
-		OS_Free(buf);
+		// NOTE: originaly the buffer was made using OS_Make and freed when not needed
+		// but for some reason it was causing a crash! Use GlobalAlloc/GlobalLock?
+		len = DragQueryFile(drop, i, buf, MAX_PATH-1);
+		// printf("DROP: %d %ls\n", len, buf);
+		evt.ser = RL_Encode_UTF8_String(buf, len, TRUE, 0);
 		if (!RL_Event(&evt)) break;	// queue is full
 	}
+	DragFinish(drop);
 }
 
-static Check_Modifiers(REBINT flags)
+static REBINT Check_Modifiers(REBINT flags)
 {
 	if (GetKeyState(VK_SHIFT) < 0) flags |= (1<<EVF_SHIFT);
 	if (GetKeyState(VK_CONTROL) < 0) flags |= (1<<EVF_CONTROL);
 	return flags;
 }
 
+static int modal_timer_id;
+static void onModalBlock(
+  HWND Arg1,
+  UINT Arg2,
+  UINT_PTR Arg3,
+  DWORD Arg4
+) {
+	puts("o");
+	//Add_Event_XY(gob, EVT_RESIZE, xy, 0);
+}
 
 /***********************************************************************
 **
-*/	LRESULT CALLBACK REBOL_Window_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM xy)
+*/	LRESULT CALLBACK REBOL_Base_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+/*
+**		A Base_Proc() message handler. Simply translate Windows
+**		messages into a generic form that REBOL processes.
+**
+***********************************************************************/
+{
+	LPARAM xy = lParam;
+	REBGOB *gob;
+
+	// Handle message:
+	switch(msg)
+	{
+	case WM_MOUSEACTIVATE:
+		if (IS_LAYERED(hwnd)) {
+			SetForegroundWindow(GetParent(hwnd));
+			return 3; // do not make it activated when click it
+		}
+		break;
+	case WM_LBUTTONDOWN:
+		SetCapture(hwnd);
+		return 0;
+	case WM_LBUTTONUP:
+		ReleaseCapture();
+		return 0;
+	case WM_ERASEBKGND:
+		return TRUE; // drawing in WM_PAINT to avoid flickering
+	case WM_SIZE:
+		gob = GOB_FROM_HWND(hwnd);
+		//TODO: finish me!
+		break;
+
+
+
+	}
+}
+
+/***********************************************************************
+**
+*/	LRESULT CALLBACK REBOL_Window_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 /*
 **		A Window_Proc() message handler. Simply translate Windows
 **		messages into a generic form that REBOL processes.
 **
 ***********************************************************************/
 {
+	LPARAM xy = lParam;
 	REBGOB *gob;
 	REBCNT flags = 0;
 	REBCNT i;
@@ -187,12 +265,11 @@ static Check_Modifiers(REBINT flags)
 	// resizing is a modal loop and prevents it being a problem.
 	static LPARAM last_xy = 0;
 	static REBINT mode = 0;
+	SCROLLINFO si;
 
-#ifdef __LLP64__
-	gob = (REBGOB *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-#else
-	gob = (REBGOB *)GetWindowLong(hwnd, GWL_USERDATA);
-#endif
+	gob = GOB_FROM_HWND(hwnd);
+
+	//printf("REBOL_Window_Proc - msg: %0X wParam: %0X lParam: %0X gob: %0Xh\n", msg, wParam, lParam, gob);
 
 	// Not a REBOL window (or early creation):
 	if (!gob || !IS_WINDOW(gob)) {
@@ -206,6 +283,7 @@ static Check_Modifiers(REBINT flags)
 			case WM_DESTROY:
 				PostQuitMessage(0);
 				break;
+			//case WM_GETMINMAXINFO: printf("WM_GETMINMAXINFO\n");
 			default:
 				// Default processing that we do not care about:
 				return DefWindowProc(hwnd, msg, wParam, xy);
@@ -217,17 +295,25 @@ static Check_Modifiers(REBINT flags)
 	switch(msg)
 	{
 		case WM_PAINT:
+		case WM_DISPLAYCHANGE:
 			Paint_Window(hwnd);
-			break;
+			return FALSE;
 
 		case WM_MOUSEMOVE:
 			Add_Event_XY(gob, EVT_MOVE, xy, flags);
 			//if (!(WIN_FLAGS(wp) & WINDOW_TRACK_LEAVE))
 			//	Track_Mouse_Leave(wp);
+			return FALSE;
+
+		case WM_ERASEBKGND:
+			//if (!IS_WINDOW(gob))
+				return TRUE;
 			break;
 
 		case WM_SIZE:
-//			RL_Print("SIZE %d\n", mode);
+		
+		//case WM_SIZING:
+			RL_Print("SIZE %d\n", mode);
 			if (wParam == SIZE_MINIMIZED) {
 				//Invalidate the size but not win buffer
 				gob->old_size.x = 0;
@@ -237,14 +323,14 @@ static Check_Modifiers(REBINT flags)
 				gob->size.x = (i16)LOWORD(xy);
 				gob->size.y = (i16)HIWORD(xy);
 				last_xy = xy;
+				OS_Resize_Window(gob, TRUE);
 				if (mode) {
 					//Resize and redraw the window buffer (when resize dragging)
-					Resize_Window(gob, TRUE);
 					mode = EVT_RESIZE;
 					break;
 				} else {
 					//Resize only the window buffer (when win gob size changed by REBOL code or using min/max buttons)
-					if (!Resize_Window(gob, FALSE)){
+					if (!OS_Resize_Window(gob, (wParam == SIZE_RESTORED))){
 						//size has been changed programatically - return only 'resize event
 						Add_Event_XY(gob, EVT_RESIZE, xy, flags);
 						break;
@@ -257,7 +343,7 @@ static Check_Modifiers(REBINT flags)
 				Add_Event_XY(gob, EVT_RESIZE, xy, flags);
 				if (i) Add_Event_XY(gob, i, xy, flags);
 			}
-			break;
+			return FALSE;
 
 		case WM_MOVE:
 			// Minimize and maximize call this w/o mode set.
@@ -266,15 +352,30 @@ static Check_Modifiers(REBINT flags)
 			last_xy = xy;
 			if (mode) mode = EVT_OFFSET;
 			else Add_Event_XY(gob, EVT_OFFSET, xy, flags);
-			break;
+			return FALSE;
+
+		case WM_HSCROLL:
+		case WM_VSCROLL:
+			if (lParam == 0) {
+				// standard scroll bar
+				Add_Event_Widget((HWND)wParam, EVT_SCROLL, flags);
+			} else {
+				Add_Event_Widget((HWND)lParam, EVT_CHANGE, flags);
+			}
+			return 0;
 
 		case WM_ENTERSIZEMOVE:
 			mode = -1; // possible to ENTER and EXIT w/o SIZE change
+			//modal_timer_id = SetTimer(hwnd, 0, USER_TIMER_MINIMUM , (TIMERPROC)NULL);
 			break;
 
 		case WM_EXITSIZEMOVE:
-			if (mode > 0) Add_Event_XY(gob, mode, last_xy, flags);
+			if (mode > 0) 
+				Add_Event_XY(gob, mode, last_xy, flags);
+			//else
+			//	KillTimer(hwnd, modal_timer_id);
 			mode = 0;
+			
 			break;
 
 		case WM_MOUSELEAVE:
@@ -296,14 +397,16 @@ static Check_Modifiers(REBINT flags)
 			break;
 
 		case WM_TIMER:
-			//Add_Event_XY(gob, EVT_TIME, xy, flags);
+			//printf("t");
+			Add_Event_XY(gob, EVT_TIME, xy, flags);
 			break;
 
 		case WM_SETCURSOR:
 			if (LOWORD(xy) == 1) {
 				SetCursor(Cursor);
 				return TRUE;
-			} else goto default_case;
+			}
+			break;
 
 		case WM_LBUTTONDBLCLK:
 			SET_FLAG(flags, EVF_DOUBLE);
@@ -311,6 +414,7 @@ static Check_Modifiers(REBINT flags)
 			//if (!WIN_CAPTURED(wp)) {
 			flags = Check_Modifiers(flags);
 			Add_Event_XY(gob, EVT_DOWN, xy, flags);
+			SetFocus(hwnd);
 			SetCapture(hwnd);
 			//WIN_CAPTURED(wp) = EVT_BTN1_UP;
 			break;
@@ -329,6 +433,7 @@ static Check_Modifiers(REBINT flags)
 			//if (!WIN_CAPTURED(wp)) {
 			flags = Check_Modifiers(flags);
 			Add_Event_XY(gob, EVT_ALT_DOWN, xy, flags);
+			SetFocus(hwnd);
 			SetCapture(hwnd);
 			//WIN_CAPTURED(wp) = EVT_BTN2_UP;
 			break;
@@ -347,6 +452,7 @@ static Check_Modifiers(REBINT flags)
 			//if (!WIN_CAPTURED(wp)) {
 			flags = Check_Modifiers(flags);
 			Add_Event_XY(gob, EVT_AUX_DOWN, xy, flags);
+			SetFocus(hwnd);
 			SetCapture(hwnd);
 			break;
 
@@ -377,23 +483,178 @@ static Check_Modifiers(REBINT flags)
 			Add_Event_Key(gob, EVT_KEY, i, flags);
 			break;
 
+		case WM_COMMAND:
+			//printf("\nWM_COMMAND wParam: %04X %04X %u  lParam: %08X \n", LOWORD(wParam), HIWORD(wParam), HIWORD(wParam),  lParam);
+			switch (HIWORD(wParam))
+			{
+			case EN_CHANGE:
+				Add_Event_Widget((HWND)lParam, EVT_CHANGE, flags);
+				break;
+			//case EN_UPDATE:
+			//		GetScrollInfo((HWND)lParam, SB_HORZ, &si);
+			//		//ShowScrollBar((HWND)lParam, SB_HORZ, si.nPos > 0);
+			//		//printf("EN h: %d\n", si.nPos);
+			//	break;
+			case BN_CLICKED:
+				Add_Event_Widget((HWND)lParam, EVT_CLICK, flags);
+				break;
+			case EN_SETFOCUS:
+				Add_Event_Widget((HWND)lParam, EVT_FOCUS, flags);
+				break;
+			case EN_KILLFOCUS:
+				Add_Event_Widget((HWND)lParam, EVT_UNFOCUS, flags);
+				break;
+			}
+			break;
+		
 		case WM_DROPFILES:
 			Add_File_Events(gob, flags, (HDROP)wParam);
+			return 0;
+
+		case WM_CTLCOLORSTATIC:
+			//SetTextColor((HDC)wParam, RGB(0, 0, 0));
+			//SetBkMode((HDC)wParam, COLOR_BACKGROUND);
+			//return (LRESULT)GetStockObject(COLOR_WINDOW);
+			break;
+
+		case WM_CTLCOLORBTN:
+			//printf("\nWM_CTLCOLORBTN wParam: %08X lParam: %08X \n", wParam, lParam);
+			//SetBkMode((HDC)wParam, COLOR_WINDOW);
+			//SetBkColor((HDC)lParam, RGB(0, 0, 0));
+			//return (LRESULT)GetStockObject(COLOR_WINDOW);
+			break;
+
+		case WM_NOTIFY:
+			//printf("\nWM_NOTIFY wParam: %04X %04X %u  lParam: %08X \n", LOWORD(wParam), HIWORD(wParam), HIWORD(wParam), lParam);
+			switch (((LPNMHDR)lParam)->code) {
+			case DTN_DATETIMECHANGE:
+				Add_Event_Widget(((LPNMHDR)lParam)->hwndFrom, EVT_CHANGE, flags);
+				return 0;
+			}
+			break;
+
+		case WM_GETMINMAXINFO:
+			//printf("WM_GETMINMAXINFO\n");
+			break;
+
+		case WM_SETFOCUS:
+			//puts("WM_SETFOCUS");
+			Focused_Window = hwnd;
 			break;
 
 		case WM_CLOSE:
 			Add_Event_XY(gob, EVT_CLOSE, xy, flags);
-			Close_Window(gob);	// Needs to be removed - should be done by REBOL event handling
-//			DestroyWindow(hwnd);// This is done in Close_Window()
-			break;
+			OS_Close_Window(gob);	// Needs to be removed - should be done by REBOL event handling
+//			DestroyWindow(hwnd);// This is done in OS_Close_Window()
+			return 0;
+
+
 
 		case WM_DESTROY:
 			PostQuitMessage(0);
+			return 0;
+		case WM_NCDESTROY:
+			//TODO: notify native widgets?
+			//puts("WM_NCDESTROY");
 			break;
 
-		default:
-		default_case:
-			return DefWindowProc(hwnd, msg, wParam, xy);
 	}
-	return 0;
+	return DefWindowProc(hwnd, msg, wParam, xy);
+}
+
+
+/***********************************************************************
+**
+*/	LRESULT CALLBACK REBOL_OpenGL_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+/*
+**		An OpenGL message handler.
+**
+***********************************************************************/
+{
+	REBGOB *gob;
+	REBCNT flags = 0;
+	HDC hdc;
+	HGLRC hglrc;
+	PIXELFORMATDESCRIPTOR pfd;
+	PAINTSTRUCT ps;
+	
+	gob = GOB_FROM_HWND(hwnd);
+
+	//if(msg != WM_PAINT)
+	//	printf("OpenGL_Proc - msg: %0X wParam: %0X lParam: %0X gob: %0Xh\n", msg, wParam, lParam, gob);
+	
+	// Handle message:
+	switch (msg)
+	{
+	case WM_PAINT: 
+		hdc = BeginPaint(hwnd, &ps);
+		//TODO: retrive context from gob's handle
+		//hglrc = wglGetCurrentContext();
+		//wglMakeCurrent(hdc, hglrc);
+			//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glBegin(GL_TRIANGLES);
+			glColor3ub(255, 0, 0);    glVertex2d(-0.75, -0.75);
+			glColor3ub(0, 255, 0);    glVertex2d(0.0, 0.75);
+			glColor3ub(0, 0, 255);    glVertex2d(0.75, -0.75);
+			glEnd();
+			glFlush();
+
+			SwapBuffers(hdc);
+		//	wglMakeCurrent(hdc, 0);
+			EndPaint(hwnd, &ps);
+		return FALSE;
+	case WM_ERASEBKGND:
+		// for testing purposes, set random background so far...
+		glClearColor(((float)rand()/(float)(RAND_MAX))*1.0, 0.0, 0.0, 0.0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		break;
+	case WM_SIZE:
+		glViewport(0, 0, LOWORD(lParam), HIWORD(lParam));
+		break;
+	case WM_CREATE:
+		hdc = GetDC(hwnd);
+		ZeroMemory(&pfd, sizeof(pfd));
+		PIXELFORMATDESCRIPTOR pfd = {
+			sizeof(PIXELFORMATDESCRIPTOR),
+			1,
+			PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,    // Flags
+			PFD_TYPE_RGBA,        // The kind of framebuffer. RGBA or palette.
+			32,                   // Colordepth of the framebuffer.
+			0, 0, 0, 0, 0, 0,
+			0,
+			0,
+			0,
+			0, 0, 0, 0,
+			24,                   // Number of bits for the depthbuffer
+			8,                    // Number of bits for the stencilbuffer
+			0,                    // Number of Aux buffers in the framebuffer.
+			PFD_MAIN_PLANE,
+			0,
+			0, 0, 0
+		};
+		int pf = ChoosePixelFormat(hdc, &pfd);
+		if (!pf) {
+			RL_Print("Could not find a pixel format.. OpenGL cannot create its context.\n");
+			return FALSE;
+		}
+		SetPixelFormat(hdc, pf, &pfd);
+		hglrc = wglCreateContext(hdc);
+		if (hglrc) {
+			wglMakeCurrent(hdc, hglrc);
+		}
+		else {
+			RL_Print("Failed to create OpenGL context!\n");
+			return FALSE;
+		}
+		RL_Print("OPENGL CONTEXT CREATED!\n");
+		RL_Print("Version %s\n", glGetString(GL_VERSION));
+		return FALSE;
+
+	case WM_DESTROY:
+		hglrc = wglGetCurrentContext();
+		wglDeleteContext(hglrc);
+		return FALSE;
+	}
+
+	return REBOL_Window_Proc(hwnd, msg, wParam, lParam);
 }

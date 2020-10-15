@@ -60,6 +60,7 @@
 #include <time.h>
 #include <string.h>
 #include <errno.h>
+#include <signal.h>  //for kill
 
 #ifndef timeval // for older systems
 #include <sys/time.h>
@@ -139,6 +140,185 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 **
 ***********************************************************************/
 
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_PID(void)
+/*
+**		Return the current process ID
+**
+***********************************************************************/
+{
+	return getpid();
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_UID(void)
+/*
+**		Return the real user ID
+**
+***********************************************************************/
+{
+	return getuid();
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_UID(REBINT uid)
+/*
+**		Set the user ID, see setuid manual for its semantics
+**
+***********************************************************************/
+{
+	if (setuid(uid) < 0) {
+		switch (errno) {
+			case EINVAL:
+				return OS_EINVAL;
+			case EPERM:
+				return OS_EPERM;
+			default:
+				return -errno;
+		}
+	} else {
+		return 0;
+	}
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_GID(void)
+/*
+**		Return the real group ID
+**
+***********************************************************************/
+{
+	return getgid();
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_GID(REBINT gid)
+/*
+**		Set the group ID, see setgid manual for its semantics
+**
+***********************************************************************/
+{
+	if (setgid(gid) < 0) {
+		switch (errno) {
+			case EINVAL:
+				return OS_EINVAL;
+			case EPERM:
+				return OS_EPERM;
+			default:
+				return -errno;
+		}
+	} else {
+		return 0;
+	}
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_EUID(void)
+/*
+**		Return the effective user ID
+**
+***********************************************************************/
+{
+	return geteuid();
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_EUID(REBINT uid)
+/*
+**		Set the effective user ID
+**
+***********************************************************************/
+{
+	if (seteuid(uid) < 0) {
+		switch (errno) {
+			case EINVAL:
+				return OS_EINVAL;
+			case EPERM:
+				return OS_EPERM;
+			default:
+				return -errno;
+		}
+	} else {
+		return 0;
+	}
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_EGID(void)
+/*
+**		Return the effective group ID
+**
+***********************************************************************/
+{
+	return getegid();
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_EGID(REBINT gid)
+/*
+**		Set the effective group ID
+**
+***********************************************************************/
+{
+	if (setegid(gid) < 0) {
+		switch (errno) {
+			case EINVAL:
+				return OS_EINVAL;
+			case EPERM:
+				return OS_EPERM;
+			default:
+				return -errno;
+		}
+	} else {
+		return 0;
+	}
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Send_Signal(REBINT pid, REBINT signal)
+/*
+**		Send signal to a process
+**
+***********************************************************************/
+{
+	if (kill(pid, signal) < 0) {
+		switch (errno) {
+			case EINVAL:
+				return OS_EINVAL;
+			case EPERM:
+				return OS_EPERM;
+			case ESRCH:
+				return OS_ESRCH;
+			default:
+				return -errno;
+		}
+	} else {
+		return 0;
+	}
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Kill(REBINT pid)
+/*
+**		Try to kill the process
+**
+***********************************************************************/
+{
+	return OS_Send_Signal(pid, SIGTERM);
+}
+
 /***********************************************************************
 **
 */	REBINT OS_Config(int id, REBYTE *result)
@@ -189,13 +369,16 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 **
 */	void OS_Exit(int code)
 /*
-**		Called in cases where REBOL needs to quit immediately
-**		without returning from the main() function.
+**		Called in all cases when REBOL quits
+**
+**		If there would be case when freeing resources is not wanted,
+**		it should be signalised by a new argument.
 **
 ***********************************************************************/
 {
 	//OS_Call_Device(RDI_STDIO, RDC_CLOSE); // close echo
 	OS_Quit_Devices(0);
+	RL_Dispose();
 	exit(code);
 }
 
@@ -222,10 +405,10 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 	// A title tells us we should alert the user:
 	if (title) {
-		fputs(title, stderr);
+		fputs(cs_cast(title), stderr);
 		fputs(":\n", stderr);
 	}
-	fputs(content, stderr);
+	fputs(cs_cast(content), stderr);
 	fputs("\n\n", stderr);
 	exit(100);
 }
@@ -240,7 +423,8 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 **
 ***********************************************************************/
 {
-	strerror_r(errnum, str, len);
+    if (!errnum) errnum = errno;
+	strerror_r(errnum, s_cast(str), len);
 	return str;
 }
 
@@ -286,11 +470,11 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 	// Note: The Posix variant of this API is case-sensitive
 
 	REBINT len;
-	const REBCHR* value = getenv(envname);
+	const REBCHR* value = cs_cast(getenv(cs_cast(envname)));
 	if (value == 0) return 0;
 
 	len = LEN_STR(value);
-	if (len == 0) return -1; // shouldn't have saved an empty env string
+	//if (len == 0) return -1; // shouldn't have saved an empty env string
 
 	if (len + 1 > valsize) {
 		return len + 1;
@@ -311,7 +495,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 ***********************************************************************/
 {
 	if (envval) {
-#ifdef setenv
+#ifdef USE_SETENV
 		// we pass 1 for overwrite (make call to OS_Get_Env if you 
 		// want to check if already exists)
 
@@ -336,9 +520,9 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 		char* expr = MAKE_STR(LEN_STR(envname) + 1 + LEN_STR(envval) + 1);
 
-		strcpy(expr, envname);
+		strcpy(expr, cs_cast(envname));
 		strcat(expr, "=");
-		strcat(expr, envval);
+		strcat(expr, cs_cast(envval));
 
 		if (putenv(expr) == -1)
 			return FALSE;
@@ -346,7 +530,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 		return TRUE;
 	}
 
-#ifdef unsetenv
+#ifdef USE_SETENV
 	if (unsetenv(envname) == -1)
 		return FALSE;
 #else
@@ -392,7 +576,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 		*cp = 0;
 	}
 
-	return str; // caller will free it
+	return (REBCHR*)str; // caller will free it
 }
 
 
@@ -494,6 +678,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 {
 #ifndef NO_DL_LIB
 	void *dll = dlopen(path, RTLD_LAZY/*|RTLD_GLOBAL*/);
+	// if(!dll) printf("dlerror: %s\n", dlerror());
 	*error = 0; // dlerror() returns a char* error message, so there's
 				// no immediate way to return an "error code" in *error
 	return dll;
@@ -519,7 +704,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 /***********************************************************************
 **
-*/	void *OS_Find_Function(void *dll, char *funcname)
+*/	void *OS_Find_Function(void *dll, const char *funcname)
 /*
 **		Get a DLL function address from its string name.
 **
@@ -626,7 +811,7 @@ static inline REBOOL Open_Pipe_Fails(int pipefd[2]) {
 
 /***********************************************************************
 **
-*/	int OS_Create_Process(REBCHR *call, int argc, char* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
+*/	int OS_Create_Process(REBCHR *call, int argc, REBCHR* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
 /*
 ** flags:
 ** 		1: wait, is implied when I/O redirection is enabled
@@ -788,7 +973,7 @@ static inline REBOOL Open_Pipe_Fails(int pipefd[2]) {
 
 		close(info_pipe[R]);
 
-		//printf("flag_shell in child: %hhu\n", flag_shell);
+		printf("flag_shell in child: %hhu\n", flag_shell);
 		if (flag_shell) {
 			const char* sh = NULL;
 			const char ** argv_new = NULL;
@@ -807,7 +992,7 @@ static inline REBOOL Open_Pipe_Fails(int pipefd[2]) {
 			argv_new[argc + 2] = NULL;
 			execvp(sh, (char* const*)argv_new);
 		} else {
-			execvp(argv[0], argv);
+			execvp(argv[0], (char* const*)argv);
 		}
 child_error:
 		if(write(info_pipe[W], &errno, sizeof(errno)) == -1) {
@@ -847,7 +1032,7 @@ child_error:
 		if (err_len != NULL) *err_len = 0;
 
 		if (stdin_pipe[W] > 0) {
-			//printf("stdin_pipe[W]: %d\n", stdin_pipe[W]);
+			printf("stdin_pipe[W]: %d\n", stdin_pipe[W]);
 			input_size = strlen((char*)input); /* the passed in input_len is in character, not in bytes */
 			input_len = 0;
 			pfds[nfds++] = (struct pollfd){.fd = stdin_pipe[W], .events = POLLOUT};
@@ -855,7 +1040,7 @@ child_error:
 			stdin_pipe[R] = -1;
 		}
 		if (stdout_pipe[R] > 0) {
-			//printf("stdout_pipe[R]: %d\n", stdout_pipe[R]);
+			printf("stdout_pipe[R]: %d\n", stdout_pipe[R]);
 			output_size = BUF_SIZE_CHUNK;
 			*output = OS_Make(output_size);
 			pfds[nfds++] = (struct pollfd){.fd = stdout_pipe[R], .events = POLLIN};
@@ -863,7 +1048,7 @@ child_error:
 			stdout_pipe[W] = -1;
 		}
 		if (stderr_pipe[R] > 0) {
-			//printf("stderr_pipe[R]: %d\n", stderr_pipe[R]);
+			printf("stderr_pipe[R]: %d\n", stderr_pipe[R]);
 			err_size = BUF_SIZE_CHUNK;
 			*err = OS_Make(err_size);
 			pfds[nfds++] = (struct pollfd){.fd = stderr_pipe[R], .events = POLLIN};
@@ -1070,6 +1255,21 @@ stdin_pipe_err:
 	return ret;
 }
 
+/***********************************************************************
+**
+*/	int OS_Reap_Process(int pid, int *status, int flags)
+/*
+ * pid: 
+ * 		> 0, a signle process
+ * 		-1, any child process
+ * flags:
+ * 		0: return immediately
+ *
+**		Return -1 on error, otherwise process ID
+***********************************************************************/
+{
+	return waitpid(pid, status, flags == 0? WNOHANG : 0);
+}
 
 static int Try_Browser(char *browser, REBCHR *url)
 {
@@ -1085,9 +1285,14 @@ static int Try_Browser(char *browser, REBCHR *url)
 			exit(1);
 			break;
 		default:
-			waitpid(pid, &status, WUNTRACED);
-			result = WIFEXITED(status)
+            sleep(1); // needed else WEXITSTATUS sometimes reports value 127
+            if (0 > waitpid(pid, &status, WUNTRACED)) {
+                result = FALSE;
+            } else {
+                //printf("status: %i WIFEXITED: %i WEXITSTATUS: %i\n", status, WIFEXITED(status), WEXITSTATUS(status) );
+                result = WIFEXITED(status)
 					&& (WEXITSTATUS(status) == 0);
+            }
 	}
 
 	return result;
@@ -1122,14 +1327,3 @@ static int Try_Browser(char *browser, REBCHR *url)
 
 
 
-/***********************************************************************
-**
-*/	REBSER *OS_GOB_To_Image(REBGOB *gob)
-/*
-**		Render a GOB into an image. Returns an image or zero if
-**		it cannot be done.
-**
-***********************************************************************/
-{
-	return 0;
-}

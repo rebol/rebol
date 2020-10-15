@@ -165,7 +165,11 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 		// The ->ser field of the REBEVT is void*, so we must cast
 		// Comment says it is a "port or object"
 		CHECK_MARK((REBSER*)VAL_EVENT_SER(value), depth);
-	} 
+	}
+
+	if (IS_EVENT_MODEL(value, EVM_GUI)) {
+		Mark_Gob(VAL_EVENT_SER(value), depth);
+	}
 
 	if (IS_EVENT_MODEL(value, EVM_DEVICE)) {
 		// In the case of being an EVM_DEVICE event type, the port! will
@@ -248,15 +252,15 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 		case REB_TYPESET:
 			break;
 		case REB_HANDLE:
-			if (VAL_HANDLE_NAME(val) != NULL) {
-				//printf("markserhandle %i val: %i %i \n", (int)val, VAL_HANDLE(val), VAL_HANDLE_NAME(val));
-				MARK_SERIES((REBSER*)VAL_HANDLE(val));
+			if (IS_SERIES_HANDLE(val) && !HANDLE_GET_FLAG(val, HANDLE_RELEASABLE)) {
+				//printf("markserhandle %0xh val: %0xh %s \n", (void*)val, VAL_HANDLE(val), VAL_HANDLE_NAME(val));
+				MARK_SERIES(VAL_HANDLE_DATA(val));
 			}
 			break;
 
 		case REB_DATATYPE:
 			if (VAL_TYPE_SPEC(val)) {	// allow it to be zero
-				CHECK_MARK(VAL_TYPE_SPEC(val), depth); // check typespec.r file
+				CHECK_MARK(VAL_TYPE_SPEC(val), depth); // check typespec.reb file
 			}
 			break;
 
@@ -303,6 +307,7 @@ mark_obj:
 		case REB_CLOSURE:
 		case REB_REBCODE:
 			CHECK_MARK(VAL_FUNC_BODY(val), depth);
+			/* no break */
 		case REB_NATIVE:
 		case REB_ACTION:
 		case REB_OP:
@@ -352,6 +357,7 @@ mark_obj:
 		case REB_URL:
 		case REB_TAG:
 		case REB_BITSET:
+		case REB_REF:
 			ser = VAL_SERIES(val);
 			if (SERIES_WIDE(ser) > sizeof(REBUNI))
 				Crash(RP_BAD_WIDTH, sizeof(REBUNI), SERIES_WIDE(ser), VAL_TYPE(val));
@@ -463,7 +469,7 @@ mark_obj:
 			MUNG_CHECK(SERIES_POOL, series, sizeof(*series));
 			if (!SERIES_FREED(series)) {
 				if (IS_FREEABLE(series)) {
-					//printf("free: %i\n", (int)series);
+					//printf("free: %0xh\n", (int)series);
 					Free_Series(series);
 					count++;
 				} else
@@ -541,7 +547,7 @@ mark_obj:
 		return 0;
 	}
 
-	if (Reb_Opts->watch_recycle) Debug_Str(BOOT_STR(RS_WATCH, 0));
+	if (Reb_Opts->watch_recycle) Debug_Str(cs_cast(BOOT_STR(RS_WATCH, 0)));
 
 	GC_Disabled = 1;
 
@@ -650,7 +656,7 @@ mark_obj:
 	sp = (REBSER **)GC_Series->data;
 	for (n = 0; n < SERIES_TAIL(GC_Series); n++) {
 		if (sp[n] == series) {
-			Remove_Series(GC_Series, n, sizeof(REBSER *));
+			Remove_Series(GC_Series, n, 1);
 			break;
 		}
 	}
@@ -682,4 +688,27 @@ mark_obj:
 
 	GC_Series = Make_Series(60, sizeof(REBSER *), FALSE);
 	KEEP_SERIES(GC_Series, "gc guarded");
+}
+
+/***********************************************************************
+**
+*/	void Dispose_Memory(void)
+/*
+**		Dispose memory system when application quits.
+**
+***********************************************************************/
+{
+	REBCNT n;
+	GC_Disabled = 0;
+	/* remove everything from GC_Infants (GC protection) */
+	for (n = 0; n < MAX_SAFE_SERIES; n++) {
+		GC_Infants[n] = NULL;
+	}
+	Free_Series(GC_Protect);
+	Free_Series(GC_Series);
+	Sweep_Series();
+	Sweep_Gobs();
+	Free_Mem(GC_Infants, 0);
+	Free_Mem(Prior_Expand, 0);
+	Dispose_Pools();
 }

@@ -1,3 +1,39 @@
+#ifdef USE_JPG_CODEC
+/***********************************************************************
+**
+**  jdatasrc.c
+** 
+**  Copyright (C) 1994-1996, Thomas G. Lane.
+**  This file is part of the Independent JPEG Group's software.
+**  For conditions of distribution and use, see the accompanying README file.
+** 
+**  This file contains decompression data source routines for the case of
+**  reading JPEG data from a file (or any stdio stream).  While these routines
+**  are sufficient for most applications, some will want to use a different
+**  source manager.
+**  IMPORTANT: we assume that fread() will correctly transcribe an array of
+**  JOCTETs from 8-bit-wide elements on external storage.  If char is wider
+**  than 8 bits on your machine, you may need to do some tweaking.
+**
+************************************************************************
+**
+**  Module:  u-jpg.c
+**  Summary: JPEG image format conversion
+**  Section: utility
+**  Notes:
+**    This is an optional part of R3. This file can be replaced by
+**    library function calls into an updated implementation.
+**
+***********************************************************************
+**  Base-code:
+
+  if find system/codecs 'jpeg [
+    system/codecs/jpeg/suffixes: [%.jpg %.jpeg]
+    append append system/options/file-types system/codecs/jpeg/suffixes 'jpeg
+  ]
+
+***********************************************************************/
+
 #define JPEG_INTERNALS
 #define NO_GETENV
 #include "reb-config.h"
@@ -5,26 +41,15 @@
 #include <setjmp.h>
 #include "sys-jpg.h"
 
-/*
- * jdatasrc.c
- *
- * Copyright (C) 1994-1996, Thomas G. Lane.
- * This file is part of the Independent JPEG Group's software.
- * For conditions of distribution and use, see the accompanying README file.
- *
- * This file contains decompression data source routines for the case of
- * reading JPEG data from a file (or any stdio stream).  While these routines
- * are sufficient for most applications, some will want to use a different
- * source manager.
- * IMPORTANT: we assume that fread() will correctly transcribe an array of
- * JOCTETs from 8-bit-wide elements on external storage.  If char is wider
- * than 8 bits on your machine, you may need to do some tweaking.
- */
-
 /* this is not a core library module, so it doesn't define JPEG_INTERNALS */
 //#include "jinclude.h"
 //#include "jpeglib.h"
 //#include "jerror.h"
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4267)   /* conversion from 'size_t' to 'long', possible loss of data */
+#endif
 
 typedef u32 uinteger32;
 
@@ -268,7 +293,7 @@ void jpeg_load( char *buffer, int nbytes, char *output )
 	output = ( char * )dp;
 	for ( j=0; j<cinfo.image_width; j++ ) {
 		cp -= 3;
-		*--dp = cp[ 2 ] | ( cp[ 1 ] << 8 ) | ( ( uinteger32 )cp[ 0 ] << 16 );
+		*--dp = cp[ 2 ] | ( cp[ 1 ] << 8 ) | ( ( uinteger32 )cp[ 0 ] << 16 ) | 0xff000000;
 	}
   }
   else
@@ -3715,10 +3740,10 @@ static const int extend_test[16] =   /* entry n is 2**(n-1) */
     0x0100, 0x0200, 0x0400, 0x0800, 0x1000, 0x2000, 0x4000 };
 
 static const int extend_offset[16] = /* entry n is (-1 << n) + 1 */
-  { 0, ((-1)<<1) + 1, ((-1)<<2) + 1, ((-1)<<3) + 1, ((-1)<<4) + 1,
-    ((-1)<<5) + 1, ((-1)<<6) + 1, ((-1)<<7) + 1, ((-1)<<8) + 1,
-    ((-1)<<9) + 1, ((-1)<<10) + 1, ((-1)<<11) + 1, ((-1)<<12) + 1,
-    ((-1)<<13) + 1, ((-1)<<14) + 1, ((-1)<<15) + 1 };
+  { 0, -(1<<1) + 1, -(1<<2) + 1, -(1<<3) + 1, -(1<<4) + 1,
+    -(1<<5) + 1, -(1<<6) + 1, -(1<<7) + 1, -(1<<8) + 1,
+    -(1<<9) + 1, -(1<<10) + 1, -(1<<11) + 1, -(1<<12) + 1,
+    -(1<<13) + 1, -(1<<14) + 1, -(1<<15) + 1 };
 
 #endif /* AVOID_TABLES */
 
@@ -10314,10 +10339,10 @@ static const int p_extend_test[16] =   /* entry n is 2**(n-1) */
     0x0100, 0x0200, 0x0400, 0x0800, 0x1000, 0x2000, 0x4000 };
 
 static const int p_extend_offset[16] = /* entry n is (-1 << n) + 1 */
-  { 0, ((-1)<<1) + 1, ((-1)<<2) + 1, ((-1)<<3) + 1, ((-1)<<4) + 1,
-    ((-1)<<5) + 1, ((-1)<<6) + 1, ((-1)<<7) + 1, ((-1)<<8) + 1,
-    ((-1)<<9) + 1, ((-1)<<10) + 1, ((-1)<<11) + 1, ((-1)<<12) + 1,
-    ((-1)<<13) + 1, ((-1)<<14) + 1, ((-1)<<15) + 1 };
+  { 0, -(1<<1) + 1, -(1<<2) + 1, -(1<<3) + 1, -(1<<4) + 1,
+    -(1<<5) + 1, -(1<<6) + 1, -(1<<7) + 1, -(1<<8) + 1,
+    -(1<<9) + 1, -(1<<10) + 1, -(1<<11) + 1, -(1<<12) + 1,
+    -(1<<13) + 1, -(1<<14) + 1, -(1<<15) + 1 };
 
 #endif /* AVOID_TABLES */
 
@@ -10780,7 +10805,7 @@ jinit_phuff_decoder (j_decompress_ptr cinfo)
 #ifndef CODI_DEFINED
 #include "reb-codec.h"
 extern long* Make_Mem(size_t size);
-extern void Register_Codec(char *name, codo dispatcher);
+extern void Register_Codec(const char *name, codo dispatcher);
 #endif
 
 /***********************************************************************
@@ -10800,15 +10825,20 @@ extern void Register_Codec(char *name, codo dispatcher);
 
 	if (codi->action == CODI_IDENTIFY) {
 		int w, h;
-		jpeg_info(codi->data, codi->len, &w, &h); // will throw errors
+		// temporary workaround for: https://github.com/rebol/rebol-issues/issues/2377
+		if (codi->len < 125) { // mininamal JPEG size: https://stackoverflow.com/a/2349470/494472
+			codi->error = CODI_ERR_BAD_DATA; 
+		} else {
+			jpeg_info(s_cast(codi->data), codi->len, &w, &h); // will throw errors
+		}
 		return CODI_CHECK;
 	}
 
 	if (codi->action == CODI_DECODE) {
 		int w, h;
-		jpeg_info(codi->data, codi->len, &w, &h);
+		jpeg_info(s_cast(codi->data), codi->len, &w, &h);
 		codi->bits = (u32 *)Make_Mem(w * h * 4);
-		jpeg_load(codi->data, codi->len, (char *)codi->bits);
+		jpeg_load(s_cast(codi->data), codi->len, (char *)codi->bits);
 		codi->w = w;
 		codi->h = h;
 		return CODI_IMAGE;
@@ -10827,3 +10857,9 @@ extern void Register_Codec(char *name, codo dispatcher);
 {
 	Register_Codec("jpeg", Codec_JPEG_Image);
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
+#endif //USE_JPG_CODEC

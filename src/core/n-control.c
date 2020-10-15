@@ -37,7 +37,8 @@ enum {
 	PROT_DEEP,
 	PROT_HIDE,
 	PROT_WORD,
-	PROT_PERMANENTLY
+	PROT_WORDS,
+	PROT_LOCK
 };
 
 
@@ -108,7 +109,7 @@ enum {
 
 	if (GET_FLAG(flags, PROT_SET)) {
 		PROTECT_SERIES(series);
-		if (GET_FLAG(flags, PROT_PERMANENTLY)) LOCK_SERIES(series);
+		if (GET_FLAG(flags, PROT_LOCK)) LOCK_SERIES(series);
 	} 
 	else
 		//unprotect series only when not locked (using protect/permanently)
@@ -134,26 +135,27 @@ enum {
 ***********************************************************************/
 {
 	REBSER *series = VAL_OBJ_FRAME(value);
-
 	if (IS_MARK_SERIES(series)) return; // avoid loop
-
-	if (GET_FLAG(flags, PROT_SET)) {
-		PROTECT_SERIES(series);
-		if (GET_FLAG(flags, PROT_PERMANENTLY)) LOCK_SERIES(series);
-	}
-	else 
-		//unprotect series only when not locked (using protect/permanently)
-		if (!IS_LOCK_SERIES(series))
-			UNPROTECT_SERIES(series);
-
 	for (value = FRM_WORDS(series)+1; NOT_END(value); value++) {
 		Protect_Word(value, flags);
 	}
-
+	if (GET_FLAG(flags, PROT_SET)) {
+		// protecting...
+		if (!GET_FLAG(flags, PROT_WORDS)) {
+			PROTECT_SERIES(series);
+			if (GET_FLAG(flags, PROT_LOCK))
+				LOCK_SERIES(series);
+		}
+	} else {
+		// unprotecting...
+		if(!GET_FLAG(flags, PROT_WORDS)) {
+			//unprotect series only when not locked (using protect/permanently)
+			if (!IS_LOCK_SERIES(series))
+				UNPROTECT_SERIES(series);
+		}
+	}
 	if (!GET_FLAG(flags, PROT_DEEP)) return;
-
 	MARK_SERIES(series); // recursion protection
-
 	for (value = FRM_VALUES(series)+1; NOT_END(value); value++) {
 		Protect_Value(value, flags);
 	}
@@ -174,8 +176,10 @@ enum {
 		Protect_Word(wrd, flags);
 		if (GET_FLAG(flags, PROT_DEEP)) {
 			val = Get_Var(word);
-			Protect_Value(val, flags);
-			Unmark(val);
+			if(!IS_SCALAR(val)) {
+				Protect_Value(val, flags);
+				Unmark(val);
+			}
 		}
 	}
 	else if (ANY_PATH(word)) {
@@ -213,12 +217,12 @@ enum {
 	Check_Security(SYM_PROTECT, POL_WRITE, val);
 
 	if (D_REF(2)) SET_FLAG(flags, PROT_DEEP);
-	//if (D_REF(3)) SET_FLAG(flags, PROT_WORD);
+	if (D_REF(3)) SET_FLAG(flags, PROT_WORDS);
 
 	if (D_REF(5)) SET_FLAG(flags, PROT_HIDE);
 	else SET_FLAG(flags, PROT_WORD); // there is no unhide
 
-	if (D_REF(6)) SET_FLAG(flags, PROT_PERMANENTLY);
+	if (D_REF(6)) SET_FLAG(flags, PROT_LOCK);
 
 	if (IS_WORD(val) || IS_PATH(val)) {
 		Protect_Word_Value(val, flags); // will unmark if deep
@@ -250,6 +254,36 @@ enum {
 	return R_ARG1;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(protectedq)
+/*
+***********************************************************************/
+{
+	REBVAL *value = D_ARG(1);
+	if (IS_WORD(value) || IS_PATH(value)) {
+		REBVAL *wrd = NULL;
+		if (ANY_WORD(value) && HAS_FRAME(value) && VAL_WORD_INDEX(value) > 0) {
+			wrd = FRM_WORDS(VAL_WORD_FRAME(value))+VAL_WORD_INDEX(value);
+		}
+		else if (ANY_PATH(value)) {
+			REBCNT index;
+			REBSER *obj;
+			if (NZ(obj = Resolve_Path(value, &index))) {
+				wrd = FRM_WORD(obj, index);
+			}
+		}
+		if(wrd && VAL_GET_OPT(wrd, OPTS_LOCK)) return R_TRUE;
+	}
+	else if (ANY_SERIES(value) || IS_MAP(value)) {
+		if(IS_PROTECT_SERIES(VAL_SERIES(value))) return R_TRUE;
+	}
+	else if (IS_OBJECT(value) || IS_MODULE(value)) {
+		if(IS_PROTECT_SERIES(VAL_OBJ_FRAME(value))) return R_TRUE;
+	}
+	
+	return R_FALSE;
+}
 
 /***********************************************************************
 **
@@ -294,7 +328,7 @@ enum {
 	while (index < SERIES_TAIL(block)) {
 		index = Do_Next(block, index, 0); // stack volatile
 		ds = DS_POP;  // volatile stack reference
-		if (!IS_FALSE(ds) && !IS_UNSET(ds)) return R_TOS1;
+		if (!IS_FALSE(ds)) return R_TOS1;
 	}
 	return R_NONE;
 }
@@ -360,7 +394,7 @@ enum {
 			ds = DS_POP;  // volatile stack reference
 			if (IS_BLOCK(ds)) {
 				ds = DO_BLK(ds);
-				if (IS_UNSET(ds) && !all_flag) return R_TRUE;
+				if (IS_UNSET(ds) && !all_flag) return R_UNSET;
 			}
 			if (THROWN(ds) || !all_flag || index >= SERIES_TAIL(block))
 				return R_TOS1;
@@ -800,8 +834,12 @@ got_err:
 {
 	REBFLG except = D_REF(2);
 	REBVAL handler = *D_ARG(3); // TRY exception will trim the stack
+	REBVAL *last_error = Get_System(SYS_STATE, STATE_LAST_ERROR);
+	SET_NONE(last_error);
 
 	if (Try_Block(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
+		// save the error as a system/state/last-error value
+		*last_error = *DS_NEXT;
 		if (except) {
 			if (IS_BLOCK(&handler)) {
 				DO_BLK(&handler);

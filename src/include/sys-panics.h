@@ -29,7 +29,7 @@
 enum reb_panics {
 
 //  Boot Errors (very limited environment avaliable)
-	RP_BOOT_DATA = 1000,	// no boot.r text found
+	RP_BOOT_DATA = 1000,	// no boot.reb text found
 	RP_REBVAL_ALIGNMENT,	// not aligned perfectly in memory
 	RP_BAD_SIZE,			// expected size did not match
 	RP_NO_BUFFER,			// buffer not yet allocated
@@ -37,7 +37,7 @@ enum reb_panics {
 	RP_BAD_BOOT_TYPE_BLOCK,	// boot block is wrong size
 	RP_BAD_END_TYPE_WORD,	// the end word is not correct
 	RP_ACTION_OVERFLOW,		// more actions than we should have
-	RE_NATIVE_BOOT,			// bad boot.r native ordering
+	RE_NATIVE_BOOT,			// bad boot.reb native ordering
 	RP_EARLY_ERROR,			// error before error handling
 	RP_BAD_END_CANON_WORD,	// END was not found
 	RP_BAD_TRUE_CANON_WORD,	// TRUE was not found
@@ -81,7 +81,7 @@ enum reb_panics {
 //  Datatype Errors (300 + N --indicates location)
 	RP_DATATYPE = 1300,
 
-//  Documented Errors (keep in-sync with error strings in boot.r!)
+//  Documented Errors (keep in-sync with error strings in boot.reb!)
 	RP_STR_BASE = 1400,
 	RP_NO_MEMORY,			// not enough memory: %d bytes
 	RP_BAD_WIDTH,			// invalid series width: %d %d %d

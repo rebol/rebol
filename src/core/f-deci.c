@@ -1044,7 +1044,7 @@ deci deci_divide (deci a, deci b) {
 
 #define MAX_NB 7
 
-INLINE REBINT m_to_string (REBYTE *s, REBINT n, const REBCNT a[]) {
+static INLINE REBINT m_to_string (REBYTE *s, REBINT n, const REBCNT a[]) {
     REBCNT r, b[MAX_NB];
 	REBYTE v[10 * MAX_NB + 1], *vmax, *k;
     
@@ -1068,7 +1068,7 @@ INLINE REBINT m_to_string (REBYTE *s, REBINT n, const REBCNT a[]) {
 		*--k = '0' + r;
 	}
 
-	strcpy(s, k);
+	strcpy(s_cast(s), s_cast(k));
     return vmax - k;
 }
 
@@ -1102,7 +1102,7 @@ REBINT deci_to_string(REBYTE *string, const deci a, const REBYTE symbol, const R
 				}
 				*s++ = 'e';
 				INT_TO_STR(e - 1, s);
-				s = strchr(s, '\0');
+				s = b_cast(strchr(s_cast(s), '\0'));
 			} else { /* -6 <= e <= 0 */
 				memmove(s + 2 - e, s, j + 1);
 				*s++ = '0';
@@ -1122,7 +1122,7 @@ REBINT deci_to_string(REBYTE *string, const deci a, const REBYTE symbol, const R
 			s += j;
 			*s++ = 'e';
 			INT_TO_STR(e - j, s);
-			s = strchr(s, '\0');
+			s = b_cast(strchr(s_cast(s), '\0'));
 	}
 	
 	return s - string;
@@ -1180,8 +1180,8 @@ deci deci_mod (deci a, deci b) {
 }
 
 /* in case of error the function returns deci_zero and *endptr = s */
-deci string_to_deci (REBYTE *s, REBYTE **endptr) {
-	REBYTE *a = s;
+deci string_to_deci (const REBYTE *s, const REBYTE **endptr) {
+	const REBYTE *a = s;
 	deci b = {0, 0, 0, 0, 0};
 	REBCNT sb[] = {0, 0, 0, 0}; /* significand */
 	REBINT f = 0, e = 0; /* exponents */
@@ -1281,7 +1281,7 @@ REBFLG deci_is_same (deci a, deci b) {
 	return (a.m0 == b.m0) && (a.m1 == b.m1) && (a.m2 == b.m2) && (a.s == b.s) && (a.e == b.e);
 }
 
-deci binary_to_deci(REBYTE s[12]) {
+deci binary_to_deci(const REBYTE s[12]) {
 	deci d;
 	/* this looks like the only way, since the order of bits in bitsets is compiler-dependent */
 	d.s = s[0] >> 7;

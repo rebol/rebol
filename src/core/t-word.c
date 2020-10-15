@@ -84,8 +84,8 @@
 
 	switch (action) {
 	case A_LENGTHQ:
-		diff = LEN_BYTES(Get_Sym_Name(VAL_WORD_SYM(val)));
-		if (type != REB_WORD) diff++;
+		diff = (REBINT)Length_As_UTF8_Code_Points(Get_Sym_Name(VAL_WORD_SYM(val)));
+		//if (type != REB_WORD) diff++; // in case that the _decoration_ should be also counted (#abc :abc abc: 'abc)
 		DS_Ret_Int(diff);
 		break;
 
@@ -98,7 +98,7 @@
 			return R_ARG2;
 		}
 		else {
-			if (IS_STRING(arg)) {
+			if (IS_STRING(arg) || IS_REF(arg)) {
 				REBYTE *bp;
 				REBCNT len;
 				// Set sym. Rest is set below.
@@ -108,7 +108,7 @@
 				if (!sym) Trap1(RE_BAD_CHAR, arg);
 			}
 			else if (IS_CHAR(arg)) {
-				REBYTE buf[8];
+				REBYTE buf[8] = {0};
 				sym = Encode_UTF8_Char(&buf[0], VAL_CHAR(arg)); //returns length
 				sym = Scan_Word(&buf[0], sym);
 				if (!sym) Trap1(RE_BAD_CHAR, arg);

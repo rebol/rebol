@@ -105,7 +105,7 @@ static void reverse_string(REBVAL *value, REBCNT len)
 	}
 }
 
-static REBCNT find_string(REBSER *series, REBCNT index, REBCNT end, REBVAL *target, REBCNT len, REBCNT flags, REBINT skip)
+static REBCNT find_string(REBSER *series, REBCNT index, REBCNT end, REBVAL *target, REBCNT len, REBCNT flags, REBINT skip, REBVAL *wild)
 {
 	REBCNT start = index;
 
@@ -116,12 +116,17 @@ static REBCNT find_string(REBSER *series, REBCNT index, REBCNT end, REBVAL *targ
 		else index--;
 	}
 
+	if (flags & AM_FIND_SAME) flags |= AM_FIND_CASE; // /SAME has same functionality as /CASE for any-string!
+
 	if (ANY_BINSTR(target)) {
 		// Do the optimal search or the general search?
-		if (BYTE_SIZE(series) && VAL_BYTE_SIZE(target) && !(flags & ~(AM_FIND_CASE|AM_FIND_MATCH)))
+		if (BYTE_SIZE(series) && VAL_BYTE_SIZE(target) && !(flags & ~(AM_FIND_CASE|AM_FIND_MATCH))) {
 			return Find_Byte_Str(series, start, VAL_BIN_DATA(target), len, !GET_FLAG(flags, ARG_FIND_CASE-1), GET_FLAG(flags, ARG_FIND_MATCH-1));
-		else
-			return Find_Str_Str(series, start, index, end, skip, VAL_SERIES(target), VAL_INDEX(target), len, flags & (AM_FIND_MATCH|AM_FIND_CASE));
+		} else if (flags & AM_FIND_ANY) {
+			return Find_Str_Str_Any(series, start, index, end, skip, VAL_SERIES(target), VAL_INDEX(target), len, flags, wild);
+		} else {
+			return Find_Str_Str(series, start, index, end, skip, VAL_SERIES(target), VAL_INDEX(target), len, flags & (AM_FIND_MATCH | AM_FIND_CASE | AM_FIND_TAIL));
+		}
 	}
 	else if (IS_BINARY(target)) {
 		return Find_Byte_Str(series, start, VAL_BIN_DATA(target), len, 0, GET_FLAG(flags, ARG_FIND_MATCH-1));
@@ -149,19 +154,7 @@ static REBSER *make_string(REBVAL *arg, REBOOL make)
 	}
 	// MAKE/TO <type> <binary!>
 	else if (IS_BINARY(arg)) {
-		REBYTE *bp = VAL_BIN_DATA(arg);
-		REBCNT len = VAL_LEN(arg);
-		switch (What_UTF(bp, len)) {
-		case 0:
-			break;
-		case 8: // UTF-8 encoded
-			bp  += 3;
-			len -= 3;
-			break;
-		default:
-			Trap0(RE_BAD_DECODE);
-		}
-		ser = Decode_UTF_String(bp, len, 8); // UTF-8
+		ser = Decode_UTF_String(VAL_BIN_DATA(arg), VAL_LEN(arg), -1, FALSE, FALSE);
 	}
 	// MAKE/TO <type> <any-string>
 	else if (ANY_BINSTR(arg)) {
@@ -227,8 +220,15 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	case REB_EMAIL:
 	case REB_URL:
 	case REB_TAG:
+	case REB_REF:
 //	case REB_ISSUE:
 		ser = Encode_UTF8_Value(arg, VAL_LEN(arg), 0);
+		break;
+
+	// MAKE/TO BINARY! <vector!>
+	case REB_VECTOR:
+		// result is in little-endian!
+		ser = Copy_Bytes(VAL_BIN_DATA(arg), VAL_LEN(arg) * VAL_VEC_WIDTH(arg));
 		break;
 
 	case REB_BLOCK:
@@ -278,8 +278,9 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 ***********************************************************************/
 {
 	REBCNT i;
-
-	if (!ANY_BINSTR(data)) return FALSE;
+	// allow only #[string! "data"] or #[string! "data" index]
+	if (!(ANY_BINSTR(data) && (IS_END(data+1) || (IS_INTEGER(data+1) && IS_END(data+2)))))
+		return FALSE;
 	*out = *data++;
 	VAL_SET(out, type);
 	i = IS_INTEGER(data) ? Int32(data) - 1 : 0;
@@ -291,7 +292,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 /***********************************************************************
 **
-*/	static int Compare_Chr(const void *v1, const void *v2)
+*/	static int Compare_Chr_Cased(const void *v1, const void *v2)
 /*
 ***********************************************************************/
 {
@@ -301,11 +302,91 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 /***********************************************************************
 **
-*/	static int Compare_Chr_Rev(const void *v1, const void *v2)
+*/	static int Compare_Chr_Cased_Rev(const void *v1, const void *v2)
 /*
 ***********************************************************************/
 {
 	return ((int)*(REBYTE*)v2) - ((int)*(REBYTE*)v1);
+}
+
+/***********************************************************************
+**
+*/	static int Compare_Chr_Uncased(const void *v1, const void *v2)
+/*
+***********************************************************************/
+{
+	return ((int)LO_CASE(*(REBYTE*)v1)) - ((int)LO_CASE(*(REBYTE*)v2));
+}
+
+
+/***********************************************************************
+**
+*/	static int Compare_Chr_Uncased_Rev(const void *v1, const void *v2)
+/*
+***********************************************************************/
+{
+	return ((int)LO_CASE(*(REBYTE*)v2)) - ((int)LO_CASE(*(REBYTE*)v1));
+}
+
+// WARNING! Not re-entrant. !!!  Must find a way to push it on stack?
+static struct {
+	REBFLG cased;
+	REBFLG reverse;
+	REBCNT offset;
+	REBVAL *compare;
+	REBFLG wide;
+} sort_flags = {0};
+
+/***********************************************************************
+**
+*/	static int Compare_Call(const void *p1, const void *p2)
+/*
+***********************************************************************/
+{
+	REBVAL *v1;
+	REBVAL *v2;
+	REBVAL *val;
+	REBVAL *tmp;
+
+	// O: is there better way how to temporary use 2 values?
+	DS_SKIP; v1 = DS_TOP;
+	DS_SKIP; v2 = DS_TOP;
+
+	if (sort_flags.wide) {
+		SET_CHAR(v1, (int)(*(REBUNI*)p2));
+		SET_CHAR(v2, (int)(*(REBUNI*)p1));
+	} else {
+		SET_CHAR(v1, (int)(*(REBYTE*)p2));
+		SET_CHAR(v2, (int)(*(REBYTE*)p1));
+	}
+	
+	if (sort_flags.reverse) {
+		tmp = v1;
+		v1 = v2;
+		v2 = tmp;
+	}
+
+	val = Apply_Func(0, sort_flags.compare, v1, v2, 0);
+
+	// v1 and v2 no more needed...
+	DS_POP;
+	DS_POP;
+
+	if (IS_LOGIC(val)) {
+		if (IS_TRUE(val)) return 1;
+		return -1;
+	}
+	if (IS_INTEGER(val)) {
+		if (VAL_INT64(val) < 0) return 1;
+		if (VAL_INT64(val) == 0) return 0;
+		return -1;
+	}
+	if (IS_DECIMAL(val)) {
+		if (VAL_DECIMAL(val) < 0) return 1;
+		if (VAL_DECIMAL(val) == 0) return 0;
+		return -1;
+	}
+	return -1;
 }
 
 
@@ -318,6 +399,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	REBCNT len;
 	REBCNT skip = 1;
 	REBCNT size = 1;
+	REBSER *args;
 	int (*sfunc)(const void *v1, const void *v2);
 
 	// Determine length of sort:
@@ -333,7 +415,27 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 	// Use fast quicksort library function:
 	if (skip > 1) len /= skip, size *= skip;
-	sfunc = rev ? Compare_Chr_Rev : Compare_Chr;
+
+	if (ANY_FUNC(compv)) {
+		// Check argument types of comparator function.
+		args = VAL_FUNC_ARGS(compv);
+		if (BLK_LEN(args) > 1 && !TYPE_CHECK(BLK_SKIP(args, 1), REB_CHAR))
+			Trap3(RE_EXPECT_ARG, Of_Type(compv), BLK_SKIP(args, 1), Get_Type_Word(REB_CHAR));
+		if (BLK_LEN(args) > 2 && !TYPE_CHECK(BLK_SKIP(args, 2), REB_CHAR))
+			Trap3(RE_EXPECT_ARG, Of_Type(compv), BLK_SKIP(args, 2), Get_Type_Word(REB_CHAR));
+		sort_flags.cased = ccase;
+		sort_flags.reverse = rev;
+		sort_flags.compare = 0;
+		sort_flags.offset = 0;
+		sort_flags.compare = compv;
+		sort_flags.wide = 1 < SERIES_WIDE(VAL_SERIES(string));
+		sfunc = Compare_Call;
+
+	} else if (ccase) {
+		sfunc = rev ? Compare_Chr_Cased_Rev : Compare_Chr_Cased;
+	} else {
+		sfunc = rev ? Compare_Chr_Uncased_Rev : Compare_Chr_Uncased;
+	}
 
 	//!!uni - needs to compare wide chars too
 	reb_qsort((void *)VAL_DATA(string), len, size * SERIES_WIDE(VAL_SERIES(string)), sfunc);
@@ -349,11 +451,11 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	REBVAL *data = pvs->value;
 	REBVAL *val = pvs->setval;
 	REBINT n = 0;
-	REBCNT i;
+	REBINT i;
 	REBINT c;
 	REBSER *ser = VAL_SERIES(data);
 
-	if (IS_INTEGER(pvs->select)) {
+	if (IS_INTEGER(pvs->select) || IS_DECIMAL(pvs->select)) {
 		i = Int32(pvs->select);
 		if (i == 0) return PE_NONE; // like in case: path/0
 		if (i < 0) i++;
@@ -517,21 +619,24 @@ find:
 
 		if (ANY_BINSTR(arg)) len = VAL_LEN(arg);
 
-		if (args & AM_FIND_PART) tail = Partial(value, 0, D_ARG(ARG_FIND_LENGTH), 0);
+		if (args & AM_FIND_PART) tail = index + Partial(value, 0, D_ARG(ARG_FIND_LENGTH), 0);
 		ret = 1; // skip size
-		if (args & AM_FIND_SKIP) ret = Partial(value, 0, D_ARG(ARG_FIND_SIZE), 0);
+		if (args & AM_FIND_SKIP) {
+			ret = Partial(value, 0, D_ARG(ARG_FIND_SIZE), 0);
+			if(!ret) goto is_none;
+		}
 
-		ret = find_string(VAL_SERIES(value), index, tail, arg, len, args, ret);
+		if (action == A_SELECT) args |= AM_FIND_TAIL;
 
-		if (ret >= (REBCNT)tail) goto is_none;
+		ret = find_string(VAL_SERIES(value), index, tail, arg, len, args, ret, D_ARG(ARG_FIND_WILD));
+
+		if (ret > (REBCNT)tail) goto is_none;
 		if (args & AM_FIND_ONLY) len = 1;
 
 		if (action == A_FIND) {
-			if (args & (AM_FIND_TAIL | AM_FIND_MATCH)) ret += len;
 			VAL_INDEX(value) = ret;
 		}
 		else {
-			ret++;
 			if (ret >= (REBCNT)tail) goto is_none;
 			if (IS_BINARY(value)) {
 				SET_INTEGER(value, *BIN_SKIP(VAL_SERIES(value), ret));
@@ -706,8 +811,9 @@ zero_str:
 		break;
 
 	case A_RANDOM:
+		if(IS_PROTECT_SERIES(VAL_SERIES(value))) Trap0(RE_PROTECTED);
 		if (D_REF(2)) { // seed
-			Set_Random(Compute_CRC(VAL_BIN_DATA(value), VAL_LEN(value)));
+			Set_Random(Compute_CRC24(VAL_BIN_DATA(value), VAL_LEN(value)));
 			return R_UNSET;
 		}
 		if (D_REF(4)) { // /only

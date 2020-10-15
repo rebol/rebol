@@ -121,12 +121,197 @@ static void *Task_Ready;
 	}
 }
 
+#ifdef removing_this_code
+// this function is not needed. Now is possible to use RL_GET_STRING with WIDE flag
+/***********************************************************************
+**
+*/	REBOOL As_OS_Str(REBSER *series, REBCHR **string)
+/*
+**	If necessary, convert a string series to Win32 wide-chars.
+**  (Handy for GOB/TEXT handling).
+**  If the string series is empty the resulting string is set to NULL
+**
+**  Function returns:
+**      TRUE - if the resulting string needs to be deallocated by the caller code
+**      FALSE - if REBOL string is used (no dealloc needed)
+**
+**  Note: REBOL strings are allowed to contain nulls.
+**
+***********************************************************************/
+{
+	int len, n;
+	void *str;
+	wchar_t *wstr;
+
+	if ((len = RL_Get_String(series, 0, &str)) < 0) {
+		// Latin1 byte string - convert to wide chars
+		len = -len;
+		wstr = OS_Make((len + 1) * sizeof(wchar_t));
+		for (n = 0; n < len; n++)
+			wstr[n] = (wchar_t)((unsigned char*)str)[n];
+		wstr[len] = 0;
+		//note: following string needs be deallocated in the code that uses this function
+		*string = (REBCHR*)wstr;
+		return TRUE;
+	}
+	*string = (len == 0) ? NULL : str; //empty string check
+	return FALSE;
+}
+#endif
 
 /***********************************************************************
 **
 **	OS Library Functions
 **
 ***********************************************************************/
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_PID()
+/*
+**		Return the current process ID
+**
+***********************************************************************/
+{
+	return GetCurrentProcessId();
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_UID()
+/*
+**		Return the real user ID
+**
+***********************************************************************/
+{
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_UID(REBINT uid)
+/*
+**		Set the user ID, see setuid manual for its semantics
+**
+***********************************************************************/
+{
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_GID()
+/*
+**		Return the real group ID
+**
+***********************************************************************/
+{
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_GID(REBINT gid)
+/*
+**		Set the group ID, see setgid manual for its semantics
+**
+***********************************************************************/
+{
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_EUID()
+/*
+**		Return the effective user ID
+**
+***********************************************************************/
+{
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_EUID(REBINT uid)
+/*
+**		Set the effective user ID
+**
+***********************************************************************/
+{
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_EGID()
+/*
+**		Return the effective group ID
+**
+***********************************************************************/
+{
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_EGID(REBINT gid)
+/*
+**		Set the effective group ID
+**
+***********************************************************************/
+{
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Send_Signal(REBINT pid, REBINT signal)
+/*
+**		Send signal to a process
+**
+***********************************************************************/
+{
+	if (signal == 9 || signal == 15) { //SIGKILL || SIGTERM
+		return OS_Kill(pid);
+	}
+	return OS_ENA;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Kill(REBINT pid)
+/*
+**		Try to kill the process
+**
+***********************************************************************/
+{
+	REBINT err = 0;
+	HANDLE ph = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+	if (ph == NULL) {
+		err = GetLastError();
+		switch (err) {
+			case ERROR_ACCESS_DENIED:
+				return OS_EPERM;
+			case ERROR_INVALID_PARAMETER:
+				return OS_ESRCH;
+			default:
+				return OS_ESRCH;
+		}
+	}
+	if (TerminateProcess(ph, 0)) {
+		CloseHandle(ph);
+		return 0;
+	}
+	err = GetLastError();
+	CloseHandle(ph);
+	switch (err) {
+		case ERROR_INVALID_HANDLE:
+			return OS_EINVAL;
+		default:
+			return -err;
+	}
+}
 
 /***********************************************************************
 **
@@ -178,13 +363,24 @@ static void *Task_Ready;
 **
 */	void OS_Exit(int code)
 /*
-**		Called in cases where REBOL needs to quit immediately
-**		without returning from the main() function.
+**		Called in all cases when REBOL quits
+**
+**		If there would be case when freeing resources is not wanted,
+**		it should be signalised by a new argument.
 **
 ***********************************************************************/
 {
 	//OS_Call_Device(RDI_STDIO, RDC_CLOSE); // close echo
+	
 	OS_Quit_Devices(0);
+#ifdef USE_NATIVE_IMAGE_CODECS
+	OS_Release_Codecs();
+#endif
+#ifdef REB_VIEW
+	//Dispose_Graphics();
+	Dispose_Windows();
+#endif
+	RL_Dispose();
 	exit(code);
 }
 
@@ -251,6 +447,8 @@ static void *Task_Ready;
 	if (!ok) COPY_STR(str, TEXT("unknown error"), len);
 	else {
 		COPY_STR(str, lpMsgBuf, len);
+		len = (int)LEN_STR(str);
+		if (str[len-2] == '\r' && str[len-1] == '\n') str[len-2] = 0; // trim CRLF
 		LocalFree(lpMsgBuf);
 	}
 	return str;
@@ -348,7 +546,7 @@ static void *Task_Ready;
 	REBCHR *str;
 
 	str = env;
-	while (n = LEN_STR(str)) {
+	while (n = (REBCNT)LEN_STR(str)) {
 		len += n + 1;
 		str = env + len; // next
 	}
@@ -399,7 +597,7 @@ static void *Task_Ready;
 	LARGE_INTEGER time;
 
 	if (!QueryPerformanceCounter(&time))
-		OS_Crash("Missing resource", "High performance timer");
+		OS_Crash(cb_cast("Missing resource"), "High performance timer");
 
 	if (base == 0) return time.QuadPart; // counter (may not be time)
 
@@ -440,7 +638,7 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	return SetCurrentDirectory(path);
+	return SetCurrentDirectory( path[0]==0 ? L"\\" : path );
 }
 
 
@@ -494,7 +692,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Find_Function(void *dll, char *funcname)
+*/	void *OS_Find_Function(void *dll, const char *funcname)
 /*
 **		Get a DLL function address from its string name.
 **
@@ -1029,11 +1227,30 @@ input_error:
 	return ret;  // meaning depends on flags
 }
 
+/***********************************************************************
+**
+*/	int OS_Reap_Process(int pid, int *status, int flags)
+/*
+ * pid: 
+ * 		> 0, a signle process
+ * 		-1, any child process
+ * flags:
+ * 		0: return immediately
+ * 		1: wait until one of child processes exits
+ *
+**		Return -1 on error, otherwise process ID
+***********************************************************************/
+{
+	/* It seems that process doesn't need to be reaped on Windows */
+	return 0;
+}
 
 /***********************************************************************
 **
 */	int OS_Browse(REBCHR *url, int reserved)
 /*
+**		Return FALSE on error else TRUE (like on Posix)
+**
 ***********************************************************************/
 {
 	#define MAX_BRW_PATH 2044
@@ -1046,7 +1263,7 @@ input_error:
 	int exit_code = 0;
 
 	if (RegOpenKeyEx(HKEY_CLASSES_ROOT, TEXT("http\\shell\\open\\command"), 0, KEY_READ, &key) != ERROR_SUCCESS)
-		return 0;
+		return FALSE;
 
 	if (!url) url = TEXT("");
 
@@ -1057,7 +1274,7 @@ input_error:
 	RegCloseKey(key);
 	if (flag != ERROR_SUCCESS) {
 		FREE_MEM(path);
-		return 0;
+		return FALSE;
 	}
 	//if (ExpandEnvironmentStrings(&str[0], result, len))
 
@@ -1072,7 +1289,7 @@ input_error:
 							INHERIT_TYPE, NULL, NULL); /* u32 err_type, void **err, u32 *err_len */
 
 	FREE_MEM(path);
-	return len;
+	return (len < 0) ? FALSE : TRUE;
 }
 
 
@@ -1085,7 +1302,7 @@ input_error:
 	OPENFILENAME ofn = {0};
 	BOOL ret;
 	//int err;
-	REBCHR *filters = TEXT("All files\0*.*\0REBOL scripts\0*.r\0Text files\0*.txt\0"	);
+	REBCHR *filters = TEXT("All files\0*.*\0REBOL scripts\0*.reb\0Text files\0*.txt\0"	);
 
 	ofn.lStructSize = sizeof(ofn);
 
@@ -1114,27 +1331,3 @@ input_error:
 	return ret;
 }
 
-
-/***********************************************************************
-**
-*/	REBSER *OS_GOB_To_Image(REBGOB *gob)
-/*
-**		Render a GOB into an image. Returns an image or zero if
-**		it cannot be done.
-**
-***********************************************************************/
-{
-
-#ifndef REB_CORE
-
-#ifndef NO_COMPOSITOR
-	return (REBSER*)Gob_To_Image(gob);
-#else
-	return 0;
-#endif
-
-#else
-	return 0;
-#endif
-
-}

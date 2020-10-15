@@ -37,7 +37,7 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Grab_Int(REBYTE *cp, REBINT *val)
+*/	const REBYTE *Grab_Int(const REBYTE *cp, REBINT *val)
 /*
 **		Grab an integer value from the string.
 **
@@ -70,7 +70,7 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Grab_Int_Scale(REBYTE *cp, REBINT *val, REBCNT scale)
+*/	const REBYTE *Grab_Int_Scale(const REBYTE *cp, REBINT *val, REBCNT scale)
 /*
 **		Return integer scaled to the number of digits specified.
 **		Used for the decimal part of numbers (e.g. times).
@@ -177,18 +177,18 @@
 
 	n = Form_Int_Len(tmp, val, max);
 	if (n == 0) {
-		strcpy(buf, "??");
+		strcpy(s_cast(buf), "??");
 		return buf;  // too long
 	}
 
 	if (len >= 0) {
-		strcpy(buf, tmp);
+		strcpy(s_cast(buf), s_cast(tmp));
 		buf += n;
 		for (; n < len; n++) *buf++ = pad;
 	}
 	else { // len < 0
 		for (; n < -len; len++) *buf++ = pad;
-		strcpy(buf, tmp);
+		strcpy(s_cast(buf), s_cast(tmp));
 		buf += n;
 	}
 
@@ -231,7 +231,7 @@
 ***********************************************************************/
 {
 	INT_TO_STR(val, buf);
-	return LEN_BYTES(buf);
+	return (REBINT)LEN_BYTES(buf);
 }
 
 
@@ -253,14 +253,14 @@
 	if (decimal_digits < MIN_DIGITS) decimal_digits = MIN_DIGITS;
 	else if (decimal_digits > MAX_DIGITS) decimal_digits = MAX_DIGITS;
 
-	sig = (REBYTE *) dtoa (d, 0, decimal_digits, &e, &sgn, (char **) &rve);
+	sig = (REBYTE *) dtoa (d, 2, decimal_digits, &e, &sgn, (char **) &rve);
 
 	digits_obtained = rve - sig;
 
 	/* handle sign */
 	if (sgn) *cp++ = '-';
 
-	if (trim == DEC_MOLD_PERCENT) e += 2;
+	if (trim == DEC_MOLD_PERCENT && (digits_obtained > 1 || sig[0] != '0')) e += 2;
 
 	if ((e > decimal_digits) || (e <= -6)) {
 		/* e-format */
@@ -317,7 +317,7 @@
 	if (e) {
 		*cp++ = 'e';
 		INT_TO_STR(e - 1, cp);
-		cp = strchr(cp, 0);
+		cp = b_cast(strchr(s_cast(cp), 0));
 	}
 
  	if (trim == DEC_MOLD_PERCENT) *cp++ = '%';

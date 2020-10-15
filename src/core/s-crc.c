@@ -32,18 +32,19 @@
 #define CRC_DEFINED
 
 #define CRCBITS 24			/* may be 16, 24, or 32 */
-#define MASK_CRC(crc) ((crc) & 0x00ffffffL)	  /* if CRCBITS is 24 */
-#define CRCHIBIT ((REBCNT) (1L<<(CRCBITS-1))) /* 0x8000 if CRCBITS is 16 */
+#define MASK_CRC(crc) ((crc) & I32_C(0x00ffffff))	  /* if CRCBITS is 24 */
+#define CRCHIBIT ((REBCNT) (I32_C(1)<<(CRCBITS-1))) /* 0x8000 if CRCBITS is 16 */
 #define CRCSHIFTS (CRCBITS-8)
 #define CCITTCRC 0x1021 	/* CCITT's 16-bit CRC generator polynomial */
 #define PRZCRC   0x864cfb	/* PRZ's 24-bit CRC generator polynomial */
 #define CRCINIT  0xB704CE	/* Init value for CRC accumulator */
 
-static REBCNT *CRC_Table;
+static REBCNT *CRC24_Table;
+static REBCNT *CRC32_Table = 0;
 
 /***********************************************************************
 **
-*/	static REBCNT Generate_CRC(REBYTE ch, REBCNT poly, REBCNT accum)
+*/	static REBCNT Generate_CRC24(REBYTE ch, REBCNT poly, REBCNT accum)
 /*
 **		Simulates CRC hardware circuit.  Generates true CRC
 **		directly, without requiring extra NULL bytes to be appended
@@ -95,7 +96,7 @@ static REBCNT *CRC_Table;
 
 /***********************************************************************
 **
-*/	static void Make_CRC_Table(REBCNT poly)
+*/	static void Make_CRC24_Table(REBCNT poly)
 /*
 **		Derives a CRC lookup table from the CRC polynomial.
 **		The table is used later by crcupdate function given below.
@@ -105,13 +106,13 @@ static REBCNT *CRC_Table;
 {
 	REBINT i;
 
-	FOREACH (i, 256) CRC_Table[i] = Generate_CRC((REBYTE) i, poly, 0);
+	FOREACH (i, 256) CRC24_Table[i] = Generate_CRC24((REBYTE) i, poly, 0);
 }
 
 
 /***********************************************************************
 **
-*/	REBINT Compute_CRC(REBYTE *str, REBCNT len)
+*/	REBINT Compute_CRC24(REBYTE *str, REBCNT len)
 /*
 ***********************************************************************/
 {
@@ -120,7 +121,7 @@ static REBCNT *CRC_Table;
 
 	for (; len > 0; len--) {
 		n = (REBYTE)((crc >> CRCSHIFTS) ^ (REBYTE)(*str++));
-		crc = MASK_CRC(crc << 8) ^ (REBINT)CRC_Table[n];
+		crc = MASK_CRC(crc << 8) ^ (REBINT)CRC24_Table[n];
 	}
 
 	return crc;
@@ -141,7 +142,7 @@ static REBCNT *CRC_Table;
 
 	for (; len > 0; len--) {
 		n = (REBYTE)((hash >> CRCSHIFTS) ^ (REBYTE)LO_CASE(*str++));
-		hash = MASK_CRC(hash << 8) ^ (REBINT)CRC_Table[n];
+		hash = MASK_CRC(hash << 8) ^ (REBINT)CRC24_Table[n];
 	}
 
 	return hash;
@@ -150,7 +151,7 @@ static REBCNT *CRC_Table;
 
 /***********************************************************************
 **
-*/	REBINT Hash_Word(REBYTE *str, REBINT len)
+*/	REBINT Hash_Word(const REBYTE *str, REBINT len)
 /*
 **		Return a case insensitive hash value for the string.
 **
@@ -160,7 +161,7 @@ static REBCNT *CRC_Table;
 	REBINT hash;
 	REBCNT ulen;
 
-	if (len < 0) len = LEN_BYTES(str);
+	if (len < 0) len = (REBINT)LEN_BYTES(str);
 
 	hash = (REBINT)len + (REBINT)((REBYTE)LO_CASE(*str));
 
@@ -171,7 +172,7 @@ static REBCNT *CRC_Table;
 		if (n > 127 && NZ(m = Decode_UTF8_Char(&str, &ulen))) n = m; // mods str, ulen
 		if (n < UNICODE_CASES) n = LO_CASE(n);
 		n = (REBYTE)((hash >> CRCSHIFTS) ^ (REBYTE)n); // drop upper 8 bits
-		hash = MASK_CRC(hash << 8) ^ (REBINT)CRC_Table[n];
+		hash = MASK_CRC(hash << 8) ^ (REBINT)CRC24_Table[n];
 	}
 
 	return hash;
@@ -208,6 +209,7 @@ static REBCNT *CRC_Table;
 	case REB_EMAIL:
 	case REB_URL:
 	case REB_TAG:
+	case REB_REF:
 		ret = Hash_String(VAL_BIN_DATA(val), Val_Byte_Len(val));
 		break;
 
@@ -323,8 +325,19 @@ static REBCNT *CRC_Table;
 /*
 ***********************************************************************/
 {
-	CRC_Table = Make_Mem(sizeof(REBCNT) * 256);
-	Make_CRC_Table(PRZCRC);
+	CRC24_Table = Make_Mem(sizeof(REBCNT) * 256);
+	Make_CRC24_Table(PRZCRC);
+}
+
+
+/***********************************************************************
+**
+*/	void Dispose_CRC(void)
+/*
+***********************************************************************/
+{
+	Free_Mem(CRC24_Table, 0);
+	Free_Mem(CRC32_Table, 0);
 }
 
 
@@ -357,24 +370,21 @@ static REBCNT *CRC_Table;
 
 
 
-
-static u32 *crc32_table = 0;
-
 static void Make_CRC32_Table(void) {
-	unsigned long c;
+	u32 c;
 	int n,k;
 
-	crc32_table = Make_Mem(256 * sizeof(u32));
+	CRC32_Table = Make_Mem(256 * sizeof(u32));
 
 	for(n=0;n<256;n++) {
-		c=(unsigned long)n;
+		c=(u32)n;
 		for(k=0;k<8;k++) {
 			if(c&1)
-				c=0xedb88320L^(c>>1);
+				c=U32_C(0xedb88320)^(c>>1);
 			else
 				c=c>>1;
 		}
-		crc32_table[n]=c;
+		CRC32_Table[n]=c;
 	}
 }
 
@@ -382,10 +392,10 @@ REBCNT Update_CRC32(u32 crc, REBYTE *buf, int len) {
 	u32 c = ~crc;
 	int n;
 
-	if(!crc32_table) Make_CRC32_Table();
+	if(!CRC32_Table) Make_CRC32_Table();
 
 	for(n = 0; n < len; n++)
-		c = crc32_table[(c^buf[n])&0xff]^(c>>8);
+		c = CRC32_Table[(c^buf[n])&0xff]^(c>>8);
 
 	return ~c;
 }
@@ -396,7 +406,7 @@ REBCNT Update_CRC32(u32 crc, REBYTE *buf, int len) {
 /*
 ***********************************************************************/
 {
-	return Update_CRC32(0x00000000L, buf, len);
+	return Update_CRC32(U32_C(0x00000000), buf, len);
 }
 
 

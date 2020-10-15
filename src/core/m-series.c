@@ -27,6 +27,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include "sys-int-funcs.h"
 
 
 /***********************************************************************
@@ -37,7 +38,7 @@
 **		number of units specified by delta.
 **
 **			index - where space is expanded (but not cleared)
-**			delta - number of UNITS to expand (keeping terminator)
+**			delta - number of UNITS to expand from TAIL (keeping terminator)
 **			tail  - will be updated
 **
 **			        |<---rest--->|
@@ -60,7 +61,7 @@
 ***********************************************************************/
 {
 	REBCNT start;
-	REBCNT size;
+	REBCNT size, new_size;
 	REBCNT extra;
 	REBCNT wide;
 	REBSER *newser, swap;
@@ -95,7 +96,7 @@
 		//DISABLE_GC; // Don't let GC occur just for an expansion.
 
 		if (Reb_Opts->watch_expand) {
-			Debug_Fmt("Expand %x wide: %d tail: %d delta: %d", series, wide, series->tail, delta);
+			Debug_Fmt(cb_cast("Expand %x wide: %d tail: %d delta: %d"), series, wide, series->tail, delta);
 		}
 
 		// Create a new series that is bigger.
@@ -112,7 +113,13 @@
 #ifdef DEBUGGING
 		Print_Num("Expand:", series->tail + delta + 1);
 #endif
-		newser = Make_Series(series->tail + delta + x, wide, TRUE);
+		/* new_size = series->tail + delta + x with overflow checking */
+		if (REB_U32_ADD_OF(series->tail, delta, &new_size)
+			|| REB_U32_ADD_OF(new_size, x, &new_size)) {
+			Trap0(RE_PAST_END);
+		}
+
+		newser = Make_Series(new_size, wide, TRUE);
 		// If necessary, add series to the recently expanded list:
 		if (Prior_Expand[n] != series) {
 			n = (REBUPT)(Prior_Expand[0]) + 1;
@@ -196,7 +203,7 @@
 
 /***********************************************************************
 **
-*/	void Append_Series(REBSER *series, REBYTE *data, REBCNT len)
+*/	void Append_Series(REBSER *series, const REBYTE *data, REBCNT len)
 /*
 **		Append value(s) onto the tail of a series.  The len is
 **		the number of units (bytes, REBVALS, etc.) of the data,
@@ -217,7 +224,7 @@
 
 /***********************************************************************
 **
-*/	void Append_Mem_Extra(REBSER *series, REBYTE *data, REBCNT len, REBCNT extra)
+*/	void Append_Mem_Extra(REBSER *series, const REBYTE *data, REBCNT len, REBCNT extra)
 /*
 **		An optimized function for appending raw memory bytes to
 **		a byte-sized series. The series will be expanded if room
@@ -344,13 +351,28 @@
 			CLEAR(series->data, SERIES_WIDE(series)); // terminate
 		} else {
 			// Add bias to head:
-			SERIES_ADD_BIAS(series, len);
-			SERIES_REST(series) -= len;
-			series->data += SERIES_WIDE(series) * len;
-			if (NZ(start = SERIES_BIAS(series))) {
-				// If more than half biased:
-				if (start >= MAX_SERIES_BIAS || start > SERIES_REST(series))
-					Reset_Bias(series);
+			REBCNT bias = SERIES_BIAS(series);
+			if (REB_U32_ADD_OF(bias, len, &bias)) {
+				Trap0(RE_OVERFLOW);
+			}
+			if (bias > 0xffff) { //bias is 16-bit, so a simple SERIES_ADD_BIAS could overflow it
+				REBYTE *data = series->data;
+
+				data += SERIES_WIDE(series) * len;
+				series->data -= SERIES_WIDE(series) * SERIES_BIAS(series);
+				SERIES_REST(series) += SERIES_BIAS(series);
+				SERIES_SET_BIAS(series, 0);
+
+				memmove(series->data, data, SERIES_USED(series));
+			} else {
+				SERIES_SET_BIAS(series, bias);
+				SERIES_REST(series) -= len;
+				series->data += SERIES_WIDE(series) * len;
+				if (NZ(start = SERIES_BIAS(series))) {
+					// If more than half biased:
+					if (start >= MAX_SERIES_BIAS || start > SERIES_REST(series))
+						Reset_Bias(series);
+				}
 			}
 		}
 		return;

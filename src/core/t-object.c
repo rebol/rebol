@@ -83,8 +83,8 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 			if ((VAL_WORD_CANON(arg) == SYM_SELF) && !IS_SELFLESS(obj))
 				Trap0(RE_SELF_PROTECTED);
 			Expand_Frame(obj, 1, 1); // copy word table also
-			Append_Frame(obj, 0, VAL_WORD_SYM(arg));
-			// val is UNSET
+			val = Append_Frame(obj, 0, VAL_WORD_SYM(arg));
+			SET_NONE(val);
 		}
 		return;
 	}
@@ -315,7 +315,9 @@ static REBSER *Trim_Object(REBSER *obj)
 
 				// make task! [init]
 				if (type == REB_TASK) {
+#ifdef INCLUDE_TASK
 					// Does it include a spec?
+					VAL_SET(value, REB_TASK);
 					if (IS_BLOCK(VAL_BLK(arg))) {
 						arg = VAL_BLK(arg);
 						if (!IS_BLOCK(arg+1)) Trap_Make(REB_TASK, value);
@@ -325,7 +327,12 @@ static REBSER *Trim_Object(REBSER *obj)
 						obj = Make_Module_Spec(0);
 						VAL_MOD_BODY(value) = VAL_SERIES(arg);
 					}
-					break; // returns obj
+					VAL_MOD_FRAME(value) = obj;
+					DS_RET_VALUE(value);
+#else
+					Trap0(RE_FEATURE_NA);
+#endif
+					return R_RET;
 				}
 			}
 

@@ -28,7 +28,6 @@
 ***********************************************************************/
 
 #include "sys-core.h"
-#include "sys-state.h"
 
 #define EVAL_DOSE 10000
 
@@ -51,7 +50,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	static void Assert_Basics()
+*/	static void Assert_Basics(void)
 /*
 ***********************************************************************/
 {
@@ -59,49 +58,52 @@ extern const REBYTE Str_Banner[];
 
 	VAL_SET(&val, 123);
 #ifdef WATCH_BOOT
-	printf("TYPE(123)=%d val=%d dat=%d gob=%d\n",
-		VAL_TYPE(&val), sizeof(REBVAL), sizeof(REBDAT), sizeof(REBGOB));
+	printf("TYPE(123)=%d val=%u dat=%u gob=%u\n",
+		VAL_TYPE(&val), (REBCNT)sizeof(REBVAL), (REBCNT)sizeof(REBDAT), (REBCNT)sizeof(REBGOB));
 #endif
 
 #ifdef SHOW_SIZEOFS
 	// For debugging ports to some systems:
-	printf("%d %s\n", sizeof(REBWRD), "word");
-	printf("%d %s\n", sizeof(REBSRI), "series");
-	printf("%d %s\n", sizeof(REBCNT), "logic");
-	printf("%d %s\n", sizeof(REBI64), "integer");
-	printf("%d %s\n", sizeof(REBU64), "unteger");
-	printf("%d %s\n", sizeof(REBINT), "int32");
-	printf("%d %s\n", sizeof(REBDEC), "decimal");
-	printf("%d %s\n", sizeof(REBUNI), "uchar");
-	printf("%d %s\n", sizeof(REBERR), "error");
-	printf("%d %s\n", sizeof(REBTYP), "datatype");
-	printf("%d %s\n", sizeof(REBFRM), "frame");
-	printf("%d %s\n", sizeof(REBWRS), "wordspec");
-	printf("%d %s\n", sizeof(REBTYS), "typeset");
-	printf("%d %s\n", sizeof(REBSYM), "symbol");
-	printf("%d %s\n", sizeof(REBTIM), "time");
-	printf("%d %s\n", sizeof(REBTUP), "tuple");
-	printf("%d %s\n", sizeof(REBFCN), "func");
-	printf("%d %s\n", sizeof(REBOBJ), "object");
-	printf("%d %s\n", sizeof(REBXYF), "pair");
-	printf("%d %s\n", sizeof(REBEVT), "event");
-	printf("%d %s\n", sizeof(REBLIB), "library");
-	printf("%d %s\n", sizeof(REBROT), "routine");
-	printf("%d %s\n", sizeof(REBSTU), "structure");
-	printf("%d %s\n", sizeof(REBGBO), "gob");
-	printf("%d %s\n", sizeof(REBUDT), "utype");
-	printf("%d %s\n", sizeof(REBDCI), "deci");
-	printf("%d %s\n", sizeof(REBHAN), "handle");
-	printf("%d %s\n", sizeof(REBALL), "all");
+	printf("%u %s\n", (REBCNT)sizeof(REBVAL), "rebval");
+	printf("%u %s\n", (REBCNT)sizeof(REBSER), "rebser");
+	printf("%u %s\n", (REBCNT)sizeof(REBWRD), "word");
+	printf("%u %s\n", (REBCNT)sizeof(REBSRI), "series");
+	printf("%u %s\n", (REBCNT)sizeof(REBCNT), "logic");
+	printf("%u %s\n", (REBCNT)sizeof(REBI64), "integer");
+	printf("%u %s\n", (REBCNT)sizeof(REBU64), "unteger");
+	printf("%u %s\n", (REBCNT)sizeof(REBINT), "int32");
+	printf("%u %s\n", (REBCNT)sizeof(REBDEC), "decimal");
+	printf("%u %s\n", (REBCNT)sizeof(REBUNI), "uchar");
+	printf("%u %s\n", (REBCNT)sizeof(REBERR), "error");
+	printf("%u %s\n", (REBCNT)sizeof(REBTYP), "datatype");
+	printf("%u %s\n", (REBCNT)sizeof(REBFRM), "frame");
+	printf("%u %s\n", (REBCNT)sizeof(REBWRS), "wordspec");
+	printf("%u %s\n", (REBCNT)sizeof(REBTYS), "typeset");
+	printf("%u %s\n", (REBCNT)sizeof(REBSYM), "symbol");
+	printf("%u %s\n", (REBCNT)sizeof(REBTIM), "time");
+	printf("%u %s\n", (REBCNT)sizeof(REBTUP), "tuple");
+	printf("%u %s\n", (REBCNT)sizeof(REBFCN), "func");
+	printf("%u %s\n", (REBCNT)sizeof(REBOBJ), "object");
+	printf("%u %s\n", (REBCNT)sizeof(REBXYF), "pair");
+	printf("%u %s\n", (REBCNT)sizeof(REBEVT), "event");
+	printf("%u %s\n", (REBCNT)sizeof(REBLIB), "library");
+	printf("%u %s\n", (REBCNT)sizeof(REBROT), "routine");
+	printf("%u %s\n", (REBCNT)sizeof(REBSTU), "structure");
+	printf("%u %s\n", (REBCNT)sizeof(REBGOB), "gob");
+	printf("%u %s\n", (REBCNT)sizeof(REBGBO), "gbo");
+	printf("%u %s\n", (REBCNT)sizeof(REBUDT), "utype");
+	printf("%u %s\n", (REBCNT)sizeof(REBDCI), "deci");
+	printf("%u %s\n", (REBCNT)sizeof(REBHAN), "handle");
+	printf("%u %s\n", (REBCNT)sizeof(REBALL), "all");
 #endif
 
 	ASSERT(VAL_TYPE(&val) == 123,  RP_REBVAL_ALIGNMENT);
 	if (sizeof(void *) == 8) {
 		ASSERT(sizeof(REBVAL) == 32,   RP_REBVAL_ALIGNMENT);
-		ASSERT1(sizeof(REBGOB) == 84,  RP_BAD_SIZE);
+		//ASSERT1(sizeof(REBGOB) == 84,  RP_BAD_SIZE);
 	} else {
 		ASSERT(sizeof(REBVAL) == 16,   RP_REBVAL_ALIGNMENT);
-		ASSERT1(sizeof(REBGOB) == 64,  RP_BAD_SIZE);
+		//ASSERT1(sizeof(REBGOB) == 64,  RP_BAD_SIZE);
 	}
 	ASSERT1(sizeof(REBDAT) == 4,   RP_BAD_SIZE);
 }
@@ -114,7 +116,7 @@ extern const REBYTE Str_Banner[];
 ***********************************************************************/
 {
 	if (rargs->options & RO_VERS) {
-		Debug_Fmt((REBYTE*)Str_Banner, REBOL_VER, REBOL_REV, REBOL_UPD, REBOL_SYS, REBOL_VAR);
+		Debug_Fmt(Str_Banner, REBOL_VER, REBOL_REV, REBOL_UPD, REBOL_SYS, REBOL_VAR);
 		OS_EXIT(0);
 	}
 }
@@ -172,14 +174,14 @@ extern const REBYTE Str_Banner[];
 		spec.tail = NAT_SPEC_SIZE;
 
 		textlen = Bytes_To_REBCNT(Native_Specs);
-		text = Decompress(&spec, 0, -1, textlen, 0);
+		text = DecompressZlib(&spec, 0, -1, textlen, 0);
 		if (!text || (STR_LEN(text) != textlen)) Crash(RP_BOOT_DATA);
 		boot = Scan_Source(STR_HEAD(text), textlen);
 		//Dump_Block_Raw(boot, 0, 2);
 		Free_Series(text);
 	}
 
-	Set_Root_Series(ROOT_BOOT, boot, "boot block");	// Do not let it get GC'd
+	Set_Root_Series(ROOT_BOOT, boot, cb_cast("boot block"));	// Do not let it get GC'd
 
 	Boot_Block = (BOOT_BLK *)VAL_BLK(BLK_HEAD(boot));
 
@@ -200,9 +202,9 @@ extern const REBYTE Str_Banner[];
 		}
 	}
 
-	ASSERT(!CMP_BYTES("end!", Get_Sym_Name(SYM_END_TYPE)), RP_BAD_END_CANON_WORD);
-	ASSERT(!CMP_BYTES("true", Get_Sym_Name(SYM_TRUE)), RP_BAD_TRUE_CANON_WORD);
-	ASSERT(!CMP_BYTES("line", BOOT_STR(RS_SCAN,1)), RP_BAD_BOOT_STRING);
+	ASSERT(!CMP_BYTES(cb_cast("end!"), Get_Sym_Name(SYM_END_TYPE)), RP_BAD_END_CANON_WORD);
+	ASSERT(!CMP_BYTES(cb_cast("true"), Get_Sym_Name(SYM_TRUE)), RP_BAD_TRUE_CANON_WORD);
+	ASSERT(!CMP_BYTES(cb_cast("line"), BOOT_STR(RS_SCAN,1)), RP_BAD_BOOT_STRING);
 }
 
 
@@ -249,6 +251,7 @@ extern const REBYTE Str_Banner[];
 
 	for (word++; NOT_END(word); word++, n++) {
 		COPY_BYTES(str, Get_Word_Name(word), 32);
+		str[31] = '\0';
 		str[LEN_BYTES(str)-1] = '?';
 		sym = Make_Word(str, 0);
 		//Print("sym: %s", Get_Sym_Name(sym));
@@ -334,7 +337,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	REBNATIVE(context)
+*/	REBNATIVE(object)
 /*
 **		The spec block has already been bound to Lib_Context, to
 **		allow any embedded values and functions to evaluate.
@@ -344,7 +347,7 @@ extern const REBYTE Str_Banner[];
 	REBVAL *spec = D_ARG(1);
 
 	SET_OBJECT(ds, Make_Object(0, VAL_BLK(spec)));
-	Bind_Block(VAL_OBJ_FRAME(ds), VAL_BLK(spec), BIND_ONLY); // not deep
+	Bind_Block(VAL_OBJ_FRAME(ds), VAL_BLK(spec), D_REF(2)?BIND_ONLY:BIND_DEEP); // not deep
 	Do_Blk(VAL_SERIES(spec), 0); // result ignored
 	return R_RET;
 }
@@ -434,7 +437,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	void Init_UType_Proto()
+*/	void Init_UType_Proto(void)
 /*
 **		Create prototype func object for UTypes.
 **
@@ -463,7 +466,7 @@ extern const REBYTE Str_Banner[];
 ***********************************************************************/
 {
 	DS_Series = Make_Block(size);
-	Set_Root_Series(TASK_STACK, DS_Series, "data stack"); // uses special GC
+	Set_Root_Series(TASK_STACK, DS_Series, cb_cast("data stack")); // uses special GC
 	DS_Base = BLK_HEAD(DS_Series);
 	DSP = DSF = 0;
 	SET_NONE(DS_TOP); // avoids it being set to END (GC problem)
@@ -509,7 +512,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	void Set_Root_Series(REBVAL *value, REBSER *ser, REBYTE *label)
+*/	void Set_Root_Series(REBVAL *value, REBSER *ser, const REBYTE *label)
 /*
 **		Used to set block and string values in the ROOT context.
 **
@@ -560,9 +563,9 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	static void Init_System_Object()
+*/	static void Init_System_Object(void)
 /*
-**		The system object is defined in boot.r.
+**		The system object is defined in boot.reb.
 **
 ***********************************************************************/
 {
@@ -608,7 +611,7 @@ extern const REBYTE Str_Banner[];
 	value = Get_System(SYS_CATALOG, CAT_ACTIONS);
 	Set_Block(value, Collect_Set_Words(VAL_BLK(&Boot_Block->actions)));
 
-	// Create system/catalog/actions block:
+	// Create system/catalog/nativess block:
 	value = Get_System(SYS_CATALOG, CAT_NATIVES);
 	Set_Block(value, Collect_Set_Words(VAL_BLK(&Boot_Block->natives)));
 
@@ -627,7 +630,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	static void Init_Contexts_Object()
+*/	static void Init_Contexts_Object(void)
 /*
 ***********************************************************************/
 {
@@ -663,10 +666,12 @@ extern const REBYTE Str_Banner[];
 	}
 
 	if (codi->action == CODI_DECODE) {
-		return CODI_TEXT;
+		codi->other = (void*)Decode_UTF_String(codi->data, codi->len, -1, TRUE, FALSE);
+		return CODI_STRING;
 	}
 
 	if (codi->action == CODI_ENCODE) {
+		//O: This does not happen as in n-system.c only image is allowed to be encoded!
 		return CODI_BINARY;
 	}
 
@@ -684,6 +689,7 @@ extern const REBYTE Str_Banner[];
 	codi->error = 0;
 
 	if (codi->action == CODI_IDENTIFY) {
+		codi->error = 1;   // never identified... would require markup validator
 		return CODI_CHECK; // error code is inverted result
 	}
 
@@ -699,32 +705,43 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	void Register_Codec(REBYTE *name, codo dispatcher)
+*/	void Register_Codec(const char *name, codo dispatcher)
 /*
 **		Internal function for adding a codec.
 **
 ***********************************************************************/
 {
 	REBVAL *value = Get_System(SYS_CODECS, 0);
-	REBCNT sym = Make_Word(name, 0);
+	REBCNT sym = Make_Word(cb_cast(name), 0);
 
 	value = Append_Frame(VAL_OBJ_FRAME(value), 0, sym);
-	SET_HANDLE(value, dispatcher);
+	SET_HANDLE(value, dispatcher, SYM_CODEC, HANDLE_FUNCTION);
 }
 
 
 /***********************************************************************
 **
-*/	static void Init_Codecs()
+*/	static void Init_Codecs(void)
 /*
 ***********************************************************************/
 {
-	Register_Codec((REBYTE*)"text", Codec_Text);
-	Register_Codec((REBYTE*)"markup", Codec_Markup);
+	Register_Codec("text", Codec_Text);
+	Register_Codec("markup", Codec_Markup);
+#ifdef USE_BMP_CODEC
 	Init_BMP_Codec();
+#endif
+#ifdef USE_GIF_CODEC
 	Init_GIF_Codec();
+#endif
+#ifdef USE_PNG_CODEC
 	Init_PNG_Codec();
+#endif
+#ifdef USE_JPG_CODEC
 	Init_JPEG_Codec();
+#endif
+#ifdef USE_WAV_CODEC
+	Init_WAV_Codec();
+#endif
 }
 
 
@@ -733,7 +750,7 @@ static void Set_Option_String(REBCHR *str, REBCNT field)
 	REBVAL *val;
 	if (str) {
 		val = Get_System(SYS_OPTIONS, field);
-		Set_String(val, Copy_OS_Str(str, LEN_STR(str)));
+		Set_String(val, Copy_OS_Str(str, (REBINT)LEN_STR(str)));
 	}
 }
 
@@ -745,7 +762,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	REBCNT n = 0;
 
 	if (str) {
-		n = LEN_STR(str); // WC correct
+		n = (REBCNT)LEN_STR(str); // WC correct
 		if (n > 38) return 0;
 		bp = &buf[0];
 		while ((*bp++ = (REBYTE)*str++)); // clips unicode
@@ -756,11 +773,26 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	return n;
 }
 
+static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
+{
+	REBSER *ser;
+	REBVAL *val;
+	if (OS_WIDE) {
+		ser = To_REBOL_Path(src, 0, OS_WIDE, dir);
+	}
+	else {
+		ser = Decode_UTF_String(src, LEN_BYTES(src), 8, FALSE, FALSE);
+		ser = To_REBOL_Path(BIN_DATA(ser), BIN_LEN(ser), (REBOOL)!BYTE_SIZE(ser), dir);
+	}
+	val = Get_System(SYS_OPTIONS, field);
+	Set_Series(REB_FILE, val, ser);
+}
+
 /***********************************************************************
 **
 */	static void Init_Main_Args(REBARGS *rargs)
 /*
-**		The system object is defined in boot.r.
+**		The system object is defined in boot.reb.
 **
 ***********************************************************************/
 {
@@ -791,22 +823,17 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 	// Print("script: %s", rargs->script);
 	if (rargs->script) {
-		ser = To_REBOL_Path(rargs->script, 0, OS_WIDE, 0);
-		val = Get_System(SYS_OPTIONS, OPTIONS_SCRIPT);
-		Set_Series(REB_FILE, val, ser);
+		Set_Option_File(OPTIONS_SCRIPT, (REBYTE*)rargs->script, FALSE);
 	}
 
 	if (rargs->exe_path) {
-		ser = To_REBOL_Path(rargs->exe_path, 0, OS_WIDE, 0);
-		val = Get_System(SYS_OPTIONS, OPTIONS_BOOT);
-		Set_Series(REB_FILE, val, ser);
+		Set_Option_File(OPTIONS_BOOT, (REBYTE*)rargs->exe_path, FALSE);
 	}
 
 	// Print("home: %s", rargs->home_dir);
 	if (rargs->home_dir) {
-		ser = To_REBOL_Path(rargs->home_dir, 0, OS_WIDE, TRUE);
-		val = Get_System(SYS_OPTIONS, OPTIONS_HOME);
-		Set_Series(REB_FILE, val, ser);
+		Set_Option_File(OPTIONS_HOME, (REBYTE*)rargs->home_dir, TRUE);
+		OS_FREE(rargs->home_dir);
 	}
 
 	n = Set_Option_Word(rargs->boot, OPTIONS_BOOT_LEVEL);
@@ -823,22 +850,26 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 	if (NZ(data = OS_GET_LOCALE(0))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE);
-		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
+		OS_FREE(data);
 	}
 
 	if (NZ(data = OS_GET_LOCALE(1))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE_P);
-		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
+		OS_FREE(data);
 	}
 
 	if (NZ(data = OS_GET_LOCALE(2))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE);
-		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
+		OS_FREE(data);
 	}
 
 	if (NZ(data = OS_GET_LOCALE(3))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE_P);
-		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
+		OS_FREE(data);
 	}
 }
 
@@ -927,8 +958,8 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 	Init_Raw_Print();		// Low level output (Print)
 
-	Print_Banner(rargs);
-
+	Print_Banner(rargs);    // Can cause early exit (-v)
+	PG_Boot_Phase = BOOT_STARTED;
 	DOUT("Level 1");
 	Init_Char_Cases();
 	Init_CRC();				// For word hashing
@@ -993,4 +1024,54 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	DS_RESET;
 
 	DOUT("Boot done");
+}
+
+
+/***********************************************************************
+**
+*/	void Dispose_Core(void)
+/*
+**		Release Core resources (used before application quits)
+**
+***********************************************************************/
+{
+	DOUT("Dispose Core");
+	if(!Task_Series)
+		return; // can happen when close button, shutdown, etc.
+
+	Free_Series(Task_Series);
+	if (PG_Boot_Phase > BOOT_START) {
+		Free_Series(Bind_Table);
+		Free_Series(PG_Word_Table.hashes);
+		Free_Series(PG_Word_Table.series);
+		Free_Series(PG_Word_Names);
+	}
+	Free_Series(VAL_SERIES(ROOT_ROOT));
+	if (PG_Boot_Phase >= BOOT_MEZZ) {
+		Free_Series(VAL_SERIES(ROOT_SYSTEM));
+		Free_Series(VAL_SERIES(ROOT_ERROBJ));
+		Free_Series(VAL_SERIES(ROOT_STRINGS));
+		Free_Series(VAL_SERIES(ROOT_TYPESETS));
+		if (!IS_NONE(ROOT_BOOT))
+			Free_Series(VAL_SERIES(ROOT_BOOT));
+		Free_Series(VAL_SERIES(TASK_STACK));
+		Free_Series(VAL_SERIES(TASK_BUF_EMIT));
+		Free_Series(VAL_SERIES(TASK_BUF_WORDS));
+		Free_Series(VAL_SERIES(TASK_BUF_UTF8));
+		Free_Series(VAL_SERIES(TASK_BUF_PRINT));
+		Free_Series(VAL_SERIES(TASK_BUF_FORM));
+		Free_Series(VAL_SERIES(TASK_BUF_MOLD));
+		Free_Series(VAL_SERIES(TASK_MOLD_LOOP));
+	}
+	Dispose_Memory();
+	if (PG_Boot_Phase > BOOT_STARTED) {
+		Dispose_Char_Cases();
+		Dispose_Ports();
+		Dispose_Mold();
+		Dispose_CRC();
+		Free_Mem(PG_Boot_Strs, 0);
+	}
+	Dispose_StdIO();
+	Free_Mem(PG_Reb_Stats, 0);
+	Free_Mem(Reb_Opts, 0);
 }

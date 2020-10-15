@@ -46,10 +46,12 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
-void Host_Crash(REBYTE *reason);
+void Host_Crash(char *reason);
 
 // Temporary globals: (either move or remove?!)
-REBREQ Std_IO_Req;
+// O: where it should be moved?
+// O: as the Std_IO_Req is shared with lib (DLL), I'm now storing it also in Host_Lib struct
+static REBREQ Std_IO_Req;
 static REBYTE *inbuf;
 static REBCNT inbuf_len = 32*1024;
 
@@ -69,7 +71,7 @@ static REBYTE *Get_Next_Line()
 		out = OS_Make(len + 2);
 		COPY_BYTES(out, inbuf, len+1);
 		out[len+1] = 0;
-		MOVE_MEM(inbuf, bp+1, 1+strlen(bp+1));
+		MOVE_MEM(inbuf, bp+1, 1+strlen(cs_cast(bp)+1));
 		return out;
 	}
 
@@ -78,7 +80,7 @@ static REBYTE *Get_Next_Line()
 
 static int Fetch_Buf()
 {
-	REBCNT len = strlen(inbuf);
+	REBCNT len = (REBCNT)strlen(cs_cast(inbuf));
 
 	Std_IO_Req.data   = inbuf + len;
 	Std_IO_Req.length = inbuf_len - len - 1;
@@ -105,7 +107,7 @@ static int Fetch_Buf()
 
 /***********************************************************************
 **
-*/	void Open_StdIO(void)
+*/	REBREQ *Open_StdIO()
 /*
 **		Open REBOL's standard IO device. This same device is used
 **		by both the host code and the R3 DLL itself.
@@ -125,6 +127,7 @@ static int Fetch_Buf()
 
 	inbuf = OS_Make(inbuf_len);
 	inbuf[0] = 0;
+	return &Std_IO_Req;
 }
 
 /***********************************************************************
@@ -152,6 +155,13 @@ static int Fetch_Buf()
 {
 	REBYTE *line;
 
+	// make sure that we are in LINE reading mode!
+	if (!GET_FLAG(Std_IO_Req.modes, RDM_READ_LINE)) {
+		// if not, set it back
+		Std_IO_Req.modify.mode = RDM_READ_LINE;
+		Std_IO_Req.modify.value = TRUE;
+		OS_Do_Device(&Std_IO_Req, RDC_MODIFY);
+	}
 	if ((line = Get_Next_Line())) return line;
 
 	if (Fetch_Buf()) return Get_Next_Line();
@@ -170,7 +180,7 @@ static int Fetch_Buf()
 **
 ***********************************************************************/
 {
-	Std_IO_Req.length = strlen(buf);
+	Std_IO_Req.length = strlen(cs_cast(buf));
 	Std_IO_Req.data = (REBYTE*)buf;
 	Std_IO_Req.actual = 0;
 

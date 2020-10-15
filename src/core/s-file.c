@@ -28,6 +28,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include <wchar.h>
 
 #define FN_PAD 2	// pad file name len for adding /, /*, and /?
 
@@ -57,7 +58,7 @@
 	REBCNT i;
 
 	if (len == 0)
-		len = uni ? wcslen((REBUNI*)bp) : LEN_BYTES((REBYTE*)bp);
+		len = (REBCNT)(uni ? wcslen((const wchar_t*)bp) : LEN_BYTES((REBYTE*)bp));
 	
 	n = 0;
 	dst = ((uni == -1) || (uni && Is_Wide((REBUNI*)bp, len))) 
@@ -124,7 +125,7 @@
 **
 ***********************************************************************/
 {
-	REBUNI c, d;
+	REBUNI c;
 	REBSER *dst;
 	REBCNT i = 0;
 	REBCNT n = 0;
@@ -133,7 +134,7 @@
 	REBCNT l = 0;
 
 	if (len == 0)
-		len = uni ? wcslen((REBUNI*)bp) : LEN_BYTES((REBYTE*)bp);
+		len = (REBCNT)(uni ? wcslen((const wchar_t*)bp) : LEN_BYTES((REBYTE*)bp));
 
 	// Prescan for: /c/dir = c:/dir, /vol/dir = //vol/dir, //dir = ??
 	c = GET_CHAR_UNI(uni, bp, i);
@@ -141,6 +142,11 @@
 		dst = Make_Unicode(len+FN_PAD);
 		out = UNI_HEAD(dst);
 #ifdef TO_WINDOWS
+		if (len == 1) {
+			// it was really just: %/
+			// so return empty string in such a case
+			goto term_out;
+		}
 		i++;
 		if (i < len) {
 			c = GET_CHAR_UNI(uni, bp, i);
@@ -148,7 +154,7 @@
 		}
 		if (c != '/') {		// %/c or %/c/ but not %/ %// %//c
 			// peek ahead for a '/':
-			d = '/';
+			REBUNI d = '/';
 			if (i < len) d = GET_CHAR_UNI(uni, bp, i);
 			if (d == '/') {	// %/c/ => "c:/"
 				i++;
@@ -174,7 +180,8 @@
 			dst->tail = abs(clen);
 			//Append_Bytes(dst, lpath);
 #endif
-			Append_Byte(dst, OS_DIR_SEP);
+			if (OS_DIR_SEP != UNI_LAST(dst)[0])
+				Append_Byte(dst, OS_DIR_SEP);
 			OS_FREE(lpath);
 		}
 		out = UNI_HEAD(dst);
@@ -221,6 +228,7 @@
 			out[n++] = c;
 		}
 	}
+term_out:
 	out[n] = 0;
 	SERIES_TAIL(dst) = n;
 //	TERM_SERIES(dst);

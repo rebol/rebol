@@ -53,7 +53,7 @@ const REBYTE * const Crash_Msgs[] = {
 };
 
 const REBYTE * const Str_Dump[] = {
-	BP"%s Series %x \"%s\": wide: %2d size: %6d bias: %d tail: %d rest: %d flags: %x"
+	BP"%s Series %x: wide: %2d size: %6d bias: %d tail: %d rest: %d flags: %x \"%s\""
 };
 
 const REBYTE * Hex_Digits = BP"0123456789ABCDEF";
@@ -88,7 +88,7 @@ const REBYTE Month_Lengths[12] = {
 	31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 
-const REBYTE * const Month_Names[12] = {
+const REBYTE * Month_Names[12] = {
 	BP"January",	BP"February", BP"March",
 	BP"April",	BP"May",		 BP"June",
 	BP"July",	BP"August",	 BP"September",

@@ -6,7 +6,7 @@ if error? set/any 'err try [
 TOOLS-Win32: ""
 TOOLS-Win64: ""
 
-attempt [do %make-settings.r]
+attempt [do %make-settings.reb]
 
 cmd-menu: {^/^[[1;33;49mPlease choose version to build:^[[0m^/}
 
@@ -114,7 +114,7 @@ forever [
 	]
 
 	if val [
-		eval-cmd [rebol-tool " -qs ../src/tools/make-make.r " OS_ID]
+		eval-cmd [rebol-tool " -qs ../src/tools/make-make.reb " OS_ID]
 		if prev <> val [
 			;clean if making different target or for the first run
 			eval-cmd [{make TOOLS=} TOOLS { clean}]

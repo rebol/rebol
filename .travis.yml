@@ -5,7 +5,12 @@
 #
 
 notifications:
-    email: false
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/8347147c7174afe97937
+    on_success: always  # options: [always|never|change] default: always
+    on_failure: always  # options: [always|never|change] default: always
+    on_start: never     # options: [always|never|change] default: always
 
 language: c
 
@@ -17,6 +22,8 @@ env:
     matrix:
         # Linux x86
         - OS_ID=0.4.4
+        # Linux ARM
+        - OS_ID=0.4.20
         # Linux x64
         - OS_ID=0.4.40
 
@@ -37,6 +44,8 @@ install:
 
 script:
     - cd make/
-    - prebuild/r3-make-linux -qs ../src/tools/make-make.r ${OS_ID}
+    - prebuild/r3-make-linux -qs ../src/tools/make-make.reb ${OS_ID}
     - make clean prep r3
-    - valgrind --error-exitcode=42 --leak-check=full ./r3 --do 'print {Hello!}'
+    - ./r3 -v # to test early exit sequence (app version output)
+    - valgrind -v --error-exitcode=42 --leak-check=full --track-origins=yes ./r3 ../src/tests/run-tests.r3
+    #- valgrind -v --error-exitcode=42 --leak-check=full ./r3 ../src/tests/run-tests.r3

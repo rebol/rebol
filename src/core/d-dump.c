@@ -27,12 +27,13 @@
 **
 ***********************************************************************/
 
+#include <stdio.h>
 #include "sys-core.h"
 
 
 /***********************************************************************
 **
-*/	void Dump_Series(REBSER *series, REBYTE *memo)
+*/	void Dump_Series_Fmt(REBSER *series, const char *memo)
 /*
 ***********************************************************************/
 {
@@ -49,9 +50,19 @@
 		SERIES_REST(series),
 		SERIES_FLAGS(series)
 	);
-	if (SERIES_WIDE(series) == sizeof(REBVAL))
+}
+
+/***********************************************************************
+**
+*/	void Dump_Series(REBSER *series, const char *memo)
+/*
+***********************************************************************/
+{
+	if (!series) return;
+	Dump_Series_Fmt(series, memo);
+	if (SERIES_WIDE(series) == sizeof(REBVAL)) {
 		Dump_Values(BLK_HEAD(series), SERIES_TAIL(series));
-	else
+	} else
 		Dump_Bytes(series->data, (SERIES_TAIL(series)+1) * SERIES_WIDE(series));
 }
 
@@ -99,7 +110,7 @@
 		for (tp = str; *tp;) *cp++ = *tp++;
 
 		*cp = 0;
-		Debug_Str(buf);
+		Debug_Str(cs_cast(buf));
 		if (cnt >= limit) break;
 		cp = buf;
 	}
@@ -118,10 +129,11 @@
 	REBYTE *cp;
 	REBCNT l, n;
 	REBCNT *bp = (REBCNT*)vp;
-	REBYTE *type;
+	const REBYTE *type;
 
 	cp = buf;
 	for (l = 0; l < count; l++) {
+		REBVAL *val = (REBVAL*)bp;
 		cp = Form_Hex_Pad(cp, l, 8);
 
 		*cp++ = ':';
@@ -137,9 +149,14 @@
 			cp = Form_Hex_Pad(cp, *bp++, 8);
 			*cp++ = ' ';
 		}
+		n = 0;
+		if (IS_WORD((REBVAL*)val) || IS_GET_WORD((REBVAL*)val) || IS_SET_WORD((REBVAL*)val)) {
+			const char * name = cs_cast(Get_Word_Name((REBVAL*)val));
+			n = snprintf(s_cast(cp), sizeof(buf) - (cp - buf), " (%s)", name);
+		}
 
-		*cp = 0;
-		Debug_Str(buf);
+		*(cp + n) = 0;
+		Debug_Str(s_cast(buf));
 		cp = buf;
 	}
 }
@@ -370,7 +387,7 @@ xx*/	void Dump_Bind_Table()
 			args = BLK_HEAD(VAL_FUNC_ARGS(DSF_FUNC(dsf)));
 			m = SERIES_TAIL(VAL_FUNC_ARGS(DSF_FUNC(dsf)));
 			for (n = 1; n < m; n++)
-				Debug_Fmt("\t%s: %72r", Get_Word_Name(args+n), DSF_ARGS(dsf, n));
+				Debug_Fmt(cb_cast("\t%s: %72r"), Get_Word_Name(args+n), DSF_ARGS(dsf, n));
 		}
 		//Debug_Fmt(Str_Stack[2], PRIOR_DSF(dsf));
 		if (PRIOR_DSF(dsf) > 0) Dump_Stack(PRIOR_DSF(dsf), dsf-1);

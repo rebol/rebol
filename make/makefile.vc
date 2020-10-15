@@ -32,12 +32,12 @@ clean:
 all: clean prep r3.exe
 
 prep:  objs
-	$(REBOL) $T/make-headers.r
-	$(REBOL) $T/make-boot.r $(OS_ID)
-	$(REBOL) $T/make-host-init.r
-	$(REBOL) $T/make-os-ext.r # ok, but not always
-	$(REBOL) $T/make-host-ext.r
-	$(REBOL) $T/make-reb-lib.r
+	$(REBOL) $T/make-headers.reb
+	$(REBOL) $T/make-boot.reb $(OS_ID)
+	$(REBOL) $T/make-host-init.reb
+	$(REBOL) $T/make-os-ext.reb # ok, but not always
+	$(REBOL) $T/make-host-ext.reb
+	$(REBOL) $T/make-reb-lib.reb
 	windres --target=pe-i386 r3.rc -O coff -o objs/r3.res
 
 objs:

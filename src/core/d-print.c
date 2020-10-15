@@ -37,6 +37,7 @@
 */
 
 #include "sys-core.h"
+#include <wchar.h>
 
 static REBREQ *Req_SIO;
 
@@ -62,6 +63,16 @@ static REBREQ *Req_SIO;
 	OS_DO_DEVICE(Req_SIO, RDC_OPEN);
 }
 
+/***********************************************************************
+**
+*/	void Dispose_StdIO(void)
+/*
+***********************************************************************/
+{
+	OS_FREE(Req_SIO);
+	Req_SIO = NULL;
+}
+
 
 /***********************************************************************
 **
@@ -71,7 +82,10 @@ static REBREQ *Req_SIO;
 **
 ***********************************************************************/
 {
-	Req_SIO->data = BYTES("\n");
+	// !!! Don't put const literal directly into mutable Req_SIO->data
+	static REBYTE newline[] = "\n";
+
+	Req_SIO->data = newline;
 	Req_SIO->length = 1;
 	Req_SIO->actual = 0;
 
@@ -83,7 +97,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	static void Prin_OS_String(REBYTE *bp, REBINT len, REBOOL uni)
+*/	static void Prin_OS_String(const REBYTE *bp, REBINT len, REBOOL uni)
 /*
 **		Print a string, but no line terminator or space.
 **
@@ -101,7 +115,7 @@ static REBREQ *Req_SIO;
 	if (!bp) Crash(RP_NO_PRINT_PTR);
 
 	// Determine length if not provided:
-	if (len == UNKNOWN) len = uni ? wcslen(up) : LEN_BYTES(bp);
+	if (len == UNKNOWN) len = (REBINT)(uni ? wcslen((const wchar_t*)up) : LEN_BYTES(bp));
 
 	SET_FLAG(Req_SIO->flags, RRF_FLUSH);
 
@@ -141,7 +155,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	void Out_Str(REBYTE *bp, REBINT lines)
+*/	void Out_Str(const REBYTE *bp, REBINT lines)
 /*
 ***********************************************************************/
 {
@@ -206,24 +220,24 @@ static REBREQ *Req_SIO;
 		//RESET_SERIES(Trace_Buffer);
 	}
 	else {
-		Out_Str("backtrace not enabled", 1);
+		Out_Str(cb_cast("backtrace not enabled"), 1);
 	}
 }
 
 
 /***********************************************************************
 **
-*/	void Debug_String(REBYTE *bp, REBINT len, REBOOL uni, REBINT lines)
+*/	void Debug_String(const REBYTE *bp, REBINT len, REBOOL uni, REBINT lines)
 /*
 ***********************************************************************/
 {
-	REBUNI *up = (REBUNI*)bp;
+	const REBUNI *up = cast(const REBUNI*, bp);
 	REBUNI uc;
 
 	if (Trace_Limit > 0) {
 		if (Trace_Buffer->tail >= Trace_Limit)
 			Remove_Series(Trace_Buffer, 0, 2000);
-		if (len == UNKNOWN) len = uni ? wcslen(up) : LEN_BYTES(bp);
+		if (len == UNKNOWN) len = (REBINT)(uni ? wcslen((const wchar_t*)up) : LEN_BYTES(bp));
 		// !!! account for unicode!
 		for (; len > 0; len--) {
 			uc = uni ? *up++ : *bp++;
@@ -245,19 +259,19 @@ static REBREQ *Req_SIO;
 /*
 ***********************************************************************/
 {
-	Debug_String("", UNKNOWN, 0, 1);
+	Debug_String(cb_cast(""), UNKNOWN, 0, 1);
 }
 
 
 /***********************************************************************
 **
-*/	void Debug_Str(REBYTE *str)
+*/	void Debug_Str(const char *str)
 /*
 **		Print a string followed by a newline.
 **
 ***********************************************************************/
 {
-	Debug_String(str, UNKNOWN, 0, 1);
+	Debug_String(cb_cast(str), UNKNOWN, 0, 1);
 }
 
 
@@ -292,7 +306,7 @@ static REBREQ *Req_SIO;
 /*
 ***********************************************************************/
 {
-	if (BYTE_SIZE(ser)) Debug_Str(BIN_HEAD(ser));
+	if (BYTE_SIZE(ser)) Debug_Str(s_cast(BIN_HEAD(ser)));
 	else Debug_Uni(ser);
 }
 
@@ -308,9 +322,9 @@ static REBREQ *Req_SIO;
 	REBYTE buf[40];
 
 	Debug_String(str, UNKNOWN, 0, 0);
-	Debug_String(" ", 1, 0, 0);
+	Debug_String(cb_cast(" "), 1, 0, 0);
 	Form_Hex_Pad(buf, num, 8);
-	Debug_Str(buf);
+	Debug_Str(s_cast(buf));
 }
 
 
@@ -350,7 +364,7 @@ static REBREQ *Req_SIO;
 **
 ***********************************************************************/
 {
-	Debug_Str(Get_Word_Name(word));
+	Debug_Str(cs_cast(Get_Word_Name(word)));
 }
 
 
@@ -362,7 +376,7 @@ static REBREQ *Req_SIO;
 **
 ***********************************************************************/
 {
-	if (VAL_TYPE(value) < REB_MAX) Debug_Str(Get_Type_Name(value));
+	if (VAL_TYPE(value) < REB_MAX) Debug_Str(cs_cast(Get_Type_Name(value)));
 	else Debug_Str("TYPE?!");
 }
 
@@ -443,7 +457,7 @@ static REBREQ *Req_SIO;
 	tail = bp - STR_HEAD(buf);
 
 	for (n = 0; n < tail; n += len) {
-		len = LEN_BYTES(STR_SKIP(buf, n));
+		len = (REBCNT)LEN_BYTES(STR_SKIP(buf, n));
 		if (len > 1024) len = 1024;
 		Debug_String(STR_SKIP(buf, n), len, 0, 0);
 	}
@@ -452,7 +466,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	void Debug_Fmt_(REBYTE *fmt, ...)
+*/	void Debug_Fmt_(const REBYTE *fmt, ...)
 /*
 **		Print using a format string and variable number
 **		of arguments.  All args must be long word aligned
@@ -541,9 +555,7 @@ static REBREQ *Req_SIO;
 {
 	REBYTE buffer[MAX_HEX_LEN+4];
 	REBYTE *bp = (REBYTE*)(buffer + MAX_HEX_LEN + 1);
-	REBU64 sgn;
-
-	sgn = (val < 0) ? -1 : 0;
+	REBU64 sgn = 0; // was: sgn = (val < 0) ? -1 : 0;
 
 	len = MIN(len, MAX_HEX_LEN);
 	*bp-- = 0;
@@ -717,10 +729,10 @@ pick:
 		case 's':
 			cp = va_arg(args, REBYTE *);
 			if ((REBUPT)cp < 100) cp = (REBYTE*)Bad_Ptr;
-			if (pad == 1) pad = LEN_BYTES(cp);
+			if (pad == 1) pad = (REBINT)LEN_BYTES(cp);
 			if (pad < 0) {
 				pad = -pad;
-				pad -= LEN_BYTES(cp);
+				pad -= (REBINT)LEN_BYTES(cp);
 				for (; pad > 0 && len < max; len++, pad--) *bp++ = ' ';
 			}
 			for (; *cp && len < max && pad > 0; pad--, len++) *bp++ = *cp++;
@@ -878,6 +890,6 @@ mold_value:
 **
 ***********************************************************************/
 {
-	Set_Root_Series(TASK_BUF_PRINT, Make_Binary(1000), "print buffer");
-	Set_Root_Series(TASK_BUF_FORM,  Make_Binary(64), "form buffer");
+	Set_Root_Series(TASK_BUF_PRINT, Make_Binary(1000), cb_cast("print buffer"));
+	Set_Root_Series(TASK_BUF_FORM,  Make_Binary(64), cb_cast("form buffer"));
 }

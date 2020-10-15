@@ -70,8 +70,18 @@ extern REBDEV Dev_File;
 extern REBDEV Dev_Event;
 extern REBDEV Dev_Net;
 extern REBDEV Dev_DNS;
+extern REBDEV Dev_Checksum;
 #ifndef MIN_OS
 extern REBDEV Dev_Clipboard;
+#define DEVICE_PTR_CLIPBOARD &Dev_Clipboard
+#else
+#define DEVICE_PTR_CLIPBOARD 0
+#endif
+#ifdef USE_MIDI_DEVICE
+extern REBDEV Dev_MIDI;
+#define DEVICE_PTR_MIDI &Dev_MIDI
+#else
+#define DEVICE_PTR_MIDI 0
 #endif
 
 REBDEV *Devices[RDI_LIMIT] =
@@ -83,10 +93,9 @@ REBDEV *Devices[RDI_LIMIT] =
 	&Dev_Event,
 	&Dev_Net,
 	&Dev_DNS,
-#ifndef MIN_OS
-	&Dev_Clipboard,
-#endif
-	0,
+	0,//&Dev_Checksum,
+	DEVICE_PTR_CLIPBOARD,
+	DEVICE_PTR_MIDI
 };
 
 
@@ -102,9 +111,10 @@ static int Poll_Default(REBDEV *dev)
 	for (req = *prior; req; req = *prior) {
 
 		// Call command again:
-		if (req->command < RDC_MAX)
+		if (req->command < RDC_MAX) {
+			CLR_FLAG(req->flags, RRF_ACTIVE);
 			result = dev->commands[req->command](req);
-		else {
+		} else {
 			result = -1;	// invalid command, remove it
 			req->error = ((REBCNT)-1);
 		}
@@ -115,8 +125,12 @@ static int Poll_Default(REBDEV *dev)
 			req->next = 0;
 			CLR_FLAG(req->flags, RRF_PENDING);
 			change = TRUE;
+		} else {
+			prior = &req->next;
+			if (GET_FLAG(req->flags, RRF_ACTIVE)) {
+				change = TRUE;
+			}
 		}
-		else prior = &req->next;
 	}
 
 	return change;
@@ -251,6 +265,7 @@ static int Poll_Default(REBDEV *dev)
 ***********************************************************************/
 {
 	REBDEV *dev;
+	REBREQ req;
 
 	// Validate device:
 	if (device >= RDI_MAX || !(dev = Devices[device]))
@@ -261,7 +276,10 @@ static int Poll_Default(REBDEV *dev)
 		return -2;
 
 	// Do command, return result:
-	return dev->commands[command]((REBREQ*)dev);
+	/* fake a request, not all fields are set */
+	req.device = device;
+	req.command = command;
+	return dev->commands[command](&req);
 }
 
 
@@ -466,6 +484,8 @@ static int Poll_Default(REBDEV *dev)
 	// Setup for timing:
 	CLEARS(&req);
 	req.device = RDI_EVENT;
+
+	OS_Reap_Process(-1, NULL, 0);
 
 	// Let any pending device I/O have a chance to run:
 	if (OS_Poll_Devices()) return -1;

@@ -124,6 +124,8 @@
 	case A_SUBTRACT:	// "test this" - 10
 	case A_MULTIPLY:	// "t" * 4 = "tttt"
 	case A_DIVIDE:
+		if (IS_VECTOR(value)) return -1; // allow vector for actions above
+		//continue...
 	case A_REMAINDER:
 	case A_POWER:
 	case A_ODDQ:
@@ -280,7 +282,8 @@ chkDecimal:
 	case REB_OBJECT:
 	case REB_MODULE:
 	case REB_PORT:
-		return VAL_OBJ_FRAME(s) - VAL_OBJ_FRAME(t);
+		//return VAL_OBJ_FRAME(s) - VAL_OBJ_FRAME(t); // strict variant
+		return !CT_Object(s, t, 1); // equality used
 
 	case REB_NATIVE:
 		return &VAL_FUNC_CODE(s) - &VAL_FUNC_CODE(t);

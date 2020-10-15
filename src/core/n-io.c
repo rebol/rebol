@@ -124,22 +124,34 @@ static REBSER *Read_All_File(char *fname)
 **		/only   "For a block value, give only contents, no outer [ ]"
 **		/all	"Mold in serialized format"
 **		/flat	"No line indentation"
+**		/part	"Limit the length of the result"
+**		 limit [integer!]
 **
 ***********************************************************************/
 {
 	REBVAL *val = D_ARG(1);
 	REB_MOLD mo = {0};
+	REBINT  len = -1; // no limit
 
 	if (D_REF(3)) SET_FLAG(mo.opts, MOPT_MOLD_ALL);
 	if (D_REF(4)) SET_FLAG(mo.opts, MOPT_INDENT);
+	if (D_REF(5)) {
+		if (VAL_INT64(D_ARG(6)) > (i64)MAX_I32)
+			len = MAX_I32;
+		else if (VAL_INT64(D_ARG(6)) < 0)
+			len = 0;
+		else
+			len = VAL_INT32(D_ARG(6));
+	}
 
 	Reset_Mold(&mo);
+	mo.limit = (REBINT)len;
 
 	if (D_REF(2) && IS_BLOCK(val)) SET_FLAG(mo.opts, MOPT_ONLY);
 
 	Mold_Value(&mo, val, TRUE);
-
-	Set_String(D_RET, Copy_String(mo.series, 0, -1));
+	if (len > mo.series->tail) len = mo.series->tail;
+	Set_String(D_RET, Copy_String(mo.series, 0, len));
 
 	return R_RET;
 }
@@ -154,7 +166,7 @@ static REBSER *Read_All_File(char *fname)
 	REBVAL *value = D_ARG(1);
 
 	if (IS_BLOCK(value)) Reduce_Block(VAL_SERIES(value), VAL_INDEX(value), 0);
-	Print_Value(DS_TOP, 0, 0);
+	Print_Value(DS_TOP, NO_LIMIT, 0);
 	return R_UNSET; // reloads ds
 }
 
@@ -236,6 +248,8 @@ static REBSER *Read_All_File(char *fname)
 	REBOL_DAT dat;
 	REBINT n = -1;
 	REBVAL *ret = D_RET;
+
+	Assert_Max_Refines(ds, D_REF(9) ? 2 : 1); // prevent too many refines like: now/year/month
 
 	OS_GET_TIME(&dat);
 	if (!D_REF(9)) dat.nano = 0; // Not /precise
@@ -329,7 +343,7 @@ static REBSER *Read_All_File(char *fname)
 		DS_RELOAD(ds);
 		for (val = BLK_HEAD(ports); NOT_END(val); val++) { // find timeout
 			if (Pending_Port(val)) n++;
-			if (IS_INTEGER(val) || IS_DECIMAL(val)) break;
+			if (IS_INTEGER(val) || IS_DECIMAL(val) || IS_TIME(val)) break;
 		}
 		if (IS_END(val)) {
 			if (n == 0) return R_NONE; // has no pending ports!
@@ -407,11 +421,13 @@ chk_neg:
 
 	val = OFV(port, STD_PORT_ACTOR);
 	if (IS_NATIVE(val)) {
+		//  Makes the port object fully consistent with internal native structures (e.g. the actual length of data read).
 		Do_Port_Action(port, A_UPDATE); // uses current stack frame
 	}
 
 	val = OFV(port, STD_PORT_AWAKE);
 	if (ANY_FUNC(val)) {
+		// Calls the port's awake function with the event as an argument.
 		val = Apply_Func(0, val, D_ARG(2), 0);
 		if (!(IS_LOGIC(val) && VAL_LOGIC(val))) return R_FALSE;
 	}
@@ -512,15 +528,16 @@ chk_neg:
 	if (IS_NONE(arg))
 		return R_UNSET;
 
-	url = Val_Str_To_OS(arg);
+	if(IS_FILE(arg)) {
+		// Convert file to full local os path
+		url = (REBCHR*)SERIES_DATA(Value_To_OS_Path(arg, TRUE));
+	} else {
+		url = Val_Str_To_OS(arg);
+	}
 
 	r = OS_BROWSE(url, 0);
 
-	if (r == 0) {
-		return R_UNSET;
-	} else {
-		Trap1(RE_CALL_FAIL, Make_OS_Error(r));
-	}
+	if (r == 0) Trap1(RE_CALL_FAIL, Make_OS_Error(r));
 
 	return R_UNSET;
 }
@@ -554,7 +571,7 @@ chk_neg:
 	REBINT r;
 	REBCHR *cmd = NULL;
 	REBVAL *arg = D_ARG(1);
-	REBI64 pid = -1;
+	REBU64 pid = 0;
 	u32 flags = 0;
 	int argc = 1;
 	REBCHR ** argv = NULL;
@@ -583,63 +600,60 @@ chk_neg:
 	if (D_REF(4)) flag_shell = TRUE;
 	if (D_REF(5)) flag_info = TRUE;
 	if (D_REF(6)) { /* input */
-		REBVAL *param = D_ARG(7);
-		input = param;
-		if (IS_STRING(param)) {
+		input = D_ARG(7);
+		if (IS_STRING(input)) {
 			input_type = STRING_TYPE;
-			os_input = Val_Str_To_OS(param);
-			input_len = VAL_LEN(param);
-		} else if (IS_BINARY(param)) {
+			os_input = Val_Str_To_OS(input);
+			input_len = VAL_LEN(input);
+		} else if (IS_BINARY(input)) {
 			input_type = BINARY_TYPE;
-			os_input = VAL_BIN_DATA(param);
-			input_len = VAL_LEN(param);
-		} else if (IS_FILE(param)) {
-			REBSER *path = Value_To_OS_Path(param, FALSE);
+			os_input = VAL_BIN_DATA(input);
+			input_len = VAL_LEN(input);
+		} else if (IS_FILE(input)) {
+			REBSER *path = Value_To_OS_Path(input, FALSE);
 			input_type = FILE_TYPE;
 			os_input = SERIES_DATA(path);
 			input_len = SERIES_TAIL(path);
-		} else if (IS_NONE(param)) {
+		} else if (IS_NONE(input)) {
 			input_type = NONE_TYPE;
 		} else {
-			Trap_Arg(param);
+			Trap_Arg(input);
 		}
 	}
 
 	if (D_REF(8)) { /* output */
-		REBVAL *param = D_ARG(9);
-		output = param;
-		if (IS_STRING(param)) {
+		output = D_ARG(9);
+		if (IS_STRING(output)) {
 			output_type = STRING_TYPE;
-		} else if (IS_BINARY(param)) {
+		} else if (IS_BINARY(output)) {
 			output_type = BINARY_TYPE;
-		} else if (IS_FILE(param)) {
-			REBSER *path = Value_To_OS_Path(param, FALSE);
+		} else if (IS_FILE(output)) {
+			REBSER *path = Value_To_OS_Path(output, FALSE);
 			output_type = FILE_TYPE;
 			os_output = SERIES_DATA(path);
 			output_len = SERIES_TAIL(path);
-		} else if (IS_NONE(param)) {
+		} else if (IS_NONE(output)) {
 			output_type = NONE_TYPE;
 		} else {
-			Trap_Arg(param);
+			Trap_Arg(output);
 		}
 	}
 
 	if (D_REF(10)) { /* err */
-		REBVAL *param = D_ARG(11);
-		err = param;
-		if (IS_STRING(param)) {
+		err = D_ARG(11);
+		if (IS_STRING(err)) {
 			err_type = STRING_TYPE;
-		} else if (IS_BINARY(param)) {
+		} else if (IS_BINARY(err)) {
 			err_type = BINARY_TYPE;
-		} else if (IS_FILE(param)) {
-			REBSER *path = Value_To_OS_Path(param, FALSE);
+		} else if (IS_FILE(err)) {
+			REBSER *path = Value_To_OS_Path(err, FALSE);
 			err_type = FILE_TYPE;
 			os_err = SERIES_DATA(path);
 			err_len = SERIES_TAIL(path);
-		} else if (IS_NONE(param)) {
+		} else if (IS_NONE(err)) {
 			err_type = NONE_TYPE;
 		} else {
-			Trap_Arg(param);
+			Trap_Arg(err);
 		}
 	}
 
@@ -811,7 +825,7 @@ chk_neg:
 	REBCHR *eq;
 	REBSER *blk;
 
-	while ((n = LEN_STR(str))) {
+	while ((n = (REBCNT)LEN_STR(str))) {
 		len++;
 		str += n + 1; // next
 	}
@@ -819,7 +833,7 @@ chk_neg:
 	blk = Make_Block(len*2);
 
 	str = start;
-	while (NZ(eq = FIND_CHR(str+1, '=')) && NZ(n = LEN_STR(str))) {
+	while (NZ(eq = FIND_CHR(str+1, '=')) && NZ(n = (REBCNT)LEN_STR(str))) {
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(str, eq-str));
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(eq+1, n-(eq-str)-1));
 		str += n + 1; // next
@@ -871,7 +885,7 @@ chk_neg:
 	REBSER *blk;
 	REBSER *dir;
 
-	while (n = LEN_STR(str)) {
+	while ((n = (REBCNT)LEN_STR(str))) {
 		len++;
 		str += n + 1; // next
 	}
@@ -880,7 +894,7 @@ chk_neg:
 
 	// First is a dir path or full file path:
 	str = start;
-	n = LEN_STR(str);
+	n = (REBCNT)LEN_STR(str);
 
 	if (len == 1) {  // First is full file path
 		dir = To_REBOL_Path(str, n, -1, 0);
@@ -890,7 +904,7 @@ chk_neg:
 		dir = To_REBOL_Path(str, n, -1, TRUE);
 		str += n + 1; // next
 		len = dir->tail;
-		while (n = LEN_STR(str)) {
+		while ((n = (REBCNT)LEN_STR(str))) {
 			dir->tail = len;
 			Append_Uni_Uni(dir, str, n);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
@@ -948,7 +962,7 @@ chk_neg:
 			Set_Block(D_RET, ser);
 		}
 		else {
-			ser = To_REBOL_Path(fr.files, LEN_STR(fr.files), OS_WIDE, 0);
+			ser = To_REBOL_Path(fr.files, (REBCNT)LEN_STR(fr.files), OS_WIDE, 0);
 			Set_Series(REB_FILE, D_RET, ser);
 		}
 	} else
@@ -1015,7 +1029,7 @@ chk_neg:
 		success = OS_SET_ENV(cmd, value);
 		if (success) {
 			// What function could reuse arg2 as-is?
-			Set_String(D_RET, Copy_OS_Str(value, LEN_STR(value)));
+			Set_String(D_RET, Copy_OS_Str(value, (REBCNT)LEN_STR(value)));
 			return R_RET;
 		}
 		return R_UNSET;
@@ -1045,5 +1059,134 @@ chk_neg:
 
 	Set_Series(REB_MAP, D_RET, String_List_To_Block(result));
 
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(access_os)
+/*
+**	access-os: native [
+**		{Access to various operating system functions (getuid, setuid, getpid, kill, etc.)}
+**		field [word!] "Valid words: uid, euid, gid, egid, pid"
+**		/set          "To set or kill pid (sig 15)"
+**		value [integer! block!] "Argument, such as uid, gid, or pid (in which case, it could be a block with the signal no)"
+**	]
+**	
+***********************************************************************/
+{
+	REBVAL *field = D_ARG(1);
+	REBOOL set = D_REF(2);
+	REBVAL *val = D_ARG(3);
+	REBINT ret = 0;
+	REBVAL *pid = 0;
+
+	switch (VAL_WORD_CANON(field)) {
+		case SYM_UID:
+			if (set) {
+				if (IS_INTEGER(val)) {
+					ret = OS_SET_UID(VAL_INT32(val));
+				} else {
+					Trap_Arg(val);
+				}
+			} else {
+				ret = OS_GET_UID();
+			}
+			break;
+		case SYM_GID:
+			if (set) {
+				if (IS_INTEGER(val)) {
+					ret = OS_SET_GID(VAL_INT32(val));
+				} else {
+					Trap_Arg(val);
+				}
+			} else {
+				ret = OS_GET_GID();
+			}
+			break;
+		case SYM_EUID:
+			if (set) {
+				if (IS_INTEGER(val)) {
+					ret = OS_SET_EUID(VAL_INT32(val));
+				} else {
+					Trap_Arg(val);
+				}
+			} else {
+				ret = OS_GET_EUID();
+			}
+			break;
+		case SYM_EGID:
+			if (set) {
+				if (IS_INTEGER(val)) {
+					ret = OS_SET_EGID(VAL_INT32(val));
+				} else {
+					Trap_Arg(val);
+				}
+			} else {
+				ret = OS_GET_EGID();
+			}
+			break;
+		case SYM_PID:
+			if (set) {
+				pid = val;
+				//REBVAL *arg = val;
+				if (IS_INTEGER(val)) {
+					ret = OS_KILL(VAL_INT32(pid));
+				} else if (IS_BLOCK(val)) {
+					REBVAL *sig = NULL;
+
+					if (VAL_LEN(val) != 2) {
+						Trap_Arg(val);
+					}
+					pid = VAL_BLK_SKIP(val, 0);
+					sig = VAL_BLK_SKIP(val, 1);
+					if (!IS_INTEGER(pid)) {
+						Trap_Arg(pid);
+					}
+					if (!IS_INTEGER(sig)) {
+						Trap_Arg(sig);
+					}
+					ret = OS_SEND_SIGNAL(VAL_INT32(pid), VAL_INT32(sig));
+					//arg = sig;
+				} else {
+					Trap_Arg(val);
+				}
+			} else {
+				ret = OS_GET_PID();
+			}
+			break;
+		default:
+			Trap_Arg(field);
+	}
+
+	if(ret > 0) {
+		SET_INTEGER(D_RET, ret);
+		return R_RET;
+	}
+
+	if (ret == 0) {
+		SET_TRUE(D_RET);
+		return R_RET;
+	}
+
+	switch (ret) {
+		case OS_ENA:
+			Trap1(RE_NOT_HERE, field);
+			break;
+		case OS_EPERM:
+			Trap0(RE_PERMISSION_DENIED);
+			break;
+		case OS_EINVAL:
+			Trap_Arg(val);
+			break;
+		case OS_ESRCH:
+			Trap1(RE_PROCESS_NOT_FOUND, pid);
+			break;
+		default:
+			Trap_Arg(val);
+			break;
+	}
+	// should not happen, but VS compiler wants to return value in all cases
+	SET_FALSE(D_RET);
 	return R_RET;
 }

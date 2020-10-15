@@ -119,7 +119,7 @@
 		break;
 
 	case A_MULTIPLY:
-		if (REB_I64_MUL_OF(num, arg, &p)) Trap0(RE_OVERFLOW);
+		if (REB_I64_MUL_OF(num, arg, (REBI64*)&p)) Trap0(RE_OVERFLOW);
 		num = p;
 		break;
 
@@ -208,10 +208,8 @@
 		else if (IS_MONEY(val))
 			num = deci_to_int(VAL_DECI(val));
 		else if (IS_ISSUE(val)) {
-			REBYTE *bp;
-			REBCNT len;
-			bp = Get_Word_Name(val);
-			len = strlen(bp);
+			const REBYTE *bp = Get_Word_Name(val);
+			REBCNT len = LEN_BYTES(bp);
 			n = MIN(MAX_HEX_LEN, len);
 			if (Scan_Hex(bp, &num, n, n) == 0) goto is_bad;
 		}

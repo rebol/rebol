@@ -132,7 +132,7 @@ static int Get_File_Info(REBREQ *file)
 
 	if (S_ISDIR(info.st_mode)) {
 		SET_FLAG(file->modes, RFM_DIR);
-		file->file.size = 0; // in order to be consistent on all systems
+		file->file.size = MIN_I64; // using MIN_I64 to notify, that size should be reported as NONE
 	}
 	else {
 		CLR_FLAG(file->modes, RFM_DIR);
@@ -318,7 +318,7 @@ static int Get_File_Info(REBREQ *file)
 	// Fetch file size (if fails, then size is assumed zero):
 	if (fstat(h, &info) == 0) {
 		file->file.size = info.st_size;
-		file->file.time.l = (long)(info.st_mtime);
+		file->file.time.l = (i32)(info.st_mtime);
 	}
 
 	file->id = h;
@@ -417,7 +417,7 @@ fail:
 		else file->error = -RFE_BAD_WRITE;
 		return DR_ERROR;
 	} else {
-		file->actual = num_bytes;
+		file->actual = (u32)num_bytes;
 	}
 
 	return DR_DONE;

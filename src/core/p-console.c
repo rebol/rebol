@@ -47,15 +47,19 @@
 {
 	REBREQ *req;
 	REBINT result;
-	REBVAL *arg = D_ARG(2);
+    REBVAL *arg;
 	REBSER *ser;
+	REBCNT args = 0;
+	REBVAL *spec;
 
 	Validate_Port(port, action);
 
 	arg = D_ARG(2);
 	*D_RET = *D_ARG(1);
 
-	req = Use_Port_State(port, RDI_STDIO, sizeof(REBREQ));
+	//O: known limitation: works only with default system's imput port (not for custom console ports) 
+	req = Host_Lib->std_io;
+	req->port = port;
 
 	switch (action) {
 
@@ -77,45 +81,28 @@
 		req->data = BIN_HEAD(ser);
 		req->length = SERIES_AVAIL(ser);
 
-#ifdef nono
-		// Is the buffer large enough?
-		req->length = SERIES_AVAIL(ser); // space available
-		if (req->length < OUT_BUF_SIZE/2) Extend_Series(ser, OUT_BUF_SIZE);
-		req->length = SERIES_AVAIL(ser);
-
-		// Don't make buffer too large:  Bug #174   ?????
-		if (req->length > 1024) req->length = 1024;  //???
-		req->data = STR_TAIL(ser); // write at tail  //???
-		if (SERIES_TAIL(ser) == 0) req->actual = 0;  //???
-#endif
-
 		result = OS_DO_DEVICE(req, RDC_READ);
 		if (result < 0) Trap_Port(RE_READ_ERROR, port, req->error);
 
-#ifdef nono
-		// Does not belong here!!
-		// Remove or replace CRs:
-		result = 0;
-		for (n = 0; n < req->actual; n++) {
-			chr = GET_ANY_CHAR(ser, n);
-			if (chr == CR) {
-				chr = LF;
-				// Skip LF if it follows:
-				if ((n+1) < req->actual &&
-					LF == GET_ANY_CHAR(ser, n+1)) n++;
-			}
-			SET_ANY_CHAR(ser, result, chr);
-			result++;
-		}
+		if (req->actual == 1 && req->data[0] == '\x1B') return R_NONE; // CTRL-C
+
+#ifdef TO_WINDOWS
+		if (req->actual > 1 && GET_FLAG(req->modes, RDM_READ_LINE)) req->actual -= 2; // remove CRLF from tail
+#else
+		if (req->actual > 0) req->actual -= 1; // remove LF from tail
 #endif
-		// Another copy???
-		//Set_String(ds, Copy_OS_Str((void *)(ser->data), result));
+
 		Set_Binary(ds, Copy_Bytes(req->data, req->actual));
 		break;
 
+	case A_UPDATE:
+		// do nothing here, no wake-up, events should be handled by user defined port's awake function
+		// ==>> SYSTEM/PORTS/INPUT/SCHEME/AWAKE
+		return R_NONE;
+
 	case A_OPEN:
 		// ?? why???
-		//if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port);
+		if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
 		SET_OPEN(req);
 		break;
 
@@ -128,11 +115,110 @@
 		if (IS_OPEN(req)) return R_TRUE;
 		return R_FALSE;
 
+	case A_MODIFY:
+		if (IS_WORD(arg)
+			&& (VAL_WORD_CANON(arg) == SYM_ECHO || VAL_WORD_CANON(arg) == SYM_LINE)
+		) {
+			spec = D_ARG(3);
+			if (!IS_LOGIC(spec)) Trap2(RE_INVALID_VALUE_FOR, spec, arg);
+			req->modify.mode = (VAL_WORD_CANON(arg) == SYM_ECHO) ? MODE_CONSOLE_ECHO : MODE_CONSOLE_LINE;
+			req->modify.value = VAL_LOGIC(spec);
+			OS_DO_DEVICE(req, RDC_MODIFY);
+		} else Trap1(RE_BAD_FILE_MODE, arg);
+		return R_ARG3;
+
+	case A_QUERY:
+		spec = Get_System(SYS_STANDARD, STD_CONSOLE_INFO);
+		if (!IS_OBJECT(spec)) Trap_Arg(spec);
+		args = Find_Refines(ds, ALL_QUERY_REFS);
+		if ((args & AM_QUERY_MODE) && IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
+			Set_Block(D_RET, Get_Object_Words(spec));
+			return R_RET;
+		}
+		if (OS_DO_DEVICE(req, RDC_QUERY) < 0) {
+			if(req->error == 25) return R_NONE; //Inappropriate ioctl for device (not running in terminal) 
+			SET_INTEGER(arg, req->error);
+			Trap1(RE_PROTOCOL, arg);
+			//return R_NONE;
+		}
+
+		Ret_Query_Console(req, D_RET, D_ARG(ARG_QUERY_FIELD), spec);
+		break;
+
 	default:
 		Trap_Action(REB_PORT, action);
 	}
 
 	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	static REBOOL Set_Console_Mode_Value(REBREQ *req, REBCNT mode, REBVAL *ret)
+/*
+**		Set a value with file data according specified mode
+**
+***********************************************************************/
+{
+	switch (mode) {
+	case SYM_BUFFER_COLS:
+		SET_INTEGER(ret, req->console.buffer_cols);
+		break;
+	case SYM_BUFFER_ROWS:
+		SET_INTEGER(ret, req->console.buffer_rows);
+		break;
+	case SYM_WINDOW_COLS:
+		SET_INTEGER(ret, req->console.window_cols);
+		break;
+	case SYM_WINDOW_ROWS:
+		SET_INTEGER(ret, req->console.window_rows);
+		break;
+	default:
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/***********************************************************************
+**
+*/	void Ret_Query_Console(REBREQ *req, REBVAL *ret, REBVAL *info, REBVAL *spec)
+/*
+**		Query file and set RET value to resulting STD_FILE_INFO object.
+**
+***********************************************************************/
+{
+	if (IS_WORD(info)) {
+		if (!Set_Console_Mode_Value(req, VAL_WORD_CANON(info), ret))
+			Trap1(RE_INVALID_ARG, info);
+	}
+	else if (IS_BLOCK(info)) {
+		REBVAL *val;
+		REBSER *values = Make_Block(2 * BLK_LEN(VAL_SERIES(info)));
+		REBVAL *word = VAL_BLK_DATA(info);
+		for (; NOT_END(word); word++) {
+			if (ANY_WORD(word)) {
+				if (IS_SET_WORD(word)) {
+					// keep the set-word in result
+					val = Append_Value(values);
+					*val = *word;
+					VAL_SET_LINE(val);
+				}
+				val = Append_Value(values);
+				if (!Set_Console_Mode_Value(req, VAL_WORD_CANON(word), val))
+					Trap1(RE_INVALID_ARG, word);
+			}
+			else  Trap1(RE_INVALID_ARG, word);
+		}
+		Set_Series(REB_BLOCK, ret, values);
+	}
+	else {
+		REBSER *obj = CLONE_OBJECT(VAL_OBJ_FRAME(spec));
+		SET_INTEGER(OFV(obj, STD_CONSOLE_INFO_BUFFER_COLS), req->console.buffer_cols);
+		SET_INTEGER(OFV(obj, STD_CONSOLE_INFO_BUFFER_ROWS), req->console.buffer_rows);
+		SET_INTEGER(OFV(obj, STD_CONSOLE_INFO_WINDOW_COLS), req->console.window_cols);
+		SET_INTEGER(OFV(obj, STD_CONSOLE_INFO_WINDOW_ROWS), req->console.window_rows);
+		SET_OBJECT(ret, obj);
+	}
 }
 
 

@@ -20,7 +20,10 @@ VS: context [
 
 	SourcePath:   ""
 
-	AdditionalDependencies: "wsock32.lib;comdlg32.lib;"
+	AdditionalDependencies: rejoin [
+		"wsock32.lib;comdlg32.lib;"
+		"winmm.lib;"                           ;- for MIDI
+	]
 
 	Sources: []
 
@@ -28,7 +31,7 @@ VS: context [
 	make-guid: func[name [string!] /local id] [
 		;using `name` variable for better randomness
 		id: form checksum/method to binary! (append (copy name) now/precise) 'md5
-		remove back tail remove/part id 2
+		if system/version < 3.0.2 [remove back tail remove/part id 2]
 		insert at id 9 "-"
 		insert at id 14 "-"
 		insert at id 19 "-"
@@ -348,6 +351,9 @@ EndGlobal
 	<PreBuildEvent>
 	  <Command>prebuild64.bat</Command>
 	</PreBuildEvent>
+    <Manifest>
+      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
+    </Manifest>
 	<PostBuildEvent>
       <Command>COPY /Y "$(TargetDir)$(ProjectName).exe" "$(ProjectDir)..\..\..\build\win-x64\$(ProjectName)_x64.exe"</Command>
       <Message>Copy resulted EXE</Message>
@@ -396,7 +402,7 @@ cd %~dp0
 pause}
 
 	rc-file: {
-IDI_APPICON ICON "../../r3-icon.ico"
+101 ICON "../../r3.ico"
 
 1 VERSIONINFO
 FILEVERSION     3,0,0,0
@@ -424,38 +430,51 @@ END
 STRINGTABLE
 BEGIN
     101  "Rebol 3 (Oldes branch)"
-END}
+END
+}
 ]
 
 
-do %../../src/tools/file-base.r
 
-forall core     [change core join %../../../src/core/ core/1]
-forall os       [change os   join %../../../src/os/ os/1]
-forall os-win32 [change os-win32 join %../../../src/os/win32/ os-win32/1]
-core:     head core
-os:       head os
-os-win32: head os-win32
 
+do %../../src/tools/file-base.reb
+
+forall core      [change core join %../../../src/core/ core/1]
+forall os        [change os   join %../../../src/os/     os/1]
+forall os-win32  [change os-win32  join %../../../src/os/win32/  os-win32/1]
+
+probe core
 vs/Sources: compose/only [
 	"Source Core Files" (core)
-	"Source Host Files" (append os os-win32)
+	"Source Host Files" (union os os-win32)
 ]
 vs/IncludePath-x86:
 vs/IncludePath-x64: "..\..\..\src\include;"
-vs/PreprocessorDefinitions-x86: {TO_WIN32;REB_CORE;REB_EXE;ENDIAN_LITTLE;_FILE_OFFSET_BITS=64;_CRT_SECURE_NO_WARNINGS;_UNICODE;UNICODE;}
-vs/PreprocessorDefinitions-x64: {TO_WIN32_X64;__LLP64__;REB_CORE;REB_EXE;ENDIAN_LITTLE;_FILE_OFFSET_BITS=64;_CRT_SECURE_NO_WARNINGS;_UNICODE;UNICODE;}
+
+common-definitions:  {REB_EXE;ENDIAN_LITTLE;_CRT_SECURE_NO_WARNINGS;_UNICODE;UNICODE;_FILE_OFFSET_BITS=64;NDEBUG;}
+optional-components: {USE_MIDI_DEVICE;USE_LZMA;USE_IMAGE_NATIVES;} ;TEST_EXTENSIONS;
+vs/PreprocessorDefinitions-x86: rejoin [
+	common-definitions
+	{TO_WIN32;}
+	optional-components
+]
+vs/PreprocessorDefinitions-x64: rejoin [
+	common-definitions
+	{TO_WIN32_X64;__LLP64__;}
+	optional-components
+]
+
 vs/Prebuild-x86: {
 set REBOL=..\..\prebuild\r3-make-win.exe
 set T=../../../src/tools
 set OS_ID=0.3.1
 
-%REBOL% %T%/make-headers.r
-%REBOL% %T%/make-boot.r %OS_ID%
-%REBOL% %T%/make-host-init.r
-%REBOL% %T%/make-os-ext.r
-%REBOL% %T%/make-host-ext.r
-%REBOL% %T%/make-reb-lib.r
+%REBOL% %T%/make-headers.reb
+%REBOL% %T%/make-boot.reb %OS_ID%
+%REBOL% %T%/make-host-init.reb
+%REBOL% %T%/make-os-ext.reb
+%REBOL% %T%/make-host-ext.reb
+%REBOL% %T%/make-reb-lib.reb
 }
 
 vs/Prebuild-x64: {
@@ -463,12 +482,12 @@ set REBOL=..\..\prebuild\r3-make-win.exe
 set T=../../../src/tools
 set OS_ID=0.3.40
 
-%REBOL% %T%/make-headers.r
-%REBOL% %T%/make-boot.r %OS_ID%
-%REBOL% %T%/make-host-init.r
-%REBOL% %T%/make-os-ext.r
-%REBOL% %T%/make-host-ext.r
-%REBOL% %T%/make-reb-lib.r
+%REBOL% %T%/make-headers.reb
+%REBOL% %T%/make-boot.reb %OS_ID%
+%REBOL% %T%/make-host-init.reb
+%REBOL% %T%/make-os-ext.reb
+%REBOL% %T%/make-host-ext.reb
+%REBOL% %T%/make-reb-lib.reb
 }
 
 vs/make-project/type "Rebol3" %./ "Console"

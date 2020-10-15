@@ -42,7 +42,7 @@
 	if (mode >= 3) e = deci_is_same(VAL_DECI(a), VAL_DECI(b));
 	else {
 		e = deci_is_equal(VAL_DECI(a), VAL_DECI(b));
-		g = 0;
+		//g = 0;
 		if (mode < 0) {
 			g = deci_is_lesser_or_equal(VAL_DECI(b), VAL_DECI(a));
 			if (mode == -1) e |= g;
@@ -110,7 +110,7 @@
 {
 	REBVAL *val = D_ARG(1);
 	REBVAL *arg;
-	REBYTE *str;
+	const REBYTE *str;
 	REBINT equal = 1;
 
 	if (IS_BINARY_ACT(action)) {
@@ -215,7 +215,7 @@
 
 		case REB_STRING:
 		{
-			REBYTE *end;
+			const REBYTE *end;
 			str = Qualify_String(arg, 36, 0, FALSE);
 			VAL_DECI(D_RET) = string_to_deci(str, &end);
 			if (end == str || *end != 0) Trap_Make(REB_MONEY, arg);

@@ -117,7 +117,7 @@ static int find_word(REBVAL *val, REBVAL *word)
 ***********************************************************************/
 {
 	REBCNT val1 = VAL_LOGIC(D_ARG(1));
-	REBCNT val2;
+	REBCNT val2 = 0;
 	REBVAL *arg = D_ARG(2);
 
 	if (IS_BINARY_ACT(action)) {

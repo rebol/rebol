@@ -4,5 +4,6 @@
 # But not these files...
 !.gitignore
 !Make-vs-project.r3
+!Make-vs-project-view.r3
 !Make-vs-project.bat
 !README.md

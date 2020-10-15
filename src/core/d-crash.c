@@ -78,13 +78,14 @@ enum Crash_Msg_Nums {
 
 	// "REBOL PANIC #nnn:"
 	COPY_BYTES(buf, Crash_Msgs[CM_ERROR], CRASH_BUF_SIZE);
-	APPEND_BYTES(buf, " #", CRASH_BUF_SIZE);
+	buf[CRASH_BUF_SIZE - 1] = '\0';
+	APPEND_BYTES(buf, cb_cast(" #"), CRASH_BUF_SIZE);
 	Form_Int(buf + LEN_BYTES(buf), id);
-	APPEND_BYTES(buf, ": ", CRASH_BUF_SIZE);
+	APPEND_BYTES(buf, cb_cast(": "), CRASH_BUF_SIZE);
 
 	// "REBOL PANIC #nnn: put error message here"
 	// The first few error types only print general error message.
-	// Those errors > RP_STR_BASE have specific error messages (from boot.r).
+	// Those errors > RP_STR_BASE have specific error messages (from boot.reb).
 	if      (id < RP_BOOT_DATA) n = CM_DEBUG;
 	else if (id < RP_INTERNAL) n = CM_BOOT;
 	else if (id < RP_ASSERTS)  n = CM_INTERNAL;
@@ -92,9 +93,11 @@ enum Crash_Msg_Nums {
 	else if (id < RP_STR_BASE) n = CM_DATATYPE;
 	else if (id > RP_STR_BASE + RS_MAX - RS_ERROR) n = CM_DEBUG;
 
-	// Use the above string or the boot string for the error (in boot.r):
+	// Use the above string or the boot string for the error (in boot.reb):
 	msg = (REBYTE*)(n >= 0 ? Crash_Msgs[n] : BOOT_STR(RS_ERROR, id - RP_STR_BASE - 1));
-	Form_Var_Args(buf + LEN_BYTES(buf), CRASH_BUF_SIZE - 1 - LEN_BYTES(buf), msg, args);
+	Form_Var_Args(buf + LEN_BYTES(buf), (REBCNT)(CRASH_BUF_SIZE - 1 - LEN_BYTES(buf)), msg, args);
+
+	va_end(args);
 
 	APPEND_BYTES(buf, Crash_Msgs[CM_CONTACT], CRASH_BUF_SIZE);
 

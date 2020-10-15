@@ -125,6 +125,7 @@
 	REBSER *words;
 	REBINT n = 0;
 	REBVAL *value;
+	REBOOL return_defined = FALSE;
 
 	blk = BLK_HEAD(block);
 	words = Collect_Frame(BIND_ALL | BIND_NO_DUP | BIND_NO_SELF, 0, blk);
@@ -151,6 +152,14 @@
 			VAL_TYPESET(value) = (TYPESET(REB_LOGIC) | TYPESET(REB_NONE));
 			break;
 		case REB_SET_WORD:
+			// Allow one `return: [type(s)]` specification, so one can use Red function definition.
+			// It will be ignored while evaluating.
+			if (!return_defined && VAL_WORD_SYM(blk) == SYM_RETURN && IS_BLOCK(blk+1)) {
+				return_defined = TRUE;
+				blk++; // skips the return's specification
+				continue;
+			}
+			// fall thru...
 		default:
 			Trap1(RE_BAD_FUNC_DEF, blk);
 		}
@@ -188,6 +197,8 @@
 		!IS_BLOCK(def)
 		|| (len = VAL_LEN(def)) < 2
 		|| !IS_BLOCK(spec = VAL_BLK(def))
+		|| type == REB_ACTION //@@ https://github.com/rebol/rebol-issues/issues/1051
+		|| type == REB_NATIVE
 	) return FALSE;
 
 	body = VAL_BLK_SKIP(def, 1);
@@ -204,7 +215,20 @@
 
 	VAL_SET(value, type);
 
-	if (type == REB_FUNCTION || type == REB_CLOSURE)
+	if (type == REB_OP) {
+		// make sure that there are at least 2 args
+		REBVAL *args = BLK_HEAD(VAL_FUNC_ARGS(value))+1;
+		REBCNT w = 0;
+		for (; NOT_END(args); args++) {
+			if(IS_REFINEMENT(args) && VAL_WORD_CANON(args) == SYM_LOCAL) break;
+			else if(IS_WORD(args))
+				w++;
+		}
+		if (w < 2) return FALSE;
+		VAL_SET_EXT(value, REB_FUNCTION);
+	}
+
+	if (type == REB_FUNCTION || type == REB_CLOSURE || type == REB_OP)
 		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value));
 
 	return TRUE;

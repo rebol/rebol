@@ -30,6 +30,8 @@
 **      OS_WIDE_CHAR - the OS uses wide chars (not UTF-8)
 **
 ***********************************************************************/
+#ifndef REB_C_H
+#define REB_C_H
 
 #ifndef FALSE
 #define FALSE 0
@@ -46,6 +48,10 @@
 **      It is a critical part of its definition.
 **
 ***********************************************************************/
+
+#if defined(__cplusplus) && __cplusplus >= 201103L
+#include <type_traits> // used in CASTING MACROS
+#endif
 
 #if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 /* C-code types: use C99 */
@@ -97,7 +103,7 @@ typedef unsigned short	u16;
 typedef int				i32;
 typedef unsigned int	u32;
 #else
-typedef long				i32;
+typedef long            i32;
 typedef unsigned long	u32;
 #endif
 #define I32_C(c) c
@@ -207,15 +213,15 @@ enum {
 #define MAX_HEX_LEN     16
 
 #ifdef ITOA64           // Integer to ascii conversion
-#define INT_TO_STR(n,s) _i64toa(n, s, 10)
+#define INT_TO_STR(n,s) _i64toa(n, s_cast(s), 10)
 #else
 #define INT_TO_STR(n,s) Form_Int_Len(s, n, MAX_INT_LEN)
 #endif
 
 #ifdef ATOI64           // Ascii to integer conversion
-#define CHR_TO_INT(s)   _atoi64(s)
+#define CHR_TO_INT(s)   _atoi64(cs_cast(s))
 #else
-#define CHR_TO_INT(s)   strtoll(s, 0, 10)
+#define CHR_TO_INT(s)   strtoll(cs_cast(s), 0, 10)
 #endif
 
 #define LDIV            lldiv
@@ -241,6 +247,8 @@ typedef void(*CFUNC)(void *);
 **
 ***********************************************************************/
 
+#define UNUSED(x) (void)x;
+
 #define FLAGIT(f)           (1<<(f))
 #define GET_FLAG(v,f)       (((v) & (1<<(f))) != 0)
 #define GET_FLAGS(v,f,g)    (((v) & ((1<<(f)) | (1<<(g)))) != 0)
@@ -258,48 +266,140 @@ typedef void(*CFUNC)(void *);
 
 // Memory related functions:
 #define MAKE_MEM(n)     malloc(n)
-#define MAKE_NEW(s)     malloc(sizeof(s))
+#define MAKE_NEW(s)     MAKE_MEM(sizeof(s))
 #define FREE_MEM(m)     free(m)
 #define CLEAR(m, s)     memset((void*)(m), 0, s);
+#define CLEAR_WTH(m, s, v)     memset((void*)(m), v, s);
 #define CLEARS(m)       memset((void*)(m), 0, sizeof(*m));
 #define COPY_MEM(t,f,l) memcpy((void*)(t), (void*)(f), l)
 #define MOVE_MEM(t,f,l) memmove((void*)(t), (void*)(f), l)
-
-// Byte string functions:
-#define COPY_BYTES(t,f,l)   strncpy((char*)t, (char*)f, l)
-// For APPEND_BYTES, l is the max-size allocated for t (dest)
-#define APPEND_BYTES(t,f,l) strncat((char*)t, (char*)f, MAX((l)-strlen(t)-1, 0))
-#define LEN_BYTES(s)        strlen((char*)s)
-#define CMP_BYTES(s,t)      strcmp((char*)s, (char*)t)
-#define BYTES(s) (REBYTE*)(s)
 
 // OS has wide char string interfaces:
 #ifdef OS_WIDE_CHAR
 #define OS_WIDE TRUE
 #define TXT(s) (L##s)
-#define COPY_STR(t,f,l) wcsncpy(t, f, l)
-#define JOIN_STR(d,s,l) wcsncat(d,s,l)
-#define FIND_STR(d,s)   wcsstr(d,s)
-#define FIND_CHR(d,s)   wcschr(d,s)
-#define LEN_STR(s)      wcslen(s)
+#define COPY_STR(t,f,l) wcsncpy((wchar_t*)t,(const wchar_t*)f, l)
+#define JOIN_STR(d,s,l) wcsncat((wchar_t*)d,(const wchar_t*)s,l)
+#define FIND_STR(d,s)   (REBCHR*)wcsstr((const wchar_t*)d,s)
+#define FIND_CHR(d,s)   (REBCHR*)wcschr((const wchar_t*)d,s)
+#define LEN_STR(s)      wcslen((const wchar_t*)s)
 #define TO_OS_STR(s1,s2,l)   mbstowcs(s1,s2,l)
-#define FROM_OS_STR(s1,s2,l) wcstombs(s1,s2,l)
+#define FROM_OS_STR(s1,s2,l) wcstombs(s1,(const wchar_t*)s2,l)
 #else
 // OS has UTF-8 byte string interfaces:
 #define OS_WIDE FALSE
 #define TXT(s) (s)
-#define COPY_STR(t,f,l) strncpy(t, f, l)
-#define JOIN_STR(d,s,l) strncat(d,s,l)
-#define FIND_STR(d,s)   strstr(d,s)
-#define FIND_CHR(d,s)   strchr(d,s)
-#define LEN_STR(s)      strlen(s)
+#define COPY_STR(t,f,l) strncpy((char *)t, (const char *)f, l)
+#define JOIN_STR(d,s,l) strncat((char *)d,(const char *)s,l)
+#define FIND_STR(d,s)   strstr((const char*)d,s)
+#define FIND_CHR(d,s)   (REBCHR*)strchr((const char*)d,s)
+#define LEN_STR(s)      strlen((const char*)s)
 #define TO_OS_STR(s1,s2,l)   strncpy(s1,s2,l)
-#define FROM_OS_STR(s1,s2,l) strncpy(s1,s2,l)
+#define FROM_OS_STR(s1,s2,l) strncpy(s1,(const char*)s2,l)
 #endif
 
-#define MAKE_STR(n) (REBCHR*)(malloc((n) * sizeof(REBCHR)))  // OS chars!
+#define MAKE_STR(n) (REBCHR*)(MAKE_MEM((n) * sizeof(REBCHR)))  // OS chars!
 
 #define ROUND_TO_INT(d) (REBINT)(floor((d) + 0.5))
+
+
+/***********************************************************************
+**
+**  Color Macros
+**
+***********************************************************************/
+//global pixelformat setup for REBOL image!, image loaders, color handling, tuple! conversions etc.
+//the graphics compositor code should rely on this setting(and do specific conversions if needed)
+//notes:
+//TO_RGBA_COLOR always returns 32bit RGBA value, converts R,G,B,A components to native RGBA order
+//TO_PIXEL_COLOR must match internal image! datatype byte order, converts R,G,B,A components to native image format
+// C_R, C_G, C_B, C_A Maps color components to correct byte positions for image! datatype byte order
+
+#ifdef ENDIAN_BIG
+
+#define TO_RGBA_COLOR(r,g,b,a) (REBCNT)((r)<<24 | (g)<<16 | (b)<<8 |  (a))
+
+//ARGB pixelformat used on big endian systems
+#define C_A 0
+#define C_R 1
+#define C_G 2
+#define C_B 3
+
+#define TO_PIXEL_COLOR(r,g,b,a) (REBCNT)((a)<<24 | (r)<<16 | (g)<<8 |  (b))
+
+#else
+
+#define TO_RGBA_COLOR(r,g,b,a) (REBCNT)((a)<<24 | (b)<<16 | (g)<<8 |  (r))
+
+//we use RGBA pixelformat on Android
+#ifdef TO_ANDROID_ARM
+#define C_R 0
+#define C_G 1
+#define C_B 2
+#define C_A 3
+#define TO_PIXEL_COLOR(r,g,b,a) (REBCNT)((a)<<24 | (b)<<16 | (g)<<8 |  (r))
+#else
+//BGRA pixelformat is used on Windows
+#define C_B 0
+#define C_G 1
+#define C_R 2
+#define C_A 3
+#define TO_PIXEL_COLOR(r,g,b,a) (REBCNT)((a)<<24 | (r)<<16 | (g)<<8 |  (b))
+#endif
+
+#endif
+
+
+/***********************************************************************
+**
+**  Conversion Macros
+**
+***********************************************************************/
+
+/* interpret four 8 bit unsigned integers as a 32 bit unsigned integer in little endian
+   originaly named LE in ChaCha20 code and U8TO32 in Poly1305 code */
+#define U8TO32_LE(p)                  \
+    (((u32)((p)[0]))       |          \
+     ((u32)((p)[1]) << 8)  |          \
+     ((u32)((p)[2]) << 16) |          \
+     ((u32)((p)[3]) << 24))
+
+/* store a 32 bit unsigned integer as four 8 bit unsigned integers in little endian
+   originaly named FROMLE in ChaCha20 code */
+#define U32TO8_LE(p, v)               \
+  do {                                \
+    (p)[0] = (u8)((v));               \
+    (p)[1] = (u8)((v) >> 8);          \
+    (p)[2] = (u8)((v) >> 16);         \
+    (p)[3] = (u8)((v) >> 24);         \
+  } while (0)
+
+/* interpret eight 8 bit unsigned integers as a 64 bit unsigned integer in little endian */
+#define U8TO64_LE(p)                  \
+    (((u64)((p)[0] & 0xff)      ) |   \
+     ((u64)((p)[1] & 0xff) <<  8) |   \
+     ((u64)((p)[2] & 0xff) << 16) |   \
+     ((u64)((p)[3] & 0xff) << 24) |   \
+     ((u64)((p)[4] & 0xff) << 32) |   \
+     ((u64)((p)[5] & 0xff) << 40) |   \
+     ((u64)((p)[6] & 0xff) << 48) |   \
+     ((u64)((p)[7] & 0xff) << 56))
+
+
+/* store a 64 bit unsigned integer as eight 8 bit unsigned integers in little endian */
+#define U64TO8_LE(p, v)               \
+  do {                                \
+    (p)[0] = (u8)((v)      ) & 0xff;  \
+    (p)[1] = (u8)((v) >>  8) & 0xff;  \
+    (p)[2] = (u8)((v) >> 16) & 0xff;  \
+    (p)[3] = (u8)((v) >> 24) & 0xff;  \
+    (p)[4] = (u8)((v) >> 32) & 0xff;  \
+    (p)[5] = (u8)((v) >> 40) & 0xff;  \
+    (p)[6] = (u8)((v) >> 48) & 0xff;  \
+    (p)[7] = (u8)((v) >> 56) & 0xff;  \
+  } while (0)
+
+
 
 //
 // CASTING MACROS
@@ -384,30 +484,91 @@ typedef void(*CFUNC)(void *);
     #define cast(t, v)      cast_helper<t>(v)
     #define c_cast(t, v)    c_cast_helper<t>(v)
 #endif
-#if defined(NDEBUG) || !defined(REB_DEF)
+
+
+//=//// BYTE STRINGS VS UNENCODED CHARACTER STRINGS ///////////////////////=//
+//
+// Use these when you semantically are talking about unsigned characters as
+// bytes.  For instance: if you want to count unencoded chars in 'char *' us
+// strlen(), and the reader will know that is a count of letters.  If you have
+// something like UTF-8 with more than one byte per character, use LEN_BYTES.
+// The casting macros are derived from "Casts for the Masses (in C)":
+//
+// http://blog.hostilefork.com/c-casts-for-the-masses/
+//
+// For APPEND_BYTES_LIMIT, m is the max-size allocated for d (dest)
+//
+#include <string.h> // for strlen() etc, but also defines `size_t`
+#define strsize strlen
+#if defined(NDEBUG)
     /* These [S]tring and [B]inary casts are for "flips" between a 'char *'
      * and 'unsigned char *' (or 'const char *' and 'const unsigned char *').
      * Being single-arity with no type passed in, they are succinct to use:
      */
     #define s_cast(b)       ((char *)(b))
     #define cs_cast(b)      ((const char *)(b))
-    #define b_cast(s)       ((unsigned char *)(s))
-    #define cb_cast(s)      ((const unsigned char *)(s))
-    /*
-     * In C++ (or C with '-Wpointer-sign') this is powerful.  'char *' can
-     * be used with string functions like strlen().  Then 'unsigned char *'
-     * can be saved for things you shouldn't _accidentally_ pass to functions
-     * like strlen().  (One GREAT example: encoded UTF-8 byte strings.)
-     */
+    #define b_cast(s)       ((REBYTE *)(s))
+    #define cb_cast(s)      ((const REBYTE *)(s))
+
+    #define LEN_BYTES(s) \
+        strlen((const char*)(s))
+
+    #define COPY_BYTES(d,s,n) \
+        strncpy((char*)(d), (const char*)(s), (n))
+
+    #define CMP_BYTES(l,r) \
+        strcmp((const char*)(l), (const char*)(r))
+
+    inline static REBYTE *APPEND_BYTES(
+        REBYTE *dest, const REBYTE *src, size_t max
+    ){
+        size_t len = LEN_BYTES(dest);
+        return b_cast(strncat(
+            s_cast(dest), cs_cast(src), MAX(max - len - 1, 0)
+        ));
+    }
 #else
     /* We want to ensure the input type is what we thought we were flipping,
      * particularly not the already-flipped type.  Instead of type_traits, 4
      * functions check in both C and C++ (here only during Debug builds):
-     * (Definitions are in n-strings.c w/prototypes built by make-headers.r)
      */
-    #define s_cast(b)       s_cast_(b)
-    #define cs_cast(b)      cs_cast_(b)
-    #define b_cast(s)       b_cast_(s)
-    #define cb_cast(s)      cb_cast_(s)
+    inline static REBYTE *b_cast(char *s)
+        { return (REBYTE*)s; }
+
+    inline static const REBYTE *cb_cast(const char *s)
+        { return (const REBYTE*)s; }
+
+    inline static char *s_cast(REBYTE *s)
+        { return (char*)s; }
+
+    inline static const char *cs_cast(const REBYTE *s)
+        { return (const char*)s; }
+
+    // Debug build uses inline functions to ensure you pass in unsigned char *
+    //
+    inline static unsigned char *COPY_BYTES(
+        REBYTE *dest, const REBYTE *src, size_t count
+    ){
+        return b_cast(strncpy(s_cast(dest), cs_cast(src), count));
+    }
+
+    inline static size_t LEN_BYTES(const REBYTE *str)
+        { return strlen(cs_cast(str)); }
+
+    inline static int CMP_BYTES(
+        const REBYTE *lhs, const REBYTE *rhs
+    ){
+        return strcmp(cs_cast(lhs), cs_cast(rhs));
+    }
+
+    inline static REBYTE *APPEND_BYTES(
+        REBYTE *dest, const REBYTE *src, size_t max
+    ){
+        size_t len = LEN_BYTES(dest);
+        return b_cast(strncat(
+            s_cast(dest), cs_cast(src), MAX(max - len - 1, 0)
+        ));
+    }
 #endif
 
+#endif // REB_C_H

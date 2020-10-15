@@ -162,6 +162,12 @@
 		return R_RET;
 	}
 
+	if (D_REF(5)) {
+		REBVAL *pool_id = D_ARG(6);
+		Dump_Series_In_Pool(VAL_INT32(pool_id));
+		return R_NONE;
+	}
+
 	if (D_REF(1)) flags = 3;
 	n = Inspect_Series(flags);
 
@@ -170,7 +176,7 @@
 	return R_RET;
 }
 
-REBYTE *evoke_help = "Evoke values:\n"
+char *evoke_help = "Evoke values:\n"
 	"[stack-size n] crash-dump delect\n"
 	"watch-recycle watch-obj-copy crash\n"
 	"1: watch expand\n"
@@ -218,7 +224,7 @@ REBYTE *evoke_help = "Evoke values:\n"
 				Crash(9999);
 				break;
 			default:
-				Out_Str(evoke_help, 1);
+				Out_Str(cb_cast(evoke_help), 1);
 			}
 		}
 		if (IS_INTEGER(arg)) {
@@ -237,7 +243,7 @@ REBYTE *evoke_help = "Evoke values:\n"
 				Check_Bind_Table();
 				break;
 			default:
-				Out_Str(evoke_help, 1);
+				Out_Str(cb_cast(evoke_help), 1);
 			}
 		}
 	}
@@ -396,9 +402,11 @@ err:
 	REBVAL *val;
 	REBINT result;
 	REBSER *ser;
+	REBVAL *hnd = D_ARG(1); //codec's handle
+
+	if (VAL_HANDLE_TYPE(hnd) != SYM_CODEC) Trap0(RE_INVALID_HANDLE);
 
 	CLEAR(&codi, sizeof(codi));
-
 	codi.action = CODI_DECODE;
 
 	val = D_ARG(3);
@@ -430,8 +438,7 @@ err:
 	}
 
 	// Nasty alias, but it must be done:
-	// !!! add a check to validate the handle as a codec!!!!
-	result = ((codo) (VAL_HANDLE(D_ARG(1))))(&codi);
+	result = ((codo)(VAL_HANDLE(hnd)))(&codi);
 
 	if (codi.error != 0) {
 		if (result == CODI_CHECK) return R_FALSE;
@@ -468,6 +475,9 @@ err:
 
 	case CODI_BLOCK:
 		Set_Block(D_RET, codi.other);
+		break;
+	case CODI_STRING:
+		Set_String(D_RET, codi.other);
 		break;
 
 	default:

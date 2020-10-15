@@ -63,18 +63,25 @@
 
 REBARGS Main_Args;
 
-#define PROMPT_STR "\x1B[1;31;49m>>\x1B[1;33;49m "
-#define RESULT_STR "\x1B[32m==\x1B[1;32;49m "
+#define PROMPT_STR (REBYTE*)"\x1B[1;31;49m>>\x1B[1;33;49m "
+#define RESULT_STR (REBYTE*)"\x1B[32m==\x1B[1;32;49m "
 
 #ifdef TO_WINDOWS
 #define MAX_TITLE_LENGTH  1024
 HINSTANCE App_Instance = 0;
+HWND      Focused_Window = 0;
 WCHAR     App_Title[MAX_TITLE_LENGTH]; //will be filled later from the resources file
 #endif
 
-#ifndef REB_CORE
+#ifdef REB_GTK
+
 extern void Init_Windows(void);
-extern void Init_Graphics(void);
+
+#endif
+
+#ifdef REB_VIEW
+extern void Init_Windows(void);
+//extern void Init_Graphics(void);
 #endif
 
 //#define TEST_EXTENSIONS
@@ -83,13 +90,13 @@ extern void Init_Ext_Test(void);	// see: host-ext-test.c
 #endif
 
 // Host bare-bones stdio functs:
-extern void Open_StdIO(void);
+extern REBREQ *Open_StdIO();
 extern void Close_StdIO(void);
 extern void Put_Str(REBYTE *buf);
-extern REBYTE *Get_Str();
+extern REBYTE *Get_Str(void);
 
-void Host_Crash(REBYTE *reason) {
-	OS_Crash("REBOL Host Failure", reason);
+void Host_Crash(char *reason) {
+	OS_Crash(cb_cast("REBOL Host Failure"), cb_cast(reason));
 }
 
 void Host_Repl() {
@@ -123,7 +130,14 @@ void Host_Repl() {
 
 		if (!line) {
 			// "end of stream" - for example on CTRL+C
-			Put_Str("\x1B[0m"); //reset console color before leaving
+			if(cont_level > 0) {
+				// we were in multiline editing, so escape from it only
+				cont_level = 0;
+				input_len = 0;
+				input[0] = 0;
+				continue;
+			}
+			Put_Str(b_cast("\x1B[0m")); //reset console color before leaving
 			goto cleanup_and_return;
 		}
 
@@ -173,7 +187,7 @@ void Host_Repl() {
 		if (input_len + line_len > input_max) {
 			REBYTE *tmp = OS_Make(2 * input_max);
 			if (!tmp) {
-				Put_Str("\x1B[0m"); //reset console color;
+				Put_Str(b_cast("\x1B[0m")); //reset console color;
 				Host_Crash("Growing console input buffer failed!");
 			}
 			memcpy(tmp, input, input_len);
@@ -194,7 +208,7 @@ void Host_Repl() {
 		input_len = 0;
 		cont_level = 0;
 
-		Put_Str("\x1B[0m"); //reset color
+		Put_Str(b_cast("\x1B[0m")); //reset color
 
 		RL_Do_String(input, 0, 0);
 		RL_Print_TOS(TRUE, RESULT_STR);
@@ -242,18 +256,23 @@ int main(int argc, char **argv) {
 	App_Instance = GetModuleHandle(0); // HMODULE=HINSTANCE
 #endif
 	// Fetch the win32 unicoded program arguments:
-	argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+	argv = (char**)CommandLineToArgvW(GetCommandLineW(), &argc);
 	// Use title string as defined in resources file (.rc) with hardcoded ID 101
 	LoadStringW(App_Instance, 101, App_Title, MAX_TITLE_LENGTH);
+#ifdef USE_NATIVE_IMAGE_CODECS 
+	CoInitialize(0);
+#endif
+
 #else //non Windows platforms
 int main(int argc, char **argv) {
 #endif
 	REBYTE vers[8];
 	REBINT n;
+	REBREQ *std_io;
 
 	// Must be done before an console I/O can occur. Does not use reb-lib,
 	// so this device should open even if there are other problems.
-	Open_StdIO();  // also sets up interrupt handler
+	std_io = Open_StdIO();  // also sets up interrupt handler
 
 	Host_Lib = &Host_Lib_Init;
 
@@ -272,13 +291,14 @@ int main(int argc, char **argv) {
 	if (!Host_Lib) Host_Crash("Missing host lib");
 	// !!! Second part will become vers[2] < RL_REV on release!!!
 	if (vers[1] != RL_VER || vers[2] != RL_REV) Host_Crash("Incompatible reb-lib DLL");
+	Host_Lib->std_io = std_io;
 	n = RL_Init(&Main_Args, Host_Lib);
 	if (n == 1) Host_Crash("Host-lib wrong size");
 	if (n == 2) Host_Crash("Host-lib wrong version/checksum");
 
-#ifndef REB_CORE
+#ifdef REB_VIEW
 	Init_Windows();
-	Init_Graphics();
+	//Init_Graphics();
 #endif
 
 #ifdef TEST_EXTENSIONS
@@ -303,15 +323,13 @@ int main(int argc, char **argv) {
 			|| (Main_Args.options & RO_HALT)  // --halt option
 		)
 	){
+		if (n < 0 && !(Main_Args.options & RO_HALT)) {
+			RL_Do_String(b_cast("unless system/options/quiet [print {^[[mClosing in 3s!} wait 3] quit/return -1"), 0, 0);
+		}
 		Host_Repl();
 	}
 
-	//OS_Call_Device(RDI_STDIO, RDC_CLOSE);
-	OS_Quit_Devices(0);
-
-	Close_StdIO();
-
-	// A QUIT does not exit this way, so the only valid return code is zero.
+	OS_Exit(0);
 	return 0;
 }
 

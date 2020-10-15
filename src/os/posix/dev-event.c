@@ -46,6 +46,16 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
+#ifdef REB_VIEW
+#include <gtk/gtk.h>
+extern GMainContext *GTKCtx;
+extern REBINT exit_loop;
+#else
+REBINT exit_loop = 0;
+#endif
+
+
+
 void Done_Device(int handle, int error);
 
 /***********************************************************************
@@ -75,6 +85,17 @@ void Done_Device(int handle, int error);
 ***********************************************************************/
 {
 	int flag = DR_DONE;
+#ifdef REB_VIEW
+	//X_Event_Loop(-1);
+	//puts("Poll_Events");
+	if (exit_loop > 0) {
+		while(g_main_context_pending(GTKCtx)) {
+			flag = DR_PEND;
+			//printf(".");
+			g_main_context_iteration(GTKCtx, FALSE);
+		}
+	}
+#endif
 	return flag;	// different meaning compared to most commands
 }
 
@@ -93,9 +114,24 @@ void Done_Device(int handle, int error);
 	int result;
 
 	tv.tv_sec = 0;
-	tv.tv_usec = req->length * 1000;
+	tv.tv_usec = req->length * (exit_loop == 0 ? 1000 : 200); // don't wait so much when gui is used
 	//printf("usec %d\n", tv.tv_usec);
-	
+
+#ifdef REB_VIEW
+	int max_priority;
+	GPollFD poll_fds[10];
+	gint timeout = tv.tv_usec;
+
+	//if (g_main_context_acquire(GTKCtx)) {
+	//	if (g_main_context_prepare(GTKCtx, &max_priority)) {
+	//		result = g_main_context_query (GTKCtx, max_priority, &timeout, poll_fds, 10);
+	//		//printf("g_main_context_query: %i timeout: %i\n", result, timeout);
+	//	}
+	//	g_main_context_release(GTKCtx);
+	//	if (result >= 0) return DR_DONE;
+	//}
+#endif	
+
 	result = select(0, 0, 0, 0, &tv);
 	if (result < 0) {
 		//

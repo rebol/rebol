@@ -22,7 +22,7 @@
 **  Module:  a-lib.c
 **  Summary: exported REBOL library functions
 **  Section: environment
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Oldes
 **  Notes:
 **
 ***********************************************************************/
@@ -31,7 +31,6 @@
 #include "reb-dialect.h"
 #include "reb-ext.h"
 #include "reb-evtypes.h"
-#include "sys-state.h"
 
 // Linkage back to HOST functions. Needed when we compile as a DLL
 // in order to use the OS_* macro functions.
@@ -134,6 +133,26 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
+*/	RL_API void RL_Dispose(void)
+/*
+**	Disposes the REBOL interpreter.
+**
+**	Returns:
+**		nothing
+**	Arguments:
+**		none
+**	Notes:
+**		This function will deallocate and release all memory
+**		structures used by the REBOL interpreter.
+**
+***********************************************************************/
+{
+	Dispose_Core();
+}
+
+
+/***********************************************************************
+**
 */	RL_API int RL_Start(REBYTE *bin, REBINT len, REBCNT flags)
 /*
 **	Evaluate the default boot function.
@@ -157,7 +176,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	if (bin) {
 		spec.data = bin;
 		spec.tail = len;
-		ser = Decompress(&spec, 0, -1, 10000000, 0);
+		ser = DecompressZlib(&spec, 0, -1, 0, 0);
 		if (!ser) return 1;
 
 		val = BLK_SKIP(Sys_Context, SYS_CTX_BOOT_HOST);
@@ -170,7 +189,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
-*/	RL_API void RL_Reset()
+*/	RL_API void RL_Reset(void)
 /*
 **	Reset REBOL (not implemented)
 **
@@ -221,7 +240,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	value = Append_Value(ser);
 	Set_Binary(value, Copy_Bytes(source, -1)); // UTF-8
 	value = Append_Value(ser);
-	SET_HANDLE(value, call);
+	SET_HANDLE(value, call, SYM_EXTENSION, HANDLE_FUNCTION);
 
 	return Extension_Lib();
 }
@@ -307,12 +326,12 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	//Cloak(TRUE, code, NAT_SPEC_SIZE, &key[0], 20, TRUE);
 	spec.data = bin;
 	spec.tail = length;
-	text = Decompress(&spec, 0, -1, 10000000, 0);
+	text = DecompressZlib(&spec, 0, -1, 0, 0);
 	if (!text) return FALSE;
 	Append_Byte(text, 0);
 
 #ifdef DUMP_INIT_SCRIPT
-	f = _open("host-boot.r", _O_CREAT | _O_RDWR, _S_IREAD | _S_IWRITE );
+	f = _open("host-boot.reb", _O_CREAT | _O_RDWR, _S_IREAD | _S_IWRITE );
 	_write(f, STR_HEAD(text), LEN_BYTES(STR_HEAD(text)));
 	_close(f);
 #endif
@@ -447,7 +466,11 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		if (!IS_ERROR(top)) {
 			types = Get_System(SYS_OPTIONS, OPTIONS_RESULT_TYPES);
 			if (IS_TYPESET(types) && TYPE_CHECK(types, VAL_TYPE(top))) {
-				if (marker) Out_Str(marker, 0);
+				if (marker) {
+					DS_SKIP; // protect `top` from modification
+					Out_Str(marker, 0);
+					DS_DROP; 
+				}
 				Out_Value(top, 500, TRUE, 1); // limit, molded
 			}
 //			else {
@@ -498,6 +521,32 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	return 0;
 }
 
+/***********************************************************************
+**
+*/	RL_API int RL_Update_Event(REBEVT *evt)
+/*
+**	Updates an application event (e.g. GUI) to the event port.
+**
+**	Returns:
+**		Returns 1 if updated, or 0 if event appended, and -1 if full.
+**	Arguments:
+**		evt - A properly initialized event structure. The
+**			 model and type of the event are used to address 
+**           the unhandled event in the queue, when it is found,
+**           it will be replaced with this one
+**
+***********************************************************************/
+
+{
+	REBVAL *event = Find_Event(evt->model, evt->type, evt->ser);
+
+	if (event) {
+		event->data.event = *evt;
+		return 1;
+	}
+	
+	return RL_Event(evt) - 1;
+}
 
 RL_API void *RL_Make_Block(u32 size)
 /*
@@ -518,6 +567,23 @@ RL_API void *RL_Make_Block(u32 size)
 {
 	return Make_Block(size);
 }
+
+RL_API void RL_Expand_Series(REBSER *series, REBCNT index, REBCNT delta)
+/*
+**	Expand a series at a particular index point by the number
+**	number of units specified by delta.
+**
+**	Returns:
+**		
+**	Arguments:
+**		series - series to expand
+**		index - position where to expand
+**		delta - number of UNITS to expand from TAIL (keeping terminator)
+*/
+{
+	Expand_Series(series, index, delta);
+}
+
 
 RL_API void *RL_Make_String(u32 size, int unicode)
 /*
@@ -559,6 +625,29 @@ RL_API void *RL_Make_Image(u32 width, u32 height)
 	return Make_Image(width, height, FALSE);
 }
 
+RL_API void *RL_Make_Vector(REBINT type, REBINT sign, REBINT dims, REBINT bits, REBINT size)
+/*
+**	Allocate a new vector of the given attributes.
+**
+**	Returns:
+**		A pointer to a vector series or zero.
+**	Arguments:
+**		type: the datatype
+**		sign: signed or unsigned
+**		dims: number of dimensions
+**		bits: number of bits per unit (8, 16, 32, 64)
+**		size: number of values
+**	Notes:
+**		Allocated with REBOL's internal memory manager.
+**		Vectors are automatically garbage collected if there are
+**		no references to them from REBOL code (C code does nothing.)
+*/
+{
+	// check if bits is valid 
+	if(!(bits == 8 || bits == 16 || bits == 32 || bits == 64)) return 0;
+	return Make_Vector(type, sign, dims, bits, size);
+}
+
 RL_API void RL_Protect_GC(REBSER *series, u32 flags)
 /*
 **	Protect memory from garbage collection.
@@ -581,7 +670,7 @@ RL_API void RL_Protect_GC(REBSER *series, u32 flags)
 	(flags == 1) ? SERIES_SET_FLAG(series, SER_KEEP) : SERIES_CLR_FLAG(series, SER_KEEP);
 }
 
-RL_API int RL_Get_String(REBSER *series, u32 index, void **str)
+RL_API int RL_Get_String(REBSER *series, u32 index, void **str, REBOOL needs_wide)
 /*
 **	Obtain a pointer into a string (bytes or unicode).
 **
@@ -592,6 +681,7 @@ RL_API int RL_Get_String(REBSER *series, u32 index, void **str)
 **		series - string series pointer
 **		index - index from beginning (zero-based)
 **		str   - pointer to first character
+**		needs_wide - unicode string is required, converts if needed
 **	Notes:
 **		If the len is less than zero, then the string is optimized to
 **		codepoints (chars) 255 or less for ASCII and LATIN-1 charsets.
@@ -602,11 +692,41 @@ RL_API int RL_Get_String(REBSER *series, u32 index, void **str)
 	int len = (index >= series->tail) ? 0 : series->tail - index;
 
 	if (BYTE_SIZE(series)) {
+		if (needs_wide) {
+			Widen_String(series);
+		} else {
+			*str = BIN_SKIP(series, index);
+			return -len;
+		}
+	}
+	*str = UNI_SKIP(series, index);
+	return len;
+}
+
+RL_API int RL_Get_UTF8_String(REBSER *series, u32 index, void **str)
+/*
+**	Obtain a pointer into an UTF8 encoded string.
+**
+**	Returns:
+**		The length of string is bytes.
+**  Arguments:
+**		series - string series pointer
+**		index - index from beginning (zero-based)
+**		str   - pointer to first character
+**	Notes:
+**		Strings are allowed to move in memory. Therefore, you will want
+**		to make a copy of the string if needed.
+*/
+{
+	int len = (index >= series->tail) ? 0 : series->tail - index;
+
+	if (BYTE_SIZE(series)) {
 		*str = BIN_SKIP(series, index);
-		len = -len;
 	}
 	else {
-		*str = UNI_SKIP(series, index);
+		REBSER *ser = Encode_UTF8_String((void*)UNI_SKIP(series, index), len, TRUE, 0);
+		*str = BIN_HEAD(ser);
+		len = BIN_LEN(ser);
 	}
 
 	return len;
@@ -677,11 +797,9 @@ RL_API REBYTE *RL_Word_String(u32 word)
 */
 {
 	REBYTE *s1, *s2;
-	// !!This code should use a function from c-words.c (but nothing perfect yet.)
-	if (word == 0 || word >= PG_Word_Table.series->tail) return 0;
-	s1 = VAL_SYM_NAME(BLK_SKIP(PG_Word_Table.series, word));
-	s2 = OS_MAKE(strlen(s1));
-	strcpy(s2, s1);
+	s1 = Get_Sym_Name(word);
+	s2 = OS_MAKE(strlen(cs_cast(s1)) + 1);
+	strcpy(s_cast(s2), cs_cast(s1));
 	return s2;
 }
 
@@ -770,6 +888,38 @@ RL_API u32 RL_Set_Char(REBSER *series, u32 index, u32 chr)
 	}
 	SET_ANY_CHAR(series, index, chr);
 	return index;
+}
+
+RL_API int RL_Get_Value_Resolved(REBSER *series, u32 index, RXIARG *result)
+/*
+**	Get a value from a block. If value is WORD or PATH, than its value is resolved.
+**
+**	Returns:
+**		Datatype of value or zero if index is past tail.
+**	Arguments:
+**		series - block series pointer
+**		index - index of the value in the block (zero based)
+**		result - set to the value of the field
+*/
+{
+	REBVAL *value;
+	if (index >= series->tail) return 0;
+	value = BLK_SKIP(series, index);
+	switch (VAL_TYPE(value)) {
+	case REB_WORD:
+	case REB_GET_WORD:
+		
+		value = Get_Var(value);
+		//printf("resolved type: %u\n", VAL_TYPE(value));
+		break;
+	case REB_PATH:
+	case REB_GET_PATH:
+		Do_Path(&value, NULL);
+		value = DS_TOP; // only safe for short time!
+		break;
+	}
+	*result = Value_To_RXI(value);
+	return Reb_To_RXT[VAL_TYPE(value)];
 }
 
 RL_API int RL_Get_Value(REBSER *series, u32 index, RXIARG *result)
@@ -872,7 +1022,7 @@ RL_API int RL_Set_Field(REBSER *obj, u32 word, RXIARG val, int type)
 **		type - datatype of value
 */
 {
-	REBVAL value = {0};
+	//REBVAL value = {0};
 	if (!(word = Find_Word_Index(obj, word, FALSE))) return 0;
 	if (VAL_PROTECTED(FRM_WORDS(obj)+word)) return 0; //	Trap1(RE_LOCKED_WORD, word);
 	RXI_To_Value(FRM_VALUES(obj)+word, val, type);
@@ -917,6 +1067,56 @@ RL_API int RL_Callback(RXICBI *cbi)
 	SET_FLAG(cbi->flags, RXC_QUEUED);
 
 	return RL_Event(&evt);	// (returns 0 if queue is full, ignored)
+}
+
+RL_API REBCNT RL_Encode_UTF8(REBYTE *dst, REBINT max, void *src, REBCNT *len, REBFLG uni, REBFLG opts)
+/*
+**	Encode the unicode into UTF8 byte string.
+**		
+**	Returns:
+**		Number of source chars used.
+**		Updates len for dst bytes used.
+**		Does not add a terminator.
+**	Arguments:
+**		max  - The maximum size of the result (UTF8).
+**		uni  - Source string can be byte or unichar sized (uni = TRUE);
+**		opts - Convert LF/CRLF
+*/
+{
+	return Encode_UTF8(dst, max, src, len, uni, opts);
+}
+
+RL_API REBSER* RL_Encode_UTF8_String(void *src, REBCNT len, REBFLG uni, REBFLG opts)
+/*
+**	Encode the unicode into UTF8 byte string.
+**
+**	Returns:
+**		Rebol series value with an UTF8 encoded data.
+**	Arguments:
+**		src  - series as a REBYTE or REBUNI.
+**		len  - number of source bytes to convert.
+**		uni  - Source string can be byte or unichar sized (uni = TRUE);
+**		opts - Convert LF/CRLF
+*/
+{
+	return Encode_UTF8_String(src, len, uni, opts);
+}
+
+RL_API REBSER* RL_Decode_UTF_String(REBYTE *src, REBCNT len, REBINT utf, REBFLG ccr, REBFLG uni)
+/*
+**	Decode the UTF8 encoded data into Rebol series.
+**
+**	Returns:
+**		Rebol series with char size 1 or 2
+**	Arguments:
+**		src  - UTF8 encoded data
+**		len  - number of source bytes to convert.
+**		utf  - is 0, 8, +/-16, +/-32.
+**		ccr  - Convert LF/CRLF
+**		uni  - keep uni version even for plain ascii
+*/
+{
+	return Decode_UTF_String(src, len, utf, ccr, uni);
 }
 
 

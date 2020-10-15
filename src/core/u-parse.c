@@ -28,7 +28,6 @@
 ***********************************************************************/
 
 #include "sys-core.h"
-#include "sys-state.h"
 
 // Parser flags:
 enum Parse_Flags {
@@ -76,7 +75,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	REBVAL val;
 	Set_Series(type, &val, series);
 	VAL_INDEX(&val) = index;
-	Debug_Fmt("%r: %r", rules, &val);
+	Debug_Fmt(cb_cast("%r: %r"), rules, &val);
 }
 
 
@@ -244,6 +243,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	// Do an expression:
 	case REB_PAREN:
 		item = Do_Block_Value_Throw(item); // might GC
+        UNUSED(item);
 		// old: if (IS_ERROR(item)) Throw_Error(VAL_ERR_OBJECT(item));
         index = MIN(index, series->tail); // may affect tail
 		break;
@@ -310,7 +310,8 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	// Do an expression:
 	case REB_PAREN:
 		item = Do_Block_Value_Throw(item); // might GC
-		// old: if (IS_ERROR(item)) Throw_Error(VAL_ERR_OBJECT(item));
+        UNUSED(item);
+        // old: if (IS_ERROR(item)) Throw_Error(VAL_ERR_OBJECT(item));
         index = MIN(index, series->tail); // may affect tail
 		break;
 
@@ -420,6 +421,25 @@ no_result:
 					ch2 = VAL_CHAR(item);
 					if (!HAS_CASE(parse)) ch2 = UP_CASE(ch2);
 					if (ch1 == ch2) goto found1;
+				}
+				else if (IS_TAG(item)) {
+					ch2 = '<';
+					if (ch1 == ch2) {
+						// adapted from function Parse_To :-)
+						REBSER *ser;
+						ser = Copy_Form_Value(item, 0);
+						i = Find_Str_Str(series, 0, index, series->tail, 1, ser, 0, ser->tail,  AM_FIND_MATCH | parse->flags);
+						if (i != NOT_FOUND) {
+							if (is_thru) i += ser->tail;
+							index = i;
+							goto found;
+						}
+					}
+				}
+				// bitset
+				else if (IS_BITSET(item)) {
+					if (Check_Bit(VAL_SERIES(item), ch1, !HAS_CASE(parse)))
+						goto found1;
 				}
 				else if (ANY_STR(item)) {
 					ch2 = VAL_ANY_CHAR(item);
@@ -538,7 +558,8 @@ bad_target:
 	return i;
 }
 
-
+#ifdef USE_DO_PARSE_RULE
+//@@ https://github.com/Oldes/Rebol-issues/issues/2083
 /***********************************************************************
 **
 */	static REBCNT Do_Eval_Rule(REBPARSE *parse, REBCNT index, REBVAL **rule)
@@ -632,7 +653,7 @@ bad_target:
 	UNSAVE_SERIES(newparse.series);
 	return n;
 }
-
+#endif // USE_DO_PARSE_RULE
 
 /***********************************************************************
 **
@@ -655,7 +676,7 @@ bad_target:
 	REBSER *ser;
 	REBFLG flags;
 	REBCNT cmd;
-	REBVAL *rule_head = rules;
+	//REBVAL *rule_head = rules;
 
 	CHECK_STACK(&flags);
 	//if (depth > MAX_PARSE_DEPTH) Trap_Word(RE_LIMIT_HIT, SYM_PARSE, 0);
@@ -794,11 +815,8 @@ bad_target:
 
 			} else { // It's not a PARSE command, get or set it:
 			
-				// word: - if not the target of a COPY or SET operation, this will
-				// default to setting a variable to the series at current index
-				if (IS_SET_WORD(item) &&
-					!(GET_FLAG(flags, PF_SET_OR_COPY) || GET_FLAG(flags, PF_COPY)))
-				{
+				// word: - set a variable to the series at current index
+				if (IS_SET_WORD(item)) {
 					Set_Var_Series(item, parse->type, series, index);
 					continue;
 				}
@@ -910,13 +928,13 @@ bad_target:
 						&& (Parse_Series(val, VAL_BLK_DATA(item), parse->flags, depth+1) == VAL_TAIL(val))
 					) ? index+1 : NOT_FOUND;
 					break;
-
+#ifdef USE_DO_PARSE_RULE
 				case SYM_DO:
 					if (!IS_BLOCK_INPUT(parse)) goto bad_rule;
 					i = Do_Eval_Rule(parse, index, &rules);
 					rulen = 1;
 					break;
-
+#endif
 				default:
 					goto bad_rule;
 				}
@@ -1025,7 +1043,10 @@ post:
 					Throw_Return_Series(parse->type, ser);
 				}
 				if (GET_FLAG(flags, PF_REMOVE)) {
-					if (count) Remove_Series(series, begin, count);
+					if (count) {
+						if (IS_PROTECT_SERIES(series)) Trap0(RE_PROTECTED);
+						Remove_Series(series, begin, count);
+					}
 					index = begin;
 				}
 				if (flags & (1<<PF_INSERT | 1<<PF_CHANGE)) {
@@ -1040,9 +1061,14 @@ post:
 						item = rules++;
 					}
 					// CHECK FOR QUOTE!!
-					item = Get_Parse_Value(item); // new value
+					if (IS_PAREN(item)) {
+						item = Do_Block_Value_Throw(item); // might GC
+					} else {
+						item = Get_Parse_Value(item); // new value
+					}
 					if (IS_UNSET(item)) Trap1(RE_NO_VALUE, rules-1);
 					if (IS_END(item)) goto bad_end;
+					if (IS_PROTECT_SERIES(series)) Trap0(RE_PROTECTED);
 					if (IS_BLOCK_INPUT(parse)) {
 						index = Modify_Block(GET_FLAG(flags, PF_CHANGE) ? A_CHANGE : A_INSERT,
 								series, begin, item, cmd, count, 1);
@@ -1073,6 +1099,9 @@ post:
 		mincount = maxcount = 1;
 
 	}
+	
+	if (--Eval_Count <= 0 || Eval_Signals) Do_Signals();
+
 	return index;
 
 bad_rule:

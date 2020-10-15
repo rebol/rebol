@@ -96,8 +96,6 @@
 
 #include "sys-core.h"
 
-#include "sys-state.h"
-
 // Globals or Threaded???
 static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
@@ -206,7 +204,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 /***********************************************************************
 **
-*/	void Trap_Stack()
+*/	void Trap_Stack(void)
 /*
 ***********************************************************************/
 {
@@ -222,11 +220,11 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 /***********************************************************************
 **
-*/	REBCNT Stack_Depth()
+*/	REBCNT Stack_Depth(void)
 /*
 ***********************************************************************/
 {
-	REBCNT dsf = DSF;
+	REBCNT dsf;
 	REBCNT count = 0;
 
 	for (dsf = DSF; dsf > 0; dsf = PRIOR_DSF(dsf)) {
@@ -324,6 +322,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 	if (num) {
 		obj1 = Find_Word_Value(frame, SYM_CODE);
+		if (!obj1) return 0;
 		*num = VAL_INT32(obj1)
 			+ Find_Word_Index(frame, VAL_WORD_SYM(&error->id), FALSE)
 			- Find_Word_Index(frame, SYM_TYPE, FALSE) - 1;
@@ -680,7 +679,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	errs = Construct_Object(0, VAL_BLK(errors), 0);
 	Set_Object(Get_System(SYS_CATALOG, CAT_ERRORS), errs);
 
-	Set_Root_Series(TASK_ERR_TEMPS, Make_Block(3), "task errors");
+	Set_Root_Series(TASK_ERR_TEMPS, Make_Block(3), cb_cast("task errors"));
 
 	// Create objects for all error types:
 	for (val = BLK_SKIP(errs, 1); NOT_END(val); val++) {
