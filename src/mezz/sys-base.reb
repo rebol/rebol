@@ -194,10 +194,10 @@ make-module*: func [
 ; MOVE some of these to SYSTEM?
 boot-banner: ajoin [
 	"REBOL 3." system/version/2 #"." system/version/3
-	" for "    system/platform
+	" for "    system/platform " (" system/build/os #")"
 	" built "  system/build/date
 ]
-if system/build/git [
+if all [system/build/git system/build/git/commit] [
 	append append boot-banner " commit #" copy/part system/build/git/commit 8
 ]
 boot-help: "Boot-sys level - no extra features."
