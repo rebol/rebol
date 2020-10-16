@@ -234,7 +234,7 @@ Rebol [
 
 --test-- "issue-1047"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1047
-	-assert all [
+	--assert all [
 		error? e: try [f: func [a:][print a]]
 		e/id = 'bad-func-def
 	]
