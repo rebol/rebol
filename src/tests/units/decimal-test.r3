@@ -90,8 +90,8 @@ Rebol [
 	--assert not odd? -2.0
 	--assert not odd? 1.7976931348623157e308
 	--assert not odd? -1.7976931348623157e308
-	--assert odd? 1000000000.0
-	--assert odd? 10000000000.0
+	--assert not odd? 1000000000.0
+	--assert not odd? 10000000000.0
 ===end-group===
 
 ===start-group=== "to-degrees & to-radians"
