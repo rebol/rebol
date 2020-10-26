@@ -154,6 +154,10 @@ if system/platform = 'Windows [
 		;@@ https://github.com/Oldes/Rebol3/issues/14
 		--assert     exists? http://httpbin.org/
 		--assert not exists? http://httpbin.org/not-exists
+	--test-- "read/part"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2434
+		--assert "<!DOCTYPE" = read/part http://httpbin.org/ 9
+		--assert #{89504E47} = read/binary/part http://avatars-04.gitter.im/gh/uv/4/oldes 4
 ===end-group===
 
 
