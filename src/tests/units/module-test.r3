@@ -123,6 +123,24 @@ myfunc: func [arg [string!]][reverse arg]
 		]
 		--assert module? import/version m 1.0.0
 
+	--test-- "import/check"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1686
+		s: save/header none [f: func[arg][arg]] [type: module checksum: true]
+		c: select first load/header s 'checksum
+		--assert #{3556AE790FFAC48BBBBC1CF2BC5F8942782416F7} = c
+		--assert block? m: sys/load-module/check s c
+		--assert module? m/2
+		--assert 22 = m/2/f 22
+		--assert module? m: import/check s c
+		--assert 33 = m/f 33
+		; corrupt the source:
+		change find s to-binary "f:" "g"
+		--assert all [
+			error? e: try [import/check s c]
+			e/id = 'bad-checksum
+		]
+
+
 	--test-- "import string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1721
 		unset in system/contexts/user 'issue-1721-a
