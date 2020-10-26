@@ -36,6 +36,17 @@ Rebol [
 		o: first load/header "rebol [a: true b: yes c: no d: false e: none f: foo] print 'hello"
 		--assert all [logic? o/a logic? o/b logic? o/c logic? o/d none? o/e word? o/f]
 
+	--test--"Script checksum verification"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1685
+		s: save/header none [print "Hello REBOL!"] [checksum: true]
+		--assert [print "Hello REBOL!"] = try [load s]
+		; corrupt the script...
+		clear at s 88
+		--assert all [
+			error? e: try [load s]
+			e/id = 'bad-checksum
+		]
+
 ===end-group===
 
 ===start-group=== "Load issues/wishes"
