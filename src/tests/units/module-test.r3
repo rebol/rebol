@@ -78,6 +78,42 @@ Rebol [
 ===end-group===
 
 ===start-group=== "module import"
+	--test-- "import"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/923
+	write %mymodule.reb {
+Rebol [
+    type: 'module
+    name: 'mymodule
+    exports: [myfunc]
+]
+print "mymodule imported"
+myfunc: func [arg [string!]][reverse arg]
+}
+	import 'mymodule
+	--assert "cba" = myfunc "abc"
+	import 'mymodule     ;-- this works... the file isn't reloaded... and indeed the console doesn't print another "mymodule imported"
+	--assert "cba" = myfunc "abc"
+	import %mymodule.reb ;-- no crash
+	--assert "cba" = myfunc "abc"
+	delete %mymodule.reb
+
+;;; This test would fail as the module needs itself! It should be detected, but it isn't yet.
+;;	write %mymodule2.reb {
+;; Rebol [
+;;     type: 'module
+;;     name: 'mymodule2
+;;     exports: [myfunc2]
+;;     needs: [%mymodule2.reb]
+;; ]
+;; print "mymodule2 imported"
+;; myfunc2: func [arg [string!]][reverse arg]
+;; }
+;; 	import 'mymodule2
+;; 	import 'mymodule2
+;; 	import %mymodule2.reb ;-- no crash
+;; 	--assert "cba" = myfunc2 "abc"
+;; 	delete %mymodule2.reb
+
 	--test-- "import/version"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1687
 		m: module [version: 1.0.0 name: 'Foo][a: 1]
