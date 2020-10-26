@@ -730,6 +730,23 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "UPPERCASE / LOWERCASE"
+	--test-- "uppercase/part backwards"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1772
+		--assert "abcDEFG" = head uppercase/part tail "abcdefg" -4
+		--assert "abCDEFG" = head uppercase/part tail "abcdefg" -5
+		--assert "aBCDEFG" = head uppercase/part tail "abcdefg" -6
+		--assert "ABCDEFG" = head uppercase/part tail "abcdefg" -10
+	--test-- "lowercase/part backwards"
+		--assert "ABCdefg" = head lowercase/part tail "ABCDEFG" -4
+		--assert "ABcdefg" = head lowercase/part tail "ABCDEFG" -5
+		--assert "Abcdefg" = head lowercase/part tail "ABCDEFG" -6
+		--assert "abcdefg" = head lowercase/part tail "ABCDEFG" -10
+
+===end-group===
+
+
+
 ===start-group=== "RANDOM"
 	--test-- "random/only string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1083
