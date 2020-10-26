@@ -49,6 +49,11 @@ Rebol [
 		--assert  "-10%" = mold  -10%
 		--assert "-0.1%" = mold -0.1%
 		--assert "-100%" = mold -100%
+
+	--test-- "mold/all"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1633
+		--assert same? 9.9999999999999926e154% load mold/all 9.9999999999999926e154%
+		
 ===end-group===
 
 ===start-group=== "percent issues"

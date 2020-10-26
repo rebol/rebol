@@ -446,6 +446,11 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/219
 		--assert "#[datatype! integer!]" = mold/all integer!
 
+	--test-- "mold/all decimal!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1633
+		--assert "0.10000000000000001" = mold/all 0.1
+		--assert "0.29999999999999999" = mold/all 0.3
+
 ===end-group===
 
 ~~~end-file~~~
