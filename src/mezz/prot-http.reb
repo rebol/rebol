@@ -11,8 +11,8 @@ REBOL [
 	}
 	Name: 'http
 	Type: 'module
-	Version: 0.3.4
-	Date: 25-Feb-2020
+	Version: 0.3.5
+	Date: 26-Oct-2020
 	File: %prot-http.r
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -496,6 +496,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 		new-uri: as url! ajoin [spec/scheme "://" spec/host #":" spec/port-id new-uri]
 	]
 	new-uri: decode-url new-uri
+	spec/headers/host: new-uri/host
 
 	unless select new-uri 'port-id [
 		switch new-uri/scheme [
