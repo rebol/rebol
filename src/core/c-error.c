@@ -302,23 +302,29 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 **		to be bound to the error catalog context.
 **		If the message is not found, return null.
 **
+**	NOTE: throws invalid-arg error if id or type are not found
+**	      throws invalid-error if id or type are not words
+**
 ***********************************************************************/
 {
 	REBSER *frame;
 	REBVAL *obj1;
 	REBVAL *obj2;
 
-	if (!IS_WORD(&error->type) || !IS_WORD(&error->id)) return 0;
+	if (IS_NONE(&error->type) || IS_NONE(&error->id)) 
+		Trap0(RE_INVALID_ERROR);
 
 	// Find the correct error type object in the catalog:
+	if (!IS_WORD(&error->type)) goto invalid_type;
 	frame = VAL_OBJ_FRAME(Get_System(SYS_CATALOG, CAT_ERRORS));
 	obj1 = Find_Word_Value(frame, VAL_WORD_SYM(&error->type));
-	if (!obj1) return 0;
+	if (!obj1) goto invalid_type;
 
 	// Now find the correct error message for that type:
+	if (!IS_WORD(&error->id)) goto invalid_id;
 	frame = VAL_OBJ_FRAME(obj1);
 	obj2 = Find_Word_Value(frame, VAL_WORD_SYM(&error->id));
-	if (!obj2) return 0;
+	if (!obj2) goto invalid_id;
 
 	if (num) {
 		obj1 = Find_Word_Value(frame, SYM_CODE);
@@ -329,6 +335,11 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	}
 
 	return obj2;
+invalid_type:
+	Trap1(RE_INVALID_ARG, &error->type);
+invalid_id:
+	Trap1(RE_INVALID_ARG, &error->id);
+	return 0; // just for compiler
 }
 
 
@@ -371,19 +382,20 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 		DISABLE_GC;
 		Do_Bind_Block(err, arg); // GC-OK (disabled)
 		ENABLE_GC;
-		if (IS_INTEGER(&error->code) && VAL_INT64(&error->code)) {
-			Set_Error_Type(error);
-		} else {
-			if (Find_Error_Info(error, &code)) {
-				SET_INTEGER(&error->code, code);
-			}
-		}
+		//It was possible to set error using code, but that's now ignored!
+		//@@ https://github.com/Oldes/Rebol-issues/issues/1593
+		//if (IS_INTEGER(&error->code) && VAL_INT64(&error->code)) {
+		//	Set_Error_Type(error);
+		//} else {
+			if (!Find_Error_Info(error, &code)) code = RE_INVALID_ERROR;
+			SET_INTEGER(&error->code, code);
+
+		//}
 		// The error code is not valid:
-		if (IS_NONE(&error->id)) {
-			SET_INTEGER(&error->code, RE_INVALID_ERROR);
+		if (VAL_INT64(&error->code) == RE_INVALID_ERROR) {
 			Set_Error_Type(error);
 		}
-		if (VAL_INT64(&error->code) < 100 || VAL_INT64(&error->code) > 1000)
+		if (VAL_INT64(&error->code) < 100) // || VAL_INT64(&error->code) > 1000) 
 			Trap_Arg(arg);
 	}
 
