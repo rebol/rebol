@@ -57,6 +57,11 @@ Rebol [
 	--assert error? try [make op! [[a][]]]
 	--assert error? try [make op! [[/local a b][]]]
 	--assert error? try [make op! [[a /local b][]]]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1607
+	--assert all [
+		error? e: try [new-op: make := [* [value1 > value2]]]
+		e/id = 'cannot-use
+	]
 
 ===end-group===
 
