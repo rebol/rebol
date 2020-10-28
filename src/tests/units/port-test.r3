@@ -61,6 +61,15 @@ Rebol [
 			not error? try [delete-dir %units/temp-dir/]
 			not exists? %units/temp-dir/
 		]
+	--test-- "RENAME dir"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1533
+		--assert all [
+			not error? try [make-dir %units/temp-dir/]
+			not error? try [rename %units/temp-dir/ %units/new-dir/]
+			exists? %units/new-dir/
+			not error? try [delete-dir %units/new-dir/]
+		]
+
 if system/platform = 'Windows [
 	--test-- "read %/"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2031
