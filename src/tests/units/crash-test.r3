@@ -155,6 +155,13 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1619
 	--assert value? try [write clipboard:// [a]] ;- no crash
 
+--test-- "unset 'self"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1569
+	--assert all [
+		error? e: try [unset 'self]
+		e/id = 'self-protected
+	]
+
 ===end-group===
 
 ~~~end-file~~~
