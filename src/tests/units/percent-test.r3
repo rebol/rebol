@@ -73,6 +73,14 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/262
 		--assert 100% = try [load {1E+2%}]
 
+	--test-- "large percent"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1475
+		x: 30000000000000000000000000000000000%
+		--assert "3e34%" = mold x
+		--assert "3.0000000000000003e34%" = mold/all x
+		--assert x = load mold x
+		--assert x = load mold/all x
+
 ===end-group===
 
 
