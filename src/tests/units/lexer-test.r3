@@ -39,6 +39,15 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Money"
+	--test-- "space requirement"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1445
+		--assert all [error? e: try [load {$1/$2}] e/id = 'invalid]
+		--assert all [error? e: try [load {$1*$2}] e/id = 'invalid]
+		--assert all [error? e: try [load {$1+$2}] e/id = 'invalid]
+		--assert all [error? e: try [load {$1-$2}] e/id = 'invalid]
+===end-group===
+
 ===start-group=== "Ref"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1962
 	--test-- "valid `ref!`"
