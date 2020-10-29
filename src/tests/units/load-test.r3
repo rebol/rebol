@@ -46,6 +46,11 @@ Rebol [
 			error? e: try [load s]
 			e/id = 'bad-checksum
 		]
+	--test-- "Save/length"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1684
+		s: sys/load-header save/length none [print "Hello REBOL!"]
+		--assert s/1/length = 21
+		--assert s/2 = #{7072696E74202248656C6C6F205245424F4C21220A}
 
 ===end-group===
 
