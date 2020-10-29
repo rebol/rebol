@@ -90,6 +90,13 @@ Rebol [
 	--assert "AbcdAe" = find/same "aAbcdAe" "A"
 	--assert "Ae" = find/same/last "aAbcdAe" "A"
 
+--test-- "FIND/LAST/CASE in string!"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1495
+	--assert none?   find/case "Abc" "a"
+	--assert "Abc" = find/case "Abc" "A"
+	--assert none?   find/case/last "Abc" "a"
+	--assert "Abc" = find/case/last "Abc" "A"
+
 --test-- "FIND/PART"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/2329
 ;@@ need to decide, which result is correct
