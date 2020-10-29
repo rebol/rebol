@@ -192,6 +192,12 @@ Rebol [
 		--assert "1!!2!!3"  = replace/all "1 2 3" " " "!!"
 ===end-group===
 
+===start-group=== "REPLACE binary!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1499
+	--test-- "issue-1499"
+		--assert #{6163} = replace #{616263} #{6263} #{63}
+===end-group===
+
 
 ===start-group=== "CHANGE string!"
 	--test-- "change/part"
