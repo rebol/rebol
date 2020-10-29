@@ -175,7 +175,7 @@ is-protected-error?: func[code][
 		--assert #{2AFF} = b/buffer
 
 	--test-- "BinCode - AT"
-		;AT is using absolute positioning
+		;AT is using absolute positioning (one-based)
 		b: binary 8
 		
 		binary/write b [AT 4 UI8 4]
@@ -191,6 +191,32 @@ is-protected-error?: func[code][
 		binary/read b [AT 4 i: UI8] --assert i = 4
 		--assert is-range-error? [binary/read b [AT  5 i: UI8]]
 		--assert is-range-error? [binary/read b [AT -1 i: UI8]]
+	
+	--test-- "BinCode - ATz"
+		;ATz is using absolute positioning (zero-based)
+		b: binary 8
+		
+		binary/write b [ATz 3 UI8 4]
+		binary/write b [ATz 2 UI8 3]
+		binary/write b [ATz 1 UI8 2]
+		binary/write b [ATz 0 UI8 1]
+		--assert is-range-error? [binary/write b [ATz -1 UI8 1]]
+		--assert #{01020304} = b/buffer
+		i: 0
+		binary/read b [ATz 0 i: UI8] --assert i = 1
+		binary/read b [ATz 1 i: UI8] --assert i = 2
+		binary/read b [ATz 2 i: UI8] --assert i = 3
+		binary/read b [ATz 3 i: UI8] --assert i = 4
+		--assert is-range-error? [binary/read b [ATz  4 i: UI8]]
+		--assert is-range-error? [binary/read b [ATz -1 i: UI8]]
+
+	--test-- "BinCode - INDEX & INDEXz"
+		b: binary #{01020304}
+		--assert [1 0] = binary/read b [INDEX INDEXz]
+		--assert [2 1] = binary/read b [AT  2 INDEX INDEXz]
+		--assert [4 3] = binary/read b [ATz 3 INDEX INDEXz]
+		binary/read b [AT 4 i: INDEX j: INDEXz]
+		--assert all [i = 4 j = 3]
 
 	--test-- "BinCode - SKIP"
 		;SKIP is using relative positioning

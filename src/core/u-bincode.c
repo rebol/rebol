@@ -239,6 +239,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 	REBCNT n, count, index, tail, tail_new;
 	REBDEC dbl;
 	REBD32 d32;
+	REBCNT cmd;
 	i32 i, len;
 	u64 u;
 	i64 si;
@@ -425,8 +426,8 @@ static REBCNT EncodedU32_Size(u32 value) {
 						Set_Binary(DS_TOP, Encode_UTF8_Value(next, VAL_LEN(next), 0));
 						next = DS_POP;
 					}
-
-					switch (VAL_WORD_CANON(data)) {
+					cmd = VAL_WORD_CANON(data);
+					switch (cmd) {
 					case SYM_SI8:
 					case SYM_UI8:
 						if (IS_INTEGER(next) || IS_CHAR(next)) {
@@ -471,11 +472,13 @@ static REBCNT EncodedU32_Size(u32 value) {
 						}
 						goto error;
 					case SYM_AT:
+					case SYM_ATZ:
 						if (IS_INTEGER(next)) {
 							if (count > tail) tail = count;
-							// AT is using ABSOLUTE positioning, so it cannot be < 1 (one-indexed)
-							if(VAL_INT32(next) < 1) Trap1(RE_OUT_OF_RANGE, next);
-							count = VAL_INT32(next) - 1;
+							i = (cmd == SYM_AT ? 1 : 0);
+							// AT is using ABSOLUTE positioning, so it cannot be < 1 (one-indexed) or < 0 (zero-based)
+							if(VAL_INT32(next) < i) Trap1(RE_OUT_OF_RANGE, next);
+							count = VAL_INT32(next) - i;
 							continue;
 						}
 						goto error;
@@ -584,7 +587,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 					value++; //skip optional INDEX word...
 					if (
 						(VAL_TYPE(value) != REB_WORD) ||
-						(VAL_WORD_CANON(value) != SYM_INDEX)
+						(VAL_WORD_CANON(value) != SYM_INDEX && VAL_WORD_CANON(value) != SYM_INDEXZ)
 					) {
 						value--; //... or revert it
 					}
@@ -655,8 +658,8 @@ static REBCNT EncodedU32_Size(u32 value) {
 						Set_Binary(DS_TOP, Encode_UTF8_Value(next, VAL_LEN(next), 0));
 						next = DS_POP;
 					}
-
-					switch (VAL_WORD_CANON(data)) {
+					cmd = VAL_WORD_CANON(data);
+					switch (cmd) {
 					case SYM_UI8:
 						ASSERT_UI_RANGE(next, 0xFF);
 					write_ui8:
@@ -891,7 +894,8 @@ static REBCNT EncodedU32_Size(u32 value) {
 						break;
 
 					case SYM_AT:
-						VAL_INDEX(buffer_write) = VAL_INT32(next) - 1;
+					case SYM_ATZ:
+						VAL_INDEX(buffer_write) = VAL_INT32(next) - (cmd == SYM_AT ? 1 : 0);
 						cp = BIN_DATA(bin) + VAL_INDEX(buffer_write);
 						n = 0;
 						break;
@@ -1057,7 +1061,6 @@ static REBCNT EncodedU32_Size(u32 value) {
 		DS_PUSH_NONE;
 		temp = DS_TOP;
 		REBINT ssp = DSP;  // starting stack pointer
-		REBINT cmd;
 		
 		for (; NOT_END(value); value++) {
 			n = 0;
@@ -1452,18 +1455,20 @@ static REBCNT EncodedU32_Size(u32 value) {
 							VAL_INDEX(buffer_read) += 4;
 							goto readNBytes;
 						case SYM_AT:
+						case SYM_ATZ:
 							// uses absolute positioning from series HEAD!
 							next = ++value;
 							if (IS_GET_WORD(next)) next = Get_Var(next);
 							if (!IS_INTEGER(next)) Trap1(RE_INVALID_SPEC, value);
-							i = VAL_INT32(next) - 1;
+							i = VAL_INT32(next) - (cmd == SYM_AT ? 1 : 0);
 							ASSERT_INDEX_RANGE(buffer_read, i, value);
 							VAL_INDEX(buffer_read) = i;
 							cp = BIN_DATA(bin) + VAL_INDEX(buffer_read);
 							continue;
 						case SYM_INDEX:
+						case SYM_INDEXZ:
 							VAL_SET(temp, REB_INTEGER);
-							SET_INT32(temp, VAL_INDEX(buffer_read) + 1);
+							SET_INT32(temp, VAL_INDEX(buffer_read)) + (cmd == SYM_INDEX ? 1 : 0);
 							n = 0;
 							break;
 						case SYM_SKIP:
