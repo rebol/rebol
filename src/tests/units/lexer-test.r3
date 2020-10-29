@@ -42,10 +42,11 @@ Rebol [
 ===start-group=== "Money"
 	--test-- "space requirement"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1445
-		--assert all [error? e: try [load {$1/$2}] e/id = 'invalid]
-		--assert all [error? e: try [load {$1*$2}] e/id = 'invalid]
-		--assert all [error? e: try [load {$1+$2}] e/id = 'invalid]
-		--assert all [error? e: try [load {$1-$2}] e/id = 'invalid]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1472
+		--assert all [error? e: try [load {$1/$2}] e/id = 'invalid e/arg2 = "$1/"]
+		--assert all [error? e: try [load {$1*$2}] e/id = 'invalid e/arg2 = "$1*$2"]
+		--assert all [error? e: try [load {$1+$2}] e/id = 'invalid e/arg2 = "$1+$2"]
+		--assert all [error? e: try [load {$1-$2}] e/id = 'invalid e/arg2 = "$1-$2"]
 ===end-group===
 
 ===start-group=== "Ref"
