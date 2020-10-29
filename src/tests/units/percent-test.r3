@@ -8,6 +8,14 @@ Rebol [
 
 
 ~~~start-file~~~ "percent"
+===start-group=== "make percent!"
+	--test-- "make percent from integer"
+		--assert 100% = make percent! 1
+	--test-- "make percent from decimal"
+		--assert 50% = make percent! 0.5
+	--test-- "make percent from block"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1504
+		--assert 1e18% = make percent! [1 18]
 
 ===start-group=== "to conversion"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/137
