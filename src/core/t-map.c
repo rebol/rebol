@@ -128,7 +128,9 @@
 	// Compute hash for value:
 	len = hser->tail;
 	hash = Hash_Value(key, len);
-	if (!hash) Trap_Type(key);
+	//o: use fallback hash value, if key is not a hashable type, instead of an error
+	//o: https://github.com/Oldes/Rebol-issues/issues/1765
+	if (!hash) hash = 3 * (len/5); //Trap_Type(key);
 
 	// Determine skip and first index:
 	skip  = (len == 0) ? 0 : (hash & 0x0000FFFF) % len;

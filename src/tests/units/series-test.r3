@@ -1345,6 +1345,20 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "More set operations"	
+--test-- "unhashable types"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1765
+	blk1: reduce ["a" [1 2 3] 'path/path func [][] charset ["a"]]
+	blk2: append copy blk1 blk1
+	--assert blk1 = unique blk2
+	--assert blk1 = union blk1 blk2 
+	append blk2 blk3: ["b" [3 4]]
+	--assert blk1 = intersect  blk2 blk1
+	--assert blk3 = difference blk1 blk2
+	--assert blk3 = exclude blk2 blk1
+	--assert empty? exclude blk1 blk2
+===end-group===
+
 ===start-group=== "TO-*"
 
 --test-- "to-path"
