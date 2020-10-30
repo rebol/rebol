@@ -1357,6 +1357,19 @@ Rebol [
 	--assert blk3 = difference blk1 blk2
 	--assert blk3 = exclude blk2 blk1
 	--assert empty? exclude blk1 blk2
+
+--test-- "set ops on binary"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/837
+	bin1: #{010203}
+	bin2: #{010203010203}
+	--assert bin1 = unique bin2
+	--assert bin1 = union  bin1 bin2 
+	append bin2 bin3: #{0405}
+	--assert bin1 = intersect  bin2 bin1
+	--assert bin3 = difference bin1 bin2
+	--assert bin3 = exclude bin2 bin1
+	--assert empty? exclude bin1 bin2
+
 ===end-group===
 
 ===start-group=== "TO-*"
