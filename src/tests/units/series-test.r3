@@ -198,6 +198,16 @@ Rebol [
 		--assert #{6163} = replace #{616263} #{6263} #{63}
 ===end-group===
 
+===start-group=== "POKE"
+	--test-- "poke unset value"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1815
+		--assert all [
+			b: [1 2 3] 
+			not error? try [poke b 2 #[unset!]]
+			unset? pick b 2
+			unset? b/2
+		]
+===end-group===
 
 ===start-group=== "CHANGE string!"
 	--test-- "change/part"
