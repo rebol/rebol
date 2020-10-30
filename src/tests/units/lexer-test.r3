@@ -66,6 +66,17 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Lit"
+	--test-- "quote arrow-based words"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1461
+		--assert lit-word? load {'<}
+		--assert lit-word? load {'>}
+		--assert lit-word? load {'<>}
+		--assert lit-word? load {'<=}
+		--assert lit-word? load {'>=}
+
+===end-group===
+
 ===start-group=== "Integer"
 	--test-- "-0"
 		--assert 0 = load "-0" ;@@ https://github.com/Oldes/Rebol-issues/issues/33
