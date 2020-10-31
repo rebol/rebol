@@ -128,6 +128,11 @@ Rebol [
 20312E322031303A3230202274657374222075736572406578616D706C652E63
 6F6D205B73756220626C6F636B5D0A} 
 		--assert data = load bin
+		
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1465
+		bin: save/header none [1] true
+		--assert bin = #{5245424F4C205B5D0A310A}
+		--assert 1 = load bin
 ===end-group===
 
 
