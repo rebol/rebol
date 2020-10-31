@@ -77,6 +77,37 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "make module"
+	--test-- "inlined module"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1628
+		unset 'z1 z2: 2
+		--assert all [
+			error? e: try [do "rebol [type: module] attempt [z1: 12345] z1"]
+			e/id = 'not-defined
+			e/arg1 = 'z1
+		]
+		--assert all [
+			error? e: try [do "rebol [type: module] attempt [z2: 12345] z2"]
+			e/id = 'not-defined
+			e/arg1 = 'z2
+		]
+		--assert all [
+			error? e: try [do "rebol [] module [] [attempt [z1: 12345] z1]"]
+			e/id = 'not-defined
+			e/arg1 = 'z1
+		]
+		--assert all [
+			error? e: try [do "rebol [] module [] [attempt [z2: 12345] z2]"]
+			e/id = 'not-defined
+			e/arg1 = 'z2
+		]
+	--test-- "module body modified on export"
+		module [] body: [export 'b]
+		--assert body = ['b]
+
+===end-group===
+
+
 ===start-group=== "module import"
 	--test-- "import"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/923
