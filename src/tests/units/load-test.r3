@@ -104,5 +104,32 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "SAVE"
+	data: [1 1.2 10:20 "test" user@example.com [sub block]]
+	--test-- "save to none"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1464
+		--assert #{310A} = save none 1
+		--assert #{0A} = save none [] ;@@ or better #{} ?
+		bin: save none data
+		--assert bin = #{
+3120312E322031303A3230202274657374222075736572406578616D706C652E
+636F6D205B73756220626C6F636B5D0A}
+		--assert data = load bin
+	--test-- "save to binary"
+		b: #{}
+		--assert #{310A} = save b 1
+		--assert #{310A320A} = save b 3
+		--assert #{310A320A237B30337D0A} = save b #{03}
+
+	--test-- "save/header"
+		bin: save/header none data [title: "my code"]
+		--assert bin = #{
+5245424F4C205B0A202020207469746C653A20226D7920636F6465220A5D0A31
+20312E322031303A3230202274657374222075736572406578616D706C652E63
+6F6D205B73756220626C6F636B5D0A} 
+		--assert data = load bin
+===end-group===
+
+
 ~~~end-file~~~
 
