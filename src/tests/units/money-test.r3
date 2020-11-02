@@ -124,7 +124,7 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/392
 		--assert $1e-100 = ($1.00 / 1e100) ; no crash
 
-	--test-- "1205"
+	--test-- "issue-1205"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1205
 		--assert error? try [$1 / #"a"]
 		--assert error? try [$1 * 1.2.3.4]
