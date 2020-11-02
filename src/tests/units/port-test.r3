@@ -152,6 +152,22 @@ if system/platform = 'Windows [
 		--assert "<foo>"  = read/string write %foo <foo>
 		delete %foo
 
+	--test- "open/close file"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1456
+		file: %tmp-1456
+		write file "abc"
+		--assert #{616263} = read file
+		port: open file
+		--assert #{616263} = read port
+		--assert open? port
+		--assert empty? read port ; because the port is still open, but we are at tail already
+		close port
+		--assert not open? port
+		--assert #{616263} = read port ;port was not one, so it's opened for read action
+		--assert not open? port ;but was closed again by read
+		--assert #{616263} = read port ;so next read is again full
+		delete %tmp-1456
+
 ===end-group===
 
 ===start-group=== "HTTP scheme"
