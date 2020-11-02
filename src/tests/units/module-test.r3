@@ -207,6 +207,41 @@ probe all [
 	--assert "true^/true^/true^/true^/" = probe o
 	delete %no-lib-import.reb
 
+	--test-- "import block"
+	;- using external script again!
+	write %m1.reb {Rebol [name: m1 type: module] export m1a: 1}
+	write %m2.reb {Rebol [name: m2 type: module] export m2b: 2}
+	write %block-import-1.reb {
+Rebol []
+probe all [
+	block? b: import [m1 m2]
+	module? b/1
+	module? b/2
+	m1a = 1
+	m2b = 2
+]}
+	o: copy ""
+	call/wait/shell/output probe reform [to-local-file system/options/boot %block-import-1.reb] o
+	--assert "true^/" = probe o
+	--test-- "import/no-lib block"
+	write %block-import-2.reb {
+Rebol []
+probe all [
+	block? b: import/no-lib [m1 m2]
+	module? b/1
+	module? b/2
+	m1a = 1
+	m2b = 2
+	none? get in system/contexts/lib 'm1a
+	none? get in system/contexts/lib 'm1a
+]}
+	o: copy ""
+	call/wait/shell/output probe reform [to-local-file system/options/boot %block-import-2.reb] o
+	--assert "true^/" = probe o
+	delete %block-import-1.reb
+	delete %block-import-2.reb
+	delete %m1.reb
+	delete %m2.reb
 
 	--test-- "import/version"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1687
