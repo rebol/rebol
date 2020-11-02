@@ -245,12 +245,12 @@ probe all [
 
 	--test-- "import/version"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1687
-		m: module [version: 1.0.0 name: 'Foo][a: 1]
+		m-1687: module [version: 1.0.0 name: 'm-1687][a: 1]
 		--assert all [
-			error? e: try [import/version m 2.2.2]
+			error? e: try [import/version m-1687 2.2.2]
 			e/id = 'needs
 		]
-		--assert module? import/version m 1.0.0
+		--assert module? m: try [import/version m-1687 1.0.0]
 
 	--test-- "import/check"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1686
