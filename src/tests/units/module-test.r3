@@ -145,6 +145,69 @@ myfunc: func [arg [string!]][reverse arg]
 ;; 	--assert "cba" = myfunc2 "abc"
 ;; 	delete %mymodule2.reb
 
+	--test-- "import to user context"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1680
+	;- using external script as tests are by default inside `wrap`
+	;- and in such a case the words from module are not imported
+	;- (I'm quite not sure yet, if it is good or bad)
+	write %issue-1680.reb {
+REBOL []
+c: true ; should not be rewritten
+m: module [][export a: 1 b: 2 export c: 3]
+import m
+;-assert-1
+probe a = 1     ; exported
+;-assert-2
+probe unset? :b ; not exported
+;-assert-3
+probe logic? :c ; not rewritten
+
+;-assert-4
+unset [a b c]   ; reset all
+import/no-user m
+probe all [unset? :a unset? :b unset? :c]
+}
+	o: copy ""
+	call/wait/shell/output probe reform [to-local-file system/options/boot %issue-1680.reb] o
+	--assert "true^/true^/true^/true^/" = probe o
+	delete %issue-1680.reb
+
+	--test-- "import/no-lib"
+	;- using external script again!
+	write %no-lib-import.reb {
+REBOL []
+;-assert-1 = make sure, that a and b are not in lib
+probe all [
+	none? get in system/contexts/lib 'a
+	none? get in system/contexts/lib 'b
+]
+
+m1: module [name: no-lib-test-a][export a: 1]
+import m1
+
+;-assert-2 = check existence of imported values
+probe all [
+	1 = a                      ; imported to user context
+	1 = system/contexts/lib/a  ; imported also to lib
+]
+
+;-assert-3
+unset 'a ; uset user's value
+probe 1 = system/contexts/lib/a ; still available in lib
+
+;-assert-4 = import using /no-lib
+m2: module [name: no-lib-test-b][export b: 2]
+import/no-lib m2
+probe all [
+	2 = b                      ; imported to user context
+	none? get in system/contexts/lib 'b ; but not to lib
+]}
+	o: copy ""
+	call/wait/shell/output probe reform [to-local-file system/options/boot %no-lib-import.reb] o
+	--assert "true^/true^/true^/true^/" = probe o
+	delete %no-lib-import.reb
+
+
 	--test-- "import/version"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1687
 		m: module [version: 1.0.0 name: 'Foo][a: 1]
