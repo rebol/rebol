@@ -8,6 +8,21 @@ Rebol [
 
 ~~~start-file~~~ "Parse"
 
+===start-group=== "TO/THRU"
+--test-- "TO/THRU with bitset!"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1457
+	a: charset "a"
+	--assert parse "a" [thru a]
+	--assert not parse "a" [thru a skip]
+	--assert parse "a" [and thru a skip]
+	--assert parse "ba" [to a skip]
+	--assert not parse "ba" [to a "ba"]
+	--assert parse/case "a" [thru a]
+	--assert not parse/case "A" [thru a]
+
+
+===end-group===
+
 ===start-group=== "CHANGE"
 
 --test-- "CHANGE rule value (same size)"
