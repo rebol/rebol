@@ -293,6 +293,8 @@ retry:
 {
 	REBCNT n = VAL_INDEX(val);
 
+	if(IS_PROTECT_SERIES(bset)) Trap0(RE_PROTECTED);
+
 	if (VAL_BYTE_SIZE(val)) {
 		REBYTE *bp = VAL_BIN(val);
 		for (; n < VAL_TAIL(val); n++)
@@ -316,6 +318,8 @@ retry:
 {
 	REBCNT n;
 	REBCNT c;
+
+	if(IS_PROTECT_SERIES(bset)) Trap0(RE_PROTECTED);
 
 	if (IS_CHAR(val)) {
 		Set_Bit(bset, VAL_CHAR(val), set);
