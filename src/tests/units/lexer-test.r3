@@ -30,6 +30,13 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1855
 		--assert error? try [load {////a}]
 
+	--test-- "Invalid money!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1441
+		--assert all [
+			error? e: try [load {$}]
+			e/id = 'invalid
+		]
+
 ===end-group===
 
 ===start-group=== "Email"
