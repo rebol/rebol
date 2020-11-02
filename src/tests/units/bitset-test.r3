@@ -58,6 +58,11 @@
 		--assert #[bitset! #{}]   = b1
 		--assert #[bitset! #{40}] = b2
 
+	--test-- "charset"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1092
+		--assert #[bitset! #{80}] = charset #"^@"
+		--assert #[bitset! #{8000}] = charset/length #"^@" 16
+
 ===end-group===
 
 ===start-group=== "pick bitset!"
@@ -274,6 +279,11 @@
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1271
 		chars: complement charset "ther "
 		--assert "it goes" = find "there it goes" chars
+
+	--test-- "issue-1283"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1283
+		bits: make bitset!  [1]
+		--assert find bits [1] ;- no crash
 
 	--test-- "to-binary bitset"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2436
