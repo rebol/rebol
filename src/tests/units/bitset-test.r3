@@ -270,6 +270,12 @@
 	;@@ https://github.com/Oldes/Rebol-issues/issues/209
 		--assert (charset [#"^(80)"]) = make bitset! #{0000000000000000000000000000000080}
 
+	--test-- "issue-1271"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1271
+		chars: complement charset "ther "
+		--assert "it goes" = find "there it goes" chars  
+
+
 ===end-group===
 
 
