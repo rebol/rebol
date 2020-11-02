@@ -273,7 +273,14 @@
 	--test-- "issue-1271"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1271
 		chars: complement charset "ther "
-		--assert "it goes" = find "there it goes" chars  
+		--assert "it goes" = find "there it goes" chars
+
+	--test-- "to-binary bitset"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2436
+		bits: make bitset!  [1]
+		--assert #{40} = to binary! bits
+		--assert #{BF} = to binary! complement bits
+		--assert #{BF} = complement to binary! bits
 
 
 ===end-group===

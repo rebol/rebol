@@ -31,8 +31,6 @@
 
 #define MAX_BITSET 0x7fffffff
 
-#define BITS_NOT(s) ((s)->size)
-
 // use if you want compatibility with R3-alpha for returning NONE on non existing bit
 // #define PICK_BITSET_AS_NONE
 

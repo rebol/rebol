@@ -698,7 +698,9 @@ typedef struct Reb_Series_Ref
 **
 ***********************************************************************/
 
-#define	VAL_BITSET(v)	VAL_SERIES(v)
+#define BITS_NOT(s)        ((s)->size)
+#define	VAL_BITSET(v)      VAL_SERIES(v)
+#define	VAL_BITSET_NOT(v)  BITS_NOT(VAL_SERIES(v))
 
 #define	VAL_BIT_DATA(v)	VAL_BIN(v)
 
