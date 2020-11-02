@@ -154,6 +154,7 @@ if system/platform = 'Windows [
 
 	--test- "open/close file"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1456
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1453
 		file: %tmp-1456
 		write file "abc"
 		--assert #{616263} = read file
