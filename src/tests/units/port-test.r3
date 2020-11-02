@@ -152,7 +152,7 @@ if system/platform = 'Windows [
 		--assert "<foo>"  = read/string write %foo <foo>
 		delete %foo
 
-	--test- "open/close file"
+	--test-- "open/close file"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1456
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1453
 		file: %tmp-1456
@@ -170,6 +170,20 @@ if system/platform = 'Windows [
 		delete %tmp-1456
 
 ===end-group===
+
+if find system/schemes 'clipboard [
+	===start-group=== "CLIPBOARD"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1968
+		--test-- "Clipboard port test"
+			p: open clipboard://
+			write p c: "Clipboard port test"
+			--assert strict-equal? c read p
+			close p
+		--test-- "Clipboard scheme test"
+			write clipboard:// c: "Clipboard scheme test"
+			--assert strict-equal? c read clipboard://
+	===end-group===
+]
 
 ===start-group=== "HTTP scheme"
 	--test-- "read HTTP"
