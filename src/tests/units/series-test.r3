@@ -408,6 +408,12 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "MOVE"
+	--test-- "move/skip"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1629
+	--assert [b 3 4 a 1 2] = head move/skip at [a 1 2 b 3 4] 4 -1 3
+	--assert [b 3 4 a 1 2] = head move/to/skip at [a 1 2 b 3 4] 4 1 3
+===end-group===
 
 ===start-group=== "++ & --"
 	--test-- "++ & -- on block!"
