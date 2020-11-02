@@ -19,6 +19,16 @@ Rebol [
 	--assert not parse "ba" [to a "ba"]
 	--assert parse/case "a" [thru a]
 	--assert not parse/case "A" [thru a]
+--test-- "TO/THRU with unsuported rule"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2129
+	--assert all [
+		e: try [parse "foo" [thru some "0"]] ;@@ Red supports `some` right after `to`!
+		e/id = 'parse-rule
+	]
+	--assert all [
+		e: try [parse "foo" [thru 1.2]]
+		e/id = 'parse-rule
+	]
 
 
 ===end-group===

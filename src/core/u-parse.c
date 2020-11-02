@@ -552,6 +552,8 @@ bad_target:
 				i = Find_Str_Bitset(series, 0, index, series->tail, 1, VAL_BITSET(item), HAS_CASE(parse));
 				if (i != NOT_FOUND && is_thru) i++;
 			}
+			else
+				Trap1(RE_PARSE_RULE, item - 1);
 		}
 	}
 
