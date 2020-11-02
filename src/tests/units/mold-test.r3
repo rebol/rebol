@@ -285,6 +285,12 @@ Rebol [
 		--assert "[1 2" = mold/part/flat b 4
 		--assert "[1 2 3 4]" = mold/part/flat b 100
 
+	--test-- "issue-1439"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1439
+		--assert "1^/2^/3" = mold/only load "[1^/2^/3^/]"
+		--assert "1 2^/3^/4" = mold/only load "[1 2^/3^/4^/]"
+		--assert "1 2^/3^/4^/5" = mold/only load "[1 2^/3^/4^/5]"
+
 ===end-group===
 
 ===start-group=== "mold map!"
