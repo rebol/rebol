@@ -54,6 +54,23 @@ Rebol [
 		e/code = 67
 	]
 
+--test-- "custom event"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1821
+	--assert all [
+		event? e: try [make event! [type: 'custom code: 1]]
+		e/type = 'custom
+		e/code = 1
+	]
+	if system/view/event-port [
+		; using port in the custom event
+		--assert all [
+			event? e: try [make event! [type: 'custom code: 2 port: system/view/event-port]]
+			e/type = 'custom
+			e/code = 2
+			e/port = system/view/event-port
+		]
+	]
+
 ===end-group===
 
 ~~~end-file~~~
