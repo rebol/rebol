@@ -1254,4 +1254,4 @@ emit ["#define TASK_MAX " n lf]
 write inc/tmp-boot.h out
 ;print ask "-DONE-"
 ;wait .3
-print "   "
+print "[DONE boot]^/"

@@ -297,4 +297,4 @@ write-if reb-ext-defs out
 write-if %../reb-lib-doc.txt cmts
 
 ;ask "Done"
-print "   "
+print "[DONE reb-lib]^/"

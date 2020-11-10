@@ -384,4 +384,4 @@ if dup-found [
 	wait 5
 ]
 
-print "   "
+print "[DONE headers]^/"

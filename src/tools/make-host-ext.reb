@@ -178,4 +178,4 @@ emit-file %host-ext-window [
 ;;	%boot/text.reb
 ;;]
 
-print "   "
+print "[DONE host-ext]^/"
