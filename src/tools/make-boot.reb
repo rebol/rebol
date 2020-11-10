@@ -993,6 +993,7 @@ if product = 'view [
 		]
 	]
 ]
+append mezz-files/3 %codec-image-ext.reb
 
 foreach section [boot-base boot-sys boot-mezz] [
 	set section make block! 200

@@ -283,6 +283,14 @@ if find codecs 'JSON [
 	===end-group===
 ]
 
+if find codecs 'PNG [
+	===start-group=== "PNG codec"
+	--test-- "png/size?"
+		--assert 24x24 = codecs/png/size? read %units/files/r3.png
+		--assert none?   codecs/png/size? read %units/files/test.aar
+	===end-group===
+]
+
 if find codecs 'XML [
 	===start-group=== "XML codec"
 	--test-- "XML decode test1"
