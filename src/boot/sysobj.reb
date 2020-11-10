@@ -18,16 +18,11 @@ REBOL [
 
 product:  'core
 
-; Next three fields are updated during build:
+; Next four fields are updated during build:
 platform: none
 version:  0.0.0
-build:    1
-
-license: {Copyright 2012 REBOL Technologies
-REBOL is a trademark of REBOL Technologies
-Licensed under the Apache License, Version 2.0.
-See: http://www.apache.org/licenses/LICENSE-2.0
-}
+build:    0
+license: none
 
 catalog: object [
 	; Static (non-changing) values, blocks, objects
