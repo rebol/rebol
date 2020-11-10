@@ -14,7 +14,7 @@ but because nobody really cares about official Rebol and this repository and I w
 
 ### Other Rebol related projects
 
-You may want to check [Ren-C](https://github.com/metaeducation/ren-c), [Red](https://github.com/red/red) and [Boron](http://urlan.sourceforge.net/boron/) projects,
+You may want to check [Ren-C](https://github.com/metaeducation/ren-c), [Red](https://github.com/red/red), [Arturo](https://github.com/arturo-lang/arturo) and [Boron](http://urlan.sourceforge.net/boron/) projects,
 if you are looking for other _Rebol like languages_.
 
 There is also [Shinxin's fork](https://github.com/zsx/r3), which I was initially using for _chery-picking_,
