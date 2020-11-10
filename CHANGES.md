@@ -4,8 +4,20 @@ This is just generated output from commits in [this repository](https://github.c
 
 ## 2020 November
 
+### Features:
+
+* [`77a412`](https://github.com/Oldes/Rebol3/commit/77a4122b4c04a52d5b045cef40f1e8d8369ef9d5) Extend `PNG` codec with `size?` function (returning image size of the binary)
+* [`5455ee`](https://github.com/Oldes/Rebol3/commit/5455ee479bb7a0bca1eb2b61cbbfc832908de1f6) Including `as-colors` module with functions, which decorates any value with bright ANSI color sequences
+* [`fd1790`](https://github.com/Oldes/Rebol3/commit/fd179029ea7b6a4570fe638b660d4849b0907344) BinCode - match binary!
+
+### Changes:
+
+* [`a6a07f`](https://github.com/Oldes/Rebol3/commit/a6a07f8bea642c20652dca1b446c90e9103f6eab) Updated Windows' icon file
+* [`42ef0d`](https://github.com/Oldes/Rebol3/commit/42ef0d5c8720f9ab9678b3556933a94ff3e7d8f0) Updated banner and `license` output
+
 ### Fixes:
 
+* [`173968`](https://github.com/Oldes/Rebol3/commit/1739683623264cc51c60f13020709c48fd145a67) Reset ANSI color after `secure` help output
 * [`f7e8e8`](https://github.com/Oldes/Rebol3/commit/f7e8e8fd4a6484f23a02b44bba77f8920068bfab) PROTECT and UNPROTECT bitset!
 * [`7c409f`](https://github.com/Oldes/Rebol3/commit/7c409fb2b19a4e563fcf61214b37d1c5b1bad234) Conversion of bitset to binary does not count with complement bitset state
 * [`ced591`](https://github.com/Oldes/Rebol3/commit/ced59161e81edd409a0b822614a114b9afdaddb9) Open does not reset the internal file pointer of a previously closed file port
