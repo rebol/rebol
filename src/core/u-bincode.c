@@ -208,7 +208,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 //		/write   "Write data into output buffer"
 //			data [binary! block!] "Data dialect"
 //		/read    "Read data from the input buffer"
-//			code [word! block! integer!]   "Input encoding"
+//			code [word! block! integer! binary!]   "Input encoding"
 //		/into    "Put READ results in out block, instead of creating a new block"
 //			out  [block!] "Target block for results, when /into is used"
 //		/with    "Additional input argument"
@@ -1589,6 +1589,19 @@ static REBCNT EncodedU32_Size(u32 value) {
 					//puts("-- found set-word?");
 					DS_PUSH(value);
 					continue;
+				case REB_BINARY:
+					// do binary comparison, return TRUE and skip if data matches
+					// or return FALSE and keep position where it is
+					VAL_SET(temp, REB_LOGIC);
+					n = Val_Series_Len(value);
+					if ((cp + n) > ep || NZ(memcmp(cp, VAL_BIN_DATA(value), n))) {
+						VAL_LOGIC(temp) = FALSE;
+						n = 0; // no advance
+					}
+					else {
+						VAL_LOGIC(temp) = TRUE;
+					}
+					break;
 			}
 			// Set prior set-words:
 			while (DSP > ssp) {

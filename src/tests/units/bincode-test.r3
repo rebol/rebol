@@ -440,6 +440,18 @@ is-protected-error?: func[code][
 		;- used for fixed size octal numbers (used for example in TAR files)
 		--assert 8 = binary/read/with #{3130} 'OCTAL-BYTES 2
 
+	--test-- "BinCode - match binary!"
+		b: binary #{0badCafe}
+		--assert binary/read b #{0bad}
+		--assert binary/read b #{Cafe}
+		--assert tail? b/buffer
+		--assert [#[true] #[false] #[true]] = binary/read b [
+			ATz 0   ; reset position to head
+			#{0bad} ; true and advance
+			#{F00D} ; false, no advance
+			#{Cafe} ; true and advance
+		]
+		--assert [#[true] #{CAFE}] = binary/read b [ATz 0 #{0bad} bytes 2]
 
 ===end-group===
 
