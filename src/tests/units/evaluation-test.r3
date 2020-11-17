@@ -482,10 +482,23 @@ Rebol [
 		--assert d = set/any [A B] d
 		--assert all [a = 4 unset? :b]
 
-	--test-- "Set - issue 2366"
-	;@@https://github.com/Oldes/Rebol-issues/issues/2366
+	--test-- "Set - issue 2367"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2367
 		--assert error? try [set #ab 1]
 		--assert error? try [set #12 2]
+
+	--test-- "set block with word types"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1745
+		set [a 'b :c d:] [1 2 3 4]
+		--assert a = 1
+		--assert b = 2
+		--assert c = 3
+		--assert d = 4
+		--assert error? try [set [/e][5]]
+		--assert error? try [set [#f][6]]
+		--assert error? try [set /a 1]
+		
+
 
 
 ===end-group===
