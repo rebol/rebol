@@ -65,6 +65,21 @@ Rebol [
 		--assert ref? load {@šiška}
 		--assert ref? load {@%C5%A1}
 
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2437
+	--test-- "invalid `ref!`"
+		--assert error? try [load {'2nd}]
+		--assert error? try [load {':foo}]
+		--assert error? try [load {'@foo}]
+
+===end-group===
+
+===start-group=== "Set-word"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2437
+	--test-- "invalid `set-word!`"
+		--assert error? try [load {:2nd}]
+		--assert error? try [load {::foo}]
+		--assert error? try [load {:@foo}]
+
 ===end-group===
 
 ===start-group=== "Tag"

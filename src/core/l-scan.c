@@ -786,7 +786,10 @@
         }
 
     case LEX_CLASS_SPECIAL:
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT) && *cp != '<') return TOKEN_EMAIL; // for case like: %61@b which is actually: a@b
+        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT) && *cp != '<') { // for case like: %61@b which is actually: a@b 
+			if (*cp == '\'' || *cp == ':') return -TOKEN_WORD; // no '@foo abd :@foo
+			return TOKEN_EMAIL; 
+		}
     next_ls:
         switch (GET_LEX_VALUE(*cp)) {
 
@@ -811,7 +814,7 @@
         case LEX_SPECIAL_COLON:         /* :word :12 (time) */
             if (IS_LEX_NUMBER(cp[1])) return TOKEN_TIME;
             if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD)) return TOKEN_GET;   /* common case */
-			if (cp[1] == '\'') return -TOKEN_WORD;
+			if (cp[1] == '\'' || cp[1] == ':') return -TOKEN_WORD; // no :'foo ::foo
 			// Various special cases of < << <> >> > >= <=
 			if (cp[1] == '<' || cp[1] == '>') {
 				cp++;
@@ -839,7 +842,7 @@
 					return TOKEN_LIT;
 				}
 			}
-			if (cp[1] == '\'') return -TOKEN_WORD;
+			if (cp[1] == '\'') return -TOKEN_LIT; // no ''foo
             type = TOKEN_LIT;
             goto scanword;
 
