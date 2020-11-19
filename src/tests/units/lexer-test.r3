@@ -82,6 +82,18 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Refinement"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/980
+	--test-- "valid `refinement!`"
+		--assert refinement? try [load {/foo}]
+		--assert refinement? try [load {/+}]
+		--assert refinement? try [load {/!}]
+		--assert refinement? try [load {/111}]
+		--assert refinement? try [load {/+1}]
+		
+
+===end-group===
+
 ===start-group=== "Tag"
 	--test-- "valid `tags`"
 		--assert tag? load {<a '"'>} ;@@ https://github.com/Oldes/Rebol-issues/issues/1873
