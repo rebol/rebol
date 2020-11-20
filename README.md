@@ -14,8 +14,14 @@ Preferred way for issue reporting is using [dedicated issue repository](https://
 
 ### Other Rebol related projects
 
-You may want to check [Ren-C](https://github.com/metaeducation/ren-c), [Red](https://github.com/red/red), [Arturo](https://github.com/arturo-lang/arturo) and [Boron](http://urlan.sourceforge.net/boron/) projects,
-if you are looking for other _Rebol like languages_.
+If you are looking for other _Rebol like languages_, you may want to check also:
+
+* [Arturo](https://github.com/arturo-lang/arturo) language written in Nim
+* [Boron](http://urlan.sourceforge.net/boron/) language written in C
+* [Red](https://github.com/red/red) language written in Red bootstrapped from Rebol2
+* [Ren-C](https://github.com/metaeducation/ren-c) another living Rebol3 fork
+* [Rye](https://github.com/refaktor/rye) language written in Go
+
 
 There is also [Shinxin's fork](https://github.com/zsx/r3), which I was initially using for _chery-picking_,
 as it contains modifications from Atronix and Saphirion. But its use is now limited as it depends on non-public modules and also there is not much life visible recently.
