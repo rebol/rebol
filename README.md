@@ -21,6 +21,7 @@ If you are looking for other _Rebol like languages_, you may want to check also:
 * [Red](https://github.com/red/red) language written in Red bootstrapped from Rebol2
 * [Ren-C](https://github.com/metaeducation/ren-c) another living Rebol3 fork
 * [Rye](https://github.com/refaktor/rye) language written in Go
+* [World](https://github.com/Geomol/World) language written in C
 
 
 There is also [Shinxin's fork](https://github.com/zsx/r3), which I was initially using for _chery-picking_,
