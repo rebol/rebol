@@ -66,6 +66,7 @@ Rebol [
 	--assert "d"     = find/any/reverse/tail tail "ažcdažcd" "žc"
 
 --test-- "FIND/SAME in block!"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1720
 	a: "a"
 	obj1: context [a: 1 b: 2]
 	obj2: context [a: 1 b: 2]
@@ -85,6 +86,10 @@ Rebol [
 	--assert 1 = index? find b b/1
 	--assert 1 = index? find b b/2
 	--assert 1 = index? find b b/3
+	--assert 1 = index? find/same [1 1.0] 1
+	--assert 2 = index? find/same [1 1.0] 1.0
+	--assert 2 = index? find/same [1.0 1] 1
+	--assert 1 = index? find/same [1.0 1] 1.0
 
 --test-- "FIND/SAME in string!"
 	--assert "AbcdAe" = find/same "aAbcdAe" "A"
