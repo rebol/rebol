@@ -171,7 +171,7 @@ if system/platform = 'Windows [
 
 ===end-group===
 
-if find system/schemes 'clipboard [
+if system/platform = 'Windows [
 	===start-group=== "CLIPBOARD"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1968
 		--test-- "Clipboard port test"
