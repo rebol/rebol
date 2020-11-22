@@ -10,7 +10,7 @@ REBOL [
 ]
 
 if find codecs 'png [
-	extend codecs/png 'size2? func ["Return PNG image size or none" bin [binary!]][
+	extend codecs/png 'size? func ["Return PNG image size or none" bin [binary!]][
 		if all [
 			parse bin [
 				#{89504E470D0A1A0A} ;- PNG magic number
