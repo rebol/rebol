@@ -90,6 +90,11 @@ Rebol [
 		--assert unset? do %units/files/unset.r3
 		--assert dir = what-dir
 
+	--test-- "script with quit"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2250
+		--assert unset? do %units/files/quit.r3
+		--assert 42 = do %units/files/quit-return.r3
+
 ===end-group===
 
 ===start-group=== "do function"

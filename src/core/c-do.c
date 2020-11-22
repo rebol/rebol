@@ -1835,7 +1835,8 @@ reapply:  // Go back here to start over with a new func
 
 	if (arg) {
 		if (IS_NONE(arg)) {
-			SET_INTEGER(TASK_THIS_VALUE, 0);
+			//SET_INTEGER(TASK_THIS_VALUE, 0); // for (do {quit}) == 0
+			SET_UNSET(TASK_THIS_VALUE);        // for (do {quit}) == unset!
 		} else 
 			*TASK_THIS_VALUE = *arg;	// save the value
 	} else {
