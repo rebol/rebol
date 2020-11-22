@@ -435,6 +435,15 @@
 
 	if (IS_DATE(arg)) {
 		*val = *arg;
+		if (IS_TIME(++arg)) {
+			// make date! [1-1-2000 100:0]
+			// we must get date parts here so can be used
+			// for time normalization later
+			day   = VAL_DAY(val) - 1;
+			month = VAL_MONTH(val) - 1;
+			year  = VAL_YEAR(val);
+			goto set_time;
+		}
 		return TRUE;
 	}
 
@@ -463,6 +472,7 @@
 	day--;
 	month--;
 
+set_time:
 	if (IS_TIME(arg)) {
 		secs = VAL_TIME(arg);
 		arg++;
@@ -812,7 +822,7 @@ setDate:
 				bp = Qualify_String(arg, 45, &len, FALSE); // can trap, ret diff str
 				if (Scan_Date(bp, len, D_RET)) return R_RET;
 			}
-			else if (ANY_BLOCK(arg) && VAL_BLK_LEN(arg) >= 3) {
+			else if (ANY_BLOCK(arg) && VAL_BLK_LEN(arg) >= 1) {
 				if (MT_Date(D_RET, VAL_BLK_DATA(arg), REB_DATE)) {
 					return R_RET;
 				}
