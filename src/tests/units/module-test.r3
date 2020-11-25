@@ -8,6 +8,11 @@ Rebol [
 
 ~~~start-file~~~ "module!"
 
+modules-test-dir: join what-dir %units/files/
+unless find system/options/module-paths modules-test-dir [
+	append system/options/module-paths modules-test-dir
+]
+
 ===start-group=== "module keywords"
 	--test-- "hidden"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1696
@@ -277,6 +282,21 @@ probe all [
 		import {rebol [type: 'module] issue-1721-a: 1 export issue-1721-b: 2}
 		--assert unset? :system/contexts/user/issue-1721-a
 		--assert system/contexts/user/issue-1721-b = 2
+
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1694
+	--test-- "import needs word!"
+		import 'test-needs-name
+		--assert true? test-needs-name-result
+	--test-- "import needs file!"
+		;- at this moment files imported from other file
+		;- does not use parent file's location!
+		import %units/files/test-needs-file.reb
+		--assert true? test-needs-file-result
+	--test-- "import needs url!"
+		--assert not error? try [
+			import https://github.com/Oldes/Rebol3/raw/master/src/tests/units/files/test-needs-url.reb
+			--assert true? test-needs-url-result
+		]
 
 ===end-group===
 
