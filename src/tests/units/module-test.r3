@@ -110,6 +110,13 @@ unless find system/options/module-paths modules-test-dir [
 		module [] body: [export 'b]
 		--assert body = ['b]
 
+	--test-- "make module type assertion"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1444
+		--assert all [
+			error? err: try [module [type: :print][]]
+			err/id = 'wrong-type
+		]
+
 ===end-group===
 
 
