@@ -131,7 +131,7 @@ start: func [
 
 	;-- Make the user's global context:
 	tmp: make object! 320
-	append tmp reduce ['system :system]
+	append tmp reduce ['system :system 'local-lib :tmp]
 	system/contexts/user: tmp
 
 	;boot-print ["Checking for user.reb file in" file]
