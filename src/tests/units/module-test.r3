@@ -3,15 +3,15 @@ Rebol [
 	Author:  "Peter W A Wood, Oldes"
 	File: 	 %module-test.r3
 	Tabs:	 4
-	Needs:   [%../quick-test-module.r3]
+	Needs:   %../quick-test-module.r3
 ]
 
 ~~~start-file~~~ "module!"
 
-modules-test-dir: join what-dir %units/files/
-unless find system/options/module-paths modules-test-dir [
-	append system/options/module-paths modules-test-dir
-]
+; extend module-paths with units/files/ directory
+; so modules there can be located
+supplement system/options/module-paths join what-dir %units/files/
+
 
 ===start-group=== "module keywords"
 	--test-- "hidden"

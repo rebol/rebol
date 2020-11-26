@@ -169,6 +169,16 @@ Rebol [
 	--assert #"b" = select/same "aAbcdAe" "A"
 	--assert #"e" = select/same/last "aAbcdAe" "A"
 
+--test- "SUPPLEMENT"
+	;@@ https://github.com/Oldes/Rebol-wishes/issues/11
+	b: []
+	--assert [%a]         = supplement b %a
+	--assert [%a %b]      = supplement b %b
+	--assert [%a %b]      = supplement b %a
+	--assert [%a %b #"a"] = supplement b #"a"
+	--assert [%a %b #"a"] = supplement b #"A" ; case-insensitive
+	--assert [%a %b #"a" #"A"] = supplement/case b #"A"
+
 ===end-group===
 
 ===start-group=== "PATH notation"
