@@ -169,7 +169,7 @@ Rebol [
 	--assert #"b" = select/same "aAbcdAe" "A"
 	--assert #"e" = select/same/last "aAbcdAe" "A"
 
---test- "SUPPLEMENT"
+--test-- "SUPPLEMENT"
 	;@@ https://github.com/Oldes/Rebol-wishes/issues/11
 	b: []
 	--assert [%a]         = supplement b %a
