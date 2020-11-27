@@ -3,7 +3,7 @@ REBOL [
 	name: 'tls
 	type: 'module
 	author: rights: ["Richard 'Cyphre' Smolak" "Oldes" "Brian Dickens (Hostilefork)"]
-	version: 0.7.1
+	version: 0.7.3
 	history: [
 		0.6.1 "Cyphre" "Initial implementation used in old R3-alpha"
 		0.7.0 "Oldes" {
@@ -20,6 +20,7 @@ REBOL [
 			* Basic support for EllipticCurves (x25519 still missing)
 			* Added support for Chacha20-Poly1305 cipher suite
 		}
+		0.7.3 "Oldes" "Fixed RSA memory leak"
 	]
 	todo: {
 		* cached sessions
@@ -629,6 +630,7 @@ client-key-exchange: function [
 				key-data: rsa/encrypt rsa-key pre-master-secret
 				key-data-len-bytes: 2
 				log-more ["W[" ctx/seq-write "] key-data:" mold key-data]
+				rsa rsa-key none ;@@ releases the internal RSA data, should be done by GC one day!
 			]
 			DHE_DSS
 			DHE_RSA [
@@ -1578,6 +1580,7 @@ TLS-parse-handshake-message: function [
 								;decrypt the `signature` with server's public key
 								rsa-key: apply :rsa-init ctx/server-certs/1/public-key/rsaEncryption
 								signature: rsa/verify rsa-key signature
+								rsa rsa-key none ;@@ releases the internal RSA data, should be done by GC one day!
 								;?? signature
 								signature: decode 'der signature
 								;note tls1.3 is different a little bit here!
