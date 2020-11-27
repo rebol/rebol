@@ -126,7 +126,25 @@ Rebol [
 
 	;@@ https://github.com/Oldes/Rebol-issues/issues/598
 	--test-- "map-issue-598"
-		--assert error? try [make map! [[a] 1]]
+		--assert all [
+			map? m: try [make map! [[a] 1]]
+			1 = select m [a]
+			2 = poke m [b] 2
+			1 = m/([a])
+			2 = pick m [b]
+		]
+		;- note that keys are not implicitly protected!
+		k: [c]
+		poke m :k 3
+		--assert [[a] [b] [c]] = keys-of m
+		;- so it's possible to create a map with multiple same keys!
+		append clear k 'b
+		--assert [[a] [b] [b]] = keys-of m
+		;- it's still possible to protect keys manually like:
+		k: protect [d] clear m
+		poke m :k 4
+		--assert [[d]] = keys-of m
+		--assert error? try [append clear k 'b]
 
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1872
 	--test-- "map-issue-1872"
