@@ -208,9 +208,8 @@ Rebol [
 		]
 		; it's now possible to set /utc (if used date or date-time)
 		n: 27-Nov-2020/18:15:57+1:00 ; date-time with timezone
-		--assert probe n = (d/utc: n) ; result is passed thru
-		probe d
-		--assert probe d = 27-Nov-2020/17:15:57 ; but d is now adjusted
+		--assert n = (d/utc: n) ; result is passed thru
+		--assert d = 27-Nov-2020/17:15:57 ; but d is now adjusted
 
 
 ===end-group===
