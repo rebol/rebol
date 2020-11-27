@@ -103,11 +103,11 @@ Rebol [
 ===start-group=== "Lit"
 	--test-- "quote arrow-based words"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1461
-		--assert lit-word? load {'<}
-		--assert lit-word? load {'>}
-		--assert lit-word? load {'<>}
-		--assert lit-word? load {'<=}
-		--assert lit-word? load {'>=}
+		--assert lit-word? try [load {'<} ]
+		--assert lit-word? try [load {'>} ]
+		--assert lit-word? try [load {'<>}]
+		--assert lit-word? try [load {'<=}]
+		--assert lit-word? try [load {'>=}]
 
 ===end-group===
 
