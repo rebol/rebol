@@ -185,9 +185,33 @@ Rebol [
 			err/id = 'invalid-path
 		]
 		--assert all [
-			error? err: try [d/yearday: 1]
-			err/id = 'bad-path-set
+			error? err: try [d/utc: 1] ; error, because it requires date
+			err/id = 'bad-field-set
 		]
+		--assert all [
+			not error? try [d/time: 1.2] ; setting time to decimal is now implemented
+			d = 1-Jan-2000/0:00:01.2
+		]
+		d/time: none
+		--assert all [
+			;@@ https://github.com/Oldes/Rebol-wishes/issues/18
+			not error? try [d/yearday: 17]
+			d = 17-1-2000
+			60 = d/yearday: 60
+			d = 29-Feb-2000 ; was leak year
+			d/year: 2001 d/yearday: 60
+			d = 1-Mar-2001  ; this one not
+			d/yearday: 0    ; last day of previous year
+			d = 31-Dec-2000
+			d/yearday: -1
+			d = 30-Dec-1999
+		]
+		; it's now possible to set /utc (if used date or date-time)
+		n: 27-Nov-2020/18:15:57+1:00 ; date-time with timezone
+		--assert probe n = (d/utc: n) ; result is passed thru
+		probe d
+		--assert probe d = 27-Nov-2020/17:15:57 ; but d is now adjusted
+
 
 ===end-group===
 

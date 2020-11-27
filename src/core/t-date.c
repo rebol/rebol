@@ -205,6 +205,49 @@
 	return date.date.day + days;
 }
 
+/***********************************************************************
+**
+*/	REBI64 Days_Of_Date(REBINT day, REBINT month, REBINT year )
+/*
+**		Return number of days from given date parts
+**
+***********************************************************************/
+{
+	REBI64 m = (month + 9) % 12;
+	REBI64 y = year - (m / 10);
+	return (REBI64)(365 * y + (y / 4) - (y / 100) + (y / 400) + ((m * 306 + 5) / 10) + ((REBI64)day - 1));
+}
+
+/***********************************************************************
+**
+*/	void Date_Of_Days(REBI64 days, REBDAT *date)
+/*
+**		Return number of days from given date parts
+**
+***********************************************************************/
+{
+	REBI64 dd, y, mi;
+	
+	y = ((10000 * days) + 14780) / 3652425;
+	dd = days - (365 * y + (y / 4) - (y / 100) + (y / 400));
+	mi = (100 * dd + 52) / 3060;
+	date->date.month = (mi + 2) % 12 + 1;
+	date->date.year = y + ((mi + 2) / 12);
+	date->date.day = dd - ((mi * 306 + 5) / 10) + 1;
+}
+
+
+/***********************************************************************
+**
+*/	static REBI64 Days_Of_Jan_1st(REBINT year)
+/*
+**		Return number of days for 1st January of given year
+**
+***********************************************************************/
+{
+	return Days_Of_Date(1, 1, year);
+}
+
 
 /***********************************************************************
 **
@@ -633,11 +676,11 @@ set_time:
 
 		if (IS_INTEGER(val) || IS_DECIMAL(val)) {
 			// allow negative time zone
-			n = (sym == SYM_ZONE) ? Int32(val) : Int32s(val, 0);
+			n = (sym == SYM_ZONE || sym == SYM_YEARDAY) ? Int32(val) : Int32s(val, 0);
 		}
 		else if (IS_NONE(val)) n = 0;
 		else if (IS_TIME(val) && (sym == SYM_TIME || sym == SYM_ZONE));
-		else if (IS_DATE(val) && (sym == SYM_TIME || sym == SYM_DATE));
+		else if (IS_DATE(val) && (sym == SYM_TIME || sym == SYM_DATE || sym == SYM_UTC));
 		else return PE_BAD_SET_TYPE;
 
 		if (secs == NO_TIME && ((sym >= SYM_HOUR && sym <= SYM_SECOND) || sym == SYM_TIME || sym == SYM_ZONE)) {
@@ -703,6 +746,20 @@ set_time:
 				time.n = (REBINT)((VAL_DECIMAL(val) - time.s) * SEC_SEC);
 			}
 			secs = Join_Time(&time);
+			break;
+		case SYM_UTC:
+			if (!IS_DATE(val)) return PE_BAD_SET_TYPE;
+			 data = pvs->value;
+			*data = *val;
+			VAL_ZONE(data) = 0;
+			return PE_USE;
+		case SYM_YEARDAY:
+		case SYM_JULIAN:
+			if (!IS_INTEGER(val)) return PE_BAD_SET_TYPE;
+			Date_Of_Days( Days_Of_Jan_1st(year) + n - 1, &date);
+			day   = date.date.day - 1;
+			month = date.date.month - 1;
+			year  = date.date.year;
 			break;
 
 		default:
