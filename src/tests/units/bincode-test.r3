@@ -63,7 +63,7 @@ is-protected-error?: func[code][
 		--assert object? binary/write b [ui64 1  ui32BE 1  ui24BE 1  ui16BE 1 ui8 1]
 		--assert #{000000000000000100000001000001000101} = b/buffer
 		--assert "11111" = rejoin binary/read b [ui64 ui32 ui24 ui16 ui8]
-		--assert "11111" = rejoin binary/read b [at 1 ui64be ui32be ui24be ui16be ui8]
+		--assert "11111" = rejoin binary/read b [AT 1 ui64be ui32be ui24be ui16be ui8]
 		binary/init b none
 		binary/write b [
 			#{7FFFFFFFFFFFFFFF}
@@ -222,11 +222,11 @@ is-protected-error?: func[code][
 		;SKIP is using relative positioning
 		b: binary #{01020304}
 		i: 0
-		binary/read b [skip  1 i: UI8] --assert i = 2
-		binary/read b [skip -1 i: UI8] --assert i = 2
-		binary/read b [skip  0 i: UI8] --assert i = 3
-		binary/read b [skip -2 i: UI8] --assert i = 2
-		binary/read b [at 1 skip 3  i: UI8] --assert i = 4
+		binary/read b [SKIP  1 i: UI8] --assert i = 2
+		binary/read b [SKIP -1 i: UI8] --assert i = 2
+		binary/read b [SKIP  0 i: UI8] --assert i = 3
+		binary/read b [SKIP -2 i: UI8] --assert i = 2
+		binary/read b [AT 1 SKIP 3  i: UI8] --assert i = 4
 		--assert is-range-error? [binary/read b [AT 1 SKIP  5 UI8]]
 		--assert is-range-error? [binary/read b [AT 1 SKIP -1 UI8]]
 
@@ -234,9 +234,9 @@ is-protected-error?: func[code][
 		;LENGTH? returns number of bytes remaining in the buffer
 		b: binary #{01020304}
 		i: 0
-		binary/read b [     i: length?] --assert i = 4
-		binary/read b [ui16 i: length?] --assert i = 2
-		binary/read b [ui16 i: length?] --assert i = 0
+		binary/read b [     i: LENGTH?] --assert i = 4
+		binary/read b [UI16 i: LENGTH?] --assert i = 2
+		binary/read b [UI16 i: LENGTH?] --assert i = 0
 
 	--test-- "BinCode - UNIXTIME-NOW"
 		;Writes UNIX time as UI32 value
@@ -257,7 +257,7 @@ is-protected-error?: func[code][
 		out: copy #{} ;not yet protected
 		blk: copy []
 		--assert object? binary/write out #{babe}
-		--assert (binary/read out [at 1 i: ui8] i = 186)
+		--assert (binary/read out [AT 1 i: ui8] i = 186)
 
 		protect :out
 		protect :blk
@@ -265,8 +265,8 @@ is-protected-error?: func[code][
 		--assert is-protected-error? [binary/write out #{babe}]
 		
 		
-		--assert is-protected-error? [binary/read out [at 1 i: ui8]]
-		--assert is-protected-error? [binary/read/into out [at 1 ui8] blk]
+		--assert is-protected-error? [binary/read out [AT 1 i: ui8]]
+		--assert is-protected-error? [binary/read/into out [AT 1 ui8] blk]
 		unprotect/words [blk out i]
 
 	--test-- "BinCode - STRING"
@@ -408,8 +408,8 @@ is-protected-error?: func[code][
 		;- old and not much precise format for storing date and time from MS-DOS times
 		;- still used in some file formats, like ZIP
 
-		--assert  4-Apr-2018/18:53:56  = binary/read #{BC96844C} 'msdos-datetime
-		--assert [18:53:56 4-Apr-2018] = binary/read #{BC96844C} [msdos-time msdos-date]
+		--assert  4-Apr-2018/18:53:56  = binary/read #{BC96844C} 'MSDOS-DATETIME
+		--assert [18:53:56 4-Apr-2018] = binary/read #{BC96844C} [MSDOS-TIME MSDOS-DATE]
 
 		b: binary 64
 		binary/write b [
@@ -422,15 +422,15 @@ is-protected-error?: func[code][
 			msdos-datetime 14-Mar-2019/15:29:52
 			msdos-datetime 14-Mar-2019/15:33:18+1:00
 		]
-		--assert 11:32:20 = binary/read b 'msdos-time
-		--assert 21:23:54 = binary/read b 'msdos-time
-		--assert 15:29:52 = binary/read b 'msdos-time
-		--assert 0:0:0    = binary/read b 'msdos-time
-		--assert 14-Mar-2019 = binary/read b 'msdos-date
-		--assert 14-Mar-2019/15:29:52 = binary/read b 'msdos-datetime
-		--assert 14-Mar-2019/14:33:18 = binary/read b 'msdos-datetime
+		--assert 11:32:20 = binary/read b 'MSDOS-TIME
+		--assert 21:23:54 = binary/read b 'MSDOS-TIME
+		--assert 15:29:52 = binary/read b 'MSDOS-TIME
+		--assert 0:0:0    = binary/read b 'MSDOS-TIME
+		--assert 14-Mar-2019 = binary/read b 'MSDOS-DATE
+		--assert 14-Mar-2019/15:29:52 = binary/read b 'MSDOS-DATETIME
+		--assert 14-Mar-2019/14:33:18 = binary/read b 'MSDOS-DATETIME
 
-		--assert error? try [binary/write b [msdos-date 15:33:18]] ;<- date required
+		--assert error? try [binary/write b [MSDOS-DATE 15:33:18]] ;<- date required
 
 	--test-- "BinCode - STRING-BYTES (read)"
 		;- used for fixed size strings (used for example in TAR files)
@@ -451,7 +451,7 @@ is-protected-error?: func[code][
 			#{F00D} ; false, no advance
 			#{Cafe} ; true and advance
 		]
-		--assert [#[true] #{CAFE}] = binary/read b [ATz 0 #{0bad} bytes 2]
+		--assert [#[true] #{CAFE}] = binary/read b [ATz 0 #{0bad} BYTES 2]
 
 ===end-group===
 
