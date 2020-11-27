@@ -173,6 +173,21 @@ Rebol [
 			error? e: try [poke d 1 2000]
 			e/id = 'expect-arg
 		]
+	--test-- "error date set messages"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1385
+		d: 1-1-2000
+		--assert all [
+			error? err: try [d/date: 1]
+			err/id = 'bad-field-set
+		]
+		--assert all [
+			error? err: try [d/foo: 1]
+			err/id = 'invalid-path
+		]
+		--assert all [
+			error? err: try [d/yearday: 1]
+			err/id = 'bad-path-set
+		]
 
 ===end-group===
 
