@@ -3,7 +3,7 @@ Rebol [
 	Author:  "Peter W A Wood, Oldes"
 	File: 	 %module-test.r3
 	Tabs:	 4
-	Needs:   %../quick-test-module.r3
+	Needs:   quick-test
 ]
 
 ~~~start-file~~~ "module!"
@@ -17,11 +17,11 @@ supplement system/options/module-paths join what-dir %units/files/
 	--test-- "hidden"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1696
 		--assert all [
-			[a] = words-of m: module [] [a: 1]
+			[local-lib a] = words-of m: module [] [a: 1]
 			m/a = 1
 		]
 		--assert all [
-			[b] = words-of m: module [] [hidden a: 1 b: does[a + 1]]
+			[local-lib b] = words-of m: module [] [hidden a: 1 b: does[a + 1]]
 			error? try [m/a]
 			m/b = 2
 		]
@@ -263,6 +263,11 @@ probe all [
 			e/id = 'needs
 		]
 		--assert module? m: try [import/version m-1687 1.0.0]
+		--assert all [
+			;@@ https://github.com/Oldes/Rebol-wishes/issues/13
+			object? m/local-lib
+			empty?  m/local-lib ; because there was no import in this module
+		]
 
 	--test-- "import/check"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1686
@@ -297,13 +302,23 @@ probe all [
 	--test-- "import needs file!"
 		;- at this moment files imported from other file
 		;- does not use parent file's location!
-		import %units/files/test-needs-file.reb
+		m: import %units/files/test-needs-file.reb
 		--assert true? test-needs-file-result
+		--assert all [
+			;@@ https://github.com/Oldes/Rebol-wishes/issues/13
+			object? m/local-lib
+			m/local-lib/test-needs-file-value = 42 ; value imported from the inner module
+		]
+
 	--test-- "import needs url!"
 		--assert not error? try [
 			import https://github.com/Oldes/Rebol3/raw/master/src/tests/units/files/test-needs-url.reb
 			--assert true? test-needs-url-result
 		]
+
+	--test-- "local-lib"
+	;@@ https://github.com/Oldes/Rebol-wishes/issues/13
+		--assert same? local-lib system/contexts/user
 
 ===end-group===
 
@@ -311,13 +326,13 @@ probe all [
 	--test-- "issue-1005"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1005
 		m: module [] [a: 1 2]
-		--assert [a: 1] = body-of m
-		--assert [a] = keys-of m
-		--assert [1] = values-of m
+		--assert [local-lib: #[object![]] a: 1] = body-of m
+		--assert [local-lib a] = keys-of m
+		--assert [#[object![]] 1] = values-of m
 		m: module [exports: [a]] [a: 1 2]
-		--assert [a: 1] = body-of m
-		--assert [a] = keys-of m
-		--assert [1] = values-of m
+		--assert [local-lib: #[object![]] a: 1] = body-of m
+		--assert [local-lib a] = keys-of m
+		--assert [#[object![]] 1] = values-of m
 
 	--test-- "issue-1708"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1708
