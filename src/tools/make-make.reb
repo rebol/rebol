@@ -190,7 +190,7 @@ makefile-link: {
 # Directly linked r3 executable:
 r3$(BIN_SUFFIX):	tmps objs $(OBJS) $(HOST) $(RES)
 	$(CC) -o r3$(BIN_SUFFIX) $(OBJS) $(HOST) $(RES) $(CLIB)
-	-$(NM) -a r3$(BIN_SUFFIX)
+#	-$(NM) -a r3$(BIN_SUFFIX)
 
 objs:
 	mkdir -p objs
