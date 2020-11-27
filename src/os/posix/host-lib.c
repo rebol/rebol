@@ -973,7 +973,7 @@ static inline REBOOL Open_Pipe_Fails(int pipefd[2]) {
 
 		close(info_pipe[R]);
 
-		printf("flag_shell in child: %hhu\n", flag_shell);
+		//printf("flag_shell in child: %hhu\n", flag_shell);
 		if (flag_shell) {
 			const char* sh = NULL;
 			const char ** argv_new = NULL;
@@ -1032,7 +1032,7 @@ child_error:
 		if (err_len != NULL) *err_len = 0;
 
 		if (stdin_pipe[W] > 0) {
-			printf("stdin_pipe[W]: %d\n", stdin_pipe[W]);
+			//printf("stdin_pipe[W]: %d\n", stdin_pipe[W]);
 			input_size = strlen((char*)input); /* the passed in input_len is in character, not in bytes */
 			input_len = 0;
 			pfds[nfds++] = (struct pollfd){.fd = stdin_pipe[W], .events = POLLOUT};
@@ -1040,7 +1040,7 @@ child_error:
 			stdin_pipe[R] = -1;
 		}
 		if (stdout_pipe[R] > 0) {
-			printf("stdout_pipe[R]: %d\n", stdout_pipe[R]);
+			//printf("stdout_pipe[R]: %d\n", stdout_pipe[R]);
 			output_size = BUF_SIZE_CHUNK;
 			*output = OS_Make(output_size);
 			pfds[nfds++] = (struct pollfd){.fd = stdout_pipe[R], .events = POLLIN};
@@ -1048,7 +1048,7 @@ child_error:
 			stdout_pipe[W] = -1;
 		}
 		if (stderr_pipe[R] > 0) {
-			printf("stderr_pipe[R]: %d\n", stderr_pipe[R]);
+			//printf("stderr_pipe[R]: %d\n", stderr_pipe[R]);
 			err_size = BUF_SIZE_CHUNK;
 			*err = OS_Make(err_size);
 			pfds[nfds++] = (struct pollfd){.fd = stderr_pipe[R], .events = POLLIN};
@@ -1251,7 +1251,7 @@ stdout_pipe_err:
 		close(stdin_pipe[W]);
 	}
 stdin_pipe_err:
-	if(ret != 0) printf("ret: %d\n", ret);
+	//if(ret != 0) printf("ret: %d\n", ret);
 	return ret;
 }
 
