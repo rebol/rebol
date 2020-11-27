@@ -154,7 +154,7 @@
 				bp = Form_Int(bp, tz / 4);
 			}
 			*bp++ = ':';
-			bp = Form_Int_Pad(bp, (tz & 3) * 15, 2, 2, '0');
+			bp = Form_Int_Pad(bp, ((REBI64)tz & 3) * 15, 2, 2, '0');
 			*bp = 0;
 
 			Append_Bytes(mold->series, cs_cast(buf));
@@ -531,7 +531,7 @@ set_time:
 	REBINT day, month, year;
 	REBINT num;
 	REBVAL dat;
-	REB_TIMEF time;
+	REB_TIMEF time = {0,0,0,0};
 	REBOOL asTimezone = FALSE;
 
 	if (!IS_DATE(data)) return PE_BAD_ARGUMENT;
@@ -677,7 +677,7 @@ set_time:
 			if (tz > MAX_ZONE || tz < -MAX_ZONE) return PE_BAD_RANGE;
 			if (secs == NO_TIME) secs = 0;
 			if (asTimezone) {
-				secs += ((i64)(tz - tzp) * ((i64)ZONE_SECS * SEC_SEC));
+				secs += (((i64)tz - tzp) * ((i64)ZONE_SECS * SEC_SEC));
 			}
 			break;
 		case SYM_DATE:
@@ -731,9 +731,8 @@ setDate:
 ***********************************************************************/
 {
 	REBI64	secs;
-	REBINT  tz;
 	REBDAT	date;
-	REBINT	day, month, year;
+	REBINT	day = 0, month = 0, year = 0, tz = 0;
 	REBVAL	*val;
 	REBVAL	*arg = NULL;
 	REBINT	num;
@@ -752,7 +751,7 @@ setDate:
 	if (DS_ARGC > 1) arg = D_ARG(2);
 
 	if (IS_BINARY_ACT(action)) {
-		REBINT	type = VAL_TYPE(arg);
+		REBINT type = VAL_TYPE(arg);
 
 		if (type == REB_DATE) {
 			if (action == A_SUBTRACT) {
