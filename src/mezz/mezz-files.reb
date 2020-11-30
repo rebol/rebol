@@ -52,7 +52,7 @@ clean-path: func [
 				either cnt > 0 [
 					-- cnt
 				][
-					unless find ["" "." ".."] to string! f [append out f]
+					unless find ["" "." ".."] as string! f [append out f]
 				]
 			)
 		]
