@@ -65,6 +65,13 @@ Rebol [
 	--assert parse b: [1] [change integer! (1 + 1) to end]
 	--assert b = [2]
 
+--test-- "CHANGE undefined"
+;@@  https://github.com/Oldes/Rebol-issues/issues/1418
+	--assert all [
+		error? e: try [parse "abc" ["a" change skip undefined-word]]
+		e/id = 'no-value
+	]
+
 ===end-group===
 
 ===start-group=== "INSERT"
