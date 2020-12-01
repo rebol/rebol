@@ -204,6 +204,12 @@ Rebol [
 		true? parse [42] [copy a: integer!]
 		a = [42]
 	]
+--test-- "issue-2130"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2130
+	--assert all [
+		parse [x][set val pos: word!]
+		pos = [x]
+	]
 
 ===end-group===
 
