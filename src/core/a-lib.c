@@ -478,7 +478,9 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 //			}
 		} else {
 			if (VAL_ERR_NUM(top) != RE_HALT) {
+				Put_Str(b_cast("\x1B[1;35m"));
 				Out_Value(top, 640, FALSE, 0); // error FORMed
+				Put_Str(b_cast("\x1B[0m"));
 //				if (VAL_ERR_NUM(top) > RE_THROW_MAX) {
 //					Out_Str("** Note: use WHY? for more about this error", 1);
 //				}
