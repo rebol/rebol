@@ -257,6 +257,13 @@ Rebol [
 		e/arg1 = quote :s
 	]
 
+--test-- "issue-1253"
+;@@  https://github.com/Oldes/Rebol-issues/issues/1253
+	--assert all [
+		parse [base: [specs]] [set-word! set c opt word! block!]
+		none? c
+	]
+
 ===end-group===
 
 ~~~end-file~~~
