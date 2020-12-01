@@ -220,6 +220,42 @@ Rebol [
 		val = "f"
 		pos = ser
 	]
+--test-- "get-word use"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2269
+	s: copy "ab"
+	--assert all [
+		parse s [p: to end :p insert "x" to end]
+		s = "xab"
+		p = s
+	]
+	s: copy "ab"
+	--assert all [
+		parse s [p: 1 skip :p insert "x" to end]
+		s = "xab"
+		p = s
+	]
+	s: copy "ab"
+	--assert all [
+		parse s [1 skip p: 1 skip :p insert "x" to end]
+		s = "axb"
+		p = "xb"
+	]
+	s: copy "abcd"
+	--assert all [
+		error? e: try [parse s [x: "ab" thru :s "abcd"]]
+		e/id = 'parse-rule
+	]
+	--assert parse s [x: "ab" :s thru "abcd"]
+	s: copy "abcd" parse s ["ab" p: "c" :p copy x to end]
+	--assert all [p = "cd" x = "cd"]
+	s: copy "abcd" parse s ["ab" p: "c" :p set x to end]
+	--assert all [p = "cd" x = #"c"] 
+	--assert all [
+		; get-word used in middle of the rule
+		error? e: try [parse "abcd" [x: "ab" copy y :s thru "abcd"]]
+		e/id = 'parse-rule
+		e/arg1 = quote :s
+	]
 
 ===end-group===
 
