@@ -193,6 +193,17 @@ Rebol [
 		parse "" [some [(a: true)]] ;- no infinite loop as in R2!
 		a
 	]
+--test-- "set/copy set-word"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2023
+	a: none
+	--assert all [
+		true? parse [42] [set a: integer!]
+		a = 42
+	]
+	--assert all [
+		true? parse [42] [copy a: integer!]
+		a = [42]
+	]
 
 ===end-group===
 
