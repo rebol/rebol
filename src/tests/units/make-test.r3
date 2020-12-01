@@ -30,6 +30,13 @@ Rebol [
 			error? err: try [make char! #{}]
 			err/id = 'bad-make-arg
 		]
+	--test-- "to char! 30"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1414
+		--assert #"^(1E)" = to char! 30
+		--assert #"^^" = to char! 94
+		--assert 30 = to integer! #"^(1E)"
+		--assert 94 = to integer! #"^^"
+
 ===end-group===
 
 ~~~end-file~~~
