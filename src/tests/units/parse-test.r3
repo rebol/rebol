@@ -210,6 +210,16 @@ Rebol [
 		parse [x][set val pos: word!]
 		pos = [x]
 	]
+	--assert all [
+		not parse ser: "foo" [copy val pos: skip]
+		val = "f"
+		pos = ser
+	]
+	--assert all [
+		not parse ser: "foo" [copy val: pos: skip]
+		val = "f"
+		pos = ser
+	]
 
 ===end-group===
 
