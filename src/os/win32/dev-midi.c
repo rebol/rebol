@@ -82,7 +82,6 @@ static midi_ports Midi_Ports_Pool;
 static REBINT Get_New_Midi_Port(REBMID **port)
 {
 	REBCNT n;
-	REBMID new_port;
 	for (n = 0; n < Midi_Ports_Pool.count; n++) {
 		if (Midi_Ports_Pool.ports[n].port == NULL) {
 			*port = &Midi_Ports_Pool.ports[n];
@@ -103,7 +102,7 @@ static REBINT Get_New_Midi_Port(REBMID **port)
 **		size => maxlen
 ***********************************************************************/
 {
-	int next = buffer->tail + sizeof(data);
+	REBCNT next = buffer->tail + sizeof(data);
 	if (next >= buffer->size)
 		next = 0;
 	
@@ -233,7 +232,7 @@ static void CALLBACK MidiOutProc(HMIDIOUT hMidiOut, UINT wMsg, DWORD dwInstance,
 	case MM_MOM_CLOSE:
 		return; // don't report these
 	default:
-		printf("MidiOutProc... port: %0X\n", midi_port.port);
+		printf("MidiOutProc... port: %0p\n", midi_port.port);
 		printf("dwInstance=%u dwParam1=%08x, dwParam2=%08x wMsg=%08x\n", dwInstance, dwParam1, dwParam2, wMsg);
 	}
 	return;
@@ -292,10 +291,10 @@ static void PrintMidiDevices()
 	//printf("Init_MIDI: sizeof(Midi_Ports_Pool): %d sizeof(REBMID): %d\n", sizeof(Midi_Ports_Pool), sizeof(REBMID));
 	Midi_Ports_Pool.count = MIDI_PORTS_ALLOC;
 	Midi_Ports_Pool.ports = MAKE_MEM(MIDI_PORTS_ALLOC * sizeof(REBMID));
+	if (!Midi_Ports_Pool.ports) return DR_ERROR;
 	CLEAR(Midi_Ports_Pool.ports, MIDI_PORTS_ALLOC * sizeof(REBMID));
 	return DR_DONE;
 }
-
 
 /***********************************************************************
 **
@@ -306,14 +305,15 @@ static void PrintMidiDevices()
 	HMIDIIN hMidiDevice = NULL;
 	HMIDIOUT hMidiDeviceOut = NULL;
 	//DWORD nMidiPort = 0;
-	UINT nMidiDeviceNum;
 	MMRESULT rv;
-	REBVAL *spec;
 	REBSER *port = req->port;
 	REBCNT device_in = req->midi.device_in;
 	REBCNT device_out = req->midi.device_out;
-	REBCNT num, port_num;
+	REBCNT port_num;
 	REBMID *midi_port = NULL;
+#ifdef DEBUG_MIDI
+	UINT nMidiDeviceNum;
+#endif;
 
 	port_num = Get_New_Midi_Port(&midi_port);
 	if (port_num < 0) {
@@ -322,7 +322,7 @@ static void PrintMidiDevices()
 	}
 
 #ifdef DEBUG_MIDI
-	printf("Open_MIDI... port: %0X in: %i out: %i\n", port, device_in, device_out);
+	printf("Open_MIDI... port: %0p in: %i out: %i\n", port, device_in, device_out);
 	PrintMidiDevices();
 	printf("new MIDI port NUM: %u\n", port_num);
 #endif
@@ -494,7 +494,7 @@ static void PrintMidiDevices()
 	nMidiDeviceNum = midiInGetNumDevs();
 	for (i = 0; i < nMidiDeviceNum; ++i) {
 		midiInGetDevCaps(i, &capsInp, sizeof(MIDIINCAPS));
-		arg.series = RL_Encode_UTF8_String(capsInp.szPname, wcslen(capsInp.szPname), TRUE, FALSE);
+		arg.series = RL_Encode_UTF8_String(capsInp.szPname, (REBCNT)wcslen(capsInp.szPname), TRUE, FALSE);
 		arg.index = 0;
 		RL_Set_Value(VAL_SERIES(val), i, arg, RXT_STRING);
 	}
@@ -503,7 +503,7 @@ static void PrintMidiDevices()
 	nMidiDeviceNum = midiOutGetNumDevs();
 	for (i = 0; i < nMidiDeviceNum; ++i) {
 		midiOutGetDevCaps(i, &capsOut, sizeof(MIDIOUTCAPS));
-		arg.series = RL_Encode_UTF8_String(capsOut.szPname, wcslen(capsOut.szPname), TRUE, FALSE);
+		arg.series = RL_Encode_UTF8_String(capsOut.szPname, (REBCNT)wcslen(capsOut.szPname), TRUE, FALSE);
 		arg.index = 0;
 		RL_Set_Value(VAL_SERIES(val), i, arg, RXT_STRING);
 	}
