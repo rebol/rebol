@@ -787,11 +787,11 @@ setDate:
 /*
 ***********************************************************************/
 {
-	REBI64	secs;
-	REBDAT	date;
+	REBI64	secs = 0;
+	REBDAT	date = {0};
 	REBINT	day = 0, month = 0, year = 0, tz = 0;
 	REBVAL	*val;
-	REBVAL	*arg = NULL;
+	REBVAL	*arg = D_RET; // using D_RET to silent compiler's warnings (it's redefined if needed)
 	REBINT	num;
 	REBVAL *spec;
 

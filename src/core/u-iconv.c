@@ -542,7 +542,6 @@ static REBINT get_codepage_id(REBVAL *cp)
 static REBYTE* get_codepage_name(REBVAL *cp)
 {
 	REBINT id, i;
-	REBYTE *name;
 
 	if (IS_WORD(cp)) {
 		return VAL_WORD_NAME(cp);
@@ -571,7 +570,7 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 ***********************************************************************/
 {
 	//printf("Swap_Endianess_U16 len: %d\n", len);
-	int i;
+	REBCNT i;
 	for (i = 0; i < len; ++i) {
 		u16 num = data[i];
 		data[i] = (num>>8) | (num<<8);
