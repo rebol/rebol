@@ -776,7 +776,7 @@ is_none:
 {
 	REBVAL *val;
 	REBVAL *arg;
-	REBGOB *gob;
+	REBGOB *gob = 0;
 	REBGOB *ngob;
 	REBCNT index;
 	REBCNT tail;
