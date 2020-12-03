@@ -96,6 +96,9 @@ enum {
 #define	IS_SET(v)			(VAL_TYPE(v) > REB_UNSET)
 #define IS_SCALAR(v)		(VAL_TYPE(v) <= REB_DATE)
 
+// When key is removed from map, it has OPTS_HIDE flag
+#define VAL_MAP_REMOVED(val) (VAL_GET_OPT(val, OPTS_HIDE)) 
+
 
 /***********************************************************************
 **

@@ -191,13 +191,19 @@
 		clear bs
 		--assert "make bitset! #{}" = mold bs
 
-;	--test-- "remove-1"
-;		bs: charset "012345789"
-;		--assert 64 = length? bs
-;		--assert "make bitset! #{000000000000FDC0}" = mold bs
-;		--assert "make bitset! #{0000000000007DC0}" = mold remove/key bs #"0"
-;		--assert "make bitset! #{0000000000003DC0}" = mold remove/key bs 49
-;		--assert "make bitset! #{0000000000000000}" = mold remove/key bs [#"2" - #"7" "8" #"9"]
+	--test-- "remove-1"
+		;@@ https://github.com/Oldes/Rebol-wishes/issues/20
+		bs: charset "012345789"
+		--assert 64 = length? bs
+		--assert "make bitset! #{000000000000FDC0}" = mold bs
+		--assert "make bitset! #{0000000000007DC0}" = mold remove/key bs #"0"
+		--assert "make bitset! #{0000000000003DC0}" = mold remove/key bs 49
+		--assert "make bitset! #{0000000000000000}" = mold remove/key bs [#"2" - #"7" "8" #"9"]
+	--test-- "remove/part invalid"
+		--assert all [
+			error? e: try [remove/part bs "01"]
+			e/id = 'bad-refines
+		]
 
 ===end-group===
 

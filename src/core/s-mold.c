@@ -910,10 +910,10 @@ STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		}
 	}
 
-	// Mold all non-none entries
+	// Mold all not removed entries
 	mold->indent++;
 	for (val = BLK_HEAD(mapser); NOT_END(val) && NOT_END(val+1); val += 2) {
-		if (!IS_NONE(val+1)) {
+		if (!VAL_MAP_REMOVED(val)) {
 			count++;
 			if (molded) {
 				if(indented) 

@@ -267,4 +267,25 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "MAP with NONE"
+	--test-- "map with none"
+		m: #(a: #[none] b: 1)
+		m/b: none
+		--assert [a b] = keys-of m
+		--assert [#[none] #[none]] = values-of m
+
+	--test-- "remove from map"
+		m: #("ab" 1 "AB" 2)
+		--assert ["ab" 1 "AB" 2]  = to block! remove/key m "aB"
+		--assert 2 = length? m
+		--assert ["ab" 1       ]  = to block! remove/key m "AB"
+		--assert 1 = length? m
+		m: #(ab: 1 AB: 2)
+		--assert [ab: 1 AB: 2]  = to block! remove/key m 'aB
+		--assert 2 = length? m
+		--assert [ab: 1      ]  = to block! remove/key m 'AB
+		--assert 1 = length? m
+
+===end-group===
+
 ~~~end-file~~~

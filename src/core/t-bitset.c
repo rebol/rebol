@@ -649,9 +649,10 @@ set_bits:
 		if (Set_Bits(VAL_SERIES(value), arg, (REBOOL)diff)) break;
 		Trap_Arg(arg);
 
-	case A_REMOVE:	// #"a" "abc"  remove/part bs "abcd"  yuk: /part ?
-		if (!D_REF(2)) Trap0(RE_MISSING_ARG); // /part required
-		if (Set_Bits(VAL_SERIES(value), D_ARG(3), FALSE)) break;
+	case A_REMOVE:	// #"a" "abc"  remove/key bs "abcd"
+		if (D_REF(ARG_REMOVE_PART)) Trap0(RE_BAD_REFINES);
+		if (!D_REF(ARG_REMOVE_KEY)) Trap0(RE_MISSING_ARG); // /key required
+		if (Set_Bits(VAL_SERIES(value), D_ARG(ARG_REMOVE_KEY_ARG), FALSE)) break;
 		Trap_Arg(D_ARG(3));
 
 	case A_COPY:

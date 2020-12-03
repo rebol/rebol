@@ -340,6 +340,7 @@ foreach word [
 	write
 	query
 	take
+	remove
 ] [make-arg-enums word]
 
 acts: load %../boot/natives.reb

@@ -67,8 +67,6 @@
 //	[a: 1 b: 2] = body-of  make map! [a 1 b: 2]
 
 
-
-
 /***********************************************************************
 **
 */	REBINT CT_Map(REBVAL *a, REBVAL *b, REBINT mode)
@@ -242,7 +240,9 @@
 
 	// Must set the value:
 	if (n) {  // re-set it:
-		*BLK_SKIP(series, ((n-1)*2)+1) = *val; // set it
+		set = BLK_SKIP(series, ((n-1)*2)); // find the key
+		VAL_CLR_OPT(set++, OPTS_HIDE);     // clear HIDE flag in case it was removed key; change to value position
+		*set = *val;                       // set the value
 		return n;
 	}
 
@@ -289,7 +289,7 @@
 	REBVAL *v = BLK_HEAD(series);
 
 	for (n = 0; n < series->tail; n += 2, v += 2) {
-		if (!IS_NONE(v+1)) c++; // must have non-none value
+		if (!VAL_MAP_REMOVED(v)) c++; // count only not removed values
 	}
 
 	return c;
@@ -386,14 +386,14 @@
 
 	// Count number of set entries:
 	for (val = BLK_HEAD(mapser); NOT_END(val) && NOT_END(val+1); val += 2) {
-		if (!IS_NONE(val+1)) cnt++; // must have non-none value
+		if (!VAL_MAP_REMOVED(val)) cnt++; // must not be removed
 	}
 
 	// Copy entries to new block:
 	blk = Make_Block(cnt * ((what == 0) ? 2 : 1));
 	out = BLK_HEAD(blk);
 	for (val = BLK_HEAD(mapser); NOT_END(val) && NOT_END(val+1); val += 2) {
-		if (!IS_NONE(val+1)) {
+		if (!VAL_MAP_REMOVED(val)) {
 #ifndef DO_NOT_NORMALIZE_MAP_KEYS
 			if (what < 0) {
 				// words-of
@@ -517,6 +517,16 @@
 		Find_Entry(series, arg, D_ARG(3), FALSE);
 		*D_RET = *D_ARG(3);
 		break;
+
+	case A_REMOVE:
+		//O: throw an error if /part is used?
+		n = Find_Entry(series, D_ARG(ARG_REMOVE_KEY_ARG), 0, TRUE);
+		if (n) {
+			n = (n-1)*2;
+			VAL_SET_OPT(VAL_BLK_SKIP(val, n), OPTS_HIDE);
+			VAL_SET(VAL_BLK_SKIP(val, n+1), REB_NONE); // set value to none (so the old one may be GCed)
+		}
+		return R_ARG1;
 
 	case A_LENGTHQ:
 		n = Length_Map(series);

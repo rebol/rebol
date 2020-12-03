@@ -224,6 +224,25 @@ Rebol [
 		]
 ===end-group===
 
+===start-group=== "SET-PATH"
+	--test-- "set-path missing value"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2312
+		data: copy [a 10 b 20]
+		data/a: 30
+		--assert data = [a 30 b 20] ; this one is ok
+		; but rest are errors by design
+		--assert all [
+			error? e: try [data/c: 30]
+			e/id: 'invalid-path
+		]
+		--assert all [
+			data: [1 c]
+			error? e: try [data/c: 30]
+			e/id: 'invalid-path
+		]
+===end-group===
+
+
 ===start-group=== "CHANGE string!"
 	--test-- "change/part"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/55
@@ -694,6 +713,26 @@ Rebol [
 		b: make binary! 40000 insert/dup b 0 40000
 		remove/part b to integer! #{8000}
 		--assert 7232 = length? b
+
+	--test-- "remove/key any-block!"
+		;@@ https://github.com/Oldes/Rebol-wishes/issues/20
+		b: [a b b c]
+		--assert [a b b c] = remove/key b 'c ; no change, c is value, not a key
+		--assert [a b b c] = remove/key b 'B ; no change, B is not b
+		--assert [a b    ] = remove/key b 'b
+		b: quote (a b b c)
+		--assert quote (a b b c) = remove/key b 'c ; no change, c is value, not a key
+		--assert quote (a b b c) = remove/key b 'B ; no change, B is not b
+		--assert quote (a b    ) = remove/key b 'b
+		b: 'a/b/b/c
+		--assert 'a/b/b/c = remove/key b 'c ; no change, c is value, not a key
+		--assert 'a/b/b/c = remove/key b 'B ; no change, B is not b
+		--assert 'a/b     = remove/key b 'b
+	--test-- "remove/key string!"
+		--assert all [
+			error? e: try [remove/key "abcd" #"a"]
+			e/id = 'feature-na
+		]
 
 ===end-group===
 
