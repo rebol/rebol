@@ -161,6 +161,9 @@ Rebol [
 		error? e: try [unset 'self]
 		e/id = 'self-protected
 	]
+--test-- "stack expansion"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2161
+	--assert 128000 = length? rejoin array/initial 128000 #{00}
 
 ===end-group===
 
