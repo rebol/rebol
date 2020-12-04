@@ -152,12 +152,12 @@ options: object [  ; Options supplied to REBOL during startup
 
 	; verbosity of logs per service (codecs, schemes)
 	; 0 = nothing; 1 = info; 2 = more; 3 = debug
-	log: construct [
-		http:
-		tls:
-		zip:
-		tar: 1
-	]
+	log: #[map! [
+		http: 1
+		tls:  1
+		zip:  1
+		tar:  1
+	]]
 ]
 
 script: construct [

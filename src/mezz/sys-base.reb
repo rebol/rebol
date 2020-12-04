@@ -224,3 +224,37 @@ assert-utf8: function [
 	]
 	data
 ]
+
+log: func [
+	"Prints out debug message"
+	id [word!] "Source of the log message"
+	msg        "Output message"
+	/info
+	/more
+	/debug
+	/error
+	/local level
+][
+	if error [
+		msg: form either block? msg [reduce msg][msg]
+		foreach line parse/all msg #"^/" [
+			print ajoin [
+				" ^[[35m[" id "] ^[[1m"
+				either line/1 = #"*" []["** Error: "]
+				copy/part line 100
+				"^[[0m"
+			]
+		]
+		exit
+	]
+	if system/options/quiet [exit]
+	level: select system/options/log id
+	if any [none? level level <= 0] [exit]
+	if block? msg [msg: form reduce :msg]
+	case [
+		info  [ if level > 0 [print ajoin [" ^[[1;33m[" id "] ^[[36m" msg "^[[0m"]]]
+		more  [ if level > 1 [print ajoin [" ^[[33m[" id "] ^[[0;36m" msg "^[[0m"]]]
+		debug [ if level > 2 [print ajoin [" ^[[33m[" id "] ^[[0;32m" msg "^[[0m"]]]
+		true  [ if level > 0 [print ajoin [" ^[[33m[" id "] " msg "^[[0m"]]]
+	]
+]
