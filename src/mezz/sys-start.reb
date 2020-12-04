@@ -51,7 +51,7 @@ start: func [
 		get-env "REBOL_HOME"  ; User can set this environment variable with own location
 		get-env "USERPROFILE" ; Default user's home directory on Windows
 		get-env "HOME"        ; Default user's home directory on Linux
-		home
+		file                  ; Directory where is the executable
 	]
 	if file? script [ ; Get the path (needed for SECURE setup)
 		script-path: split-path script
@@ -121,7 +121,14 @@ start: func [
 		flags/secure [secure]
 		flags/secure-min ['allow]
 		flags/secure-max ['quit]
-		file? script [compose [file throw (file) [allow read] (first script-path) allow]]
+		file? script [
+			compose [
+				file throw
+				(file) [allow read]
+				(home) [allow read]
+				(first script-path) allow
+			]
+		]
 		'else ['none] ;compose [file throw (file) [allow read] %. allow]] ; default
 	])
 
@@ -134,8 +141,8 @@ start: func [
 	append tmp reduce ['system :system 'local-lib :tmp]
 	system/contexts/user: tmp
 
-	;boot-print ["Checking for user.reb file in" file]
-	;if exists? file/user.reb [do file/user.reb]
+	boot-print ["Checking for user.reb file in" home]
+	if exists? home/user.reb [do home/user.reb]
 
 	boot-print ""
 
