@@ -164,6 +164,10 @@ Rebol [
 --test-- "stack expansion"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2161
 	--assert 128000 = length? rejoin array/initial 128000 #{00}
+--test-- "stack expansion 2"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/953
+	a: copy [] loop 250000 [append a random/secure 1000]
+	--assert 250000 = join [] a
 
 ===end-group===
 
