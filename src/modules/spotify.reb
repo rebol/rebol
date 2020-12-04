@@ -26,9 +26,9 @@ spotify: object [
 	scope:         ""
 	port-id:       8989
 	token:         none
-	get: func [what [any-string!]][request self 'GET what none]
-	put: func [what [any-string!] /with data][request self 'PUT what data]
-	del: func [what [any-string!]][request self 'DELETE what none]
+	get: func [what [any-string!]           ][request self 'GET    what none]
+	put: func [what [any-string!] /with data][request self 'PUT    what data]
+	del: func [what [any-string!]           ][request self 'DELETE what none]
 	request: none
 ]
 
@@ -40,7 +40,7 @@ authorize: function [
 	ctx/request: :request
 
 	unless ctx/client-id [ 
-		print ajoin ["*** `" value "` is needed to authorize with Spotify!"]
+		print ajoin ["*** `client-id` is needed to authorize with Spotify!"]
 		return none
 	]
 	unless string?  ctx/client-id [ ctx/client-id: form ctx/client-id ]
