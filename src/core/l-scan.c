@@ -542,7 +542,7 @@ new_line:
 		buf->tail++;
     }
 
-	src++; // Skip ending quote or brace.
+	src++; // Skip ending brace.
 
 	if (scan_state) scan_state->line_count += lines;
 
