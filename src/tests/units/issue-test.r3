@@ -38,6 +38,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1106
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1109
 		--assert error? try [to-hex #"a"]
+
+	--test-- "to-hex money!" ; not supported by design!
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1023
+		--assert error? try [to-hex $0]
 		
 
 ===end-group===
