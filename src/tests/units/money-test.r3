@@ -9,6 +9,15 @@ Rebol [
 
 ~~~start-file~~~ "money"
 
+===start-group=== "make money!"
+	--test-- "make money! percent!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/971
+		--assert $0   = try [make money! 0%]
+		--assert $100 = try [make money! 100%]
+		--assert $100 = try [make money! make percent! $100]
+===end-group===
+
+
 ===start-group=== "max/min"
 	--test-- "max"
 		--assert  $3 == max  $3 1
@@ -19,6 +28,7 @@ Rebol [
 		--assert -$3 == min -$3 1.0
 		--assert -$3 == min -$3 $1
 ===end-group===
+
 
 ===start-group=== "round"
 	--test-- "round"
