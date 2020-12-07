@@ -171,6 +171,30 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "BINARY"
+	--test-- {binary! with spaces}
+		--assert #{00}   = first transcode/only to binary! " #{0 0}"
+		--assert #{00}   = first transcode/only to binary! "2#{0000 00 00}"
+		--assert #{00}   = first transcode/only to binary! "2#{0000^/0000}"
+		--assert #{00}   = first transcode/only to binary! "2#{0000^M0000}"
+		--assert #{01}   = first transcode/only to binary! "2#{0000^-0001}"
+		--assert #{02}   = first transcode/only to binary! "2#{0000^ 0010}"
+		--assert #{0001} = first transcode/only to binary! "16#{00 01}"
+		--assert #{0001} = first transcode/only to binary! "64#{AA E=}"
+
+	--test-- {binary! with comments inside}
+	;@@ https://github.com/Oldes/Rebol-wishes/issues/23
+		--assert #{00}   = first transcode/only/error to binary! "#{;XXX^/00}"
+		--assert #{00}   = first transcode/only/error to binary! "#{00;XXX^/}"
+		--assert #{0002} = first transcode/only/error to binary! "#{00;XXX^/02}"
+		--assert #{0002} = first transcode/only/error to binary! "#{00;XXX^M02}" ;CR is also comment stopper
+	--test-- {binary! with other valid escapes}
+		--assert #{0003} = first transcode/only/error to binary! "#{^(30)^(30)03}"
+	--test-- {binary! with unicode char} ; is handled early
+		--assert error? first transcode/only/error to binary! "#{0č}"
+
+===end-group===
+
 
 ===start-group=== "Special tests"
 ;if "true" <> get-env "CONTINUOUS_INTEGRATION" [
