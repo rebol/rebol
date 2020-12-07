@@ -15,6 +15,21 @@ Rebol [
 		--assert $0   = try [make money! 0%]
 		--assert $100 = try [make money! 100%]
 		--assert $100 = try [make money! make percent! $100]
+
+	--test-- "make money! binary!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1060
+		--assert $15 = make money! #{00000000000000000000000F}
+		--assert $15 =   to money! #{00000000000000000000000F}
+		--assert $15 = make money! #{0F}
+		--assert $15 =   to money! #{0F}
+
+	--test-- "make money! issue!" ; not supported by design
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1130
+		--assert all [
+			error? e: try [to money! #ff]
+			e/id = 'bad-make-arg
+		]
+
 ===end-group===
 
 
