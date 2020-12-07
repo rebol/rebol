@@ -33,6 +33,10 @@ Rebol [
 		--assert #01020304 = to-hex/size 1.2.3.4.5.6 8 ; truncates the tuple!
 		--assert error? try [to-hex/size 1.2.3  0] 
 		--assert error? try [to-hex/size 1.2.3 -1] 
+
+	--test-- "to-hex char!" ; not supported by design!
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1109
+		--assert error? try [to-hex #"a"]
 		
 
 ===end-group===
