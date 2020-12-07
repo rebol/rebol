@@ -37,6 +37,34 @@ Rebol [
 		--assert 30 = to integer! #"^(1E)"
 		--assert 94 = to integer! #"^^"
 
+	--test-- "to char! issue!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1130
+		--assert all [
+			error? e: try [to char! #FF]
+			e/id = 'bad-make-arg
+		]
+
 ===end-group===
+
+
+===start-group=== "make decimal!"
+	--test-- "to decimal! issue!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1130
+		--assert all [
+			error? e: try [to decimal! #FF]
+			e/id = 'bad-make-arg
+		]
+===end-group===
+
+
+===start-group=== "make money!"
+	--test-- "to money! issue!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1130
+		--assert all [
+			error? e: try [to money! #FF]
+			e/id = 'bad-make-arg
+		]
+===end-group===
+
 
 ~~~end-file~~~
