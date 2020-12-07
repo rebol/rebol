@@ -222,7 +222,7 @@
 			break;
 		}
 
-//		case REB_ISSUE:
+//		case REB_ISSUE: // removed support -> https://github.com/Oldes/Rebol-issues/issues/1130
 		case REB_BINARY:
 			if (!Bin_To_Money(D_RET, arg)) goto err;
 			break;
