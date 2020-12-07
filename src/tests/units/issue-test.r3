@@ -35,6 +35,7 @@ Rebol [
 		--assert error? try [to-hex/size 1.2.3 -1] 
 
 	--test-- "to-hex char!" ; not supported by design!
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1106
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1109
 		--assert error? try [to-hex #"a"]
 		

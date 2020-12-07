@@ -67,4 +67,20 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "make issue!"
+	--test-- "make issue! char!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1106
+	;	--assert #1 = make issue! #"1" <--- does not work!
+		--assert #à = make issue! #"à"
+===end-group===
+
+
+===start-group=== "make binary!"
+	--test-- "to binary! char!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1106
+		--assert #{31}   = make binary! #"1"
+		--assert #{C3A0} = make binary! #"à"
+===end-group===
+
+
 ~~~end-file~~~
