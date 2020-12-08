@@ -462,7 +462,11 @@ Rebol [
 ===start-group=== "form error!"
 	--test-- "form error!"
 		; no ANSI escape sequence!
-		--assert (form try [1 / 0]) = {** Math error: attempt to divide by zero^/** Where: / try^/** Near: / 0^/}
+		--assert parse (form try [1 / 0]) [
+			{** Math error: attempt to divide by zero^/}
+			{** Where: / try} thru #"^/"
+			{** Near: / 0^/}
+		]
 
 ===end-group===
 
