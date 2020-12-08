@@ -123,6 +123,17 @@ Rebol [
 		--assert error? try [to percent! false]
 ===end-group===
 
+===start-group=== "make logic!"
+	--test-- "make/to logic! integer!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2055
+		--assert 100% = make percent! true
+		--assert   0% = make percent! false
+		--assert 100% = make 50% true
+		--assert   0% = make 50% false
+		--assert error? try [to percent! true]
+		--assert error? try [to percent! false]
+===end-group===
+
 
 ===start-group=== "make issue!"
 	--test-- "make issue! char!"
