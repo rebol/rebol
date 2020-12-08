@@ -13,7 +13,7 @@ Rebol [
 	--test-- "make money! percent!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/971
 		--assert $0   = try [make money! 0%]
-		--assert $100 = try [make money! 100%]
+		--assert $1   = try [make money! 100%]
 		--assert $100 = try [make money! make percent! $100]
 
 	--test-- "make money! binary!"
