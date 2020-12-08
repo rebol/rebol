@@ -123,6 +123,90 @@ Rebol [
 		--assert error? try [to percent! false]
 ===end-group===
 
+
+===start-group=== "make/to pair!"
+	--test-- "make pair! .."
+		--assert 1x1 = make pair! "1x1"
+		--assert error? try [make pair! quote #[unset!]  ] ; unset!
+		--assert error? try [make pair! quote #[none]    ] ; none!
+		--assert error? try [make pair! quote #[true]    ] ; logic!
+		--assert 1x1  = try [make pair! quote 1          ] ; integer!
+		--assert 0x0  = try [make pair! quote 0          ] ; integer!
+		--assert 4x4  = try [make pair! quote 4          ] ; integer!
+		--assert 4x4  = try [make pair! quote 4.0        ] ; decimal!
+		--assert error? try [make pair! quote 4.0%       ] ; percent!
+		--assert error? try [make pair! quote $4         ] ; money!
+		--assert error? try [make pair! quote #"a"       ] ; char!
+		--assert 2x2  = try [make pair! quote 2x2        ] ; pair!
+		--assert error? try [make pair! quote 1.1.1      ] ; tuple!
+		--assert error? try [make pair! quote 10:00      ] ; time!
+		--assert error? try [make pair! quote 2000-01-01 ] ; date!
+		--assert error? try [make pair! quote #{00}      ] ; binary!
+		--assert error? try [make pair! quote #{312032}  ] ; binary!
+		--assert error? try [make pair! quote #{317832}  ] ; binary!
+		--assert error? try [make pair! quote ""         ] ; string!
+		--assert error? try [make pair! quote "1 2"      ] ; string!
+		--assert error? try [make pair! quote %file      ] ; file!
+		--assert error? try [make pair! quote u@email    ] ; email!
+		--assert error? try [make pair! quote @ref       ] ; ref!
+		--assert error? try [make pair! quote http://aa  ] ; url!
+		--assert error? try [make pair! quote <tag>      ] ; tag!
+		--assert 1x2  = try [make pair! quote [1 2]      ] ; block!
+		--assert error? try [make pair! quote (1 2)      ] ; paren!
+		--assert error? try [make pair! quote a/b        ] ; path!
+		--assert error? try [make pair! quote a/b:       ] ; set-path!
+		--assert error? try [make pair! quote :a/b       ] ; get-path!
+		--assert error? try [make pair! quote /ref       ] ; refinement!
+		--assert error? try [make pair! quote #FF        ] ; issue!
+		--assert error? try [make pair! quote #[bitset! #{FF}] ] ; bitset!
+		--assert error? try [make pair! quote #[image! 1x1 #{FFFFFF}] ] ; image!
+		--assert error? try [make pair! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
+		--assert error? try [make pair! quote #[object! [a: 1]] ] ; object!
+		--assert error? try [make pair! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
+	--test-- "to pair! .."
+		--assert 1x1 = to pair! "1x1"
+		--assert error? try [to pair! quote #[unset!]     ] ; unset!
+		--assert error? try [to pair! quote #[none]       ] ; none!
+		--assert error? try [to pair! quote #[true]       ] ; logic!
+		--assert 1x1  = try [to pair! quote 1             ] ; integer!
+		--assert 0x0  = try [to pair! quote 0             ] ; integer!
+		--assert 4x4  = try [to pair! quote 4             ] ; integer!
+		--assert 4x4  = try [to pair! quote 4.0           ] ; decimal!
+		--assert error? try [to pair! quote 4.0%          ] ; percent!
+		--assert error? try [to pair! quote $4            ] ; money!
+		--assert error? try [to pair! quote #"a"          ] ; char!
+		--assert 2x2  = try [to pair! quote 2x2           ] ; pair!
+		--assert error? try [to pair! quote 1.1.1         ] ; tuple!
+		--assert error? try [to pair! quote 10:00         ] ; time!
+		--assert error? try [to pair! quote 2000-01-01    ] ; date!
+		--assert error? try [to pair! quote #{00}         ] ; binary!
+		--assert error? try [to pair! quote #{312032}     ] ; binary!
+		--assert error? try [to pair! quote ""            ] ; string!
+		--assert error? try [to pair! quote "1 2"         ] ; string!
+		--assert error? try [to pair! quote %file         ] ; file!
+		--assert error? try [to pair! quote u@email       ] ; email!
+		--assert error? try [to pair! quote @ref          ] ; ref!
+		--assert error? try [to pair! quote http://aa     ] ; url!
+		--assert error? try [to pair! quote <tag>         ] ; tag!
+		--assert 1x2  = try [to pair! quote [1 2]         ] ; block!
+		--assert error? try [to pair! quote (1 2)         ] ; paren!
+		--assert error? try [to pair! quote a/b           ] ; path!
+		--assert error? try [to pair! quote a/b:          ] ; set-path!
+		--assert error? try [to pair! quote :a/b          ] ; get-path!
+		--assert error? try [to pair! quote /ref          ] ; refinement!
+		--assert error? try [to pair! quote #FF           ] ; issue!
+		--assert error? try [to pair! quote #[bitset! #{FF}] ] ; bitset!
+		--assert error? try [to pair! quote #[image! 1x1 #{FFFFFF}] ] ; image!
+		--assert error? try [to pair! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
+		--assert error? try [to pair! quote #[object! [a: 1]] ] ; object!
+		--assert error? try [to pair! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
+	--test-- "to pair! string! (long)"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2202
+		--assert 661.1194x510.1062 = to pair! "661.1194458007812x510.106201171875"
+
+===end-group===
+
+
 ===start-group=== "make/to logic!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2055
 	--test-- "make logic! .."
