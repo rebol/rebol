@@ -356,6 +356,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 				goto setDec;
 			
 			case REB_LOGIC:
+				if (action != A_MAKE) goto err_make;
 				d1 = VAL_LOGIC(val) ? 1.0 : 0.0;
 				goto setDec;
 			
@@ -377,7 +378,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 					if (type == REB_PERCENT) break;
 					goto setDec;
 				}
-				Trap_Make(type, val);
+				goto err_make;
 			}
 			
 			case REB_BINARY:
@@ -413,8 +414,10 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 						exp--, d1 *= 10.0, Check_Overflow(d1);
 					while (exp <= -1)
 						exp++, d1 /= 10.0;
-				} else
+				} else {
+err_make:
 					Trap_Make(type, val);
+				}
 			}
 
 			if (type == REB_PERCENT) d1 /= 100.0;

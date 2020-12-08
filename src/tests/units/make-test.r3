@@ -47,13 +47,44 @@ Rebol [
 ===end-group===
 
 
-===start-group=== "make decimal!"
+===start-group=== "make/to integer"
+	--test-- "to integer! logic!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1018
+		--assert all [
+			error? e: try [to integer! true]
+			e/id = 'bad-make-arg
+		]
+		--assert all [
+			error? e: try [to integer! false]
+			e/id = 'bad-make-arg
+		]
+	--test-- "make integer! logic!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1018
+		--assert 1 = make integer! true
+		--assert 0 = make integer! false
+		--assert 1 = make 42 true
+		--assert 0 = make 42 false
+		--assert error? try [to integer! true]
+		--assert error? try [to integer! false]
+
+===end-group===
+
+===start-group=== "make/to decimal!"
 	--test-- "to decimal! issue!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1130
 		--assert all [
 			error? e: try [to decimal! #FF]
 			e/id = 'bad-make-arg
 		]
+	--test-- "make/to decimal! logic!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1018
+		--assert 1.0 = make decimal! true
+		--assert 0.0 = make decimal! false
+		--assert 1.0 = make 0.0 true
+		--assert 0.0 = make 0.0 false
+		--assert error? try [to decimal! true]
+		--assert error? try [to decimal! false]
+
 ===end-group===
 
 
@@ -64,6 +95,32 @@ Rebol [
 			error? e: try [to money! #FF]
 			e/id = 'bad-make-arg
 		]
+	--test-- "make/to money! logic!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1018
+		--assert $1 = make money! true
+		--assert $0 = make money! false
+		--assert $1 = make $111 true
+		--assert $0 = make $111 false
+		--assert error? try [to money! true]
+		--assert error? try [to money! false]
+===end-group===
+
+
+===start-group=== "make percent!"
+	--test-- "to percent! issue!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1130
+		--assert all [
+			error? e: try [to percent! #FF]
+			e/id = 'bad-make-arg
+		]
+	--test-- "make/to percent! logic!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1018
+		--assert 100% = make percent! true
+		--assert   0% = make percent! false
+		--assert 100% = make 50% true
+		--assert   0% = make 50% false
+		--assert error? try [to percent! true]
+		--assert error? try [to percent! false]
 ===end-group===
 
 
@@ -85,6 +142,7 @@ Rebol [
 
 ===start-group=== "make special"
 	--test-- "make types from none!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1018
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1041
 		--assert error? try [make end! none]
 		--assert not error? try [make unset! none]

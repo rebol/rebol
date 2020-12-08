@@ -218,7 +218,7 @@
 			const REBYTE *end;
 			str = Qualify_String(arg, 36, 0, FALSE);
 			VAL_DECI(D_RET) = string_to_deci(str, &end);
-			if (end == str || *end != 0) Trap_Make(REB_MONEY, arg);
+			if (end == str || *end != 0)  goto err;
 			break;
 		}
 
@@ -228,8 +228,9 @@
 			break;
 
 		case REB_LOGIC:
+			if(action != A_MAKE)  goto err;
 			equal = !VAL_LOGIC(arg);
-//		case REB_NONE: // 'equal defaults to 1
+//		case REB_NONE: // 'equal defaults to 1 // removed by design
 			VAL_DECI(D_RET) = int_to_deci(equal ? 0 : 1);
 			break;
 
