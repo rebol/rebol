@@ -910,7 +910,7 @@ end_date:
 
 /***********************************************************************
 **
-*/	REBINT *Scan_Binary_Base(const REBYTE *cp, REBCNT len)
+*/	REBINT Scan_Binary_Base(const REBYTE *cp, REBCNT len)
 /*
 **		Scan for binary base
 **
