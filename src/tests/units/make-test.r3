@@ -227,7 +227,9 @@ Rebol [
 		--assert  error?  try [make block! quote 4%         ] ; percent!
 		--assert  error?  try [make block! quote $4         ] ; money!
 		--assert  error?  try [make block! quote #"a"       ] ; char!
-		--assert  error?  try [make block! quote 2x2        ] ; pair!
+		--assert  []    = try [make block! quote 2x2        ] ; pair! - preallocated for at least 4 values
+		--assert  []    = try [make block! quote 0x2.2      ] ; pair! - preallocated for at least 2 values (1*2)
+		--assert  []    = try [make block! quote 2x-2       ] ; pair! - preallocated for at least 2 values (2*1)
 		--assert  error?  try [make block! quote 1.1.1      ] ; tuple!
 		--assert  error?  try [make block! quote 10:00      ] ; time!
 		--assert  error?  try [make block! quote 2000-01-01 ] ; date!

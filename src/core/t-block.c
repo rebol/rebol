@@ -353,6 +353,13 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 		goto done;
 	}
 
+	// use `make block! pair!` for block preallocation
+	if (IS_PAIR(arg)) {
+		len = (REBCNT)MAX(1, VAL_PAIR_X_INT(arg)) * (REBCNT)MAX(1, VAL_PAIR_Y_INT(arg));
+		Set_Series(type, value, Make_Block(len));
+		return;
+	}
+
 	// else not supported make block! ...
 	Trap_Arg(arg);
 
