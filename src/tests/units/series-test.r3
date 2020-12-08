@@ -233,12 +233,12 @@ Rebol [
 		; but rest are errors by design
 		--assert all [
 			error? e: try [data/c: 30]
-			e/id: 'invalid-path
+			e/id = 'invalid-path
 		]
 		--assert all [
 			data: [1 c]
 			error? e: try [data/c: 30]
-			e/id: 'invalid-path
+			e/id = 'invalid-path
 		]
 ===end-group===
 
