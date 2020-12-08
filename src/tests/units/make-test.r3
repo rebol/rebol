@@ -296,6 +296,7 @@ Rebol [
 ===start-group=== "make special"
 	--test-- "make types from none!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1018
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1024
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1041
 		--assert error? try [make end! none]
 		--assert not error? try [make unset! none]
