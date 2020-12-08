@@ -264,6 +264,10 @@ Rebol [
 		foreach k keys-of m [ 
 			--assert not error? try [m/:k]
 		]
+	--test-- "more keys.."
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1804
+		m: make map! [1-1-2000 1 10:00 2 1.1.1 3 ]
+		--assert [1-Jan-2000 10:00 1.1.1] = keys-of m
 
 ===end-group===
 
