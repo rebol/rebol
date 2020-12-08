@@ -167,12 +167,20 @@ Rebol [
 
 
 ===start-group=== "Valgrind issues"
+;@@ these tests passes but Valgrind reports a memory leak
+;@@ (I believe it is false report so it is moved here as I don't want to spend time on it now)
+;@@ all of them are related to stack expansion
 --test-- {compose large block}
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1906
-	;@@ this test passes but Valgrind reports a memory leak
-	;@@ (I believe it is false report so it is moved here as I don't want to spend time on it now)
 	b: copy [] insert/dup b 1 32768
 	--assert b = compose b ;- no crash
+--test-- "stack expansion"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2161
+	--assert 128000 = length? rejoin array/initial 128000 #{00}
+--test-- "stack expansion 2"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/953
+	a: copy [] loop 250000 [append a random/secure 1000]
+	--assert 250000 = join [] a
 
 ===end-group===
 
