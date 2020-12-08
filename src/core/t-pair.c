@@ -329,7 +329,7 @@
 				REBYTE *bp;
 				REBCNT len;
 				// -1234567890x-1234567890
-				bp = Qualify_String(val, 24, &len, FALSE);
+				bp = Qualify_String(val, VAL_LEN(val), &len, FALSE);
 				if (Scan_Pair(bp, len, DS_RETURN)) return R_RET;
 			}
 			if (IS_INTEGER(val)) {
