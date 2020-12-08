@@ -602,6 +602,18 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "REPEAT"
+	--test-- "repeat pair!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1995
+		b: copy []
+		repeat x 2x2 [append b x]
+		--assert b = [1x1 2x1 1x2 2x2]
+		--assert b = collect [repeat x 2x2 [keep x]]
+
+===end-group===
+
+
 ===start-group=== "BREAK"
 	--test-- "break returns unset"
 		--assert unset?   loop 1 [break 2]
