@@ -123,15 +123,80 @@ Rebol [
 		--assert error? try [to percent! false]
 ===end-group===
 
-===start-group=== "make logic!"
-	--test-- "make/to logic! integer!"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/2055
-		--assert 100% = make percent! true
-		--assert   0% = make percent! false
-		--assert 100% = make 50% true
-		--assert   0% = make 50% false
-		--assert error? try [to percent! true]
-		--assert error? try [to percent! false]
+===start-group=== "make/to logic!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2055
+	--test-- "make logic! .."
+		--assert #[true]  = try [make logic! quote #[unset!] ] ; unset!
+		--assert #[false]  = try [make logic! quote #[none] ] ; none!
+		--assert #[true]  = try [make logic! quote #[true] ] ; logic!
+		--assert #[true]  = try [make logic! quote 1 ] ; integer!
+		--assert #[false]  = try [make logic! quote 0 ] ; integer!
+		--assert #[true]  = try [make logic! quote 4 ] ; integer!
+		--assert #[true]  = try [make logic! quote 4.0 ] ; decimal!
+		--assert #[true]  = try [make logic! quote 4.0000000000000001% ] ; percent!
+		--assert #[true]  = try [make logic! quote $4 ] ; money!
+		--assert #[true]  = try [make logic! quote #"a" ] ; char!
+		--assert #[true]  = try [make logic! quote 2x2 ] ; pair!
+		--assert #[true]  = try [make logic! quote 1.1.1 ] ; tuple!
+		--assert #[true]  = try [make logic! quote 10:00 ] ; time!
+		--assert #[true]  = try [make logic! quote 2000-01-01 ] ; date!
+		--assert #[true]  = try [make logic! quote #{00} ] ; binary!
+		--assert #[true]  = try [make logic! quote #{312032} ] ; binary!
+		--assert #[true]  = try [make logic! quote "" ] ; string!
+		--assert #[true]  = try [make logic! quote "1 2" ] ; string!
+		--assert #[true]  = try [make logic! quote %file ] ; file!
+		--assert #[true]  = try [make logic! quote u@email ] ; email!
+		--assert #[true]  = try [make logic! quote #[ref! "ref"] ] ; ref!
+		--assert #[true]  = try [make logic! quote http://aa ] ; url!
+		--assert #[true]  = try [make logic! quote <tag> ] ; tag!
+		--assert #[true]  = try [make logic! quote [1 2] ] ; block!
+		--assert #[true]  = try [make logic! quote (1 2) ] ; paren!
+		--assert #[true]  = try [make logic! quote a/b ] ; path!
+		--assert #[true]  = try [make logic! quote a/b: ] ; set-path!
+		--assert #[true]  = try [make logic! quote :a/b ] ; get-path!
+		--assert #[true]  = try [make logic! quote /ref ] ; refinement!
+		--assert #[true]  = try [make logic! quote #FF ] ; issue!
+		--assert #[true]  = try [make logic! quote #[bitset! #{FF}] ] ; bitset!
+		--assert #[true]  = try [make logic! quote #[image! 1x1 #{FFFFFF}] ] ; image!
+		--assert #[true]  = try [make logic! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
+		--assert #[true]  = try [make logic! quote #[object! [a: 1]] ] ; object!
+		--assert #[true]  = try [make logic! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
+	--test-- "to logic! .."
+		--assert #[true]  = try [to logic! quote #[unset!] ] ; unset!
+		--assert #[false]  = try [to logic! quote #[none] ] ; none!
+		--assert #[true]  = try [to logic! quote #[true] ] ; logic!
+		--assert #[true]  = try [to logic! quote 1 ] ; integer!
+		--assert #[true]  = try [to logic! quote 0 ] ; integer!
+		--assert #[true]  = try [to logic! quote 4 ] ; integer!
+		--assert #[true]  = try [to logic! quote 4.0 ] ; decimal!
+		--assert #[true]  = try [to logic! quote 4.0000000000000001% ] ; percent!
+		--assert #[true]  = try [to logic! quote $4 ] ; money!
+		--assert #[true]  = try [to logic! quote #"a" ] ; char!
+		--assert #[true]  = try [to logic! quote 2x2 ] ; pair!
+		--assert #[true]  = try [to logic! quote 1.1.1 ] ; tuple!
+		--assert #[true]  = try [to logic! quote 10:00 ] ; time!
+		--assert #[true]  = try [to logic! quote 2000-01-01 ] ; date!
+		--assert #[true]  = try [to logic! quote #{00} ] ; binary!
+		--assert #[true]  = try [to logic! quote #{312032} ] ; binary!
+		--assert #[true]  = try [to logic! quote "" ] ; string!
+		--assert #[true]  = try [to logic! quote "1 2" ] ; string!
+		--assert #[true]  = try [to logic! quote %file ] ; file!
+		--assert #[true]  = try [to logic! quote u@email ] ; email!
+		--assert #[true]  = try [to logic! quote #[ref! "ref"] ] ; ref!
+		--assert #[true]  = try [to logic! quote http://aa ] ; url!
+		--assert #[true]  = try [to logic! quote <tag> ] ; tag!
+		--assert #[true]  = try [to logic! quote [1 2] ] ; block!
+		--assert #[true]  = try [to logic! quote (1 2) ] ; paren!
+		--assert #[true]  = try [to logic! quote a/b ] ; path!
+		--assert #[true]  = try [to logic! quote a/b: ] ; set-path!
+		--assert #[true]  = try [to logic! quote :a/b ] ; get-path!
+		--assert #[true]  = try [to logic! quote /ref ] ; refinement!
+		--assert #[true]  = try [to logic! quote #FF ] ; issue!
+		--assert #[true]  = try [to logic! quote #[bitset! #{FF}] ] ; bitset!
+		--assert #[true]  = try [to logic! quote #[image! 1x1 #{FFFFFF}] ] ; image!
+		--assert #[true]  = try [to logic! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
+		--assert #[true]  = try [to logic! quote #[object! [a: 1]] ] ; object!
+		--assert #[true]  = try [to logic! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
 ===end-group===
 
 
