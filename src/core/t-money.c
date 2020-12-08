@@ -69,7 +69,7 @@
 /*
 ***********************************************************************/
 {
-	REBCNT len;
+	REBCNT len=0;
 	REBYTE buf[MAX_HEX_LEN+4] = {0}; // binary to convert
 
 	if (IS_BINARY(val)) {
@@ -95,7 +95,7 @@
 		}
 	}
 #endif
-	memcpy(buf + 12 - len, buf, len); // shift to right side
+	memmove(buf + 12 - len, buf, len); // shift to right side
 	memset(buf, 0, 12 - len);
 	VAL_DECI(result) = binary_to_deci(buf);
 	return TRUE;
