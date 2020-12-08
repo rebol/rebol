@@ -248,7 +248,7 @@ make: action [
 to: action [
 	{Converts to a specified datatype.}
 	type [any-type!] {The datatype or example value}
-	spec [any-type!] {The attributes of the new value}
+	value [any-type!] {The attributes of the new value}
 ]
 
 copy: action [

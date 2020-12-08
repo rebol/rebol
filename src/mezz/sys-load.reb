@@ -212,7 +212,7 @@ load-ext-module: function [
 	]
 
 	; Convert the code to a block if not already:
-	unless block? code [code: to block! code]
+	unless block? code [code: make block! code]
 	insert code tmp ; Extension object fields and values must be first!
 	reduce [hdr code] ; ready for make module!
 ]
@@ -329,7 +329,7 @@ load: function [
 		; data is binary or block now, hdr is object or none
 
 		;-- Convert code to block, insert header if requested:
-		not block? data [data: to block! data]
+		not block? data [data: make block! data]
 		header [insert data hdr]
 
 		;-- Bind code to user context:
@@ -614,7 +614,7 @@ load-module: function [
 						hdr/options: append any [hdr/options make block! 1] 'isolate
 					]
 				]
-				binary? code [code: to block! code]
+				binary? code [code: make block! code]
 			]
 			assert/type [hdr object! code block!]
 			mod: reduce [hdr code do-needs/no-user hdr]
