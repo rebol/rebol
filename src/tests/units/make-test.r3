@@ -97,12 +97,12 @@ Rebol [
 		]
 	--test-- "make/to money! logic!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1018
-	;	--assert $1 = make money! true
-	;	--assert $0 = make money! false
-	;	--assert $1 = make $111 true
-	;	--assert $0 = make $111 false
-	;	--assert error? try [to money! true]
-	;	--assert error? try [to money! false]
+		--assert $1 = make money! true
+		--assert $0 = make money! false
+		--assert $1 = make $111 true
+		--assert $0 = make $111 false
+		--assert error? try [to money! true]
+		--assert error? try [to money! false]
 ===end-group===
 
 
