@@ -116,6 +116,24 @@ supplement system/options/module-paths join what-dir %units/files/
 			error? err: try [module [type: :print][]]
 			err/id = 'wrong-type
 		]
+	--test-- "make module! integer!" ; not allowed
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1551
+		--assert all [
+			error? err: try [make module! 10]
+			err/id = 'bad-make-arg
+		]
+	--test-- "make module! map!" ; not allowed
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1551
+		--assert all [
+			error? err: try [make module! #(a: 1)]
+			err/id = 'bad-make-arg
+		]
+	--test-- "make module! object!" ; not allowed
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1551
+		--assert all [
+			error? err: try [make module! context [a: 1]]
+			err/id = 'bad-make-arg
+		]
 
 ===end-group===
 
