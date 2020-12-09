@@ -145,6 +145,8 @@ Rebol [
 
 --test-- https://github.com/Oldes/Rebol-issues/issues/1611
 	--assert none? try [index? none]
+--test-- https://github.com/Oldes/Rebol-issues/issues/1626
+	--assert none? try [length? none]
 
 --test-- "SELECT"
 	--assert 2 = select/part [1 2 1 3 1 2] 1 2
