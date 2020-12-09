@@ -162,6 +162,12 @@ Rebol [
 		e/id = 'self-protected
 	]
 
+--test-- "issue-430"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/430
+	--assert block? values-of system/contexts/lib ;- no crash
+	--assert block? body-of system/contexts/lib ;- no crash
+
+
 ===end-group===
 
 ~~~end-file~~~
