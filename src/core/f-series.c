@@ -165,15 +165,20 @@ is_true:
 **
 ***********************************************************************/
 {
-	REBVAL	*s = VAL_BLK_DATA(sval);
-	REBVAL	*t = VAL_BLK_DATA(tval);
+	REBVAL	*s;
+	REBVAL	*t;
 	REBINT	diff;
-
-	CHECK_STACK(&s);
 
 	if ((VAL_SERIES(sval)==VAL_SERIES(tval))&&
 	 (VAL_INDEX(sval)==VAL_INDEX(tval)))
 		 return 0;
+
+	// make sure that none of block is past tail
+	// https://github.com/Oldes/Rebol-issues/issues/2439
+	s = VAL_BLK_DATA_SAFE(sval);
+	t = VAL_BLK_DATA_SAFE(tval);
+
+	CHECK_STACK(&s);
 
 	while (!IS_END(s) && (VAL_TYPE(s) == VAL_TYPE(t) ||
 					(IS_NUMBER(s) && IS_NUMBER(t)))) {

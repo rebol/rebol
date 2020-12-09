@@ -743,6 +743,7 @@ Rebol [
 		a: [1 2 3 4]
 		--assert [4] = b: skip a 3
 		--assert [4] = remove/part a 3
+		--assert [ ] = b ;@@ https://github.com/Oldes/Rebol-issues/issues/2439
 		--assert empty? b
 		--assert  tail? b
 		--assert  past? b
