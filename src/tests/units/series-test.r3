@@ -143,6 +143,9 @@ Rebol [
 	--assert "1.1" == find str "1."
 	--assert "1.1" == find/part str "1." 2
 
+--test-- https://github.com/Oldes/Rebol-issues/issues/1611
+	--assert none? try [index? none]
+
 --test-- "SELECT"
 	--assert 2 = select/part [1 2 1 3 1 2] 1 2
 	--assert none? select/part [1 2 1 3 1 2] 2 2
