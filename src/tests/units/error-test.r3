@@ -71,7 +71,7 @@ Rebol [
 			e/id   = 'assert-failed
 			e/arg1 = [not none? none]
 		]
-		
+
 	--test-- "assert with longer expression"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2231
 		--assert all [
@@ -91,6 +91,10 @@ Rebol [
 			e/arg1 = 'x
 		]
 		--assert assert/type [x [integer! string!]]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1364
+		--assert assert/type [x #[typeset! [char! string!]]
+		--assert assert/type [x any-string!]
+		--assert assert/type [x #[datatype! string!]]
 
 	--test-- "invalid assert"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1363
