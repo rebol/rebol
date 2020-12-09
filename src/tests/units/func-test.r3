@@ -66,6 +66,20 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "types-of"
+
+--test-- "types-of FUNCTION"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/436
+	f: func[/a b [integer!]]
+	--assert all [
+		block? b: types-of :f
+		b/1 = #[typeset! [none! logic!]]
+		b/2 = #[typeset! [integer!]]
+	]
+
+===end-group===
+
+
 ===start-group=== "OP!"
 
 --test-- "make op!"
