@@ -469,7 +469,21 @@ Rebol [
 			[  2] = a
 			2 = index? a
 		]
-		
+	--test-- "++ & -- past end"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/409
+		a: [1]
+		--assert [1] = ++ a
+		--assert [ ] = a
+		--assert [ ] = ++ a
+		--assert [ ] = -- a
+		--assert [1] = a
+		a: "A"
+		--assert "A" = -- a
+		--assert "A" = a
+		--assert "A" = ++ a
+		--assert ""  = a
+		--assert ""  = -- a
+		--assert "A" = a
 ===end-group===
 
 
