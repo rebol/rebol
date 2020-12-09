@@ -71,6 +71,14 @@ Rebol [
 			e/id   = 'assert-failed
 			e/arg1 = [not none? none]
 		]
+		
+	--test-- "assert with longer expression"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2231
+		--assert all [
+			error? e: try [assert [true 1 + 3 = 2 true]]
+			e/id   = 'assert-failed
+			e/arg1 = [true 1 + 3 = 2 true]
+		]
 
 	--test-- "valid assert/type"
 		x: 1

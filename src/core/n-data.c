@@ -176,7 +176,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			index = Do_Next(block, i = index, 0); // stack volatile
 			ds = DS_POP; // volatile stack reference
 			if (IS_FALSE(ds)) {
-				Set_Block(ds, Copy_Block_Len(block, i, 3));
+				Set_Block(ds, Copy_Block(VAL_SERIES(value), VAL_INDEX(value))); // #2231
 				Trap1(RE_ASSERT_FAILED, ds);
 			}
 			if (THROWN(ds)) return R_TOS1;
