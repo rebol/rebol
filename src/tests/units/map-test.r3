@@ -59,6 +59,8 @@ Rebol [
 		--assert 13 = m/('A)
 		--assert 17 = m/(@A)
 		--assert 21 = m/(#"A")
+		;@@ https://github.com/Oldes/Rebol-issues/issues/471
+		--assert none? select m none 
 
 
 ===end-group===
