@@ -63,4 +63,36 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "ASSERT"
+	--test-- "valid assert"
+		--assert assert [not none? 1]
+		--assert all [
+			error? e: try [assert [not none? none]]
+			e/id   = 'assert-failed
+			e/arg1 = [not none? none]
+		]
+
+	--test-- "valid assert/type"
+		x: 1
+		--assert assert/type [x  integer! ]
+		--assert assert/type [x [integer!]]
+		x: ""
+		--assert all [
+			error? e: try [assert/type [x integer!]]
+			e/id   = 'wrong-type
+			e/arg1 = 'x
+		]
+		--assert assert/type [x [integer! string!]]
+
+	--test-- "invalid assert"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1363
+	--assert all [
+		error? e: try [assert/type [1 integer!]]
+		e/id = 'invalid-arg
+		e/arg1 = 1
+	]
+
+===end-group===
+
+
 ~~~end-file~~~
