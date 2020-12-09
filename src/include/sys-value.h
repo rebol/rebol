@@ -732,6 +732,7 @@ typedef struct Reb_Series_Ref
 // Arg is a value:
 #define VAL_BLK(v)		BLK_HEAD(VAL_SERIES(v))
 #define VAL_BLK_DATA(v)	BLK_SKIP(VAL_SERIES(v), VAL_INDEX(v))
+#define VAL_BLK_DATA_SAFE(v)	BLK_SKIP(VAL_SERIES(v), MIN(VAL_INDEX(v),VAL_TAIL(v))) // don't go behind tail
 #define VAL_BLK_SKIP(v,n)	BLK_SKIP(VAL_SERIES(v), (n))
 #define VAL_BLK_TAIL(v)	BLK_SKIP(VAL_SERIES(v), VAL_SERIES(v)->tail)
 #define	VAL_BLK_LEN(v)	VAL_LEN(v)
