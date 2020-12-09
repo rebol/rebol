@@ -736,6 +736,32 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "PAST?"
+	--test-- "past? block!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/417
+		a: [1 2 3 4]
+		--assert [4] = b: skip a 3
+		--assert [4] = remove/part a 3
+		--assert empty? b
+		--assert  tail? b
+		--assert  past? b
+	--test-- "past? string!"
+		a: "1234"
+		--assert "4" = b: skip a 3
+		--assert "4" = remove/part a 3
+		--assert  "" = b
+		--assert empty? b
+		--assert  tail? b
+		--assert  past? b
+
+	--test-- "past? is not tail?"
+		b: tail [1 2 3]
+		--assert     tail? b
+		--assert not past? b
+===end-group===
+
+
 ===start-group=== "SORT"
 
 --test-- "sort block of words"
