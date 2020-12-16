@@ -155,6 +155,14 @@ Rebol [
 ;@@ https://github.com/Oldes/Rebol-issues/issues/394
 	--assert parse #{001122} [#{00} #{11} #{22}]
 
+--test-- "issue-591"
+;@@ https://github.com/Oldes/Rebol-issues/issues/591
+	--assert all [
+		error? e: try [parse " " [0]]
+		e/id = 'parse-rule
+		e/arg1 = 0
+	]
+
 --test-- "issue-2130"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/2130
 	--assert parse [x][set val pos: word!]
