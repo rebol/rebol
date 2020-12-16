@@ -94,6 +94,12 @@ Rebol [
 		--assert error? try [50% - 10:0]
 		--assert error? try [50% / 10:0]
 
+	--test-- "issue-972"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/972
+		--assert 0:00:00.123456789 = 0:00:00.1234567892
+		--assert 0:00:00.12345679  = 0:00:00.1234567895
+		--assert 0:00:00.123456789 = 0:00:00.123456789456
+
 
 ===end-group===
 
