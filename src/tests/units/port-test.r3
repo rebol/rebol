@@ -169,6 +169,18 @@ if system/platform = 'Windows [
 		--assert #{616263} = read port ;so next read is again full
 		delete %tmp-1456
 
+	--test-- "write/part"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/445
+		a: make binary! 100000
+		insert/dup a #{00} 100000
+		write %zeroes-445.txt a
+		; write junk bug
+		f: open %zeroes-445.txt
+		write/part f #{1020304050} 100
+		close f
+		--assert 10873462 = checksum read %zeroes-445.txt
+		delete %zeroes-445.txt
+
 ===end-group===
 
 if system/platform = 'Windows [
