@@ -246,6 +246,11 @@ Rebol [
 	--assert empty? spec-of clos [] [a: 1]
 	--assert [/local a] = spec-of closure [] [a: 1]
 
+--test-- "closure's self"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/447
+	slf: 'self 
+	--assert do closure [x] [same? slf 'self] 1
+
 --test-- "issue-1893"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1893
 	word: do func [x] ['x] 1
