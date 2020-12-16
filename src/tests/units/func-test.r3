@@ -70,7 +70,7 @@ Rebol [
 
 --test-- "types-of FUNCTION"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/436
-	f: func[/a b [integer!]]
+	f: func[/a b [integer!]][]
 	--assert all [
 		block? b: types-of :f
 		b/1 = #[typeset! [none! logic!]]
