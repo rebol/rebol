@@ -338,6 +338,15 @@ probe all [
 	;@@ https://github.com/Oldes/Rebol-wishes/issues/13
 		--assert same? local-lib system/contexts/user
 
+	--test-- "do module from file"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1203
+		do %units/files/test-1203.reb
+		--assert all [
+			object? o: system/modules/test-1203/f
+			o/title = "test-1203"
+			system/script/title <> "test-1203"
+		]
+
 ===end-group===
 
 ===start-group=== "module issues"
