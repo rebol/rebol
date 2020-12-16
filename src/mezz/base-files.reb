@@ -176,6 +176,20 @@ split-path: func [
 	reduce [dir pos]
 ]
 
+wildcard: func [
+	"Return block of absolute path files filtered using wildcards."
+	path  [file!]       "Source directory"
+	value [any-string!] "Search value with possible * and ? wildcards"
+	/local result
+][
+	result: make block! 8
+	path: clean-path/dir path
+	foreach file read path [
+		if find/match/any file value [ append result path/:file ]
+	]
+	new-line/all result true
+]
+
 intern: function [
 	"Imports (internalize) words and their values from the lib into the user context."
 	data [block! any-word!] "Word or block of words to be added (deeply)"
