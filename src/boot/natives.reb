@@ -370,9 +370,10 @@ unbind: native [
 	/deep "Process nested blocks"
 ]
 
-bound?: native [
+context?: native [ ; was originally named `bound?`
 	{Returns the context in which a word is bound.}
-	word [any-word!]
+	word [any-word!] "Word to check."
+	;return: [object! function! none!]
 ]
 
 collect-words: native [

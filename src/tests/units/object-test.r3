@@ -331,7 +331,7 @@ Rebol [
 ===start-group=== "USE"
 	--test-- "issue-197"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/197
-	--assert object? o: use [a] [bind? 'a]
+	--assert object? o: use [a] [context? 'a]
 	--assert [a] = words-of o
 
 ===end-group===

@@ -328,15 +328,22 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 /***********************************************************************
 **
-*/	REBNATIVE(boundq)
+*/	REBNATIVE(contextq)
 /*
+**	Originally named `boundq`
+**	see: https://github.com/Oldes/Rebol-issues/issues/2440
+**
 ***********************************************************************/
 {
 	REBVAL *word = D_ARG(1);
 
 	if (!HAS_FRAME(word)) return R_NONE;
-	if (VAL_WORD_INDEX(word) < 0) return R_TRUE;
-	SET_OBJECT(D_RET, VAL_WORD_FRAME(word));
+	if (VAL_WORD_INDEX(word) < 0) {
+		// was originally returning R_TRUE for function context
+		 *D_RET = Stack_Frame(1)[3];
+	} else {
+		SET_OBJECT(D_RET, VAL_WORD_FRAME(word));
+	}
 	return R_RET;
 }
 

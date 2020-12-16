@@ -66,6 +66,21 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "function's context?"
+--test-- "wish-2440"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2440
+	f: func[arg1 arg2][context? 'arg1]
+	--assert same? :f f 1 2
+	f: func[arg1 arg2][spec-of context? 'arg1]
+	--assert [arg1 arg2] = f 1 2
+	f: func[arg1 arg2 /local f2][
+		f2: func[a][spec-of context? 'a]
+		f2 arg1
+	]
+	--assert [a] = f 1 2
+===end-group===
+
+
 ===start-group=== "types-of"
 
 --test-- "types-of FUNCTION"
@@ -188,7 +203,9 @@ Rebol [
 
 --test-- "issue-196"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/196
-	--assert do func [a] [bind? 'a] 1 ;-no crash
+	; with change related to https://github.com/Oldes/Rebol-issues/issues/2440
+	; bellow test is now throwing error instead of `true`
+	--assert error? try [do func [a] [context? 'a] 1] ;-no crash
 
 --test-- "issue-216"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/216
