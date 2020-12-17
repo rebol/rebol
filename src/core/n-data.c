@@ -686,6 +686,9 @@ next_obj_val:
 			value = Get_Var(word);
 			SET_UNSET(value);
 		} else Trap1(RE_NOT_DEFINED, word);
+	} else if (IS_NONE(word)) {
+		// https://github.com/Oldes/Rebol-wishes/issues/28
+		return R_NONE;
 	} else {
 		for (word = VAL_BLK_DATA(word); NOT_END(word); word++) {
 			if (IS_WORD(word)) {

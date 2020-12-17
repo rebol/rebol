@@ -203,6 +203,7 @@ Rebol [
 		--assert not same? a b
 ===end-group===
 
+
 ===start-group=== "Object actions"
 	--test-- "empty?"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1669
@@ -211,6 +212,23 @@ Rebol [
 	--test-- "length?"
 	--assert 0 = length? object []
 	--assert 0 = length? #[object! []]
+
+===end-group===
+
+
+===start-group=== "UNSET in object"
+	--test-- "unset ctx"
+	ctx: context [a: 1 b: 2 c: 3]
+	--assert unset? unset in ctx 'a
+	--assert unset? unset bind [b c] ctx
+	--assert all [
+		unset? :ctx/a
+		unset? :ctx/b
+		unset? :ctx/c
+	]
+	;@@ https://github.com/Oldes/Rebol-wishes/issues/28
+	--assert none? unset in ctx 'd
+
 
 ===end-group===
 
