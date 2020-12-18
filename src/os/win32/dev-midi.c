@@ -313,7 +313,7 @@ static void PrintMidiDevices()
 	REBMID *midi_port = NULL;
 #ifdef DEBUG_MIDI
 	UINT nMidiDeviceNum;
-#endif;
+#endif
 
 	port_num = Get_New_Midi_Port(&midi_port);
 	if (port_num < 0) {
