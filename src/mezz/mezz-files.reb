@@ -62,6 +62,20 @@ clean-path: func [
 	reverse out
 ]
 
+wildcard: func [
+	"Return block of absolute path files filtered using wildcards."
+	path  [file!]       "Source directory"
+	value [any-string!] "Search value with possible * and ? wildcards"
+	/local result
+][
+	result: make block! 8
+	path: clean-path/dir path
+	foreach file read path [
+		if find/match/any file value [ append result path/:file ]
+	]
+	new-line/all result true
+]
+
 input: func [
 	{Inputs a string from the console.}
 	/hide "Turns off echoing inputs"
