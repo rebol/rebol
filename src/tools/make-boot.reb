@@ -1099,7 +1099,7 @@ foreach val nats [
 ]
 foreach [name spec] nats-collected [
 	emit-line/code "N_" name ","
-	append boot-natives to-block spec
+	append boot-natives make block! spec
 ]
 emit-end
 emit newline
