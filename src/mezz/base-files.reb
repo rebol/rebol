@@ -128,17 +128,18 @@ make-dir: func [
 
 delete-dir: func [
 	{Deletes a directory including all files and subdirectories.}
-	dir [file! url!]
+	path [file!]
 	/local files
 ][
-	if all [
-		dir? dir
-		dir: dirize dir
-		attempt [files: load dir]
-	] [
-		foreach file files [delete-dir dir/:file]
+	try [
+		if all [
+			'dir = exists? path
+			block? files: read path
+		] [
+			foreach file files [delete-dir path/:file]
+		]
+		delete path
 	]
-	attempt [delete dir]
 ]
 
 script?: func [

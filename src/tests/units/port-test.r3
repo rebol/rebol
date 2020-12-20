@@ -76,9 +76,27 @@ Rebol [
 		--assert all [
 			not error? try [make-dir/deep %units/temp-dir/sub-dir/]
 			not error? try [write %units/temp-dir/file "hello"]
-			not error? try [delete-dir %units/temp-dir/]
+			not error?      delete-dir %units/temp-dir/
 			not exists? %units/temp-dir/
 		]
+		--assert all [
+			all [
+				not error? try [make-dir/deep %units/temp-dir/]
+				; open a file for writing in the directory
+				p: open/write %units/temp-dir/file
+				; and see that the directory cannot be deleted
+				error? e: delete-dir %units/temp-dir/
+				e/id = 'no-delete
+				exists? %units/temp-dir/
+			]
+			all [
+				; closing the file
+				close p
+				; and now the file and dir are both deleted
+				not error? delete-dir %units/temp-dir/
+			]
+		]
+
 	--test-- "RENAME dir"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1533
 		--assert all [
