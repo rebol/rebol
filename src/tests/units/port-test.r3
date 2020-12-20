@@ -100,7 +100,7 @@ if system/platform = 'Windows [
 ]
 	--test-- "exists? %/"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2317
-		--assert exists? %/
+		--assert 'dir = exists? %/       ;@@ https://github.com/Oldes/Rebol-issues/issues/612
 		--assert object? info: query %/
 		--assert info/name = %/
 		--assert info/type = 'dir
@@ -141,6 +141,8 @@ if system/platform = 'Windows [
 		--assert ["a" ""] = read/lines %tmp.txt
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2429
 		--assert "a^/b^/" = read/string write/lines %tmp.txt ["a" "b"]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/612
+		--assert 'file = exists? %tmp.txt
 		delete %tmp.txt
 
 	--test-- "read/lines - issue/1794"
@@ -223,7 +225,7 @@ if system/platform = 'Windows [
 	--test-- "exists? url"
 		;@@ https://github.com/Oldes/Rebol3/issues/14
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1613
-		--assert     exists? http://httpbin.org/
+		--assert 'url = exists? http://httpbin.org/  ;@@ https://github.com/Oldes/Rebol-issues/issues/612
 		--assert not exists? http://httpbin.org/not-exists
 	--test-- "read/part"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2434
