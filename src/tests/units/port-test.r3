@@ -60,6 +60,13 @@ Rebol [
 			d/size = none
 		]
 		delete %dir-606/
+	--test-- "DIR?"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/602
+		; dir? only checks if the last char is / or \
+		--assert dir? %doesnotexists/
+		--assert not dir? %doesnotexists
+		--assert dir? %./
+		--assert not dir? %.
 	--test-- "READ on non-existing dir-name"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/500
 		--assert error? e: try [read %carl-for-president/]
