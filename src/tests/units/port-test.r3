@@ -49,8 +49,19 @@ Rebol [
 		--assert what-dir = query/mode %. 'name
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2305
 		--assert      none? query/mode %. 'size
+	--test-- "query directory type"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/606
+		make-dir %dir-606/
+		--assert all [
+			object? d: query %dir-606
+			d/type = 'dir
+			object? d: query %dir-606/
+			d/type = 'dir
+			d/size = none
+		]
+		delete %dir-606/
 	--test-- "READ on non-existing dir-name"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/500
+		;@@ https://github.com/Oldes/Rebol-issues/issues/500
 		--assert error? e: try [read %carl-for-president/]
 		--assert e/id = 'cannot-open
 	--test-- "DELETE-DIR"
