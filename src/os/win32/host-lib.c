@@ -1334,7 +1334,7 @@ input_error:
 
 static LPITEMIDLIST lpLastBrowseFolder = NULL;
 static BOOL bBrowseFolderInit = FALSE;
-static BFFCALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData) {
+static INT CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData) {
 	// Using this callback to set default folder.
 	// The SendMessage in BFFM_SELCHANGED is there to update focus on the directory
 	// Without it it would select the folder on init, but the folder could not be visible.
