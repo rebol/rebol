@@ -56,6 +56,7 @@
 #include <stdio.h>
 #include <windows.h>
 #include <process.h>
+#include <ShlObj.h>  // used for OS_Request_Dir
 
 #include "reb-host.h"
 #include "host-lib.h"
@@ -1331,3 +1332,65 @@ input_error:
 	return ret;
 }
 
+static LPITEMIDLIST lpLastBrowseFolder = NULL;
+static BOOL bBrowseFolderInit = FALSE;
+static BFFCALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData) {
+	// Using this callback to set default folder.
+	// The SendMessage in BFFM_SELCHANGED is there to update focus on the directory
+	// Without it it would select the folder on init, but the folder could not be visible.
+	REBOOL set = FALSE;
+
+	switch (uMsg) {
+	case BFFM_INITIALIZED:
+		bBrowseFolderInit = TRUE;
+		set = TRUE;
+		break;
+	case BFFM_SELCHANGED:
+		if (bBrowseFolderInit) {
+			bBrowseFolderInit = FALSE;
+			set = TRUE;
+		}
+		break;
+	}
+	if (lpData && set) {
+		SendMessage(hwnd, BFFM_SETSELECTION, lpLastBrowseFolder != lpData, lpData);
+	}
+	return 0;
+}
+/***********************************************************************
+**
+*/	REBOOL OS_Request_Dir(REBRFR *fr)
+/*
+***********************************************************************/
+{
+	BROWSEINFO bInfo = {0};
+	REBOOL keep = GET_FLAG(fr->flags, FRF_KEEP);
+	REBCHR *dir = fr->dir;
+
+	//bInfo.hwndOwner = Owner window // Must find a way to set this
+	bInfo.pidlRoot = NULL; 
+	bInfo.pszDisplayName = fr->files; // Address of a buffer to receive the name of the folder selected by the user
+	bInfo.lpszTitle = fr->title;      // Title of the dialog
+	bInfo.ulFlags = BIF_USENEWUI | BIF_RETURNONLYFSDIRS;
+	bInfo.lpfn = BrowseCallbackProc;
+	// start in dir location is used /dir
+	// else use last keeped result if used /keep
+	// else NULL if no /keep and /dir is there
+	bInfo.lParam = (dir) ? dir : (keep) ? lpLastBrowseFolder : NULL;
+	bInfo.iImage = -1;
+
+	LPITEMIDLIST lpItem = SHBrowseForFolder( &bInfo);
+	if(lpItem == NULL) {
+		// nothing selected
+		return FALSE;
+	}
+	if (keep) {
+		// release last result if there was any
+		if(lpLastBrowseFolder)
+			CoTaskMemFree(lpLastBrowseFolder);
+		// and store result for next request
+		lpLastBrowseFolder = lpItem;
+	}
+	SHGetPathFromIDList(lpItem, fr->files);
+	return TRUE;
+}

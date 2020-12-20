@@ -348,6 +348,7 @@ acts: load %../boot/natives.reb
 foreach word [
 	checksum
 	request-file
+	request-dir
 ] [make-arg-enums word]
 
 ;?? output

@@ -973,6 +973,65 @@ chk_neg:
 
 	return ser ? R_RET : R_NONE;
 #else
+	Trap0(RE_FEATURE_NA);
+	return R_NONE;
+#endif
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(request_dir)
+/*
+***********************************************************************/
+{
+#ifdef TO_WINDOWS
+	REBRFR fr = {0};
+	REBSER *ser;
+	REBINT n;
+
+	fr.files = OS_MAKE(MAX_DIR_REQ_BUF);
+	fr.len = MAX_DIR_REQ_BUF/sizeof(REBCHR) - 4; // reserve for trailing slash and null 
+	fr.files[0] = 0;
+
+	DISABLE_GC;
+
+	if (D_REF(ARG_REQUEST_DIR_DIR)) {
+		ser = Value_To_OS_Path(D_ARG(ARG_REQUEST_DIR_NAME), TRUE);
+		fr.dir = (REBCHR*)(ser->data);
+		n = ser->tail;
+		if (fr.dir[n-1] != OS_DIR_SEP) {
+			if (n+2 > fr.len) n = fr.len - 2;
+			COPY_STR(fr.files, (REBCHR*)(ser->data), n);
+			fr.files[n] = 0;
+		}
+	}
+
+	if (D_REF(ARG_REQUEST_DIR_TITLE))
+		fr.title = Val_Str_To_OS(D_ARG(ARG_REQUEST_DIR_TEXT));
+	else
+		fr.title = L"Select Folder";
+
+	if (D_REF(ARG_REQUEST_DIR_KEEP)) SET_FLAG(fr.flags, FRF_KEEP);
+
+	if (OS_REQUEST_DIR(&fr)) {
+		REBCNT len = (REBCNT)LEN_STR(fr.files);
+		// Windows may return path without trailing slash, so just add it if missing
+		if (fr.files[len-1] != '\\') {
+			fr.files[len++]  = '\\';
+			fr.files[len  ]  = 0;
+		}
+		ser = To_REBOL_Path(fr.files, len, OS_WIDE, 0);
+		Set_Series(REB_FILE, D_RET, ser);
+	} else
+		ser = 0;
+
+	ENABLE_GC;
+	OS_FREE(fr.files);
+
+	return ser ? R_RET : R_NONE;
+#else
+	Trap0(RE_FEATURE_NA);
 	return R_NONE;
 #endif
 }

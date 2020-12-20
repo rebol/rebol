@@ -936,11 +936,23 @@ evoke: native [
 
 request-file: native [
 	{Asks user to select a file and returns full file path (or block of paths).}
-	/save "File save mode"
+	/save  "File save mode"
 	/multi "Allows multiple file selection, returned as a block"
-	/file name [file!] "Default file name or directory"
-	/title text [string!] "Window title"
-	/filter list [block!] "Block of filters (filter-name filter)"
+	/file  "Default file name or directory"
+	 name  [file!]
+	/title "Window title"
+	 text  [string!]
+	/filter "Block of filters (filter-name filter)"
+	 list  [block!]
+]
+
+request-dir: native [
+	{Asks user to select a directory and returns full directory path (or block of paths).}
+	/title "Change heading on request"
+	 text  [string!]
+	/dir   "Set starting directory" 
+	 name  [file!]
+	/keep  "Keep previous directory path"
 ]
 
 ascii?: native [
