@@ -222,6 +222,7 @@ if system/platform = 'Windows [
 		--assert  string? try [read https://www.google.com]
 	--test-- "exists? url"
 		;@@ https://github.com/Oldes/Rebol3/issues/14
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1613
 		--assert     exists? http://httpbin.org/
 		--assert not exists? http://httpbin.org/not-exists
 	--test-- "read/part"
