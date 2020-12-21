@@ -159,7 +159,7 @@ Rebol [
 ;@@ https://github.com/Oldes/Rebol-issues/issues/591
 	--assert all [
 		error? e: try [parse " " [0]]
-		e/id = 'parse-rule
+		e/id = 'parse-end
 		e/arg1 = 0
 	]
 
