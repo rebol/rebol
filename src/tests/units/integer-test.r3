@@ -305,4 +305,18 @@ Rebol [
 		
 ===end-group===
 
+
+===start-group=== "RANDOM integer!"
+	--test-- "Random range"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1053
+		two-to-62: to integer! 2 ** 62
+		a: (to integer! #{7ffffffffffffffe}) / 3
+		b: two-to-62 - a
+		count: 10000
+		random/seed 0
+		f: 0
+		loop count [if (random a) <= b [f: f + 1]]
+		--assert (b / a) = round/to (f / count) 0.1
+===end-group===
+
 ~~~end-file~~~
