@@ -217,4 +217,13 @@ AF45D2E376484031617F78D2B58A6B1B9C7EF464F5A01B47E42EC3736322445E
 
 ===end-group===
 
+===start-group=== "Checksum/hash"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1396
+	--test-- "test case 1"
+	res: true
+	--assert repeat i 1024 [
+		h: checksum/hash to binary! i 64
+		res: all [res h >= 0 h < 64]
+	]
+
 ~~~end-file~~~
