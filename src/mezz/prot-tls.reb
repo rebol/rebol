@@ -3,7 +3,7 @@ REBOL [
 	name: 'tls
 	type: 'module
 	author: rights: ["Richard 'Cyphre' Smolak" "Oldes" "Brian Dickens (Hostilefork)"]
-	version: 0.7.3
+	version: 0.7.4
 	history: [
 		0.6.1 "Cyphre" "Initial implementation used in old R3-alpha"
 		0.7.0 "Oldes" {
@@ -21,6 +21,7 @@ REBOL [
 			* Added support for Chacha20-Poly1305 cipher suite
 		}
 		0.7.3 "Oldes" "Fixed RSA memory leak"
+		0.7.4 "Oldes" "Pass data to parent handler even when ALERT message is not decoded"
 	]
 	todo: {
 		* cached sessions
@@ -860,7 +861,7 @@ decrypt-msg: function [
 		binary/init  bin 0 ;clear the temp bin buffer
 	]
 	unless data [
-		critical-error: *Alert/Bad_record_MAC
+	;	critical-error: *Alert/Bad_record_MAC
 	]
 	data
 ]
@@ -1285,11 +1286,19 @@ TLS-read-data: function [
 				ctx/critical-error: TLS-parse-handshake-message ctx data
 			]
 			ALERT [
+				log-debug ["ALERT len:" :len "ctx/cipher-spec-set:" ctx/cipher-spec-set]
 				binary/read inp [data: BYTES :len]
 				if ctx/cipher-spec-set > 1 [
+					log-debug ["Decrypting ALERT message:" mold data]
 					data: decrypt-msg ctx data
-					;print "DECRYPTED ALERT"
-					;?? data
+					unless data [
+						log-error "Failed to decode ALERT message!"
+						;@@ TODO: inspect how it's possible that decrypt failes
+						;@@ problem is when CHACHA20_POLY1305 is used.
+						ctx/critical-error: none
+						ctx/protocol: 'APPLICATION ; content is reported to higher level
+						continue
+					]
 				]
 				level: data/1
 				id:    data/2
@@ -1785,6 +1794,7 @@ TLS-awake: function [event [event!]][
 				]
 				TLS-port/data: TLS-port/state/port-data
 				binary/init TLS-port/state/in none ; resets input buffer
+				?? TLS-port/state/protocol
 				either 'APPLICATION = TLS-port/state/protocol [
 					;print "------------------"
 					;- report that we have data to higher layer
