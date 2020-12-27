@@ -291,6 +291,10 @@ Rebol [
 		--assert "1 2^/3^/4" = mold/only load "[1 2^/3^/4^/]"
 		--assert "1 2^/3^/4^/5" = mold/only load "[1 2^/3^/4^/5]"
 
+	--test-- "issue-2279"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2279
+		--assert "[[[^/    1^/]]]" = mold load {[[[^/1^/]]]}
+
 ===end-group===
 
 ===start-group=== "mold map!"
