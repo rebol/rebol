@@ -2,21 +2,83 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+## 2020 December
+
+### Features:
+
+* [`33e013`](https://github.com/Oldes/Rebol3/commit/33e01309018001ac22c992b4c718f3f49accbfb6) Implemented `request-dir` on Windows
+* [`d5efc5`](https://github.com/Oldes/Rebol3/commit/d5efc5ee048f6593d9f23b18acd16f2bb4862c7e) Revisited `delete-dir` function
+* [`6fc873`](https://github.com/Oldes/Rebol3/commit/6fc8732e5309aba4a88b00bdea1381ec49d6db0f) `wildcard` function - returns block of absolute path files filtered using * and ? wildcards.
+* [`7b1ec8`](https://github.com/Oldes/Rebol3/commit/7b1ec82cdd9326ef1c033d164588e2ae42402c58) Allowed to make `block!` using `pair!`
+* [`52a67d`](https://github.com/Oldes/Rebol3/commit/52a67dbb6a6d7d1b3112eadca61f0fb8a6bd08f3) Allow line-comments inside binary value specification.
+* [`9ca83b`](https://github.com/Oldes/Rebol3/commit/9ca83b2c5c1d1a265bcc91492b3ccfae842a56d9) Extended system's `log` function with `/error` refinement
+* [`b42fc9`](https://github.com/Oldes/Rebol3/commit/b42fc97976314261d6dd45d1e202d4cc64bee55a) Allow `none` as a `map!` value, implement `remove/key`
+
+### Changes:
+
+* [`0688a1`](https://github.com/Oldes/Rebol3/commit/0688a196164be4678cbbb53734b8b199b46f1a30) Have EXISTS? return the type field or none instead of true/false
+* [`b71d81`](https://github.com/Oldes/Rebol3/commit/b71d8164ea57afb6b749558bf34cfe38c8c873e0) Allow `unset none` to be a no-op instead of throwing an error
+* [`0c7beb`](https://github.com/Oldes/Rebol3/commit/0c7bebd9c6f4c5d83199d92f7a4785d91fbf71a8) Replace `bind?` and `bound?` with `context?`
+* [`b19a10`](https://github.com/Oldes/Rebol3/commit/b19a1095db46634e1f480005fc0e249b4393e450) Simplify `TO BLOCK!` and complex construct via `MAKE BLOCK!`
+
+  This is major change which may break some things (in a few places there may be need to replace `to block!` with `make block!`), but it's good to do it now.
+  
+  See the included unit tests for currently expected results!
+
+* [`d07af9`](https://github.com/Oldes/Rebol3/commit/d07af993370be7f677826ee411fe258b4003f6ab) Don't allow `to` conversion from `logic!` to `integer!`, `money!` and `percent!`
+* [`54493f`](https://github.com/Oldes/Rebol3/commit/54493f7e25aa2e58f0d4fb5d2f19ce1e2b6a5de0) Evaluating `user.reb` file if found in user's home directory.
+
+  Home directory (`system/options/home`) can be set by using one of `REBOL_HOME`, `USERPROFILE` or `HOME` environmental variables (preference in this order). If none of these is defined, as home is used same directory as directory with used executable.
+
+### Fixes:
+
+* [`87c5fe`](https://github.com/Oldes/Rebol3/commit/87c5fe50aa0735a9840d85ab03c6cbc8ad99d819) MOLD NEW-LINE? behavior indents too much in BLOCK!s
+* [`d2583a`](https://github.com/Oldes/Rebol3/commit/d2583a55f8201498bc49f48d960c15881ef5593e) Temporary fix for failed read of some HTTPS sites
+* [`167eac`](https://github.com/Oldes/Rebol3/commit/167eac4a05af5dc019a612b76eb96b2228b6ec1a) `request-dir` not compiled on 32bit Windows
+* [`70855c`](https://github.com/Oldes/Rebol3/commit/70855c502b98476537ca212dde430cfc86ee1af9) Including D2D related files
+* [`dbcb3d`](https://github.com/Oldes/Rebol3/commit/dbcb3da27039a7eda6a06e079a9476d6c0aa7eed) Removed memory dispose pool related debug traces
+* [`851e2f`](https://github.com/Oldes/Rebol3/commit/851e2f3afaf66b592ec394dfccd6c45efd799e86) Make old build script compatible with recent changes
+* [`68beea`](https://github.com/Oldes/Rebol3/commit/68beeaf75f8d5bd9da76ac94d01851c3aa291ea6) Extra tokens at end of #endif directive
+* [`2052b2`](https://github.com/Oldes/Rebol3/commit/2052b222143ccf8f9aef2c51a9a78f2a765204b7) Move `wildcard` from `base` to `mezz` + test
+* [`761b44`](https://github.com/Oldes/Rebol3/commit/761b4407f5dc3fc7c278feac06fe871c298a9b1c) Comparison of blocks where one is past tail (missing file)
+* [`85e592`](https://github.com/Oldes/Rebol3/commit/85e5920f363e9b68f2a7cae9dfed4a0002df6f4e) Comparison of blocks where one is past tail
+* [`cedd82`](https://github.com/Oldes/Rebol3/commit/cedd82138f3e8d45ff2ba6381bcb205c9156dbd4) Report full failed expression when `assert` fails
+* [`c167c2`](https://github.com/Oldes/Rebol3/commit/c167c29553689b901d18421368dc68519197a21c) Don't allow making a `module!` from `integer!` and `map!`
+* [`10932d`](https://github.com/Oldes/Rebol3/commit/10932d1b1fe36b3dc5b0fec95c07512e0febf9cb) Possible fix of Valgrind's `Source and destination overlap in memcpy` error.
+* [`dba14b`](https://github.com/Oldes/Rebol3/commit/dba14b77d30fe4da4428d9ae5b045cfa1c9ef325) TO PAIR! causes an error with a "long" string
+* [`577b45`](https://github.com/Oldes/Rebol3/commit/577b45a7fd7985509b77283eb32167afb2f7f7dd) PARSE's INSERT used after a seek puts data at the position before the seek
+* [`1752e3`](https://github.com/Oldes/Rebol3/commit/1752e3cc5dc726ddec9c2ca1216e4be7d4bb5324) Don't use ANSI color sequence in formed error
+
 ## 2020 November
 
 ### Features:
 
+* [`030915`](https://github.com/Oldes/Rebol3/commit/0309156ad657f95e8ce674b74266cfed3e6f9338) Add possibility to set date's `/utc` and `/yearday`
+
+  resolves: https://github.com/Oldes/Rebol-wishes/issues/18
+* [`c49f86`](https://github.com/Oldes/Rebol3/commit/c49f86aabdfdae13a793c41555c82075f7599293) Set `local-lib` to refer to the local import library
+* [`52ee40`](https://github.com/Oldes/Rebol3/commit/52ee407276ddb6e34f1592a21ea00704fcafae4d) Added `supplement` mezzanine function which appends a value into a block if not yet present
+* [`2aa6c6`](https://github.com/Oldes/Rebol3/commit/2aa6c68300ffc50c163af5c608a14bca8ff8b18b) Allow direct conversion from tag! to word! (if it has valid chars)
+* [`08bded`](https://github.com/Oldes/Rebol3/commit/08bdedfbbf3837578a2ea32a60d5c00ab8a5fa57) Way to combine DATE! and TIME! without a variable
 * [`77a412`](https://github.com/Oldes/Rebol3/commit/77a4122b4c04a52d5b045cef40f1e8d8369ef9d5) Extend `PNG` codec with `size?` function (returning image size of the binary)
 * [`5455ee`](https://github.com/Oldes/Rebol3/commit/5455ee479bb7a0bca1eb2b61cbbfc832908de1f6) Including `as-colors` module with functions, which decorates any value with bright ANSI color sequences
 * [`fd1790`](https://github.com/Oldes/Rebol3/commit/fd179029ea7b6a4570fe638b660d4849b0907344) BinCode - match binary!
 
 ### Changes:
 
+* [`6ba777`](https://github.com/Oldes/Rebol3/commit/6ba777e64bbc5a193a103e4288dc0c2cca7b20cf) Removed mention of boot in `boot-print` and `loud-print` doc-strings (these can be use also after boot)
+* [`a253f5`](https://github.com/Oldes/Rebol3/commit/a253f5e8ab4b33bb2318a534d5f5c53f73d08309) A plain, explicit QUIT from nested scripts returning UNSET! instead of 0
+
+  resolves: https://github.com/Oldes/Rebol-issues/issues/2250
 * [`a6a07f`](https://github.com/Oldes/Rebol3/commit/a6a07f8bea642c20652dca1b446c90e9103f6eab) Updated Windows' icon file
 * [`42ef0d`](https://github.com/Oldes/Rebol3/commit/42ef0d5c8720f9ab9678b3556933a94ff3e7d8f0) Updated banner and `license` output
 
 ### Fixes:
 
+* [`04d633`](https://github.com/Oldes/Rebol3/commit/04d63353b1365b4bdb28afabcd35596be71ec90a) Removing leaked traces in posix version
+* [`112c08`](https://github.com/Oldes/Rebol3/commit/112c087b84da66e904f300a688bb76d23dfae6f6) RSA related memory leak in TLS protocol
+* [`f6e480`](https://github.com/Oldes/Rebol3/commit/f6e4805692c688d496c62dfc53877fa7a9a4b3ce) Typo in PNG codec extension code
+* [`c7ffb5`](https://github.com/Oldes/Rebol3/commit/c7ffb5e37e180bd288f91aa45b3704c10572e600) Don't allow specific `lit-word!` and `get-word!` cases
 * [`173968`](https://github.com/Oldes/Rebol3/commit/1739683623264cc51c60f13020709c48fd145a67) Reset ANSI color after `secure` help output
 * [`f7e8e8`](https://github.com/Oldes/Rebol3/commit/f7e8e8fd4a6484f23a02b44bba77f8920068bfab) PROTECT and UNPROTECT bitset!
 * [`7c409f`](https://github.com/Oldes/Rebol3/commit/7c409fb2b19a4e563fcf61214b37d1c5b1bad234) Conversion of bitset to binary does not count with complement bitset state
