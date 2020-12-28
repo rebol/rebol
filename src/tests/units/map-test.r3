@@ -266,6 +266,13 @@ Rebol [
 		foreach k keys-of m [ 
 			--assert not error? try [m/:k]
 		]
+
+	--test-- "block of map"
+	;@@ https://github.com/Oldes/Rebol-wishes/issues/31
+		--assert {a: 1^/b: 2^/c: 3^/d: 4^/e: 5^/f: 6^/"a" 7^/<b> 8^/9 9^/#"c" 10^/a@b 11^/3.14 12^/1x0 13^/$1 14}
+		         = mold/only to block! m
+		--assert {[^/    a: 1^/    b: 2^/]} = mold to block! #(a: 1 b: 2)
+
 	--test-- "more keys.."
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1804
 		m: make map! [1-1-2000 1 10:00 2 1.1.1 3 ]

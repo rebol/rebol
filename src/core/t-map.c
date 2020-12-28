@@ -394,18 +394,21 @@
 	out = BLK_HEAD(blk);
 	for (val = BLK_HEAD(mapser); NOT_END(val) && NOT_END(val+1); val += 2) {
 		if (!VAL_MAP_REMOVED(val)) {
-#ifndef DO_NOT_NORMALIZE_MAP_KEYS
 			if (what < 0) {
 				// words-of
 				*out++ = val[0];
+#ifndef DO_NOT_NORMALIZE_MAP_KEYS
 				if (ANY_WORD(val)) VAL_SET(out - 1, REB_WORD);
-			}
-			else if (what == 0)
-				*out++ = val[0]; // body-of
-#else
-			if (what <= 0) *out++ = val[0]; // words-of or body-of
 #endif
-			if (what >= 0) *out++ = val[1]; // values
+				continue;
+			}
+			else if (what == 0) {
+				// body-of
+				*out++ = val[0]; 
+				// making unified output by forcing new-line for each key
+				VAL_SET_LINE(out-1);
+			}
+			*out++ = val[1]; // values
 		}
 	}
 
