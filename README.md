@@ -19,8 +19,10 @@ If you are looking for other _Rebol like languages_, you may want to check also:
 * [Arturo](https://github.com/arturo-lang/arturo) language written in Nim
 * [Boron](http://urlan.sourceforge.net/boron/) language written in C
 * [Red](https://github.com/red/red) language written in Red bootstrapped from Rebol2
+* [Red.js](https://github.com/ALANVF/Red.js) web runtime for Red written in Haxe
 * [Ren-C](https://github.com/metaeducation/ren-c) another living Rebol3 fork
 * [Rye](https://github.com/refaktor/rye) language written in Go
+* [Topaz](https://github.com/giesse/Project-SnowBall) experimental Rebol like language being compiled to JS
 * [World](https://github.com/Geomol/World) language written in C
 
 
