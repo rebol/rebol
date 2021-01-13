@@ -32,7 +32,9 @@
 #include "sys-core.h"
 #include "reb-codec.h"
 #include "sys-magick.h" // used for `resize` native
-
+#if defined(TO_WINDOWS) && defined(USE_NATIVE_IMAGE_CODECS)
+#include "winerror.h" // used for WINCODEC_ERR_COMPONENTNOTFOUND
+#endif
 
 typedef struct REBCLR {
 	union {
