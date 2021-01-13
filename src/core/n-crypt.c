@@ -828,6 +828,7 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 		ctx_ser = VAL_HANDLE_DATA(val_ctx);
 		if (VAL_HANDLE_TYPE(val_ctx) != SYM_CHACHA20 || ctx_ser == NULL || SERIES_TAIL(ctx_ser) != sizeof(chacha20_ctx)){
     		Trap0(RE_INVALID_HANDLE);
+			return R_NONE; // avoid wornings later
 		}
 	}
 
@@ -852,6 +853,7 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 
     	if (VAL_HANDLE_TYPE(val_ctx) != SYM_CHACHA20 || ctx_ser == NULL || SERIES_TAIL(ctx_ser) != sizeof(chacha20_ctx)){
     		Trap0(RE_INVALID_HANDLE);
+			return R_NONE;
     	}
 
     	len = VAL_LEN(val_data);
