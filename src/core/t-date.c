@@ -154,7 +154,7 @@
 				bp = Form_Int(bp, tz / 4);
 			}
 			*bp++ = ':';
-			bp = Form_Int_Pad(bp, (tz & 3) * 15, 2, 2, '0');
+			bp = Form_Int_Pad(bp, ((REBI64)tz & 3) * 15, 2, 2, '0');
 			*bp = 0;
 
 			Append_Bytes(mold->series, cs_cast(buf));
@@ -203,6 +203,49 @@
 		days += Month_Length(i, date.date.year);
 
 	return date.date.day + days;
+}
+
+/***********************************************************************
+**
+*/	REBI64 Days_Of_Date(REBINT day, REBINT month, REBINT year )
+/*
+**		Return number of days from given date parts
+**
+***********************************************************************/
+{
+	REBI64 m = (month + 9) % 12;
+	REBI64 y = year - (m / 10);
+	return (REBI64)(365 * y + (y / 4) - (y / 100) + (y / 400) + ((m * 306 + 5) / 10) + ((REBI64)day - 1));
+}
+
+/***********************************************************************
+**
+*/	void Date_Of_Days(REBI64 days, REBDAT *date)
+/*
+**		Return number of days from given date parts
+**
+***********************************************************************/
+{
+	REBI64 dd, y, mi;
+	
+	y = ((10000 * days) + 14780) / 3652425;
+	dd = days - (365 * y + (y / 4) - (y / 100) + (y / 400));
+	mi = (100 * dd + 52) / 3060;
+	date->date.month = (mi + 2) % 12 + 1;
+	date->date.year = y + ((mi + 2) / 12);
+	date->date.day = dd - ((mi * 306 + 5) / 10) + 1;
+}
+
+
+/***********************************************************************
+**
+*/	static REBI64 Days_Of_Jan_1st(REBINT year)
+/*
+**		Return number of days for 1st January of given year
+**
+***********************************************************************/
+{
+	return Days_Of_Date(1, 1, year);
 }
 
 
@@ -435,6 +478,15 @@
 
 	if (IS_DATE(arg)) {
 		*val = *arg;
+		if (IS_TIME(++arg)) {
+			// make date! [1-1-2000 100:0]
+			// we must get date parts here so can be used
+			// for time normalization later
+			day   = VAL_DAY(val) - 1;
+			month = VAL_MONTH(val) - 1;
+			year  = VAL_YEAR(val);
+			goto set_time;
+		}
 		return TRUE;
 	}
 
@@ -463,6 +515,7 @@
 	day--;
 	month--;
 
+set_time:
 	if (IS_TIME(arg)) {
 		secs = VAL_TIME(arg);
 		arg++;
@@ -521,7 +574,7 @@
 	REBINT day, month, year;
 	REBINT num;
 	REBVAL dat;
-	REB_TIMEF time;
+	REB_TIMEF time = {0,0,0,0};
 	REBOOL asTimezone = FALSE;
 
 	if (!IS_DATE(data)) return PE_BAD_ARGUMENT;
@@ -623,11 +676,11 @@
 
 		if (IS_INTEGER(val) || IS_DECIMAL(val)) {
 			// allow negative time zone
-			n = (sym == SYM_ZONE) ? Int32(val) : Int32s(val, 0);
+			n = (sym == SYM_ZONE || sym == SYM_YEARDAY) ? Int32(val) : Int32s(val, 0);
 		}
 		else if (IS_NONE(val)) n = 0;
 		else if (IS_TIME(val) && (sym == SYM_TIME || sym == SYM_ZONE));
-		else if (IS_DATE(val) && (sym == SYM_TIME || sym == SYM_DATE));
+		else if (IS_DATE(val) && (sym == SYM_TIME || sym == SYM_DATE || sym == SYM_UTC));
 		else return PE_BAD_SET_TYPE;
 
 		if (secs == NO_TIME && ((sym >= SYM_HOUR && sym <= SYM_SECOND) || sym == SYM_TIME || sym == SYM_ZONE)) {
@@ -667,7 +720,7 @@
 			if (tz > MAX_ZONE || tz < -MAX_ZONE) return PE_BAD_RANGE;
 			if (secs == NO_TIME) secs = 0;
 			if (asTimezone) {
-				secs += ((i64)(tz - tzp) * ((i64)ZONE_SECS * SEC_SEC));
+				secs += (((i64)tz - tzp) * ((i64)ZONE_SECS * SEC_SEC));
 			}
 			break;
 		case SYM_DATE:
@@ -693,6 +746,20 @@
 				time.n = (REBINT)((VAL_DECIMAL(val) - time.s) * SEC_SEC);
 			}
 			secs = Join_Time(&time);
+			break;
+		case SYM_UTC:
+			if (!IS_DATE(val)) return PE_BAD_SET_TYPE;
+			 data = pvs->value;
+			*data = *val;
+			VAL_ZONE(data) = 0;
+			return PE_USE;
+		case SYM_YEARDAY:
+		case SYM_JULIAN:
+			if (!IS_INTEGER(val)) return PE_BAD_SET_TYPE;
+			Date_Of_Days( Days_Of_Jan_1st(year) + n - 1, &date);
+			day   = date.date.day - 1;
+			month = date.date.month - 1;
+			year  = date.date.year;
 			break;
 
 		default:
@@ -720,12 +787,11 @@ setDate:
 /*
 ***********************************************************************/
 {
-	REBI64	secs;
-	REBINT  tz;
-	REBDAT	date;
-	REBINT	day, month, year;
+	REBI64	secs = 0;
+	REBDAT	date = {0};
+	REBINT	day = 0, month = 0, year = 0, tz = 0;
 	REBVAL	*val;
-	REBVAL	*arg = NULL;
+	REBVAL	*arg = D_RET; // using D_RET to silent compiler's warnings (it's redefined if needed)
 	REBINT	num;
 	REBVAL *spec;
 
@@ -742,7 +808,7 @@ setDate:
 	if (DS_ARGC > 1) arg = D_ARG(2);
 
 	if (IS_BINARY_ACT(action)) {
-		REBINT	type = VAL_TYPE(arg);
+		REBINT type = VAL_TYPE(arg);
 
 		if (type == REB_DATE) {
 			if (action == A_SUBTRACT) {
@@ -812,7 +878,7 @@ setDate:
 				bp = Qualify_String(arg, 45, &len, FALSE); // can trap, ret diff str
 				if (Scan_Date(bp, len, D_RET)) return R_RET;
 			}
-			else if (ANY_BLOCK(arg) && VAL_BLK_LEN(arg) >= 3) {
+			else if (ANY_BLOCK(arg) && VAL_BLK_LEN(arg) >= 1) {
 				if (MT_Date(D_RET, VAL_BLK_DATA(arg), REB_DATE)) {
 					return R_RET;
 				}

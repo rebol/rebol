@@ -49,8 +49,26 @@ Rebol [
 		--assert what-dir = query/mode %. 'name
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2305
 		--assert      none? query/mode %. 'size
+	--test-- "query directory type"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/606
+		make-dir %dir-606/
+		--assert all [
+			object? d: query %dir-606
+			d/type = 'dir
+			object? d: query %dir-606/
+			d/type = 'dir
+			d/size = none
+		]
+		delete %dir-606/
+	--test-- "DIR?"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/602
+		; dir? only checks if the last char is / or \
+		--assert dir? %doesnotexists/
+		--assert not dir? %doesnotexists
+		--assert dir? %./
+		--assert not dir? %.
 	--test-- "READ on non-existing dir-name"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/500
+		;@@ https://github.com/Oldes/Rebol-issues/issues/500
 		--assert error? e: try [read %carl-for-president/]
 		--assert e/id = 'cannot-open
 	--test-- "DELETE-DIR"
@@ -58,9 +76,36 @@ Rebol [
 		--assert all [
 			not error? try [make-dir/deep %units/temp-dir/sub-dir/]
 			not error? try [write %units/temp-dir/file "hello"]
-			not error? try [delete-dir %units/temp-dir/]
+			not error?      delete-dir %units/temp-dir/
 			not exists? %units/temp-dir/
 		]
+		--assert all [
+			all [
+				not error? try [make-dir/deep %units/temp-dir/]
+				; open a file for writing in the directory
+				p: open/write %units/temp-dir/file
+				; and see that the directory cannot be deleted
+				error? e: delete-dir %units/temp-dir/
+				e/id = 'no-delete
+				exists? %units/temp-dir/
+			]
+			all [
+				; closing the file
+				close p
+				; and now the file and dir are both deleted
+				not error? delete-dir %units/temp-dir/
+			]
+		]
+
+	--test-- "RENAME dir"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1533
+		--assert all [
+			not error? try [make-dir %units/temp-dir/]
+			not error? try [rename %units/temp-dir/ %units/new-dir/]
+			exists? %units/new-dir/
+			not error? try [delete-dir %units/new-dir/]
+		]
+
 if system/platform = 'Windows [
 	--test-- "read %/"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2031
@@ -73,7 +118,7 @@ if system/platform = 'Windows [
 ]
 	--test-- "exists? %/"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2317
-		--assert exists? %/
+		--assert 'dir = exists? %/       ;@@ https://github.com/Oldes/Rebol-issues/issues/612
 		--assert object? info: query %/
 		--assert info/name = %/
 		--assert info/type = 'dir
@@ -114,6 +159,8 @@ if system/platform = 'Windows [
 		--assert ["a" ""] = read/lines %tmp.txt
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2429
 		--assert "a^/b^/" = read/string write/lines %tmp.txt ["a" "b"]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/612
+		--assert 'file = exists? %tmp.txt
 		delete %tmp.txt
 
 	--test-- "read/lines - issue/1794"
@@ -143,7 +190,50 @@ if system/platform = 'Windows [
 		--assert "<foo>"  = read/string write %foo <foo>
 		delete %foo
 
+	--test-- "open/close file"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1456
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1453
+		file: %tmp-1456
+		write file "abc"
+		--assert #{616263} = read file
+		port: open file
+		--assert #{616263} = read port
+		--assert open? port
+		--assert empty? read port ; because the port is still open, but we are at tail already
+		close port
+		--assert not open? port
+		--assert #{616263} = read port ;port was not one, so it's opened for read action
+		--assert not open? port ;but was closed again by read
+		--assert #{616263} = read port ;so next read is again full
+		delete %tmp-1456
+
+	--test-- "write/part"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/445
+		a: make binary! 100000
+		insert/dup a #{00} 100000
+		write %zeroes-445.txt a
+		; write junk bug
+		f: open %zeroes-445.txt
+		write/part f #{1020304050} 100
+		close f
+		--assert 10873462 = checksum read %zeroes-445.txt
+		delete %zeroes-445.txt
+
 ===end-group===
+
+if system/platform = 'Windows [
+	===start-group=== "CLIPBOARD"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1968
+		--test-- "Clipboard port test"
+			p: open clipboard://
+			write p c: "Clipboard port test"
+			--assert strict-equal? c read p
+			close p
+		--test-- "Clipboard scheme test"
+			write clipboard:// c: "Clipboard scheme test"
+			--assert strict-equal? c read clipboard://
+	===end-group===
+]
 
 ===start-group=== "HTTP scheme"
 	--test-- "read HTTP"
@@ -152,8 +242,19 @@ if system/platform = 'Windows [
 		--assert  string? try [read https://www.google.com]
 	--test-- "exists? url"
 		;@@ https://github.com/Oldes/Rebol3/issues/14
-		--assert     exists? http://httpbin.org/
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1613
+		--assert 'url = exists? http://httpbin.org/  ;@@ https://github.com/Oldes/Rebol-issues/issues/612
 		--assert not exists? http://httpbin.org/not-exists
+	--test-- "read/part"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2434
+		--assert "<!DOCTYPE" = read/part http://httpbin.org/ 9
+		--assert #{89504E47} = read/binary/part http://avatars-04.gitter.im/gh/uv/4/oldes 4
+	--test-- "read not existing url"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/470
+		--assert all [
+			error? e: try [read http://www.r]
+			e/id = 'no-connect
+		]
 ===end-group===
 
 

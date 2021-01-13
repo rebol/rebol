@@ -11,8 +11,8 @@ REBOL [
 	}
 	Name: 'http
 	Type: 'module
-	Version: 0.3.4
-	Date: 25-Feb-2020
+	Version: 0.3.5
+	Date: 26-Oct-2020
 	File: %prot-http.r
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -33,6 +33,7 @@ REBOL [
 		0.3.2 25-Feb-2020 "Oldes" "FIX: Properly handling chunked data"
 		0.3.3 25-Feb-2020 "Oldes" "FEAT: support for read/binary and write/binary to force raw data result"
 		0.3.4 26-Feb-2020 "Oldes" "FIX: limit input data according Content-Length (#issues/2386)"
+		0.3.5 26-Oct-2020 "Oldes" "FEAT: support for read/part (using Range request with read/part/binary)"
 	]
 ]
 
@@ -264,7 +265,7 @@ do-request: func [
 		Accept-charset: "utf-8"
 		Accept-Encoding: "gzip,deflate"
 		Host: either not find [80 443] spec/port-id [
-			rejoin [form spec/host #":" spec/port-id]
+			ajoin [spec/host #":" spec/port-id]
 		][
 			form spec/host
 		]
@@ -471,11 +472,9 @@ http-response-headers: construct [
 	Last-Modified:
 ]
 
-do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state][
+do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state headers][
 	spec: port/spec
 	state: port/state
-
-	clear spec/headers
 	port/data: none
 
 	new-uri: as url! new-uri
@@ -497,6 +496,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state][
 		new-uri: as url! ajoin [spec/scheme "://" spec/host #":" spec/port-id new-uri]
 	]
 	new-uri: decode-url new-uri
+	spec/headers/host: new-uri/host
 
 	unless select new-uri 'port-id [
 		switch new-uri/scheme [
@@ -514,11 +514,16 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state][
 		return throw-http-error port {Redirect to a protocol different from HTTP or HTTPS not supported}
 	]
 
-	;we need to reset tcp connection here before doing a redirect
+	; store original request headers
+	headers: spec/headers
+	; we need to reset tcp connection here before doing a redirect
 	close port/state/connection
 	port/spec: spec: new-uri
 	port/state: none
 	open port
+	; restore original request headers
+	port/spec/headers: headers
+	port
 ]
 
 check-data: func [port /local headers res data available out chunk-size pos trailer state conn][
@@ -683,9 +688,14 @@ sys/make-scheme [
 		read: func [
 			port [port!]
 			/binary
+			/part length [number!]
 			/local result
 		][
 			sys/log/debug 'HTTP "READ"
+			unless port/state [open port port/state/close?: yes]
+			if all [part binary length > 0] [
+				append port/spec/headers compose [Range: (join "bytes=0-" (to integer! length) - 1)]
+			]
 			either any-function? :port/awake [
 				unless open? port [cause-error 'Access 'not-open port/spec/ref]
 				if port/state/state <> 'ready [throw-http-error "Port not ready"]
@@ -694,6 +704,7 @@ sys/make-scheme [
 			][
 				result: sync-op port []
 				unless binary [decode-result result]
+				if all [part result/2] [ clear skip result/2 length ]
 				result/2
 			]
 		]

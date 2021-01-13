@@ -66,6 +66,7 @@ Rebol [
 	--assert "d"     = find/any/reverse/tail tail "ažcdažcd" "žc"
 
 --test-- "FIND/SAME in block!"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1720
 	a: "a"
 	obj1: context [a: 1 b: 2]
 	obj2: context [a: 1 b: 2]
@@ -77,10 +78,29 @@ Rebol [
 	--assert 2 = index? find b :obj1
 	--assert 2 = index? find b :obj2
 	--assert 2 = index? find/case b :obj2 ;/case is not /same in this case
+	b: [a a: 'a :a]
+	--assert 1 = index? find/same b b/1
+	--assert 2 = index? find/same b b/2
+	--assert 3 = index? find/same b b/3
+	--assert 4 = index? find/same b b/4
+	--assert 1 = index? find b b/1
+	--assert 1 = index? find b b/2
+	--assert 1 = index? find b b/3
+	--assert 1 = index? find/same [1 1.0] 1
+	--assert 2 = index? find/same [1 1.0] 1.0
+	--assert 2 = index? find/same [1.0 1] 1
+	--assert 1 = index? find/same [1.0 1] 1.0
 
 --test-- "FIND/SAME in string!"
 	--assert "AbcdAe" = find/same "aAbcdAe" "A"
 	--assert "Ae" = find/same/last "aAbcdAe" "A"
+
+--test-- "FIND/LAST/CASE in string!"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1495
+	--assert none?   find/case "Abc" "a"
+	--assert "Abc" = find/case "Abc" "A"
+	--assert none?   find/case/last "Abc" "a"
+	--assert "Abc" = find/case/last "Abc" "A"
 
 --test-- "FIND/PART"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/2329
@@ -123,6 +143,14 @@ Rebol [
 	--assert "1.1" == find str "1."
 	--assert "1.1" == find/part str "1." 2
 
+--test-- https://github.com/Oldes/Rebol-issues/issues/1611
+	--assert none? try [index? none]
+--test-- https://github.com/Oldes/Rebol-issues/issues/1626
+	--assert none? try [length? none]
+--test-- https://github.com/Oldes/Rebol-issues/issues/473
+	--assert none? try [select none 1]
+	--assert none? try [  find none 1]
+
 --test-- "SELECT"
 	--assert 2 = select/part [1 2 1 3 1 2] 1 2
 	--assert none? select/part [1 2 1 3 1 2] 2 2
@@ -148,6 +176,16 @@ Rebol [
 	--assert #"2" = select/last/any "ab1ab2" "ab"
 	--assert #"b" = select/same "aAbcdAe" "A"
 	--assert #"e" = select/same/last "aAbcdAe" "A"
+
+--test-- "SUPPLEMENT"
+	;@@ https://github.com/Oldes/Rebol-wishes/issues/11
+	b: []
+	--assert [%a]         = supplement b %a
+	--assert [%a %b]      = supplement b %b
+	--assert [%a %b]      = supplement b %a
+	--assert [%a %b #"a"] = supplement b #"a"
+	--assert [%a %b #"a"] = supplement b #"A" ; case-insensitive
+	--assert [%a %b #"a" #"A"] = supplement/case b #"A"
 
 ===end-group===
 
@@ -175,6 +213,41 @@ Rebol [
 	--test-- "issue-54"
 		--assert "ABCDE456" = replace "123456" "123" "ABCDE"
 		--assert "1!!2!!3"  = replace/all "1 2 3" " " "!!"
+===end-group===
+
+===start-group=== "REPLACE binary!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1499
+	--test-- "issue-1499"
+		--assert #{6163} = replace #{616263} #{6263} #{63}
+===end-group===
+
+===start-group=== "POKE"
+	--test-- "poke unset value"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1815
+		--assert all [
+			b: [1 2 3] 
+			not error? try [poke b 2 #[unset!]]
+			unset? pick b 2
+			unset? b/2
+		]
+===end-group===
+
+===start-group=== "SET-PATH"
+	--test-- "set-path missing value"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2312
+		data: copy [a 10 b 20]
+		data/a: 30
+		--assert data = [a 30 b 20] ; this one is ok
+		; but rest are errors by design
+		--assert all [
+			error? e: try [data/c: 30]
+			e/id = 'invalid-path
+		]
+		--assert all [
+			data: [1 c]
+			error? e: try [data/c: 30]
+			e/id = 'invalid-path
+		]
 ===end-group===
 
 
@@ -377,6 +450,12 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "MOVE"
+	--test-- "move/skip"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1629
+	--assert [b 3 4 a 1 2] = head move/skip at [a 1 2 b 3 4] 4 -1 3
+	--assert [b 3 4 a 1 2] = head move/to/skip at [a 1 2 b 3 4] 4 1 3
+===end-group===
 
 ===start-group=== "++ & --"
 	--test-- "++ & -- on block!"
@@ -398,7 +477,21 @@ Rebol [
 			[  2] = a
 			2 = index? a
 		]
-		
+	--test-- "++ & -- past end"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/409
+		a: [1]
+		--assert [1] = ++ a
+		--assert [ ] = a
+		--assert [ ] = ++ a
+		--assert [ ] = -- a
+		--assert [1] = a
+		a: "A"
+		--assert "A" = -- a
+		--assert "A" = a
+		--assert "A" = ++ a
+		--assert ""  = a
+		--assert ""  = -- a
+		--assert "A" = a
 ===end-group===
 
 
@@ -643,7 +736,54 @@ Rebol [
 		remove/part b to integer! #{8000}
 		--assert 7232 = length? b
 
+	--test-- "remove/key any-block!"
+		;@@ https://github.com/Oldes/Rebol-wishes/issues/20
+		b: [a b b c]
+		--assert [a b b c] = remove/key b 'c ; no change, c is value, not a key
+		--assert [a b b c] = remove/key b 'B ; no change, B is not b
+		--assert [a b    ] = remove/key b 'b
+		b: quote (a b b c)
+		--assert quote (a b b c) = remove/key b 'c ; no change, c is value, not a key
+		--assert quote (a b b c) = remove/key b 'B ; no change, B is not b
+		--assert quote (a b    ) = remove/key b 'b
+		b: 'a/b/b/c
+		--assert 'a/b/b/c = remove/key b 'c ; no change, c is value, not a key
+		--assert 'a/b/b/c = remove/key b 'B ; no change, B is not b
+		--assert 'a/b     = remove/key b 'b
+	--test-- "remove/key string!"
+		--assert all [
+			error? e: try [remove/key "abcd" #"a"]
+			e/id = 'feature-na
+		]
+
 ===end-group===
+
+
+===start-group=== "PAST?"
+	--test-- "past? block!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/417
+		a: [1 2 3 4]
+		--assert [4] = b: skip a 3
+		--assert [4] = remove/part a 3
+		--assert [ ] = b ;@@ https://github.com/Oldes/Rebol-issues/issues/2439
+		--assert empty? b
+		--assert  tail? b
+		--assert  past? b
+	--test-- "past? string!"
+		a: "1234"
+		--assert "4" = b: skip a 3
+		--assert "4" = remove/part a 3
+		--assert  "" = b
+		--assert empty? b
+		--assert  tail? b
+		--assert  past? b
+
+	--test-- "past? is not tail?"
+		b: tail [1 2 3]
+		--assert     tail? b
+		--assert not past? b
+===end-group===
+
 
 ===start-group=== "SORT"
 
@@ -720,6 +860,23 @@ Rebol [
 	--assert ["FRED" "Fred" "fred"] == sort/case ["Fred" "fred" "FRED"]
 
 ===end-group===
+
+
+===start-group=== "UPPERCASE / LOWERCASE"
+	--test-- "uppercase/part backwards"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1772
+		--assert "abcDEFG" = head uppercase/part tail "abcdefg" -4
+		--assert "abCDEFG" = head uppercase/part tail "abcdefg" -5
+		--assert "aBCDEFG" = head uppercase/part tail "abcdefg" -6
+		--assert "ABCDEFG" = head uppercase/part tail "abcdefg" -10
+	--test-- "lowercase/part backwards"
+		--assert "ABCdefg" = head lowercase/part tail "ABCDEFG" -4
+		--assert "ABcdefg" = head lowercase/part tail "ABCDEFG" -5
+		--assert "Abcdefg" = head lowercase/part tail "ABCDEFG" -6
+		--assert "abcdefg" = head lowercase/part tail "ABCDEFG" -10
+
+===end-group===
+
 
 
 ===start-group=== "RANDOM"
@@ -1304,6 +1461,33 @@ Rebol [
 --test-- "extract with unset"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1540
 	--assert [5 1 #[unset!]] = extract [5 3 1 #[unset!] #[unset!] #[unset!]] 2
+
+===end-group===
+
+===start-group=== "More set operations"	
+--test-- "unhashable types"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1765
+	blk1: reduce ["a" [1 2 3] 'path/path func [][] charset ["a"]]
+	blk2: append copy blk1 blk1
+	--assert blk1 = unique blk2
+	--assert blk1 = union blk1 blk2 
+	append blk2 blk3: ["b" [3 4]]
+	--assert blk1 = intersect  blk2 blk1
+	--assert blk3 = difference blk1 blk2
+	--assert blk3 = exclude blk2 blk1
+	--assert empty? exclude blk1 blk2
+
+--test-- "set ops on binary"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/837
+	bin1: #{010203}
+	bin2: #{010203010203}
+	--assert bin1 = unique bin2
+	--assert bin1 = union  bin1 bin2 
+	append bin2 bin3: #{0405}
+	--assert bin1 = intersect  bin2 bin1
+	--assert bin3 = difference bin1 bin2
+	--assert bin3 = exclude bin2 bin1
+	--assert empty? exclude bin1 bin2
 
 ===end-group===
 

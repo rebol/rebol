@@ -90,6 +90,11 @@ Rebol [
 		--assert unset? do %units/files/unset.r3
 		--assert dir = what-dir
 
+	--test-- "script with quit"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2250
+		--assert unset? do %units/files/quit.r3
+		--assert 42 = do %units/files/quit-return.r3
+
 ===end-group===
 
 ===start-group=== "do function"
@@ -482,10 +487,23 @@ Rebol [
 		--assert d = set/any [A B] d
 		--assert all [a = 4 unset? :b]
 
-	--test-- "Set - issue 2366"
-	;@@https://github.com/Oldes/Rebol-issues/issues/2366
+	--test-- "Set - issue 2367"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2367
 		--assert error? try [set #ab 1]
 		--assert error? try [set #12 2]
+
+	--test-- "set block with word types"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1745
+		set [a 'b :c d:] [1 2 3 4]
+		--assert a = 1
+		--assert b = 2
+		--assert c = 3
+		--assert d = 4
+		--assert error? try [set [/e][5]]
+		--assert error? try [set [#f][6]]
+		--assert error? try [set /a 1]
+		
+
 
 
 ===end-group===
@@ -573,7 +591,28 @@ Rebol [
 			e/id = 'overflow
 			num = 1
 		]
+	--test-- "FOR with series! start and number! end"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1601
+		out: copy ""
+		for x "abcde" 3 1 [append out x]
+		--assert "abcdebcdecde" == out
+		clear out
+		for x "abcde" tail "ab" 1 [append out x]
+		--assert "abcdebcdecde" == out
+
 ===end-group===
+
+
+===start-group=== "REPEAT"
+	--test-- "repeat pair!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1995
+		b: copy []
+		repeat x 2x2 [append b x]
+		--assert b = [1x1 2x1 1x2 2x2]
+		--assert b = collect [repeat x 2x2 [keep x]]
+
+===end-group===
+
 
 ===start-group=== "BREAK"
 	--test-- "break returns unset"

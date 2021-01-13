@@ -8,6 +8,31 @@ Rebol [
 
 ~~~start-file~~~ "Parse"
 
+===start-group=== "TO/THRU"
+--test-- "TO/THRU with bitset!"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1457
+	a: charset "a"
+	--assert parse "a" [thru a]
+	--assert not parse "a" [thru a skip]
+	--assert parse "a" [and thru a skip]
+	--assert parse "ba" [to a skip]
+	--assert not parse "ba" [to a "ba"]
+	--assert parse/case "a" [thru a]
+	--assert not parse/case "A" [thru a]
+--test-- "TO/THRU with unsuported rule"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2129
+	--assert all [
+		e: try [parse "foo" [thru some "0"]] ;@@ Red supports `some` right after `to`!
+		e/id = 'parse-rule
+	]
+	--assert all [
+		e: try [parse "foo" [thru 1.2]]
+		e/id = 'parse-rule
+	]
+
+
+===end-group===
+
 ===start-group=== "CHANGE"
 
 --test-- "CHANGE rule value (same size)"
@@ -39,6 +64,13 @@ Rebol [
 --test-- "CHANGE block"
 	--assert parse b: [1] [change integer! (1 + 1) to end]
 	--assert b = [2]
+
+--test-- "CHANGE undefined"
+;@@  https://github.com/Oldes/Rebol-issues/issues/1418
+	--assert all [
+		error? e: try [parse "abc" ["a" change skip undefined-word]]
+		e/id = 'no-value
+	]
 
 ===end-group===
 
@@ -123,6 +155,14 @@ Rebol [
 ;@@ https://github.com/Oldes/Rebol-issues/issues/394
 	--assert parse #{001122} [#{00} #{11} #{22}]
 
+--test-- "issue-591"
+;@@ https://github.com/Oldes/Rebol-issues/issues/591
+	--assert all [
+		error? e: try [parse " " [0]]
+		e/id = 'parse-end
+		e/arg1 = 0
+	]
+
 --test-- "issue-2130"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/2130
 	--assert parse [x][set val pos: word!]
@@ -168,6 +208,83 @@ Rebol [
 		parse "" [some [(a: true)]] ;- no infinite loop as in R2!
 		a
 	]
+--test-- "set/copy set-word"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2023
+	a: none
+	--assert all [
+		true? parse [42] [set a: integer!]
+		a = 42
+	]
+	--assert all [
+		true? parse [42] [copy a: integer!]
+		a = [42]
+	]
+--test-- "issue-2130"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2130
+	--assert all [
+		parse [x][set val pos: word!]
+		pos = [x]
+	]
+	--assert all [
+		not parse ser: "foo" [copy val pos: skip]
+		val = "f"
+		pos = ser
+	]
+	--assert all [
+		not parse ser: "foo" [copy val: pos: skip]
+		val = "f"
+		pos = ser
+	]
+--test-- "get-word use"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2269
+	s: copy "ab"
+	--assert all [
+		parse s [p: to end :p insert "x" to end]
+		s = "xab"
+		p = s
+	]
+	s: copy "ab"
+	--assert all [
+		parse s [p: 1 skip :p insert "x" to end]
+		s = "xab"
+		p = s
+	]
+	s: copy "ab"
+	--assert all [
+		parse s [1 skip p: 1 skip :p insert "x" to end]
+		s = "axb"
+		p = "xb"
+	]
+	s: copy "abcd"
+	--assert all [
+		error? e: try [parse s [x: "ab" thru :s "abcd"]]
+		e/id = 'parse-rule
+	]
+	--assert parse s [x: "ab" :s thru "abcd"]
+	s: copy "abcd" parse s ["ab" p: "c" :p copy x to end]
+	--assert all [p = "cd" x = "cd"]
+	s: copy "abcd" parse s ["ab" p: "c" :p set x to end]
+	--assert all [p = "cd" x = #"c"] 
+	--assert all [
+		; get-word used in middle of the rule
+		error? e: try [parse "abcd" [x: "ab" copy y :s thru "abcd"]]
+		e/id = 'parse-rule
+		e/arg1 = quote :s
+	]
+
+--test-- "issue-1253"
+;@@  https://github.com/Oldes/Rebol-issues/issues/1253
+	--assert all [
+		parse [base: [specs]] [set-word! set c opt word! block!]
+		none? c
+	]
+
+--test-- "issue-1480"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1480
+	c: make string! 255
+	--assert 256 = length? for i 0 255 1 [append c to-char i]
+	--assert 16646400 = length? data: to-string array/initial 255 * 255 random c 
+	--assert (length? parse data "^/") = (length? parse data "^/")
 
 ===end-group===
 

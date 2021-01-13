@@ -674,7 +674,6 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 
 	if (sep[1]) {
 		Append_Byte(out, sep[0]);
-		mold->indent++;
 	}
 //	else out->tail--;  // why?????
 
@@ -683,8 +682,14 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 		// check if we can end sooner with molding..
 		if (MOLD_HAS_LIMIT(mold) && MOLD_OVER_LIMIT(mold)) return;
 		if (VAL_GET_LINE(value)) {
-			if (indented && (sep[1] || line_flag)) New_Indented_Line(mold);
-			had_lines = TRUE;
+			if (indented && (sep[1] || line_flag)) {
+				if(!had_lines && !line_flag) {
+					had_lines = TRUE;
+					mold->indent++;
+				}
+				New_Indented_Line(mold);
+			}
+			
 		}
 		line_flag = TRUE;
 		Mold_Value(mold, value, TRUE);
@@ -694,8 +699,10 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 	}
 
 	if (sep[1]) {
-		mold->indent--;
-		if (indented && (VAL_GET_LINE(value) || had_lines)) New_Indented_Line(mold);
+		if (indented && (VAL_GET_LINE(value) || had_lines)) {
+			if (had_lines) mold->indent--;
+			New_Indented_Line(mold);
+		}
 		Append_Byte(out, sep[1]);
 	}
 
@@ -910,10 +917,10 @@ STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		}
 	}
 
-	// Mold all non-none entries
+	// Mold all not removed entries
 	mold->indent++;
 	for (val = BLK_HEAD(mapser); NOT_END(val) && NOT_END(val+1); val += 2) {
-		if (!IS_NONE(val+1)) {
+		if (!VAL_MAP_REMOVED(val)) {
 			count++;
 			if (molded) {
 				if(indented) 
@@ -1046,7 +1053,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	err = VAL_ERR_VALUES(value);
 
 	// Form: ** <type> Error:
-	Emit(mold, "\x1B[1;35;49m** WB", &err->type, RS_ERRS+0);
+	Emit(mold, "** WB", &err->type, RS_ERRS+0);
 
 	// Append: error message ARG1, ARG2, etc.
 	msg = Find_Error_Info(err, 0);

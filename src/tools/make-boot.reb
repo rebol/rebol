@@ -993,6 +993,7 @@ if product = 'view [
 		]
 	]
 ]
+append mezz-files/3 %codec-image-ext.reb
 
 foreach section [boot-base boot-sys boot-mezz] [
 	set section make block! 200
@@ -1098,7 +1099,7 @@ foreach val nats [
 ]
 foreach [name spec] nats-collected [
 	emit-line/code "N_" name ","
-	append boot-natives to-block spec
+	append boot-natives make block! spec
 ]
 emit-end
 emit newline
@@ -1254,4 +1255,4 @@ emit ["#define TASK_MAX " n lf]
 write inc/tmp-boot.h out
 ;print ask "-DONE-"
 ;wait .3
-print "   "
+print "[DONE boot]^/"

@@ -69,7 +69,7 @@
 /*
 ***********************************************************************/
 {
-	REBCNT len;
+	REBCNT len=0;
 	REBYTE buf[MAX_HEX_LEN+4] = {0}; // binary to convert
 
 	if (IS_BINARY(val)) {
@@ -95,7 +95,7 @@
 		}
 	}
 #endif
-	memcpy(buf + 12 - len, buf, len); // shift to right side
+	memmove(buf + 12 - len, buf, len); // shift to right side
 	memset(buf, 0, 12 - len);
 	VAL_DECI(result) = binary_to_deci(buf);
 	return TRUE;
@@ -218,18 +218,19 @@
 			const REBYTE *end;
 			str = Qualify_String(arg, 36, 0, FALSE);
 			VAL_DECI(D_RET) = string_to_deci(str, &end);
-			if (end == str || *end != 0) Trap_Make(REB_MONEY, arg);
+			if (end == str || *end != 0)  goto err;
 			break;
 		}
 
-//		case REB_ISSUE:
+//		case REB_ISSUE: // removed support -> https://github.com/Oldes/Rebol-issues/issues/1130
 		case REB_BINARY:
 			if (!Bin_To_Money(D_RET, arg)) goto err;
 			break;
 
 		case REB_LOGIC:
+			if(action != A_MAKE)  goto err;
 			equal = !VAL_LOGIC(arg);
-//		case REB_NONE: // 'equal defaults to 1
+//		case REB_NONE: // 'equal defaults to 1 // removed by design
 			VAL_DECI(D_RET) = int_to_deci(equal ? 0 : 1);
 			break;
 

@@ -20,6 +20,11 @@ Rebol [
 	--assert 1 = length? to-word to-string to-char 126
 	--assert 1 = length? to-word to-string to-char 128
 
+	--test-- "Word from tag"
+	;@@ https://github.com/Oldes/Rebol-wishes/issues/2
+	--assert 'a = to word! <a>
+	--assert error? try [to word! <a b>]
+
 ===end-group===
 
 ===start-group=== "word compare"

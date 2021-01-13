@@ -52,6 +52,12 @@ Rebol [
 	protect out
 	--assert is-protected-error? [delect dialect inp out]
 
+	--test-- "protect bitset"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/977
+		ws: protect charset "^- "
+		--assert is-protected-error? [clear ws  ]
+		--assert is-protected-error? [ws/1: true]
+
 ===end-group===
 
 ~~~end-file~~~

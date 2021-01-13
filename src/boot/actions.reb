@@ -248,7 +248,7 @@ make: action [
 to: action [
 	{Converts to a specified datatype.}
 	type [any-type!] {The datatype or example value}
-	spec [any-type!] {The attributes of the new value}
+	value [any-type!] {The attributes of the new value}
 ]
 
 copy: action [
@@ -302,9 +302,11 @@ append: action [
 
 remove: action [
 	{Removes element(s); returns same position.}
-	series [series! gob! port! bitset! none!] {At position (modified)}
+	series [series! gob! port! bitset! none! map!] {At position (modified)}
 	/part {Removes multiple elements or to a given position}
 	length [number! series! pair! char!]
+	/key {Removes a key from map.}
+	key-arg [any-type!]
 ]
 
 change: action [

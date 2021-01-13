@@ -324,8 +324,10 @@ const REBCNT Gob_Flag_Words[] = {
 /*
 ***********************************************************************/
 {
+#ifdef HAS_WIDGET_GOB
 	REBVAL *spec;
 	REBVAL *hndl;
+#endif
 
 	switch (VAL_WORD_CANON(word)) {
 	case SYM_OFFSET:
@@ -643,7 +645,7 @@ is_none:
 	REBSER *ser = Make_Block(10);
 	REBVAL *val;
 	REBVAL *val1;
-	REBCNT sym;
+	REBCNT sym = 0;
 
 	val = Append_Value(ser);
 	Init_Word(val, SYM_OFFSET);
@@ -693,9 +695,11 @@ is_none:
 			sym = SYM_EFFECT;
 			break;
 		}
-		Init_Word(val1, sym);
-		VAL_SET(val1, REB_SET_WORD);
-		Get_GOB_Var(gob, val1, val);
+		if (sym) {
+			Init_Word(val1, sym);
+			VAL_SET(val1, REB_SET_WORD);
+			Get_GOB_Var(gob, val1, val);
+		}
 	}
 
 	return ser;
@@ -772,7 +776,7 @@ is_none:
 {
 	REBVAL *val;
 	REBVAL *arg;
-	REBGOB *gob;
+	REBGOB *gob = 0;
 	REBGOB *ngob;
 	REBCNT index;
 	REBCNT tail;
@@ -781,14 +785,14 @@ is_none:
 	arg = D_ARG(2);
 	val = D_RET;
 	*val = *D_ARG(1);
-	gob = 0;
-
+	
 	if (IS_GOB(val)) {
 		gob = VAL_GOB(val);
 		index = VAL_GOB_INDEX(val);
 		tail = GOB_PANE(gob) ? GOB_TAIL(gob) : 0;
 	} else if (!(IS_DATATYPE(val) && action == A_MAKE)){
 		Trap_Arg(val);
+		return R_FALSE; // shut-up compiler's warnings
 	}
 
 	// unary actions

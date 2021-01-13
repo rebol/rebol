@@ -172,9 +172,9 @@
 ***********************************************************************/
 {
 	REBVAL *result;
-	REBDEC s;
-	REBDEC e;
-	REBDEC i;
+	REBDEC s=0;
+	REBDEC e=0;
+	REBDEC i=0;
 
 	if (IS_INTEGER(start)) s = (REBDEC)VAL_INT64(start);
 	else if (IS_DECIMAL(start) || IS_PERCENT(start)) s = VAL_DECIMAL(start);

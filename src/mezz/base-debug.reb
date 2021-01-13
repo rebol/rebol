@@ -57,14 +57,14 @@ probe: func [
 ]
 
 boot-print: func [
-	"Prints during boot when not quiet."
+	"Prints when not quiet."
 	data
 ][
 	unless system/options/quiet [print :data]
 ]
 
 loud-print: func [
-	"Prints during boot when verbose."
+	"Prints when verbose."
 	data
 ][
 	if system/options/flags/verbose [print :data]

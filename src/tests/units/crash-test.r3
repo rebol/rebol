@@ -155,6 +155,19 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1619
 	--assert value? try [write clipboard:// [a]] ;- no crash
 
+--test-- "unset 'self"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1569
+	--assert all [
+		error? e: try [unset 'self]
+		e/id = 'self-protected
+	]
+
+--test-- "issue-430"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/430
+	--assert block? values-of system/contexts/lib ;- no crash
+	--assert block? body-of system/contexts/lib ;- no crash
+
+
 ===end-group===
 
 ~~~end-file~~~

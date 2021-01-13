@@ -61,8 +61,6 @@
 	REBINT result;
 	REBVAL *arg;
 	REBCNT args = 0;
-	REBINT len, n;
-	REBSER *ser;
 	REBVAL *spec;
 	REBVAL *val1, *val2;
 

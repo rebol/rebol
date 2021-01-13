@@ -9,6 +9,30 @@ Rebol [
 
 ~~~start-file~~~ "money"
 
+===start-group=== "make money!"
+	--test-- "make money! percent!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/971
+		--assert $0   = try [make money! 0%]
+		--assert $1   = try [make money! 100%]
+		--assert $100 = try [make money! make percent! $100]
+
+	--test-- "make money! binary!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1060
+		--assert $15 = make money! #{00000000000000000000000F}
+		--assert $15 =   to money! #{00000000000000000000000F}
+		--assert $15 = make money! #{0F}
+		--assert $15 =   to money! #{0F}
+
+	--test-- "make money! issue!" ; not supported by design
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1130
+		--assert all [
+			error? e: try [to money! #ff]
+			e/id = 'bad-make-arg
+		]
+
+===end-group===
+
+
 ===start-group=== "max/min"
 	--test-- "max"
 		--assert  $3 == max  $3 1
@@ -19,6 +43,7 @@ Rebol [
 		--assert -$3 == min -$3 1.0
 		--assert -$3 == min -$3 $1
 ===end-group===
+
 
 ===start-group=== "round"
 	--test-- "round"
@@ -124,7 +149,7 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/392
 		--assert $1e-100 = ($1.00 / 1e100) ; no crash
 
-	--test-- "1205"
+	--test-- "issue-1205"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1205
 		--assert error? try [$1 / #"a"]
 		--assert error? try [$1 * 1.2.3.4]

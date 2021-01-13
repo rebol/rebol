@@ -8,7 +8,7 @@ REBOL [
 		0.1.0 11-Oct-2018 "Oldes" {
 			Initial version with DECODE and IDENTIFY functions.
 			Not all chunks are parsed.}
-		0.2.0 2-Mar-2020 "Oldes" {
+		0.2.0 02-Mar-2020 "Oldes" {
 			Sound data are now as a vector! instead of raw binary!
 			Support for encoding wav data.}
 	]
@@ -63,12 +63,12 @@ register-codec [
 				switch/default chunk  [
 					<fmt > [
 						format: binary/read bin [
-							UI16LE        ; compression
-							UI16LE        ; channels
-							UI32LE        ; sampleRate
-							UI32LE        ; bytesPerSec
-							UI16LE        ; blockAlign
-							UI16LE        ; bitsPerSample
+								   UI16LE ; compression
+								   UI16LE ; channels
+								   UI32LE ; sampleRate
+								   UI32LE ; bytesPerSec
+								   UI16LE ; blockAlign
+								   UI16LE ; bitsPerSample
 						]
 						if size > 16 [
 							size: size - 16
@@ -83,25 +83,25 @@ register-codec [
 					]
 					<smpl> [
 						sampler: binary/read bin [
-							UI32LE        ; Manufacturer
-							UI32LE        ; Product
-							UI32LE        ; Sample Period
-							UI32LE        ; MIDI Unity Note
-							UI32LE        ; MIDI Pitch Fraction
-							UI32LE        ; SMPTE Format
-							UI32LE        ; SMPTE Offset
+								   UI32LE ; Manufacturer
+								   UI32LE ; Product
+								   UI32LE ; Sample Period
+								   UI32LE ; MIDI Unity Note
+								   UI32LE ; MIDI Pitch Fraction
+								   UI32LE ; SMPTE Format
+								   UI32LE ; SMPTE Offset
 							count: UI32LE ; Num Sample Loops
-							UI32LE        ; Sampler Data
+								   UI32LE ; Sampler Data
 						]
 						append/only sampler loops: copy []
 						loop count [
 							binary/read/into bin [
-								UI32LE    ; Cue Point ID
-								UI32LE    ; Type
-								UI32LE    ; Start
-								UI32LE    ; End
-								UI32LE    ; Fraction
-								UI32LE    ; Play Count
+								   UI32LE ; Cue Point ID
+								   UI32LE ; Type
+								   UI32LE ; Start
+								   UI32LE ; End
+								   UI32LE ; Fraction
+								   UI32LE ; Play Count
 							] loops
 						]
 						append/only chunks sampler
@@ -114,12 +114,12 @@ register-codec [
 						append chunks cues: copy []
 						loop count [
 							binary/read/into bin [
-								UI32LE    ; id            - unique identification value
-								UI32LE    ; Position      - play order position
-								UI32LE    ; Data Chunk ID - RIFF ID of corresponding data chunk
-								UI32LE    ; Chunk Start   - Byte Offset of Data Chunk *
-								UI32LE    ; Block Start   - Byte Offset to sample of First Channel
-								UI32LE    ; Sample Offset - Byte Offset to sample byte of First Channel
+								   UI32LE ; id            - unique identification value
+								   UI32LE ; Position      - play order position
+								   UI32LE ; Data Chunk ID - RIFF ID of corresponding data chunk
+								   UI32LE ; Chunk Start   - Byte Offset of Data Chunk *
+								   UI32LE ; Block Start   - Byte Offset to sample of First Channel
+								   UI32LE ; Sample Offset - Byte Offset to sample byte of First Channel
 							] tail cues
 						]
 						new-line/skip cues true 6
@@ -242,7 +242,7 @@ register-codec [
 		]
 		
 		bytes: (length? out/buffer) - 8
-		binary/write out reduce ['at 5 'UI32LE bytes]
+		binary/write out [AT 5 UI32LE :bytes]
 		out/buffer
 	]
 

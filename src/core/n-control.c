@@ -88,7 +88,7 @@ enum {
 **
 ***********************************************************************/
 {
-	if (ANY_SERIES(value) || IS_MAP(value))
+	if (ANY_SERIES(value) || IS_MAP(value) || IS_BITSET(value))
 		Protect_Series(value, flags);
 	else if (IS_OBJECT(value) || IS_MODULE(value))
 		Protect_Object(value, flags);

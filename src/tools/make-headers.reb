@@ -340,6 +340,7 @@ foreach word [
 	write
 	query
 	take
+	remove
 ] [make-arg-enums word]
 
 acts: load %../boot/natives.reb
@@ -347,6 +348,7 @@ acts: load %../boot/natives.reb
 foreach word [
 	checksum
 	request-file
+	request-dir
 ] [make-arg-enums word]
 
 ;?? output
@@ -384,4 +386,4 @@ if dup-found [
 	wait 5
 ]
 
-print "   "
+print "[DONE headers]^/"

@@ -43,6 +43,16 @@ Rebol [
 ===end-group===
 
 ===start-group=== "TO DATE!"
+	--test-- "make date!"
+		--assert 1-Feb-0003 = make date! [1 2 3]
+		--assert 1-Feb-0003/4:00 = make date! [1 2 3 4:0]
+		--assert 1-Feb-0003/4:00+5:00 = make date! [1 2 3 4:0 5:0]
+		;@@ https://github.com/Oldes/Rebol-wishes/issues/1
+		--assert 1-Jan-2000 = make date! [1-1-2000]
+		--assert 1-Jan-2000/10:00 = make date! [1-1-2000 10:0]
+		--assert 1-Jan-2000/10:00+2:00 = make date! [1-1-2000 10:0 2:0]
+		--assert 5-Jan-2000/4:00 = make date! [1-1-2000 100:0]
+		
 	--test-- "invalid input"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/878
 		--assert error? try [to date! "31-2-2009"]
@@ -56,6 +66,12 @@ Rebol [
 		--assert 1-Feb-0003 = #[date! 1 2 3]
 		--assert 1-Feb-0003/4:00 = #[date! 1 2 3 4:0]
 		--assert 1-Feb-0003/4:00+5:00 = #[date! 1 2 3 4:0 5:0]
+		;@@ https://github.com/Oldes/Rebol-wishes/issues/1
+		--assert 1-Jan-2000 = #[date! 1-1-2000]
+		--assert 1-Jan-2000/10:00 = #[date! 1-1-2000 10:0]
+		--assert 1-Jan-2000/10:00+2:00 = #[date! 1-1-2000 10:0 2:0]
+		--assert 5-Jan-2000/4:00 = #[date! 1-1-2000 100:0]
+
 	--test-- "#[date!] invalid"
 		--assert error? try [load {#[date!]}]
 		--assert error? try [load {#[date! 1]}]
@@ -157,6 +173,44 @@ Rebol [
 			error? e: try [poke d 1 2000]
 			e/id = 'expect-arg
 		]
+	--test-- "error date set messages"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1385
+		d: 1-1-2000
+		--assert all [
+			error? err: try [d/date: 1]
+			err/id = 'bad-field-set
+		]
+		--assert all [
+			error? err: try [d/foo: 1]
+			err/id = 'invalid-path
+		]
+		--assert all [
+			error? err: try [d/utc: 1] ; error, because it requires date
+			err/id = 'bad-field-set
+		]
+		--assert all [
+			not error? try [d/time: 1.2] ; setting time to decimal is now implemented
+			d = 1-Jan-2000/0:00:01.2
+		]
+		d/time: none
+		--assert all [
+			;@@ https://github.com/Oldes/Rebol-wishes/issues/18
+			not error? try [d/yearday: 17]
+			d = 17-1-2000
+			60 = d/yearday: 60
+			d = 29-Feb-2000 ; was leak year
+			d/year: 2001 d/yearday: 60
+			d = 1-Mar-2001  ; this one not
+			d/yearday: 0    ; last day of previous year
+			d = 31-Dec-2000
+			d/yearday: -1
+			d = 30-Dec-1999
+		]
+		; it's now possible to set /utc (if used date or date-time)
+		n: 27-Nov-2020/18:15:57+1:00 ; date-time with timezone
+		--assert n = (d/utc: n) ; result is passed thru
+		--assert d = 27-Nov-2020/17:15:57 ; but d is now adjusted
+
 
 ===end-group===
 

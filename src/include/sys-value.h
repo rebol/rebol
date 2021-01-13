@@ -96,6 +96,9 @@ enum {
 #define	IS_SET(v)			(VAL_TYPE(v) > REB_UNSET)
 #define IS_SCALAR(v)		(VAL_TYPE(v) <= REB_DATE)
 
+// When key is removed from map, it has OPTS_HIDE flag
+#define VAL_MAP_REMOVED(val) (VAL_GET_OPT(val, OPTS_HIDE)) 
+
 
 /***********************************************************************
 **
@@ -698,7 +701,9 @@ typedef struct Reb_Series_Ref
 **
 ***********************************************************************/
 
-#define	VAL_BITSET(v)	VAL_SERIES(v)
+#define BITS_NOT(s)        ((s)->size)
+#define	VAL_BITSET(v)      VAL_SERIES(v)
+#define	VAL_BITSET_NOT(v)  BITS_NOT(VAL_SERIES(v))
 
 #define	VAL_BIT_DATA(v)	VAL_BIN(v)
 
@@ -727,6 +732,7 @@ typedef struct Reb_Series_Ref
 // Arg is a value:
 #define VAL_BLK(v)		BLK_HEAD(VAL_SERIES(v))
 #define VAL_BLK_DATA(v)	BLK_SKIP(VAL_SERIES(v), VAL_INDEX(v))
+#define VAL_BLK_DATA_SAFE(v)	BLK_SKIP(VAL_SERIES(v), MIN(VAL_INDEX(v),VAL_TAIL(v))) // don't go behind tail
 #define VAL_BLK_SKIP(v,n)	BLK_SKIP(VAL_SERIES(v), (n))
 #define VAL_BLK_TAIL(v)	BLK_SKIP(VAL_SERIES(v), VAL_SERIES(v)->tail)
 #define	VAL_BLK_LEN(v)	VAL_LEN(v)

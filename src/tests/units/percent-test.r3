@@ -8,6 +8,14 @@ Rebol [
 
 
 ~~~start-file~~~ "percent"
+===start-group=== "make percent!"
+	--test-- "make percent from integer"
+		--assert 100% = make percent! 1
+	--test-- "make percent from decimal"
+		--assert 50% = make percent! 0.5
+	--test-- "make percent from block"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1504
+		--assert 1e18% = make percent! [1 18]
 
 ===start-group=== "to conversion"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/137
@@ -49,6 +57,11 @@ Rebol [
 		--assert  "-10%" = mold  -10%
 		--assert "-0.1%" = mold -0.1%
 		--assert "-100%" = mold -100%
+
+	--test-- "mold/all"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1633
+		--assert same? 9.9999999999999926e154% load mold/all 9.9999999999999926e154%
+		
 ===end-group===
 
 ===start-group=== "percent issues"
@@ -59,6 +72,14 @@ Rebol [
 	--test-- "issue-262"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/262
 		--assert 100% = try [load {1E+2%}]
+
+	--test-- "large percent"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1475
+		x: 30000000000000000000000000000000000%
+		--assert "3e34%" = mold x
+		--assert "3.0000000000000003e34%" = mold/all x
+		--assert x = load mold x
+		--assert x = load mold/all x
 
 ===end-group===
 

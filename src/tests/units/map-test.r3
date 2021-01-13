@@ -59,6 +59,8 @@ Rebol [
 		--assert 13 = m/('A)
 		--assert 17 = m/(@A)
 		--assert 21 = m/(#"A")
+		;@@ https://github.com/Oldes/Rebol-issues/issues/471
+		--assert none? select m none 
 
 
 ===end-group===
@@ -126,7 +128,25 @@ Rebol [
 
 	;@@ https://github.com/Oldes/Rebol-issues/issues/598
 	--test-- "map-issue-598"
-		--assert error? try [make map! [[a] 1]]
+		--assert all [
+			map? m: try [make map! [[a] 1]]
+			1 = select m [a]
+			2 = poke m [b] 2
+			1 = m/([a])
+			2 = pick m [b]
+		]
+		;- note that keys are not implicitly protected!
+		k: [c]
+		poke m :k 3
+		--assert [[a] [b] [c]] = keys-of m
+		;- so it's possible to create a map with multiple same keys!
+		append clear k 'b
+		--assert [[a] [b] [b]] = keys-of m
+		;- it's still possible to protect keys manually like:
+		k: protect [d] clear m
+		poke m :k 4
+		--assert [[d]] = keys-of m
+		--assert error? try [append clear k 'b]
 
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1872
 	--test-- "map-issue-1872"
@@ -246,6 +266,38 @@ Rebol [
 		foreach k keys-of m [ 
 			--assert not error? try [m/:k]
 		]
+
+	--test-- "block of map"
+	;@@ https://github.com/Oldes/Rebol-wishes/issues/31
+		--assert {a: 1^/b: 2^/c: 3^/d: 4^/e: 5^/f: 6^/"a" 7^/<b> 8^/9 9^/#"c" 10^/a@b 11^/3.14 12^/1x0 13^/$1 14}
+		         = mold/only to block! m
+		--assert {[^/    a: 1^/    b: 2^/]} = mold to block! #(a: 1 b: 2)
+
+	--test-- "more keys.."
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1804
+		m: make map! [1-1-2000 1 10:00 2 1.1.1 3 ]
+		--assert [1-Jan-2000 10:00 1.1.1] = keys-of m
+
+===end-group===
+
+===start-group=== "MAP with NONE"
+	--test-- "map with none"
+		m: #(a: #[none] b: 1)
+		m/b: none
+		--assert [a b] = keys-of m
+		--assert [#[none] #[none]] = values-of m
+
+	--test-- "remove from map"
+		m: #("ab" 1 "AB" 2)
+		--assert ["ab" 1 "AB" 2]  = to block! remove/key m "aB"
+		--assert 2 = length? m
+		--assert ["ab" 1       ]  = to block! remove/key m "AB"
+		--assert 1 = length? m
+		m: #(ab: 1 AB: 2)
+		--assert [ab: 1 AB: 2]  = to block! remove/key m 'aB
+		--assert 2 = length? m
+		--assert [ab: 1      ]  = to block! remove/key m 'AB
+		--assert 1 = length? m
 
 ===end-group===
 

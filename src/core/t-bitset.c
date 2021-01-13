@@ -31,8 +31,6 @@
 
 #define MAX_BITSET 0x7fffffff
 
-#define BITS_NOT(s) ((s)->size)
-
 // use if you want compatibility with R3-alpha for returning NONE on non existing bit
 // #define PICK_BITSET_AS_NONE
 
@@ -295,6 +293,8 @@ retry:
 {
 	REBCNT n = VAL_INDEX(val);
 
+	if(IS_PROTECT_SERIES(bset)) Trap0(RE_PROTECTED);
+
 	if (VAL_BYTE_SIZE(val)) {
 		REBYTE *bp = VAL_BIN(val);
 		for (; n < VAL_TAIL(val); n++)
@@ -318,6 +318,8 @@ retry:
 {
 	REBCNT n;
 	REBCNT c;
+
+	if(IS_PROTECT_SERIES(bset)) Trap0(RE_PROTECTED);
 
 	if (IS_CHAR(val)) {
 		Set_Bit(bset, VAL_CHAR(val), set);
@@ -647,9 +649,10 @@ set_bits:
 		if (Set_Bits(VAL_SERIES(value), arg, (REBOOL)diff)) break;
 		Trap_Arg(arg);
 
-	case A_REMOVE:	// #"a" "abc"  remove/part bs "abcd"  yuk: /part ?
-		if (!D_REF(2)) Trap0(RE_MISSING_ARG); // /part required
-		if (Set_Bits(VAL_SERIES(value), D_ARG(3), FALSE)) break;
+	case A_REMOVE:	// #"a" "abc"  remove/key bs "abcd"
+		if (D_REF(ARG_REMOVE_PART)) Trap0(RE_BAD_REFINES);
+		if (!D_REF(ARG_REMOVE_KEY)) Trap0(RE_MISSING_ARG); // /key required
+		if (Set_Bits(VAL_SERIES(value), D_ARG(ARG_REMOVE_KEY_ARG), FALSE)) break;
 		Trap_Arg(D_ARG(3));
 
 	case A_COPY:

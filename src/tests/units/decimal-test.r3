@@ -90,8 +90,8 @@ Rebol [
 	--assert not odd? -2.0
 	--assert not odd? 1.7976931348623157e308
 	--assert not odd? -1.7976931348623157e308
-	--assert odd? 1000000000.0
-	--assert odd? 10000000000.0
+	--assert not odd? 1000000000.0
+	--assert not odd? 10000000000.0
 ===end-group===
 
 ===start-group=== "to-degrees & to-radians"
@@ -114,6 +114,46 @@ Rebol [
 			--assert d = to-degrees r
 		]
 ===end-group===
+
+
+===start-group=== "square-root"
+	--test-- "square-root 4"
+		--assert 2.0 = square-root 4
+	--test-- "square-root -1"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2431
+		--assert "1.#NaN" = mold try [square-root -1]
+	--test-- "sqrt"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2433
+		--assert all [
+			error? e: try [sqrt 4]
+			e/id = 'expect-arg
+			e/arg3 = integer!
+		]
+		--assert 2.0 = sqrt 4.0
+===end-group===
+
+
+===start-group=== "log"
+	--test-- "log-* -1"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2431
+		--assert "1.#NaN" = mold try [log-2  -1]
+		--assert "1.#NaN" = mold try [log-e  -1]
+		--assert "1.#NaN" = mold try [log-10 -1]
+		
+	--test-- "log-* 0"
+		--assert "-1.#INF" = mold try [log-2  0]
+		--assert "-1.#INF" = mold try [log-e  0]
+		--assert "-1.#INF" = mold try [log-10 0]
+
+	--test-- "log-2 32"
+		--assert 5.0 = log-2 32
+	--test-- "log-10 100"
+		--assert 2.0 = log-10 100
+	--test-- "log-e 123"
+		--assert 4.812184355372417 = log-e 123
+
+===end-group===
+
 
 ===start-group=== "decimal issues"
 	--test-- "issue-1753"

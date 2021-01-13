@@ -133,6 +133,7 @@
 	case SYM_KEY:
 		//VAL_EVENT_TYPE(value) != EVT_KEY && VAL_EVENT_TYPE(value) != EVT_KEY_UP)
 		VAL_EVENT_MODEL(value) = EVM_GUI;
+		if(!VAL_EVENT_TYPE(value)) VAL_EVENT_TYPE(value) = EVT_KEY;
 		if (IS_CHAR(val)) {
 			VAL_EVENT_DATA(value) = VAL_CHAR(val);
 			CLR_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY);

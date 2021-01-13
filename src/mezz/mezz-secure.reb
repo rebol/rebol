@@ -42,7 +42,7 @@ secure: function/with [
 			"^[[1;32m     other ^[[m - other value, such as integer"
 		]
 		print " Settings for read, write, and execute are also available."
-		print "^/ ^[[1;35mNOTE: ^[[1;31mSecure is not fully implemented!^/"
+		print "^/ ^[[1;35mNOTE: ^[[1;31mSecure is not fully implemented!^[[m^/"
 		;print "Type: help/doc secure for detailed documentation and examples."
 		exit
 	]

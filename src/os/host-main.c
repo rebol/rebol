@@ -104,10 +104,10 @@ void Host_Repl() {
 
 #define MAX_CONT_LEVEL 1024
 	REBYTE cont_str[] = "\x1B[1;31;49m  \x1B[1;33;49m ";
-	int cont_level = 0;
+	REBCNT cont_level = 0;
 	REBYTE cont_stack[MAX_CONT_LEVEL] = { 0 };
 
-	int input_max = 32768;
+	REBCNT input_max = 32768;
 	int input_len = 0;
 	REBYTE *input = OS_Make(input_max);
 

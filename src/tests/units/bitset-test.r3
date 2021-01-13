@@ -58,6 +58,11 @@
 		--assert #[bitset! #{}]   = b1
 		--assert #[bitset! #{40}] = b2
 
+	--test-- "charset"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1092
+		--assert #[bitset! #{80}] = charset #"^@"
+		--assert #[bitset! #{8000}] = charset/length #"^@" 16
+
 ===end-group===
 
 ===start-group=== "pick bitset!"
@@ -186,13 +191,19 @@
 		clear bs
 		--assert "make bitset! #{}" = mold bs
 
-;	--test-- "remove-1"
-;		bs: charset "012345789"
-;		--assert 64 = length? bs
-;		--assert "make bitset! #{000000000000FDC0}" = mold bs
-;		--assert "make bitset! #{0000000000007DC0}" = mold remove/key bs #"0"
-;		--assert "make bitset! #{0000000000003DC0}" = mold remove/key bs 49
-;		--assert "make bitset! #{0000000000000000}" = mold remove/key bs [#"2" - #"7" "8" #"9"]
+	--test-- "remove-1"
+		;@@ https://github.com/Oldes/Rebol-wishes/issues/20
+		bs: charset "012345789"
+		--assert 64 = length? bs
+		--assert "make bitset! #{000000000000FDC0}" = mold bs
+		--assert "make bitset! #{0000000000007DC0}" = mold remove/key bs #"0"
+		--assert "make bitset! #{0000000000003DC0}" = mold remove/key bs 49
+		--assert "make bitset! #{0000000000000000}" = mold remove/key bs [#"2" - #"7" "8" #"9"]
+	--test-- "remove/part invalid"
+		--assert all [
+			error? e: try [remove/part bs "01"]
+			e/id = 'bad-refines
+		]
 
 ===end-group===
 
@@ -269,6 +280,24 @@
 	--test-- "issue-209"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/209
 		--assert (charset [#"^(80)"]) = make bitset! #{0000000000000000000000000000000080}
+
+	--test-- "issue-1271"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1271
+		chars: complement charset "ther "
+		--assert "it goes" = find "there it goes" chars
+
+	--test-- "issue-1283"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1283
+		bits: make bitset!  [1]
+		--assert find bits [1] ;- no crash
+
+	--test-- "to-binary bitset"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2436
+		bits: make bitset!  [1]
+		--assert #{40} = to binary! bits
+		--assert #{BF} = to binary! complement bits
+		--assert #{BF} = complement to binary! bits
+
 
 ===end-group===
 

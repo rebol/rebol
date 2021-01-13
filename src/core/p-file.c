@@ -76,6 +76,7 @@
 	if (GET_FLAG(file->modes, RFM_NAME_MEM)) {
 		//NOTE: file->file.path will get GC'd
 		file->file.path = 0;
+		file->file.index = 0;
 		CLR_FLAG(file->modes, RFM_NAME_MEM);
 	}
 	SET_CLOSED(file);

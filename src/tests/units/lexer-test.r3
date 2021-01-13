@@ -30,6 +30,13 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1855
 		--assert error? try [load {////a}]
 
+	--test-- "Invalid money!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1441
+		--assert all [
+			error? e: try [load {$}]
+			e/id = 'invalid
+		]
+
 ===end-group===
 
 ===start-group=== "Email"
@@ -37,6 +44,16 @@ Rebol [
 		--assert email? load {name@where}
 		--assert email? load {a@šiška}
 
+===end-group===
+
+===start-group=== "Money"
+	--test-- "space requirement"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1445
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1472
+		--assert all [error? e: try [load {$1/$2}] e/id = 'invalid e/arg2 = "$1/"]
+		--assert all [error? e: try [load {$1*$2}] e/id = 'invalid e/arg2 = "$1*$2"]
+		--assert all [error? e: try [load {$1+$2}] e/id = 'invalid e/arg2 = "$1+$2"]
+		--assert all [error? e: try [load {$1-$2}] e/id = 'invalid e/arg2 = "$1-$2"]
 ===end-group===
 
 ===start-group=== "Ref"
@@ -48,11 +65,49 @@ Rebol [
 		--assert ref? load {@šiška}
 		--assert ref? load {@%C5%A1}
 
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2437
+	--test-- "invalid `ref!`"
+		--assert error? try [load {'2nd}]
+		--assert error? try [load {':foo}]
+		--assert error? try [load {'@foo}]
+
+===end-group===
+
+===start-group=== "Set-word"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2437
+	--test-- "invalid `set-word!`"
+		--assert error? try [load {:2nd}]
+		--assert error? try [load {::foo}]
+		--assert error? try [load {:@foo}]
+
+===end-group===
+
+===start-group=== "Refinement"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/980
+	--test-- "valid `refinement!`"
+		--assert refinement? try [load {/foo}]
+		--assert refinement? try [load {/+}]
+		--assert refinement? try [load {/!}]
+		--assert refinement? try [load {/111}]
+		--assert refinement? try [load {/+1}]
+		
+
 ===end-group===
 
 ===start-group=== "Tag"
 	--test-- "valid `tags`"
 		--assert tag? load {<a '"'>} ;@@ https://github.com/Oldes/Rebol-issues/issues/1873
+
+===end-group===
+
+===start-group=== "Lit"
+	--test-- "quote arrow-based words"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1461
+		--assert lit-word? try [load {'<} ]
+		--assert lit-word? try [load {'>} ]
+		--assert lit-word? try [load {'<>}]
+		--assert lit-word? try [load {'<=}]
+		--assert lit-word? try [load {'>=}]
 
 ===end-group===
 
@@ -113,6 +168,30 @@ Rebol [
 		--assert error? try [load {#[string! "ab" 2 x]}]
 		--assert error? try [load {#[file! "ab" x]}]
 		--assert error? try [load {#[file! "ab" 2 x]}]
+
+===end-group===
+
+===start-group=== "BINARY"
+	--test-- {binary! with spaces}
+		--assert #{00}   = first transcode/only to binary! " #{0 0}"
+		--assert #{00}   = first transcode/only to binary! "2#{0000 00 00}"
+		--assert #{00}   = first transcode/only to binary! "2#{0000^/0000}"
+		--assert #{00}   = first transcode/only to binary! "2#{0000^M0000}"
+		--assert #{01}   = first transcode/only to binary! "2#{0000^-0001}"
+		--assert #{02}   = first transcode/only to binary! "2#{0000^ 0010}"
+		--assert #{0001} = first transcode/only to binary! "16#{00 01}"
+		--assert #{0001} = first transcode/only to binary! "64#{AA E=}"
+
+	--test-- {binary! with comments inside}
+	;@@ https://github.com/Oldes/Rebol-wishes/issues/23
+		--assert #{00}   = first transcode/only/error to binary! "#{;XXX^/00}"
+		--assert #{00}   = first transcode/only/error to binary! "#{00;XXX^/}"
+		--assert #{0002} = first transcode/only/error to binary! "#{00;XXX^/02}"
+		--assert #{0002} = first transcode/only/error to binary! "#{00;XXX^M02}" ;CR is also comment stopper
+	--test-- {binary! with other valid escapes}
+		--assert #{0003} = first transcode/only/error to binary! "#{^(30)^(30)03}"
+	--test-- {binary! with unicode char} ; is handled early
+		--assert error? first transcode/only/error to binary! "#{0č}"
 
 ===end-group===
 

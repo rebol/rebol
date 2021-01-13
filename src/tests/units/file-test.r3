@@ -76,4 +76,23 @@ secure [%/ allow]
 	delete %temp.txt
 ===end-group===
 
+===start-group=== "WILDCARD"
+	--test-- "wildcard *"
+		--assert all [
+			block? files: wildcard %units/files/ %*.zip
+			empty? find/last/tail files/1 %.zip
+		]
+		--assert empty? wildcard %units/files/ %*.something
+	--test-- "wildcard ?"
+		--assert all [
+			block? files: wildcard %units/files/ %issue-2186-UTF??-BE.txt
+			2 = length? files
+		]
+	--test-- "wildcard *?*"
+		--assert all [
+			block? probe files: wildcard %units/files/ %*2186-UTF??*.txt
+			4 = length? files
+		]
+===end-group===
+
 ~~~end-file~~~

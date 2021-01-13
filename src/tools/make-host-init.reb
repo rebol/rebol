@@ -183,4 +183,4 @@ save %boot/host-init.reb code
 
 write-c-file %include/host-init.h code
 
-print "   " ; (separate the output for build watch window)
+print "[DONE host-init]^/"; (separate the output for build watch window)

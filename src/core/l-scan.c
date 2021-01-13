@@ -473,6 +473,84 @@
 	return src;
 }
 
+/***********************************************************************
+**
+*/  const REBYTE *Scan_Quote_Binary(const REBYTE *src, SCAN_STATE *scan_state)
+/*
+**      Scan a binary string, remove spaceces and comments.
+**
+**		The result will be put into the temporary MOLD_BUF binary.
+**
+***********************************************************************/
+{
+    REBOOL comm = FALSE;
+	REBINT chr;
+	REBCNT lines = 0;
+	REBSER *buf = BUF_MOLD;
+
+	RESET_TAIL(buf);
+
+	if (*src++ != '{') return 0;
+
+	while (*src != '}') {
+		chr = *src;
+
+        switch (chr) {
+
+		case 0:
+			return 0; // Scan_state shows error location.
+		case '^':
+			chr = Scan_Char(&src);
+			if (chr == -1) return 0;
+			src--;
+            break;
+		case ';':
+			while (chr != 0) {
+				chr = *++src;
+				if (chr == '^') {
+					chr = Scan_Char(&src);
+					if (chr == -1) return 0;
+					src--;
+				}
+				if (chr == LF ||  chr == CR) {
+					goto new_line;
+				}
+			}
+			return 0; // end of input reached
+		case CR:
+			if (src[1] == LF) src++;
+			// fall thru
+        case LF:
+new_line:
+			lines++;
+			// fall thru
+		case ' ':
+		case TAB:
+			src++;
+			continue;
+
+		default:
+			if (chr >= 0x80) return 0;
+		}
+
+		src++;
+
+		if (SERIES_FULL(buf))
+			Extend_Series(buf, 1);
+
+		*BIN_SKIP(buf, buf->tail) = chr;
+		buf->tail++;
+    }
+
+	src++; // Skip ending brace.
+
+	if (scan_state) scan_state->line_count += lines;
+
+	STR_TERM(buf);
+
+	return src;
+}
+
 
 /***********************************************************************
 **
@@ -786,7 +864,10 @@
         }
 
     case LEX_CLASS_SPECIAL:
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT) && *cp != '<') return TOKEN_EMAIL; // for case like: %61@b which is actually: a@b
+        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT) && *cp != '<') { // for case like: %61@b which is actually: a@b 
+			if (*cp == '\'' || *cp == ':') return -TOKEN_WORD; // no '@foo abd :@foo
+			return TOKEN_EMAIL; 
+		}
     next_ls:
         switch (GET_LEX_VALUE(*cp)) {
 
@@ -811,7 +892,7 @@
         case LEX_SPECIAL_COLON:         /* :word :12 (time) */
             if (IS_LEX_NUMBER(cp[1])) return TOKEN_TIME;
             if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD)) return TOKEN_GET;   /* common case */
-			if (cp[1] == '\'') return -TOKEN_WORD;
+			if (cp[1] == '\'' || cp[1] == ':') return -TOKEN_WORD; // no :'foo ::foo
 			// Various special cases of < << <> >> > >= <=
 			if (cp[1] == '<' || cp[1] == '>') {
 				cp++;
@@ -839,7 +920,7 @@
 					return TOKEN_LIT;
 				}
 			}
-			if (cp[1] == '\'') return -TOKEN_WORD;
+			if (cp[1] == '\'') return -TOKEN_LIT; // no ''foo
             type = TOKEN_LIT;
             goto scanword;
 
@@ -926,7 +1007,11 @@
 			if (*cp == '{') { /* BINARY #{12343132023902902302938290382} */
 				scan_state->end = scan_state->begin;  /* save start */
 				scan_state->begin = cp;
-	            cp = Scan_Quote(cp, scan_state);  // stores result string in BUF_MOLD !!??
+				// Originally there was used Scan_Quote collecting into BUF_MOLD, but this was not used later.
+				// It was wasting resources, because Scan_Quote collects unicode (2 bytes per char).
+				// Scan_Quote_Binary collects ANSI and report invalit input (like unicode char) much sooner.
+				// It also skips spaces and line-comments so these should not have to be tested by Decode_Binary later.
+	            cp = Scan_Quote_Binary(cp, scan_state);  // stores result string in BUF_MOLD !!??
 				scan_state->begin = scan_state->end;  /* restore start */
 				if (cp) {
 					scan_state->end = cp;
@@ -1433,7 +1518,9 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 			break;
 
 		case TOKEN_BINARY:
-			Scan_Binary(bp, len, value);
+			// In BUF_MOLD is preprocessed ANSI result without comments and spaces
+			// we just still need to resolve the binary base (like `64#{`) from the input
+			Scan_Binary(Scan_Binary_Base(bp, len), BIN_DATA(BUF_MOLD), BIN_LEN(BUF_MOLD), value);
 			LABEL_SERIES(VAL_SERIES(value), "scan binary");
 			break;
 

@@ -380,6 +380,23 @@ alter: func [
 	) [append series :value]
 ]
 
+supplement: func [
+	"Append value if not found; returns series at same position."
+	series [block!] {(modified)}
+	value
+	/case "Case-sensitive comparison"
+	/local result
+][
+	result: series ; to return series at same position if value is found
+	any[
+		either case [
+			find/case series :value
+		][  find      series :value ]
+		append series :value
+	]
+	result
+]
+
 collect: func [
 	"Evaluates a block, storing values via KEEP function, and returns block of collected values."
 	body [block!] "Block to evaluate"

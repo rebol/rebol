@@ -965,13 +965,13 @@ crash:
 				seg = next;
 			}
 		}
-		else {
-			printf(cs_cast("!!! Mem_Pools[%u] not empty! Has: %u free: %u\n"), n, Mem_Pools[n].has, Mem_Pools[n].free);
-		}
+		//else {
+		//	printf(cs_cast("!!! Mem_Pools[%u] not empty! Has: %u free: %u\n"), n, Mem_Pools[n].has, Mem_Pools[n].free);
+		//}
 	}
 	// SYSTEM_POOL contains not system series sizes (big series), at this state it should be empty!
-	if (Mem_Pools[SYSTEM_POOL].has > 0)
-		printf(cs_cast("!!! Mem_Pools[SYSTEM_POOL].has: %u\n"), Mem_Pools[SYSTEM_POOL].has);
+	//if (Mem_Pools[SYSTEM_POOL].has > 0)
+	//	printf(cs_cast("!!! Mem_Pools[SYSTEM_POOL].has: %u\n"), Mem_Pools[SYSTEM_POOL].has);
 	Free_Mem(Mem_Pools, 0);
 	Free_Mem(PG_Pool_Map, 0);
 }

@@ -910,9 +910,9 @@ end_date:
 
 /***********************************************************************
 **
-*/	const REBYTE *Scan_Binary(const REBYTE *cp, REBCNT len, REBVAL *value)
+*/	REBINT Scan_Binary_Base(const REBYTE *cp, REBCNT len)
 /*
-**		Scan and convert binary strings.
+**		Scan for binary base
 **
 ***********************************************************************/
 {
@@ -926,14 +926,25 @@ end_date:
 		cp = ep;
 	}
 	cp++;  // skip #
-	if (*cp++ != '{') return 0;
-	len -= 2;
+	if (*cp++ != '{' || (len - 2) < 1) return 0;
+	return base;
+}
 
+/***********************************************************************
+**
+*/	const REBYTE *Scan_Binary(REBINT base, const REBYTE *cp, REBCNT len, REBVAL *value)
+/*
+**		Scan and convert binary strings according given base (like 2, 16, 64, 85).
+**
+***********************************************************************/
+{
+	//O: no need to check the base here... Decode_Binary handles any case
 	cp = Decode_Binary(value, cp, len, base, '}', FALSE);
 	if (!cp) return 0;
 
-	cp = Skip_To_Char(cp, cp + len, '}');
-	if (!cp) return 0; // series will be gc'd
+	//O: bellow check is not needed, because scener already validated the input
+	//cp = Skip_To_Char(cp, cp + len, '}');
+	//if (!cp) return 0; // series will be gc'd
 
 	return cp;
 }

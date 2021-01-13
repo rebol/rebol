@@ -552,6 +552,8 @@ bad_target:
 				i = Find_Str_Bitset(series, 0, index, series->tail, 1, VAL_BITSET(item), HAS_CASE(parse));
 				if (i != NOT_FOUND && is_thru) i++;
 			}
+			else
+				Trap1(RE_PARSE_RULE, item - 1);
 		}
 	}
 
@@ -830,6 +832,12 @@ bad_target:
 					if (!ANY_SERIES(item)) Trap1(RE_PARSE_SERIES, rules-1);
 					index = Set_Parse_Series(parse, item);
 					series = parse->series;
+
+					// #2269 - reset the position if we are not in the middle of any rule
+					// don't allow code like: [copy x :pos integer!]
+					if (flags != 0) Trap1(RE_PARSE_RULE, rules-1); 
+                    begin = index;
+
 					continue;
 				}
 

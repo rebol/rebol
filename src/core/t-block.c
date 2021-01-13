@@ -119,7 +119,7 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 			value = BLK_SKIP(series, index);
 			if (ANY_WORD(value)) {
 				cnt = (VAL_WORD_SYM(value) == VAL_WORD_SYM(target));
-				if (flags & AM_FIND_CASE) {
+				if (flags & (AM_FIND_CASE | AM_FIND_SAME)) {
 					// Must be same type and spelling:
 					if (cnt && VAL_TYPE(value) == VAL_TYPE(target)) return index;
 				}
@@ -295,7 +295,7 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 	else  // make [...] ....
 		type = VAL_TYPE(value);
 
-	// make block! [1 2 3]
+	// make block! [1 2 3] but also: to block! 'a/b/c
 	if (ANY_BLOCK(arg)) {
 		len = VAL_BLK_LEN(arg);
 #ifdef not_used
@@ -306,18 +306,7 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 		goto done;
 	}
 
-	if (IS_STRING(arg)) {
-		REBCNT index, len = 0;
-		VAL_SERIES(arg) = Prep_Bin_Str(arg, &index, &len); // (keeps safe)
-		ser = Scan_Source(VAL_BIN(arg), VAL_LEN(arg));
-		goto done;
-	}
-
-	if (IS_BINARY(arg)) {
-		ser = Scan_Source(VAL_BIN_DATA(arg), VAL_LEN(arg));
-		goto done;
-	}
-
+	// map!, object! and vector! have same result for make/to
 	if (IS_MAP(arg)) {
 		ser = Map_To_Block(VAL_SERIES(arg), 0);
 		goto done;
@@ -333,17 +322,6 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 		goto done;
 	}
 
-//	if (make && IS_NONE(arg)) {
-//		ser = Make_Block(0);
-//		goto done;
-//	}
-
-	// to block! typset
-	if (!make && IS_TYPESET(arg) && type == REB_BLOCK) {
-		Set_Block(value, Typeset_To_Block(arg));
-		return;
-	}
-
 	if (make) {
 		// make block! 10
 		if (IS_INTEGER(arg) || IS_DECIMAL(arg)) {
@@ -351,9 +329,44 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 			Set_Series(type, value, Make_Block(len));
 			return;
 		}
-		Trap_Arg(arg);
+		
+	} else if (type == REB_BLOCK || type == REB_PAREN) {
+		// to block!/paren! typset!
+		if (IS_TYPESET(arg)) {
+			Set_Block(value, Typeset_To_Block(arg));
+			return;
+		}
+		// to block!/paren! ... simplified
+		goto to_blk_val;
 	}
 
+	// make from string! or binary! with tokenization
+	if (IS_STRING(arg)) {
+		REBCNT index, len = 0;
+		VAL_SERIES(arg) = Prep_Bin_Str(arg, &index, &len); // (keeps safe)
+		ser = Scan_Source(VAL_BIN(arg), VAL_LEN(arg));
+		goto done;
+	}
+
+	if (IS_BINARY(arg)) {
+		ser = Scan_Source(VAL_BIN_DATA(arg), VAL_LEN(arg));
+		goto done;
+	}
+
+	// use `make block! pair!` for block preallocation
+	if (IS_PAIR(arg)) {
+		len = (REBCNT)MAX(1, VAL_PAIR_X_INT(arg)) * (REBCNT)MAX(1, VAL_PAIR_Y_INT(arg));
+		Set_Series(type, value, Make_Block(len));
+		return;
+	}
+
+	// else not supported make block! ...
+	Trap_Arg(arg);
+
+
+to_blk_val:
+	// simplified to block! ..
+	// (only copy the value into a new block)
 	ser = Copy_Values(arg, 1);
 
 done:

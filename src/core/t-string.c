@@ -249,7 +249,11 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 	// MAKE/TO BINARY! <bitset!>
 	case REB_BITSET:
-		ser = Copy_Bytes(VAL_BIN(arg), VAL_TAIL(arg));
+		if(VAL_BITSET_NOT(arg)) {
+			ser = Complement_Binary(arg);
+		} else {
+			ser = Copy_Bytes(VAL_BIN(arg), VAL_TAIL(arg));
+		}
 		break;
 
 	// MAKE/TO BINARY! <image!>

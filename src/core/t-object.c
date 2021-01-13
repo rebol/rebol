@@ -343,20 +343,24 @@ static REBSER *Trim_Object(REBSER *obj)
 				break; // returns value
 			}
 
-			// make object! 10
-			if (IS_NUMBER(arg)) {
-				n = Int32s(arg, 0);
-				obj = Make_Frame(n);
-				break; // returns obj
+			// Allow only object! to be made from from map! or number! spec
+			if (type == REB_OBJECT) {
+
+				// make object! 10
+				if (IS_NUMBER(arg)) {
+					n = Int32s(arg, 0);
+					obj = Make_Frame(n);
+					break; // returns obj
+				}
+
+				// make object! map!
+				if (IS_MAP(arg)) {
+					obj = Map_To_Object(VAL_SERIES(arg));
+					break; // returns obj
+				}
 			}
 
-			// make object! map!
-			if (IS_MAP(arg)) {
-				obj = Map_To_Object(VAL_SERIES(arg));
-				break; // returns obj
-			}
-
-			//if (IS_NONE(arg)) {obj = Make_Frame(0); break;}
+			//if (IS_NONE(arg)) {obj = Make_Frame(0); break;} // removed by design!
 
 			Trap_Make(type, arg);
 		}

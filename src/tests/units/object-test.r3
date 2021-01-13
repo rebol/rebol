@@ -177,6 +177,19 @@ Rebol [
 		--assert ["1" "yes"] = values-of construct "a: 1^/b: yes"
 		--assert ["1 b: yes"] = values-of construct "a: 1 b: yes" ; there is not the newline!
 
+	--test-- "red-issue-4765"
+		a4765: make object! [ x: 1 show: does [x] ]
+		b4765: make object! [ x: 2 y: 3 show: does [reduce [x y]] ]
+		c4765: make a4765 b4765
+		--assert a4765/show == 1
+		--assert b4765/show == [2 3]
+
+		a4765x: make object! [ x: 1 show: does [x] ]
+		b4765x: make object! [ x: 2 show: does [reduce [x y]] y: 3]
+		c4765x: make a4765x b4765x
+		--assert a4765x/show == 1
+		--assert b4765x/show == [2 3]
+
 ===end-group===
 
 
@@ -190,6 +203,7 @@ Rebol [
 		--assert not same? a b
 ===end-group===
 
+
 ===start-group=== "Object actions"
 	--test-- "empty?"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1669
@@ -198,6 +212,23 @@ Rebol [
 	--test-- "length?"
 	--assert 0 = length? object []
 	--assert 0 = length? #[object! []]
+
+===end-group===
+
+
+===start-group=== "UNSET in object"
+	--test-- "unset ctx"
+	ctx: context [a: 1 b: 2 c: 3]
+	--assert unset? unset in ctx 'a
+	--assert unset? unset bind [b c] ctx
+	--assert all [
+		unset? :ctx/a
+		unset? :ctx/b
+		unset? :ctx/c
+	]
+	;@@ https://github.com/Oldes/Rebol-wishes/issues/28
+	--assert none? unset in ctx 'd
+
 
 ===end-group===
 
@@ -231,7 +262,7 @@ Rebol [
 
 	--test-- "issue-2076"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2076
-		--assert object? o: bound? use [x] ['x]
+		--assert object? o: context? use [x] ['x]
 		--assert object? append o 'self
 
 ===end-group===
@@ -331,7 +362,7 @@ Rebol [
 ===start-group=== "USE"
 	--test-- "issue-197"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/197
-	--assert object? o: use [a] [bind? 'a]
+	--assert object? o: use [a] [context? 'a]
 	--assert [a] = words-of o
 
 ===end-group===

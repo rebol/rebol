@@ -176,7 +176,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			index = Do_Next(block, i = index, 0); // stack volatile
 			ds = DS_POP; // volatile stack reference
 			if (IS_FALSE(ds)) {
-				Set_Block(ds, Copy_Block_Len(block, i, 3));
+				Set_Block(ds, Copy_Block(VAL_SERIES(value), VAL_INDEX(value))); // #2231
 				Trap1(RE_ASSERT_FAILED, ds);
 			}
 			if (THROWN(ds)) return R_TOS1;
@@ -328,15 +328,22 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 /***********************************************************************
 **
-*/	REBNATIVE(boundq)
+*/	REBNATIVE(contextq)
 /*
+**	Originally named `boundq`
+**	see: https://github.com/Oldes/Rebol-issues/issues/2440
+**
 ***********************************************************************/
 {
 	REBVAL *word = D_ARG(1);
 
 	if (!HAS_FRAME(word)) return R_NONE;
-	if (VAL_WORD_INDEX(word) < 0) return R_TRUE;
-	SET_OBJECT(D_RET, VAL_WORD_FRAME(word));
+	if (VAL_WORD_INDEX(word) < 0) {
+		// was originally returning R_TRUE for function context
+		 *D_RET = Stack_Frame(1)[3];
+	} else {
+		SET_OBJECT(D_RET, VAL_WORD_FRAME(word));
+	}
 	return R_RET;
 }
 
@@ -679,6 +686,9 @@ next_obj_val:
 			value = Get_Var(word);
 			SET_UNSET(value);
 		} else Trap1(RE_NOT_DEFINED, word);
+	} else if (IS_NONE(word)) {
+		// https://github.com/Oldes/Rebol-wishes/issues/28
+		return R_NONE;
 	} else {
 		for (word = VAL_BLK_DATA(word); NOT_END(word); word++) {
 			if (IS_WORD(word)) {

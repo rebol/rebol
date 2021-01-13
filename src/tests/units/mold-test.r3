@@ -285,6 +285,16 @@ Rebol [
 		--assert "[1 2" = mold/part/flat b 4
 		--assert "[1 2 3 4]" = mold/part/flat b 100
 
+	--test-- "issue-1439"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1439
+		--assert "1^/2^/3" = mold/only load "[1^/2^/3^/]"
+		--assert "1 2^/3^/4" = mold/only load "[1 2^/3^/4^/]"
+		--assert "1 2^/3^/4^/5" = mold/only load "[1 2^/3^/4^/5]"
+
+	--test-- "issue-2279"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2279
+		--assert "[[[^/    1^/]]]" = mold load {[[[^/1^/]]]}
+
 ===end-group===
 
 ===start-group=== "mold map!"
@@ -445,6 +455,22 @@ Rebol [
 	--test-- "mold/all datatype!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/219
 		--assert "#[datatype! integer!]" = mold/all integer!
+
+	--test-- "mold/all decimal!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1633
+		--assert "0.10000000000000001" = mold/all 0.1
+		--assert "0.29999999999999999" = mold/all 0.3
+
+===end-group===
+
+===start-group=== "form error!"
+	--test-- "form error!"
+		; no ANSI escape sequence!
+		--assert parse (form try [1 / 0]) [
+			{** Math error: attempt to divide by zero^/}
+			{** Where: / try} thru #"^/"
+			{** Near: / 0^/}
+		]
 
 ===end-group===
 

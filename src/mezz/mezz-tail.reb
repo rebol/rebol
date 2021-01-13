@@ -31,6 +31,3 @@ system/options/boot: clean-path system/options/boot
 
 ;protect system/standard
 protect-system-object
-
-;- try to execute file with user preferences
-if exists? ~/user.r3 [ try [do ~/user.r3] ]

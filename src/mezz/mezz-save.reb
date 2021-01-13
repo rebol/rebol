@@ -59,6 +59,7 @@ save: function [
 			header-data: any [
 				lib/all [
 					block? :value
+					block? value/1
 					first+ value ; the header (do not use TAKE)
 				]
 				[] ; empty header

@@ -132,6 +132,7 @@ make-module*: func [
 	if find spec/options 'extension [
 		append obj 'lib-base ; specific runtime values MUST BE FIRST
 	]
+	append obj 'local-lib ; local import library for the module
 
 	unless spec/type [spec/type: 'module] ; in case not set earlier
 
@@ -183,6 +184,7 @@ make-module*: func [
 	]
 
 	bind body obj
+	obj/local-lib: any [mixins make object! 0] ; always set, always overrides
 	if block? hidden [protect/hide/words hidden]
 	obj: to module! reduce [spec obj]
 	do body
@@ -194,10 +196,10 @@ make-module*: func [
 ; MOVE some of these to SYSTEM?
 boot-banner: ajoin [
 	"REBOL 3." system/version/2 #"." system/version/3
-	" for "    system/platform
+	" for "    system/platform " (" system/build/os #")"
 	" built "  system/build/date
 ]
-if system/build/git [
+if all [system/build/git system/build/git/commit] [
 	append append boot-banner " commit #" copy/part system/build/git/commit 8
 ]
 boot-help: "Boot-sys level - no extra features."
@@ -221,4 +223,38 @@ assert-utf8: function [
 		cause-error 'script 'no-decode ajoin ["UTF-" abs tmp]
 	]
 	data
+]
+
+log: func [
+	"Prints out debug message"
+	id [word!] "Source of the log message"
+	msg        "Output message"
+	/info
+	/more
+	/debug
+	/error
+	/local level
+][
+	if error [
+		msg: form either block? msg [reduce msg][msg]
+		foreach line parse/all msg #"^/" [
+			print ajoin [
+				" ^[[35m[" id "] ^[[1m"
+				either line/1 = #"*" []["** Error: "]
+				copy/part line 100
+				"^[[0m"
+			]
+		]
+		exit
+	]
+	if system/options/quiet [exit]
+	level: select system/options/log id
+	if any [none? level level <= 0] [exit]
+	if block? msg [msg: form reduce :msg]
+	case [
+		info  [ if level > 0 [print ajoin [" ^[[1;33m[" id "] ^[[36m" msg "^[[0m"]]]
+		more  [ if level > 1 [print ajoin [" ^[[33m[" id "] ^[[0;36m" msg "^[[0m"]]]
+		debug [ if level > 2 [print ajoin [" ^[[33m[" id "] ^[[0;32m" msg "^[[0m"]]]
+		true  [ if level > 0 [print ajoin [" ^[[33m[" id "] " msg "^[[0m"]]]
+	]
 ]

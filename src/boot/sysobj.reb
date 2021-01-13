@@ -18,16 +18,11 @@ REBOL [
 
 product:  'core
 
-; Next three fields are updated during build:
+; Next four fields are updated during build:
 platform: none
 version:  0.0.0
-build:    1
-
-license: {Copyright 2012 REBOL Technologies
-REBOL is a trademark of REBOL Technologies
-Licensed under the Apache License, Version 2.0.
-See: http://www.apache.org/licenses/LICENSE-2.0
-}
+build:    0
+license: none
 
 catalog: object [
 	; Static (non-changing) values, blocks, objects
@@ -157,12 +152,12 @@ options: object [  ; Options supplied to REBOL during startup
 
 	; verbosity of logs per service (codecs, schemes)
 	; 0 = nothing; 1 = info; 2 = more; 3 = debug
-	log: construct [
-		http:
-		tls:
-		zip:
-		tar: 1
-	]
+	log: #[map! [
+		http: 1
+		tls:  1
+		zip:  1
+		tar:  1
+	]]
 ]
 
 script: construct [

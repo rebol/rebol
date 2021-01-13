@@ -36,6 +36,22 @@ Rebol [
 		o: first load/header "rebol [a: true b: yes c: no d: false e: none f: foo] print 'hello"
 		--assert all [logic? o/a logic? o/b logic? o/c logic? o/d none? o/e word? o/f]
 
+	--test--"Script checksum verification"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1685
+		s: save/header none [print "Hello REBOL!"] [checksum: true]
+		--assert [print "Hello REBOL!"] = try [load s]
+		; corrupt the script...
+		clear at s 88
+		--assert all [
+			error? e: try [load s]
+			e/id = 'bad-checksum
+		]
+	--test-- "Save/length"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1684
+		s: sys/load-header save/length none [print "Hello REBOL!"]
+		--assert s/1/length = 21
+		--assert s/2 = #{7072696E74202248656C6C6F205245424F4C21220A}
+
 ===end-group===
 
 ===start-group=== "Load issues/wishes"
@@ -53,6 +69,13 @@ Rebol [
 	--test-- "issue-234"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/234
 		--assert [] = load to-string []
+	--test-- "issue-2435"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2435
+		--assert all [
+			error? e: try [load #{789DE3}] ;- no crash!
+			e/id = 'invalid-chars
+		]
+
 ===end-group===
 
 
@@ -85,6 +108,38 @@ Rebol [
 			error? e/1
 			e/2 = #{0A5D}
 		]
+===end-group===
+
+
+===start-group=== "SAVE"
+	data: [1 1.2 10:20 "test" user@example.com [sub block]]
+	--test-- "save to none"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1464
+		--assert #{310A} = save none 1
+		--assert #{0A} = save none [] ;@@ or better #{} ?
+		bin: save none data
+		--assert bin = #{
+3120312E322031303A3230202274657374222075736572406578616D706C652E
+636F6D205B73756220626C6F636B5D0A}
+		--assert data = load bin
+	--test-- "save to binary"
+		b: #{}
+		--assert #{310A} = save b 1
+		--assert #{310A320A} = save b 3
+		--assert #{310A320A237B30337D0A} = save b #{03}
+
+	--test-- "save/header"
+		bin: save/header none data [title: "my code"]
+		--assert bin = #{
+5245424F4C205B0A202020207469746C653A20226D7920636F6465220A5D0A31
+20312E322031303A3230202274657374222075736572406578616D706C652E63
+6F6D205B73756220626C6F636B5D0A} 
+		--assert data = load bin
+
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1465
+		bin: save/header none [1] true
+		--assert bin = #{5245424F4C205B5D0A310A}
+		--assert 1 = load bin
 ===end-group===
 
 
