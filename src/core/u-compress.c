@@ -28,9 +28,9 @@
 
 #include "sys-core.h"
 #include "sys-zlib.h"
-#ifdef USE_LZMA
+#ifdef INCLUDE_LZMA
 #include "sys-lzma.h"
-#endif // USE_LZMA
+#endif // INCLUDE_LZMA
 
 static void *zalloc(void *opaque, unsigned nr, unsigned size)
 {
@@ -47,7 +47,7 @@ static void zfree(void *opaque, void *addr)
 	free(addr);
 }
 
-//#ifdef old_Sterlings_code
+//#ifdef old_Sterlings_code // used also in LZMA code at this moment
 /*
  *  This number represents the top file size that,
  *  if the data is random, will produce a larger output
@@ -220,7 +220,7 @@ void Trap_ZStream_Error(z_stream *stream, int err, REBOOL while_compression)
 	return output;
 }
 
-#ifdef USE_LZMA
+#ifdef INCLUDE_LZMA
 
 static void *SzAlloc(ISzAllocPtr p, size_t size) { UNUSED(p); return malloc(size); }
 static void SzFree(ISzAllocPtr p, void *address) { UNUSED(p); free(address); }
@@ -340,4 +340,4 @@ static const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 	return output;
 }
 
-#endif //USE_LZMA
+#endif //INCLUDE_LZMA

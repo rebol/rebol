@@ -1,4 +1,3 @@
-#ifdef USE_GIF_CODEC
 /***********************************************************************
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
@@ -38,7 +37,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
-
+#ifdef INCLUDE_GIF_CODEC
 
 #define	MAX_STACK_SIZE	4096
 #define	NULL_CODE		(-1)
@@ -355,4 +354,4 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 	Register_Codec("gif", Codec_GIF_Image);
 }
 
-#endif //USE_GIF_CODEC
+#endif //INCLUDE_GIF_CODEC

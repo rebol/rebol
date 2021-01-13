@@ -67,6 +67,16 @@ These are now obsolete (as of A107) and should be removed:
 
 */
 
+
+//* Options ************************************************************
+
+#if !defined(REBOL_OPTIONS_FILE)
+#include "opt-config.h"
+#else
+#include REBOL_OPTIONS_FILE
+#endif
+
+
 //* Common *************************************************************
 
 #define THREADED				// enable threads
@@ -111,11 +121,13 @@ These are now obsolete (as of A107) and should be removed:
 #ifdef REB_VIEW
 #define HAS_WIDGET_GOB			// supports it
 // use native image codecs only in VIEW version so far
-#define USE_NATIVE_IMAGE_CODECS
-#undef	USE_BMP_CODEC
-#undef	USE_PNG_CODEC
-#undef	USE_GIF_CODEC
-#undef	USE_JPG_CODEC
+#if !defined(USE_OS_IMAGE_CODECS)
+#define USE_OS_IMAGE_CODECS
+#undef	INCLUDE_BMP_CODEC
+#undef	INCLUDE_PNG_CODEC
+#undef	INCLUDE_GIF_CODEC
+#undef	INCLUDE_JPG_CODEC
+#endif
 #endif
 
 #ifdef THREADED

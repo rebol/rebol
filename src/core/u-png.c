@@ -1,4 +1,3 @@
-#ifdef USE_PNG_CODEC
 /***********************************************************************
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
@@ -38,6 +37,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#ifdef INCLUDE_PNG_CODEC
 #include "sys-zlib.h"
 
 #if defined(ENDIAN_LITTLE)
@@ -867,4 +867,4 @@ error:
 	Register_Codec("png", Codec_PNG_Image);
 }
 
-#endif //USE_PNG_CODEC
+#endif //INCLUDE_PNG_CODEC

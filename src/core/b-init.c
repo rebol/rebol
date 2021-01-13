@@ -727,19 +727,19 @@ extern const REBYTE Str_Banner[];
 {
 	Register_Codec("text", Codec_Text);
 	Register_Codec("markup", Codec_Markup);
-#ifdef USE_BMP_CODEC
+#ifdef INCLUDE_BMP_CODEC
 	Init_BMP_Codec();
 #endif
-#ifdef USE_GIF_CODEC
+#ifdef INCLUDE_GIF_CODEC
 	Init_GIF_Codec();
 #endif
-#ifdef USE_PNG_CODEC
+#ifdef INCLUDE_PNG_CODEC
 	Init_PNG_Codec();
 #endif
 #ifdef USE_JPG_CODEC
 	Init_JPEG_Codec();
 #endif
-#ifdef USE_WAV_CODEC
+#ifdef INCLUDE_WAV_CODEC
 	Init_WAV_Codec();
 #endif
 }
