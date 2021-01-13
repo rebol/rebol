@@ -1,5 +1,6 @@
 REBOL [R3] Language Interpreter and Run-time Environment
 Copyright 2012 REBOL Technologies
+Copyright 2012-2021 Rebol Open Source Developers
 REBOL is a trademark of REBOL Technologies
 Licensed under the Apache License, Version 2.0
 See included LICENSE file for details
@@ -8,59 +9,69 @@ See included LICENSE file for details
 Credits for Non-REBOL orginated C files and modules
 ---------------------------------------------------
 
-Unicode encoding/decoding functions:
-Copyright 2001-2004 Unicode, Inc.
 
-ECDH:
-Copyright (c) 2014, Kenneth MacKay - https://github.com/kmackay/micro-ecc
-All rights reserved.
+* MbedTLS parts (checksums so far):
+  Copyright The Mbed TLS Contributors
+  SPDX-License-Identifier: Apache-2.0
+  https://github.com/ARMmbed/mbedtls
 
-CHACHA20:
-Copyright (c) 2014, insane coder - http://chacha20.insanecoding.org/
-Copyright (c) 2016-2018, Eduard Suica
+* Unicode encoding/decoding functions:
+  Copyright 2001-2004 Unicode, Inc.
 
-POLY1305:
-Daniel Bernstein (http://cr.yp.to/mac.html)
-Andrew Moon (https://github.com/floodyberry/poly1305-donna)
+* ECDH:
+  Copyright (c) 2014, Kenneth MacKay - https://github.com/kmackay/micro-ecc
+  All rights reserved.
 
-MD5: 
-This software contains code derived from the RSA Data Security
-Inc. MD5 Message-Digest Algorithm, including various
-modifications by Spyglass Inc., Carnegie Mellon University, and
-Bell Communications Research, Inc (Bellcore).
+* CHACHA20:
+  Copyright (c) 2014, insane coder - http://chacha20.insanecoding.org/
+  Copyright (c) 2016-2018, Eduard Suica
 
-SHA1:
-Copyright 1995-1998 Eric Young (eay@cryptsoft.com)
-All rights reserved.
+* POLY1305:
+  Daniel Bernstein (http://cr.yp.to/mac.html)
+  Andrew Moon (https://github.com/floodyberry/poly1305-donna)
 
-SHA256/384/512:
-Copyright (c) 2000-2001, Aaron D. Gifford - http://www.aarongifford.com/
+* RC4, AES, DH:
+  Copyright (c) 2007, Cameron Rich
+  All rights reserved.
 
-RC4, AES, DH:
-Copyright (c) 2007, Cameron Rich
-All rights reserved.
+* ZLIB general purpose compression library:
+  Version 1.1.2, March 19th, 1998
+  Copyright 1995-1998 Jean-loup Gailly and Mark Adler
 
-ZLIB general purpose compression library:
-Version 1.1.2, March 19th, 1998
-Copyright 1995-1998 Jean-loup Gailly and Mark Adler
+* LZMA (optional):
+  Copyright (C) 2018, Igor Pavlov
+  Public domain - https://www.7-zip.org/sdk.html
 
-LZMA (optional):
-Copyright (C) 2018, Igor Pavlov
-Public domain - https://www.7-zip.org/sdk.html
+* JPEG decoder:
+  Copyright 1994-1996, Thomas G. Lane.
+  This file is part of the Independent JPEG Group's software.
 
-JPEG decoder:
-Copyright 1994-1996, Thomas G. Lane.
-This file is part of the Independent JPEG Group's software.
+* JSON codec:
+  Copyright (C) 2019 Red Foundation. All rights reserved.
 
-JSON codec:
-Copyright (C) 2019 Red Foundation. All rights reserved.
+* dtoa:
+  The author of this software is David M. Gay.
+  Copyright (c) 1991, 2000, 2001 by Lucent Technologies.
 
-dtoa:
-The author of this software is David M. Gay.
-Copyright (c) 1991, 2000, 2001 by Lucent Technologies.
+* qsort:
+  Copyright (c) 1992, 1993 The Regents of the University of California.
 
-qsort:
-Copyright (c) 1992, 1993 The Regents of the University of California.
+* UTF-8 decoder:
+  Copyright (c) 2008-2010 Bjoern Hoehrmann <bjoern@hoehrmann.de>
 
-UTF-8 decoder:
-Copyright (c) 2008-2010 Bjoern Hoehrmann <bjoern@hoehrmann.de>
+
+Credits for currently deprecated code
+-------------------------------------
+
+* MD5: 
+  This software contains code derived from the RSA Data Security
+  Inc. MD5 Message-Digest Algorithm, including various
+  modifications by Spyglass Inc., Carnegie Mellon University, and
+  Bell Communications Research, Inc (Bellcore).
+
+* SHA1:
+  Copyright 1995-1998 Eric Young (eay@cryptsoft.com)
+  All rights reserved.
+
+* SHA256/384/512:
+  Copyright (c) 2000-2001, Aaron D. Gifford - http://www.aarongifford.com/

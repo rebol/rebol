@@ -30,95 +30,40 @@
 #include "sys-core.h"
 #include "sys-scan.h"
 #include "sys-deci-funcs.h"
+#include "sys-checksum.h"
 
 REBCNT z_adler32_z(REBCNT adler, REBYTE *buf, REBCNT len);
 
-/***********************************************************************
-**
-**	Hash Function Externs
-**
-***********************************************************************/
 
-#ifndef SHA_DEFINED
-#ifdef HAS_SHA1
-REBYTE *SHA1(REBYTE *, REBCNT, REBYTE *);
-void SHA1_Init(void *c);
-void SHA1_Update(void *c, REBYTE *data, REBCNT len);
-void SHA1_Final(REBYTE *md, void *c);
-int  SHA1_CtxSize(void);
-#endif
-#endif
-
-#ifndef SHA2_DEFINED
-#ifdef HAS_SHA2
-REBYTE *SHA256(REBYTE *, REBCNT, REBYTE *);
-void SHA256_Init(void *c);
-void SHA256_Update(void *c, REBYTE *data, REBCNT len);
-void SHA256_Final(REBYTE *md, void *c);
-int  SHA256_CtxSize(void);
-
-REBYTE *SHA384(REBYTE *, REBCNT, REBYTE *);
-void SHA384_Init(void *c);
-void SHA384_Update(void *c, REBYTE *data, REBCNT len);
-void SHA384_Final(REBYTE *md, void *c);
-int  SHA384_CtxSize(void);
-
-REBYTE *SHA512(REBYTE *, REBCNT, REBYTE *);
-void SHA512_Init(void *c);
-void SHA512_Update(void *c, REBYTE *data, REBCNT len);
-void SHA512_Final(REBYTE *md, void *c);
-int  SHA512_CtxSize(void);
-#endif
-#endif
-
-#ifndef MD5_DEFINED
-#ifdef HAS_MD5
-REBYTE *MD5(REBYTE *, REBCNT, REBYTE *);
-void MD5_Init(void *c);
-void MD5_Update(void *c, REBYTE *data, REBCNT len);
-void MD5_Final(REBYTE *md, void *c);
-int  MD5_CtxSize(void);
-#endif
-#endif
-
-#ifdef HAS_MD4
-REBYTE *MD4(REBYTE *, REBCNT, REBYTE *);
-void MD4_Init(void *c);
-void MD4_Update(void *c, REBYTE *data, REBCNT len);
-void MD4_Final(REBYTE *md, void *c);
-int  MD4_CtxSize(void);
-#endif
 
 // Table of has functions and parameters:
 static struct digest {
 	REBYTE *(*digest)(REBYTE *, REBCNT, REBYTE *);
 	void (*init)(void *);
 	void (*update)(void *, REBYTE *, REBCNT);
-	void (*final)(REBYTE *, void *);
+	void (*final)(void *, REBYTE *);
 	int (*ctxsize)(void);
 	REBINT index;
 	REBINT len;
 	REBINT hmacblock;
 } digests[] = {
 
-#ifdef HAS_SHA1
-	{SHA1, SHA1_Init, SHA1_Update, SHA1_Final, SHA1_CtxSize, SYM_SHA1, 20, 64},
+	{MD5,       MD5_Starts,    MD5_Update,    MD5_Finish,    MD5_CtxSize, SYM_MD5,    16, 64},
+	{SHA1,     SHA1_Starts,   SHA1_Update,   SHA1_Finish,   SHA1_CtxSize, SYM_SHA1,   20, 64},
+	{SHA256, SHA256_Starts, SHA256_Update, SHA256_Finish, SHA256_CtxSize, SYM_SHA256, 32, 64},
+#ifdef INCLUDE_SHA224
+	{SHA224, SHA224_Starts, SHA256_Update, SHA256_Finish, SHA256_CtxSize, SYM_SHA224, 28, 64},
 #endif
-
-#ifdef HAS_SHA2
-	{ SHA256, SHA256_Init, SHA256_Update, SHA256_Final, SHA256_CtxSize, SYM_SHA256, 32, 64 },
-	{ SHA384, SHA384_Init, SHA384_Update, SHA384_Final, SHA384_CtxSize, SYM_SHA384, 48, 128 },
-	{ SHA512, SHA512_Init, SHA512_Update, SHA512_Final, SHA512_CtxSize, SYM_SHA512, 64, 128 },
+#ifdef INCLUDE_SHA384
+	{SHA384, SHA384_Starts, SHA384_Update, SHA384_Finish, SHA384_CtxSize, SYM_SHA384, 48, 128},
 #endif
-
-#ifdef HAS_MD4
-	{MD4, MD4_Init, MD4_Update, MD4_Final, MD4_CtxSize, SYM_MD4, 16, 64},
+	{SHA512, SHA512_Starts, SHA512_Update, SHA512_Finish, SHA512_CtxSize, SYM_SHA512, 64, 128},
+#ifdef INCLUDE_RIPEMD160
+	{RIPEMD160, RIPEMD160_Starts, RIPEMD160_Update, RIPEMD160_Finish, RIPEMD160_CtxSize, SYM_RIPEMD160, 20, 64},
 #endif
-
-#ifdef HAS_MD5
-	{MD5, MD5_Init, MD5_Update, MD5_Final, MD5_CtxSize, SYM_MD5, 16, 64},
+#ifdef INCLUDE_MD4
+	{MD4, MD4_Starts, MD4_Update, MD4_Finish, MD4_CtxSize, SYM_MD4, 16, 64},
 #endif
-
 	{0}
 
 };
@@ -234,7 +179,7 @@ static struct digest {
 				LABEL_SERIES(digest, "checksum digest");
 
 				if (D_REF(ARG_CHECKSUM_KEY)) {
-					REBYTE tmpdigest[64];		// Size must be max of all digest[].len;
+					REBYTE tmpdigest[128];		// Size must be max of all digest[].len;
 					REBYTE ipad[128],opad[128];	// Size must be max of all digest[].hmacblock;
 					void *ctx = Make_Mem(digests[i].ctxsize());
 					REBVAL *key = D_ARG(ARG_CHECKSUM_KEY_VALUE);
@@ -261,11 +206,11 @@ static struct digest {
 					digests[i].init(ctx);
 					digests[i].update(ctx,ipad,blocklen);
 					digests[i].update(ctx, data, len);
-					digests[i].final(tmpdigest,ctx);
+					digests[i].final(ctx, tmpdigest);
 					digests[i].init(ctx);
 					digests[i].update(ctx,opad,blocklen);
 					digests[i].update(ctx,tmpdigest,digests[i].len);
-					digests[i].final(BIN_HEAD(digest),ctx);
+					digests[i].final(ctx,BIN_HEAD(digest));
 
 					Free_Mem(ctx, digests[i].ctxsize());
 
@@ -334,7 +279,7 @@ static struct digest {
 	ser = Prep_Bin_Str(data, &index, &len); // result may be a SHARED BUFFER!
 
 	if(ref_lzma) {
-#ifdef USE_LZMA
+#ifdef INCLUDE_LZMA
 		Set_Binary(D_RET, CompressLzma(ser, index, (REBINT)len, ref_level ? VAL_INT32(level) : -1));
 #else
 		Trap0(RE_FEATURE_NA);
@@ -393,7 +338,7 @@ static struct digest {
 	if (ref_size) limit = (REBCNT)Int32s(size, 1); // /limit size
 
 	if (ref_lzma) {
-#ifdef USE_LZMA
+#ifdef INCLUDE_LZMA
 		Set_Binary(D_RET, DecompressLzma(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit));
 #else
 		Trap0(RE_FEATURE_NA);

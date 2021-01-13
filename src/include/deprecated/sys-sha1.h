@@ -21,9 +21,9 @@ extern "C" {
 		unsigned int num;
 	} SHA_CTX;
 
-	void SHA1_Init(SHA_CTX *c);
+	void SHA1_Starts(SHA_CTX *c);
 	void SHA1_Update(SHA_CTX *c, unsigned char *data, size_t len);
-	void SHA1_Final(unsigned char *md, SHA_CTX *c);
+	void SHA1_Finish(SHA_CTX *c, unsigned char *md);
 	int SHA1_CtxSize(void);
 	//unsigned char *SHA1(unsigned char *d, SHA_LONG n,unsigned char *md);
 	//static void SHA1_Transform(SHA_CTX *c, unsigned char *data);

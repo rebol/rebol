@@ -54,9 +54,11 @@
 
 
 // otional checksums **************************************************/
-//#define INCLUDE_MBEDTLS       // used for checksum implementation so far (for crypt later)
-#define INCLUDE_MD4         // checksum: MD4 (unsecure)
-#define INCLUDE_RIPEMD160   // checksum: RIPE-MD-160 (requires USE_MBEDTLS)
+#define INCLUDE_MBEDTLS       // used for checksum implementation so far (for crypt later)
+#define INCLUDE_MD4           // checksum: MD4 (unsecure)
+#define INCLUDE_RIPEMD160     // checksum: RIPE-MD-160 (requires USE_MBEDTLS)
+#define INCLUDE_SHA224
+#define INCLUDE_SHA384
 
 
 // unfinished features ************************************************/

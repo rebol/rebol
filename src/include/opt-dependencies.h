@@ -23,7 +23,7 @@
 **  Module:  opt-dependencies.h
 **  Author:  Oldes
 **  Notes:
-**      This file is used to check user defined options
+**      This file is used to validate user defined options
 **
 ***********************************************************************/
 
@@ -31,25 +31,39 @@
 #define REBOL_OPTIONS_H
 
 //**************************************************************//
-//** dependencies... do not modify! ****************************//
+//** dependency fixes! ****************************************//
+
 #if defined(INCLUDE_MBEDTLS)
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
-#endif
+	#if !defined(MBEDTLS_CONFIG_FILE)
+	#include "mbedtls/config.h"
+	#else
+	#include MBEDTLS_CONFIG_FILE
+	#endif
 
-#if defined(INCLUDE_MD4)
-#define MBEDTLS_MD4_C
-#else
-#undef MBEDTLS_MD4_C
-#endif
+	#if defined(INCLUDE_MD4)
+	#define MBEDTLS_MD4_C
+	#else
+	#undef MBEDTLS_MD4_C
+	#endif
 
-#if defined(INCLUDE_RIPEMD160)
-#define MBEDTLS_RIPEMD160_C
+	#if defined(INCLUDE_RIPEMD160)
+	#define MBEDTLS_RIPEMD160_C
+	#else
+	#undef MBEDTLS_RIPEMD160_C
+	#endif
 #else
-#undef MBEDTLS_RIPEMD160_C
+	// no mbedTLS
+	#if defined(INCLUDE_RIPEMD160)
+	#undef INCLUDE_RIPEMD160
+	#endif
+
+	#if defined(INCLUDE_SHA224)
+	#undef INCLUDE_SHA224
+	#endif
+
+	#if defined(INCLUDE_MD4)
+	#undef INCLUDE_MD4
+	#endif
 #endif
 
 #endif //REBOL_OPTIONS_H

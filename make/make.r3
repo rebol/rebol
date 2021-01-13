@@ -81,11 +81,8 @@ append cmd-menu {^-^[[1;32;49mc^[[0m:  Clean^/}
 append cmd-menu {^-^[[1;32;49mq^[[0m:  Quit^/}
 
 clean-project: func[/local dir][
-	dir: %objs/
-	foreach file read dir [
-		print ["Deleting:" dir/:file]
-		delete dir/:file
-	] 
+	print ["Deleting directory:" clean-path %objs/]
+	delete-dir %objs/
 ]
 
 eval-cmd: func[cmd [string! block!] /local err][
