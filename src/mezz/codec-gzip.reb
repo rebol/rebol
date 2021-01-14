@@ -51,7 +51,7 @@ register-codec [
 		]
 		if 2 = (2 and flg) [ ;FHCRC
 			;the two least significant bytes of the CRC32 for all bytes of the gzip header up to and not including the CRC16
-			;checksum/method/part bin/buffer-write 'CRC32 index? bin/buffer
+			;checksum/part bin/buffer-write 'CRC32 index? bin/buffer
 			crc16: binary/read bin 'UI16LE
 		]
 		if verbose > 0 [	

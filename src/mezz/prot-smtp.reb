@@ -174,7 +174,7 @@ sync-smtp-handler: func [ event
 								auth-key: skip response 4
 								auth-key: debase auth-key 64
 								; compute challenge response
-								auth-key: checksum/method/key auth-key 'md5 client/spec/pass
+								auth-key: checksum/with auth-key 'md5 client/spec/pass
 								write client to-binary net-log/C join 
 								enbase reform [client/spec/user lowercase enbase auth-key 16] 64 CRLF
 								client/spec/state: 'PASSWORD

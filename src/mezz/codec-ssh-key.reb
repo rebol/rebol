@@ -60,7 +60,7 @@ wrap [
 					]
 					iv: debase iv 16
 					unless p [p: ask/hide "Pasword: "]
-					p: checksum/method
+					p: checksum
 						join to binary! p copy/part iv 8
 						'md5
 					d: aes/key/decrypt p iv

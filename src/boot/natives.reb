@@ -385,20 +385,7 @@ collect-words: native [
 	words [any-object! block! none!] "Words to ignore"
 ]
 
-checksum: native [
-	{Computes a checksum, CRC, or hash.}
-	data [binary! string!] {Bytes to checksum. String value is first converted to UTF-8!}
-	/part length {Length of data}
-	/tcp {Returns an Internet TCP 16-bit checksum}
-	/secure {Returns a cryptographically secure checksum}
-	/hash {Returns a hash value}
-	size [integer!] {Size of the hash table}
-	/method {Method to use}
-	word [word!] {Methods: SHA1 SHA256 SHA384 SHA512 MD5 CRC32 ADLER32}
-	/key {Returns keyed HMAC value}
-	key-value [any-string! binary!] {Key to use}
-]
-
+;checksum:   native [] ; defined in %n-string.c
 ;compress:   native [] ; defined in %n-string.c
 ;decompress: native [] ; defined in %n-string.c
 

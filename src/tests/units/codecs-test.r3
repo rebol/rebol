@@ -81,22 +81,22 @@ Rebol [
 --test-- "load UCS16-LE txt"
 	--assert all [
 		string? try [str: load %units/files/issue-2186-UTF16-LE.txt]
-		11709824 = checksum str
+		11709824 = checksum str 'crc24
 	]
 --test-- "load UCS16-BE txt"
 	--assert all [
 		string? try [str: load %units/files/issue-2186-UTF16-BE.txt]
-		11709824 = checksum str
+		11709824 = checksum str 'crc24
 	]
 --test-- "load UCS32-LE txt"
 	--assert all [
 		string? try [str: load %units/files/issue-2186-UTF32-LE.txt]
-		11709824 = checksum str
+		11709824 = checksum str 'crc24
 	]
 --test-- "load UCS32-BE txt"
 	--assert all [
 		string? try [str: load %units/files/issue-2186-UTF32-BE.txt]
-		11709824 = checksum str
+		11709824 = checksum str 'crc24
 	]
 --test-- "load/save issue! as .txt"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1937
@@ -133,12 +133,12 @@ if find codecs 'wav [
 			--assert   44100 = snd/rate
 			--assert       1 = snd/channels
 			--assert      16 = snd/bits
-			--assert 3097828 = checksum to-binary snd/data
+			--assert 3097828 = checksum to-binary snd/data  'crc24
 			snd: none
 		--test-- "Decode WAV data"
 			--assert binary? bin: read %units/files/zblunk_02.wav
 			--assert object? snd: decode 'WAV bin
-			--assert 4283614 = checksum to-binary snd/data
+			--assert 4283614 = checksum to-binary snd/data 'crc24
 			snd: none
 			bin: none
 			
@@ -224,7 +224,7 @@ if find codecs 'zip [
 			--assert info/1   = %xJSFL.komodoproject
 			--assert info/2/1 = 18-Aug-2012/5:20:28
 			data: codecs/zip/decompress-file at bin info/2/2 reduce [info/2/5 info/2/3 info/2/4]
-			--assert info/2/6 = checksum/method data 'crc32 
+			--assert info/2/6 = checksum data 'crc32
 
 	===end-group===
 	system/options/log/zip: v

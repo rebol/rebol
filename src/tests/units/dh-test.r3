@@ -117,7 +117,7 @@ foreach ecurve curves [
 		;- wants to sign some data:
 		data: {Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.}
 		;- computes its hash:
-		hash: checksum/method data 'sha256
+		hash: checksum data 'sha256
 		;- and use ECDSA to sign it using her private key
 		signature: ecdsa/sign k-Alice hash
 		--assert binary? signature

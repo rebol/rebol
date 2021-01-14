@@ -216,7 +216,7 @@ if system/platform = 'Windows [
 		f: open %zeroes-445.txt
 		write/part f #{1020304050} 100
 		close f
-		--assert 10873462 = checksum read %zeroes-445.txt
+		--assert 10873462 = checksum read %zeroes-445.txt 'crc24
 		delete %zeroes-445.txt
 
 ===end-group===

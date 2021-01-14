@@ -116,61 +116,43 @@ static struct digest {
 **
 */	REBNATIVE(checksum)
 /*
-**		Computes checksum or hash value.
-**
-**		Note: Currently BINARY only.
-**
-**	Args:
-**
-**		data [any-string!] {Data to checksum}
-**		/part length
-**		/tcp {Returns an Internet TCP 16-bit checksum.}
-**		/secure {Returns a cryptographically secure checksum.}
-**		/hash {Returns a hash value}
-**		size [integer!] {Size of the hash table}
-**		/method {Method to use}
-**		word [word!] {Method: SHA1 MD5}
-**		/key {Returns keyed HMAC value}
-**		key-value [any-string! binary!] {Key to use}
-**
+//	checksum: native [
+//		{Computes a checksum, CRC, hash, or HMAC.}
+//		data [binary! string!] {If string, it will be UTF8 encoded}
+//		method [word!] {One of `system/catalog/checksums` and HASH}
+//		/with {Extra value for HMAC key or hash table size; not compatible with TCP/CRC24/CRC32/ADLER32 methods.}
+//		 spec [any-string! binary! integer!] {String or binary for MD5/SHA* HMAC key, integer for hash table size.}
+//		/part {Limits to a given length}
+//		 length
+//	]
 ***********************************************************************/
 {
-	REBVAL *arg = D_ARG(ARG_CHECKSUM_DATA);
+	REBVAL *arg  = D_ARG(ARG_CHECKSUM_DATA);
+	REBINT sym   = VAL_WORD_CANON(D_ARG(ARG_CHECKSUM_METHOD));
+	REBVAL *spec = D_ARG(ARG_CHECKSUM_SPEC);
 	REBINT sum;
 	REBINT i;
 	REBINT j;
-	REBSER *digest;
-	REBINT sym = SYM_SHA1;
-	REBCNT len;
+	REBSER *digest, *ser;
+	REBCNT len, keylen;
 	REBYTE *data;
+	REBYTE *keycp;
+
 
 	len = Partial1(arg, D_ARG(ARG_CHECKSUM_LENGTH));
 
 	if (IS_STRING(arg)) {
-		// using `digest` just as a temp variable here!
-		digest = Encode_UTF8_Value(arg, len, 0);
-		data = SERIES_DATA(digest);
-		len = SERIES_LEN(digest) - 1;
+		ser = Encode_UTF8_Value(arg, len, 0);
+		data = SERIES_DATA(ser);
+		len = SERIES_LEN(ser) - 1;
 	}
 	else {
 		data = VAL_BIN_DATA(arg);
 	}
 
-	
-
-	// Method word:
-	if (D_REF(ARG_CHECKSUM_METHOD)) sym = VAL_WORD_CANON(D_ARG(ARG_CHECKSUM_WORD));
-
-	// If method, secure, or key... find matching digest:
-	if (D_REF(ARG_CHECKSUM_METHOD) || D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) {
-
-		if (sym == SYM_CRC32 || sym == SYM_ADLER32) {
-			if (D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) Trap0(RE_BAD_REFINES);
-			i = (sym == SYM_CRC32) ? CRC32(data, len) : z_adler32_z(0x00000001L, data, len);
-			DS_RET_INT(i);
-			return R_RET;
-		}
-
+	if (sym > SYM_CRC32 && sym <= SYM_SHA512) {
+		// O: could be optimized using index computed from `sym`
+		// find matching digest:
 		for (i = 0; i < sizeof(digests) / sizeof(digests[0]); i++) {
 
 			if (digests[i].index == sym) {
@@ -178,13 +160,24 @@ static struct digest {
 				digest = Make_Series(digests[i].len, 1, FALSE);
 				LABEL_SERIES(digest, "checksum digest");
 
-				if (D_REF(ARG_CHECKSUM_KEY)) {
+				if (D_REF(ARG_CHECKSUM_WITH)) {	// HMAC
+					if (IS_INTEGER(spec))
+						Trap1(RE_BAD_REFINE, D_ARG(ARG_CHECKSUM_SPEC));
+
+					if (IS_BINARY(spec)) {
+						keycp = VAL_BIN_DATA(spec);
+						keylen = VAL_LEN(spec);
+					}
+					else {
+						// normalize to UTF8 first
+						ser = Encode_UTF8_Value(spec, VAL_LEN(spec), 0);
+						keycp = SERIES_DATA(ser);
+						keylen = SERIES_LEN(ser) - 1;
+					}
 					REBYTE tmpdigest[128];		// Size must be max of all digest[].len;
 					REBYTE ipad[128],opad[128];	// Size must be max of all digest[].hmacblock;
 					void *ctx = Make_Mem(digests[i].ctxsize());
-					REBVAL *key = D_ARG(ARG_CHECKSUM_KEY_VALUE);
-					REBYTE *keycp = VAL_BIN_DATA(key);
-					int keylen = VAL_LEN(key);
+
 					int blocklen = digests[i].hmacblock;
 
 					if (keylen > blocklen) {
@@ -224,23 +217,34 @@ static struct digest {
 				return 0;
 			}
 		}
+		// used correct name, but diggest was not found (excluded from build)
+		Trap0(RE_FEATURE_NA);
+	}
 
-		Trap_Arg(D_ARG(ARG_CHECKSUM_WORD));
+	if (D_REF(ARG_CHECKSUM_WITH) && ((sym > SYM_HASH && sym <= SYM_CRC32) || sym == SYM_TCP))
+		Trap0(RE_BAD_REFINES);
+
+	if (sym == SYM_CRC32 || sym == SYM_ADLER32) {
+		i = (sym == SYM_CRC32) ? CRC32(data, len) : z_adler32_z(0x00000001L, data, len);
 	}
-	else if (D_REF(ARG_CHECKSUM_TCP)) { // /tcp
-		i = Compute_IPC(data, len);
-	}
-	else if (D_REF(ARG_CHECKSUM_HASH)) {  // /hash
-		sum = VAL_INT32(D_ARG(ARG_CHECKSUM_SIZE)); // /size
+	else if (sym == SYM_HASH) {  // /hash
+		if(!D_REF(ARG_CHECKSUM_WITH)) Trap0(RE_MISSING_ARG);
+		if (!IS_INTEGER(spec)) Trap1(RE_BAD_REFINE, D_ARG(ARG_CHECKSUM_SPEC));
+		sum = VAL_INT32(spec); // size of the hash table
 		if (sum <= 1) sum = 1;
 		i = Hash_String(data, len) % sum;
 	}
-	else {
+	else if (sym == SYM_CRC24) {
 		i = Compute_CRC24(data, len);
+	}
+	else if (sym == SYM_TCP) {
+		i = Compute_IPC(data, len);
+	}
+	else {
+		Trap_Arg(D_ARG(ARG_CHECKSUM_METHOD));
 	}
 
 	DS_RET_INT(i);
-
 	return R_RET;
 }
 

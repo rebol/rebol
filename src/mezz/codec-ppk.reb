@@ -66,8 +66,8 @@ register-codec [
 					pass: either password [copy pass][
 						ask/hide ajoin ["Key password for " mold comm ": "]
 					]
-					key: join checksum/secure join #{00000000} pass
-					          checksum/secure join #{00000001} pass
+					key: join checksum join #{00000000} pass 'sha1
+					          checksum join #{00000001} pass 'sha1
 					key: aes/decrypt/key copy/part key 32 none
 					pri: aes/decrypt/stream key pri
 				][
@@ -87,11 +87,11 @@ register-codec [
 					UI32BYTES :pri
 				] 'buffer
 			]
-			mackey: checksum/secure join "putty-private-key-file-mac-key" any [pass ""]
+			mackey: checksum join "putty-private-key-file-mac-key" any [pass ""] 'sha1
 			if pass [forall pass [pass/1: random 255]]
 			if pmac <> form either mac? [
-				checksum/secure/key macdata mackey
-			][	checksum/secure     macdata ] [
+				checksum/with macdata 'sha1 mackey
+			][	checksum      macdata 'sha1 ] [
 				print either key ["Wrong password!"]["MAC failed!"]
 				return none
 			]

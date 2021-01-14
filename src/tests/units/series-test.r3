@@ -972,46 +972,46 @@ Rebol [
 	bin: read %units/files/issue-2186-UTF16-LE.txt
 	--assert all [
 		string? try [str: to-string bin]
-		3160989 = checksum str
+		3160989 = checksum str 'crc24
 	]
 --test-- "issue-2186 read UCS16-BE"
 	bin: read %units/files/issue-2186-UTF16-BE.txt
 	--assert all [
 		string? try [str: to-string bin]
-		3160989 = checksum str
+		3160989 = checksum str 'crc24
 	]
 --test-- "issue-2186 read UCS32-LE"
 	bin: read %units/files/issue-2186-UTF32-LE.txt
 	--assert all [
 		string? try [str: to-string bin]
-		3160989 = checksum str
+		3160989 = checksum str 'crc24
 	]
 --test-- "issue-2186 read UCS32-BE"
 	bin: read %units/files/issue-2186-UTF32-BE.txt
 	--assert all [
 		string? try [str: to-string bin]
-		3160989 = checksum str
+		3160989 = checksum str 'crc24
 	]
 ;- read/string converts CRLF to LF, so the checksum is different
 --test-- "issue-2186 read/string UCS16-LE"
 	--assert all [
 		string? try [str: read/string %units/files/issue-2186-UTF16-LE.txt]
-		11709824 = checksum str
+		11709824 = checksum str 'crc24
 	]
 --test-- "issue-2186 read/string UCS16-BE"
 	--assert all [
 		string? try [str: read/string %units/files/issue-2186-UTF16-BE.txt]
-		11709824 = checksum str
+		11709824 = checksum str 'crc24
 	]
 --test-- "issue-2186 read/string UCS32-LE"
 	--assert all [
 		string? try [str: read/string %units/files/issue-2186-UTF32-LE.txt]
-		11709824 = checksum str
+		11709824 = checksum str 'crc24
 	]
 --test-- "issue-2186 read/string UCS32-BE"
 	--assert all [
 		string? try [str: read/string %units/files/issue-2186-UTF32-BE.txt]
-		11709824 = checksum str
+		11709824 = checksum str 'crc24
 	]
 
 --test-- "invalid UTF8 char"
@@ -1033,9 +1033,9 @@ Rebol [
 	--assert "^(FFFD)" = to-string #{EFBFBD}
 	;- using quickbrown.bin instead of quickbrown.txt beacause GIT modifies CRLF to LF on posix
 	--assert none? invalid-utf? bin: read %units/files/quickbrown.bin
-	--assert 13806406 = checksum str: to-string bin ; does not normalize CRLF
-	--assert 5367801 = checksum deline str
-	--assert 5367801 = checksum read/string %units/files/quickbrown.bin ;converts CRLF to LF
+	--assert 13806406 = checksum str: to-string bin 'crc24 ; does not normalize CRLF
+	--assert  5367801 = checksum deline str 'crc24
+	--assert  5367801 = checksum read/string %units/files/quickbrown.bin 'crc24 ;converts CRLF to LF
 
 --test-- "LOAD Unicode encoded text with BOM"
 	--assert "Writer" = form load #{FEFF005700720069007400650072}     ;UTF-16BE

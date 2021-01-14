@@ -100,7 +100,7 @@ save: function [
 
 	case/all [
 		; Checksum uncompressed data, if requested
-		tmp: find header-data 'checksum [change next tmp checksum/secure data: to-binary data]
+		tmp: find header-data 'checksum [change next tmp checksum data: to-binary data 'sha1]
 		; Compress the data if necessary
 		compress [data: lib/compress data]
 		; File content is encoded as base-64:

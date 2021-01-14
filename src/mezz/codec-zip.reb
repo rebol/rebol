@@ -125,7 +125,7 @@ register-codec [
 					if all [
 						data
 						any [validate validate-crc?]
-						crc <> crc2: checksum/method data 'crc32
+						crc <> crc2: checksum data 'crc32
 					][
 						sys/log/error 'ZIP ["CRC check failed!" crc "<>" crc2]
 					]

@@ -468,10 +468,10 @@ TLS-update-messages-hash: function [
 	log-more ["Update-messages-hash bytes:" len "hash:" all [ctx/sha-port ctx/sha-port/spec/method]]
 	if none? ctx/sha-port [
 		either ctx/legacy? [
-			ctx/sha-port: open checksum://sha1
-			ctx/md5-port: open checksum://md5
+			ctx/sha-port: open checksum:sha1
+			ctx/md5-port: open checksum:md5
 		][
-			ctx/sha-port: open either ctx/mac-size = 48 [checksum://sha384][checksum://sha256]
+			ctx/sha-port: open either ctx/mac-size = 48 [checksum:sha384][checksum:sha256]
 		]
 		log-more ["Initialized SHA method:" ctx/sha-port/spec/method]
 	]
@@ -846,7 +846,7 @@ decrypt-msg: function [
 				binary/write bin [
 					UI16BYTES :data
 				]
-				mac-check: checksum/method/key bin/buffer hash-method server-mac-key
+				mac-check: checksum/with bin/buffer hash-method server-mac-key
 
 				;?? mac
 				;?? mac-check
@@ -925,7 +925,7 @@ encrypt-data: function [
 
 			binary/write bin content
 
-			MAC: checksum/method/key bin/buffer ctx/hash-method ctx/client-mac-key
+			MAC: checksum/with bin/buffer ctx/hash-method ctx/client-mac-key
 
 			;?? MAC
 			data: rejoin [content MAC]
@@ -1032,15 +1032,15 @@ prf: function [
 		p-md5: copy #{}
 		a: seed ; A(0)
 		while [output-length > length? p-md5][
-			a: checksum/method/key a 'md5 s-1 ; A(n)
-			append p-md5 checksum/method/key rejoin [a seed] 'md5 s-1
+			a: checksum/with a 'md5 s-1 ; A(n)
+			append p-md5 checksum/with rejoin [a seed] 'md5 s-1
 		]
 
 		p-sha1: copy #{}
 		a: seed ; A(0)
 		while [output-length > length? p-sha1][
-			a: checksum/method/key a 'sha1 s-2 ; A(n)
-			append p-sha1 checksum/method/key rejoin [a seed] 'sha1 s-2
+			a: checksum/with a 'sha1 s-2 ; A(n)
+			append p-sha1 checksum/with rejoin [a seed] 'sha1 s-2
 		]
 		return (
 			(copy/part p-md5 output-length)
@@ -1057,8 +1057,8 @@ prf: function [
 	p-sha256: make binary! output-length
 	a: seed ; A(0)
 	while [output-length >= length? p-sha256][
-		a: checksum/method/key a 'sha256 secret
-		append p-sha256 checksum/method/key rejoin [a seed] 'sha256 secret
+		a: checksum/with a 'sha256 secret
+		append p-sha256 checksum/with rejoin [a seed] 'sha256 secret
 		;?? p-sha256
 	]
 	;trim the result to required output length
@@ -1579,7 +1579,7 @@ TLS-parse-handshake-message: function [
 					log-error "legacy __private_rsa_verify_hash_md5sha1 not implemented yet!"
 					return *Alert/Decode_error
 				]
-				message-hash: checksum/method message hash-algorithm
+				message-hash: checksum message hash-algorithm
 				;? message-hash
 				if any [
 					error? valid?: try [

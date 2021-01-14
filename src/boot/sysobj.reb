@@ -57,6 +57,7 @@ catalog: object [
 		uri:           #[bitset! #{000000005BFFFFF5FFFFFFE17FFFFFE2}] ;A-Z a-z 0-9 !#$&'()*+,-./:;=?@_~
 		uri-component: #[bitset! #{0000000041E6FFC07FFFFFE17FFFFFE2}] ;A-Z a-z 0-9 !'()*-._~
 	]
+	checksums: [adler32 crc24 crc32 tcp md4 md5 sha1 sha224 sha256 sha384 sha512 ripemd160]
 ]
 
 contexts: construct [

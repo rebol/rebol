@@ -525,9 +525,9 @@ mysql-driver: make object! [
 		
 		;--- New 4.1.0+ authentication scheme ---
 		crypt-v11: func [data [binary!] seed [binary!] /local key1 key2][
-			key1: checksum/secure data
-			key2: checksum/secure key1
-			key1 xor checksum/secure rejoin [(to-binary seed) key2]
+			key1: checksum data 'sha1
+			key2: checksum key1 'sha1
+			key1 xor checksum rejoin [(to-binary seed) key2] 'sha1
 		]
 		
 		scramble: func [data [string! none!] port [port!] /v10 /local seed][

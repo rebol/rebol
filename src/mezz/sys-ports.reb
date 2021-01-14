@@ -300,7 +300,7 @@ init-schemes: func [
 
 	make-scheme [
 		title: "Checksum port"
-		info: "Possible methods: MD5, SHA1, SHA256, SHA384, SHA512"
+		info: "Possible methods are in `system/catalog/checksums`"
 		spec: system/standard/port-spec-checksum
 		name: 'checksum
 		init: function [
@@ -314,7 +314,7 @@ init-schemes: func [
 			]
 			if any [
 				error? try [spec/method: to word! method] ; in case it was not
-				not find [md5 sha1 sha256 sha384 sha512] spec/method
+				not find system/catalog/checksums spec/method
 			][
 				cause-error 'access 'invalid-spec method
 			] 

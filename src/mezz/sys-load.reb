@@ -149,9 +149,9 @@ load-header: function/with [
 						attempt [decompress/part rest end] ; binary compression
 						attempt [decompress first transcode/next rest] ; script encoded
 					] [return 'bad-compress]
-					if all [sum sum != checksum/secure rest] [return 'bad-checksum]
+					if all [sum sum != checksum rest 'sha1] [return 'bad-checksum]
 				] ; else assumed not compressed
-				all [sum sum != checksum/secure/part rest end] [return 'bad-checksum]
+				all [sum sum != checksum/part rest 'sha1 end] [return 'bad-checksum]
 			]
 		]
 		;assert/type [rest [binary!]] none
@@ -161,9 +161,9 @@ load-header: function/with [
 			case [
 				find hdr/options 'compress [ ; script encoded only
 					unless rest: attempt [decompress first rest] [return 'bad-compress]
-					if all [sum sum != checksum/secure rest] [return 'bad-checksum]
+					if all [sum sum != checksum rest 'sha1] [return 'bad-checksum]
 				]
-				all [sum sum != checksum/secure/part tmp back end] [return 'bad-checksum]
+				all [sum sum != checksum/part tmp 'sha1 back end] [return 'bad-checksum]
 			]
 		]
 		;assert/type [rest [block! binary!]] none
@@ -427,7 +427,7 @@ load-module: function [
 	{Loads a module (from a file, URL, binary, etc.) and inserts it into the system module list.}
 	source [word! file! url! string! binary! module! block!] {Source or block of sources}
 	/version ver [tuple!] "Module must be this version or greater"
-	/check sum [binary!] "Match checksum (must be set in header)"
+	/check sum [binary!] "Match SHA1 checksum (must be set in header)"
 	/no-share "Force module to use its own non-shared global namespace"
 	/no-lib "Don't export to the runtime library (lib)"
 	/import "Do module import now, overriding /delay and 'delay option"
