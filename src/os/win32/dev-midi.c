@@ -36,7 +36,16 @@
 **    5. Test everything, then test it again.
 **
 ***********************************************************************/
-#ifdef USE_MIDI_DEVICE
+
+//* Options ************************************************************
+
+#if !defined(REBOL_OPTIONS_FILE)
+#include "opt-config.h"
+#else
+#include REBOL_OPTIONS_FILE
+#endif
+
+#ifdef INCLUDE_MIDI_DEVICE
 
 // NOTE: this will be useful for higher level launchpad schemes:
 // https://github.com/FMMT666/launchpad.py/blob/master/launchpad_py/launchpad.py

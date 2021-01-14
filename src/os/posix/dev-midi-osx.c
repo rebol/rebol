@@ -36,7 +36,17 @@
  **    5. Test everything, then test it again.
  **
  ***********************************************************************/
-#ifdef USE_MIDI_DEVICE
+
+//* Options ************************************************************
+
+#if !defined(REBOL_OPTIONS_FILE)
+#include "opt-config.h"
+#else
+#include REBOL_OPTIONS_FILE
+#endif
+
+#ifdef INCLUDE_MIDI_DEVICE
+
 #if defined(TO_OSX) || defined(TO_OSX_X64) || defined(TO_OSXI) //!!! could be made better! 
 
 // NOTE: this will be useful for higher level launchpad schemes:
