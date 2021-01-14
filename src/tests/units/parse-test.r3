@@ -286,6 +286,10 @@ Rebol [
 	--assert 16646400 = length? data: to-string array/initial 255 * 255 random c 
 	--assert (length? parse data "^/") = (length? parse data "^/")
 
+--test-- "issue-1614"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1614
+	--assert not parse "a b c" ["a" "b" "c"]
+
 ===end-group===
 
 ~~~end-file~~~
