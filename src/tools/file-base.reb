@@ -103,7 +103,7 @@ core: [
 	t-vector.c
 	t-word.c
 	u-aes.c
-	u-bigint.c ;needed for RSA which is needed in TLS protocol (HTTPS)
+	u-bigint.c     ; needed for RSA which is needed in TLS protocol (HTTPS)
 	u-bincode.c
 	u-bmp.c
 	u-chacha20.c
@@ -119,7 +119,7 @@ core: [
 	u-png.c
 	u-poly1305.c
 	u-rc4.c
-	u-rsa.c    ;needed in TLS protocol (HTTPS)
+	u-rsa.c       ; needed in TLS protocol (HTTPS)
 	u-uECC.c
 	u-zlib.c
 	u-wav.c
@@ -144,12 +144,12 @@ core: [
 ]
 
 made: [
-	make-boot.reb       core/b-boot.c
-	make-headers.reb    include/tmp-funcs.h
-	make-host-ext.reb   include/host-ext-graphics.h
-	make-host-init.reb  include/host-init.h
-	make-os-ext.reb     include/host-lib.h
-	make-reb-lib.reb    include/reb-lib.h
+	make-boot.reb			core/b-boot.c
+	make-headers.reb		include/tmp-funcs.h
+	make-host-ext.reb		include/host-ext-graphics.h
+	make-host-init.reb	    include/host-init.h
+	make-os-ext.reb		    include/host-lib.h
+	make-reb-lib.reb		include/reb-lib.h
 ]
 
 os: [

@@ -132,9 +132,8 @@ emit-native-spec: func[
 		emit-n ["^/;-- " the-file]
 		c-file: the-file
 	]
-	emit-n ["^/" name " {"]
+	emit-n #"^/"
 	emit-n trim/head/tail detab spec-rebol
-	emit-n #"}"
 ]
 
 func-header: [
@@ -344,6 +343,7 @@ foreach word [
 ] [make-arg-enums word]
 
 acts: load %../boot/natives.reb
+append acts load temp-dir/tmp-natives.reb
 
 foreach word [
 	checksum

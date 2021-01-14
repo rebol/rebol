@@ -1060,10 +1060,11 @@ emit {
 
 externs: make string! 2000
 boot-booters: load %booters.reb
-boot-natives: load %natives.reb
+boot-natives: append load %natives.reb load temp-dir/tmp-natives.reb
+
 
 nats: append copy boot-booters boot-natives
-nats-collected: load temp-dir/tmp-natives.reb
+
 
 n: boot-sys
 ;while [n: find n 'native] [
@@ -1083,10 +1084,6 @@ foreach val nats [
 	]
 ]
 
-foreach [name spec] nats-collected [
-	emit-line/decl "REBNATIVE(" name ");"
-	nat-count: nat-count + 1
-]
 
 print [nat-count "natives"]
 
@@ -1097,10 +1094,7 @@ foreach val nats [
 		emit-line/code "N_" to word! val "," ;R3
 	]
 ]
-foreach [name spec] nats-collected [
-	emit-line/code "N_" name ","
-	append boot-natives make block! spec
-]
+
 emit-end
 emit newline
 
