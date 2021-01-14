@@ -55,12 +55,12 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
-
+#ifndef INCLUDE_MBEDTLS
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "sys-core.h"
-#include "sys-sha1.h"
+#include "deprecated/sys-sha1.h"
 
 #if !defined(ENDIAN_LITTLE) && !defined(ENDIAN_BIG)
 #error Endianness must be defined in rebol.h for builds including SHA1
@@ -281,7 +281,7 @@ SHA_LONG __builtin_rol(SHA_LONG,int,int);
 #  define	M_nl2c		nl2c
 #endif
 
-void SHA1_Init(c)
+void SHA1_Starts(c)
 SHA_CTX *c;
 	{
 	c->h0=INIT_DATA_h0;
@@ -586,7 +586,7 @@ int num;
 	}
 #endif
 
-void SHA1_Final(md, c)
+void SHA1_Finish(c, md)
 unsigned char *md;
 SHA_CTX *c;
 	{
@@ -652,10 +652,10 @@ int SHA1_CtxSize(void) {
 	static unsigned char m[SHA_DIGEST_LENGTH];
 
 	if (md == NULL) md=m;
-	SHA1_Init(&c);
+	SHA1_Starts(&c);
 	SHA1_Update(&c,d,n);
-	SHA1_Final(md,&c);
+	SHA1_Finish(&c, md);
 	memset(&c,0,sizeof(c));
 	return(md);
 }
-
+#endif // INCLUDE_MBEDTLS

@@ -1,4 +1,3 @@
-#ifdef USE_IMAGE_NATIVES
 /***********************************************************************
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
@@ -30,9 +29,14 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+
+#ifdef INCLUDE_IMAGE_NATIVES
+
 #include "reb-codec.h"
 #include "sys-magick.h" // used for `resize` native
-
+#if defined(TO_WINDOWS) && defined(USE_OS_IMAGE_CODECS)
+#include "winerror.h" // used for WINCODEC_ERR_COMPONENTNOTFOUND
+#endif
 
 typedef struct REBCLR {
 	union {
@@ -369,7 +373,7 @@ typedef struct REBCLR {
 	REBCNT length;
 
 
-#if defined(TO_WINDOWS) && defined(USE_NATIVE_IMAGE_CODECS)
+#if defined(TO_WINDOWS) && defined(USE_OS_IMAGE_CODECS)
 	CLEARS(&codi);
 	if (ref_as) {
 		switch (VAL_WORD_CANON(val_type)) {
@@ -491,4 +495,4 @@ typedef struct REBCLR {
 	return R_RET;
 }
 
-#endif // USE_IMAGE_NATIVES
+#endif // INCLUDE_IMAGE_NATIVES

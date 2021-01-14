@@ -27,12 +27,27 @@
 **
 ***********************************************************************/
 
-//#include "sys-core.h"
-#include "sys-sha2.h"
-#include "reb-net.h"
-#include "sys-md5.h"
-#include "sys-sha1.h"
+#if !defined(REBOL_OPTIONS_FILE)
+#include "opt-config.h"
+#else
+#include REBOL_OPTIONS_FILE
+#endif
 
+#ifdef INCLUDE_MBEDTLS
+#include "sys-core.h"
+#include "reb-net.h"
+#include "mbedtls/md4.h"
+#include "mbedtls/md5.h"
+#include "mbedtls/ripemd160.h"
+#include "mbedtls/sha1.h"
+#include "mbedtls/sha256.h"
+#include "mbedtls/sha512.h"
+#else
+#include "deprecated/sys-sha2.h"
+#include "reb-net.h"
+#include "deprecated/sys-sha1.h"
+#include "deprecated/sys-md5.h"
+#endif
 
 
 /***********************************************************************
@@ -43,6 +58,46 @@
 {
     if(!method) return;
 	switch (VAL_WORD_CANON(method)) {
+#ifdef INCLUDE_MBEDTLS
+		case SYM_MD5:
+			*ctx = sizeof(mbedtls_md5_context);
+			*blk = 16;
+			break;
+		case SYM_SHA1:
+			*ctx = sizeof(mbedtls_sha1_context);
+			*blk = 20;
+			return;
+		case SYM_SHA256:
+			*ctx = sizeof(mbedtls_sha256_context);
+			*blk = 32;
+			return;
+		case SYM_SHA224:
+			*ctx = sizeof(mbedtls_sha256_context);
+			*blk = 28;
+#ifdef INCLUDE_SHA384
+		case SYM_SHA384:
+			*ctx = sizeof(mbedtls_sha512_context);
+			*blk = 48;
+			return;
+#endif
+		case SYM_SHA512:
+			*ctx = sizeof(mbedtls_sha512_context);
+			*blk = 64;
+			return;
+#ifdef INCLUDE_RIPEMD160
+		case SYM_RIPEMD160:
+			*ctx = sizeof(mbedtls_ripemd160_context);
+			*blk = 20;
+			return;
+#endif
+#ifdef INCLUDE_MD4
+		case SYM_MD4:
+			*ctx = sizeof(mbedtls_md4_context);
+			*blk = 16;
+			break;
+#endif
+#else
+		// NO MBEDTLS
 		case SYM_MD5:
 			*ctx = sizeof(MD5_CTX);
 			*blk = MD5_DIGEST_LENGTH;
@@ -63,6 +118,7 @@
 			*ctx = sizeof(SHA512_CTX);
 			*blk = SHA512_DIGEST_LENGTH;
 			return;
+#endif
 		default:
 			*ctx = *blk = 0;
 			break;
@@ -86,21 +142,54 @@
 	}
 	VAL_TAIL(ctx) = ctx_size;
 	switch (VAL_WORD_CANON(method)) {
+#ifdef INCLUDE_MBEDTLS
 		case SYM_MD5:
-			MD5_Init((MD5_CTX*)VAL_BIN(ctx));
+			mbedtls_md5_starts_ret((mbedtls_md5_context*)VAL_BIN(ctx));
 			return TRUE;
 		case SYM_SHA1:
-			SHA1_Init((SHA_CTX*)VAL_BIN(ctx));
+			mbedtls_sha1_starts_ret((mbedtls_sha1_context*)VAL_BIN(ctx));
 			return TRUE;
 		case SYM_SHA256:
-			SHA256_Init((SHA256_CTX*)VAL_BIN(ctx));
+			mbedtls_sha256_starts_ret((mbedtls_sha256_context*)VAL_BIN(ctx), 0);
 			return TRUE;
-		case SYM_SHA384:
-			SHA384_Init((SHA384_CTX*)VAL_BIN(ctx));
+		case SYM_SHA224:
+			mbedtls_sha256_starts_ret((mbedtls_sha256_context*)VAL_BIN(ctx), 1);
 			return TRUE;
 		case SYM_SHA512:
-			SHA512_Init((SHA512_CTX*)VAL_BIN(ctx));
+			mbedtls_sha512_starts_ret((mbedtls_sha512_context*)VAL_BIN(ctx), 0);
 			return TRUE;
+	#ifdef INCLUDE_SHA384
+		case SYM_SHA384:
+			mbedtls_sha512_starts_ret((mbedtls_sha512_context*)VAL_BIN(ctx), 1);
+			return TRUE;
+	#endif
+	#ifdef INCLUDE_RIPEMD160
+		case SYM_RIPEMD160:
+			mbedtls_ripemd160_starts_ret((mbedtls_ripemd160_context*)VAL_BIN(ctx));
+			return TRUE;
+	#endif
+	#ifdef INCLUDE_MD4
+		case SYM_MD4:
+			mbedtls_md4_starts_ret((mbedtls_md4_context*)VAL_BIN(ctx));
+			return TRUE;
+	#endif
+#else
+		case SYM_MD5:
+			MD5_Starts((MD5_CTX*)VAL_BIN(ctx));
+			return TRUE;
+		case SYM_SHA1:
+			SHA1_Starts((SHA_CTX*)VAL_BIN(ctx));
+			return TRUE;
+		case SYM_SHA256:
+			SHA256_Starts((SHA256_CTX*)VAL_BIN(ctx));
+			return TRUE;
+		case SYM_SHA384:
+			SHA384_Starts((SHA384_CTX*)VAL_BIN(ctx));
+			return TRUE;
+		case SYM_SHA512:
+			SHA512_Starts((SHA512_CTX*)VAL_BIN(ctx));
+			return TRUE;
+#endif
 	}
 	return FALSE;
 }
@@ -170,6 +259,34 @@
 		}
 		if(part <= 0) return R_RET;
 		switch (VAL_WORD_CANON(method)) {
+#ifdef INCLUDE_MBEDTLS
+			case SYM_MD5:
+				mbedtls_md5_update_ret((mbedtls_md5_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				break;
+			case SYM_SHA1:
+				mbedtls_sha1_update_ret((mbedtls_sha1_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				break;
+			case SYM_SHA256:
+			case SYM_SHA224:
+				mbedtls_sha256_update_ret((mbedtls_sha256_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				break;
+			case SYM_SHA512:
+#ifdef INCLUDE_SHA384
+			case SYM_SHA384:
+#endif
+				mbedtls_sha512_update_ret((mbedtls_sha512_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				break;
+#ifdef INCLUDE_RIPEMD160
+			case SYM_RIPEMD160:
+				mbedtls_ripemd160_update_ret((mbedtls_ripemd160_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				break;
+#endif
+#ifdef INCLUDE_MD4
+			case SYM_MD4:
+				mbedtls_md4_update_ret((mbedtls_md4_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				break;
+#endif
+#else
 			case SYM_MD5:
 				MD5_Update((MD5_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
 				break;
@@ -185,6 +302,7 @@
 			case SYM_SHA512:
 				SHA512_Update((SHA512_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
 				break;
+#endif
 			}
 		break;
 	case A_READ:
@@ -204,25 +322,55 @@
 			}
 		}
 
-		//using copy so READ will not destroy intermediate context state by calling *_Final
+		//using copy so READ will not destroy intermediate context state by calling *_Finish
 		memcpy(DS_TOP, VAL_BIN(ctx), ctx_size);
 
 		switch (VAL_WORD_CANON(method)) {
+
+#ifdef INCLUDE_MBEDTLS
 		case SYM_MD5:
-			MD5_Final(VAL_BIN_DATA(data), (MD5_CTX*)DS_TOP);
+			mbedtls_md5_finish_ret((mbedtls_md5_context*)DS_TOP, VAL_BIN_DATA(data));
 			break;
 		case SYM_SHA1:
-			SHA1_Final(VAL_BIN_DATA(data), (SHA_CTX*)DS_TOP);
+			mbedtls_sha1_finish_ret((mbedtls_sha1_context*)DS_TOP, VAL_BIN_DATA(data));
 			break;
 		case SYM_SHA256:
-			SHA256_Final(VAL_BIN_DATA(data), (SHA256_CTX*)DS_TOP);
-			break;
-		case SYM_SHA384:
-			SHA384_Final(VAL_BIN_DATA(data), (SHA384_CTX*)DS_TOP);
+		case SYM_SHA224:
+			mbedtls_sha256_finish_ret((mbedtls_sha256_context*)DS_TOP, VAL_BIN_DATA(data));
 			break;
 		case SYM_SHA512:
-			SHA512_Final(VAL_BIN_DATA(data), (SHA512_CTX*)DS_TOP);
+#ifdef INCLUDE_SHA384
+		case SYM_SHA384:
+#endif
+			mbedtls_sha512_finish_ret((mbedtls_sha512_context*)DS_TOP, VAL_BIN_DATA(data));
 			break;
+#ifdef INCLUDE_RIPEMD160
+		case SYM_RIPEMD160:
+			mbedtls_ripemd160_finish_ret((mbedtls_ripemd160_context*)DS_TOP, VAL_BIN_DATA(data));
+			break;
+#endif
+#ifdef INCLUDE_MD4
+		case SYM_MD4:
+			mbedtls_md4_finish_ret((mbedtls_md4_context*)DS_TOP, VAL_BIN_DATA(data));
+			break;
+#endif
+#else
+		case SYM_MD5:
+			MD5_Finish((MD5_CTX*)DS_TOP, VAL_BIN_DATA(data));
+			break;
+		case SYM_SHA1:
+			SHA1_Finish((SHA_CTX*)DS_TOP, VAL_BIN_DATA(data));
+			break;
+		case SYM_SHA256:
+			SHA256_Finish((SHA256_CTX*)DS_TOP, VAL_BIN_DATA(data));
+			break;
+		case SYM_SHA384:
+			SHA384_Finish((SHA384_CTX*)DS_TOP, VAL_BIN_DATA(data));
+			break;
+		case SYM_SHA512:
+			SHA512_Finish((SHA512_CTX*)DS_TOP, VAL_BIN_DATA(data));
+			break;
+#endif
 		}
 		if(action == A_READ) *D_RET = *data;
 		return R_RET;

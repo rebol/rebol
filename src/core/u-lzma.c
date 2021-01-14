@@ -1,4 +1,12 @@
-#ifdef USE_LZMA
+//* Options ************************************************************
+
+#if !defined(REBOL_OPTIONS_FILE)
+#include "opt-config.h"
+#else
+#include REBOL_OPTIONS_FILE
+#endif
+
+#ifdef INCLUDE_LZMA
 
 #include "sys-lzma.h"
 
@@ -5054,4 +5062,4 @@ SRes LzmaDecode(Byte *dest, SizeT *destLen, const Byte *src, SizeT *srcLen,
   return res;
 }
 
-#endif // USE_LZMA
+#endif // INCLUDE_LZMA

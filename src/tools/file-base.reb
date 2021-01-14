@@ -115,26 +115,41 @@ core: [
 	u-image-resize.c
 	u-jpg.c
 	u-lzma.c
-	u-md5.c
 	u-parse.c
 	u-png.c
 	u-poly1305.c
 	u-rc4.c
 	u-rsa.c    ;needed in TLS protocol (HTTPS)
-	u-sha1.c
-	u-sha2.c
 	u-uECC.c
 	u-zlib.c
 	u-wav.c
+
+	;- Mbed TLS related files (only checksums used so far)
+	u-mbedtls.c
+	; platform
+	mbedtls/platform.c       ; Platform abstraction layer
+	mbedtls/platform_util.c  ; Common and shared functions used by multiple modules in the Mbed TLS
+	; checksums:
+	mbedtls/md4.c
+	mbedtls/md5.c
+	mbedtls/ripemd160.c
+	mbedtls/sha1.c
+	mbedtls/sha256.c
+	mbedtls/sha512.c
+
+	;- deprecated checksum files:
+	;u-md5.c
+	;u-sha1.c
+	;u-sha2.c
 ]
 
 made: [
-	make-boot.reb			core/b-boot.c
-	make-headers.reb		include/tmp-funcs.h
-	make-host-ext.reb		include/host-ext-graphics.h
-	make-host-init.reb	include/host-init.h
-	make-os-ext.reb		include/host-lib.h
-	make-reb-lib.reb		include/reb-lib.h
+	make-boot.reb       core/b-boot.c
+	make-headers.reb    include/tmp-funcs.h
+	make-host-ext.reb   include/host-ext-graphics.h
+	make-host-init.reb  include/host-init.h
+	make-os-ext.reb     include/host-lib.h
+	make-reb-lib.reb    include/reb-lib.h
 ]
 
 os: [

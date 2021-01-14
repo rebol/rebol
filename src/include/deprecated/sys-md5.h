@@ -20,9 +20,9 @@ typedef struct MD5state_st {
 	int num;
 } MD5_CTX;
 
-void MD5_Init(MD5_CTX *c);
+void MD5_Starts(MD5_CTX *c);
 void MD5_Update(MD5_CTX *c, unsigned char *data, MD5_LONG len);
-void MD5_Final(unsigned char *md, MD5_CTX *c);
+void MD5_Finish(MD5_CTX *c, unsigned char *md);
 int MD5_CtxSize(void);
 unsigned char *MD5(unsigned char *d, MD5_LONG n, unsigned char *md);
 

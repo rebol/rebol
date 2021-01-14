@@ -1,4 +1,3 @@
-#ifdef USE_JPG_CODEC
 /***********************************************************************
 **
 **  jdatasrc.c
@@ -34,9 +33,11 @@
 
 ***********************************************************************/
 
+#include "reb-config.h"
+#ifdef INCLUDE_JPG_CODEC
+
 #define JPEG_INTERNALS
 #define NO_GETENV
-#include "reb-config.h"
 #include "reb-c.h"
 #include <setjmp.h>
 #include "sys-jpg.h"

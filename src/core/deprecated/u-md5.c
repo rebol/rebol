@@ -1,8 +1,8 @@
 #include "sys-core.h"
-#include "sys-md5.h"
+#include "deprecated/sys-md5.h"
 
 
-void MD5_Init(MD5_CTX *c) {
+void MD5_Starts(MD5_CTX *c) {
 	c->A=INIT_DATA_A;
 	c->B=INIT_DATA_B;
 	c->C=INIT_DATA_C;
@@ -190,7 +190,7 @@ static void md5_block(MD5_CTX *c, register ULONG *X)
 	c->D+=D&0xffffffffL;
 }
 
-void MD5_Final(unsigned char *md, MD5_CTX *c)
+void MD5_Finish(MD5_CTX *c, unsigned char *md)
 {
 	register int i,j;
 	register ULONG l;
@@ -241,9 +241,9 @@ unsigned char *MD5(unsigned char *d, MD5_LONG n, unsigned char *md)
 	static unsigned char m[MD5_DIGEST_LENGTH];
 
 	if (!md) md=m;
-	MD5_Init(&c);
+	MD5_Starts(&c);
 	MD5_Update(&c,d,n);
-	MD5_Final(md,&c);
+	MD5_Finish(&c, md);
 	//memset(&c,0,sizeof(c)); /* security consideration */
 	return(md);
 }

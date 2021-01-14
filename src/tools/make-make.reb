@@ -109,7 +109,8 @@ make:
 
 clean:
 	$(RM) $(RES)
-	$(RM) objs/*
+	#(RM) objs/mbedtls/*.o
+	$(RM) objs/*.o
 
 all:
 	$(MAKE) prep
@@ -194,6 +195,7 @@ r3$(BIN_SUFFIX):	tmps objs $(OBJS) $(HOST) $(RES)
 
 objs:
 	mkdir -p objs
+	mkdir -p objs/mbedtls
 }
 
 makefile-so: {
@@ -293,7 +295,7 @@ os-specific-dir: dirize to file! join %os/ os-base
 
 outdir: path-make
 make-dir outdir
-make-dir outdir/objs
+make-dir/deep outdir/objs/mbedtls
 
 nl2: "^/^/"
 output: make string! 10000

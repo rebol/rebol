@@ -1,4 +1,3 @@
-#ifdef USE_IMAGE_NATIVES
 /***********************************************************************
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
@@ -80,13 +79,16 @@
 %
 %
 */
-
+
 /*
 	Include declarations.
 */
 #include "sys-core.h"
+
+#ifdef INCLUDE_IMAGE_NATIVES
+
 #include "sys-magick.h"
-
+
 /*
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                             %
@@ -744,4 +746,4 @@ REBSER *ResizeImage(const REBSER *image,const REBCNT columns,
 	return(resized_image);
 }
 
-#endif // USE_IMAGE_NATIVES
+#endif // INCLUDE_IMAGE_NATIVES

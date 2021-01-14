@@ -1,4 +1,3 @@
-#ifdef USE_BMP_CODEC
 /***********************************************************************
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
@@ -38,6 +37,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#ifdef INCLUDE_BMP_CODEC
 
 //**********************************************************************
 
@@ -644,4 +644,4 @@ error:
 	Register_Codec("bmp", Codec_BMP_Image);
 }
 
-#endif //USE_BMP_CODEC
+#endif //INCLUDE_BMP_CODEC
