@@ -36,7 +36,7 @@ REBCNT z_adler32_z(REBCNT adler, REBYTE *buf, REBCNT len);
 
 
 
-// Table of has functions and parameters:
+// Table of hash functions and parameters:
 static struct digest {
 	REBYTE *(*digest)(REBYTE *, REBCNT, REBYTE *);
 	void (*init)(void *);
