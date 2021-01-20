@@ -953,6 +953,15 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "REMOVE-EACH"
+
+--test-- "break in remove-each"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2192
+	remove-each n s: [1 2 3 4] [if n = 2 [break] true]
+	--assert s = [2 3 4]
+
+===end-group===
+
 ===start-group=== "STRING conversion"
 
 --test-- "issues/2336"
