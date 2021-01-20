@@ -308,6 +308,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "remove-each with map!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/806
 	;@@ https://github.com/red/REP/issues/93
 	--test-- "remove-each with map"
 		m: #(a 1 "b" 2 c #[none] d: 3)

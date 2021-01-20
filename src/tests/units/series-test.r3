@@ -969,6 +969,10 @@ Rebol [
 	--assert [3 4] = remove-each n s [n < 3]
 	--assert [1 3 4] = head s
 
+	;@@ https://github.com/Oldes/Rebol-issues/issues/806
+	--assert #{0303} = remove-each v #{03010203} [v < 3]
+	--assert [3 3] = to block! remove-each v #[ui16! [3 1 2 3]] [v < 3]
+
 --test-- "remove-each/count result"
 	b: [a 1 b 2]
 	--assert 2 = remove-each/count [k v] b [v < 2]
