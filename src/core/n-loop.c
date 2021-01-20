@@ -489,6 +489,7 @@ skip_hidden: ;
 	if (mode == LM_REMOVE) {
 		// Remove hole (updates tail):
 		if (windex < index) Remove_Series(series, windex, index - windex);
+		if (err == 2) return R_TOS1;  // If BREAK/RETURN
 		if (return_count) {
 			index -= windex;
 			SET_INTEGER(DS_RETURN, IS_MAP(value) ? index / 2 : index);

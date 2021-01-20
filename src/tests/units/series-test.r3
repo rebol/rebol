@@ -984,6 +984,11 @@ Rebol [
 	--assert s = [2 3 4]
 	--assert 1 = remove-each/count n s: [1 2 3 4] [if n = 2 [break] true]
 	--assert s = [2 3 4]
+--test-- "break/return in remove-each"
+	--assert 'x = remove-each n s: [1 2 3 4] [if n = 2 [break/return 'x] true]
+	--assert s = [2 3 4]
+	--assert 'x = remove-each/count n s: [1 2 3 4] [if n = 2 [break/return 'x] true]
+	--assert s = [2 3 4]
 
 ===end-group===
 
