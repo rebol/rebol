@@ -477,6 +477,7 @@ skip_hidden: ;
 		// Remove hole (updates tail):
 		if (windex < index) Remove_Series(series, windex, index - windex);
 		SET_INTEGER(DS_RETURN, index - windex);
+		if (IS_MAP(value)) return R_ARG2;
 		return R_RET;
 	}
 

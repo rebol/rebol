@@ -307,4 +307,13 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "remove-each with map!"
+	;@@ https://github.com/red/REP/issues/93
+	--test-- "remove-each with map"
+		m: #(a 1 "b" 2 c #[none] d: 3)
+		--assert m = remove-each [k v] m [any [string? k none? v]]
+		--assert [a d] = words-of m
+
+===end-group===
+
 ~~~end-file~~~
