@@ -391,8 +391,7 @@
 					}
 
 					else if (IS_MAP(value)) {
-						REBVAL *val = BLK_SKIP(series, index | 1);
-						if (!IS_NONE(val)) {
+						if (!VAL_GET_OPT(BLK_SKIP(series, index), OPTS_HIDE)) {
 							if (j == 0) {
 								*vars = *BLK_SKIP(series, index & ~1);
 								if (IS_END(vars+1)) index++; // only words

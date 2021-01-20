@@ -281,13 +281,19 @@ Rebol [
 ===end-group===
 
 ===start-group=== "MAP with NONE"
+	;@@ https://github.com/Oldes/Rebol-wishes/issues/21
 	--test-- "map with none"
 		m: #(a: #[none] b: 1)
 		m/b: none
 		--assert [a b] = keys-of m
 		--assert [#[none] #[none]] = values-of m
+	--test-- "foreach on map with none"
+		o: copy ""
+		foreach [k v] m [append o k]
+		--assert o = "ab"
 
 	--test-- "remove from map"
+	;@@ https://github.com/Oldes/Rebol-wishes/issues/20
 		m: #("ab" 1 "AB" 2)
 		--assert ["ab" 1 "AB" 2]  = to block! remove/key m "aB"
 		--assert 2 = length? m
