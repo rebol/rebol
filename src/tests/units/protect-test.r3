@@ -29,6 +29,7 @@ Rebol [
 	--test-- "encloak" --assert is-protected-error? [encloak bin "key"]
 	--test-- "decloak" --assert is-protected-error? [decloak bin "key"]
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1780
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2272
 	--test-- "remove-each" --assert is-protected-error? [remove-each a bin [a < 3]]
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1780
 	--test-- "random block"  --assert is-protected-error? [random blk]
