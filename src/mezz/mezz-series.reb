@@ -234,7 +234,7 @@ reword: func [
 				]
 				unless empty? w [
 					unless empty? char-end [w: append copy w char-end]
-					poke vals w unless unset? :v [:v]
+					either unset? :v [ remove/key vals w ][ poke vals w :v ]
 				]
 			]
 		]
@@ -249,7 +249,7 @@ reword: func [
 				]
 				unless empty? w [
 					unless empty? char-end [w: append copy w char-end]
-					poke vals w unless unset? :v [:v]
+					either unset? :v [ remove/key vals w ][ poke vals w :v ]
 				]
 			]
 		]
