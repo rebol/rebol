@@ -31,6 +31,12 @@
 #include "sys-core.h"
 #include "sys-int-funcs.h" //REB_I64_ADD_OF
 
+enum loop_each_mode {
+	LM_FOR = 0,
+	LM_REMOVE,
+	LM_REMOVE_COUNT,
+	LM_MAP
+};
 
 /***********************************************************************
 **
@@ -271,7 +277,6 @@
 	return R_RET;
 }
 
-
 /***********************************************************************
 **
 */	static int Loop_Each(REBVAL *ds, REBINT mode)
@@ -279,7 +284,8 @@
 **		Supports these natives (modes):
 **			0: foreach
 **			1: remove-each
-**			2: map
+**			2: remove-each/count
+**			3: map-each
 **
 ***********************************************************************/
 {
@@ -289,7 +295,7 @@
 	REBSER *frame;
 	REBVAL *value;
 	REBSER *series;
-	REBSER *out = NULL;	// output block (for MAP, mode = 2)
+	REBSER *out = NULL;	// output block (for LM_MAP, mode = 2)
 
 	REBINT index;	// !!!! should these be REBCNT?
 	REBINT tail;
@@ -298,8 +304,9 @@
 	REBINT err;
 	REBCNT i;
 	REBCNT j;
+	REBOOL return_count = FALSE;
 
-	ASSERT2(mode >= 0 && mode < 3, RP_MISC);
+	ASSERT2(mode >= 0 && mode < 4, RP_MISC);
 
 	value = D_ARG(2); // series
 	if (IS_NONE(value)) return R_NONE;
@@ -311,10 +318,14 @@
 	SET_NONE(D_RET);
 	SET_NONE(DS_NEXT);
 
-	// If it's MAP, create result block:
-	if (mode == 2) {
+	// If it's `map-each`, create result block:
+	if (mode == LM_MAP) {
 		out = Make_Block(VAL_LEN(value));
 		Set_Block(D_RET, out);
+	}
+	else if (mode == LM_REMOVE_COUNT) {
+		mode = LM_REMOVE;
+		return_count = TRUE;
 	}
 
 	// Get series info:
@@ -333,14 +344,16 @@
 		series = VAL_SERIES(value);
 		index  = VAL_INDEX(value);
 		if (index >= (REBINT)SERIES_TAIL(series)) {
-			if (mode == 1) {
-				SET_INTEGER(D_RET, 0);
+			if (mode == LM_REMOVE) {
+				if(return_count)
+					SET_INTEGER(D_RET, 0);
+				else return R_ARG2;
 			}
 			return R_RET;
 		}
 	}
 
-	if (mode==1 && IS_PROTECT_SERIES(series)) 
+	if (mode==LM_REMOVE && IS_PROTECT_SERIES(series)) 
 		Trap0(RE_PROTECTED);
 	
 	windex = index;
@@ -448,16 +461,16 @@
 				break;
 			}
 			// else CONTINUE:
-			if (mode == 1) SET_FALSE(ds); // keep the value (for mode == 1)
+			if (mode == LM_REMOVE) SET_FALSE(ds); // keep the value (for mode == LM_REMOVE)
 		} else {
 			err = 0; // prevent later test against uninitialized value
 		}
 
-		if (mode > 0) {
+		if (mode > LM_FOR) {
 			//if (ANY_OBJECT(value)) Trap_Types(words, REB_BLOCK, VAL_TYPE(value)); //check not needed
 
 			// If FALSE return, copy values to the write location:
-			if (mode == 1) {  // remove-each
+			if (mode == LM_REMOVE) {  // remove-each
 				if (IS_FALSE(ds)) {
 					REBCNT wide = SERIES_WIDE(series);
 					// memory areas may overlap, so use memmove and not memcpy!
@@ -467,24 +480,27 @@
 				}
 			}
 			else
-				if (!IS_UNSET(ds)) Append_Val(out, ds); // (mode == 2)
+				if (!IS_UNSET(ds)) Append_Val(out, ds); // (mode == LM_MAP)
 		}
 skip_hidden: ;
 	}
 
 	// Finish up:
-	if (mode == 1) {
+	if (mode == LM_REMOVE) {
 		// Remove hole (updates tail):
 		if (windex < index) Remove_Series(series, windex, index - windex);
-		SET_INTEGER(DS_RETURN, index - windex);
-		if (IS_MAP(value)) return R_ARG2;
-		return R_RET;
+		if (return_count) {
+			index -= windex;
+			SET_INTEGER(DS_RETURN, IS_MAP(value) ? index / 2 : index);
+			return R_RET;
+		}
+		return R_ARG2;
 	}
 
-	// If MAP and not BREAK/RETURN:
-	if (mode == 2 && err != 2) return R_RET;
+	// If map-each and not BREAK/RETURN:
+	if (mode == LM_MAP && err != 2) return R_RET;
 
-	return R_TOS1;
+	return R_TOS1; // foreach
 }
 
 
@@ -586,7 +602,7 @@ skip_hidden: ;
 **
 ***********************************************************************/
 {
-	return Loop_Each(ds, 0);
+	return Loop_Each(ds, LM_FOR);
 }
 
 
@@ -597,10 +613,11 @@ skip_hidden: ;
 **		'word [get-word! word! block!] {Word or block of words}
 **		data [series!] {The series to traverse}
 **		body [block!] {Block to evaluate each time}
+**		/count
 **
 ***********************************************************************/
 {
-	return Loop_Each(ds, 1);
+	return Loop_Each(ds, D_REF(4) ? LM_REMOVE_COUNT : LM_REMOVE);
 }
 
 
@@ -614,7 +631,7 @@ skip_hidden: ;
 **
 ***********************************************************************/
 {
-	return Loop_Each(ds, 2);
+	return Loop_Each(ds, LM_MAP);
 }
 
 

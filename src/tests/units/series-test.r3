@@ -950,14 +950,39 @@ Rebol [
 	data: copy ""
 	foreach x "123" [append data x]
 	--assert "123" = data
+--test-- "FOREACH result"
+	--assert #"3" = foreach x "123" [x]
+	--assert 3 = foreach x [1 2 3] [x]
+	--assert unset? foreach x [1 2 3] [if x = 2 [break]]
+	--assert 4 = foreach x [1 2 3] [if x = 2 [break/return 4]]
 
 ===end-group===
 
 ===start-group=== "REMOVE-EACH"
+--test-- "remove-each result"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/931
+	b: [a 1 b 2]
+	--assert [b 2] = remove-each [k v] b [v < 2]
+	--assert [b 2] = b
+
+	s: next [1 2 3 4]
+	--assert [3 4] = remove-each n s [n < 3]
+	--assert [1 3 4] = head s
+
+--test-- "remove-each/count result"
+	b: [a 1 b 2]
+	--assert 2 = remove-each/count [k v] b [v < 2]
+	--assert b = [b 2]
+
+	s: next [1 2 3 4]
+	--assert 1 = remove-each/count n s [n < 3]
+	--assert [1 3 4] = head s
 
 --test-- "break in remove-each"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2192
-	remove-each n s: [1 2 3 4] [if n = 2 [break] true]
+	--assert [2 3 4] = remove-each n s: [1 2 3 4] [if n = 2 [break] true]
+	--assert s = [2 3 4]
+	--assert 1 = remove-each/count n s: [1 2 3 4] [if n = 2 [break] true]
 	--assert s = [2 3 4]
 
 ===end-group===

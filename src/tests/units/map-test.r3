@@ -313,6 +313,10 @@ Rebol [
 		m: #(a 1 "b" 2 c #[none] d: 3)
 		--assert m = remove-each [k v] m [any [string? k none? v]]
 		--assert [a d] = words-of m
+	--test-- "remove-each/count with map"
+		m: #(a 1 "b" 2 c #[none] d: 3)
+		--assert 2 = remove-each/count [k v] m [any [string? k none? v]]
+		--assert [a d] = words-of m
 
 ===end-group===
 
