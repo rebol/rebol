@@ -279,12 +279,15 @@ Rebol [
 		none? c
 	]
 
---test-- "issue-1480"
-;@@ https://github.com/Oldes/Rebol-issues/issues/1480
-	c: make string! 255
-	--assert 256 = length? for i 0 255 1 [append c to-char i]
-	--assert 16646400 = length? data: to-string array/initial 255 * 255 random c 
-	--assert (length? parse data "^/") = (length? parse data "^/")
+;@@ not using this tests because it allocates so many values,
+;@@ that I cannot see in results if there is any new problem!
+;------------------------------------------------------------
+;@@ --test-- "issue-1480"
+;@@ ;@@ https://github.com/Oldes/Rebol-issues/issues/1480
+;@@ 	c: make string! 255
+;@@ 	--assert 256 = length? for i 0 255 1 [append c to-char i]
+;@@ 	--assert 16646400 = length? data: to-string array/initial 255 * 255 random c 
+;@@ 	--assert (length? parse data "^/") = (length? parse data "^/")
 
 --test-- "issue-1614"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1614
