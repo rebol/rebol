@@ -87,11 +87,12 @@
 	spec = PG_Handles[idx-1];
 	size = spec.size;
 
-	//printf("Requested HOB for %s of size %u\n", SYMBOL_TO_NAME(sym),  size);
+	//printf("Requested HOB for %s (%u) of size %u\n", SYMBOL_TO_NAME(sym), sym, size);
 	hob = (REBHOB*)Make_Node(HOB_POOL);
 	hob->data = MAKE_MEM(size);
 	hob->index = idx;
 	hob->flags = 0;
+	hob->sym = sym;
 	CLEAR(hob->data, size);
 	USE_HOB(hob);
 	//printf("HOB made mem: %0x\n", hob->data);

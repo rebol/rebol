@@ -807,6 +807,34 @@ crash:
 	}
 }
 
+#ifdef DEBUG_HANDLES
+/***********************************************************************
+**
+*/	void Dump_Handles(void)
+/*
+**		Dump all series in the pool @pool_id, -1 for all pools
+**
+***********************************************************************/
+{
+	REBSEG *seg;
+	REBHOB *hob;
+	REBCNT count;
+	REBCNT n = 0;
+	puts("\nUsed handles:\n");
+	for (seg = Mem_Pools[HOB_POOL].segs; seg; seg = seg->next, n++) {
+		hob = (REBHOB *) (seg + 1);
+		printf("seg %u units: %u free: %u\n", n, Mem_Pools[HOB_POOL].units, Mem_Pools[HOB_POOL].free);
+		for (count = Mem_Pools[HOB_POOL].units; count > 0; count--) {
+			SKIP_WALL_TYPE(hob, REBHOB);
+			if (IS_USED_HOB(hob)) {
+				printf("hob %s used\n", SYMBOL_TO_NAME(hob->sym));
+			}
+			hob++;
+			SKIP_WALL_TYPE(hob, REBHOB);
+		}
+	}
+}
+#endif
 
 /***********************************************************************
 **
@@ -848,6 +876,9 @@ crash:
 	Debug_Fmt(cb_cast("Pools used %d of %d (%2d%%)"), tused, total, (tused*100) / total);
 	Debug_Fmt(cb_cast("System pool used %d"), Mem_Pools[SYSTEM_POOL].has);
 	//Debug_Fmt("Raw allocator reports %d", PG_Mem_Usage);
+#ifdef DEBUG_HANDLES
+	Dump_Handles();
+#endif
 }
 
 
@@ -977,12 +1008,25 @@ crash:
 ***********************************************************************/
 {
 	REBSEG	*seg, *next;
+	REBHOB *hob;
 	REBCNT  used;
 	REBCNT  n;
 
 	//Dump_Pools();
 	//Dump_Series_In_Pool(-1);
+	
+	// HOB at this moment does not use system series, so handle it separately
+	for (seg = Mem_Pools[HOB_POOL].segs; seg; seg = seg->next) {
+		hob = (REBHOB *) (seg + 1);
+		for (n = Mem_Pools[HOB_POOL].units; n > 0; n--) {
+			SKIP_WALL_TYPE(hob, REBHOB);
+			if (IS_USED_HOB(hob)) Free_Hob(hob);
+			hob++;
+			SKIP_WALL_TYPE(hob, REBHOB);
+		}
+	}
 
+	// than release all series from all system pools
 	FOREACH(n, SYSTEM_POOL) {
 		//printf(cs_cast("*** Dispose_Pools[%u] Has: %u free: %u\n"), n, Mem_Pools[n].has, Mem_Pools[n].free);
 		if (Mem_Pools[n].has == Mem_Pools[n].free) {
