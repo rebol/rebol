@@ -52,6 +52,8 @@
 
 	if (!sym) return 0;
 
+	//printf("Register_Handle: %s with size %u\n", SYMBOL_TO_NAME(sym),  size);
+
 	idx = Find_Handle_Index(sym);
 	if (idx) Crash(RP_HANDLE_ALREADY_REGISTERED);
 	idx = VAL_TAIL(handles) + 1;
@@ -60,8 +62,8 @@
 	REBVAL *val = Append_Value(VAL_SERIES(handles));
 	Set_Word(val, sym, 0, 0);
 
-	PG_Handles[idx].size = size;
-	PG_Handles[idx].free = free_func;
+	PG_Handles[idx-1].size = size;
+	PG_Handles[idx-1].free = free_func;
 	
 	return idx;
 }
@@ -85,6 +87,7 @@
 	spec = PG_Handles[idx-1];
 	size = spec.size;
 
+	//printf("Requested HOB for %s of size %u\n", SYMBOL_TO_NAME(sym),  size);
 	hob = (REBHOB*)Make_Node(HOB_POOL);
 	hob->data = MAKE_MEM(size);
 	hob->index = idx;
