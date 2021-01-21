@@ -198,7 +198,7 @@ import/no-user m
 probe all [unset? :a unset? :b unset? :c]
 }
 	o: copy ""
-	call/wait/shell/output probe reform [to-local-file system/options/boot %issue-1680.reb] o
+	call/wait/shell/output reform [to-local-file system/options/boot %issue-1680.reb] o
 	--assert "true^/true^/true^/true^/" = probe o
 	delete %issue-1680.reb
 
@@ -233,8 +233,8 @@ probe all [
 	none? get in system/contexts/lib 'b ; but not to lib
 ]}
 	o: copy ""
-	call/wait/shell/output probe reform [to-local-file system/options/boot %no-lib-import.reb] o
-	--assert "true^/true^/true^/true^/" = probe o
+	call/wait/shell/output reform [to-local-file system/options/boot %no-lib-import.reb] o
+	--assert "true^/true^/true^/true^/" = o
 	delete %no-lib-import.reb
 
 	--test-- "import block"
@@ -251,8 +251,8 @@ probe all [
 	m2b = 2
 ]}
 	o: copy ""
-	call/wait/shell/output probe reform [to-local-file system/options/boot %block-import-1.reb] o
-	--assert "true^/" = probe o
+	call/wait/shell/output reform [to-local-file system/options/boot %block-import-1.reb] o
+	--assert "true^/" = o
 	--test-- "import/no-lib block"
 	write %block-import-2.reb {
 Rebol []
