@@ -26,6 +26,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/237
 	--assert "23" = find "123" 2
 
+--test-- "FIND %file %file"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/624
+	--assert %file = find %file %file
+
 --test-- "FIND/ANY on string"
 	--assert "abcd"  = find/any "abcd" "abc"
 	--assert "abcd"  = find/any "abcd" "*c"
