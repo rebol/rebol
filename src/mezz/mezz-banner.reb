@@ -54,7 +54,7 @@ sys/boot-banner: make-banner [
 	["REBOL 3." system/version/2 #"." system/version/3 " (Oldes branch)"]
 	-
 	= Copyright: "2012 REBOL Technologies"
-	= "" "2012-2020 Rebol Open Source Contributors"
+	= "" "2012-2021 Rebol Open Source Contributors"
 	= "" "Apache 2.0 License, see LICENSE."
 	= Website:  "https://github.com/Oldes/Rebol3"
 	-
@@ -70,7 +70,7 @@ system/license: make-banner [
 	*
 	-
 	= Copyright: "2012 REBOL Technologies"
-	= "" "2012-2020 Rebol Open Source Contributors"
+	= "" "2012-2021 Rebol Open Source Contributors"
 	= "" "Licensed under the Apache License, Version 2.0."
 	= "" "https://www.apache.org/licenses/LICENSE-2.0"
 	-
