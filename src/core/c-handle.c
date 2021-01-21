@@ -131,7 +131,7 @@
 	CLEAR(PG_Handles, MAX_HANDLE_TYPES * sizeof(REBHSP));
 
 #ifdef INCLUDE_MBEDTLS
-	Init_MbedTLS();
+	//Init_MbedTLS(); // not yet public!
 #endif
 	Init_Crypt(); // old crypt code handles
 }
