@@ -202,7 +202,8 @@ Rebol [
 		--assert error? try [to pair! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
 	--test-- "to pair! string! (long)"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2202
-		--assert 661.1194x510.1062 = to pair! "661.1194458007812x510.106201171875"
+		; using mold because of rounding error causing false comparison
+		--assert "661.1194x510.1062" = mold to pair! "661.1194458007812x510.106201171875"
 
 ===end-group===
 

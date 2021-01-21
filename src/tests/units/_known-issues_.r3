@@ -17,6 +17,15 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "MAKE"
+	--test-- "to pair! string! (long)"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2202
+		; this is ok:
+		--assert "661.1194x510.1062" = mold to pair! "661.1194458007812x510.106201171875"
+		; but this should be too:
+		--assert  661.1194x510.1062  =      to pair! "661.1194458007812x510.106201171875"
+===end-group===
+
 
 ===start-group=== "SERIES"
 --test-- "AS with protect"
