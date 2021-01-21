@@ -758,6 +758,17 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "ANY-OF & ALL-OF"
+;@@ https://github.com/Oldes/Rebol-issues/issues/637
+--test-- "any-of"
+	--assert 4 = any-of x [-1 4 10] [x > 0]
+	--assert [10 8] = any-of [x y] [1 4 10 8 5 -3] [(x - 2) = y]
+--test-- "all-of"
+	--assert none? all-of x [33 -1 24] [x > 0]
+	--assert all-of [x y] [1 2 3 4] [x < y]
+
+===end-group===
+
 
 ===start-group=== "PAST?"
 	--test-- "past? block!"
