@@ -52,6 +52,12 @@
 **     Do not even modify the argument names.
 */
 
+#if !defined(REBOL_OPTIONS_FILE)
+#include "opt-config.h"
+#else
+#include REBOL_OPTIONS_FILE
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <windows.h>
