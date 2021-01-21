@@ -1184,7 +1184,7 @@ emit [
 {
 #define MAX_NATS      } nat-count {
 #define NAT_SPEC_SIZE } length? comp-data {
-#define CHECK_TITLE   } checksum to binary! title {
+#define CHECK_TITLE   } crc24 to binary! title {
 
 extern const REBYTE Native_Specs[];
 extern const REBFUN Native_Funcs[];

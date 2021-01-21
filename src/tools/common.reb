@@ -47,6 +47,20 @@ if exists? opts: temp-dir/tmp-options.reb [
 
 
 ;-- UTILITIES ----------------------------------------------------------
+; using checksum mezzanines to be able use build scripts also with old Rebol versions
+needs-new-checksum-version?: error? try [checksum #{}]
+crc24: func[data [binary!]] either needs-new-checksum-version? [
+	[checksum data 'crc24]
+][	; old R2 compatible:
+	[checksum data]
+]
+; for some reason extensions are tested agains IP checksum :-/
+ipc: func[data [binary!]] either needs-new-checksum-version? [
+	[checksum data 'tcp]
+][	; old R2 compatible:
+	[checksum/tcp data]
+]
+
 
 error: func[msg [string! block!]][
 	if block? msg [msg: reform msg]

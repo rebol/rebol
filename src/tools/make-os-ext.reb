@@ -147,11 +147,13 @@ foreach file files [
 
 remit "} REBOL_HOST_LIB;"
 
+;@@ TODO: there is used IP checksum form HOST_LIB
+;@@ but CRC24 for boot data
 out: rejoin [
 	form-header/gen "Host Access Library" %host-lib.h %make-os-ext.reb
 {
 #define HOST_LIB_VER } lib-version {
-#define HOST_LIB_SUM } checksum/tcp to-binary xsum {
+#define HOST_LIB_SUM } ipc to-binary xsum {
 #define HOST_LIB_SIZE } cnt {
 
 extern REBDEV *Devices[];
