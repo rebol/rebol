@@ -51,7 +51,6 @@
 
 // optional natives ***************************************************/
 #define INCLUDE_IMAGE_NATIVES
-#define USE_NATIVE_IMAGE_CODECS
 
 
 // otional checksums **************************************************/
