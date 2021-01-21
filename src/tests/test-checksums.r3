@@ -40,4 +40,5 @@ foreach m system/catalog/checksums [
 print  "------------------------"
 print ["total:   " total LF]
 
-ask "DONE"
+if system/options/script [ask "DONE"]
+total
