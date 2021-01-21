@@ -120,5 +120,15 @@ Rebol [
 	; cleanup:
 	rsa public-key none
 	rsa private-key none
+===end-group===
+
+===start-group=== "RSA initialization from file"
+	--test-- "RSA private key from OpenSSL format"
+	--assert handle? try [private-key: load %units/files/rebol-private-no-pass.key]
+	; cleanup:
+	rsa private-key none
+===end-group===
+
+
 
 ~~~end-file~~~

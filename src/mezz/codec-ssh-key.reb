@@ -30,7 +30,7 @@ wrap [
 	register-codec [
 		name: 'ssh-key
 		title: "Secure Shell Key"
-		; not using suffixes as there is no standard!
+		suffixes: [%.key]
 
 		decode: function [
 			"Decodes and initilize SSH key"
@@ -88,8 +88,8 @@ wrap [
 					all [
 						parse data [
 							'SEQUENCE into [
-								'SEQUENCE   set v    block!  ; AlgorithmIdentifier 
-								'BIT_STRING set data binary! ; PublicKey
+								'SEQUENCE   set v:    block!  ; AlgorithmIdentifier 
+								'BIT_STRING set data: binary! ; PublicKey
 								(
 									data: codecs/der/decode data
 								)
@@ -98,8 +98,8 @@ wrap [
 						v/OBJECT_IDENTIFIER = #{2A864886F70D010101} ;= rsaEncryption
 						parse data [
 							'SEQUENCE into [
-								'INTEGER set n   binary! ;modulus        
-								'INTEGER set e   binary! ;publicExponent 
+								'INTEGER set n:   binary! ;modulus        
+								'INTEGER set e:   binary! ;publicExponent 
 							]
 						]
 					]
@@ -110,8 +110,8 @@ wrap [
 					; resolve RSA public data from the DER structure (PKCS#1)
 					parse data [
 						'SEQUENCE into [
-							'INTEGER set n   binary! ;modulus        
-							'INTEGER set e   binary! ;publicExponent 
+							'INTEGER set n:   binary! ;modulus        
+							'INTEGER set e:   binary! ;publicExponent 
 						]
 					]
 					; resolve RSA handle from parsed data
@@ -121,15 +121,15 @@ wrap [
 					; resolve RSA private data from the DER structure (PKCS#1)
 					parse data [
 						'SEQUENCE into [
-							'INTEGER set v   binary! ;version
-							'INTEGER set n   binary! ;modulus        
-							'INTEGER set e   binary! ;publicExponent 
-							'INTEGER set d   binary! ;privateExponent
-							'INTEGER set p   binary! ;prime1         
-							'INTEGER set q   binary! ;prime2         
-							'INTEGER set dp  binary! ;exponent1       d mod (p-1)
-							'INTEGER set dq  binary! ;exponent2       d mod (q-1)
-							'INTEGER set inv binary! ;coefficient     (inverse of q) mod p
+							'INTEGER set v:   binary! ;version
+							'INTEGER set n:   binary! ;modulus        
+							'INTEGER set e:   binary! ;publicExponent 
+							'INTEGER set d:   binary! ;privateExponent
+							'INTEGER set p:   binary! ;prime1         
+							'INTEGER set q:   binary! ;prime2         
+							'INTEGER set dp:  binary! ;exponent1       d mod (p-1)
+							'INTEGER set dq:  binary! ;exponent2       d mod (q-1)
+							'INTEGER set inv: binary! ;coefficient     (inverse of q) mod p
 							to end
 						]
 						to end
