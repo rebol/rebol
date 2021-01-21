@@ -98,8 +98,15 @@ register-codec [
 
 		func [
 			data [binary! block!]
-			/local version serialNumber issuer subject validity
+			/local pkix version serialNumber issuer subject validity
 		][
+			try [all [
+				; as there seems to be no standard, the *.crt file
+				; may be actually in pkix format, so try it first...
+				pkix: codecs/pkix/decode data
+				pkix/label = "CERTIFICATE"
+				data: pkix/binary
+			]]
 			if binary? data [ data: der-codec/decode data ]
 			if all [
 				2 = length? data

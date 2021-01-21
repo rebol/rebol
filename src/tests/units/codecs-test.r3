@@ -180,6 +180,12 @@ if find codecs 'crt [
 			--assert "Google Internet Authority G3" = try [cert/issuer/commonName]
 			--assert block? try [key: cert/public-key/rsaEncryption]
 			--assert #{010001} = try [key/2]
+			
+		--test-- "Load Docker's CRT file"
+			--assert object? cert: load %units/files/apiserver.crt
+			--assert "kubernetes" = try [cert/issuer/commonName]
+			--assert block? try [key: cert/public-key/rsaEncryption]
+			--assert #{010001} = try [key/2]
 	===end-group===
 	codecs/crt/verbose: 0
 ]
