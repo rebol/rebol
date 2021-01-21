@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -104,6 +105,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	DEF_POOL(sizeof(REBSER), 4096),	// Series headers
 	DEF_POOL(sizeof(REBGOB), 128),	// Gobs
+	DEF_POOL(sizeof(REBHOB), 16),	// Handle objects
 	DEF_POOL(1, 1),	// Just used for tracking main memory
 };
 
@@ -594,6 +596,32 @@ clear_header:
 	FREE_GOB(gob);
 
 	Free_Node(GOB_POOL, (REBNOD *)gob);
+}
+
+
+/***********************************************************************
+**
+*/	void Free_Hob(REBHOB *hob)
+/*
+**		Free a hob, returning its memory for reuse.
+**
+***********************************************************************/
+{
+	REBHSP spec;
+	REBCNT idx = hob->index;
+
+	if( idx == 0 || !IS_USED_HOB(hob) || hob->data == NULL) return;
+
+	spec = PG_Handles[idx-1];
+	//printf("HOB free mem: %0x\n", hob->data);
+
+	if (spec.free)
+		spec.free(hob->data);
+	
+	CLEAR(hob->data, spec.size); 
+	FREE_MEM(hob->data);
+	UNUSE_HOB(hob);
+	Free_Node(HOB_POOL, (REBNOD *)hob);
 }
 
 

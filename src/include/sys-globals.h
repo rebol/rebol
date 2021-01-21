@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,6 +54,7 @@ PVAR REBUNI *Lower_Cases;
 // Other:
 PVAR REBYTE *PG_Pool_Map;	// Memory pool size map (created on boot)
 PVAR REBSER *PG_Root_Words;	// Root object word table (reused by threads)
+PVAR REBHSP *PG_Handles;    // Holds handle related contexts/specs
 
 PVAR REBI64 PG_Boot_Time;	// Counter when boot started
 PVAR REBINT Current_Year;

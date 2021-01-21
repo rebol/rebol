@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -252,7 +253,10 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 		case REB_TYPESET:
 			break;
 		case REB_HANDLE:
-			if (IS_SERIES_HANDLE(val) && !HANDLE_GET_FLAG(val, HANDLE_RELEASABLE)) {
+			if (IS_CONTEXT_HANDLE(val)) {
+				MARK_HANDLE_CONTEXT(val);
+			}	
+			else if (IS_SERIES_HANDLE(val) && !HANDLE_GET_FLAG(val, HANDLE_RELEASABLE)) {
 				//printf("markserhandle %0xh val: %0xh %s \n", (void*)val, VAL_HANDLE(val), VAL_HANDLE_NAME(val));
 				MARK_SERIES(VAL_HANDLE_DATA(val));
 			}
@@ -503,10 +507,8 @@ mark_obj:
 	for (seg = Mem_Pools[GOB_POOL].segs; seg; seg = seg->next) {
 		gob = (REBGOB *) (seg + 1);
 		for (n = Mem_Pools[GOB_POOL].units; n > 0; n--) {
-#ifdef MUNGWALL
-			gob = (gob *) (((REBYTE *)s)+MUNG_SIZE);
+			SKIP_WALL_TYPE(gob, REBGOB);
 			MUNG_CHECK(GOB_POOL, gob, sizeof(*gob));
-#endif
 			if (IS_GOB_USED(gob)) {
 				if (IS_GOB_MARK(gob))
 					UNMARK_GOB(gob);
@@ -516,9 +518,45 @@ mark_obj:
 				}
 			}
 			gob++;
-#ifdef MUNGWALL
-			gob = (gob *) (((REBYTE *)s)+MUNG_SIZE);
-#endif
+			SKIP_WALL_TYPE(gob, REBGOB);
+		}
+	}
+
+	return count;
+}
+
+
+/***********************************************************************
+**
+*/	static REBCNT Sweep_Handles(void)
+/*
+**		Free all unmarked handles.
+**
+**		Scans all hobs in all segments that are part of the
+**		HOB_POOL. Free hobs that have not been marked.
+**
+***********************************************************************/
+{
+	REBSEG	*seg;
+	REBHOB	*hob;
+	REBCNT  n;
+	REBCNT	count = 0;
+
+	for (seg = Mem_Pools[HOB_POOL].segs; seg; seg = seg->next) {
+		hob = (REBHOB *) (seg + 1);
+		for (n = Mem_Pools[HOB_POOL].units; n > 0; n--) {
+			SKIP_WALL_TYPE(hob, REBHOB);
+			MUNG_CHECK(HOB_POOL, hob, sizeof(*hob));
+			if (IS_USED_HOB(hob)) {
+				if (IS_MARK_HOB(hob))
+					UNMARK_HOB(hob);
+				else {
+					Free_Hob(hob);
+					count++;
+				}
+			}
+			hob++;
+			SKIP_WALL_TYPE(hob, REBHOB);
 		}
 	}
 
@@ -597,6 +635,7 @@ mark_obj:
 	
 	count = Sweep_Series();
 	count += Sweep_Gobs();
+	count += Sweep_Handles();
 
 	CHECK_MEMORY(4);
 

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +42,8 @@ enum reb_panics {
 	RP_EARLY_ERROR,			// error before error handling
 	RP_BAD_END_CANON_WORD,	// END was not found
 	RP_BAD_TRUE_CANON_WORD,	// TRUE was not found
+	RP_HANDLE_ALREADY_REGISTERED,
+	RP_MAX_HANDLES,
 
 //  Internal Errors (other things that could go wrong)
 	RP_INTERNAL = 1100,

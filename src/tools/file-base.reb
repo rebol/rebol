@@ -25,6 +25,7 @@ core: [
 	c-error.c
 	c-frame.c
 	c-function.c
+	c-handle.c
 	c-port.c
 	c-task.c
 	c-word.c

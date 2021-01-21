@@ -3,6 +3,7 @@ REBOL [
 	Title: "System object"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2021 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -29,6 +30,7 @@ catalog: object [
 	datatypes: []
 	actions: none
 	natives: none
+	handles: none
 	errors:  none
 	; Reflectors are used on boot to create *-of functions
 	reflectors: [

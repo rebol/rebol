@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2017 Rebol Open Source Contributors
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,10 +33,35 @@
 #include "sys-aes.h"
 #include "sys-rsa.h"
 #include "sys-dh.h"
+#include "uECC.h"
 #ifndef EXCLUDE_CHACHA20POLY1305
 #include "sys-chacha20.h"
 #include "sys-poly1305.h"
 #endif
+
+const struct uECC_Curve_t* ECC_curves[5] = {0,0,0,0,0};
+typedef struct {
+	REBCNT  curve_type;
+	uint8_t public[64];
+	uint8_t private[32];
+} ECC_CTX;
+
+/***********************************************************************
+**
+*/	void Init_Crypt()
+/*
+***********************************************************************/
+{
+	Register_Handle(SYM_AES,  sizeof(AES_CTX), NULL);
+	Register_Handle(SYM_ECDH, sizeof(ECC_CTX), NULL);
+	Register_Handle(SYM_RC4,  sizeof(RC4_CTX), NULL);
+	Register_Handle(SYM_RSA,  sizeof(RSA_CTX), RSA_free);
+#ifndef EXCLUDE_CHACHA20POLY1305
+	Register_Handle(SYM_CHACHA20, sizeof(poly1305_context), NULL);
+	Register_Handle(SYM_POLY1305, sizeof(poly1305_context), NULL);
+	Register_Handle(SYM_CHACHA20POLY1305, sizeof(chacha20poly1305_ctx), NULL);
+#endif
+}
 
 /***********************************************************************
 **
@@ -60,34 +85,26 @@
     REBVAL *val_data      = D_ARG(5);
 
     REBVAL *ret = D_RET;
-	REBSER *ctx;
 
     if(ref_stream) {
-    	ctx = VAL_HANDLE_DATA(val_ctx);
-
-    	if (VAL_HANDLE_TYPE(val_ctx) != SYM_RC4) {
-    		Trap0(RE_INVALID_HANDLE);
-    	}
+    	if (NOT_VALID_CONTEXT_HANDLE(val_ctx, SYM_RC4)) Trap0(RE_INVALID_HANDLE);
 
     	REBYTE *data = VAL_BIN_AT(val_data);
-    	RC4_crypt((RC4_CTX*)ctx->data, data, data, VAL_LEN(val_data));
+    	RC4_crypt((RC4_CTX*)VAL_HANDLE_CONTEXT_DATA(val_ctx), data, data, VAL_LEN(val_data));
     	DS_RET_VALUE(val_data);
 
     } else if (ref_key) {
     	//key defined - setup new context
-		//making series from POOL so it will be GCed automaticaly
-		REBSER* ctx = Make_Series(sizeof(RC4_CTX), 1, FALSE);
-
+		MAKE_HANDLE(ret, SYM_RC4);
 		RC4_setup(
-			(RC4_CTX*)ctx->data,
+			(RC4_CTX*)VAL_HANDLE_CONTEXT_DATA(ret),
             VAL_BIN_AT(val_crypt_key),
             VAL_LEN(val_crypt_key)
         );
-
-        SET_HANDLE(ret, ctx, SYM_RC4, HANDLE_SERIES);
     }
     return R_RET;
 }
+
 
 /***********************************************************************
 **
@@ -114,7 +131,6 @@
     REBVAL *val_data      = D_ARG(7);
     
     REBVAL *ret = D_RET;
-	REBSER *ctx;
 	REBINT  len, pad_len;
 
 	//TODO: could be optimized by reusing the handle
@@ -140,29 +156,24 @@
 			return R_NONE;
 		}
 
-		//making series from POOL so it will be GCed automaticaly
-		ctx = Make_Series(sizeof(AES_CTX), (REBCNT)1, FALSE);
-		SERIES_TAIL(ctx) = sizeof(AES_CTX);
+		MAKE_HANDLE(ret, SYM_AES);
 
 		AES_set_key(
-			(AES_CTX*)ctx->data,
+			(AES_CTX*)VAL_HANDLE_CONTEXT_DATA(ret),
 			VAL_BIN_AT(val_crypt_key),
 			(const uint8_t *)iv,
 			(len == 128) ? AES_MODE_128 : AES_MODE_256
 		);
 
-		if (ref_decrypt) AES_convert_key((AES_CTX*)ctx->data);
-
-		SET_HANDLE(ret, ctx, SYM_AES, HANDLE_SERIES);
-		// the ctx in the handle is released by GC once the handle is not referenced
+		if (ref_decrypt) AES_convert_key((AES_CTX*)VAL_HANDLE_CONTEXT_DATA(ret));
 
     } else if(ref_stream) {
 
-		ctx = VAL_HANDLE_DATA(val_ctx);
-
-    	if (VAL_HANDLE_TYPE(val_ctx) != SYM_AES || ctx == NULL || SERIES_TAIL(ctx) != sizeof(AES_CTX)){
-    		Trap0(RE_INVALID_HANDLE);
-    	}
+    	if (NOT_VALID_CONTEXT_HANDLE(val_ctx, SYM_AES)) {
+			Trap0(RE_INVALID_HANDLE);
+			return R_NONE;
+		}		
+		AES_CTX *aes_ctx = (AES_CTX *)VAL_HANDLE_CONTEXT_DATA(val_ctx);
 
     	len = VAL_LEN(val_data);
     	if (len == 0) return R_NONE;
@@ -185,7 +196,7 @@
 		}
 
 		REBSER  *binaryOut = Make_Binary(pad_len);
-		AES_CTX *aes_ctx = (AES_CTX *)ctx->data;
+
 		if (aes_ctx->key_mode == AES_MODE_DECRYPT) {
 			AES_cbc_decrypt(aes_ctx, data, BIN_HEAD(binaryOut),	pad_len);
 		}
@@ -235,13 +246,10 @@
 	REBCNT len_dq = 0;
 
 	REBVAL *ret = D_RET;
-	REBSER *ser = Make_Series(sizeof(RSA_CTX), 1, FALSE);
-	SERIES_TAIL(ser) = sizeof(RSA_CTX);
-	
-	RSA_CTX *rsa_ctx = (RSA_CTX*)SERIES_DATA(ser);
-	CLEARS(rsa_ctx);
+	RSA_CTX *rsa_ctx;
 
-	SET_HANDLE(ret, ser, SYM_RSA, HANDLE_SERIES);
+	MAKE_HANDLE(ret, SYM_RSA);
+	rsa_ctx = (RSA_CTX*)VAL_HANDLE_CONTEXT_DATA(ret);
 
 	if(ref_private) {
 		if (IS_BINARY(val_dp)) {
@@ -304,20 +312,13 @@
 		Trap0(RE_BAD_REFINES);
 	}
 
-	if (VAL_HANDLE_TYPE(key) != SYM_RSA || VAL_HANDLE_DATA(key) == NULL) {
-		Trap0(RE_INVALID_HANDLE);
-	}
+	if (NOT_VALID_CONTEXT_HANDLE(key, SYM_RSA)) Trap0(RE_INVALID_HANDLE);
 
-	REBSER  *rsa_ser = VAL_HANDLE_DATA(key);
-	if(SERIES_TAIL(rsa_ser) != sizeof(RSA_CTX)) return R_NONE; // probably released (and so invalidated) handle
-	RSA_CTX *rsa_ctx = (RSA_CTX*)SERIES_DATA(rsa_ser);
+	RSA_CTX *rsa_ctx = (RSA_CTX*)VAL_HANDLE_CONTEXT_DATA(key);
 
 	if (IS_NONE(val_data)) {
 		// release RSA key resources
-		RSA_free(rsa_ctx);
-		// and invalidate the handle's data (the series will be GCed once the handle will not be referenced
-		CLEARS(rsa_ctx);
-		SERIES_TAIL(rsa_ser) = 0;
+		Free_Hob(VAL_HANDLE_CTX(key));
 		return R_TRUE;
 	}
 
@@ -526,14 +527,6 @@
 }
 
 
-#include "uECC.h"
-const struct uECC_Curve_t* ECC_curves[5] = {0,0,0,0,0};
-typedef struct {
-	REBCNT  curve_type;
-	uint8_t public[64];
-	uint8_t private[32];
-} ECC_CTX;
-
 static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 	uECC_Curve curve = NULL;
 	switch (curve_type) {
@@ -602,89 +595,61 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 	REBVAL *val_public  = D_ARG(7);
 	REBOOL  ref_release = D_REF(8);
 
-	REBSER *ecc_ser = NULL;
 	REBSER *bin = NULL;
 	REBVAL *ret;
-	REBCNT curve_type = 0;
 	uECC_Curve curve = NULL;
 	ECC_CTX *ecc = NULL;
 
-	if (IS_HANDLE(val_handle)) {
-		if (VAL_HANDLE_TYPE(val_handle) != SYM_ECDH || VAL_HANDLE_DATA(val_handle) == NULL) {
-			Trap0(RE_INVALID_HANDLE);
-		}
-		ecc_ser = VAL_HANDLE_DATA(val_handle);
-		ecc = (ECC_CTX*)SERIES_DATA(ecc_ser);
-		curve_type = ecc->curve_type;
-	}
-
 	if (ref_init) {
-		if(ecc_ser == NULL) {
-			ecc_ser = Make_Series(sizeof(ECC_CTX), 1, FALSE);
-		}
-		ecc = (ECC_CTX*)SERIES_DATA(ecc_ser);	
-		CLEARS(ecc);
-		curve_type = ecc->curve_type = VAL_WORD_CANON(val_curve);
-		SET_HANDLE(val_handle, ecc_ser, SYM_ECDH, HANDLE_SERIES);
-	}
-
-	curve = get_ecc_curve(curve_type);
-	if (!curve) return R_NONE;
-
-	if (ref_init) {
+		MAKE_HANDLE(val_handle, SYM_ECDH);
+		ecc = (ECC_CTX*)VAL_HANDLE_CONTEXT_DATA(val_handle);
+		ecc->curve_type = VAL_WORD_CANON(val_curve);
+		curve = get_ecc_curve(ecc->curve_type);
+		if (!curve) return R_NONE;
 		if(!uECC_make_key(ecc->public, ecc->private, curve)) {
 			//puts("failed to init ECDH key");
-			Trap0(RE_INVALID_HANDLE); //TODO: change to something better!
-		} else return R_ARG1;
+			return R_NONE;
+		}
+		else return R_ARG1;
+	} else {
+		if (NOT_VALID_CONTEXT_HANDLE(val_handle, SYM_ECDH)) {
+			// not throwing an error.. just returning NONE
+			return R_NONE;
+		}
+		ecc = (ECC_CTX*)VAL_HANDLE_CONTEXT_DATA(val_handle);
+		curve = get_ecc_curve(ecc->curve_type);
+		if (!curve) return R_NONE;
 	}
 
 	if (ref_secret) {
-		if (IS_HANDLE(val_handle)) {
-			bin = Make_Binary(32);
-			if (!uECC_shared_secret(VAL_DATA(val_public), ecc->private, BIN_DATA(bin), curve)) {
-				return R_NONE;
-            }
-			if(ref_release) {
-				CLEARS(ecc);
-				HANDLE_SET_FLAG(val_handle, HANDLE_RELEASABLE);
-			}
-			SET_BINARY(D_RET, bin);
-			BIN_LEN(bin) = 32;
-			return R_RET;
-		}
-		else {
-			Trap0(RE_INVALID_HANDLE);
+		bin = Make_Binary(32);
+		if (!uECC_shared_secret(VAL_DATA(val_public), ecc->private, BIN_DATA(bin), curve)) {
 			return R_NONE;
+        }
+		if(ref_release) {
+			Free_Hob(VAL_HANDLE_CTX(val_handle));
 		}
+		SET_BINARY(D_RET, bin);
+		BIN_LEN(bin) = 32;
+		return R_RET;
 	}
 
 	if (ref_public) {
-		if (IS_HANDLE(val_handle)) {
-			bin = Make_Binary(64);
-			COPY_MEM(BIN_DATA(bin), ecc->public, 64);
-			SET_BINARY(D_RET, bin);
-			BIN_LEN(bin) = 64;
-			return R_RET;
-		}
-		else {
-			return R_NONE;
-		}
+		bin = Make_Binary(64);
+		COPY_MEM(BIN_DATA(bin), ecc->public, 64);
+		SET_BINARY(D_RET, bin);
+		BIN_LEN(bin) = 64;
+		return R_RET;
 	}
 
 	if(ref_release) {
-		CLEARS(ecc);
-		HANDLE_SET_FLAG(val_handle, HANDLE_RELEASABLE);
+		Free_Hob(VAL_HANDLE_CTX(val_handle));
 		return R_ARG1;
 	}
 
 	if (ref_type) {
-		if (IS_HANDLE(val_handle)) {
-			Init_Word(val_curve, curve_type);
-			return R_ARG3;
-		}
-		else {
-			return R_NONE;
-		}
+		Init_Word(val_curve, ecc->curve_type);
+		return R_ARG3;
 	}
 	return R_ARG1;
 }
@@ -714,7 +679,6 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 	REBOOL  ref_curve   = D_REF(6);
 	REBVAL *val_curve   = D_ARG(7);
 
-	REBSER *ecc_ser = NULL;
 	REBSER *bin = NULL;
 	REBYTE *key = NULL;
 	REBCNT curve_type = 0;
@@ -726,11 +690,10 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 		curve_type = VAL_WORD_CANON(val_curve);
 	}
 	else {
-		if (VAL_HANDLE_TYPE(val_key) != SYM_ECDH || VAL_HANDLE_DATA(val_key) == NULL) {
+		if (NOT_VALID_CONTEXT_HANDLE(val_key, SYM_ECDH)) {
 			Trap0(RE_INVALID_HANDLE);
 		}
-		ecc_ser = VAL_HANDLE_DATA(val_key);
-		ecc = (ECC_CTX*)SERIES_DATA(ecc_ser);
+		ecc = (ECC_CTX*)VAL_HANDLE_CONTEXT_DATA(val_key);
 		curve_type = ecc->curve_type;
 	}
 
@@ -745,7 +708,7 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 			if (VAL_LEN(val_key) != 32) return R_NONE;
 			key = VAL_BIN(val_key);
 		}
-		bin = Make_Series((REBCNT)64, (REBCNT)1, FALSE);
+		bin = Make_Series(64, 1, FALSE);
 		if(!uECC_sign(key, VAL_DATA(val_hash), VAL_LEN(val_hash), BIN_DATA(bin), curve)) {
 			return R_NONE;
 		}
@@ -804,7 +767,6 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
     REBVAL *val_data      = D_ARG(8);
 	REBOOL  ref_into      = D_REF(9);
 
-	REBSER *ctx_ser;
 	REBINT  len;
 	REBU64  sequence;
 
@@ -815,18 +777,13 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 			Trap1(RE_INVALID_DATA, val_ctx);
 			return R_NONE;
 		}
-		//making series from POOL so it will be GCed automaticaly
-		ctx_ser = Make_Series(sizeof(chacha20_ctx), (REBCNT)1, FALSE);
-
-		chacha20_keysetup((chacha20_ctx*)ctx_ser->data, VAL_BIN_AT(val_ctx), len);
-
-		SERIES_TAIL(ctx_ser) = sizeof(chacha20_ctx);
-		SET_HANDLE(val_ctx, ctx_ser, SYM_CHACHA20, HANDLE_SERIES);
-		// the ctx_ser in the handle is released by GC once the handle is not referenced
+		REBYTE *bin_key = VAL_BIN_AT(val_ctx);
+		
+		MAKE_HANDLE(val_ctx, SYM_CHACHA20);
+		chacha20_keysetup((chacha20_ctx*)VAL_HANDLE_CONTEXT_DATA(val_ctx), bin_key, len);
 	}
 	else {
-		ctx_ser = VAL_HANDLE_DATA(val_ctx);
-		if (VAL_HANDLE_TYPE(val_ctx) != SYM_CHACHA20 || ctx_ser == NULL || SERIES_TAIL(ctx_ser) != sizeof(chacha20_ctx)){
+		if (NOT_VALID_CONTEXT_HANDLE(val_ctx, SYM_CHACHA20)) {
     		Trap0(RE_INVALID_HANDLE);
 			return R_NONE; // avoid wornings later
 		}
@@ -843,18 +800,10 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 		}
 
 		sequence = (ref_aad) ? VAL_INT64(val_sequence) : 0;
-		chacha20_ivsetup((chacha20_ctx*)ctx_ser->data, VAL_BIN_AT(val_nonce), len, VAL_INT64(val_counter), (u8 *)&sequence);
-
+		chacha20_ivsetup((chacha20_ctx*)VAL_HANDLE_CONTEXT_DATA(val_ctx), VAL_BIN_AT(val_nonce), len, VAL_INT64(val_counter), (u8 *)&sequence);
     }
 	
 	if (ref_stream) {
-
-		ctx_ser = VAL_HANDLE_DATA(val_ctx);
-
-    	if (VAL_HANDLE_TYPE(val_ctx) != SYM_CHACHA20 || ctx_ser == NULL || SERIES_TAIL(ctx_ser) != sizeof(chacha20_ctx)){
-    		Trap0(RE_INVALID_HANDLE);
-			return R_NONE;
-    	}
 
     	len = VAL_LEN(val_data);
     	if (len == 0) return R_NONE;
@@ -863,7 +812,7 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 		REBSER  *binaryOut = Make_Binary(len);
 
 		chacha20_encrypt(
-			(chacha20_ctx *)ctx_ser->data,
+			(chacha20_ctx *)VAL_HANDLE_CONTEXT_DATA(val_ctx),
 			(const uint8_t*)data,
 			(      uint8_t*)BIN_DATA(binaryOut),
 			len
@@ -911,42 +860,38 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 
 	if (IS_BINARY(val_ctx)) {
 		len = VAL_LEN(val_ctx);
-		if (len < 32) {
+		if (len < POLY1305_KEYLEN) {
 			Trap1(RE_INVALID_DATA, val_ctx);
 			return R_NONE;
 		}
-		//making series from POOL so it will be GCed automaticaly
-		ctx_ser = Make_Series(sizeof(poly1305_context), (REBCNT)1, FALSE);
-
-		poly1305_init((poly1305_context*)ctx_ser->data, VAL_BIN_AT(val_ctx));
-
-		SERIES_TAIL(ctx_ser) = sizeof(poly1305_context);
-		SET_HANDLE(val_ctx, ctx_ser, SYM_POLY1305, HANDLE_SERIES);
-		// the ctx_ser in the handle is released by GC once the handle is not referenced
+		
+		REBYTE *bin_key = VAL_BIN_AT(val_ctx);
+		
+		MAKE_HANDLE(val_ctx, SYM_POLY1305);
+		poly1305_init((poly1305_context*)VAL_HANDLE_CONTEXT_DATA(val_ctx), bin_key);
 	}
 	else {
-		ctx_ser = VAL_HANDLE_DATA(val_ctx);
-		if (VAL_HANDLE_TYPE(val_ctx) != SYM_POLY1305 || ctx_ser == NULL || SERIES_TAIL(ctx_ser) != sizeof(poly1305_context)){
+		if (NOT_VALID_CONTEXT_HANDLE(val_ctx, SYM_POLY1305)) {
     		Trap0(RE_INVALID_HANDLE);
 		}
 	}
 
 	if (ref_update) {
-		poly1305_update((poly1305_context*)ctx_ser->data, VAL_BIN_AT(val_data), VAL_LEN(val_data));
+		poly1305_update((poly1305_context*)VAL_HANDLE_CONTEXT_DATA(val_ctx), VAL_BIN_AT(val_data), VAL_LEN(val_data));
 	}
 
 	if (ref_finish) {
-		SET_BINARY(ret, Make_Series(16, (REBCNT)1, FALSE));
+		SET_BINARY(ret, Make_Series(16, 1, FALSE));
 		VAL_TAIL(ret) = 16;
-		poly1305_finish((poly1305_context*)ctx_ser->data, VAL_BIN(ret));
+		poly1305_finish((poly1305_context*)VAL_HANDLE_CONTEXT_DATA(val_ctx), VAL_BIN(ret));
 		return R_RET;
 	}
 
 	if (ref_verify) {
-		if (VAL_LEN(val_mac) != 16)
+		if (VAL_LEN(val_mac) != POLY1305_TAGLEN)
 			return R_FALSE; // or error?
 		CLEARS(mac);
-		poly1305_finish((poly1305_context*)ctx_ser->data, mac);
+		poly1305_finish((poly1305_context*)VAL_HANDLE_CONTEXT_DATA(val_ctx), mac);
 		return (poly1305_verify(VAL_BIN_AT(val_mac), mac)) ? R_TRUE : R_FALSE;
 	}
 
@@ -999,12 +944,9 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 	REBU64 sequence = 0;
 
 	if (ref_init) {
-		ctx_ser = Make_Series(sizeof(chacha20poly1305_ctx), (REBCNT)1, FALSE);
-		SERIES_TAIL(ctx_ser) = sizeof(chacha20poly1305_ctx);
-		SET_HANDLE(val_ctx, ctx_ser, SYM_CHACHA20POLY1305, HANDLE_SERIES);
-		//SET_BINARY(val_ctx, ctx_ser);
+		MAKE_HANDLE(val_ctx, SYM_CHACHA20POLY1305);
 
-		chacha = (chacha20poly1305_ctx*)ctx_ser->data;
+		chacha = (chacha20poly1305_ctx*)VAL_HANDLE_CONTEXT_DATA(val_ctx);
 		len = VAL_LEN(val_local_key);
 		if (!(len == 32 || len == 16))
 			Trap1(RE_INVALID_DATA, val_local_key);
@@ -1028,12 +970,11 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 		return R_ARG1;
 	}
 
-	ctx_ser = VAL_HANDLE_DATA(val_ctx);
-	if (VAL_HANDLE_TYPE(val_ctx) != SYM_CHACHA20POLY1305 || ctx_ser == NULL || SERIES_TAIL(ctx_ser) != sizeof(chacha20poly1305_ctx)){
+	if (NOT_VALID_CONTEXT_HANDLE(val_ctx, SYM_CHACHA20POLY1305)) {
     	Trap0(RE_INVALID_HANDLE);
 		return R_NONE;
 	}
-	chacha = (chacha20poly1305_ctx*)ctx_ser->data;
+	chacha = (chacha20poly1305_ctx*)VAL_HANDLE_CONTEXT_DATA(val_ctx);
 
 	if (ref_encrypt) {
 		chacha20_ivsetup(&chacha->local_chacha, chacha->local_iv, 12, 1,  VAL_BIN_AT(val_local_aad));

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -420,6 +421,13 @@ static REBCNT bit_sizes[4] = { 8, 16, 32, 64 };
 // Flag: If wide field is not set, series is free (not used):
 #define	SERIES_FREED(s)  (!SERIES_WIDE(s))
 
+// Bias is empty space in front of head:
+#define	SERIES_BIAS(s)	   (REBCNT)((SERIES_FLAGS(s) >> 16) & 0xffff)
+#define MAX_SERIES_BIAS    0x1000
+#define SERIES_SET_BIAS(s,b) (SERIES_FLAGS(s) = (SERIES_FLAGS(s) & 0xffff) | (b << 16))
+#define SERIES_ADD_BIAS(s,b) (SERIES_FLAGS(s) += (b << 16))
+#define SERIES_SUB_BIAS(s,b) (SERIES_FLAGS(s) -= (b << 16))
+
 // Size in bytes of memory allocated (including bias area):
 #define SERIES_TOTAL(s) ((SERIES_REST(s) + SERIES_BIAS(s)) * (REBCNT)SERIES_WIDE(s))
 // Size in bytes of series (not including bias area):
@@ -450,13 +458,6 @@ static REBCNT bit_sizes[4] = { 8, 16, 32, 64 };
 #define BYTE_SIZE(s) (((s)->info) & 1)
 #define VAL_BYTE_SIZE(v) (BYTE_SIZE(VAL_SERIES(v)))
 #define VAL_STR_IS_ASCII(v) (VAL_BYTE_SIZE(v) && !Is_Not_ASCII(VAL_BIN_DATA(v), VAL_LEN(v)))
-
-// Bias is empty space in front of head:
-#define	SERIES_BIAS(s)	   (REBCNT)((SERIES_FLAGS(s) >> 16) & 0xffff)
-#define MAX_SERIES_BIAS    0x1000
-#define SERIES_SET_BIAS(s,b) (SERIES_FLAGS(s) = (SERIES_FLAGS(s) & 0xffff) | (b << 16))
-#define SERIES_ADD_BIAS(s,b) (SERIES_FLAGS(s) += (b << 16))
-#define SERIES_SUB_BIAS(s,b) (SERIES_FLAGS(s) -= (b << 16))
 
 // Series Flags:
 enum {
@@ -981,6 +982,9 @@ typedef int  (*REBACT)(REBVAL *ds, REBCNT a);	// Action function
 typedef void (*REBDOF)(REBVAL *ds);				// DO evaltype dispatch function
 typedef int  (*REBPAF)(REBVAL *ds, REBSER *p, REBCNT a); // Port action func
 
+typedef int     (*REB_HANDLE_FREE_FUNC)(void *hnd);
+typedef REBSER* (*REB_HANDLE_MOLD_FUNC)(REBSER *mold, void *hnd); //TODO: not used yet!
+
 typedef void (*ANYFUNC)(void *);
 typedef void (*TRYFUNC)(void *);
 typedef int  (*CMD_FUNC)(REBCNT n, REBSER *args);
@@ -1039,37 +1043,96 @@ typedef REBINT (*REBCTF)(REBVAL *a, REBVAL *b, REBINT s);
 **	HANDLE
 **
 ***********************************************************************/
+// Initially there was just HANDLE_FUNCTION type, where there was stored
+// pointer or index directly in the REB_HANDLE value.
+//
+// That was later extended to HANDLE_SERIES, where data is holding pointer
+// to Rebol managed `series` allocated using `Make_Series`.
+// These series had to be locked so the series was not GCed...
+// To free such a handle was possible by setting HANDLE_RELEASABLE flag...
+//
+// Now it's possible to use `HANDLE_CONTEXT` handles registered in system using
+// `Register_Handle` function in c-handle.c file.
+// Registered handle tracks info, how much bytes is needed when creating a new
+// handle of given type. And it also allows to define custom `free` callback function.
+//
+// Ideally in the future there should be also `mold` and `query` callbacks,
+// so it `handle!` value should not be transparent anymore and it would be possible
+// to check it's internall data. This new handle can be used as a pseudo-object type.
+//
+// It's now possible to list all registered handle types using `system/catalog/handles`.
+//
+// It's quite possible that HANDLE_SERIES/HANDLE_RELEASABLE combo will be removed in
+// the future and there will be only HANDLE_FUNCTION (better name?) with HANDLE_CONTEXT
+// (but these are still in use so far).
+
 enum Handle_Flags {
-	HANDLE_FUNCTION    = 0     ,  // hanndle has pointer to function so GC don't mark it
-	HANDLE_SERIES      = 1 << 0,  // handle has pointer to REB series, GC will mark it, if not set as releasable 
-	HANDLE_RELEASABLE  = 1 << 1,  // GC will not try to mark it, if it is SERIES handle type
+	HANDLE_FUNCTION       = 0     ,  // handle has pointer to function (or holds an index) so GC don't mark it
+	HANDLE_SERIES         = 1 << 0,  // handle has pointer to REB series, GC will mark it, if not set as releasable 
+	HANDLE_RELEASABLE     = 1 << 1,  // GC will not try to mark it, if it is SERIES handle type
+	HANDLE_CONTEXT        = 1 << 2,
+	HANDLE_CONTEXT_MARKED = 1 << 3,  // used in handle's context (HOB)
+	HANDLE_CONTEXT_USED   = 1 << 4,  // --//--
 };
 
+typedef struct Reb_Handle_Spec {
+	REBCNT size;
+	REB_HANDLE_FREE_FUNC free;
+	//REB_HANDLE_MOLD_FUNC mold;
+	//REB_HANDLE_QUERY_FUNC query;
+} REBHSP;
+
+typedef struct Reb_Handle_Context {
+	REBYTE *data;
+	REBCNT  sym;      // Index of the word's symbol. Used as a handle's type!
+	REBFLG  flags:16; // Handle_Flags (HANDLE_CONTEXT_MARKED and HANDLE_CONTEXT_USED)
+	REBCNT  index:16; // Index into Reb_Handle_Spec value
+} REBHOB;
+
 typedef struct Reb_Handle {
-	REBCNT	sym;    // Index of the word's symbol. Used as a handle's type!
-	REBFLG  flags;  // Handle_Flags
 	union {
 		ANYFUNC	code;
+		REBHOB *ctx;
 		REBSER *data;
 		REBINT  index;
 	};
+	REBCNT	sym;    // Index of the word's symbol. Used as a handle's type! TODO: remove and use REBHOB
+	REBFLG  flags;  // Handle_Flags
 } REBHAN;
 
 #define VAL_HANDLE(v)		((v)->data.handle.code)
 #define VAL_HANDLE_DATA(v)  ((v)->data.handle.data)
+#define VAL_HANDLE_CTX(v)   ((v)->data.handle.ctx)
 #define VAL_HANDLE_I32(v)   ((v)->data.handle.index) // for handles which are storing just index in the data field
 #define VAL_HANDLE_TYPE(v)  ((v)->data.handle.sym)
+#define VAL_HANDLE_SYM(v)   ((v)->data.handle.sym)
 #define VAL_HANDLE_FLAGS(v) ((v)->data.handle.flags)
-#define VAL_HANDLE_NAME(v)  VAL_WORD_NAME(v) // used in MOLD as an info about handle's type
+#define VAL_HANDLE_CONTEXT_FLAGS(v) (VAL_HANDLE_CTX(v)->flags)
+#define VAL_HANDLE_CONTEXT_DATA(v)  (VAL_HANDLE_CTX(v)->data)
+#define VAL_HANDLE_NAME(v)  VAL_SYM_NAME(BLK_SKIP(PG_Word_Table.series, VAL_HANDLE_SYM(v)))  // used in MOLD as an info about handle's type
 
 #define HANDLE_SET_FLAG(v, f) (VAL_HANDLE_FLAGS(v) |=  (f))
 #define HANDLE_CLR_FLAG(v, f) (VAL_HANDLE_FLAGS(v) &= ~(f))
 #define HANDLE_GET_FLAG(v, f) (VAL_HANDLE_FLAGS(v) &   (f))
 
 #define IS_SERIES_HANDLE(v)     HANDLE_GET_FLAG(v, HANDLE_SERIES)
+#define IS_CONTEXT_HANDLE(v)    HANDLE_GET_FLAG(v, HANDLE_CONTEXT)
 #define IS_FUNCTION_HANDLE(v)  !HANDLE_GET_FLAG(v, HANDLE_SERIES)
 
+#define  IS_VALID_CONTEXT_HANDLE(v, t) (VAL_HANDLE_TYPE(v)==(t) &&  IS_USED_HOB(VAL_HANDLE_CTX(v)))
+#define NOT_VALID_CONTEXT_HANDLE(v, t) (VAL_HANDLE_TYPE(v)!=(t) || !IS_USED_HOB(VAL_HANDLE_CTX(v)))
+
 #define SET_HANDLE(v,h,t,f)	VAL_SET(v, REB_HANDLE), VAL_HANDLE(v) = (void*)(h), VAL_HANDLE_TYPE(v) = t, HANDLE_SET_FLAG(v,f)
+
+#define MAKE_HANDLE(v, t) SET_HANDLE(v, Make_Handle_Context(t), t, HANDLE_CONTEXT)
+
+#define IS_USED_HOB(h)         ((h)->flags &   HANDLE_CONTEXT_USED)   // used to detect if handle's context is still valid
+#define     USE_HOB(h)         ((h)->flags |=  HANDLE_CONTEXT_USED)
+#define   UNUSE_HOB(h)         ((h)->flags &= ~HANDLE_CONTEXT_USED)
+#define IS_MARK_HOB(h)         ((h)->flags &   HANDLE_CONTEXT_MARKED) // GC marks still used handles, so these are not released
+#define    MARK_HOB(h)         ((h)->flags |=  HANDLE_CONTEXT_MARKED)
+#define  UNMARK_HOB(h)         ((h)->flags &= ~HANDLE_CONTEXT_MARKED)
+#define MARK_HANDLE_CONTEXT(v) (MARK_HOB(VAL_HANDLE_CTX(v)))
 
 /***********************************************************************
 **
