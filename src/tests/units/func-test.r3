@@ -283,7 +283,7 @@ Rebol [
 --test-- "issue-717"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/717
 	--assert all [
-		error? e try [f: func [a /local b b ][]]
+		error? e: try [f: func [a /local b b ][]]
 		e/id = 'dup-vars
 		e/arg1 = 'b
 	]
