@@ -20,6 +20,13 @@ secure [%/ allow]
 	change-dir dir
 ===end-group===
 
+===start-group=== "UN/DIRIZE"
+	--test-- "dirize"
+	--assert %file/ = dirize %file
+	--test-- "undirize"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/619
+	--assert %./file = undirize %./file/
+===end-group===
 
 ===start-group=== "to-local-file"
 
