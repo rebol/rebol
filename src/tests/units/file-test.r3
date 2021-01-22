@@ -69,6 +69,7 @@ secure [%/ allow]
 
 ===start-group=== "script?"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1885
+	;@@ https://github.com/Oldes/Rebol-issues/issues/654
 	--test-- "script? string!"
 	--assert #{5245424F4C5B5D2031} = script? {REBOL[] 1}
 	--assert #{5245424F4C5B5D2031} = script? {bla^/REBOL[] 1}
