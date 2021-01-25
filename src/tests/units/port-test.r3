@@ -314,18 +314,22 @@ if system/platform = 'Windows [
 			error? e: try [read http://www.r]
 			e/id = 'no-connect
 		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2441
+		--assert string? try [read http://www.rebol.com]
+		
+===end-group===
+
+
+===start-group=== "WHOIS scheme"
+	--test-- "read WHOIS"
+		--assert  string? probe try [read whois://google.com]
+	--test-- "write WHOIS"
+		--assert string? try [write whois://whois.nic.cz "seznam.cz"]
 ===end-group===
 
 
 if "true" <> get-env "CONTINUOUS_INTEGRATION" [
 	;- don't do these tests on Travis CI
-	===start-group=== "WHOIS scheme"
-		--test-- "read WHOIS"
-			--assert  string? probe try [read whois://google.com]
-		--test-- "write WHOIS"
-			--assert string? try [write whois://whois.nic.cz "seznam.cz"]
-	===end-group===
-
 	===start-group=== "console port"	
 		--test-- "query input port"
 			--assert  port? system/ports/input

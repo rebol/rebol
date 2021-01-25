@@ -336,7 +336,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 
 	sock->error = GET_ERROR;
 	Signal_Device(sock, EVT_ERROR);
-	return DR_ERROR; // Remove it from pending list
+	return DR_DONE; // Using DONE instead of ERROR -> https://github.com/Oldes/Rebol-issues/issues/2441
 }
 
 
