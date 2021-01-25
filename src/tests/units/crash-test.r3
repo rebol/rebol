@@ -167,7 +167,9 @@ Rebol [
 	--assert block? values-of system/contexts/lib ;- no crash
 	--assert block? body-of system/contexts/lib ;- no crash
 
-
+--test-- "issue-441"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/441
+	--assert unset? repeat n 1000000 [foreach a [1 2 3] []] ;- no crash
 ===end-group===
 
 ~~~end-file~~~
