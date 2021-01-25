@@ -32,6 +32,8 @@
 // Special policy: Win32 does not wanting tail slash for dir info
 #define REMOVE_TAIL_SLASH (1<<10)
 
+#define WILD_PATH(p) (Find_Str_Wild(VAL_SERIES(p), VAL_INDEX(p), VAL_TAIL(p)) != NOT_FOUND)
+
 
 /***********************************************************************
 **
@@ -78,77 +80,8 @@
 		Set_Series(REB_FILE, Append_Value(files), name);
 	}
 
-	if (result < 0 && dir->error != -RFE_OPEN_FAIL
-		&& (FIND_CHR(dir->file.path, '*') || FIND_CHR(dir->file.path, '?')))
-		result = 0;  // no matches found, but not an error
-
 	return result;
 }
-
-
-#ifdef REMOVED
-// It's problematic. See blog. Moved to mezz.
-
-/***********************************************************************
-**
-*/	REBNATIVE(dirq)
-/*
-**	Refinements:
-**		/any -- allow * and ? wildcards
-**
-**	Patterns:
-**		abc/ is true
-**		abc/*.reb is true
-**		abc/?.reb is true
-**		abc - ask the file system
-**
-***********************************************************************/
-{
-	REBVAL *path = D_ARG(1);
-	REBINT len;
-	REBINT i;
-	REBCNT dot;
-	REBUNI c;
-	REBSER *ser = VAL_SERIES(path);
-
-	if (!ANY_STR(path)) return R_FALSE;
-
-	len = (REBINT)VAL_LEN(path);
-	if (len == 0) return R_FALSE;
-
-	// We cannot tell from above, so we must check it (if file):
-	if (IS_FILE(path)) {
-		REBSER *ser;
-		REBREQ file;
-
-		CLEARS(&file); 
-		ser = Value_To_OS_Path(path, TRUE);
-		file.file.path = (REBCHR*)(ser->data);
-		file.device = RDI_FILE;
-		len = OS_DO_DEVICE(&file, RDC_QUERY);
-		FREE_SERIES(ser);
-		if (len == DR_DONE && GET_FLAG(file.modes, RFM_DIR)) return R_TRUE;
-	}
-
-	// Search backward for abc/, abc/def, abc/*, etc:
-	len = (REBINT)VAL_LEN(path);
-	dot = 0;
-	for (i = 0; i < len; i++) {
-		c = GET_ANY_CHAR(ser, VAL_TAIL(path)-1-i);
-		if (c == '/' || c == '\\') {
-			if (i == 0 || dot) return R_TRUE;
-			break;
-		}
-		if (c == '.') {
-			if (i == 0 || dot) dot = 1;
-		}
-		else dot = 0;
-		if ((c == '*' || c == '?') && D_REF(2)) return R_TRUE;
-	}
-
-	return R_FALSE;
-}
-#endif
 
 
 /***********************************************************************
@@ -268,7 +201,12 @@
 			Set_Block(state, Make_Block(7)); // initial guess
 			result = Read_Dir(&dir, VAL_SERIES(state));
 			///OS_FREE(dir.file.path);
-			if (result < 0) Trap_Port(RE_CANNOT_OPEN, port, dir.error);
+			
+			// don't throw an error if the original path contains wildcard chars * or ?
+			if (result < 0 && !(dir.error == (REBCNT)-RFE_OPEN_FAIL && WILD_PATH(path)) ) {
+				Trap_Port(RE_CANNOT_OPEN, port, dir.error);
+			}
+
 			*D_RET = *state;
 			SET_NONE(state);
 		} else {

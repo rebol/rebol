@@ -569,6 +569,24 @@
 }
 
 
+/***********************************************************************
+**
+*/	REBCNT Find_Str_Wild(REBSER *ser, REBCNT index, REBCNT tail)
+/*
+**		Returns index of first * or ? chars in series 
+**
+***********************************************************************/
+{
+	REBUNI ch;
+
+	for (; index < tail; index++) {
+		ch = GET_ANY_CHAR(ser, index);
+		if (ch == '*' || ch == '?') return index;
+	}
+	return NOT_FOUND;
+}
+
+
 #ifdef old
 /***********************************************************************
 **

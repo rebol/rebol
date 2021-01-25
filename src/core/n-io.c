@@ -468,6 +468,59 @@ chk_neg:
 	return R_RET;
 }
 
+// Blog: http://www.rebol.net/cgi-bin/r3blog.r?view=0319
+/***********************************************************************
+**
+*/	REBNATIVE(dirq)
+/*
+//	dir?: native [
+//		"Returns TRUE if the value looks like a directory spec (ends with a slash (or backslash))."
+//		target [file! url! none!]
+//		/check "If the file is a directory on local storage (don't have to end with a slash)"
+//	]
+***********************************************************************/
+{
+	REBVAL *path = D_ARG(1);
+	REBINT len;
+	REBSER *ser;
+	REBREQ file;
+	REBUNI ch;
+
+	if (!ANY_STR(path) || VAL_LEN(path) == 0) return R_FALSE;
+
+	if (D_REF(2)) {
+	// use OS check if path really exists and is a directory
+		if (IS_FILE(path)) {
+			CLEARS(&file); 
+			ser = Value_To_OS_Path(path, TRUE);
+			file.file.path = (REBCHR*)(ser->data);
+			file.device = RDI_FILE;
+			len = OS_DO_DEVICE(&file, RDC_QUERY);
+			FREE_SERIES(ser);
+			if (len == DR_DONE && GET_FLAG(file.modes, RFM_DIR)) return R_TRUE;
+		}
+	}
+	// without OS check
+	ch = GET_ANY_CHAR(VAL_SERIES(path), VAL_TAIL(path)-1);
+	if (ch == '/' || ch == '\\') return R_TRUE;
+
+	return R_FALSE;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(wildcardq)
+/*
+//	wildcard?: native [
+//		"Return true if file contains wildcard chars (* or ?)"
+//		path [file!]
+//	]
+***********************************************************************/
+{
+	REBVAL *path = D_ARG(1);
+	REBCNT index = Find_Str_Wild(VAL_SERIES(path), VAL_INDEX(path), VAL_TAIL(path));
+	return index == NOT_FOUND ? R_FALSE : R_TRUE;
+}
 
 /***********************************************************************
 **

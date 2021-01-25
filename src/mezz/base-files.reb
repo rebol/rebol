@@ -62,13 +62,6 @@ suffix?: func [
 	]
 ]
 
-dir?: func [
-	{Returns TRUE if the file or url ends with a slash (or backslash).}
-	target [file! url!]
-][
-	true? find "/\" last target
-]
-
 dirize: func [
 	{Returns a copy (always) of the path as a directory (ending slash).}
 	path [file! string! url!]
@@ -87,9 +80,9 @@ make-dir: func [
 	if empty? path [return path]
 	if slash <> last path [path: dirize path]
 
-	if exists? path [
-		if dir? path [return path]
-		cause-error 'access 'cannot-open path
+	switch exists? path [
+		dir  [return path]
+		file [cause-error 'access 'cannot-open path]
 	]
 
 	if any [not deep url? path] [

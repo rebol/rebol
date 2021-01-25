@@ -106,12 +106,6 @@ continue: native [
 	{Throws control back to top of loop.}
 ]
 
-;dir?: native [
-;	{Returns true if file is a directory.}
-;	file [any-string! none!]
-;	/any {Allow * or ? wildcards for directory}
-;]
-
 ;disarm: native [
 ;	{(Deprecated - not needed) Converts error to an object. Other types not modified.}
 ;	error [any-type!]
@@ -705,6 +699,9 @@ change-dir: native [
 	"Changes the current directory path."
 	path [file!]
 ]
+
+;dir?: in %n-io.c
+;wildcard?: in %n-io.c
 
 ;-- Series Natives
 

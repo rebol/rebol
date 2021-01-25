@@ -60,6 +60,38 @@ Rebol [
 			d/size = none
 		]
 		delete %dir-606/
+
+	--test-- "make-dir/delete/exists? with path without a slash"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/499
+		--assert %dir-606/ = make-dir %dir-606
+		--assert not error? try [delete %dir-606]
+		--assert not exists? %dir-606
+
+	--test-- "make-dir if file exists"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1777
+		--assert not error? try [write %issue-1777.txt "test"]
+		--assert error? er: try [make-dir %issue-1777.txt/]
+		--assert er/id = 'no-create
+		--assert not error? try [delete %issue-1777.txt]
+
+	--test-- "open %."
+		;@@ https://github.com/Oldes/Rebol-issues/issues/117
+		--assert port? p: open %.
+		--assert 'dir  = p/scheme/name
+		--assert 'dir  = p/spec/scheme
+		--assert  %./  = p/spec/ref
+		--assert port? close p
+
+	--test-- "open wildcard"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/158
+		--assert all [
+			port? p: try [open %*.r3]
+			'dir  = p/scheme/name
+			'dir  = p/spec/scheme
+			%*.r3 = p/spec/ref
+			port? close p
+		]
+
 	--test-- "DIR?"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/602
 		; dir? only checks if the last char is / or \
@@ -67,10 +99,34 @@ Rebol [
 		--assert not dir? %doesnotexists
 		--assert dir? %./
 		--assert not dir? %.
+		; dir?/check
+		--assert not dir?/check %doesnotexists
+		--assert dir?/check %.
+		--assert dir?/check %./
+
+	--test-- "READ on existing dir-name"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/635
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1675
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2379
+		--assert block? b1: read %.
+		--assert block? b2: read %./
+		--assert b1 = b2
+		;@@ https://github.com/Oldes/Rebol-issues/issues/604
+		--assert 'dir = exists? %.
+		--assert 'dir = exists? %./
+
 	--test-- "READ on non-existing dir-name"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/500
 		--assert error? e: try [read %carl-for-president/]
 		--assert e/id = 'cannot-open
+
+	--test-- "READ wildcard"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/158
+		--assert all [block? b: try [read %*.r3]             not empty? b]
+		--assert all [block? b: try [read %run-tests.?3]     not empty? b]
+		--assert all [block? b: try [read %units/files/*.r3] not empty? b]
+		--assert all [block? b: try [read %*.xxx]                empty? b]
+
 	--test-- "DELETE-DIR"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1545
 		--assert all [
@@ -79,6 +135,8 @@ Rebol [
 			not error?      delete-dir %units/temp-dir/
 			not exists? %units/temp-dir/
 		]
+if system/platform = 'Windows [
+;@@ it looks that on Linux there is no lock on opened file
 		--assert all [
 			all [
 				not error? try [make-dir/deep %units/temp-dir/]
@@ -96,6 +154,7 @@ Rebol [
 				not error? delete-dir %units/temp-dir/
 			]
 		]
+]
 
 	--test-- "RENAME dir"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1533
@@ -262,7 +321,7 @@ if "true" <> get-env "CONTINUOUS_INTEGRATION" [
 	;- don't do these tests on Travis CI
 	===start-group=== "WHOIS scheme"
 		--test-- "read WHOIS"
-			--assert  string? try [read whois://google.com]
+			--assert  string? probe try [read whois://google.com]
 		--test-- "write WHOIS"
 			--assert string? try [write whois://whois.nic.cz "seznam.cz"]
 	===end-group===

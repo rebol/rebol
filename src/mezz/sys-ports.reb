@@ -25,7 +25,11 @@ make-port*: func [
 	; The first job is to identify the scheme specified:
 	case [
 		file? spec  [
-			name: pick [dir file] dir? spec
+			name: case [
+				wildcard?  spec ['dir]
+				dir?/check spec [spec: dirize spec 'dir]
+				true            ['file]
+			]
 			spec: join [ref:] spec
 		]
 		url? spec [
