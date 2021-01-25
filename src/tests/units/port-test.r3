@@ -316,7 +316,11 @@ if system/platform = 'Windows [
 		]
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2441
 		--assert string? try [read http://www.rebol.com]
-		
+	--test-- "query url"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/467
+		--assert error? try [query https://www]
+		--assert object? query https://www.google.com
+
 ===end-group===
 
 
