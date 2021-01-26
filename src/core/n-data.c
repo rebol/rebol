@@ -28,6 +28,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include "reb-evtypes.h" // for EVT_DROP_EVENT
 
 #ifdef REMOVED
 // Removed because it causes more trouble than the benefits it provides.
@@ -139,10 +140,12 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	if (IS_BLOCK(val)) {
 		for (types = VAL_BLK_DATA(val); NOT_END(types); types++) {
 			val = IS_WORD(types) ? Get_Var(types) : types;
-			if (IS_DATATYPE(val))
+			if (IS_DATATYPE(val)) {
 				if (VAL_DATATYPE(val) == (REBINT)VAL_TYPE(value)) return TRUE;
-			else if (IS_TYPESET(val))
+			}
+			else if (IS_TYPESET(val)) {
 				if (TYPE_CHECK(val, VAL_TYPE(value))) return TRUE;
+			}
 			else
 				Trap1(RE_INVALID_TYPE, Of_Type(val));
 		}
@@ -173,7 +176,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			index = Do_Next(block, i = index, 0); // stack volatile
 			ds = DS_POP; // volatile stack reference
 			if (IS_FALSE(ds)) {
-				Set_Block(ds, Copy_Block_Len(block, i, 3));
+				Set_Block(ds, Copy_Block(VAL_SERIES(value), VAL_INDEX(value))); // #2231
 				Trap1(RE_ASSERT_FAILED, ds);
 			}
 			if (THROWN(ds)) return R_TOS1;
@@ -181,7 +184,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	}
 	else {
 		// /types [var1 integer!  var2 [integer! decimal!]]
-		REBVAL *val;
+		REBVAL *val = NULL;
 		REBVAL *type;
 
 		for (value = VAL_BLK_DATA(value); NOT_END(value); value += 2) {
@@ -206,6 +209,26 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	}
 
 	return R_TRUE;
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(as)
+/*
+***********************************************************************/
+{
+	REBVAL *type = D_ARG(1);
+	REBVAL *spec = D_ARG(2);
+	REBCNT target = IS_DATATYPE(type)? VAL_DATATYPE(type) : VAL_TYPE(type);
+	if ((ANY_BLOCK(spec) && ANY_BLOCK_TYPE(target)) || (ANY_STR(spec) && ANY_STR_TYPE(target))) {
+		SET_TYPE(spec, target);
+	} else {
+		Set_Datatype(spec, VAL_TYPE(spec));
+		Set_Datatype(type, target);
+		Trap2(RE_NOT_SAME_CLASS, spec, type);
+	}
+	return R_ARG2;
 }
 
 
@@ -305,15 +328,22 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 /***********************************************************************
 **
-*/	REBNATIVE(boundq)
+*/	REBNATIVE(contextq)
 /*
+**	Originally named `boundq`
+**	see: https://github.com/Oldes/Rebol-issues/issues/2440
+**
 ***********************************************************************/
 {
 	REBVAL *word = D_ARG(1);
 
 	if (!HAS_FRAME(word)) return R_NONE;
-	if (VAL_WORD_INDEX(word) < 0) return R_TRUE;
-	SET_OBJECT(D_RET, VAL_WORD_FRAME(word));
+	if (VAL_WORD_INDEX(word) < 0) {
+		// was originally returning R_TRUE for function context
+		 *D_RET = Stack_Frame(1)[3];
+	} else {
+		SET_OBJECT(D_RET, VAL_WORD_FRAME(word));
+	}
 	return R_RET;
 }
 
@@ -503,7 +533,8 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 **		word [any-word! block! object!] {Word or words to set}
 **		value [any-type!] {Value or block of values}
 **		/any {Allows setting words to any value.}
-**		/pad {For objects, if block is too short, remaining words are set to NONE.}
+**		/only {Block or object value argument is set as a single value}
+**		/some {None values in a block or object value argument, are not set}
 **
 ***********************************************************************/
 {
@@ -511,7 +542,12 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	REBVAL *val    = D_ARG(2);
 	REBVAL *tmp    = NULL;
 	REBOOL not_any = !D_REF(3);
+	REBOOL not_only= !D_REF(4);
+	REBOOL ref_some= D_REF(5);
 	REBOOL is_blk  = FALSE;
+	REBSER *obj;
+	REBVAL *obj_val;
+
 
 	if (not_any && !IS_SET(val))
 		Trap1(RE_NEED_VALUE, word);
@@ -528,7 +564,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 	// Is value a block?
 	if (IS_BLOCK(val)) {
-		val = VAL_BLK_DATA(val);
+		if (not_only) val = VAL_BLK_DATA(val);
 		if (IS_END(val)) val = NONE_VALUE;
 		else is_blk = TRUE;
 	}
@@ -539,20 +575,51 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 		// Check for protected or unset before setting anything.
 		for (tmp = val, word = VAL_OBJ_WORD(word, 1); NOT_END(word); word++) { // skip self
 			if (VAL_PROTECTED(word)) Trap1(RE_LOCKED_WORD, word);
-			if (not_any && is_blk && !IS_END(tmp) && IS_UNSET(tmp++)) // won't advance past end
+			if (not_any && is_blk && not_only && !IS_END(tmp) && IS_UNSET(tmp++)) // won't advance past end
 				Trap1(RE_NEED_VALUE, word);
 		}
-		for (word = VAL_OBJ_VALUES(D_ARG(1)) + 1; NOT_END(word); word++) { // skip self
-			// WARNING: Unwinds that make it here are assigned. All unwinds
-			// should be screened earlier (as is done in e.g. REDUCE, or for
-			// function arguments) so they don't even get into this function.
-			*word = *val;
-			if (is_blk) {
-				val++;
-				if (IS_END(val)) {
-					if (!D_REF(4)) break; // /pad not provided
-					is_blk = FALSE;
-					val = NONE_VALUE;
+		if (IS_OBJECT(val) && not_only) {
+			obj = VAL_OBJ_FRAME(D_ARG(1));
+			// Keep the binding table.
+			Collect_Start(BIND_ALL);
+			// Setup binding table and BUF_WORDS with destination obj words:
+			Collect_Object(obj);
+
+			obj_val = VAL_OBJ_VALUES(D_ARG(1)) + 1;  // skip self
+			for (word = BLK_HEAD(VAL_OBJ_WORDS(D_ARG(1))) + 1; NOT_END(word); word++) { // skip self
+				tmp = Find_Word_Value(VAL_OBJ_FRAME(val), VAL_WORD_SYM(word));
+				if (tmp) {
+					// don't set to UNSET value if not used SET/ANY
+					if (IS_UNSET(tmp) && not_any) goto next_obj_val;
+					// don't overwrite target's existing value with NONE if used SET/SOME
+					if (ref_some && VAL_TYPE(obj_val) > REB_NONE && VAL_TYPE(tmp) <= REB_NONE) goto next_obj_val;
+
+					*obj_val = *tmp;
+				}
+next_obj_val:
+				obj_val++;
+			}
+			Copy_Deep_Values(obj, 1, SERIES_TAIL(obj), TS_CLONE);
+			Rebind_Block(VAL_OBJ_FRAME(val), obj, BLK_SKIP(obj, 1), REBIND_FUNC | REBIND_TABLE);
+			// release binding table
+			Collect_End(obj);
+		} else if (is_blk && !not_only) {
+			for (word = VAL_OBJ_VALUES(D_ARG(1)) + 1; NOT_END(word); word++) { // skip self
+				*word = *val;
+			}
+		} else {
+			for (word = VAL_OBJ_VALUES(D_ARG(1)) + 1; NOT_END(word); word++) { // skip self
+				// WARNING: Unwinds that make it here are assigned. All unwinds
+				// should be screened earlier (as is done in e.g. REDUCE, or for
+				// function arguments) so they don't even get into this function.
+				*word = *val;
+				if (is_blk) {
+					val++;
+					if (IS_END(val)) {
+						if (ref_some) break; // /pad not provided
+						is_blk = FALSE;
+						val = NONE_VALUE;
+					}
 				}
 			}
 		}
@@ -571,11 +638,13 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			}
 		}
 		for (word = VAL_BLK_DATA(D_ARG(1)); NOT_END(word); word++) {
-			if (IS_WORD(word) || IS_SET_WORD(word) || IS_LIT_WORD(word)) Set_Var(word, val);
-			else if (IS_GET_WORD(word))
-				Set_Var(word, IS_WORD(val) ? Get_Var(val) : val);
-			else Trap_Arg(word);
-			if (is_blk) {
+			if (IS_UNSET(word) || !(ref_some && IS_NONE(val))) {
+				if (IS_WORD(word) || IS_SET_WORD(word) || IS_LIT_WORD(word)) Set_Var(word, val);
+				else if (IS_GET_WORD(word))
+					Set_Var(word, IS_WORD(val) ? Get_Var(val) : val);
+				else Trap_Arg(word);
+			}
+			if (is_blk && not_only) {
 				val++;
 				if (IS_END(val)) is_blk = FALSE, val = NONE_VALUE;
 			}
@@ -616,10 +685,14 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			Protected(word);
 			value = Get_Var(word);
 			SET_UNSET(value);
-		}
+		} else Trap1(RE_NOT_DEFINED, word);
+	} else if (IS_NONE(word)) {
+		// https://github.com/Oldes/Rebol-wishes/issues/28
+		return R_NONE;
 	} else {
 		for (word = VAL_BLK_DATA(word); NOT_END(word); word++) {
-			if (IS_WORD(word) && VAL_WORD_FRAME(word)) {
+			if (IS_WORD(word)) {
+				if (!VAL_WORD_FRAME(word)) Trap1(RE_NOT_DEFINED, word);
 				Protected(word);
 				value = Get_Var(word);
 				SET_UNSET(value);
@@ -641,6 +714,16 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	if (ANY_WORD(value) && !(value = Get_Var_No_Trap(value))) return R_FALSE;
 	if (IS_UNSET(value)) return R_FALSE;
 	return R_TRUE;
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(to_value)
+/*
+***********************************************************************/
+{
+	return (IS_UNSET(D_ARG(1)) ? R_NONE : R_ARG1);
 }
 
 
@@ -886,8 +969,13 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 #ifdef _DEBUG
 	REBVAL *arg = D_ARG(1);
 
-	if (ANY_SERIES(arg)) 
-		Dump_Series(VAL_SERIES(arg), "=>");
+	if (ANY_SERIES(arg)) {
+		if (D_REF(2)) {
+			Dump_Series_Fmt(VAL_SERIES(arg), "=>");
+		} else {
+			Dump_Series(VAL_SERIES(arg), "=>");
+		}
+	}
 	else
 		Dump_Values(arg, 1);
 #endif
@@ -1006,8 +1094,19 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 ***********************************************************************/
 {
 	REBVAL *val = D_ARG(1);
-	REBGOB *gob = VAL_EVENT_SER(val);
+	REBGOB *gob = NULL;
 	REBXYF xy;
+
+	//O: handle drop_file this way? Or maybe just don't use EVF_HAS_XY?
+	//gob = (VAL_EVENT_TYPE(val) == EVT_DROP_FILE) ? Gob_Root : VAL_EVENT_SER(val);
+	if (GET_FLAG(VAL_EVENT_FLAGS(val), EVF_HAS_DATA)) {
+		CLR_FLAG(VAL_EVENT_FLAGS(val), EVF_HAS_DATA);
+#ifdef REB_VIEW
+		gob = OS_GET_GOB_ROOT();
+#endif
+	} else {
+		gob = VAL_EVENT_SER(val);
+	}
 
 	if (gob && GET_FLAG(VAL_EVENT_FLAGS(val), EVF_HAS_XY)) {
 		xy.x = (REBD32)VAL_EVENT_X(val);

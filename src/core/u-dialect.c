@@ -471,7 +471,7 @@ again:
 	if (Delect_Debug > 0) {
 		Total_Missed += dia.missed;
 		// !!!! debug
-		if (dia.missed) Debug_Fmt(Dia_Fmt, Get_Field_Name(dia.dialect, dia.cmd), dia.out->tail, dia.missed, Total_Missed);
+		if (dia.missed) Debug_Fmt(cb_cast(Dia_Fmt), Get_Field_Name(dia.dialect, dia.cmd), dia.out->tail, dia.missed, Total_Missed);
 	}
 
 	if (n < 0) return n; //error
@@ -501,6 +501,8 @@ again:
 	dia.out = VAL_SERIES(D_ARG(3));	
 	dia.outi = VAL_INDEX(D_ARG(3));
 
+	if (IS_PROTECT_SERIES(dia.out)) Trap0(RE_PROTECTED);
+
 	if (dia.argi >= SERIES_TAIL(dia.args)) return R_NONE; // end of block
 
 	if (D_REF(4)) { // in
@@ -529,7 +531,7 @@ again:
 
 	if (Delect_Debug > 0) {
 		Total_Missed += dia.missed;
-		if (dia.missed) Debug_Fmt(Dia_Fmt, Get_Field_Name(dia.dialect, dia.cmd), dia.out->tail, dia.missed, Total_Missed);
+		if (dia.missed) Debug_Fmt(cb_cast(Dia_Fmt), Get_Field_Name(dia.dialect, dia.cmd), dia.out->tail, dia.missed, Total_Missed);
 	}
 
 	if (err < 0) Trap_Arg(D_ARG(2)); // !!! needs better error

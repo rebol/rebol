@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -165,7 +166,11 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 		// The ->ser field of the REBEVT is void*, so we must cast
 		// Comment says it is a "port or object"
 		CHECK_MARK((REBSER*)VAL_EVENT_SER(value), depth);
-	} 
+	}
+
+	if (IS_EVENT_MODEL(value, EVM_GUI)) {
+		Mark_Gob(VAL_EVENT_SER(value), depth);
+	}
 
 	if (IS_EVENT_MODEL(value, EVM_DEVICE)) {
 		// In the case of being an EVM_DEVICE event type, the port! will
@@ -246,12 +251,20 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 
 		case REB_UNSET:
 		case REB_TYPESET:
+			break;
 		case REB_HANDLE:
+			if (IS_CONTEXT_HANDLE(val)) {
+				MARK_HANDLE_CONTEXT(val);
+			}	
+			else if (IS_SERIES_HANDLE(val) && !HANDLE_GET_FLAG(val, HANDLE_RELEASABLE)) {
+				//printf("markserhandle %0xh val: %0xh %s \n", (void*)val, VAL_HANDLE(val), VAL_HANDLE_NAME(val));
+				MARK_SERIES(VAL_HANDLE_DATA(val));
+			}
 			break;
 
 		case REB_DATATYPE:
 			if (VAL_TYPE_SPEC(val)) {	// allow it to be zero
-				CHECK_MARK(VAL_TYPE_SPEC(val), depth); // check typespec.r file
+				CHECK_MARK(VAL_TYPE_SPEC(val), depth); // check typespec.reb file
 			}
 			break;
 
@@ -298,6 +311,7 @@ mark_obj:
 		case REB_CLOSURE:
 		case REB_REBCODE:
 			CHECK_MARK(VAL_FUNC_BODY(val), depth);
+			/* no break */
 		case REB_NATIVE:
 		case REB_ACTION:
 		case REB_OP:
@@ -347,6 +361,7 @@ mark_obj:
 		case REB_URL:
 		case REB_TAG:
 		case REB_BITSET:
+		case REB_REF:
 			ser = VAL_SERIES(val);
 			if (SERIES_WIDE(ser) > sizeof(REBUNI))
 				Crash(RP_BAD_WIDTH, sizeof(REBUNI), SERIES_WIDE(ser), VAL_TYPE(val));
@@ -458,6 +473,7 @@ mark_obj:
 			MUNG_CHECK(SERIES_POOL, series, sizeof(*series));
 			if (!SERIES_FREED(series)) {
 				if (IS_FREEABLE(series)) {
+					//printf("free: %0xh\n", (int)series);
 					Free_Series(series);
 					count++;
 				} else
@@ -491,10 +507,8 @@ mark_obj:
 	for (seg = Mem_Pools[GOB_POOL].segs; seg; seg = seg->next) {
 		gob = (REBGOB *) (seg + 1);
 		for (n = Mem_Pools[GOB_POOL].units; n > 0; n--) {
-#ifdef MUNGWALL
-			gob = (gob *) (((REBYTE *)s)+MUNG_SIZE);
+			SKIP_WALL_TYPE(gob, REBGOB);
 			MUNG_CHECK(GOB_POOL, gob, sizeof(*gob));
-#endif
 			if (IS_GOB_USED(gob)) {
 				if (IS_GOB_MARK(gob))
 					UNMARK_GOB(gob);
@@ -504,9 +518,45 @@ mark_obj:
 				}
 			}
 			gob++;
-#ifdef MUNGWALL
-			gob = (gob *) (((REBYTE *)s)+MUNG_SIZE);
-#endif
+			SKIP_WALL_TYPE(gob, REBGOB);
+		}
+	}
+
+	return count;
+}
+
+
+/***********************************************************************
+**
+*/	static REBCNT Sweep_Handles(void)
+/*
+**		Free all unmarked handles.
+**
+**		Scans all hobs in all segments that are part of the
+**		HOB_POOL. Free hobs that have not been marked.
+**
+***********************************************************************/
+{
+	REBSEG	*seg;
+	REBHOB	*hob;
+	REBCNT  n;
+	REBCNT	count = 0;
+
+	for (seg = Mem_Pools[HOB_POOL].segs; seg; seg = seg->next) {
+		hob = (REBHOB *) (seg + 1);
+		for (n = Mem_Pools[HOB_POOL].units; n > 0; n--) {
+			SKIP_WALL_TYPE(hob, REBHOB);
+			MUNG_CHECK(HOB_POOL, hob, sizeof(*hob));
+			if (IS_USED_HOB(hob)) {
+				if (IS_MARK_HOB(hob))
+					UNMARK_HOB(hob);
+				else {
+					Free_Hob(hob);
+					count++;
+				}
+			}
+			hob++;
+			SKIP_WALL_TYPE(hob, REBHOB);
 		}
 	}
 
@@ -535,7 +585,7 @@ mark_obj:
 		return 0;
 	}
 
-	if (Reb_Opts->watch_recycle) Debug_Str(BOOT_STR(RS_WATCH, 0));
+	if (Reb_Opts->watch_recycle) Debug_Str(cs_cast(BOOT_STR(RS_WATCH, 0)));
 
 	GC_Disabled = 1;
 
@@ -585,6 +635,7 @@ mark_obj:
 	
 	count = Sweep_Series();
 	count += Sweep_Gobs();
+	count += Sweep_Handles();
 
 	CHECK_MEMORY(4);
 
@@ -644,7 +695,7 @@ mark_obj:
 	sp = (REBSER **)GC_Series->data;
 	for (n = 0; n < SERIES_TAIL(GC_Series); n++) {
 		if (sp[n] == series) {
-			Remove_Series(GC_Series, n, sizeof(REBSER *));
+			Remove_Series(GC_Series, n, 1);
 			break;
 		}
 	}
@@ -676,4 +727,27 @@ mark_obj:
 
 	GC_Series = Make_Series(60, sizeof(REBSER *), FALSE);
 	KEEP_SERIES(GC_Series, "gc guarded");
+}
+
+/***********************************************************************
+**
+*/	void Dispose_Memory(void)
+/*
+**		Dispose memory system when application quits.
+**
+***********************************************************************/
+{
+	REBCNT n;
+	GC_Disabled = 0;
+	/* remove everything from GC_Infants (GC protection) */
+	for (n = 0; n < MAX_SAFE_SERIES; n++) {
+		GC_Infants[n] = NULL;
+	}
+	Free_Series(GC_Protect);
+	Free_Series(GC_Series);
+	Sweep_Series();
+	Sweep_Gobs();
+	Free_Mem(GC_Infants, 0);
+	Free_Mem(Prior_Expand, 0);
+	Dispose_Pools();
 }

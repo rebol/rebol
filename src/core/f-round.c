@@ -99,7 +99,7 @@ enum {
 	/* is scale negligible? */
 	if (scale < ldexp(fabs(dec), -53)) return dec;
 
-	if (v = scale >= 1.0) dec = dec / scale;
+	if ((v = scale >= 1.0)) dec = dec / scale;
 	else {
 		r = frexp(scale, &e);
 		if (e <= -1022) {

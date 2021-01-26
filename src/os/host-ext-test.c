@@ -39,12 +39,14 @@
 **
 ***********************************************************************/
 
+#ifdef TEST_EXTENSIONS
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "reb-host.h"
 #include "host-lib.h"
+#include "sys-value.h"
 
 RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
@@ -68,10 +70,17 @@ char *RX_Spec =
 	"img0:   command [{return 10x20 image}]\n"
 	"cec0:   command [{test command context struct} blk [block!]]\n"
 	"cec1:   command [{returns cec.index value or -1 if no cec}]\n"
+	"hndl1:  command [{creates a handle}]\n"
+	"hndl2:  command [{return handle's internal value as integer} hnd [handle!]]\n"
+	"vec0:   command [{return vector size in bytes} v [vector!]]\n"
+	"vec1:   command [{return vector size in bytes (from object)} o [object!]]\n"
+	"blk1:   command [{print type ids of all values in a block} b [block!]]\n"
 
-	"a: b: c: none\n"
+	"a: b: c: h: none\n"
 	"xtest: does [\n"
 		"foreach blk [\n"
+			"[h: hndl1]\n"
+			"[hndl2 h]\n"
 			"[xarg0]\n"
 			"[xarg1 111]\n"
 			"[xarg1 1.1]\n"
@@ -83,6 +92,7 @@ char *RX_Spec =
 			"[xword1 {system}]\n"
 			"[xobj1 system 'version]\n"
 
+
 			// We just use this context as example. Normally, it would be
 			// your own object that has your special functions within it.
 			"[calls lib 'negate]\n"
@@ -91,12 +101,16 @@ char *RX_Spec =
 			"[img0]\n"
 			"[c: do-commands [a: xarg0 b: xarg1 333 xobj1 system 'version] reduce [a b c]]\n"
 			"[cec0 [a: cec1 b: cec1 c: cec1] reduce [a b c]]\n"
+			"[vec0 make vector! [integer! 16 [1 2 3]]]\n"
+			"[vec1 object [v: make vector! [integer! 16 [1 2 3]]]]\n"
+			"[blk1 [read %img /at 1]]\n"
 		"][\n"
-			"print [{test:} mold blk]\n"
+			"print [{^[[7mtest:^[[0m} mold blk]\n"
 			"prin {      } \n"
 			//"replace {x} {x} {y}\n"
 			"probe do blk\n"
 		"]\n"
+	"prin {^/^[[7mAsync call result (should be printed 1234):^[[0m }"
 		"wait 0.1 ; let async events happen\n"
 		"exit\n"
 	"]\n"
@@ -109,6 +123,8 @@ REBCNT Test_Sync_Callback(REBSER *obj, REBCNT word, RXIARG *result)
 	RXICBI cbi;
 	RXIARG args[4];
 	REBCNT n;
+
+	printf("Test_Sync_Callback: ");
 
 	// These can be on the stack, because it's synchronous.
 	CLEAR(&cbi, sizeof(cbi));
@@ -136,6 +152,8 @@ REBCNT Test_Async_Callback(REBSER *obj, REBCNT word)
 	RXIARG *args;
 	REBCNT n;
 
+	printf("Test_Async_Callback: ");
+
 	// These cannot be on the stack, because they are used
 	// when the callback happens later.
 	cbi = MAKE_NEW(*cbi);
@@ -151,62 +169,65 @@ REBCNT Test_Async_Callback(REBSER *obj, REBCNT word)
 	RXI_COUNT(args) = 1;
 	RXI_TYPE(args, 1) = RXT_INTEGER;
 
-	args[1].int64 = 123;
+	args[1].int64 = 1234;
 
 	n = RL_CALLBACK(cbi); // result is in cbi struct, if wanted
 
 	return n;
 }
 
-
-RXIEXT int RX_Call(int cmd, RXIFRM *frm, REBCEC *ctx) {
+RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 	REBYTE *str;
+
+	printf("Context ptr: %p\n", ctx);
 
 	switch (cmd) {
 
-	case 0:
+	case 0: //command [{return zero}]
 		RXA_INT64(frm, 1) = 0;
 		RXA_TYPE(frm, 1) = RXT_INTEGER;
 		break;
 
-	case 1:
+	case 1: //command [{return first arg} arg]
 		break; // same as arg
 
-	case 2:
+	case 2: //command [{return second arg} arg1 arg2]
 		RXA_INT64(frm, 1) = RXA_INT64(frm, 2);
 		RXA_TYPE(frm, 1)  = RXA_TYPE(frm, 2);
 		break;
 
-	case 3:
-		RXA_WORD(frm, 1) = RL_MAP_WORD("system"); //?? is frame always long enough??
+	case 3: //command [{return system word from internal string}]
+		RXA_WORD(frm, 1) = AS_WORD("system"); //?? is frame always long enough??
 		RXA_TYPE(frm, 1) = RXT_WORD;
 		break;
 
-	case 4:
-		RL_GET_STRING(RXA_SERIES(frm, 1), 0, (void*)(&str)); // latin-1 only for test
+	case 4: //command [{return word from string} str [string!]]
+		RL_GET_STRING(RXA_SERIES(frm, 1), 0, (void*)(&str), FALSE); // latin-1 only for test
 		RXA_WORD(frm, 1) = RL_MAP_WORD(str);
 		RXA_TYPE(frm, 1) = RXT_WORD;
 		break;
 
-	case 5:
+	case 5: //command [{return obj field value} obj [object!] field [word! lit-word!]]
 		RXA_TYPE(frm, 1) = RL_GET_FIELD(RXA_OBJECT(frm, 1), RXA_WORD(frm, 2), &RXA_ARG(frm, 1));
 		break;
 
-	case 6:
+	case 6: //command [{test sync callback} context [object!] word [word!]]
 		RXA_TYPE(frm, 1) = Test_Sync_Callback(RXA_OBJECT(frm, 1), RXA_WORD(frm, 2), &RXA_ARG(frm, 1));
 		break;
 
-	case 7:
+	case 7: //command [{test async callback} context [object!] word [word!]]
 		RXA_LOGIC(frm, 1) = Test_Async_Callback(RXA_OBJECT(frm, 1), RXA_WORD(frm, 2));
 		RXA_TYPE(frm, 1) = RXT_LOGIC;
 		break;
 
-	case 8:
+	case 8: //command [{return 2x3 image}]
 		RXA_TYPE(frm, 1) = RXT_IMAGE;
-		RXA_SERIES(frm, 1) = RL_MAKE_IMAGE(2, 3);
+		RXA_IMAGE(frm, 1) = RL_MAKE_IMAGE(2, 3);
+		RXA_IMAGE_WIDTH(frm, 1) = 2;
+		RXA_IMAGE_HEIGHT(frm, 1) = 3;
 		break;
 
-	case 9:
+	case 9: //command [{test command context struct} blk [block!]]
 		{
 			REBCEC cec;
 			cec.envr = 0;
@@ -216,9 +237,65 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, REBCEC *ctx) {
 		}
 		return RXR_UNSET;
 
-	case 10:
-		RXA_INT64(frm, 1) = (i64)(ctx ? ctx->index : -1);
-		RXA_TYPE(frm, 1) = RXT_INTEGER;
+	case 10: //command [{returns cec.index value or -1 if no cec}]
+		{
+			REBCEC* cec = (REBCEC*)ctx;
+			RXA_INT64(frm, 1) = (i64)(cec ? cec->index : -1);
+			RXA_TYPE(frm, 1) = RXT_INTEGER;
+		}
+		break;
+
+	case 11: //command [{creates a handle}]"
+		{
+			RXA_HANDLE(frm, 1) = (void*)42;
+			RXA_HANDLE_TYPE(frm, 1) = AS_WORD("xtest");
+			RXA_TYPE(frm, 1) = RXT_HANDLE;
+		}
+		break;
+
+	case 12: //command [{return handle's internal value as integer} hnd [handle!]]
+		{
+			i64 i = (i64)RXA_HANDLE(frm, 1);
+			RXA_INT64(frm, 1) = i;
+			RXA_TYPE(frm, 1) = RXT_INTEGER;
+		}
+		break;
+
+	case 13: //command [{return vector size in bytes} v [vector!]]
+		{
+			REBSER *vec = RXA_SERIES(frm, 1);
+			RXA_TYPE(frm, 1) = RXT_INTEGER;
+			RXA_INT64(frm, 1) = vec->info * vec->tail;
+		}
+		break;
+	case 14: //command [{return vector size in values (from object)} o [object!]]
+		{
+			RXIARG vec;
+			REBCNT type = RL_GET_FIELD(RXA_OBJECT(frm, 1), AS_WORD("v"), &vec);
+			if(type == RXT_VECTOR) {
+				REBSER *vecs = (REBSER*)vec.series;
+				u16* data = (u16*)vecs->data;
+				printf("data[0-2]: %i, %i, %i\n", data[0], data[1], data[2]);
+				//RXA_TYPE(frm, 1) = RXT_INTEGER;
+				//RXA_INT64(frm, 1) = vecs->tail;
+			} else {
+				return RXR_FALSE;
+			}
+		}
+		break;
+	case 15: //command [{print type ids of all values in a block} b [block!]]
+		{
+			REBSER *blk = RXA_SERIES(frm, 1);
+			REBCNT n, type;
+			RXIARG val;
+			printf("\nBlock with %llu values:\n", RL_SERIES(blk, RXI_SER_TAIL));
+			for(n = 0; (type = RL_GET_VALUE(blk, n, &val)); n++) {
+				if(type == RXT_END) break;
+				printf("\t%i -> %i\n", n, type);
+			}
+			RL_MAP_WORDS(RXA_SERIES(frm, 1));
+			return RXR_UNSET;
+		}
 		break;
 
 	default:
@@ -230,5 +307,6 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, REBCEC *ctx) {
 
 void Init_Ext_Test(void)
 {
-	RL = RL_Extend(&RX_Spec[0], &RX_Call);
+	RL = RL_Extend(b_cast(&RX_Spec[0]), (RXICAL)&RX_Call);
 }
+#endif //TEST_EXTENSIONS

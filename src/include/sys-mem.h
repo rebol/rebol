@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -94,6 +95,7 @@ typedef void *REBNOD;			// Just used for linking free nodes
 	MEM_BIG_POOLS   = MEM_MID_POOLS   +  4, // larger pools
 	SERIES_POOL     = MEM_BIG_POOLS,
 	GOB_POOL,
+	HOB_POOL,     // Handle contexts referencies
 	SYSTEM_POOL,
 	MAX_POOLS
 };
@@ -123,7 +125,7 @@ typedef void *REBNOD;			// Just used for linking free nodes
 #define MUNG_PATTERN2 "Magic protection"
 #define MUNG_SIZE 16
 #define MUNG_CHECK(a,b,c) Mung_Check((a),(REBYTE *)(b),(c))
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 void mywrite(int a, char *b, int c) {int i;for(i=0;i<c;i++) Put_Term(b[i]);}
 #else
 #define mywrite(a,b,c) write(a,b,c)
@@ -133,7 +135,9 @@ void mywrite(int a, char *b, int c) {int i;for(i=0;i<c;i++) Put_Term(b[i]);}
 #endif
 
 #ifdef MUNGWALL
-#define SKIP_WALL(s) s = (REBSER *)(((REBYTE *)s)+MUNG_SIZE)
+#define SKIP_WALL_TYPE(s, t) s = (t *)(((REBYTE *)s)+MUNG_SIZE)
+#define SKIP_WALL(s) SKIP_WALL_TYPE(s, REBSER)
 #else
 #define SKIP_WALL(s)
+#define SKIP_WALL_TYPE(s, t)
 #endif

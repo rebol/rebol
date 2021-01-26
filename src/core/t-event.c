@@ -120,15 +120,25 @@
 	case SYM_OFFSET:
 		if (IS_PAIR(val)) {
 			SET_EVENT_XY(value, Float_Int16(VAL_PAIR_X(val)), Float_Int16(VAL_PAIR_Y(val)));
+			CLR_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_CODE);
+			SET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY);
+			break;
 		}
-		else return FALSE;
-		break;
+		//O: should it be possible to remove offset value from event?
+		//else if (IS_NONE(val)) {
+		//	CLR_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY);
+		//}
+		return FALSE;
 
 	case SYM_KEY:
 		//VAL_EVENT_TYPE(value) != EVT_KEY && VAL_EVENT_TYPE(value) != EVT_KEY_UP)
 		VAL_EVENT_MODEL(value) = EVM_GUI;
+		if(!VAL_EVENT_TYPE(value)) VAL_EVENT_TYPE(value) = EVT_KEY;
 		if (IS_CHAR(val)) {
 			VAL_EVENT_DATA(value) = VAL_CHAR(val);
+			CLR_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY);
+			SET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_CODE);
+			break;
 		}
 		else if (IS_LIT_WORD(val) || IS_WORD(val)) {
 			arg = Get_System(SYS_VIEW, VIEW_EVENT_KEYS);
@@ -143,20 +153,21 @@
 				if (IS_END(arg)) return FALSE;
 				break;
 			}
-			return FALSE;
 		}
-		else return FALSE;
-		break;
+		return FALSE;
 
 	case SYM_CODE:
+		//if (GET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY)) return FALSE;
 		if (IS_INTEGER(val)) {
-			VAL_EVENT_DATA(value) = VAL_INT32(val);
+			VAL_EVENT_DATA(value) = VAL_INT64(val);
+			CLR_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY);
+			SET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_CODE);
+			break;
 		}
-		else return FALSE;
-		break;
+		return FALSE;
 
 	default:
-			return FALSE;
+		return FALSE;
 	}
 
 	return TRUE;
@@ -210,7 +221,7 @@
 			*val = *Get_System(SYS_VIEW, VIEW_EVENT_PORT);
 		}
 		// Event holds a port:
-		else if (IS_EVENT_MODEL(value, EVM_PORT)) {
+		else if (IS_EVENT_MODEL(value, EVM_PORT) || IS_EVENT_MODEL(value, EVM_MIDI)) {
 			SET_PORT(val, VAL_EVENT_SER(value));
 		}
 		// Event holds an object:
@@ -219,6 +230,9 @@
 		}
 		else if (IS_EVENT_MODEL(value, EVM_CALLBACK)) {
 			*val = *Get_System(SYS_PORTS, PORTS_CALLBACK);
+		}
+		else if (IS_EVENT_MODEL(value, EVM_CONSOLE)) {
+			*val = *Get_System(SYS_PORTS, PORTS_INPUT);
 		}
 		else {
 			// assumes EVM_DEVICE
@@ -232,20 +246,23 @@
 	case SYM_WINDOW:
 	case SYM_GOB:
 		if (IS_EVENT_MODEL(value, EVM_GUI)) {
+			if (GET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_DATA))
+				goto is_none;
 			if (VAL_EVENT_SER(value)) {
 				SET_GOB(val, VAL_EVENT_SER(value));
 				break;
 			}
 		}
-		return FALSE;
+		goto is_none;
 
 	case SYM_OFFSET:
-		if (VAL_EVENT_TYPE(value) == EVT_KEY || VAL_EVENT_TYPE(value) == EVT_KEY_UP)
-			goto is_none;
-		VAL_SET(val, REB_PAIR);
-		VAL_PAIR_X(val) = (REBD32)VAL_EVENT_X(value);
-		VAL_PAIR_Y(val) = (REBD32)VAL_EVENT_Y(value);
-		break;
+		if (GET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY)) {
+			VAL_SET(val, REB_PAIR);
+			VAL_PAIR_X(val) = (REBD32)VAL_EVENT_X(value);
+			VAL_PAIR_Y(val) = (REBD32)VAL_EVENT_Y(value);
+			break;
+		}
+		goto is_none;
 
 	case SYM_KEY:
 		if (VAL_EVENT_TYPE(value) != EVT_KEY && VAL_EVENT_TYPE(value) != EVT_KEY_UP)
@@ -258,7 +275,7 @@
 				*val = *VAL_BLK_SKIP(arg, n);
 				break;
 			}
-			return FALSE;
+			goto is_none;
 		}
 		SET_CHAR(val, n);
 		break;
@@ -279,18 +296,19 @@
 				Init_Word(arg, SYM_SHIFT);
 			}
 			Set_Block(val, ser);
-		} else SET_NONE(val);
+		} else goto is_none;
 		break;
 
 	case SYM_CODE:
-		if (VAL_EVENT_TYPE(value) != EVT_KEY && VAL_EVENT_TYPE(value) != EVT_KEY_UP)
-			goto is_none;
-		n = VAL_EVENT_DATA(value); // key-words in top 16, chars in lower 16
-		SET_INTEGER(val, n);
-		break;
+		if (GET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_CODE)) {
+			SET_INTEGER(val, VAL_EVENT_DATA(value)); // key-words in top 16, chars in lower 16
+			break;
+		}
+		goto is_none;
 
 	case SYM_DATA:
 		// Event holds a file string:
+		if (!GET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_DATA)) goto is_none;
 		if (VAL_EVENT_TYPE(value) != EVT_DROP_FILE) goto is_none;
 		if (!GET_FLAG(VAL_EVENT_FLAGS(value), EVF_COPIED)) {
 			void *str = VAL_EVENT_SER(value);
@@ -510,15 +528,18 @@ enum rebol_event_fields {
 		SYM_TYPE, SYM_PORT, SYM_GOB, SYM_OFFSET, SYM_KEY,
 		SYM_FLAGS, SYM_CODE, SYM_DATA, 0
 	};
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
 
 	Pre_Mold(value, mold);
 	Append_Byte(mold->series, '[');
 	mold->indent++;
 
 	for (field = 0; fields[field]; field++) {
-		Get_Event_Var(value, fields[field], &val);
-		if (!IS_NONE(&val)) {
-			New_Indented_Line(mold);
+		if (Get_Event_Var(value, fields[field], &val) && !IS_NONE(&val)) {
+			if(indented)
+				New_Indented_Line(mold);
+			else if (field > 0)
+				Append_Byte(mold->series, ' ');
 			Append_UTF8(mold->series, Get_Sym_Name(fields[field]), -1);
 			Append_Bytes(mold->series, ": ");
 			if (IS_WORD(&val)) Append_Byte(mold->series, '\'');
@@ -527,7 +548,7 @@ enum rebol_event_fields {
 	}
 
 	mold->indent--;
-	New_Indented_Line(mold);
+	if (indented) New_Indented_Line(mold);
 	Append_Byte(mold->series, ']');
 
 	End_Mold(mold);

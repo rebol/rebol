@@ -77,7 +77,7 @@
 	REBVAL *value;
 	REBINT n;
 	
-	Set_Root_Series(ROOT_TYPESETS, Make_Block(40), "typeset presets");
+	Set_Root_Series(ROOT_TYPESETS, Make_Block(40), cb_cast("typeset presets"));
 
 	for (n = 0; Typesets[n]; n += 2) {
 		value = Append_Value(VAL_SERIES(ROOT_TYPESETS));
@@ -253,6 +253,10 @@
 	case A_COMPLEMENT:
 		VAL_TYPESET(val) = ~VAL_TYPESET(val);
 		return R_ARG1;
+
+	case A_TAILQ:
+		// Necessary to make EMPTY? work:
+		return (VAL_TYPESET(val) == 0) ? R_TRUE : R_FALSE;
 
 	default:
 		Trap_Action(REB_TYPESET, action);

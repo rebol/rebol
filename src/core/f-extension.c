@@ -37,13 +37,14 @@
 // Extension evaluation categories:
 enum {
     RXE_NULL,	// unset
-	RXE_PTR,	// any pointer
+	RXE_HANDLE,	// handle
     RXE_32,		// logic
     RXE_64,		// integer, decimal, etc.
     RXE_SYM,	// word
     RXE_SER,	// string
 	RXE_IMAGE,	// image
 	RXE_DATE,	// from upper section
+	RXE_OBJECT, // any object
 	RXE_MAX
 };
 
@@ -88,8 +89,12 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 		arg.series = VAL_SERIES(val);
 		arg.index = VAL_INDEX(val);
 		break;
-	case RXE_PTR:
+	case RXE_OBJECT:
+		arg.addr = VAL_OBJ_FRAME(val);
+		break;
+	case RXE_HANDLE:
 		arg.addr = VAL_HANDLE(val);
+		arg.handle.type = VAL_HANDLE_TYPE(val);
 		break;
 	case RXE_32:
 		arg.int32a = VAL_I32(val);
@@ -105,7 +110,7 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 		break;
 	case RXE_IMAGE:
 		arg.series = VAL_SERIES(val);
-		arg.width = VAL_IMAGE_WIDE(val);
+		arg.width  = VAL_IMAGE_WIDE(val);
 		arg.height = VAL_IMAGE_HIGH(val);
 		break;
 	case RXE_NULL:
@@ -131,8 +136,12 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 		VAL_SERIES(val) = arg.series;
 		VAL_INDEX(val) = arg.index;
 		break;
-	case RXE_PTR:
+	case RXE_OBJECT:
+		VAL_OBJ_FRAME(val) = arg.addr;
+		break;
+	case RXE_HANDLE:
 		VAL_HANDLE(val) = arg.addr;
+		VAL_HANDLE_TYPE(val) = arg.handle.type;
 		break;
 	case RXE_32:
 		VAL_I32(val) = arg.int32a;
@@ -313,7 +322,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	REBEXT *ext;
 	RXICAL call;
 	REBSER *src;
-	int Remove_after_first_run;
+//	int Remove_after_first_run;
 	//Check_Security(SYM_EXTENSION, POL_EXEC, val);
 
 	if (!D_REF(2)) { // No /dispatch, use the DLL file:
@@ -324,11 +333,12 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 		// Try to load the DLL file:
 		if (!(dll = OS_OPEN_LIBRARY(name, &error))) {
+			//printf("error: %i\n", error);
 			Trap1(RE_NO_EXTENSION, val);
 		}
 
 		// Call its info() function for header and code body:
-		if (!(info = OS_FIND_FUNCTION(dll, BOOT_STR(RS_EXTENSION, 0)))){
+		if (!(info = OS_FIND_FUNCTION(dll, cs_cast(BOOT_STR(RS_EXTENSION, 0))))){
 			OS_CLOSE_LIBRARY(dll);
 			Trap1(RE_BAD_EXTENSION, val);
 		}
@@ -341,7 +351,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 		// Import the string into REBOL-land:
 		src = Copy_Bytes(code, -1); // Nursery protected
-		call = OS_FIND_FUNCTION(dll, BOOT_STR(RS_EXTENSION, 2)); // zero is allowed
+		call = OS_FIND_FUNCTION(dll, cs_cast(BOOT_STR(RS_EXTENSION, 2))); // zero is allowed
 	}
 	else {
 		// Hosted extension:
@@ -363,8 +373,8 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 	// Set extension fields needed:
 	val = FRM_VALUE(obj, STD_EXTENSION_LIB_BASE);
-	VAL_SET(val, REB_HANDLE);
-	VAL_I32(val) = ext->index;
+	SET_HANDLE(val, NULL, SYM_EXTENSION, HANDLE_FUNCTION);
+	VAL_HANDLE_I32(val) = ext->index;
 	if (!D_REF(2)) *FRM_VALUE(obj, STD_EXTENSION_LIB_FILE) = *D_ARG(1);
 	Set_Binary(FRM_VALUE(obj, STD_EXTENSION_LIB_BOOT), src);
 
@@ -390,13 +400,14 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		VAL_LEN(def) != 3
 		|| !(IS_MODULE(val) || IS_OBJECT(val))
 		|| !IS_HANDLE(VAL_OBJ_VALUE(val, 1))
+		|| VAL_HANDLE_TYPE(VAL_OBJ_VALUE(val, 1)) != SYM_EXTENSION
 		|| !IS_INTEGER(val+1)
 		|| VAL_INT64(val+1) > 0xffff
 	) Trap1(RE_BAD_FUNC_DEF, def);
 
 	val = VAL_OBJ_VALUE(val, 1);
 	if (
-		!(ext = &Ext_List[VAL_I32(val)])
+		!(ext = &Ext_List[VAL_HANDLE_I32(val)])
 		|| !(ext->call)
 	) Trap1(RE_BAD_EXTENSION, def);
 
@@ -431,7 +442,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 **
 ***********************************************************************/
 {
-	REBVAL *val = BLK_HEAD(VAL_FUNC_BODY(value));
+	REBVAL *val;
 	REBEXT *ext;
 	REBCNT cmd;
 	REBCNT argc;
@@ -441,7 +452,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	// All of these were checked above on definition:
 	val = BLK_HEAD(VAL_FUNC_BODY(value));
 	cmd = (int)VAL_INT64(val+1);
-	ext = &Ext_List[VAL_I32(VAL_OBJ_VALUE(val, 1))]; // Handler
+	ext = &Ext_List[VAL_HANDLE_I32(VAL_OBJ_VALUE(val, 1))]; // Handler
 
 	// Copy args to command frame (array of args):
 	RXA_COUNT(&frm) = argc = SERIES_TAIL(VAL_FUNC_ARGS(value))-1; // not self
@@ -475,6 +486,19 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		SET_FALSE(val);
 		break;
 	case RXR_ERROR:
+		{
+			const char* errmsg = frm.args[1].series;
+			if(errmsg != NULL) {
+				int len = strlen(errmsg);
+				VAL_SET(val, REB_STRING);		
+				VAL_SERIES(val) = Make_Binary(len);
+				VAL_INDEX(val) = 0;
+				VAL_TAIL(val) = len;
+				memcpy(VAL_BIN_HEAD(val), errmsg, len);
+			}
+			Trap1(RE_COMMAND_FAIL, val);
+		}
+		break;
 	default:
 		SET_UNSET(val);
 	}
@@ -573,7 +597,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		// Call the command (also supports different extension modules):
 		func  = BLK_HEAD(VAL_FUNC_BODY(func));
 		n = (REBCNT)VAL_INT64(func + 1);
-		ext = &Ext_List[VAL_I32(VAL_OBJ_VALUE(func, 1))]; // Handler
+		ext = &Ext_List[VAL_HANDLE_I32(VAL_OBJ_VALUE(func, 1))]; // Handler
 		n = ext->call(n, &frm, context);
 		val = DS_RETURN;
 		switch (n) {

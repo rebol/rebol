@@ -186,12 +186,12 @@
 {
 	REBVAL	*value;
 	REBVAL	*arg;
-	REBYTE	*vp;
-	REBYTE	*ap;
-	REBINT	len;
-	REBINT	alen;
-	REBINT	v;
-	REBINT	a;
+	REBYTE	*vp = NULL;
+	REBYTE	*ap = NULL;
+	REBCNT	len = 0;
+	REBCNT	alen;
+	REBI64	v;
+	REBI64	a;
 	REBDEC	dec;
 
 	value = D_ARG(1);
@@ -202,12 +202,14 @@
 	arg = D_ARG(2);
 
 	if (IS_BINARY_ACT(action)) {
+		ASSERT2(vp != NULL, RP_MISC);
+
 		if (IS_INTEGER(arg)) {
-			a = VAL_INT32(arg);
+			a = VAL_INT64(arg);
 			ap = 0;
 		} else if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
 			dec=VAL_DECIMAL(arg);
-			a = (REBINT)dec;
+			a = (REBI64)dec;
 			ap = 0;
 		} else if (IS_TUPLE(arg)) {
 			ap = VAL_TUPLE(arg);
@@ -217,22 +219,32 @@
 		} else Trap_Math_Args(REB_TUPLE, action);
 
 		for (;len > 0; len--, vp++) {
-			v = *vp;
+			v = (REBI64)*vp;
 			if (ap)
-				a = (REBINT) *ap++;
+				a = (REBI64) *ap++;
 			switch (action) {
 			case A_ADD:	v += a; break;
 			case A_SUBTRACT: v -= a; break;
 			case A_MULTIPLY:
-				if (IS_DECIMAL(arg) || IS_PERCENT(arg))
-					v=(REBINT)(v*dec);
-				else
+				if ( v == 0 ) break;
+				if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
+					if (dec > 255.0) {
+						*vp = (REBYTE)255;
+						continue;
+					}
+					v=(REBI64)(v*dec);
+				} else {
+					if (a > 255) {
+						*vp = (REBYTE)255;
+						continue;
+					}
 					v *= a;
+				}
 				break;
 			case A_DIVIDE:
 				if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
 					if (dec == 0.0) Trap0(RE_ZERO_DIVIDE);
-					v=(REBINT)Round_Dec(v/dec, 0, 1.0);
+					v=(REBI64)Round_Dec(v/dec, 0, 1.0);     //@@ https://github.com/Oldes/Rebol-issues/issues/1974
 				} else {
 					if (a == 0) Trap0(RE_ZERO_DIVIDE);
 					v /= a;
@@ -270,15 +282,7 @@
 		}
 		goto ret_value;
 	}
-/*
-	if (action == A_ZEROQ) {
-		for (;len > 0; len--, vp++) {
-			if (*vp != 0)
-				goto is_false;
-		}
-		goto is_true;
-	}
-*/
+
 	//a = 1; //???
 	switch (action) {
 	case A_LENGTHQ:
@@ -351,7 +355,7 @@
 		if (IS_ISSUE(arg)) {
 			REBUNI c;
 			ap = Get_Word_Name(arg);
-			len = LEN_BYTES(ap);  // UTF-8 len
+			len = (REBINT)LEN_BYTES(ap);  // UTF-8 len
 			if (len & 1) goto bad_arg; // must have even # of chars
 			len /= 2;
 			if (len > MAX_TUPLE) goto bad_arg; // valid even for UTF-8

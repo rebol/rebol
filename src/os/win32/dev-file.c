@@ -134,24 +134,22 @@ static BOOL Seek_File_64(REBREQ *file)
 	WIN32_FIND_DATA info;
 	HANDLE h= (HANDLE)(dir->handle);
 	REBCHR *cp = 0;
+	REBCNT len;
 
 	if (!h) {
-
+		file->modes = 0;		
 		// Read first file entry:
 		h = FindFirstFile(dir->file.path, &info);
 		if (h == INVALID_HANDLE_VALUE) {
 			dir->error = -RFE_OPEN_FAIL;
 			return DR_ERROR;
 		}
+		cp = info.cFileName;
 		dir->handle = h;
 		CLR_FLAG(dir->flags, RRF_DONE);
-		cp = info.cFileName;
-
 	}
-
 	// Skip over the . and .. dir cases:
 	while (cp == 0 || (cp[0] == '.' && (cp[1] == 0 || (cp[1] == '.' && cp[2] == 0)))) {
-
 		// Read next file entry, or error:
 		if (!FindNextFile(h, &info)) {
 			dir->error = GetLastError();
@@ -163,7 +161,6 @@ static BOOL Seek_File_64(REBREQ *file)
 			return DR_DONE;
 		}
 		cp = info.cFileName;
-
 	}
 
 	file->modes = 0;
@@ -174,6 +171,46 @@ static BOOL Seek_File_64(REBREQ *file)
 	return DR_DONE;
 }
 
+/***********************************************************************
+**
+*/	static int Read_Drives(REBREQ *dir, REBREQ *file)
+/*
+**		Reading list of logical drives.. Rebol code: read %/
+**
+***********************************************************************/
+{
+	HANDLE h= (HANDLE)(dir->handle);
+	REBCHR *cp = 0;
+	REBCNT len;
+	if (!h) {
+		len = (1 + GetLogicalDriveStrings(0, NULL)) << 1;
+		h = MAKE_MEM(len);
+		GetLogicalDriveStrings(len, h);
+		dir->length = len;
+		dir->actual = 0;
+		dir->handle = h;
+		file->modes = 0;
+		CLR_FLAG(dir->flags, RRF_DONE);
+	}
+	// Drive names processing...
+	cp = (REBCHR*)h + dir->actual;
+	file->file.path = cp;
+	if (cp[0] == 0 || dir->length <= dir->actual) {
+		// end
+		FREE_MEM(dir->handle);
+		dir->handle = NULL;
+		SET_FLAG(dir->flags, RRF_DONE); // no more files
+		return DR_DONE;
+	}
+	while (cp[0] != 0 && dir->length > dir->actual) {
+		cp++; dir->actual++;
+	}
+	// the names are as: "C:\" but we want "C/"
+	cp[-2] = '/';
+	cp[-1] = 0;    
+	dir->actual++; // skip the null after current drive name
+	return DR_DONE;
+}
 
 /***********************************************************************
 **
@@ -284,7 +321,10 @@ fail:
 ***********************************************************************/
 {
 	if (GET_FLAG(file->modes, RFM_DIR)) {
-		return Read_Directory(file, (REBREQ*)file->data);
+		if (!GET_FLAG(file->modes, RFM_DRIVES))
+			return Read_Directory(file, (REBREQ*)file->data);
+		else
+			return Read_Drives(file, (REBREQ*)file->data);
 	}
 
 	if (!file->handle) {
@@ -297,7 +337,7 @@ fail:
 		if (!Seek_File_64(file)) return DR_ERROR;
 	}
 
-	if (!ReadFile(file->handle, file->data, file->length, &file->actual, 0)) {
+	if (!ReadFile(file->handle, file->data, file->length, (LPDWORD)&file->actual, 0)) {
 		file->error = -RFE_BAD_READ;
 		return DR_ERROR;
 	} else {
@@ -337,7 +377,7 @@ fail:
 	}
 
 	if (file->length != 0) {
-		if (!WriteFile(file->handle, file->data, file->length, &file->actual, 0)) {
+		if (!WriteFile(file->handle, file->data, file->length, (LPDWORD)&file->actual, 0)) {
 			result = GetLastError();
 			if (result == ERROR_HANDLE_DISK_FULL) file->error = -RFE_DISK_FULL;
 			else file->error = -RFE_BAD_WRITE;
@@ -372,13 +412,31 @@ fail:
 	WIN32_FILE_ATTRIBUTE_DATA info;
 
 	if (!GetFileAttributesEx(file->file.path, GetFileExInfoStandard, &info)) {
+		if (file->file.path[0] == 0) {
+			// special case: query %/
+			// report it still as a dir...
+			SET_FLAG(file->modes, RFM_DIR);
+			// but without size and date
+			file->file.size = MIN_I64;
+			file->file.time.l = 0;
+			file->file.time.h = 0;
+			// put back removed slash
+			file->file.path[0] = '/';
+			file->file.path[1] = 0;
+			return DR_DONE;
+		}
 		file->error = GetLastError();
 		return DR_ERROR;
 	}
 
-	if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) SET_FLAG(file->modes, RFM_DIR);
-	else CLR_FLAG(file->modes, RFM_DIR);
-	file->file.size = ((i64)info.nFileSizeHigh << 32) + (i64)info.nFileSizeLow;
+	if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+		SET_FLAG(file->modes, RFM_DIR);
+		file->file.size = MIN_I64; // using MIN_I64 to notify, that size should be reported as NONE
+	}
+	else {
+		CLR_FLAG(file->modes, RFM_DIR);
+		file->file.size = ((i64)info.nFileSizeHigh << 32) + (i64)info.nFileSizeLow;
+	}
 	file->file.time.l = info.ftLastWriteTime.dwLowDateTime;
 	file->file.time.h = info.ftLastWriteTime.dwHighDateTime;
 	return DR_DONE;

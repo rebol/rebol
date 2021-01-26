@@ -27,7 +27,7 @@
 ***********************************************************************/
 
 //----- Windows - "Network standards? What network standards?" -Bill G.
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS // any Windows version
 
 #include <winsock.h>
 
@@ -57,6 +57,7 @@ typedef long __LONG;
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <unistd.h>
 
 #define GET_ERROR		errno
 #define IOCTL			ioctl

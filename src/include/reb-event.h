@@ -26,7 +26,15 @@
 **
 ***********************************************************************/
 
-// Note: size must be 12 bytes!
+#ifndef REB_EVENT_H
+#define REB_EVENT_H
+
+// Note: size must be 12 bytes on 32-bit or 16 on 64-bit!
+
+// Forward references:
+typedef struct rebol_device REBDEV;
+typedef struct rebol_devreq REBREQ;
+typedef struct Reb_Series   REBSER;
 
 #pragma pack(4)
 typedef struct rebol_event {
@@ -37,7 +45,8 @@ typedef struct rebol_event {
 	u32 data;		// an x/y position or keycode (raw/decoded)
 	union {
 		REBREQ *req;	// request (for device events)
-		void *ser;		// port or object
+		REBSER *port;   // port
+		void *ser;		// object
 	};
 } REBEVT;
 #pragma pack()
@@ -50,6 +59,8 @@ enum {
 	EVF_DOUBLE,		// double click detected
 	EVF_CONTROL,
 	EVF_SHIFT,
+	EVF_HAS_DATA,   // drop_file event series contains data instead of gob
+	EVF_HAS_CODE,   // XY value is interpreted as integer instead of pair
 };
 
 
@@ -61,7 +72,11 @@ enum {
 	EVM_OBJECT,		// event holds object frame pointer
 	EVM_GUI,		// GUI event uses system/view/event/port
 	EVM_CALLBACK,	// Callback event uses system/ports/callback port
+	EVM_MIDI,		// event holds midi port pointer
+	EVM_CONSOLE,    // native console events
 };
 
 // Special messages
 #define WM_DNS (WM_USER+100)
+
+#endif

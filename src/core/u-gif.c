@@ -26,10 +26,18 @@
 **    This is an optional part of R3. This file can be replaced by
 **    library function calls into an updated implementation.
 **
+***********************************************************************
+**  Base-code:
+
+	if find system/codecs 'gif [
+		system/codecs/gif/suffixes: [%.gif]
+		append append system/options/file-types system/codecs/gif/suffixes 'gif
+	]
+
 ***********************************************************************/
 
 #include "sys-core.h"
-
+#ifdef INCLUDE_GIF_CODEC
 
 #define	MAX_STACK_SIZE	4096
 #define	NULL_CODE		(-1)
@@ -179,7 +187,7 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 			}
 			top_stack--;
 			rp = colortab + 3 * *top_stack;
-			*dp++ = rp[2] | (rp[1] << 8) | (rp[0] << 16);
+			*dp++ = TO_PIXEL_COLOR(rp[0], rp[1], rp[2], 0xff);
 			x++;
 		}
 		if (interlaced) {
@@ -301,7 +309,7 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 		Decode_LZW(dp, &cp, colormap, w, h, interlaced);
 
 		if(transparency_index >= 0) {
-			int ADD_alpha_key_detection;
+			//int ADD_alpha_key_detection;
 			REBYTE *p=colormap+3*transparency_index;
 			///Chroma_Key_Alpha(Temp_Value, (REBCNT)(p[2]|(p[1]<<8)|(p[0]<<16)), BLIT_MODE_COLOR);
 		}
@@ -345,3 +353,5 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 {
 	Register_Codec("gif", Codec_GIF_Image);
 }
+
+#endif //INCLUDE_GIF_CODEC

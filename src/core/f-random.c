@@ -149,7 +149,7 @@ static REBI64 ran_arr_cycle()
 	return tmp;
 }
 
-#define MAX_U64 ((REBU64)(REBI64)-1)
+//#define MAX_U64 ((REBU64)(REBI64)-1) //defined in reb-c.h
 /***********************************************************************
 **
 */	REBI64 Random_Range(REBI64 r, REBFLG secure)
@@ -178,4 +178,36 @@ static REBI64 ran_arr_cycle()
 	s = (REBDEC)Random_Int(secure);
 	if (s < 0.0) s += 1.8446744073709552e19;
 	return (s * t) * r;
+}
+
+/***********************************************************************
+**
+*/	void Random_Bytes(REBYTE* dest, REBCNT length, REBOOL	no_zeros)
+/*
+**		Fills destination buffer with random bytes.
+**
+***********************************************************************/
+{
+	REBI64 rnd;
+	REBCNT k = length / 8;
+	REBCNT r = length % 8;
+	REBYTE *cp = dest;
+	REBCNT i;
+
+	for (i = 0; i < k; i++) {
+		rnd = Random_Int(TRUE);
+		memcpy(cp, (REBYTE*)&rnd, 8);
+		cp += 8;
+	}
+	if (r > 0) {
+		rnd = Random_Int(TRUE);
+		memcpy(cp, (REBYTE*)&rnd, r);
+	}
+	if(no_zeros) {
+		// make result without null bytes
+		for (i = 0; i < length; i++) {
+			while (dest[i] == 0) 
+				dest[i] = (u8)(rand());
+		}
+	}
 }

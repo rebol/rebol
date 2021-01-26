@@ -39,6 +39,7 @@
 	REBREQ *req;
 	REBINT result;
 	REBVAL *arg;
+	REBCNT args = 0;
 	REBCNT refs;	// refinement argument flags
 	REBINT len;
 	REBSER *ser;
@@ -50,8 +51,27 @@
 	req = Use_Port_State(port, RDI_CLIPBOARD, sizeof(REBREQ));
 
 	switch (action) {
+	case A_UPDATE:
+		// Update the port object after a READ or WRITE operation.
+		// This is normally called by the WAKE-UP function.
+		arg = OFV(port, STD_PORT_DATA);
+		if (req->command == RDC_READ) {
+			len = req->actual;
+			if (GET_FLAG(req->flags, RRF_WIDE)) {
+				len /= sizeof(REBUNI); //correct length
+				// Copy the string (convert to latin-8 if it fits):
+				Set_Binary(arg, Copy_Wide_Str(req->data, len));
+			} else {
+				Set_Binary(arg, Copy_OS_Str(req->data, len));
+			}
+		}
+		else if (req->command == RDC_WRITE) {
+			SET_NONE(arg);  // Write is done.
+		}
+		return R_NONE;
 
 	case A_READ:
+		args = Find_Refines(ds, ALL_READ_REFS);
 		// This device is opened on the READ:
 		if (!IS_OPEN(req)) {
 			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
@@ -63,21 +83,37 @@
 
 		// Copy and set the string result:
 		arg = OFV(port, STD_PORT_DATA);
-
-		// If wide, correct length:
+		
 		len = req->actual;
-		if (GET_FLAG(req->flags, RRF_WIDE)) len /= sizeof(REBUNI);
-
-		// Copy the string (convert to latin-8 if it fits):
-		Set_String(arg, Copy_OS_Str(req->data, len));
+		if (GET_FLAG(req->flags, RRF_WIDE)) {
+			len /= sizeof(REBUNI); //correct length
+			// Copy the string (convert to latin-8 if it fits):
+			Set_String(arg, Copy_Wide_Str(req->data, len));
+		} else {
+			Set_String(arg, Copy_OS_Str(req->data, len));
+		}
 
 		OS_FREE(req->data); // release the copy buffer
 		req->data = 0;
-		*D_RET = *arg;
+
+		if (args & AM_READ_LINES) {
+			Set_Block(D_RET, Split_Lines(arg));
+		} else {
+			*D_RET = *arg;
+		}
 		return R_RET;
 
 	case A_WRITE:
-		if (!IS_STRING(arg) && !IS_BINARY(arg)) Trap1(RE_INVALID_PORT_ARG, arg);
+		if (!(IS_STRING(arg) || IS_BINARY(arg))) {
+#ifdef WRITE_ANY_VALUE_TO_CLIPBOARD
+			REB_MOLD mo = {0};
+			Reset_Mold(&mo);
+			Mold_Value(&mo, arg, TRUE);
+			Set_String(arg, mo.series);
+#else
+			Trap1(RE_INVALID_PORT_ARG, arg);
+#endif
+		}
 		// This device is opened on the WRITE:
 		if (!IS_OPEN(req)) {
 			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);

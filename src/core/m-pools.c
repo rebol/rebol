@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -104,6 +105,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	DEF_POOL(sizeof(REBSER), 4096),	// Series headers
 	DEF_POOL(sizeof(REBGOB), 128),	// Gobs
+	DEF_POOL(sizeof(REBHOB), 16),	// Handle objects
 	DEF_POOL(1, 1),	// Just used for tracking main memory
 };
 
@@ -273,6 +275,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	if (!pool->first) Fill_Pool(pool);
 	node = pool->first;
 	pool->first = *node;
+#ifdef WATCH_SERIES_POOL
+	printf(cs_cast("*** SERIES_POOL Make_Node=> has: %u free: %u\n"), Mem_Pools[SERIES_POOL].has, Mem_Pools[SERIES_POOL].free);
+#endif
 	pool->free--;
 	return (void *)node;
 }
@@ -290,6 +295,14 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	*node = Mem_Pools[pool_id].first;
 	Mem_Pools[pool_id].first = node;
 	Mem_Pools[pool_id].free++;
+#ifdef WATCH_SERIES_POOL
+	if(pool_id == SERIES_POOL) {
+		//if(Mem_Pools[SERIES_POOL].has == Mem_Pools[SERIES_POOL].free) {
+		//	puts("last?");
+		//}
+		printf(cs_cast("*** SERIES_POOL Free_Node=> has: %u free: %u\n"), Mem_Pools[SERIES_POOL].has, Mem_Pools[SERIES_POOL].free);
+	}
+#endif
 }
 
 
@@ -320,6 +333,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		pool->first = *node;
 		pool->free--;
 		length = pool->wide;
+#ifdef WATCH_SERIES_POOL
+		if(pool_num == SERIES_POOL) printf(cs_cast("*** SERIES_POOL Make_Series_Data=> has: %u free: %u (size: %u)\n"), Mem_Pools[SERIES_POOL].has, Mem_Pools[SERIES_POOL].free, length);
+#endif
 	} else {
 		length = ALIGN(length, 2048);
 #ifdef DEBUGGING
@@ -338,6 +354,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #endif
 		Mem_Pools[SYSTEM_POOL].has += length;
 		Mem_Pools[SYSTEM_POOL].free++;
+#ifdef WATCH_SYSTEM_POOL
+		printf(cs_cast("*** SYSTEM_POOL Make_Series_Data=> has: %u free: %u (size: %u)\n"), Mem_Pools[SYSTEM_POOL].has, Mem_Pools[SYSTEM_POOL].free, length);
+#endif
 	}
 #ifdef CHAFF
 	memset((REBYTE *)node, 0xff, length);
@@ -370,15 +389,14 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	if (((REBU64)length * wide) > MAX_I32) Trap0(RE_NO_MEMORY);
 
-	PG_Reb_Stats->Series_Made++;
-	PG_Reb_Stats->Series_Memory += length * wide;
-
 	ASSERT(wide != 0, RP_BAD_SERIES);
 
 //	if (GC_TRIGGER) Recycle();
 
 	series = (REBSER *)Make_Node(SERIES_POOL);
 	length *= wide;
+	ASSERT(length != 0, RP_BAD_SERIES);
+
 	pool_num = FIND_POOL(length);
 	if (pool_num < SYSTEM_POOL) {
 		pool = &Mem_Pools[pool_num];
@@ -387,6 +405,10 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		pool->first = *node;
 		pool->free--;
 		length = pool->wide;
+		memset(node, 0, length);
+#ifdef WATCH_SERIES_POOL
+		if(pool_num == SERIES_POOL) printf(cs_cast("*** SERIES_POOL Make_Series=> has: %u free: %u (size: %u)\n"), Mem_Pools[SERIES_POOL].has, Mem_Pools[SERIES_POOL].free, length);
+#endif
 	} else {
 		if (powerof2) {
 			// !!! WHO added this and why??? Just use a left shift and mask!
@@ -415,12 +437,15 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #endif
 		Mem_Pools[SYSTEM_POOL].has += length;
 		Mem_Pools[SYSTEM_POOL].free++;
+#ifdef WATCH_SYSTEM_POOL
+		printf(cs_cast("*** SYSTEM_POOL Make_Series => has: %u free: %u (size: %u)\n"), Mem_Pools[SYSTEM_POOL].has, Mem_Pools[SYSTEM_POOL].free, length);
+#endif
 	}
 #ifdef CHAFF
 	memset((REBYTE *)node, 0xff, length);
 #endif
 	series->tail = series->size = 0;
-	SERIES_REST(series) = length / wide;
+	SERIES_REST(series) = length / wide; //FIXME: This is based on the assumption that length is multiple of wide
 	series->data = (REBYTE *)node;
 	series->info = wide; // also clears flags
 	LABEL_SERIES(series, "make");
@@ -432,6 +457,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	GC_Infants[GC_Last_Infant++] = series;
 
 	CHECK_MEMORY(2);
+
+	PG_Reb_Stats->Series_Made++;
+	PG_Reb_Stats->Series_Memory += length;
 
 	return series;
 }
@@ -474,7 +502,8 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	// Verify that size matches pool size:
 	if (pool_num < SERIES_POOL) {
-		ASSERT(Mem_Pools[pool_num].wide == size, RP_FREE_NODE_SIZE);
+		/* size < wide when "wide" is not a multiple of element size */
+		ASSERT(Mem_Pools[pool_num].wide >= size, RP_FREE_NODE_SIZE);
 	}
 	MUNG_CHECK(pool_num,node, size);
 
@@ -483,6 +512,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		*node = pool->first;
 		pool->first = node;
 		pool->free++;
+#ifdef WATCH_SERIES_POOL
+		if(pool_num == SERIES_POOL) printf(cs_cast("*** SERIES_POOL Free_Series_Data=> has: %u free: %u (size: %u)\n"), Mem_Pools[SERIES_POOL].has, Mem_Pools[SERIES_POOL].free, size);
+#endif
 	} else {
 #ifdef MUNGWALL
 		Free_Mem(((REBYTE *)node)-MUNG_SIZE, size + MUNG_SIZE*2);
@@ -491,6 +523,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #endif
 		Mem_Pools[SYSTEM_POOL].has -= size;
 		Mem_Pools[SYSTEM_POOL].free--;
+#ifdef WATCH_SYSTEM_POOL
+		printf(cs_cast("*** SYSTEM_POOL Free_Series_Data=> has: %u free: %u (size: %u)\n"), Mem_Pools[SYSTEM_POOL].has, Mem_Pools[SYSTEM_POOL].free, size);
+#endif
 	}
 
 	CHECK_MEMORY(2);
@@ -512,21 +547,34 @@ clear_header:
 ***********************************************************************/
 {
 	REBCNT n;
-
+#ifdef WATCH_SERIES_POOL
+	if (SERIES_FREED(series)) {
+		puts("series already free!");
+	}
+#endif
 	PG_Reb_Stats->Series_Freed++;
+	PG_Reb_Stats->Series_Memory -= SERIES_TOTAL(series);
 
 	// Remove series from expansion list, if found:
 	for (n = 1; n < MAX_EXPAND_LIST; n++) {
 		if (Prior_Expand[n] == series) Prior_Expand[n] = 0;
 	}
 
-	Free_Series_Data(series, TRUE);
+	if (!IS_EXT_SERIES(series)) {
+		Free_Series_Data(series, TRUE);
+	}
 	series->info = 0; // includes width
 	//series->data = BAD_MEM_PTR;
 	//series->tail = 0xBAD2BAD2;
 	//series->size = 0xBAD3BAD3;
 
 	Free_Node(SERIES_POOL, (REBNOD *)series);
+
+	/* remove from GC_Infants */
+	for (n = 0; n < MAX_SAFE_SERIES; n++) {
+		if (GC_Infants[n] == series)
+			GC_Infants[n] = NULL;
+	}
 
 /* Old torture mode:
 	if (!SERIES_FREED(series)) { // Don't try to free twice.
@@ -553,6 +601,32 @@ clear_header:
 
 /***********************************************************************
 **
+*/	void Free_Hob(REBHOB *hob)
+/*
+**		Free a hob, returning its memory for reuse.
+**
+***********************************************************************/
+{
+	REBHSP spec;
+	REBCNT idx = hob->index;
+
+	if( idx == 0 || !IS_USED_HOB(hob) || hob->data == NULL) return;
+
+	spec = PG_Handles[idx-1];
+	//printf("HOB free mem: %0x\n", hob->data);
+
+	if (spec.free)
+		spec.free(hob->data);
+	
+	CLEAR(hob->data, spec.size); 
+	FREE_MEM(hob->data);
+	UNUSE_HOB(hob);
+	Free_Node(HOB_POOL, (REBNOD *)hob);
+}
+
+
+/***********************************************************************
+**
 */	void Prop_Series(REBSER *newser, REBSER *oldser)
 /*
 **		Propagate a series from another.
@@ -560,7 +634,7 @@ clear_header:
 ***********************************************************************/
 {
 	newser->info = oldser->info;
-	newser->size = oldser->size;
+	newser->all = oldser->all;
 #ifdef SERIES_LABELS
 	newser->label = oldser->label;
 #endif
@@ -603,7 +677,7 @@ clear_header:
 {
 	REBCNT pool_num;
 	REBNOD *node;
-	REBNOD *pnode;
+	//REBNOD *pnode;
 	REBCNT count = 0;
 	REBSEG *seg;
 	REBSER *series;
@@ -639,10 +713,10 @@ clear_header:
 			count++;
 			// The node better belong to one of the pool's segments:
 			for (seg = Mem_Pools[pool_num].segs; seg; seg = seg->next) {
-				if ((int)node > (int)seg && (int)node < (int)seg + (int)seg->size) break;
+				if ((REBUPT)node > (REBUPT)seg && (REBUPT)node < (REBUPT)seg + (REBUPT)seg->size) break;
 			}
 			if (!seg) goto crash;
-			pnode = node; // for debugger
+			//pnode = node; // for debugger
 		}
 		// The number of free nodes must agree with header:
 		if (
@@ -679,7 +753,7 @@ crash:
 			if (!SERIES_FREED(series)) {
 				if (SERIES_WIDE(series) == size && SERIES_GET_FLAG(series, SER_MON)) {
 					//Debug_Fmt("%3d %4d %4d = \"%s\"", n++, series->tail, SERIES_TOTAL(series), series->data);
-					Debug_Fmt("%3d %4d %4d = \"%s\"", n++, series->tail, SERIES_REST(series), (SERIES_LABEL(series) ? SERIES_LABEL(series) : "-"));
+					Debug_Fmt(cb_cast("%3d %4d %4d = \"%s\""), n++, series->tail, SERIES_REST(series), (SERIES_LABEL(series) ? SERIES_LABEL(series) : "-"));
 				}
 			}
 			series++;
@@ -688,6 +762,79 @@ crash:
 	}
 }
 
+/***********************************************************************
+**
+*/	void Dump_Series_In_Pool(int pool_id)
+/*
+**		Dump all series in the pool @pool_id, -1 for all pools
+**
+***********************************************************************/
+{
+	REBSEG	*seg;
+	REBSER *series;
+	REBCNT count;
+	//REBCNT n = 0;
+
+	for (seg = Mem_Pools[SERIES_POOL].segs; seg; seg = seg->next) {
+		series = (REBSER *) (seg + 1);
+		for (count = Mem_Pools[SERIES_POOL].units; count > 0; count--) {
+			SKIP_WALL(series);
+			if (!SERIES_FREED(series)) {
+				if (pool_id < 0 || FIND_POOL(SERIES_TOTAL(series)) == pool_id) {
+					Debug_Fmt(
+							  Str_Dump[0], //"%s Series %x: Wide: %2d Size: %6d - Bias: %d Tail: %d Rest: %d Flags: %x %s"
+							  "Dump",
+							  series,
+							  SERIES_WIDE(series),
+							  SERIES_TOTAL(series),
+							  SERIES_BIAS(series),
+							  SERIES_TAIL(series),
+							  SERIES_REST(series),
+							  SERIES_FLAGS(series),
+							  (SERIES_LABEL(series) ? SERIES_LABEL(series) : "-")
+							 );
+					//Dump_Series(series, "Dump");
+					if (SERIES_WIDE(series) == sizeof(REBVAL)) {
+						Debug_Values(BLK_HEAD(series), SERIES_TAIL(series), 1024); /* FIXME limit */
+					} else{
+						Dump_Bytes(series->data, (SERIES_TAIL(series)+1) * SERIES_WIDE(series));
+					}
+				}
+			}
+			series++;
+			SKIP_WALL(series);
+		}
+	}
+}
+
+#ifdef DEBUG_HANDLES
+/***********************************************************************
+**
+*/	void Dump_Handles(void)
+/*
+**		Dump all series in the pool @pool_id, -1 for all pools
+**
+***********************************************************************/
+{
+	REBSEG *seg;
+	REBHOB *hob;
+	REBCNT count;
+	REBCNT n = 0;
+	puts("\nUsed handles:\n");
+	for (seg = Mem_Pools[HOB_POOL].segs; seg; seg = seg->next, n++) {
+		hob = (REBHOB *) (seg + 1);
+		printf("seg %u units: %u free: %u\n", n, Mem_Pools[HOB_POOL].units, Mem_Pools[HOB_POOL].free);
+		for (count = Mem_Pools[HOB_POOL].units; count > 0; count--) {
+			SKIP_WALL_TYPE(hob, REBHOB);
+			if (IS_USED_HOB(hob)) {
+				printf("hob %s used\n", SYMBOL_TO_NAME(hob->sym));
+			}
+			hob++;
+			SKIP_WALL_TYPE(hob, REBHOB);
+		}
+	}
+}
+#endif
 
 /***********************************************************************
 **
@@ -712,7 +859,7 @@ crash:
 			size += seg->size;
 
 		used = Mem_Pools[n].has - Mem_Pools[n].free;
-		Debug_Fmt("Pool[%-2d] %-4dB %-5d/%-5d:%-4d (%-2d%%) %-2d segs, %-07d total",
+		Debug_Fmt(cb_cast("Pool[%-2d] %-4dB %-5d/%-5d:%-4d (%-2d%%) %-2d segs, %-07d total"),
 			n,
 			Mem_Pools[n].wide,
 			used,
@@ -726,9 +873,12 @@ crash:
 		tused += used * Mem_Pools[n].wide;
 		total += size;
 	}
-	Debug_Fmt("Pools used %d of %d (%2d%%)", tused, total, (tused*100) / total);
-	Debug_Fmt("System pool used %d", Mem_Pools[SYSTEM_POOL].has);
+	Debug_Fmt(cb_cast("Pools used %d of %d (%2d%%)"), tused, total, (tused*100) / total);
+	Debug_Fmt(cb_cast("System pool used %d"), Mem_Pools[SYSTEM_POOL].has);
 	//Debug_Fmt("Raw allocator reports %d", PG_Mem_Usage);
+#ifdef DEBUG_HANDLES
+	Dump_Handles();
+#endif
 }
 
 
@@ -788,25 +938,25 @@ crash:
 			if (SERIES_WIDE(series) == sizeof(REBVAL)) {
 				blks++;
 				blk_size += SERIES_TOTAL(series);
-				if (f) Debug_Fmt_("BLOCK ");
+				if (f) Debug_Fmt_(cb_cast("BLOCK "));
 			}
 			else if (SERIES_WIDE(series) == 1) {
 				strs++;
 				str_size += SERIES_TOTAL(series);
-				if (f) Debug_Fmt_("STRING");
+				if (f) Debug_Fmt_(cb_cast("STRING"));
 			}
 			else if (SERIES_WIDE(series) == sizeof(REBUNI)) {
 				unis++;
 				uni_size += SERIES_TOTAL(series);
-				if (f) Debug_Fmt_("UNICOD");
+				if (f) Debug_Fmt_(cb_cast("UNICOD"));
 			}
 			else if (SERIES_WIDE(series)) {
 				odds++;
 				odd_size += SERIES_TOTAL(series);
-				if (f) Debug_Fmt_("ODD[%d]", SERIES_WIDE(series));
+				if (f) Debug_Fmt_(cb_cast("ODD[%d]"), SERIES_WIDE(series));
 			}
 			if (f && SERIES_WIDE(series)) {
-				Debug_Fmt(" units: %-5d tail: %-5d bytes: %-7d", SERIES_REST(series), SERIES_TAIL(series), SERIES_TOTAL(series));
+				Debug_Fmt(cb_cast(" units: %-5d tail: %-5d bytes: %-7d"), SERIES_REST(series), SERIES_TAIL(series), SERIES_TOTAL(series));
 			}
 
 			series++;
@@ -820,7 +970,7 @@ crash:
 	}
 
 	if (flags & 1) {
-		Debug_Fmt(
+		Debug_Fmt(cb_cast(
 			  "Series Memory Info:\n"
 			  "  node   size = %d\n"
 			  "  series size = %d\n"
@@ -831,7 +981,7 @@ crash:
 			  "  %-6d odds = %-7d bytes - odd series\n"
 			  "  %-6d used = %-7d bytes - total used\n"
 			  "  %-6d free / %-7d bytes - free headers / node-space\n"
-			  ,
+			  ),
 			  sizeof(REBVAL),
 			  sizeof(REBSER),
 			  segs, seg_size,
@@ -849,3 +999,51 @@ crash:
 	return tot_size;
 }
 
+/***********************************************************************
+**
+*/	void Dispose_Pools(void)
+/*
+**		Free memory pool array when application quits.
+**
+***********************************************************************/
+{
+	REBSEG	*seg, *next;
+	REBHOB *hob;
+	REBCNT  used;
+	REBCNT  n;
+
+	//Dump_Pools();
+	//Dump_Series_In_Pool(-1);
+	
+	// HOB at this moment does not use system series, so handle it separately
+	for (seg = Mem_Pools[HOB_POOL].segs; seg; seg = seg->next) {
+		hob = (REBHOB *) (seg + 1);
+		for (n = Mem_Pools[HOB_POOL].units; n > 0; n--) {
+			SKIP_WALL_TYPE(hob, REBHOB);
+			if (IS_USED_HOB(hob)) Free_Hob(hob);
+			hob++;
+			SKIP_WALL_TYPE(hob, REBHOB);
+		}
+	}
+
+	// than release all series from all system pools
+	FOREACH(n, SYSTEM_POOL) {
+		//printf(cs_cast("*** Dispose_Pools[%u] Has: %u free: %u\n"), n, Mem_Pools[n].has, Mem_Pools[n].free);
+		if (Mem_Pools[n].has == Mem_Pools[n].free) {
+			seg = Mem_Pools[n].segs;
+			while (seg) {
+				next = seg->next;
+				Free_Mem(seg, seg->size);
+				seg = next;
+			}
+		}
+		//else {
+		//	printf(cs_cast("!!! Mem_Pools[%u] not empty! Has: %u free: %u\n"), n, Mem_Pools[n].has, Mem_Pools[n].free);
+		//}
+	}
+	// SYSTEM_POOL contains not system series sizes (big series), at this state it should be empty!
+	//if (Mem_Pools[SYSTEM_POOL].has > 0)
+	//	printf(cs_cast("!!! Mem_Pools[SYSTEM_POOL].has: %u\n"), Mem_Pools[SYSTEM_POOL].has);
+	Free_Mem(Mem_Pools, 0);
+	Free_Mem(PG_Pool_Map, 0);
+}

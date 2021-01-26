@@ -39,7 +39,7 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
 
 /***********************************************************************
 **
-*/  REBYTE *Scan_Hex(REBYTE *cp, REBI64 *num, REBCNT minlen, REBCNT maxlen)
+*/  const REBYTE *Scan_Hex(const REBYTE *cp, REBI64 *num, REBCNT minlen, REBCNT maxlen)
 /*
 **		Scans hex while it is valid and does not exceed the maxlen.
 **		If the hex string is longer than maxlen - it's an error.
@@ -74,7 +74,7 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
 
 /***********************************************************************
 **
-*/	REBOOL Scan_Hex2(REBYTE *bp, REBUNI *n, REBFLG uni)
+*/	REBOOL Scan_Hex2(const REBYTE *bp, REBUNI *n, REBFLG uni)
 /*
 **		Decode a %xx hex encoded byte into a char.
 **
@@ -147,7 +147,7 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
 
 /***********************************************************************
 **
-*/	REBCNT Scan_Hex_Value(void *src, REBCNT len, REBOOL uni)
+*/	REBCNT Scan_Hex_Value(const void *src, REBCNT len, REBOOL uni)
 /*
 **		Given a string, scan it as hex. Chars can be 8 or 16 bit.
 **		Result is 32 bits max.
@@ -184,7 +184,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 
 /***********************************************************************
 **
-*/	REBYTE *Scan_Dec_Buf(REBYTE *cp, REBCNT len, REBYTE *buf)
+*/	const REBYTE *Scan_Dec_Buf(const REBYTE *cp, REBCNT len, REBYTE *buf)
 /*
 **		Validate a decimal number. Return on first invalid char
 **		(or end). Return zero if not valid.
@@ -240,13 +240,13 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 
 /***********************************************************************
 **
-*/	REBYTE *Scan_Decimal(REBYTE *cp, REBCNT len, REBVAL *value, REBFLG dec_only)
+*/	const REBYTE *Scan_Decimal(const REBYTE *cp, REBCNT len, REBVAL *value, REBFLG dec_only)
 /*
 **		Scan and convert a decimal value.  Return zero if error.
 **
 ***********************************************************************/
 {
-	REBYTE *bp = cp;
+	const REBYTE *bp = cp;
 	REBYTE buf[MAX_NUM_LEN+4];
 	REBYTE *ep = buf;
 	REBOOL dig = FALSE;   /* flag that a digit was present */
@@ -260,6 +260,43 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 		else cp++;
 	if (*cp == ',' || *cp == '.') cp++;
 	*ep++ = '.';
+
+#ifndef USE_NO_INFINITY
+	if (cp[0] == '#') {
+		if (
+			   (cp[1] == 'I' || cp[1] == 'i')
+			&& (cp[2] == 'N' || cp[2] == 'n')
+			&& (cp[3] == 'F' || cp[3] == 'f')
+		) {
+			cp += 4;
+			if ((REBCNT)(cp - bp) != len) return 0;
+			VAL_SET(value, REB_DECIMAL);
+			VAL_DECIMAL(value) = (bp[0] == '-') ? -INFINITY : INFINITY;
+			return cp;
+		}
+		if (
+			   (cp[1] == 'N' || cp[1] == 'n')
+			&& (cp[2] == 'a' || cp[2] == 'A')
+			&& (cp[3] == 'N' || cp[3] == 'n')
+		) {
+			cp += 4;
+			if ((REBCNT)(cp - bp) != len) return 0;
+			VAL_SET(value, REB_DECIMAL);
+
+			// NOTE: NAN sign may differ!
+			//       VS (17) is producing negative NaN #{FFF8000000000000}, while GCC positive #{7FF8000000000000}!
+			// Is this an issue?
+#if _MSC_VER
+			VAL_DECIMAL(value) = (bp[0] == '-') ? NAN : -NAN;
+#else
+			VAL_DECIMAL(value) = (bp[0] == '-') ? -NAN : NAN;
+#endif
+			return cp;
+		}
+		return 0;
+	}
+#endif // !USE_NO_INFINITY
+
 	while (IS_LEX_NUMBER(*cp) || *cp == '\'')
 		if (*cp != '\'') *ep++ = *cp++, dig=1;
 		else cp++;
@@ -288,7 +325,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 
 /***********************************************************************
 **
-*/  REBYTE *Scan_Integer(REBYTE *cp, REBCNT len, REBVAL *value)
+*/  const REBYTE *Scan_Integer(const REBYTE *cp, REBCNT len, REBVAL *value)
 /*
 **		Scan and convert an integer value.  Return zero if error.
 **		Allow preceding + - and any combination of ' marks.
@@ -308,7 +345,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	}
 
 	if (len > MAX_NUM_LEN) return 0; // prevent buffer overflow
-	len = 0;
+	//len = 0;
 	bp = buf;
 
 	// Strip leading signs:
@@ -330,7 +367,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	*bp = 0;
 
 	// Too many digits?
-	len = bp - &buf[0];
+	len = (REBCNT)(bp - &buf[0]);
 	if (neg) len--;
 	if (len > 19) return 0;
 
@@ -344,13 +381,13 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 
 /***********************************************************************
 **
-*/	REBYTE *Scan_Money(REBYTE *cp, REBCNT len, REBVAL *value)
+*/	const REBYTE *Scan_Money(const REBYTE *cp, REBCNT len, REBVAL *value)
 /*
 **		Scan and convert money.  Return zero if error.
 **
 ***********************************************************************/
 {
-	REBYTE *end;
+	const REBYTE *end;
 
 	if (*cp == '$') cp++, len--;
 	if (len == 0) return 0;
@@ -402,14 +439,14 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 
 /***********************************************************************
 **
-*/	REBYTE *Scan_Date(REBYTE *cp, REBCNT len, REBVAL *value)
+*/	const REBYTE *Scan_Date(const REBYTE *cp, REBCNT len, REBVAL *value)
 /*
 **		Scan and convert a date. Also can include a time and zone.
 **
 ***********************************************************************/
 {
-	REBYTE *ep;
-	REBYTE *end = cp + len;
+	const REBYTE *ep;
+	const REBYTE *end = cp + len;
 	REBINT num;
 	REBINT day = 0;
 	REBINT month;
@@ -452,7 +489,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 		size = (REBCNT)(ep - cp);
 		if (size < 3) return 0;
 		for (num = 0; num < 12; num++) {
-			if (!Compare_Bytes((REBYTE *)(Month_Names[num]), cp, size, TRUE)) break;
+			if (!Compare_Bytes(Month_Names[num], cp, size, TRUE)) break;
 		}
 		month = num + 1;
 	}
@@ -488,7 +525,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	VAL_TIME(value) = NO_TIME;
 	if (cp >= end) goto end_date;
 
-	if (*cp == '/' || *cp == ' ') {
+	if (*cp == '/' || *cp == 'T' || *cp == ' ') { //@@ Oldes: is the check for space really needed here?
 		sep = *cp++;
 		if (cp >= end) goto end_date;
 		cp = Scan_Time(cp, 0, value);
@@ -498,12 +535,19 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 
 	if (*cp == sep) cp++;
 
+	if (*cp == 'Z') {
+		// 'Z' must be last char in the ISO8601 date (if used).
+		if (++cp == end) goto end_date; // valid timezone 0:0
+		else return 0;
+	}
 	// Time zone can be 12:30 or 1230 (optional hour indicator)
 	if (*cp == '-' || *cp == '+') {
 		if (cp >= end) goto end_date;
 		ep = Grab_Int(cp+1, &num);
 		if (ep-cp == 0) return 0;
 		if (*ep != ':') {
+			// An integer is assumed to be HHMM format
+			// https://github.com/rebol/rebol-issues/issues/1411#issuecomment-170907151
 			int h, m;
 			if (num < -1500 || num > 1500) return 0;
 			h = (num / 100);
@@ -531,7 +575,7 @@ end_date:
 #ifdef moved
 /***********************************************************************
 **
-**/  REBCNT Scan_Word(REBYTE *cp, REBCNT len)
+**/  REBCNT Scan_Word(const REBYTE *cp, REBCNT len)
 /*
 **		Scan word chars and make word symbol for it.
 **		Returns symbol number, or zero for errors.
@@ -572,13 +616,13 @@ end_date:
 #ifdef not_used
 /***********************************************************************
 **
-*/  REBYTE *Scan_String(REBYTE *cp, REBCNT len, REBVAL *value)
+*/  const REBYTE *Scan_String(const REBYTE *cp, REBCNT len, REBVAL *value)
 /*
 **		Scan and convert a string.  Return zero if error.
 **
 ***********************************************************************/
 {
-	REBYTE *ep;
+	const REBYTE *ep;
 
 	Reset_Buffer(BUF_FORM, len);
 
@@ -595,21 +639,21 @@ end_date:
 
 /***********************************************************************
 **
-*/	REBYTE *Scan_File(REBYTE *cp, REBCNT len, REBVAL *value)
+*/	const REBYTE *Scan_File(const REBYTE *cp, REBCNT len, REBVAL *value)
 /*
 **		Scan and convert a file name.
 **
 ***********************************************************************/
 {
 	REBUNI term = 0;
-	REBYTE *invalid = ":;()[]\"";
+	const REBYTE *invalid = cb_cast(":;()[]\"");
 
 	if (*cp == '%') cp++, len--;
 	if (*cp == '"') {
 		cp++;
 		len--;
 		term = '"';
-		invalid = ":;\"";
+		invalid = cb_cast(":;\"");
 	}
 	cp = Scan_Item(cp, cp+len, term, invalid);
 	if (cp)
@@ -655,20 +699,17 @@ end_date:
 
 /***********************************************************************
 **
-*/	REBYTE *Scan_Email(REBYTE *cp, REBCNT len, REBVAL *value)
+*/	const REBYTE *Scan_Email(const REBYTE *cp, REBCNT len, REBVAL *value)
 /*
 **		Scan and convert email.
 **
 ***********************************************************************/
 {
-	REBYTE *str;
+	REBYTE *str = Reset_Buffer(BUF_FORM, len);
 	REBOOL at = FALSE;
 	REBUNI n;
+	REBCNT cnt = len;
 
-	VAL_SERIES(value) = Make_Binary(len);
-	VAL_INDEX(value) = 0;
-
-	str = VAL_BIN(value);
 	for (; len > 0; len--) {
 		if (*cp == '@') {
 			if (at) return 0;
@@ -677,14 +718,17 @@ end_date:
 		if (*cp == '%') {
 			if (len <= 2 || !Scan_Hex2(cp+1, &n, FALSE)) return 0;
 			*str++ = (REBYTE)n;
-			cp += 3;
+			cp  += 3;
 			len -= 2;
+			cnt -= 2;
 		}
 		else *str++ = *cp++;
 	}
 	*str = 0;
 	if (!at) return 0;
-	VAL_TAIL(value) = (REBCNT)(str - VAL_BIN(value));
+
+	VAL_SERIES(value) = Decode_UTF_String(BIN_DATA(BUF_FORM), cnt, 8, FALSE, FALSE);
+	VAL_INDEX(value) = 0;
 	VAL_SET(value, REB_EMAIL);
 	return cp;
 }
@@ -692,14 +736,32 @@ end_date:
 
 /***********************************************************************
 **
-*/	REBYTE *Scan_URL(REBYTE *cp, REBCNT len, REBVAL *value)
+*/	const REBYTE *Scan_Ref(const REBYTE *cp, REBCNT len, REBVAL *value)
+/*
+**		Scan and convert ref!
+**
+***********************************************************************/
+{
+	if (*cp != '@') return 0;
+	VAL_SERIES(value) = Decode_UTF_String(cp+1, len-1, 8, FALSE, FALSE);
+	VAL_INDEX(value) = 0;
+	VAL_SET(value, REB_REF);
+	cp += len;
+	return cp;
+}
+
+
+/***********************************************************************
+**
+*/	const REBYTE *Scan_URL(const REBYTE *cp, REBCNT len, REBVAL *value)
 /*
 **		Scan and convert a URL.
 **
 ***********************************************************************/
 {
-	REBYTE *str;
 	REBUNI n;
+	REBYTE *str = Reset_Buffer(BUF_FORM, len);
+	REBCNT cnt = len;
 
 //  !!! Need to check for any possible scheme followed by ':'
 
@@ -709,22 +771,22 @@ end_date:
 //	if (n >= URL_MAX) return 0;
 //	if (*str != ':') return 0;
 
-	VAL_SERIES(value) = Make_Binary(len);
-	VAL_INDEX(value) = 0;
-
-	str = VAL_BIN(value);
+	
 	for (; len > 0; len--) {
 		//if (*cp == '%' && len > 2 && Scan_Hex2(cp+1, &n, FALSE)) {
 		if (*cp == '%') {
 			if (len <= 2 || !Scan_Hex2(cp+1, &n, FALSE)) return 0;
 			*str++ = (REBYTE)n;
-			cp += 3;
+			cp  += 3;
 			len -= 2;
+			cnt -= 2;
 		}
 		else *str++ = *cp++;
 	}
 	*str = 0;
-	VAL_TAIL(value) = (REBCNT)(str - VAL_BIN(value));
+
+	VAL_SERIES(value) = Decode_UTF_String(BIN_DATA(BUF_FORM), cnt, 8, FALSE, FALSE);
+	VAL_INDEX(value) = 0;
 	VAL_SET(value, REB_URL);
 	return cp;
 }
@@ -732,26 +794,80 @@ end_date:
 
 /***********************************************************************
 **
-*/	REBYTE *Scan_Pair(REBYTE *cp, REBCNT len, REBVAL *value)
+*/	const REBYTE *Scan_Pair(const REBYTE *cp, REBCNT len, REBVAL *value)
 /*
 **		Scan and convert a pair
 **
 ***********************************************************************/
 {
-	REBYTE *ep, *xp;
+	const REBYTE *ep, *xp;
 	REBYTE buf[MAX_NUM_LEN+4];
 
-	ep = cp;
+	//ep = cp;
 	//ep = Grab_Int(ep, &n);
 	ep = Scan_Dec_Buf(cp, MAX_NUM_LEN, &buf[0]);
 	if (!ep) return 0;
+
+#ifndef USE_NO_INFINITY
+	if (ep[0] == '#') {
+		if (!((buf[0] == '-' && buf[1] == '1' && buf[2] == '.') || (buf[0] == '1' && buf[1] == '.'))) return 0; //don't allow numbers like 20.#INF or -2.#INF
+		if (
+			(ep[1] == 'I' || ep[1] == 'i') &&
+			(ep[2] == 'N' || ep[2] == 'n') &&
+			(ep[3] == 'F' || ep[3] == 'f')
+		) {
+			VAL_PAIR_X(value) = buf[0] == '-' ? -INFINITY : INFINITY;
+			ep += 4;
+		}
+		else if (
+			 (ep[1] == 'N' || ep[1] == 'n')
+		  && (ep[2] == 'a' || ep[2] == 'A')
+		  && (ep[3] == 'N' || ep[3] == 'n')
+		) {
+			ep += 4;
+			VAL_PAIR_X(value) = NAN;
+		}
+		else return 0;
+	} else {
+		VAL_PAIR_X(value) = (float)atof((char*)(&buf[0])); //n;
+	}
+#else
 	VAL_PAIR_X(value) = (float)atof((char*)(&buf[0])); //n;
+#endif // !USE_NO_INFINITY
+	
 	if (*ep != 'x' && *ep != 'X') return 0;
 	ep++;
 
 	xp = Scan_Dec_Buf(ep, MAX_NUM_LEN, &buf[0]);
 	if (!xp) return 0;
+
+#ifndef USE_NO_INFINITY
+	if (xp[0] == '#') {
+		if(!((buf[0]=='-' && buf[1]=='1' && buf[2]=='.') || (buf[0]=='1' && buf[1]=='.'))) return 0; //don't allow numbers like 20.#INF or -2.#INF
+		if (
+			(xp[1] == 'I' || xp[1] == 'i') &&
+			(xp[2] == 'N' || xp[2] == 'n') &&
+			(xp[3] == 'F' || xp[3] == 'f')
+		) {
+			VAL_PAIR_Y(value) = buf[0] == '-' ? -INFINITY : INFINITY;
+			xp += 4;
+		}
+		else if (
+			   (xp[1] == 'N' || xp[1] == 'n')
+			&& (xp[2] == 'a' || xp[2] == 'A')
+			&& (xp[3] == 'N' || xp[3] == 'n')
+		) {
+			xp += 4;
+			VAL_PAIR_Y(value) = NAN;
+		}
+		else return 0;
+	}
+	else {
+		VAL_PAIR_Y(value) = (float)atof((char*)(&buf[0])); //n;
+	}
+#else
 	VAL_PAIR_Y(value) = (float)atof((char*)(&buf[0])); //n;
+#endif // !USE_NO_INFINITY
 
 	if (len > (REBCNT)(xp - cp)) return 0;
 	VAL_SET(value, REB_PAIR);
@@ -761,13 +877,13 @@ end_date:
 
 /***********************************************************************
 **
-*/	REBYTE *Scan_Tuple(REBYTE *cp, REBCNT len, REBVAL *value)
+*/	const REBYTE *Scan_Tuple(const REBYTE *cp, REBCNT len, REBVAL *value)
 /*
 **		Scan and convert a tuple.
 **
 ***********************************************************************/
 {
-	REBYTE *ep;
+	const REBYTE *ep;
 	REBYTE *tp;
 	REBCNT size = 1;
 	REBINT n;
@@ -794,13 +910,13 @@ end_date:
 
 /***********************************************************************
 **
-*/	REBYTE *Scan_Binary(REBYTE *cp, REBCNT len, REBVAL *value)
+*/	REBINT Scan_Binary_Base(const REBYTE *cp, REBCNT len)
 /*
-**		Scan and convert binary strings.
+**		Scan for binary base
 **
 ***********************************************************************/
 {
-	REBYTE *ep;
+	const REBYTE *ep;
 	REBINT base = 16;
 
 	if (*cp != '#') {
@@ -810,14 +926,25 @@ end_date:
 		cp = ep;
 	}
 	cp++;  // skip #
-	if (*cp++ != '{') return 0;
-	len -= 2;
+	if (*cp++ != '{' || (len - 2) < 1) return 0;
+	return base;
+}
 
-	cp = Decode_Binary(value, cp, len, base, '}');
+/***********************************************************************
+**
+*/	const REBYTE *Scan_Binary(REBINT base, const REBYTE *cp, REBCNT len, REBVAL *value)
+/*
+**		Scan and convert binary strings according given base (like 2, 16, 64, 85).
+**
+***********************************************************************/
+{
+	//O: no need to check the base here... Decode_Binary handles any case
+	cp = Decode_Binary(value, cp, len, base, '}', FALSE);
 	if (!cp) return 0;
 
-	cp = Skip_To_Char(cp, cp + len, '}');
-	if (!cp) return 0; // series will be gc'd
+	//O: bellow check is not needed, because scener already validated the input
+	//cp = Skip_To_Char(cp, cp + len, '}');
+	//if (!cp) return 0; // series will be gc'd
 
 	return cp;
 }
@@ -825,7 +952,7 @@ end_date:
 
 /***********************************************************************
 **
-*/	REBYTE *Scan_Any(REBYTE *cp, REBCNT len, REBVAL *value, REBYTE type)
+*/	const REBYTE *Scan_Any(const REBYTE *cp, REBCNT len, REBVAL *value, REBYTE type)
 /*
 **		Scan any string that does not require special decoding.
 **
@@ -835,23 +962,20 @@ end_date:
 
 	VAL_SET(value, type);
 	VAL_SERIES(value) = Append_UTF8(0, cp, len);
-	VAL_INDEX(value) = 0;
-	VAL_TAIL(value) = len;
 
-	if (VAL_BYTE_SIZE(value)) {
-		n = Deline_Bytes(VAL_BIN(value), len);
-	} else {
-		n = Deline_Uni(VAL_UNI(value), len);
-	}
-	VAL_TAIL(value) = n;
-
+	//O: is it really needed to normalize the string using DELINE how it was done in R3-alpha?
+	//O: Rebol2 was not using any LF normalization.
+	//O: in R2: `#{610D0A62} = to-binary load "<a^M^/b>"`
+	//O: in R3: `#{610A62}   = to-binary load "<a^M^/b>"` (if next line is enabled!)
+	//Replace_CRLF_to_LF(value, VAL_LEN(value)); // keep commented for compatibility with R2 & Red!
+	
 	return cp + len;
 }
 
 
 /***********************************************************************
 **
-*/	static void Append_Markup(REBSER *series, REBCNT type, REBYTE *bp, REBINT len)
+*/	static void Append_Markup(REBSER *series, REBCNT type, const REBYTE *bp, REBINT len)
 /*
 **		Add a new string or tag to a markup block, advancing the tail.
 **
@@ -869,14 +993,14 @@ end_date:
 
 /***********************************************************************
 **
-*/	REBSER *Load_Markup(REBYTE *cp, REBINT len)
+*/	REBSER *Load_Markup(const REBYTE *cp, REBINT len)
 /*
 **		Scan a string as HTML or XML and convert it to a block
 **		of strings and tags.  Return the block as a series.
 **
 ***********************************************************************/
 {
-	REBYTE *bp = cp;
+	const REBYTE *bp = cp;
 	REBSER *series;
 	REBYTE quote;
 
@@ -972,6 +1096,9 @@ end_date:
 			return TRUE;
 
 		default:
+			if (type >= SYM_SI8X && type <= SYM_F64X) {
+				if (MT_Vector(value, val, REB_VECTOR)) return TRUE;
+			}
 			return FALSE;
 		}
 	}

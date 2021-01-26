@@ -37,7 +37,9 @@ enum {
 	RDI_EVENT,
 	RDI_NET,
 	RDI_DNS,
+	RDI_CHECKSUM,
 	RDI_CLIPBOARD,
+	RDI_MIDI,
 	RDI_MAX,
 	RDI_LIMIT = 32
 };
@@ -93,6 +95,7 @@ enum {
 	RRF_PENDING,	// Request is attached to pending list
 	RRF_ALLOC,		// Request is allocated, not a temp on stack
 	RRF_WIDE,		// Wide char IO
+	RRF_ACTIVE,		// Port is active, even no new events yet
 };
 
 // REBOL Device Errors:
@@ -105,6 +108,7 @@ enum {
 
 enum {
 	RDM_NULL,		// Null device
+	RDM_READ_LINE,
 };
 
 #pragma pack(4)
@@ -178,6 +182,20 @@ struct rebol_devreq {
 			u32  remote_port;		// remote port
 			void *host_info;		// for DNS usage
 		} net;
+		struct {
+			u32  buffer_rows;
+			u32  buffer_cols;
+			u32  window_rows;
+			u32  window_cols;
+		} console;
+		struct {
+			u32 device_in;  // requested device ID (1-based; 0 = none)
+			u32 device_out;
+		} midi;
+		struct {
+			u32 mode;
+			u32 value;
+		} modify;
 	};
 };
 #pragma pack()

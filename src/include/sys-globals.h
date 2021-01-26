@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +30,7 @@
 //-- Bootstrap variables:
 PVAR REBINT PG_Boot_Phase;	// To know how far in the boot we are.
 PVAR REBINT PG_Boot_Level;	// User specified startup level
-PVAR REBYTE **PG_Boot_Strs;	// Special strings in boot.r (RS_ constants)
+PVAR REBYTE **PG_Boot_Strs;	// Special strings in boot.reb (RS_ constants)
 
 //-- Various statistics about memory, etc.
 PVAR REB_STATS *PG_Reb_Stats;
@@ -53,10 +54,13 @@ PVAR REBUNI *Lower_Cases;
 // Other:
 PVAR REBYTE *PG_Pool_Map;	// Memory pool size map (created on boot)
 PVAR REBSER *PG_Root_Words;	// Root object word table (reused by threads)
+PVAR REBHSP *PG_Handles;    // Holds handle related contexts/specs
 
 PVAR REBI64 PG_Boot_Time;	// Counter when boot started
 PVAR REBINT Current_Year;
 PVAR REB_OPTS *Reb_Opts;
+
+PVAR jmp_buf *Halt_State;	// Pointer to saved CPU state for HALT/QUIT handlers
 
 // This signal word should be thread-local, but it will not work
 // when implemented that way. Needs research!!!!
@@ -85,7 +89,7 @@ TVAR REBINT	GC_Last_Infant;	// Index to last infant above (circular)
 TVAR REBFLG GC_Stay_Dirty;  // Do not free memory, fill it with 0xBB
 TVAR REBSER **Prior_Expand;	// Track prior series expansions (acceleration)
 
-TVAR REBCNT Stack_Limit;	// Limit address for CPU stack.
+TVAR REBUPT Stack_Limit;	// Limit address for CPU stack.
 
 //-- Evaluation stack:
 TVAR REBSER	*DS_Series;
@@ -93,7 +97,7 @@ TVAR REBVAL	*DS_Base;		// Data stack base
 TVAR REBINT	DSP;			// Data stack pointer
 TVAR REBINT	DSF;			// Data stack frame (function base)
 
-TVAR jmp_buf *Saved_State;	// Pointer to saved CPU state
+TVAR jmp_buf *Saved_State;	// Pointer to saved CPU state for error handlers.
 
 //-- Evaluation variables:
 TVAR REBI64	Eval_Cycles;	// Total evaluation counter (upward)

@@ -26,16 +26,10 @@
 **  Notes:
 **
 ***********************************************************************/
-/*
-**  It's a bit of a shame that alpha channels are represented with
-**  an inverted level compared to many standards. Alpha zero must
-**  be opaque in order for RGB tuples to be equal RGBA tuples.
-**  That is: 10.20.30 = 10.20.30.0
-*/
 
 #include "sys-core.h"
 
-#define CLEAR_IMAGE(p, x, y) memset(p, 0, x * y * sizeof(long))
+#define CLEAR_IMAGE(p, x, y) memset(p, 0xFF, x * y * sizeof(u32))
 
 
 /***********************************************************************
@@ -91,7 +85,10 @@
 	dp[C_R] = tup[0];
 	dp[C_G] = tup[1];
 	dp[C_B] = tup[2];
-	if (VAL_TUPLE_LEN(tuple) > 3) dp[C_A] = tup[3];
+	if (VAL_TUPLE_LEN(tuple) > 3)
+		dp[C_A] = tup[3];
+	else
+		dp[C_A] = 0xff;
 }
 
 
@@ -119,9 +116,10 @@
 /*
 ***********************************************************************/
 {
-	if (only) // only RGB, do not touch Alpha
+	if (only) {// only RGB, do not touch Alpha
+		color &= 0xffffff;
 		for (; len > 0; len--, ip++) *ip = (*ip & 0xff000000) | color;
-	else
+	} else
 		for (; len > 0; len--) *ip++ = color;
 }
 
@@ -166,6 +164,7 @@
 ***********************************************************************/
 {
 	if (only) { // only RGB, do not touch Alpha
+		color &= 0x00ffffff;
 		for (; len > 0; len--, ip++)
 			if (color == (*ip & 0x00ffffff)) return ip;
 	} else {
@@ -191,28 +190,98 @@
 
 /***********************************************************************
 **
-*/	void RGB_To_Bin(REBYTE *bin, REBYTE *rgba, REBINT len, REBOOL alpha)
+*/	void Color_To_Bin(REBYTE *bin, REBYTE *rgba, REBINT len, REBCNT format)
 /*
+**	Convert internal image (integer) to binary string according requested order
+**
 ***********************************************************************/
 {
-	// Convert internal image (integer) to RGB/A order binary string:
-	if (alpha) {
+	REBINT c0, c1, c2, c3;
+	REBINT alpha = 0;
+
+	switch(format) {
+	case SYM_RGB:  c0 = C_R; c1 = C_G; c2 = C_B; c3 = C_A; break;
+	case SYM_RGBA: c0 = C_R; c1 = C_G; c2 = C_B; c3 = C_A; alpha =  1; break;
+	case SYM_RGBO: c0 = C_R; c1 = C_G; c2 = C_B; c3 = C_A; alpha = -1; break;
+	case SYM_ARGB: c0 = C_A; c1 = C_R; c2 = C_G; c3 = C_B; alpha =  1; break;
+	case SYM_ORGB: c0 = C_A; c1 = C_R; c2 = C_G; c3 = C_B; alpha = -1; break;
+	
+	case SYM_BGRA: c0 = C_B; c1 = C_G; c2 = C_R; c3 = C_A; alpha =  1; break;
+	case SYM_BGRO: c0 = C_B; c1 = C_G; c2 = C_R; c3 = C_A; alpha = -1; break;
+	case SYM_ABGR: c0 = C_A; c1 = C_B; c2 = C_G; c3 = C_R; alpha =  1; break;
+	case SYM_OBGR: c0 = C_A; c1 = C_B; c2 = C_G; c3 = C_R; alpha = -1; break;
+	case SYM_BGR:  c0 = C_B; c1 = C_G; c2 = C_R; c3 = C_A; break;
+	default: return;
+	}
+
+	if (alpha > 0) {
 		for (; len > 0; len--, rgba += 4, bin += 4) {
-			bin[0] = rgba[C_R];
-			bin[1] = rgba[C_G];
-			bin[2] = rgba[C_B];
-			bin[3] = rgba[C_A];
+			bin[0] = rgba[c0];
+			bin[1] = rgba[c1];
+			bin[2] = rgba[c2];
+			bin[3] = rgba[c3];
+		}
+	} else if (alpha < 0) {
+		if (c0 == C_A) {
+			for (; len > 0; len--, rgba += 4, bin += 4) {
+				bin[0] = 255 - rgba[c0];
+				bin[1] = rgba[c1];
+				bin[2] = rgba[c2];
+				bin[3] = rgba[c3];
+			}
+		} else {
+			for (; len > 0; len--, rgba += 4, bin += 4) {
+				bin[0] = rgba[c0];
+				bin[1] = rgba[c1];
+				bin[2] = rgba[c2];
+				bin[3] = 255 - rgba[c3];
+			}
 		}
 	} else {
-		// Only the RGB part:
+		// Result without alpha 
 		for (; len > 0; len--, rgba += 4, bin += 3) {
-			bin[0] = rgba[C_R];
-			bin[1] = rgba[C_G];
-			bin[2] = rgba[C_B];
+			bin[0] = rgba[c0];
+			bin[1] = rgba[c1];
+			bin[2] = rgba[c2];
 		}
 	}
 }
 
+/***********************************************************************
+**
+*/	void Bin_To_Color(REBYTE *trg, REBYTE *src, REBINT len, REBCNT format)
+/*
+**	Convert external binary is specified color format to internal image
+**
+***********************************************************************/
+{
+	REBINT r, g, b, a;
+	REBINT alpha = 0;
+	REBCNT *clr = (REBCNT*)trg;
+
+	switch(format) {
+	case SYM_RGBA: r = 0; g = 1; b = 2; a = 3; alpha =  1; break;
+	case SYM_RGBO: r = 0; g = 1; b = 2; a = 3; alpha = -1; break;
+	case SYM_ARGB: a = 0; r = 1; g = 2; b = 3; alpha =  1; break;
+	case SYM_ORGB: a = 0; r = 1; g = 2; b = 3; alpha = -1; break;
+	
+	case SYM_BGRA: b = 0; g = 1; r = 2; a = 3; alpha =  1; break;
+	case SYM_BGRO: b = 0; g = 1; r = 2; a = 3; alpha = -1; break;
+	case SYM_ABGR: a = 0; b = 1; g = 2; r = 3; alpha =  1; break;
+	case SYM_OBGR: a = 0; b = 1; g = 2; r = 3; alpha = -1; break;
+	default: return;
+	}
+
+	if (alpha > 0) {
+		for (; len > 0; len--, src += 4, clr++) {
+			clr[0] = TO_PIXEL_COLOR(src[r], src[g], src[b], src[a]);
+		}
+	} else {
+		for (; len > 0; len--, src += 4, clr++) {
+			clr[0] = TO_PIXEL_COLOR(src[r], src[g], src[b], 255 - src[a]);
+		}
+	}
+}
 
 /***********************************************************************
 **
@@ -239,11 +308,11 @@
 {
 	if (len > (REBINT)size) len = size; // avoid over-run
 
-	// Convert from BGRA format to internal image (integer):
+	// Convert from RGBA format to internal image (integer):
 	for (; len > 0; len--, rgba += 4, bin += 4) {
-		rgba[C_B] = bin[0];
+		rgba[C_R] = bin[0];
 		rgba[C_G] = bin[1];
-		rgba[C_R] = bin[2];
+		rgba[C_B] = bin[2];
 		if (!only) rgba[C_A] = bin[3];
 	}
 }
@@ -251,25 +320,34 @@
 
 /***********************************************************************
 **
-*/	void Alpha_To_Bin(REBYTE *bin, REBYTE *rgba, REBINT len)
+*/	void Alpha_To_Bin(REBYTE *bin, REBYTE *rgba, REBINT len, REBCNT type)
 /*
 ***********************************************************************/
 {
-	for (; len > 0; len--, rgba += 4)
-		*bin++ = rgba[C_A];
+	if (type == SYM_ALPHA) {
+		for (; len > 0; len--, rgba += 4)
+			*bin++ = rgba[C_A];
+	} else { // SYM_OPACITY
+		for (; len > 0; len--, rgba += 4)
+			*bin++ = 255 - rgba[C_A];
+	}
 }
-
 
 /***********************************************************************
 **
-*/	void Bin_To_Alpha(REBYTE *rgba, REBCNT size, REBYTE *bin, REBINT len)
+*/	void Bin_To_Alpha(REBYTE *rgba, REBCNT size, REBYTE *bin, REBINT len, REBCNT type)
 /*
 ***********************************************************************/
 {
 	if (len > (REBINT)size) len = size; // avoid over-run
 
-	for (; len > 0; len--, rgba += 4)
-		rgba[C_A] = *bin++;
+	if (type == SYM_ALPHA) {
+		for (; len > 0; len--, rgba += 4)
+			rgba[C_A] = *bin++;
+	} else { // SYM_OPACITY
+		for (; len > 0; len--, rgba += 4)
+			rgba[C_A] = 255 - *bin++;
+	}
 }
 
 
@@ -290,6 +368,14 @@
 	return 0;
 }
 
+/***********************************************************************
+**
+*/	void Tuple_To_Color(REBCNT format, REBVAL *tuple, REBCNT *rgba)
+/*
+***********************************************************************/
+{
+	Bin_To_Color((REBYTE*)rgba, VAL_TUPLE(tuple), 1, format);
+}
 
 /***********************************************************************
 **
@@ -306,25 +392,59 @@
 		rgba[C_R] = bin[0];
 		rgba[C_G] = bin[1];
 		rgba[C_B] = bin[2];
-		rgba[C_A] = bin[3];
+		rgba[C_A] = 255 - bin[3];
 	}
 }
 
 
 /***********************************************************************
 **
-*/	void Image_To_BGRA(REBYTE *rgba, REBYTE *bin, REBINT len)
+*/	void Image_To_RGBA(REBYTE *rgba, REBYTE *bin, REBINT len)
 /*
 ***********************************************************************/
 {
-	// Convert from BGRA format to internal image (integer):
+	// Convert from internal image (integer) to RGBA binary order:
 	for (; len > 0; len--, rgba += 4, bin += 4) {
-		bin[0] = rgba[C_B];
+		bin[0] = rgba[C_R];
 		bin[1] = rgba[C_G];
-		bin[2] = rgba[C_R];
+		bin[2] = rgba[C_B];
 		bin[3] = rgba[C_A];
 	}
 }
+
+/***********************************************************************
+**
+*/	void Average_Image_Color(REBYTE *rgba, REBVAL *clr, REBINT len)
+/*
+***********************************************************************/
+{
+	REBU64 r = 0, g = 0, b = 0, a = 0;
+	REBU64 n = (REBU64)len;
+
+	VAL_SET(clr, REB_TUPLE);
+	VAL_TUPLE_LEN(clr) = 4;
+	if (n > 0) {
+		for (; len > 0; len--, rgba += 4) {
+			r += rgba[C_R];
+			g += rgba[C_G];
+			b += rgba[C_B];
+			a += rgba[C_A];
+		}
+		VAL_TUPLE(clr)[0] = (REBYTE)(r / n);
+		VAL_TUPLE(clr)[1] = (REBYTE)(g / n);
+		VAL_TUPLE(clr)[2] = (REBYTE)(b / n);
+		VAL_TUPLE(clr)[3] = (REBYTE)(a / n);
+	}
+	else {
+		// returning transparent black when image is empty
+		VAL_TUPLE(clr)[0] = 0;
+		VAL_TUPLE(clr)[1] = 0;
+		VAL_TUPLE(clr)[2] = 0;
+		VAL_TUPLE(clr)[3] = 0;
+		//.. or should it return none instead?
+	}
+}
+
 
 #ifdef ndef
 INLINE REBCNT ARGB_To_BGR(REBCNT i)
@@ -346,35 +466,56 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	REBCNT len;
 	REBCNT size;
 	REBCNT *data;
-
+	REBYTE* pixel;
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
+	
 	Emit(mold, "IxI #{", VAL_IMAGE_WIDE(value), VAL_IMAGE_HIGH(value));
 
 	// Output RGB image:
 	size = VAL_IMAGE_LEN(value); // # pixels (from index to tail)
-	data = (REBCNT *)VAL_IMAGE_DATA(value);
-	up = Prep_Uni_Series(mold, (size * 6) + (size / 10) + 1);
 
-	for (len = 0; len < size; len++) {
-		if ((len % 10) == 0) *up++ = LF;
-		up = Form_RGB_Uni(up, *data++);
+	if (size == 0) {
+		Append_Byte(mold->series, '}');
+		return;
 	}
 
+	// reduce size if mold/part is used, so not all pixels are processed
+	CHECK_MOLD_LIMIT(mold, size);
+
+	// use `flat` result for images with less than 10 pixels (looks better in console) 
+	if (size < 10) indented = FALSE;
+
+	data = (REBCNT *)VAL_IMAGE_DATA(value);
+	up = Prep_Uni_Series(mold, indented ? ((size * 6) + ((size - 1) / 10) + 1) : (size * 6));
+
+	for (len = 0; len < size; len++) {
+		pixel = (REBYTE*)data++;
+		if (indented && (len % 10) == 0) *up++ = LF;
+		up = Form_RGB_Uni(up, TO_RGBA_COLOR(pixel[C_R], pixel[C_G], pixel[C_B], pixel[C_A]));
+	}
+
+	// don't waste time with alpha if we are over limit
+	if (MOLD_HAS_LIMIT(mold) && MOLD_OVER_LIMIT(mold)) return;
+	
 	// Output Alpha channel, if it has one:
 	if (Image_Has_Alpha(value, FALSE)) {
+		if (indented) Append_Byte(mold->series, '\n');
+		Append_Bytes(mold->series, "} #{");
 
-		Append_Bytes(mold->series, "\n} #{");
-
-		up = Prep_Uni_Series(mold, (size * 2) + (size / 10) + 1);
+		up = Prep_Uni_Series(mold, indented ? (size * 2) + (size / 10) + 1 : size * 2);
 
 		data = (REBCNT *)VAL_IMAGE_DATA(value);
 		for (len = 0; len < size; len++) {
-			if ((len % 10) == 0) *up++ = LF;
+			if (indented && (len % 10) == 0) *up++ = LF;
 			up = Form_Hex2_Uni(up, *data++ >> 24);
 		}
 	}
 	*up = 0; // tail already set from Prep.
 
-	Append_Bytes(mold->series, "\n}");
+	if (indented) 
+		Append_Bytes(mold->series, "\n}");
+	else
+		Append_Byte(mold->series, '}');
 }
 
 
@@ -386,13 +527,11 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 {
 	REBSER *ser;
 
-#ifdef XENDIAN_BIG
-	ser = Make_Quad(0, VAL_IMAGE_LEN(image));
-	ser->tail = VAL_IMAGE_LEN(image) * 4;
-	Image_To_BGRA(VAL_IMAGE_DATA(image), QUAD_HEAD(ser), VAL_IMAGE_LEN(image));
-#else
-	ser = Copy_Bytes(VAL_IMAGE_DATA(image), VAL_IMAGE_LEN(image)*4);
-#endif
+	REBINT len;
+	len = VAL_IMAGE_LEN(image) * 4;
+	ser = Make_Binary(len);
+	SERIES_TAIL(ser) = len;
+	Image_To_RGBA(VAL_IMAGE_DATA(image), QUAD_HEAD(ser), VAL_IMAGE_LEN(image));
 	return ser;
 }
 
@@ -414,10 +553,10 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		else return 0;
 	}
 	
-	img = Make_Series(w * h + 1, sizeof(REBINT), FALSE);
+	img = Make_Series(w * h + 1, sizeof(u32), FALSE);
 	LABEL_SERIES(img, "make image");
 	img->tail = w * h;
-	CLEAR(img->data, (img->tail + 1) * sizeof(REBINT));
+	CLEAR_IMAGE(img->data, w, h);
 	IMG_WIDE(img) = w;
 	IMG_HIGH(img) = h;
 	return img;
@@ -443,7 +582,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 **
 */	REBVAL *Create_Image(REBVAL *block, REBVAL *val, REBCNT modes)
 /*
-**	Create an image value from components block [pair rgb alpha].
+**	Create an image value from components block [pair rgb alpha index].
 **
 ***********************************************************************/
 {
@@ -475,7 +614,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 
 		// Load alpha channel data:
 		if (IS_BINARY(block)) {
-			Bin_To_Alpha(ip, size, VAL_BIN_DATA(block), VAL_LEN(block));
+			Bin_To_Alpha(ip, size, VAL_BIN_DATA(block), VAL_LEN(block), SYM_ALPHA);
 //			VAL_IMAGE_TRANSP(value)=VITT_ALPHA;
 			block++;
 		}
@@ -486,7 +625,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		}
 	}
 	else if (IS_TUPLE(block)) {
-		Fill_Rect((REBCNT *)ip, TO_COLOR_TUPLE(block), w, w, h, TRUE);
+		Fill_Rect((REBCNT *)ip, TO_PIXEL_TUPLE(block), w, w, h, VAL_TUPLE_LEN(block) == 3);
 		block++;
 		if (IS_INTEGER(block)) {
 			Fill_Alpha_Rect((REBCNT *)ip, (REBYTE)VAL_INT32(block), w, w, h);
@@ -495,10 +634,10 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		}
 	}
 	else if (IS_BLOCK(block)) {
-		if (w = Valid_Tuples(block)) Trap_Arg(block+w-1);
+		if ((w = Valid_Tuples(block))) Trap_Arg(block+w-1);
 		Tuples_To_RGBA(ip, size, VAL_BLK_DATA(block), VAL_LEN(block));
 	}
-	else if (!IS_END(block)) return 0;
+	if (!IS_END(block)) return 0;
 
 	//if (!IS_END(block)) Trap_Arg(block);
 
@@ -536,7 +675,6 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 
 	if (action == A_APPEND) {
 		index = tail;
-		action = A_INSERT;
 	}
 
 	x = index % w; // offset on the line
@@ -625,14 +763,17 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	}
 
 	// Expand image data if necessary:
-	if (action == A_INSERT) {
+	if (action == A_INSERT || action == A_APPEND) {
 		if (index > tail) index = tail;
 		Expand_Series(VAL_SERIES(value), index, dup * part);
-		CLEAR(VAL_BIN(value) + (index * 4), dup * part * 4);
+		CLEAR_IMAGE(VAL_BIN(value) + (index * 4), dup, part);
 		Reset_Height(value);
 		tail = VAL_TAIL(value);
 		only = 0;
 	}
+	if (action != A_APPEND)
+		VAL_INDEX(value) = index + (dup * part); // so it is on position after insertion or change
+	
 	ip = VAL_IMAGE_HEAD(value);
 
 	// Handle the datatype of the argument.
@@ -648,9 +789,9 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 				Fill_Alpha_Line(ip, (REBYTE)n, dup);
 		} else if (IS_TUPLE(arg)) { // RGB
 			if (IS_PAIR(count)) // rectangular fill
-				Fill_Rect((REBCNT *)ip, TO_COLOR_TUPLE(arg), w, dupx, dupy, only);
+				Fill_Rect((REBCNT *)ip, TO_PIXEL_TUPLE(arg), w, dupx, dupy, only);
 			else
-				Fill_Line((REBCNT *)ip, TO_COLOR_TUPLE(arg), dup, only);
+				Fill_Line((REBCNT *)ip, TO_PIXEL_TUPLE(arg), dup, only);
 		}
 	} else if (IS_IMAGE(arg)) {
 		Copy_Rect_Data(value, x, y, partx, party, arg, 0, 0); // dst dx dy w h src sx sy
@@ -679,22 +820,6 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 /*
 **	Finds a value in a series and returns the series at the start of it.
 **
-**		 1 image
-**		 2 value [any-type!]
-**		 3 /part {Limits the search to a given length or position.}
-**		 4 range [number! series! port!]
-**		 5 /only {ignore alpha value.}
-**		 6 /case - ignored
-**		 7 /any  - ignored
-**		 8 /with - ignored
-**		 9 wild  - ignored
-**		10 /skip - ignored
-**		11 size  - ignored
-**		12 /match {Performs comparison and returns the tail of the match.}
-**		13 /tail  {Returns the end of the string.}
-**		14 /last  {Backwards from end of string.}
-**		15 /reverse {Backwards from the current position.}
-**
 ***********************************************************************/
 {
 	REBVAL	*value = D_ARG(1);
@@ -703,41 +828,41 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	REBCNT  tail = VAL_TAIL(value);
 	REBCNT	len;
 	REBCNT	*ip = (REBCNT *)VAL_IMAGE_DATA(value); // NOTE ints not bytes
-	REBCNT  *p;
+	REBCNT  *p = NULL;
 	REBINT  n;
 	REBOOL  only = FALSE;
-	REBYTE  no_refs[10] = {5, 6, 7, 8, 9, 10, 13, 14}; // ref - 1 (invalid refinements)
+	REBCNT	refs = Find_Refines(ds, ALL_FIND_REFS);
 
 	len = tail - index;
 	if (!len) goto find_none;
 
-	for (n = 0; n < 8; n++) // (zero based)
-		if (D_REF((REBINT)no_refs[n]))
-			Trap0(RE_BAD_REFINE);
-//			Trap2(RE_CANNOT_USE, FRM_WORDS(me, (REBINT)no_refs[n]), Get_Global(REB_IMAGE));
+	// FIND on image now supports only `/only` refinement (used that comparison should not check alpha)
+	// TODO: At least `/part`, `/last` and `/reverse` should be also supported.
+	if (refs & (AM_FIND_PART|AM_FIND_CASE|AM_FIND_ANY|AM_FIND_WITH|AM_FIND_SKIP|AM_FIND_LAST|AM_FIND_REVERSE))
+		Trap0(RE_BAD_REFINES);
 
 	if (IS_TUPLE(arg)) {
 		only = (REBOOL)(VAL_TUPLE_LEN(arg) < 4);
-		if (D_REF(5)) only = TRUE; // /only flag
-		p = Find_Color(ip, TO_COLOR_TUPLE(arg), len, only);
+		if (refs & AM_FIND_ONLY) only = TRUE; // /only flag
+		p = Find_Color(ip, TO_PIXEL_TUPLE(arg), len, only);
 	} else if (IS_INTEGER(arg)) {
 		n = VAL_INT32(arg);
 		if (n < 0 || n > 255) Trap_Range(arg);
 		p = Find_Alpha(ip, n, len);
 	} else if (IS_IMAGE(arg)) {
-		p = 0;
+		Trap0(RE_NOT_DONE);
 	} else if (IS_BINARY(arg)) {
-		p = 0;
+		Trap0(RE_NOT_DONE);
 	} else
 		Trap_Type(arg);
 
 	// Post process the search (failure or apply /match and /tail):
 	if (p) {
 		n = (REBCNT)(p - (REBCNT *)VAL_IMAGE_HEAD(value));
-		if (D_REF(11)) { // match
+		if (refs & AM_FIND_MATCH) { // match
 			if (n != (REBINT)index) goto find_none;
 			n++;
-		} else if (D_REF(12)) n++; // /tail
+		} else if (refs & AM_FIND_TAIL) n++; // /tail
 		index = n;
 		VAL_INDEX(value) = index;
 		return value;
@@ -762,7 +887,7 @@ find_none:
 	p = (REBCNT *)VAL_IMAGE_HEAD(v);
 	i = VAL_IMAGE_WIDE(v)*VAL_IMAGE_HIGH(v);
 	for(; i > 0; i--) {
-		if (*p++ & 0xff000000) {
+		if (~*p++ & 0xff000000) {
 //			if (save) VAL_IMAGE_TRANSP(v) = VITT_ALPHA;
 			return TRUE;
 		}
@@ -914,8 +1039,9 @@ find_none:
 	case A_INDEXQ:
 		if (D_REF(2)) {
 			VAL_SET(D_RET, REB_PAIR);
-			VAL_PAIR_X(D_RET) = (REBD32)(index % VAL_IMAGE_WIDE(value));
-			VAL_PAIR_Y(D_RET) = (REBD32)(index / VAL_IMAGE_WIDE(value));
+			// 1-based result! -> https://github.com/Oldes/Rebol-issues/issues/2409
+			VAL_PAIR_X(D_RET) = (REBD32)(index % VAL_IMAGE_WIDE(value)) + 1;
+			VAL_PAIR_Y(D_RET) = (REBD32)(index / VAL_IMAGE_WIDE(value)) + 1;
 			return R_RET;
 		} else {
 			DS_RET_INT(index + 1);
@@ -1029,15 +1155,20 @@ find_none:
 		break;
 
 	case A_FIND:	// find   ser val /part len /only /case /any /with wild /match /tail
-		Find_Image(ds); // sets DS_RETURN
+		value = Find_Image(ds); // sets DS_RETURN
 		break;
 
 	case A_TO:
 		if (IS_IMAGE(arg)) goto makeCopy;
 		else if (IS_GOB(arg)) {
+			//originally it was returning image without content when conversion failed!
 			//value = Make_Image(ROUND_TO_INT(GOB_W(VAL_GOB(arg))), ROUND_TO_INT(GOB_H(VAL_GOB(arg))));
-			//*D_RET = *value;
+#ifndef REB_VIEW
+			//TODO: remove this once OS_GOB_TO_IMAGE will be for all systems
+			Trap0(RE_FEATURE_NA);
+#else
 			series = OS_GOB_TO_IMAGE(VAL_GOB(arg));
+#endif
 			if (!series) Trap_Make(REB_IMAGE, arg);
 			SET_IMAGE(value, series);
 			break;
@@ -1087,7 +1218,7 @@ find_none:
 		else if (IS_BLOCK(arg)) {
 			if (Create_Image(VAL_BLK_DATA(arg), value, 0)) break;
 		}
-		Trap_Type(arg);
+		Trap1(RE_MALCONSTRUCT, arg);
 		break;
 
 	case A_COPY:  // copy series /part len
@@ -1178,19 +1309,23 @@ is_true:
 	REBSER *nser;
 	REBSER *series = VAL_SERIES(data);
 	REBCNT *dp;
+	REBCNT sym;
+
+	if(pvs->path && !IS_END(pvs->path+1)) val = NULL;
 
 	len = VAL_TAIL(data) - index;
 	len = MAX(len, 0);
 	src = VAL_IMAGE_DATA(data);
 
-	if (IS_PAIR(sel)) n = (VAL_PAIR_Y_INT(sel) * VAL_IMAGE_WIDE(data) + VAL_PAIR_X_INT(sel)) + 1;
+	if (IS_PAIR(sel)) n = ((VAL_PAIR_Y_INT(sel)-1) * VAL_IMAGE_WIDE(data) + (VAL_PAIR_X_INT(sel)-1)) + 1;
 	else if (IS_INTEGER(sel)) n = VAL_INT32(sel);
 	else if (IS_DECIMAL(sel)) n = (REBINT)VAL_DECIMAL(sel);
 	else if (IS_LOGIC(sel))   n = (VAL_LOGIC(sel) ? 1 : 2);
 	else if (IS_WORD(sel)) {
+		sym = VAL_WORD_CANON(sel);
 		if (val == 0) {
 			val = pvs->value = pvs->store;
-			switch (VAL_WORD_CANON(sel)) {
+			switch (sym) {
 
 			case SYM_SIZE:
 				VAL_SET(val, REB_PAIR);
@@ -1199,17 +1334,37 @@ is_true:
 				break;
 
 			case SYM_RGB:
+			case SYM_BGR:
 				nser = Make_Binary(len * 3);
 				SERIES_TAIL(nser) = len * 3;
-				RGB_To_Bin(QUAD_HEAD(nser), src, len, FALSE);
+				Color_To_Bin(QUAD_HEAD(nser), src, len, sym);
+				Set_Binary(val, nser);
+				break;
+
+			case SYM_RGBA:
+			case SYM_RGBO:
+			case SYM_BGRA:
+			case SYM_BGRO:
+			case SYM_ARGB:
+			case SYM_ABGR:
+			case SYM_ORGB:
+			case SYM_OBGR:
+				nser = Make_Binary(len * 4);
+				SERIES_TAIL(nser) = len * 4;
+				Color_To_Bin(QUAD_HEAD(nser), src, len, sym);
 				Set_Binary(val, nser);
 				break;
 
 			case SYM_ALPHA:
+			case SYM_OPACITY:
 				nser = Make_Binary(len);
 				SERIES_TAIL(nser) = len;
-				Alpha_To_Bin(QUAD_HEAD(nser), src, len);
+				Alpha_To_Bin(QUAD_HEAD(nser), src, len, sym);
 				Set_Binary(val, nser);
+				break;
+
+			case SYM_COLOR:
+				Average_Image_Color(src, val, len);
 				break;
 
 			default:
@@ -1219,7 +1374,7 @@ is_true:
 
 		} else {
 
-			switch (VAL_WORD_CANON(sel)) {
+			switch (sym) {
 
 			case SYM_SIZE:
 				if (!IS_PAIR(val) || !VAL_PAIR_X(val)) return PE_BAD_SET;
@@ -1228,24 +1383,50 @@ is_true:
 				break;
 
 			case SYM_RGB:
+			case SYM_COLOR:
+				// SYM_COLOR as a setter is used to count average color of the image,
+				// here we can will all pixels with it for consistency
 				if (IS_TUPLE(val)) {
-					Fill_Line((REBCNT *)src, TO_COLOR_TUPLE(val), len, 1);
+					Fill_Line((REBCNT *)src, TO_PIXEL_TUPLE(val), len, 1);
 				} else if (IS_INTEGER(val)) {
 					n = VAL_INT32(val);
 					if (n < 0 || n > 255) return PE_BAD_RANGE;
-					Fill_Line((REBCNT *)src, TO_COLOR(n,n,n,0), len, 1);
+					Fill_Line((REBCNT *)src, TO_PIXEL_COLOR(n,n,n,0xff), len, 1);
 				} else if (IS_BINARY(val)) {
 					Bin_To_RGB(src, len, VAL_BIN_DATA(val), VAL_LEN(val) / 3);
 				} else return PE_BAD_SET;
 				break;
 
+			case SYM_RGBA:
+			case SYM_RGBO:
+			case SYM_BGRA:
+			case SYM_BGRO:
+			case SYM_ARGB:
+			case SYM_ABGR:
+			case SYM_ORGB:
+			case SYM_OBGR:
+				if (IS_TUPLE(val)) {
+					if (VAL_TUPLE_LEN(val) != 4) return PE_BAD_ARGUMENT;
+					REBCNT color = 0;
+					Tuple_To_Color(sym, val, &color);
+					Fill_Line((REBCNT *)src, color, len, FALSE);
+				} else if (IS_INTEGER(val)) {
+					n = VAL_INT32(val);
+					if (n < 0 || n > 255) return PE_BAD_RANGE;
+					Fill_Line((REBCNT *)src, TO_PIXEL_COLOR(n,n,n,n), len, FALSE);
+				} else if (IS_BINARY(val)) {
+					Bin_To_Color(src, VAL_BIN_DATA(val), VAL_LEN(val) / 4, sym);
+				} else return PE_BAD_SET;
+				break;
+
 			case SYM_ALPHA:
+			case SYM_OPACITY:
 				if (IS_INTEGER(val)) {
 					n = VAL_INT32(val);
 					if (n < 0 || n > 255) return PE_BAD_RANGE;
 					Fill_Alpha_Line(src, (REBYTE)n, len);
 				} else if (IS_BINARY(val)) {
-					Bin_To_Alpha(src, len, VAL_BIN_DATA(val), VAL_LEN(val));
+					Bin_To_Alpha(src, len, VAL_BIN_DATA(val), VAL_LEN(val), sym);
 				} else return PE_BAD_SET;
 				break;
 
@@ -1271,7 +1452,33 @@ is_true:
 
 	// Get the pixel:
 	if (val == 0) {
-		Set_Tuple_Pixel(QUAD_SKIP(series, index), pvs->store);
+		if (pvs->setval && IS_INTEGER(pvs->path+1)) {
+			// special case when pixel is directly modified like: `img/1/2: 100`
+			// https://github.com/Oldes/Rebol-issues/issues/505
+			// NOTE: something like `img/1/(c): 100` or `img/1/:c: 100` is not supported!
+
+			val = pvs->setval;
+			if (IS_INTEGER(val) && VAL_INT64(val) >= 0 && VAL_INT64(val) <= 255) {
+				n = VAL_INT64(++pvs->path);
+				if(
+					!IS_END(pvs->path+1) // `img/1/1/1`
+					|| n < 1 || n > 4    // `img/1/200`
+				) return PE_BAD_SET;
+
+				REBYTE *bp = QUAD_SKIP(series, index);
+				switch(n) {
+					case 1: bp[C_R] = VAL_INT64(val); break;
+					case 2: bp[C_G] = VAL_INT64(val); break;
+					case 3: bp[C_B] = VAL_INT64(val); break;
+					case 4: bp[C_A] = VAL_INT64(val); break;
+				}
+				pvs->store = val;
+			}
+			else return PE_BAD_ARGUMENT;
+			
+		} else {
+			Set_Tuple_Pixel(QUAD_SKIP(series, index), pvs->store);
+		}
 		return PE_USE;
 	}
 
@@ -1285,9 +1492,10 @@ is_true:
 	}
 
 	// Set the alpha only:
-	if (IS_INTEGER(val) && VAL_INT64(val) > 0 && VAL_INT64(val) < 255) n = VAL_INT32(val);
-	else if (IS_CHAR(val)) n = VAL_CHAR(val);
-	else return PE_BAD_RANGE;
+	if (IS_INTEGER(val) && VAL_INT64(val) >= 0 && VAL_INT64(val) <= 255) n = VAL_INT32(val);
+	else if (IS_CHAR(val) && VAL_CHAR(val) <= 255) n = VAL_CHAR(val); // char in R3 may be larger that 255, not like in R2
+	// Do we really want to be able change the alpha using a CHAR value? I don't think so, but keep it there so far; Oldes
+	else return PE_BAD_ARGUMENT;
 
 	dp = (REBCNT*)QUAD_SKIP(series, index);
 	*dp = (*dp & 0xffffff) | (n << 24);

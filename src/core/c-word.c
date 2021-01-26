@@ -114,7 +114,7 @@
 	pnum = Get_Hash_Prime(ser->tail+1);
 	if (!pnum) Trap_Num(RE_SIZE_LIMIT, ser->tail+1);
 
-	nser = Make_Series(pnum+1, sizeof(REBCNT), TRUE);
+	nser = Make_Series(pnum+1, SERIES_WIDE(ser), TRUE);
 	LABEL_SERIES(nser, "hash series");
 
 	oser = *ser;
@@ -170,7 +170,7 @@
 
 /***********************************************************************
 **
-*/	static REBCNT Make_Word_Name(REBYTE *str, REBCNT len)
+*/	static REBCNT Make_Word_Name(const REBYTE *str, REBCNT len)
 /*
 **		Allocates and copies the text string of the word.
 **
@@ -186,7 +186,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Make_Word(REBYTE *str, REBCNT len)
+*/	REBCNT Make_Word(const REBYTE *str, REBCNT len)
 /*
 **		Given a string and its length, compute its hash value,
 **		search for a match, and if not found, add it to the table.
@@ -206,7 +206,7 @@
 
 	//REBYTE *sss = Get_Sym_Name(1);	// (Debugging method)
 
-	if (len == 0) len = LEN_BYTES(str);
+	if (len == 0) len = (REBCNT)LEN_BYTES(str);
 
 	// If hash part of word table is too dense, expand it:
 	if (PG_Word_Table.series->tail > PG_Word_Table.hashes->tail/2)
@@ -381,7 +381,7 @@ make_sym:
 	if (VAL_WORD_CANON(s) == VAL_WORD_CANON(t)) return 0;
 
 	// They must be differ by case:
-	return Compare_UTF8(sp, tp, LEN_BYTES(tp)) + 2;
+	return Compare_UTF8(sp, tp, (REBCNT)LEN_BYTES(tp)) + 2;
 }
 
 
@@ -398,7 +398,7 @@ make_sym:
 	if (!only) {
 		// Create the hash for locating words quickly:
 		// Note that the TAIL is never changed for this series.
-		PG_Word_Table.hashes = Make_Series(n+1, sizeof(REBCNT *), FALSE);
+		PG_Word_Table.hashes = Make_Series(n+1, sizeof(REBCNT), FALSE);
 		KEEP_SERIES(PG_Word_Table.hashes, "word hashes"); // pointer array
 		Clear_Series(PG_Word_Table.hashes);
 		PG_Word_Table.hashes->tail = n;

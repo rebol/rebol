@@ -95,6 +95,10 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 	union {REBDEC d; REBI64 i;} ua, ub;
 	REBI64 int_diff;
 
+#ifndef USE_NO_INFINITY
+	if(isnan(a) || isnan(b)) return FALSE;
+#endif // !USE_NO_INFINITY
+
 	ua.d = a;
 	ub.d = b;
 
@@ -222,7 +226,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 	REBVAL  *arg;
 	REBDEC  d2;
 	REBINT  num;
-	REBDEC  exp;
+	REBDEC  exp = 0;
 	REBINT  type = 0;
 
 	// all binary actions
@@ -234,7 +238,8 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 				type == REB_PAIR ||
 				type == REB_TUPLE ||
 				type == REB_MONEY ||
-				type == REB_TIME
+				type == REB_TIME ||
+				type == REB_VECTOR
 			) && (
 				action == A_ADD ||
 				action == A_MULTIPLY
@@ -287,19 +292,19 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 
 			case A_DIVIDE:
 			case A_REMAINDER:
+#ifdef USE_NO_INFINITY
 				if (d2 == 0.0) Trap0(RE_ZERO_DIVIDE);
+#endif
 				if (action == A_DIVIDE) d1 /= d2;
 				else d1 = fmod(d1, d2);
 				goto setDec;
 
 			case A_POWER:
-				if (d1 == 0) goto setDec;
 				if (d2 == 0) {
 					d1 = 1.0;
 					goto setDec;
 				}
-				//if (d1 < 0 && d2 < 1 && d2 != -1)
-				//  Trap0(RE_POSITIVE);
+				if (d1 == 0) goto setDec;
 				d1 = pow(d1, d2);
 				goto setDec;
 
@@ -351,6 +356,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 				goto setDec;
 			
 			case REB_LOGIC:
+				if (action != A_MAKE) Trap_Make(type, val);
 				d1 = VAL_LOGIC(val) ? 1.0 : 0.0;
 				goto setDec;
 			
@@ -372,7 +378,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 					if (type == REB_PERCENT) break;
 					goto setDec;
 				}
-				Trap_Make(type, val);
+				Trap_Make(type, val);;
 			}
 			
 			case REB_BINARY:
@@ -402,7 +408,8 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 
 					if (IS_INTEGER(++arg)) exp = (REBDEC)VAL_INT64(arg);
 					else if (IS_DECIMAL(arg) || IS_PERCENT(val)) exp = VAL_DECIMAL(arg);
-					else Trap_Make(REB_DECIMAL, arg);
+                    else Trap_Make(REB_DECIMAL, arg);
+                    
 					while (exp >= 1)            // funky. There must be a better way
 						exp--, d1 *= 10.0, Check_Overflow(d1);
 					while (exp <= -1)
@@ -462,7 +469,9 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 	Trap_Action(VAL_TYPE(val), action);
 
 setDec:
+#ifdef USE_NO_INFINITY
 	if (!FINITE(d1)) Trap0(RE_OVERFLOW);
+#endif
 #ifdef not_required
 	if (type == REB_PERCENT) {
 		// Keep percent in smaller range (not to use e notation).

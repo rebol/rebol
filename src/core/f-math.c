@@ -22,7 +22,7 @@
 **  Module:  f-math.c
 **  Summary: basic math conversions
 **  Section: functional
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Ladislav Mecir
 **  Notes:
 **    Do not underestimate what it takes to make some parts of this
 **    portable over all systems. Modifications to this code should be
@@ -37,7 +37,7 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Grab_Int(REBYTE *cp, REBINT *val)
+*/	const REBYTE *Grab_Int(const REBYTE *cp, REBINT *val)
 /*
 **		Grab an integer value from the string.
 **
@@ -70,7 +70,7 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Grab_Int_Scale(REBYTE *cp, REBINT *val, REBCNT scale)
+*/	const REBYTE *Grab_Int_Scale(const REBYTE *cp, REBINT *val, REBCNT scale)
 /*
 **		Return integer scaled to the number of digits specified.
 **		Used for the decimal part of numbers (e.g. times).
@@ -177,18 +177,18 @@
 
 	n = Form_Int_Len(tmp, val, max);
 	if (n == 0) {
-		strcpy(buf, "??");
+		strcpy(s_cast(buf), "??");
 		return buf;  // too long
 	}
 
 	if (len >= 0) {
-		strcpy(buf, tmp);
+		strcpy(s_cast(buf), s_cast(tmp));
 		buf += n;
 		for (; n < len; n++) *buf++ = pad;
 	}
 	else { // len < 0
 		for (; n < -len; len++) *buf++ = pad;
-		strcpy(buf, tmp);
+		strcpy(s_cast(buf), s_cast(tmp));
 		buf += n;
 	}
 
@@ -209,7 +209,6 @@
 	REBINT len = Form_Int_Len(buf, val, MAX_NUM_LEN);
 	return buf + len;
 }
-
 
 /***********************************************************************
 **
@@ -232,165 +231,20 @@
 ***********************************************************************/
 {
 	INT_TO_STR(val, buf);
-	return LEN_BYTES(buf);
-}
-
-
-#ifdef OLDER
-/***********************************************************************
-**
-xx*/	REBCNT Set_Random(REBCNT seed)
-/*
-***********************************************************************/
-{
-	REBCNT save = next;
-	next = seed;
-	return save;
+	return (REBINT)LEN_BYTES(buf);
 }
 
 
 /***********************************************************************
 **
-xx*/	REBCNT Random_Int(REBFLG secure)
-/*
-**		Return random integer. Secure uses SHA1 for better quality.
-**		Be careful of endian-ness.
-**
-***********************************************************************/
-{
-	REBCNT	tmp;
-
-	next = next * 1103515245L + 12345L;
-	tmp = next & 0xffff0000;
-	next = next * 1103515245L + 12345L;
-	tmp |= (next >> 16);
-
-	if (secure) {
-		REBYTE srcbuf[20], dstbuf[20];
-		REBCNT i;
-
-		Long_To_Bytes(srcbuf, tmp);
-		for(i = sizeof(tmp); i < 20; i += sizeof(tmp))
-			memcpy(srcbuf + i, srcbuf, sizeof(tmp));
-		SHA1(srcbuf, i, dstbuf);
-		tmp = Bytes_To_Long(dstbuf);
-	}
-
-	return tmp;
-}
-#endif
-
-#ifdef OLD_DEC_TO_STR
-static int Convert_Decimal(REBDEC d, REBI64 *sig, REBINT *point)
-{
-	REBDEC e;
-	REBDEC n;
-
-	// Check if num needs exp format:
-	e = floor(log10(d));
-	if (e > 15 || e < -6) return 0; // use gcvt
-
-	modf(d * pow(10, (15-e)), &n);
-	*sig = (REBI64)n;
-	*point = 1 + (REBINT)e;
-	return 1;
-}
-
-/***********************************************************************
-**
-*/  REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG percent, REBYTE point, REBINT digits)
+*/	REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT decimal_digits)
 /*
 ***********************************************************************/
 {
-	REBYTE out[MAX_NUMCHR];
-	REBINT len;
-	REBINT n;
-	REBINT i;
-	REBI64 sig;
-	REBINT pt;
-	REBFLG neg;
-	REBYTE *start = cp;
-
-	*cp = out[0] = 0;
-
-	// Deal with 0 as special case:
-	if (d == 0.0 || d == -0.0) {
-		*cp++ = '0';
-		if (!percent) {
-			*cp++ = '.';
-			*cp++ = '0';
-		}
-	}
-	else {
-
-		if (percent) d *= 100.0;
-
-		if (NZ(neg = (d < 0))) d = -d;
-
-		if (Convert_Decimal(d, &sig, &pt)) {
-			// Not exp format.
-			len = Form_Integer(out, sig) - out;
-			if (neg) *cp++ = '-';
-
-			// Trim un-needed trailing zeros:
-			for (len--; len > 0 && len >= pt; len--) {
-				if (out[len] == '0') out[len] = 0;
-				else break;
-			}
-
-			// Leading zero, as in 0.1
-			if (pt <= 0) *cp++ = '0';
-
-			// Other leading digits:
-			for (n = 0; out[n] && n < pt; n++) *cp++ = out[n];
-
-			if (!percent || n <= len) {
-				// Decimal point:
-				*cp++ = point;
-
-				// Zeros before first significant digit:
-				for (i = 0; i > pt; i--) *cp++ = '0';
-
-				// All remaining digits:
-				for (; n <= len; n++) *cp++ = out[n];
-
-				// Force extra zero in 1.0 cases:
-				if (cp[-1] == point) *cp++ = '0';
-			}
-		}
-		else {
-			REBYTE *pp;
-
-			// Requires exp format:
-			if (percent) Trap0(RE_OVERFLOW);
-			len = Get_System_Int(SYS_OPTIONS, OPTIONS_DECIMAL_DIGITS, MAX_DIGITS);
-			if (len > MAX_DIGITS) len = MAX_DIGITS;
-			gcvt(d, len, cp); // returns 1.2e123 (also 1e123)
-			pp = strchr(cp, '.');
-			if (pp && (pp[1] == 'e' || pp[1] == 'E')) {
-				memcpy(pp, pp+1, strlen(pp));
-			}
-			if (point != '.' && pp) {
-				cp = strchr(cp, '.');
-				if (cp) *cp = point;
-			}
-			cp = start + LEN_BYTES(start);
-		}
-	}
-
-	if (percent) *cp++ = '%';
-	*cp = 0;
-
-	return cp - start;
-}
-
-#else // NEW_DEC_TO_STR
-
 #define MIN_DIGITS 1
 /* this is appropriate for 64-bit IEEE754 binary floating point format */
 #define MAX_DIGITS 17
-
-REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT decimal_digits) {
+	
 	REBYTE *start = cp, *sig, *rve;
 	int e, sgn;
 	REBINT digits_obtained;
@@ -399,14 +253,14 @@ REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT deci
 	if (decimal_digits < MIN_DIGITS) decimal_digits = MIN_DIGITS;
 	else if (decimal_digits > MAX_DIGITS) decimal_digits = MAX_DIGITS;
 
-	sig = (REBYTE *) dtoa (d, 0, decimal_digits, &e, &sgn, (char **) &rve);
+	sig = (REBYTE *) dtoa (d, 2, decimal_digits, &e, &sgn, (char **) &rve);
 
 	digits_obtained = rve - sig;
 
 	/* handle sign */
 	if (sgn) *cp++ = '-';
 
-	if (trim == DEC_MOLD_PERCENT) e += 2;
+	if (trim == DEC_MOLD_PERCENT && (digits_obtained > 1 || sig[0] != '0')) e += 2;
 
 	if ((e > decimal_digits) || (e <= -6)) {
 		/* e-format */
@@ -463,11 +317,10 @@ REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT deci
 	if (e) {
 		*cp++ = 'e';
 		INT_TO_STR(e - 1, cp);
-		cp = strchr(cp, 0);
+		cp = b_cast(strchr(s_cast(cp), 0));
 	}
 
  	if (trim == DEC_MOLD_PERCENT) *cp++ = '%';
 	*cp = 0;
 	return cp - start;
 }
-#endif // NEW_DEC_TO_STR

@@ -46,8 +46,7 @@
 #define MAX_EXPAND_LIST 5		// number of series-1 in Prior_Expand list
 #define USE_UNICODE 1			// scanner uses unicode
 #define UNICODE_CASES 0x2E00	// size of unicode folding table
-#define HAS_SHA1				// allow it
-#define HAS_MD5					// allow it
+//#define INCLUDE_TASK
 
 // External system includes:
 #include <stdlib.h>
@@ -58,7 +57,7 @@
 
 // Special OS-specific definitions:
 #ifdef OS_DEFS
-	#ifdef TO_WIN32
+	#ifdef TO_WINDOWS
 	#include <windows.h>
 	#undef IS_ERROR
 	#endif
@@ -81,8 +80,6 @@
 #include "reb-types.h"
 #include "reb-event.h"
 
-#include "sys-deci.h"
-
 #include "sys-value.h"
 #include "tmp-strings.h"
 #include "tmp-funcargs.h"
@@ -101,6 +98,7 @@ typedef struct rebol_mold {
 	REBYTE period;		// for decimal point
 	REBYTE dash;		// for date fields
 	REBYTE digits;		// decimal digits
+	REBCNT limit;       // optional length limit of the result (-1 = no limit)
 } REB_MOLD;
 
 #include "reb-file.h"
@@ -118,6 +116,8 @@ typedef struct rebol_mold {
 #include "tmp-errnums.h"
 #include "host-lib.h"
 #include "sys-stack.h"
+#include "sys-state.h"
+#include "tmp-portmodes.h"
 
 /***********************************************************************
 **
@@ -127,6 +127,7 @@ typedef struct rebol_mold {
 
 enum Boot_Phases {
 	BOOT_START = 0,
+	BOOT_STARTED,
 	BOOT_LOADED,
 	BOOT_ERRORS,
 	BOOT_MEZZ,
@@ -213,6 +214,7 @@ enum Reb_Reflectors {
 	OF_BODY,
 	OF_SPEC,
 	OF_VALUES,
+	OF_TYPE,
 	OF_TYPES,
 	OF_TITLE,
 };
@@ -266,24 +268,6 @@ enum {
 	POL_WRITE,
 	POL_EXEC,
 };
-
-// Encoding options:
-enum encoding_opts {
-	ENC_OPT_BIG,		// big endian (not little)
-	ENC_OPT_UTF8,		// UTF-8
-	ENC_OPT_UTF16,		// UTF-16
-	ENC_OPT_UTF32,		// UTF-32
-	ENC_OPT_BOM,		// byte order marker
-	ENC_OPT_CRLF,		// CR line termination
-	ENC_OPT_NO_COPY,	// do not copy if ASCII
-};
-
-#define ENCF_NO_COPY (1<<ENC_OPT_NO_COPY)
-#if OS_CRLF
-#define ENCF_OS_CRLF (1<<ENC_OPT_CRLF)
-#else
-#define ENCF_OS_CRLF 0
-#endif
 
 /***********************************************************************
 **
@@ -366,9 +350,9 @@ enum encoding_opts {
 #endif
 
 #ifdef OS_STACK_GROWS_UP
-#define CHECK_STACK(v) if ((REBCNT)(v) >= Stack_Limit) Trap_Stack();
+#define CHECK_STACK(v) if ((REBUPT)(v) >= Stack_Limit) Trap_Stack();
 #else
-#define CHECK_STACK(v) if ((REBCNT)(v) <= Stack_Limit) Trap_Stack();
+#define CHECK_STACK(v) if ((REBUPT)(v) <= Stack_Limit) Trap_Stack();
 #endif
 #define STACK_BOUNDS (4*1024*1000) // note: need a better way to set it !!
 // Also: made somewhat smaller than linker setting to allow trapping it

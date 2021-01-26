@@ -27,7 +27,7 @@
 ***********************************************************************/
 
 /*
-**  Tokens returned by the scanner.  Keep in sync with boot.r strings area.
+**  Tokens returned by the scanner.  Keep in sync with boot.reb strings area.
 */
 enum Value_Types {
 	TOKEN_EOF = 0,
@@ -59,11 +59,49 @@ enum Value_Types {
 	TOKEN_ISSUE,
 	TOKEN_TAG,
 	TOKEN_PATH,
+	TOKEN_REF,
 	TOKEN_REFINE,
 	TOKEN_CONSTRUCT,
+	TOKEN_MAP,
 	TOKEN_MAX
 };
 
+#ifdef TEST_SCAN
+const char *Token_Names[TOKEN_MAX] = {
+ "EOF",
+ "LINE",
+ "BLOCK_END",
+ "PAREN_END",
+ "WORD",
+ "SET",
+ "GET",
+ "LIT",
+ "NONE",
+ "LOGIC",
+ "INTEGER",
+ "DECIMAL",
+ "PERCENT",
+ "MONEY",
+ "TIME",
+ "DATE",
+ "CHAR",
+ "BLOCK",
+ "PAREN",
+ "STRING",
+ "BINARY",
+ "PAIR",
+ "TUPLE",
+ "FILE",
+ "EMAIL",
+ "URL",
+ "ISSUE",
+ "TAG",
+ "PATH",
+ "REFINE",
+ "CONSTRUCT",
+ "MAP"
+};
+#endif
 
 /*
 **  Lexical Table Entry Encoding
@@ -189,12 +227,12 @@ enum rebol_esc_codes {
 */
 
 typedef struct rebol_scan_state {
-    REBYTE *begin;
-    REBYTE *end;
-    REBYTE const *limit;    /* no chars after this point */
+    const REBYTE *begin;
+    const REBYTE *end;
+    const REBYTE *limit;    /* no chars after this point */
 //    REBYTE const *error_id; /* id string for errors (file name or URL path) */
     REBCNT line_count;
-	REBYTE *head_line;		// head of current line (used for errors)
+	const REBYTE *head_line;		// head of current line (used for errors)
 	REBCNT opts;
 	REBCNT errors;
 } SCAN_STATE;
@@ -216,7 +254,7 @@ extern const REBYTE Lex_Map[256];
 
 /***********************************************************************
 **
-*/  static INLINE REBYTE *Skip_To_Char(REBYTE *cp, REBYTE *ep, REBYTE chr)
+*/  static INLINE const REBYTE *Skip_To_Char(const REBYTE *cp, const REBYTE *ep, REBYTE chr)
 /*
 **		Skip to the specified character but not past the end
 **		of the string.  Return zero if the char is not found.

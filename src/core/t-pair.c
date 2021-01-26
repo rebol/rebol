@@ -148,7 +148,7 @@
 		else if (VAL_WORD_CANON(sel) == SYM_Y) n = 2;
 		else return PE_BAD_SELECT;
 	}
-	else if (IS_INTEGER(sel)) {
+	else if (IS_INTEGER(sel) || IS_DECIMAL(sel)) {
 		n = Int32(sel);
 		if (n != 1 && n !=2) return PE_BAD_SELECT;
 	}
@@ -177,7 +177,7 @@
 ***********************************************************************/
 {
 	REBVAL *val;
-	REBVAL *arg;
+	REBVAL *arg = NULL;
 	REBINT n;
 	REBD32 x1, x2;
 	REBD32 y1, y2;
@@ -329,7 +329,7 @@
 				REBYTE *bp;
 				REBCNT len;
 				// -1234567890x-1234567890
-				bp = Qualify_String(val, 24, &len, FALSE);
+				bp = Qualify_String(val, VAL_LEN(val), &len, FALSE);
 				if (Scan_Pair(bp, len, DS_RETURN)) return R_RET;
 			}
 			if (IS_INTEGER(val)) {

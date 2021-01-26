@@ -59,12 +59,14 @@
 
 #include "sys-core.h"
 
+#ifdef INCLUDE_TASK
 /***********************************************************************
 **
 */	static void Launch_Task(REBVAL *task)
 /*
 ***********************************************************************/
 {
+	REBOL_STATE state;
 	REBSER *body;
 
 	Debug_Str("Begin Task");
@@ -72,11 +74,21 @@
 	Init_Task();
 	body = Clone_Block(VAL_MOD_BODY(task));
 	OS_TASK_READY(0);
+	
+	PUSH_STATE(state, Saved_State);
+	if (SET_JUMP(state)) {
+		POP_STATE(state, Saved_State);
+		Catch_Error(DS_NEXT); // Stores error value here
+		Debug_Str("End Task -> error!");
+		return;
+	}
+	SET_STATE(state, Saved_State);
 	Do_Blk(body, 0);
 
+	POP_STATE(state, Saved_State);
 	Debug_Str("End Task");
 }
-
+#endif
 
 /***********************************************************************
 **
@@ -84,5 +96,8 @@
 /*
 ***********************************************************************/
 {
+#ifdef INCLUDE_TASK
 	OS_CREATE_THREAD((void*)Launch_Task, task, 50000);
+#endif
 }
+

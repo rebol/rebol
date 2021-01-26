@@ -22,7 +22,7 @@
 **  Title: Graphics Compositing
 **  Author: Cyphre, Carl
 **  Purpose: Interface from graphics commands to AGG library.
-**  Tools: make-host-ext.r
+**  Tools: make-host-ext.reb
 **
 ************************************************************************
 **
@@ -65,69 +65,6 @@ static u32* graphics_ext_words;
 void* Rich_Text;
 
 RL_LIB *RL; // Link back to reb-lib from embedded extensions
-
-/***********************************************************************
-**
-*/	HCURSOR Image_To_Cursor(REBYTE* image, REBINT width, REBINT height)
-/*
-**      Converts REBOL image! to Windows CURSOR
-**
-***********************************************************************/
-{
-	int xHotspot = 0;
-	int yHotspot = 0;
-
-	HICON result = NULL;
-	HBITMAP hSourceBitmap;
-	BITMAPINFO  BitmapInfo;
-	ICONINFO iconinfo;
-
-    //Get the system display DC
-    HDC hDC = GetDC(NULL);
-
-	//Create DIB
-	unsigned char* ppvBits;
-	int bmlen = width * height * 4;
-	int i;
-
-	BitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	BitmapInfo.bmiHeader.biWidth = width;
-	BitmapInfo.bmiHeader.biHeight = -(signed)height;
-	BitmapInfo.bmiHeader.biPlanes = 1;
-	BitmapInfo.bmiHeader.biBitCount = 32;
-	BitmapInfo.bmiHeader.biCompression = BI_RGB;
-	BitmapInfo.bmiHeader.biSizeImage = 0;
-	BitmapInfo.bmiHeader.biXPelsPerMeter = 0;
-	BitmapInfo.bmiHeader.biYPelsPerMeter = 0;
-	BitmapInfo.bmiHeader.biClrUsed = 0;
-	BitmapInfo.bmiHeader.biClrImportant = 0;
-
-	hSourceBitmap = CreateDIBSection(hDC, &BitmapInfo, DIB_RGB_COLORS, (void**)&ppvBits, NULL, 0);
-
-	//Release the system display DC
-    ReleaseDC(NULL, hDC);
-
-	//Copy the image content to DIB
-	COPY_MEM(ppvBits, image, bmlen);
-
-	//Invert alphachannel from the REBOL format
-	for (i = 3;i < bmlen;i+=4){
-		ppvBits[i] ^= 0xff;
-	}
-
-	//Create the cursor using the masks and the hotspot values provided
-	iconinfo.fIcon		= FALSE;
-	iconinfo.xHotspot	= xHotspot;
-	iconinfo.yHotspot	= yHotspot;
-	iconinfo.hbmMask	= hSourceBitmap;
-	iconinfo.hbmColor	= hSourceBitmap;
-
-	result = CreateIconIndirect(&iconinfo);
-
-	DeleteObject(hSourceBitmap);
-
-	return result;
-}
 
 /***********************************************************************
 **
@@ -175,11 +112,6 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions
 ***********************************************************************/
 {
 	switch (cmd) {
-
-	case CMD_GRAPHICS_SHOW:
-		Show_Gob((REBGOB*)RXA_SERIES(frm, 1));
-		RXA_TYPE(frm, 1) = RXT_GOB;
-		return RXR_VALUE;
 
     case CMD_GRAPHICS_SIZE_TEXT:
         if (Rich_Text) {
@@ -243,36 +175,6 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions
         }
         break;
 
-    case CMD_GRAPHICS_CURSOR:
-        {
-            REBINT n = 0;
-            REBSER image = 0;
-
-            if (RXA_TYPE(frm, 1) == RXT_IMAGE) {
-                image = RXA_IMAGE_BITS(frm,1);
-            } else {
-                n = RXA_INT64(frm,1);
-            }
-
-            if (Custom_Cursor) {
-                //Destroy cursor object only if it is a custom image
-                DestroyCursor(Cursor);
-                Custom_Cursor = FALSE;
-            }
-
-            if (n > 0)
-                Cursor = LoadCursor(NULL, (LPCTSTR)n);
-            else if (image) {
-                Cursor = Image_To_Cursor(image, RXA_IMAGE_WIDTH(frm,1), RXA_IMAGE_HEIGHT(frm,1));
-                Custom_Cursor = TRUE;
-            } else
-                Cursor = NULL;
-
-            SetCursor(Cursor);
-
-        }
-        break;
-
     case CMD_GRAPHICS_DRAW:
         {
             REBYTE* img = 0;
@@ -298,73 +200,12 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions
         }
         break;
 
-    case CMD_GRAPHICS_GUI_METRIC:
-        {
-            REBINT x,y;
-            u32 w = RL_FIND_WORD(graphics_ext_words,RXA_WORD(frm, 1));
+    case CMD_GRAPHICS_INIT:
+        //Initialize text rendering context
+        if (Rich_Text) Destroy_RichText(Rich_Text);
+        Rich_Text = Create_RichText();
 
-            switch(w)
-            {
-                case W_GRAPHICS_SCREEN_SIZE:
-                    x = GetSystemMetrics(SM_CXSCREEN);
-                    y = GetSystemMetrics(SM_CYSCREEN);
-                    break;
-
-                case W_GRAPHICS_TITLE_SIZE:
-                    x = 0;
-                    y = GetSystemMetrics(SM_CYCAPTION);
-                    break;
-
-                case W_GRAPHICS_BORDER_SIZE:
-                    x = GetSystemMetrics(SM_CXSIZEFRAME);
-                    y = GetSystemMetrics(SM_CYSIZEFRAME);
-                    break;
-
-                case W_GRAPHICS_BORDER_FIXED:
-                    x = GetSystemMetrics(SM_CXFIXEDFRAME);
-                    y = GetSystemMetrics(SM_CYFIXEDFRAME);
-                    break;
-
-                case W_GRAPHICS_WORK_ORIGIN:
-                    {
-                        RECT rect;
-                        SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
-                        x = rect.left;
-                        y = rect.top;
-                    }
-                    break;
-
-                case W_GRAPHICS_WORK_SIZE:
-                    {
-                        RECT rect;
-                        SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
-                        x = rect.right;
-                        y = rect.bottom;
-                    }
-                    break;
-            }
-
-            if (w){
-                RXA_PAIR(frm, 1).x = x;
-                RXA_PAIR(frm, 1).y = y;
-                RXA_TYPE(frm, 1) = RXT_PAIR;
-            } else {
-                RXA_TYPE(frm, 1) = RXT_NONE;
-            }
-            return RXR_VALUE;
-        }
         break;
-
-	case CMD_GRAPHICS_INIT:
-		Gob_Root = (REBGOB*)RXA_SERIES(frm, 1); // system/view/screen-gob
-		Gob_Root->size.x = (REBD32)GetSystemMetrics(SM_CXSCREEN);
-		Gob_Root->size.y = (REBD32)GetSystemMetrics(SM_CYSCREEN);
-
-		//Initialize text rendering context
-		if (Rich_Text) Destroy_RichText(Rich_Text);
-		Rich_Text = Create_RichText();
-
-		break;
 
     case CMD_GRAPHICS_INIT_WORDS:
         //temp hack - will be removed later
@@ -1204,6 +1045,19 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions
 	}
 
     return RXR_UNSET;
+}
+#endif //unused
+
+
+/***********************************************************************
+**
+*/	void OS_Show_Soft_Keyboard(void* win, REBINT x, REBINT y)
+/*
+**  Display software/virtual keyboard on the screen.
+**  (mainly used on mobile platforms)
+**
+***********************************************************************/
+{
 }
 
 

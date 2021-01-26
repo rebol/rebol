@@ -26,9 +26,18 @@
 **    This is an optional part of R3. This file can be replaced by
 **    library function calls into an updated implementation.
 **
+***********************************************************************
+**  Base-code:
+
+	if find system/codecs 'bmp [
+		system/codecs/bmp/suffixes: [%.bmp]
+		append append system/options/file-types system/codecs/bmp/suffixes 'bmp
+	]
+
 ***********************************************************************/
 
 #include "sys-core.h"
+#ifdef INCLUDE_BMP_CODEC
 
 //**********************************************************************
 
@@ -173,7 +182,7 @@ void Map_Bytes(void *dstp, REBYTE **srcp, char *map) {
 
 		case 'l':
 			if (longaligned()) {
-				while(((unsigned long)dst)&3)
+				while(((REBUPT)dst)&3)
 					dst++;
 			}
 			*((REBCNT *)dst) = *((REBCNT *)src);
@@ -230,7 +239,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 
 		case 'l':
 			if (longaligned()) {
-				while(((unsigned long)src)&3)
+				while(((REBUPT)src)&3)
 					src++;
 			}
 			*((REBCNT *)dst) = *((REBCNT *)src);
@@ -290,6 +299,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 	REBCNT				*dp;
 	RGBQUADPTR			color;
 	RGBQUADPTR			ctab = 0;
+	REBOOL				bottom_up = 1;
 
 	cp = codi->data;
 	Map_Bytes(&bmfh, &cp, mapBITMAPFILEHEADER);
@@ -346,12 +356,18 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 	if (bmfh.bfOffBits != (DWORD)(cp - codi->data))
 		cp = codi->data + bmfh.bfOffBits;
 
+	if (h < 0) {
+		bottom_up = 0;
+		h = -h;
+	}
+
 	codi->w = w;
 	codi->h = h;
 	codi->bits = Make_Mem(w * h * 4);
 
 	dp = (REBCNT *) codi->bits;
-	dp += w * h - w;
+	if (bottom_up)
+		dp += w * h - w;
 
 	for (y = 0; y<h; y++) {
 		switch(compression) {
@@ -365,8 +381,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 						c = *cp++ & 0xff;
 					}
 					color = &ctab[(c&x) != 0];
-					*dp++ = ((int)color->rgbRed << 16) |
-							((int)color->rgbGreen << 8) | color->rgbBlue;
+					*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
 					x >>= 1;
 				}
 				i = (w+7) / 8;
@@ -385,8 +400,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 						goto error;
 					}
 					color = &ctab[x];
-					*dp++ = ((int)color->rgbRed << 16) |
-							((int)color->rgbGreen << 8) | color->rgbBlue;
+					*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
 				}
 				i = (w+1) / 2;
 				break;
@@ -399,21 +413,24 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 						goto error;
 					}
 					color = &ctab[c];
-					*dp++ = ((int)color->rgbRed << 16) |
-							((int)color->rgbGreen << 8) | color->rgbBlue;
+					*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
 				}
 				break;
 
 			case 24:
 				for (i = 0; i<w; i++) {
-#ifdef ENDIAN_BIG
-					*dp++=cp[0]|(cp[1]<<8)|(cp[2]<<16);
-#else
-					*dp++ = (*(int *)cp) & 0xffffffL;
-#endif
+					*dp++ = TO_PIXEL_COLOR(cp[2], cp[1], cp[0], 0xff);
 					cp += 3;
 				}
 				i = w * 3;
+				break;
+
+			case 32:
+				for (i = 0; i<w; i++) {
+					*dp++ = TO_PIXEL_COLOR(cp[2], cp[1], cp[0], cp[3]);
+					cp += 4;
+				}
+				i = w * 4;
 				break;
 
 			default:
@@ -446,8 +463,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 						}
 						else
 							color = &ctab[x&0x0f];
-						*dp++ = ((int)color->rgbRed << 16) |
-							((int)color->rgbGreen << 8) | color->rgbBlue;
+						*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
 					}
 					j = (c+1) / 2;
 					while (j++%2)
@@ -464,8 +480,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 							color = &ctab[x&0x0f];
 						else
 							color = &ctab[x>>4];
-						*dp++ = ((int)color->rgbRed << 16) |
-							((int)color->rgbGreen << 8) | color->rgbBlue;
+						*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
 					}
 				}
 			}
@@ -487,8 +502,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 					for (j = 0; j<c; j++) {
 						x = *cp++ & 0xff;
 						color = &ctab[x];
-						*dp++ = ((int)color->rgbRed << 16) |
-							((int)color->rgbGreen << 8) | color->rgbBlue;
+						*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
 					}
 					while (j++ % 2)
 						cp++;
@@ -497,8 +511,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 					x = *cp++ & 0xff;
 					for (j = 0; j<c; j++) {
 						color = &ctab[x];
-						*dp++ = ((int)color->rgbRed << 16) |
-							((int)color->rgbGreen << 8) | color->rgbBlue;
+						*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
 					}
 				}
 			}
@@ -508,7 +521,8 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 			codi->error = CODI_ERR_ENCODING;
 			goto error;
 		}
-		dp -= 2 * w;
+		if (bottom_up)
+			dp -= 2 * w;
 	}
 error:
 	if (ctab) free(ctab);
@@ -528,18 +542,20 @@ error:
 {
 	REBINT i, y;
 	REBINT w, h;
-	REBYTE *cp;
-	REBCNT *dp, v;
+	REBYTE *cp, *v;
+	REBCNT *dp;
 	BITMAPFILEHEADER bmfh;
 	BITMAPINFOHEADER bmih;
+	REBOOL hasalpha;
 
 	w = codi->w;
 	h = codi->h;
+	hasalpha = codi->alpha;
 
 	memset(&bmfh, 0, sizeof(bmfh));
 	bmfh.bfType[0] = 'B';
 	bmfh.bfType[1] = 'M';
-	bmfh.bfSize = 14 + 40 + h * WADJUST(w);
+	bmfh.bfSize = 14 + 40 + h * (hasalpha ? w * 4: WADJUST(w));
 	bmfh.bfOffBits = 14 + 40;
 
 	// Create binary string:
@@ -552,7 +568,7 @@ error:
 	bmih.biWidth = w;
 	bmih.biHeight = h;
 	bmih.biPlanes = 1;
-	bmih.biBitCount = 24;
+	bmih.biBitCount = hasalpha ? 32 : 24;
 	bmih.biCompression = 0;
 	bmih.biSizeImage = 0;
 	bmih.biXPelsPerMeter = 0;
@@ -565,16 +581,27 @@ error:
 	dp += w * h - w;
 
 	for (y = 0; y<h; y++) {
-		for (i = 0; i<w; i++) {
-			v = *dp++;
-			cp[0] = v & 0xff;
-			cp[1] = (v >> 8) & 0xff;
-			cp[2] = (v >> 16) & 0xff;
-			cp += 3;
+		if (hasalpha) {
+			for (i = 0; i<w; i++) {
+				v = (REBYTE*)dp++;
+				cp[0] = v[C_B];
+				cp[1] = v[C_G];
+				cp[2] = v[C_R];
+				cp[3] = v[C_A];
+				cp += 4;
+			}
+		} else {
+			for (i = 0; i<w; i++) {
+				v = (REBYTE*)dp++;
+				cp[0] = v[C_B];
+				cp[1] = v[C_G];
+				cp[2] = v[C_R];
+				cp += 3;
+			}
+			i = w * 3;
+			while (i++ % 4)
+				*cp++ = 0;
 		}
-		i = w * 3;
-		while (i++ % 4)
-			*cp++ = 0;
 		dp -= 2 * w;
 	}
 }
@@ -616,3 +643,5 @@ error:
 {
 	Register_Codec("bmp", Codec_BMP_Image);
 }
+
+#endif //INCLUDE_BMP_CODEC

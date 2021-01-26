@@ -114,16 +114,26 @@
 	case A_REMOVE:
 		// /PART length
 		TRAP_PROTECT(VAL_SERIES(value));
-		len = DS_REF(2) ? Partial(value, 0, DS_ARG(3), 0) : 1;
-		index = (REBINT)VAL_INDEX(value);
+		if (DS_REF(ARG_REMOVE_KEY)) {
+			if (ANY_BLOCK(value)) {
+				len = 2;
+				index = Find_Block(VAL_SERIES(value), VAL_INDEX(value), VAL_TAIL(value), DS_ARG(ARG_REMOVE_KEY_ARG), VAL_LEN(value), AM_FIND_CASE, 2);
+			}
+			else Trap0(RE_FEATURE_NA);
+		} else {
+			len = DS_REF(2) ? Partial(value, 0, DS_ARG(3), 0) : 1;
+			index = (REBINT)VAL_INDEX(value);
+		}
 		if (index < tail && len != 0)
-			Remove_Series(VAL_SERIES(value), VAL_INDEX(value), len);
+			Remove_Series(VAL_SERIES(value), (REBCNT)index, len);
 		break;
 
 	case A_ADD:			// Join_Strings(value, arg);
 	case A_SUBTRACT:	// "test this" - 10
 	case A_MULTIPLY:	// "t" * 4 = "tttt"
 	case A_DIVIDE:
+		if (IS_VECTOR(value)) return -1; // allow vector for actions above
+		//continue...
 	case A_REMAINDER:
 	case A_POWER:
 	case A_ODDQ:
@@ -155,15 +165,20 @@ is_true:
 **
 ***********************************************************************/
 {
-	REBVAL	*s = VAL_BLK_DATA(sval);
-	REBVAL	*t = VAL_BLK_DATA(tval);
+	REBVAL	*s;
+	REBVAL	*t;
 	REBINT	diff;
-
-	CHECK_STACK(&s);
 
 	if ((VAL_SERIES(sval)==VAL_SERIES(tval))&&
 	 (VAL_INDEX(sval)==VAL_INDEX(tval)))
 		 return 0;
+
+	// make sure that none of block is past tail
+	// https://github.com/Oldes/Rebol-issues/issues/2439
+	s = VAL_BLK_DATA_SAFE(sval);
+	t = VAL_BLK_DATA_SAFE(tval);
+
+	CHECK_STACK(&s);
 
 	while (!IS_END(s) && (VAL_TYPE(s) == VAL_TYPE(t) ||
 					(IS_NUMBER(s) && IS_NUMBER(t)))) {
@@ -280,7 +295,8 @@ chkDecimal:
 	case REB_OBJECT:
 	case REB_MODULE:
 	case REB_PORT:
-		return VAL_OBJ_FRAME(s) - VAL_OBJ_FRAME(t);
+		//return VAL_OBJ_FRAME(s) - VAL_OBJ_FRAME(t); // strict variant
+		return !CT_Object(s, t, 1); // equality used
 
 	case REB_NATIVE:
 		return &VAL_FUNC_CODE(s) - &VAL_FUNC_CODE(t);

@@ -60,4 +60,10 @@ typedef struct {		// State variables to save
 #define	SET_STATE(s, g) g = &(s).cpu_state
 
 // Store all CPU registers into the structure:
+#ifdef HAS_POSIX_SIGNAL
+#define	SET_JUMP(s) sigsetjmp((s).cpu_state, 1)
+#define	LONG_JUMP(s, v) siglongjmp((s), (v))
+#else
 #define	SET_JUMP(s) setjmp((s).cpu_state)
+#define	LONG_JUMP(s, v) longjmp((s), (v))
+#endif

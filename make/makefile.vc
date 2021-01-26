@@ -10,9 +10,11 @@ CD=	 ./
 
 I= /I..\src\include
 TO_OS= TO_WIN32
-OS_ID= 0.4.4
+OS_ID= 0.3.1
 
-CFLAGS=/c /Os /D "UNICODE" /D "WIN32" /W3 /GR- /Zi /GS /Gy /GF /EHs-c- /GL /D "NDEBUG" /D "_CRT_SECURE_NO_WARNINGS"
+
+CFLAGS=/c /Os /W3 /GR- /Zi /GS /Gy /GF /EHs-c- /GL /D "REB_EXE" /D "ENDIAN_LITTLE" /D "_CRT_SECURE_NO_WARNINGS" /D "_UNICODE" /D "UNICODE" /D "_FILE_OFFSET_BITS=64" /D "NDEBUG" /D "TO_WIN32" /D "USE_MIDI_DEVICE" /D "USE_LZMA" /D "USE_IMAGE_NATIVES"
+
 
 RAPI_FLAGS= $(CFLAGS)
 HOST_FLAGS= $(CFLAGS)
@@ -21,56 +23,71 @@ RLIB_FLAGS=
 RFLAGS= $(RAPI_FLAGS) $(I) /D$(TO_OS) /DREB_API
 HFLAGS= $(HOST_FLAGS) $(I) /D$(TO_OS) /DREB_CORE
 
-LIBS= user32.lib ws2_32.lib advapi32.lib shell32.lib comdlg32.lib
+
+LIBS= user32.lib ws2_32.lib advapi32.lib shell32.lib comdlg32.lib winmm.lib wsock32.lib
+
+
 LDFLAGS = /nologo /DEBUG /RELEASE /opt:ref /opt:icf /LTCG
 
-REBOL=	r3-make.exe -qs
 
-all: prep r3.exe
+REBOL= prebuild\r3-make-win.exe -qs
 
-prep:
-	$(REBOL) $T/make-headers.r
-	$(REBOL) $T/make-boot.r $(OS_ID)
-	$(REBOL) $T/make-host-init.r
-	$(REBOL) $T/make-os-ext.r # ok, but not always
-	$(REBOL) $T/make-host-ext.r
-	$(REBOL) $T/make-reb-lib.r
+clean:
+	DEL /s /q objs
+
+all: clean prep r3.exe
+
+prep:  objs
+	$(REBOL) $T/make-headers.reb
+	$(REBOL) $T/make-boot.reb $(OS_ID)
+	$(REBOL) $T/make-host-init.reb
+	$(REBOL) $T/make-os-ext.reb # ok, but not always
+	$(REBOL) $T/make-host-ext.reb
+	$(REBOL) $T/make-reb-lib.reb
+
 
 objs:
-	mkdir objs
+	if not exist objs MKDIR objs
 
 OBJS =	objs/a-constants.obj objs/a-globals.obj objs/a-lib.obj objs/b-boot.obj \
 	objs/b-init.obj objs/c-do.obj objs/c-error.obj objs/c-frame.obj \
 	objs/c-function.obj objs/c-port.obj objs/c-task.obj objs/c-word.obj \
 	objs/d-crash.obj objs/d-dump.obj objs/d-print.obj objs/f-blocks.obj \
-	objs/f-deci.obj objs/f-enbase.obj objs/f-extension.obj objs/f-math.obj \
-	objs/f-modify.obj objs/f-random.obj objs/f-round.obj objs/f-series.obj \
-	objs/f-stubs.obj objs/l-scan.obj objs/l-types.obj objs/m-gc.obj \
-	objs/m-pools.obj objs/m-series.obj objs/n-control.obj objs/n-data.obj \
-	objs/n-io.obj objs/n-loop.obj objs/n-math.obj objs/n-sets.obj \
-	objs/n-strings.obj objs/n-system.obj objs/p-clipboard.obj objs/p-console.obj \
-	objs/p-dir.obj objs/p-dns.obj objs/p-event.obj objs/p-file.obj \
-	objs/p-net.obj objs/s-cases.obj objs/s-crc.obj objs/s-file.obj \
-	objs/s-find.obj objs/s-make.obj objs/s-mold.obj objs/s-ops.obj \
-	objs/s-trim.obj objs/s-unicode.obj objs/t-bitset.obj objs/t-block.obj \
-	objs/t-char.obj objs/t-datatype.obj objs/t-date.obj objs/t-decimal.obj \
-	objs/t-event.obj objs/t-function.obj objs/t-gob.obj objs/t-image.obj \
-	objs/t-integer.obj objs/t-logic.obj objs/t-map.obj objs/t-money.obj \
-	objs/t-none.obj objs/t-object.obj objs/t-pair.obj objs/t-port.obj \
-	objs/t-string.obj objs/t-time.obj objs/t-tuple.obj objs/t-typeset.obj \
-	objs/t-utype.obj objs/t-vector.obj objs/t-word.obj objs/u-bmp.obj \
-	objs/u-compress.obj objs/u-dialect.obj objs/u-gif.obj objs/u-jpg.obj \
-	objs/u-md5.obj objs/u-parse.obj objs/u-png.obj objs/u-sha1.obj \
-	objs/u-zlib.obj
+	objs/f-deci.obj objs/f-dtoa.obj objs/f-enbase.obj objs/f-extension.obj \
+	objs/f-int.obj objs/f-math.obj objs/f-modify.obj objs/f-qsort.obj \
+	objs/f-random.obj objs/f-round.obj objs/f-series.obj objs/f-stubs.obj \
+	objs/l-scan.obj objs/l-types.obj objs/m-gc.obj objs/m-pools.obj \
+	objs/m-series.obj objs/n-control.obj objs/n-crypt.obj objs/n-data.obj \
+	objs/n-image.obj objs/n-io.obj objs/n-loop.obj objs/n-math.obj \
+	objs/n-sets.obj objs/n-strings.obj objs/n-system.obj objs/p-checksum.obj \
+	objs/p-clipboard.obj objs/p-console.obj objs/p-dir.obj objs/p-dns.obj \
+	objs/p-event.obj objs/p-file.obj objs/p-net.obj objs/p-midi.obj \
+	objs/s-cases.obj objs/s-crc.obj objs/s-file.obj objs/s-find.obj \
+	objs/s-make.obj objs/s-mold.obj objs/s-ops.obj objs/s-trim.obj \
+	objs/s-unicode.obj objs/t-bitset.obj objs/t-block.obj objs/t-char.obj \
+	objs/t-datatype.obj objs/t-date.obj objs/t-decimal.obj objs/t-event.obj \
+	objs/t-function.obj objs/t-gob.obj objs/t-image.obj objs/t-integer.obj \
+	objs/t-logic.obj objs/t-map.obj objs/t-money.obj objs/t-none.obj \
+	objs/t-object.obj objs/t-pair.obj objs/t-port.obj objs/t-string.obj \
+	objs/t-time.obj objs/t-tuple.obj objs/t-typeset.obj objs/t-utype.obj \
+	objs/t-vector.obj objs/t-word.obj objs/u-aes.obj objs/u-bigint.obj \
+	objs/u-bincode.obj objs/u-bmp.obj objs/u-chacha20.obj objs/u-compress.obj \
+	objs/u-dh.obj objs/u-dialect.obj objs/u-gif.obj objs/u-iconv.obj \
+	objs/u-image-resize.obj objs/u-jpg.obj objs/u-lzma.obj objs/u-md5.obj \
+	objs/u-parse.obj objs/u-png.obj objs/u-poly1305.obj objs/u-rc4.obj \
+	objs/u-rsa.obj objs/u-sha1.obj objs/u-sha2.obj objs/u-uECC.obj \
+	objs/u-zlib.obj objs/u-wav.obj 
+
 
 HOST =	objs/host-main.obj objs/host-args.obj objs/host-device.obj objs/host-stdio.obj \
-	objs/dev-net.obj objs/dev-dns.obj objs/host-lib.obj \
-	objs/dev-stdio.obj objs/dev-event.obj objs/dev-file.obj \
-	objs/dev-clipboard.obj
+	objs/dev-net.obj objs/dev-dns.obj objs/host-ext-test.obj objs/host-lib.obj \
+	objs/dev-stdio.obj objs/dev-file.obj objs/dev-event.obj objs/dev-clipboard.obj \
+	objs/dev-midi.obj 
 
 # Directly linked r3 executable:
 r3.exe: objs $(OBJS) $(HOST)
-	$(LD) $(LDFLAGS) $(OBJS) $(HOST) $(LIBS) /PDB:$*.pdb /OUT:r3.exe /SUBSYSTEM:WINDOWS
+	$(LD) $(LDFLAGS) $(OBJS) $(HOST) $(LIBS) /PDB:$*.pdb /OUT:r3.exe
+
 
 {..\src\core}.c{objs}.obj::
 	$(CC) $(RFLAGS) /Foobjs\ /Fdobjs\vc80.pdb $<

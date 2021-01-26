@@ -80,7 +80,10 @@
 			SET_OBJECT(D_RET, obj);
 		}
 		else if (n == OF_TITLE) {
-			Set_String(D_RET, Copy_Series(VAL_SERIES(BLK_HEAD(VAL_TYPE_SPEC(BLK_SKIP(Lib_Context, type+1))))));
+			Set_String(D_RET, Copy_Series(VAL_SERIES(BLK_HEAD( VAL_TYPE_SPEC(BLK_SKIP(Lib_Context, type+1)) ))));
+		}
+		else if (n == OF_TYPE) {
+			Init_Word(D_RET, VAL_WORD_CANON(BLK_SKIP( VAL_TYPE_SPEC(BLK_SKIP(Lib_Context, type+1)), 1)));
 		}
 		else Trap_Reflect(VAL_TYPE(value), arg);
 		break;

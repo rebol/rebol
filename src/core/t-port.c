@@ -89,6 +89,7 @@
 	case A_CREATE:
 	case A_DELETE:
 	case A_RENAME:
+	case A_MODIFY:
 		value = As_Port(value);
 	case A_UPDATE:
 	default:

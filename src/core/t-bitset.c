@@ -31,7 +31,8 @@
 
 #define MAX_BITSET 0x7fffffff
 
-#define BITS_NOT(s) ((s)->size)
+// use if you want compatibility with R3-alpha for returning NONE on non existing bit
+// #define PICK_BITSET_AS_NONE
 
 /***********************************************************************
 **
@@ -91,7 +92,7 @@
 /*
 ***********************************************************************/
 {
-	REBFLG is_not = 0;
+	//REBFLG is_not = 0;
 	
 	if (IS_BLOCK(data)) {
 		REBINT len = Find_Max_Bit(data);
@@ -149,7 +150,7 @@
 			for (; n < (REBINT)VAL_TAIL(val); n++)
 				if (up[n] > maxi) maxi = up[n];
 		}
-		maxi++;
+		//maxi++; //@@ https://github.com/Oldes/Rebol-issues/issues/2415
 		break;
 
 	case REB_BINARY:
@@ -214,6 +215,27 @@ retry:
 
 /***********************************************************************
 **
+*/	REBFLG Check_Bit_Cased(REBSER *bset, REBCNT c)
+/*
+**		Check bit indicated. Returns TRUE if set.
+**		This is light variant of the Check_Bit function above (cased version only)
+**
+***********************************************************************/
+{
+	REBCNT i, n = c;
+	REBCNT tail = SERIES_TAIL(bset);
+	REBFLG flag = 0;
+
+	i = n >> 3;
+	if (i < tail)
+		flag = (0 != (BIN_HEAD(bset)[i] & (1 << (7 - ((n) & 7)))));
+
+	return (BITS_NOT(bset)) ? !flag : flag;
+}
+
+
+/***********************************************************************
+**
 */	REBFLG Check_Bit_Str(REBSER *bset, REBVAL *val, REBFLG uncased)
 /*
 **		If uncased is TRUE, try to match either upper or lower case.
@@ -271,6 +293,8 @@ retry:
 {
 	REBCNT n = VAL_INDEX(val);
 
+	if(IS_PROTECT_SERIES(bset)) Trap0(RE_PROTECTED);
+
 	if (VAL_BYTE_SIZE(val)) {
 		REBYTE *bp = VAL_BIN(val);
 		for (; n < VAL_TAIL(val); n++)
@@ -294,6 +318,8 @@ retry:
 {
 	REBCNT n;
 	REBCNT c;
+
+	if(IS_PROTECT_SERIES(bset)) Trap0(RE_PROTECTED);
 
 	if (IS_CHAR(val)) {
 		Set_Bit(bset, VAL_CHAR(val), set);
@@ -478,11 +504,16 @@ found:
 	REBFLG t;
 
 	if (val == 0) {
+#ifdef PICK_BITSET_AS_NONE
 		if (Check_Bits(ser, pvs->select, 0)) {
 			SET_TRUE(pvs->store);
 			return PE_USE;
 		}
 		return PE_NONE;
+#else
+		SET_LOGIC(pvs->store, Check_Bits(ser, pvs->select, 0));
+		return PE_USE;
+#endif
 	}
 
 	t = IS_TRUE(val);
@@ -493,6 +524,23 @@ found:
 	return PE_BAD_SET;
 }
 
+/***********************************************************************
+**
+*/	REBOOL Is_Zero_Bitset(REBSER *bset)
+/*
+**		Check if all bits are unset.
+**
+***********************************************************************/
+{
+	REBCNT i;
+	REBYTE *bp = BIN_HEAD(bset);
+	REBYTE b = BITS_NOT(bset) ? 0xFF : 0; 
+
+	for(i = 0;  i < SERIES_TAIL(bset); i++) {
+		if(bp[i] != b) return FALSE;
+	}
+	return TRUE;
+}
 
 /***********************************************************************
 **
@@ -511,6 +559,19 @@ found:
 	SERIES_TAIL(ser) = tail;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(complementq)
+/*
+//	complement?: native [
+//		"Returns TRUE if the bitset is complemented"
+//		value [bitset!]
+//	]
+***********************************************************************/
+{
+	return (BITS_NOT(VAL_SERIES(D_ARG(1))) ? R_TRUE : R_FALSE);
+}
+
 
 /***********************************************************************
 **
@@ -518,15 +579,15 @@ found:
 /*
 ***********************************************************************/
 {
-	REBYTE *data = 0;
+	//REBYTE *data = 0;
 	REBVAL *value = D_ARG(1);
 	REBVAL *arg = D_ARG(2);
 	REBSER *ser;
 	REBINT len;
 	REBINT diff;
 
-	if (action != A_MAKE && action != A_TO)
-		data = VAL_BIT_DATA(value);
+	//if (action != A_MAKE && action != A_TO)
+	//	data = VAL_BIT_DATA(value);
 
 	// Check must be in this order (to avoid checking a non-series value);
 	if (action >= A_TAKE && action <= A_SORT && IS_PROTECT_SERIES(VAL_SERIES(value)))
@@ -539,7 +600,12 @@ found:
 
 	case A_PICK:
 	case A_FIND:
-		if (!Check_Bits(VAL_SERIES(value), arg, D_REF(ARG_FIND_CASE))) return R_NONE;
+		if (!Check_Bits(VAL_SERIES(value), arg,(action == A_FIND && D_REF(ARG_FIND_CASE)) ))
+#ifdef PICK_BITSET_AS_NONE
+			return R_NONE;
+#else
+			return R_FALSE; // returning FALSE instead of NONE like Red does
+#endif
 		return R_TRUE;
 
 	case A_COMPLEMENT:
@@ -551,6 +617,10 @@ found:
 
 	case A_MAKE:
 	case A_TO:
+		if (IS_BITSET(arg)) {
+			VAL_SERIES(arg) = Copy_Series_Value(arg);
+			return R_ARG2;
+		}
 		// Determine size of bitset. Returns -1 for errors.
 		len = Find_Max_Bit(arg);
 		if (len < 0 || len > 0x0FFFFFFF) Trap_Arg(arg);
@@ -579,9 +649,10 @@ set_bits:
 		if (Set_Bits(VAL_SERIES(value), arg, (REBOOL)diff)) break;
 		Trap_Arg(arg);
 
-	case A_REMOVE:	// #"a" "abc"  remove/part bs "abcd"  yuk: /part ?
-		if (!D_REF(2)) Trap0(RE_MISSING_ARG); // /part required
-		if (Set_Bits(VAL_SERIES(value), D_ARG(3), FALSE)) break;
+	case A_REMOVE:	// #"a" "abc"  remove/key bs "abcd"
+		if (D_REF(ARG_REMOVE_PART)) Trap0(RE_BAD_REFINES);
+		if (!D_REF(ARG_REMOVE_KEY)) Trap0(RE_MISSING_ARG); // /key required
+		if (Set_Bits(VAL_SERIES(value), D_ARG(ARG_REMOVE_KEY_ARG), FALSE)) break;
 		Trap_Arg(D_ARG(3));
 
 	case A_COPY:
@@ -598,7 +669,11 @@ set_bits:
 		return (VAL_TAIL(value) == 0) ? R_TRUE : R_FALSE;
 
 	case A_CLEAR:
+		//O: which version is better?
+		// version 1: clearing series and resetting length as well -> clear make bitset! {01} == make bitset! #{}
 		Clear_Series(VAL_SERIES(value));
+		// version 2: clearing series but keeping its length -> ... == make bitset! #{00}
+		// CLEAR(SERIES_DATA(VAL_SERIES(value)), SERIES_SPACE(VAL_SERIES(value)));
 		break;
 
 	case A_AND:

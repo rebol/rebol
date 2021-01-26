@@ -29,6 +29,7 @@
 
 #include "sys-core.h"
 #include "sys-deci-funcs.h"
+#include "sys-int-funcs.h"
 
 
 /***********************************************************************
@@ -55,9 +56,7 @@
 	REBI64 arg;
 	REBINT n;
 
-	REBU64 p, a, b; // for overflow detection
-	REBCNT a1, a0, b1, b0;
-	REBFLG sgn;
+	REBU64 p; // for overflow detection
 	REBI64 anum;
 
 	num = VAL_INT64(val);
@@ -110,41 +109,18 @@
 	switch (action) {
 
 	case A_ADD:
-		anum = (REBU64)num + (REBU64)arg;
-		if (
-			((num < 0) == (arg < 0)) && ((num < 0) != (anum < 0))
-		) Trap0(RE_OVERFLOW);
+		if (REB_I64_ADD_OF(num, arg, &anum)) Trap0(RE_OVERFLOW);
 		num = anum;
 		break;
 
 	case A_SUBTRACT:
-		anum = (REBU64)num - (REBU64)arg;
-		if (
-			((num < 0) != (arg < 0)) && ((num < 0) != (anum < 0))
-		) Trap0(RE_OVERFLOW);
+		if (REB_I64_SUB_OF(num, arg, &anum)) Trap0(RE_OVERFLOW);
 		num = anum;
 		break;
 
 	case A_MULTIPLY:
-		a = num;
-		sgn = (num < 0);
-		if (sgn) a = -a;
-		b = arg;
-		if (arg < 0) {
-			sgn = !sgn;
-			b = -b;
-		}
-		p = a * b;
-		a1 = a>>32;
-		a0 = a;
-		b1 = b>>32;
-		b0 = b;
-		if (
-			(a1 && b1)
-			|| ((REBU64)a0 * b1 + (REBU64)a1 * b0 > p >> 32)
-			|| ((p > (REBU64)MAX_I64) && (!sgn || (p > -(REBU64)MIN_I64)))
-		) Trap0(RE_OVERFLOW);
-		num = sgn ? -p : p;
+		if (REB_I64_MUL_OF(num, arg, (REBI64*)&p)) Trap0(RE_OVERFLOW);
+		num = p;
 		break;
 
 	case A_DIVIDE:
@@ -232,10 +208,8 @@
 		else if (IS_MONEY(val))
 			num = deci_to_int(VAL_DECI(val));
 		else if (IS_ISSUE(val)) {
-			REBYTE *bp;
-			REBCNT len;
-			bp = Get_Word_Name(val);
-			len = strlen(bp);
+			const REBYTE *bp = Get_Word_Name(val);
+			REBCNT len = LEN_BYTES(bp);
 			n = MIN(MAX_HEX_LEN, len);
 			if (Scan_Hex(bp, &num, n, n) == 0) goto is_bad;
 		}

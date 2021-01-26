@@ -32,27 +32,28 @@
 
 /***********************************************************************
 **
-*/	void Long_To_Bytes(REBYTE *out, REBCNT in)
+*/	void REBCNT_To_Bytes(REBYTE *out, REBCNT in)
 /*
 ***********************************************************************/
 {
+	ASSERT(sizeof(REBCNT) == 4, RP_BAD_SIZE);
 	out[0] = (REBYTE) in;
 	out[1] = (REBYTE)(in >> 8);
 	out[2] = (REBYTE)(in >> 16);
 	out[3] = (REBYTE)(in >> 24);
 }
 
-
 /***********************************************************************
 **
-*/	REBCNT Bytes_To_Long(REBYTE const *in)
+*/	REBCNT Bytes_To_REBCNT(REBYTE const *in)
 /*
 ***********************************************************************/
 {
+	ASSERT(sizeof(REBCNT) == 4, RP_BAD_SIZE);
 	return (REBCNT) in[0]          // & 0xFF
-	     | (REBCNT) (in[1] <<  8)  // & 0xFF00;
-	     | (REBCNT) (in[2] << 16)  // & 0xFF0000;
-	     | (REBCNT) (in[3] << 24); // & 0xFF000000;
+		| (REBCNT)  in[1] <<  8    // & 0xFF00;
+		| (REBCNT)  in[2] << 16    // & 0xFF0000;
+		| (REBCNT)  in[3] << 24;   // & 0xFF000000;
 }
 
 
@@ -266,6 +267,25 @@
 			result |= 1 << n;
 	}
 	return result;
+}
+
+/***********************************************************************
+**
+*/	void Assert_Max_Refines(REBVAL *ds, REBCNT limit)
+/*
+**		Scans the stack for function refinements
+**		and throw an error if exeeds given limit
+**
+***********************************************************************/
+{
+	REBINT n;
+	REBCNT count=0;
+	REBINT len = DS_ARGC;
+
+	for (n = 1; n <= len; n++) {
+		if (D_REF(n))
+			if(count++ == limit) Trap0(RE_BAD_REFINES);
+	}
 }
 
 
@@ -666,7 +686,7 @@
 
 /***********************************************************************
 **
-*/	 REBINT Partial1(REBVAL *sval, REBVAL *lval)
+*/	 REBCNT Partial1(REBVAL *sval, REBVAL *lval)
 /*
 **		Process the /part (or /skip) and other length modifying
 **		arguments.
@@ -704,7 +724,7 @@
 		}
 	}
 
-	return (REBINT)len;
+	return (REBCNT)len;
 }
 
 
@@ -730,7 +750,7 @@
 **
 ***********************************************************************/
 {
-	REBVAL *val;
+	REBVAL *val = NULL;
 	REBINT len;
 	REBINT maxlen;
 
@@ -812,6 +832,17 @@
 
 /***********************************************************************
 **
+*/	REBDEC Clip_Dec(REBDEC val, REBDEC mind, REBDEC maxd)
+/*
+***********************************************************************/
+{
+	if (val < mind) val = mind;
+	else if (val > maxd) val = maxd;
+	return val;
+}
+
+/***********************************************************************
+**
 */	void memswapl(void *m1, void *m2, size_t len)
 /*
 **		For long integer memory units, not chars. It is assumed that
@@ -861,14 +892,18 @@
 
 /***********************************************************************
 **
-*/	REBVAL *Make_OS_Error()
+*/	REBVAL *Make_OS_Error(int errnum)
 /*
+**      Creates Rebol string from error number.
+**      If errnum is zero, the number of last error will be resolved
+**      using system functions.
+**
 ***********************************************************************/
 {
 	REBCHR str[100];
 
-	OS_FORM_ERROR(0, str, 100);
-	Set_String(DS_RETURN, Copy_OS_Str(str, LEN_STR(str)));
+	OS_FORM_ERROR(errnum, str, 100);
+	Set_String(DS_RETURN, Copy_OS_Str(str, (REBINT)LEN_STR(str)));
 	return DS_RETURN;
 }
 
@@ -942,6 +977,7 @@
 		case SYM_VALUES: return OF_VALUES;
 		case SYM_TYPES:  return OF_TYPES;
 		case SYM_TITLE:  return OF_TITLE;
+		case SYM_TYPE:   return OF_TYPE;
 		}
 	}
 	return 0;

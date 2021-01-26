@@ -37,6 +37,8 @@ enum {
 	PROT_DEEP,
 	PROT_HIDE,
 	PROT_WORD,
+	PROT_WORDS,
+	PROT_LOCK
 };
 
 
@@ -86,7 +88,7 @@ enum {
 **
 ***********************************************************************/
 {
-	if (ANY_SERIES(value) || IS_MAP(value))
+	if (ANY_SERIES(value) || IS_MAP(value) || IS_BITSET(value))
 		Protect_Series(value, flags);
 	else if (IS_OBJECT(value) || IS_MODULE(value))
 		Protect_Object(value, flags);
@@ -105,10 +107,14 @@ enum {
 
 	if (IS_MARK_SERIES(series)) return; // avoid loop
 
-	if (GET_FLAG(flags, PROT_SET))
+	if (GET_FLAG(flags, PROT_SET)) {
 		PROTECT_SERIES(series);
+		if (GET_FLAG(flags, PROT_LOCK)) LOCK_SERIES(series);
+	} 
 	else
-		UNPROTECT_SERIES(series);
+		//unprotect series only when not locked (using protect/permanently)
+		if (!IS_LOCK_SERIES(series))
+			UNPROTECT_SERIES(series);
 
 	if (!ANY_BLOCK(val) || !GET_FLAG(flags, PROT_DEEP)) return;
 
@@ -129,20 +135,27 @@ enum {
 ***********************************************************************/
 {
 	REBSER *series = VAL_OBJ_FRAME(value);
-
 	if (IS_MARK_SERIES(series)) return; // avoid loop
-
-	if (GET_FLAG(flags, PROT_SET)) PROTECT_SERIES(series);
-	else UNPROTECT_SERIES(series);
-
 	for (value = FRM_WORDS(series)+1; NOT_END(value); value++) {
 		Protect_Word(value, flags);
 	}
-
+	if (GET_FLAG(flags, PROT_SET)) {
+		// protecting...
+		if (!GET_FLAG(flags, PROT_WORDS)) {
+			PROTECT_SERIES(series);
+			if (GET_FLAG(flags, PROT_LOCK))
+				LOCK_SERIES(series);
+		}
+	} else {
+		// unprotecting...
+		if(!GET_FLAG(flags, PROT_WORDS)) {
+			//unprotect series only when not locked (using protect/permanently)
+			if (!IS_LOCK_SERIES(series))
+				UNPROTECT_SERIES(series);
+		}
+	}
 	if (!GET_FLAG(flags, PROT_DEEP)) return;
-
 	MARK_SERIES(series); // recursion protection
-
 	for (value = FRM_VALUES(series)+1; NOT_END(value); value++) {
 		Protect_Value(value, flags);
 	}
@@ -163,8 +176,10 @@ enum {
 		Protect_Word(wrd, flags);
 		if (GET_FLAG(flags, PROT_DEEP)) {
 			val = Get_Var(word);
-			Protect_Value(val, flags);
-			Unmark(val);
+			if(!IS_SCALAR(val)) {
+				Protect_Value(val, flags);
+				Unmark(val);
+			}
 		}
 	}
 	else if (ANY_PATH(word)) {
@@ -191,6 +206,7 @@ enum {
 **		3: /words  - list of words
 **		4: /values - list of values
 **		5: /hide  - hide variables
+**		6: /permanent - protects permanently (unprotect would fail)
 **
 ***********************************************************************/
 {
@@ -201,10 +217,12 @@ enum {
 	Check_Security(SYM_PROTECT, POL_WRITE, val);
 
 	if (D_REF(2)) SET_FLAG(flags, PROT_DEEP);
-	//if (D_REF(3)) SET_FLAG(flags, PROT_WORD);
+	if (D_REF(3)) SET_FLAG(flags, PROT_WORDS);
 
 	if (D_REF(5)) SET_FLAG(flags, PROT_HIDE);
 	else SET_FLAG(flags, PROT_WORD); // there is no unhide
+
+	if (D_REF(6)) SET_FLAG(flags, PROT_LOCK);
 
 	if (IS_WORD(val) || IS_PATH(val)) {
 		Protect_Word_Value(val, flags); // will unmark if deep
@@ -236,6 +254,36 @@ enum {
 	return R_ARG1;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(protectedq)
+/*
+***********************************************************************/
+{
+	REBVAL *value = D_ARG(1);
+	if (IS_WORD(value) || IS_PATH(value)) {
+		REBVAL *wrd = NULL;
+		if (ANY_WORD(value) && HAS_FRAME(value) && VAL_WORD_INDEX(value) > 0) {
+			wrd = FRM_WORDS(VAL_WORD_FRAME(value))+VAL_WORD_INDEX(value);
+		}
+		else if (ANY_PATH(value)) {
+			REBCNT index;
+			REBSER *obj;
+			if (NZ(obj = Resolve_Path(value, &index))) {
+				wrd = FRM_WORD(obj, index);
+			}
+		}
+		if(wrd && VAL_GET_OPT(wrd, OPTS_LOCK)) return R_TRUE;
+	}
+	else if (ANY_SERIES(value) || IS_MAP(value)) {
+		if(IS_PROTECT_SERIES(VAL_SERIES(value))) return R_TRUE;
+	}
+	else if (IS_OBJECT(value) || IS_MODULE(value)) {
+		if(IS_PROTECT_SERIES(VAL_OBJ_FRAME(value))) return R_TRUE;
+	}
+	
+	return R_FALSE;
+}
 
 /***********************************************************************
 **
@@ -280,7 +328,7 @@ enum {
 	while (index < SERIES_TAIL(block)) {
 		index = Do_Next(block, index, 0); // stack volatile
 		ds = DS_POP;  // volatile stack reference
-		if (!IS_FALSE(ds) && !IS_UNSET(ds)) return R_TOS1;
+		if (!IS_FALSE(ds)) return R_TOS1;
 	}
 	return R_NONE;
 }
@@ -346,7 +394,7 @@ enum {
 			ds = DS_POP;  // volatile stack reference
 			if (IS_BLOCK(ds)) {
 				ds = DO_BLK(ds);
-				if (IS_UNSET(ds) && !all_flag) return R_TRUE;
+				if (IS_UNSET(ds) && !all_flag) return R_UNSET;
 			}
 			if (THROWN(ds) || !all_flag || index >= SERIES_TAIL(block))
 				return R_TOS1;
@@ -462,10 +510,27 @@ got_err:
 ***********************************************************************/
 {
 	REBVAL *value = D_ARG(1);
+	REBVAL *into = D_REF(4) ? D_ARG(5) : 0;
 
-	if (!IS_BLOCK(value)) return R_ARG1;
-	Compose_Block(value, D_REF(2), D_REF(3), D_REF(4) ? D_ARG(5) : 0);
-	return R_TOS;
+	if (IS_BLOCK(value)) {
+		Compose_Block(value, D_REF(2), D_REF(3), into);
+		return R_TOS;
+	}
+	else if (into != 0) {
+		REBINT start = DSP + 1;
+		if (IS_WORD(value)) {
+			value = Get_Var(value);
+			DS_PUSH(value);
+		}
+		else if (IS_PATH(value)) {
+			Do_Path(&value, 0); // pushes val on stack
+		}
+		else DS_PUSH(value);
+		Copy_Stack_Values(start, into);
+		return R_TOS;
+	}
+	
+	return R_ARG1;
 }
 
 
@@ -504,6 +569,7 @@ got_err:
 ***********************************************************************/
 {
 	REBVAL *value = D_ARG(1);
+	REBINT ret;
 
 	switch (VAL_TYPE(value)) {
 
@@ -522,26 +588,34 @@ got_err:
 		else DO_BLK(value);
 		return R_TOS1;
 
-    case REB_NATIVE:
+	case REB_NATIVE:
 	case REB_ACTION:
-    case REB_COMMAND:
-    case REB_REBCODE:
-    case REB_OP:
-    case REB_CLOSURE:
+	case REB_COMMAND:
+	case REB_REBCODE:
+	case REB_OP:
+	case REB_CLOSURE:
 	case REB_FUNCTION:
 		VAL_SET_OPT(value, OPTS_REVAL);
-		return R_ARG1;
+		ret = R_ARG1;
+		break;
 
 //	case REB_PATH:  ? is it used?
 
 	case REB_WORD:
 	case REB_GET_WORD:
 		*D_RET = *Get_Var(value);
-		return R_RET;
+		ret = R_RET;
+		break;
 
 	case REB_LIT_WORD:
 		*D_RET = *value;
 		SET_TYPE(D_RET, REB_WORD);
+		ret = R_RET;
+		break;
+
+	case REB_LIT_PATH:
+		*D_RET = *value;
+		SET_TYPE(D_RET, REB_PATH);
 		return R_RET;
 
 	case REB_ERROR:
@@ -553,19 +627,25 @@ got_err:
 	case REB_URL:
 	case REB_FILE:
 		// DO native and sys/do* must use same arg list:
-		Do_Sys_Func(SYS_CTX_DO_P, value, D_ARG(2), D_ARG(3), D_ARG(4), D_ARG(5), 0);
+		Do_Sys_Func(SYS_CTX_DO_P, value, D_ARG(2), D_ARG(3), D_ARG(4), D_ARG(5), NULL);
 		return R_TOS1;
 
 	case REB_TASK:
 		Do_Task(value);
-		return R_ARG1;
+		ret = R_ARG1;
+		break;
 
 	case REB_SET_WORD:
+	case REB_SET_PATH:
 		Trap_Arg(value);
 
 	default:
-		return R_ARG1;
+		ret = R_ARG1;
 	}
+
+	if (D_REF(4)) Set_Var(D_ARG(5), NONE_VALUE); // fallback /next behavior
+
+	return ret;
 }
 
 
@@ -655,17 +735,32 @@ got_err:
 /*
 ***********************************************************************/
 {
-	if (IS_BLOCK(D_ARG(1))) {
-		REBSER *ser = VAL_SERIES(D_ARG(1));
-		REBCNT index = VAL_INDEX(D_ARG(1));
-		REBVAL *val = D_REF(5) ? D_ARG(6) : 0;
+	REBVAL *val = D_ARG(1);
+	REBVAL *into = D_REF(5) ? D_ARG(6) : 0;
+
+	if (IS_BLOCK(val)) {
+		REBSER *ser = VAL_SERIES(val);
+		REBCNT index = VAL_INDEX(val);
 
 		if (D_REF(2))
-			Reduce_Block_No_Set(ser, index, val);
+			Reduce_Block_No_Set(ser, index, into);
 		else if (D_REF(3))
-			Reduce_Only(ser, index, D_ARG(4), val);
+			Reduce_Only(ser, index, D_ARG(4), into);
 		else
-			Reduce_Block(ser, index, val);
+			Reduce_Block(ser, index, into);
+		return R_TOS;
+	}
+	else if (into != 0) {
+		REBINT start = DSP + 1;
+		if (IS_WORD(val)) {
+			val = Get_Var(val);
+			DS_PUSH(val);
+		}
+		else if (IS_PATH(val)) {
+			Do_Path(&val, 0); // pushes val on stack
+		}
+		else DS_PUSH(val);
+		Copy_Stack_Values(start, into);
 		return R_TOS;
 	}
 
@@ -718,7 +813,7 @@ got_err:
 			// Evaluate the case block
 			result = DO_BLK(blk);
 			if (!all) return R_TOS1;
-			if (THROWN(result) && Check_Error(result) >= 0) break;
+			if (THROWN(result)) return R_TOS1;
 		}
 	}
 
@@ -737,17 +832,29 @@ got_err:
 /*
 ***********************************************************************/
 {
-	REBVAL value = *D_ARG(3); // TRY exception will trim the stack
 	REBFLG except = D_REF(2);
+	REBVAL handler = *D_ARG(3); // TRY exception will trim the stack
+	REBVAL *last_error = Get_System(SYS_STATE, STATE_LAST_ERROR);
+	SET_NONE(last_error);
 
 	if (Try_Block(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
+		// save the error as a system/state/last-error value
+		*last_error = *DS_NEXT;
 		if (except) {
-			if (IS_BLOCK(&value)) {
-				DO_BLK(&value);
+			if (IS_BLOCK(&handler)) {
+				DO_BLK(&handler);
 			}
-			else { // do func[error] arg
-				REBVAL arg = *DS_NEXT; // will get overwritten
-				Apply_Func(0, &value, &arg, 0);
+			else { // do func[err] error
+				REBVAL error = *DS_NEXT; // will get overwritten
+				REBVAL *args = BLK_SKIP(VAL_FUNC_ARGS(&handler), 1);
+				if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(&error))) {
+					// TODO: This results in an error message such as "action!
+					// does not allow error! for its value1 argument". A better
+					// message would be more like "except handler does not
+					// allow error! for its value1 argument."
+					Trap3(RE_EXPECT_ARG, Of_Type(&handler), args, Of_Type(&error));
+				}
+				Apply_Func(0, &handler, &error, 0);
 			}
 		}
 	}
