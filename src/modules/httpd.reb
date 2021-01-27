@@ -48,11 +48,12 @@ decode-target: wrap [
 	chars: complement control
 	func [
 		"Splits target into file part and key/pair query values if any"
-		target [file! string! binary!]
+		target [file! string! binary! none!]
 		/local key val
 	][
 		
 		result: object [file: none values: make block! 8 fragment: none original: target]
+		unless target [return result]
 		parse/all to binary! target [
 			opt [
 				copy val any chars (result/file: val) [
