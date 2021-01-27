@@ -199,7 +199,7 @@ probe all [unset? :a unset? :b unset? :c]
 }
 	o: copy ""
 	call/wait/shell/output reform [to-local-file system/options/boot %issue-1680.reb] o
-	--assert "true^/true^/true^/true^/" = probe o
+	--assert "true^/true^/true^/true^/" = o
 	delete %issue-1680.reb
 
 	--test-- "import/no-lib"
@@ -266,8 +266,8 @@ probe all [
 	none? get in system/contexts/lib 'm1a
 ]}
 	o: copy ""
-	call/wait/shell/output probe reform [to-local-file system/options/boot %block-import-2.reb] o
-	--assert "true^/" = probe o
+	call/wait/shell/output reform [to-local-file system/options/boot %block-import-2.reb] o
+	--assert "true^/" = o
 	delete %block-import-1.reb
 	delete %block-import-2.reb
 	delete %m1.reb
