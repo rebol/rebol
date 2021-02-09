@@ -1325,5 +1325,12 @@ static int Try_Browser(char *browser, REBCHR *url)
 	return FALSE;
 }
 
-
+/***********************************************************************
+**
+*/	REBOOL OS_Request_Dir(REBRFR *fr)
+/*
+***********************************************************************/
+{
+	return FALSE;
+}
 

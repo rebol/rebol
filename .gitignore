@@ -7,22 +7,6 @@ make/host.exe
 make/libr3.so
 make/libr3.dll
 make/Rebol3.xcworkspace/
-src/boot/boot-code.reb
-src/boot/host-init.reb
-src/boot/tmp-natives.reb
-src/boot/tmp-symbols.reb
-src/core/b-boot.c
-src/include/ext-types.h
-src/include/host-*
-src/include/reb-dialect.h
-src/include/reb-evtypes.h
-src/include/reb-lib-lib.h
-src/include/reb-lib.h
-src/include/reb-types.h
-src/include/tmp-*
-src/tools/reb-lib-doc.txt
-src/reb-lib-doc.txt
-src/mezz/base-collected.reb
 
 src/tests/httpd-root/logs/
 
