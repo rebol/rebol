@@ -283,6 +283,15 @@ if system/platform = 'Windows [
 		--assert 10873462 = checksum read %zeroes-445.txt 'crc24
 		delete %zeroes-445.txt
 
+	--test-- "RENAME file"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/446
+		--assert all [
+			not error? try [write %issue-446 "test"]
+			not error? try [rename %issue-446 %issue-446.txt]
+			"test" = read/string %issue-446.txt
+			not error? try [delete %issue-446.txt]
+		]
+
 ===end-group===
 
 if system/platform = 'Windows [
