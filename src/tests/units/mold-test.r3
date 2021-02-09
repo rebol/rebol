@@ -474,4 +474,13 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "mold/form path!"
+	--test-- "mold/form path!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/488
+		--assert "a/b/c" = mold 'a/b/c
+		--assert "a/b/c" = form 'a/b/c
+
+===end-group===
+
 ~~~end-file~~~
