@@ -10,6 +10,7 @@ Rebol [
 
 ===start-group=== "set-env / get-env"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/533
+;@@ https://github.com/Oldes/Rebol-issues/issues/1307
 --test-- "env-1"
 	--assert "hello" = set-env 'test-temp "hello"
 	--assert "hello" = get-env 'test-temp
