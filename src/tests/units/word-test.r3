@@ -29,7 +29,14 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1167
 	--assert all [error? e: try [to-word "a,"] e/id = 'bad-char]
 	;@@ https://github.com/Oldes/Rebol-issues/issues/330
-	--assert all [error? e: try [to-word "a b"] e/id = 'invalid-chars] 
+	--assert all [error? e: try [to-word "a b"] e/id = 'invalid-chars]
+
+	--test-- "word from /1"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/733
+	; allowed so far..
+	--assert word? try [to word! /1]
+	;TODO: write mold test... should be molded to: #[word! "1"]
+
 
 ===end-group===
 
