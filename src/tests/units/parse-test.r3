@@ -155,6 +155,11 @@ Rebol [
 ;@@ https://github.com/Oldes/Rebol-issues/issues/394
 	--assert parse #{001122} [#{00} #{11} #{22}]
 
+--test-- "issue-529"
+;@@ https://github.com/Oldes/Rebol-issues/issues/529
+	a: context [b: string!]
+	--assert parse ["test"] [a/b]
+
 --test-- "issue-591"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/591
 	--assert all [
