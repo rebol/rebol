@@ -25,6 +25,10 @@ Rebol [
 	--assert 'a = to word! <a>
 	--assert error? try [to word! <a b>]
 
+	--test-- "invalid construction"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1167
+	--assert all [error? e: try [to-word "a,"] e/id = 'bad-char] 
+
 ===end-group===
 
 ===start-group=== "word compare"
