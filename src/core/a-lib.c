@@ -1121,6 +1121,59 @@ RL_API REBSER* RL_Decode_UTF_String(REBYTE *src, REBCNT len, REBINT utf, REBFLG 
 	return Decode_UTF_String(src, len, utf, ccr, uni);
 }
 
+/***********************************************************************
+**
+*/	RL_API REBCNT RL_Register_Handle(REBYTE *name, REBCNT size, void* free_func)
+/*
+**	Low level print of formatted data to the console.
+**
+**	Returns:
+**		handle's id or NOT_FOUND on error
+**	Arguments:
+**		name      - handle's name as a c-string (length is being detected)
+**		size      - size of needed memory to handle
+**		free_func - custom function to be called when handle is released
+**
+***********************************************************************/
+{
+	REBCNT sym;
+	REBCNT len;
+	// Convert C-string to Rebol word
+	len = strlen(cs_cast(name));
+	sym = Scan_Word(name, len);
+	if (!sym) return NOT_FOUND; //TODO: use different value if word is invalid?
+	return Register_Handle(sym, size, (REB_HANDLE_FREE_FUNC)free_func);
+}
+
+RL_API REBHOB* RL_Make_Handle_Context(REBCNT sym)
+/*
+**	Allocates memory large enough to hold given handle's id
+**
+**	Returns:
+**		A pointer to a Rebol's handle value.
+**	Arguments:
+**		sym - handle's word id
+**
+***********************************************************************/
+{
+	return Make_Handle_Context(sym);
+}
+
+RL_API void RL_Free_Handle_Context(REBHOB *hob)
+/*
+**	Frees memory of given handle's context
+**
+**	Returns:
+**		nothing
+**	Arguments:
+**		hob - handle's context
+**
+***********************************************************************/
+{
+	return Free_Hob(hob);
+}
+
+
 
 
 #include "reb-lib-lib.h"
