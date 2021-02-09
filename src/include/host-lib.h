@@ -10,7 +10,7 @@
 **
 **  Title: Host Access Library
 **  Build: A0
-**  Date:  14-Jan-2021
+**  Date:  10-Feb-2021
 **  File:  host-lib.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-os-ext.reb)
@@ -19,8 +19,8 @@
 
 
 #define HOST_LIB_VER 0
-#define HOST_LIB_SUM 31203
-#define HOST_LIB_SIZE 45
+#define HOST_LIB_SUM 40647
+#define HOST_LIB_SIZE 44
 
 extern REBDEV *Devices[];
 
@@ -29,14 +29,14 @@ typedef struct REBOL_Host_Lib {
 	unsigned int ver_sum;
 	REBDEV **devices;
 	REBREQ *std_io;
-	REBINT (*os_get_pid)();
-	REBINT (*os_get_uid)();
+	REBINT (*os_get_pid)(void);
+	REBINT (*os_get_uid)(void);
 	REBINT (*os_set_uid)(REBINT uid);
-	REBINT (*os_get_gid)();
+	REBINT (*os_get_gid)(void);
 	REBINT (*os_set_gid)(REBINT gid);
-	REBINT (*os_get_euid)();
+	REBINT (*os_get_euid)(void);
 	REBINT (*os_set_euid)(REBINT uid);
-	REBINT (*os_get_egid)();
+	REBINT (*os_get_egid)(void);
 	REBINT (*os_set_egid)(REBINT gid);
 	REBINT (*os_send_signal)(REBINT pid, REBINT signal);
 	REBINT (*os_kill)(REBINT pid);
@@ -66,7 +66,6 @@ typedef struct REBOL_Host_Lib {
 	int (*os_reap_process)(int pid, int *status, int flags);
 	int (*os_browse)(REBCHR *url, int reserved);
 	REBOOL (*os_request_file)(REBRFR *fr);
-	REBOOL (*os_request_dir)(REBRFR *fr);
 	int (*os_call_device)(REBINT device, REBCNT command);
 	int (*os_do_device)(REBREQ *req, REBCNT command);
 	REBREQ *(*os_make_devreq)(int device);
@@ -80,14 +79,14 @@ typedef struct REBOL_Host_Lib {
 
 #ifndef REB_DEF
 
-extern REBINT OS_Get_PID();    // host-lib.c
-extern REBINT OS_Get_UID();    // host-lib.c
+extern REBINT OS_Get_PID(void);    // host-lib.c
+extern REBINT OS_Get_UID(void);    // host-lib.c
 extern REBINT OS_Set_UID(REBINT uid);    // host-lib.c
-extern REBINT OS_Get_GID();    // host-lib.c
+extern REBINT OS_Get_GID(void);    // host-lib.c
 extern REBINT OS_Set_GID(REBINT gid);    // host-lib.c
-extern REBINT OS_Get_EUID();    // host-lib.c
+extern REBINT OS_Get_EUID(void);    // host-lib.c
 extern REBINT OS_Set_EUID(REBINT uid);    // host-lib.c
-extern REBINT OS_Get_EGID();    // host-lib.c
+extern REBINT OS_Get_EGID(void);    // host-lib.c
 extern REBINT OS_Set_EGID(REBINT gid);    // host-lib.c
 extern REBINT OS_Send_Signal(REBINT pid, REBINT signal);    // host-lib.c
 extern REBINT OS_Kill(REBINT pid);    // host-lib.c
@@ -117,7 +116,6 @@ extern int OS_Create_Process(REBCHR *call, int argc, REBCHR* argv[], u32 flags, 
 extern int OS_Reap_Process(int pid, int *status, int flags);    // host-lib.c
 extern int OS_Browse(REBCHR *url, int reserved);    // host-lib.c
 extern REBOOL OS_Request_File(REBRFR *fr);    // host-lib.c
-extern REBOOL OS_Request_Dir(REBRFR *fr);    // host-lib.c
 extern int OS_Call_Device(REBINT device, REBCNT command);    // ../host-device.c
 extern int OS_Do_Device(REBREQ *req, REBCNT command);    // ../host-device.c
 extern REBREQ *OS_Make_Devreq(int device);    // ../host-device.c
@@ -172,7 +170,6 @@ REBOL_HOST_LIB Host_Lib_Init = {  // Host library function vector table.
 	OS_Reap_Process,
 	OS_Browse,
 	OS_Request_File,
-	OS_Request_Dir,
 	OS_Call_Device,
 	OS_Do_Device,
 	OS_Make_Devreq,
@@ -227,7 +224,6 @@ extern	REBOL_HOST_LIB *Host_Lib;
 #define OS_REAP_PROCESS(a,b,c)      Host_Lib->os_reap_process(a,b,c)
 #define OS_BROWSE(a,b)              Host_Lib->os_browse(a,b)
 #define OS_REQUEST_FILE(a)          Host_Lib->os_request_file(a)
-#define OS_REQUEST_DIR(a)           Host_Lib->os_request_dir(a)
 #define OS_CALL_DEVICE(a,b)         Host_Lib->os_call_device(a,b)
 #define OS_DO_DEVICE(a,b)           Host_Lib->os_do_device(a,b)
 #define OS_MAKE_DEVREQ(a)           Host_Lib->os_make_devreq(a)

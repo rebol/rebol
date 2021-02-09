@@ -10,7 +10,7 @@
 **
 **  Title: Host custom init code
 **  Build: A0
-**  Date:  14-Jan-2021
+**  Date:  10-Feb-2021
 **  File:  include/host-init.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-host-init.reb)
@@ -20,11 +20,9 @@
 #define REB_INIT_SIZE 70
 
 const unsigned char Reb_Init_Code[REB_INIT_SIZE] = {
-	120, 156, 179, 86, 112, 206, 47, 168, 44, 202, 
-	76, 207, 40, 81, 8, 114, 117, 242, 247, 81, 
-	8, 73, 77, 206, 200, 203, 207, 201, 79, 207, 
-	76, 45, 86, 48, 52, 209, 245, 74, 204, 211, 
-	53, 50, 48, 50, 212, 55, 178, 50, 50, 177, 
-	50, 53, 211, 54, 180, 50, 48, 224, 226, 98, 
-	0, 0, 32, 148, 16, 26, 58, 0, 0, 0, 
-	};
+	"\x78\x9C\xB3\x56\x70\xCE\x2F\xA8\x2C\xCA\x4C\xCF\x28\x51\x08\x72"
+"\x75\xF2\xF7\x51\x08\x49\x4D\xCE\xC8\xCB\xCF\xC9\x4F\xCF\x4C\x2D"
+"\x56\x30\x34\xD0\x75\x4B\x4D\xD2\x35\x32\x30\x32\xD4\x37\xB0\x32"
+"\x34\xB7\x32\x31\xD4\x36\xB4\x32\x30\xE0\xE2\x62\x00\x00\x1E\xE2"
+"\x10\x04\x3A\x00\x00\x00"
+};

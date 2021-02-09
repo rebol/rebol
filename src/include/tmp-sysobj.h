@@ -10,7 +10,7 @@
 **
 **  Title: System Object
 **  Build: A0
-**  Date:  14-Jan-2021
+**  Date:  10-Feb-2021
 **  File:  sysobj.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -46,10 +46,12 @@ enum CAT_object {
 	CAT_DATATYPES,
 	CAT_ACTIONS,
 	CAT_NATIVES,
+	CAT_HANDLES,
 	CAT_ERRORS,
 	CAT_REFLECTORS,
 	CAT_BOOT_FLAGS,
 	CAT_BITSETS,
+	CAT_CHECKSUMS,
 	CAT_MAX
 };
 

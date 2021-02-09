@@ -10,7 +10,7 @@
 **
 **  Title: Datatype Definitions
 **  Build: A0
-**  Date:  14-Jan-2021
+**  Date:  10-Feb-2021
 **  File:  reb-types.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)

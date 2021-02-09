@@ -10,7 +10,7 @@
 **
 **  Title: Function Prototypes
 **  Build: A0
-**  Date:  14-Jan-2021
+**  Date:  10-Feb-2021
 **  File:  funcs.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-headers)
@@ -163,6 +163,10 @@ extern void Do_Act(REBVAL *ds, REBCNT type, REBCNT act); // c-function.c
 extern void Do_Action(REBVAL *func); // c-function.c
 extern void Do_Function(REBVAL *func); // c-function.c
 extern void Do_Closure(REBVAL *func); // c-function.c
+extern REBCNT Register_Handle(REBCNT sym, REBCNT size, REB_HANDLE_FREE_FUNC free_func); // c-handle.c
+extern REBHOB* Make_Handle_Context(REBCNT sym); // c-handle.c
+extern REBCNT Find_Handle_Index(REBCNT sym); // c-handle.c
+extern void Init_Handles(); // c-handle.c
 extern REBVAL *Make_Port(REBVAL *spec); // c-port.c
 extern REBFLG Is_Port_Open(REBSER *port); // c-port.c
 extern void Set_Port_Open(REBSER *port, REBFLG flag); // c-port.c
@@ -376,11 +380,13 @@ extern REBSER *Make_Series(REBCNT length, REBCNT wide, REBOOL powerof2); // m-po
 extern void Free_Series_Data(REBSER *series, REBOOL protect); // m-pools.c
 extern void Free_Series(REBSER *series); // m-pools.c
 extern void Free_Gob(REBGOB *gob); // m-pools.c
+extern void Free_Hob(REBHOB *hob); // m-pools.c
 extern void Prop_Series(REBSER *newser, REBSER *oldser); // m-pools.c
 extern REBFLG Series_In_Pool(REBSER *series); // m-pools.c
 extern REBCNT Check_Memory(void); // m-pools.c
 extern void Dump_All(REBINT size); // m-pools.c
 extern void Dump_Series_In_Pool(int pool_id); // m-pools.c
+extern void Dump_Handles(void); // m-pools.c
 extern REBU64 Inspect_Series(REBCNT flags); // m-pools.c
 extern void Dispose_Pools(void); // m-pools.c
 extern void Expand_Series(REBSER *series, REBCNT index, REBCNT delta); // m-series.c
@@ -405,6 +411,7 @@ extern REBSER *Copy_Buffer(REBSER *buf, void *end); // m-series.c
 extern void Protected(REBVAL *word); // n-control.c
 extern void Protect_Series(REBVAL *val, REBCNT flags); // n-control.c
 extern void Protect_Object(REBVAL *value, REBCNT flags); // n-control.c
+extern void Init_Crypt(); // n-crypt.c
 extern REBSER *Block_To_String_List(REBVAL *blk); // n-io.c
 extern REBINT Compare_Values(REBVAL *a, REBVAL *b, REBINT strictness); // n-math.c
 extern void Init_Checksum_Scheme(void); // p-checksum.c
@@ -452,6 +459,7 @@ extern REBCNT Find_Str_Str(REBSER *ser1, REBCNT head, REBCNT index, REBCNT tail,
 extern REBCNT Find_Str_Str_Any(REBSER *ser1, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBSER *ser2, REBCNT index2, REBCNT len, REBCNT flags, REBVAL *wild); // s-find.c
 extern REBCNT Find_Str_Char(REBSER *ser, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBUNI c2, REBCNT flags); // s-find.c
 extern REBCNT Find_Str_Bitset(REBSER *ser, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBSER *bset, REBCNT flags); // s-find.c
+extern REBCNT Find_Str_Wild(REBSER *ser, REBCNT index, REBCNT tail); // s-find.c
 extern REBCNT Count_Lines(REBYTE *bp, REBCNT len); // s-find.c
 extern REBCNT Next_Line(REBYTE **bin); // s-find.c
 extern REBSER *Make_Binary(REBCNT length); // s-make.c

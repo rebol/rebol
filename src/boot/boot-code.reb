@@ -128,11 +128,18 @@
         lanczos
         bessel
         sinc
-        sha1
-        sha256
+        hash
+        adler32
+        crc24
+        crc32
         md4
         md5
-        crc32
+        ripemd160
+        sha1
+        sha224
+        sha256
+        sha384
+        sha512
         identify
         decode
         encode
@@ -209,7 +216,7 @@
         msdos-date
         msdos-time
         octal-bytes
-        string-bytes abgr adler32 aes align argb at atz bgr bgra bgro bincode bit bitset16 bitset32 bitset8 bmp bytes chacha20 chacha20poly1305 checksum codec dds dh dng ecdh egid encodedu32 euid fb fixed16 fixed8 float float16 gid gif hdp heif ico index indexz jpeg jpegxr jpg jxr length local midi name obgr opacity orgb pid png poly1305 rc4 rgba rgbo ripemd160 rsa sb secp160r1 secp192r1 secp224r1 secp256k1 secp256r1 sha224 sha384 sha512 si16 si16be si16le si24 si24be si32 si32be si32le si64 si8 signed skipbits string tiff tuple3 tuple4 ub ui16 ui16be ui16bebytes ui16bytes ui16le ui16lebytes ui24 ui24be ui24bebytes ui24bytes ui24le ui24lebytes ui32 ui32be ui32bebytes ui32bytes ui32le ui32lebytes ui64 ui64be ui64le ui8 ui8bytes uid webp widget
+        string-bytes abgr aes align argb at atz bgr bgra bgro bincode bit bitset16 bitset32 bitset8 bmp bytes chacha20 chacha20poly1305 checksum codec dds dh dng ecdh egid encodedu32 euid fb fixed16 fixed8 float float16 gid gif hdp heif ico index indexz jpeg jpegxr jpg jxr length local midi name obgr opacity orgb pid png poly1305 rc4 rgba rgbo rsa sb secp160r1 secp192r1 secp224r1 secp256k1 secp256r1 si16 si16be si16le si24 si24be si32 si32be si32le si64 si8 signed skipbits string tiff tuple3 tuple4 ub ui16 ui16be ui16bebytes ui16bytes ui16le ui16lebytes ui24 ui24be ui24bebytes ui24bytes ui24le ui24lebytes ui32 ui32be ui32bebytes ui32bytes ui32le ui32lebytes ui64 ui64be ui64le ui8 ui8bytes uid webp widget
     ] [
         self
         root
@@ -839,10 +846,11 @@
             body [block!] "Block to evaluate each time"
         ]
         remove-each: native [
-            {Removes values for each block that returns true; returns removal count.}
+            {Removes values for each block that returns truthy value.}
             'word [word! block!] "Word or block of words to set each time (local)"
-            data [series!] "The series to traverse (modified)"
+            data [series! map!] "The series to traverse (modified)"
             body [block!] "Block to evaluate (return TRUE to remove)"
+            /count "Returns removal count"
         ]
         return: native [
             "Returns a value from a function."
@@ -918,19 +926,6 @@
             /set "Only include set-words"
             /ignore "Ignore prior words"
             words [any-object! block! none!] "Words to ignore"
-        ]
-        checksum: native [
-            "Computes a checksum, CRC, or hash."
-            data [binary! string!] {Bytes to checksum. String value is first converted to UTF-8!}
-            /part length "Length of data"
-            /tcp "Returns an Internet TCP 16-bit checksum"
-            /secure "Returns a cryptographically secure checksum"
-            /hash "Returns a hash value"
-            size [integer!] "Size of the hash table"
-            /method "Method to use"
-            word [word!] {Methods: SHA1 SHA256 SHA384 SHA512 MD5 CRC32 ADLER32}
-            /key "Returns keyed HMAC value"
-            key-value [any-string! binary!] "Key to use"
         ]
         construct: native [
             "Creates an object with scant (safe) evaluation."
@@ -1678,6 +1673,15 @@
             /scale
             sc [pair! percent!]
         ]
+        dir?: native [
+            {Returns TRUE if the value looks like a directory spec (ends with a slash (or backslash)).}
+            target [file! url! none!]
+            /check {If the file is a directory on local storage (don't have to end with a slash)}
+        ]
+        wildcard?: native [
+            {Return true if file contains wildcard chars (* or ?)}
+            path [file!]
+        ]
         access-os: native [
             {Access to various operating system functions (getuid, setuid, getpid, kill, etc.)}
             field [word!] "Valid words: uid, euid, gid, egid, pid"
@@ -1743,6 +1747,15 @@
         to-degrees: native [
             "Converts radians to degrees"
             radians [integer! decimal!] "Radians to convert"
+        ]
+        checksum: native [
+            "Computes a checksum, CRC, hash, or HMAC."
+            data [binary! string!] "If string, it will be UTF8 encoded"
+            method [word!] "One of `system/catalog/checksums` and HASH"
+            /with {Extra value for HMAC key or hash table size; not compatible with TCP/CRC24/CRC32/ADLER32 methods.}
+            spec [any-string! binary! integer!] {String or binary for MD5/SHA* HMAC key, integer for hash table size.}
+            /part "Limits to a given length"
+            length
         ]
         compress: native [
             {Compresses data. Default is deflate with Adler32 checksum and uncompressed size in last 4 bytes.}
@@ -2000,18 +2013,24 @@
         ]
     ] [
         product: 'core
-        platform: <PLATFORM>
-        version: 0.0.0
+        platform: 'Linux
+        version: 3.4.0.4.40
         build: make object! [
-            os: 'boot-strap
-            date: 14-Jan-2021/1:24:56
-            git: none
+            os: 'libc-x64
+            date: 9-Feb-2021/23:17:41
+            git: make object! [
+                repository: none
+                branch: "revert"
+                commit: "e2143decae671c5ed6e0660802f309a13ff01733"
+                message: "Initial boot-strap version"
+            ]
         ]
         license: none
         catalog: object [
             datatypes: []
             actions: none
             natives: none
+            handles: none
             errors: none
             reflectors: [
                 spec [any-function! any-object! vector! datatype!]
@@ -2036,6 +2055,7 @@
                 uri: make bitset! #{000000005BFFFFF5FFFFFFE17FFFFFE2}
                 uri-component: make bitset! #{0000000041E6FFC07FFFFFE17FFFFFE2}
             ]
+            checksums: [adler32 crc24 crc32 tcp md4 md5 sha1 sha224 sha256 sha384 sha512 ripemd160]
         ]
         contexts: construct [
             root:
@@ -2541,12 +2561,6 @@
                 ]
             ]
         ]
-        dir?: func [
-            {Returns TRUE if the file or url ends with a slash (or backslash).}
-            target [file! url!]
-        ] [
-            true? find "/\" last target
-        ]
         dirize: func [
             {Returns a copy (always) of the path as a directory (ending slash).}
             path [file! string! url!]
@@ -2563,9 +2577,9 @@
         ] [
             if empty? path [return path]
             if slash <> last path [path: dirize path]
-            if exists? path [
-                if dir? path [return path]
-                cause-error 'access 'cannot-open path
+            switch exists? path [
+                dir [return path]
+                file [cause-error 'access 'cannot-open path]
             ]
             if any [not deep url? path] [
                 create path
@@ -3065,7 +3079,11 @@
         ] [
             case [
                 file? spec [
-                    name: pick [dir file] dir? spec
+                    name: case [
+                        wildcard? spec ['dir]
+                        dir?/check spec [spec: dirize spec 'dir]
+                        true ['file]
+                    ]
                     spec: join [ref:] spec
                 ]
                 url? spec [
@@ -3275,7 +3293,7 @@
             ]
             make-scheme [
                 title: "Checksum port"
-                info: {Possible methods: MD5, SHA1, SHA256, SHA384, SHA512}
+                info: "Possible methods are in `system/catalog/checksums`"
                 spec: system/standard/port-spec-checksum
                 name: 'checksum
                 init: function [
@@ -3289,7 +3307,7 @@
                     ]
                     if any [
                         error? try [spec/method: to word! method]
-                        not find [md5 sha1 sha256 sha384 sha512] spec/method
+                        not find system/catalog/checksums spec/method
                     ] [
                         cause-error 'access 'invalid-spec method
                     ]
@@ -3493,9 +3511,9 @@
                                 attempt [decompress/part rest end]
                                 attempt [decompress first transcode/next rest]
                             ] [return 'bad-compress]
-                            if all [sum sum != checksum/secure rest] [return 'bad-checksum]
+                            if all [sum sum != checksum rest 'sha1] [return 'bad-checksum]
                         ]
-                        all [sum sum != checksum/secure/part rest end] [return 'bad-checksum]
+                        all [sum sum != checksum/part rest 'sha1 end] [return 'bad-checksum]
                     ]
                 ]
                 :key != 'rebol [
@@ -3504,9 +3522,9 @@
                     case [
                         find hdr/options 'compress [
                             unless rest: attempt [decompress first rest] [return 'bad-compress]
-                            if all [sum sum != checksum/secure rest] [return 'bad-checksum]
+                            if all [sum sum != checksum rest 'sha1] [return 'bad-checksum]
                         ]
-                        all [sum sum != checksum/secure/part tmp back end] [return 'bad-checksum]
+                        all [sum sum != checksum/part tmp 'sha1 back end] [return 'bad-checksum]
                     ]
                 ]
             ]
@@ -3692,7 +3710,7 @@
             {Loads a module (from a file, URL, binary, etc.) and inserts it into the system module list.}
             source [word! file! url! string! binary! module! block!] "Source or block of sources"
             /version ver [tuple!] "Module must be this version or greater"
-            /check sum [binary!] "Match checksum (must be set in header)"
+            /check sum [binary!] "Match SHA1 checksum (must be set in header)"
             /no-share {Force module to use its own non-shared global namespace}
             /no-lib "Don't export to the runtime library (lib)"
             /import {Do module import now, overriding /delay and 'delay option}
@@ -4506,7 +4524,7 @@
             data: either all [mold/all/only :value] [mold/only :value]
             append data newline
             case/all [
-                tmp: find header-data 'checksum [change next tmp checksum/secure data: to-binary data]
+                tmp: find header-data 'checksum [change next tmp checksum data: to-binary data 'sha1]
                 compress [data: lib/compress data]
                 method = 'script [data: mold64 data]
                 not binary? data [data: to-binary data]
@@ -4711,7 +4729,7 @@
                         ]
                         unless empty? w [
                             unless empty? char-end [w: append copy w char-end]
-                            poke vals w unless unset? :v [:v]
+                            either unset? :v [remove/key vals w] [poke vals w :v]
                         ]
                     ]
                 ]
@@ -4726,7 +4744,7 @@
                         ]
                         unless empty? w [
                             unless empty? char-end [w: append copy w char-end]
-                            poke vals w unless unset? :v [:v]
+                            either unset? :v [remove/key vals w] [poke vals w :v]
                         ]
                     ]
                 ]
@@ -5869,7 +5887,7 @@
             ["REBOL 3." system/version/2 #"." system/version/3 " (Oldes branch)"]
             -
             = Copyright: "2012 REBOL Technologies"
-            = "" "2012-2020 Rebol Open Source Contributors"
+            = "" "2012-2021 Rebol Open Source Contributors"
             = "" "Apache 2.0 License, see LICENSE."
             = Website: "https://github.com/Oldes/Rebol3"
             -
@@ -5884,7 +5902,7 @@
             *
             -
             = Copyright: "2012 REBOL Technologies"
-            = "" "2012-2020 Rebol Open Source Contributors"
+            = "" "2012-2021 Rebol Open Source Contributors"
             = "" "Licensed under the Apache License, Version 2.0."
             = "" "https://www.apache.org/licenses/LICENSE-2.0"
             -
@@ -6548,8 +6566,13 @@
                 ]
                 func [
                     data [binary! block!]
-                    /local version serialNumber issuer subject validity
+                    /local pkix version serialNumber issuer subject validity
                 ] [
+                    try [all [
+                            pkix: codecs/pkix/decode data
+                            pkix/label = "CERTIFICATE"
+                            data: pkix/binary
+                        ]]
                     if binary? data [data: der-codec/decode data]
                     if all [
                         2 = length? data
@@ -6693,8 +6716,8 @@
                             pass: either password [copy pass] [
                                 ask/hide ajoin ["Key password for " mold comm ": "]
                             ]
-                            key: join checksum/secure join #{00000000} pass
-                            checksum/secure join #{00000001} pass
+                            key: join checksum join #{00000000} pass 'sha1
+                            checksum join #{00000001} pass 'sha1
                             key: aes/decrypt/key copy/part key 32 none
                             pri: aes/decrypt/stream key pri
                         ] [
@@ -6712,11 +6735,11 @@
                             UI32BYTES :pri
                         ] 'buffer
                     ]
-                    mackey: checksum/secure join "putty-private-key-file-mac-key" any [pass ""]
+                    mackey: checksum join "putty-private-key-file-mac-key" any [pass ""] 'sha1
                     if pass [forall pass [pass/1: random 255]]
                     if pmac <> form either mac? [
-                        checksum/secure/key macdata mackey
-                    ] [checksum/secure macdata] [
+                        checksum/with macdata 'sha1 mackey
+                    ] [checksum macdata 'sha1] [
                         print either key ["Wrong password!"] ["MAC failed!"]
                         return none
                     ]
@@ -6759,6 +6782,7 @@
             register-codec [
                 name: 'ssh-key
                 title: "Secure Shell Key"
+                suffixes: [%.key]
                 decode: function [
                     "Decodes and initilize SSH key"
                     key [binary! string! file!]
@@ -6783,7 +6807,7 @@
                             ]
                             iv: debase iv 16
                             unless p [p: ask/hide "Pasword: "]
-                            p: checksum/method
+                            p: checksum
                             join to binary! p copy/part iv 8
                             'md5
                             d: aes/key/decrypt p iv
@@ -6807,8 +6831,8 @@
                             all [
                                 parse data [
                                     'SEQUENCE into [
-                                        'SEQUENCE set v block!
-                                        'BIT_STRING set data binary!
+                                        'SEQUENCE set v: block!
+                                        'BIT_STRING set data: binary!
                                         (
                                             data: codecs/der/decode data
                                         )
@@ -6817,8 +6841,8 @@
                                 v/OBJECT_IDENTIFIER = #{2A864886F70D010101}
                                 parse data [
                                     'SEQUENCE into [
-                                        'INTEGER set n binary!
-                                        'INTEGER set e binary!
+                                        'INTEGER set n: binary!
+                                        'INTEGER set e: binary!
                                     ]
                                 ]
                             ]
@@ -6827,8 +6851,8 @@
                         "RSA PUBLIC KEY" [
                             parse data [
                                 'SEQUENCE into [
-                                    'INTEGER set n binary!
-                                    'INTEGER set e binary!
+                                    'INTEGER set n: binary!
+                                    'INTEGER set e: binary!
                                 ]
                             ]
                             return rsa-init n e
@@ -6836,15 +6860,15 @@
                         "RSA PRIVATE KEY" [
                             parse data [
                                 'SEQUENCE into [
-                                    'INTEGER set v binary!
-                                    'INTEGER set n binary!
-                                    'INTEGER set e binary!
-                                    'INTEGER set d binary!
-                                    'INTEGER set p binary!
-                                    'INTEGER set q binary!
-                                    'INTEGER set dp binary!
-                                    'INTEGER set dq binary!
-                                    'INTEGER set inv binary!
+                                    'INTEGER set v: binary!
+                                    'INTEGER set n: binary!
+                                    'INTEGER set e: binary!
+                                    'INTEGER set d: binary!
+                                    'INTEGER set p: binary!
+                                    'INTEGER set q: binary!
+                                    'INTEGER set dp: binary!
+                                    'INTEGER set dq: binary!
+                                    'INTEGER set inv: binary!
                                     to end
                                 ]
                                 to end
@@ -7012,7 +7036,7 @@
                             if all [
                                 data
                                 any [validate validate-crc?]
-                                crc <> crc2: checksum/method data 'crc32
+                                crc <> crc2: checksum data 'crc32
                             ] [
                                 sys/log/error 'ZIP ["CRC check failed!" crc "<>" crc2]
                             ]
@@ -8972,9 +8996,9 @@
                         head new
                     ]
                     crypt-v11: func [data [binary!] seed [binary!] /local key1 key2] [
-                        key1: checksum/secure data
-                        key2: checksum/secure key1
-                        key1 xor checksum/secure rejoin [(to-binary seed) key2]
+                        key1: checksum data 'sha1
+                        key2: checksum key1 'sha1
+                        key1 xor checksum rejoin [(to-binary seed) key2] 'sha1
                     ]
                     scramble: func [data [string! none!] port [port!] /v10 /local seed] [
                         if any [none? data empty? data] [return make binary! 0]
@@ -11158,10 +11182,10 @@ Port closed!}]
                 log-more ["Update-messages-hash bytes:" len "hash:" all [ctx/sha-port ctx/sha-port/spec/method]]
                 if none? ctx/sha-port [
                     either ctx/legacy? [
-                        ctx/sha-port: open checksum://sha1
-                        ctx/md5-port: open checksum://md5
+                        ctx/sha-port: open checksum:sha1
+                        ctx/md5-port: open checksum:md5
                     ] [
-                        ctx/sha-port: open either ctx/mac-size = 48 [checksum://sha384] [checksum://sha256]
+                        ctx/sha-port: open either ctx/mac-size = 48 [checksum:sha384] [checksum:sha256]
                     ]
                     log-more ["Initialized SHA method:" ctx/sha-port/spec/method]
                 ]
@@ -11427,7 +11451,7 @@ Port closed!}]
                             binary/write bin [
                                 UI16BYTES :data
                             ]
-                            mac-check: checksum/method/key bin/buffer hash-method server-mac-key
+                            mac-check: checksum/with bin/buffer hash-method server-mac-key
                             if mac <> mac-check [critical-error: *Alert/Bad_record_MAC]
                             if version > *Protocol-version/TLS1.0 [
                                 unset 'server-iv
@@ -11472,7 +11496,7 @@ Port closed!}]
                         log-more ["Client-mac-key:" client-mac-key]
                         log-more ["Hash-method:   " hash-method]
                         binary/write bin content
-                        MAC: checksum/method/key bin/buffer ctx/hash-method ctx/client-mac-key
+                        MAC: checksum/with bin/buffer ctx/hash-method ctx/client-mac-key
                         data: rejoin [content MAC]
                         if block-size [
                             padding: block-size - (remainder (1 + length? data) block-size)
@@ -11546,14 +11570,14 @@ Port closed!}]
                     p-md5: copy #{}
                     a: seed
                     while [output-length > length? p-md5] [
-                        a: checksum/method/key a 'md5 s-1
-                        append p-md5 checksum/method/key rejoin [a seed] 'md5 s-1
+                        a: checksum/with a 'md5 s-1
+                        append p-md5 checksum/with rejoin [a seed] 'md5 s-1
                     ]
                     p-sha1: copy #{}
                     a: seed
                     while [output-length > length? p-sha1] [
-                        a: checksum/method/key a 'sha1 s-2
-                        append p-sha1 checksum/method/key rejoin [a seed] 'sha1 s-2
+                        a: checksum/with a 'sha1 s-2
+                        append p-sha1 checksum/with rejoin [a seed] 'sha1 s-2
                     ]
                     return (
                         (copy/part p-md5 output-length)
@@ -11563,8 +11587,8 @@ Port closed!}]
                 p-sha256: make binary! output-length
                 a: seed
                 while [output-length >= length? p-sha256] [
-                    a: checksum/method/key a 'sha256 secret
-                    append p-sha256 checksum/method/key rejoin [a seed] 'sha256 secret
+                    a: checksum/with a 'sha256 secret
+                    append p-sha256 checksum/with rejoin [a seed] 'sha256 secret
                 ]
                 clear at p-sha256 (1 + output-length)
                 p-sha256
@@ -11962,7 +11986,7 @@ Port closed!}]
                                 log-error {legacy __private_rsa_verify_hash_md5sha1 not implemented yet!}
                                 return *Alert/Decode_error
                             ]
-                            message-hash: checksum/method message hash-algorithm
+                            message-hash: checksum message hash-algorithm
                             if any [
                                 error? valid?: try [
                                     switch sign-algorithm [
