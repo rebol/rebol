@@ -380,6 +380,7 @@ Rebol [
 ===start-group=== "VECTOR copy"
 
 --test-- "COPY"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/463
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2400
 	v1: #[ui16! [1 2]]
 	v2: v1
