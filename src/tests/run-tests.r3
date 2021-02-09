@@ -5,6 +5,10 @@ Rebol [
 	Needs:   [%quick-test-module.r3]
 ]
 
+;- check speed of available checksum methods
+;do %test-checksums.r3
+
+;- run unit tests..
 dt [ ;- delta time
 	***start-run*** "All tests"
 	;recycle/torture
@@ -28,6 +32,7 @@ dt [ ;- delta time
 		%units/event-test.r3
 		%units/gob-test.r3
 		%units/file-test.r3
+		%units/format-test.r3
 		%units/func-test.r3
 		%units/image-test.r3
 		%units/integer-test.r3
@@ -66,6 +71,7 @@ dt [ ;- delta time
 		;- known issues - waiting for fix
 		;%units/_known-issues_.r3
 		;%units/xx-test.r3
+		;%units/_test.r3
 	][
 		try/except [wrap load file] func[error][
 			repend failed-units [file error]
