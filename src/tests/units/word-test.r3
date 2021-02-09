@@ -54,6 +54,17 @@ Rebol [
 	--assert word? try [to-word #"d"]
 	--assert word? try [to-word  "d"]
 
+	--test-- "set issue! & refinement!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1663
+	--assert all [
+		error? e: try [set #issue 9999]
+		e/id = 'expect-arg
+	]
+	--assert all [
+		error? e: try [set /ref-word 9999]
+		e/id = 'expect-arg
+	]
+
 ===end-group===
 
 ~~~end-file~~~
