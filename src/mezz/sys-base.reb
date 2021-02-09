@@ -132,7 +132,7 @@ make-module*: func [
 	if find spec/options 'extension [
 		append obj 'lib-base ; specific runtime values MUST BE FIRST
 	]
-	append obj 'local-lib ; local import library for the module
+	append obj 'lib-local ; local import library for the module
 
 	unless spec/type [spec/type: 'module] ; in case not set earlier
 
@@ -184,7 +184,7 @@ make-module*: func [
 	]
 
 	bind body obj
-	obj/local-lib: any [mixins make object! 0] ; always set, always overrides
+	obj/lib-local: any [mixins make object! 0] ; always set, always overrides
 	if block? hidden [protect/hide/words hidden]
 	obj: to module! reduce [spec obj]
 	do body
