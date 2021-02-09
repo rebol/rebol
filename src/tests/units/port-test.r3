@@ -283,6 +283,15 @@ if system/platform = 'Windows [
 		--assert 10873462 = checksum read %zeroes-445.txt 'crc24
 		delete %zeroes-445.txt
 
+	--test-- "write/append"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/443
+		--assert all [
+			not error? try [write %issue-443 "test"]
+			not error? try [write/append %issue-443 "443"]
+			"test443" = read/string %issue-443
+			not error? try [delete %issue-443]
+		]
+
 	--test-- "RENAME file"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/446
 		--assert all [
