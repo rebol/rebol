@@ -43,6 +43,11 @@ Rebol [
 			error? e: try [to char! #FF]
 			e/id = 'bad-make-arg
 		]
+		
+	--test-- "to char! string"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/465
+		--assert #"x" = try [to char! "x" ]
+		--assert #"x" = try [to char! "xy"]
 
 ===end-group===
 
