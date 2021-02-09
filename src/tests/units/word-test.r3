@@ -37,6 +37,33 @@ Rebol [
 	--assert word? try [to word! /1]
 	;TODO: write mold test... should be molded to: #[word! "1"]
 
+	--test-- "to word! string!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2444
+	find-nonloadable-words: function [][
+		nlw: copy []
+		for n 0 255 1 [
+			w: copy []
+			append w rejoin [""  to char! n "a"] ;; test as leading letter
+			append w rejoin ["a" to char! n    ] ;; test as trailing letter
+			append w rejoin ["a" to char! n "a"] ;; test as mid letter
+			foreach c w [
+				if not error? try [to word! c][ ;; test only those that can be to-worded
+					s: join trim/tail c ": 999" ;; trimmed for "a^-" and "a " inputs (allowed)
+					if any [
+						error? try [unset? load s] ;; Can we load it?
+						error? try [unset?   do s] ;; Can we do the assign a: 999 ?
+						unset? do s ;; Did we get 999 if we did?
+						999 <> do s
+					][
+						append nlw c ;; none of the above: it's not a serialisable word
+					]
+				]
+			]
+		]
+		nlw
+	]
+	--assert empty? find-nonloadable-words
+
 
 ===end-group===
 
