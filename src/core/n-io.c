@@ -886,7 +886,7 @@ chk_neg:
 	blk = Make_Block(len*2);
 
 	str = start;
-	while (NZ(eq = FIND_CHR(str+1, '=')) && NZ(n = (REBCNT)LEN_STR(str))) {
+	while (NZ(n = (REBCNT)LEN_STR(str)) && NZ(eq = FIND_CHR(str+1, '='))) {
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(str, eq-str));
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(eq+1, n-(eq-str)-1));
 		str += n + 1; // next
@@ -1169,8 +1169,10 @@ chk_neg:
 {
 	REBCHR *result = OS_LIST_ENV();
 
-	Set_Series(REB_MAP, D_RET, String_List_To_Block(result));
+	if(result == NULL) Trap0(RE_NO_MEMORY);
 
+	Set_Series(REB_MAP, D_RET, String_List_To_Block(result));
+	FREE_MEM(result);
 	return R_RET;
 }
 

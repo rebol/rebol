@@ -555,6 +555,8 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 **
 */	REBCHR *OS_List_Env(void)
 /*
+**		Returns NULL on error.
+**
 ***********************************************************************/
 {
 	extern char **environ;
@@ -565,6 +567,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 	for (n = 0; environ[n]; n++) len += 1 + LEN_STR(environ[n]);
 
 	cp = str = OS_Make(len + 1); // +terminator
+	if(!cp) return NULL;
 	*cp = 0;
 
 	// combine all strings into one:
