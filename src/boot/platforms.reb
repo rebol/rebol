@@ -45,6 +45,7 @@ REBOL [
 	21 bionic-arm
 	30 libc6-mips
 	40 libc-x64
+	46 musl-x64
 ]
 
 5 Haiku [
