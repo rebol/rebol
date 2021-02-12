@@ -80,6 +80,9 @@ internal!: make typeset! [
 	end! unset! frame! handle!
 ]
 
+; refinement! and issue! are special words which cannot be set
+; all-word!: union any-word! make typeset! [refinement! issue!]
+
 immediate!: make typeset! [
 	; Does not include internal datatypes
 	none! logic! scalar! date! any-word! datatype! typeset! event!
