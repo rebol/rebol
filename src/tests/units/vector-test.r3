@@ -362,9 +362,25 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "VECTOR Compare"
+	--test-- "compare vectors"
+	;@@  https://github.com/Oldes/Rebol-issues/issues/458
+	--assert equal? (make vector! 3)(make vector! 3)
+	--assert not equal? #[ui16! [1 2]] #[ui16! [1 2 3]]
+	--assert #[ui16! [1 2]] = #[ui16! [1 2]]
+	--assert #[ui16! [1 2]] < #[ui16! [1 2 0]]
+	--assert #[ui16! [1 2]] < #[ui16! [1 2 1]]
+	--assert #[ui16! [1 2]] < #[ui16! [2 2]]
+	--assert #[ui16! [2 2]] > #[ui16! [1 2]]
+
+===end-group===
+
+
 ===start-group=== "VECTOR copy"
 
 --test-- "COPY"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/463
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2400
 	v1: #[ui16! [1 2]]
 	v2: v1

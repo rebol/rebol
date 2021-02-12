@@ -29,6 +29,11 @@ Rebol [
 	--test-- "round/to (decimal)"
 	--assert 1.375 = round/to 1.333 .125
 	--assert 1.33  = round/to 1.333 .01
+	;@@ https://github.com/Oldes/Rebol-issues/issues/507
+	--assert "0.5" = mold round/to 0.5 0.1
+	--assert "0.6" = mold round/to 0.6 0.1
+	--assert "0.7" = mold round/to 0.7 0.1
+	--assert "1.0" = mold round/to 1   0.1
 
 	--test-- "round/to (integer)"
 	--assert     1 = round/to 0.5   1

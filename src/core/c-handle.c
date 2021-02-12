@@ -43,27 +43,27 @@
 /*
 **      Stores handle's specification (required data size and optional free callback.
 **		Returns table index for the word (whether found or new).
-**      Returns 0 if handle with give ID is already registered.
+**      Returns NOT_FOUND if handle with give ID is already registered.
 **
 ***********************************************************************/
 {
 	REBCNT idx;
 	REBVAL *handles = Get_System(SYS_CATALOG, CAT_HANDLES);
 
-	if (!sym) return 0;
+	if (!sym) return NOT_FOUND;
 
 	//printf("Register_Handle: %s with size %u\n", SYMBOL_TO_NAME(sym),  size);
 
 	idx = Find_Handle_Index(sym);
-	if (idx) Crash(RP_HANDLE_ALREADY_REGISTERED);
-	idx = VAL_TAIL(handles) + 1;
+	if (idx != NOT_FOUND) Crash(RP_HANDLE_ALREADY_REGISTERED);
+	idx = VAL_TAIL(handles);
 	if (idx >= MAX_HANDLE_TYPES) Crash(RP_MAX_HANDLES);
 
 	REBVAL *val = Append_Value(VAL_SERIES(handles));
 	Set_Word(val, sym, 0, 0);
 
-	PG_Handles[idx-1].size = size;
-	PG_Handles[idx-1].free = free_func;
+	PG_Handles[idx].size = size;
+	PG_Handles[idx].free = free_func;
 	
 	return idx;
 }
@@ -82,9 +82,9 @@
 	REBYTE *data;
 	REBHOB *hob;
 	REBCNT idx = Find_Handle_Index(sym);
-	if (!idx) return NULL;
+	if (idx == NOT_FOUND) return NULL;
 	
-	spec = PG_Handles[idx-1];
+	spec = PG_Handles[idx];
 	size = spec.size;
 
 	//printf("Requested HOB for %s (%u) of size %u\n", SYMBOL_TO_NAME(sym), sym, size);
@@ -104,18 +104,18 @@
 */	REBCNT Find_Handle_Index(REBCNT sym)
 /*
 **		Finds handle's word in system/catalog/handles and returns it's index
-**      Returns one-based value or 0 if handle is not found.
+**      Returns NOT_FOUND if handle is not found.
 **
 ***********************************************************************/
 {
-	REBCNT idx = 1;
+	REBCNT idx = 0;
 	REBVAL *handle = VAL_BLK(Get_System(SYS_CATALOG, CAT_HANDLES));
 
 	while(IS_WORD(handle)){
 		if(VAL_WORD_SYM(handle) == sym) return idx;
 		idx++; handle++;
 	}
-	return 0;
+	return NOT_FOUND;
 }
 
 /***********************************************************************

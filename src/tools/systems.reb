@@ -34,6 +34,7 @@ systems: [
 	[0.4.21		"linux_arm"		posix		[LEN +O2 PIE LDL ST1 -LM HID]]	; bionic (Android)
 	[0.4.30		"linux_mips"	posix		[LEN +O2 PIC LDL ST1 -LM HID]]
 	[0.4.40		"linux_x64"		posix		[LEN +O2 PIC LDL ST1 -LM HID L64]] ; core version
+	[0.4.46		"linux_x64_musl"posix		[LEN +O2 PIC LDL ST1 -LM HID L64]]
 	[0.5.75		"haiku"			posix		[LEN +O2 ST1 NWK]]
 	[0.7.02		"freebsd"		posix		[LEN +O1 ST1 -LM]]
 	[0.7.40		"freebsd_x64"	posix		[LEN +O1 ST1 -LM L64]]

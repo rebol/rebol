@@ -155,6 +155,11 @@ Rebol [
 ;@@ https://github.com/Oldes/Rebol-issues/issues/394
 	--assert parse #{001122} [#{00} #{11} #{22}]
 
+--test-- "issue-529"
+;@@ https://github.com/Oldes/Rebol-issues/issues/529
+	a: context [b: string!]
+	--assert parse ["test"] [a/b]
+
 --test-- "issue-591"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/591
 	--assert all [
@@ -162,6 +167,18 @@ Rebol [
 		e/id = 'parse-end
 		e/arg1 = 0
 	]
+
+--test-- "issue-753"
+;@@ https://github.com/Oldes/Rebol-issues/issues/753
+	ws: to-bitset rejoin[ tab newline cr sp ]
+	abc: charset [ "a" "b" "c" ]
+	rls: [ "a" some ws copy b some abc some ws "c" ]
+	rla: [ "a"  any ws copy b some abc  any ws "c" ]
+	--assert     parse/all "a b c" rls
+	--assert     parse/all "a b c" rla
+	--assert not parse/all "a b"   rls
+	--assert not parse/all "a b"   rla
+
 
 --test-- "issue-2130"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/2130

@@ -381,6 +381,8 @@ static void Close_StdIO_Local(void)
 	else
 		SET_FLAG(dev->flags, SF_DEV_NULL);
 
+	SetConsoleOutputCP(65001);
+
 	SET_FLAG(req->flags, RRF_OPEN);
 	SET_FLAG(dev->flags, RDF_OPEN);
 	SET_FLAG(req->modes, RDM_READ_LINE);

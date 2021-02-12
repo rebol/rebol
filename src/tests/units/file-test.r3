@@ -98,9 +98,27 @@ secure [%/ allow]
 		]
 	--test-- "wildcard *?*"
 		--assert all [
-			block? probe files: wildcard %units/files/ %*2186-UTF??*.txt
+			block? files: wildcard %units/files/ %*2186-UTF??*.txt
 			4 = length? files
 		]
+	--test-- "read wildcard"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2443
+		--assert all [
+			block? files: try [read %units/files/issue-2186-*.txt]
+			4 = length? files
+			to logic! find files %issue-2186-UTF16-LE.txt
+		]
+		--assert all [
+			block? files: try [read %units/files/issue-2186-UTF??-BE.txt]
+			2 = length? files
+			to logic! find files %issue-2186-UTF32-BE.txt
+		]
+		--assert all [
+			block? files: try [read %units/files/*2186-UTF??*.txt]
+			4 = length? files
+			to logic! find files %issue-2186-UTF16-BE.txt
+		]
+
 ===end-group===
 
 ~~~end-file~~~

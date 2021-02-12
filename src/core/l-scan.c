@@ -1796,7 +1796,12 @@ exit_block:
 
 	Init_Scan_State(&scan_state, cp, len);
 
-	if (TOKEN_WORD == Scan_Token(&scan_state)) return Make_Word(cp, len);
+	if (TOKEN_WORD == Scan_Token(&scan_state)
+		// check also if there are not any chars left
+		// https://github.com/Oldes/Rebol-issues/issues/2444
+		// (space and tab chars at tail are truncated and so accepted)
+		&& scan_state.end == scan_state.limit) 
+			return Make_Word(cp, len);
 
 	return 0;
 }

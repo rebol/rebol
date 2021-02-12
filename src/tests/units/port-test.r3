@@ -202,6 +202,11 @@ if system/platform = 'Windows [
 		--assert [file 51732] = query/mode file [type size]
 		--assert [type: file size: 51732] = query/mode file [type: size:]
 
+	--test-- "query file name"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2442
+		file: %units/files/čeština.txt
+		--assert not none? find (query/mode file 'name) file
+
 	--test-- "query file info (port)"
 		file: open %units/files/alice29.txt.gz
 		--assert [name size date type] = query/mode file none
@@ -277,6 +282,24 @@ if system/platform = 'Windows [
 		close f
 		--assert 10873462 = checksum read %zeroes-445.txt 'crc24
 		delete %zeroes-445.txt
+
+	--test-- "write/append"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/443
+		--assert all [
+			not error? try [write %issue-443 "test"]
+			not error? try [write/append %issue-443 "443"]
+			"test443" = read/string %issue-443
+			not error? try [delete %issue-443]
+		]
+
+	--test-- "RENAME file"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/446
+		--assert all [
+			not error? try [write %issue-446 "test"]
+			not error? try [rename %issue-446 %issue-446.txt]
+			"test" = read/string %issue-446.txt
+			not error? try [delete %issue-446.txt]
+		]
 
 ===end-group===
 

@@ -17,29 +17,30 @@ make-banner: func [
 ][
 	if string? fmt [return fmt] ; aleady built
 	str: make string! 2000
-	star: format/pad [$30.107 74 $0] "" #"*"
+	append str format/pad [$0 #"╔" 74 "╗^/"] "" #"═"
 
-	spc: format [$30.107 "**" 70 "**" $0] ""
-	sf: [$30.107 "**  " $35 68 $30.107 "**" $0]
+	spc: format [#"║" $30.107 74 $0 #"║"] ""
+	sf: [#"║" $30.107 "  " $35 72 $30.107 $0 #"║"]
 	parse fmt [
 		some [
 			[
 				set a string! (s: format sf a)
 			  | set a block!  (s: format sf ajoin a)
 			  | '= set a [string! | word! | set-word!] [
-			  			b:
+						b:
 						  path! (b: get b/1)
 						| word! (b: get b/1)
 						| block! (b: reform b/1)
 						| string! (b: b/1)
 					]
-					(s: either none? b [none][format [$30.107 "**    " $32 11 $31 55 $30 "**" $0] reduce [a b]])
+					(s: either none? b [none][format [#"║" $30.107 "    " $32 11 $31 59 $30 $0 #"║"] reduce [a b]])
 			  | '* (s: star)
 			  | '- (s: spc)
 			]
 			(unless none? s [append append str s newline])
 		]
 	]
+	append str format/pad [#"╚" 74 "╝^/"] "" #"═"
 	str
 ]
 
@@ -49,7 +50,6 @@ if #"/" <> first system/options/home [
 ]
 
 sys/boot-banner: make-banner [
-	*
 	-
 	["REBOL 3." system/version/2 #"." system/version/3 " (Oldes branch)"]
 	-
@@ -63,11 +63,9 @@ sys/boot-banner: make-banner [
 	-
 	= Home:     [to-local-file system/options/home]
 	-
-	*
 ]
 
 system/license: make-banner [
-	*
 	-
 	= Copyright: "2012 REBOL Technologies"
 	= "" "2012-2021 Rebol Open Source Contributors"
@@ -76,7 +74,6 @@ system/license: make-banner [
 	-
 	= Notice: "https://github.com/Oldes/Rebol3/blob/master/NOTICE"
 	-
-	*
 ]
 
 

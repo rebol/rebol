@@ -108,6 +108,13 @@
 **
 ***********************************************************************/
 {
+#if !defined(TO_WINDOWS)
+	// on Posix the file.path is in UTF8 format, so must be decoded bellow
+	REBSER *ser = BUF_UTF8;
+	REBINT len;
+	const REBYTE *path;
+#endif
+
 	switch (mode) {
 	case SYM_SIZE:
 		if(file->file.size == MIN_I64) {
@@ -123,7 +130,15 @@
 		Set_File_Date(file, ret);
 		break;
 	case SYM_NAME:
+#ifdef TO_WINDOWS
 		Set_Series(REB_FILE, ret, To_REBOL_Path(file->file.path, 0, OS_WIDE, 0));
+#else
+		path = cb_cast(file->file.path);
+		len = (REBINT)LEN_BYTES(path);
+		len = Decode_UTF8(UNI_HEAD(ser), path, len, 0);
+		if (len < 0) len = -len; // negative len means ASCII chars only
+		Set_Series(REB_FILE, ret, To_REBOL_Path(UNI_HEAD(ser), len, TRUE, 0));
+#endif
 		break;
 	default:
 		return FALSE;

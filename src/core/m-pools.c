@@ -610,9 +610,9 @@ clear_header:
 	REBHSP spec;
 	REBCNT idx = hob->index;
 
-	if( idx == 0 || !IS_USED_HOB(hob) || hob->data == NULL) return;
+	if( !IS_USED_HOB(hob) || hob->data == NULL ) return;
 
-	spec = PG_Handles[idx-1];
+	spec = PG_Handles[idx];
 	//printf("HOB free mem: %0x\n", hob->data);
 
 	if (spec.free)

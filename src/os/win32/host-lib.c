@@ -546,6 +546,8 @@ static void *Task_Ready;
 **
 */	REBCHR *OS_List_Env(void)
 /*
+**		Returns NULL on error.
+**
 ***********************************************************************/
 {
 	REBCHR *env = GetEnvironmentStrings();
@@ -559,7 +561,9 @@ static void *Task_Ready;
 	}
 	len++;
 
-	str = OS_Make(len * sizeof(REBCHR));
+	str = OS_Make(len * sizeof(REBCHR)); // Must be released by caller!
+	if(!str) return NULL;
+
 	MOVE_MEM(str, env, len * sizeof(REBCHR));
 
 	FreeEnvironmentStrings(env);
@@ -1226,7 +1230,7 @@ error_error:
 	}
 
 output_error:
-	if (input_type == FILE_TYPE) {
+	if (input_type == FILE_TYPE && si.hStdInput != NULL) {
 		CloseHandle(si.hStdInput);
 	}
 

@@ -687,7 +687,8 @@ import: function [
 		; Unless /no-lib its exports are in lib already, so just import what we need.
 		not no-lib [resolve/only system/contexts/user lib exports]
 	]
-
+	protect 'mod/lib-base
+	protect/hide 'mod/lib-boot
 	mod ; module! returned
 ]
 

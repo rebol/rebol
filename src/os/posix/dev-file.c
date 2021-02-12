@@ -38,6 +38,7 @@
 ***********************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -45,6 +46,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <errno.h>
+#include <glob.h>
 
 #include "reb-host.h"
 #include "host-lib.h"
@@ -191,21 +193,25 @@ static int Get_File_Info(REBREQ *file)
 **
 ***********************************************************************/
 {
-	struct stat info;
 	struct dirent *d;
 	char *cp;
 	DIR *h;
-	int n;
-
-	// Remove * from tail, if present. (Allowed because the
-	// path was copied into to-local-path first).
-	n = strlen(cp = dir->file.path);
-	if (n > 0 && cp[n-1] == '*') cp[n-1] = 0;
+	int len, n = 0;
 
 	// If no dir handle, open the dir:
 	if (!(h = dir->handle)) {
+		// Remove * from tail, if present. (Allowed because the
+		// path was copied into to-local-path first).
+		len = strlen((cp = dir->file.path));
+		if (len > 0 && cp[len-1] == '*') {
+			// keep track that we removed *
+			n = len-1;
+			cp[n] = 0;
+		}
 		h = opendir(dir->file.path);
 		if (!h) {
+			// revert back the * char as it may be part of pattern matching
+			if (n > 0) cp[n] = '*';
 			dir->error = errno;
 			return DR_ERROR;
 		}
@@ -237,6 +243,8 @@ static int Get_File_Info(REBREQ *file)
 	// most efficient, because it does not require a separate
 	// file system call for determining directories.
 	if (d->d_type == DT_DIR) SET_FLAG(file->modes, RFM_DIR);
+	// NOTE: DT_DIR may be enabled using _BSD_SOURCE define
+	// https://stackoverflow.com/a/9241608/494472
 #else
 	if (Is_Dir(dir->file.path, file->file.path)) SET_FLAG(file->modes, RFM_DIR);
 #endif
@@ -247,6 +255,85 @@ static int Get_File_Info(REBREQ *file)
 	return DR_DONE;
 }
 
+
+/***********************************************************************
+**
+*/	static int Read_Pattern(REBREQ *dir, REBREQ *file)
+/*
+**		This function will read a file with wildcards, one file entry
+**		at a time, then close when no more files are found.
+**
+**		Although GLOB allows to pass patterns which match content
+**		thru multiple directories, that is intentionally disabled,
+**		because such a functionality would not be easy to implement
+**		and because result would have to be full path, which also
+**		may not be the best choice from user's view.
+**
+**		Actually the result is truncated so only files are returned and
+**		not complete paths.
+**
+***********************************************************************/
+{
+	char *cp;
+	glob_t *g;
+	int n, p, end;
+	int wld = -1;
+
+	if (!(g = dir->handle)) {
+		//printf("init pattern: %s\n", dir->file.path);
+
+		n = strlen((cp = dir->file.path));
+		for (p = 0; p < n; p++) {
+			if (cp[p] == '/') {
+				// store position of the directory separator
+				end = p;
+				if (wld > 0) {
+					// don't support wildcards thru multiple directories
+					// like: %../?/?.png
+					// as this is not available on Windows
+
+					//puts("Not supported pattern!");
+					dir->error = -GLOB_NOMATCH; // result will be []
+					return DR_ERROR;
+				}
+			}
+			else if (cp[p] == '*' || cp[p] == '?') wld = p;
+		}
+		// keep position of the last directory separator so it can be used
+		// to limit result into just a file and not a full path
+		dir->clen = end + 1;
+
+		g = MAKE_NEW(glob_t); // deallocate once done!		
+		n = glob(dir->file.path, GLOB_MARK, NULL, g);
+		if (n) {
+			//printf("glob: %s err: %i errno: %i\n", dir->file.path, n, errno);
+			globfree(g);
+			OS_Free(g);
+			dir->error = -n; // using negative number as on Windows
+			return DR_ERROR;
+		}
+		//printf("found patterns: %li\n", g->gl_pathc);
+		// all patterns are already in the glob buffer,
+		// but we will not report them all at once
+		dir->handle = g;
+		dir->actual = 0;
+		dir->length = g->gl_pathc;
+		dir->modes  = 1 << RFM_PATTERN; // changing mode from RFM_DIR to RFM_PATTERN
+		CLR_FLAG(dir->flags, RRF_DONE);
+	}
+	if(dir->actual >= g->gl_pathc) {
+		globfree(g);
+		OS_Free(g);
+		SET_FLAG(dir->flags, RRF_DONE); // no more files
+		return DR_DONE;
+	}
+	//printf("path[%i]: %s\n", dir->actual, g->gl_pathv[dir->actual]);
+	file->modes = 0;
+	//TODO: assert if: 0 <= dir->clen <= MAX_FILE_NAME ???
+	// only file part is returned...
+	COPY_BYTES(file->file.path, g->gl_pathv[dir->actual++] + dir->clen, MAX_FILE_NAME - dir->clen);
+	return DR_DONE;
+}
 
 /***********************************************************************
 **
@@ -355,7 +442,15 @@ fail:
 	ssize_t num_bytes;
 
 	if (GET_FLAG(file->modes, RFM_DIR)) {
-		return Read_Directory(file, (REBREQ*)file->data);
+		int ret = Read_Directory(file, (REBREQ*)file->data);
+		// If there is no id yet and reading failed, we will
+		// try to use file as a pattern...
+		if (ret == DR_ERROR && !file->id) goto init_pattern;
+		return ret;
+	}
+	else if (GET_FLAG(file->modes, RFM_PATTERN)) {
+init_pattern:
+		return Read_Pattern(file, (REBREQ*)file->data);
 	}
 
 	if (!file->id) {

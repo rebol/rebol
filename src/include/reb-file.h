@@ -39,6 +39,7 @@ enum {
 	RFM_NAME_MEM,		// converted name allocated in mem
 	RFM_DIR = 16,
 	RFM_DRIVES,         // used only on Windows to get logical drives letters (read %/)
+	RFM_PATTERN,        // used only on Posix for reading wildcard patterns (read %*.txt)
 };
 
 // RFE - REBOL File Error

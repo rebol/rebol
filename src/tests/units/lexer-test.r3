@@ -37,6 +37,13 @@ Rebol [
 			e/id = 'invalid
 		]
 
+	--test-- "Invalid time"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/698
+		--assert all [
+			error? e: try [load {--1:23}]
+			e/id = 'invalid
+		]
+
 ===end-group===
 
 ===start-group=== "Email"

@@ -17,11 +17,11 @@ supplement system/options/module-paths join what-dir %units/files/
 	--test-- "hidden"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1696
 		--assert all [
-			[local-lib a] = words-of m: module [] [a: 1]
+			[lib-local a] = words-of m: module [] [a: 1]
 			m/a = 1
 		]
 		--assert all [
-			[local-lib b] = words-of m: module [] [hidden a: 1 b: does[a + 1]]
+			[lib-local b] = words-of m: module [] [hidden a: 1 b: does[a + 1]]
 			error? try [m/a]
 			m/b = 2
 		]
@@ -199,7 +199,7 @@ probe all [unset? :a unset? :b unset? :c]
 }
 	o: copy ""
 	call/wait/shell/output reform [to-local-file system/options/boot %issue-1680.reb] o
-	--assert "true^/true^/true^/true^/" = probe o
+	--assert "true^/true^/true^/true^/" = o
 	delete %issue-1680.reb
 
 	--test-- "import/no-lib"
@@ -266,8 +266,8 @@ probe all [
 	none? get in system/contexts/lib 'm1a
 ]}
 	o: copy ""
-	call/wait/shell/output probe reform [to-local-file system/options/boot %block-import-2.reb] o
-	--assert "true^/" = probe o
+	call/wait/shell/output reform [to-local-file system/options/boot %block-import-2.reb] o
+	--assert "true^/" = o
 	delete %block-import-1.reb
 	delete %block-import-2.reb
 	delete %m1.reb
@@ -283,8 +283,8 @@ probe all [
 		--assert module? m: try [import/version m-1687 1.0.0]
 		--assert all [
 			;@@ https://github.com/Oldes/Rebol-wishes/issues/13
-			object? m/local-lib
-			empty?  m/local-lib ; because there was no import in this module
+			object? m/lib-local
+			empty?  m/lib-local ; because there was no import in this module
 		]
 
 	--test-- "import/check"
@@ -324,8 +324,8 @@ probe all [
 		--assert true? test-needs-file-result
 		--assert all [
 			;@@ https://github.com/Oldes/Rebol-wishes/issues/13
-			object? m/local-lib
-			m/local-lib/test-needs-file-value = 42 ; value imported from the inner module
+			object? m/lib-local
+			m/lib-local/test-needs-file-value = 42 ; value imported from the inner module
 		]
 
 	--test-- "import needs url!"
@@ -334,9 +334,9 @@ probe all [
 			--assert true? test-needs-url-result
 		]
 
-	--test-- "local-lib"
+	--test-- "lib-local"
 	;@@ https://github.com/Oldes/Rebol-wishes/issues/13
-		--assert same? local-lib system/contexts/user
+		--assert same? lib-local system/contexts/user
 
 	--test-- "do module from file"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1203
@@ -353,12 +353,12 @@ probe all [
 	--test-- "issue-1005"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1005
 		m: module [] [a: 1 2]
-		--assert [local-lib: #[object![]] a: 1] = body-of m
-		--assert [local-lib a] = keys-of m
+		--assert [lib-local: #[object![]] a: 1] = body-of m
+		--assert [lib-local a] = keys-of m
 		--assert [#[object![]] 1] = values-of m
 		m: module [exports: [a]] [a: 1 2]
-		--assert [local-lib: #[object![]] a: 1] = body-of m
-		--assert [local-lib a] = keys-of m
+		--assert [lib-local: #[object![]] a: 1] = body-of m
+		--assert [lib-local a] = keys-of m
 		--assert [#[object![]] 1] = values-of m
 
 	--test-- "issue-1708"
