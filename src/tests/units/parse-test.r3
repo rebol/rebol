@@ -43,6 +43,15 @@ Rebol [
 	]
 ===end-group===
 
+
+===start-group=== "THEN"
+--test-- "then"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1394
+	--assert parse "ab" ["a" then "b" | "c"]
+	--assert parse "c"  ["a" then "b" | "c"]
+===end-group===
+
+
 ===start-group=== "CHANGE"
 
 --test-- "CHANGE rule value (same size)"
