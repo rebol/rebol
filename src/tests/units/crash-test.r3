@@ -170,6 +170,13 @@ Rebol [
 --test-- "issue-441"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/441
 	--assert unset? repeat n 1000000 [foreach a [1 2 3] []] ;- no crash
+
+--test-- "issue-2445"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2445
+	--assert not error? try [p: open tcp://localhost:10000]
+	loop 10 [--assert not error? try [close p open p]] ;- no crash
+	--assert not error? try [close p]
+
 ===end-group===
 
 ~~~end-file~~~
