@@ -204,9 +204,11 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 			index = (UP_CASE(VAL_CHAR(item)) == UP_CASE(GET_ANY_CHAR(series, index))) ? index+1 : NOT_FOUND;
 		break;
 
-	case REB_EMAIL:
 	case REB_STRING:
 	case REB_BINARY: 
+	case REB_FILE:
+	case REB_URL:
+	case REB_EMAIL:
 		index = Find_Str_Str(series, 0, index, SERIES_TAIL(series), 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), flags);
 		break;
 
@@ -225,7 +227,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 		break;
 */
 	case REB_TAG:
-	case REB_FILE:
+	case REB_REF:
 //	case REB_ISSUE:
 		// !! Can be optimized (w/o COPY)
 		ser = Copy_Form_Value(item, 0);
@@ -533,6 +535,7 @@ bad_target:
 			if (ANY_BINSTR(item)) {
 				if (!IS_STRING(item) && !IS_BINARY(item)) {
 					// !!! Can this be optimized not to use COPY?
+					// O: It would require Find_Str_Tag, Find_Str_Ref
 					ser = Copy_Form_Value(item, 0);
 					i = Find_Str_Str(series, 0, index, series->tail, 1, ser, 0, ser->tail, HAS_CASE(parse));
 					if (i != NOT_FOUND && is_thru) i += ser->tail;
