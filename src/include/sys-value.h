@@ -1075,6 +1075,7 @@ enum Handle_Flags {
 	HANDLE_CONTEXT        = 1 << 2,
 	HANDLE_CONTEXT_MARKED = 1 << 3,  // used in handle's context (HOB)
 	HANDLE_CONTEXT_USED   = 1 << 4,  // --//--
+	HANDLE_CONTEXT_LOCKED = 1 << 5,  // so Rebol will not GC the handle if C side still depends on it
 };
 
 typedef struct Reb_Handle_Spec {
@@ -1131,7 +1132,7 @@ typedef struct Reb_Handle {
 #define IS_USED_HOB(h)         ((h)->flags &   HANDLE_CONTEXT_USED)   // used to detect if handle's context is still valid
 #define     USE_HOB(h)         ((h)->flags |=  HANDLE_CONTEXT_USED)
 #define   UNUSE_HOB(h)         ((h)->flags &= ~HANDLE_CONTEXT_USED)
-#define IS_MARK_HOB(h)         ((h)->flags &   HANDLE_CONTEXT_MARKED) // GC marks still used handles, so these are not released
+#define IS_MARK_HOB(h)         ((h)->flags &  (HANDLE_CONTEXT_MARKED | HANDLE_CONTEXT_LOCKED)) // GC marks still used handles, so these are not released
 #define    MARK_HOB(h)         ((h)->flags |=  HANDLE_CONTEXT_MARKED)
 #define  UNMARK_HOB(h)         ((h)->flags &= ~HANDLE_CONTEXT_MARKED)
 #define MARK_HANDLE_CONTEXT(v) (MARK_HOB(VAL_HANDLE_CTX(v)))
