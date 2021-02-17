@@ -303,6 +303,10 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1106
 		--assert #{31}   = make binary! #"1"
 		--assert #{C3A0} = make binary! #"à"
+	--test-- "to binary! block!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1389
+		--assert #{01}   = to binary! [1]
+		--assert #{0102} = to binary! [1 2]
 ===end-group===
 
 

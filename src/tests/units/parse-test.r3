@@ -8,6 +8,18 @@ Rebol [
 
 ~~~start-file~~~ "Parse"
 
+===start-group=== "Basic string based parsing"
+--test-- "parse string! using any-string!"
+;@@ https://github.com/Oldes/Rebol-wishes/issues/36
+	--assert      parse "ab"   ["ab"]
+	--assert      parse "abc"  [%abc]
+	--assert      parse "a@bc" [a@bc]
+	--assert try [parse "abc"  [@abc]]
+	--assert try [parse "a:bc" [a:bc]]
+	--assert      parse "<a>"  [<a> ]
+===end-group===
+
+
 ===start-group=== "TO/THRU"
 --test-- "TO/THRU with bitset!"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1457
@@ -29,9 +41,16 @@ Rebol [
 		e: try [parse "foo" [thru 1.2]]
 		e/id = 'parse-rule
 	]
-
-
 ===end-group===
+
+
+===start-group=== "THEN"
+--test-- "then"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1394
+	--assert parse "ab" ["a" then "b" | "c"]
+	--assert parse "c"  ["a" then "b" | "c"]
+===end-group===
+
 
 ===start-group=== "CHANGE"
 

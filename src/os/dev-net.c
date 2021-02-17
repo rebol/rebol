@@ -260,6 +260,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 			if (sock->handle) WSACancelAsyncRequest(sock->handle);
 #endif
 			OS_Free(sock->net.host_info);
+			sock->net.host_info = NULL;
 			sock->socket = sock->length; // Restore TCP socket (see Lookup)
 		}
 
