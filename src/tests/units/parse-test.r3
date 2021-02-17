@@ -9,14 +9,14 @@ Rebol [
 ~~~start-file~~~ "Parse"
 
 ===start-group=== "Basic string based parsing"
-	--test-- "parse string! using any-string!"
-	;@@ https://github.com/Oldes/Rebol-wishes/issues/36
-		--assert      parse "ab"   ["ab"]
-		--assert      parse "abc"  [%abc]
-		--assert      parse "a@bc" [a@bc]
-		--assert try [parse "abc"  [@abc]]
-		--assert try [parse "a:bc" [a:bc]]
-		--assert      parse "<a>"  [<a> ]
+--test-- "parse string! using any-string!"
+;@@ https://github.com/Oldes/Rebol-wishes/issues/36
+	--assert      parse "ab"   ["ab"]
+	--assert      parse "abc"  [%abc]
+	--assert      parse "a@bc" [a@bc]
+	--assert try [parse "abc"  [@abc]]
+	--assert try [parse "a:bc" [a:bc]]
+	--assert      parse "<a>"  [<a> ]
 ===end-group===
 
 
