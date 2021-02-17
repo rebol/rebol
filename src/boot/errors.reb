@@ -104,7 +104,8 @@ Script: [
 	self-protected:     {cannot set/unset self - it is protected}
 	bad-bad:            [:arg1 {error:} :arg2]
 
-	bad-make-arg:       [{cannot MAKE/TO} :arg1 {from:} :arg2]
+	bad-make-arg:       [{cannot MAKE} :arg1 {from:} :arg2]
+;	bad-to-arg:         [{cannot convert} :arg2 {to:} :arg1]
 	bad-decode:         {missing or unsupported encoding marker}
 ;	no-decode:          [{cannot decode} :arg1 {encoding}]
 	already-used:       [{alias word is already in use:} :arg1]
