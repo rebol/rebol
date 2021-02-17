@@ -2,10 +2,93 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+
+## 2021 February
+
+### Features:
+
+* [`552e2c`](https://github.com/Oldes/Rebol3/commit/552e2c0d0ff8943d665dc040886efc4dfe700af9) Parse string! using any-string!
+* [`9249a3`](https://github.com/Oldes/Rebol3/commit/9249a364380352f498a7b91abfbc5b66d1d7b463) Exporting new library functions for registering, creation and releasing handles (so these may be also used from external native modules.
+* [`c990e8`](https://github.com/Oldes/Rebol3/commit/c990e82e678d578db2429173caf989c2dead302f) Simple TCP port scanner (module)
+* [`b6cbac`](https://github.com/Oldes/Rebol3/commit/b6cbac24a999355934784a604bc2c4146f0e5df5) Do some minimal extension's module protection
+* [`4d44e9`](https://github.com/Oldes/Rebol3/commit/4d44e997c68951a5dc651023610ced7355ed5398) When $SHELL is not set on POSIX OS, `/bin/sh` is used as a default
+
+  Such a situation may happen for example on a clean Alpine Docker's image.
+
+### Changes:
+
+* [`6809c8`](https://github.com/Oldes/Rebol3/commit/6809c89dc01ed720401a8ce0a65f15f57c41a5df) Registered new system ID 0.4.46 as a 64bit Linux using `musl` compiler (musl.libc.org)
+* [`d352af`](https://github.com/Oldes/Rebol3/commit/d352af0674aa647e942aeee82618821ff5fae7c3) Renamed module's local context from `local-lib` to `lib-local`
+
+  So it is consistent with existing `lib-base` and `lib-file`, which are also there.
+* [`500d3d`](https://github.com/Oldes/Rebol3/commit/500d3da6542db487cd190a48e8bb83000707b3e1) Force UTF-8 console output code page on Windows
+* [`f09840`](https://github.com/Oldes/Rebol3/commit/f09840e2b6fcafc72ae27f5409181d1da2ddba4f) Using NOT_FOUND instead of 0 in handle's registration
+
+### Fixes:
+
+* [`a90ee0`](https://github.com/Oldes/Rebol3/commit/a90ee0798a06a831b41d2bf42f2de0f542866794) Crash when re-opening listening port multiple times
+* [`98d66e`](https://github.com/Oldes/Rebol3/commit/98d66e5f7ba5c5a44c605d49aae2651275c994ed) Using at least one image in the ICO file as a PNG encoded in RGBA32 format
+* [`82f0ae`](https://github.com/Oldes/Rebol3/commit/82f0ae3f15e3133edc3e805e89adf986b61bff4a) Updated banners look
+* [`be2463`](https://github.com/Oldes/Rebol3/commit/be2463a4bd0ca9837cf1b7ce6adc7015e8350af7) Memory leak in `list-env` function
+* [`d1e316`](https://github.com/Oldes/Rebol3/commit/d1e31695b1f4e70465f9ff5c03d4825c43df6c18) `to word!` accepting delimiters in the input string
+* [`a81b86`](https://github.com/Oldes/Rebol3/commit/a81b862ad71b5dc095c51a57a0cd1c97b7259a0d) `to word!` accepting delimiters in the input string
+
+## 2021 January
+
+### Features:
+
+* [`102488`](https://github.com/Oldes/Rebol3/commit/102488d30c3a4be94ea9ada3ccb613154c38d7ca) POSIX wildcard support in `read`'s `file` argument
+* [`b83660`](https://github.com/Oldes/Rebol3/commit/b836603cb640e36d5cd1f551b981965f2d721959) Replaced `dir?` mezzanine as a `native!` with optional `/check` refinement
+* [`0f71dd`](https://github.com/Oldes/Rebol3/commit/0f71dd64598a3d0e2502480a5ca5e9988f7ce20b) Macro for getting c-string from a symbol
+* [`65ac08`](https://github.com/Oldes/Rebol3/commit/65ac088a875ab365f196f47e0dd5288e971ad72b) Register `*.key` suffix for SSH keys
+* [`15eaec`](https://github.com/Oldes/Rebol3/commit/15eaec4cf2a9741584b9e93672e4bebe8d080694) Allow to decode `*.crt` files stored in `PKIX` format
+* [`88086a`](https://github.com/Oldes/Rebol3/commit/88086a5dabbd86c8249f6f7ced5dfcb645f0e5ec) Preliminary support for system managed handles
+* [`2cd73c`](https://github.com/Oldes/Rebol3/commit/2cd73c6e3a637cd6c9c99afc3f911df069fc9143) `break/return` now has priority over regular return value from `remove-each`
+* [`355df8`](https://github.com/Oldes/Rebol3/commit/355df845dbb1bdd2062e8609455f312618bdc6c0) Support `map!` in `remove-each`
+* [`1ab00e`](https://github.com/Oldes/Rebol3/commit/1ab00e66004196b8f83deef20b356b1e780e5b64) Improved dealing with automatically collected natives from C sources
+* [`775155`](https://github.com/Oldes/Rebol3/commit/77515519655a579fbef99f7e185a27a4451718d7) Replacing old checksum code with implementations from the Mbed TLS library (including optionally also SHA224, MD4 and RIPE-MD-160 checksums)
+* [`40ddbf`](https://github.com/Oldes/Rebol3/commit/40ddbf368175351817f476bc906ab365bbbd8888) Introducing user defined config file for compile options
+
+  Using INCLUDE_* instead of USE_* definition names for optional parts
+
+### Changes:
+
+* [`0f4d26`](https://github.com/Oldes/Rebol3/commit/0f4d26ce68a891b5ea4045f8a7a64d04d6c5ced8) `REMOVE-EACH` returns the modified series at the argument position as in Rebol2
+
+  Added a `REMOVE-EACH/count` refinement, which toggles `REMOVE-EACH` to returning the removal count.
+
+* [`8f30a4`](https://github.com/Oldes/Rebol3/commit/8f30a41303cd87dd5d250a642089ab55750be7ef) Making `CHECKSUM` more compatible with Red language
+
+  * removed `/method`; now method is always used as second argument
+  * removed `/tcp`; now accessible as: `checksum data 'tcp`
+  * removed `/secure`; now accessible as: `checksum data 'sha1` (`sha1` is not considered as too secure anyway these days)
+  * removed `/hash`; now accessible as: `checksum/with value 'hash 256`
+  * renamed `/key` to `/with`; given `spec` is used as a key for HMAC and or size of hash table
+  
+  Available checksum methods are now listed in: `system/catalog/checksums`
+  
+  Note: checksum port does not support these methods: adler32, crc24, crc32 and tcp
+
+### Fixes:
+
+* [`5060ce`](https://github.com/Oldes/Rebol3/commit/5060cea88b8bbfa67192308dc0c600ea4c780cc6) HTTPD: allow target to be a none in decode-target
+* [`040c9c`](https://github.com/Oldes/Rebol3/commit/040c9c689376dd7b898ea22e944646df7bd18377) POSIX: `query` not handling correctly file names with non ASCII chars
+* [`2d5a75`](https://github.com/Oldes/Rebol3/commit/2d5a759b0b09e7a8b850c62dea25afe77cd79c53) Not possible to read url after failed lookup on posix
+* [`676405`](https://github.com/Oldes/Rebol3/commit/6764052442e161abcb09437d11a846498c72f580) Disposing all handles on exit (so Valgrind doesn't report errors)
+* [`e29986`](https://github.com/Oldes/Rebol3/commit/e299860a2281db57c870aaddcfc2afa7433d3412) Invalid handle's spec offset
+* [`681851`](https://github.com/Oldes/Rebol3/commit/68185158ec4a1bf0c5a9033fa83c8e13deafb7bf) Updated build scripts to be compatible with the recent `CHECKSUM` change
+* [`516dfe`](https://github.com/Oldes/Rebol3/commit/516dfee630e95f458bb51016a8616050635d5b5c) `reword` expecting that maps cannot accept `none` values
+* [`b7118b`](https://github.com/Oldes/Rebol3/commit/b7118b71860c0ede346abe116bfad6707071f936) `foreach` not seeing `none` values in `map!`
+* [`98b806`](https://github.com/Oldes/Rebol3/commit/98b806dcbf864051727b0bb5fde7330f68f6cc9b) Update MIDI device code to use the new option's configuration
+* [`9723d4`](https://github.com/Oldes/Rebol3/commit/9723d43c52caf3fd70d961f6752954ce525d386e) Add missing library dependency for `request-dir` function on Windows
+* [`61ab30`](https://github.com/Oldes/Rebol3/commit/61ab3023ac7bcefa6bbb42d488b70d3a71ca0e32) Avoiding compiler warnings
+* [`a96958`](https://github.com/Oldes/Rebol3/commit/a969582ac6b20daee6699bd7901b0203e91ac8fa) Resolved redefinition warning
+
 ## 2020 December
 
 ### Features:
 
+* [`379072`](https://github.com/Oldes/Rebol3/commit/3790723fb92eab6f0792f7b5b8e55269098a0354) Unified line breaks when converting map to block
 * [`33e013`](https://github.com/Oldes/Rebol3/commit/33e01309018001ac22c992b4c718f3f49accbfb6) Implemented `request-dir` on Windows
 * [`d5efc5`](https://github.com/Oldes/Rebol3/commit/d5efc5ee048f6593d9f23b18acd16f2bb4862c7e) Revisited `delete-dir` function
 * [`6fc873`](https://github.com/Oldes/Rebol3/commit/6fc8732e5309aba4a88b00bdea1381ec49d6db0f) `wildcard` function - returns block of absolute path files filtered using * and ? wildcards.
