@@ -551,17 +551,26 @@ chk_neg:
 	REBVAL *arg = D_ARG(1);
 	REBSER *ser;
 	REBINT n;
-	REBVAL val;
+	REBVAL val, reason;
 
 	ser = Value_To_OS_Path(arg, TRUE);
-	if (!ser) Trap_Arg(arg); // !!! ERROR MSG
+	// it should be safe not to check result from Value_To_OS_Path (it always succeeds)
+	//if (!ser) Trap_Arg(arg); // !!! ERROR MSG
 
 	Set_String(&val, ser); // may be unicode or utf-8
 	Check_Security(SYM_FILE, POL_EXEC, &val);
 
 	n = OS_SET_CURRENT_DIR((void*)ser->data);  // use len for bool
-	if (!n) Trap_Arg(arg); // !!! ERROR MSG
 
+	// convert the full OS path back to Rebol format
+	// used in error or as a result
+	ser = Value_To_REBOL_Path(&val, TRUE);
+	SET_FILE(arg, ser);
+
+	if (NZ(n)) {
+		SET_INTEGER(&reason, n);
+		Trap2(RE_CANNOT_OPEN, arg, &reason);
+	}
 	return R_ARG1;
 }
 

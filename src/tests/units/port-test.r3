@@ -135,6 +135,15 @@ Rebol [
 			not error?      delete-dir %units/temp-dir/
 			not exists? %units/temp-dir/
 		]
+	--test-- "CHANGE-DIR"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2446
+		--assert what-dir = change-dir %.
+		--assert all [
+			error? e: try [change-dir %issues/2446]
+			e/id = 'cannot-open
+			e/arg1 = join what-dir %issues/2446/
+		]
+		
 if system/platform = 'Windows [
 ;@@ it looks that on Linux there is no lock on opened file
 		--assert all [

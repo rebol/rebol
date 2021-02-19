@@ -646,14 +646,14 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 /***********************************************************************
 **
-*/	REBOOL OS_Set_Current_Dir(REBCHR *path)
+*/	int OS_Set_Current_Dir(REBCHR *path)
 /*
-**		Set the current directory to local path. Return FALSE
-**		on failure.
+**		Set the current directory to local path.
+**		Return 0 on success else error number.
 **
 ***********************************************************************/
 {
-	return chdir(path) == 0;
+	return (chdir(path) == 0) ? 0 : errno;
 }
 
 
