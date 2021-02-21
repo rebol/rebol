@@ -39,16 +39,16 @@
 {
 	if (!series) return;
 	Debug_Fmt(
-		Str_Dump[0], //"%s Series %x %s: Wide: %2d Size: %6d - Bias: %d Tail: %d Rest: %d Flags: %x"
+		Str_Dump[0], //"%s Series %x: wide: %2d size: %6d bias: %d tail: %d rest: %d flags: %x \"%s\""
 		memo,
 		series,
-		(SERIES_LABEL(series) ? SERIES_LABEL(series) : "-"),
 		SERIES_WIDE(series),
 		SERIES_TOTAL(series),
 		SERIES_BIAS(series),
 		SERIES_TAIL(series),
 		SERIES_REST(series),
-		SERIES_FLAGS(series)
+		SERIES_FLAGS(series),
+		(SERIES_LABEL(series) ? SERIES_LABEL(series) : "-")
 	);
 }
 
