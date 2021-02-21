@@ -568,8 +568,6 @@ init_pattern:
 
 	file->error = errno;
 	return DR_ERROR;
-
-	return 0;
 }
 
 

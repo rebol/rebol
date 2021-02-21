@@ -642,14 +642,14 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	REBOOL OS_Set_Current_Dir(REBCHR *path)
+*/	int OS_Set_Current_Dir(REBCHR *path)
 /*
-**		Set the current directory to local path. Return FALSE
-**		on failure.
+**		Set the current directory to local path.
+**		Return 0 on success else error number.
 **
 ***********************************************************************/
 {
-	return SetCurrentDirectory( path[0]==0 ? L"\\" : path );
+	return (SetCurrentDirectory(path[0] == 0 ? L"\\" : path)) ? 0 : GetLastError();
 }
 
 

@@ -337,6 +337,11 @@ static int Poll_Default(REBDEV *dev)
 			Signal_Device(req, EVT_ERROR);
 		}
 	}
+	else if (result < 0) {
+		result = req->error;
+		// make sure that we are consistent and error is always negative...
+		if (result > 0) result = -result;
+	}
 
 	return result;
 }

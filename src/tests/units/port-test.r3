@@ -135,6 +135,19 @@ Rebol [
 			not error?      delete-dir %units/temp-dir/
 			not exists? %units/temp-dir/
 		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2447
+		--assert false? try [delete %not-exists/]
+		--assert error? try [delete %/]
+
+	--test-- "CHANGE-DIR"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2446
+		--assert what-dir = change-dir %.
+		--assert all [
+			error? e: try [change-dir %issues/2446]
+			e/id = 'cannot-open
+			e/arg1 = join what-dir %issues/2446/
+		]
+		
 if system/platform = 'Windows [
 ;@@ it looks that on Linux there is no lock on opened file
 		--assert all [
@@ -292,6 +305,27 @@ if system/platform = 'Windows [
 			not error? try [delete %issue-443]
 		]
 
+	--test-- "write/seek"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/552
+		--assert file? write %file-552 to-binary "Hello World!"
+		--assert port? f: open/seek %file-552
+		--assert "Hello World!" = to-string read/seek f 0
+		--assert file? write/seek f to-binary "a" 4  ; In range
+		--assert file? write/seek f to-binary " Goodbye World!" 12  ; Out of range
+		--assert "Hella World! Goodbye World!" = to-string read/seek f 0
+		--assert port? close f
+		try [delete %file-552]
+
+	--test-- "clear file port"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/812
+		--assert file? write %file-812 to-binary "Hello World!"
+		--assert port? f: open %file-812
+		--assert "Hello World!" = to-string read f
+		--assert port? clear f
+		--assert 0 = length? f
+		--assert port? close f
+		try [delete %file-812]
+
 	--test-- "RENAME file"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/446
 		--assert all [
@@ -300,6 +334,19 @@ if system/platform = 'Windows [
 			"test" = read/string %issue-446.txt
 			not error? try [delete %issue-446.txt]
 		]
+	--test-- "DELETE file"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2447
+		--assert false? try [delete %not-exists]
+		; create locked file...
+		p: open %issue-2447
+		; should not be possible to delete it..
+		--assert error? try [delete %issue-2447]
+		; close the file handle...
+		close p
+		; now it may be deleted..
+		--assert  port? try [delete %issue-2447]
+		; validate...
+		--assert not exists? %issue-2447
 
 ===end-group===
 

@@ -216,8 +216,15 @@ Rebol [
 ===end-group===
 
 
-===start-group=== "UNSET in object"
-	--test-- "unset ctx"
+===start-group=== "IN object"
+	--test-- "in ctx paren!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/566
+	--assert "(1 + 1)" = mold in context [] to paren! [1 + 1] ;- no crash
+	--assert 10 = do in context [a: 1 b: 9] to paren! [a + b]
+	a: 500
+	--assert 1500 = do in context [b: 1000] to paren! [a + b]
+
+	--test-- "unset in ctx"
 	ctx: context [a: 1 b: 2 c: 3]
 	--assert unset? unset in ctx 'a
 	--assert unset? unset bind [b c] ctx
