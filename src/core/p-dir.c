@@ -251,8 +251,11 @@ create:
 		// !!! add recursive delete (?)
 		result = OS_DO_DEVICE(&dir, RDC_DELETE);
 		///OS_FREE(dir.file.path);
-		if (result < 0) Trap1(RE_NO_DELETE, path);
-		return R_ARG2;
+		if (result >=  0) return R_ARG2;
+		if (result == -2) return R_FALSE;
+		// else...
+		Trap1(RE_NO_DELETE, path);
+		break;
 
 	case A_OPEN:
 		// !! If open fails, what if user does a READ w/o checking for error?

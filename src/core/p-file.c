@@ -416,6 +416,7 @@ REBINT Mode_Syms[] = {
 	REBREQ *file = 0;
 	REBCNT args = 0;
 	REBCNT len;
+	REBINT result;
 	REBOOL opened = FALSE;	// had to be opened (shortcut case)
 
 	//Print("FILE ACTION: %r", Get_Action_Word(action));
@@ -542,9 +543,13 @@ REBINT Mode_Syms[] = {
 		break;
 
 	case A_DELETE:
-		if (IS_OPEN(file)) Trap1(RE_NO_DELETE, path);
+		if (IS_OPEN(file)) Trap1(RE_NO_DELETE, path); // it's not allowed to delete opened file port
 		Setup_File(file, 0, path);
-		if (OS_DO_DEVICE(file, RDC_DELETE) < 0 ) Trap1(RE_NO_DELETE, path);
+		result = OS_DO_DEVICE(file, RDC_DELETE);
+		if (result >=  0) return R_RET;   // returns port so it can be used in chained evaluation 
+		if (result == -2) return R_FALSE;
+		// else...
+		Trap1(RE_NO_DELETE, path);
 		break;
 
 	case A_RENAME:

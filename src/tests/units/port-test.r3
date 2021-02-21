@@ -135,6 +135,10 @@ Rebol [
 			not error?      delete-dir %units/temp-dir/
 			not exists? %units/temp-dir/
 		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2447
+		--assert false? try [delete %not-exists/]
+		--assert error? try [delete %/]
+
 	--test-- "CHANGE-DIR"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2446
 		--assert what-dir = change-dir %.
@@ -330,6 +334,19 @@ if system/platform = 'Windows [
 			"test" = read/string %issue-446.txt
 			not error? try [delete %issue-446.txt]
 		]
+	--test-- "DELETE file"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2447
+		--assert false? try [delete %not-exists]
+		; create locked file...
+		p: open %issue-2447
+		; should not be possible to delete it..
+		--assert error? try [delete %issue-2447]
+		; close the file handle...
+		close p
+		; now it may be deleted..
+		--assert  port? try [delete %issue-2447]
+		; validate...
+		--assert not exists? %issue-2447
 
 ===end-group===
 
