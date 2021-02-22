@@ -138,16 +138,6 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2447
 		--assert false? try [delete %not-exists/]
 		--assert error? try [delete %/]
-
-	--test-- "CHANGE-DIR"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/2446
-		--assert what-dir = change-dir %.
-		--assert all [
-			error? e: try [change-dir %issues/2446]
-			e/id = 'cannot-open
-			e/arg1 = join what-dir %issues/2446/
-		]
-		
 if system/platform = 'Windows [
 ;@@ it looks that on Linux there is no lock on opened file
 		--assert all [
@@ -168,6 +158,21 @@ if system/platform = 'Windows [
 			]
 		]
 ]
+
+	--test-- "CHANGE-DIR"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2446
+		--assert what-dir = change-dir %.
+		--assert all [
+			error? e: try [change-dir %issues/2446]
+			e/id = 'cannot-open
+			e/arg1 = join what-dir %issues/2446/
+		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2448
+		dir: pwd
+		--assert pwd = to-rebol-file get-env "PWD"
+		change-dir %../
+		--assert pwd = to-rebol-file get-env "PWD"
+		change-dir dir
 
 	--test-- "RENAME dir"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1533
