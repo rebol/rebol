@@ -9,8 +9,8 @@ make/libr3.dll
 make/Rebol3.xcworkspace/
 src/boot/boot-code.reb
 src/boot/host-init.reb
-src/boot/tmp-natives.reb
-src/boot/tmp-symbols.reb
+src/boot/gen-natives.reb
+src/boot/gen-symbols.reb
 src/core/b-boot.c
 src/include/ext-types.h
 src/include/host-*
@@ -19,10 +19,11 @@ src/include/reb-evtypes.h
 src/include/reb-lib-lib.h
 src/include/reb-lib.h
 src/include/reb-types.h
-src/include/tmp-*
+src/include/gen-*
 src/tools/reb-lib-doc.txt
-src/reb-lib-doc.txt
+reb-lib-doc.txt
 src/mezz/base-collected.reb
+src/generated/
 
 src/tests/httpd-root/logs/
 
@@ -146,6 +147,8 @@ UpgradeLog*.XML
 ############
 ## Windows
 ############
+
+* - Copy*
 
 # Windows image file caches
 Thumbs.db

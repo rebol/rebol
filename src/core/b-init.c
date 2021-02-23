@@ -353,6 +353,21 @@ extern const REBYTE Str_Banner[];
 	return R_RET;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(version)
+/*
+//	version: native [
+//		"Return Rebol version string"
+//	]
+***********************************************************************/
+{
+	const REBYTE*version = BOOT_STR(RS_VERSION, 0);
+	Set_String(ds, Copy_Bytes(version, strlen(cs_cast(version))));
+	return R_RET;
+}
+
+
 
 /***********************************************************************
 **

@@ -3,39 +3,19 @@ REBOL [
 	Title: "Generate OS host API headers"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2021 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
 		Licensed under the Apache License, Version 2.0
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-	Author: "Carl Sassenrath"
-	Needs: 2.100.100
+	Author: ["Carl Sassenrath" "Oldes"]
+	Version: 2.0.0
+	Needs: 3.5.0
 ]
 
-do %common.reb
-
-lib-version: version/3
-print ["--- Make OS Ext Lib --- Version:" lib-version]
-
-change-dir append %os/ os-base
-
-files: [
-	%host-lib.c
-	%../host-device.c
-]
-
-switch os-base [
-	win32 [
-		if product = 'view [
-			append files [
-				%host-window.c
-				%host-compositor.c
-				%host-image.c
-			]
-		]
-	]
-]
+context [ ; wrapped to prevent colisions with other build scripts
 
 cnt: 0
 
@@ -117,9 +97,7 @@ func-header: [
 ]
 
 process: func [file] [
-	if verbose [?? file]
-	data: read the-file: file
-	data: deline to-string data ; R3
+	data: read-file file
 	parse/all data [
 		any func-header
 	]
@@ -138,12 +116,7 @@ memit {
 extern	REBOL_HOST_LIB *Host_Lib;
 }
 
-foreach file files [
-	print ["scanning" file]
-	if all [
-		%.c = suffix? file
-	][process file]
-]
+foreach file c-host-files [ process root-dir/:file ]
 
 remit "} REBOL_HOST_LIB;"
 
@@ -194,6 +167,8 @@ mlib
 
 ;print out ;halt
 ;print ['checksum checksum/tcp xsum]
-write %../../include/host-lib.h out
-;ask "Done"
-print "   "
+if cnt > 0 [
+	write-generated root-dir/src/include/host-lib.h out
+]
+
+] ; end of context

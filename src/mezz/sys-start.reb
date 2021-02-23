@@ -19,7 +19,7 @@ REBOL [
 
 start: func [
 	"INIT: Completes the boot sequence. Loads extras, handles args, security, scripts."
-	/local file tmp script-path script-args code
+	/local file tmp script-path script-args code ver
 ] bind [ ; context is: system/options
 
 	;** Note ** We need to make this work for lower boot levels too!
@@ -32,6 +32,14 @@ start: func [
 	boot-level: any [boot-level 'full]
 	start: 'done ; only once
 	init-schemes ; only once
+
+	ver: load/type lib/version 'unbound
+	system/product:        ver/2
+	system/version:        ver/3
+	system/platform:       ver/4
+	system/build/target:   ver/5
+	system/build/compiler: ver/6
+	system/build/date:     ver/7
 
 	;-- Print minimal identification banner if needed:
 	if all [
@@ -78,7 +86,7 @@ start: func [
 	]
 	; version, import, secure are all of valid type or none
 
-	if flags/verbose [print self]
+	;if flags/verbose [print self]
 
 	;-- Boot up the rest of the run-time environment:
 	;   NOTE: this can still be split up into more boot-levels !!!

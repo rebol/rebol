@@ -34,7 +34,7 @@
 #include <errno.h>
 
 typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
-#include "tmp-maketypes.h"
+#include "gen-maketypes.h"
 
 
 /***********************************************************************

@@ -1,0 +1,452 @@
+;~ Siskin project seed file ~;
+name:     %Rebol
+group:    %rebol
+compiler: clang
+strip:    on
+upx:      off
+
+root:     %../
+source:   %src/
+include:  %src/include/
+temp:     %make/tmp/
+output:   %build/
+
+stack-size: 4194300
+optimize:   2
+
+version: 3.5.1
+
+core-files: [
+	%core/a-constants.c
+	%core/a-globals.c
+	%core/a-lib.c
+	%core/b-boot.c
+	%core/b-init.c
+	%core/c-do.c
+	%core/c-error.c
+	%core/c-frame.c
+	%core/c-function.c
+	%core/c-handle.c
+	%core/c-port.c
+	%core/c-task.c
+	%core/c-word.c
+	%core/d-crash.c
+	%core/d-dump.c
+	%core/d-print.c
+	%core/f-blocks.c
+	%core/f-deci.c
+	%core/f-dtoa.c
+	%core/f-enbase.c
+	%core/f-extension.c
+	%core/f-int.c
+	%core/f-math.c
+	%core/f-modify.c
+	%core/f-qsort.c
+	%core/f-random.c
+	%core/f-round.c
+	%core/f-series.c
+	%core/f-stubs.c
+	%core/l-scan.c
+	%core/l-types.c
+	%core/m-gc.c
+	%core/m-pools.c
+	%core/m-series.c
+	;%core/n-audio.c
+	%core/n-control.c
+	%core/n-crypt.c
+	%core/n-data.c
+	;%core/n-draw.c
+	;%core/n-graphics.c
+	;%core/n-image.c         ;optional, use: include-image-natives
+	%core/n-io.c
+	%core/n-loop.c
+	%core/n-math.c
+	%core/n-sets.c
+	%core/n-strings.c
+	%core/n-system.c
+	;%core/p-audio.c
+	%core/p-checksum.c
+	%core/p-clipboard.c
+	%core/p-console.c
+	%core/p-dir.c
+	%core/p-dns.c
+	%core/p-event.c
+	%core/p-file.c
+	%core/p-net.c
+	%core/p-midi.c
+	;%core/p-serial.c
+	;%core/p-timer.c
+	%core/s-cases.c
+	%core/s-crc.c
+	%core/s-file.c
+	%core/s-find.c
+	%core/s-make.c
+	%core/s-mold.c
+	%core/s-ops.c
+	%core/s-trim.c
+	%core/s-unicode.c
+	%core/t-bitset.c
+	%core/t-block.c
+	%core/t-char.c
+	%core/t-datatype.c
+	%core/t-date.c
+	%core/t-decimal.c
+	%core/t-event.c
+	%core/t-function.c
+	%core/t-gob.c
+	%core/t-image.c
+	%core/t-integer.c
+	%core/t-logic.c
+	%core/t-map.c
+	%core/t-money.c
+	%core/t-none.c
+	%core/t-object.c
+	%core/t-pair.c
+	%core/t-port.c
+	%core/t-string.c
+	;%core/t-struct.c
+	%core/t-time.c
+	%core/t-tuple.c
+	%core/t-typeset.c
+	%core/t-utype.c
+	%core/t-vector.c
+	%core/t-word.c
+	%core/u-aes.c
+	%core/u-bigint.c ;needed for RSA which is needed in TLS protocol (HTTPS)
+	;%core/u-bmp.c         ;optional, use: include-native-bmp-codec
+	%core/u-bincode.c
+	%core/u-chacha20.c
+	%core/u-compress.c
+	%core/u-dh.c
+	%core/u-dialect.c
+	;%core/u-gif.c          ;optional, use: include-native-gif-codec
+	%core/u-iconv.c
+	;%core/u-image-resize.c ;optional, use: include-image-natives
+	;%core/u-jpg.c          ;optional, use: include-native-jpg-codec
+	;%core/u-lzma.c         ;optional, use: include-lzma-compression
+	%core/u-parse.c
+	;%core/u-png.c          ;optional, use: include-native-png-codec
+	%core/u-poly1305.c
+	%core/u-rc4.c
+	%core/u-rsa.c
+	%core/u-uECC.c
+	%core/u-zlib.c
+	;%core/u-wav.c          ;optional, use: include-native-wav-codec
+
+	%core/u-mbedtls.c
+	%core/mbedtls/platform.c
+	%core/mbedtls/platform_util.c
+	%core/mbedtls/ripemd160.c
+	%core/mbedtls/sha1.c
+	%core/mbedtls/sha256.c
+	%core/mbedtls/sha512.c
+	%core/mbedtls/md4.c
+	%core/mbedtls/md5.c
+
+	; deprecated checksum implementations replaced by mbedtls
+	;%core/deprecated/u-sha1.c
+	;%core/deprecated/u-sha2.c
+	;%core/deprecated/u-md5.c
+]
+
+host-files: [
+	%os/host-main.c
+	%os/host-args.c
+	%os/host-device.c
+	%os/host-stdio.c
+	%os/dev-net.c
+	%os/dev-dns.c
+	;%os/dev-checksum.c
+	;%os/host-ext-sokol.c
+	;%os/host-view.c
+	#if Windows? [
+		%os/win32/host-lib.c
+		%os/win32/dev-stdio.c
+		%os/win32/dev-file.c
+		%os/win32/dev-event.c
+		%os/win32/dev-clipboard.c
+		;%os/win32/dev-audio.c
+		;%os/win32/dev-serial.c
+		;%os/win32/host-event.c
+		;%os/win32/host-window.c
+		;%os/win32/host-graphics.c
+		;%os/win32/host-compositor.c
+	]
+	#if Posix? [
+		%os/posix/host-lib.c
+		%os/posix/host-readline.c
+		;%os/posix/host-window.c
+		%os/posix/dev-file.c
+		%os/posix/dev-stdio.c
+		%os/posix/dev-event.c
+		;%os/posix/dev-serial.c
+	]
+]
+
+host-files-view: [
+	#if Windows? [
+		%os/win32/sys-utils.c
+		%os/win32/sys-codecs.cpp
+		%os/win32/sys-d2d.cpp
+		%os/win32/host-image.c
+		;%win32/sys-codecs-ini.c
+
+		%os/win32/host-event.c
+		%os/win32/host-window.c
+		;%os/win32/host-graphics.c
+		%os/win32/host-compositor.c
+	]
+]
+
+config: [ ;- this is list of configuration (optional) defines
+	INCLUDE_MBEDTLS ;- replaced original checksum implementations
+
+	;*** Unfinished features **************************************************/
+	;INCLUDE_TASK    ;- tasks are not implemented yet, so include it only on demand
+
+	;*** Other (not recommanded) options **************************************/
+	;HAS_WIDGET_GOB  ;- used in t-gob.c
+	;EXCLUDE_CHACHA20POLY1305 ; don't include chacha20 and poly1305 cipher/authentication code
+	;USE_EMPTY_HASH_AS_NONE   ; a single # means NONE, else error; Used in l-scan.c file
+	;DO_NOT_NORMALIZE_MAP_KEYS
+	;	 with above define you would get:
+	;		[a b:]     = keys-of make map! [a 1 b: 2]
+	;		[a 1 b: 2] = body-of make map! [a 1 b: 2]
+	;	
+	;	 else:
+	;		[a b]       = keys-of make map! [a 1 b: 2]
+	;		[a: 1 b: 2] = body-of make map! [a 1 b: 2]
+
+	;FORCE_ANSI_ESC_EMULATION_ON_WINDOWS  ; would not try to use MS' built-in VIRTUAL_TERMINAL_PROCESSING
+	;EXCLUDE_VECTOR_MATH  ; don't include vector math support (like: 3 * #[vector! integer! 8 3 [1 2 3]]); Used in t-vector.c file
+	;WRITE_ANY_VALUE_TO_CLIPBOARD ; https://github.com/Oldes/Rebol-issues/issues/1619
+
+	;SERIES_LABELS ; used for special debug purposes
+	;SHOW_SIZEOFS  ; for debugging ports to some new systems
+	;NDEBUG        ; removes some asserts
+	;TEST_SCAN
+	;_DEBUG
+
+	;*** Memory pool special defines (were not used!) *************************/
+	; these were found in sources, but never actually used...
+	;CHAFF    ; Fill series data to crash old references (crashes at start, so hard to say, if it's ok)
+	;MUNGWALL ; "MungWall"-style sentinels for REBNODEs (missing Mung_Check function, not ok!) Amiga only?
+]
+
+include-native-bmp-codec: [config: INCLUDE_BMP_CODEC core-files: %core/u-bmp.c]
+include-native-png-codec: [config: INCLUDE_PNG_CODEC core-files: %core/u-png.c]
+include-native-jpg-codec: [config: INCLUDE_JPG_CODEC core-files: %core/u-jpg.c]
+include-native-gif-codec: [config: INCLUDE_GIF_CODEC core-files: %core/u-gif.c]
+;@@ on Windows it's better to use system image codec
+include-image-os-codec: [
+	#if Windows? [config: USE_OS_IMAGE_CODECS] ;@@ rename?
+]
+
+include-image-natives: [
+	; image related native functions like:
+	;	hsv-to-rgb, rgb-to-hsv, tint, resize, premultiply
+	; on Windows also: image as common entry to os image codec (if enabled)
+	config: INCLUDE_IMAGE_NATIVES
+	core-files: %core/n-image.c
+	core-files: %core/n-image-resize.c
+]
+
+include-optional-checksums: [
+	config: INCLUDE_MD4        ; checksum: MD4 (unsecure)
+	config: INCLUDE_RIPEMD160  ; checksum: RIPE-MD-160 (requires INCLUDE_MBEDTLS)
+	config: INCLUDE_SHA224
+	config: INCLUDE_SHA384
+]
+
+include-lzma-compression: [
+	config: INCLUDE_LZMA
+	core-files: %core/u-lzma.c
+]
+
+include-base85-encoding: [
+	; adds support for enbase/debase with base 85 (ASCII85)
+	config: INCLUDE_BASE85
+]
+
+include-view: [
+	; currently only on Windows!
+	host-files: :host-files-view
+	#if Windows? [
+		define: REB_VIEW
+		:include-image-os-codec
+		libraries: [
+			%Gdi32
+			%Msimg32                   ;- for AlphaBlend
+			%Ole32 %OleAut32 %Comctl32 ;- for native widgets & COM access
+			%UxTheme                   ;- used for visual defaults
+			%opengl32 %glu32           ;- OpenGL
+			;%Shell32         ;- for drag and drop (DragQueryPoint, DragQueryFileW, DragFinish, DragAcceptFiles)
+		]
+	]
+]
+
+include-test-extension: [
+	host-files: %os/host-ext-test.c
+	config:     TEST_EXTENSIONS ;@@TODO: rename!
+]
+
+include-native-wav-codec: [
+	; native WAV codec was just a prove of concept, don't use it
+	; there is more feature full Rebol implementation instead
+	core-files: %core/u-wav.c
+	config:     INCLUDE_WAV_CODEC
+]
+
+include-midi: [
+	#if Windows? [
+		host-files: %os/win32/dev-midi.c
+		config:     INCLUDE_MIDI_DEVICE
+		library:    %winmm
+	]
+	#if macOS? [
+		config:  INCLUDE_MIDI_DEVICE
+	]
+	#if Linux? [
+		; there is no support yet
+	]
+]
+
+all-includes: [
+	:include-optional-checksums
+	:include-image-os-codec
+	:include-image-natives
+	:include-lzma-compression
+	:include-base85-encoding
+	:include-view
+	:include-midi
+	;- for tests:
+	;:include-test-extension
+	;- not recommanded:
+	;:include-native-wav-codec
+]
+
+common: [
+	files: :core-files
+	clean: %core/b-init.c ;make-boot.reb modifies embedded native code, so b-init.c must be always recompiled
+	clean: %core/b-boot.c
+
+	define: :config
+
+	;cflags: [-ffast-math]
+
+	#if Windows? [
+		libraries: [
+			%User32
+			%wsock32 
+			%comdlg32 ;- for GetOpenFileName and GetSaveFileName (request-file)
+			%Shell32  ;- for the win32 unicoded program arguments & drag and drop in View
+			;%Ntdll   ;- for IsWindows*OrGreater functions
+			%Ole32
+			;%m
+		]
+		defines: ENDIAN_LITTLE
+		defines: [UNICODE _UNICODE]
+		defines: _CRT_SECURE_NO_WARNINGS
+	]
+	#if-macOS [
+		library: %m
+		defines: ENDIAN_LITTLE
+		defines: USE_OLD_PIPE
+	]
+	#if-Linux [
+		library: %m
+		defines: ENDIAN_LITTLE
+	]
+]
+
+common-host: [
+	files: :host-files
+	#if Windows? [
+		flag:     mconsole
+		;flag:    mwindows define: _WINDOWS
+		library:  %Advapi32 ;- needed for OS_Browse
+		resource: %make/r3.rc
+	]
+	;#if Posix []
+	#if Linux? [
+		flag: -fvisibility=hidden
+		flag: -fPIC       ; position independent (used for libs)
+	]
+]
+
+arch-x64: [
+	arch: x64
+	define: _FILE_OFFSET_BITS=64
+	#if-Linux [
+		library: %dl
+		defines: TO_LINUX_X64
+		defines: __LP64__ ; has long (integer) 64 bits
+	]
+	#if Windows? [
+		defines: TO_WIN32_X64
+		defines: _WIN32
+		defines: __LLP64__
+	]
+]
+arch-x86: [
+	arch: x86
+	#if Linux? [
+		library: %dl
+		defines: TO_LINUX_X86
+	]
+	#if Windows? [
+		resource-options: "--target=pe-i386"
+		defines: TO_WIN32
+	]
+]
+
+;-------------------------------------------------------------------------------
+;- Action definitions (experimantal so far!)                                    
+;-------------------------------------------------------------------------------
+probe-spec: action ["Probe current spec structure"][do [? spec]]
+pre-make:   action ["Pre-make headers and boot code"][
+	do %make/pre-make.r3 "$TEMP_SEED_SPEC"
+]
+
+;-------------------------------------------------------------------------------
+;- List of all possible compilation targets                                     
+;-------------------------------------------------------------------------------
+targets: [
+	#if Windows? [
+		"Pre-make (base)" [
+			pre-make
+		]
+		"Pre-make (all included)" [
+			:all-includes
+			pre-make
+		]
+		"Rebol Win-x86 exe" [
+			target: x86-win32
+			name: %rebol3-x86-core
+			compiler: gcc
+			:common
+			:common-host
+			:arch-x86
+			defines: [REB_EXE]
+		]
+	]
+]
+
+
+;-------------------------------------------------------------------------------
+;- optional settings:                                                           
+;-------------------------------------------------------------------------------
+
+clang-size-optimization: [
+	;flags:  [-flto -fuse-ld=lld] ;<- /manifestdependency: is not allowed in .drectve error :-(
+]
+
+gcc-size-optimization: [
+	;- for minimal size:
+	;@@ https://interrupt.memfault.com/blog/code-size-optimization-gcc-flags
+	flags:   -O2   ;@@ using -Os leads to compilation errors (too drastic optimizations somewhere)
+	flags:   -flto ; link time optimization
+	cflags: [-ffunction-sections -fdata-sections]
+	lflags: "-Wl,--gc-sections"
+]
+

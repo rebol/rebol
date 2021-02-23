@@ -3,6 +3,7 @@ REBOL [
 	Title: "Build REBOL 3.0 boot extension module"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2021 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -10,18 +11,15 @@ REBOL [
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
 	Author: "Carl Sassenrath"
-	Needs: 2.100.100
+	Version: 2.0.0
+	Needs: 3.5.0
 	Purpose: {
 		Collects host-kit extension modules and writes them out
 		to a .h file in a compilable data format.
 	}
 ]
 
-print "--- Make Host Boot Extension ---"
-
-secure none
-do %common.reb
-
+context [ ; wrapped to prevent colisions with other build scripts
 ;-- Conversion to C strings, depending on compiler ---------------------------
 
 to-cstr: either system/version/4 = 3 [
@@ -65,9 +63,8 @@ collect-files: func [
 	/local source data header
 ][
 	source: make block! 1000
-
 	foreach file files [
-		data: load/all file
+		data: load/all root-dir/:file
 		remove-each [a b] data [issue? a] ; commented sections
 		unless block? header: find data 'rebol [
 			print ["Missing header in:" file] halt
@@ -147,7 +144,7 @@ emit-file: func [
 	emit ["const unsigned char RX_" name "[] = {^/" to-cstr data "^/};^/^/"]
 	emit "#endif^/"
 
-	write rejoin [%include/ file %.h] out
+	write-generated rejoin [root-dir %src/include/ file %.h] out
 
 ;	clear out
 ;	emit form-header/gen join title " - Module Initialization" second split-path file %make-host-ext.r
@@ -157,8 +154,8 @@ emit-file: func [
 ;-- Create Files -------------------------------------------------------------
 
 emit-file %host-ext-window [
-	%boot/window.reb
-	%mezz/view-funcs.reb
+	%src/boot/window.reb
+	%src/mezz/view-funcs.reb
 ]
 
 ;;emit-file %host-ext-graphics [
@@ -177,5 +174,4 @@ emit-file %host-ext-window [
 ;;emit-file %host-ext-text [
 ;;	%boot/text.reb
 ;;]
-
-print "[DONE host-ext]^/"
+] ; end of context

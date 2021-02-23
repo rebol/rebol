@@ -1,1 +1,0 @@
-Executables in this folder are supposed to be used only for compiler's preprocession!

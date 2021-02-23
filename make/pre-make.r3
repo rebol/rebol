@@ -1,0 +1,199 @@
+REBOL [
+	System: "REBOL [R3] Language Interpreter and Run-time Environment"
+	Title: "Generate headers and boot code"
+	Rights: {
+		Copyright 2012 REBOL Technologies
+		Copyright 2012-2021 Rebol Open Source Contributors
+		REBOL is a trademark of REBOL Technologies
+	}
+	License: {
+		Licensed under the Apache License, Version 2.0
+		See: http://www.apache.org/licenses/LICENSE-2.0
+	}
+	Author: "Oldes"
+	Needs: 3.5.0
+	Note: {
+		This script is comilation of multiple original Carl's make-* scripts.
+	}
+]
+
+secure [ file allow ]
+
+do %tools/form-header.reb
+do %tools/utils.reb
+
+spec-file: try/except [
+	to-rebol-file first system/options/args
+][ clean-path %spec-core.reb ]
+
+unless 'file = exists? spec-file [
+	error "Spec file not found!"
+	quit
+]
+
+print-info ["Using spec file:" as-yellow to-local-file spec-file ]
+spec: load spec-file
+
+;-- Options:
+verbose: off
+
+c-core-files:  spec/core-files
+c-host-files:  spec/host-files
+
+;@@ TODO: vygenerovat get-config.h a ten pouzit misto opt-config.h
+;@@+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+switch system/platform [
+	Windows [ if block? spec/host-files-win32 [append c-host-files spec/host-files-win32] ]
+]
+
+assert [
+	block? c-core-files not empty? c-core-files
+	block? c-host-files not empty? c-host-files
+]
+
+if file? src-dir: dirize spec/source [
+	forall c-core-files [insert c-core-files/1 src-dir]
+	forall c-host-files [insert c-host-files/1 src-dir]
+]
+
+version:  any [spec/version 3.5.0]
+platform: any [spec/platform system/platform]
+target:   any [spec/target spec/os-target spec/configuration]
+os-base:  'win32
+product:  any [spec/product 'Core]
+
+unless target [
+	; if configuration is not fully provided, try to compose it
+	; EXAMPLES:
+	;	x86_64-linux-musl
+	;	ppc-apple-darwin
+	;
+	; list of LLVM (6) targets/archs:
+	;    aarch64    - AArch64 (little endian)
+	;    aarch64_be - AArch64 (big endian)
+	;    amdgcn     - AMD GCN GPUs
+	;    arm        - ARM
+	;    arm64      - ARM64 (little endian)
+	;    armeb      - ARM (big endian)
+	;    bpf        - BPF (host endian)
+	;    bpfeb      - BPF (big endian)
+	;    bpfel      - BPF (little endian)
+	;    hexagon    - Hexagon
+	;    lanai      - Lanai
+	;    mips       - Mips
+	;    mips64     - Mips64 [experimental]
+	;    mips64el   - Mips64el [experimental]
+	;    mipsel     - Mipsel
+	;    msp430     - MSP430 [experimental]
+	;    nvptx      - NVIDIA PTX 32-bit
+	;    nvptx64    - NVIDIA PTX 64-bit
+	;    ppc32      - PowerPC 32
+	;    ppc64      - PowerPC 64
+	;    ppc64le    - PowerPC 64 LE
+	;    r600       - AMD GPUs HD2XXX-HD6XXX
+	;    sparc      - Sparc
+	;    sparcel    - Sparc LE
+	;    sparcv9    - Sparc V9
+	;    systemz    - SystemZ
+	;    thumb      - Thumb
+	;    thumbeb    - Thumb (big endian)
+	;    x86        - 32-bit X86: Pentium-Pro and above
+	;    x86-64     - 64-bit X86: EM64T and AMD64
+	;    xcore      - XCore
+	target: form any [
+		; i686, x86_64, amd64, arm ...
+		all [word? spec/arch          spec/arch       ]
+		all [word? spec/target-arch   spec/target-arch]
+		all [word? spec/build-type    spec/build-type ]
+		all [word? spec/cpu           spec/cpu        ]
+	]
+	if vendor: any [
+		;pc, apple, nvidia, ibm, etc.
+		all [word? spec/vendor        spec/vendor       ]
+		all [word? spec/manufacturer  spec/manufacturer ]
+	][
+		append append target #"-" vendor
+	]
+	if sys: any [spec/target-sys spec/kernel][
+		;none, linux, win32, darwin, cuda, etc.
+		append append target #"-" sys
+	]
+	if abi: any [spec/target-abi spec/abi][
+		;eabi, gnu, android, macho, elf, etc.
+		append append target #"-" abi
+	]
+]
+;"Rebol Core 4.0.0 Windows x86_64 msvc-19 20-Feb-2021/17:31"
+;"Rebol Core 4.0.0 Linux x86_64-linux-gnu gcc 20-Feb-2021/17:31"
+;"Rebol Core 4.0.0 Linux x86_64-linux-musl gcc 20-Feb-2021/17:31"
+;"Rebol Core 4.0.0 Linux arm-linux-gnueabihf gcc 20-Feb-2021/17:31
+build-date: now/date
+build-time: now/time build-time/second: 0
+build-date/time: build-time
+
+str-version: reform [
+	"Rebol" ; probably always same
+	product  ; like Core, View, etc...
+	version  ; triple value product version
+	platform ; Linux, Windows, macOS, Android...
+	target
+	any [all [word? spec/compiler spec/compiler]] ; gcc, clang, msvc...
+	build-date
+]
+
+ver3: version ver3/4: none ; trimmed version to just 3 parts
+lib-version: version/1
+
+protect [spec version c-core-files c-host-files]
+
+root-dir: spec/root
+
+;change-dir root-dir
+
+; Output directory for generated files:
+make-dir gen-dir: root-dir/src/generated
+
+;------------------------------------------------------------------------------
+print-title ["[1/6]" as-red "Building Rebol headers"]
+do %tools/make-headers.reb
+
+;------------------------------------------------------------------------------
+print-title ["[2/6]" as-red "Make primary boot files" ]
+do %tools/make-boot.reb
+
+;------------------------------------------------------------------------------
+print-title ["[3/6]" as-red "Make Host Init Code"]
+; Options:
+include-vid: off
+; Files to include in the host program:
+files: [
+;	%mezz/prot-http.reb ;- included in core! (boot-files.reb)
+;	%mezz/view-colors.reb
+]
+vid-files: [
+	%mezz/dial-draw.reb
+	%mezz/dial-text.reb
+	%mezz/dial-effect.reb
+	%mezz/view-funcs.reb
+	%mezz/vid-face.reb
+	%mezz/vid-events.reb
+	%mezz/vid-styles.reb
+	%mezz/mezz-splash.reb
+]
+if include-vid [append files vid-files]
+do %tools/make-host-init.reb
+
+;------------------------------------------------------------------------------
+print-title ["[4/6]" as-red "Make Host Boot Extension"]
+do %tools/make-host-ext.reb
+
+;------------------------------------------------------------------------------
+print-title ["[5/6]" as-red "Make OS Library Extension"]
+do %tools/make-os-ext.reb
+
+;------------------------------------------------------------------------------
+print-title ["[6/6]" as-red "Make Reb-Lib Headers" ]
+do %tools/make-reb-lib.reb
+
+print-title "DONE"

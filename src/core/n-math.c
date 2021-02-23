@@ -28,7 +28,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
-#include "tmp-comptypes.h"
+#include "gen-comptypes.h"
 #include "sys-deci-funcs.h"
 
 #include <math.h>

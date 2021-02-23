@@ -51,14 +51,19 @@ if #"/" <> first system/options/home [
 
 sys/boot-banner: make-banner [
 	-
-	["REBOL 3." system/version/2 #"." system/version/3 " (Oldes branch)"]
+	["REBOL " system/version " (Oldes branch)"]
 	-
 	= Copyright: "2012 REBOL Technologies"
 	= "" "2012-2021 Rebol Open Source Contributors"
 	= "" "Apache 2.0 License, see LICENSE."
 	= Website:  "https://github.com/Oldes/Rebol3"
 	-
-	= Platform: [ajoin [system/platform " (" system/build/os ")"]]
+	= Platform: [
+		ajoin [
+			system/platform " | " system/build/target
+			any [all [system/build/compiler join " | " system/build/compiler] ()]
+		]
+	]
 	= Build:    system/build/date
 	-
 	= Home:     [to-local-file system/options/home]

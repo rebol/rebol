@@ -3,6 +3,7 @@ REBOL [
 	Title: "Make REBOL host initialization code"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2021 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -10,8 +11,8 @@ REBOL [
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
 	Package: "REBOL 3 Host Kit"
-	Version: 1.1.1
-	Needs: 2.100.100
+	Version: 2.0.0
+	Needs: 3.5.0
 	Author: "Carl Sassenrath"
 	Purpose: {
 		Build a single init-file from a collection of scripts.
@@ -19,33 +20,7 @@ REBOL [
 	}
 ]
 
-print "--- Make Host Init Code ---"
-;print ["REBOL version:" system/version]
-
-do %common.reb
-
-; Options:
-include-vid: off
-
-; Files to include in the host program:
-files: [
-;	%mezz/prot-http.reb ;- included in core! (boot-files.reb)
-;	%mezz/view-colors.reb
-]
-
-vid-files: [
-	%mezz/dial-draw.reb
-	%mezz/dial-text.reb
-	%mezz/dial-effect.reb
-	%mezz/view-funcs.reb
-	%mezz/vid-face.reb
-	%mezz/vid-events.reb
-	%mezz/vid-styles.reb
-	%mezz/mezz-splash.reb
-]
-
-if include-vid [append files vid-files]
-
+context [ ; wrapped to prevent colisions with other build scripts
 ;** Utility Functions **************************************************
 
 out: make string! 100000
@@ -59,40 +34,6 @@ emit-head: func [title file] [
 emit-end: func [/easy] [
 	if not easy [remove find/last out #","]
 	append out {^};^/}
-]
-
-; Convert binary to C code depending on the compiler requirements.
-; (Some compilers cannot create long string concatenations.)
-binary-to-c: either system/version/4 = 3 [
-	; Windows MSVC 6 compatible format (as integer chars):
-	func [comp-data /local out] [
-		out: make string! 4 * (length? comp-data)
-		forall comp-data [
-			out: insert out reduce [to-integer first comp-data ", "]
-			if zero? ((index? comp-data) // 10) [out: insert out "^/^-"]
-		]
-		;remove/part out either (pick out -1) = #" " [-2][-4]
-		head out
-	]
-][
-	; Other compilers (as hex-escaped char strings "\x00"):
-	func [comp-data /local out] [
-		out: make string! 4 * (length? comp-data)
-		forall comp-data [
-			data: copy/part comp-data 16
-			comp-data: skip comp-data 15
-			data: enbase-16 data
-			forall data [
-				insert data "\x"
-				data: skip data 3
-			]
-			data: tail data
-			insert data {"^/}
-			append out {"}
-			append out head data
-		]
-		head out
-	]
 ]
 
 ;** Main Functions *****************************************************
@@ -115,7 +56,7 @@ write-c-file: func [
 	insert data reduce ["; Copyright REBOL Technologies " now newline]
 	insert tail data make char! 0 ; zero termination required
 
-	write temp-dir/tmp-host-init.reb data
+	write-generated gen-dir/gen-host-init.reb data
 
 	comp-data: compress data
 	comp-size: length? comp-data
@@ -129,8 +70,7 @@ write-c-file: func [
 	emit binary-to-c comp-data
 	emit-end/easy
 
-	print ["writing" c-file]
-	write c-file to-binary out
+	write-generated c-file to-binary out
 ;	write h-file to-binary reform [
 ;		form-header "Host custom init header" second split-path h-file newline  
 ;		"#define REB_INIT_SIZE" comp-size newline
@@ -138,8 +78,7 @@ write-c-file: func [
 ;	]
 
 	;-- Output stats:
-	print [
-		newline
+	print-info [
 		"Compressed" length? data "to" comp-size "bytes:"
 		to-integer (comp-size / (length? data) * 100)
 		"percent of original"
@@ -163,9 +102,9 @@ load-files: func [
 			file: compose/deep [
 				import module
 				[
-					title: (header/title)
+					title:   (header/title)
 					version: (header/version)
-					name: (header/name)
+					name:    (header/name)
 				][
 					(file)
 				]
@@ -179,8 +118,7 @@ load-files: func [
 
 code: load-files files
 
-save %boot/host-init.reb code
+save-generated gen-dir/gen-host-init.reb code
+write-c-file root-dir/src/include/host-init.h code
 
-write-c-file %include/host-init.h code
-
-print "[DONE host-init]^/"; (separate the output for build watch window)
+] ; end of context

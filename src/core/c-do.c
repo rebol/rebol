@@ -62,7 +62,7 @@ void T_List(REBCNT n) {;}		// list
 
 void Do_Rebcode(REBVAL *v) {;}
 
-#include "tmp-evaltypes.h"
+#include "gen-evaltypes.h"
 
 #define EVAL_TYPE(val) (Eval_Type_Map[VAL_TYPE(val)])
 
