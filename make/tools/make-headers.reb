@@ -222,7 +222,7 @@ context [
 
 	emit-header "Function Prototypes" %funcs.h
 
-	foreach file c-core-files [ process root-dir/:file ] 
+	foreach file c-core-files [ process file ] 
 
 	symbols: sort unique symbols ;contains all symbols (like: SYM_CALL) used in above processed C files (without the SYM_ part)
 	assert [not empty? symbols]

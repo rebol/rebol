@@ -34,9 +34,14 @@
 
 #include "reb-codec.h"
 #include "sys-magick.h" // used for `resize` native
-#if defined(TO_WINDOWS) && defined(USE_OS_IMAGE_CODECS)
+#if defined(TO_WINDOWS) && defined(INCLUDE_IMAGE_OS_CODEC)
 #include "winerror.h" // used for WINCODEC_ERR_COMPONENTNOTFOUND
 #endif
+
+#ifndef WINCODEC_ERR_COMPONENTNOTFOUND
+#define WINCODEC_ERR_COMPONENTNOTFOUND   0x88982F50L
+#endif
+
 
 typedef struct REBCLR {
 	union {
@@ -373,7 +378,7 @@ typedef struct REBCLR {
 	REBCNT length;
 
 
-#if defined(TO_WINDOWS) && defined(USE_OS_IMAGE_CODECS)
+#if defined(TO_WINDOWS) && defined(INCLUDE_IMAGE_OS_CODEC)
 	CLEARS(&codi);
 	if (ref_as) {
 		switch (VAL_WORD_CANON(val_type)) {

@@ -37,31 +37,80 @@ spec: load spec-file
 ;-- Options:
 verbose: off
 
-c-core-files:  spec/core-files
-c-host-files:  spec/host-files
+root-dir:        spec/root
+c-core-files:    spec/core-files
+c-host-files:    spec/host-files
+mezz-base-files: spec/mezz-base-files
+mezz-sys-files:  spec/mezz-sys-files
+mezz-lib-files:  spec/mezz-lib-files
+mezz-prot-files: spec/mezz-prot-files
+boot-host-files: spec/boot-host-files
 
-;@@ TODO: vygenerovat get-config.h a ten pouzit misto opt-config.h
-;@@+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;either file? boot-script [
+;	if #"/" <> first boot-script [boot-script: join root-dir boot-script]
+;	unless exists? boot-script [
+;		print-error ["Boot script not found:" as-red boot-script]
+;		quit/return 3
+;	]
+;][
+;	if boot-script [
+;		print-error ["Boot script must be a file, but is:" as-red boot-script]
+;		quit/return 3
+;	]
+;]
+
 
 switch system/platform [
 	Windows [ if block? spec/host-files-win32 [append c-host-files spec/host-files-win32] ]
 ]
 
+
 assert [
-	block? c-core-files not empty? c-core-files
-	block? c-host-files not empty? c-host-files
+	block? c-core-files
+	block? c-host-files
+	not empty? c-core-files
+	not empty? c-host-files
+	block? mezz-base-files
+	block? mezz-sys-files
+	block? mezz-lib-files
+	block? mezz-prot-files
 ]
 
-if file? src-dir: dirize spec/source [
-	forall c-core-files [insert c-core-files/1 src-dir]
-	forall c-host-files [insert c-host-files/1 src-dir]
+absolutize-path: func[file][
+	if #"/" <> first file/1 [insert file src-dir]
+	file
 ]
+src-dir: dirize spec/source
+if #"/" <> first src-dir [src-dir: join spec/root src-dir]
+
+if file? src-dir [
+	forall c-core-files    [absolutize-path c-core-files/1]
+	forall c-host-files    [absolutize-path c-host-files/1]
+	forall mezz-base-files [absolutize-path mezz-base-files/1]
+	forall mezz-sys-files  [absolutize-path mezz-sys-files/1]
+	forall mezz-lib-files  [absolutize-path mezz-lib-files/1]
+	forall mezz-prot-files [absolutize-path mezz-prot-files/1]
+]
+
+c-core-files: unique c-core-files
+c-host-files: unique c-host-files
+
+mezz-files: reduce [
+	;Boot Mezzanine Functions
+	unique mezz-base-files
+	unique mezz-sys-files
+	unique mezz-lib-files
+	unique mezz-prot-files
+]
+
 
 version:  any [spec/version 3.5.0]
 platform: any [spec/platform system/platform]
 target:   any [spec/target spec/os-target spec/configuration]
 os-base:  'win32
 product:  any [spec/product 'Core]
+configs:  unique any [spec/config copy []]
+
 
 unless target [
 	; if configuration is not fully provided, try to compose it
@@ -145,9 +194,7 @@ str-version: reform [
 ver3: version ver3/4: none ; trimmed version to just 3 parts
 lib-version: version/1
 
-protect [spec version c-core-files c-host-files]
-
-root-dir: spec/root
+protect [spec version c-core-files c-host-files mezz-files configs]
 
 ;change-dir root-dir
 

@@ -121,8 +121,8 @@ These are now obsolete (as of A107) and should be removed:
 #ifdef REB_VIEW
 #define HAS_WIDGET_GOB			// supports it
 // use native image codecs only in VIEW version so far
-#if !defined(USE_OS_IMAGE_CODECS)
-#define USE_OS_IMAGE_CODECS
+#if !defined(INCLUDE_IMAGE_OS_CODEC)
+#define INCLUDE_IMAGE_OS_CODEC
 #undef	INCLUDE_BMP_CODEC
 #undef	INCLUDE_PNG_CODEC
 #undef	INCLUDE_GIF_CODEC

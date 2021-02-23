@@ -46,11 +46,8 @@ write-c-file: func [
 	;print "writing C code..."
 	emit-head "Host custom init code" c-file
 
-	data: either system/version > 2.7.5 [
-		mold/flat/only/all code ; crashes 2.7
-	][
-		mold/only/all code
-	]
+	data: mold/flat/only/all code
+
 	append data newline ; BUG? why does MOLD not provide it?
 
 	insert data reduce ["; Copyright REBOL Technologies " now newline]
@@ -94,8 +91,7 @@ load-files: func [
 	data: make block! 100
 	;append data [print "REBOL Host-Init"] ; for startup debug only
 	foreach file file-list [
-		print ["loading:" file]
-		file: load/header file
+		file: load-file/header file
 		header: file/1
 		remove file
 		if header/type = 'module [
@@ -116,7 +112,8 @@ load-files: func [
 	data
 ]
 
-code: load-files files
+code: load-files boot-host-files
+;probe code
 
 save-generated gen-dir/gen-host-init.reb code
 write-c-file root-dir/src/include/host-init.h code

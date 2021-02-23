@@ -347,8 +347,7 @@ write-generated inc/gen-comptypes.h out
 
 emit-head "Datatype Definitions" %reb-types.h
 
-emit [
-{
+emit {
 /***********************************************************************
 **
 */	enum REBOL_Types
@@ -358,7 +357,6 @@ emit [
 ***********************************************************************/
 ^{
 }
-]
 
 datatypes: []
 n: 0
@@ -444,12 +442,11 @@ foreach :rxt-record ext-types [
 
 emit-head "Extension Types (Isolators)" %ext-types.h
 
-emit [
-{
+emit {
 enum REBOL_Ext_Types
 ^{
 }
-]
+
 n: 0
 foreach :rxt-record ext-types [
 	either integer? offset [
@@ -545,15 +542,13 @@ write-generated inc/gen-exttypes.h out
 
 emit-head "Boot Definitions" %bootdefs.h
 
-emit [
-{
+emit [{
 #define REBOL_VER } any [version/1 0] {
 #define REBOL_REV } any [version/2 0] {
 #define REBOL_UPD } any [version/3 0] {
 #define REBOL_SYS } any [version/4 0] {
 #define REBOL_VAR } any [version/5 0] {
-}
-]
+}]
 
 ;-- Generate Lower-Level String Table ----------------------------------------
 
@@ -898,32 +893,24 @@ emit-end
 write-generated inc/gen-portmodes.h out
 
 ;----------------------------------------------------------------------------
-;- Load Boot Mezzanine Functions - Base, Sys, and Plus                       
+;- Load Boot Mezzanine Functions - Base, Sys, Lib, and Prot                  
 ;----------------------------------------------------------------------------
 
-print-info "Load Boot Mezzanine Functions - Base, Sys, and Plus"
-;-- Add other MEZZ functions:
-mezz-files: load-file root-dir/src/mezz/boot-files.reb ; base, lib, sys, mezz
+print-info "Load Boot Mezzanine Functions - Base, Sys, Lib and Prot"
 
-; fine tuning what to add into mezzanine per product/os (could be done better!)
-if product = 'view [
-	append mezz-files/3 [
-		%codec-wav.reb
-		%codec-swf.reb
-		%codec-bbcode.reb
-	]
-	if os-base = 'win32 [
-		append mezz-files/3 [
-			%codec-image.reb
-		]
-	]
+;make sure that mezz-tail.reb is the last file in boot-mezz
+if all [
+	pos: find mezz-files/3 %mezz-tail.reb
+	1 <> length? pos
+][
+	append mezz-files/3 take pos
 ]
-append mezz-files/3 %codec-image-ext.reb
 
 foreach section [boot-base boot-sys boot-mezz] [
 	set section make block! 200
+
 	foreach file first mezz-files [
-		file: load-file/header rejoin [root-dir %src/mezz/ file]
+		file: load-file/header file
 		hdr: take file
 		append get section either 'module = select hdr 'type [
 			compose/deep/only [
@@ -942,7 +929,7 @@ foreach section [boot-base boot-sys boot-mezz] [
 
 boot-protocols: make block! 20
 foreach file first mezz-files [
-	file: load-file/header rejoin [root-dir %src/mezz/ file]
+	file: load-file/header file
 	hdr: to block! take file
 	either all [
 		;- if protocol exports some function, import must be used so
@@ -1181,6 +1168,29 @@ foreach word boot-task [
 emit ["#define TASK_MAX " n lf]
 
 write-generated inc/gen-boot.h out
+
+
+;----------------------------------------------------------------------------
+;- gen-config.h - system configuration header file                           
+;----------------------------------------------------------------------------
+
+emit-head "Build configuration" %config.h
+
+emit {^/#ifndef REBOL_OPTIONS_H^/}
+
+foreach def configs [
+	emit ajoin ["#define " def lf]
+]
+emit {
+//**************************************************************//
+#include "opt-dependencies.h" // checks for above options
+
+#endif //REBOL_OPTIONS_H
+}
+
+write-generated inc/gen-config.h out
+
+;----------------------------------------------------------------------------
 ;print ask "-DONE-"
 ;wait .3
 

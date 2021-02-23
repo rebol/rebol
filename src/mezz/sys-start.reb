@@ -110,6 +110,12 @@ start: func [
 			quiet: true
 		]
 
+		if boot-host [
+			loud-print "Init host code..."
+			;probe load boot-host
+			do load boot-host
+			boot-host: none
+		]
 		;-- Print fancy banner (created by mezz plus):
 		if any [
 			flags/verbose
@@ -117,28 +123,25 @@ start: func [
 		][
 			boot-print boot-banner
 		]
-		if boot-host [
-			loud-print "Init host code..."
-			do load boot-host
-			boot-host: none
-		]
 	]
 
-	;-- Setup SECURE configuration (a NO-OP for min boot)
-	lib/secure (case [
-		flags/secure [secure]
-		flags/secure-min ['allow]
-		flags/secure-max ['quit]
-		file? script [
-			compose [
-				file throw
-				(file) [allow read]
-				(home) [allow read]
-				(first script-path) allow
+	;-- Setup SECURE configuration
+	if select lib 'secure [
+		lib/secure (case [
+			flags/secure [secure]
+			flags/secure-min ['allow]
+			flags/secure-max ['quit]
+			file? script [
+				compose [
+					file throw
+					(file) [allow read]
+					(home) [allow read]
+					(first script-path) allow
+				]
 			]
-		]
-		'else ['none] ;compose [file throw (file) [allow read] %. allow]] ; default
-	])
+			'else ['none] ;compose [file throw (file) [allow read] %. allow]] ; default
+		])
+	]
 
 	;-- Evaluate rebol.reb script:
 	loud-print ["Checking for rebol.reb file in" file]

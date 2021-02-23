@@ -2,7 +2,7 @@
 name:     %Rebol
 group:    %rebol
 compiler: clang
-strip:    on
+strip:    off
 upx:      off
 
 root:     %../
@@ -188,7 +188,7 @@ host-files-view: [
 		%os/win32/sys-utils.c
 		%os/win32/sys-codecs.cpp
 		%os/win32/sys-d2d.cpp
-		%os/win32/host-image.c
+		;%os/win32/host-image.c
 		;%win32/sys-codecs-ini.c
 
 		%os/win32/host-event.c
@@ -196,6 +196,72 @@ host-files-view: [
 		;%os/win32/host-graphics.c
 		%os/win32/host-compositor.c
 	]
+]
+
+mezz-base-files: [
+	;-- base: low-level boot in lib context:
+	%mezz/base-constants.reb
+	%mezz/base-funcs.reb
+	%mezz/base-series.reb
+	%mezz/base-files.reb
+	%mezz/base-debug.reb
+	%mezz/base-defs.reb
+	%mezz/base-collected.reb ; contains automatically collected code from C files
+]
+mezz-sys-files: [
+	;-- sys: low-level sys context:
+	%mezz/sys-base.reb
+	%mezz/sys-ports.reb
+	%mezz/sys-codec.reb ; export to lib!
+	%mezz/sys-load.reb
+	%mezz/sys-start.reb
+]
+mezz-lib-files: [
+;-- lib: mid-level lib context:
+	%mezz/mezz-secure.reb
+	%mezz/mezz-types.reb
+	%mezz/mezz-func.reb
+	%mezz/mezz-debug.reb
+	%mezz/mezz-control.reb
+	%mezz/mezz-save.reb
+	%mezz/mezz-series.reb
+	%mezz/mezz-files.reb
+	%mezz/mezz-shell.reb
+	%mezz/mezz-math.reb
+	%mezz/mezz-help.reb ; move dump-obj!
+	%mezz/mezz-banner.reb
+	%mezz/mezz-colors.reb
+	%mezz/mezz-date.reb ; Internet date support
+;	%mezz/mezz-tag.reb  ; build-tag
+	%mezz/mezz-tail.reb
+;	%mezz/codec-unixtime.reb
+;-- cryptographic           
+;	%mezz/codec-utc-time.reb
+;	%mezz/codec-pkix.reb
+;	%mezz/codec-der.reb
+;	%mezz/codec-crt.reb
+;	%mezz/codec-ppk.reb
+;	%mezz/codec-ssh-key.reb
+;-- compression             
+;	%mezz/codec-gzip.reb
+;	%mezz/codec-zip.reb
+;	%mezz/codec-tar.reb
+;-- other                   
+;	%mezz/%codec-bbcode.reb
+;	%mezz/%codec-json.reb
+;	%mezz/%codec-xml.reb
+;	%mezz/%codec-html-entities.reb
+;	%mezz/%codec-wav.reb
+;	%mezz/%codec-swf.reb
+;	%mezz/%codec-image.reb ; included using: include-image-os-codec (windows only so far)
+;	%mezz/%codec-image-ext.reb ; image codec extensions (codecs/png/size?)
+]
+mezz-prot-files: [
+	;-- protocols:
+;	%mezz/prot-http.reb
+;	%mezz/prot-tls.reb
+;	%mezz/prot-whois.reb
+;	%mezz/prot-mysql.reb
 ]
 
 config: [ ;- this is list of configuration (optional) defines
@@ -233,13 +299,22 @@ config: [ ;- this is list of configuration (optional) defines
 	;MUNGWALL ; "MungWall"-style sentinels for REBNODEs (missing Mung_Check function, not ok!) Amiga only?
 ]
 
+;-------------------------------------------------------------------------------
+;- Include definitions (fine-tunning products)                                  
+;-------------------------------------------------------------------------------
+
 include-native-bmp-codec: [config: INCLUDE_BMP_CODEC core-files: %core/u-bmp.c]
 include-native-png-codec: [config: INCLUDE_PNG_CODEC core-files: %core/u-png.c]
 include-native-jpg-codec: [config: INCLUDE_JPG_CODEC core-files: %core/u-jpg.c]
 include-native-gif-codec: [config: INCLUDE_GIF_CODEC core-files: %core/u-gif.c]
-;@@ on Windows it's better to use system image codec
+
+;@@ on Windows it's better to use system image codec (ability to use more types)
 include-image-os-codec: [
-	#if Windows? [config: USE_OS_IMAGE_CODECS] ;@@ rename?
+	#if Windows? [
+		config: INCLUDE_IMAGE_OS_CODEC
+		host-files: %os/win32/host-image.c
+		mezz-lib-files: %codec-image.reb
+	]
 ]
 
 include-image-natives: [
@@ -248,7 +323,7 @@ include-image-natives: [
 	; on Windows also: image as common entry to os image codec (if enabled)
 	config: INCLUDE_IMAGE_NATIVES
 	core-files: %core/n-image.c
-	core-files: %core/n-image-resize.c
+	core-files: %core/u-image-resize.c
 ]
 
 include-optional-checksums: [
@@ -328,9 +403,9 @@ all-includes: [
 common: [
 	files: :core-files
 	clean: %core/b-init.c ;make-boot.reb modifies embedded native code, so b-init.c must be always recompiled
-	clean: %core/b-boot.c
 
-	define: :config
+	;define: :config
+	define: {REBOL_OPTIONS_FILE=\"gen-config.h\"}
 
 	;cflags: [-ffast-math]
 
@@ -403,13 +478,15 @@ arch-x86: [
 ;-------------------------------------------------------------------------------
 ;- Action definitions (experimantal so far!)                                    
 ;-------------------------------------------------------------------------------
-probe-spec: action ["Probe current spec structure"][do [? spec]]
+probe-spec: action ["Probe current spec structure"][
+	do [? spec]
+]
 pre-make:   action ["Pre-make headers and boot code"][
 	do %make/pre-make.r3 "$TEMP_SEED_SPEC"
 ]
 
 ;-------------------------------------------------------------------------------
-;- List of all possible compilation targets                                     
+;- All possible compilation targets and commands                                
 ;-------------------------------------------------------------------------------
 targets: [
 	#if Windows? [
@@ -420,10 +497,22 @@ targets: [
 			:all-includes
 			pre-make
 		]
+		"Rebol/Base x86-win32 (gcc)" [
+			target: x86-win32
+			product: 'Base
+			name: %rebol3-x86-base-gcc
+			compiler: gcc
+			pre-make
+			:common
+			:common-host
+			:arch-x86
+			defines: [REB_EXE]
+		]
 		"Rebol Win-x86 exe" [
 			target: x86-win32
 			name: %rebol3-x86-core
-			compiler: gcc
+			compiler: clang
+			:all-includes
 			:common
 			:common-host
 			:arch-x86

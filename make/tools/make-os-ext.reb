@@ -116,7 +116,7 @@ memit {
 extern	REBOL_HOST_LIB *Host_Lib;
 }
 
-foreach file c-host-files [ process root-dir/:file ]
+foreach file c-host-files [ process file ]
 
 remit "} REBOL_HOST_LIB;"
 
