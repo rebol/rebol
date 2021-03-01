@@ -18,6 +18,9 @@ Preferred way for issue reporting is using [dedicated issue repository](https://
 
 ![](https://github.com/Oldes/media/blob/master/screens/rebol-ubuntu-terminal.jpg?raw=true "Rebol in Linux Terminal")
 
+#### Building a customized CLI application using compile DSL:
+![](https://raw.githubusercontent.com/Oldes/media/master/screens/build-siskin.gif "Building a Rebol based utility")
+
 ### Other Rebol related projects
 
 If you are looking for other _Rebol like languages_, you may want to check also:
