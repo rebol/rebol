@@ -247,14 +247,14 @@ mezz-lib-files: [
 ;	%mezz/codec-zip.reb
 ;	%mezz/codec-tar.reb
 ;-- other                   
-;	%mezz/%codec-bbcode.reb
-;	%mezz/%codec-json.reb
-;	%mezz/%codec-xml.reb
-;	%mezz/%codec-html-entities.reb
-;	%mezz/%codec-wav.reb
-;	%mezz/%codec-swf.reb
-;	%mezz/%codec-image.reb ; included using: include-image-os-codec (windows only so far)
-;	%mezz/%codec-image-ext.reb ; image codec extensions (codecs/png/size?)
+;	%mezz/codec-bbcode.reb
+;	%mezz/codec-json.reb
+;	%mezz/codec-xml.reb
+;	%mezz/codec-html-entities.reb
+;	%mezz/codec-wav.reb
+;	%mezz/codec-swf.reb
+;	%mezz/codec-image.reb ; included using: include-image-os-codec (windows only so far)
+;	%mezz/codec-image-ext.reb ; image codec extensions (codecs/png/size?)
 ]
 mezz-prot-files: [
 	;-- protocols:
@@ -313,7 +313,7 @@ include-image-os-codec: [
 	#if Windows? [
 		config: INCLUDE_IMAGE_OS_CODEC
 		host-files: %os/win32/host-image.c
-		mezz-lib-files: %codec-image.reb
+		mezz-lib-files: %mezz/codec-image.reb
 	]
 ]
 
@@ -513,6 +513,7 @@ targets: [
 			name: %rebol3-x86-core
 			compiler: clang
 			:all-includes
+			do %make/pre-make.r3 "$TEMP_SEED_SPEC"
 			:common
 			:common-host
 			:arch-x86
