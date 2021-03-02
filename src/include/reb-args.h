@@ -40,6 +40,10 @@ typedef struct rebol_args {
 	REBCHR *boot;
 	REBCHR *exe_path;
 	REBCHR *home_dir;
+#ifdef RAW_MAIN_ARGS
+	REBCNT argc;
+	REBCHR **argv;
+#endif
 } REBARGS;
 
 // REBOL arg option flags:

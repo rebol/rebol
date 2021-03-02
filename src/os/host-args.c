@@ -197,14 +197,29 @@ const struct arg_chr arg_chars2[] = {
 **		Parse REBOL's command line arguments, setting options
 **		and values in the provided args structure.
 **
+**		If RAW_MAIN_ARGS is used, the arguments list is not being
+**		parsed in this function, but instead will be converted to
+**		block of strings and leaved on interpreter to process it.
+**
 ***********************************************************************/
 {
+#ifdef RAW_MAIN_ARGS
+	CLEARS(rargs);
+	rargs->argc = argc;
+	rargs->argv = argv;
+	// First arg is path to executable (on most systems):
+	if (argc > 0) rargs->exe_path = *argv;
+	OS_Get_Current_Dir(&rargs->home_dir);
+#else
 	int arg_buf_size=128;
 
 	REBCHR *arg;
 	REBCHR *args = 0; // holds trailing args
 	int flag;
 	int i;
+	int len;
+	int size;
+	REBCHR *tmp;
 
 	CLEARS(rargs);
 
@@ -261,9 +276,6 @@ const struct arg_chr arg_chars2[] = {
 			if (!rargs->script)
 				rargs->script = arg;
 			else {
-				int len;
-				int size;
-				REBCHR *tmp;
 				if (!args) {
 					args = MAKE_STR(arg_buf_size);
 					args[0] = 0;
@@ -289,6 +301,7 @@ const struct arg_chr arg_chars2[] = {
 		args[LEN_STR(args)-1] = 0; // remove trailing space
 		Get_Ext_Arg(RO_ARGS, rargs, args);
 	}
+#endif
 }
 
 
