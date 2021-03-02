@@ -265,7 +265,7 @@ int main(int argc, char **argv) {
 	argv = (char**)CommandLineToArgvW(GetCommandLineW(), &argc);
 	// Use title string as defined in resources file (.rc) with hardcoded ID 101
 	LoadStringW(App_Instance, 101, App_Title, MAX_TITLE_LENGTH);
-#ifdef USE_NATIVE_IMAGE_CODECS 
+#ifdef INCLUDE_IMAGE_OS_CODEC 
 	CoInitialize(0);
 #endif
 

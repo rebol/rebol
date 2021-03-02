@@ -380,7 +380,7 @@ static void *Task_Ready;
 	//OS_Call_Device(RDI_STDIO, RDC_CLOSE); // close echo
 	
 	OS_Quit_Devices(0);
-#ifdef USE_NATIVE_IMAGE_CODECS
+#ifdef INCLUDE_IMAGE_OS_CODEC
 	OS_Release_Codecs();
 #endif
 #ifdef REB_VIEW
