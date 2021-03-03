@@ -90,6 +90,7 @@ if file? src-dir [
 	forall mezz-sys-files  [absolutize-path mezz-sys-files/1]
 	forall mezz-lib-files  [absolutize-path mezz-lib-files/1]
 	forall mezz-prot-files [absolutize-path mezz-prot-files/1]
+	forall boot-host-files [absolutize-path boot-host-files/1]
 ]
 
 c-core-files: unique c-core-files

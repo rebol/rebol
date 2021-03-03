@@ -263,6 +263,7 @@ mezz-prot-files: [
 ;	%mezz/prot-whois.reb
 ;	%mezz/prot-mysql.reb
 ]
+boot-host-files: [] ; may be used for custom boot script
 
 config: [ ;- this is list of configuration (optional) defines
 	INCLUDE_MBEDTLS ;- replaced original checksum implementations
@@ -405,7 +406,7 @@ common: [
 	clean: %core/b-init.c ;make-boot.reb modifies embedded native code, so b-init.c must be always recompiled
 
 	;define: :config
-	define: {REBOL_OPTIONS_FILE=\"gen-config.h\"}
+	define: {REBOL_OPTIONS_FILE=\"gen-config.h\"} ;@@ TODO: should be auto-escaped!
 
 	;cflags: [-ffast-math]
 
@@ -423,12 +424,12 @@ common: [
 		defines: [UNICODE _UNICODE]
 		defines: _CRT_SECURE_NO_WARNINGS
 	]
-	#if-macOS [
+	#if macOS? [
 		library: %m
 		defines: ENDIAN_LITTLE
 		defines: USE_OLD_PIPE
 	]
-	#if-Linux [
+	#if Linux? [
 		library: %m
 		defines: ENDIAN_LITTLE
 	]
@@ -452,7 +453,7 @@ common-host: [
 arch-x64: [
 	arch: x64
 	define: _FILE_OFFSET_BITS=64
-	#if-Linux [
+	#if Linux? [
 		library: %dl
 		defines: TO_LINUX_X64
 		defines: __LP64__ ; has long (integer) 64 bits
@@ -475,13 +476,35 @@ arch-x86: [
 	]
 ]
 
+
+;-------------------------------------------------------------------------------
+;- optional settings:                                                           
+;-------------------------------------------------------------------------------
+
+clang-size-optimization: [
+	;flags:  [-flto -fuse-ld=lld] ;<- /manifestdependency: is not allowed in .drectve error :-(
+]
+
+gcc-size-optimization: [
+	;- for minimal size:
+	;; https://interrupt.memfault.com/blog/code-size-optimization-gcc-flags
+	flags:   -O2   ;@@ using -Os leads to compilation errors (too drastic optimizations somewhere)
+	flags:   -flto ; link time optimization
+	cflags: [-ffunction-sections -fdata-sections]
+	lflags: "-Wl,--gc-sections"
+]
+
 ;-------------------------------------------------------------------------------
 ;- Action definitions (experimantal so far!)                                    
 ;-------------------------------------------------------------------------------
+;; the idea is, that it should be possible to specify, if the action should be
+;; executed immediatelly when is being parsed, before or after compilation.
+;; So far it's only before compilation (and not handled by msvc project maker!)
+
 probe-spec: action ["Probe current spec structure"][
 	do [? spec]
 ]
-pre-make:   action ["Pre-make headers and boot code"][
+pre-make:   action [@pre "Pre-make headers and boot code"][
 	do %make/pre-make.r3 "$TEMP_SEED_SPEC"
 ]
 
@@ -521,22 +544,3 @@ targets: [
 		]
 	]
 ]
-
-
-;-------------------------------------------------------------------------------
-;- optional settings:                                                           
-;-------------------------------------------------------------------------------
-
-clang-size-optimization: [
-	;flags:  [-flto -fuse-ld=lld] ;<- /manifestdependency: is not allowed in .drectve error :-(
-]
-
-gcc-size-optimization: [
-	;- for minimal size:
-	;@@ https://interrupt.memfault.com/blog/code-size-optimization-gcc-flags
-	flags:   -O2   ;@@ using -Os leads to compilation errors (too drastic optimizations somewhere)
-	flags:   -flto ; link time optimization
-	cflags: [-ffunction-sections -fdata-sections]
-	lflags: "-Wl,--gc-sections"
-]
-
