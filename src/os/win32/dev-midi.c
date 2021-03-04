@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2019 Rebol Open Source Developers
+**  Copyright 2012-2021 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -565,4 +565,4 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 
 DEFINE_DEV(Dev_MIDI, "MIDI", 1, Dev_Cmds, RDC_MAX, 0);
 
-#endif //USE_MIDI_DEVICE
+#endif //INCLUDE_MIDI_DEVICE

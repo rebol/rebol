@@ -275,9 +275,10 @@ do-request: func [
 	info/headers: info/response-line: info/response-parsed: port/data:
 	info/size: info/date: info/name: none
 
-	;sys/log/info 'HTTP ["Request:^[[22m" spec/method spec/host spec/path]
+	;sys/log/info 'HTTP ["Request:^[[22m" spec/method spec/host mold spec/path]
 
-	write port/state/connection make-http-request spec/method enhex as file! any [spec/path %/] spec/headers spec/content
+	;write port/state/connection make-http-request spec/method enhex as file! any [spec/path %/] spec/headers spec/content
+	write port/state/connection make-http-request spec/method any [spec/path %/] spec/headers spec/content
 ]
 parse-write-dialect: func [port block /local spec][
 	spec: port/spec
@@ -477,7 +478,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 	state: port/state
 	port/data: none
 
-	new-uri: as url! new-uri
+	;new-uri: as url! new-uri
 
 	sys/log/info 'HTTP ["Redirect to:^[[m" mold new-uri]
 
@@ -501,7 +502,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 	unless select new-uri 'port-id [
 		switch new-uri/scheme [
 			'https [append new-uri [port-id: 443]]
-			'http [append new-uri [port-id: 80]]
+			'http  [append new-uri [port-id: 80 ]]
 		]
 	]
 	new-uri: construct/with new-uri port/scheme/spec
@@ -509,6 +510,8 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 	new-uri/ref: as url! ajoin either find [#[none] 80 443] new-uri/port-id [
 		[new-uri/scheme "://" new-uri/host new-uri/path]
 	][	[new-uri/scheme "://" new-uri/host #":" new-uri/port-id new-uri/path]]
+
+	? new-uri/ref
 
 	unless find [http https] new-uri/scheme [
 		return throw-http-error port {Redirect to a protocol different from HTTP or HTTPS not supported}
@@ -523,6 +526,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 	open port
 	; restore original request headers
 	port/spec/headers: headers
+	?? 
 	port
 ]
 

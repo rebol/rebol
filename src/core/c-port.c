@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -632,10 +633,10 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	Init_UDP_Scheme();
 	Init_DNS_Scheme();
 	Init_Checksum_Scheme();
-#ifndef MIN_OS
+#ifdef INCLUDE_CLIPBOARD
 	Init_Clipboard_Scheme();
 #endif
-#ifdef USE_MIDI_DEVICE
+#ifdef INCLUDE_MIDI_DEVICE
 	Init_MIDI_Scheme();
 #endif
 }

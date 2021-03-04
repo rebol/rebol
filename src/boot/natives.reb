@@ -3,6 +3,7 @@ REBOL [
 	Title: "Native function specs"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2021 Rebol Open Source Developers
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -448,15 +449,7 @@ entab: native [
 	number [integer!]
 ]
 
-delect: native [
-	"Parses a common form of dialects. Returns updated input block."
-	 dialect [object!] "Describes the words and datatypes of the dialect"
-	 input [block!] "Input stream to parse"
-	 output [block!] "Resulting values, ordered as defined (modified)"
-	 /in "Search for var words in specific objects (contexts)"
-	 where [block!] "Block of objects to search (non objects ignored)"
-	 /all "Parse entire block, not just one command at a time"
-]
+;delect: ;@@ defined in u-dialec.c
 
 difference: native [
 	{Returns the special difference of two values.}

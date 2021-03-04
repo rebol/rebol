@@ -137,5 +137,7 @@
 #ifdef INCLUDE_MBEDTLS
 	//Init_MbedTLS(); // not yet public!
 #endif
+#ifdef INCLUDE_CRYPTOGRAPHY
 	Init_Crypt(); // old crypt code handles
+#endif
 }
