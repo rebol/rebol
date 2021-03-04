@@ -511,8 +511,6 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 		[new-uri/scheme "://" new-uri/host new-uri/path]
 	][	[new-uri/scheme "://" new-uri/host #":" new-uri/port-id new-uri/path]]
 
-	? new-uri/ref
-
 	unless find [http https] new-uri/scheme [
 		return throw-http-error port {Redirect to a protocol different from HTTP or HTTPS not supported}
 	]
@@ -526,7 +524,6 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 	open port
 	; restore original request headers
 	port/spec/headers: headers
-	?? 
 	port
 ]
 

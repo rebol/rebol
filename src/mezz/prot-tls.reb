@@ -1794,7 +1794,7 @@ TLS-awake: function [event [event!]][
 				]
 				TLS-port/data: TLS-port/state/port-data
 				binary/init TLS-port/state/in none ; resets input buffer
-				?? TLS-port/state/protocol
+				;?? TLS-port/state/protocol
 				either 'APPLICATION = TLS-port/state/protocol [
 					;print "------------------"
 					;- report that we have data to higher layer
