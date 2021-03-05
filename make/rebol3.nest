@@ -698,4 +698,60 @@ eggs: [
 			:make-x64-exe
 		]
 	]
+	#if Linux? [
+		"Rebol/Base x64-libc (gcc)" [
+			name:     %rebol3-base-x64-libc-gcc
+			product:  Base
+			compiler: gcc
+			target:   x64-libc
+			:make-x64-exe
+			upx: off
+		]
+		"Rebol/Core x64-libc (gcc)" [
+			name:     %rebol3-core-x64-libc-gcc
+			product:  Core
+			compiler: gcc
+			target:   x64-libc
+			:include-rebol-core
+			:make-x64-exe
+			upx: off
+		]
+		"Rebol/Bulk x64-libc (gcc)" [
+			name:     %rebol3-bulk-x64-libc-gcc
+			product:  Bulk
+			compiler: gcc
+			target:   x64-libc
+			:include-rebol-bulk
+			:make-x64-exe
+			upx: off
+		]
+
+		;@@TODO: find a way for using one egg spec for multiple targets
+		"Rebol/Base x64-libc (clang)" [
+			name:     %rebol3-base-x64-libc-clang
+			product:  Base
+			compiler: clang
+			target:   x64-libc
+			:make-x64-exe
+			upx: off
+		]
+		"Rebol/Core x64-libc (clang)" [
+			name:     %rebol3-core-x64-libc-clang
+			product:  Core
+			compiler: clang
+			target:   x64-libc
+			:include-rebol-core
+			:make-x64-exe
+			upx: off
+		]
+		"Rebol/Bulk x64-libc (clang)" [
+			name:     %rebol3-bulk-x64-libc-clang
+			product:  Bulk
+			compiler: clang
+			target:   x64-libc
+			:include-rebol-bulk
+			:make-x64-exe
+			upx: off
+		]
+	]
 ]
