@@ -61,19 +61,3 @@ mint: 		100.136.116
 
 reblue:		38.58.108
 base-color: 200.200.200
-
-import module [
-	name:    as-colors
-	version: 1.0.0
-	purpose: "Decorate any value with bright ANSI color sequences"
-][
-	;- using 2x append to avoid making a reduced block for the output
-	export as-gray:   func[value][append append copy "^[[1;30m" value "^[[0m"]
-	export as-red:    func[value][append append copy "^[[1;31m" value "^[[0m"]
-	export as-green:  func[value][append append copy "^[[1;32m" value "^[[0m"]
-	export as-yellow: func[value][append append copy "^[[1;33m" value "^[[0m"]
-	export as-blue:   func[value][append append copy "^[[1;34m" value "^[[0m"]
-	export as-purple: func[value][append append copy "^[[1;35m" value "^[[0m"]
-	export as-cyan:   func[value][append append copy "^[[1;36m" value "^[[0m"]
-	export as-white:  func[value][append append copy "^[[1;37m" value "^[[0m"]
-]
