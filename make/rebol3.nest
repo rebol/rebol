@@ -459,6 +459,7 @@ include-mezz-colors:         [mezz-lib-files:  %mezz/mezz-colors.reb        ]
 include-prot-whois:          [mezz-prot-files: %mezz/prot-whois.reb         ]
 include-prot-mysql:          [mezz-prot-files: %mezz/prot-mysql.reb         ]
 
+include-prebol:              [mezz-lib-files: %modules/prebol.reb           ]
 
 include-https: [
 	mezz-lib-files: [
@@ -511,6 +512,8 @@ include-rebol-bulk: [
 
 	:include-mezz-date
 	:include-mezz-colors
+
+	:include-prebol
 
 	:include-prot-whois
 	:include-prot-mysql

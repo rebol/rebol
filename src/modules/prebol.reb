@@ -1,6 +1,9 @@
 REBOL [
-	Title: "Prebol - Official REBOL Preprocessor"
-	Version: 1.1.3
+	Name:    prebol
+	Type:    module
+	Exports: [process-source]
+	Title:   "Prebol - Official REBOL Preprocessor"
+	Version: 1.1.4
 	Author: ["Carl Sassenrath" "Holger Kruse" "Oldes"]
 	Purpose: {
 		The official REBOL preprocessor. Combines multiple
@@ -49,63 +52,35 @@ REBOL [
 			"Added #include-block command"
 			"Includes are described in the result code using comment"
 		]
-	]
-	Example: [
-		"With requester" [
-			set [in-file out-file] system/script/args
-			
-			if view? [
-				if none? in-file [
-					in-file: request-file/title "Input file?" "Open"
-					if none? in-file [quit]
-					in-file: in-file/1
-				]
-				if none? out-file [
-					out-file: request-file/title/save "Output file?" "Save"
-					if none? out-file [quit]
-					out-file: out-file/1
-				]
-			]
-			
-			if not all [
-				msg: "Missing input file name argument"
-				in-file
-				msg: "Input file not found"
-				exists? in-file
-				msg: "Missing output file name argument"
-				out-file
-				msg: "Input file is not a REBOL file"
-				script? in-file
-				msg: ["Cannot load REBOL input file" mold clean-path in-file]
-				not error? try [data: load/all in-file]
-			][
-				error msg
-			]
-			
-			size: process-source data size? in-file
-			save out-file head data
-			print ["Processed:" size "bytes"]
+		5-Mar-2021 "Oldes" [
+			"Updated for use with current Rebol version"
 		]
 	]
 ]
 
 system/options/binary-base: 64  ; output data in base-64
 
-;vn
-;error: func [msg] [print msg halt]
-error: func [[catch] msg] [throw make error! reform msg]
+error: func [msg] [
+	if block? msg [msg: reform msg]
+	sys/log/error 'prebol msg
+	halt
+]
 
-process-source-comment?: true ;adds comments before included content
+include-source-comment?: true ;adds comments before included content
 process-source: func [
 	; Process REBOL source code block. Modifies the block. Returns size.
 	blk [any-block!] "Block of source to process"
 	size [integer!] "Starting size"
+	/only "Don't use recursive processing"
 	/local file data expr cmd else tmp path include-cmds header do-expr
 ][
 	do-expr: func [expr /local result] [
 		; Evaluate expression and make sure it returns a result.
-		if unset? set/any 'result do expr [
-			print ["***" cmd "must return a value or none:" mold expr]
+		set/any 'result try [do :expr]
+		if function? :result [set/any 'result try [do :result]]
+		case [
+			unset? :result [ error [mold cmd "must return a value or none:" mold expr] ]
+			error? :result [ error result ]
 		]
 		:result
 	]
@@ -120,7 +95,7 @@ process-source: func [
 				]
 				header: make header data/2
 				remove/part data 2
-				if process-source-comment? [
+				if include-source-comment? [
 					insert data compose [
 comment (rejoin [{
 #### Include: } mold file {
@@ -150,11 +125,9 @@ comment (rejoin [{---- end of include } mold file { ----}])
 			set/any 'data do file ;file is not a file but a block to evaluate!!!
 			head insert/only copy [] data ; return it
 		]
-
 	]
 
 	while [not tail? blk][
-
 		; Source pragmas begin with # (they are of the ISSUE datatype)
 		; and are followed by a filename, a block, or a paren.
 		either issue? blk/1 [
@@ -168,22 +141,19 @@ comment (rejoin [{---- end of include } mold file { ----}])
 
 				; Expression such as #include (join %file num: num + 1)
 				if paren? :file [
-					file: do-expr reduce [file] ; for older REBOL compatibility
+					file: do-expr to block! :file
 				]
 
 				; Include requires a file argument:
-				if not file? file [error ["***Invalid" cmd "file expression:" mold file]]
+				if not file? file [error ["Invalid" mold cmd "file expression:" mold file]]
 
 				; File must exist:
-				if not exists? file [error ["***" cmd "file not found:" mold file]]
+				if not exists? file [error [mold cmd "file not found:" mold file]]
 
 				size: size + size? file ; for stats only
 
 				; Execute the include:
-				if error? data: try select include-cmds cmd [
-					data: disarm :data
-					error ["***" cmd file "error:" data/id "at" mold data/near]
-				]
+				if error? data: try select include-cmds cmd [ error data ]
 				; Replace include command with contents of file:
 				remove/part blk 2
 				insert blk data
@@ -222,7 +192,7 @@ comment (rejoin [{---- end of include } mold file { ----}])
 						insert/only blk tmp
 					]
 					#comments  [ ; #comments true/false
-						process-source-comment?: either find [false off] blk/2 [false][true]
+						include-source-comment?: either find [false off] blk/2 [false][true]
 						blk: skip blk 2
 					]
 				][
@@ -234,12 +204,10 @@ comment (rejoin [{---- end of include } mold file { ----}])
 			blk: next blk
 		]
 	]
-
-	foreach item head blk [
-		if block? :item [size: process-source item size]
+	unless only [
+		foreach item head blk [
+			if block? :item [size: process-source item size]
+		]
 	]
-
 	size
 ]
-
-
