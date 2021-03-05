@@ -27,8 +27,7 @@ spec-file: try/except [
 ][ clean-path %spec-core.reb ]
 
 unless 'file = exists? spec-file [
-	error "Spec file not found!"
-	quit
+	do error "Spec file not found!"
 ]
 
 print-info ["Using spec file:" as-yellow to-local-file spec-file ]
