@@ -1,4 +1,4 @@
-;~ Siskin project seed file ~;
+;~ Siskin project nest file ~;
 name:     %Rebol
 group:    %rebol
 compiler: clang
@@ -9,7 +9,7 @@ root:     %../
 source:   %src/
 include:  %src/include/
 temp:     %make/tmp/
-output:   %build/
+;output:   %build/
 
 stack-size: 4194300
 optimize:   2
@@ -199,7 +199,7 @@ host-files-view: [
 ]
 
 mezz-base-files: [
-	;-- base: low-level boot in lib context:
+;-- base: low-level boot in lib context:
 	%mezz/base-constants.reb
 	%mezz/base-funcs.reb
 	%mezz/base-series.reb
@@ -209,7 +209,7 @@ mezz-base-files: [
 	%mezz/base-collected.reb ; contains automatically collected code from C files
 ]
 mezz-sys-files: [
-	;-- sys: low-level sys context:
+;-- sys: low-level sys context:
 	%mezz/sys-base.reb
 	%mezz/sys-ports.reb
 	%mezz/sys-codec.reb ; export to lib!
@@ -257,7 +257,7 @@ mezz-lib-files: [
 ;	%mezz/codec-image-ext.reb ; image codec extensions (codecs/png/size?)
 ]
 mezz-prot-files: [
-	;-- protocols:
+;-- protocols:
 ;	%mezz/prot-http.reb
 ;	%mezz/prot-tls.reb
 ;	%mezz/prot-whois.reb
@@ -452,6 +452,7 @@ include-codec-xml:           [mezz-lib-files:  %mezz/codec-xml.reb          ]
 include-codec-swf:           [mezz-lib-files:  %mezz/codec-swf.reb          ]
 include-codec-wav:           [mezz-lib-files:  %mezz/codec-wav.reb          ]
 ; mezzanines:
+include-mezz-ansi:           [mezz-lib-files:  %mezz/mezz-ansi.reb          ]
 include-mezz-date:           [mezz-lib-files:  %mezz/mezz-date.reb          ]
 include-mezz-colors:         [mezz-lib-files:  %mezz/mezz-colors.reb        ]
 ; protocols:
@@ -474,6 +475,7 @@ include-https: [
 ;- Product specifications                                                       
 
 include-rebol-core: [
+	:include-mezz-ansi
 	:include-clipboard
 	:include-cryptography
 	:include-bincode
@@ -625,11 +627,11 @@ probe-spec: action ["Probe current spec structure"][
 	do [? spec]
 ]
 pre-make:   action [@pre "Pre-make headers and boot code"][
-	do %make/pre-make.r3 "$TEMP_SEED_SPEC"
+	do %make/pre-make.r3 "$NEST_SPEC"
 ]
 
 ;-------------------------------------------------------------------------------
-;- All possible compilation targets and commands                                
+;- All possible compilation targets (eggs) and commands                         
 ;-------------------------------------------------------------------------------
 
 ; target shortcuts..
@@ -637,12 +639,12 @@ make-exe: [
 	:common
 	:common-host
 	defines: [REB_EXE]
-	do %make/pre-make.r3 "$TEMP_SEED_SPEC"
+	do %make/pre-make.r3 "$NEST_SPEC"
 ]
 make-x86-exe: [:arch-x86 :make-exe #if Windows? [target: x86-win32]]
 make-x64-exe: [:arch-x64 :make-exe #if Windows? [target: x64-win32]]
 
-targets: [
+eggs: [
 	#if Windows? [
 ;		"Pre-make (minimum included)" [
 ;			pre-make
@@ -678,14 +680,14 @@ targets: [
 			compiler: gcc
 			:make-x64-exe
 		]
-		"Rebol/Core x86-win32 (gcc)" [
+		"Rebol/Core x64-win32 (gcc)" [
 			name:     %rebol3-core-x64-gcc
 			product:  Core
 			compiler: gcc
 			:include-rebol-core
 			:make-x64-exe
 		]
-		"Rebol/Bulk x86-win32 (clang)" [
+		"Rebol/Bulk x64-win32 (clang)" [
 			name:     %rebol3-bulk-x64-clang
 			product:  Bulk
 			compiler: clang
