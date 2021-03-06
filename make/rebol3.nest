@@ -447,6 +447,12 @@ include-codec-tar:           [mezz-lib-files:  %mezz/codec-tar.reb          ]
 ; other codecs:
 include-codec-bbcode:        [mezz-lib-files:  %mezz/codec-bbcode.reb       ]
 include-codec-html-entities: [mezz-lib-files:  %mezz/codec-html-entities.reb]
+include-codec-ico: [
+	; at this moment ico can be encoded only from pngs!
+	:include-native-png-codec 
+	mezz-lib-files: %mezz/codec-ico.reb
+	mezz-lib-files: %mezz/codec-image-ext.reb ; png/size? function
+]
 include-codec-json:          [mezz-lib-files:  %mezz/codec-json.reb         ]
 include-codec-xml:           [mezz-lib-files:  %mezz/codec-xml.reb          ]
 include-codec-swf:           [mezz-lib-files:  %mezz/codec-swf.reb          ]
@@ -505,6 +511,7 @@ include-rebol-bulk: [
 	:include-codec-tar
 	:include-codec-bbcode
 	:include-codec-html-entities
+	:include-codec-ico
 	:include-codec-json
 	:include-codec-xml
 	:include-codec-swf
