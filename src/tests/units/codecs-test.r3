@@ -280,6 +280,38 @@ if find codecs 'unixtime [
 	===end-group===
 ]
 
+if all [
+	find codecs 'ICO
+	find codecs 'PNG
+][
+	===start-group=== "ICO codec"
+	--test-- "ICO encode"
+		--assert all [
+			binary? bin: try [codecs/ico/encode [
+			    %units/files/ico/icon_16.png
+			    %units/files/ico/icon_24.png
+			    %units/files/ico/icon_32.png
+			    %units/files/ico/icon_48.png
+			    %units/files/ico/icon_128.png
+			]]
+			#{35FB14C61A0E81F4FC525B9243116D3C} = checksum bin 'md5
+		]
+	--test-- "ICO decode"
+		--assert all [
+			block? ico: try [codecs/ico/decode %units/files/test.ico]
+			ico/1/1 = 16   ico/1/2 = 32  binary? ico/1/3
+			ico/2/1 = 24   ico/2/2 = 32  binary? ico/2/3
+			ico/3/1 = 32   ico/3/2 = 32  binary? ico/3/3
+			ico/4/1 = 48   ico/4/2 = 32  binary? ico/4/3
+			ico/5/1 = 128  ico/5/2 = 32  binary? ico/5/3
+		]
+		--assert all [
+			image? img: try [decode 'png ico/1/3]
+			16x16 = img/size
+		]
+	===end-group===
+]
+
 if find codecs 'JSON [
 	===start-group=== "JSON codec"
 	--test-- "JSON encode/decode"
