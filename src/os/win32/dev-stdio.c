@@ -381,7 +381,7 @@ static void Close_StdIO_Local(void)
 	else
 		SET_FLAG(dev->flags, SF_DEV_NULL);
 
-	SetConsoleOutputCP(65001);
+	//SetConsoleOutputCP(65001); // Don't use, cause of crash on Win7! https://github.com/Oldes/Rebol3/issues/25
 
 	SET_FLAG(req->flags, RRF_OPEN);
 	SET_FLAG(dev->flags, RDF_OPEN);
