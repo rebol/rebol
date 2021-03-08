@@ -104,6 +104,7 @@ static BOOL Emulate_ANSI = 0;
 
 // Special access:
 extern REBDEV *Devices[];
+extern void Close_StdIO(void);
 
 
 //** ANSI emulation definition ****************************************** 
