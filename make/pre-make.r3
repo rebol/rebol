@@ -22,12 +22,14 @@ secure [ file allow ]
 do %tools/form-header.reb
 do %tools/utils.reb
 
+args: system/script/args
+
 spec-file: try/except [
-	to-rebol-file first system/options/args
+	to-rebol-file either block? args [first args][args]
 ][ clean-path %spec-core.reb ]
 
 unless 'file = exists? spec-file [
-	do error "Spec file not found!"
+	do error ["Spec file not found:" mold spec-file]
 ]
 
 print-info ["Using spec file:" as-yellow to-local-file spec-file ]
