@@ -562,7 +562,7 @@ static void Close_StdIO_Local(void)
 			}
 		}
 		else {
-			DWORD cNumRead, fdwMode, i; 
+			DWORD cNumRead, i; 
 			INPUT_RECORD irInBuf[128]; 
 			int counter=0;
 			ok = ReadConsoleInputW(Std_Inp, irInBuf, 128, &cNumRead);
@@ -598,7 +598,7 @@ static void Close_StdIO_Local(void)
 ***********************************************************************/
 {
 	REBEVT evt;
-	DWORD  cNumRead, i, c, repeat; 
+	DWORD  cNumRead, i, repeat; 
 	INPUT_RECORD irInBuf[8]; 
 	if (ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), irInBuf, 8, &cNumRead)) {
 		//printf("cNumRead: %u\n", cNumRead);

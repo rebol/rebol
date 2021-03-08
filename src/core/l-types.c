@@ -958,8 +958,6 @@ end_date:
 **
 ***********************************************************************/
 {
-	REBCNT n;
-
 	VAL_SET(value, type);
 	VAL_SERIES(value) = Append_UTF8(0, cp, len);
 

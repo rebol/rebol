@@ -821,7 +821,6 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	REBCNT n;
 
 #ifdef RAW_MAIN_ARGS
-	REBSER *str;
 	REBVAL *new;
 	// make system/options/flags block even when not used...
 	val = Get_System(SYS_OPTIONS, OPTIONS_FLAGS);

@@ -79,7 +79,6 @@
 {
 	REBHSP spec;
 	REBCNT size;
-	REBYTE *data;
 	REBHOB *hob;
 	REBCNT idx = Find_Handle_Index(sym);
 	if (idx == NOT_FOUND) return NULL;
