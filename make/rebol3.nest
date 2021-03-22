@@ -654,6 +654,27 @@ make-exe: [
 make-x86-exe: [:arch-x86 :make-exe #if Windows? [target: x86-win32]]
 make-x64-exe: [:arch-x64 :make-exe #if Windows? [target: x64-win32]]
 
+; for making Rebol as a shared library
+make-dll: [
+	:common
+	;:common-host
+	defines: [REB_API]
+	flags:   [-O2 shared]
+	do %make/pre-make.r3 "$NEST_SPEC"
+]
+make-x86-dll: [:arch-x86 :make-dll #if Windows? [target: x86-win32]]
+make-x64-dll: [:arch-x64 :make-dll #if Windows? [target: x64-win32]]
+
+; for testing host app using shared library
+make-host: [
+	:common
+	files: none ;includes only host files
+	:common-host
+	do %make/pre-make.r3 "$NEST_SPEC"
+]
+make-x86-host: [:arch-x86 :make-host #if Windows? [target: x86-win32]]
+make-x64-host: [:arch-x64 :make-host #if Windows? [target: x64-win32]]
+
 eggs: [
 	#if Windows? [
 ;		"Pre-make (minimum included)" [
@@ -703,6 +724,39 @@ eggs: [
 			compiler: clang
 			:include-rebol-bulk
 			:make-x64-exe
+		]
+
+		"Rebol/Core x86-win32 shared library (gcc)" [
+			name:     %lib-rebol3-core-x86-gcc
+			product:  Core
+			compiler: gcc
+			upx:      off ; library compiled using MSVC seems to make problems when UPXed  
+			:include-rebol-core
+			:make-x86-dll
+		]
+		"Rebol/Core x86-win32 host application (gcc)" [
+			name:     %host-core-x86-gcc
+			product:  Core
+			compiler: gcc
+			:include-rebol-core
+			:make-x86-host
+			shared:   %lib-rebol3-core-x86-gcc
+		]
+
+		"Rebol/Core x64-win32 shared library (gcc)" [
+			name:     %lib-rebol3-core-x64-gcc
+			product:  Core
+			compiler: gcc
+			:include-rebol-core
+			:make-x64-dll
+		]
+		"Rebol/Core x64-win32 host application (gcc)" [
+			name:     %host-core-x64-gcc
+			product:  Core
+			compiler: gcc
+			:include-rebol-core
+			:make-x64-host
+			shared:   %lib-rebol3-core-x64-gcc
 		]
 	]
 	#if Linux? [
