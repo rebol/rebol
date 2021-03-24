@@ -46,6 +46,36 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Special % word"
+	--test-- "valid % word cases"
+		--assert word? try [load {%}]
+		--assert word? try [load {% }]
+		--assert word? try [load {%^-}]
+		--assert word? try [first load {[%]}]
+	--test-- "valid % lit-word cases"
+		--assert lit-word? try [load {'%}]
+		--assert lit-word? try [load {'% }]
+		--assert lit-word? try [load {'%^-}]
+		--assert lit-word? try [first load {['%]}]
+	--test-- "valid % get-word cases"
+		--assert get-word? try [load {:%}]
+		--assert get-word? try [load {:% }]
+		--assert get-word? try [load {:%^-}]
+		--assert get-word? try [first load {[:%]}]
+	--test-- "invalid % lit-word cases"
+		--assert all [error? e: try [load {'%""}] e/id = 'invalid e/arg1 = "word-lit"]
+		--assert all [error? e: try [load {'%/}]  e/id = 'invalid e/arg1 = "word-lit"]
+	--test-- "invalid % get-word cases"
+		--assert all [error? e: try [load {:%""}] e/id = 'invalid e/arg1 = "word-get"]
+		--assert all [error? e: try [load {:%/}]  e/id = 'invalid e/arg1 = "word-get"]
+	--test-- "% used in object"
+		--assert all [
+			not error? try [o: make object! [%: 1]]
+			1 = o/%
+		]
+
+===end-group===
+
 ===start-group=== "Email"
 	--test-- "valid `emails`"
 		--assert email? load {name@where}

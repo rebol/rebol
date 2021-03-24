@@ -874,7 +874,13 @@ new_line:
         case LEX_SPECIAL_AT:            /* @username */
             return TOKEN_REF;
 
-        case LEX_SPECIAL_PERCENT:       /* %filename */
+        case LEX_SPECIAL_PERCENT:
+			if (IS_LEX_DELIMIT(cp[1]) && cp[1] != '"' && cp[1] != '/') {
+				return TOKEN_WORD; // special case for having % as a word (reminder op!)
+			} else if (cp[1] == ':' && IS_LEX_DELIMIT(cp[2])) {
+				return TOKEN_SET;
+			}
+			/* %filename */
             cp = scan_state->end;
             if (*cp == '"') {
 				cp = Scan_Quote(cp, scan_state);  // stores result string in BUF_MOLD
@@ -901,6 +907,13 @@ new_line:
 				scan_state->end = cp+1;
 				return TOKEN_GET;
 			}
+			if (cp[1] == '%' && IS_LEX_DELIMIT(cp[2])) {
+				if (cp[2] == '"' || cp[2] == '/') { // no :%"" or :%/
+					scan_state->end = cp + 3;
+					return -TOKEN_GET;
+				}
+				return TOKEN_GET; // allowed :%
+			}
             type = TOKEN_GET;
             cp++;                       /* skip ':' */
             goto scanword;
@@ -918,6 +931,13 @@ new_line:
 					if (!IS_LEX_DELIMIT(cp[1])) return -TOKEN_LIT;
 					scan_state->end = cp+1;
 					return TOKEN_LIT;
+				}
+				if (cp[1] == '%' && IS_LEX_DELIMIT(cp[2])) {
+					if (cp[2] == '"' || cp[2] == '/') { // no '%"" or '%/
+						scan_state->end = cp + 3;
+						return -TOKEN_LIT;
+					}
+					return TOKEN_LIT; // allowed '%
 				}
 			}
 			if (cp[1] == '\'') return -TOKEN_LIT; // no ''foo
