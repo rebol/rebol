@@ -124,6 +124,13 @@ Rebol [
 	--assert parse v: "yxxyyx" remove-any-y
 	--assert v = "xxx"
 
+--test-- "remove & insert"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1251
+	--assert parse v: "a" [remove skip insert "xxx"]
+	--assert v = "xxx"
+	--assert parse v: "a" [[remove skip] insert "xxx"]
+	--assert v = "xxx"
+
 ===end-group===
 
 ===start-group=== "Modifiers on protected series"
