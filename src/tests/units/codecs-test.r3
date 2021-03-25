@@ -287,7 +287,7 @@ if all [
 	===start-group=== "ICO codec"
 	--test-- "ICO encode"
 		--assert all [
-			binary? bin: try [codecs/ico/encode wildcard %units/files/ico/ %.png]
+			binary? bin: try [codecs/ico/encode wildcard %units/files/ico/ %*.png]
 			#{0E7368623AD1DBD1BD94FC55B174778C} = checksum bin 'md5
 		]
 	--test-- "ICO decode"
