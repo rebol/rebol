@@ -287,26 +287,29 @@ if all [
 	===start-group=== "ICO codec"
 	--test-- "ICO encode"
 		--assert all [
-			binary? bin: try [codecs/ico/encode [
-			    %units/files/ico/icon_16.png
-			    %units/files/ico/icon_24.png
-			    %units/files/ico/icon_32.png
-			    %units/files/ico/icon_48.png
-			    %units/files/ico/icon_128.png
-			]]
-			#{35FB14C61A0E81F4FC525B9243116D3C} = checksum bin 'md5
+			binary? bin: try [codecs/ico/encode wildcard %units/files/ico/ %.png]
+			#{0E7368623AD1DBD1BD94FC55B174778C} = checksum bin 'md5
 		]
 	--test-- "ICO decode"
 		--assert all [
 			block? ico: try [codecs/ico/decode %units/files/test.ico]
-			ico/1/1 = 16   ico/1/2 = 32  binary? ico/1/3
-			ico/2/1 = 24   ico/2/2 = 32  binary? ico/2/3
-			ico/3/1 = 32   ico/3/2 = 32  binary? ico/3/3
-			ico/4/1 = 48   ico/4/2 = 32  binary? ico/4/3
-			ico/5/1 = 128  ico/5/2 = 32  binary? ico/5/3
+			ico/1/1  = 128 ico/1/2  = 32  binary? ico/1/3
+			ico/2/1  = 16  ico/2/2  = 32  binary? ico/2/3
+			ico/3/1  = 20  ico/3/2  = 32  binary? ico/3/3
+			ico/4/1  = 24  ico/4/2  = 32  binary? ico/4/3
+			ico/5/1  = 30  ico/5/2  = 32  binary? ico/5/3
+			ico/6/1  = 32  ico/6/2  = 32  binary? ico/6/3
+			ico/7/1  = 36  ico/7/2  = 32  binary? ico/7/3
+			ico/8/1  = 40  ico/8/2  = 32  binary? ico/8/3
+			ico/9/1  = 48  ico/9/2  = 32  binary? ico/9/3
+			ico/10/1 = 60  ico/10/2 = 32  binary? ico/10/3
+			ico/11/1 = 64  ico/11/2 = 32  binary? ico/11/3
+			ico/12/1 = 72  ico/12/2 = 32  binary? ico/12/3
+			ico/13/1 = 80  ico/13/2 = 32  binary? ico/13/3
+			ico/14/1 = 96  ico/14/2 = 32  binary? ico/14/3
 		]
 		--assert all [
-			image? img: try [decode 'png ico/1/3]
+			image? img: try [decode 'png ico/2/3]
 			16x16 = img/size
 		]
 	===end-group===
