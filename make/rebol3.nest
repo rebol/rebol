@@ -579,7 +579,7 @@ common-host: [
 	]
 	;#if Posix []
 	#if Linux? [
-		flag: -fvisibility=hidden
+	;	flag: -fvisibility=hidden
 		flag: -fPIC       ; position independent (used for libs)
 	]
 ]
@@ -662,6 +662,8 @@ make-dll: [
 	;:common-host
 	defines: [REB_API]
 	flags:   [-O2 shared]
+	#if Posix? [ flag: fPIC upx: off ]
+	#if macOS? [ flag: fno-common ]
 	do %make/pre-make.r3 "$NEST_SPEC"
 ]
 make-x86-dll: [:arch-x86 :make-dll #if Windows? [target: x86-win32]]
@@ -672,6 +674,7 @@ make-host: [
 	:common
 	files: none ;includes only host files
 	:common-host
+	#if Posix? [upx: off]
 	do %make/pre-make.r3 "$NEST_SPEC"
 ]
 make-x86-host: [:arch-x86 :make-host #if Windows? [target: x86-win32]]
@@ -815,6 +818,22 @@ eggs: [
 			:include-rebol-bulk
 			:make-x64-exe
 			upx: off
+		]
+
+		"Rebol/Core x64-libc shared library (gcc)" [
+			name:     %lib-rebol3-core-x64-gcc
+			product:  Core
+			compiler: gcc
+			:include-rebol-core
+			:make-x64-dll
+		]
+		"Rebol/Core x64-libc host application (gcc)" [
+			name:     %host-core-x64-gcc
+			product:  Core
+			compiler: gcc
+			:include-rebol-core
+			:make-x64-host
+			shared:   %lib-rebol3-core-x64-gcc
 		]
 	]
 ]
