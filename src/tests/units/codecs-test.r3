@@ -329,6 +329,35 @@ if find codecs 'PNG [
 	--test-- "png/size?"
 		--assert 24x24 = codecs/png/size? read %units/files/r3.png
 		--assert none?   codecs/png/size? read %units/files/test.aar
+
+	--test-- "png/chunks"
+		--assert all [
+			; read PNG file as a block of chunks...
+			block? blk: try [codecs/png/chunks %units/files/png-from-photoshop.png]
+			10 = length? blk
+			"IHDR" = to string! blk/1    13 = length? blk/2
+			"pHYs" = to string! blk/3     9 = length? blk/4
+			"iTXt" = to string! blk/5  2661 = length? blk/6
+			"IDAT" = to string! blk/7   264 = length? blk/8
+			"IEND" = to string! blk/9     0 = length? blk/10
+		]
+		--assert all [
+			; read PNG with only specified set of chunks...
+			block? blk: try [codecs/png/chunks/only %units/files/png-from-photoshop.png ["IHDR" "IDAT" "PLTE"]]
+			4 = length? blk
+			"IHDR" = to string! blk/1
+			"IDAT" = to string! blk/3
+			; the source image does not use palette, so there is no PLTE chunk
+			; write filtered set of chunks back as a PNG file...
+			file? try [write %new.png codecs/png/chunks blk]
+			; validate, if the new PNG is loadeable
+			image? img: try [load %new.png]
+			img/size = 72x72
+			; compare sizes of the original and the reduced version
+			321  = size? %new.png
+			3015 = size? %units/files/png-from-photoshop.png
+		]
+		try [delete %new.png]
 	===end-group===
 ]
 
