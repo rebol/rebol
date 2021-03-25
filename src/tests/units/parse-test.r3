@@ -131,6 +131,15 @@ Rebol [
 	--assert parse v: "a" [[remove skip] insert "xxx"]
 	--assert v = "xxx"
 
+--test-- "remove copy"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1244
+	--assert not parse a: "12" [remove copy v skip]
+	--assert a = "2"
+	--assert v = "1"
+	--assert not parse a: "12" [remove [copy v skip]]
+	--assert a = "2"
+	--assert v = "1"
+
 ===end-group===
 
 ===start-group=== "Modifiers on protected series"
