@@ -527,7 +527,7 @@ include-rebol-bulk: [
 	:include-prot-whois
 	:include-prot-mysql
 
-;	:include-dialecting  ;`delect` function (not used so far)
+	:include-dialecting  ;`delect`
 
 	;- for tests:
 	;:include-test-extension
