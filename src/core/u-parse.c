@@ -56,6 +56,7 @@ enum parse_flags {
 	PF_CHANGE,
 	PF_RETURN,
 	PF_WHILE,
+	PF_ADVANCE, // used to report that although index was not changed, rule is suppose to advance
 };
 
 #define MAX_PARSE_DEPTH 512
@@ -839,8 +840,8 @@ bad_target:
 					// #2269 - reset the position if we are not in the middle of any rule
 					// don't allow code like: [copy x :pos integer!]
 					if (flags != 0) Trap1(RE_PARSE_RULE, rules-1); 
-                    begin = index;
-
+					begin = index;
+					SET_FLAG(parse->flags, PF_ADVANCE);
 					continue;
 				}
 
@@ -978,10 +979,20 @@ bad_target:
 			if (i != NOT_FOUND) {
 				count++; // may overflow to negative
 				if (count < 0) count = MAX_I32; // the forever case
+
 				// If input did not advance:
-				if (i == index && !GET_FLAG(flags, PF_WHILE)) {
-					if (count < mincount) index = NOT_FOUND; // was not enough
-					break;
+				if (i == index) {
+					// check if there was processed some _modifying_ rule, which should advance
+					// even if index was not changed (https://github.com/Oldes/Rebol-issues/issues/2452)
+					if (GET_FLAG(parse->flags, PF_ADVANCE)) {
+						// clear the state in case, that there are other rules to be processed
+						// keep it in case that we were at the last one
+						if(count < maxcount) CLR_FLAG(parse->flags, PF_ADVANCE);
+					}
+					else if (!GET_FLAG(flags, PF_WHILE)) {
+						if (count < mincount) index = NOT_FOUND; // was not enough
+						break;
+					}
 				}
 			}
 			//if (i >= series->tail) {     // OLD check: no more input
@@ -1058,6 +1069,7 @@ post:
 						if (IS_PROTECT_SERIES(series)) Trap0(RE_PROTECTED);
 						Remove_Series(series, begin, count);
 					}
+					SET_FLAG(parse->flags, PF_ADVANCE);
 					index = begin;
 				}
 				if (flags & (1<<PF_INSERT | 1<<PF_CHANGE)) {
@@ -1090,6 +1102,7 @@ post:
 						index = Modify_String(GET_FLAG(flags, PF_CHANGE) ? A_CHANGE : A_INSERT,
 								series, begin, item, cmd, count, 1);
 					}
+					SET_FLAG(parse->flags, PF_ADVANCE);
 				}
 				if (GET_FLAG(flags, PF_AND)) index = begin;
 			}
