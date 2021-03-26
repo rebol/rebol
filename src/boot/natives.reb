@@ -394,7 +394,7 @@ construct: native [
 
 debase: native [
 	{Decodes binary-coded string to binary value.}
-	value [binary! string!] {The string to decode}
+	value [binary! any-string!] {The string to decode}
 	base  [integer!] {Binary base to use: 85, 64, 16, or 2}
 	/url  {Base 64 Decoding with URL and Filename Safe Alphabet}
 	/part {Limit the length of the input}

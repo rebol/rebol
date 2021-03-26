@@ -97,6 +97,13 @@ Rebol [
 		--assert strict-equal? 
 			"A multi-line\nstring" 
 			to string! debase "41206d756c74692d6c696e655c6e737472696e67" 16
+	--test-- "debase other strings"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2453
+		--assert #{1234} = debase "1234" 16
+		--assert #{1234} = debase <1234> 16
+		--assert #{1234} = debase @1234  16
+		--assert #{01}   = debase @00000001 2
+
 
 ===end-group===
 
