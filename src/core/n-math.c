@@ -576,7 +576,7 @@ enum {SINE, COSINE, TANGENT};
 				SET_MONEY(a, int_to_deci(VAL_INT64(a)));
 				goto compare;
 			}
-			else if (tb == REB_INTEGER) // special negative?, zero?, ...
+			else if (tb == REB_INTEGER || tb == REB_CHAR) // special negative?, zero?, ...
 				goto compare;
 			break;
 
@@ -621,8 +621,13 @@ enum {SINE, COSINE, TANGENT};
 		case REB_TAG:
 			if (ANY_STR(b)) goto compare;
 			break;
-		}
 
+		case REB_CHAR:
+			//o: using sepparated case as I don't want to allow comparison
+			//o: with not integer numbers (money, decimal, percent)
+			if (tb == REB_INTEGER)
+				goto compare;
+		}
 		if (strictness == 0 || strictness == 1) return FALSE;
 		//if (strictness >= 2)
 		Trap2(RE_INVALID_COMPARE, Of_Type(a), Of_Type(b));
