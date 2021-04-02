@@ -360,7 +360,7 @@ include-midi: [
 		core-files: %core/p-midi.c
 		host-files: %os/posix/dev-midi-osx.c
 		config:     INCLUDE_MIDI_DEVICE
-		lflags:     "-framework CoreServices -framework CoreMIDI"
+		frameworks: [CoreServices CoreMIDI]
 
 	]
 	#if Linux? [
