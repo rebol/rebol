@@ -11,7 +11,7 @@ include:  %src/include/
 temp:     %make/tmp/
 ;output:   %build/
 
-stack-size: 4194300
+stack-size: 4194304
 optimize:   2
 
 version: 3.5.2
@@ -357,7 +357,11 @@ include-midi: [
 		library:    %winmm
 	]
 	#if macOS? [
+		core-files: %core/p-midi.c
+		host-files: %os/posix/dev-midi-osx.c
 		config:     INCLUDE_MIDI_DEVICE
+		lflags:     "-framework CoreServices -framework CoreMIDI"
+
 	]
 	#if Linux? [
 		; there is no support yet
@@ -367,7 +371,7 @@ include-midi: [
 ;- native utilities:                                                            
 include-bincode:    [core-files: %core/u-bincode.c]
 include-dialecting: [core-files: %core/u-dialect.c config: INCLUDE_DELECT]
-include-iconv:      [core-files: %core/u-iconv.c]
+include-iconv:      [core-files: %core/u-iconv.c #if macOS? [library: %iconv]]
 
 ;- native cryptography:                                                         
 include-cryptography: [
@@ -562,6 +566,7 @@ common: [
 		library: %m
 		defines: ENDIAN_LITTLE
 		defines: USE_OLD_PIPE
+		cflags:  -Wno-pointer-sign
 	]
 	#if Linux? [
 		library: %m
@@ -595,8 +600,12 @@ arch-x64: [
 	#if Windows? [
 		defines: TO_WIN32_X64
 		defines: _WIN32
-		defines: __LLP64__
+		defines: __LLP64__ ; 64-bit, long (integer) has 32 bits and 'void *' is sizeof(long long)
 	]
+	#if macOS? [
+		defines: TO_OSX_X64
+		defines: __LP64__ ; same like LLP64, but long (integer) has 64 bits instead of 32
+	] 
 ]
 arch-x86: [
 	arch: x86
@@ -663,7 +672,7 @@ make-dll: [
 	defines: [REB_API]
 	flags:   [-O2 shared]
 	#if Posix? [ flag: fPIC upx: off ]
-	#if macOS? [ flag: fno-common ]
+	#if macOS? [ flag: fno-common strip: off]
 	do %make/pre-make.r3 "$NEST_SPEC"
 ]
 make-x86-dll: [:arch-x86 :make-dll #if Windows? [target: x86-win32]]
@@ -834,6 +843,50 @@ eggs: [
 			:include-rebol-core
 			:make-x64-host
 			shared:   %lib-rebol3-core-x64-gcc
+		]
+	]
+	#if macOS? [
+		"Rebol/Base x64-osx (clang)" [
+			name:     %rebol3-base-x64-osx
+			product:  Base
+			compiler: clang
+			target:   x64-osx
+			:make-x64-exe
+			upx: off
+		]
+		"Rebol/Core x64-osx (clang)" [
+			name:     %rebol3-core-x64-osx
+			product:  Core
+			compiler: clang
+			target:   x64-osx
+			:include-rebol-core
+			:make-x64-exe
+			upx: off
+		]
+		"Rebol/Bulk x64-osx (clang)" [
+			name:     %rebol3-bulk-x64-osx
+			product:  Bulk
+			compiler: clang
+			target:   x64-osx
+			:include-rebol-bulk
+			:make-x64-exe
+			upx: off
+		]
+
+		"Rebol/Core x64-osx shared library (clang)" [
+			name:     %lib-rebol3-core-x64-osx
+			product:  Core
+			compiler: clang
+			:include-rebol-core
+			:make-x64-dll
+		]
+		"Rebol/Core x64-libc host application (clang)" [
+			name:     %host-core-x64-osx
+			product:  Core
+			compiler: clang
+			:include-rebol-core
+			:make-x64-host
+			shared:   %lib-rebol3-core-x64-osx
 		]
 	]
 ]
