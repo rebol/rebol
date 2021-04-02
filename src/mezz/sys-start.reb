@@ -19,7 +19,7 @@ REBOL [
 
 start: func [
 	"INIT: Completes the boot sequence. Loads extras, handles args, security, scripts."
-	/local file tmp script-path script-args code
+	/local file tmp script-path script-args code ver
 ] bind [ ; context is: system/options
 
 	;** Note ** We need to make this work for lower boot levels too!
@@ -32,6 +32,14 @@ start: func [
 	boot-level: any [boot-level 'full]
 	start: 'done ; only once
 	init-schemes ; only once
+
+	ver: load/type lib/version 'unbound
+	system/product:        ver/2
+	system/version:        ver/3
+	system/platform:       ver/4
+	system/build/target:   ver/5
+	system/build/compiler: ver/6
+	system/build/date:     ver/7
 
 	;-- Print minimal identification banner if needed:
 	if all [
@@ -65,7 +73,7 @@ start: func [
 	;-- Convert command line arg strings as needed:
 	script-args: args ; save for below
 	foreach [opt act] [
-		args    [parse args ""]
+		;args    [parse args ""]
 		do-arg  block!
 		debug   block!
 		secure  word!
@@ -78,7 +86,7 @@ start: func [
 	]
 	; version, import, secure are all of valid type or none
 
-	if flags/verbose [print self]
+	;if flags/verbose [print self]
 
 	;-- Boot up the rest of the run-time environment:
 	;   NOTE: this can still be split up into more boot-levels !!!
@@ -102,6 +110,12 @@ start: func [
 			quiet: true
 		]
 
+		if boot-host [
+			loud-print "Init host code..."
+			;probe load boot-host
+			do load boot-host
+			boot-host: none
+		]
 		;-- Print fancy banner (created by mezz plus):
 		if any [
 			flags/verbose
@@ -109,28 +123,25 @@ start: func [
 		][
 			boot-print boot-banner
 		]
-		if boot-host [
-			loud-print "Init host code..."
-			do load boot-host
-			boot-host: none
-		]
 	]
 
-	;-- Setup SECURE configuration (a NO-OP for min boot)
-	lib/secure (case [
-		flags/secure [secure]
-		flags/secure-min ['allow]
-		flags/secure-max ['quit]
-		file? script [
-			compose [
-				file throw
-				(file) [allow read]
-				(home) [allow read]
-				(first script-path) allow
+	;-- Setup SECURE configuration
+	if select lib 'secure [
+		lib/secure (case [
+			flags/secure [secure]
+			flags/secure-min ['allow]
+			flags/secure-max ['quit]
+			file? script [
+				compose [
+					file throw
+					(file) [allow read]
+					(home) [allow read]
+					(first script-path) allow
+				]
 			]
-		]
-		'else ['none] ;compose [file throw (file) [allow read] %. allow]] ; default
-	])
+			'else ['none] ;compose [file throw (file) [allow read] %. allow]] ; default
+		])
+	]
 
 	;-- Evaluate rebol.reb script:
 	loud-print ["Checking for rebol.reb file in" file]

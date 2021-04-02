@@ -1,5 +1,3 @@
-[![Travis build](https://travis-ci.org/Oldes/Rebol3.svg?branch=master)](https://travis-ci.org/Oldes/Rebol3)
-[![AppVeyor build](https://ci.appveyor.com/api/projects/status/70wh8i8o61d6hipu?svg=true)](https://ci.appveyor.com/project/Oldes/r3)
 [![Gitter](https://badges.gitter.im/rebol3/community.svg)](https://gitter.im/rebol3/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Chocolatey](https://raw.githubusercontent.com/Oldes/media/master/install-from-choco.svg)](https://chocolatey.org/packages/rebol3)
 
@@ -17,6 +15,9 @@ Preferred way for issue reporting is using [dedicated issue repository](https://
 ![](https://github.com/Oldes/media/blob/master/screens/rebol-windows-terminal.PNG?raw=true "Rebol in Windows Terminal")
 
 ![](https://github.com/Oldes/media/blob/master/screens/rebol-ubuntu-terminal.jpg?raw=true "Rebol in Linux Terminal")
+
+#### Building a customized CLI application using compile DSL:
+![](https://raw.githubusercontent.com/Oldes/media/master/screens/build-siskin.gif "Building a Rebol based utility")
 
 ### Other Rebol related projects
 

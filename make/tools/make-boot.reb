@@ -11,7 +11,7 @@ REBOL [
 	}
 	Author: "Carl Sassenrath"
 	Version: 2.100.0
-	Needs: 2.100.100
+	Needs: 3.5.0
 	Purpose: {
 		A lot of the REBOL system is built by REBOL, and this program
 		does most of the serious work. It generates most of the C include
@@ -23,66 +23,21 @@ REBOL [
 	}
 ]
 
-print "--- Make Boot : System Embedded Script ---"
+context [ ; wrapped to prevent colisions with other build scripts
 
-do %common.reb
-do %tools/systems.reb
-
-
-;-- Args passed: platform, product
-
-? system/options/args
-
-if none? args: system/options/args [
-	print "Using default target options!"
-	args: reduce [
-		to tuple! reduce [0 system/version/4 system/version/5]
-		'core
-	]
-]
-
-try [
-	platform: load args/1
-	target: config-system/platform platform
-]
-
-if none? target [
-	do error ["Failed to find target for platform: " platform]
-]
-os-name: target/2
-os-base: target/3
-
-product: to-word any [args/2 'core]
-
-? platform
-? product
-? target
-
-platform-data: context [type: 'windows]
-build: context [features: [help-strings]]
+;platform-data: context [type: 'windows]
+;build: context [features: [help-strings]]
 
 ;-- SETUP --------------------------------------------------------------
 
-change-dir %boot/
-inc: %../include/
-src: %../core/
-
-version: load %version.reb
-version/4: platform/2
-version/5: platform/3
-
-save temp-dir/tmp-options.reb compose [
-	platform: (platform)
-	version:  (version )
-	os-name:  (os-name )
-	os-base:  (os-base )
-	product:  (product )
-]
+inc: root-dir/src/include
+src: root-dir/src/core
 
 ;-- Title string put into boot.h file checksum:
 Title:
 {REBOL
 Copyright 2012 REBOL Technologies
+Copyright 2012-2021 Rebol Open Source Contributors
 REBOL is a trademark of REBOL Technologies
 Licensed under the Apache License, Version 2.0
 }
@@ -114,6 +69,8 @@ include-protocols: false      ; include protocols in build
 ;init-build-objects/platform platform
 ;platform-data: platforms/:platform
 ;build: platform-data/builds/:product
+
+load-boot: func[file][load-file rejoin [root-dir %src/boot/ file]]
 
 ;-- Emit Function
 out: make string! 100000
@@ -161,38 +118,6 @@ emit-end: func [/easy] [
 	append out {^};^/}
 ]
 
-binary-to-c: either system/version/4 = 3 [
-	; Windows format:
-	func [comp-data /local out] [
-		out: make string! 4 * (length? comp-data)
-		forall comp-data [
-			out: insert out reduce [to-integer first comp-data ", "]
-			if zero? ((index? comp-data) // 10) [out: insert out "^/^-"]
-		]
-;		remove/part out either (pick out -1) = #" " [-2][-4]
-		head out
-	]
-][
-	; Other formats (Linux, OpenBSD, etc.):
-	func [comp-data /local out data] [
-		out: make string! 4 * (length? comp-data)
-		forall comp-data [
-			data: copy/part comp-data 16
-			comp-data: skip comp-data 15
-			data: enbase-16 data
-			forall data [
-				insert data "\x"
-				data: skip data 3
-			]
-			data: tail data
-			insert data {"^/}
-			append out {"}
-			append out head data
-		]
-		head out
-	]
-]
-
 remove-tests: func [d] [
 	while [d: find d #test][remove/part d 2]
 ]
@@ -201,7 +126,7 @@ remove-tests: func [d] [
 ;- Evaltypes.h - Evaluation Dispatch Maps                                    
 ;----------------------------------------------------------------------------
 
-boot-types: load %types.reb
+boot-types: load-boot %types.reb
 type-record: [type evalclass typeclass moldtype formtype haspath maker typesets]
 
 emit-head "Evaluation Maps" %evaltypes.h
@@ -274,7 +199,7 @@ foreach :type-record boot-types [
 ]
 emit-end
 
-write inc/tmp-evaltypes.h out
+write-generated inc/gen-evaltypes.h out
 
 
 ;----------------------------------------------------------------------------
@@ -319,7 +244,7 @@ foreach :type-record boot-types [
 
 emit-end
 
-write inc/tmp-maketypes.h out
+write-generated inc/gen-maketypes.h out
 
 ;----------------------------------------------------------------------------
 ;- Comptypes.h - compare functions                                           
@@ -356,7 +281,7 @@ foreach :type-record boot-types [
 ]
 emit-end
 
-write inc/tmp-comptypes.h out
+write-generated inc/gen-comptypes.h out
 
 
 ;----------------------------------------------------------------------------
@@ -414,7 +339,7 @@ write inc/tmp-comptypes.h out
 ;]
 ;emit-end
 ;
-;write inc/tmp-moldtypes.h out
+;write-generated inc/gen-moldtypes.h out
 
 ;----------------------------------------------------------------------------
 ;- Bootdefs.h - Boot include file                                            
@@ -422,8 +347,7 @@ write inc/tmp-comptypes.h out
 
 emit-head "Datatype Definitions" %reb-types.h
 
-emit [
-{
+emit {
 /***********************************************************************
 **
 */	enum REBOL_Types
@@ -433,7 +357,6 @@ emit [
 ***********************************************************************/
 ^{
 }
-]
 
 datatypes: []
 n: 0
@@ -495,13 +418,13 @@ foreach [ts types] typeset-sets [
 	append remove back tail out ")^/"
 ]
 
-write-if inc/reb-types.h out
+write-generated inc/reb-types.h out
 
 ;----------------------------------------------------------------------------
 ;- Extension Related Tables                                                  
 ;----------------------------------------------------------------------------
 
-ext-types: load %types-ext.reb
+ext-types: load-boot %types-ext.reb
 rxt-record: [type offset size]
 
 ; Generate type table with necessary gaps
@@ -519,12 +442,11 @@ foreach :rxt-record ext-types [
 
 emit-head "Extension Types (Isolators)" %ext-types.h
 
-emit [
-{
+emit {
 enum REBOL_Ext_Types
 ^{
 }
-]
+
 n: 0
 foreach :rxt-record ext-types [
 	either integer? offset [
@@ -538,7 +460,7 @@ emit {    RXT_MAX
 ^};
 }
 
-write inc/ext-types.h out ; part of Host-Kit distro
+write-generated inc/ext-types.h out ; part of Host-Kit distro
 
 emit-head "Extension Type Equates" %tmp-exttypes.h
 emit {
@@ -611,7 +533,7 @@ foreach type next rxt-types [
 remove back tail out
 emit ")^/"
 
-write inc/tmp-exttypes.h out
+write-generated inc/gen-exttypes.h out
 
 
 ;----------------------------------------------------------------------------
@@ -620,15 +542,13 @@ write inc/tmp-exttypes.h out
 
 emit-head "Boot Definitions" %bootdefs.h
 
-emit [
-{
-#define REBOL_VER } version/1 {
-#define REBOL_REV } version/2 {
-#define REBOL_UPD } version/3 {
-#define REBOL_SYS } version/4 {
-#define REBOL_VAR } version/5 {
-}
-]
+emit [{
+#define REBOL_VER } any [version/1 0] {
+#define REBOL_REV } any [version/2 0] {
+#define REBOL_UPD } any [version/3 0] {
+#define REBOL_SYS } any [version/4 0] {
+#define REBOL_VAR } any [version/5 0] {
+}]
 
 ;-- Generate Lower-Level String Table ----------------------------------------
 
@@ -644,7 +564,12 @@ emit {
 ***********************************************************************/
 }
 
-boot-strings: load %strings.reb
+boot-strings: load-boot %strings.reb
+
+append boot-strings compose [
+	version:
+		(any [str-version "Rebol Core 3.5.0"])
+]
 
 code: ""
 n: 0
@@ -686,9 +611,9 @@ foreach :type-record boot-types [
 	n: n + 1
 ]
 
-boot-words: load %words.reb
+boot-words: load-boot %words.reb
 
-foreach [group words] load %modes.reb [
+foreach [group words] load-boot %modes.reb [
 	replace boot-words group words
 ]
 
@@ -698,11 +623,11 @@ foreach word boot-words [
 	n: n + 1
 ]
 
-;- tmp-symbols.reb is file generated by make-headers.reb script!
-if exists? temp-dir/tmp-symbols.reb [
+;- gen-symbols.reb is file generated by make-headers.reb script!
+if exists? gen-dir/gen-symbols.reb [
 	emit {^/    // follows symbols used in C sources, but not defined in %words.reb list...^/}
 
-	foreach word load temp-dir/tmp-symbols.reb [
+	foreach word load-file gen-dir/gen-symbols.reb [
 		if not find used-words word [
 			append boot-words to word! lowercase word
 			emit-line "SYM_" word form n
@@ -728,13 +653,13 @@ emit {
 ^{
 }
 
-boot-actions: load %actions.reb
-n: 1
+boot-actions: load-boot %actions.reb
+act-count: 1
 emit-line "A_" "type = 0" "Handled by interpreter"
 foreach word boot-actions [
 	if set-word? :word [
-		emit-line "A_" to word! :word n ;R3
-		n: n + 1
+		emit-line "A_" to word! :word act-count ;R3
+		++ act-count
 	]
 ]
 emit [tab "A_MAX_ACTION" lf "};"]
@@ -742,9 +667,8 @@ emit {
 
 #define IS_BINARY_ACT(a) ((a) <= A_XOR)
 }
-print [n "actions"]
 
-write inc/tmp-bootdefs.h out
+write-generated inc/gen-bootdefs.h out
 
 ;----------------------------------------------------------------------------
 ;- Sysobj.h - System Object Selectors                                        
@@ -757,18 +681,14 @@ at-value: func ['field] [next find boot-sysobj to-set-word field]
 
 get-git: function[][
 	git: ref: none
-	if any [
-		exists? git-dir: %../../.git/
-		exists? git-dir: %../../../.git/
-	][
-		?? git-dir
+	if exists? git-dir: root-dir/.git [
+		;?? git-dir
 		try [
 			;ls/r :git-dir
-			
-			try [print read/string  git-dir/config ]
+			;try [print read/string  git-dir/config ]
 
-			git-head: read/string git-dir/HEAD
-			?? git-head
+			git-head: read-file git-dir/HEAD
+			;?? git-head
 			parse git-head [thru "ref:" any #" " copy ref to lf]
 			
 			git: object [repository: branch: commit: message: none]
@@ -781,25 +701,24 @@ get-git: function[][
 			try [git/branch: find/reverse/tail tail ref #"/"]
 			try [git/commit: trim/tail either ref [read/string git-dir/(ref)][git-head]]
 			try [git/message: trim/tail read/string git-dir/COMMIT_EDITMSG]
-			?? git
+			;?? git
 		]
 	]
 	git
 ]
 
-plats: load %platforms.reb
-boot-sysobj: load %sysobj.reb
+plats: load-boot %platforms.reb
+boot-sysobj: load-boot %sysobj.reb
 change at-value version version
 when: now
 when: when - when/zone
 when/zone: 0:00
-change at-value build object [
-	os: any [select third any [find/skip plats version/4 3 []] version/5 ""]
-	date: when
-	git: get-git
-]
-change at-value product to lit-word! product
-
+;change at-value build object [
+;	os: any [select third any [find/skip plats version/4 3 []] version/5 ""]
+;	date: when
+;	git: get-git
+;]
+;change at-value product to lit-word! product
 change/only at-value platform to lit-word! any [select plats version/4 'Unknown]
 
 ob: context boot-sysobj
@@ -839,7 +758,7 @@ make-obj-defs ob/options "OPTIONS_" 4
 make-obj-defs ob/locale "LOCALE_" 4
 make-obj-defs ob/view "VIEW_" 4
 
-write inc/tmp-sysobj.h out
+write-generated inc/gen-sysobj.h out
 
 ;----------------------------------------------------------------------------
 
@@ -860,7 +779,7 @@ make-obj-defs ob/dialects "DIALECTS_" 4
 emit {#define DIALECT_LIT_CMD 0x1000
 }
 
-write inc/reb-dialect.h out
+write-generated inc/reb-dialect.h out
 
 
 ;----------------------------------------------------------------------------
@@ -885,7 +804,7 @@ foreach field ob/view/event-keys [
 emit [tab "EVK_MAX^/"]
 emit "};^/^/"
 
-write inc/reb-evtypes.h out
+write-generated inc/reb-evtypes.h out
 
 
 ;----------------------------------------------------------------------------
@@ -924,7 +843,7 @@ emit {
 ^{
 }
 
-boot-errors: load %errors.reb
+boot-errors: load-boot %errors.reb
 err-list: make block! 200
 errs: false
 
@@ -955,13 +874,13 @@ emit {
 #define RE_USER RE_MESSAGE
 }
 
-write inc/tmp-errnums.h out
+write-generated inc/gen-errnums.h out
 
 ;-------------------------------------------------------------------------
 
 emit-head "Port Modes" %port-modes.h
 
-data: load %modes.reb
+data: load-boot %modes.reb
 
 emit {^/enum reb_port_modes ^{^/}
 foreach word select data '*port-modes* [ emit-enum join "MODE_PORT_" up-word word ]
@@ -971,44 +890,38 @@ emit {^/enum reb_console_modes ^{^/}
 foreach word select data '*console-modes* [	emit-enum join "MODE_CONSOLE_" up-word word ]
 emit-end
 
-write inc/tmp-portmodes.h out
+write-generated inc/gen-portmodes.h out
 
 ;----------------------------------------------------------------------------
-;- Load Boot Mezzanine Functions - Base, Sys, and Plus                       
+;- Load Boot Mezzanine Functions - Base, Sys, Lib, and Prot                  
 ;----------------------------------------------------------------------------
 
-;-- Add other MEZZ functions:
-mezz-files: load %../mezz/boot-files.reb ; base lib, sys, mezz
+print-info "Load Boot Mezzanine Functions - Base, Sys, Lib and Prot"
 
-; fine tuning what to add into mezzanine per product/os (could be done better!)
-if product = 'view [
-	append mezz-files/3 [
-		%codec-wav.reb
-		%codec-swf.reb
-		%codec-bbcode.reb
-	]
-	if os-base = 'win32 [
-		append mezz-files/3 [
-			%codec-image.reb
-		]
-	]
+;make sure that mezz-tail.reb is the last file in boot-mezz
+if all [
+	pos: find mezz-files/3 %mezz-tail.reb
+	1 <> length? pos
+][
+	append mezz-files/3 take pos
 ]
-append mezz-files/3 %codec-image-ext.reb
 
 foreach section [boot-base boot-sys boot-mezz] [
 	set section make block! 200
+
 	foreach file first mezz-files [
-		file: load/header join %../mezz/ file
-		append get section either 'module = select file/1 'type [
+		file: load-file/header file
+		hdr: take file
+		append get section either 'module = select hdr 'type [
 			compose/deep/only [
 				import module [
-					Title:   (select file/1 'title)
-					Name:    (select file/1 'name)
-					Version: (select file/1 'version)
-					Exports: (select file/1 'exports)
-				] ( next file )
+					Title:   (select hdr 'title)
+					Name:    (select hdr 'name)
+					Version: (select hdr 'version)
+					Exports: (select hdr 'exports)
+				] ( file )
 			]
-		][	next file ]
+		][	file ]
 	]
 	remove-tests get section
 	mezz-files: next mezz-files
@@ -1016,33 +929,34 @@ foreach section [boot-base boot-sys boot-mezz] [
 
 boot-protocols: make block! 20
 foreach file first mezz-files [
-	file: next load/all join %../mezz/ file
+	file: load-file/header file
+	hdr: to block! take file
 	either all [
 		;- if protocol exports some function, import must be used so
 		;- the functions are available in user's context
-		select file/1 'exports
-		select file/1 'name
-		'module  = select file/1 'type
+		select hdr 'exports
+		select hdr 'name
+		'module  = select hdr 'type
 	][
 		;- using boot-mezz as this section is binded into lib context
 		append boot-mezz compose/deep/only [
 			import module [
-				Title:   (select file/1 'title)
-				Name:    (select file/1 'name)
-				Version: (select file/1 'version)
-				Exports: (select file/1 'exports)
-			] ( next file )
+				Title:   (select hdr 'title)
+				Name:    (select hdr 'name)
+				Version: (select hdr 'version)
+				Exports: (select hdr 'exports)
+			] ( file )
 		]
 	][
 		;- else hidden module is used by default (see sys-start.reb)
-		append/only append/only boot-protocols file/1 next file
+		append/only append/only boot-protocols hdr file
 	]
 ]
 
 emit-head "Sys Context" %sysctx.h
 sctx: construct boot-sys
 make-obj-defs sctx "SYS_CTX_" 1
-write inc/tmp-sysctx.h out
+write-generated inc/gen-sysctx.h out
 
 
 ;----------------------------------------------------------------------------
@@ -1059,8 +973,8 @@ emit {
 }
 
 externs: make string! 2000
-boot-booters: load %booters.reb
-boot-natives: append load %natives.reb load temp-dir/tmp-natives.reb
+boot-booters: load-boot %booters.reb
+boot-natives: append load-boot %natives.reb load-file gen-dir/gen-natives.reb
 
 
 nats: append copy boot-booters boot-natives
@@ -1083,9 +997,6 @@ foreach val nats [
 		nat-count: nat-count + 1
 	]
 ]
-
-
-print [nat-count "natives"]
 
 emit [newline {const REBFUN Native_Funcs[} nat-count {] = ^{
 }]
@@ -1112,24 +1023,26 @@ emit newline
 
 ;-- Build typespecs block (in same order as datatypes table):
 boot-typespecs: make block! 100
-specs: load %typespec.reb
+specs: load-boot %typespec.reb
 foreach type datatypes [
 	append/only boot-typespecs select specs type
 ]
 
 ;-- Create main code section (compressed):
 boot-types: new-types
-boot-root: load %root.reb
-boot-task: load %task.reb
-boot-ops: load %ops.reb
-;boot-script: load %script.reb
+boot-root: load-boot %root.reb
+boot-task: load-boot %task.reb
+boot-ops:  load-boot %ops.reb
+;boot-script: load-boot %script.reb
 
-write %boot-code.reb mold reduce sections
+write-generated gen-dir/gen-boot-code.reb mold reduce sections
+
 data: mold reduce sections
 insert data reduce ["; Copyright (C) REBOL Technologies " now newline]
 insert tail data make char! 0 ; scanner requires zero termination
 
 comp-data: compress data: to-binary data
+;comp-data-zlib: compress/zlib/level data: to-binary data 9
 
 emit [
 {
@@ -1155,14 +1068,7 @@ emit binary-to-c reverse (skip data-len-bin 4)
 emit binary-to-c comp-data
 emit-end/easy
 
-write src/b-boot.c out
-
-;-- Output stats:
-print [
-	"Compressed" length? data "to" length? comp-data "bytes:"
-	to-integer ((length? comp-data) / (length? data) * 100)
-	"percent of original"
-]
+write-generated src/b-boot.c out
 
 ;-- Create platform string:
 ;platform: to-string platform
@@ -1173,6 +1079,21 @@ print [
 ;	replace/all product "-" ""
 ;]
 ;;dir: to-file rejoin [%../to- platform "/" product "/temp/"]
+
+;-- Output stats:
+print-info ["Natives:^[[33m" nat-count]
+print-info ["Actions:^[[33m" act-count]
+print-info ajoin [
+	"^[[32mBoot code compressed from ^[[33m" length? data
+	"^[[32m to ^[[33m" length? comp-data
+	"^[[32m bytes (^[[33m" to-integer ((length? comp-data) / (length? data) * 100)
+	"^[[32m percent)"
+]
+;print-info [
+;	"Compressed" length? data "to" length? comp-data-zlib "bytes:"
+;	to-integer ((length? comp-data-zlib) / (length? data) * 100)
+;	"percent of original (ZLIB)"
+;]
 
 ;----------------------------------------------------------------------------
 ;- Boot.h - Boot header file                                                 
@@ -1246,7 +1167,32 @@ foreach word boot-task [
 ]
 emit ["#define TASK_MAX " n lf]
 
-write inc/tmp-boot.h out
+write-generated inc/gen-boot.h out
+
+
+;----------------------------------------------------------------------------
+;- gen-config.h - system configuration header file                           
+;----------------------------------------------------------------------------
+
+emit-head "Build configuration" %config.h
+
+emit {^/#ifndef REBOL_OPTIONS_H^/}
+
+foreach def configs [
+	emit ajoin ["#define " def lf]
+]
+emit {
+//**************************************************************//
+#include "opt-dependencies.h" // checks for above options
+
+#endif //REBOL_OPTIONS_H
+}
+
+write-generated inc/gen-config.h out
+
+;----------------------------------------------------------------------------
 ;print ask "-DONE-"
 ;wait .3
-print "[DONE boot]^/"
+
+] ; end of context
+;print "[DONE boot]^/"

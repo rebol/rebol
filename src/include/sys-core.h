@@ -73,7 +73,7 @@
 #include "reb-c.h"
 #include "reb-defs.h"
 #include "reb-args.h"
-#include "tmp-bootdefs.h"
+#include "gen-bootdefs.h"
 #define PORT_ACTIONS A_CREATE  // port actions begin here
 
 #include "reb-device.h"
@@ -81,8 +81,8 @@
 #include "reb-event.h"
 
 #include "sys-value.h"
-#include "tmp-strings.h"
-#include "tmp-funcargs.h"
+#include "gen-strings.h"
+#include "gen-funcargs.h"
 
 //-- Port actions (for native port schemes):
 typedef struct rebol_port_action_map {
@@ -106,18 +106,18 @@ typedef struct rebol_mold {
 #include "reb-math.h"
 #include "reb-codec.h"
 
-#include "tmp-sysobj.h"
-#include "tmp-sysctx.h"
+#include "gen-sysobj.h"
+#include "gen-sysctx.h"
 
 //#include "reb-net.h"
 #include "sys-panics.h"
-#include "tmp-boot.h"
+#include "gen-boot.h"
 #include "sys-mem.h"
-#include "tmp-errnums.h"
+#include "gen-errnums.h"
 #include "host-lib.h"
 #include "sys-stack.h"
 #include "sys-state.h"
-#include "tmp-portmodes.h"
+#include "gen-portmodes.h"
 
 /***********************************************************************
 **
@@ -417,7 +417,7 @@ extern const REBACT Value_Dispatch[];
 //extern const REBYTE Lower_Case[];
 
 
-#include "tmp-funcs.h"
+#include "gen-funcs.h"
 
 
 /***********************************************************************

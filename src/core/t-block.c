@@ -330,9 +330,9 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 			return;
 		}
 		
-	} else if (type == REB_BLOCK || type == REB_PAREN) {
+	} else if (ANY_BLOCK_TYPE(type)) {
 		// to block!/paren! typset!
-		if (IS_TYPESET(arg)) {
+		if (IS_TYPESET(arg) && (type == REB_BLOCK || type == REB_PAREN)) {
 			Set_Block(value, Typeset_To_Block(arg));
 			return;
 		}

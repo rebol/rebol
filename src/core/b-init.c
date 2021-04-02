@@ -353,6 +353,20 @@ extern const REBYTE Str_Banner[];
 	return R_RET;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(version)
+/*
+//	version: native [
+//		"Return Rebol version string"
+//	]
+***********************************************************************/
+{
+	const REBYTE*version = BOOT_STR(RS_VERSION, 0);
+	Set_String(ds, Copy_Bytes(version, strlen(cs_cast(version))));
+	return R_RET;
+}
+
 
 /***********************************************************************
 **
@@ -806,6 +820,26 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	REBCHR *data;
 	REBCNT n;
 
+#ifdef RAW_MAIN_ARGS
+	REBVAL *new;
+	// make system/options/flags block even when not used...
+	val = Get_System(SYS_OPTIONS, OPTIONS_FLAGS);
+	Set_Block(val, Make_Block(3));
+	// clear list of default flags (system/catalog/boot-flags)
+	val = Get_System(SYS_CATALOG, CAT_BOOT_FLAGS);
+	SET_NONE(val);
+	// convert raw argument strings to block of strings...
+	ser = Make_Block(3);
+	for (n = 1; n < rargs->argc ; n++) {
+		REBCHR *arg = rargs->argv[n];
+		if (arg == 0) continue; // shell bug
+		new = Append_Value(ser);
+		Set_String(new, Copy_OS_Str(arg, (REBINT)LEN_STR(arg)));
+		//if(arg[0]=='-')	VAL_SET_LINE(new);
+	}
+	val = Get_System(SYS_OPTIONS, OPTIONS_ARGS);
+	Set_Block(val, ser);
+#else
 
 	ser = Make_Block(3);
 	n = 2; // skip first flag (ROF_EXT)
@@ -815,8 +849,11 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 		if (rargs->options & n) Append_Val(ser, val); 
 		n <<= 1;
 	}
+	// last value is always TRUE, so it's possible to use just *path* instead of `find`
+	// like: `if system/options/flags/verbose [...]`
 	val = Append_Value(ser);
 	SET_TRUE(val);
+	
 	val = Get_System(SYS_OPTIONS, OPTIONS_FLAGS);
 	Set_Block(val, ser);
 
@@ -831,16 +868,6 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 		Set_Option_File(OPTIONS_SCRIPT, (REBYTE*)rargs->script, FALSE);
 	}
 
-	if (rargs->exe_path) {
-		Set_Option_File(OPTIONS_BOOT, (REBYTE*)rargs->exe_path, FALSE);
-	}
-
-	// Print("home: %s", rargs->home_dir);
-	if (rargs->home_dir) {
-		Set_Option_File(OPTIONS_HOME, (REBYTE*)rargs->home_dir, TRUE);
-		OS_FREE(rargs->home_dir);
-	}
-
 	n = Set_Option_Word(rargs->boot, OPTIONS_BOOT_LEVEL);
 	if (n >= SYM_BASE && n <= SYM_MODS)
 		PG_Boot_Level = n - SYM_BASE; // 0 - 3
@@ -852,7 +879,16 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	Set_Option_String(rargs->import, OPTIONS_IMPORT);
 
 	Set_Option_Word(rargs->secure, OPTIONS_SECURE);
+#endif
+	if (rargs->exe_path) {
+		Set_Option_File(OPTIONS_BOOT, (REBYTE*)rargs->exe_path, FALSE);
+	}
 
+	// Print("home: %s", rargs->home_dir);
+	if (rargs->home_dir) {
+		Set_Option_File(OPTIONS_HOME, (REBYTE*)rargs->home_dir, TRUE);
+		OS_FREE(rargs->home_dir);
+	}
 	if (NZ(data = OS_GET_LOCALE(0))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE);
 		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));

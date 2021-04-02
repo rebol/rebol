@@ -1009,7 +1009,6 @@ crash:
 {
 	REBSEG	*seg, *next;
 	REBHOB *hob;
-	REBCNT  used;
 	REBCNT  n;
 
 	//Dump_Pools();

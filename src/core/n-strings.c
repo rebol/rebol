@@ -682,7 +682,6 @@ static struct digest {
 {
 	REBVAL *val = D_ARG(1);
 	REBINT len = VAL_LEN(val);
-	REBINT n;
 
 	if (IS_PROTECT_SERIES(VAL_SERIES(val))) Trap0(RE_PROTECTED);
 

@@ -3,6 +3,7 @@ REBOL [
 	Title: "Standard source code header"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2021 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -12,10 +13,8 @@ REBOL [
 	Author: "Carl Sassenrath"
 ]
 
-bv: load %../boot/version.reb
-
 form-header: func [title [string!] file [file!] /gen by] [
-	print ["..." title]
+	print-info ["== Header:" as-green title]
 	by: either gen [
 		rejoin [{**  AUTO-GENERATED FILE - Do not modify. (From: } by {)^/**^/}]
 	][""]
@@ -25,6 +24,7 @@ form-header: func [title [string!] file [file!] /gen by] [
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **  Licensed under the Apache License, Version 2.0
 **  This is a code-generated file.
@@ -32,7 +32,7 @@ form-header: func [title [string!] file [file!] /gen by] [
 ************************************************************************
 **
 **  Title: } title {
-**  Build: A} bv/3 {
+**  Build: } ver3 {
 **  Date:  } now/date {
 **  File:  } file {
 **
@@ -40,5 +40,4 @@ form-header: func [title [string!] file [file!] /gen by] [
 {***********************************************************************/
 
 }
-]
-]
+]]

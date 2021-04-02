@@ -46,6 +46,164 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Special % word"
+	--test-- "valid % word cases"
+		--assert word? try [load {%}]
+		--assert word? try [load {% }]
+		--assert word? try [load {%^-}]
+		--assert word? try [first load {[%]}]
+	--test-- "valid % lit-word cases"
+		--assert lit-word? try [load {'%}]
+		--assert lit-word? try [load {'% }]
+		--assert lit-word? try [load {'%^-}]
+		--assert lit-word? try [first load {['%]}]
+	--test-- "valid % get-word cases"
+		--assert get-word? try [load {:%}]
+		--assert get-word? try [load {:% }]
+		--assert get-word? try [load {:%^-}]
+		--assert get-word? try [first load {[:%]}]
+	--test-- "invalid % lit-word cases"
+		--assert all [error? e: try [load {'%""}] e/id = 'invalid e/arg1 = "word-lit"]
+		--assert all [error? e: try [load {'%/}]  e/id = 'invalid e/arg1 = "word-lit"]
+	--test-- "invalid % get-word cases"
+		--assert all [error? e: try [load {:%""}] e/id = 'invalid e/arg1 = "word-get"]
+		--assert all [error? e: try [load {:%/}]  e/id = 'invalid e/arg1 = "word-get"]
+	--test-- "% used in object"
+		--assert all [
+			not error? try [o: make object! [%: 1]]
+			1 = o/%
+		]
+
+===end-group===
+
+===start-group=== "Special arrow-like words"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1302
+;@@ https://github.com/Oldes/Rebol-issues/issues/1318
+;@@ https://github.com/Oldes/Rebol-issues/issues/1342
+;@@ https://github.com/Oldes/Rebol-issues/issues/1478
+
+	--test-- "valid arrow-like words"
+		--assert word? try [load {<-->}]
+		--assert word? try [load {<==>}]
+		--assert word? try [load {<-==->}]
+		--assert word? try [load {<~~~>}]
+
+	--test-- "valid left-arrow-like words"
+		--assert word? try [load {<<}]
+		--assert word? try [load {<<<}]
+		--assert word? try [load {<<<<}]
+		--assert word? try [load {<<==}]
+		--assert word? try [load {<===}]
+		--assert word? try [load {<---}]
+		--assert word? try [load {<~~~}]
+		--assert all [block? b: try [load {<<<""}] parse b [word! string!]]
+
+	--test-- "valid right-arrow-like words"
+		--assert word? try [load {>>}]
+		--assert word? try [load {>>>}]
+		--assert word? try [load {>>>>}]
+		--assert word? try [load {==>>}]
+		--assert word? try [load {===>}] 
+		--assert word? try [load {--->}]
+		--assert word? try [load {~~~>}] 
+		--assert all [block? b: try [load {>>>""}] parse b [word! string!]]
+
+	--test-- "invalid cases"
+		--assert error? try [load {a<}]
+		--assert error? try [load {a>}]
+		--assert error? try [load {a<--}]
+		--assert error? try [load {a-->}]
+
+	--test-- "valid arrow-like lit-words"
+		--assert lit-word? try [load {'<-->}]
+		--assert lit-word? try [load {'<==>}]
+		--assert lit-word? try [load {'<-==->}]
+		--assert lit-word? try [load {'<~~~>}]
+
+	--test-- "valid left-arrow-like lit-words"
+		--assert lit-word? try [load {'<<}]
+		--assert lit-word? try [load {'<<<}]
+		--assert lit-word? try [load {'<<<<}]
+		--assert all [block? b: try [load {'<<<""}] parse b [lit-word! string!]]
+
+	--test-- "valid right-arrow-like lit-words"
+		--assert lit-word? try [load {'>>}]
+		--assert lit-word? try [load {'>>>}]
+		--assert lit-word? try [load {'>>>>}]
+		--assert lit-word? try [load {'==>>}]
+		--assert lit-word? try [load {'===>}]
+		--assert lit-word? try [load {'--->}]
+		--assert lit-word? try [load {'~~~>}]
+		--assert all [block? b: try [load {'>>>""}] parse b [lit-word! string!]]
+
+	--test-- "valid arrow-like get-words"
+		--assert get-word? try [load {:<-->}]
+		--assert get-word? try [load {:<==>}]
+		--assert get-word? try [load {:<-==->}]
+		--assert get-word? try [load {:<~~~>}]
+
+	--test-- "valid left-arrow-like get-words"
+		--assert get-word? try [load {:<<}]
+		--assert get-word? try [load {:<<<}]
+		--assert get-word? try [load {:<<<<}]
+		--assert all [block? b: try [load {:<<<""}] parse b [get-word! string!]]
+
+	--test-- "valid right-arrow-like get-words"
+		--assert get-word? try [load {:>>}]
+		--assert get-word? try [load {:>>>}]
+		--assert get-word? try [load {:>>>>}]
+		--assert get-word? try [load {:==>>}]
+		--assert get-word? try [load {:===>}]
+		--assert get-word? try [load {:--->}]
+		--assert get-word? try [load {:~~~>}]
+		--assert all [block? b: try [load {:>>>""}] parse b [get-word! string!]]
+
+	--test-- "valid arrow-like set-words"
+		--assert set-word? try [load {<-->:}]
+		--assert set-word? try [load {<==>:}]
+		--assert set-word? try [load {<-==->:}]
+		--assert set-word? try [load {<~~~>:}]
+
+	--test-- "valid left-arrow-like set-words"
+		--assert set-word? try [load {<<:}]
+		--assert set-word? try [load {<<<:}]
+		--assert set-word? try [load {<<<<:}]
+		--assert all [block? b: try [load {<<<:""}] parse b [set-word! string!]]
+
+	--test-- "valid right-arrow-like set-words"
+		--assert set-word? try [load {>>:}]
+		--assert set-word? try [load {>>>:}]
+		--assert set-word? try [load {>>>>:}]
+		--assert set-word? try [load {==>>:}]
+		--assert set-word? try [load {===>:}]
+		--assert set-word? try [load {--->:}]
+		--assert set-word? try [load {~~~>:}]
+		--assert all [block? b: try [load {>>>:""}] parse b [set-word! string!]]
+
+	--test-- "valid arrow-like refinements"
+		--assert refinement? try [load {/<-->}]
+		--assert refinement? try [load {/<==>}]
+		--assert refinement? try [load {/<-==->}]
+		--assert refinement? try [load {/<~~~>}]
+
+	--test-- "valid left-arrow-like refinements"
+		--assert refinement? try [load {/<<}]
+		--assert refinement? try [load {/<<<}]
+		--assert refinement? try [load {/<<<<}]
+		--assert all [block? b: try [load {/<<<""}] parse b [refinement! string!]]
+
+	--test-- "valid right-arrow-like refinements"
+		--assert refinement? try [load {/>>}]
+		--assert refinement? try [load {/>>>}]
+		--assert refinement? try [load {/>>>>}]
+		--assert refinement? try [load {/==>>}]
+		--assert refinement? try [load {/===>}]
+		--assert refinement? try [load {/--->}]
+		--assert refinement? try [load {/~~~>}]
+		--assert all [block? b: try [load {/>>>""}] parse b [refinement! string!]]
+
+===end-group===
+
 ===start-group=== "Email"
 	--test-- "valid `emails`"
 		--assert email? load {name@where}

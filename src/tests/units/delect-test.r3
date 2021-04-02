@@ -9,6 +9,8 @@ Rebol [
 ~~~start-file~~~ "DELECT"
 
 ===start-group=== "Delect"
+; test only if `delect` is available
+if find lib 'delect [
 	dialect: context [
 		default: []
 		cmd:     [any-string! integer!]
@@ -36,7 +38,7 @@ Rebol [
 		--assert out = [cmd #[none] 5]
 
 		;-- should be extended with more tests...
-
+]
 ===end-group===
 
 ~~~end-file~~~

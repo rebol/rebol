@@ -57,7 +57,7 @@ typedef struct reb_ext {
 	int  object;				// extension object reference
 } REBEXT;
 
-#include "tmp-exttypes.h"
+#include "gen-exttypes.h"
 
 extern const REBDOF Func_Dispatch[];
 

@@ -783,7 +783,6 @@ size_spec:
 					Trap_Reflect(VAL_TYPE(value), field); // better error?
 			}
 			else if (IS_BLOCK(field)) {
-				REBVAL *val;
 				REBSER *values = Make_Block(2 * BLK_LEN(VAL_SERIES(field)));
 				REBVAL *word = VAL_BLK_DATA(field);
 				for (; NOT_END(word); word++) {

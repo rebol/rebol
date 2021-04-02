@@ -3,34 +3,28 @@ REBOL [
 	Title: "Make Reb-Lib related files"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2021 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
 		Licensed under the Apache License, Version 2.0
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-	Author: "Carl Sassenrath"
-	Needs: 2.100.100
+	Author: ["Carl Sassenrath" "Oldes"]
+	Version: 2.0.0
+	Needs: 3.5.0
 ]
 
-print "--- Make Reb-Lib Headers ---"
-
-do %common.reb
-
-lib-ver: 2
+context [ ; wrapped to prevent colisions with other build scripts
 
 preface: "RL_"
 
-reb-lib: %core/a-lib.c
-ext-lib: %core/f-extension.c
+reb-lib: root-dir/src/core/a-lib.c
+ext-lib: root-dir/src/core/f-extension.c
 
 ; outputs:
-reb-ext-lib:  %include/reb-lib.h      ; for Host usage
-reb-ext-defs: %include/reb-lib-lib.h  ; for REBOL usage
-
-ver: load %boot/version.reb
-
-
+reb-ext-lib:  root-dir/src/include/reb-lib.h      ; for Host usage
+reb-ext-defs: root-dir/src/include/reb-lib-lib.h  ; for REBOL usage
 
 ;-----------------------------------------------------------------------------
 ;-----------------------------------------------------------------------------
@@ -162,19 +156,9 @@ func-header: [
 	]
 ]
 
-write-if: func [file data] [
-	if data <> attempt [deline to string! read file][ ;R3
-		print ["UPDATE:" file]
-		write file data
-	]
-]
-
 process: func [file] [
-	if verbose [?? file]
-	data: deline to string! read the-file: file ;R3
-	parse/all data [
-		any func-header
-	]
+	data: read-file file
+	parse/all data [ any func-header ]
 ]
 
 ;-----------------------------------------------------------------------------
@@ -186,7 +170,7 @@ cemit [{Host/Extension API
 
 =r3
 
-=*Updated for A} ver/3 { on } now/date {
+=*Updated for } ver3 { on } now/date {
 
 =*Describes the functions of reb-lib, the REBOL API (both the DLL and extension library.)
 
@@ -228,9 +212,9 @@ form-header/gen "REBOL Host and Extension API" %reb-lib.reb %make-reb-lib.reb
 {
 // These constants are created by the release system and can be used to check
 // for compatiblity with the reb-lib DLL (using RL_Version.)
-#define RL_VER } ver/1 {
-#define RL_REV } ver/2 {
-#define RL_UPD } ver/3 {
+#define RL_VER } version/1 {
+#define RL_REV } version/2 {
+#define RL_UPD } version/3 {
 
 // Compatiblity with the lib requires that structs are aligned using the same
 // method. This is concrete, not abstract. The macro below uses struct
@@ -279,7 +263,7 @@ xlib
 }
 ]
 
-write-if reb-ext-lib out
+write-generated reb-ext-lib out
 
 ;-----------------------------------------------------------------------------
 
@@ -292,9 +276,7 @@ dlib
 }
 ]
 
-write-if reb-ext-defs out
+write-generated reb-ext-defs out
+write-generated root-dir/reb-lib-doc.txt cmts
 
-write-if %../reb-lib-doc.txt cmts
-
-;ask "Done"
-print "[DONE reb-lib]^/"
+] ; end of context

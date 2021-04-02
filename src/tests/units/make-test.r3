@@ -386,6 +386,83 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "make/to path"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2451
+	--test-- "make path! .."
+		--assert error? try [make path! quote #[unset!] ] ; unset!
+		--assert error? try [make path! quote #[none] ] ; none!
+		--assert error? try [make path! quote #[true] ] ; logic!
+		--assert  path? try [make path! quote 1 ] ; integer!
+		--assert  path? try [make path! quote 0 ] ; integer!
+		--assert  path? try [make path! quote 4 ] ; integer!
+		--assert  path? try [make path! quote 4.0 ] ; decimal!
+		--assert error? try [make path! quote 4% ] ; percent!
+		--assert error? try [make path! quote $4 ] ; money!
+		--assert error? try [make path! quote #"a" ] ; char!
+		--assert  path? try [make path! quote 2x2 ] ; pair!
+		--assert error? try [make path! quote 1.1.1 ] ; tuple!
+		--assert error? try [make path! quote 10:00 ] ; time!
+		--assert error? try [make path! quote 2000-01-01 ] ; date!
+		--assert  path? try [make path! quote #{00} ] ; binary!
+		--assert  path? try [make path! quote #{312032} ] ; binary!
+		--assert  path? try [make path! quote "" ] ; string!
+		--assert  path? try [make path! quote "1 2" ] ; string!
+		--assert error? try [make path! quote %file ] ; file!
+		--assert error? try [make path! quote u@email ] ; email!
+		--assert error? try [make path! quote #[ref! "ref"] ] ; ref!
+		--assert error? try [make path! quote http://aa ] ; url!
+		--assert error? try [make path! quote <tag> ] ; tag!
+		--assert  path? try [make path! quote [1 2] ] ; block!
+		--assert  path? try [make path! quote (1 2) ] ; paren!
+		--assert  path? try [make path! quote a/b ] ; path!
+		--assert  path? try [make path! quote a/b: ] ; set-path!
+		--assert  path? try [make path! quote :a/b ] ; get-path!
+		--assert error? try [make path! quote /ref ] ; refinement!
+		--assert error? try [make path! quote #FF ] ; issue!
+		--assert error? try [make path! quote #[bitset! #{FF}] ] ; bitset!
+		--assert error? try [make path! quote #[image! 1x1 #{FFFFFF}] ] ; image!
+		--assert  path? try [make path! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
+		--assert  path? try [make path! quote #[object! [a: 1]] ] ; object!
+		--assert error? try [make path! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
+
+	--test-- "to path! .."
+		--assert  path? try [to path! quote #[unset!] ] ; unset!
+		--assert  path? try [to path! quote #[none] ] ; none!
+		--assert  path? try [to path! quote #[true] ] ; logic!
+		--assert  path? try [to path! quote 1 ] ; integer!
+		--assert  path? try [to path! quote 0 ] ; integer!
+		--assert  path? try [to path! quote 4 ] ; integer!
+		--assert  path? try [to path! quote 4.0 ] ; decimal!
+		--assert  path? try [to path! quote 4% ] ; percent!
+		--assert  path? try [to path! quote $4 ] ; money!
+		--assert  path? try [to path! quote #"a" ] ; char!
+		--assert  path? try [to path! quote 2x2 ] ; pair!
+		--assert  path? try [to path! quote 1.1.1 ] ; tuple!
+		--assert  path? try [to path! quote 10:00 ] ; time!
+		--assert  path? try [to path! quote 2000-01-01 ] ; date!
+		--assert  path? try [to path! quote #{00} ] ; binary!
+		--assert  path? try [to path! quote #{312032} ] ; binary!
+		--assert  path? try [to path! quote "" ] ; string!
+		--assert  path? try [to path! quote "1 2" ] ; string!
+		--assert  path? try [to path! quote %file ] ; file!
+		--assert  path? try [to path! quote u@email ] ; email!
+		--assert  path? try [to path! quote #[ref! "ref"] ] ; ref!
+		--assert  path? try [to path! quote http://aa ] ; url!
+		--assert  path? try [to path! quote <tag> ] ; tag!
+		--assert  path? try [to path! quote [1 2] ] ; block!
+		--assert  path? try [to path! quote (1 2) ] ; paren!
+		--assert  path? try [to path! quote a/b ] ; path!
+		--assert  path? try [to path! quote a/b: ] ; set-path!
+		--assert  path? try [to path! quote :a/b ] ; get-path!
+		--assert  path? try [to path! quote /ref ] ; refinement!
+		--assert  path? try [to path! quote #FF ] ; issue!
+		--assert  path? try [to path! quote #[bitset! #{FF}] ] ; bitset!
+		--assert  path? try [to path! quote #[image! 1x1 #{FFFFFF}] ] ; image!
+		--assert  path? try [to path! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
+		--assert  path? try [to path! quote #[object! [a: 1]] ] ; object!
+		--assert  path? try [to path! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
+===end-group===
+
 
 ===start-group=== "make special"
 	--test-- "make types from none!"

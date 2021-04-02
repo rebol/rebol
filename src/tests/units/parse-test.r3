@@ -123,16 +123,45 @@ Rebol [
 
 ===start-group=== "REMOVE"
 --test-- "remove"
-	;--assert parse v: "yx" [some [remove #"y" | #"x"] ]
-	;--assert v = "x"
-	;--assert parse "yx" [copy v any [ remove #"y" | #"x" ] ]
-	;--assert v = "x"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2452
+	--assert parse v: "yx" [some [remove #"y" | #"x"]]
+	--assert v = "x"
+	--assert parse "yx" [copy v any [ remove #"y" | #"x" ]]
+	--assert v = "x"
+	--assert parse v: "yx" [some [change #"y" "" | #"x"]]
+	--assert v = "x"
+	--assert parse v: "ab" [any [s: 1 skip e: (e: remove/part s e) :e | skip]]
+	--assert empty? v
+	; and also:
+	lr: [s: #L integer! e: (s: remove/part s 2) :s]
+	--assert parse v: [#L 1 "a" #L 2 "b"][some [lr | string!]]
+	--assert v = ["a" "b"]
+	--assert parse v: [#L 1 "a" #L 2 "b"][some [string! | lr]]
+	--assert v = ["a" "b"]
+
+--test-- "while .. remove"
 	remove-any-y: [while [remove #"y" | #"x"]] 
 	--assert parse v: "" remove-any-y
 	--assert parse v: "yx" remove-any-y
 	--assert v = "x"
 	--assert parse v: "yxxyyx" remove-any-y
 	--assert v = "xxx"
+
+--test-- "remove & insert"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1251
+	--assert parse v: "a" [remove skip insert "xxx"]
+	--assert v = "xxx"
+	--assert parse v: "a" [[remove skip] insert "xxx"]
+	--assert v = "xxx"
+
+--test-- "remove copy"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1244
+	--assert not parse a: "12" [remove copy v skip]
+	--assert a = "2"
+	--assert v = "1"
+	--assert not parse a: "12" [remove [copy v skip]]
+	--assert a = "2"
+	--assert v = "1"
 
 ===end-group===
 

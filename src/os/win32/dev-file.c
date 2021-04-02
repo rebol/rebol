@@ -134,7 +134,6 @@ static BOOL Seek_File_64(REBREQ *file)
 	WIN32_FIND_DATA info;
 	HANDLE h= (HANDLE)(dir->handle);
 	REBCHR *cp = 0;
-	REBCNT len;
 
 	if (!h) {
 		file->modes = 0;		

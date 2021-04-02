@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -71,13 +72,13 @@ extern REBDEV Dev_Event;
 extern REBDEV Dev_Net;
 extern REBDEV Dev_DNS;
 extern REBDEV Dev_Checksum;
-#ifndef MIN_OS
+#ifdef INCLUDE_CLIPBOARD
 extern REBDEV Dev_Clipboard;
 #define DEVICE_PTR_CLIPBOARD &Dev_Clipboard
 #else
 #define DEVICE_PTR_CLIPBOARD 0
 #endif
-#ifdef USE_MIDI_DEVICE
+#ifdef INCLUDE_MIDI_DEVICE
 extern REBDEV Dev_MIDI;
 #define DEVICE_PTR_MIDI &Dev_MIDI
 #else

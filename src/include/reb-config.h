@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -121,8 +122,8 @@ These are now obsolete (as of A107) and should be removed:
 #ifdef REB_VIEW
 #define HAS_WIDGET_GOB			// supports it
 // use native image codecs only in VIEW version so far
-#if !defined(USE_OS_IMAGE_CODECS)
-#define USE_OS_IMAGE_CODECS
+#if !defined(INCLUDE_IMAGE_OS_CODEC)
+#define INCLUDE_IMAGE_OS_CODEC
 #undef	INCLUDE_BMP_CODEC
 #undef	INCLUDE_PNG_CODEC
 #undef	INCLUDE_GIF_CODEC
@@ -199,7 +200,7 @@ These are now obsolete (as of A107) and should be removed:
 #endif
 
 #ifdef TO_ANY_LINUX
-#undef USE_MIDI_DEVICE          // Not implemented!
+#undef INCLUDE_MIDI_DEVICE      // Not implemented!
 #define USE_SETENV 
 #endif
 
@@ -209,13 +210,13 @@ These are now obsolete (as of A107) and should be removed:
 #endif
 
 #ifdef TO_OBSD					// OpenBSD
-#undef USE_MIDI_DEVICE          // Not implemented!
+#undef INCLUDE_MIDI_DEVICE      // Not implemented!
 #define COPY_STR(d,s,m) strlcpy(d,s,m)
 #define JOIN_STR(d,s,m) strlcat(d,s,m)
 #endif
 
 #ifdef TO_AMIGA					// Target for OS4
-#undef USE_MIDI_DEVICE          // Not implemented!
+#undef INCLUDE_MIDI_DEVICE      // Not implemented!
 #define HAS_BOOL
 #define HAS_SMART_CONSOLE
 #define NO_DL_LIB

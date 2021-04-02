@@ -36,15 +36,6 @@ Rebol [
 ===end-group===
 
 
-===start-group=== "PARSE"
---test-- "parse remove"
-	--assert parse v: "yx" [some [remove #"y" | #"x"] ]
-	--assert v = "x"
-	--assert parse "yx" [copy v any [ remove #"y" | #"x" ] ]
-	--assert v = "x"
-===end-group===
-
-
 ===start-group=== "TIME"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2416
 	--test-- "time protect 1"

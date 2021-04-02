@@ -79,7 +79,6 @@
 {
 	REBHSP spec;
 	REBCNT size;
-	REBYTE *data;
 	REBHOB *hob;
 	REBCNT idx = Find_Handle_Index(sym);
 	if (idx == NOT_FOUND) return NULL;
@@ -137,5 +136,7 @@
 #ifdef INCLUDE_MBEDTLS
 	//Init_MbedTLS(); // not yet public!
 #endif
+#ifdef INCLUDE_CRYPTOGRAPHY
 	Init_Crypt(); // old crypt code handles
+#endif
 }

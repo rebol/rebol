@@ -34,7 +34,7 @@
 #include <errno.h>
 
 typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
-#include "tmp-maketypes.h"
+#include "gen-maketypes.h"
 
 
 /***********************************************************************
@@ -958,8 +958,6 @@ end_date:
 **
 ***********************************************************************/
 {
-	REBCNT n;
-
 	VAL_SET(value, type);
 	VAL_SERIES(value) = Append_UTF8(0, cp, len);
 
