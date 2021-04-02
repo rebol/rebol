@@ -652,6 +652,55 @@ new_line:
     return 0;
 }
 
+/***********************************************************************
+**
+*/  static const REBYTE* Skip_Left_Arrow(const REBYTE* cp)
+/*
+**		Skip the entire contents of a `left arrow` like words.
+**		Zero is returned on errors.
+**
+***********************************************************************/
+{
+	while (*cp == '<') cp++;
+	while (*cp) {
+		if (*cp == '-' || *cp == '=' || *cp == '>' || *cp == '~') {
+			cp++;
+			continue;
+		}
+		if (IS_LEX_DELIMIT(*cp)) break;
+		if (*cp == ':') {
+			cp++;
+			break;
+		}
+		return 0;
+	}
+	return cp;
+}
+
+/***********************************************************************
+**
+*/  static const REBYTE* Skip_Right_Arrow(const REBYTE* cp)
+/*
+**		Skip the entire contents of a `right arrow` like words.
+**		Zero is returned on errors.
+**
+***********************************************************************/
+{
+	while (*cp) {
+		if (*cp == '-' || *cp == '=' || *cp == '>' || *cp == '~') {
+			cp++;
+			continue;
+		}
+		if (IS_LEX_DELIMIT(*cp)) break;
+		if (*cp == ':') {
+			cp++;
+			break;
+		}
+		return 0;
+	}
+	return cp;
+}
+
 
 /***********************************************************************
 **
@@ -777,6 +826,7 @@ new_line:
     REBCNT flags;
     const REBYTE *cp;
     REBINT type;
+	REBYTE *np = NULL;
 
     flags = Prescan(scan_state);
     cp = scan_state->begin;
@@ -847,9 +897,9 @@ new_line:
 		        if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD)) return type;
 				goto scanword;
             }
-			if (cp[0] == '<' || cp[0] == '>') {
-	            scan_state->end = cp+1;
-				return -TOKEN_REFINE;
+			if (*cp == '<' || *cp == '>') {
+				type = TOKEN_REFINE;
+				goto scan_arrow_word;
 			}
             scan_state->end = cp;
             return TOKEN_WORD;
@@ -902,10 +952,8 @@ new_line:
 			// Various special cases of < << <> >> > >= <=
 			if (cp[1] == '<' || cp[1] == '>') {
 				cp++;
-				if (cp[1] == '<' || cp[1] == '>' || cp[1] == '=') cp++;
-				if (!IS_LEX_DELIMIT(cp[1])) return -TOKEN_GET;
-				scan_state->end = cp+1;
-				return TOKEN_GET;
+				type = TOKEN_GET;
+				goto scan_arrow_word;
 			}
 			if (cp[1] == '%' && IS_LEX_DELIMIT(cp[2])) {
 				if (cp[2] == '"' || cp[2] == '/') { // no :%"" or :%/
@@ -922,25 +970,22 @@ new_line:
 			if (IS_LEX_NUMBER(cp[1])) return -TOKEN_LIT;		// no '2nd
 			if (cp[1] == ':') return -TOKEN_LIT;				// no ':X
             if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD)) return TOKEN_LIT;   /* common case */
+			cp++;
+			if (*cp == '<' || *cp == '>') {
+				type = TOKEN_LIT;
+				goto scan_arrow_word;
+			}
 			if (!IS_LEX_WORD(cp[1])) {
-				// Various special cases of < << <> >> > >= <=
-				if ((cp[1] == '-' || cp[1] == '+') && IS_LEX_NUMBER(cp[2])) return -TOKEN_WORD;
-				if (cp[1] == '<' || cp[1] == '>') {
-					cp++;
-					if (cp[1] == '<' || cp[1] == '>' || cp[1] == '=') cp++;
-					if (!IS_LEX_DELIMIT(cp[1])) return -TOKEN_LIT;
-					scan_state->end = cp+1;
-					return TOKEN_LIT;
-				}
-				if (cp[1] == '%' && IS_LEX_DELIMIT(cp[2])) {
-					if (cp[2] == '"' || cp[2] == '/') { // no '%"" or '%/
-						scan_state->end = cp + 3;
+				if ((*cp == '-' || *cp == '+') && IS_LEX_NUMBER(cp[1])) return -TOKEN_WORD;
+				if (*cp == '%' && IS_LEX_DELIMIT(cp[1])) {
+					if (cp[1] == '"' || cp[1] == '/') { // no '%"" or '%/
+						scan_state->end = cp + 2;
 						return -TOKEN_LIT;
 					}
 					return TOKEN_LIT; // allowed '%
 				}
 			}
-			if (cp[1] == '\'') return -TOKEN_LIT; // no ''foo
+			if (*cp == '\'') return -TOKEN_LIT; // no ''foo
             type = TOKEN_LIT;
             goto scanword;
 
@@ -954,15 +999,28 @@ new_line:
 
 		case LEX_SPECIAL_GREATER:
 			if (IS_LEX_DELIMIT(cp[1])) return TOKEN_WORD;	// RAMBO 3903 
-			if (cp[1] == '>') {
-				if (IS_LEX_DELIMIT(cp[2])) return TOKEN_WORD;
-				return -TOKEN_WORD;
+			if (cp[1] == '>' || cp[1] == '=' || cp[1] == '-' || cp[1] == '~') {
+				np = Skip_Right_Arrow(cp);
+				if (np != NULL) {
+					scan_state->end = np;
+					return (np[-1] == ':' ? TOKEN_SET : TOKEN_WORD);
+				}
 			}
+			return -TOKEN_WORD;
+			
 		case LEX_SPECIAL_LESSER:
 			if (IS_LEX_ANY_SPACE(cp[1]) || cp[1] == ']' || cp[1] == 0) return TOKEN_WORD;	// CES.9121 Was LEX_DELIMIT - changed for </tag>
-			if ((cp[0] == '<' && cp[1] == '<') || cp[1] == '=' || cp[1] == '>') {
-				if (IS_LEX_DELIMIT(cp[2])) return TOKEN_WORD;
-				return -TOKEN_WORD;
+
+			if (IS_LEX_DELIMIT(cp[2]) && (cp[1] == '>' || cp[1] == '=' || cp[1] == '<')) {
+				return TOKEN_WORD; // common cases: <> <= <<
+			}
+
+			if (cp[1] == '<' || cp[1] == '>' || cp[1] == '=' || cp[1] == '-' || cp[1] == '~') {
+				np = Skip_Left_Arrow(cp);
+				if (np != NULL) {
+					scan_state->end = np;
+					return (np[-1] == ':' ? TOKEN_SET : TOKEN_WORD);
+				}
 			}
 			if (GET_LEX_VALUE(*cp) == LEX_SPECIAL_GREATER) return -TOKEN_WORD;
 			cp = Skip_Tag(cp);
@@ -1169,8 +1227,33 @@ scanword:
 		/*bogus: if (HAS_LEX_FLAG(flags, LEX_SPECIAL_GREATER) &&
 			Skip_To_Char(scan_state->begin, cp, '>')) return -TOKEN_WORD; */
 		scan_state->end = cp;
-	} else if (HAS_LEX_FLAG(flags, LEX_SPECIAL_GREATER)) return -type;
+	}
+	else if (HAS_LEX_FLAG(flags, LEX_SPECIAL_GREATER)) {
+		if (*cp == '=' || *cp == '-' || *cp == '~') {
+			np = Skip_Right_Arrow(cp);
+			if (np != NULL) {
+				scan_state->end = np;
+				return (np[-1] == ':' ? TOKEN_SET : type);
+			}
+		}
+		return -type;
+	}
     return type;
+
+scan_arrow_word:
+	// Various special cases of < << <> >> > >= <= <--- >--->
+	if (cp[0] == '<') {
+		np = Skip_Left_Arrow(cp);
+		if (!np) return -type;
+		scan_state->end = np;
+		return type;
+	}
+	else {
+		np = Skip_Right_Arrow(cp);
+		if (!np) return -type;
+		scan_state->end = np;
+		return type;
+	}
 }
 
 
@@ -1822,7 +1905,6 @@ exit_block:
 		// (space and tab chars at tail are truncated and so accepted)
 		&& scan_state.end == scan_state.limit) 
 			return Make_Word(cp, len);
-
 	return 0;
 }
 
