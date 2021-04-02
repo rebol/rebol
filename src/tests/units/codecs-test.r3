@@ -287,26 +287,29 @@ if all [
 	===start-group=== "ICO codec"
 	--test-- "ICO encode"
 		--assert all [
-			binary? bin: try [codecs/ico/encode [
-			    %units/files/ico/icon_16.png
-			    %units/files/ico/icon_24.png
-			    %units/files/ico/icon_32.png
-			    %units/files/ico/icon_48.png
-			    %units/files/ico/icon_128.png
-			]]
-			#{35FB14C61A0E81F4FC525B9243116D3C} = checksum bin 'md5
+			binary? bin: try [codecs/ico/encode wildcard %units/files/ico/ %*.png]
+			#{0E7368623AD1DBD1BD94FC55B174778C} = checksum bin 'md5
 		]
 	--test-- "ICO decode"
 		--assert all [
 			block? ico: try [codecs/ico/decode %units/files/test.ico]
-			ico/1/1 = 16   ico/1/2 = 32  binary? ico/1/3
-			ico/2/1 = 24   ico/2/2 = 32  binary? ico/2/3
-			ico/3/1 = 32   ico/3/2 = 32  binary? ico/3/3
-			ico/4/1 = 48   ico/4/2 = 32  binary? ico/4/3
-			ico/5/1 = 128  ico/5/2 = 32  binary? ico/5/3
+			ico/1/1  = 128 ico/1/2  = 32  binary? ico/1/3
+			ico/2/1  = 16  ico/2/2  = 32  binary? ico/2/3
+			ico/3/1  = 20  ico/3/2  = 32  binary? ico/3/3
+			ico/4/1  = 24  ico/4/2  = 32  binary? ico/4/3
+			ico/5/1  = 30  ico/5/2  = 32  binary? ico/5/3
+			ico/6/1  = 32  ico/6/2  = 32  binary? ico/6/3
+			ico/7/1  = 36  ico/7/2  = 32  binary? ico/7/3
+			ico/8/1  = 40  ico/8/2  = 32  binary? ico/8/3
+			ico/9/1  = 48  ico/9/2  = 32  binary? ico/9/3
+			ico/10/1 = 60  ico/10/2 = 32  binary? ico/10/3
+			ico/11/1 = 64  ico/11/2 = 32  binary? ico/11/3
+			ico/12/1 = 72  ico/12/2 = 32  binary? ico/12/3
+			ico/13/1 = 80  ico/13/2 = 32  binary? ico/13/3
+			ico/14/1 = 96  ico/14/2 = 32  binary? ico/14/3
 		]
 		--assert all [
-			image? img: try [decode 'png ico/1/3]
+			image? img: try [decode 'png ico/2/3]
 			16x16 = img/size
 		]
 	===end-group===
@@ -326,6 +329,35 @@ if find codecs 'PNG [
 	--test-- "png/size?"
 		--assert 24x24 = codecs/png/size? read %units/files/r3.png
 		--assert none?   codecs/png/size? read %units/files/test.aar
+
+	--test-- "png/chunks"
+		--assert all [
+			; read PNG file as a block of chunks...
+			block? blk: try [codecs/png/chunks %units/files/png-from-photoshop.png]
+			10 = length? blk
+			"IHDR" = to string! blk/1    13 = length? blk/2
+			"pHYs" = to string! blk/3     9 = length? blk/4
+			"iTXt" = to string! blk/5  2661 = length? blk/6
+			"IDAT" = to string! blk/7   264 = length? blk/8
+			"IEND" = to string! blk/9     0 = length? blk/10
+		]
+		--assert all [
+			; read PNG with only specified set of chunks...
+			block? blk: try [codecs/png/chunks/only %units/files/png-from-photoshop.png ["IHDR" "IDAT" "PLTE"]]
+			4 = length? blk
+			"IHDR" = to string! blk/1
+			"IDAT" = to string! blk/3
+			; the source image does not use palette, so there is no PLTE chunk
+			; write filtered set of chunks back as a PNG file...
+			file? try [write %new.png codecs/png/chunks blk]
+			; validate, if the new PNG is loadeable
+			image? img: try [load %new.png]
+			img/size = 72x72
+			; compare sizes of the original and the reduced version
+			321  = size? %new.png
+			3015 = size? %units/files/png-from-photoshop.png
+		]
+		try [delete %new.png]
 	===end-group===
 ]
 
