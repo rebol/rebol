@@ -117,6 +117,7 @@ void Host_Repl() {
 	int input_len = 0;
 	REBYTE *input = OS_Make(input_max);
 
+	REBYTE *tmp;
 	REBYTE *line;
 	int line_len;
 
@@ -191,15 +192,19 @@ void Host_Repl() {
 		inside_short_str = FALSE;
 
 		if (input_len + line_len > input_max) {
-			REBYTE *tmp = OS_Make(2 * input_max);
+			// limit maximum input size to 2GB (it should be more than enough)
+			if (input_max >= 0x80000000) goto crash_buffer;
+			input_max *= 2;
+			tmp = OS_Make(input_max);
 			if (!tmp) {
+				crash_buffer:
 				Put_Str(b_cast("\x1B[0m")); //reset console color;
 				Host_Crash("Growing console input buffer failed!");
+				return; // make VS compiler happy
 			}
 			memcpy(tmp, input, input_len);
 			OS_Free(input);
 			input = tmp;
-			input_max *= 2;
 		}
 
 		memcpy(&input[input_len], line, line_len);
