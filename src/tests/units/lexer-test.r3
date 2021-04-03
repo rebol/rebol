@@ -80,6 +80,7 @@ Rebol [
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1302
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1318
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1342
+;@@ https://github.com/Oldes/Rebol-issues/issues/1461
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1478
 
 	--test-- "valid arrow-like words"
@@ -115,19 +116,24 @@ Rebol [
 		--assert error? try [load {a-->}]
 
 	--test-- "valid arrow-like lit-words"
+		--assert lit-word? try [load {'<>}]
 		--assert lit-word? try [load {'<-->}]
 		--assert lit-word? try [load {'<==>}]
 		--assert lit-word? try [load {'<-==->}]
 		--assert lit-word? try [load {'<~~~>}]
 
 	--test-- "valid left-arrow-like lit-words"
+		--assert lit-word? try [load {'<} ]
 		--assert lit-word? try [load {'<<}]
+		--assert lit-word? try [load {'<=}]
 		--assert lit-word? try [load {'<<<}]
 		--assert lit-word? try [load {'<<<<}]
 		--assert all [block? b: try [load {'<<<""}] parse b [lit-word! string!]]
 
 	--test-- "valid right-arrow-like lit-words"
+		--assert lit-word? try [load {'>} ]
 		--assert lit-word? try [load {'>>}]
+		--assert lit-word? try [load {'>=}]
 		--assert lit-word? try [load {'>>>}]
 		--assert lit-word? try [load {'>>>>}]
 		--assert lit-word? try [load {'==>>}]
@@ -238,9 +244,9 @@ Rebol [
 
 ===end-group===
 
-===start-group=== "Set-word"
+===start-group=== "Get-word"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2437
-	--test-- "invalid `set-word!`"
+	--test-- "invalid `get-word!`"
 		--assert error? try [load {:2nd}]
 		--assert error? try [load {::foo}]
 		--assert error? try [load {:@foo}]
@@ -249,13 +255,17 @@ Rebol [
 
 ===start-group=== "Refinement"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/980
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1856
 	--test-- "valid `refinement!`"
 		--assert refinement? try [load {/foo}]
 		--assert refinement? try [load {/+}]
 		--assert refinement? try [load {/!}]
 		--assert refinement? try [load {/111}]
 		--assert refinement? try [load {/+1}]
-		
+		--assert refinement? load "/+123"
+		--assert refinement? load "/-"
+		--assert refinement? load "/."
+		--assert refinement? load "/.123"
 
 ===end-group===
 
@@ -265,16 +275,6 @@ Rebol [
 
 ===end-group===
 
-===start-group=== "Lit"
-	--test-- "quote arrow-based words"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/1461
-		--assert lit-word? try [load {'<} ]
-		--assert lit-word? try [load {'>} ]
-		--assert lit-word? try [load {'<>}]
-		--assert lit-word? try [load {'<=}]
-		--assert lit-word? try [load {'>=}]
-
-===end-group===
 
 ===start-group=== "Integer"
 	--test-- "-0"
@@ -282,16 +282,6 @@ Rebol [
 
 ===end-group===
 
-===start-group=== "Refinement" 
-	--test-- "/+"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/1856
-		--assert refinement? load "/+"
-		--assert refinement? load "/+123"
-		--assert refinement? load "/-"
-		--assert refinement? load "/."
-		--assert refinement? load "/.123"
-
-===end-group===
 
 ===start-group=== "Char"
 	--test-- {#"^(1)"}
