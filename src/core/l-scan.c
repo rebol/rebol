@@ -825,9 +825,9 @@ new_line:
 {
     REBCNT flags;
     const REBYTE *cp;
+	const REBYTE *np;
     REBINT type;
-	REBYTE *np = NULL;
-
+	
     flags = Prescan(scan_state);
     cp = scan_state->begin;
 
