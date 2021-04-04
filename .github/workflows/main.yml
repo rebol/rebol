@@ -34,47 +34,47 @@ jobs:
 
     - name: Build 64bit Rebol/Base using MSVC
       run: |
-        ./siskin.exe rebol [msvc %rebol3-base-x64-gcc]
+        ./siskin.exe make/rebol3.nest [msvc %rebol3-base-x64-gcc]
         MOVE ./tree/rebol/Rebol/msvc/Release-x64/rebol3-base-x64-vs.exe ./
 
     - name: Build 64bit Rebol/Core using MSVC
       run: |
-        ./siskin.exe rebol [msvc %rebol3-core-x64-gcc]
+        ./siskin.exe make/rebol3.nest [msvc %rebol3-core-x64-gcc]
         MOVE ./tree/rebol/Rebol/msvc/Release-x64/rebol3-core-x64-vs.exe ./
 
     - name: Build 64bit Rebol/Bulk using MSVC
       run: |
-        ./siskin.exe rebol [msvc %rebol3-bulk-x64-clang]
+        ./siskin.exe make/rebol3.nest [msvc %rebol3-bulk-x64-clang]
         MOVE ./tree/rebol/Rebol/msvc/Release-x64/rebol3-bulk-x64-vs.exe ./
 
     - name: Build 32bit Rebol/Base using MSVC
       run: |
-        ./siskin.exe rebol [msvc %rebol3-base-x86-gcc]
+        ./siskin.exe make/rebol3.nest [msvc %rebol3-base-x86-gcc]
         MOVE ./tree/rebol/Rebol/msvc/Release-Win32/rebol3-base-x86-vs.exe ./
 
     - name: Build 32bit Rebol/Core using MSVC
       run: |
-        ./siskin.exe rebol [msvc %rebol3-core-x86-gcc]
+        ./siskin.exe make/rebol3.nest [msvc %rebol3-core-x86-gcc]
         MOVE ./tree/rebol/Rebol/msvc/Release-Win32/rebol3-core-x86-vs.exe ./
 
     - name: Build 32bit Rebol/Bulk using MSVC
       run: |
-        ./siskin.exe rebol [msvc %rebol3-bulk-x86-clang]
+        ./siskin.exe make/rebol3.nest [msvc %rebol3-bulk-x86-clang]
         MOVE ./tree/rebol/Rebol/msvc/Release-Win32/rebol3-bulk-x86-vs.exe ./
 
     ###############################################################################
     # Building Rebol as a shared library...
     - name: Build 32bit Rebol/Core as a shared library using MSVC
-      run: ./siskin.exe rebol [msvc %lib-rebol3-core-x86-gcc]
+      run: ./siskin.exe make/rebol3.nest [msvc %lib-rebol3-core-x86-gcc]
     - name: Build 64bit Rebol/Core as a shared library using MSVC
-      run: ./siskin.exe rebol [msvc %lib-rebol3-core-x64-gcc]
+      run: ./siskin.exe make/rebol3.nest [msvc %lib-rebol3-core-x64-gcc]
         
     ###############################################################################
     # Building sample host applications using Rebol as a shared library...
     - name: Build 32bit Rebol/Core as a host application using MSVC
-      run: ./siskin.exe rebol [msvc %host-core-x86-gcc]
+      run: ./siskin.exe make/rebol3.nest [msvc %host-core-x86-gcc]
     - name: Build 64bit Rebol/Core as a host application using MSVC
-      run: ./siskin.exe rebol [msvc %host-core-x64-gcc]
+      run: ./siskin.exe make/rebol3.nest [msvc %host-core-x64-gcc]
 
     - name: Move library and host files into root
       run: |
@@ -133,17 +133,17 @@ jobs:
           ls -la
 
       - name: Build 64bit Rebol/Base using gcc
-        run: ./build %rebol3-base-x64-libc-gcc
+        run: ./build make/rebol3.nest %rebol3-base-x64-libc-gcc
       - name: Build 64bit Rebol/Core using gcc
-        run: ./build %rebol3-core-x64-libc-gcc
+        run: ./build make/rebol3.nest %rebol3-core-x64-libc-gcc
       - name: Build 64bit Rebol/Bulk using gcc
-        run: ./build %rebol3-bulk-x64-libc-gcc
+        run: ./build make/rebol3.nest %rebol3-bulk-x64-libc-gcc
       - name: Build 64bit Rebol/Base using clang
-        run: ./build %rebol3-base-x64-libc-clang
+        run: ./build make/rebol3.nest %rebol3-base-x64-libc-clang
       - name: Build 64bit Rebol/Core using clang
-        run: ./build %rebol3-core-x64-libc-clang
+        run: ./build make/rebol3.nest %rebol3-core-x64-libc-clang
       - name: Build 64bit Rebol/Bulk using clang
-        run: ./build %rebol3-bulk-x64-libc-clang
+        run: ./build make/rebol3.nest %rebol3-bulk-x64-libc-clang
 
       - uses: actions/upload-artifact@v2
         with:
@@ -172,16 +172,16 @@ jobs:
           ls -la
 
       - name: Build 64bit Rebol/Base using clang
-        run: ./build %rebol3-base-x64-osx
+        run: ./build make/rebol3.nest %rebol3-base-x64-osx
       - name: Build 64bit Rebol/Core using clang
-        run: ./build %rebol3-core-x64-osx
+        run: ./build make/rebol3.nest %rebol3-core-x64-osx
       - name: Build 64bit Rebol/Bulk using clang
-        run: ./build %rebol3-bulk-x64-osx
+        run: ./build make/rebol3.nest %rebol3-bulk-x64-osx
 
       - name: Build 64bit Rebol/Core as a shared library
-        run: ./build %lib-rebol3-core-x64-osx
+        run: ./build make/rebol3.nest %lib-rebol3-core-x64-osx
       - name: Build 64bit Rebol/Core as a host application
-        run: ./build %host-core-x64-osx
+        run: ./build make/rebol3.nest %host-core-x64-osx
 
       - uses: actions/upload-artifact@v2
         with:
