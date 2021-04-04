@@ -1,0 +1,189 @@
+name: 'Rebol CI'
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  #workflow_dispatch:
+
+jobs:
+  windows:
+    strategy:
+      fail-fast: true
+    runs-on: windows-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Checkout Rebol repository
+      uses: actions/checkout@v2
+      with:
+        repository: Siskin-framework/Rebol
+        path: tree/rebol/Rebol
+        #ref:  new-make
+
+    - name: Download Siskin Builder
+      shell: cmd
+      run: |
+        C:\msys64\usr\bin\wget.exe -q https://github.com/Siskin-framework/Builder/releases/download/0.3.3/Siskin-x64.exe
+        MOVE ./Siskin-x64.exe ./siskin.exe
+        SET PATH=%PATH%;%CD%
+
+    - name: Build 64bit Rebol/Base using MSVC
+      run: |
+        ./siskin.exe rebol [msvc %rebol3-base-x64-gcc]
+        MOVE ./tree/rebol/Rebol/msvc/Release-x64/rebol3-base-x64-vs.exe ./
+
+    - name: Build 64bit Rebol/Core using MSVC
+      run: |
+        ./siskin.exe rebol [msvc %rebol3-core-x64-gcc]
+        MOVE ./tree/rebol/Rebol/msvc/Release-x64/rebol3-core-x64-vs.exe ./
+
+    - name: Build 64bit Rebol/Bulk using MSVC
+      run: |
+        ./siskin.exe rebol [msvc %rebol3-bulk-x64-clang]
+        MOVE ./tree/rebol/Rebol/msvc/Release-x64/rebol3-bulk-x64-vs.exe ./
+
+    - name: Build 32bit Rebol/Base using MSVC
+      run: |
+        ./siskin.exe rebol [msvc %rebol3-base-x86-gcc]
+        MOVE ./tree/rebol/Rebol/msvc/Release-Win32/rebol3-base-x86-vs.exe ./
+
+    - name: Build 32bit Rebol/Core using MSVC
+      run: |
+        ./siskin.exe rebol [msvc %rebol3-core-x86-gcc]
+        MOVE ./tree/rebol/Rebol/msvc/Release-Win32/rebol3-core-x86-vs.exe ./
+
+    - name: Build 32bit Rebol/Bulk using MSVC
+      run: |
+        ./siskin.exe rebol [msvc %rebol3-bulk-x86-clang]
+        MOVE ./tree/rebol/Rebol/msvc/Release-Win32/rebol3-bulk-x86-vs.exe ./
+
+    ###############################################################################
+    # Building Rebol as a shared library...
+    - name: Build 32bit Rebol/Core as a shared library using MSVC
+      run: ./siskin.exe rebol [msvc %lib-rebol3-core-x86-gcc]
+    - name: Build 64bit Rebol/Core as a shared library using MSVC
+      run: ./siskin.exe rebol [msvc %lib-rebol3-core-x64-gcc]
+        
+    ###############################################################################
+    # Building sample host applications using Rebol as a shared library...
+    - name: Build 32bit Rebol/Core as a host application using MSVC
+      run: ./siskin.exe rebol [msvc %host-core-x86-gcc]
+    - name: Build 64bit Rebol/Core as a host application using MSVC
+      run: ./siskin.exe rebol [msvc %host-core-x64-gcc]
+
+    - name: Move library and host files into root
+      run: |
+        MOVE ./tree/rebol/Rebol/msvc/Release-Win32/lib-rebol3-core-x86-vs.dll ./
+        MOVE ./tree/rebol/Rebol/msvc/Release-Win32/lib-rebol3-core-x86-vs.lib ./
+        MOVE ./tree/rebol/Rebol/msvc/Release-Win32/host-core-x86-vs.exe ./
+        MOVE ./tree/rebol/Rebol/msvc/Release-x64/lib-rebol3-core-x64-vs.dll ./
+        MOVE ./tree/rebol/Rebol/msvc/Release-x64/lib-rebol3-core-x64-vs.lib ./
+        MOVE ./tree/rebol/Rebol/msvc/Release-x64/host-core-x64-vs.exe ./
+
+    ###############################################################################
+    # Collecting build artifacts...
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Rebol-win-vs
+        path: ./rebol3-*.exe
+    # and lib/host variant...
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Rebol-win-lib-vs
+        path: ./lib-*.dll
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Rebol-win-lib-vs
+        path: ./lib-*.lib
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Rebol-win-lib-vs
+        path: ./host-*.exe
+
+  linux:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-18.04]
+        #os: [ubuntu-20.04, ubuntu-18.04]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Checkout Rebol repository
+        uses: actions/checkout@v2
+        with:
+          repository: Siskin-framework/Rebol
+          path: tree/rebol/Rebol
+          #ref:  new-make
+
+      - name: Download Siskin Builder
+        run: |
+          wget -q https://github.com/Siskin-framework/Builder/releases/download/0.3.3/Siskin-x64-libc.gz
+          gunzip ./Siskin-x64-libc.gz
+          mv ./Siskin-x64-libc ./build
+          chmod +x ./build
+          ls -la
+
+      - name: Build 64bit Rebol/Base using gcc
+        run: ./build %rebol3-base-x64-libc-gcc
+      - name: Build 64bit Rebol/Core using gcc
+        run: ./build %rebol3-core-x64-libc-gcc
+      - name: Build 64bit Rebol/Bulk using gcc
+        run: ./build %rebol3-bulk-x64-libc-gcc
+      - name: Build 64bit Rebol/Base using clang
+        run: ./build %rebol3-base-x64-libc-clang
+      - name: Build 64bit Rebol/Core using clang
+        run: ./build %rebol3-core-x64-libc-clang
+      - name: Build 64bit Rebol/Bulk using clang
+        run: ./build %rebol3-bulk-x64-libc-clang
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Rebol-64bit-linux
+          path: ./tree/rebol/Rebol/build/rebol3-*
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Checkout Rebol repository
+        uses: actions/checkout@v2
+        with:
+          repository: Siskin-framework/Rebol
+          path: tree/rebol/Rebol
+          #ref:  new-make
+
+      - name: Download Siskin Builder
+        run: |
+          wget -q https://github.com/Siskin-framework/Builder/releases/download/0.3.3/Siskin-x64-osx.gz
+          gunzip ./Siskin-x64-osx.gz
+          mv ./Siskin-x64-osx.gz ./build
+          chmod +x ./build
+          ls -la
+
+      - name: Build 64bit Rebol/Base using clang
+        run: ./build %rebol3-base-x64-osx
+      - name: Build 64bit Rebol/Core using clang
+        run: ./build %rebol3-core-x64-osx
+      - name: Build 64bit Rebol/Bulk using clang
+        run: ./build %rebol3-bulk-x64-osx
+
+      - name: Build 64bit Rebol/Core as a shared library
+        run: ./build %lib-rebol3-core-x64-osx
+      - name: Build 64bit Rebol/Core as a host application
+        run: ./build %host-core-x64-osx
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Rebol-64bit-osx
+          path: ./tree/rebol/Rebol/build/*

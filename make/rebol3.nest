@@ -1,5 +1,6 @@
 ;~ Siskin project nest file ~;
 name:     %Rebol
+product:  Base    ; default product.. the others are by include: Core or Bulk
 group:    %rebol
 compiler: clang
 strip:    on
@@ -500,6 +501,8 @@ include-rebol-core: [
 	:include-codec-unixtime
 	config: INCLUDE_SHA224
 	config: INCLUDE_SHA384
+
+	product: Core
 ]
 
 include-rebol-bulk: [
@@ -537,6 +540,8 @@ include-rebol-bulk: [
 	;:include-test-extension
 	;- not recommanded:
 	;:include-native-wav-codec
+
+	product: Bulk
 ]
 
 common: [
@@ -686,8 +691,18 @@ make-host: [
 	#if Posix? [upx: off]
 	do %make/pre-make.r3 "$NEST_SPEC"
 ]
-make-x86-host: [:arch-x86 :make-host #if Windows? [target: x86-win32]]
-make-x64-host: [:arch-x64 :make-host #if Windows? [target: x64-win32]]
+make-x86-host: [
+	:arch-x86 :make-host
+	#if Windows? [target: x86-win32]
+	#if Linux?   [target: x86-libc ]
+	#if macOS?   [target: x86-osx  ]
+]
+make-x64-host: [
+	:arch-x64 :make-host
+	#if Windows? [target: x64-win32]
+	#if Linux?   [target: x64-libc ]
+	#if macOS?   [target: x64-osx  ]
+]
 
 eggs: [
 	#if Windows? [
@@ -700,20 +715,17 @@ eggs: [
 ;		]
 		"Rebol/Base x86-win32 (gcc)" [
 			name:     %rebol3-base-x86-gcc
-			product:  Base
 			compiler: gcc
 			:make-x86-exe
 		]
 		"Rebol/Core x86-win32 (gcc)" [
 			name:     %rebol3-core-x86-gcc
-			product:  Core
 			compiler: gcc
 			:include-rebol-core
 			:make-x86-exe
 		]
 		"Rebol/Bulk x86-win32 (clang)" [
 			name:     %rebol3-bulk-x86-clang
-			product:  Bulk
 			compiler: clang
 			:include-rebol-bulk
 			:make-x86-exe
@@ -721,20 +733,17 @@ eggs: [
 
 		"Rebol/Base x64-win32 (gcc)" [
 			name:     %rebol3-base-x64-gcc
-			product:  Base
 			compiler: gcc
 			:make-x64-exe
 		]
 		"Rebol/Core x64-win32 (gcc)" [
 			name:     %rebol3-core-x64-gcc
-			product:  Core
 			compiler: gcc
 			:include-rebol-core
 			:make-x64-exe
 		]
 		"Rebol/Bulk x64-win32 (clang)" [
 			name:     %rebol3-bulk-x64-clang
-			product:  Bulk
 			compiler: clang
 			:include-rebol-bulk
 			:make-x64-exe
@@ -742,15 +751,13 @@ eggs: [
 
 		"Rebol/Core x86-win32 shared library (gcc)" [
 			name:     %lib-rebol3-core-x86-gcc
-			product:  Core
 			compiler: gcc
-			upx:      off ; library compiled using MSVC seems to make problems when UPXed  
 			:include-rebol-core
 			:make-x86-dll
+			upx:      off ; library compiled using MSVC seems to make problems when UPXed  
 		]
 		"Rebol/Core x86-win32 host application (gcc)" [
 			name:     %host-core-x86-gcc
-			product:  Core
 			compiler: gcc
 			:include-rebol-core
 			:make-x86-host
@@ -759,14 +766,12 @@ eggs: [
 
 		"Rebol/Core x64-win32 shared library (gcc)" [
 			name:     %lib-rebol3-core-x64-gcc
-			product:  Core
 			compiler: gcc
 			:include-rebol-core
 			:make-x64-dll
 		]
 		"Rebol/Core x64-win32 host application (gcc)" [
 			name:     %host-core-x64-gcc
-			product:  Core
 			compiler: gcc
 			:include-rebol-core
 			:make-x64-host
@@ -776,69 +781,50 @@ eggs: [
 	#if Linux? [
 		"Rebol/Base x64-libc (gcc)" [
 			name:     %rebol3-base-x64-libc-gcc
-			product:  Base
 			compiler: gcc
 			target:   x64-libc
 			:make-x64-exe
-			upx: off
 		]
 		"Rebol/Core x64-libc (gcc)" [
 			name:     %rebol3-core-x64-libc-gcc
-			product:  Core
 			compiler: gcc
-			target:   x64-libc
 			:include-rebol-core
 			:make-x64-exe
-			upx: off
 		]
 		"Rebol/Bulk x64-libc (gcc)" [
 			name:     %rebol3-bulk-x64-libc-gcc
-			product:  Bulk
 			compiler: gcc
-			target:   x64-libc
 			:include-rebol-bulk
 			:make-x64-exe
-			upx: off
 		]
 
 		;@@TODO: find a way for using one egg spec for multiple targets
 		"Rebol/Base x64-libc (clang)" [
 			name:     %rebol3-base-x64-libc-clang
-			product:  Base
 			compiler: clang
-			target:   x64-libc
 			:make-x64-exe
-			upx: off
 		]
 		"Rebol/Core x64-libc (clang)" [
 			name:     %rebol3-core-x64-libc-clang
-			product:  Core
 			compiler: clang
-			target:   x64-libc
 			:include-rebol-core
 			:make-x64-exe
-			upx: off
 		]
 		"Rebol/Bulk x64-libc (clang)" [
 			name:     %rebol3-bulk-x64-libc-clang
-			product:  Bulk
 			compiler: clang
-			target:   x64-libc
 			:include-rebol-bulk
 			:make-x64-exe
-			upx: off
 		]
 
 		"Rebol/Core x64-libc shared library (gcc)" [
 			name:     %lib-rebol3-core-x64-gcc
-			product:  Core
 			compiler: gcc
 			:include-rebol-core
 			:make-x64-dll
 		]
 		"Rebol/Core x64-libc host application (gcc)" [
 			name:     %host-core-x64-gcc
-			product:  Core
 			compiler: gcc
 			:include-rebol-core
 			:make-x64-host
@@ -848,41 +834,32 @@ eggs: [
 	#if macOS? [
 		"Rebol/Base x64-osx (clang)" [
 			name:     %rebol3-base-x64-osx
-			product:  Base
 			compiler: clang
 			target:   x64-osx
 			:make-x64-exe
-			upx: off
 		]
 		"Rebol/Core x64-osx (clang)" [
 			name:     %rebol3-core-x64-osx
-			product:  Core
 			compiler: clang
 			target:   x64-osx
 			:include-rebol-core
 			:make-x64-exe
-			upx: off
 		]
 		"Rebol/Bulk x64-osx (clang)" [
 			name:     %rebol3-bulk-x64-osx
-			product:  Bulk
 			compiler: clang
-			target:   x64-osx
 			:include-rebol-bulk
 			:make-x64-exe
-			upx: off
 		]
 
 		"Rebol/Core x64-osx shared library (clang)" [
 			name:     %lib-rebol3-core-x64-osx
-			product:  Core
 			compiler: clang
 			:include-rebol-core
 			:make-x64-dll
 		]
 		"Rebol/Core x64-libc host application (clang)" [
 			name:     %host-core-x64-osx
-			product:  Core
 			compiler: clang
 			:include-rebol-core
 			:make-x64-host
