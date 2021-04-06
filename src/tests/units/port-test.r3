@@ -345,12 +345,20 @@ if system/platform = 'Windows [
 		]
 		; create locked file...
 		p: open %issue-2447
-		; should not be possible to delete it..
-		--assert error? try [delete %issue-2447]
+
+		either system/platform = 'Windows [
+		; should not be possible to delete it on Windows..
+			--assert error? try [delete %issue-2447]
+		][
+		; on Posix it can be deleted
+			--assert not error? try [delete %issue-2447]
+		]
 		; close the file handle...
 		close p
-		; now it may be deleted..
-		--assert  port? try [delete %issue-2447]
+		if system/platform = 'Windows [
+			; now it may be deleted..
+			--assert  port? try [delete %issue-2447]
+		]
 		; validate...
 		--assert not exists? %issue-2447
 
@@ -364,7 +372,7 @@ if system/platform = 'Windows [
 			--assert all [
 				port? p: try [open clipboard://]
 				not error? try [write p c]
-				strict-equal? c read p
+				strict-equal? c try [read p]
 			]
 			close p
 		--test-- "Clipboard scheme test"
@@ -373,7 +381,7 @@ if system/platform = 'Windows [
 			; but is ok when done in console :-/
 			--assert all [
 				not error? try [write clipboard:// c]
-				strict-equal? c read clipboard://
+				strict-equal? c try [read clipboard://]
 			]
 	===end-group===
 ]
