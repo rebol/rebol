@@ -293,8 +293,8 @@ if all [
 	===start-group=== "ICO codec"
 	--test-- "ICO encode"
 		--assert all [
-			binary? bin: try [codecs/ico/encode wildcard %units/files/ico/ %*.png]
-			#{0E7368623AD1DBD1BD94FC55B174778C} = checksum bin 'md5
+			binary? bin: try [codecs/ico/encode probe sort wildcard %units/files/ico/ %*.png]
+			#{0E7368623AD1DBD1BD94FC55B174778C} = probe checksum bin 'md5
 		]
 	--test-- "ICO decode"
 		--assert all [
@@ -331,15 +331,17 @@ if find codecs 'JSON [
 ]
 
 if find codecs 'PNG [
+	system/options/log/png: 3
 	===start-group=== "PNG codec"
 	--test-- "png/size?"
 		--assert 24x24 = codecs/png/size? read %units/files/r3.png
 		--assert none?   codecs/png/size? read %units/files/test.aar
 
 	--test-- "png/chunks"
+		? codecs/png
 		--assert all [
 			; read PNG file as a block of chunks...
-			block? blk: try [codecs/png/chunks %units/files/png-from-photoshop.png]
+			block? probe blk: try [codecs/png/chunks %units/files/png-from-photoshop.png]
 			10 = length? blk
 			"IHDR" = to string! blk/1    13 = length? blk/2
 			"pHYs" = to string! blk/3     9 = length? blk/4

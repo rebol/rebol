@@ -14,61 +14,61 @@ dt [ ;- delta time
 	;recycle/torture
 	failed-units: copy []
 	foreach file [
-		%units/bbcode-test.r3
-		%units/bincode-test.r3
-		%units/bitset-test.r3
+	;	%units/bbcode-test.r3
+	;	%units/bincode-test.r3
+	;	%units/bitset-test.r3
 		%units/codecs-test.r3
-		%units/compare-test.r3
-		%units/compress-test.r3
-		%units/conditional-test.r3
-		%units/crash-test.r3
-		%units/datatype-test.r3
-		%units/date-test.r3
-		%units/decimal-test.r3
-		%units/delect-test.r3
-		%units/enbase-test.r3
-		%units/enum-test.r3
-		%units/error-test.r3
-		%units/evaluation-test.r3
-		%units/event-test.r3
-		%units/gob-test.r3
-		%units/file-test.r3
-		%units/format-test.r3
-		%units/func-test.r3
-		%units/image-test.r3
-		%units/integer-test.r3
-		%units/issue-test.r3
-		%units/lexer-test.r3
-		%units/load-test.r3
-		%units/make-test.r3
-		%units/map-test.r3
-		%units/module-test.r3
-		%units/mold-test.r3
-		%units/money-test.r3
-		%units/object-test.r3
-		%units/os-test.r3
-		%units/pair-test.r3
-		%units/parse-test.r3
-		%units/percent-test.r3
-		%units/port-test.r3
-		%units/power-test.r3
-		%units/protect-test.r3
-		%units/series-test.r3
-		%units/task-test.r3
-		%units/time-test.r3
-		%units/tuple-test.r3
-		%units/typeset-test.r3
-		%units/vector-test.r3
-		%units/word-test.r3
-		;- cryptography tests:
-		%units/aes-test.r3
-		%units/chacha20-test.r3
-		%units/checksum-test.r3
-		%units/dh-test.r3
-		%units/crypt-test.r3
-		%units/poly1305-test.r3
-		%units/rc4-test.r3
-		%units/rsa-test.r3
+	;	%units/compare-test.r3
+	;	%units/compress-test.r3
+	;	%units/conditional-test.r3
+	;	%units/crash-test.r3
+	;	%units/datatype-test.r3
+	;	%units/date-test.r3
+	;	%units/decimal-test.r3
+	;	%units/delect-test.r3
+	;	%units/enbase-test.r3
+	;	%units/enum-test.r3
+	;	%units/error-test.r3
+	;	%units/evaluation-test.r3
+	;	%units/event-test.r3
+	;	%units/gob-test.r3
+	;	%units/file-test.r3
+	;	%units/format-test.r3
+	;	%units/func-test.r3
+	;	%units/image-test.r3
+	;	%units/integer-test.r3
+	;	%units/issue-test.r3
+	;	%units/lexer-test.r3
+	;	%units/load-test.r3
+	;	%units/make-test.r3
+	;	%units/map-test.r3
+	;	%units/module-test.r3
+	;	%units/mold-test.r3
+	;	%units/money-test.r3
+	;	%units/object-test.r3
+	;	%units/os-test.r3
+	;	%units/pair-test.r3
+	;	%units/parse-test.r3
+	;	%units/percent-test.r3
+	;	%units/port-test.r3
+	;	%units/power-test.r3
+	;	%units/protect-test.r3
+	;	%units/series-test.r3
+	;	%units/task-test.r3
+	;	%units/time-test.r3
+	;	%units/tuple-test.r3
+	;	%units/typeset-test.r3
+	;	%units/vector-test.r3
+	;	%units/word-test.r3
+	;	;- cryptography tests:
+	;	%units/aes-test.r3
+	;	%units/chacha20-test.r3
+	;	%units/checksum-test.r3
+	;	%units/dh-test.r3
+	;	%units/crypt-test.r3
+	;	%units/poly1305-test.r3
+	;	%units/rc4-test.r3
+	;	%units/rsa-test.r3
 		;- known issues - waiting for fix
 		;%units/_known-issues_.r3
 		;%units/xx-test.r3
