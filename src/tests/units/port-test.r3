@@ -360,13 +360,21 @@ if system/platform = 'Windows [
 	===start-group=== "CLIPBOARD"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1968
 		--test-- "Clipboard port test"
-			p: open clipboard://
-			write p c: "Clipboard port test"
-			--assert strict-equal? c read p
+			c: "Clipboard port test"
+			--assert all [
+				port? p: try [open clipboard://]
+				not error? try [write p c]
+				strict-equal? c read p
+			]
 			close p
 		--test-- "Clipboard scheme test"
-			write clipboard:// c: "Clipboard scheme test"
-			--assert strict-equal? c read clipboard://
+			c: "Clipboard scheme test"
+			; this tests now seems to be failing when done from a run-tests script
+			; but is ok when done in console :-/
+			--assert all [
+				not error? try [write clipboard:// c]
+				strict-equal? c read clipboard://
+			]
 	===end-group===
 ]
 
@@ -408,7 +416,10 @@ if system/platform = 'Windows [
 ===end-group===
 
 
-if "true" <> get-env "CONTINUOUS_INTEGRATION" [
+if all [
+	"true" <> get-env "CONTINUOUS_INTEGRATION"
+	"true" <> get-env "CI" ; for GitHub workflows
+][
 	;- don't do these tests on Travis CI
 	===start-group=== "console port"	
 		--test-- "query input port"
