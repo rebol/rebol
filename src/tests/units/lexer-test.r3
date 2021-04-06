@@ -368,21 +368,15 @@ Rebol [
 			data: make string! 40000
 			insert/dup data "ABCD" 10000
 
-			any [
-				exists? dir: join system/options/path %r3/src/tests/units/files/
-				exists? dir: join system/options/path %../r3/src/tests/units/files/
-				exists? dir: join system/options/path %../../src/tests/units/files/
-			]
-			probe dir: clean-path dir
-			probe save %units/files/tmp.data reduce [1 data]
-			probe exe: system/options/boot
-
+			dir: clean-path %units/files/
+			save dir/tmp.data reduce [1 data]
+			exe: system/options/boot
 			;@@ CALL seems not to work same on all OSes :-(
-			either system/version/4 = 3 [
-				call/wait/output probe rejoin [to-local-file exe { -s } to-local-file dir/bug-load-null.r3] out
-			][	call/wait/output probe reduce [exe "-s" dir/bug-load-null.r3] out ]
+			either system/platform = 'Windows [
+				call/wait/output rejoin [to-local-file exe { -s } to-local-file dir/bug-load-null.r3] out
+			][	call/wait/output reduce [exe "-s" dir/bug-load-null.r3] out ]
 
-			probe out
+			;probe out
 			parse out [thru "Test OK" to end]
 		][
 			probe system/state/last-error
