@@ -474,6 +474,8 @@ include-prot-mysql:          [mezz-prot-files: %mezz/prot-mysql.reb         ]
 include-prebol:              [mezz-lib-files: %modules/prebol.reb           ]
 
 include-https: [
+	:include-bincode
+	:include-cryptography
 	mezz-lib-files: [
 		%mezz/codec-utc-time.reb
 		%mezz/codec-der.reb
