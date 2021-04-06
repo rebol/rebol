@@ -68,7 +68,8 @@ if find codecs 'png [
 		unless parse data [#{89504E470D0A1A0A} data: to end][ return none ]
 		bin: binary data
 		out: make block! 12
-		num: -40 + query/mode console:// 'window-cols
+		; in cloud builds the console width is not resolved!
+		num: try/except [-40 + query/mode console:// 'window-cols][40]
 		while [8 < length? bin/buffer][
 			len: binary/read bin 'ui32be
 			tag: copy/part bin/buffer 4
