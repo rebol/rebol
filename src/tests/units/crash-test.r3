@@ -30,6 +30,7 @@ Rebol [
 
 --test-- "issue-2190"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2190
+	unset 'x ; make sure that `print x` has reason to throw an error!
 	catch/quit [ attempt [ quit ] ]
 	--assert error? try [print x] ;- no crash, just error!
 
