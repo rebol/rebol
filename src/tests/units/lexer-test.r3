@@ -112,8 +112,11 @@ Rebol [
 	--test-- "invalid cases"
 		--assert error? try [load {a<}]
 		--assert error? try [load {a>}]
-		--assert error? try [load {a<--}]
 		--assert error? try [load {a-->}]
+
+	--test-- "special cases"
+		--assert all [block? b: try [load {a<--}] parse b [word! word!]]
+		--assert all [block? b: try [load {a<a>}] parse b [word! tag!]]
 
 	--test-- "valid arrow-like lit-words"
 		--assert lit-word? try [load {'<>}]
