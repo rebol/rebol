@@ -136,7 +136,10 @@ Rebol [
 			not exists? %units/temp-dir/
 		]
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2447
-		--assert false? try [delete %not-exists/]
+		--assert all [
+			logic? v: try [delete %not-exists/]
+			not v
+		]
 		--assert error? try [delete %/]
 
 	--test-- "CHANGE-DIR"
@@ -336,7 +339,10 @@ if system/platform = 'Windows [
 		]
 	--test-- "DELETE file"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2447
-		--assert false? try [delete %not-exists]
+		--assert all [
+			logic? v: try [delete %not-exists]
+			not v
+		]
 		; create locked file...
 		p: open %issue-2447
 		; should not be possible to delete it..
