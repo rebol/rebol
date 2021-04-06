@@ -35,7 +35,7 @@ jobs:
     # Collecting build artifacts...
     - uses: actions/upload-artifact@v2
       with:
-        name: Rebol-CI-${{GITHUB_RUN_ID}}
+        name: Rebol-CI-${{env.GITHUB_RUN_ID}}
         path: ./rebol3-*.exe
 
   linux:
@@ -72,7 +72,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Rebol-CI-${{GITHUB_RUN_ID}}
+          name: Rebol-CI-${{env.GITHUB_RUN_ID}}
           path: ./rebol3-*.gz
 
   macos:
@@ -97,5 +97,5 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Rebol-CI-${{GITHUB_RUN_ID}}
+          name: Rebol-CI-${{env.GITHUB_RUN_ID}}
           path: ./rebol3-*.gz
