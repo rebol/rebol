@@ -25,78 +25,18 @@ jobs:
         MOVE ./Siskin-x64.exe ./siskin.exe
         SET PATH=%PATH%;%CD%
 
-    - name: Build 64bit Rebol/Base using MSVC
-      run: |
-        ./siskin.exe make/rebol3.nest [msvc %rebol3-base-x64-gcc]
-        MOVE ./msvc/Release-x64/rebol3-base-x64-vs.exe ./
-
-    - name: Build 64bit Rebol/Core using MSVC
-      run: |
-        ./siskin.exe make/rebol3.nest [msvc %rebol3-core-x64-gcc]
-        MOVE ./msvc/Release-x64/rebol3-core-x64-vs.exe ./
-
     - name: Build 64bit Rebol/Bulk using MSVC
       run: |
         ./siskin.exe make/rebol3.nest [msvc %rebol3-bulk-x64-clang]
-        MOVE ./msvc/Release-x64/rebol3-bulk-x64-vs.exe ./
+        MOVE ./msvc/Release-x64/rebol3-bulk-x64-vs.exe ./rebol3-bulk-x64.exe
 
-    - name: Build 32bit Rebol/Base using MSVC
-      run: |
-        ./siskin.exe make/rebol3.nest [msvc %rebol3-base-x86-gcc]
-        MOVE ./msvc/Release-Win32/rebol3-base-x86-vs.exe ./
-
-    - name: Build 32bit Rebol/Core using MSVC
-      run: |
-        ./siskin.exe make/rebol3.nest [msvc %rebol3-core-x86-gcc]
-        MOVE ./msvc/Release-Win32/rebol3-core-x86-vs.exe ./
-
-    - name: Build 32bit Rebol/Bulk using MSVC
-      run: |
-        ./siskin.exe make/rebol3.nest [msvc %rebol3-bulk-x86-clang]
-        MOVE ./msvc/Release-Win32/rebol3-bulk-x86-vs.exe ./
-
-    ###############################################################################
-    # Building Rebol as a shared library...
-    - name: Build 32bit Rebol/Core as a shared library using MSVC
-      run: ./siskin.exe make/rebol3.nest [msvc %lib-rebol3-core-x86-gcc]
-    - name: Build 64bit Rebol/Core as a shared library using MSVC
-      run: ./siskin.exe make/rebol3.nest [msvc %lib-rebol3-core-x64-gcc]
-        
-    ###############################################################################
-    # Building sample host applications using Rebol as a shared library...
-    - name: Build 32bit Rebol/Core as a host application using MSVC
-      run: ./siskin.exe make/rebol3.nest [msvc %host-core-x86-gcc]
-    - name: Build 64bit Rebol/Core as a host application using MSVC
-      run: ./siskin.exe make/rebol3.nest [msvc %host-core-x64-gcc]
-
-    - name: Move library and host files into root
-      run: |
-        MOVE ./msvc/Release-Win32/lib-rebol3-core-x86-vs.dll ./
-        MOVE ./msvc/Release-Win32/lib-rebol3-core-x86-vs.lib ./
-        MOVE ./msvc/Release-Win32/host-core-x86-vs.exe ./
-        MOVE ./msvc/Release-x64/lib-rebol3-core-x64-vs.dll ./
-        MOVE ./msvc/Release-x64/lib-rebol3-core-x64-vs.lib ./
-        MOVE ./msvc/Release-x64/host-core-x64-vs.exe ./
 
     ###############################################################################
     # Collecting build artifacts...
     - uses: actions/upload-artifact@v2
       with:
-        name: Rebol-win-vs
+        name: Rebol-CI-${GITHUB_RUN_ID}
         path: ./rebol3-*.exe
-    # and lib/host variant...
-    - uses: actions/upload-artifact@v2
-      with:
-        name: Rebol-win-lib-vs
-        path: ./lib-*.dll
-    - uses: actions/upload-artifact@v2
-      with:
-        name: Rebol-win-lib-vs
-        path: ./lib-*.lib
-    - uses: actions/upload-artifact@v2
-      with:
-        name: Rebol-win-lib-vs
-        path: ./host-*.exe
 
   linux:
     strategy:
@@ -118,23 +58,22 @@ jobs:
           chmod +x ./siskin
           ls -la
 
-      - name: Build 64bit Rebol/Base using gcc
-        run: ./siskin make/rebol3.nest %rebol3-base-x64-libc-gcc
-      - name: Build 64bit Rebol/Core using gcc
-        run: ./siskin make/rebol3.nest %rebol3-core-x64-libc-gcc
       - name: Build 64bit Rebol/Bulk using gcc
-        run: ./siskin make/rebol3.nest %rebol3-bulk-x64-libc-gcc
-      - name: Build 64bit Rebol/Base using clang
-        run: ./siskin make/rebol3.nest %rebol3-base-x64-libc-clang
-      - name: Build 64bit Rebol/Core using clang
-        run: ./siskin make/rebol3.nest %rebol3-core-x64-libc-clang
+        run: |
+          ./siskin make/rebol3.nest %rebol3-bulk-x64-libc-gcc
+          mv ./build/rebol3-bulk-x64-libc-gcc ./rebol3-bulk-x64-libc-gcc
+          gzip -9 ./rebol3-bulk-x64-libc-gcc
+
       - name: Build 64bit Rebol/Bulk using clang
-        run: ./siskin make/rebol3.nest %rebol3-bulk-x64-libc-clang
+        run: |
+          ./siskin make/rebol3.nest %rebol3-bulk-x64-libc-clang
+          mv ./build/rebol3-bulk-x64-libc-clang ./rebol3-bulk-x64-libc-clang
+          gzip -9 ./rebol3-bulk-x64-libc-clang
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Rebol-64bit-linux
-          path: ./build/rebol3-*
+          name: Rebol-CI-${GITHUB_RUN_ID}
+          path: ./rebol3-*.gz
 
   macos:
     runs-on: macos-latest
@@ -150,19 +89,13 @@ jobs:
           chmod +x ./siskin
           ls -la
 
-      - name: Build 64bit Rebol/Base using clang
-        run: ./siskin make/rebol3.nest %rebol3-base-x64-osx
-      - name: Build 64bit Rebol/Core using clang
-        run: ./siskin make/rebol3.nest %rebol3-core-x64-osx
       - name: Build 64bit Rebol/Bulk using clang
-        run: ./siskin make/rebol3.nest %rebol3-bulk-x64-osx
-
-      - name: Build 64bit Rebol/Core as a shared library
-        run: ./siskin make/rebol3.nest %lib-rebol3-core-x64-osx
-      - name: Build 64bit Rebol/Core as a host application
-        run: ./siskin make/rebol3.nest %host-core-x64-osx
+        run: |
+          ./siskin make/rebol3.nest %rebol3-bulk-x64-osx
+          mv ./build/rebol3-bulk-x64-osx ./rebol3-bulk-x64-osx
+          gzip -9 ./rebol3-bulk-x64-osx
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Rebol-64bit-osx
-          path: ./build/*
+          name: Rebol-CI-${GITHUB_RUN_ID}
+          path: ./rebol3-*.gz

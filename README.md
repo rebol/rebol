@@ -1,3 +1,4 @@
+[![Rebol CI](https://github.com/Siskin-framework/Rebol/actions/workflows/main.yml/badge.svg)](https://github.com/Siskin-framework/Rebol/actions/workflows/main.yml)
 [![Gitter](https://badges.gitter.im/rebol3/community.svg)](https://gitter.im/rebol3/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Chocolatey](https://raw.githubusercontent.com/Oldes/media/master/install-from-choco.svg)](https://chocolatey.org/packages/rebol3)
 
