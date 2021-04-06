@@ -18,13 +18,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Checkout Rebol repository
-      uses: actions/checkout@v2
-      with:
-        repository: Siskin-framework/Rebol
-        path: tree/rebol/Rebol
-        #ref:  new-make
-
     - name: Download Siskin Builder
       shell: cmd
       run: |
@@ -35,32 +28,32 @@ jobs:
     - name: Build 64bit Rebol/Base using MSVC
       run: |
         ./siskin.exe make/rebol3.nest [msvc %rebol3-base-x64-gcc]
-        MOVE ./tree/rebol/Rebol/msvc/Release-x64/rebol3-base-x64-vs.exe ./
+        MOVE ./msvc/Release-x64/rebol3-base-x64-vs.exe ./
 
     - name: Build 64bit Rebol/Core using MSVC
       run: |
         ./siskin.exe make/rebol3.nest [msvc %rebol3-core-x64-gcc]
-        MOVE ./tree/rebol/Rebol/msvc/Release-x64/rebol3-core-x64-vs.exe ./
+        MOVE ./msvc/Release-x64/rebol3-core-x64-vs.exe ./
 
     - name: Build 64bit Rebol/Bulk using MSVC
       run: |
         ./siskin.exe make/rebol3.nest [msvc %rebol3-bulk-x64-clang]
-        MOVE ./tree/rebol/Rebol/msvc/Release-x64/rebol3-bulk-x64-vs.exe ./
+        MOVE ./msvc/Release-x64/rebol3-bulk-x64-vs.exe ./
 
     - name: Build 32bit Rebol/Base using MSVC
       run: |
         ./siskin.exe make/rebol3.nest [msvc %rebol3-base-x86-gcc]
-        MOVE ./tree/rebol/Rebol/msvc/Release-Win32/rebol3-base-x86-vs.exe ./
+        MOVE ./msvc/Release-Win32/rebol3-base-x86-vs.exe ./
 
     - name: Build 32bit Rebol/Core using MSVC
       run: |
         ./siskin.exe make/rebol3.nest [msvc %rebol3-core-x86-gcc]
-        MOVE ./tree/rebol/Rebol/msvc/Release-Win32/rebol3-core-x86-vs.exe ./
+        MOVE ./msvc/Release-Win32/rebol3-core-x86-vs.exe ./
 
     - name: Build 32bit Rebol/Bulk using MSVC
       run: |
         ./siskin.exe make/rebol3.nest [msvc %rebol3-bulk-x86-clang]
-        MOVE ./tree/rebol/Rebol/msvc/Release-Win32/rebol3-bulk-x86-vs.exe ./
+        MOVE ./msvc/Release-Win32/rebol3-bulk-x86-vs.exe ./
 
     ###############################################################################
     # Building Rebol as a shared library...
@@ -78,12 +71,12 @@ jobs:
 
     - name: Move library and host files into root
       run: |
-        MOVE ./tree/rebol/Rebol/msvc/Release-Win32/lib-rebol3-core-x86-vs.dll ./
-        MOVE ./tree/rebol/Rebol/msvc/Release-Win32/lib-rebol3-core-x86-vs.lib ./
-        MOVE ./tree/rebol/Rebol/msvc/Release-Win32/host-core-x86-vs.exe ./
-        MOVE ./tree/rebol/Rebol/msvc/Release-x64/lib-rebol3-core-x64-vs.dll ./
-        MOVE ./tree/rebol/Rebol/msvc/Release-x64/lib-rebol3-core-x64-vs.lib ./
-        MOVE ./tree/rebol/Rebol/msvc/Release-x64/host-core-x64-vs.exe ./
+        MOVE ./msvc/Release-Win32/lib-rebol3-core-x86-vs.dll ./
+        MOVE ./msvc/Release-Win32/lib-rebol3-core-x86-vs.lib ./
+        MOVE ./msvc/Release-Win32/host-core-x86-vs.exe ./
+        MOVE ./msvc/Release-x64/lib-rebol3-core-x64-vs.dll ./
+        MOVE ./msvc/Release-x64/lib-rebol3-core-x64-vs.lib ./
+        MOVE ./msvc/Release-x64/host-core-x64-vs.exe ./
 
     ###############################################################################
     # Collecting build artifacts...
@@ -117,13 +110,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Checkout Rebol repository
-        uses: actions/checkout@v2
-        with:
-          repository: Siskin-framework/Rebol
-          path: tree/rebol/Rebol
-          #ref:  new-make
-
       - name: Download Siskin Builder
         run: |
           wget -q https://github.com/Siskin-framework/Builder/releases/download/0.3.3/Siskin-x64-libc.gz
@@ -148,20 +134,13 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: Rebol-64bit-linux
-          path: ./tree/rebol/Rebol/build/rebol3-*
+          path: ./build/rebol3-*
 
   macos:
     runs-on: macos-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-
-      - name: Checkout Rebol repository
-        uses: actions/checkout@v2
-        with:
-          repository: Siskin-framework/Rebol
-          path: tree/rebol/Rebol
-          #ref:  new-make
 
       - name: Download Siskin Builder
         run: |
@@ -186,4 +165,4 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: Rebol-64bit-osx
-          path: ./tree/rebol/Rebol/build/*
+          path: ./build/*
