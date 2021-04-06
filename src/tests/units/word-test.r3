@@ -46,15 +46,15 @@ Rebol [
 		nlw: copy []
 		for n 0 255 1 [
 			w: copy []
-			append w rejoin [""  to char! n "a"] ;; test as leading letter
-			append w rejoin ["a" to char! n    ] ;; test as trailing letter
-			append w rejoin ["a" to char! n "a"] ;; test as mid letter
+			append w rejoin [""  to char! n "x"] ;; test as leading letter
+			append w rejoin ["x" to char! n    ] ;; test as trailing letter
+			append w rejoin ["x" to char! n "x"] ;; test as mid letter
 			foreach c w [
 				if not error? try [to word! c][ ;; test only those that can be to-worded
-					s: join trim/tail c ": 999" ;; trimmed for "a^-" and "a " inputs (allowed)
+					s: join trim/tail c ": 999" ;; trimmed for "x^-" and "x " inputs (allowed)
 					if any [
 						error? try [unset? load s] ;; Can we load it?
-						error? try [unset?   do s] ;; Can we do the assign a: 999 ?
+						error? try [unset?   do s] ;; Can we do the assign x: 999 ?
 						unset? do s ;; Did we get 999 if we did?
 						999 <> do s
 					][
