@@ -125,7 +125,7 @@ Rebol [
 	--test-- "save to binary"
 		b: #{}
 		--assert #{310A} = save b 1
-		--assert #{310A320A} = save b 3
+		--assert #{310A320A} = save b 2
 		--assert #{310A320A237B30337D0A} = save b #{03}
 
 	--test-- "save/header"
