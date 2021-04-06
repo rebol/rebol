@@ -35,7 +35,7 @@ jobs:
     # Collecting build artifacts...
     - uses: actions/upload-artifact@v2
       with:
-        name: Rebol-CI-${GITHUB_RUN_ID}
+        name: Rebol-CI-${{GITHUB_RUN_ID}}
         path: ./rebol3-*.exe
 
   linux:
@@ -61,18 +61,18 @@ jobs:
       - name: Build 64bit Rebol/Bulk using gcc
         run: |
           ./siskin make/rebol3.nest %rebol3-bulk-x64-libc-gcc
-          mv ./build/rebol3-bulk-x64-libc-gcc ./rebol3-bulk-x64-libc-gcc
-          gzip -9 ./rebol3-bulk-x64-libc-gcc
+          mv ./build/rebol3-bulk-x64-libc-gcc ./rebol3-bulk-x64-libc
+          gzip -9 ./rebol3-bulk-x64-libc
 
-      - name: Build 64bit Rebol/Bulk using clang
-        run: |
-          ./siskin make/rebol3.nest %rebol3-bulk-x64-libc-clang
-          mv ./build/rebol3-bulk-x64-libc-clang ./rebol3-bulk-x64-libc-clang
-          gzip -9 ./rebol3-bulk-x64-libc-clang
+      #- name: Build 64bit Rebol/Bulk using clang
+      #  run: |
+      #    ./siskin make/rebol3.nest %rebol3-bulk-x64-libc-clang
+      #    mv ./build/rebol3-bulk-x64-libc-clang ./rebol3-bulk-x64-libc-clang
+      #    gzip -9 ./rebol3-bulk-x64-libc-clang
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Rebol-CI-${GITHUB_RUN_ID}
+          name: Rebol-CI-${{GITHUB_RUN_ID}}
           path: ./rebol3-*.gz
 
   macos:
@@ -97,5 +97,5 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Rebol-CI-${GITHUB_RUN_ID}
+          name: Rebol-CI-${{GITHUB_RUN_ID}}
           path: ./rebol3-*.gz
