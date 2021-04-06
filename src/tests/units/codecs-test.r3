@@ -61,16 +61,22 @@ Rebol [
 		--assert #{CAFE} = load save #{} #{CAFE}
 		--assert [1 2]   = load save #{} [1 2]
 
-	--test-- "invalid image SAVE"
-		--assert error? try [save %temp.bmp [1 2]]
-		--assert error? try [save %temp.png [1 2]]
-		--assert error? try [save %temp.jpg [1 2]]
-		--assert error? try [save %temp.bmp "foo"]
-		--assert error? try [save %temp.png "foo"]
-		--assert error? try [save %temp.jpg "foo"]
-		--assert error? try [save %temp.bmp #{00}]
-		--assert error? try [save %temp.png #{00}]
-		--assert error? try [save %temp.jpg #{00}]
+	--test-- "invalid image SAVE"	
+		if in codecs 'png [
+			--assert error? try [save %temp.png [1 2]]
+			--assert error? try [save %temp.png "foo"]
+			--assert error? try [save %temp.png #{00}]
+		]
+		if in codecs 'bmp [
+			--assert error? try [save %temp.bmp [1 2]]
+			--assert error? try [save %temp.bmp "foo"]
+			--assert error? try [save %temp.bmp #{00}]
+		]
+		if in codecs 'jpg [
+			--assert error? try [save %temp.jpg [1 2]]
+			--assert error? try [save %temp.jpg "foo"]
+			--assert error? try [save %temp.jpg #{00}]
+		]
 ===end-group===
 
 
