@@ -388,6 +388,11 @@ include-cryptography: [
 		%core/u-rsa.c
 		%core/u-uECC.c
 	]
+	:include-codec-crt
+	:include-codec-der
+	:include-codec-pkix
+	:include-codec-ppk
+	:include-codec-ssh-key
 ]
 
 ;- native additional checksums:                                                 
@@ -444,7 +449,16 @@ include-native-wav-codec: [
 ]
 
 ;- Mezzanine level includes                                                     
-
+; crypto codecs:
+include-codec-crt:           [
+	:include-codec-pkix
+	:include-codec-der
+	mezz-lib-files:  %mezz/codec-crt.reb
+]
+include-codec-der:           [mezz-lib-files:  %mezz/codec-der.reb          ]
+include-codec-pkix:          [mezz-lib-files:  %mezz/codec-pkix.reb         ]
+include-codec-ppk:           [mezz-lib-files:  %mezz/codec-ppk.reb          ]
+include-codec-ssh-key:       [mezz-lib-files:  %mezz/codec-ssh-key.reb      ]
 ; compression codecs:
 include-codec-gzip:          [mezz-lib-files:  %mezz/codec-gzip.reb         ]
 include-codec-zip:           [mezz-lib-files:  %mezz/codec-zip.reb          ]
