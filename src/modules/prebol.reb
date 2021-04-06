@@ -58,8 +58,6 @@ REBOL [
 	]
 ]
 
-system/options/binary-base: 64  ; output data in base-64
-
 error: func [msg] [
 	if block? msg [msg: reform msg]
 	sys/log/error 'prebol msg
@@ -72,8 +70,10 @@ process-source: func [
 	blk [any-block!] "Block of source to process"
 	size [integer!] "Starting size"
 	/only "Don't use recursive processing"
-	/local file data expr cmd else tmp path include-cmds header do-expr
+	/local file data expr cmd else tmp path include-cmds header do-expr base
 ][
+	base: system/options/binary-base
+	system/options/binary-base: 64   ; output data in base-64
 	do-expr: func [expr /local result] [
 		; Evaluate expression and make sure it returns a result.
 		set/any 'result try [do :expr]
@@ -209,5 +209,6 @@ comment (rejoin [{---- end of include } mold file { ----}])
 			if block? :item [size: process-source item size]
 		]
 	]
+	system/options/binary-base: base ; restore the original base
 	size
 ]
