@@ -1,0 +1,115 @@
+name: 'Rebol CI'
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  #workflow_dispatch:
+
+jobs:
+  windows:
+    strategy:
+      fail-fast: true
+    runs-on: windows-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Download Siskin Builder
+      shell: cmd
+      run: |
+        C:\msys64\usr\bin\wget.exe -q https://github.com/Siskin-framework/Builder/releases/download/0.3.3/Siskin-x64.exe
+        MOVE ./Siskin-x64.exe ./siskin.exe
+        SET PATH=%PATH%;%CD%
+
+    - name: Build 64bit Rebol/Bulk using MSVC
+      run: ./siskin.exe make/rebol3.nest [msvc %rebol3-bulk-x64-clang]
+
+    - name: Prepare 64bit Rebol/Bulk for upload
+      run: MOVE ./msvc/Release-x64/rebol3-bulk-x64-vs.exe ./rebol3-bulk-x64.exe
+
+    - name: Test 64bit Rebol/Bulk
+      run: ./rebol3-bulk-x64.exe -s ./src/tests/run-tests.r3
+
+
+    ###############################################################################
+    # Collecting build artifacts...
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Rebol-CI-${{github.run_id}}
+        path: ./rebol3-*.exe
+
+  linux:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-18.04]
+        #os: [ubuntu-20.04, ubuntu-18.04]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Download Siskin Builder
+        run: |
+          wget -q https://github.com/Siskin-framework/Builder/releases/download/0.3.3/Siskin-x64-libc.gz
+          gunzip ./Siskin-x64-libc.gz
+          mv ./Siskin-x64-libc ./siskin
+          chmod +x ./siskin
+          ls -la
+
+      - name: Build 64bit Rebol/Bulk using gcc
+        run: ./siskin make/rebol3.nest %rebol3-bulk-x64-libc-gcc
+
+      - name: Test 64bit Rebol/Bulk
+        run: ./build/rebol3-bulk-x64-libc-gcc -s ./src/tests/run-tests.r3
+
+      - name: Prepare 64bit Rebol/Bulk for upload
+        run: |
+          mv ./build/rebol3-bulk-x64-libc-gcc ./rebol3-bulk-x64-libc
+          gzip -9 ./rebol3-bulk-x64-libc
+
+      #- name: Build 64bit Rebol/Bulk using clang
+      #  run: |
+      #    ./siskin make/rebol3.nest %rebol3-bulk-x64-libc-clang
+      #    mv ./build/rebol3-bulk-x64-libc-clang ./rebol3-bulk-x64-libc-clang
+      #    gzip -9 ./rebol3-bulk-x64-libc-clang
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Rebol-CI-${{github.run_id}}
+          path: ./rebol3-*.gz
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Download Siskin Builder
+        run: |
+          wget -q https://github.com/Siskin-framework/Builder/releases/download/0.3.3/Siskin-x64-osx.gz
+          gunzip ./Siskin-x64-osx.gz
+          mv ./Siskin-x64-osx ./siskin
+          chmod +x ./siskin
+          ls -la
+
+      - name: Build 64bit Rebol/Bulk using clang
+        run: ./siskin make/rebol3.nest %rebol3-bulk-x64-osx
+
+      - name: Test 64bit Rebol/Bulk
+        run: ./build/rebol3-bulk-x64-osx -s ./src/tests/run-tests.r3
+
+      - name: Prepare 64bit Rebol/Bulk for upload
+        run: |
+          mv ./build/rebol3-bulk-x64-osx ./rebol3-bulk-x64-osx
+          gzip -9 ./rebol3-bulk-x64-osx
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Rebol-CI-${{github.run_id}}
+          path: ./rebol3-*.gz

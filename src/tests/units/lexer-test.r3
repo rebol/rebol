@@ -80,6 +80,7 @@ Rebol [
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1302
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1318
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1342
+;@@ https://github.com/Oldes/Rebol-issues/issues/1461
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1478
 
 	--test-- "valid arrow-like words"
@@ -111,23 +112,31 @@ Rebol [
 	--test-- "invalid cases"
 		--assert error? try [load {a<}]
 		--assert error? try [load {a>}]
-		--assert error? try [load {a<--}]
 		--assert error? try [load {a-->}]
 
+	--test-- "special cases"
+		--assert all [block? b: try [load {a<--}] parse b [word! word!]]
+		--assert all [block? b: try [load {a<a>}] parse b [word! tag!]]
+
 	--test-- "valid arrow-like lit-words"
+		--assert lit-word? try [load {'<>}]
 		--assert lit-word? try [load {'<-->}]
 		--assert lit-word? try [load {'<==>}]
 		--assert lit-word? try [load {'<-==->}]
 		--assert lit-word? try [load {'<~~~>}]
 
 	--test-- "valid left-arrow-like lit-words"
+		--assert lit-word? try [load {'<} ]
 		--assert lit-word? try [load {'<<}]
+		--assert lit-word? try [load {'<=}]
 		--assert lit-word? try [load {'<<<}]
 		--assert lit-word? try [load {'<<<<}]
 		--assert all [block? b: try [load {'<<<""}] parse b [lit-word! string!]]
 
 	--test-- "valid right-arrow-like lit-words"
+		--assert lit-word? try [load {'>} ]
 		--assert lit-word? try [load {'>>}]
+		--assert lit-word? try [load {'>=}]
 		--assert lit-word? try [load {'>>>}]
 		--assert lit-word? try [load {'>>>>}]
 		--assert lit-word? try [load {'==>>}]
@@ -238,9 +247,9 @@ Rebol [
 
 ===end-group===
 
-===start-group=== "Set-word"
+===start-group=== "Get-word"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2437
-	--test-- "invalid `set-word!`"
+	--test-- "invalid `get-word!`"
 		--assert error? try [load {:2nd}]
 		--assert error? try [load {::foo}]
 		--assert error? try [load {:@foo}]
@@ -249,13 +258,17 @@ Rebol [
 
 ===start-group=== "Refinement"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/980
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1856
 	--test-- "valid `refinement!`"
 		--assert refinement? try [load {/foo}]
 		--assert refinement? try [load {/+}]
 		--assert refinement? try [load {/!}]
 		--assert refinement? try [load {/111}]
 		--assert refinement? try [load {/+1}]
-		
+		--assert refinement? load "/+123"
+		--assert refinement? load "/-"
+		--assert refinement? load "/."
+		--assert refinement? load "/.123"
 
 ===end-group===
 
@@ -265,16 +278,6 @@ Rebol [
 
 ===end-group===
 
-===start-group=== "Lit"
-	--test-- "quote arrow-based words"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/1461
-		--assert lit-word? try [load {'<} ]
-		--assert lit-word? try [load {'>} ]
-		--assert lit-word? try [load {'<>}]
-		--assert lit-word? try [load {'<=}]
-		--assert lit-word? try [load {'>=}]
-
-===end-group===
 
 ===start-group=== "Integer"
 	--test-- "-0"
@@ -282,16 +285,6 @@ Rebol [
 
 ===end-group===
 
-===start-group=== "Refinement" 
-	--test-- "/+"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/1856
-		--assert refinement? load "/+"
-		--assert refinement? load "/+123"
-		--assert refinement? load "/-"
-		--assert refinement? load "/."
-		--assert refinement? load "/.123"
-
-===end-group===
 
 ===start-group=== "Char"
 	--test-- {#"^(1)"}
@@ -375,21 +368,15 @@ Rebol [
 			data: make string! 40000
 			insert/dup data "ABCD" 10000
 
-			any [
-				exists? dir: join system/options/path %r3/src/tests/units/files/
-				exists? dir: join system/options/path %../r3/src/tests/units/files/
-				exists? dir: join system/options/path %../../src/tests/units/files/
-			]
-			probe dir: clean-path dir
-			probe save %units/files/tmp.data reduce [1 data]
-			probe exe: system/options/boot
-
+			dir: clean-path %units/files/
+			save dir/tmp.data reduce [1 data]
+			exe: system/options/boot
 			;@@ CALL seems not to work same on all OSes :-(
-			either system/version/4 = 3 [
-				call/wait/output probe rejoin [to-local-file exe { -s } to-local-file dir/bug-load-null.r3] out
-			][	call/wait/output probe reduce [exe "-s" dir/bug-load-null.r3] out ]
+			either system/platform = 'Windows [
+				call/wait/output rejoin [to-local-file exe { -s } to-local-file dir/bug-load-null.r3] out
+			][	call/wait/output reduce [exe "-s" dir/bug-load-null.r3] out ]
 
-			probe out
+			;probe out
 			parse out [thru "Test OK" to end]
 		][
 			probe system/state/last-error

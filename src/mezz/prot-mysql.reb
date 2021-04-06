@@ -1485,7 +1485,7 @@ sys/make-scheme [
 	title: "MySQL Driver"
 	
 	spec: make system/standard/port-spec-net [
-		path: %
+		path: %""
 		port-id: 3306
 		timeout: 120
 		user:

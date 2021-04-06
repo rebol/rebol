@@ -8,6 +8,23 @@ Rebol [
 
 ~~~start-file~~~ "KNOWN PROBLEMS!"
 
+===start-group=== "PORTS"
+	--test-- "write/seek"
+		;-- THIS TEST DOES NOT PASS ON LINUX!
+		;@@ https://github.com/Oldes/Rebol-issues/issues/552
+		--assert file? write %file-552 to-binary "Hello World!"
+		--assert port? f: open/seek %file-552
+		--assert "Hello World!" = to-string read/seek f 0
+		--assert file? write/seek f to-binary "a" 4  ; In range
+		--assert file? write/seek f to-binary " Goodbye World!" 12  ; Out of range
+		--assert "Hella World! Goodbye World!" = probe to-string read/seek f 0
+		--assert "Hella World! Goodbye World!" = probe to-string read/seek %file-552 0
+		;-- on Linux above is just "Hella World!"
+		--assert port? close f
+		try [delete %file-552]
+===end-group===
+
+
 ===start-group=== "MAP"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1872
 	--test-- "map-issue-1872"
