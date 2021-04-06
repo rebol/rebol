@@ -88,6 +88,6 @@ register-codec [
 	]
 
 	identify: function [data [binary!]][
-		parse b [#{0000} [#{0100} | #{0200}] to end] ;.ico or .cur
+		parse data [#{0000} [#{0100} | #{0200}] to end] ;.ico or .cur
 	]
 ]
