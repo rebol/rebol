@@ -293,7 +293,7 @@ if all [
 	===start-group=== "ICO codec"
 	--test-- "ICO encode"
 		--assert all [
-			binary? bin: try [codecs/ico/encode wildcard %units/files/ico/ %*.png]
+			binary? bin: try [codecs/ico/encode sort wildcard %units/files/ico/ %*.png]
 			#{0E7368623AD1DBD1BD94FC55B174778C} = checksum bin 'md5
 		]
 	--test-- "ICO decode"
@@ -331,6 +331,7 @@ if find codecs 'JSON [
 ]
 
 if find codecs 'PNG [
+	system/options/log/png: 3
 	===start-group=== "PNG codec"
 	--test-- "png/size?"
 		--assert 24x24 = codecs/png/size? read %units/files/r3.png

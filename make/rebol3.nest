@@ -1,4 +1,8 @@
-;~ Siskin project nest file ~;
+;-    .-.                                                                       
+;-   /'v'\   SISKIN-Builder project file                                        
+;-  (/uOu\)  https://github.com/Siskin-framework/Builder/                       
+;-===="="=======================================================================
+
 name:     %Rebol
 product:  Base    ; default product.. the others are by include: Core or Bulk
 group:    %rebol
