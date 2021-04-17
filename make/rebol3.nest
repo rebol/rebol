@@ -8,7 +8,7 @@ product:  Base    ; default product.. the others are by include: Core or Bulk
 group:    %rebol
 compiler: clang
 strip:    on
-upx:      on
+#if Windows? [upx: on]
 
 root:     %../
 source:   %src/
