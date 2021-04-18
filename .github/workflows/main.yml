@@ -18,8 +18,8 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Install Rebol
-      uses: oldes/install-rebol@v3.5.3
+    - name: Install Siskin Builder
+      uses: oldes/install-siskin@v0.3.3
 
     - name: Build 64bit Rebol/Bulk using MSVC
       run: ./siskin.exe make/rebol3.nest [msvc %rebol3-bulk-x64-clang]
@@ -50,8 +50,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install Rebol
-        uses: oldes/install-rebol@v3.5.3
+      - name: Install Siskin Builder
+        uses: oldes/install-siskin@v0.3.3
 
       - name: Build 64bit Rebol/Bulk using gcc
         run: ./siskin make/rebol3.nest %rebol3-bulk-x64-libc-gcc
@@ -81,8 +81,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install Rebol
-        uses: oldes/install-rebol@v3.5.3
+      - name: Install Siskin Builder
+        uses: oldes/install-siskin@v0.3.3
 
       - name: Build 64bit Rebol/Bulk using clang
         run: ./siskin make/rebol3.nest %rebol3-bulk-x64-osx
