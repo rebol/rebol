@@ -8,7 +8,7 @@ product:  Base    ; default product.. the others are by include: Core or Bulk
 group:    %rebol
 compiler: clang
 strip:    on
-upx:      on
+#if Windows? [upx: on]
 
 root:     %../
 source:   %src/
@@ -19,7 +19,7 @@ temp:     %make/tmp/
 stack-size: 4194304
 optimize:   2
 
-version: 3.5.2
+version: 3.5.3
 
 core-files: [
 	%core/a-constants.c
