@@ -26,10 +26,13 @@ Rebol [
 	--test-- "to-tuple tuple!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/180
 	--assert 1.1.1 = to-tuple 1.1.1
+	--assert 1.0.0 = to-tuple "1"
 
 	--test-- "reverse tuple"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/211
 	--assert 3.2.1 = reverse 1.2.3
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1126
+	--assert 0.0.1 = reverse to-tuple "1"
 
 	--test-- "reverse/part tuple"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1810
@@ -46,6 +49,9 @@ Rebol [
 		99 = (t/2: 99)
 		t = 1.99.3.4
 	]
+
+	--test-- "complement tuple"
+	--assert 254.255.255 = complement 1.0.0
 
 	--test-- "tuple shortening"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1639
