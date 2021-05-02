@@ -214,6 +214,7 @@ Rebol [
 
 
 ===start-group=== "make/to logic!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/763
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2055
 	--test-- "make logic! .."
 		--assert #[true]  = try [make logic! quote #[unset!] ] ; unset!
@@ -239,6 +240,7 @@ Rebol [
 		--assert #[true]  = try [make logic! quote #[ref! "ref"] ] ; ref!
 		--assert #[true]  = try [make logic! quote http://aa ] ; url!
 		--assert #[true]  = try [make logic! quote <tag> ] ; tag!
+		--assert #[true]  = try [make logic! quote [] ] ; empty block!
 		--assert #[true]  = try [make logic! quote [1 2] ] ; block!
 		--assert #[true]  = try [make logic! quote (1 2) ] ; paren!
 		--assert #[true]  = try [make logic! quote a/b ] ; path!
