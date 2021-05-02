@@ -312,7 +312,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 **
 ***********************************************************************/
 {
-	REBCHR *name;
+	REBSER* path;
 	void *dll;
 	REBCNT error;
 	REBYTE *code;
@@ -329,10 +329,10 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 		if (!IS_FILE(val)) Trap_Arg(val);
 
-		name = Val_Str_To_OS(val);
+		path = Value_To_OS_Path(val, FALSE);
 
 		// Try to load the DLL file:
-		if (!(dll = OS_OPEN_LIBRARY(name, &error))) {
+		if (!(dll = OS_OPEN_LIBRARY(SERIES_DATA(path), &error))) {
 			//printf("error: %i\n", error);
 			Trap1(RE_NO_EXTENSION, val);
 		}
