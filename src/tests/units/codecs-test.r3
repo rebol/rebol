@@ -37,6 +37,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "TEXT codec"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2028
 	--test-- "ENCODE text"
 		--assert "1 2" = encode 'text [1 2]
 		--assert "1 2" = encode 'text #{312032}
