@@ -224,5 +224,56 @@ Rebol [
 		--assert 2 = t/2.6
 
 ===end-group===
+
+===start-group=== "trigonometric function"
+
+	--test-- "cosine"
+		--assert -1.0 = cosine/radians pi
+		--assert  0.0 = cosine 90
+		--assert  0.0 = cosine/radians pi / 2
+
+	--test-- "sine"
+		--assert  0.0 = sine/radians pi
+		--assert  1.0 = sine 90
+
+	--test-- "tangent"
+		--assert  0.0 = tangent/radians 0
+		--assert -1.0 = tangent 135
+
+	--test-- "arcsine"
+		--assertf~= -1.5707963267949 arcsine/radians -1 1E-13	
+		--assert 90.0 = arcsine 1
+
+	--test-- "arccosine"
+		--assertf~= 1.5707963267949 arccosine/radians 0 1E-13
+		--assert 90 = arccosine 0
+
+	--test-- "arctangent"
+		--assertf~= -0.785398163397448 arctangent/radians -1 1E-13
+		--assert 45 = arctangent 1
+
+	;@@ https://github.com/Oldes/Rebol-issues/issues/882
+	--test-- "atan2"
+		--assertf~=  3.1415926535898  atan2  0.0 -1.0 1E-13
+		--assertf~= -1.5707963267949  atan2 -1.0  0.0 1E-13
+		--assertf~= -0.78539816339745 atan2 -1.0  1.0 1E-13
+		--assertf~= -0.78539816339745 atan2 -1.5  1.5 1E-13
+
+	--test-- "arctangent2"
+		--assertf~=  180.0 arctangent2   -1x0    1E-13
+		--assertf~=  180.0 arctangent2 -1.0x0.0  1E-13
+		--assertf~= -90.0  arctangent2    0x-1   1E-13
+		--assertf~= -45.0  arctangent2    1x-1   1E-13
+		--assertf~= -45.0  arctangent2  1.5x-1.5 1E-13
+
+	--test-- "arctangent2/radians"
+		--assertf~=  3.1415926535898  arctangent2/radians   -1x0    1E-13
+		--assertf~=  3.1415926535898  arctangent2/radians -1.0x0.0  1E-13
+		--assertf~= -1.5707963267949  arctangent2/radians    0x-1   1E-13
+		--assertf~= -0.78539816339745 arctangent2/radians    1x-1   1E-13
+		--assertf~= -0.78539816339745 arctangent2/radians  1.5x-1.5 1E-13
+
+===end-group===
+
 	
 ~~~end-file~~~
