@@ -893,13 +893,14 @@ eggs: [
 		compiler: gcc
 		flags: [-O2 shared]
 		#if Linux? [ flag: -fPIC ]
+		#either macOS? [compiler: clang][compiler: gcc]
 	]
 	"Test extension 64bit" [
 		name:  %test-x64.rebx
 		files: only %tests/extension/test.c
 		:arch-x64
-		compiler: gcc
 		flags: [-O2 shared]
 		#if Linux? [ flag: -fPIC ]
+		#either macOS? [compiler: clang][compiler: gcc]
 	]
 ]

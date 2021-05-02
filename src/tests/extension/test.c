@@ -7,8 +7,9 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions
 const char *init_block =
     "REBOL [\n"
         "Title: {Add two integers}\n"
+        "Name: extension-test"
         "Type: module\n"
-        "Exports: [addi ]\n" // exporting just the first command!
+        "Exports: [addi]\n" // exporting just the first command!
     "]\n"
     "addi:  command [i1 [integer!] i2 [integer!]]\n"
     "addi2: command [i1 [integer!] i2 [integer!]]\n" // this one is not exported
