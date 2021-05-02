@@ -449,6 +449,8 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	REBCNT n;
 	RXIFRM frm;	// args stored here
 
+	CLEARS(&frm);
+
 	// All of these were checked above on definition:
 	val = BLK_HEAD(VAL_FUNC_BODY(value));
 	cmd = (int)VAL_INT64(val+1);
@@ -485,6 +487,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	case RXR_FALSE:
 		SET_FALSE(val);
 		break;
+	case RXR_BAD_ARGS:
 	case RXR_ERROR:
 		{
 			const char* errmsg = frm.args[1].series;
