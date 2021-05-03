@@ -193,30 +193,34 @@
 	REBVAL *body;
 	REBCNT len;
 
-	if (
-		!IS_BLOCK(def)
-		|| (len = VAL_LEN(def)) < 2
-		|| !IS_BLOCK(spec = VAL_BLK(def))
-		|| type == REB_ACTION //@@ https://github.com/rebol/rebol-issues/issues/1051
-		|| type == REB_NATIVE
-	) return FALSE;
+	if (type == REB_ACTION || type == REB_NATIVE) //@@ https://github.com/rebol/rebol-issues/issues/1051
+		return FALSE;
 
-	body = VAL_BLK_SKIP(def, 1);
+	if (IS_BLOCK(def)) {
+		if ((len = VAL_LEN(def)) < 2 || !IS_BLOCK(spec = VAL_BLK(def)))
+			return FALSE;
+		body = VAL_BLK_SKIP(def, 1);
+		VAL_FUNC_SPEC(value) = VAL_SERIES(spec);
+		VAL_FUNC_ARGS(value) = Check_Func_Spec(VAL_SERIES(spec));
 
-	VAL_FUNC_SPEC(value) = VAL_SERIES(spec);
-	VAL_FUNC_ARGS(value) = Check_Func_Spec(VAL_SERIES(spec));
-
-	if (type != REB_COMMAND) {
-		if (len != 2 || !IS_BLOCK(body)) return FALSE;
-		VAL_FUNC_BODY(value) = VAL_SERIES(body);
+		if (type != REB_COMMAND) {
+			if (len != 2 || !IS_BLOCK(body)) return FALSE;
+			VAL_FUNC_BODY(value) = VAL_SERIES(body);
+		}
+		else
+			Make_Command(value, def);
 	}
-	else
-		Make_Command(value, def);
+	else if (type == REB_OP && IS_FUNCTION(def)) {
+		VAL_FUNC_SPEC(value) = VAL_FUNC_SPEC(def);
+		VAL_FUNC_BODY(value) = VAL_FUNC_BODY(def);
+		VAL_FUNC_ARGS(value) = VAL_FUNC_ARGS(def);
+	}
+	else return FALSE;
 
 	VAL_SET(value, type);
 
 	if (type == REB_OP) {
-		// make sure that there are at least 2 args
+		// make sure that there are exactly 2 args
 		REBVAL *args = BLK_HEAD(VAL_FUNC_ARGS(value))+1;
 		REBCNT w = 0;
 		for (; NOT_END(args); args++) {
@@ -224,7 +228,7 @@
 			else if(IS_WORD(args))
 				w++;
 		}
-		if (w < 2) return FALSE;
+		if (w != 2) return FALSE;
 		VAL_SET_EXT(value, REB_FUNCTION);
 	}
 

@@ -114,6 +114,17 @@ Rebol [
 	--assert [a b]         = spec-of :+*
 	--assert (spec-of :. ) = [a "val1" b "val2" /local c]
 
+--test-- "make op! from action!"
+	--assert op? op1: make op! :remainder
+--test-- "make op! from function!"
+	fce: func[a b][a * b]
+	--assert op? op2: make op! :fce
+	--assert 6 = (2 op2 3)
+	--assert 2 op2 3 = 6
+	fce: func[a b c][a + b + c]
+	--assert all [error? e: try [make op! :fce] e/id = 'bad-make-arg]
+	fce: func[a][a]
+	--assert all [error? e: try [make op! :fce] e/id = 'bad-make-arg]
 	
 ===end-group===
 
