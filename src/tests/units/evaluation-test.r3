@@ -511,6 +511,10 @@ Rebol [
 		var: 'x
 		obj/(var): (some-func 30)
 		--assert all [obj/x = 10 obj/y = 30]
+	--test-- "set path 2"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/396
+		c: 0 b: [1 2 3]
+		--assert 1 = b/(c: 2): c + 1
 
 
 ===end-group===
