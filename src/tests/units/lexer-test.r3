@@ -213,6 +213,26 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Special slash words"
+	--test-- "valid slash words"
+		--assert word? try [load {/}]
+		--assert word? try [load {//}]
+		--assert word? try [load {///}]
+	--test-- "valid slash lit-words"
+		--assert lit-word? try [load {'/}]
+		--assert lit-word? try [load {'//}]
+		--assert lit-word? try [load {'///}]
+	--test-- "valid slash get-words"
+		--assert get-word? try [load {:/}]
+		--assert get-word? try [load {://}]
+		--assert get-word? try [load {:///}]
+	--test-- "valid slash set-words"
+		--assert set-word? try [load {/:}]
+		--assert set-word? try [load {//:}]
+		--assert set-word? try [load {///:}]
+===end-group===
+
+
 ===start-group=== "Email"
 	--test-- "valid `emails`"
 		--assert email? load {name@where}
