@@ -62,8 +62,8 @@ sign?: func [
 	]
 ]
 
-minimum-of: func [
-	{Finds the smallest value in a series}
+find-min: func [
+	{Returns the series where the smallest value is found, or none if the series is empty.}
 	series [series!] {Series to search}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
@@ -78,8 +78,8 @@ minimum-of: func [
 	spot
 ]
 
-maximum-of: func [
-	{Finds the largest value in a series}
+find-max: func [
+	{Returns the series where the largest value is found, or none if the series is empty.}
 	series [series!] {Series to search}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
