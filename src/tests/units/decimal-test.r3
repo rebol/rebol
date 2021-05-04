@@ -159,6 +159,13 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "random"
+	--test-- "random decimal!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/935
+	--assert 1.0 <> random 1.0
+
+===end-group===
+
 
 ===start-group=== "decimal issues"
 	--test-- "issue-1753"
