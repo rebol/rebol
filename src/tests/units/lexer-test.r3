@@ -214,6 +214,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "Special slash words"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1477
 	--test-- "valid slash words"
 		--assert word? try [load {/}]
 		--assert word? try [load {//}]
