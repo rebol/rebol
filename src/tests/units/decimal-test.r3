@@ -275,5 +275,50 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "modulo / remainder"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1332
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2311
+	;@@ https://github.com/metaeducation/ren-c/issues/843
+	;@@ https://github.com/red/red/issues/1515
+	--test-- "remainder"
+		b: copy [] for i -7 7 1 [append b i % 3] b
+		--assert b = [-1 0 -2 -1 0 -2 -1 0 1 2 0 1 2 0 1]
+		b: copy [] for i -7 7 1 [append b i % -3] b
+		--assert b = [-1 0 -2 -1 0 -2 -1 0 1 2 0 1 2 0 1]
+		--assert all [error? e: try [7 % 0] e/id = 'zero-divide]
+		--assert 1.222090944E+33 % -2147483648.0 = 0.0
+	--test-- "mod"
+		b: copy [] for i -7 7 1 [append b mod i 3] b
+		--assert b = [2 0 1 2 0 1 2 0 1 2 0 1 2 0 1]
+		b: copy [] for i -7 7 1 [append b mod i -3] b
+		--assert b = [-1 0 -2 -1 0 -2 -1 0 -2 -1 0 -2 -1 0 -2]
+		--assert all [error? e: try [mod 7 0] e/id = 'zero-divide]
+		--assert 0.25 = mod 562949953421311.25 1
+		--assert 5.55111512312578e-17 = mod 0.1 + 0.1 + 0.1 0.3
+		--assert -3 == mod -8 -5
+		--assert -3.0 == mod -8.0 -5
+
+	--test-- "modulo"
+		b: copy [] for i -7 7 1 [append b i // 3] b
+		--assert b = [2 0 1 2 0 1 2 0 1 2 0 1 2 0 1]
+		b: copy [] for i -7 7 1 [append b i // -3] b
+		--assert b = [-1 0 -2 -1 0 -2 -1 0 -2 -1 0 -2 -1 0 -2]
+		--assert 0.0 = (1.222090944E+33 // -2147483648.0)
+		--assert 0.0 = modulo 562949953421311.25 1
+		--assert 0.0 = modulo  0.1 + 0.1 + 0.1 0.3
+		--assert $0 == modulo $0.1 + $0.1 + $0.1 $0.3
+		--assert $0 == modulo $0.3 $0.1 + $0.1 + $0.1
+		--assert  0 == modulo 1 0.1
+		--assert   -3 //  2   ==  1
+		--assert    3 // -2   == -1
+		--assert 1000 // #"a" == 30
+		--assert #"a" // 3    == #"^A"
+		--assert 10:0 // 3:0  == 1:0
+		--assert  10% // 3%   == 1%
+		--assert  10  // 3%   == 0  ; because result A was integer, result is also integer!
+		--assert 0.01 = round/to (10.0 // 3%) 0.00001
+
+===end-group===
+
 	
 ~~~end-file~~~
