@@ -236,6 +236,12 @@ Rebol [
 		]
 ===end-group===
 
+===start-group=== "PATH"
+	--test-- "get on path"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/248
+		--assert tuple? get 'system/version
+===end-group===
+
 ===start-group=== "SET-PATH"
 	--test-- "set-path missing value"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2312
