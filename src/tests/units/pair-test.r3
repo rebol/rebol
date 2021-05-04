@@ -132,26 +132,25 @@ Rebol [
 		
 ===end-group===
 
-;@@ not implemented in Rebol
-;===start-group=== "pair - remainder"
-;
-;	--test-- "prem-1"
-;		prem1-p: 4x4
-;		--assert equal? prem1-p % 2 0x0
-;	
-;	--test-- "prem-2"
-;		prem2-p: 16x15
-;		--assert equal? prem2-p % 2x3 0x0
-;		
-;	--test-- "prem-3"
-;		prem3-p: 2147483647x2147483647
-;		--assert equal? prem3-p % 2 1x1
-;		
-;	--test-- "prem-4"
-;		prem4-p: -2147483648x-2147483648
-;		--assert equal? prem4-p % -2147483648 0x0
-;		
-;===end-group===
+===start-group=== "pair - remainder"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2450
+	--test-- "prem-1"
+		prem1-p: 4x4
+		--assert equal? prem1-p % 2 0x0
+	
+	--test-- "prem-2"
+		prem2-p: 16x15
+		--assert equal? prem2-p % 2x3 0x0
+		
+	--test-- "prem-3"
+		prem3-p: 32767x32767
+		--assert equal? prem3-p % 2 1x1
+		
+	--test-- "prem-4"
+		prem4-p: -32767x-32767
+		--assert equal? prem4-p % -32767 0x0
+		
+===end-group===
 
 ===start-group=== "pair - negate"
 
