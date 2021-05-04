@@ -34,6 +34,8 @@
 #include <math.h>
 #include <float.h>
 
+REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff); // in t-decimal.c
+
 #define	LOG2	0.6931471805599453
 #define	EPS		2.718281828459045235360287471
 
