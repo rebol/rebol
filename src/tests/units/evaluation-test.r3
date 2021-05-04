@@ -687,6 +687,13 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "RETURN"
+	--test-- "return value"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/771
+		--assert 1 == do does [type? return 1 2]
+
+===end-group===
+
 
 ===start-group=== "WAIT"
 	--test-- "wait -1"
