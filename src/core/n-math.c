@@ -651,6 +651,10 @@ enum {SINE, COSINE, TANGENT};
 			}
 			else if (tb == REB_INTEGER || tb == REB_CHAR) // special negative?, zero?, ...
 				goto compare;
+			else if (tb == REB_TIME) {
+				SET_INTEGER(b, (REBI64)SECS_IN(VAL_TIME(b)));
+				goto compare;
+			}
 			break;
 
 		case REB_DECIMAL:
@@ -665,6 +669,10 @@ enum {SINE, COSINE, TANGENT};
 			}
 			else if (tb == REB_DECIMAL || tb == REB_PERCENT) // equivalent types
 				goto compare;
+			else if (tb == REB_TIME) {
+				SET_DECIMAL(b, (REBDEC)VAL_TIME(b) * NANO);
+				goto compare;
+			}
 			break;
 
 		case REB_MONEY:
@@ -700,6 +708,17 @@ enum {SINE, COSINE, TANGENT};
 			//o: with not integer numbers (money, decimal, percent)
 			if (tb == REB_INTEGER)
 				goto compare;
+			break;
+		case REB_TIME:
+			if (tb == REB_INTEGER) {
+				SET_INTEGER(a, (REBI64)SECS_IN(VAL_TIME(a)));
+				goto compare;
+			}
+			else if (tb == REB_DECIMAL || tb == REB_PERCENT) {
+				SET_DECIMAL(a, (REBDEC)VAL_TIME(a) * NANO);
+				goto compare;
+			}
+			break;
 		}
 		if (strictness == 0 || strictness == 1) return FALSE;
 		//if (strictness >= 2)
