@@ -219,6 +219,25 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "pair - min/max/negative/positive"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1071
+	--test-- "min"
+		--assert equal?   1x1   min 100x1 1x100
+	--test-- "max"
+		--assert equal? 100x100 max 100x1 1x100
+	--test-- "negative?"
+		--assert negative? -1x-1
+		--assert not negative? -1x1
+		--assert not negative?  1x-1
+		--assert not negative? -1x0
+	--test-- "positive?"
+		--assert positive? 1x1
+		--assert not positive? -1x1
+		--assert not positive?  1x-1
+		--assert not positive? -1x0
+
+===end-group===
+
 ===start-group=== "pair - issues"
 
 	--test-- "invalid construction"
