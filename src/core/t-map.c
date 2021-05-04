@@ -540,6 +540,7 @@
 	case A_TO:
 		// make map! [word val word val]
 		if (IS_BLOCK(arg) || IS_PAREN(arg) || IS_MAP(arg)) {
+		map_from_block:
 			if (MT_Map(D_RET, arg, 0)) return R_RET;
 			Trap_Arg(arg);
 //		} else if (IS_NONE(arg)) {
@@ -548,6 +549,9 @@
 		} else if (IS_NUMBER(arg)) {
 			if (action == A_TO) Trap_Arg(arg);
 			n = Int32s(arg, 0);
+		} else if (IS_OBJECT(arg)) {
+			Set_Block(arg, Make_Object_Block(VAL_OBJ_FRAME(arg), 3));
+			goto map_from_block;
 		} else
 			Trap_Make(REB_MAP, Of_Type(arg));
 		// positive only
