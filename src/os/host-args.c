@@ -214,7 +214,7 @@ const struct arg_chr arg_chars2[] = {
 	int arg_buf_size=128;
 
 	REBCHR *arg;
-	REBCHR *args = 0; // holds trailing args
+	REBCHR *args = NULL; // holds trailing args
 	int flag;
 	int i;
 	int len;
@@ -278,6 +278,7 @@ const struct arg_chr arg_chars2[] = {
 			else {
 				if (!args) {
 					args = MAKE_STR(arg_buf_size);
+					if (!args) return;
 					args[0] = 0;
 				}
 				len = (int)LEN_STR(arg) + (int)LEN_STR(args) + 2;
@@ -286,6 +287,7 @@ const struct arg_chr arg_chars2[] = {
 				if (size > arg_buf_size) {
 					tmp = args;
 					args = MAKE_STR(size);
+					if (!args) return;
 					memcpy(args, tmp, arg_buf_size);
 					arg_buf_size = size;
 					FREE_MEM(tmp);
