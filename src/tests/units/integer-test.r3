@@ -281,6 +281,17 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "++ & --"
+	--test-- "++ and -- integer!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/554
+		a: 1
+		--assert 1 = ++ a
+		--assert 2 = -- a
+		--assert 1 = a
+
+===end-group===
+
+
 ===start-group=== "integer issues"
 	--test-- "issue-502"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/502
