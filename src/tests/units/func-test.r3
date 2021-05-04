@@ -129,6 +129,42 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "ZERO?"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/772
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1102
+	--test-- "zero?"
+	--assert all [
+		zero? 0
+		zero? 0.0
+		zero? $0
+		zero? 0%
+		zero? #"^@"
+		zero? 0:0:0
+		zero? 0x0
+	]
+	--assert all [
+		not zero? 10
+		not zero? 10.0
+		not zero? $10
+		not zero? 10%
+		not zero? 1:0:0
+		not zero? 0x1
+		not zero? 1x0
+	]
+	--assert all [
+		not zero? "0"
+		not zero? #"0"
+		not zero? @0
+		not zero? #0
+		not zero? 1-1-2000
+		not zero? ""
+		not zero? []
+		not zero? none
+		not zero? false
+	]
+
+===end-group===
+
 
 ===start-group=== "Other issues"
 
