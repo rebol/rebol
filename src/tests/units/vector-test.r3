@@ -444,4 +444,12 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "MAXIMUM-OF / MINIMUM-OF"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/460
+	v: #[si32! [1 2 3 -1]]
+	--test-- "MAXIMUM-OF vector!" --assert  3 = first maximum-of v
+	--test-- "MINIMUM-OF vector!" --assert -1 = first minimum-of v
+===end-group===
+
+
 ~~~end-file~~~
