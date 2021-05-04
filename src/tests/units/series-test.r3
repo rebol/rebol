@@ -462,6 +462,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "++ & --"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/554
 	--test-- "++ & -- on block!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/340
 		a: [ 1 2 ]
