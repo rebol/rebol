@@ -20,6 +20,15 @@ secure [%/ allow]
 	change-dir dir
 ===end-group===
 
+===start-group=== "concat url and file"
+--test-- "issue-1427"
+;@@https://github.com/Oldes/Rebol-issues/issues/1427
+	url: http://www.rebol.com page: %/test.html
+	--assert url/test  = http://www.rebol.com/test
+	--assert url/:page = http://www.rebol.com/test.html
+
+===end-group===
+
 ===start-group=== "UN/DIRIZE"
 	--test-- "dirize"
 	--assert %file/ = dirize %file
