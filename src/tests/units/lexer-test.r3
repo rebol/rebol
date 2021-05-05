@@ -43,7 +43,7 @@ Rebol [
 			error? e: try [load {--1:23}]
 			e/id = 'invalid
 		]
-		
+
 	--test-- "Invalid date"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/698
 		--assert all [error? e: try [load {19-Jan-2010<}] e/id = 'invalid]
@@ -381,6 +381,10 @@ Rebol [
 		--assert #{0003} = first transcode/only/error to binary! "#{^(30)^(30)03}"
 	--test-- {binary! with unicode char} ; is handled early
 		--assert error? first transcode/only/error to binary! "#{0č}"
+	--test-- "Invalid binary"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1431
+		--assert all [error? e: try [load {000016#{FF}}] e/id = 'invalid e/arg1 = "integer"]
+		--assert all [error? e: try [load {+2#{}}] e/id = 'invalid e/arg1 = "integer"]
 
 ===end-group===
 
