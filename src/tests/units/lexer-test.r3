@@ -43,6 +43,11 @@ Rebol [
 			error? e: try [load {--1:23}]
 			e/id = 'invalid
 		]
+	--test-- "Invalid % escape"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1443
+		--assert all [error? e: try [load {a@%2h}] e/id = 'invalid]
+		--assert all [error? e: try [load {%a%2h}] e/id = 'invalid]
+		--assert all [error? e: try [load {url:a%2h}] e/id = 'invalid]
 
 ===end-group===
 
