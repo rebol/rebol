@@ -259,6 +259,17 @@
 		poke bs [32 - 40] true
 		--assert "make bitset! [not bits #{000000000000}]" = mold bs
 
+	--test-- "issue-1541"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1541
+		b: charset " "
+		b/48: true
+		--assert b = #[bitset! #{00000000800080}]
+		b: complement charset " "
+		b/48: none
+		--assert b = make bitset! [not bits #{00000000800080}]
+		b/48: true
+		--assert b = make bitset! [not bits #{00000000800000}]
+
 ===end-group===
 
 ===start-group=== "bitset issues"
