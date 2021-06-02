@@ -1504,60 +1504,10 @@ ctx-munge: context [
 				settings/error reform [source "is not a ZIP file"]
 			]
 			true [
-
-				to-int: function [b][to integer! reverse copy b]
-
-				blk: make block! 32
-
-				extract: either zero? source/8 [[
-					;	Local file header - CRC-32, Compressed & Uncompressed fields precede data
-					data: compressed-size skip
-				]][[
-					;	Data descriptor - data precedes CRC-32, Compressed & Uncompressed fields
-					copy data to #{504B0708} 4 skip
-					copy crc 4 skip
-					copy compressed-size 4 skip (compressed-size: to-int compressed-size)
-					copy size 4 skip
-				]]
-
-				rule: [
-					some [
-						#{504B0304} 4 skip
-						copy method 2 skip
-						4 skip
-						copy crc 4 skip
-						copy compressed-size 4 skip (compressed-size: to-int compressed-size)
-						copy size 4 skip
-						copy name-length 2 skip (name-length: to-int name-length)
-						copy extrafield-length 2 skip (extrafield-length: to-int extrafield-length)
-						copy name name-length skip (name: to-rebol-file to file! name)
-						extrafield-length skip
-						extract
-						(
-							append blk case [
-								info							[reduce [name to-int size]]
-								#"/" = last name				[reduce [name none]]
-								#{00000000} = to binary! size	[reduce [name make binary! 0]]
-								#{0000} = to binary! method		[reduce [name to binary! copy/part data compressed-size]]
-								true [
-									reduce [
-										name
-										decompress/gzip rejoin [#{789C} copy/part data compressed-size reverse crc size]
-									]
-								]
-							]
-							if all [only name = file] [
-								all [settings/console settings/exited]
-								return last blk
-							]
-						)
-					]
-					to end
-				]
-
-				parse source rule
-
-				either only [none] [blk]
+				either only [
+					tmp: codecs/zip/decode/only source to block! file
+					tmp/2/3 ; retuns only decompressed data
+				][	codecs/zip/decode source ]
 			]
 		]
 
