@@ -1,4 +1,3 @@
-; Red [] ; commented as 'red is undefined in REBOL/Core
 Rebol [
 	Title:		"Munge functions"
 	Owner:		"Ashley G Truter"
@@ -108,163 +107,32 @@ Rebol [
 	}
 ]
 
-case [
-	;	*** Red ***
-	not rebol [
-		foreach word [compress decimal! deline invalid-utf? join reform to-rebol-file] [
-			all [value? word print [word "already defined!"]]
-		]
 
-		compress: function [data /gzip] [data]
-
-		decimal!: :float!
-
-		deline: function [
-			string [any-string!]
-			/lines "Return block of lines (works for LF, CR, CR-LF endings) (no modify)"
-			"Converts string terminators to standard format, e.g. CRLF to LF"
-		] [
-			trim/with string cr
-			either lines [split string lf] [string]
-		]
-
-		invalid-utf?: function [
-			"Checks UTF encoding; if correct, returns none else position of error"
-			binary [binary!]
-		] compose [
-			find binary (make bitset! [192 193 245 - 255])
-		]
-
-		join: function [
-			"Concatenates values"
-			value "Base value"
-			rest "Value or block of values"
-		] [
-			value: either series? value [copy value] [form value]
-			repend value rest
-		]
-
-		reform: function [
-			"Forms a reduced block and returns a string"
-			value "Value to reduce and form"
-		] [
-			form reduce value
-		]
-
-		to-rebol-file: :to-red-file
-	]
-	;	*** R3 ***
-	system/product = 'atronix-view [
-		;foreach word [average put sum] [
-		;	all [value? word print [word "already defined!"]]
-		;]
-
-		average: function [
-			"Returns the average of all values in a block"
-			block [block!]
-		][
-			all [empty? block return none]
-			divide sum block length? block
-		]
-
-		put: function [
-			"Replaces the value following a key, and returns the map"
-			map [map!]
-			key
-			value
-		] [
-			append map reduce [key value]
-			value
-		]
-
-		sum: function [
-			"Returns the sum of all values in a block"
-			values [block!]
-		] [
-			result: 0
-			foreach value values [result: result + value]
-			result
-		]
-	]
-	;	*** R2 ***
-	2 = system/version/1 [
-		all [system/version/4 = 3 call/show ""]
-
-		function:	:funct
-		map!:		:block!
-
-		average: function [
-			"Returns the average of all values in a block"
-			block [block!]
-		][
-			all [empty? block return none]
-			divide sum block length? block
-		]
-
-		put: function [
-			"Replaces the value following a key, and returns the map"
-			map [block! hash!]
-			key
-			value
-		] [
-			either hash? map [
-				append map key
-			] [
-				remove/part find/skip map key 2 2
-				append map reduce [key value]
-			]
-			value
-		]
-
-		select-map: function [
-			series [map!]
-			value
-		] [
-			first any [select/skip series value 2 [#[none]]]
-		]
-
-		split: function [
-			"Parses delimiter-separated values into a block"
-			string [series!]
-			delimiter [char!]
-		] [
-			all [empty? string return make block! 0]
-			blk: parse/all string form delimiter
-			all [delimiter = last string append blk copy ""]
-			blk
-		]
-
-		sum: function [
-			"Returns the sum of all values in a block"
-			values [block!]
-		] [
-			result: 0
-			foreach value values [result: result + value]
-			result
-		]
-	]
-	true [
-		cause-error 'user 'message ["Unsupported Rebol version or derivative"]
-	]
+average: function [
+	"Returns the average of all values in a block"
+	block [block!]
+][
+	all [empty? block return none]
+	divide sum block length? block
 ]
+
+sum: function [
+	"Returns the sum of all values in a block"
+	values [block!]
+] [
+	result: 0
+	foreach value values [result: result + value]
+	result
+]
+
 
 ctx-munge: context [
 
 	settings: context [
 
-		build: switch system/version/1 [0 ['red] 2 ['r2] 3 ['r3]]
-
-		os: switch build [
-			r2	[any [pick [none macOS Windows] system/version/4 'Linux]]
-			r3	[system/platform/1]
-			red	[system/platform]
-		]
-
-		target: switch build [
-			r2	[32]
-			r3	[either find last split-path system/options/boot %64	[64] [32]]
-			red	[either find form system/build/config/target "64"		[64] [32]]
-		]
+		build: 'r3
+		os: system/platform
+		target: either find form system/build/target "64" [64] [32]
 
 		stack: copy []
 
@@ -416,11 +284,11 @@ ctx-munge: context [
 	call-out: function [
 		"Call OS command returning STDOUT"
 		cmd [string!]
-	] compose [
+	] [
 		all [settings/console settings/called 'call-out]
-		call/wait/output/error cmd stdout: make (either settings/build = 'r2 [string!] [binary!]) 65536 stderr: make string! 1024
+		call/wait/output/error cmd stdout: make binary! 65536 stderr: make string! 1024
 		any [empty? stderr settings/error trim/lines stderr]
-		also read-string (either settings/build = 'r2 [[as-binary]] []) stdout all [settings/console settings/exited]
+		also read-string stdout all [settings/console settings/exited]
 	]
 
 	check: function [
@@ -480,52 +348,11 @@ ctx-munge: context [
 		] all [settings/console settings/exited]
 	]
 
-	crc32: function [ ; http://www.rebol.org/view-script.r?script=crc32.r
+	crc32: function [
 		"Returns a CRC32 checksum"
 		data [binary! string!]
-	] switch settings/build [
-		r2 [[
-			crc: -1
-			foreach char data [
-				crc: (shift/logical crc 8) xor pick [
-					0 1996959894 -301047508 -1727442502 124634137 1886057615 -379345611 -1637575261
-					249268274 2044508324 -522852066 -1747789432 162941995 2125561021 -407360249 -1866523247
-					498536548 1789927666 -205950648 -2067906082 450548861 1843258603 -187386543 -2083289657
-					325883990 1684777152 -43845254 -1973040660 335633487 1661365465 -99664541 -1928851979
-					997073096 1281953886 -715111964 -1570279054 1006888145 1258607687 -770865667 -1526024853
-					901097722 1119000684 -608450090 -1396901568 853044451 1172266101 -589951537 -1412350631
-					651767980 1373503546 -925412992 -1076862698 565507253 1454621731 -809855591 -1195530993
-					671266974 1594198024 -972236366 -1324619484 795835527 1483230225 -1050600021 -1234817731
-					1994146192 31158534 -1731059524 -271249366 1907459465 112637215 -1614814043 -390540237
-					2013776290 251722036 -1777751922 -519137256 2137656763 141376813 -1855689577 -429695999
-					1802195444 476864866 -2056965928 -228458418 1812370925 453092731 -2113342271 -183516073
-					1706088902 314042704 -1950435094 -54949764 1658658271 366619977 -1932296973 -69972891
-					1303535960 984961486 -1547960204 -725929758 1256170817 1037604311 -1529756563 -740887301
-					1131014506 879679996 -1385723834 -631195440 1141124467 855842277 -1442165665 -586318647
-					1342533948 654459306 -1106571248 -921952122 1466479909 544179635 -1184443383 -832445281
-					1591671054 702138776 -1328506846 -942167884 1504918807 783551873 -1212326853 -1061524307
-					-306674912 -1698712650 62317068 1957810842 -355121351 -1647151185 81470997 1943803523
-					-480048366 -1805370492 225274430 2053790376 -468791541 -1828061283 167816743 2097651377
-					-267414716 -2029476910 503444072 1762050814 -144550051 -2140837941 426522225 1852507879
-					-19653770 -1982649376 282753626 1742555852 -105259153 -1900089351 397917763 1622183637
-					-690576408 -1580100738 953729732 1340076626 -776247311 -1497606297 1068828381 1219638859
-					-670225446 -1358292148 906185462 1090812512 -547295293 -1469587627 829329135 1181335161
-					-882789492 -1134132454 628085408 1382605366 -871598187 -1156888829 570562233 1426400815
-					-977650754 -1296233688 733239954 1555261956 -1026031705 -1244606671 752459403 1541320221
-					-1687895376 -328994266 1969922972 40735498 -1677130071 -351390145 1913087877 83908371
-					-1782625662 -491226604 2075208622 213261112 -1831694693 -438977011 2094854071 198958881
-					-2032938284 -237706686 1759359992 534414190 -2118248755 -155638181 1873836001 414664567
-					-2012718362 -15766928 1711684554 285281116 -1889165569 -127750551 1634467795 376229701
-					-1609899400 -686959890 1308918612 956543938 -1486412191 -799009033 1231636301 1047427035
-					-1362007478 -640263460 1088359270 936918000 -1447252397 -558129467 1202900863 817233897
-					-1111625188 -893730166 1404277552 615818150 -1160759803 -841546093 1423857449 601450431
-					-1285129682 -1000256840 1567103746 711928724 -1274298825 -1022587231 1510334235 755167117
-				] crc and 255 xor char + 1
-			]
-			-1 xor crc
-		]]
-		r3	[[checksum/method to binary! data 'CRC32]]
-		red	[[checksum data 'CRC32]]
+	] [
+		checksum data 'CRC32
 	]
 
 	delimiter?: function [
@@ -779,44 +606,23 @@ ctx-munge: context [
 
 		any [with delimiter: delimiter? source]
 
-		(either settings/build = 'r2 [[
-			valchars: compose [any (remove/part make bitset! [#"^(00)" - #"^(FF)"] join delimiter lf)]
-			value: either any [delimiter = #"," csv] [
-				[
-					any [#" "] {"} copy v [to {"} | to end]
-					any [{"} x: {"} [to {"} | to end] y: (insert/part tail v x y)]
-					[{"} valchars | end] (insert tail row v)
-					| any [#" "] v: valchars x: (insert tail row trim/tail copy/part v x)
-				]
-			] [
-				[any [#" "] v: valchars x: (insert tail row trim/tail copy/part v x)]
+		value: either any [delimiter = #"," csv] [
+			[
+				any [#" "] {"} copy v to [{"} | end]
+				any [{"} x: {"} to [{"} | end] y: (append/part v x y)]
+				[{"} to [delimiter | lf | end]] (append row v)
+				| any [#" "] copy v to [delimiter | lf | end] (append row trim/tail v)
 			]
-			rule: copy/deep [
-				any [
-					end break | (row: make block! cols)
-					value
-					any [delimiter value] [lf | end] ()
-				]
+		] [
+			[any [#" "] copy v to [delimiter | lf | end] (append row trim/tail v)]
+		]
+		rule: copy/deep [
+			any [
+				not end (row: make block! cols)
+				value
+				any [delimiter value] [lf | end] ()
 			]
-		]] [[
-			value: either any [delimiter = #"," csv] [
-				[
-					any [#" "] {"} copy v to [{"} | end]
-					any [{"} x: {"} to [{"} | end] y: (append/part v x y)]
-					[{"} to [delimiter | lf | end]] (append row v)
-					| any [#" "] copy v to [delimiter | lf | end] (append row trim/tail v)
-				]
-			] [
-				[any [#" "] copy v to [delimiter | lf | end] (append row trim/tail v)]
-			]
-			rule: copy/deep [
-				any [
-					not end (row: make block! cols)
-					value
-					any [delimiter value] [lf | end] ()
-				]
-			]
-		]])
+		]
 
 		cols: either all [ignore not find source newline] [32] [length? fields: fields?/with source delimiter]
 
@@ -959,37 +765,20 @@ ctx-munge: context [
 
 		cols: cols? sheet
 
-		(either settings/build = 'r2 [[
-			rule: copy/deep [
-				to "<row"
-				any [
-					opt [newline]
-					opt ["<row" (insert/dup tail row: make block! cols "" cols)]
-					thru {<c r="} v: any letter x: (col: copy/part v x)
-					copy type thru ">"
-					opt ["<v>" copy val to "</v></c>" (
-						poke row to-column-number col either find type {t="s"} [pick strings 1 + to integer! val] [trim val]
-					) "</v></c>"]
-					opt [newline]
-					opt ["</row>" ()]
-				]
+		rule: copy/deep [
+			to "<row"
+			any [
+				opt [newline]
+				opt ["<row" (append/dup row: make block! cols "" cols)]
+				thru {<c r="} copy col to digit
+				copy type thru ">"
+				opt ["<v>" copy val to "</v></c>" (
+					poke row to-column-number col either find type {t="s"} [pick strings 1 + to integer! val] [trim val]
+				) "</v></c>"]
+				opt [newline]
+				opt ["</row>" ()]
 			]
-		]] [[
-			rule: copy/deep [
-				to "<row"
-				any [
-					opt [newline]
-					opt ["<row" (append/dup row: make block! cols "" cols)]
-					thru {<c r="} copy col to digit
-					copy type thru ">"
-					opt ["<v>" copy val to "</v></c>" (
-						poke row to-column-number col either find type {t="s"} [pick strings 1 + to integer! val] [trim val]
-					) "</v></c>"]
-					opt [newline]
-					opt ["</row>" ()]
-				]
-			]
-		]])
+		]
 
 		if any [fields find reform [columns condition] "&"] [
 			parse-series read-string copy/part sheet find/tail sheet #{3C2F726F773E} rule
@@ -1011,7 +800,7 @@ ctx-munge: context [
 					]
 					compose [row: (part)]
 				] [])
-				(either settings/build = 'r2 [[row <> pick tail blk -1 insert/only tail]] [[row <> last blk append/only]]) blk row
+				row <> last blk append/only blk row
 			]
 		]
 
@@ -1715,9 +1504,8 @@ ctx-munge: context [
 				settings/error reform [source "is not a ZIP file"]
 			]
 			true [
-				;	R2 parse copy converts binary! to string!
 
-				to-int: function [b] either settings/build = 'r2 [[to integer! reverse copy as-binary b]] [[to integer! reverse copy b]]
+				to-int: function [b][to integer! reverse copy b]
 
 				blk: make block! 32
 
@@ -1754,11 +1542,7 @@ ctx-munge: context [
 								true [
 									reduce [
 										name
-										switch settings/build [
-											r2	[deflate rejoin [#{1F8B08000000000002FF} copy/part data compressed-size crc size]]
-											r3	[decompress/gzip rejoin [#{789C} copy/part data compressed-size reverse crc size]]
-											red [decompress/deflate rejoin [copy/part data compressed-size crc size] to-int size]
-										]
+										decompress/gzip rejoin [#{789C} copy/part data compressed-size reverse crc size]
 									]
 								]
 							]
@@ -1771,7 +1555,7 @@ ctx-munge: context [
 					to end
 				]
 
-				either settings/build = 'r2 [parse/all source rule] [parse source rule]
+				parse source rule
 
 				either only [none] [blk]
 			]
