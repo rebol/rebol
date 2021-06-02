@@ -1109,9 +1109,9 @@ ctx-munge: context [
 		"Parses a series according to grammar rules"
 		series [series!]
 		rules [block!]
-	] compose [
+	] [
 		all [settings/console settings/called 'parse]
-		also (either settings/build = 'r2 [[parse/all series rules]] [[parse series rules]]) all [settings/console settings/exited]
+		also parse series rules all [settings/console settings/exited]
 	]
 
 	read-binary: function [
@@ -1239,7 +1239,11 @@ ctx-munge: context [
 		all [settings/console settings/called 'sheets?]
 		blk: copy []
 		parse to string! unarchive/only file %xl/workbook.xml [
-			any [thru {<sheet name="} copy name to {"} (append blk trim name)]
+			any [
+				thru {<sheet } copy tmp to #">" (
+					parse tmp [thru {name="} copy name to {"} (append blk trim name)]
+				)
+			]
 		]
 		all [settings/console settings/exited]
 		blk
