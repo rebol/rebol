@@ -745,25 +745,13 @@ ctx-munge: context [
 		parse-series read-string unarchive/only file %xl/sharedStrings.xml [
 			any [
 				thru "<si>"
-				thru ">" any [#" "] copy s to "<" (
-					either s [	; R2 can return none
-						all [
-							find trim/lines s "&"
-							foreach [code char] [
-								{&amp;}		{&}
-								{&lt;}		{<}
-								{&gt;}		{>}
-								{&quot;}	{"}
-								{&apos;}	{'}
-							] [replace/all s code char]
-						]
-					] [s: copy ""]
-					append strings s
+				thru ">" any #" " copy s to "<" (
+					append strings decode 'html-entities s
 				)
 			]
 		]
 
-		cols: cols? sheet
+		cols: cols? sheet ;- cols? may return 0 if there is no <dimension> or <cols> tags!
 
 		rule: copy/deep [
 			to "<row"
@@ -773,7 +761,9 @@ ctx-munge: context [
 				thru {<c r="} copy col to digit
 				copy type thru ">"
 				opt ["<v>" copy val to "</v></c>" (
-					poke row to-column-number col either find type {t="s"} [pick strings 1 + to integer! val] [trim val]
+					col: to-column-number col
+					if col > n: length? row [append/dup row "" col - n] 
+					poke row col either find type {t="s"} [pick strings 1 + to integer! val] [trim val]
 				) "</v></c>"]
 				opt [newline]
 				opt ["</row>" ()]
@@ -1119,13 +1109,11 @@ ctx-munge: context [
 		source [file! url!]
 		/part "Reads a specified number of bytes."
 			length [integer!]
-	] compose/deep [
+	] [
 		all [settings/console settings/called/file 'read-binary source]
 		also either part [
-			(either settings/build = 'r3 [[read/part]] [[read/binary/part]]) source length
-		] [
-			(either settings/build = 'r3 [[read]] [[read/binary]]) source
-		] all [settings/console settings/exited]
+			read/part source length
+		] [	read source	] all [settings/console settings/exited]
 	]
 
 	read-string: function [
@@ -1204,8 +1192,8 @@ ctx-munge: context [
 				cause-error 'user 'message reduce [reform [number "not a valid sheet number"]]
 			]
 			all [
-				find data #{3C726F77}
-				parse to string! find/last data #{3C726F77} [
+				find data #{3C726F7720}
+				parse to string! find/last data #{3C726F7720} [
 					thru {"} copy rows to {"} (return to integer! rows)
 				]
 			]
@@ -1228,7 +1216,7 @@ ctx-munge: context [
 		"Returns the second last value of a series"
 		string [series!]
 	] [
-		pick string subtract length? string 1
+		pick tail string -2
 	]
 
 	sheets?: function [
