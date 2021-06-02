@@ -177,30 +177,13 @@ ctx-munge: context [
 		"Compress block of file and data pairs"
 		source [series!]
 	] compose/deep [
-		to-short: function [i] [(
-			either settings/build = 'r2 [[
-				reverse next next load make string! reduce ["#{" to-hex i "}"]
-			]] [[
-				copy/part reverse to binary! i 2
-			]]
-		)]
-
-		to-long: function [i] [(
-			either settings/build = 'r2 [[
-				reverse load make string! reduce ["#{" to-hex i "}"]
-			]] [[
-				copy/part reverse to binary! i 4
-			]]
-		)]
+		to-short: function [i] [copy/part reverse to binary! i 2]
+		to-long: function [i] [copy/part reverse to binary! i 4]
 
 		case [
 			empty? source [none]
 			not block? source [
-				join #{1F8B08000000000002FF} next next head either settings/build = 'r2 [
-					change skip tail compress source -8 to-long crc32 source
-				] [
-					reverse/part skip tail compress/gzip source -8 4
-				]
+				compress/gzip source
 			]
 			true [
 				bin: copy #{}
@@ -377,7 +360,7 @@ ctx-munge: context [
 		"Remove leading zeroes from string"
 		string [string!]
 	] [
-		while [string/1 = #"0"] [remove string]
+		parse string [remove some #"0"]
 		string
 	]
 
@@ -1121,38 +1104,9 @@ ctx-munge: context [
 		source [file! url! binary!]
 	] compose/deep [
 		all [settings/console settings/called/file 'read-string source]
-;		(either settings/build = 'r2 [[any [binary? source source: read/binary/direct source]]] [])
-		i: 0
-		also either binary? source [
-			s: make string! length: length? source
-			while [i < length] [
-				append s latin1-to-utf8 copy/part skip source i 262144
-				i: i + 262144
-			]
-			s
-		] [
-			(switch settings/build [
-				r2 [[
-					replace/all trim/with read source null to char! 160 #" "
-				]]
-				r3 [[
-					s: make string! size: size? source
-					while [i < size] [
-						append s latin1-to-utf8 read/seek/part source i 262144
-						i: i + 262144
-					]
-					s
-				]]
-				red [[
-					s: make string! size: size? source
-					while [i < size] [
-						append s latin1-to-utf8 read/binary/seek/part source i 262144
-						i: i + 262144
-					]
-					s
-				]]
-			])
-		] all [settings/console settings/exited]
+		any [binary? source source: read source]
+		also to string! either invalid-utf? source [iconv/to source 'latin1 'utf8][source]
+			all [settings/console settings/exited]
 	]
 
 	replace-deep: function [
@@ -1413,62 +1367,6 @@ ctx-munge: context [
 		]
 	]
 
-	if settings/build = 'r2 [
-		deflate: function [
-			"Decompresses a gzip encoding"
-			data [binary!]
-		][
-			any [view? cause-error 'user 'message ["Requires /View"]]
-
-			set?: func [value bit][not zero? value and to-integer 2 ** bit]
-
-			any [#{1F8B08} = copy/part data 3 cause-error 'user 'message ["Bad ID or Unknown Method"]]
-
-			flags: data/4
-
-			data: skip data 10
-
-			all [set? flags 1 data: skip data 2]											; crc-16?
-			all [set? flags 2 data: skip data 2 data: skip data data/2 * 256 + data/1 + 2]	; extra?
-			all [set? flags 3 data: find/tail data #"^@"]									; name?
-
-			size: to integer! head reverse copy skip tail data -4
-
-			data: copy/part data skip tail data -8
-
-			data: load rejoin [
-				#{89504E47} #{0D0A1A0A}	; signature
-				#{0000000D}				; IHDR length
-				"IHDR"					; type: header
-				load make string! reduce ["#{" to-hex size "}"]				; width = uncompressed size
-				#{00000001}	; height = 1 line
-				#{08}		; bit depth
-				#{00}		; color type = grayscale
-				#{00}		; compression method
-				#{00}		; filter method = none
-				#{00}		; interlace method = no interlace
-				#{00000000}	; no checksum
-				load make string! reduce ["#{" to-hex 8 + length? data "}"]	; length
-				"IDAT"		; type: data
-				#{789C}		; zlib header
-				#{00 0100 FEFF 00} ; 0 = no filter for scanline
-				data
-				#{00000000}	; no checksum
-				#{00000000}	; length
-				"IEND"		; type: end
-				#{00000000}	; no checksum
-			]
-
-			bin: make binary! size
-
-			repeat i size [
-				insert tail bin to char! pick pick data i 1
-			]
-
-			bin
-		]
-	]
-
 	unarchive: function [
 		"Decompresses archive (only works with compression methods 'store and 'deflate)"
 		source [file! url! binary!]
@@ -1485,11 +1383,7 @@ ctx-munge: context [
 				either info [
 					to integer! reverse skip tail copy source -4
 				] [
-					switch settings/build [
-						r2	[deflate source]
-						r3	[decompress/gzip join #{789C} skip head reverse/part skip tail copy source -8 4 10]
-						red	[decompress source]
-					]
+					decompress/gzip source
 				]
 			]
 			#{504B0304} <> copy/part source 4 [
