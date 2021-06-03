@@ -34,6 +34,8 @@
 #include <math.h>
 #include <float.h>
 
+REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff); // in t-decimal.c
+
 #define	LOG2	0.6931471805599453
 #define	EPS		2.718281828459045235360287471
 
@@ -361,6 +363,77 @@ enum {SINE, COSINE, TANGENT};
 
 /***********************************************************************
 **
+*/	void modulus(REBVAL *ret, REBVAL *val1, REBVAL *val2, REBOOL round)
+/*
+**  Based on: https://stackoverflow.com/a/66777048/494472
+**
+***********************************************************************/
+{
+	double a, aa, b, m;
+	if (IS_INTEGER(val1) && IS_INTEGER(val2)) {
+		REBI64 ia = VAL_INT64(val1);
+		REBI64 ib = VAL_INT64(val2);
+		if (ib == 0) Trap0(RE_ZERO_DIVIDE);
+		SET_INTEGER(ret, ((ia % ib) + ib) % ib);
+		return;
+	}
+
+	a = Number_To_Dec(val1);
+	b = Number_To_Dec(val2);
+
+	if (b == 0.0) Trap0(RE_ZERO_DIVIDE);
+
+	if (round && b < 0.0) b = fabs(b);
+
+	m = fmod(fmod(a, b) + b, b);
+
+	if (round && (almost_equal(a, a - m, 10) || almost_equal(b, b + m, 10))) {
+		m = 0.0;
+	}
+	switch (VAL_TYPE(val1)) {
+	case REB_DECIMAL:
+	case REB_PERCENT: SET_DECIMAL(ret, m); break;
+	case REB_INTEGER: SET_INTEGER(ret, (REBI64)m); break;
+	case REB_TIME:    VAL_TIME(ret) = DEC_TO_SECS(m); break;
+	case REB_MONEY:   VAL_DECI(ret) = decimal_to_deci(m); break;
+	case REB_CHAR:    SET_CHAR(ret, (REBINT)m); break;
+	}
+	SET_TYPE(ret, VAL_TYPE(val1));
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(mod)
+/*
+//	mod: native [
+//		{Compute a nonnegative remainder of A divided by B.}
+//		a [number! money! char! time!]
+//		b [number! money! char! time!] "Must be nonzero."
+//	]
+***********************************************************************/
+{
+	modulus(D_RET, D_ARG(1), D_ARG(2), FALSE);
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(modulo)
+/*
+//	modulo: native [
+//		{Wrapper for MOD that handles errors like REMAINDER. Negligible values (compared to A and B) are rounded to zero.}
+//		a [number! money! char! time!]
+//		b [number! money! char! time!] "Absolute value will be used."
+//	]
+***********************************************************************/
+{
+	modulus(D_RET, D_ARG(1), D_ARG(2), TRUE);
+	return R_RET;
+}
+
+
+/***********************************************************************
+**
 */	REBNATIVE(log_10)
 /*
 ***********************************************************************/
@@ -578,6 +651,10 @@ enum {SINE, COSINE, TANGENT};
 			}
 			else if (tb == REB_INTEGER || tb == REB_CHAR) // special negative?, zero?, ...
 				goto compare;
+			else if (tb == REB_TIME) {
+				SET_INTEGER(b, (REBI64)SECS_IN(VAL_TIME(b)));
+				goto compare;
+			}
 			break;
 
 		case REB_DECIMAL:
@@ -592,6 +669,10 @@ enum {SINE, COSINE, TANGENT};
 			}
 			else if (tb == REB_DECIMAL || tb == REB_PERCENT) // equivalent types
 				goto compare;
+			else if (tb == REB_TIME) {
+				SET_DECIMAL(b, (REBDEC)VAL_TIME(b) * NANO);
+				goto compare;
+			}
 			break;
 
 		case REB_MONEY:
@@ -627,6 +708,17 @@ enum {SINE, COSINE, TANGENT};
 			//o: with not integer numbers (money, decimal, percent)
 			if (tb == REB_INTEGER)
 				goto compare;
+			break;
+		case REB_TIME:
+			if (tb == REB_INTEGER) {
+				SET_INTEGER(a, (REBI64)SECS_IN(VAL_TIME(a)));
+				goto compare;
+			}
+			else if (tb == REB_DECIMAL || tb == REB_PERCENT) {
+				SET_DECIMAL(a, (REBDEC)VAL_TIME(a) * NANO);
+				goto compare;
+			}
+			break;
 		}
 		if (strictness == 0 || strictness == 1) return FALSE;
 		//if (strictness >= 2)

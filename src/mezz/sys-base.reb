@@ -129,10 +129,16 @@ make-module*: func [
 	; Module is an object during its initialization:
 	obj: make object! 7 ; arbitrary starting size
 
-	if find spec/options 'extension [
-		append obj 'lib-base ; specific runtime values MUST BE FIRST
+	either find spec/options 'extension [
+		bind/new [
+			lib-base ; specific runtime values MUST BE FIRST
+			lib-file
+			lib-local
+			words
+		] obj
+	][
+		append obj 'lib-local ; local import library for the module
 	]
-	append obj 'lib-local ; local import library for the module
 
 	unless spec/type [spec/type: 'module] ; in case not set earlier
 

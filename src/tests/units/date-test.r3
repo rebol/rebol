@@ -166,6 +166,14 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/276
 		--assert error? try [0 - 1-jan-0000] ;- no crash!
 
+	--test-- "negative year"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/548
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1250
+		--assert all [error? e: try [load {1/11/-0}]  e/id = 'invalid]
+		--assert all [error? e: try [load {1/11/-1}]  e/id = 'invalid]
+		--assert all [error? e: try [load {1/11/-00}] e/id = 'invalid]
+		--assert 1-Nov-2000 = try [load {1/11/0}] ; this is error in Red!
+
 	--test-- "poke on date not supported"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1074
 		d: 2009-jul-09

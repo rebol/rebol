@@ -159,6 +159,13 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "random"
+	--test-- "random decimal!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/935
+	--assert 1.0 <> random 1.0
+
+===end-group===
+
 
 ===start-group=== "decimal issues"
 	--test-- "issue-1753"
@@ -224,5 +231,102 @@ Rebol [
 		--assert 2 = t/2.6
 
 ===end-group===
+
+===start-group=== "trigonometric function"
+
+	--test-- "cosine"
+		--assert -1.0 = cosine/radians pi
+		--assert  0.0 = cosine 90
+		--assert  0.0 = cosine/radians pi / 2
+
+	--test-- "sine"
+		--assert  0.0 = sine/radians pi
+		--assert  1.0 = sine 90
+
+	--test-- "tangent"
+		--assert  0.0 = tangent/radians 0
+		--assert -1.0 = tangent 135
+
+	--test-- "arcsine"
+		--assertf~= -1.5707963267949 arcsine/radians -1 1E-13	
+		--assert 90.0 = arcsine 1
+
+	--test-- "arccosine"
+		--assertf~= 1.5707963267949 arccosine/radians 0 1E-13
+		--assert 90 = arccosine 0
+
+	--test-- "arctangent"
+		--assertf~= -0.785398163397448 arctangent/radians -1 1E-13
+		--assert 45 = arctangent 1
+
+	;@@ https://github.com/Oldes/Rebol-issues/issues/882
+	--test-- "atan2"
+		--assertf~=  3.1415926535898  atan2  0.0 -1.0 1E-13
+		--assertf~= -1.5707963267949  atan2 -1.0  0.0 1E-13
+		--assertf~= -0.78539816339745 atan2 -1.0  1.0 1E-13
+		--assertf~= -0.78539816339745 atan2 -1.5  1.5 1E-13
+
+	--test-- "arctangent2"
+		--assertf~=  180.0 arctangent2   -1x0    1E-13
+		--assertf~=  180.0 arctangent2 -1.0x0.0  1E-13
+		--assertf~= -90.0  arctangent2    0x-1   1E-13
+		--assertf~= -45.0  arctangent2    1x-1   1E-13
+		--assertf~= -45.0  arctangent2  1.5x-1.5 1E-13
+
+	--test-- "arctangent2/radians"
+		--assertf~=  3.1415926535898  arctangent2/radians   -1x0    1E-13
+		--assertf~=  3.1415926535898  arctangent2/radians -1.0x0.0  1E-13
+		--assertf~= -1.5707963267949  arctangent2/radians    0x-1   1E-13
+		--assertf~= -0.78539816339745 arctangent2/radians    1x-1   1E-13
+		--assertf~= -0.78539816339745 arctangent2/radians  1.5x-1.5 1E-13
+
+===end-group===
+
+===start-group=== "modulo / remainder"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2450
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1332
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2311
+	;@@ https://github.com/metaeducation/ren-c/issues/843
+	;@@ https://github.com/red/red/issues/1515
+	--test-- "remainder"
+		b: copy [] for i -7 7 1 [append b i % 3] b
+		--assert b = [-1 0 -2 -1 0 -2 -1 0 1 2 0 1 2 0 1]
+		b: copy [] for i -7 7 1 [append b i % -3] b
+		--assert b = [-1 0 -2 -1 0 -2 -1 0 1 2 0 1 2 0 1]
+		--assert all [error? e: try [7 % 0] e/id = 'zero-divide]
+		--assert 1.222090944E+33 % -2147483648.0 = 0.0
+	--test-- "mod"
+		b: copy [] for i -7 7 1 [append b mod i 3] b
+		--assert b = [2 0 1 2 0 1 2 0 1 2 0 1 2 0 1]
+		b: copy [] for i -7 7 1 [append b mod i -3] b
+		--assert b = [-1 0 -2 -1 0 -2 -1 0 -2 -1 0 -2 -1 0 -2]
+		--assert all [error? e: try [mod 7 0] e/id = 'zero-divide]
+		--assert 0.25 = mod 562949953421311.25 1
+		--assert 5.55111512312578e-17 = mod 0.1 + 0.1 + 0.1 0.3
+		--assert -3 == mod -8 -5
+		--assert -3.0 == mod -8.0 -5
+
+	--test-- "modulo"
+		b: copy [] for i -7 7 1 [append b i // 3] b
+		--assert b = [2 0 1 2 0 1 2 0 1 2 0 1 2 0 1]
+		b: copy [] for i -7 7 1 [append b i // -3] b
+		--assert b = [-1 0 -2 -1 0 -2 -1 0 -2 -1 0 -2 -1 0 -2]
+		--assert 0.0 = (1.222090944E+33 // -2147483648.0)
+		--assert 0.0 = modulo 562949953421311.25 1
+		--assert 0.0 = modulo  0.1 + 0.1 + 0.1 0.3
+		--assert $0 == modulo $0.1 + $0.1 + $0.1 $0.3
+		--assert $0 == modulo $0.3 $0.1 + $0.1 + $0.1
+		--assert  0 == modulo 1 0.1
+		--assert   -3 //  2   ==  1
+		--assert    3 // -2   == -1
+		--assert 1000 // #"a" == 30
+		--assert #"a" // 3    == #"^A"
+		--assert 10:0 // 3:0  == 1:0
+		--assert  10% // 3%   == 1%
+		--assert  10  // 3%   == 0  ; because result A was integer, result is also integer!
+		--assert 0.01 = round/to (10.0 // 3%) 0.00001
+
+===end-group===
+
 	
 ~~~end-file~~~

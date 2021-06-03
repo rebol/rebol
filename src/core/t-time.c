@@ -532,7 +532,7 @@
 				Set_Random(secs);
 				return R_UNSET;
 			}
-			secs = Random_Range(secs / SEC_SEC, D_REF(3)) * SEC_SEC;
+			secs = Random_Range(secs, D_REF(3));
 			goto fixTime;
 
 		case A_PICK:

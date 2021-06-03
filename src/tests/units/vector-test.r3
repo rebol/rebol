@@ -444,4 +444,12 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "FIND-MAX / FIND-MIN"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/460
+	v: #[si32! [1 2 3 -1]]
+	--test-- "FIND-MAX vector!" --assert  3 = first find-max v
+	--test-- "FIND-MIN vector!" --assert -1 = first find-min v
+===end-group===
+
+
 ~~~end-file~~~

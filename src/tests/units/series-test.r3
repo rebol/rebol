@@ -236,6 +236,12 @@ Rebol [
 		]
 ===end-group===
 
+===start-group=== "PATH"
+	--test-- "get on path"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/248
+		--assert tuple? get 'system/version
+===end-group===
+
 ===start-group=== "SET-PATH"
 	--test-- "set-path missing value"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2312
@@ -461,7 +467,17 @@ Rebol [
 	--assert [b 3 4 a 1 2] = head move/to/skip at [a 1 2 b 3 4] 4 1 3
 ===end-group===
 
+===start-group=== "FIND-MAX / FIND-MIN"
+	b: [1 2 3 -1]
+	--test-- "FIND-MAX block!" --assert  3 = first find-max b
+	--test-- "FIND-MIN block!" --assert -1 = first find-min b
+	b: [1 a 2 b 3 c -1 d]
+	--test-- "FIND-MAX/skip block!" --assert  3 = first find-max/skip b 2
+	--test-- "FIND-MIN/skip block!" --assert -1 = first find-min/skip b 2
+===end-group===
+
 ===start-group=== "++ & --"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/554
 	--test-- "++ & -- on block!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/340
 		a: [ 1 2 ]

@@ -191,7 +191,7 @@ protect-system-object: func [
 		system/build
 		system/catalog
 		;system/standard
-		system/dialects
+		;system/dialects
 		;system/intrinsic
 	]
 

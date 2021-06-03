@@ -214,6 +214,7 @@ Rebol [
 
 
 ===start-group=== "make/to logic!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/763
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2055
 	--test-- "make logic! .."
 		--assert #[true]  = try [make logic! quote #[unset!] ] ; unset!
@@ -239,6 +240,7 @@ Rebol [
 		--assert #[true]  = try [make logic! quote #[ref! "ref"] ] ; ref!
 		--assert #[true]  = try [make logic! quote http://aa ] ; url!
 		--assert #[true]  = try [make logic! quote <tag> ] ; tag!
+		--assert #[true]  = try [make logic! quote [] ] ; empty block!
 		--assert #[true]  = try [make logic! quote [1 2] ] ; block!
 		--assert #[true]  = try [make logic! quote (1 2) ] ; paren!
 		--assert #[true]  = try [make logic! quote a/b ] ; path!
@@ -463,6 +465,81 @@ Rebol [
 		--assert  path? try [to path! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
 ===end-group===
 
+===start-group=== "make/to map"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2451
+	--test-- "make map! .."
+		--assert error? try [make map! quote #[unset!] ] ; unset!
+		--assert error? try [make map! quote #[none] ] ; none!
+		--assert error? try [make map! quote #[true] ] ; logic!
+		--assert   map? try [make map! quote 1 ] ; integer!
+		--assert   map? try [make map! quote 0 ] ; integer!
+		--assert   map? try [make map! quote 4 ] ; integer!
+		--assert   map? try [make map! quote 4.0 ] ; decimal!
+		--assert error? try [make map! quote 4.0000000000000001% ] ; percent!
+		--assert error? try [make map! quote $4 ] ; money!
+		--assert error? try [make map! quote #"a" ] ; char!
+		--assert error? try [make map! quote 2x2 ] ; pair!
+		--assert error? try [make map! quote 1.1.1 ] ; tuple!
+		--assert error? try [make map! quote 10:00 ] ; time!
+		--assert error? try [make map! quote 2000-01-01 ] ; date!
+		--assert error? try [make map! quote #{00} ] ; binary!
+		--assert error? try [make map! quote #{312032} ] ; binary!
+		--assert error? try [make map! quote "" ] ; string!
+		--assert error? try [make map! quote "1 2" ] ; string!
+		--assert error? try [make map! quote %file ] ; file!
+		--assert error? try [make map! quote u@email ] ; email!
+		--assert error? try [make map! quote #[ref! "ref"] ] ; ref!
+		--assert error? try [make map! quote http://aa ] ; url!
+		--assert error? try [make map! quote <tag> ] ; tag!
+		--assert   map? try [make map! quote [1 2] ] ; block!
+		--assert error? try [make map! quote (1 2) ] ; paren!
+		--assert error? try [make map! quote a/b ] ; path!
+		--assert error? try [make map! quote a/b: ] ; set-path!
+		--assert error? try [make map! quote :a/b ] ; get-path!
+		--assert error? try [make map! quote /ref ] ; refinement!
+		--assert error? try [make map! quote #FF ] ; issue!
+		--assert error? try [make map! quote #[bitset! #{FF}] ] ; bitset!
+		--assert error? try [make map! quote #[image! 1x1 #{FFFFFF}] ] ; image!
+		--assert error? try [make map! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
+		--assert   map? try [make map! quote #[object! [a: 1]] ] ; object!
+		--assert error? try [make map! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
+	--test-- "to map! .."
+		--assert error? try [to map! quote #[unset!] ] ; unset!
+		--assert error? try [to map! quote #[none] ] ; none!
+		--assert error? try [to map! quote #[true] ] ; logic!
+		--assert error? try [to map! quote 1 ] ; integer!
+		--assert error? try [to map! quote 0 ] ; integer!
+		--assert error? try [to map! quote 4 ] ; integer!
+		--assert error? try [to map! quote 4.0 ] ; decimal!
+		--assert error? try [to map! quote 4.0000000000000001% ] ; percent!
+		--assert error? try [to map! quote $4 ] ; money!
+		--assert error? try [to map! quote #"a" ] ; char!
+		--assert error? try [to map! quote 2x2 ] ; pair!
+		--assert error? try [to map! quote 1.1.1 ] ; tuple!
+		--assert error? try [to map! quote 10:00 ] ; time!
+		--assert error? try [to map! quote 2000-01-01 ] ; date!
+		--assert error? try [to map! quote #{00} ] ; binary!
+		--assert error? try [to map! quote #{312032} ] ; binary!
+		--assert error? try [to map! quote "" ] ; string!
+		--assert error? try [to map! quote "1 2" ] ; string!
+		--assert error? try [to map! quote %file ] ; file!
+		--assert error? try [to map! quote u@email ] ; email!
+		--assert error? try [to map! quote #[ref! "ref"] ] ; ref!
+		--assert error? try [to map! quote http://aa ] ; url!
+		--assert error? try [to map! quote <tag> ] ; tag!
+		--assert   map? try [to map! quote [1 2] ] ; block!
+		--assert error? try [to map! quote (1 2) ] ; paren!
+		--assert error? try [to map! quote a/b ] ; path!
+		--assert error? try [to map! quote a/b: ] ; set-path!
+		--assert error? try [to map! quote :a/b ] ; get-path!
+		--assert error? try [to map! quote /ref ] ; refinement!
+		--assert error? try [to map! quote #FF ] ; issue!
+		--assert error? try [to map! quote #[bitset! #{FF}] ] ; bitset!
+		--assert error? try [to map! quote #[image! 1x1 #{FFFFFF}] ] ; image!
+		--assert error? try [to map! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
+		--assert   map? try [to map! quote #[object! [a: 1]] ] ; object!
+		--assert error? try [to map! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
+===end-group===
 
 ===start-group=== "make special"
 	--test-- "make types from none!"

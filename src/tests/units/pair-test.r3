@@ -132,26 +132,25 @@ Rebol [
 		
 ===end-group===
 
-;@@ not implemented in Rebol
-;===start-group=== "pair - remainder"
-;
-;	--test-- "prem-1"
-;		prem1-p: 4x4
-;		--assert equal? prem1-p % 2 0x0
-;	
-;	--test-- "prem-2"
-;		prem2-p: 16x15
-;		--assert equal? prem2-p % 2x3 0x0
-;		
-;	--test-- "prem-3"
-;		prem3-p: 2147483647x2147483647
-;		--assert equal? prem3-p % 2 1x1
-;		
-;	--test-- "prem-4"
-;		prem4-p: -2147483648x-2147483648
-;		--assert equal? prem4-p % -2147483648 0x0
-;		
-;===end-group===
+===start-group=== "pair - remainder"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2450
+	--test-- "prem-1"
+		prem1-p: 4x4
+		--assert equal? prem1-p % 2 0x0
+	
+	--test-- "prem-2"
+		prem2-p: 16x15
+		--assert equal? prem2-p % 2x3 0x0
+		
+	--test-- "prem-3"
+		prem3-p: 32767x32767
+		--assert equal? prem3-p % 2 1x1
+		
+	--test-- "prem-4"
+		prem4-p: -32767x-32767
+		--assert equal? prem4-p % -32767 0x0
+		
+===end-group===
 
 ===start-group=== "pair - negate"
 
@@ -217,6 +216,25 @@ Rebol [
 	--test-- "pcomp-2"		--assert not-equal? 1x1 1x0
 	--test-- "pcomp-3"		--assert not-equal? 1x1 0x1
 	--test-- "pcomp-4"		--assert not-equal? 1x1 0x0
+
+===end-group===
+
+===start-group=== "pair - min/max/negative/positive"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1071
+	--test-- "min"
+		--assert equal?   1x1   min 100x1 1x100
+	--test-- "max"
+		--assert equal? 100x100 max 100x1 1x100
+	--test-- "negative?"
+		--assert negative? -1x-1
+		--assert not negative? -1x1
+		--assert not negative?  1x-1
+		--assert not negative? -1x0
+	--test-- "positive?"
+		--assert positive? 1x1
+		--assert not positive? -1x1
+		--assert not positive?  1x-1
+		--assert not positive? -1x0
 
 ===end-group===
 

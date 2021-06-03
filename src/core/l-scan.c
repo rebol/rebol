@@ -882,10 +882,11 @@ new_line:
             return -TOKEN_STRING;
 
         case LEX_DELIMIT_SLASH:         /* probably / or / *   */
-            while (*cp && *cp == '/') cp++;
+            while (*cp == '/') cp++;
             if (IS_LEX_AT_LEAST_WORD(*cp) || *cp=='+' || *cp=='-' || *cp=='.') {
-				// ///refine not allowed
+				/* ///refine not allowed */
             	if (scan_state->begin + 1 != cp) {
+					while (!IS_LEX_DELIMIT(*cp)) cp++;
             		scan_state->end = cp;
             		return -TOKEN_REFINE;
             	}
@@ -900,6 +901,10 @@ new_line:
 			if (*cp == '<' || *cp == '>') {
 				type = TOKEN_REFINE;
 				goto scan_arrow_word;
+			}
+			if (*cp == ':' && IS_LEX_DELIMIT(cp[1])) {
+				scan_state->end = cp+1;
+				return TOKEN_SET;
 			}
             scan_state->end = cp;
             return TOKEN_WORD;
@@ -962,6 +967,15 @@ new_line:
 				}
 				return TOKEN_GET; // allowed :%
 			}
+			if (cp[1] == '/') { // allow :///
+				cp++;
+				while (*cp == '/') cp++;
+				if (IS_LEX_DELIMIT(*cp)) {
+					scan_state->end = cp;
+					return TOKEN_GET;
+				}
+				else cp = scan_state->begin;
+			}
             type = TOKEN_GET;
             cp++;                       /* skip ':' */
             goto scanword;
@@ -986,6 +1000,17 @@ new_line:
 				}
 			}
 			if (*cp == '\'') return -TOKEN_LIT; // no ''foo
+			if (*cp == '/') { // allow '///
+				cp++;
+				while (*cp == '/') cp++;
+				if (IS_LEX_DELIMIT(*cp)) {
+					scan_state->end = cp;
+					return TOKEN_LIT;
+				}
+				while (!IS_LEX_DELIMIT(*cp)) cp++;
+				scan_state->end = cp;
+				return -TOKEN_LIT;
+			}
             type = TOKEN_LIT;
             goto scanword;
 

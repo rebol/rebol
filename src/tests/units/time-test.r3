@@ -103,6 +103,19 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "random"
+	--test-- "random time!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/911
+		t: random 0:0:0.10
+		--assert all [t > 0:0 t < 0:0:0.10]
+		t: random 1:0:0
+		--assert all [t > 0:0 t < 1:0:0]
+
+
+===end-group===
+
+
+
 ;===start-group=== "time protect"
 ;	;@@ https://github.com/Oldes/Rebol-issues/issues/2416
 ;	--test-- "time protect 1"

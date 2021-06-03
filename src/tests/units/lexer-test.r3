@@ -44,6 +44,16 @@ Rebol [
 			e/id = 'invalid
 		]
 
+	--test-- "Invalid date"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/698
+		--assert all [error? e: try [load {19-Jan-2010<}] e/id = 'invalid]
+
+	--test-- "Invalid % escape"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1443
+		--assert all [error? e: try [load {a@%2h}] e/id = 'invalid]
+		--assert all [error? e: try [load {%a%2h}] e/id = 'invalid]
+		--assert all [error? e: try [load {url:a%2h}] e/id = 'invalid]
+
 ===end-group===
 
 ===start-group=== "Special % word"
@@ -213,6 +223,27 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Special slash words"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1477
+	--test-- "valid slash words"
+		--assert word? try [load {/}]
+		--assert word? try [load {//}]
+		--assert word? try [load {///}]
+	--test-- "valid slash lit-words"
+		--assert lit-word? try [load {'/}]
+		--assert lit-word? try [load {'//}]
+		--assert lit-word? try [load {'///}]
+	--test-- "valid slash get-words"
+		--assert get-word? try [load {:/}]
+		--assert get-word? try [load {://}]
+		--assert get-word? try [load {:///}]
+	--test-- "valid slash set-words"
+		--assert set-word? try [load {/:}]
+		--assert set-word? try [load {//:}]
+		--assert set-word? try [load {///:}]
+===end-group===
+
+
 ===start-group=== "Email"
 	--test-- "valid `emails`"
 		--assert email? load {name@where}
@@ -350,6 +381,10 @@ Rebol [
 		--assert #{0003} = first transcode/only/error to binary! "#{^(30)^(30)03}"
 	--test-- {binary! with unicode char} ; is handled early
 		--assert error? first transcode/only/error to binary! "#{0č}"
+	--test-- "Invalid binary"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1431
+		--assert all [error? e: try [load {000016#{FF}}] e/id = 'invalid e/arg1 = "integer"]
+		--assert all [error? e: try [load {+2#{}}] e/id = 'invalid e/arg1 = "integer"]
 
 ===end-group===
 

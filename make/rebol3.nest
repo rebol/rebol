@@ -886,4 +886,21 @@ eggs: [
 			shared:   %lib-rebol3-core-x64-osx
 		]
 	]
+	"Test extension 32bit" [
+		name:  %test-x86.rebx
+		files: only %tests/extension/test.c
+		:arch-x86
+		compiler: gcc
+		flags: [-O2 shared]
+		#if Linux? [ flag: -fPIC ]
+		#either macOS? [compiler: clang][compiler: gcc]
+	]
+	"Test extension 64bit" [
+		name:  %test-x64.rebx
+		files: only %tests/extension/test.c
+		:arch-x64
+		flags: [-O2 shared]
+		#if Linux? [ flag: -fPIC ]
+		#either macOS? [compiler: clang][compiler: gcc]
+	]
 ]

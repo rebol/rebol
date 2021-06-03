@@ -503,7 +503,18 @@ Rebol [
 		--assert error? try [set [#f][6]]
 		--assert error? try [set /a 1]
 		
-
+	--test-- "set path"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2275
+	;Parenthesized expressions on left for SET-PATH! evaluate after right hand expressions 
+		obj: make object! [x: 10 y: 20]
+		some-func: does [var: 'y]
+		var: 'x
+		obj/(var): (some-func 30)
+		--assert all [obj/x = 10 obj/y = 30]
+	--test-- "set path 2"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/396
+		c: 0 b: [1 2 3]
+		--assert 1 = b/(c: 2): c + 1
 
 
 ===end-group===
@@ -673,6 +684,13 @@ Rebol [
 		--assert :a =? 1
 		a: 1 loop 1 [a: compose [(break)]]
 		--assert :a =? 1
+
+===end-group===
+
+===start-group=== "RETURN"
+	--test-- "return value"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/771
+		--assert 1 == do does [type? return 1 2]
 
 ===end-group===
 

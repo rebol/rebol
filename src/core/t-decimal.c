@@ -214,6 +214,24 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 	VAL_INT64(dec) = n; // aliasing the bits!
 }
 
+/***********************************************************************
+**
+*/	REBDEC Number_To_Dec(REBVAL* val)
+/*
+***********************************************************************/
+{
+	REBDEC d = NAN;
+	switch (VAL_TYPE(val)) {
+	case REB_DECIMAL:
+	case REB_PERCENT: d = VAL_DECIMAL(val); break;
+	case REB_INTEGER: d = (REBDEC)VAL_INT64(val); break;
+	case REB_MONEY:   d = deci_to_decimal(VAL_DECI(val)); break;
+	case REB_CHAR:    d = (REBDEC)VAL_CHAR(val); break;
+	case REB_TIME:    d = VAL_TIME(val) * NANO;
+	}
+	return d;
+}
+
 
 /***********************************************************************
 **
