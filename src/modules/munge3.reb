@@ -176,92 +176,8 @@ ctx-munge: context [
 	archive: function [ ; https://en.wikipedia.org/wiki/Zip_(file_format) & http://www.rebol.org/view-script.r?script=rebzip.r
 		"Compress block of file and data pairs"
 		source [series!]
-	] compose/deep [
-		to-short: function [i] [copy/part reverse to binary! i 2]
-		to-long: function [i] [copy/part reverse to binary! i 4]
-
-		case [
-			empty? source [none]
-			not block? source [
-				compress/gzip source
-			]
-			true [
-				bin: copy #{}
-				dir: copy #{}
-
-				foreach [file series] source [
-					all [none? series series: make string! 0]
-
-					any [file? file cause-error 'user 'message reduce [reform ["found" type? file "where file! expected"]]]
-					any [series? series cause-error 'user 'message reduce [reform ["found" type? series "where series! expected"]]]
-
-					method: either greater? length? series length? compressed-data: compress data: to binary! series [
-						compressed-data: copy/part skip compressed-data 2 skip tail compressed-data -8
-						#{0800}				; deflate
-					] [
-						compressed-data: data
-						#{0000}				; store
-					]
-
-					offset: length? bin
-
-					append bin rejoin [
-						#{504B0304}			; Local file header signature
-						#{1400}				; Version needed to extract (minimum)
-						#{0000}				; General purpose bit flag
-						method				; Compression method
-						#{0000}				; File last modification time
-						#{0000}				; File last modification date
-						crc:				to-long crc32 data
-						compressed-size:	to-long length? compressed-data
-						uncompressed-size:	to-long length? data
-						filename-length:	to-short length? file
-						#{0000}				; Extra field length
-						filename: to binary! file
-						#{}					; Extra field
-						compressed-data		; Data
-					]
-
-					append dir rejoin [
-						#{504B0102}			; Central directory file header signature
-						#{1400}				; Version made by
-						#{1400}				; Version needed to extract (minimum)
-						#{0000}				; General purpose bit flag
-						method				; Compression method
-						#{0000}				; File last modification time
-						#{0000}				; File last modification date
-						crc					; CRC-32
-						compressed-size		; Compressed size
-						uncompressed-size	; Uncompressed size
-						filename-length		; File name length
-						#{0000}				; Extra field length
-						#{0000}				; File comment length
-						#{0000}				; Disk number where file starts
-						#{0000}				; Internal file attributes
-						#{00000000}			; External file attributes
-						to-long offset		; Relative offset of local file header
-						filename			; File name
-						#{}					; Extra field
-						#{}					; File comment
-					]
-				]
-
-				append bin rejoin [
-					dir
-					#{504B0506}			; End of central directory signature
-					#{0000}				; Number of this disk
-					#{0000}				; Disk where central directory starts
-					entries: to-short divide length? source 2	; Number of central directory records on this disk
-					entries				; Total number of central directory records
-					to-long length? dir	; Size of central directory
-					to-long length? bin	; Offset of start of central directory
-					#{0000}				; Comment length
-					#{}					; Comment
-				]
-
-				bin
-			]
-		]
+	] [
+		encode 'ZIP source
 	]
 
 	call-out: function [
@@ -1392,7 +1308,7 @@ ctx-munge: context [
 			true [
 				either only [
 					tmp: codecs/zip/decode/only source to block! file
-					tmp/2/3 ; retuns only decompressed data
+					tmp/2/2 ; retuns only decompressed data
 				][	codecs/zip/decode source ]
 			]
 		]
