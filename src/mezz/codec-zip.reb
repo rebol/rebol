@@ -130,7 +130,7 @@ register-codec [
 						sys/log/error 'ZIP ["CRC check failed!" crc "<>" crc2]
 					]
 				]
-				repend result [name reduce [modified crc data]]
+				repend result [name reduce [modified data crc]]
 			]
 
 			if only [

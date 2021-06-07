@@ -228,8 +228,8 @@ if find codecs 'zip [
 
 		--test-- "Decode ZIP using the codec directly"
 			--assert block? data: codecs/zip/decode/only %units/files/test.aar [%classes.jar]
-			--assert data/2/2 = 646121705
-			--assert block? codecs/zip/decode data/2/3
+			--assert data/2/3 = 646121705
+			--assert block? codecs/zip/decode data/2/2
 
 		--test-- "Decode ZIP using info"
 			bin: read %units/files/test-lzma.zip
@@ -251,7 +251,7 @@ if find codecs 'zip [
 			--assert all [
 				data/1 = %empty-folder/
 				data/3 = %file-1
-				data/4/3 = #{48656C6C6F21}
+				data/4/2 = #{48656C6C6F21}
 				data/5 = %file-2
 				data/9 = %folder/file-4
 				data/10/1 = 1-Jan-2021/0:00
