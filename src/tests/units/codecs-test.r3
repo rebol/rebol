@@ -239,6 +239,41 @@ if find codecs 'zip [
 			data: codecs/zip/decompress-file at bin info/2/2 reduce [info/2/5 info/2/3 info/2/4]
 			--assert info/2/6 = checksum data 'crc32
 
+		--test-- "Encode ZIP using encode"
+			--assert binary? try [bin: encode 'ZIP [
+				%empty-folder/ none
+				%file-1 "Hello!"
+				%file-2 "Hello, Hello, Hello, Hello, Hello!"
+				%file-3 #{000102030400010203040001020304}
+				%folder/file-4 [1-Jan-2021 "This file is with date!"]
+			]]
+			data: decode 'ZIP bin
+			--assert all [
+				data/1 = %empty-folder/
+				data/3 = %file-1
+				data/4/3 = #{48656C6C6F21}
+				data/5 = %file-2
+				data/9 = %folder/file-4
+				data/10/1 = 1-Jan-2021/0:00
+			]
+
+		--test-- "Encode ZIP using directory"
+			--assert not error? try [save %ico.zip %units/files/ico/]
+			data: load %ico.zip
+			--assert 30 = length? data ; 14 files and 1 directory
+			--assert %ico/ = data/1
+			--assert %ico/icon_128.png = data/3
+			delete %ico.zip
+
+		--test-- "Encode ZIP using wildcard"
+			--assert not error? try [save %temp.zip %units/files/issue-2186*.txt]
+			data: load %temp.zip
+			--assert 8 = length? data ; 4 files
+			--assert %issue-2186-UTF16-BE.txt = data/1
+			--assert %issue-2186-UTF16-LE.txt = data/3
+			delete %temp.zip
+
+
 	===end-group===
 	system/options/log/zip: v
 ]
