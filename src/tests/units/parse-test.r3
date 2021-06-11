@@ -44,6 +44,16 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "NOT"
+--test-- "not not"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1246
+	--assert parse "1" [not not "1" "1"]
+	--assert parse "1" [not [not "1"] "1"]
+	--assert not parse "" [not 0 "a"]
+	--assert not parse "" [not [0 "a"]]
+===end-group===
+
+
 ===start-group=== "THEN"
 --test-- "then"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1394

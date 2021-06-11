@@ -649,7 +649,13 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	return (SetCurrentDirectory(path[0] == 0 ? L"\\" : path)) ? 0 : GetLastError();
+	if (SetCurrentDirectory(path[0] == 0 ? L"\\" : path)) {
+		// directory changed... update PWD
+		// https://github.com/Oldes/Rebol-issues/issues/2448
+		SetEnvironmentVariable(L"PWD", path);
+		return 0;
+	} else
+		return GetLastError();
 }
 
 

@@ -653,7 +653,13 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 **
 ***********************************************************************/
 {
-	return (chdir(path) == 0) ? 0 : errno;
+	if (chdir(path) == 0) {
+		// directory changed... update PWD
+		// https://github.com/Oldes/Rebol-issues/issues/2448
+		setenv("PWD", path, 1);
+		return 0;
+	} else
+		return errno;
 }
 
 
