@@ -50,6 +50,12 @@
 
 RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
+static REBCNT Handle_XTest;
+typedef struct XTest_Context {
+	REBCNT id;
+	REBINT num;
+} XTEST;
+
 char *RX_Spec =
 	"REBOL [\n"
 		"Title: {Test of Embedded Extension}\n"
@@ -75,10 +81,15 @@ char *RX_Spec =
 	"vec0:   command [{return vector size in bytes} v [vector!]]\n"
 	"vec1:   command [{return vector size in bytes (from object)} o [object!]]\n"
 	"blk1:   command [{print type ids of all values in a block} b [block!]]\n"
+	"hob1:   command [{creates XTEST handle}]"
+	"hob2:   command [{prints XTEST handle's data} hndl [handle!]]"
+	"str0:   command [{return a constructed string}]"
 
-	"a: b: c: h: none\n"
+	"a: b: c: h: x: none\n"
 	"xtest: does [\n"
 		"foreach blk [\n"
+			"[x: hob1]"
+			"[hob2 x]"
 			"[h: hndl1]\n"
 			"[hndl2 h]\n"
 			"[xarg0]\n"
@@ -104,11 +115,11 @@ char *RX_Spec =
 			"[vec0 make vector! [integer! 16 [1 2 3]]]\n"
 			"[vec1 object [v: make vector! [integer! 16 [1 2 3]]]]\n"
 			"[blk1 [read %img /at 1]]\n"
+			"[str0]"
 		"][\n"
-			"print [{^[[7mtest:^[[0m} mold blk]\n"
-			"prin {      } \n"
+			"print [{^/^[[7mtest:^[[0m^[[1;32m} mold blk {^[[0m}]\n"
 			//"replace {x} {x} {y}\n"
-			"probe do blk\n"
+			"print join {^[[1;33m} [do blk {^[[m}]\n"
 		"]\n"
 	"prin {^/^[[7mAsync call result (should be printed 1234):^[[0m }"
 		"wait 0.1 ; let async events happen\n"
@@ -179,7 +190,7 @@ REBCNT Test_Async_Callback(REBSER *obj, REBCNT word)
 RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 	REBYTE *str;
 
-	printf("Context ptr: %p\n", ctx);
+	//printf("Context ptr: %p\n", ctx);
 
 	switch (cmd) {
 
@@ -297,6 +308,48 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			return RXR_UNSET;
 		}
 		break;
+	case 16: //command [{creates XTEST handle}]"
+		{
+			REBHOB *hob = RL_MAKE_HANDLE_CONTEXT(Handle_XTest);
+			XTEST* data = (XTEST*)hob->data;
+			printf("data=> id: %u num: %i\n", data->id, data->num);
+			data->id = 1;
+			data->num = -42;
+			printf("data=> id: %u num: %i\n", data->id, data->num);
+
+			RXA_HANDLE(frm, 1) = hob;
+			RXA_HANDLE_TYPE(frm, 1) = hob->sym;
+			RXA_HANDLE_FLAGS(frm, 1) = hob->flags;
+			RXA_TYPE(frm, 1) = RXT_HANDLE;
+		}
+		break;
+	case 17: //command [{prints XTEST handle's data} hndl [handle!]]"
+		{
+			REBHOB* hob = RXA_HANDLE(frm, 1);
+			if (hob->sym == Handle_XTest) {
+				XTEST* data = (XTEST*)hob->data;
+				printf("data=> id: %u num: %i\n", data->id, data->num);
+				RXA_INT64(frm, 1) = data->num;
+				RXA_TYPE(frm, 1) = RXT_INTEGER;
+			}
+			else {
+				puts("Wrong handle used!");
+				return RXR_UNSET;
+			}
+		}
+		break;
+	case 18: //command [{return a constructed string}]"
+		{
+			REBSER* str = RL_MAKE_STRING(32, FALSE); // 32 bytes, latin1 (must be large enough!)
+			REBYTE ver[8];
+			RL_VERSION(ver);
+			sprintf_s(SERIES_DATA(str), SERIES_REST(str), "Version: %i.%i.%i", ver[1], ver[2], ver[3]);
+			SERIES_TAIL(str) = strlen(SERIES_DATA(str));
+			RXA_SERIES(frm, 1) = str;
+			RXA_TYPE  (frm, 1) = RXT_STRING;
+			RXA_INDEX (frm, 1) = 0;
+		}
+		break;
 
 	default:
 		return RXR_NO_COMMAND;
@@ -305,8 +358,18 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 }
 
 
+void* releaseXTestContext(void* ctx) {
+	XTEST* data = (REBHOB*)ctx;
+	printf("Relasing XTest context handle: %p\n", data);
+	// do some final cleaning off the context's content
+	printf("data=> id: %u num: %i\n", data->id, data->num);
+	CLEARS(data);
+	printf("data=> id: %u num: %i\n", data->id, data->num);
+}
+
 void Init_Ext_Test(void)
 {
 	RL = RL_Extend(b_cast(&RX_Spec[0]), (RXICAL)&RX_Call);
+	Handle_XTest = RL_REGISTER_HANDLE("XTEST", sizeof(XTEST), releaseXTestContext);
 }
 #endif //TEST_EXTENSIONS

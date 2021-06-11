@@ -94,7 +94,8 @@
 	hob->sym = sym;
 	CLEAR(hob->data, size);
 	USE_HOB(hob);
-	//printf("HOB made mem: %0x\n", hob->data);
+	MARK_HOB(hob);
+	//printf("HOB made mem: %p\n", hob->data);
 	return hob;
 }
 
