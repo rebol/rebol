@@ -30,8 +30,6 @@ This is just generated output from commits in [this repository](https://github.c
 
 * [`a2bcfe`](https://github.com/Oldes/Rebol3/commit/a2bcfed99cb42e3b0e2c245172752e584496aaa5) Allow conversion from `object!` to `map!`
 * [`933514`](https://github.com/Oldes/Rebol3/commit/933514dafc74c307ceeca636e6b14b0bcdc5eabf) Reimplemented `mod` and `modulo` in C, `//` is now `op!` for `modulo` and `%` is now `op!` for `remainder`
-
-  resolves: https://github.com/Oldes/Rebol-issues/issues/1332
 * [`72a7b9`](https://github.com/Oldes/Rebol3/commit/72a7b98779256d74766af0436bdb27657f9a7e48) Allow making `op!` from `function!`
 * [`c9aa62`](https://github.com/Oldes/Rebol3/commit/c9aa62861ca8e617b1b2ab0a3fb3785c52576231) Allow _slash_ words
 * [`30b179`](https://github.com/Oldes/Rebol3/commit/30b179f667c4c255fe78f806a96b02870d6f92b4) Added simple test extension + handling `RXR_BAD_ARGS` value from extension command call
@@ -40,11 +38,7 @@ This is just generated output from commits in [this repository](https://github.c
 
 * [`6dad57`](https://github.com/Oldes/Rebol3/commit/6dad57f8d44bb19cf2426bdc4bf2948a5102122f) Don't protect `system/dialects` as it's not used anyway
 * [`bc48fe`](https://github.com/Oldes/Rebol3/commit/bc48fe8db759d29620f08a2bfc12dd8dcaf2b4fc) Allow direct comparison of `time!` with `number!` types
-
-  resolves: https://github.com/Oldes/Rebol-issues/issues/1103
 * [`c31151`](https://github.com/Oldes/Rebol3/commit/c311519a84bca3999a24a79fa4ac0788899ed3f8) Rename MAXIMUM-OF and MINIMUM-OF to FIND-MAX and FIND-MIN
-
-  resolves: https://github.com/Oldes/Rebol-issues/issues/1971
 * [`c72b15`](https://github.com/Oldes/Rebol3/commit/c72b158a41acff007267e707fcfdfedd370b9489) Better sorting of specific runtime extension module values
 
 ### Fixes:
@@ -223,8 +217,6 @@ This is just generated output from commits in [this repository](https://github.c
 ### Features:
 
 * [`030915`](https://github.com/Oldes/Rebol3/commit/0309156ad657f95e8ce674b74266cfed3e6f9338) Add possibility to set date's `/utc` and `/yearday`
-
-  resolves: https://github.com/Oldes/Rebol-wishes/issues/18
 * [`c49f86`](https://github.com/Oldes/Rebol3/commit/c49f86aabdfdae13a793c41555c82075f7599293) Set `local-lib` to refer to the local import library
 * [`52ee40`](https://github.com/Oldes/Rebol3/commit/52ee407276ddb6e34f1592a21ea00704fcafae4d) Added `supplement` mezzanine function which appends a value into a block if not yet present
 * [`2aa6c6`](https://github.com/Oldes/Rebol3/commit/2aa6c68300ffc50c163af5c608a14bca8ff8b18b) Allow direct conversion from tag! to word! (if it has valid chars)
@@ -237,8 +229,6 @@ This is just generated output from commits in [this repository](https://github.c
 
 * [`6ba777`](https://github.com/Oldes/Rebol3/commit/6ba777e64bbc5a193a103e4288dc0c2cca7b20cf) Removed mention of boot in `boot-print` and `loud-print` doc-strings (these can be use also after boot)
 * [`a253f5`](https://github.com/Oldes/Rebol3/commit/a253f5e8ab4b33bb2318a534d5f5c53f73d08309) A plain, explicit QUIT from nested scripts returning UNSET! instead of 0
-
-  resolves: https://github.com/Oldes/Rebol-issues/issues/2250
 * [`a6a07f`](https://github.com/Oldes/Rebol3/commit/a6a07f8bea642c20652dca1b446c90e9103f6eab) Updated Windows' icon file
 * [`42ef0d`](https://github.com/Oldes/Rebol3/commit/42ef0d5c8720f9ab9678b3556933a94ff3e7d8f0) Updated banner and `license` output
 
