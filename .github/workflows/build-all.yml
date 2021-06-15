@@ -122,10 +122,23 @@ jobs:
       - name: Build 64bit Rebol/Bulk using clang
         run: ./siskin make/rebol3.nest %rebol3-bulk-x64-libc-clang
 
+      - name: Prepare 64bit Rebol/Base for upload
+        run: |
+          mv ./build/rebol3-base-x64-libc-gcc ./rebol3-base-x64-libc
+          gzip -9 ./rebol3-base-x64-libc
+      - name: Prepare 64bit Rebol/Core for upload
+        run: |
+          mv ./build/rebol3-core-x64-libc-gcc ./rebol3-core-x64-libc
+          gzip -9 ./rebol3-core-x64-libc
+      - name: Prepare 64bit Rebol/Bulk for upload
+        run: |
+          mv ./build/rebol3-bulk-x64-libc-gcc ./rebol3-bulk-x64-libc
+          gzip -9 ./rebol3-bulk-x64-libc
+
       - uses: actions/upload-artifact@v2
         with:
-          name: Rebol-64bit-linux
-          path: ./build/rebol3-*
+          name: Rebol-64bit-linux-${{github.run_id}}
+          path: ./rebol3-*.gz
 
   macos:
     runs-on: macos-latest
@@ -143,12 +156,34 @@ jobs:
       - name: Build 64bit Rebol/Bulk using clang
         run: ./siskin make/rebol3.nest %rebol3-bulk-x64-osx
 
-      - name: Build 64bit Rebol/Core as a shared library
-        run: ./siskin make/rebol3.nest %lib-rebol3-core-x64-osx
-      - name: Build 64bit Rebol/Core as a host application
-        run: ./siskin make/rebol3.nest %host-core-x64-osx
+#      - name: Build 64bit Rebol/Core as a shared library
+#        run: ./siskin make/rebol3.nest %lib-rebol3-core-x64-osx
+#      - name: Build 64bit Rebol/Core as a host application
+#        run: ./siskin make/rebol3.nest %host-core-x64-osx
+
+      - name: Prepare 64bit Rebol/Base for upload
+        run: |
+          mv ./build/rebol3-base-x64-osx-gcc ./rebol3-base-x64-osx
+          gzip -9 ./rebol3-base-x64-osx
+      - name: Prepare 64bit Rebol/Core for upload
+        run: |
+          mv ./build/rebol3-core-x64-osx-gcc ./rebol3-core-x64-osx
+          gzip -9 ./rebol3-core-x64-osx
+      - name: Prepare 64bit Rebol/Bulk for upload
+        run: |
+          mv ./build/rebol3-bulk-x64-osx-gcc ./rebol3-bulk-x64-osx
+          gzip -9 ./rebol3-bulk-x64-osx
+
+#      - name: Prepare 64bit Rebol/Core as a shared library for upload
+#        run: |
+#          mv ./build/lib-rebol3-core-x64-osx ./lib-rebol3-core-x64-osx
+#          gzip -9 ./lib-rebol3-core-x64-osx
+#      - name: Prepare 64bit Rebol/Core as a host application for upload
+#        run: |
+#          mv ./build/host-core-x64-osx ./host-core-x64-osx
+#          gzip -9 ./host-core-x64-osx
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Rebol-64bit-osx
-          path: ./build/*
+          name: Rebol-64bit-osx-${{github.run_id}}
+          path: ./*.gz
