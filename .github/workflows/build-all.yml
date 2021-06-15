@@ -163,15 +163,15 @@ jobs:
 
       - name: Prepare 64bit Rebol/Base for upload
         run: |
-          mv ./build/rebol3-base-x64-osx-gcc ./rebol3-base-x64-osx
+          mv ./build/rebol3-base-x64-osx ./rebol3-base-x64-osx
           gzip -9 ./rebol3-base-x64-osx
       - name: Prepare 64bit Rebol/Core for upload
         run: |
-          mv ./build/rebol3-core-x64-osx-gcc ./rebol3-core-x64-osx
+          mv ./build/rebol3-core-x64-osx ./rebol3-core-x64-osx
           gzip -9 ./rebol3-core-x64-osx
       - name: Prepare 64bit Rebol/Bulk for upload
         run: |
-          mv ./build/rebol3-bulk-x64-osx-gcc ./rebol3-bulk-x64-osx
+          mv ./build/rebol3-bulk-x64-osx ./rebol3-bulk-x64-osx
           gzip -9 ./rebol3-bulk-x64-osx
 
 #      - name: Prepare 64bit Rebol/Core as a shared library for upload
