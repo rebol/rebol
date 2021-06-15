@@ -3,6 +3,92 @@
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
 
+## 2021 June
+
+### Features:
+
+* [`77426b`](https://github.com/Oldes/Rebol3/commit/77426bf11820e4730e7ce8020128a2075ec11b4e) Munge code updated using the new built-in ZIP encoder
+* [`52b269`](https://github.com/Oldes/Rebol3/commit/52b269660e5f027b3641bba0acd2815414c6110e) Added `ZIP` encoder
+* [`13d7c9`](https://github.com/Oldes/Rebol3/commit/13d7c9ec53ed3424746eff95986b2c725a7475da) Munge (quickly modified to be runnable from Oldes' R3 derivative)
+
+### Changes:
+
+* [`9c5892`](https://github.com/Oldes/Rebol3/commit/9c58928aaabf1309880744eb1ded6f08bc084f1d) `RL_Register_Handle` from extension returns word's symbol id
+* [`99a5c2`](https://github.com/Oldes/Rebol3/commit/99a5c287b3d5579f59850fb0396f4128233f0ce7) Swapped `crc` and `data` values in ZIP decoder's result
+
+### Fixes:
+
+* [`cf1a20`](https://github.com/Oldes/Rebol3/commit/cf1a205a29bf1b7b69f7b14b3b3fe043881804cc) Crash when using special handle's object (HOB)
+* [`a03a3b`](https://github.com/Oldes/Rebol3/commit/a03a3b5c207939bc204cb826166409b04b1342b6) Munge - a little bit more optimizations
+* [`7d8c10`](https://github.com/Oldes/Rebol3/commit/7d8c1084e59220db159bfc673955b76bd52b097d) Munge - make working loading excel sheet even in case when there is no info about number of columns
+* [`da902d`](https://github.com/Oldes/Rebol3/commit/da902de1c79d0afa789a1c155f7c503318913179) Munge - `sheets?` function was not working
+* [`73b7f3`](https://github.com/Oldes/Rebol3/commit/73b7f38ec2a2a386793747229937630a005f8bea) Munge - replaced ZIP unarchive code with R3's ZIP codec
+
+## 2021 May
+
+### Features:
+
+* [`a2bcfe`](https://github.com/Oldes/Rebol3/commit/a2bcfed99cb42e3b0e2c245172752e584496aaa5) Allow conversion from `object!` to `map!`
+* [`933514`](https://github.com/Oldes/Rebol3/commit/933514dafc74c307ceeca636e6b14b0bcdc5eabf) Reimplemented `mod` and `modulo` in C, `//` is now `op!` for `modulo` and `%` is now `op!` for `remainder`
+
+  resolves: https://github.com/Oldes/Rebol-issues/issues/1332
+* [`72a7b9`](https://github.com/Oldes/Rebol3/commit/72a7b98779256d74766af0436bdb27657f9a7e48) Allow making `op!` from `function!`
+* [`c9aa62`](https://github.com/Oldes/Rebol3/commit/c9aa62861ca8e617b1b2ab0a3fb3785c52576231) Allow _slash_ words
+* [`30b179`](https://github.com/Oldes/Rebol3/commit/30b179f667c4c255fe78f806a96b02870d6f92b4) Added simple test extension + handling `RXR_BAD_ARGS` value from extension command call
+
+### Changes:
+
+* [`6dad57`](https://github.com/Oldes/Rebol3/commit/6dad57f8d44bb19cf2426bdc4bf2948a5102122f) Don't protect `system/dialects` as it's not used anyway
+* [`bc48fe`](https://github.com/Oldes/Rebol3/commit/bc48fe8db759d29620f08a2bfc12dd8dcaf2b4fc) Allow direct comparison of `time!` with `number!` types
+
+  resolves: https://github.com/Oldes/Rebol-issues/issues/1103
+* [`c31151`](https://github.com/Oldes/Rebol3/commit/c311519a84bca3999a24a79fa4ac0788899ed3f8) Rename MAXIMUM-OF and MINIMUM-OF to FIND-MAX and FIND-MIN
+
+  resolves: https://github.com/Oldes/Rebol-issues/issues/1971
+* [`c72b15`](https://github.com/Oldes/Rebol3/commit/c72b158a41acff007267e707fcfdfedd370b9489) Better sorting of specific runtime extension module values
+
+### Fixes:
+
+* [`e868db`](https://github.com/Oldes/Rebol3/commit/e868dba356b15915cfe0d09451f686fee40f9dab) Not truncating random time to seconds only
+* [`512505`](https://github.com/Oldes/Rebol3/commit/512505109fdf0849569d6e9a12f36554ead1768f) Import of native extension (library) on Windows
+
+## 2021 April
+
+### Fixes:
+
+* [`69cd34`](https://github.com/Oldes/Rebol3/commit/69cd3437c6a0c2b59f0d7d9c0e6e18bc470da132) In cloud builds it's not possible to resolve console width
+* [`1075e8`](https://github.com/Oldes/Rebol3/commit/1075e8a26c168c7e1da8ddc3fb47cb52ae127376) Not changing default definition of `binary-base` from `prebol` module
+* [`6384bc`](https://github.com/Oldes/Rebol3/commit/6384bc1e445d040b9864456de55017fd14f163da) Typo in ico's identify function
+* [`a7adc4`](https://github.com/Oldes/Rebol3/commit/a7adc4e3740d2397c691053fb87865bf6ea65382) `%` is not an empty path anymore
+* [`4167ab`](https://github.com/Oldes/Rebol3/commit/4167abe3ba151c8eda9103dcc96c630af976fcc7) Allow various variants of arrow-like words (fixed CC warning)
+* [`19f86b`](https://github.com/Oldes/Rebol3/commit/19f86be34a5dc6c521e8d14ac3587fbb0c192533) Make sure that console's input buffer is not growing over 2GB
+* [`cefbc9`](https://github.com/Oldes/Rebol3/commit/cefbc96afb175fcb9d3ee611c70398aa7a01b73f) Allow various variants of arrow-like words
+* [`4b2eda`](https://github.com/Oldes/Rebol3/commit/4b2edac158097af5011b41d382aacc44e1bd2cfa) Allow comparison of `char!` with `integer!`
+
+## 2021 March
+
+### Features:
+
+* [`e9b0bb`](https://github.com/Oldes/Rebol3/commit/e9b0bb1cae9ca725fc1c8028726444b6cfee9bf7) `debase` accepting `any-string!` for it's value
+* [`5ed41d`](https://github.com/Oldes/Rebol3/commit/5ed41d3843d4ad38f8a57990e6651b455c37cd06) Allow creation of `path!` from any value
+* [`46e3a2`](https://github.com/Oldes/Rebol3/commit/46e3a2ce33a4b175ac7a54d77aa6db89a93d12e3) Extended PNG codec with `chunks` function
+* [`a5ba0f`](https://github.com/Oldes/Rebol3/commit/a5ba0fdb5e87802b933db7b32ffa503782636597) Added a simple codec for decoding/encoding ICO files
+* [`fd67a5`](https://github.com/Oldes/Rebol3/commit/fd67a59b3bdb410145f9dd2e2d1b95960e73b8ba) Added a simple codec for decoding/encoding ICO files
+* [`3f45b9`](https://github.com/Oldes/Rebol3/commit/3f45b9f832db74826182e2373b0736468c298fa3) Updated `prebol` (Rebol Preprocessor) to be a real module working with current Rebol
+* [`22a6d0`](https://github.com/Oldes/Rebol3/commit/22a6d0b531a8d2620067eac1b9d45128c4062df2) Added possibility not to process default application arguments on boot
+
+### Changes:
+
+* [`aece05`](https://github.com/Oldes/Rebol3/commit/aece05f17345994ff4c5154a64b327f714667631) Have `%` to be a valid word and not an empty file
+* [`1e71aa`](https://github.com/Oldes/Rebol3/commit/1e71aa39754d7acd5114450166b997e77cd9edd1) Removed ANSI related functions from colors mezzanine file
+
+### Fixes:
+
+* [`277ab5`](https://github.com/Oldes/Rebol3/commit/277ab51cf479bfb97833d45905f0ba50f96ef749) Parse rule fails when input is modified and so does not advance
+* [`ea3aab`](https://github.com/Oldes/Rebol3/commit/ea3aab8bf1bad4da84bf82fa501e2b91f79e7484) Crash on boot on Windows7 (regression since 3.4.0)
+* [`452893`](https://github.com/Oldes/Rebol3/commit/452893f22abeca6b3fc8b8973b28f035ca982ed1) Crash on boot on Windows7 (regression since 3.4.0)
+* [`d83cf1`](https://github.com/Oldes/Rebol3/commit/d83cf1c0b2cb39a2ad0d0587d873ee3b54ed9da2) HTTP redirection does not handle correctly locations with url-encoded content
+
 ## 2021 February
 
 ### Features:
@@ -13,19 +99,19 @@ This is just generated output from commits in [this repository](https://github.c
 * [`b6cbac`](https://github.com/Oldes/Rebol3/commit/b6cbac24a999355934784a604bc2c4146f0e5df5) Do some minimal extension's module protection
 * [`4d44e9`](https://github.com/Oldes/Rebol3/commit/4d44e997c68951a5dc651023610ced7355ed5398) When $SHELL is not set on POSIX OS, `/bin/sh` is used as a default
 
-  Such a situation may happen for example on a clean Alpine Docker's image.
-
 ### Changes:
 
+* [`bbf89c`](https://github.com/Oldes/Rebol3/commit/bbf89ca6e7c9b810080c462a68cf3f678a502839) `DELETE` returning `false` if called on not existing file or directory
 * [`6809c8`](https://github.com/Oldes/Rebol3/commit/6809c89dc01ed720401a8ce0a65f15f57c41a5df) Registered new system ID 0.4.46 as a 64bit Linux using `musl` compiler (musl.libc.org)
 * [`d352af`](https://github.com/Oldes/Rebol3/commit/d352af0674aa647e942aeee82618821ff5fae7c3) Renamed module's local context from `local-lib` to `lib-local`
-
-  So it is consistent with existing `lib-base` and `lib-file`, which are also there.
 * [`500d3d`](https://github.com/Oldes/Rebol3/commit/500d3da6542db487cd190a48e8bb83000707b3e1) Force UTF-8 console output code page on Windows
 * [`f09840`](https://github.com/Oldes/Rebol3/commit/f09840e2b6fcafc72ae27f5409181d1da2ddba4f) Using NOT_FOUND instead of 0 in handle's registration
 
 ### Fixes:
 
+* [`a2b1a4`](https://github.com/Oldes/Rebol3/commit/a2b1a408a804cf865cf0078b8723782b27977763) Updating `PWD` system environment variable after each directory change
+* [`9b5723`](https://github.com/Oldes/Rebol3/commit/9b5723a2c36d5ce1bdd97a8f707e798d51e510f4) Resolved crash in lower level (debugging) value formatter
+* [`1864b6`](https://github.com/Oldes/Rebol3/commit/1864b67c28d90f06bbc3089184f7167a1c2564f8) Better results from `change-dir` function (on error and also on success).
 * [`a90ee0`](https://github.com/Oldes/Rebol3/commit/a90ee0798a06a831b41d2bf42f2de0f542866794) Crash when re-opening listening port multiple times
 * [`98d66e`](https://github.com/Oldes/Rebol3/commit/98d66e5f7ba5c5a44c605d49aae2651275c994ed) Using at least one image in the ICO file as a PNG encoded in RGBA32 format
 * [`82f0ae`](https://github.com/Oldes/Rebol3/commit/82f0ae3f15e3133edc3e805e89adf986b61bff4a) Updated banners look
