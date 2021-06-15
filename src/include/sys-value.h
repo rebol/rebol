@@ -1130,7 +1130,7 @@ typedef struct Reb_Handle {
 #define MAKE_HANDLE(v, t) SET_HANDLE(v, Make_Handle_Context(t), t, HANDLE_CONTEXT)
 
 #define IS_USED_HOB(h)         ((h)->flags &   HANDLE_CONTEXT_USED)   // used to detect if handle's context is still valid
-#define     USE_HOB(h)         ((h)->flags |=  HANDLE_CONTEXT_USED)
+#define     USE_HOB(h)         ((h)->flags |=  HANDLE_CONTEXT_USED | HANDLE_CONTEXT_MARKED)
 #define   UNUSE_HOB(h)         ((h)->flags &= ~HANDLE_CONTEXT_USED)
 #define IS_MARK_HOB(h)         ((h)->flags &  (HANDLE_CONTEXT_MARKED | HANDLE_CONTEXT_LOCKED)) // GC marks still used handles, so these are not released
 #define    MARK_HOB(h)         ((h)->flags |=  HANDLE_CONTEXT_MARKED)
