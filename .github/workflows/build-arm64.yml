@@ -26,7 +26,7 @@ jobs:
 
       - name: Setup MacOSX SDK
         run: |
-          curl https://github.com/Siskin-framework/MacOSX-SDK/releases/download/11.3/MacOSX.sdk.zip
+          curl -L -S https://github.com/Siskin-framework/MacOSX-SDK/releases/download/11.3/MacOSX.sdk.zip --output MacOSX.sdk.zip
           unzip MacOSX.sdk.zip
           export SDKROOT="$PWD/MacOSX.sdk"
           echo $SDKROOT
