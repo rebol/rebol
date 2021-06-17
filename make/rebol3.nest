@@ -647,6 +647,7 @@ arch-arm64: [
 	:arch-x64
 	arch: arm64
 	flags: ["-arch arm64"]
+	define: __arm64__
 ]
 
 
