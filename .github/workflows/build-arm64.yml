@@ -24,12 +24,11 @@ jobs:
           ls -la /Library/Developer/CommandLineTools/SDKs/
           ls -la /Applications/
 
-      - name: Setup SDK
+      - name: Setup MacOSX SDK
         run: |
-          sudo xcode-select -switch /Applications/Xcode_12.app
-          export SDKROOT="`xcrun --show-sdk-path`"
-          echo $SDKROOT
-          export SDKROOT="/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          curl https://github.com/Siskin-framework/MacOSX-SDK/releases/download/11.3/MacOSX.sdk.zip
+          unzip MacOSX.sdk.zip
+          export SDKROOT="$PWD/MacOSX.sdk"
           echo $SDKROOT
 #          export SDKROOT=/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.0.sdk
 
@@ -39,6 +38,7 @@ jobs:
       - name: Prepare 64bit Rebol/Bulk for upload
         run: |
           mv ./build/rebol3-bulk-arm64-osx ./rebol3-bulk-arm64-osx
+          file ./rebol3-bulk-arm64-osx
           gzip -9 ./rebol3-bulk-arm64-osx
 
       - uses: actions/upload-artifact@v2
