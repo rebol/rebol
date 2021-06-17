@@ -27,7 +27,9 @@ jobs:
       - name: Setup SDK
         run: |
           sudo xcode-select -switch /Applications/Xcode_12.2.app
-          export SDKROOT=/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.0.sdk
+          export SDKROOT="`xcrun --show-sdk-path`"
+          echo $SDKROOT
+#          export SDKROOT=/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.0.sdk
 
       - name: Build 64bit Rebol/Bulk using clang
         run: ./siskin make/rebol3.nest %rebol3-bulk-arm64-osx
