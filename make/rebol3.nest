@@ -643,6 +643,11 @@ arch-x86: [
 		defines: TO_WIN32
 	]
 ]
+arch-arm64: [
+	:arch-x64
+	arch: arm64
+	flags: ["-arch arm64"]
+]
 
 
 ;-------------------------------------------------------------------------------
@@ -689,6 +694,7 @@ make-exe: [
 ]
 make-x86-exe: [:arch-x86 :make-exe #if Windows? [target: x86-win32]]
 make-x64-exe: [:arch-x64 :make-exe #if Windows? [target: x64-win32]]
+make-arm64-exe: [:arch-arm64 :make-exe ]
 
 ; for making Rebol as a shared library
 make-dll: [
@@ -870,6 +876,12 @@ eggs: [
 			compiler: clang
 			:include-rebol-bulk
 			:make-x64-exe
+		]
+		"Rebol/Bulk arm64-osx (clang)" [
+			name:     %rebol3-bulk-arm64-osx
+			compiler: clang
+			:include-rebol-bulk
+			:make-arm64-exe
 		]
 
 		"Rebol/Core x64-osx shared library (clang)" [
