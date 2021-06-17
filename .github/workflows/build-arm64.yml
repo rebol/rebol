@@ -1,0 +1,33 @@
+name: 'Build Rebol'
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  #push:
+  #  branches: [ master ]
+  #pull_request:
+  #  branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install Siskin Builder
+        uses: oldes/install-siskin@v0.3.5
+
+      - name: Build 64bit Rebol/Bulk using clang
+        run: ./siskin make/rebol3.nest %rebol3-bulk-arm64-osx
+
+      - name: Prepare 64bit Rebol/Bulk for upload
+        run: |
+          mv ./build/rebol3-bulk-arm64-osx ./rebol3-bulk-arm64-osx
+          gzip -9 ./rebol3-bulk-arm64-osx
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Rebol-arm64-osx-${{github.run_id}}
+          path: ./*.gz
