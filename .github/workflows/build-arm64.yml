@@ -26,8 +26,10 @@ jobs:
 
       - name: Setup SDK
         run: |
-          sudo xcode-select -switch /Applications/Xcode_12.2.app
+          xcode-select -switch /Applications/Xcode_12.app
           export SDKROOT="`xcrun --show-sdk-path`"
+          echo $SDKROOT
+          export SDKROOT="/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
           echo $SDKROOT
 #          export SDKROOT=/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.0.sdk
 
