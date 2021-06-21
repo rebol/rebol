@@ -18,6 +18,7 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`99b5db`](https://github.com/Oldes/Rebol3/commit/99b5db8243bd4bce2c0fedcc18d6b024a33d0ee1) Pass handle flags from external (extension) argument to the internal (host) value
 * [`cf1a20`](https://github.com/Oldes/Rebol3/commit/cf1a205a29bf1b7b69f7b14b3b3fe043881804cc) Crash when using special handle's object (HOB)
 * [`a03a3b`](https://github.com/Oldes/Rebol3/commit/a03a3b5c207939bc204cb826166409b04b1342b6) Munge - a little bit more optimizations
 * [`7d8c10`](https://github.com/Oldes/Rebol3/commit/7d8c1084e59220db159bfc673955b76bd52b097d) Munge - make working loading excel sheet even in case when there is no info about number of columns
