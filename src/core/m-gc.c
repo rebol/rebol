@@ -254,6 +254,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 			break;
 		case REB_HANDLE:
 			if (IS_CONTEXT_HANDLE(val)) {
+				//printf("marked hob: %p %p\n", VAL_HANDLE_CTX(val), val);
 				MARK_HANDLE_CONTEXT(val);
 			}	
 			else if (IS_SERIES_HANDLE(val) && !HANDLE_GET_FLAG(val, HANDLE_RELEASABLE)) {
@@ -548,6 +549,7 @@ mark_obj:
 			SKIP_WALL_TYPE(hob, REBHOB);
 			MUNG_CHECK(HOB_POOL, hob, sizeof(*hob));
 			if (IS_USED_HOB(hob)) {
+				//printf("sweep hob: %p\n", hob);
 				if (IS_MARK_HOB(hob))
 					UNMARK_HOB(hob);
 				else {

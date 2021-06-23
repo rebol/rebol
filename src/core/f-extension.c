@@ -142,6 +142,7 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 	case RXE_HANDLE:
 		VAL_HANDLE(val) = arg.addr;
 		VAL_HANDLE_TYPE(val) = arg.handle.type;
+		VAL_HANDLE_FLAGS(val) = arg.handle.flags;
 		break;
 	case RXE_32:
 		VAL_I32(val) = arg.int32a;

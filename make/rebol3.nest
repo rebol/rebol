@@ -19,7 +19,7 @@ temp:     %make/tmp/
 stack-size: 4194304
 optimize:   2
 
-version: 3.5.4
+version: 3.5.5
 
 core-files: [
 	%core/a-constants.c
