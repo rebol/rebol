@@ -1677,6 +1677,14 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "COLLECT"
+--test-- "collect unset"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/880
+	--assert unset? first collect [keep #[unset!]]
+	--assert unset? first head insert copy [] #[unset!]
+
+===end-group===
+
 ;-- VECTOR related tests moved to %vector-test.r3
 
 ~~~end-file~~~
