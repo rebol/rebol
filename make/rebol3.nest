@@ -313,11 +313,12 @@ config: [ ;- this is list of configuration (optional) defines
 ;- image related natives and codecs:                                            
 include-image-natives: [
 	; image related native functions like:
-	; `hsv-to-rgb`, `rgb-to-hsv`, `tint`, `resize`, `premultiply`
+	; `hsv-to-rgb`, `rgb-to-hsv`, `tint`, `resize`, `premultiply`, `blur`
 	; on Windows also: `image` as common entry to os image codec (if enabled)
 	config: INCLUDE_IMAGE_NATIVES
 	core-files: %core/n-image.c
 	core-files: %core/u-image-resize.c
+	core-files: %core/u-image-blur.c
 ]
 
 include-native-bmp-codec: [config: INCLUDE_BMP_CODEC core-files: %core/u-bmp.c]
@@ -643,6 +644,12 @@ arch-x86: [
 		defines: TO_WIN32
 	]
 ]
+arch-arm64: [
+	:arch-x64
+	arch: arm64
+	flags: ["-arch arm64"]
+	define: __arm64__
+]
 
 
 ;-------------------------------------------------------------------------------
@@ -689,6 +696,7 @@ make-exe: [
 ]
 make-x86-exe: [:arch-x86 :make-exe #if Windows? [target: x86-win32]]
 make-x64-exe: [:arch-x64 :make-exe #if Windows? [target: x64-win32]]
+make-arm64-exe: [:arch-arm64 :make-exe ]
 
 ; for making Rebol as a shared library
 make-dll: [
@@ -870,6 +878,12 @@ eggs: [
 			compiler: clang
 			:include-rebol-bulk
 			:make-x64-exe
+		]
+		"Rebol/Bulk arm64-osx (clang)" [
+			name:     %rebol3-bulk-arm64-osx
+			compiler: clang
+			:include-rebol-bulk
+			:make-arm64-exe
 		]
 
 		"Rebol/Core x64-osx shared library (clang)" [

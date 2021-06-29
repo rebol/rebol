@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2019 Rebol Open Source Contributors
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,7 @@
 
 #include "reb-codec.h"
 #include "sys-magick.h" // used for `resize` native
+#include "sys-blur.h" // used for `blur` native
 #if defined(TO_WINDOWS) && defined(INCLUDE_IMAGE_OS_CODEC)
 #include "winerror.h" // used for WINCODEC_ERR_COMPONENTNOTFOUND
 #endif
@@ -336,6 +337,25 @@ typedef struct REBCLR {
 		rgba[C_G] = (REBYTE)(((REBINT)rgba[C_G] * a) / 255);
 		rgba[C_B] = (REBYTE)(((REBINT)rgba[C_B] * a) / 255);
 	}
+	return R_ARG1;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(blur)
+/*
+//	blur: native [
+//		"Blur (Gaussian) given image"
+//		 image    [image!]  "Image to blur (modified)"
+//		 radius   [number!] "Blur amount"
+//	]
+***********************************************************************/
+{
+	REBVAL* val_img = D_ARG(1);
+	REBVAL* val_rad = D_ARG(2);
+	REBINT radius = IS_INTEGER(val_rad) ? VAL_INT32(val_rad) : (REBINT)round(VAL_DECIMAL(val_rad));
+
+	BlurImage(VAL_SERIES(val_img), radius);
 	return R_ARG1;
 }
 
