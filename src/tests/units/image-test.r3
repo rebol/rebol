@@ -330,6 +330,33 @@ FFFFFFDC1616212121212121
 ===end-group===
 
 
+===start-group=== "BLUR"
+if value? 'blur [
+--test--  "blur"
+	i: load %units/files/flower.png
+	c: checksum to binary! i 'crc32
+	t: copy i
+	--assert all [
+		image? blur t 0
+		c = checksum to binary! t 'crc32
+	]
+	--assert all [
+		image? blur t 5
+		-1700743341 = checksum to binary! t 'crc32
+	]
+	--assert all [
+		image? blur t 5
+		-583506697  = checksum to binary! t 'crc32
+	]
+	--assert all [
+		image? blur i 100000
+		1523895462  = checksum to binary! i 'crc32
+	]
+	t: i: none
+]
+===end-group===
+
+
 ===start-group=== "Save/load image"
 	if find codecs 'png [
 		--test-- "save/load PNG"

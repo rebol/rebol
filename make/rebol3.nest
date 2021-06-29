@@ -313,11 +313,12 @@ config: [ ;- this is list of configuration (optional) defines
 ;- image related natives and codecs:                                            
 include-image-natives: [
 	; image related native functions like:
-	; `hsv-to-rgb`, `rgb-to-hsv`, `tint`, `resize`, `premultiply`
+	; `hsv-to-rgb`, `rgb-to-hsv`, `tint`, `resize`, `premultiply`, `blur`
 	; on Windows also: `image` as common entry to os image codec (if enabled)
 	config: INCLUDE_IMAGE_NATIVES
 	core-files: %core/n-image.c
 	core-files: %core/u-image-resize.c
+	core-files: %core/u-image-blur.c
 ]
 
 include-native-bmp-codec: [config: INCLUDE_BMP_CODEC core-files: %core/u-bmp.c]
