@@ -258,9 +258,11 @@ Rebol [
 
 --test-- "issue-196"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/196
-	; with change related to https://github.com/Oldes/Rebol-issues/issues/2440
-	; bellow test is now throwing error instead of `true`
-	--assert error? try [do func [a] [context? 'a] 1] ;-no crash
+;@@ https://github.com/Oldes/Rebol-issues/issues/886
+;@@ https://github.com/Oldes/Rebol-issues/issues/2440
+	--assert function? do func [/local a] [context? 'a] ;-no crash
+	--assert 1 = do has [arg] [1]
+	--assert function? do has [arg] [context? 'arg] ;-no crash and recursion
 
 --test-- "issue-216"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/216
