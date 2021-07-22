@@ -932,6 +932,7 @@ eval_func2:
 
 		// The return value is a FUNC that needs to be re-evaluated.
 		if (VAL_GET_OPT(DS_TOP, OPTS_REVAL) && ANY_FUNC(DS_TOP)) {
+			VAL_CLR_OPT(DS_TOP, OPTS_REVAL); // avoid recursion https://github.com/Oldes/Rebol-issues/issues/196
 			value = DS_POP; // WARNING: value is volatile on TOS1 !
 			word = Get_Type_Word(VAL_TYPE(value));
 			index--;		// Backup block index to re-evaluate.

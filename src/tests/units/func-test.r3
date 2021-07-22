@@ -78,6 +78,14 @@ Rebol [
 		f2 arg1
 	]
 	--assert [a] = f 1 2
+	
+	;@@ https://github.com/Oldes/Rebol-issues/issues/886
+	f: func[arg][p: 'arg]
+	f 1 2
+	--assert none? context? p ; and no crash!
+
+	c: closure[a][context? 'a]
+	--assert all [object? o: c 1  o/a = 1]
 ===end-group===
 
 
@@ -250,9 +258,11 @@ Rebol [
 
 --test-- "issue-196"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/196
-	; with change related to https://github.com/Oldes/Rebol-issues/issues/2440
-	; bellow test is now throwing error instead of `true`
-	--assert error? try [do func [a] [context? 'a] 1] ;-no crash
+;@@ https://github.com/Oldes/Rebol-issues/issues/886
+;@@ https://github.com/Oldes/Rebol-issues/issues/2440
+	--assert function? do func [/local a] [context? 'a] ;-no crash
+	--assert 1 = do has [arg] [1]
+	--assert function? do has [arg] [context? 'arg] ;-no crash and recursion
 
 --test-- "issue-216"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/216

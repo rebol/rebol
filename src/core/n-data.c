@@ -339,8 +339,17 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 	if (!HAS_FRAME(word)) return R_NONE;
 	if (VAL_WORD_INDEX(word) < 0) {
-		// was originally returning R_TRUE for function context
-		 *D_RET = Stack_Frame(1)[3];
+		// was originally returning R_TRUE for all function contexts
+		// we can try to resolve the function from stack (VAL_WORD_FRAME is not valid in this case)
+		REBVAL *frame = Stack_Frame(1);
+		// if there was no frame on the stack, the word is a leaked local of some function
+		// and it looks there is no way how to resolve it, so return NONE
+		if (!frame)
+			// this is in case like ` f: func[a][p: 'a]  f 1  context? p `
+			return R_NONE; 
+		// else return function spec
+		// case like: ` f: func[a][context? 'a]  f 1 `
+		*D_RET = frame[3]; 
 	} else {
 		SET_OBJECT(D_RET, VAL_WORD_FRAME(word));
 	}
