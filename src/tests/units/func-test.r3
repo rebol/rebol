@@ -78,6 +78,14 @@ Rebol [
 		f2 arg1
 	]
 	--assert [a] = f 1 2
+	
+	;@@ https://github.com/Oldes/Rebol-issues/issues/886
+	f: func[arg][p: 'arg]
+	f 1 2
+	--assert none? context? p ; and no crash!
+
+	c: closure[a][context? 'a]
+	--assert all [object? o: c 1  o/a = 1]
 ===end-group===
 
 
