@@ -481,10 +481,15 @@ static REBSER *Trim_Object(REBSER *obj)
 
 	case A_REFLECT:
 		action = What_Reflector(arg); // zero on error
-		if (action == OF_SPEC) {
+		if (action == OF_SPEC || action == OF_TITLE) {
 			if (!VAL_MOD_SPEC(value)) return R_NONE;
 			VAL_OBJ_FRAME(value) = VAL_MOD_SPEC(value);
 			VAL_SET(value, REB_OBJECT);
+			if (action == OF_TITLE) {
+				REBCNT n = Find_Word_Index(VAL_OBJ_FRAME(value), SYM_TITLE, FALSE);
+				if(!n) return R_NONE;
+				value = VAL_OBJ_VALUE(value, n);
+			}
 			break;
 		}
 		// Adjust for compatibility with PICK:

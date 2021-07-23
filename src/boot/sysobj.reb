@@ -39,7 +39,7 @@ catalog: object [
 		words  [any-function! any-object! map! date!]
 		values [any-object! map!]
 		types  [any-function!]
-		title  [any-function! datatype!]
+		title  [any-function! datatype! module!]
 	]
 	; Official list of system/options/flags that can appear.
 	; Must match host reb-args.h enum!
