@@ -86,7 +86,8 @@ state: object [
 			0.0.0
 		extension: 2.2.2 ; execute only
 	]
-	last-error: none ; used by WHY?
+	last-error:  none ; used by WHY?
+	last-result: none ; used to store last console result
 ]
 
 modules: []

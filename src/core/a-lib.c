@@ -449,6 +449,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	REBVAL *top = DS_VALUE(dsp+1);
 	REBOL_STATE state;
 	REBVAL *types;
+	REBVAL *last;
 
 	if (dsp != 0) Debug_Fmt(Str_Stack_Misaligned, dsp);
 
@@ -487,7 +488,9 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 			}
 		}
 	}
-
+	// store last result in system/state/last-result
+	last = Get_System(SYS_STATE, STATE_LAST_RESULT);
+	*last = *top;
 	POP_STATE(state, Saved_State);
 	DSP = 0;
 }
