@@ -1307,7 +1307,7 @@ Rebol [
 
 
 ===start-group=== "AS coercion"
-
+;@@ https://github.com/Oldes/Rebol-issues/issues/2264
 --test-- "AS datatype! any-string!"
 	s: "hell"
 	--assert file?  f: as file!  s
