@@ -368,6 +368,13 @@ Rebol [
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1614
 	--assert not parse "a b c" ["a" "b" "c"]
 
+--test-- "issue-1068"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1068
+	foreach x [[a b] (a b) a/b 'a/b :a/b a/b:] [
+		parse x [y:]
+		--assert same? x y
+	]
+
 ===end-group===
 
 ~~~end-file~~~
