@@ -16,7 +16,7 @@ include:  %src/include/
 temp:     %make/tmp/
 ;output:   %build/
 
-stack-size: 4194304
+stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
 version: 3.5.5
@@ -296,6 +296,7 @@ config: [ ;- this is list of configuration (optional) defines
 
 	;SERIES_LABELS ; used for special debug purposes
 	;SHOW_SIZEOFS  ; for debugging ports to some new systems
+	;SHOW_EXPAND_STACK ; will print info when stack expands
 	;NDEBUG        ; removes some asserts
 	;TEST_SCAN
 	;_DEBUG

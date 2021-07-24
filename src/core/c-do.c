@@ -105,7 +105,9 @@ static REBVAL *Func_Word(REBINT dsf)
 	}
 	Extend_Series(DS_Series, amount);
 	DS_Base = BLK_HEAD(DS_Series);
+#ifdef SHOW_EXPAND_STACK
 	Debug_Fmt(BOOT_STR(RS_STACK, 0), DSP, SERIES_REST(DS_Series));
+#endif
 }
 
 
@@ -861,7 +863,7 @@ more_path:
 
 	//CHECK_MEMORY(1);
 	CHECK_STACK(&value);
-	if ((DSP + 20) > (REBINT)SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN); //Trap0(RE_STACK_OVERFLOW);
+	if ((DSP + 200) > (REBINT)SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN); //Trap0(RE_STACK_OVERFLOW); 
 	if (--Eval_Count <= 0 || Eval_Signals) Do_Signals();
 
 	value = BLK_SKIP(block, index);

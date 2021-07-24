@@ -112,6 +112,7 @@ target:   any [spec/target spec/os-target spec/configuration]
 os-base:  'win32
 product:  any [spec/product 'Core]
 configs:  unique any [spec/config copy []]
+stack-size: any [spec/stack-size 1048576] ;default 1MiB
 
 
 unless target [

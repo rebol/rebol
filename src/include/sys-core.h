@@ -39,6 +39,9 @@
 //#define MUNGWALL				// memory allocation bounds checking
 #define STACK_MIN   4000		// data stack increment size
 #define STACK_LIMIT 400000		// data stack max (6.4MB)
+#ifndef STACK_SIZE
+#define STACK_SIZE (1 * 1024 * 1024) // Default MSVS stack size is 1MiB
+#endif
 #define MIN_COMMON 10000		// min size of common buffer
 #define MAX_COMMON 100000		// max size of common buffer (shrink trigger)
 #define	MAX_NUM_LEN 64			// As many numeric digits we will accept on input
@@ -354,8 +357,9 @@ enum {
 #else
 #define CHECK_STACK(v) if ((REBUPT)(v) <= Stack_Limit) Trap_Stack();
 #endif
-#define STACK_BOUNDS (4*1024*1000) // note: need a better way to set it !!
-// Also: made somewhat smaller than linker setting to allow trapping it
+#define STACK_BOUNDS (STACK_SIZE - (24 * 1024)) // made somewhat smaller than linker setting to allow trapping it
+//NOTE: in VS Debug build the stack overflow is detected before trying to expand the data stack!
+//      So use Relase build to test the stack expansion.
 
 
 /***********************************************************************
