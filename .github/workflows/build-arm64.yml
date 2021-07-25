@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install Siskin Builder
-        uses: oldes/install-siskin@v0.3.6
+        uses: oldes/install-siskin@v0.3.7
 
       - name: List some directories
         run: |

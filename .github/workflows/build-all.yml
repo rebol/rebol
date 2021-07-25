@@ -19,7 +19,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Install Siskin Builder
-      uses: oldes/install-siskin@v0.3.6
+      uses: oldes/install-siskin@v0.3.7
 
     - name: Build 64bit Rebol/Base using MSVC
       run: |
@@ -107,7 +107,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install Siskin Builder
-        uses: oldes/install-siskin@v0.3.6
+        uses: oldes/install-siskin@v0.3.7
 
       - name: Build 64bit Rebol/Base using gcc
         run: ./siskin make/rebol3.nest %rebol3-base-x64-libc-gcc
@@ -147,7 +147,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install Siskin Builder
-        uses: oldes/install-siskin@v0.3.6
+        uses: oldes/install-siskin@v0.3.7
 
       - name: Build 64bit Rebol/Base using clang
         run: ./siskin make/rebol3.nest %rebol3-base-x64-osx
