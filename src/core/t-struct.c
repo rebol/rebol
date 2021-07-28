@@ -38,23 +38,23 @@
 REBFLG MT_Struct(REBVAL *out, REBVAL *data, REBCNT type);
 
 static const REBINT type_to_sym [STRUCT_TYPE_MAX] = {
-	SYM_UINT8,
-	SYM_INT8,
-	SYM_UINT16,
-	SYM_INT16,
-	SYM_UINT32,
-	SYM_INT32,
-	SYM_UINT64,
-	SYM_INT64,
+	SYM_UINT8X,
+	SYM_INT8X,
+	SYM_UINT16X,
+	SYM_INT16X,
+	SYM_UINT32X,
+	SYM_INT32X,
+	SYM_UINT64X,
+	SYM_INT64X,
 	-1, //SYM_INTEGER,
 
-	SYM_FLOAT,
-	SYM_DOUBLE,
+	SYM_FLOATX,
+	SYM_DOUBLEX,
 	-1, //SYM_DECIMAL,
 
 	SYM_POINTER,
 	-1, //SYM_STRUCT
-	SYM_REBVAL
+	//SYM_REBVAL // unused
 	//STRUCT_TYPE_MAX
 };
 
@@ -516,43 +516,43 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 
 	if (IS_WORD(val)){
 		switch (VAL_WORD_CANON(val)) {
-			case SYM_UINT8:
+			case SYM_UINT8X:
 				field->type = STRUCT_TYPE_UINT8;
 				field->size = 1;
 				break;
-			case SYM_INT8:
+			case SYM_INT8X:
 				field->type = STRUCT_TYPE_INT8;
 				field->size = 1;
 				break;
-			case SYM_UINT16:
+			case SYM_UINT16X:
 				field->type = STRUCT_TYPE_UINT16;
 				field->size = 2;
 				break;
-			case SYM_INT16:
+			case SYM_INT16X:
 				field->type = STRUCT_TYPE_INT16;
 				field->size = 2;
 				break;
-			case SYM_UINT32:
+			case SYM_UINT32X:
 				field->type = STRUCT_TYPE_UINT32;
 				field->size = 4;
 				break;
-			case SYM_INT32:
+			case SYM_INT32X:
 				field->type = STRUCT_TYPE_INT32;
 				field->size = 4;
 				break;
-			case SYM_UINT64:
+			case SYM_UINT64X:
 				field->type = STRUCT_TYPE_UINT64;
 				field->size = 8;
 				break;
-			case SYM_INT64:
+			case SYM_INT64X:
 				field->type = STRUCT_TYPE_INT64;
 				field->size = 8;
 				break;
-			case SYM_FLOAT:
+			case SYM_FLOATX:
 				field->type = STRUCT_TYPE_FLOAT;
 				field->size = 4;
 				break;
-			case SYM_DOUBLE:
+			case SYM_DOUBLEX:
 				field->type = STRUCT_TYPE_DOUBLE;
 				field->size = 8;
 				break;
@@ -581,10 +581,12 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 					Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(val));
 				}
 				break;
+#ifdef unused
 			case SYM_REBVAL:
 				field->type = STRUCT_TYPE_REBVAL;
 				field->size = sizeof(REBVAL);
 				break;
+#endif
 			default:
 				Trap_Type(val);
 		}
