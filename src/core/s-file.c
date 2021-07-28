@@ -52,7 +52,7 @@
 {
 	REBOOL colon = 0;  // have we hit a ':' yet?
 	REBOOL slash = 0; // have we hit a '/' yet?
-	REBUNI c;
+	REBUNI c = 0;
 	REBSER *dst;
 	REBCNT n;
 	REBCNT i;
