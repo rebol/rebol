@@ -99,7 +99,7 @@ REBOL [
 	gob         self        gob         *        *       *      *   -  
 	event       self        event       *        *       *      *   -  
 	handle      self        0           -        -       -      -   -  
-	struct      invalid     0           -        -       -      -   -  
+	struct      self        struct      *        *       *      *   -  
 	library     invalid     0           -        -       -      -   -  
 	utype       self        utype       -        -       -      -   -  
 

@@ -87,6 +87,8 @@
 #include "gen-strings.h"
 #include "gen-funcargs.h"
 
+#include "reb-struct.h"
+
 //-- Port actions (for native port schemes):
 typedef struct rebol_port_action_map {
 	const REBCNT action;

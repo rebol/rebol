@@ -307,6 +307,9 @@ chkDecimal:
 	case REB_FUNCTION:
 		return VAL_FUNC_BODY(s) - VAL_FUNC_BODY(t);
 
+	case REB_STRUCT:
+		return Cmp_Struct(s, t);
+
 	case REB_NONE:
 	case REB_UNSET:
 	case REB_END:

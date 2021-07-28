@@ -111,7 +111,7 @@ REBVAL *N_watch(REBFRM *frame, REBVAL **inter_block)
 #endif
 
 static void Mark_Series(REBSER *series, REBCNT depth);
-
+static void Mark_Value(REBVAL *val, REBCNT depth);
 
 /***********************************************************************
 **
@@ -146,6 +146,69 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 
 	if (GOB_DATA(gob) && GOB_DTYPE(gob) && GOB_DTYPE(gob) != GOBD_INTEGER) {
 		CHECK_MARK(GOB_DATA(gob), depth);
+	}
+}
+
+/***********************************************************************
+**
+*/	static void Mark_Struct_Field(REBSTU *stu, struct Struct_Field *field, REBCNT depth)
+/*
+***********************************************************************/
+{
+	if (field->type == STRUCT_TYPE_STRUCT) {
+		int len = 0;
+		REBSER *series = NULL;
+
+		CHECK_MARK(field->fields, depth);
+		CHECK_MARK(field->spec, depth);
+
+		series = field->fields;
+		for (len = 0; len < series->tail; len++) {
+			Mark_Struct_Field(stu, (struct Struct_Field *)SERIES_SKIP(series, len), depth + 1);
+		}
+	}
+	else if (field->type == STRUCT_TYPE_REBVAL) {
+		REBCNT i;
+		ASSERT2(field->size == sizeof(REBVAL), RP_BAD_SIZE);
+		for (i = 0; i < field->dimension; i++) {
+			REBVAL *data = (REBVAL *)SERIES_SKIP(STRUCT_DATA_BIN(stu),
+				STRUCT_OFFSET(stu) + field->offset + i * field->size);
+			if (field->done) {
+				Mark_Value(data, depth);
+			}
+		}
+	}
+
+	/* ignore primitive datatypes */
+}
+
+/***********************************************************************
+**
+*/	static void Mark_Struct(REBSTU *stu, REBCNT depth)
+/*
+***********************************************************************/
+{
+	int len = 0;
+	REBSER *series = NULL;
+	if (IS_MARK_SERIES(STRUCT_DATA_BIN(stu))) return;
+
+	CHECK_MARK(stu->spec, depth);
+	CHECK_MARK(stu->fields, depth);
+	CHECK_MARK(STRUCT_DATA_BIN(stu), depth);
+
+	Debug_Num("mark spec:  ", (int)stu->spec);
+	Debug_Num("mark fields:", (int)stu->fields);
+	Debug_Num("mark bin:   ", (int)STRUCT_DATA_BIN(stu));
+
+	ASSERT2(IS_BARE_SERIES(stu->data), RP_BAD_SERIES);
+	ASSERT2(!IS_EXT_SERIES(stu->data), RP_BAD_SERIES);
+	ASSERT2(SERIES_TAIL(stu->data) == 1, RP_BAD_SERIES);
+	CHECK_MARK(stu->data, depth);
+
+	series = stu->fields;
+	for (len = 0; len < series->tail; len++) {
+		struct Struct_Field *field = (struct Struct_Field *)SERIES_SKIP(series, len);
+		Mark_Struct_Field(stu, field, depth + 1);
 	}
 }
 
@@ -426,9 +489,7 @@ mark_obj:
 			break;
 
 		case REB_STRUCT:
-			CHECK_MARK(VAL_STRUCT_SPEC(val), depth);  // is a block
-			CHECK_MARK(VAL_STRUCT_VALS(val), depth);  // "    "
-			MARK_SERIES(VAL_STRUCT_DATA(val));
+			Mark_Struct(&VAL_STRUCT(val), depth);
 			break;
 
 		case REB_GOB:

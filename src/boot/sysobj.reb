@@ -34,10 +34,10 @@ catalog: object [
 	errors:  none
 	; Reflectors are used on boot to create *-of functions
 	reflectors: [
-		spec   [any-function! any-object! vector! datatype!]
+		spec   [any-function! any-object! vector! datatype! struct!]
 		body   [any-function! any-object! map!]
 		words  [any-function! any-object! map! date!]
-		values [any-object! map!]
+		values [any-object! map! struct!]
 		types  [any-function!]
 		title  [any-function! datatype! module!]
 	]

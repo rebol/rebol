@@ -1205,16 +1205,15 @@ typedef struct Reb_Typeset {
 
 typedef struct Reb_Struct {
 	REBSER	*spec;
-	REBSER	*vals;
+	REBSER  *fields;	// fields definition
 	REBSER	*data;
 } REBSTU;
 
 #define VAL_STRUCT(v)       (v->data.structure)
 #define VAL_STRUCT_SPEC(v)  (v->data.structure.spec)
-#define VAL_STRUCT_VALS(v)  (v->data.structure.vals)
+#define VAL_STRUCT_FIELDS(v) ((v)->data.structure.fields)
 #define VAL_STRUCT_DATA(v)  (v->data.structure.data)
 #define VAL_STRUCT_DP(v)    (STR_HEAD(VAL_STRUCT_DATA(v)))
-#define VAL_STRUCT_LEN(v)   (SERIES_TAIL(VAL_STRUCT_DATA(v)))
 
 /***********************************************************************
 **

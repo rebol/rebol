@@ -109,7 +109,7 @@ core-files: [
 	%core/t-pair.c
 	%core/t-port.c
 	%core/t-string.c
-;	%core/t-struct.c          ;not implemented
+	%core/t-struct.c
 	%core/t-time.c
 	%core/t-tuple.c
 	%core/t-typeset.c
