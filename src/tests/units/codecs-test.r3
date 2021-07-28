@@ -150,7 +150,7 @@ if find codecs 'wav [
 			bin: none
 			
 		--test-- "Encode WAV"
-			samples: #[si16! [0 -1000 -2000 -1000 0 1000 2000 1000 0]]
+			samples: #[i16! [0 -1000 -2000 -1000 0 1000 2000 1000 0]]
 			--assert binary? bin: encode 'wav :samples
 			--assert object? snd: decode 'wav :bin
 			--assert   'wave = snd/type

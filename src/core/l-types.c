@@ -1094,7 +1094,7 @@ end_date:
 			return TRUE;
 
 		default:
-			if (type >= SYM_SI8X && type <= SYM_F64X) {
+			if (type >= SYM_I8X && type < SYM_DATATYPES) {
 				if (MT_Vector(value, val, REB_VECTOR)) return TRUE;
 			}
 			return FALSE;

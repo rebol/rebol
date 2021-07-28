@@ -487,16 +487,27 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	// SIGNED / UNSIGNED
 	if (IS_WORD(bp)) {
 		switch (VAL_WORD_CANON(bp)) {
-		case SYM_SI8X:  type = 0; sign = 0; bits =  8; bp++; goto size_spec;
-		case SYM_UI8X:  type = 0; sign = 1; bits =  8; bp++; goto size_spec;
-		case SYM_SI16X: type = 0; sign = 0; bits = 16; bp++; goto size_spec;
-		case SYM_UI16X: type = 0; sign = 1; bits = 16; bp++; goto size_spec;
-		case SYM_SI32X: type = 0; sign = 0; bits = 32; bp++; goto size_spec;
-		case SYM_UI32X: type = 0; sign = 1; bits = 32; bp++; goto size_spec;
-		case SYM_SI64X: type = 0; sign = 0; bits = 64; bp++; goto size_spec;
-		case SYM_UI64X: type = 0; sign = 1; bits = 64; bp++; goto size_spec;
-		case SYM_F32X:  type = 1; sign = 0; bits = 32; bp++; goto size_spec;
-		case SYM_F64X:  type = 1; sign = 0; bits = 64; bp++; goto size_spec;
+		case SYM_I8X:
+		case SYM_INT8X:   type = 0; sign = 0; bits =  8; bp++; goto size_spec;
+		case SYM_U8X:
+		case SYM_BYTEX:
+		case SYM_UINT8X:  type = 0; sign = 1; bits =  8; bp++; goto size_spec;
+		case SYM_I16X:
+		case SYM_INT16X:  type = 0; sign = 0; bits = 16; bp++; goto size_spec;
+		case SYM_U16X:
+		case SYM_UINT16X: type = 0; sign = 1; bits = 16; bp++; goto size_spec;
+		case SYM_I32X:
+		case SYM_INT32X:  type = 0; sign = 0; bits = 32; bp++; goto size_spec;
+		case SYM_U32X:
+		case SYM_UINT32X: type = 0; sign = 1; bits = 32; bp++; goto size_spec;
+		case SYM_I64X:
+		case SYM_INT64X:  type = 0; sign = 0; bits = 64; bp++; goto size_spec;
+		case SYM_U64X:
+		case SYM_UINT64X: type = 0; sign = 1; bits = 64; bp++; goto size_spec;
+		case SYM_F32X:
+		case SYM_FLOATX:  type = 1; sign = 0; bits = 32; bp++; goto size_spec;
+		case SYM_F64X:
+		case SYM_DOUBLEX: type = 1; sign = 0; bits = 64; bp++; goto size_spec;
 
 		case SYM_UNSIGNED: sign = 1; bp++; break;
 		case SYM_SIGNED:   sign = 0; bp++; break;
