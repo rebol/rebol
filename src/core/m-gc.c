@@ -167,6 +167,7 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 			Mark_Struct_Field(stu, (struct Struct_Field *)SERIES_SKIP(series, len), depth + 1);
 		}
 	}
+#ifdef unused
 	else if (field->type == STRUCT_TYPE_REBVAL) {
 		REBCNT i;
 		ASSERT2(field->size == sizeof(REBVAL), RP_BAD_SIZE);
@@ -178,7 +179,7 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 			}
 		}
 	}
-
+#endif
 	/* ignore primitive datatypes */
 }
 

@@ -110,9 +110,11 @@ static get_scalar(REBSTU *stu,
 				VAL_STRUCT_LEN(val) = field->size;
 			}
 			break;
+#ifdef unused
 		case STRUCT_TYPE_REBVAL:
 			memcpy(val, data, sizeof(REBVAL));
 			break;
+#endif
 		default:
 			/* should never be here */
 			return FALSE;
@@ -437,6 +439,7 @@ static void parse_attr (REBVAL *blk, REBINT *raw_size, REBUPT *raw_addr)
 					}
 					break;
 				case SYM_EXTERN:
+#ifdef unused
 					++ attr;
 
 					if (*raw_addr != 0) /* raw-memory is exclusive with extern */
@@ -466,6 +469,9 @@ static void parse_attr (REBVAL *blk, REBINT *raw_size, REBUPT *raw_addr)
 
 						*raw_addr = (REBUPT)addr;
 					}
+#else
+					Trap0(RE_FEATURE_NA);
+#endif
 					break;
 					/*
 					   case SYM_ALIGNMENT:
@@ -848,7 +854,11 @@ failed:
 	return PE_BAD_SELECT;
 }
 
-REBINT Cmp_Struct(REBVAL *s, REBVAL *t)
+/***********************************************************************
+**
+*/	REBINT Cmp_Struct(REBVAL *s, REBVAL *t)
+/*
+***********************************************************************/
 {
 	REBINT n = VAL_STRUCT_FIELDS(s) - VAL_STRUCT_FIELDS(t);
 	if (n != 0) {
