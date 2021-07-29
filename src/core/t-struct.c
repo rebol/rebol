@@ -236,7 +236,9 @@ static get_scalar(REBSTU *stu,
 		} else {
 			val = Append_Value(ser);
 			get_scalar(stu, field, 0, val);
+#ifdef ALLOW_CODE_EVALUATION_INSIDE_STRUCT_CONSTRUCTION_SPEC 
 			if (IS_WORD(val)) SET_TYPE(val, REB_LIT_WORD);
+#endif
 		}
 	}
 	return ser;
@@ -735,7 +737,8 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 				if (IS_END(blk)) {
 					Trap_Types(RE_EXPECT_VAL, REB_STRUCT, REB_END);
 				}
-				else  if (IS_BLOCK(blk)) {
+#ifdef ALLOW_CODE_EVALUATION_INSIDE_STRUCT_CONSTRUCTION_SPEC 
+				else if (IS_BLOCK(blk)) {
 					Reduce_Block(VAL_SERIES(blk), 0, NULL); //result is on stack
 					init = DS_POP;
 					++ blk;
@@ -747,7 +750,9 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 					blk = VAL_BLK_SKIP(data, eval_idx);
 					init = DS_POP; //Do_Next saves result on stack
 				}
-
+#else
+				init = blk++;
+#endif
 				if (field->array) {
 					if (IS_INTEGER(init)) { /* interpreted as a C pointer */
 						void *ptr = (void *)VAL_INT64(init);

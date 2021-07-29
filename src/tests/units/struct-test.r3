@@ -43,7 +43,7 @@ Rebol [
 	--assert (mold u64) = "make struct! [a: [uint64!] 0]"
 	--assert (mold f32) = "make struct! [a: [float!] 0.0]"
 	--assert (mold f64) = "make struct! [a: [double!] 0.0]"
-	--assert (mold w)   = "make struct! [a: [word!] 'none]"
+	--assert (mold w)   = "make struct! [a: [word!] none]"
 ===end-group===
 
 
@@ -103,6 +103,12 @@ Rebol [
 	--assert all [
 		error? e: try [make struct! [ c: [struct! [a [uint8!]]] ]]
 		e/id = 'expect-val
+	]
+--test-- "Don't allow evaluation inside struct construction"
+;@@ https://github.com/zsx/r3/issues/51
+	--assert all [
+		error? e: try [make struct! [ a: [uint8!] probe random 100 ]]
+		e/id = 'invalid-type
 	]
 ===end-group===
 
