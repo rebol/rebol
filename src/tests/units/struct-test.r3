@@ -133,6 +133,14 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "Struct conversion"
+--test-- "to binary! struct!"
+	s: make struct! [a: [uint16!] 1 b: [int32!] -1]
+	--assert #{0100FFFFFFFF} = to binary! s
+===end-group===
+
+
 ===start-group=== "Invalid struct construction"
 --test-- "Missing struct init value"
 ;@@ https://github.com/zsx/r3/issues/50
