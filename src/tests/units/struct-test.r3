@@ -97,25 +97,5 @@ Rebol [
 	--assert (mold wx2)   = "make struct! [a: [word! [2]] [none none]]"
 ===end-group===
 
-i8:
-i16:
-i32:
-i64:
-u8:
-u16:
-u32:
-u64:
-f32:
-f64:
-i8x2:
-i16x2:
-i32x2:
-i64x2:
-u8x2:
-u16x2:
-u32x2:
-u64x2:
-f32x2:
-f64x2: none
 
 ~~~end-file~~~
