@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2014 Atronix Engineering, Inc.
-**
+**  Copyright 2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@
 **
 **  Summary: Struct to C function
 **  Module:  reb-struct.h
-**  Author:  Shixin Zeng
+**  Author:  Shixin Zeng, Oldes
 **
 ***********************************************************************/
 

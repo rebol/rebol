@@ -1,8 +1,9 @@
 /***********************************************************************
 **
-**   REBOL [R3] Language Interpreter and Run-time Environment
+**  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2014 Atronix Engineering, Inc.
+**  Copyright 2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +23,7 @@
 **  Module:  t-strut.c
 **  Summary: C struct object datatype
 **  Section: datatypes
-**  Author:  Shixin Zeng
+**  Author:  Shixin Zeng, Oldes
 **  Notes:
 **
 ***********************************************************************/
@@ -619,7 +620,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 	}
 	++ val;
 
-	if (IS_BLOCK(val)) {// make struct! [a: [int32 [2]] [0 0]]
+	if (IS_BLOCK(val)) {// make struct! [a: [int32! [2]] [0 0]]
 
 		REBVAL *ret = Do_Blk(VAL_SERIES(val), 0);
 
@@ -649,8 +650,8 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
  * make struct! [
  *     field1 [type1]
  *     field2: [type2] field2-init-value
- * 	   field3: [struct [field1 [type1]]]
- * 	   field4: [type1[3]]
+ * 	   field3: [struct [field1 [type1]]] field3-init-struct-value
+ * 	   field4: [type1[3]] field4-init-block-value
  * 	   ...
  * ]
 ***********************************************************************/
@@ -949,7 +950,7 @@ void Copy_Struct_Val(REBVAL *src, REBVAL *dst)
 	Copy_Struct(&VAL_STRUCT(src), &VAL_STRUCT(dst));
 }
 
-/* a: make struct! [uint 8 i: 1]
+/* a: make struct! [i: [uint8!] 1]
  * b: make a [i: 10]
  */
 static void init_fields(REBVAL *ret, REBVAL *spec)
