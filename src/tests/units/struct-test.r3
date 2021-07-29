@@ -97,5 +97,15 @@ Rebol [
 	--assert (mold wx2)   = "make struct! [a: [word! [2]] [none none]]"
 ===end-group===
 
+===start-group=== "Invalid struct construction"
+--test-- "Missing struct init value"
+;@@ https://github.com/zsx/r3/issues/50
+	--assert all [
+		error? e: try [make struct! [ c: [struct! [a [uint8!]]] ]]
+		e/id = 'expect-val
+	]
+===end-group===
+
+
 
 ~~~end-file~~~

@@ -732,7 +732,10 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 			EXPAND_SERIES_TAIL(VAL_STRUCT_DATA_BIN(out), step);
 
 			if (expect_init) {
-				if (IS_BLOCK(blk)) {
+				if (IS_END(blk)) {
+					Trap_Types(RE_EXPECT_VAL, REB_STRUCT, REB_END);
+				}
+				else  if (IS_BLOCK(blk)) {
 					Reduce_Block(VAL_SERIES(blk), 0, NULL); //result is on stack
 					init = DS_POP;
 					++ blk;
