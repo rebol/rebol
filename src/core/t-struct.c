@@ -54,6 +54,7 @@ static const REBINT type_to_sym [STRUCT_TYPE_MAX] = {
 
 	SYM_POINTER,
 	-1, //SYM_STRUCT
+	SYM_WORD_TYPE,
 	//SYM_REBVAL // unused
 	//STRUCT_TYPE_MAX
 };
@@ -109,6 +110,9 @@ static get_scalar(REBSTU *stu,
 				VAL_STRUCT_OFFSET(val) = data - SERIES_DATA(VAL_STRUCT_DATA_BIN(val));
 				VAL_STRUCT_LEN(val) = field->size;
 			}
+			break;
+		case STRUCT_TYPE_WORD:
+			Set_Word(val, *(REBINT *)data, NULL, 0);
 			break;
 #ifdef unused
 		case STRUCT_TYPE_REBVAL:
@@ -232,6 +236,7 @@ static get_scalar(REBSTU *stu,
 		} else {
 			val = Append_Value(ser);
 			get_scalar(stu, field, 0, val);
+			if (IS_WORD(val)) SET_TYPE(val, REB_LIT_WORD);
 		}
 	}
 	return ser;
@@ -303,6 +308,12 @@ static REBOOL assign_scalar(REBSTU *stu,
 				Trap_Type(val);
 			}
 			break;
+		case REB_WORD:
+			if (STRUCT_TYPE_WORD != field->type) {
+				Trap_Type(val);
+			}
+			i = (u64)VAL_WORD_SYM(val);
+			break;
 		default:
 			Trap_Type(val);
 	}
@@ -324,6 +335,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 			*(i32*)data = (i32)i;
 			break;
 		case STRUCT_TYPE_UINT32:
+		case STRUCT_TYPE_WORD:
 			*(u32*)data = (u32)i;
 			break;
 		case STRUCT_TYPE_INT64:
@@ -581,6 +593,10 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 					Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(val));
 				}
 				break;
+			case SYM_WORD_TYPE:
+				field->type = STRUCT_TYPE_WORD;
+				field->size = 4;
+				break;
 #ifdef unused
 			case SYM_REBVAL:
 				field->type = STRUCT_TYPE_REBVAL;
@@ -764,7 +780,17 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 					for (n = 0; n < field->dimension; n ++) {
 						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), ((REBCNT)offset) + n * field->size), SERIES_DATA(VAL_STRUCT_DATA_BIN(init)), field->size);
 					}
-				} else if (field->type == STRUCT_TYPE_REBVAL) {
+				}
+				else if (field->type == STRUCT_TYPE_WORD) {
+					// use word `none` as a default value
+					REBCNT n = 0;
+					REBCNT sym = SYM_NONE;
+					for (n = 0; n < field->dimension; n++) {
+						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), ((REBCNT)offset) + n * field->size), &sym, field->size);
+					}
+				}
+				else if (field->type == STRUCT_TYPE_REBVAL) {
+#ifdef unused
 					REBVAL unset;
 					REBCNT n = 0;
 					SET_UNSET(&unset);
@@ -774,6 +800,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 							goto failed;
 						}
 					}
+#endif
 				} else {
 					memset(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), (REBCNT)offset), 0, field->size * field->dimension);
 				}
