@@ -8,7 +8,8 @@ Rebol [
 
 ~~~start-file~~~ "STRUCT"
 
-===start-group=== "Struct single value construction"
+===start-group=== "Struct construction"
+--test-- "Struct single value construction"
 	--assert not error? try [
 		i8:  make struct! [a [int8!]]
 		i16: make struct! [a [int16!]]
@@ -44,10 +45,9 @@ Rebol [
 	--assert (mold f32) = "make struct! [a: [float!] 0.0]"
 	--assert (mold f64) = "make struct! [a: [double!] 0.0]"
 	--assert (mold w)   = "make struct! [a: [word!] none]"
-===end-group===
 
 
-===start-group=== "Struct single value (dimensional) construction"
+--test-- "Struct single value (dimensional) construction"
 	--assert not error? try [
 		i8x2:  make struct! [a [int8!   [2]]]
 		i16x2: make struct! [a [int16!  [2]]]
@@ -95,6 +95,42 @@ Rebol [
 	--assert (mold f32x2) = "make struct! [a: [float! [2]] [0.0 0.0]]"
 	--assert (mold f64x2) = "make struct! [a: [double! [2]] [0.0 0.0]]"
 	--assert (mold wx2)   = "make struct! [a: [word! [2]] [none none]]"
+
+--test-- "Struct construction with initial value"
+	--assert all [struct? i8:  make struct! [a: [int8!]   23 b [int8!]]  i8/a  = 23  i8/b  = 0 ]
+	--assert all [struct? i16: make struct! [a: [int16!]  23 b [int8!]]  i16/a = 23  i16/b = 0 ]
+	--assert all [struct? i32: make struct! [a: [int32!]  23 b [int8!]]  i32/a = 23  i32/b = 0 ]
+	--assert all [struct? i64: make struct! [a: [int64!]  23 b [int8!]]  i64/a = 23  i64/b = 0 ]
+	--assert all [struct? u8:  make struct! [a: [uint8!]  23 b [int8!]]  u8/a  = 23  u8/b  = 0 ]
+	--assert all [struct? u16: make struct! [a: [uint16!] 23 b [int8!]]  u16/a = 23  u16/b = 0 ]
+	--assert all [struct? u32: make struct! [a: [uint32!] 23 b [int8!]]  u32/a = 23  u32/b = 0 ]
+	--assert all [struct? u64: make struct! [a: [uint64!] 23 b [int8!]]  u64/a = 23  u64/b = 0 ]
+	--assert all [struct? f32: make struct! [a: [float!]  23 b [int8!]]  f32/a = 23  f32/b = 0 ]
+	--assert all [struct? f64: make struct! [a: [double!] 23 b [int8!]]  f64/a = 23  f64/b = 0 ]
+	--assert all [struct? w:   make struct! [a: [word!]  foo b [int8!]]  w/a = 'foo  w/b   = 0 ]
+
+	--assert (mold i8 ) = "make struct! [a: [int8!] 23 b: [int8!] 0]"
+	--assert (mold i16) = "make struct! [a: [int16!] 23 b: [int8!] 0]"
+	--assert (mold i32) = "make struct! [a: [int32!] 23 b: [int8!] 0]"
+	--assert (mold i64) = "make struct! [a: [int64!] 23 b: [int8!] 0]"
+	--assert (mold u8 ) = "make struct! [a: [uint8!] 23 b: [int8!] 0]"
+	--assert (mold u16) = "make struct! [a: [uint16!] 23 b: [int8!] 0]"
+	--assert (mold u32) = "make struct! [a: [uint32!] 23 b: [int8!] 0]"
+	--assert (mold u64) = "make struct! [a: [uint64!] 23 b: [int8!] 0]"
+	--assert (mold f32) = "make struct! [a: [float!] 23.0 b: [int8!] 0]"
+	--assert (mold f64) = "make struct! [a: [double!] 23.0 b: [int8!] 0]"
+	--assert (mold w)   = "make struct! [a: [word!] foo b: [int8!] 0]"
+
+--test-- "Construction from struct prototype"
+	proto!: make struct! [a: [uint8!] 1 b: [uint8!] 2]
+	--assert all [proto!/a = 1 proto!/b = 2]
+	s1: make proto! [a: 10]
+	s2: make proto! [b: 20]
+	s3: make proto! [b: 20 a: 10]
+	--assert all [s1/a = 10 s1/b = 2 ]
+	--assert all [s2/a = 1  s2/b = 20]
+	--assert all [s3/a = 10 s3/b = 20]
+
 ===end-group===
 
 ===start-group=== "Invalid struct construction"
