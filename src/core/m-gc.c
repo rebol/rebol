@@ -197,9 +197,9 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 	CHECK_MARK(stu->fields, depth);
 	CHECK_MARK(STRUCT_DATA_BIN(stu), depth);
 
-	Debug_Num("mark spec:  ", (int)stu->spec);
-	Debug_Num("mark fields:", (int)stu->fields);
-	Debug_Num("mark bin:   ", (int)STRUCT_DATA_BIN(stu));
+	//Debug_Num("mark spec:  ", (int)stu->spec);
+	//Debug_Num("mark fields:", (int)stu->fields);
+	//Debug_Num("mark bin:   ", (int)STRUCT_DATA_BIN(stu));
 
 	ASSERT2(IS_BARE_SERIES(stu->data), RP_BAD_SERIES);
 	ASSERT2(!IS_EXT_SERIES(stu->data), RP_BAD_SERIES);
