@@ -352,8 +352,8 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	REBCNT l2 = VAL_LEN(v2);
 	REBCNT len = MIN(l1, l2);
 	REBCNT n;
-	REBU64 i1;
-	REBU64 i2;
+	REBU64 i1 = 0;
+	REBU64 i2 = 0;
 	REBYTE *d1 = VAL_SERIES(v1)->data;
 	REBYTE *d2 = VAL_SERIES(v2)->data;
 	REBCNT b1 = VECT_TYPE(VAL_SERIES(v1));

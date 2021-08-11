@@ -178,9 +178,9 @@
 {
 	REBVAL *val;
 	REBVAL *arg = NULL;
-	REBINT n;
-	REBD32 x1, x2;
-	REBD32 y1, y2;
+	REBINT n = 0;
+	REBD32 x1, x2 = 0.0;
+	REBD32 y1, y2 = 0.0;
 
 	val = D_ARG(1);
 	x1 = VAL_PAIR_X(val);

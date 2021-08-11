@@ -504,7 +504,7 @@ bad_target:
 ***********************************************************************/
 {
 	REBSER *series = parse->series;
-	REBCNT i;
+	REBCNT i = 0;
 	REBSER *ser;
 
 	// TO a specific index position.

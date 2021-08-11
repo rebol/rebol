@@ -522,7 +522,7 @@ static struct {
 	REBSER *ser;
 	REB_MOLD mo = {0};
 	REBCNT n;
-	REBUNI c;
+	REBUNI c = 0;
 	REBSER *arg;
 
 	if (pvs->setval) return PE_BAD_SET;
@@ -559,8 +559,8 @@ static struct {
 {
 	REBVAL	*value = D_ARG(1);
 	REBVAL  *arg = D_ARG(2);
-	REBINT	index;
-	REBINT	tail;
+	REBINT	index = 0;
+	REBINT	tail = 0;
 	REBINT	len;
 	REBSER  *ser;
 	REBCNT  type;
@@ -676,7 +676,7 @@ pick_it:
 			return R_RET;
 		}
 		else {
-			REBUNI c;
+			REBUNI c = 0;
 			arg = D_ARG(3);
 			if (IS_CHAR(arg))
 				c = VAL_CHAR(arg);
