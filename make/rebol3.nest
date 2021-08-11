@@ -365,7 +365,7 @@ include-midi: [
 	]
 	#if macOS? [
 		core-files: %core/p-midi.c
-		host-files: %os/posix/dev-midi-osx.c
+		host-files: %os/osx/dev-midi.c
 		config:     INCLUDE_MIDI_DEVICE
 		frameworks: [CoreServices CoreMIDI]
 
