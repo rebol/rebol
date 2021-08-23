@@ -243,7 +243,6 @@ static inline void chacha_nonce(chacha20_ctx *ctx, u8 *nonce) {
 
 static inline int poly1305_generate_key(u8 *key256, u8 *nonce, u32 noncelen, u8 *poly_key, u32 counter) {
 	struct chacha20_ctx ctx;
-	u64 ctr;
 	u64 sequence = 0;
 	u32 state[16];
 	int i = 10;

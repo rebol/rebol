@@ -237,7 +237,7 @@ enum {
 typedef long (__stdcall *FUNCPTR)();
 typedef void(__cdecl *CFUNC)(void *);
 #else
-typedef long (*FUNCPTR)();
+typedef long (*FUNCPTR)(void);
 typedef void(*CFUNC)(void *);
 #endif
 

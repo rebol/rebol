@@ -527,13 +527,13 @@ static REBINT get_codepage_id(REBVAL *cp)
 		if (_stricmp(cs_cast(name), codepage_alias[i].name) == 0)
 			return codepage_alias[i].codepage;
 #else
-	if (strncasecmp(name, "cp", 2) == 0)
-		return atoi(name + 2); /* CP123 */
+	if (strncasecmp(cs_cast(name), "cp", 2) == 0)
+		return atoi(cs_cast(name) + 2); /* CP123 */
 	else if ('0' <= name[0] && name[0] <= '9')
-		return atoi(name);     /* 123 */
+		return atoi(cs_cast(name));     /* 123 */
 
 	for (i = 0; codepage_alias[i].name != NULL; ++i)
-		if (strcasecmp(name, codepage_alias[i].name) == 0)
+		if (strcasecmp(cs_cast(name), codepage_alias[i].name) == 0)
 			return codepage_alias[i].codepage;
 #endif
 	return -1;
@@ -596,11 +596,12 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 	REBVAL *val_to   = D_ARG(4);
 
 	REBCNT  src_len = VAL_LEN(data);
-	REBINT  dst_len = 0;
 	REBSER *dst_wide;
-	REBSER *dest;
+	
 
 #ifdef TO_WINDOWS
+    REBINT  dst_len = 0;
+    REBSER *dest;
 	REBINT cp, tp;
 	  BOOL default_char_used;
 
@@ -717,13 +718,13 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 	size_t dst_size;
 	size_t nread;
 	REBCNT tail;
-	const char *fromcode = get_codepage_name(val_from);
+	const char *fromcode = cs_cast(get_codepage_name(val_from));
 	const char *tocode;
 	int wide;
 
 	if (!fromcode) Trap1(RE_INVALID_ARG, val_from);
 	if (ref_to) {
-		tocode = get_codepage_name(val_to);
+		tocode = cs_cast(get_codepage_name(val_to));
 		if (!tocode) Trap1(RE_INVALID_ARG, val_to);
 		wide = 1; // result is raw binary series
 	} else {
@@ -756,7 +757,7 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 				// There is not sufficient room at destination
 				if (SERIES_SPACE(dst_wide) < (4 * src_len)) {
 					// expand the destination series; maximum 4x of the source
-					tail = ((REBYTE*)dst - BIN_HEAD(dst_wide)) / wide;
+					tail = (REBCNT)((REBYTE*)dst - BIN_HEAD(dst_wide)) / wide;
 					SERIES_TAIL(dst_wide) = tail;
 					//printf("\n---expand delta: %d\n", src_len);
 					Expand_Series(dst_wide, tail, src_len / 2);
@@ -782,7 +783,7 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 		}
 		if (src_size == 0) break;
 	}
-	SERIES_TAIL(dst_wide) = ((REBYTE*)dst - BIN_HEAD(dst_wide)) / wide;
+	SERIES_TAIL(dst_wide) = (REBCNT)((REBYTE*)dst - BIN_HEAD(dst_wide)) / wide;
 	if (ref_to) {
 		SET_BINARY(D_RET, dst_wide);
 	}

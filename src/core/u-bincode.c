@@ -525,7 +525,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 
 					case SYM_ENCODEDU32:
 						if (IS_INTEGER(next)) {
-							count += EncodedU32_Size(VAL_INT64(next));
+							count += EncodedU32_Size(VAL_UNT32(next));
 							continue;
 						}
 						goto error;
@@ -902,12 +902,12 @@ static REBCNT EncodedU32_Size(u32 value) {
 
 					case SYM_ENCODEDU32:
 						ASSERT_U32_RANGE(next);
-						ulong = (u32)VAL_INT64(next);
+						ulong = VAL_UNT32(next);
 						if (ulong == 0) {
 							n = 1;
 							cp[0] = 0;
 						} else {
-							n = EncodedU32_Size(VAL_INT64(next));
+							n = EncodedU32_Size(VAL_UNT32(next));
 							for (u = 0; u < n-1; u++) {
 								cp[u] = (char)(128 + ((ulong >> (u * 7)) & 127));
 							}
@@ -1019,7 +1019,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 		inBit = IS_OBJECT(val_ctx) ? VAL_INT32(VAL_OBJ_VALUE(val_ctx, BINCODE_READ_BITMASK)): 0;
 
 		if (IS_INTEGER(val_read)) {
-			n = VAL_INT64(val_read);
+			n = (REBCNT)VAL_INT64(val_read);
 			ASSERT_READ_SIZE(val_read, cp, ep, n);
 			if(ref_into) {
 				Trap0(RE_FEATURE_NA);
@@ -1376,7 +1376,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 								VAL_SERIES(temp) = bin_new;
 								VAL_INDEX(temp) = 0;
 								if (cmd == SYM_STRING_BYTES) {
-									VAL_TAIL(temp) = strnlen(cs_cast(VAL_BIN(temp)), n);
+									VAL_TAIL(temp) = (REBCNT)strnlen(cs_cast(VAL_BIN(temp)), n);
 								}
 							}
 							break;
@@ -1387,7 +1387,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 								if(bp == ep) Trap1(RE_OUT_OF_RANGE, value);
 								bp++;
 							}
-							n = bp - cp;
+							n = (REBCNT)(bp - cp);
 							VAL_SET(temp, REB_STRING);
 							bin_new = Copy_Series_Part(bin, VAL_INDEX(buffer_read), n);
 							SET_STR_END(bin_new, n);
@@ -1436,20 +1436,22 @@ static REBCNT EncodedU32_Size(u32 value) {
 							goto readNBytes;
 						case SYM_UI32BYTES:
 							ASSERT_READ_SIZE(value, cp, ep, 4);
-							n = ((u64)cp[3]      ) |
+							n = (REBCNT)(
+                                ((u64)cp[3]      ) |
 							    ((u64)cp[2] << 8 ) |
 							    ((u64)cp[1] << 16) |
-							    ((u64)cp[0] << 24) ;
+							    ((u64)cp[0] << 24));
 							ASSERT_READ_SIZE(value, cp, ep, n);
 							cp += 4;
 							VAL_INDEX(buffer_read) += 4;
 							goto readNBytes;
 						case SYM_UI32LEBYTES:
 							ASSERT_READ_SIZE(value, cp, ep, 4);
-							n = ((u64)cp[0]      ) |
+                            n = (REBCNT)(
+                                ((u64)cp[0]      ) |
 							    ((u64)cp[1] << 8 ) |
 							    ((u64)cp[2] << 16) |
-							    ((u64)cp[3] << 24) ;
+							    ((u64)cp[3] << 24));
 							ASSERT_READ_SIZE(value, cp, ep, n);
 							cp += 4;
 							VAL_INDEX(buffer_read) += 4;

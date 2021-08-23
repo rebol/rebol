@@ -135,7 +135,8 @@ typedef struct Reb_Type {
 #define NONE_VALUE		ROOT_NONEVAL
 
 #define VAL_INT32(v)	(REBINT)((v)->data.integer)
-#define VAL_INT64(v)	((v)->data.integer)
+#define VAL_INT64(v)    ((v)->data.integer)
+#define VAL_UNT32(v)    (REBCNT)((v)->data.integer)
 #define VAL_UNT64(v)	((v)->data.unteger)
 #define	SET_INTEGER(v,n) VAL_SET(v, REB_INTEGER), ((v)->data.integer) = (n)
 #define	SET_INT32(v,n)  ((v)->data.integer) = (REBINT)(n)
