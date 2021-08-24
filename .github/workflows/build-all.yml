@@ -161,15 +161,20 @@ jobs:
 #      - name: Build 64bit Rebol/Core as a host application
 #        run: ./siskin make/rebol3.nest %host-core-x64-osx
 
+      - name: Debase certificate
+        id: cert
+        uses: timheuer/base64-to-file@v1
+        with:
+          fileName: 'certificate.p12'
+          encodedString: ${{ secrets.MACOS_CERTIFICATE }}
+    
       - name: Codesign executables
         # https://localazy.com/blog/how-to-automatically-sign-macos-apps-using-github-actions
         env: 
           MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
           MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
           MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
-        run: |
-          echo "YWFh" | base64 -D
-          echo "$MACOS_CERTIFICATE" | base64 —D -o certificate.p12
+        run: | 
           security create-keychain -p temp-password build.keychain security default-keychain -s build.keychain
           security unlock-keychain -p temp-password build.keychain
           security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
