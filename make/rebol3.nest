@@ -332,7 +332,17 @@ include-image-os-codec: [
 	#if Windows? [
 		config: INCLUDE_IMAGE_OS_CODEC
 		host-files: %os/win32/host-image.c
-		mezz-lib-files: %mezz/codec-image.reb
+		mezz-lib-files: %mezz/codec-image-win.reb
+	]
+	#if MacOS? [
+		config: INCLUDE_IMAGE_OS_CODEC
+		host-files: [
+			%os/osx/host-image.c
+			%os/osx/sys-codecs.m
+			%os/osx/sys-utils.c
+		]
+		frameworks: [CoreGraphics CoreImage ImageIO Foundation]
+		mezz-lib-files: %mezz/codec-image-osx.reb
 	]
 ]
 
@@ -340,11 +350,14 @@ include-image-codecs: [
 	#if Windows? [
 		:include-image-os-codec
 	]
-	#if Posix? [
+	#if Linux? [
 		:include-native-bmp-codec
 		:include-native-png-codec
 		:include-native-jpg-codec
 		:include-native-gif-codec
+	]
+	#if MacOS? [
+		:include-image-os-codec
 	]
 ]
 
