@@ -128,7 +128,7 @@ void set_vect(REBCNT bits, REBYTE *data, REBCNT n, REBI64 i, REBDEC f) {
 
 void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 {
-	REBCNT idx = VAL_INDEX(blk);
+//	REBCNT idx = VAL_INDEX(blk);
 	REBCNT len = VAL_LEN(blk);
 	REBVAL *val;
 	REBCNT n = 0;

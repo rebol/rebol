@@ -563,6 +563,7 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 	return NULL;
 }
 
+#ifdef TO_WINDOWS
 /***********************************************************************
 **
 */	static void Swap_Endianess_U16(u16 *data, REBCNT len)
@@ -576,6 +577,7 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 		data[i] = (num>>8) | (num<<8);
 	}
 }
+#endif
 
 /***********************************************************************
 **

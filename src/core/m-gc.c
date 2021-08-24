@@ -111,7 +111,7 @@ REBVAL *N_watch(REBFRM *frame, REBVAL **inter_block)
 #endif
 
 static void Mark_Series(REBSER *series, REBCNT depth);
-static void Mark_Value(REBVAL *val, REBCNT depth);
+//static void Mark_Value(REBVAL *val, REBCNT depth);
 
 /***********************************************************************
 **

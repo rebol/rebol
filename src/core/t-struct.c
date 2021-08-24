@@ -158,7 +158,7 @@ static get_scalar(REBSTU *stu,
 	return FALSE;
 }
 
-
+#ifdef unused
 /***********************************************************************
 **
 */	static void Set_Struct_Vars(REBSTU *strut, REBVAL *blk)
@@ -166,7 +166,7 @@ static get_scalar(REBSTU *stu,
 ***********************************************************************/
 {
 }
-
+#endif
 
 /***********************************************************************
 **
@@ -666,12 +666,12 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 		REBVAL *blk = VAL_BLK_DATA(data);
 		REBINT field_idx = 0; /* for field index */
 		u64 offset = 0; /* offset in data */
-		REBCNT eval_idx = 0; /* for spec block evaluation */
+//		REBCNT eval_idx = 0; /* for spec block evaluation */
 		REBVAL *init = NULL; /* for result to save in data */
 		REBOOL expect_init = FALSE;
 		REBINT raw_size = -1;
 		REBUPT raw_addr = 0;
-		REBCNT alignment = 0;
+//		REBCNT alignment = 0;
 
 		VAL_STRUCT_SPEC(out) = Copy_Series(VAL_SERIES(data));
 		VAL_STRUCT_DATA(out) = Make_Series(1, sizeof(struct Struct_Data), FALSE);
@@ -857,8 +857,8 @@ failed:
 /*
 ***********************************************************************/
 {
-	struct Struct_Field *field = NULL;
-	REBCNT i = 0;
+//	struct Struct_Field *field = NULL;
+//	REBCNT i = 0;
 	REBSTU *stu = &VAL_STRUCT(pvs->value);
 	if (!IS_WORD(pvs->select)) {
 		return PE_BAD_SELECT;

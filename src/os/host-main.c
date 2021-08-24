@@ -106,7 +106,7 @@ void Host_Crash(char *reason) {
 }
 
 void Host_Repl() {
-	REBOOL why_alert = TRUE;
+//	REBOOL why_alert = TRUE;
 
 #define MAX_CONT_LEVEL 1024
 	REBYTE cont_str[] = "\x1B[1;31;49m  \x1B[1;33;49m ";

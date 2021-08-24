@@ -225,7 +225,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 	REBVAL *val_read  = D_ARG(7);
 	REBOOL  ref_into  = D_REF(8);
 	REBVAL *val_into  = D_ARG(9);
-	REBOOL  ref_with  = D_REF(10);
+//	REBOOL  ref_with  = D_REF(10);
 	REBVAL *val_num   = D_ARG(11);
 
     REBVAL *ret = D_RET;

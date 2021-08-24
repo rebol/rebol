@@ -596,7 +596,6 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 	REBOOL  ref_release = D_REF(8);
 
 	REBSER *bin = NULL;
-	REBVAL *ret;
 	uECC_Curve curve = NULL;
 	ECC_CTX *ecc = NULL;
 
@@ -766,6 +765,9 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
     REBOOL  ref_stream    = D_REF(7);
     REBVAL *val_data      = D_ARG(8);
 	REBOOL  ref_into      = D_REF(9);
+	
+	if(ref_into)
+		Trap0(RE_FEATURE_NA);
 
 	REBINT  len;
 	REBU64  sequence;
@@ -853,9 +855,9 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 	REBVAL *val_mac       = D_ARG(6);
     
     REBVAL *ret = D_RET;
-	REBSER *ctx_ser;
+//	REBSER *ctx_ser;
 	REBINT  len;
-	REBCNT  i;
+//	REBCNT  i;
 	REBYTE  mac[16];
 
 	if (IS_BINARY(val_ctx)) {
@@ -991,7 +993,7 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 		// length (2 bytes)
 		unsigned char aad[13];
 		aad_size = sizeof(aad);
-		unsigned char *sequence = aad;
+//		unsigned char *sequence = aad;
 
 		chacha20_poly1305_aead(&chacha->local_chacha, VAL_BIN_AT(val_plain), (REBCNT)len-POLY1305_TAGLEN, VAL_BIN_AT(val_local_aad), VAL_LEN(val_local_aad), poly1305_key, ctx_ser->data);
 

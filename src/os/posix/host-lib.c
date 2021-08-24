@@ -743,8 +743,8 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 **
 ***********************************************************************/
 {
-	REBINT thread;
 /*
+	REBINT thread;
 	Task_Ready = CreateEvent(NULL, TRUE, FALSE, "REBOL_Task_Launch");
 	if (!Task_Ready) return -1;
 
@@ -1015,7 +1015,6 @@ child_error:
 		off_t input_size = 0;
 		off_t output_size = 0;
 		off_t err_size = 0;
-		int exited = 0;
 
 		/* initialize outputs */
 		if (output_type != NONE_TYPE
