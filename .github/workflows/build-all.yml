@@ -161,24 +161,33 @@ jobs:
 #      - name: Build 64bit Rebol/Core as a host application
 #        run: ./siskin make/rebol3.nest %host-core-x64-osx
 
-      - name: Debase certificate
-        id: cert
-        uses: timheuer/base64-to-file@v1
-        with:
-          fileName: 'certificate.p12'
-          encodedString: ${{ secrets.MACOS_CERTIFICATE }}
+      - name: Install the Apple certificate
+      # https://docs.github.com/en/actions/guides/installing-an-apple-certificate-on-macos-runners-for-xcode-development
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE }}
+          P12_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+          # import certificate from secrets
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode --output $CERTIFICATE_PATH
+
+          # create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
     
       - name: Codesign executables
-        # https://localazy.com/blog/how-to-automatically-sign-macos-apps-using-github-actions
         env: 
-          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
-          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
           MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
         run: | 
-          security create-keychain -p temp-password build.keychain security default-keychain -s build.keychain
-          security unlock-keychain -p temp-password build.keychain
-          security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k temp-password build.keychain
           /usr/bin/codesign --force -s $MACOS_IDENTITY_ID ./build/rebol3-base-x64-osx -v
           /usr/bin/codesign --force -s $MACOS_IDENTITY_ID ./build/rebol3-core-x64-osx -v
           /usr/bin/codesign --force -s $MACOS_IDENTITY_ID ./build/rebol3-bulk-x64-osx -v
