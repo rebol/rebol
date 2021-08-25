@@ -368,6 +368,14 @@ include-clipboard: [
 		core-files: %core/p-clipboard.c
 		host-files: %os/win32/dev-clipboard.c
 	]
+	#if macOS? [
+		config:     INCLUDE_CLIPBOARD
+		core-files: %core/p-clipboard.c
+		host-files: %os/osx/dev-clipboard.c
+		host-files: %os/osx/sys-clipboard.m
+		host-files: %os/osx/sys-utils.m
+		framework:  AppKit
+	]
 ]
 include-midi: [
 	#if Windows? [

@@ -39,8 +39,7 @@
 	REBREQ *req;
 	REBINT result;
 	REBVAL *arg;
-	REBCNT args = 0;
-	REBCNT refs;	// refinement argument flags
+	REBCNT refs = 0;	// refinement argument flags
 	REBINT len;
 	REBSER *ser;
 
@@ -71,11 +70,19 @@
 		return R_NONE;
 
 	case A_READ:
-		args = Find_Refines(ds, ALL_READ_REFS);
+		refs = Find_Refines(ds, ALL_READ_REFS);
 		// This device is opened on the READ:
 		if (!IS_OPEN(req)) {
 			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
 		}
+			
+		// Handle /part refinement:
+		if (refs & AM_READ_PART) {
+			req->length = VAL_INT32(D_ARG(ARG_READ_LENGTH));
+		} else {
+			req->length = 0;
+		}
+			
 		// Issue the read request:
 		CLR_FLAG(req->flags, RRF_WIDE); // allow byte or wide chars
 		result = OS_DO_DEVICE(req, RDC_READ);
@@ -96,7 +103,7 @@
 		OS_FREE(req->data); // release the copy buffer
 		req->data = 0;
 
-		if (args & AM_READ_LINES) {
+		if (refs & AM_READ_LINES) {
 			Set_Block(D_RET, Split_Lines(arg));
 		} else {
 			*D_RET = *arg;
@@ -126,14 +133,16 @@
 		if (refs & AM_WRITE_PART && VAL_INT32(D_ARG(ARG_WRITE_LENGTH)) < len)
 			len = VAL_INT32(D_ARG(ARG_WRITE_LENGTH));
 
+#ifdef TO_WINDOWS
+		// Oldes: this code is very old and should be revisited!!!
 		// If bytes, see if we can fit it:
 		if (SERIES_WIDE(VAL_SERIES(arg)) == 1) {
-#ifdef ARG_STRINGS_ALLOWED
-			if (Is_Not_ASCII(VAL_BIN_DATA(arg), len)) {
-				Set_String(arg, Copy_Bytes_To_Unicode(VAL_BIN_DATA(arg), len));
-			} else
-				req->data = VAL_BIN_DATA(arg);
-#endif
+			#ifdef ARG_STRINGS_ALLOWED
+				if (Is_Not_ASCII(VAL_BIN_DATA(arg), len)) {
+					Set_String(arg, Copy_Bytes_To_Unicode(VAL_BIN_DATA(arg), len));
+				} else
+					req->data = VAL_BIN_DATA(arg);
+			#endif
 
 			// Temp conversion:!!!
 			ser = Make_Unicode(len);
@@ -153,7 +162,13 @@
 
 		// Temp!!!
 		req->length = len * sizeof(REBUNI);
-
+		
+#else // macOS requires UTF8 encoded data (no clipboard support on other oses yet)
+		ser = Encode_UTF8_Value(arg, len, 0);
+		Set_String(arg, ser);
+		req->data = VAL_BIN_DATA(arg);
+		req->length = len;
+#endif
 		// Setup the write:
 		*OFV(port, STD_PORT_DATA) = *arg;	// keep it GC safe
 		req->actual = 0;
