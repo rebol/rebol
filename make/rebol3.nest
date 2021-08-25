@@ -339,7 +339,7 @@ include-image-os-codec: [
 		host-files: [
 			%os/osx/host-image.c
 			%os/osx/sys-codecs.m
-			%os/osx/sys-utils.c
+			%os/osx/sys-utils.m
 		]
 		frameworks: [CoreGraphics CoreImage ImageIO Foundation]
 		mezz-lib-files: %mezz/codec-image-osx.reb

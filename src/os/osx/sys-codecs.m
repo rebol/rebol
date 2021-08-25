@@ -25,15 +25,13 @@
 **  Note: So far saves just one frame. For multi-image formats it would be
 **        better to write a device (image:// port or something like that)
 **
-************************************************************************
-**  Useful links:
-**  https://chromium.googlesource.com/webm/webp-wic-codec
-***********************************************************************/
-
+************************************************************************/
 #include "sys-codecs.h"
-#include "sys-utils.h"
+#define kSDUTTypeHEIC ((__bridge CFStringRef)@"public.heic")
+#define kSDUTTypeHEIF ((__bridge CFStringRef)@"public.heif")
 
 
+#ifdef unused
 void listImageCodecs(void){
 	//puts("Suppported codecs:");
 	CFArrayRef mySourceTypes = CGImageSourceCopyTypeIdentifiers();
@@ -41,14 +39,9 @@ void listImageCodecs(void){
 	CFArrayRef myDestinationTypes = CGImageDestinationCopyTypeIdentifiers();
 	CFShow(myDestinationTypes);
 }
+#endif
 
-CFURLRef urlFromCString(const char* cString){
-	NSString *myNSString = [NSString stringWithUTF8String:cString];
-	NSString *path = [myNSString stringByExpandingTildeInPath];
-	return CFURLCreateWithFileSystemPath(NULL, (CFStringRef)path, 0, false);
-}
-
-CODECS_API int DecodeImageFromFile(const char *uri, unsigned int frame, REBCDI *codi)
+int DecodeImageFromFile(const char *uri, unsigned int frame, REBCDI *codi)
 {
 	int error = 0;
 	CFURLRef url = NULL;
@@ -62,6 +55,7 @@ CODECS_API int DecodeImageFromFile(const char *uri, unsigned int frame, REBCDI *
 	NSUInteger w, h;
 	NSUInteger bytesPerPixel = 4;
 	NSUInteger bitsPerComponent = 8;
+	
 	do {
 		if(uri) {
 			// decoding from file
@@ -87,7 +81,6 @@ CODECS_API int DecodeImageFromFile(const char *uri, unsigned int frame, REBCDI *
 		CGColorSpaceRelease(space);
 		CGContextRelease(ctx);
 		
-		//listImageCodecs();
 		codi->w = (UInt32)w;
 		codi->h = (UInt32)h;
 		codi->len = w * h * 4;
@@ -99,11 +92,17 @@ CODECS_API int DecodeImageFromFile(const char *uri, unsigned int frame, REBCDI *
 	return error;
 }
 
-CODECS_API int EncodeImageToFile(const char *uri, REBCDI *codi)
+int EncodeImageToFile(const char *uri, REBCDI *codi)
 {
-	int result = 0;
+	int error = 0;
 	CFStringRef type;
 	CFMutableDictionaryRef prop;
+	CGDataProviderRef data;
+	CGColorSpaceRef colorSpace;
+	CGImageRef img = NULL;
+	CGImageDestinationRef imgDst = NULL;
+	CFURLRef url;
+	CFDataRef dataDst;
 	
 	switch (codi->type) {
 	case CODI_IMG_PNG:  type = kUTTypePNG  ; break;     // Portable Network Graphics
@@ -112,43 +111,45 @@ CODECS_API int EncodeImageToFile(const char *uri, REBCDI *codi)
 	case CODI_IMG_GIF:  type = kUTTypeGIF  ; break;     // Graphics Interchange Format
 	case CODI_IMG_BMP:  type = kUTTypeBMP  ; break;     // Device independent bitmap
 	case CODI_IMG_TIFF: type = kUTTypeTIFF ; break;     // Tagged Image File Format
+	case CODI_IMG_HEIF: type = kSDUTTypeHEIC ; break;
 	default:
 			codi->error = 1;
 			return codi->error;
 	}
-	
-	CGDataProviderRef data = CGDataProviderCreateWithData(NULL, codi->bits, codi->w * codi->h * 4, NULL);
-	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-	CGImageRef img = CGImageCreate(codi->w, codi->h, 8, 32, codi->w * 4, colorSpace, (kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big), data, NULL, TRUE, 0);
-	CGDataProviderRelease(data);
-	CGColorSpaceRelease(colorSpace);
-	
-	CFURLRef url;
-	CGImageDestinationRef imgDst;
-	CFDataRef dataDst;
+	do {
+		data = CGDataProviderCreateWithData(NULL, codi->bits, codi->w * codi->h * 4, NULL);
+		ASSERT_NOT_NULL(data, 1, "prepare input data");
+		colorSpace = CGColorSpaceCreateDeviceRGB();
+		img = CGImageCreate(codi->w, codi->h, 8, 32, codi->w * 4, colorSpace, (kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big), data, NULL, TRUE, 0);
+		CGDataProviderRelease(data);
+		CGColorSpaceRelease(colorSpace);
+		ASSERT_NOT_NULL(img, 2, "create an image");
+		
+		
+		if(uri == NULL) {
+			// writing into preallocated buffer (fixed size!)
+			dataDst = CFDataCreateWithBytesNoCopy(NULL, codi->data, codi->len, NULL);
+			ASSERT_NOT_NULL(dataDst, 3, "prepare output data");
+			imgDst = CGImageDestinationCreateWithData((CFMutableDataRef)dataDst, type, 1, 0);
+		} else {
+			// writing directly into file
+			url = urlFromCString(uri);
+			imgDst = CGImageDestinationCreateWithURL(url, type, 1, 0);
+		}
+		ASSERT_NOT_NULL(imgDst, 4, "create a destination image");
+		// TODO: handle user defined options
+		prop = CFDictionaryCreateMutable(NULL,0,NULL,NULL);
+		CFDictionaryAddValue(prop, kCGImageDestinationLossyCompressionQuality, "0.2");
+		CGFloat quality = 0.6;
+		CGImageDestinationAddImage(imgDst, img, (__bridge CFDictionaryRef)@{(__bridge NSString *)kCGImageDestinationLossyCompressionQuality: @(quality)});
+		CGImageDestinationFinalize(imgDst);
+	} while(FALSE);
 	if(uri == NULL) {
-		// writing into preallocated buffer (fixed size!)
-		TRACE_PTR("dataTarget:", &codi->data);
-		dataDst = CFDataCreateWithBytesNoCopy(NULL, codi->data, codi->len, NULL);
-		imgDst = CGImageDestinationCreateWithData((CFMutableDataRef)dataDst, type, 1, 0);
-	} else {
-		// writing directly into file
-		url = urlFromCString(uri);
-		imgDst = CGImageDestinationCreateWithURL(url, type, 1, 0);
-	}
-	prop = CFDictionaryCreateMutable(NULL,0,NULL,NULL);
-	CFDictionaryAddValue(prop, kCGImageDestinationLossyCompressionQuality, "0.2");
-	CGFloat quality = 0.6;
-	CGImageDestinationAddImage(imgDst, img, (__bridge CFDictionaryRef)@{(__bridge NSString *)kCGImageDestinationLossyCompressionQuality: @(quality)});
-	CGImageDestinationFinalize(imgDst);
-	
-	if(uri == NULL) {
-		TRACE_PTR("dataDst:", &dataDst);
 		codi->len = CFDataGetLength(dataDst);
 		//CFRelease(dataDst);
 	}
-	CFRelease(img);
-	CFRelease(imgDst);
-	codi->error = result;
-	return result;
+	SAFE_CF_RELEASE(img);
+	SAFE_CF_RELEASE(imgDst);
+	codi->error = error;
+	return error;
 }

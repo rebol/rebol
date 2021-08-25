@@ -53,6 +53,10 @@
 #include <type_traits> // used in CASTING MACROS
 #endif
 
+#ifdef __OBJC__
+#define HAS_BOOL // don't redefine BOOL in objective-c code
+#endif
+
 #if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 /* C-code types: use C99 */
 

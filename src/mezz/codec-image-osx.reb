@@ -11,6 +11,16 @@ REBOL [
 ]
 
 register-codec [
+	name:  'heif
+	title: "High Efficiency Image File Format"
+	suffixes: [%.heif %.heic]
+
+	decode:   func [data [binary!]][lib/image/load/as data 'HEIF]
+	encode:   func [data [image! ]][lib/image/save/as none data 'HEIF]
+	identify: func [data [binary!]][parse data [4 skip #{6674797068656963} to end]]
+]
+
+register-codec [
 	name:  'tiff
 	title: "Tagged Image File Format"
 	suffixes: [%.tif %.tiff]
