@@ -2,11 +2,12 @@ REBOL [
 	title:  "REBOL 3 image codecs extensions"
 	name:   'codec-image-ext
 	author: "Oldes"
-	version: 0.2.0
-	date:    8-Mar-2021
+	version: 0.3.0
+	date:    30-Aug-2021
 	history: [
 		0.1.0 10-Nov-2020 "Oldes" {Extend native PNG codec with `size?` function}
 		0.2.0 08-Mar-2021 "Oldes" {Extend native PNG with `chunks` function}
+		0.3.0 30-Aug-2021 "Oldes" {Extend native JPEG codec with `size?` function}
 	]
 ]
 
@@ -111,5 +112,37 @@ if find codecs 'png [
 		]
 		new-line/skip out true 2
 		out
+	]
+]
+
+if find codecs 'jpeg [
+	extend codecs/jpeg 'size? function ["Return JPEG image size or none" img [file! url! binary!]][
+		unless binary? img [img: read/binary img]
+		unless img: find/tail img #{FFD8} [return none]
+		while [2 <= length? img][
+			if img/1 <> 255 [break] ;invalid chunk
+			switch img/2 [
+				192 ;baseline
+				193 ;baseline extended
+				194 ;progressive
+				195 ;lossless
+				[
+					binary/read img [
+						skip 5 ; tag, length, bpp
+						h: UI16
+						w: UI16
+					]
+					return as-pair w h
+				]
+				217 [break] ;end of image
+				218 0 [
+					unless img: find img 255 [return none] ; error
+					continue
+				]
+			]
+			img: skip img 2 ; skip chunk name
+			img: skip img binary/read img 'ui16
+		]
+		none
 	]
 ]

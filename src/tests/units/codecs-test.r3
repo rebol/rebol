@@ -404,6 +404,16 @@ if find codecs 'PNG [
 	===end-group===
 ]
 
+if find codecs 'JPEG [
+	===start-group=== "JPEG codec"
+	--test-- "jpeg/size?"
+		--assert 256x256 = codecs/jpeg/size? %units/files/flower.jpg
+		--assert 256x256 = codecs/jpeg/size? %units/files/flower-from-photoshop.jpg
+		--assert 256x256 = codecs/jpeg/size? %units/files/flower-tiny.jpg
+		--assert none?     codecs/jpeg/size? %units/files/test.aar
+	===end-group===
+]		
+
 if find codecs 'XML [
 	===start-group=== "XML codec"
 	--test-- "XML decode test1"
