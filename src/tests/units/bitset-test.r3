@@ -208,6 +208,24 @@
 ===end-group===
 
 
+===start-group=== "find"
+	--test-- "find bitset! char!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2166
+		ABC: charset [#"A" #"B" #"C"]
+		--assert find ABC #"a"
+		--assert find ABC #"A"
+		--assert find/case ABC #"A"
+		--assert not find/case ABC #"a"
+		; finding integer value is always case-sensitive
+		--assert find ABC to-integer #"A"
+		--assert not find ABC to-integer #"a"
+		; pick is always case-sensitive
+		--assert pick ABC #"A"
+		--assert not pick ABC #"a"
+
+===end-group===
+
+
 ===start-group=== "complemented"
 	
 	--test-- "comp-1"	--assert "make bitset! [not bits #{}]"   = mold charset [not]

@@ -600,7 +600,7 @@ found:
 
 	case A_PICK:
 	case A_FIND:
-		if (!Check_Bits(VAL_SERIES(value), arg,(action == A_FIND && D_REF(ARG_FIND_CASE)) ))
+		if (!Check_Bits(VAL_SERIES(value), arg,(IS_CHAR(arg) && action == A_FIND && !D_REF(ARG_FIND_CASE)) ))
 #ifdef PICK_BITSET_AS_NONE
 			return R_NONE;
 #else
