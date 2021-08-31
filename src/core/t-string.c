@@ -118,7 +118,8 @@ static REBCNT find_string(REBSER *series, REBCNT index, REBCNT end, REBVAL *targ
 
 	if (flags & AM_FIND_SAME) flags |= AM_FIND_CASE; // /SAME has same functionality as /CASE for any-string!
 
-	if (ANY_BINSTR(target)) {
+	//O: not using ANY_BINSTR as TAG is now handled separately
+	if (VAL_TYPE(target) >= REB_BINARY && VAL_TYPE(target) < REB_TAG) {
 		// Do the optimal search or the general search?
 		if (BYTE_SIZE(series) && VAL_BYTE_SIZE(target) && !(flags & ~(AM_FIND_CASE|AM_FIND_MATCH))) {
 			return Find_Byte_Str(series, start, VAL_BIN_DATA(target), len, !GET_FLAG(flags, ARG_FIND_CASE-1), GET_FLAG(flags, ARG_FIND_MATCH-1));
@@ -128,6 +129,10 @@ static REBCNT find_string(REBSER *series, REBCNT index, REBCNT end, REBVAL *targ
 			return Find_Str_Str(series, start, index, end, skip, VAL_SERIES(target), VAL_INDEX(target), len, flags & (AM_FIND_MATCH | AM_FIND_CASE | AM_FIND_TAIL));
 		}
 	}
+	else if (IS_TAG(target)) {
+		return Find_Str_Tag(series, start, index, end, skip, VAL_SERIES(target), VAL_INDEX(target), len, flags & (AM_FIND_MATCH | AM_FIND_CASE | AM_FIND_TAIL));
+	}
+	//O: next condition is always false! It could be removed. 
 	else if (IS_BINARY(target)) {
 		return Find_Byte_Str(series, start, VAL_BIN_DATA(target), len, 0, GET_FLAG(flags, ARG_FIND_MATCH-1));
 	}

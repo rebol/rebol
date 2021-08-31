@@ -404,6 +404,54 @@
 
 /***********************************************************************
 **
+*/	REBCNT Find_Str_Tag(REBSER *ser1, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBSER *ser2, REBCNT index2, REBCNT len, REBCNT flags)
+/*
+**		General purpose find a tag in a string.
+**
+**		Supports: forward/reverse with skip, cased/uncase, Unicode/byte.
+**
+**		Skip can be set positive or negative (for reverse).
+**
+**		Flags are set according to ALL_FIND_REFS
+**
+***********************************************************************/
+{
+	REBUNI c1;
+	REBUNI c2;
+	REBCNT n = 0;
+	REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
+
+	for (; index >= head && index < tail; index += skip) {
+		c1 = GET_ANY_CHAR(ser1, index);
+		if (c1 == '<') {
+			index++;
+			for (n = 0; n < len; n++) {
+				c1 = GET_ANY_CHAR(ser1, index + n);
+				c2 = GET_ANY_CHAR(ser2, index2 + n);
+				if (uncase && c1 < UNICODE_CASES && c2 < UNICODE_CASES) {
+					if (LO_CASE(c1) != LO_CASE(c2)) break;
+				}
+				else {
+					if (c1 != c2) break;
+				}
+			}
+			if (n == len) {
+				c1 = GET_ANY_CHAR(ser1, index + n);
+				if (c1 == '>') {
+					if (flags & AM_FIND_TAIL) return index + len + 1;
+					return index-1;
+				}
+			}
+		}
+		if (flags & AM_FIND_MATCH) break;
+	}
+
+	return NOT_FOUND;
+}
+
+
+/***********************************************************************
+**
 */	REBCNT Find_Str_Str_Any(REBSER *ser1, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBSER *ser2, REBCNT index2, REBCNT len, REBCNT flags, REBVAL *wild)
 /*
 **		General purpose find a substring with wildcards.
