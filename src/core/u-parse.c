@@ -210,6 +210,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	case REB_FILE:
 	case REB_URL:
 	case REB_EMAIL:
+	case REB_REF:
 		index = Find_Str_Str(series, 0, index, SERIES_TAIL(series), 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), flags);
 		break;
 
@@ -228,11 +229,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 		break;
 */
 	case REB_TAG:
-	case REB_REF:
-//	case REB_ISSUE:
-		// !! Can be optimized (w/o COPY)
-		ser = Copy_Form_Value(item, 0);
-		index = Find_Str_Str(series, 0, index, SERIES_TAIL(series), 1, ser, 0, ser->tail, flags);
+		index = Find_Str_Tag(series, 0, index, SERIES_TAIL(series), 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), flags);
 		break;
 
 	case REB_NONE:
@@ -426,14 +423,10 @@ no_result:
 					if (ch1 == ch2) goto found1;
 				}
 				else if (IS_TAG(item)) {
-					ch2 = '<';
-					if (ch1 == ch2) {
-						// adapted from function Parse_To :-)
-						REBSER *ser;
-						ser = Copy_Form_Value(item, 0);
-						i = Find_Str_Str(series, 0, index, series->tail, 1, ser, 0, ser->tail,  AM_FIND_MATCH | parse->flags);
+					if (ch1 == '<') {
+						i = Find_Str_Tag(series, 0, index, series->tail, 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item),  AM_FIND_MATCH | parse->flags);
 						if (i != NOT_FOUND) {
-							if (is_thru) i += ser->tail;
+							if (is_thru) i += VAL_LEN(item) + 2;
 							index = i;
 							goto found;
 						}
@@ -533,18 +526,10 @@ bad_target:
 		}
 		else {
 			// "str"
-			if (ANY_BINSTR(item)) {
-				if (!IS_STRING(item) && !IS_BINARY(item)) {
-					// !!! Can this be optimized not to use COPY?
-					// O: It would require Find_Str_Tag, Find_Str_Ref
-					ser = Copy_Form_Value(item, 0);
-					i = Find_Str_Str(series, 0, index, series->tail, 1, ser, 0, ser->tail, HAS_CASE(parse));
-					if (i != NOT_FOUND && is_thru) i += ser->tail;
-				}
-				else {
-					i = Find_Str_Str(series, 0, index, series->tail, 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), HAS_CASE(parse));
-					if (i != NOT_FOUND && is_thru) i += VAL_LEN(item);
-				}
+			//O: not using ANY_BINSTR as TAG is now handled separately
+			if (VAL_TYPE(item) >= REB_BINARY && VAL_TYPE(item) < REB_TAG) {
+				i = Find_Str_Str(series, 0, index, series->tail, 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), HAS_CASE(parse));
+				if (i != NOT_FOUND && is_thru) i += VAL_LEN(item);
 			}
 			// #"A"
 			else if (IS_CHAR(item)) {
@@ -555,6 +540,10 @@ bad_target:
 			else if (IS_BITSET(item)) {
 				i = Find_Str_Bitset(series, 0, index, series->tail, 1, VAL_BITSET(item), HAS_CASE(parse));
 				if (i != NOT_FOUND && is_thru) i++;
+			}
+			else if (IS_TAG(item)) {
+				i = Find_Str_Tag(series, 0, index, series->tail, 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), HAS_CASE(parse));
+				if (i != NOT_FOUND && is_thru) i += VAL_LEN(item) + 2;
 			}
 			else
 				Trap1(RE_PARSE_RULE, item - 1);

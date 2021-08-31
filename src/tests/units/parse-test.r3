@@ -41,6 +41,13 @@ Rebol [
 		e: try [parse "foo" [thru 1.2]]
 		e/id = 'parse-rule
 	]
+--test--- "TO/THRU with tag!"
+	--assert parse "<a>" [thru <a>]
+	--assert parse "a<a>" [thru [<a>]]
+	--assert parse "a<a>" [to <a> 3 skip]
+	--assert parse "a<a>" [to [<a>] to end]
+	--assert parse "a<a>" [thru [<b> | <a>]]
+	--assert all [parse "11<b>xx</b>22" [thru <b> copy x to </b> to end] x = "xx"]
 ===end-group===
 
 
