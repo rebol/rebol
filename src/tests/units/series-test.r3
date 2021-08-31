@@ -159,6 +159,11 @@ Rebol [
 ;	--assert none? find/part "abcd" "bc" 2
 ;	--assert none? find/part/any "abcd" "*c" 2
 
+--test-- "FIND/REVERSE/MATCH"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2328
+	--assert none? find/reverse/match tail "abc" "abc"
+	--assert none? find/reverse/match tail "abc" "cba"
+
 --test-- "FIND char in string"
 	str: "a,b"
 	--assert ",b" = find str #","
