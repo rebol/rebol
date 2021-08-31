@@ -18,13 +18,20 @@ Rebol [
 	--assert none? find/part [x] 'x 0
 	--assert equal? [x] find/part [x] 'x 1
 	--assert equal? [x] find/reverse tail [x] 'x
-	--assert equal? [y] find/match [x y] 'x
+	--assert equal? [x y] find/match [x y] 'x
+	--assert equal? [y] find/match/tail [x y] 'x
 	--assert equal? [x] find/last [x] 'x
 	--assert equal? [x] find/last [x x x] 'x
 
 --test-- "FIND string! integer!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/237
 	--assert "23" = find "123" 2
+
+--test-- "FIND binary! binary!"
+	--assert #{0001} = find/match #{0001} #{00}
+	--assert #{01}   = find/match/tail #{0001} #{00}
+	--assert #{02}   = find #{000102} #{02}
+	--assert #{}     = find/tail #{000102} #{02}
 
 --test-- "FIND string! tag!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1160
@@ -58,8 +65,10 @@ Rebol [
 	--assert ""      = find/any/tail  "abcd" "*d"
 	--assert ""      = find/any/tail  "abcd" "c*"
 	--assert "ef"    = find/any/tail  "abcdef" "b*d"
-	--assert ""      = find/any/match "abc" "a?c"
-	--assert ""      = find/any/match "abcdef" "a*e?"
+	--assert "abc"   = find/any/match "abc" "a?c"
+	--assert "abcdef"= find/any/match "abcdef" "a*e?"
+	--assert ""      = find/any/match/tail "abc" "a?c"
+	--assert ""      = find/any/match/tail "abcdef" "a*e?"
 	--assert "bcd"   = find/any/reverse tail "abcdabcd" "?c"
 	--assert "d"     = find/any/reverse/tail tail "abcdabcd" "?c"
 	--assert "d"     = find/any/reverse/tail tail "abcdabcd" "bc"
@@ -77,8 +86,10 @@ Rebol [
 	--assert "žcdef" = find/any "ažcdef" "ž*?*e"
 	--assert ""      = find/any/tail  "ažcd" "*d"
 	--assert "ef"    = find/any/tail  "ažcdef" "ž*d"
-	--assert ""      = find/any/match "ažc" "a?c"
-	--assert ""      = find/any/match "ažcdef" "a*e?"
+	--assert "ažc"   = find/any/match "ažc" "a?c"
+	--assert "ažcdef"= find/any/match "ažcdef" "a*e?"
+	--assert ""      = find/any/match/tail "ažc" "a?c"
+	--assert ""      = find/any/match/tail "ažcdef" "a*e?"
 	--assert "žcd"   = find/any/reverse tail "ažcdažcd" "?c"
 	--assert "d"     = find/any/reverse/tail tail "ažcdažcd" "?c"
 	--assert "d"     = find/any/reverse/tail tail "ažcdažcd" "žc"

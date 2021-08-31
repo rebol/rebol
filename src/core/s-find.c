@@ -328,7 +328,7 @@
 				for (n = 1; n < l2; n++) {
 					if (b1[n] != b2[n]) break;
 				}
-				if (n == l2) return (b1 - BIN_HEAD(series) + (match ? l2 : 0));
+				if (n == l2) return (b1 - BIN_HEAD(series));
 			}
 			b1++;
 		}
@@ -342,7 +342,7 @@
 				for (n = 1; n < l2; n++) {
 					if (LO_CASE(b1[n]) != LO_CASE(b2[n])) break;
 				}
-				if (n == l2) return (b1 - BIN_HEAD(series) + (match ? l2 : 0));
+				if (n == l2) return (b1 - BIN_HEAD(series));
 			}
 			b1++;
 		}
@@ -536,7 +536,7 @@
 			}
 			if (n == len) {
 			found:
-				if (flags & (AM_FIND_TAIL | AM_FIND_MATCH))
+				if (flags & AM_FIND_TAIL)
 					return pos;
 				return start ;
 			}

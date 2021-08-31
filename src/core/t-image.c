@@ -861,8 +861,8 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		n = (REBCNT)(p - (REBCNT *)VAL_IMAGE_HEAD(value));
 		if (refs & AM_FIND_MATCH) { // match
 			if (n != (REBINT)index) goto find_none;
-			n++;
-		} else if (refs & AM_FIND_TAIL) n++; // /tail
+		}
+		if (refs & AM_FIND_TAIL) n++; // /tail
 		index = n;
 		VAL_INDEX(value) = index;
 		return value;

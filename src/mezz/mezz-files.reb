@@ -327,10 +327,10 @@ to-relative-file: func [
 	either string? file [ ; Local file
 		; Note: to-local-file drops trailing / in R2, not in R3
 		; if tmp: find/match file to-local-file what-dir [file: next tmp]
-		file: any [find/match file to-local-file what-dir  file]
+		file: any [find/match/tail file to-local-file what-dir  file]
 		if as-rebol [file: to-rebol-file file  no-copy: true]
 	] [
-		file: any [find/match file what-dir  file]
+		file: any [find/match/tail file what-dir  file]
 		if as-local [file: to-local-file file  no-copy: true]
 	]
 	unless no-copy [file: copy file]
