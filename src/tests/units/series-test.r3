@@ -27,11 +27,33 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/237
 	--assert "23" = find "123" 2
 
+--test-- "FIND string! binary!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1159
+	--assert "F00D"  = find "id: F00D" #{F00D}
+	--assert "F00D"  = find "id: F00D" #{f00d}
+
 --test-- "FIND binary! binary!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1161
 	--assert #{0001} = find/match #{0001} #{00}
 	--assert #{01}   = find/match/tail #{0001} #{00}
 	--assert #{02}   = find #{000102} #{02}
 	--assert #{}     = find/tail #{000102} #{02}
+	--assert     none? find/match #{0001} #{01}
+	--assert     none? find/match/tail #{0001} #{01}
+	--assert     none? find #{000102} #{03}
+	--assert     none? find/tail #{000102} #{03}
+
+--test-- "FIND binary! char!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1161
+	--assert tail? find/tail #{0063} #"c"
+	--assert tail? find/tail #{0063} #"^(63)"
+	--assert tail? find/tail #{00FF} #"^(ff)"
+	--assert none? find/tail #{0063} #"C"
+	--assert none? find/tail #{0063} #"^(700)"
+
+--test-- "FIND binary! integer!"
+	--assert tail? find/tail #{0063} 99
+	--assert error? try [find/tail #{0063} 700]
 
 --test-- "FIND string! tag!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1160

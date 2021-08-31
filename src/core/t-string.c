@@ -617,7 +617,7 @@ find:
 
 		if (IS_BINARY(value)) {
 			args |= AM_FIND_CASE;
-			if (!IS_BINARY(arg) && !IS_INTEGER(arg) && !IS_BITSET(arg)) Trap0(RE_NOT_SAME_TYPE);
+			if (!IS_BINARY(arg) && !IS_INTEGER(arg) && !IS_BITSET(arg) && !IS_CHAR(arg)) Trap0(RE_NOT_SAME_TYPE);
 			if (IS_INTEGER(arg)) {
 				if (VAL_INT64(arg) < 0 || VAL_INT64(arg) > 255) Trap_Range(arg);
 				len = 1;
