@@ -125,6 +125,14 @@ Rebol [
 		--assert error? e: try [read %carl-for-president/]
 		--assert e/id = 'cannot-open
 
+	--test-- "READ dir with single file"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/611
+		make-dir %dir-611/
+		write %dir-611/foo "foo"
+		--assert [%foo] = read  %dir-611/
+		delete %dir-611/foo
+		delete %dir-611/
+
 	--test-- "READ wildcard"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/158
 		--assert all [block? b: try [read %*.r3]             not empty? b]
