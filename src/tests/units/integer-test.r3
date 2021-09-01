@@ -331,6 +331,10 @@ Rebol [
 			error? e: try [1 + "2"]
 			e/id = 'expect-arg
 		]
+
+	--test-- "issue-569"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/569
+		--assert not strict-equal? 1 $1
 		
 ===end-group===
 

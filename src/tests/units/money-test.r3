@@ -155,6 +155,10 @@ Rebol [
 		--assert error? try [$1 * 1.2.3.4]
 		--assert error? try [$1 - 10:30]
 
+	--test-- "issue-569"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/569
+		--assert not strict-equal? $1 1
+
 ===end-group===
 	
 ~~~end-file~~~
