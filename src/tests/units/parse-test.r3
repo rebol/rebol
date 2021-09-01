@@ -231,6 +231,10 @@ Rebol [
 	--assert ["a" "b" "c"] = parse/all "a/b/c" #"/"
 	--assert ["a" "b" "c"] = parse/all "a/b/c"  "/"
 
+--test-- "issue-367"
+;@@ https://github.com/Oldes/Rebol-issues/issues/367
+	--assert error? try [parse [1 2 3] [(1 / 0)] false]
+	
 --test-- "issue-394"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/394
 	--assert parse #{001122} [#{00} #{11} #{22}]
