@@ -392,6 +392,15 @@ Rebol [
 		--assert same? x y
 	]
 
+--test-- "issue-1298"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1298
+	cset: charset [#"^(01)" - #"^(FF)"]
+	--assert parse "a" ["a" any cset]
+	cset: charset [#"^(00)" - #"^(FE)"]
+	--assert parse "a" ["a" any cset]
+	cset: charset [#"^(00)" - #"^(FF)"]
+	--assert parse "a" ["a" any cset]
+
 ===end-group===
 
 ~~~end-file~~~
