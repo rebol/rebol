@@ -185,6 +185,10 @@ Rebol [
 		e/id = 'invalid-port
 	]
 
+--test-- "issue-1295"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1295
+	--assert error? try [to-object now] ;-no crash
+
 ===end-group===
 
 ~~~end-file~~~
