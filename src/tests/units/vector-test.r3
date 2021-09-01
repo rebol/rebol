@@ -50,6 +50,12 @@ Rebol [
 	--assert 1 = v/1
 	--assert 3 = v/3
 
+--test-- "HEAD, TAIL on vector"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/462
+	v: #[ui8! [1 2 3]]
+	--assert tail? tail v
+	--assert head? head v
+
 --test-- "to-block vector!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/865
 	--assert [0 0] = to-block make vector! [integer! 32 2]
