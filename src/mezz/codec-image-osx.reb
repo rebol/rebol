@@ -37,7 +37,7 @@ register-codec [
 
 	decode:   func [data [binary!]][lib/image/load/as data 'GIF]
 	encode:   func [data [image! ]][lib/image/save/as none data 'GIF]
-	identify: func [data [binary!]][parse data [#{4749463839} to end]]
+	identify: func [data [binary!]][parse data [["GIF89a" | "GIF87a"] to end]]
 ]
 
 register-codec [
