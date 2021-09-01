@@ -159,3 +159,12 @@ if find codecs 'gif [
 		none
 	]
 ]
+
+if find codecs 'bmp [
+	extend codecs/bmp 'size? function ["Return BMP image size or none" img [file! url! binary!]][
+		unless binary? img [img: read/binary/part img 32]
+		unless find/tail img #{424D} [return none]
+		try [return to pair! binary/read img [SKIP 18 UI32LE UI32LE]]
+		none
+	]
+]

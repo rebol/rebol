@@ -420,7 +420,15 @@ if find codecs 'GIF [
 		--assert 256x256 = codecs/gif/size? %units/files/flower.gif
 		--assert none?     codecs/gif/size? %units/files/test.aar
 	===end-group===
-]	
+]
+
+if find codecs 'BMP [
+	===start-group=== "BMP codec"
+	--test-- "bmp/size?"
+		--assert 256x256 = codecs/bmp/size? %units/files/flower.bmp
+		--assert none?     codecs/bmp/size? %units/files/test.aar
+	===end-group===
+]
 
 if find codecs 'XML [
 	===start-group=== "XML codec"
