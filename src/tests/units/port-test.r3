@@ -234,6 +234,7 @@ if system/platform = 'Windows [
 		--assert not none? find (query/mode file 'name) file
 
 	--test-- "query file info (port)"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2008
 		file: open %units/files/alice29.txt.gz
 		--assert [name size date type] = query/mode file none
 		--assert 'file = query/mode file 'type
