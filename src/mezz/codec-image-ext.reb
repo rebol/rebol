@@ -146,3 +146,16 @@ if find codecs 'jpeg [
 		none
 	]
 ]
+
+
+if find codecs 'gif [
+	extend codecs/gif 'size? function ["Return GIF image size or none" img [file! url! binary!]][
+		unless binary? img [img: read/binary/part img 16]
+		parse img [
+			["GIF87a" | "GIF89a"] img: (
+				return to pair! binary/read img [UI16LE UI16LE]
+			) 
+		]
+		none
+	]
+]
