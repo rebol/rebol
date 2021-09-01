@@ -69,6 +69,16 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "LIMIT"
+--test-- "limit"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1300
+	--assert all [
+		error? e: try [limit: ["123"] parse "123" [limit]]
+		e/id = 'not-done
+	]
+===end-group===
+
+
 ===start-group=== "CHANGE"
 
 --test-- "CHANGE rule value (same size)"
