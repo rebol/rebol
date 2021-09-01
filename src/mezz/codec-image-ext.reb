@@ -163,8 +163,17 @@ if find codecs 'gif [
 if find codecs 'bmp [
 	extend codecs/bmp 'size? function ["Return BMP image size or none" img [file! url! binary!]][
 		unless binary? img [img: read/binary/part img 32]
-		unless find/tail img #{424D} [return none]
+		unless find/match img #{424D} [return none]
 		try [return to pair! binary/read img [SKIP 18 UI32LE UI32LE]]
+		none
+	]
+]
+
+if find codecs 'dds [
+	extend codecs/dds 'size? function ["Return DDS image size or none" img [file! url! binary!]][
+		unless binary? img [img: read/binary/part img 32]
+		unless find/match img #{444453207C000000} [return none]
+		try [return to pair! reverse binary/read img [SKIP 12 UI32LE UI32LE]]
 		none
 	]
 ]

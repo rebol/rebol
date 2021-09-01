@@ -430,6 +430,14 @@ if find codecs 'BMP [
 	===end-group===
 ]
 
+if find codecs 'DDS [
+	===start-group=== "DDS codec"
+	--test-- "dds/size?"
+		--assert 256x256 = codecs/dds/size? %units/files/flower.dds
+		--assert none?     codecs/dds/size? %units/files/test.aar
+	===end-group===
+]
+
 if find codecs 'XML [
 	===start-group=== "XML codec"
 	--test-- "XML decode test1"

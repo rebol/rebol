@@ -29,7 +29,7 @@ register-codec [
 
 	decode:   func [data [binary!]][lib/image/load/as data 'DDS]
 	encode:   func [data [image! ]][lib/image/save/as none data 'DDS]
-	identify: func [data [binary!]][parse data [#{444453} to end]]
+	identify: func [data [binary!]][parse data [#{444453207C000000} to end]]
 ]
 
 register-codec [
