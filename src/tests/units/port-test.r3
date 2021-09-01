@@ -29,6 +29,11 @@ Rebol [
 		url: decode-url http://host?query
 		--assert url/host = "host"
 		--assert url/path = "?query"
+	--test-- "decode-url tcp://:9000"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1275
+		url: decode-url tcp://:9000
+		--assert url/scheme = 'tcp
+		--assert url/port-id = 9000
 
 ===end-group===
 
