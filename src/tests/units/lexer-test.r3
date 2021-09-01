@@ -37,6 +37,19 @@ Rebol [
 			e/id = 'invalid
 		]
 
+	--test-- "Invalid path"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1319
+		--assert all [
+			error? e: try [load {a/b<}]
+			e/id = 'invalid
+			e/arg1 = "word"
+		]
+		--assert all [
+			error? e: try [load {a/3<}]
+			e/id = 'invalid
+			e/arg1 = "integer"
+		]
+
 	--test-- "Invalid time"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/698
 		--assert all [
