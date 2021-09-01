@@ -218,6 +218,11 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/101
 	--assert none? select/skip [1 2 3 4 5 6] 5 3
 
+--test-- "SELECT/skip/last"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/616
+	--assert 'b = select/skip [a b a c] 'a 2
+	--assert 'c = select/skip/last [a b a c] 'a 2
+
 --test-- "SELECT on string"
 	--assert #"e" = select     "abcde" "bcd"
 	--assert #"e" = select/any "abcde" "b?d"
