@@ -367,7 +367,7 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 
 /***********************************************************************
 **
-*/	REBFLG Legal_UTF8_Char(REBYTE *str, REBCNT len)
+*/	REBFLG Legal_UTF8_Char(const REBYTE *str, REBCNT len)
 /*
 **		Returns TRUE if char is legal.
 **
@@ -383,14 +383,14 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 
 /***********************************************************************
 **
-*/	REBYTE *Check_UTF8(REBYTE *str, REBCNT len)
+*/	const REBYTE *Check_UTF8(const REBYTE *str, REBCNT len)
 /*
 **		Returns 0 for success, else str where error occurred.
 **
 ***********************************************************************/
 {
-	REBYTE *end = str + len;
-	REBYTE *acc = str - 1;
+	const REBYTE *end = str + len;
+	const REBYTE *acc = str - 1;
 #ifdef USE_NEW_UTF8_DECODE
 	REBCNT codepoint;
 	REBCNT state = UTF8_ACCEPT;
