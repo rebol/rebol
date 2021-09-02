@@ -57,7 +57,7 @@
 
 /***********************************************************************
 **
-*/	void OS_Release_Codecs()
+*/	void OS_Release_Codecs(void)
 /*
 **		Release resources.
 **

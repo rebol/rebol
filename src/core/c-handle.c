@@ -119,7 +119,7 @@
 
 /***********************************************************************
 **
-*/	void Init_Handles()
+*/	void Init_Handles(void)
 /*
 **		Creates handles table
 **
