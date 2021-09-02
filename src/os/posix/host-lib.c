@@ -1137,7 +1137,7 @@ child_error:
 					char **buffer = NULL;
 					u32 *offset;
 					size_t to_read = 0;
-					size_t *size = NULL;
+					off_t *size = NULL;
 					if (pfds[i].fd == stdout_pipe[R]) {
 						buffer = (char**)output;
 						offset = output_len;
