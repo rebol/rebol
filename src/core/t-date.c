@@ -567,7 +567,7 @@ set_time:
 	REBVAL *arg = pvs->select;
 	REBVAL *val = pvs->setval;
 	REBINT sym = 0;
-	REBINT n;
+	REBINT n = 0;
 	REBI64 secs;
 	REBINT tz, tzp;
 	REBDAT date;

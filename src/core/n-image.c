@@ -266,7 +266,7 @@ typedef struct REBCLR {
 	REBCNT  filter = 0;
 	REBDEC  blur = 1.0;
 	REBOOL  has_alpha = Image_Has_Alpha(val_img, FALSE);
-	REBINT  wide, high;
+	REBINT  wide = 0, high = 0;
 	
 	if (IS_INTEGER(val_filter))
 		filter = VAL_INT32(val_filter);

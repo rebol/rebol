@@ -466,7 +466,7 @@
 {
 	REBUNI c1;
 	REBUNI c2;
-	REBUNI c3;
+	REBUNI c3 = 0;
 	REBCNT n = 0, start = 0, pos = 0;
 	REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
 	REBUNI c_some = '*';

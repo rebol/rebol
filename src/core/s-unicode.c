@@ -430,7 +430,7 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 {
 #ifdef USE_NEW_UTF8_DECODE
 	REBYTE *src = (REBYTE*)*str;
-	REBCNT codepoint;
+	REBCNT codepoint = 0;
 	REBCNT state = 0;
 	REBCNT slen = 0;
 

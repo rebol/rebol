@@ -47,7 +47,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 ***********************************************************************/
 {
 	#define MAX_WITH 32
-	REBCNT wlen;
+	REBCNT wlen = 0;
 	REBUNI with_chars[MAX_WITH];	// chars to be trimmed
 	REBUNI *up = with_chars;
 	REBYTE *bp = NULL;

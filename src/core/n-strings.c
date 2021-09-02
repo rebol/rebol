@@ -131,7 +131,7 @@ static struct digest {
 	REBINT sym   = VAL_WORD_CANON(D_ARG(ARG_CHECKSUM_METHOD));
 	REBVAL *spec = D_ARG(ARG_CHECKSUM_SPEC);
 	REBINT sum;
-	REBINT i;
+	REBINT i = 0;
 	REBINT j;
 	REBSER *digest, *ser;
 	REBCNT len, keylen;

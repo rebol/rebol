@@ -661,7 +661,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	REBINT  part = 1; // /part len
 	REBINT	partx = 0, party = 0;
 	REBINT	dup = 1;  // /dup count
-	REBINT  dupx, dupy;
+	REBINT  dupx = 0, dupy = 0;
 	REBOOL  only = 0; // /only
 	REBCNT  index = VAL_INDEX(value);
 	REBCNT  tail = VAL_TAIL(value);
@@ -996,7 +996,7 @@ find_none:
 	REBVAL	*arg = D_ARG(2);
 	REBSER	*series = VAL_SERIES(value);
 	REBINT	index = (REBINT)VAL_INDEX(value);
-	REBINT	tail;
+	REBINT	tail = 0;
 	REBINT	diff, len = 0, w, h;
 	REBVAL	*val;
 

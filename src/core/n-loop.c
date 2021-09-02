@@ -301,7 +301,7 @@ enum loop_each_mode {
 	REBINT tail;
 	REBINT windex;	// write
 	REBINT rindex;	// read
-	REBINT err;
+	REBINT err = 0;
 	REBCNT i;
 	REBCNT j;
 	REBOOL return_count = FALSE;
