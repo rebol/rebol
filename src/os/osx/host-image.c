@@ -34,7 +34,7 @@
 
 /***********************************************************************
 **
-*/	void OS_Load_Image(REBUNI *uri, REBCNT frame, REBCDI *codi)
+*/	void OS_Load_Image(const char *uri, REBCNT frame, REBCDI *codi)
 /*
 **		Decodes image from specified file. If its multi-image type, it's possible
 **		to specify which frame to load.
@@ -46,7 +46,7 @@
 
 /***********************************************************************
 **
-*/	void OS_Save_Image(REBUNI *uri, REBCDI *codi)
+*/	void OS_Save_Image(const char *uri, REBCDI *codi)
 /*
 **		Encodes image to specified file.
 **
