@@ -364,7 +364,7 @@ static int Get_File_Info(REBREQ *file)
 	}
 
 	// Set the modes:
-	modes = O_BINARY | GET_FLAG(file->modes, RFM_READ) ? O_RDONLY : O_RDWR;
+	modes = (O_BINARY | GET_FLAG(file->modes, RFM_READ)) ? O_RDONLY : O_RDWR;
 
 	if (GET_FLAGS(file->modes, RFM_WRITE, RFM_APPEND)) {
 		modes = O_BINARY | O_RDWR | O_CREAT;
