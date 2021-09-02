@@ -65,6 +65,26 @@ Rebol [
 	--assert not parse "" [not [0 "a"]]
 ===end-group===
 
+===start-group=== "AND / AHEAD"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2095
+--test-- "and"
+	--assert parse "a" [and #"a" skip]
+	--assert all [parse "abc" [#"a" and #"b" copy x to end]  x = "bc"]
+	--assert parse [1] [and integer! skip]
+	--assert parse [1 hi] [integer! and word! skip]
+	--assert all [parse [hi @bob] ['hi and ref! copy x skip] x = @bob]
+	--assert not parse "a" [and #"b" skip]
+	--assert not parse [1] [and word! skip]
+--test-- "ahead"
+	--assert parse "a" [ahead #"a" skip]
+	--assert all [parse "abc" [#"a" ahead #"b" copy x to end]  x = "bc"]
+	--assert parse [1] [ahead integer! skip]
+	--assert parse [1 hi] [integer! ahead word! skip]
+	--assert all [parse [hi @bob] ['hi ahead ref! set x skip] x = @bob]
+	--assert not parse "a" [ahead #"b" skip]
+	--assert not parse [1] [ahead word! skip]
+===end-group===
+
 
 ===start-group=== "THEN"
 --test-- "then"

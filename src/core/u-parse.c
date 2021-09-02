@@ -739,6 +739,7 @@ bad_target:
 						continue;
 	
 					case SYM_AND:
+					case SYM_AHEAD:
 						SET_FLAG(flags, PF_AND);
 						continue;
 

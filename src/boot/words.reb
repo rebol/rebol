@@ -143,6 +143,7 @@ any
 opt
 not
 and
+ahead
 then
 remove
 insert
