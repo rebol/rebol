@@ -182,7 +182,6 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 {
 	// !!! THIS CODE NEEDS CLEANUP AND REWRITE BASED ON OTHER CHANGES
 	REBSER *series = parse->series;
-	REBSER *ser;
 	REBCNT flags = parse->flags | AM_FIND_MATCH | AM_FIND_TAIL;
 //	int rewrite_needed;
 
@@ -498,7 +497,6 @@ bad_target:
 {
 	REBSER *series = parse->series;
 	REBCNT i = 0;
-	REBSER *ser;
 
 	// TO a specific index position.
 	if (IS_INTEGER(item)) {
