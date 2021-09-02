@@ -920,7 +920,7 @@ static struct digest {
 ***********************************************************************/
 {
 	REBVAL *arg = D_ARG(1);
-	REBYTE *bp;
+	const REBYTE *bp;
 
 	bp = Check_UTF8(VAL_BIN_DATA(arg), VAL_LEN(arg));
 	if (bp == 0) return R_NONE;
