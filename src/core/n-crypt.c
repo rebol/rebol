@@ -55,7 +55,7 @@ typedef struct {
 	Register_Handle(SYM_AES,  sizeof(AES_CTX), NULL);
 	Register_Handle(SYM_ECDH, sizeof(ECC_CTX), NULL);
 	Register_Handle(SYM_RC4,  sizeof(RC4_CTX), NULL);
-	Register_Handle(SYM_RSA,  sizeof(RSA_CTX), RSA_free);
+	Register_Handle(SYM_RSA,  sizeof(RSA_CTX), (REB_HANDLE_FREE_FUNC)RSA_free);
 #ifndef EXCLUDE_CHACHA20POLY1305
 	Register_Handle(SYM_CHACHA20, sizeof(poly1305_context), NULL);
 	Register_Handle(SYM_POLY1305, sizeof(poly1305_context), NULL);
