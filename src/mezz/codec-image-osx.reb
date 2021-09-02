@@ -21,6 +21,16 @@ register-codec [
 ]
 
 register-codec [
+	name:  'dds
+	title: "DirectDraw Surface"
+	suffixes: [%.dds]
+
+	decode:   func [data [binary!]][lib/image/load/as data 'DDS]
+	encode:   func [data [image! ]][lib/image/save/as none data 'DDS]
+	identify: func [data [binary!]][parse data [#{444453207C000000} to end]]
+]
+
+register-codec [
 	name:  'tiff
 	title: "Tagged Image File Format"
 	suffixes: [%.tif %.tiff]

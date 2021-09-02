@@ -29,6 +29,7 @@
 #include "sys-codecs.h"
 #define kSDUTTypeHEIC ((__bridge CFStringRef)@"public.heic")
 #define kSDUTTypeHEIF ((__bridge CFStringRef)@"public.heif")
+#define kSDUTTypeDDS  ((__bridge CFStringRef)@"com.microsoft.dds")
 
 
 #ifdef unused
@@ -112,6 +113,7 @@ int EncodeImageToFile(const char *uri, REBCDI *codi)
 	case CODI_IMG_BMP:  type = kUTTypeBMP  ; break;     // Device independent bitmap
 	case CODI_IMG_TIFF: type = kUTTypeTIFF ; break;     // Tagged Image File Format
 	case CODI_IMG_HEIF: type = kSDUTTypeHEIC ; break;
+	case CODI_IMG_DDS:  type = kSDUTTypeDDS  ; break;   // Microsoft DirectDraw Surface
 	default:
 			codi->error = 1;
 			return codi->error;
@@ -125,7 +127,6 @@ int EncodeImageToFile(const char *uri, REBCDI *codi)
 		CGColorSpaceRelease(colorSpace);
 		ASSERT_NOT_NULL(img, 2, "create an image");
 		
-		
 		if(uri == NULL) {
 			// writing into preallocated buffer (fixed size!)
 			dataDst = CFDataCreateWithBytesNoCopy(NULL, codi->data, codi->len, NULL);
@@ -138,14 +139,20 @@ int EncodeImageToFile(const char *uri, REBCDI *codi)
 		}
 		ASSERT_NOT_NULL(imgDst, 4, "create a destination image");
 		// TODO: handle user defined options
-		prop = CFDictionaryCreateMutable(NULL,0,NULL,NULL);
-		CFDictionaryAddValue(prop, kCGImageDestinationLossyCompressionQuality, "0.2");
+
 		CGFloat quality = 0.6;
-		CGImageDestinationAddImage(imgDst, img, (__bridge CFDictionaryRef)@{(__bridge NSString *)kCGImageDestinationLossyCompressionQuality: @(quality)});
-		CGImageDestinationFinalize(imgDst);
+		CGImageDestinationAddImage(imgDst, img, (__bridge CFDictionaryRef)@{
+			(__bridge NSString *)kCGImageDestinationLossyCompressionQuality: @(quality)
+		});
+		
+		if(!CGImageDestinationFinalize(imgDst)) {
+			// failed to finalize!
+			error = 6;
+		}
 	} while(FALSE);
-	if(uri == NULL) {
+	if(uri == NULL && !error) {
 		codi->len = CFDataGetLength(dataDst);
+		if(codi->len == 0) error = 5;
 		//CFRelease(dataDst);
 	}
 	SAFE_CF_RELEASE(img);
