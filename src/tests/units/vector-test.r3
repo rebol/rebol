@@ -52,7 +52,7 @@ Rebol [
 
 --test-- "HEAD, TAIL on vector"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/462
-	v: #[ui8! [1 2 3]]
+	v: #[u8! [1 2 3]]
 	--assert tail? tail v
 	--assert head? head v
 
