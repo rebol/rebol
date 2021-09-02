@@ -26,9 +26,9 @@
 **
 ************************************************************************/
 
-#include <AppKit/AppKit.h>
 #include "reb-host.h"
 #include "host-lib.h" // for OS_Make
+#include <AppKit/AppKit.h>
 
 void EmptyClipboard(void){
 	[[NSPasteboard generalPasteboard] clearContents];
