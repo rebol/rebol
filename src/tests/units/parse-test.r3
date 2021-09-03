@@ -113,6 +113,11 @@ Rebol [
 
 ===start-group=== "CHANGE"
 
+--test-- "CHANGE string"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1245
+	--assert parse s: "(1)" [change "(1)" "()"]
+	--assert s = "()"
+
 --test-- "CHANGE rule value (same size)"
 	r: ["b"]
 	--assert parse s: "abc" [some ["a" change r "X" | skip]]
