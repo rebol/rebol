@@ -53,6 +53,13 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1282
 	--assert parse [1 2 a] [thru word!]
 	--assert parse [1 2 a] [to word! 1 skip]
+
+--test-- "TO/THRU end"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/295
+	--assert all [parse "xyz" [copy f to   end]  f = "xyz"]
+	--assert all [parse "xyz" [copy f thru end]  f = "xyz"]
+	--assert error? try [parse "xyz" [copy f thru to end]]
+	--assert error? try [parse "xyz" [copy f thru thru end]]
 ===end-group===
 
 
