@@ -155,6 +155,12 @@ Rebol [
 		e/id = 'no-value
 	]
 
+--test-- "CHANGE into"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1266
+	--assert all [parse s: [[a b]][change  into ['a 'b]  [z p]]  s = [z p]]
+	--assert all [parse s: [[a b]][change [into ['a 'b]] [z p]]  s = [z p]]
+	--assert all [parse s:  [a b] [change  some word!    [z p]]  s = [z p]]
+
 ===end-group===
 
 ===start-group=== "INSERT"
@@ -216,6 +222,10 @@ Rebol [
 	--assert not parse a: "12" [remove [copy v skip]]
 	--assert a = "2"
 	--assert v = "1"
+
+--test-- "remove into"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1266
+	--assert all [parse s: [[a b]][remove into ['a 'b]]  s = []]
 
 ===end-group===
 
