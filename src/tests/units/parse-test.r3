@@ -143,12 +143,14 @@ Rebol [
 	--assert s = "aXXc"
 
 --test-- "CHANGE rule (expression)"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1279
 	--assert parse s: "abc" [some ["a" change copy v r (uppercase v) | skip]]
 	--assert v = "B"
 	--assert s = "aBc"
 	--assert parse s: "abc" [some ["a" change copy v ["b" "c"] (reverse copy v) | skip]]
 	--assert v = "bc"
 	--assert s = "acb"
+	--assert all [parse s: [1] [change set n integer! (n * 10)]  s = [10]]
 
 --test-- "CHANGE block"
 	--assert parse b: [1] [change integer! (1 + 1) to end]
@@ -187,6 +189,7 @@ Rebol [
 	--assert s = "aXbYYc"
 
 --test-- "INSERT expresion"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1279
 	--assert parse s: "abc" [some ["a" insert (uppercase "x") | skip]]
 	--assert s = "aXbc"
 
