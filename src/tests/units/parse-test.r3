@@ -167,6 +167,10 @@ Rebol [
 	--assert all [parse s: [[a b]][change [into ['a 'b]] [z p]]  s = [z p]]
 	--assert all [parse s:  [a b] [change  some word!    [z p]]  s = [z p]]
 
+--test-- "CHANGE lit-word"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1265
+	--assert all [parse s: [a][change 'a 'z]  s = [z]]
+
 ===end-group===
 
 ===start-group=== "INSERT"
