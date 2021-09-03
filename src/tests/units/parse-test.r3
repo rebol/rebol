@@ -324,6 +324,13 @@ Rebol [
 	--assert not parse/all "a b"   rla
 
 
+--test-- "issue-967"
+;@@ https://github.com/Oldes/Rebol-issues/issues/967
+	x: 0
+	--assert all [parse "" [some [(x: 1) break]]  x = 1]
+	--assert all [parse "" [any  [(x: 2) break]]  x = 2]
+
+
 --test-- "issue-2130"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/2130
 	--assert parse [x][set val pos: word!]
