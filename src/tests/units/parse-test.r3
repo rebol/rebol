@@ -171,6 +171,11 @@ Rebol [
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1265
 	--assert all [parse s: [a][change 'a 'z]  s = [z]]
 
+--test-- "CHANGE only"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1264
+	--assert error? try [parse s: [a b][change only ['a 'b] [z p]]]
+	--assert all [parse s: [a b][change ['a 'b] only [z p]]  s = [[z p]]]
+
 ===end-group===
 
 ===start-group=== "INSERT"
