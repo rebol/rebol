@@ -90,6 +90,12 @@ Rebol [
 	--assert all [parse [hi @bob] ['hi ahead ref! set x skip] x = @bob]
 	--assert not parse "a" [ahead #"b" skip]
 	--assert not parse [1] [ahead word! skip]
+--test-- "issue-1238"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1238
+	--assert not parse "ab" [and "ab" "ac"]
+	--assert not parse "ac" [and "ab" "ac"]
+	--assert not parse "ab" [ahead "ab" "ac"]
+	--assert not parse "ac" [ahead "ab" "ac"]
 ===end-group===
 
 
