@@ -96,7 +96,7 @@ extern void Init_Ext_Test(void);	// see: host-ext-test.c
 #endif
 
 // Host bare-bones stdio functs:
-extern REBREQ *Open_StdIO();
+extern REBREQ *Open_StdIO(void);
 extern void Close_StdIO(void);
 extern void Put_Str(REBYTE *buf);
 extern REBYTE *Get_Str(void);
@@ -105,7 +105,7 @@ void Host_Crash(char *reason) {
 	OS_Crash(cb_cast("REBOL Host Failure"), cb_cast(reason));
 }
 
-void Host_Repl() {
+void Host_Repl(void) {
 //	REBOOL why_alert = TRUE;
 
 #define MAX_CONT_LEVEL 1024
