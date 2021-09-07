@@ -1501,13 +1501,13 @@ Rebol [
 --test-- "split block!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2051
 	b: [a b c d e f]
-	--assert [[a b c d e f]]              = split/skip b 1
-	--assert [[a b c] [d e f]]            = split/skip b 2
-	--assert [[a b] [c d] [e f]]          = split/skip b 3
-	--assert [[a] [b] [c] [d e f]]        = split/skip b 4
-	--assert [[a] [b] [c] [d] [e f]]      = split/skip b 5
-	--assert [[a] [b] [c] [d] [e] [f]]    = split/skip b 6
-	--assert [[a] [b] [c] [d] [e] [f] []] = split/skip b 7
+	--assert [[a b c d e f]]              = split/parts b 1
+	--assert [[a b c] [d e f]]            = split/parts b 2
+	--assert [[a b] [c d] [e f]]          = split/parts b 3
+	--assert [[a] [b] [c] [d e f]]        = split/parts b 4
+	--assert [[a] [b] [c] [d] [e f]]      = split/parts b 5
+	--assert [[a] [b] [c] [d] [e] [f]]    = split/parts b 6
+	--assert [[a] [b] [c] [d] [e] [f] []] = split/parts b 7
 
 --test-- "split string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1886
@@ -1519,13 +1519,74 @@ Rebol [
 	--assert ["abc" "de" "fghi" "jk"] = split "abc|de/fghi:jk" charset "|/:"
 	--assert ["abc" "de" "fghi" "jk"] = split "abc^M^Jde^Mfghi^Jjk" [crlf | #"^M" | newline]
 	--assert ["abc" "de" "fghi" "jk"] = split "abc     de fghi  jk" [some #" "]
-	--assert ["12345678" "12345678"] = split/skip "1234567812345678" 2
-	--assert ["12345" "67812" "345678"] = split/skip "1234567812345678" 3
-	--assert ["123" "456" "781" "234" "5678"] = split/skip "1234567812345678" 5
+	--assert ["12345678" "12345678"] = split/parts "1234567812345678" 2
+	--assert ["12345" "67812" "345678"] = split/parts "1234567812345678" 3
+	--assert ["123" "456" "781" "234" "5678"] = split/parts "1234567812345678" 5
 	;@@ https://github.com/Oldes/Rebol-issues/issues/573
-	--assert ["c" "c"] = split "c c" " "
-	--assert ["1,2"]   = split "1,2" " "
+	--assert ["c" "c"]  = split "c c" " "
+	--assert ["1,2"]    = split "1,2" " "
 	--assert ["c" "c "] = split "c,c " ","
+--test-- "split gregg 1"
+	;@@ https://gist.github.com/greggirwin/66d7c6892fc310097cd91ab354189542
+	--assert (split "1234567812345678" 4)       = ["1234" "5678" "1234" "5678"]
+	--assert (split "1234567812345678" 3)       = ["123" "456" "781" "234" "567" "8"]
+	--assert (split "1234567812345678" 5)       = ["12345" "67812" "34567" "8"]
+	--assert (split/parts [1 2 3 4 5 6] 2)      = [[1 2 3] [4 5 6]]
+	--assert (split/parts "1234567812345678" 2) = ["12345678" "12345678"]
+	--assert (split/parts "1234567812345678" 3) = ["12345" "67812" "345678"]
+	--assert (split/parts "1234567812345678" 5) = ["123" "456" "781" "234" "5678"]
+
+--test-- "split gregg 2"
+	; Dlm longer than series"
+	--assert (split/parts "123" 6)   =     ["1" "2" "3" "" "" ""] ;or ["1" "2" "3"]
+	--assert (split/parts [1 2 3] 6) =     [[1] [2] [3] [] [] []] ;or [1 2 3]
+
+--test-- "split gregg 3"
+	--assert (split [1 2 3 4 5 6] [2 1 3])                = [[1 2] [3] [4 5 6]]
+	--assert (split "1234567812345678" [4 4 2 2 1 1 1 1]) = ["1234" "5678" "12" "34" "5" "6" "7" "8"]
+	--assert (split first [(1 2 3 4 5 6 7 8 9)] 3)        = [(1 2 3) (4 5 6) (7 8 9)]
+	--assert (split #{0102030405060708090A} [4 3 1 2])    = [#{01020304} #{050607} #{08} #{090A}]
+	--assert (split [1 2 3 4 5 6] [2 1])                  = [[1 2] [3]]
+	--assert (split [1 2 3 4 5 6] [2 1 3 5])              = [[1 2] [3] [4 5 6] []]
+	--assert (split [1 2 3 4 5 6] [2 1 6])                = [[1 2] [3] [4 5 6]]
+
+	; Old design for negative skip vals
+	; --assert (split [1 2 3 4 5 6] [3 2 2 -2 2 -4 3]]    [[1 2 3] [4 5] [6] [5 6] [3 4 5]]
+	; New design for negative skip vals
+	--assert (split [1 2 3 4 5 6] [2 -2 2])               = [[1 2] [5 6]]
+
+--test-- "split gregg 4"
+	--assert (split "abc,de,fghi,jk" #",")                = ["abc" "de" "fghi" "jk"]
+	--assert (split "abc<br>de<br>fghi<br>jk" <br>)       = ["abc" "de" "fghi" "jk"]
+
+	--assert (split "a.b.c" ".")           = ["a" "b" "c"]
+	--assert (split "c c" " ")             = ["c" "c"]
+	--assert (split "1,2,3" " ")           = ["1,2,3"]
+	--assert (split "1,2,3" ",")           = ["1" "2" "3"]
+	--assert (split "1,2,3," ",")          = ["1" "2" "3" ""]
+	--assert (split "1,2,3," charset ",.") = ["1" "2" "3" ""]
+	--assert (split "1.2,3." charset ",.") = ["1" "2" "3" ""]
+
+	--assert (split "-a-a" ["a"])    = ["-" "-"]
+	--assert (split "-a-a'" ["a"])   = ["-" "-" "'"]
+
+--test-- "split gregg 5"
+	--assert (split "abc|de/fghi:jk" charset "|/:")                   = ["abc" "de" "fghi" "jk"]
+	--assert (split "abc^M^Jde^Mfghi^Jjk" [crlf | #"^M" | newline])   = ["abc" "de" "fghi" "jk"]
+	--assert (split "abc     de fghi  jk" [some #" "])                = ["abc" "de" "fghi" "jk"]
+
+--test-- "split gregg 6"
+	--assert (split [1 2 3 4 5 6] :even?)  = [[2 4 6] [1 3 5]]
+	--assert (split [1 2 3 4 5 6] :odd?)   = [[1 3 5] [2 4 6]]
+	--assert (split [1 2.3 /a word "str" #iss x: :y] :refinement?) = [[/a] [1 2.3 word "str" #iss x: :y]]
+	--assert (split [1 2.3 /a word "str" #iss x: :y] :number?)     = [[1 2.3] [/a word "str" #iss x: :y]]
+	--assert (split [1 2.3 /a word "str" #iss x: :y] :any-word?)   = [[/a word #iss x: :y] [1 2.3 "str"]]
+
+--test-- "split gregg 7"
+	--assert (split/at [1 2.3 /a word "str" #iss x: :y] 4) =	[[1 2.3 /a word] ["str" #iss x: :y]]
+	;!! Splitting /at with a non-integer excludes the delimiter from the result
+	--assert (split/at [1 2.3 /a word "str" #iss x: :y] "str") =	[[1 2.3 /a word] [#iss x: :y]]
+	--assert (split/at [1 2.3 /a word "str" #iss x: :y] 'word) =	[[1 2.3 /a] ["str" #iss x: :y]]
 
 ===end-group===
 

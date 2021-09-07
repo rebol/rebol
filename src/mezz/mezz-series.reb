@@ -486,28 +486,55 @@ printf: func [
 	print format :fmt :val
 ]
 
-split: func [
+split: function [
 	"Split a series into pieces; fixed or variable size, fixed number, or at delimiters"
-	series	[series!] "The series to split"
-	dlm		[block! integer! char! bitset! any-string!] "Split size, delimiter(s), or rule(s)."
-	/skip	"If dlm is an integer, split into n pieces, rather than pieces of length n."
-	/local size piece-size count mk1 mk2 res fill-val add-fill-val
+	series [series!] "The series to split"
+	;!! If we support /at, dlm could be any-value.
+	dlm    ;[block! integer! char! bitset! any-string! any-function!] "Split size, delimiter(s), predicate, or rule(s)." 
+	/parts "If dlm is an integer, split into n pieces, rather than pieces of length n."
+	/at "Split into 2, at the index position if an integer or the first occurrence of the dlm"
 ][
-	either all [block? dlm  parse dlm [some integer!]] [
+	if any-function? :dlm [
+		res: reduce [ copy [] copy [] ]
+		foreach value series [
+			append/only pick res make logic! dlm :value :value
+		]
+		return res
+	]
+	if at [
+		return reduce either integer? dlm [
+			[
+				copy/part series dlm
+				copy lib/at series dlm + 1
+			]
+		][
+			;-- Without adding a /tail refinement, we don't know if they want
+			;	to split at the head or tail of the delimiter, so we'll exclude
+			;	the delimiter from the result entirely. They know what the dlm
+			;	was that they passed in, so they can add it back to either side
+			;	of the result if they want to.
+			[
+				copy/part series find series :dlm
+				copy find/tail series :dlm
+			]
+		]
+	]
+	;print ['split 'parts? parts mold series mold dlm]
+	either all [block? dlm  parse dlm [some integer!]][
 		map-each len dlm [
 			either positive? len [
 				copy/part series series: skip series len
-			] [
+			][
 				series: skip series negate len
-				; return unset so that nothing is added to output
-				()
+				()	;-- return unset so that nothing is added to output
 			]
 		]
 	][
-		size: dlm   ; alias for readability
+		size: dlm	;-- alias for readability
 		res: collect [
-			parse/all series case [
-				all [integer? size  skip] [
+			;print ['split 'parts? parts mold series mold dlm newline]
+			parse series case [
+				all [integer? dlm  parts][
 					if size < 1 [cause-error 'Script 'invalid-arg size]
 					count: size - 1
 					piece-size: to integer! round/down divide length? series size
@@ -521,36 +548,38 @@ split: func [
 					if size < 1 [cause-error 'Script 'invalid-arg size]
 					[any [copy series 1 size skip (keep/only series)]]
 				]
-				'else [ ; = any [bitset? dlm  any-string? dlm  char? dlm]
+				'else [	;-- = any [bitset? dlm  any-string? dlm  char? dlm]
 					[any [mk1: some [mk2: dlm break | skip] (keep/only copy/part mk1 mk2)]]
 				]
 			]
 		]
-		;-- Special processing, to handle cases where the spec'd more items in
-		;   /skip than the series contains (so we want to append empty items),
+		;-- Special processing, to handle cases where they spec'd more items in
+		;   /parts than the series contains (so we want to append empty items),
 		;   or where the dlm was a char/string/charset and it was the last char
 		;   (so we want to append an empty field that the above rule misses).
-		fill-val: does [copy either any-block? series [[]] [""]]
+		fill-val: does [copy either any-block? series [ [] ][ "" ]]
 		add-fill-val: does [append/only res fill-val]
 		case [
-			all [integer? size  skip] [
-				; If the result is too short, i.e., less items than 'size, add
-				; empty items to fill it to 'size.
-				; We loop here, because insert/dup doesn't copy the value inserted.
+			all [integer? size  parts][
+				;-- If the result is too short, i.e., less items than 'size, add
+				;   empty items to fill it to 'size.
+				;   We loop here, because insert/dup doesn't copy the value inserted.
 				if size > length? res [
 					loop (size - length? res) [add-fill-val]
 				]
 			]
-			; integer? dlm [
-			; ]
-			'else [ ; = any [bitset? dlm  any-string? dlm  char? dlm]
-				; If the last thing in the series is a delimiter, there is an
-				; implied empty field after it, which we add here.
+			;-- integer? size
+			;	If they spec'd an integer size, but did not use /parts, there is
+			;	no special filing to be done. The final element may be less than
+			;	size, which is intentional.
+			'else [ ;-- = any [bitset? dlm  any-string? dlm  char? dlm]
+					;-- If the last thing in the series is a delimiter, there is an
+					;   implied empty field after it, which we add here.
 				case [
 					bitset? dlm [
-						; ATTEMPT is here because LAST will return NONE for an
-						; empty series, and finding none in a bitest is not allowed.
-						if attempt [find dlm last series] [add-fill-val]
+						;-- ATTEMPT is here because LAST will return NONE for an 
+						;   empty series, and finding none in a bitest is not allowed.
+						if attempt [find dlm last series][add-fill-val]
 					]
 					char? dlm [
 						if dlm = last series [add-fill-val]
@@ -559,7 +588,7 @@ split: func [
 						if all [
 							find series dlm
 							empty? find/last/tail series dlm
-						] [add-fill-val]
+						][add-fill-val]
 					]
 				]
 			]
