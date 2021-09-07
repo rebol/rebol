@@ -276,7 +276,7 @@ static int Get_File_Info(REBREQ *file)
 {
 	char *cp;
 	glob_t *g;
-	int n, p, end;
+	int n, p, end = 0;
 	int wld = -1;
 
 	if (!(g = dir->handle)) {
