@@ -191,8 +191,8 @@
 	REBCNT	len = 0;
 	REBCNT	alen;
 	REBI64	v;
-	REBI64	a;
-	REBDEC	dec;
+	REBI64	a = 0;
+	REBDEC	dec = 0.0;
 
 	value = D_ARG(1);
 	if (IS_TUPLE(value)) {

@@ -1178,6 +1178,9 @@ emit-head "Build configuration" %config.h
 
 emit {^/#ifndef REBOL_OPTIONS_H^/}
 
+if stack-size [
+	emit ajoin ["#define STACK_SIZE " stack-size lf lf]
+]
 foreach def configs [
 	emit ajoin ["#define " def lf]
 ]

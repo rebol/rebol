@@ -347,7 +347,7 @@ Rebol [
 		--assert  error?  try [make block! quote #FF        ] ; issue!
 		--assert  error?  try [make block! quote #[bitset! #{FF}]        ] ; bitset!
 		--assert  error?  try [make block! quote #[image! 1x1 #{FFFFFF}] ] ; image!
-		--assert  [0 0] = try [make block! quote #[ui32! 2 [0 0]]        ] ; vector!
+		--assert  [0 0] = try [make block! quote #[u32! 2 [0 0]]        ] ; vector!
 		--assert [a: 1] = try [make block! quote #[object! [a: 1]]       ] ; object!
 		--assert  error?  try [make block! #[typeset! [#[datatype! integer!] #[datatype! percent!]]] ] ; typeset!
 

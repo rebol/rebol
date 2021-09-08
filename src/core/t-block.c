@@ -800,7 +800,7 @@ zero_blk:
 		if (ret >= (REBCNT)tail) goto is_none;
 		if (args & AM_FIND_ONLY) len = 1;
 		if (action == A_FIND) {
-			if (args & (AM_FIND_TAIL | AM_FIND_MATCH)) ret += len;
+			if (args & AM_FIND_TAIL) ret += len;
 			VAL_INDEX(value) = ret;
 		}
 		else {

@@ -107,7 +107,7 @@ static int Fetch_Buf()
 
 /***********************************************************************
 **
-*/	REBREQ *Open_StdIO()
+*/	REBREQ *Open_StdIO(void)
 /*
 **		Open REBOL's standard IO device. This same device is used
 **		by both the host code and the R3 DLL itself.
@@ -144,7 +144,7 @@ static int Fetch_Buf()
 
 /***********************************************************************
 **
-*/	REBYTE *Get_Str()
+*/	REBYTE *Get_Str(void)
 /*
 **		Get input of a null terminated UTF-8 string.
 **		Divides the input into lines.

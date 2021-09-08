@@ -80,7 +80,7 @@
 	REBINT	part1, part2, part3 = -1;
 	REBINT	part4 = -1;
 
-	if (*cp == '-') cp++, neg = TRUE;
+	if (*cp == '-') {cp++; neg = TRUE;}
 	else if (*cp == '+') cp++;
 
 	if (*cp == '-' || *cp == '+') return 0; // small hole: --1:23

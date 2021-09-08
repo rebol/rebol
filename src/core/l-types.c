@@ -156,7 +156,7 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
 ***********************************************************************/
 {
 	REBUNI c;
-	REBCNT n;
+	REBCNT n = 0;
 	REBYTE lex;
 	REBCNT num = 0;
 
@@ -450,7 +450,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	REBINT num;
 	REBINT day = 0;
 	REBINT month;
-	REBINT year;
+	REBINT year = 0;
 	REBINT tz = 0;
 	REBYTE sep;
 	REBCNT size;
@@ -1094,7 +1094,7 @@ end_date:
 			return TRUE;
 
 		default:
-			if (type >= SYM_SI8X && type <= SYM_F64X) {
+			if (type >= SYM_I8X && type < SYM_DATATYPES) {
 				if (MT_Vector(value, val, REB_VECTOR)) return TRUE;
 			}
 			return FALSE;

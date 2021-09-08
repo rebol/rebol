@@ -400,7 +400,8 @@ if value? 'blur [
 	--assert   2 = index? find/only img 66.66.66
 	--assert   2 = index? find/only img 66.66.66.22
 	--assert none? find img 66.66.66.22
-	--assert   2 = index? find/match img 255.255.255
+	--assert   1 = index? find/match img 255.255.255
+	--assert   2 = index? find/match/tail img 255.255.255
 
 --test-- "FIND integer on image (alpha)"
 	img: make image! 2x2 img/2: 66.66.66.66

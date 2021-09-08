@@ -19,7 +19,25 @@ Rebol [
 		--assert -3 == min -3 $1
 ===end-group===
 
-===start-group=== "shift op!"
+===start-group=== "shift"
+	--test-- "shift native"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1310
+		m: to-integer #{8000 0000 0000 0000}
+		--assert  0 = shift 0 0
+		--assert  0 = shift 0 1
+		--assert  0 = shift 0 63
+		--assert  0 = shift 0 -1
+		--assert  1 = shift 1 0
+		--assert  2 = shift 1 1
+		--assert  error? try [shift 1 63]
+		--assert  error? try [shift 1 64]
+		--assert  0 = shift 1 -1
+		--assert -1 = shift m -63
+		--assert -1 = shift m -64
+		--assert  m = shift/logical 1 63 ; same as above
+		--assert  1 = shift/logical m -63
+		--assert  0 = shift/logical m -64
+
 	--test-- "shift-op-left"
 		--assert 2 << 3 = 16
 		--assert 1 <<  0 = 1
@@ -313,6 +331,10 @@ Rebol [
 			error? e: try [1 + "2"]
 			e/id = 'expect-arg
 		]
+
+	--test-- "issue-569"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/569
+		--assert not strict-equal? 1 $1
 		
 ===end-group===
 

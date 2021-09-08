@@ -696,8 +696,10 @@ clear_header:
 					goto crash;
 				// Does the size match a known pool?
 				pool_num = FIND_POOL(SERIES_TOTAL(series));
-				// Just to be sure the pool matches the allocation:
-				if (pool_num < SERIES_POOL && Mem_Pools[pool_num].wide != SERIES_TOTAL(series))
+				// Just to be sure the pool size is enough to hold total series length
+				// Originaly it was expecting exact size match, but there may be cases
+				// where series' total size may be lower than pool wide.
+				if (pool_num < SERIES_POOL && Mem_Pools[pool_num].wide < SERIES_TOTAL(series))
 					goto crash;
 			}
 			series++;
@@ -715,7 +717,8 @@ clear_header:
 			for (seg = Mem_Pools[pool_num].segs; seg; seg = seg->next) {
 				if ((REBUPT)node > (REBUPT)seg && (REBUPT)node < (REBUPT)seg + (REBUPT)seg->size) break;
 			}
-			if (!seg) goto crash;
+			if (!seg)
+				goto crash;
 			//pnode = node; // for debugger
 		}
 		// The number of free nodes must agree with header:

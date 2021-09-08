@@ -161,6 +161,38 @@ jobs:
 #      - name: Build 64bit Rebol/Core as a host application
 #        run: ./siskin make/rebol3.nest %host-core-x64-osx
 
+      - name: Install the Apple certificate
+      # https://docs.github.com/en/actions/guides/installing-an-apple-certificate-on-macos-runners-for-xcode-development
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE }}
+          P12_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+          # import certificate from secrets
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode --output $CERTIFICATE_PATH
+
+          # create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+    
+      - name: Codesign executables
+        env: 
+          MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
+        run: | 
+          /usr/bin/codesign --force -s $MACOS_IDENTITY_ID ./build/rebol3-base-x64-osx -v
+          /usr/bin/codesign --force -s $MACOS_IDENTITY_ID ./build/rebol3-core-x64-osx -v
+          /usr/bin/codesign --force -s $MACOS_IDENTITY_ID ./build/rebol3-bulk-x64-osx -v
+          
+          
       - name: Prepare 64bit Rebol/Base for upload
         run: |
           mv ./build/rebol3-base-x64-osx ./rebol3-base-x64-osx

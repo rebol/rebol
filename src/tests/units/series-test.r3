@@ -18,13 +18,56 @@ Rebol [
 	--assert none? find/part [x] 'x 0
 	--assert equal? [x] find/part [x] 'x 1
 	--assert equal? [x] find/reverse tail [x] 'x
-	--assert equal? [y] find/match [x y] 'x
+	--assert equal? [x y] find/match [x y] 'x
+	--assert equal? [y] find/match/tail [x y] 'x
 	--assert equal? [x] find/last [x] 'x
 	--assert equal? [x] find/last [x x x] 'x
 
 --test-- "FIND string! integer!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/237
 	--assert "23" = find "123" 2
+
+--test-- "FIND string! binary!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1159
+	--assert "F00D"  = find "id: F00D" #{F00D}
+	--assert "F00D"  = find "id: F00D" #{f00d}
+
+--test-- "FIND binary! binary!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1161
+	--assert #{0001} = find/match #{0001} #{00}
+	--assert #{01}   = find/match/tail #{0001} #{00}
+	--assert #{02}   = find #{000102} #{02}
+	--assert #{}     = find/tail #{000102} #{02}
+	--assert     none? find/match #{0001} #{01}
+	--assert     none? find/match/tail #{0001} #{01}
+	--assert     none? find #{000102} #{03}
+	--assert     none? find/tail #{000102} #{03}
+
+--test-- "FIND binary! char!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1161
+	--assert tail? find/tail #{0063} #"c"
+	--assert tail? find/tail #{0063} #"^(63)"
+	--assert tail? find/tail #{00FF} #"^(ff)"
+	--assert none? find/tail #{0063} #"C"
+	--assert none? find/tail #{0063} #"^(700)"
+
+--test-- "FIND binary! integer!"
+	--assert tail? find/tail #{0063} 99
+	--assert error? try [find/tail #{0063} 700]
+
+--test-- "FIND string! tag!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1160
+	--assert "<a>"  = find "<a>" <a>
+	--assert "b"    = find/tail "<a>b" <a>
+	--assert "<a>3" = find/last "1<a>2<a>3" <a>
+	--assert "<a>b" = find/match "<a>b" <a>
+	--assert "b"    = find/match/tail "<a>b" <a>
+	--assert "<a>b" = find/match next "a<a>b" <a>
+	--assert "<a>b" = find/reverse tail "a<a>b" <a>
+	--assert none?    find/skip "a<a>b" <a> 2
+	--assert "<a>b" = find/skip "aa<a>b" <a> 2
+	--assert "<A>"  = find/case "<a><A>" <A>
+	--assert "<a href=''>" = find "foo<a href=''>" <a href=''>
 
 --test-- "FIND %file %file"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/624
@@ -44,8 +87,10 @@ Rebol [
 	--assert ""      = find/any/tail  "abcd" "*d"
 	--assert ""      = find/any/tail  "abcd" "c*"
 	--assert "ef"    = find/any/tail  "abcdef" "b*d"
-	--assert ""      = find/any/match "abc" "a?c"
-	--assert ""      = find/any/match "abcdef" "a*e?"
+	--assert "abc"   = find/any/match "abc" "a?c"
+	--assert "abcdef"= find/any/match "abcdef" "a*e?"
+	--assert ""      = find/any/match/tail "abc" "a?c"
+	--assert ""      = find/any/match/tail "abcdef" "a*e?"
 	--assert "bcd"   = find/any/reverse tail "abcdabcd" "?c"
 	--assert "d"     = find/any/reverse/tail tail "abcdabcd" "?c"
 	--assert "d"     = find/any/reverse/tail tail "abcdabcd" "bc"
@@ -63,8 +108,10 @@ Rebol [
 	--assert "žcdef" = find/any "ažcdef" "ž*?*e"
 	--assert ""      = find/any/tail  "ažcd" "*d"
 	--assert "ef"    = find/any/tail  "ažcdef" "ž*d"
-	--assert ""      = find/any/match "ažc" "a?c"
-	--assert ""      = find/any/match "ažcdef" "a*e?"
+	--assert "ažc"   = find/any/match "ažc" "a?c"
+	--assert "ažcdef"= find/any/match "ažcdef" "a*e?"
+	--assert ""      = find/any/match/tail "ažc" "a?c"
+	--assert ""      = find/any/match/tail "ažcdef" "a*e?"
 	--assert "žcd"   = find/any/reverse tail "ažcdažcd" "?c"
 	--assert "d"     = find/any/reverse/tail tail "ažcdažcd" "?c"
 	--assert "d"     = find/any/reverse/tail tail "ažcdažcd" "žc"
@@ -111,6 +158,11 @@ Rebol [
 ;@@ need to decide, which result is correct
 ;	--assert none? find/part "abcd" "bc" 2
 ;	--assert none? find/part/any "abcd" "*c" 2
+
+--test-- "FIND/REVERSE/MATCH"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2328
+	--assert none? find/reverse/match tail "abc" "abc"
+	--assert none? find/reverse/match tail "abc" "cba"
 
 --test-- "FIND char in string"
 	str: "a,b"
@@ -165,6 +217,11 @@ Rebol [
 --test-- "SELECT/skip"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/101
 	--assert none? select/skip [1 2 3 4 5 6] 5 3
+
+--test-- "SELECT/skip/last"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/616
+	--assert 'b = select/skip [a b a c] 'a 2
+	--assert 'c = select/skip/last [a b a c] 'a 2
 
 --test-- "SELECT on string"
 	--assert #"e" = select     "abcde" "bcd"
@@ -1002,7 +1059,7 @@ Rebol [
 
 	;@@ https://github.com/Oldes/Rebol-issues/issues/806
 	--assert #{0303} = remove-each v #{03010203} [v < 3]
-	--assert [3 3] = to block! remove-each v #[ui16! [3 1 2 3]] [v < 3]
+	--assert [3 3] = to block! remove-each v #[u16! [3 1 2 3]] [v < 3]
 
 --test-- "remove-each/count result"
 	b: [a 1 b 2]
@@ -1307,7 +1364,8 @@ Rebol [
 
 
 ===start-group=== "AS coercion"
-
+;@@ https://github.com/Oldes/Rebol-issues/issues/546
+;@@ https://github.com/Oldes/Rebol-issues/issues/2264
 --test-- "AS datatype! any-string!"
 	s: "hell"
 	--assert file?  f: as file!  s
@@ -1443,13 +1501,13 @@ Rebol [
 --test-- "split block!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2051
 	b: [a b c d e f]
-	--assert [[a b c d e f]]              = split/skip b 1
-	--assert [[a b c] [d e f]]            = split/skip b 2
-	--assert [[a b] [c d] [e f]]          = split/skip b 3
-	--assert [[a] [b] [c] [d e f]]        = split/skip b 4
-	--assert [[a] [b] [c] [d] [e f]]      = split/skip b 5
-	--assert [[a] [b] [c] [d] [e] [f]]    = split/skip b 6
-	--assert [[a] [b] [c] [d] [e] [f] []] = split/skip b 7
+	--assert [[a b c d e f]]              = split/parts b 1
+	--assert [[a b c] [d e f]]            = split/parts b 2
+	--assert [[a b] [c d] [e f]]          = split/parts b 3
+	--assert [[a] [b] [c] [d e f]]        = split/parts b 4
+	--assert [[a] [b] [c] [d] [e f]]      = split/parts b 5
+	--assert [[a] [b] [c] [d] [e] [f]]    = split/parts b 6
+	--assert [[a] [b] [c] [d] [e] [f] []] = split/parts b 7
 
 --test-- "split string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1886
@@ -1461,13 +1519,74 @@ Rebol [
 	--assert ["abc" "de" "fghi" "jk"] = split "abc|de/fghi:jk" charset "|/:"
 	--assert ["abc" "de" "fghi" "jk"] = split "abc^M^Jde^Mfghi^Jjk" [crlf | #"^M" | newline]
 	--assert ["abc" "de" "fghi" "jk"] = split "abc     de fghi  jk" [some #" "]
-	--assert ["12345678" "12345678"] = split/skip "1234567812345678" 2
-	--assert ["12345" "67812" "345678"] = split/skip "1234567812345678" 3
-	--assert ["123" "456" "781" "234" "5678"] = split/skip "1234567812345678" 5
+	--assert ["12345678" "12345678"] = split/parts "1234567812345678" 2
+	--assert ["12345" "67812" "345678"] = split/parts "1234567812345678" 3
+	--assert ["123" "456" "781" "234" "5678"] = split/parts "1234567812345678" 5
 	;@@ https://github.com/Oldes/Rebol-issues/issues/573
-	--assert ["c" "c"] = split "c c" " "
-	--assert ["1,2"]   = split "1,2" " "
+	--assert ["c" "c"]  = split "c c" " "
+	--assert ["1,2"]    = split "1,2" " "
 	--assert ["c" "c "] = split "c,c " ","
+--test-- "split gregg 1"
+	;@@ https://gist.github.com/greggirwin/66d7c6892fc310097cd91ab354189542
+	--assert (split "1234567812345678" 4)       = ["1234" "5678" "1234" "5678"]
+	--assert (split "1234567812345678" 3)       = ["123" "456" "781" "234" "567" "8"]
+	--assert (split "1234567812345678" 5)       = ["12345" "67812" "34567" "8"]
+	--assert (split/parts [1 2 3 4 5 6] 2)      = [[1 2 3] [4 5 6]]
+	--assert (split/parts "1234567812345678" 2) = ["12345678" "12345678"]
+	--assert (split/parts "1234567812345678" 3) = ["12345" "67812" "345678"]
+	--assert (split/parts "1234567812345678" 5) = ["123" "456" "781" "234" "5678"]
+
+--test-- "split gregg 2"
+	; Dlm longer than series"
+	--assert (split/parts "123" 6)   =     ["1" "2" "3" "" "" ""] ;or ["1" "2" "3"]
+	--assert (split/parts [1 2 3] 6) =     [[1] [2] [3] [] [] []] ;or [1 2 3]
+
+--test-- "split gregg 3"
+	--assert (split [1 2 3 4 5 6] [2 1 3])                = [[1 2] [3] [4 5 6]]
+	--assert (split "1234567812345678" [4 4 2 2 1 1 1 1]) = ["1234" "5678" "12" "34" "5" "6" "7" "8"]
+	--assert (split first [(1 2 3 4 5 6 7 8 9)] 3)        = [(1 2 3) (4 5 6) (7 8 9)]
+	--assert (split #{0102030405060708090A} [4 3 1 2])    = [#{01020304} #{050607} #{08} #{090A}]
+	--assert (split [1 2 3 4 5 6] [2 1])                  = [[1 2] [3]]
+	--assert (split [1 2 3 4 5 6] [2 1 3 5])              = [[1 2] [3] [4 5 6] []]
+	--assert (split [1 2 3 4 5 6] [2 1 6])                = [[1 2] [3] [4 5 6]]
+
+	; Old design for negative skip vals
+	; --assert (split [1 2 3 4 5 6] [3 2 2 -2 2 -4 3]]    [[1 2 3] [4 5] [6] [5 6] [3 4 5]]
+	; New design for negative skip vals
+	--assert (split [1 2 3 4 5 6] [2 -2 2])               = [[1 2] [5 6]]
+
+--test-- "split gregg 4"
+	--assert (split "abc,de,fghi,jk" #",")                = ["abc" "de" "fghi" "jk"]
+	--assert (split "abc<br>de<br>fghi<br>jk" <br>)       = ["abc" "de" "fghi" "jk"]
+
+	--assert (split "a.b.c" ".")           = ["a" "b" "c"]
+	--assert (split "c c" " ")             = ["c" "c"]
+	--assert (split "1,2,3" " ")           = ["1,2,3"]
+	--assert (split "1,2,3" ",")           = ["1" "2" "3"]
+	--assert (split "1,2,3," ",")          = ["1" "2" "3" ""]
+	--assert (split "1,2,3," charset ",.") = ["1" "2" "3" ""]
+	--assert (split "1.2,3." charset ",.") = ["1" "2" "3" ""]
+
+	--assert (split "-a-a" ["a"])    = ["-" "-"]
+	--assert (split "-a-a'" ["a"])   = ["-" "-" "'"]
+
+--test-- "split gregg 5"
+	--assert (split "abc|de/fghi:jk" charset "|/:")                   = ["abc" "de" "fghi" "jk"]
+	--assert (split "abc^M^Jde^Mfghi^Jjk" [crlf | #"^M" | newline])   = ["abc" "de" "fghi" "jk"]
+	--assert (split "abc     de fghi  jk" [some #" "])                = ["abc" "de" "fghi" "jk"]
+
+--test-- "split gregg 6"
+	--assert (split [1 2 3 4 5 6] :even?)  = [[2 4 6] [1 3 5]]
+	--assert (split [1 2 3 4 5 6] :odd?)   = [[1 3 5] [2 4 6]]
+	--assert (split [1 2.3 /a word "str" #iss x: :y] :refinement?) = [[/a] [1 2.3 word "str" #iss x: :y]]
+	--assert (split [1 2.3 /a word "str" #iss x: :y] :number?)     = [[1 2.3] [/a word "str" #iss x: :y]]
+	--assert (split [1 2.3 /a word "str" #iss x: :y] :any-word?)   = [[/a word #iss x: :y] [1 2.3 "str"]]
+
+--test-- "split gregg 7"
+	--assert (split/at [1 2.3 /a word "str" #iss x: :y] 4) =	[[1 2.3 /a word] ["str" #iss x: :y]]
+	;!! Splitting /at with a non-integer excludes the delimiter from the result
+	--assert (split/at [1 2.3 /a word "str" #iss x: :y] "str") =	[[1 2.3 /a word] [#iss x: :y]]
+	--assert (split/at [1 2.3 /a word "str" #iss x: :y] 'word) =	[[1 2.3 /a] ["str" #iss x: :y]]
 
 ===end-group===
 

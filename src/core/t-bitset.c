@@ -236,9 +236,10 @@ retry:
 
 /***********************************************************************
 **
-*/	REBFLG Check_Bit_Str(REBSER *bset, REBVAL *val, REBFLG uncased)
+*/	REBFLG Check_Bit_Str_Any(REBSER *bset, REBVAL *val, REBFLG uncased)
 /*
 **		If uncased is TRUE, try to match either upper or lower case.
+**		Returns TRUE when first bit is found.
 **
 ***********************************************************************/
 {
@@ -255,6 +256,30 @@ retry:
 			if (Check_Bit(bset, up[n], uncased)) return TRUE;
 	}
 	return FALSE;
+}
+
+/***********************************************************************
+**
+*/	REBFLG Check_Bit_Str_All(REBSER *bset, REBVAL *val, REBFLG uncased)
+/*
+**		If uncased is TRUE, try to match either upper or lower case.
+**		Returns TRUE when all bits are found.
+**
+***********************************************************************/
+{
+	REBCNT n = VAL_INDEX(val);
+
+	if (VAL_BYTE_SIZE(val)) {
+		REBYTE *bp = VAL_BIN(val);
+		for (; n < VAL_TAIL(val); n++)
+			if (!Check_Bit(bset, bp[n], uncased)) return FALSE;
+	}
+	else {
+		REBUNI *up = VAL_UNI(val);
+		for (; n < VAL_TAIL(val); n++)
+			if (!Check_Bit(bset, up[n], uncased)) return FALSE;
+	}
+	return TRUE;
 }
 
 
@@ -414,10 +439,11 @@ span_bits:
 		
 /***********************************************************************
 **
-*/	REBFLG Check_Bits(REBSER *bset, REBVAL *val, REBFLG uncased)
+*/	REBFLG Check_Bits(REBSER *bset, REBVAL *val, REBFLG uncased, REBFLG any)
 /*
 **		Check bits indicated by strings and chars and ranges.
 **		If uncased is TRUE, try to match either upper or lower case.
+**		If any is TRUE, than returns TRUE on first found bit.
 **
 ***********************************************************************/
 {
@@ -430,8 +456,15 @@ span_bits:
 	if (IS_INTEGER(val))
 		return Check_Bit(bset, Int32s(val, 0), uncased);
 
-	if (ANY_BINSTR(val))
-		return Check_Bit_Str(bset, val, uncased);
+	if (ANY_BINSTR(val)) {
+		if (any) {
+			return Check_Bit_Str_Any(bset, val, uncased);
+		}
+		else {
+			return Check_Bit_Str_All(bset, val, uncased);
+		}
+		
+	}
 
 	if (!ANY_BLOCK(val)) Trap_Type(val);
 
@@ -448,17 +481,24 @@ span_bits:
 					n = VAL_CHAR(val);
 scan_bits:
 					if (n < c) Trap1(RE_PAST_END, val);
-					for (; c <= n; c++)
-						if (Check_Bit(bset, c, uncased)) goto found;
+					if (any) {
+						for (; c <= n; c++)
+							if (Check_Bit(bset, c, uncased)) return TRUE;
+					}
+					else {
+						for (; c <= n; c++)
+							if (!Check_Bit(bset, c, uncased)) return FALSE;
+						goto bit_found;
+					}
 				} else Trap_Arg(val);
 			}
 			else
-				if (Check_Bit(bset, c, uncased)) goto found;
+				if (Check_Bit(bset, c, uncased)) goto bit_found;
 			break;
 
 		case REB_INTEGER:
 			n = Int32s(val, 0);
-			if (n > 0xffff) return 0;
+			if (n > 0xffff) goto bit_not_found;
 			if (IS_SAME_WORD(val + 1, SYM__)) {
 				c = n;
 				val += 2;
@@ -468,7 +508,7 @@ scan_bits:
 				} else Trap_Arg(val);
 			}
 			else
-				if (Check_Bit(bset, n, uncased)) goto found;
+				if (Check_Bit(bset, n, uncased)) goto bit_found;
 			break;
 
 		case REB_BINARY:
@@ -478,16 +518,26 @@ scan_bits:
 		case REB_URL:
 		case REB_TAG:
 //		case REB_ISSUE:
-			if (Check_Bit_Str(bset, val, uncased)) goto found;
+			if (any) {
+				if (Check_Bit_Str_Any(bset, val, uncased)) goto bit_found;
+			}
+			else {
+				if (Check_Bit_Str_All(bset, val, uncased)) goto bit_found;
+			}
 			break;
 
 		default:
 			Trap_Type(val);
 		}
+	bit_not_found:
+		if (!any)
+			return FALSE;
+		continue;
+	bit_found:
+		if (any) {
+			return TRUE;
+		}
 	}
-	return FALSE;
-
-found:
 	return TRUE;
 }
 
@@ -511,7 +561,7 @@ found:
 		}
 		return PE_NONE;
 #else
-		SET_LOGIC(pvs->store, Check_Bits(ser, pvs->select, 0));
+		SET_LOGIC(pvs->store, Check_Bits(ser, pvs->select, 0, FALSE));
 		return PE_USE;
 #endif
 	}
@@ -600,7 +650,7 @@ found:
 
 	case A_PICK:
 	case A_FIND:
-		if (!Check_Bits(VAL_SERIES(value), arg,(action == A_FIND && D_REF(ARG_FIND_CASE)) ))
+		if (!Check_Bits(VAL_SERIES(value), arg,(IS_CHAR(arg) && action == A_FIND && !D_REF(ARG_FIND_CASE)), (action == A_FIND && D_REF(ARG_FIND_ANY))))
 #ifdef PICK_BITSET_AS_NONE
 			return R_NONE;
 #else

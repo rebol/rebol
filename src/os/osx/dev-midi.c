@@ -164,7 +164,7 @@ static REBSER *CFString_To_REBSER(CFStringRef source)
 static void MidiInProc(const MIDIPacketList *pktlist, void *refCon, void *connRefCon)
 {
     REBMID midi_port;
-    REBCNT id = (REBCNT)refCon;
+    REBU64 id = (REBU64)refCon;
     
     if (id >= Midi_Ports_Pool.count) return;
     

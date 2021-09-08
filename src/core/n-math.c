@@ -369,7 +369,7 @@ enum {SINE, COSINE, TANGENT};
 **
 ***********************************************************************/
 {
-	double a, aa, b, m;
+	double a, b, m;
 	if (IS_INTEGER(val1) && IS_INTEGER(val2)) {
 		REBI64 ia = VAL_INT64(val1);
 		REBI64 ib = VAL_INT64(val2);

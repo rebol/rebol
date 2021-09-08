@@ -80,7 +80,7 @@
 	REBVAL *arg = D_ARG(2);
 	REBCNT type = VAL_TYPE(val);
 	REBINT diff;
-	REBCNT sym;
+	REBCNT sym = 0;
 
 	switch (action) {
 	case A_LENGTHQ:

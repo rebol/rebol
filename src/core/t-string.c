@@ -118,7 +118,8 @@ static REBCNT find_string(REBSER *series, REBCNT index, REBCNT end, REBVAL *targ
 
 	if (flags & AM_FIND_SAME) flags |= AM_FIND_CASE; // /SAME has same functionality as /CASE for any-string!
 
-	if (ANY_BINSTR(target)) {
+	//O: not using ANY_BINSTR as TAG is now handled separately
+	if (VAL_TYPE(target) >= REB_BINARY && VAL_TYPE(target) < REB_TAG) {
 		// Do the optimal search or the general search?
 		if (BYTE_SIZE(series) && VAL_BYTE_SIZE(target) && !(flags & ~(AM_FIND_CASE|AM_FIND_MATCH))) {
 			return Find_Byte_Str(series, start, VAL_BIN_DATA(target), len, !GET_FLAG(flags, ARG_FIND_CASE-1), GET_FLAG(flags, ARG_FIND_MATCH-1));
@@ -128,6 +129,10 @@ static REBCNT find_string(REBSER *series, REBCNT index, REBCNT end, REBVAL *targ
 			return Find_Str_Str(series, start, index, end, skip, VAL_SERIES(target), VAL_INDEX(target), len, flags & (AM_FIND_MATCH | AM_FIND_CASE | AM_FIND_TAIL));
 		}
 	}
+	else if (IS_TAG(target)) {
+		return Find_Str_Tag(series, start, index, end, skip, VAL_SERIES(target), VAL_INDEX(target), len, flags & (AM_FIND_MATCH | AM_FIND_CASE | AM_FIND_TAIL));
+	}
+	//O: next condition is always false! It could be removed. 
 	else if (IS_BINARY(target)) {
 		return Find_Byte_Str(series, start, VAL_BIN_DATA(target), len, 0, GET_FLAG(flags, ARG_FIND_MATCH-1));
 	}
@@ -266,6 +271,10 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 		ser->tail = 12;
 		deci_to_binary(ser->data, VAL_DECI(arg));
 		ser->data[12] = 0;
+		break;
+
+	case REB_STRUCT:
+		ser = Copy_Series_Part(VAL_STRUCT_DATA_BIN(arg), VAL_STRUCT_OFFSET(arg), VAL_STRUCT_LEN(arg));
 		break;
 
 	default:
@@ -518,7 +527,7 @@ static struct {
 	REBSER *ser;
 	REB_MOLD mo = {0};
 	REBCNT n;
-	REBUNI c;
+	REBUNI c = 0;
 	REBSER *arg;
 
 	if (pvs->setval) return PE_BAD_SET;
@@ -555,8 +564,8 @@ static struct {
 {
 	REBVAL	*value = D_ARG(1);
 	REBVAL  *arg = D_ARG(2);
-	REBINT	index;
-	REBINT	tail;
+	REBINT	index = 0;
+	REBINT	tail = 0;
 	REBINT	len;
 	REBSER  *ser;
 	REBCNT  type;
@@ -608,7 +617,7 @@ find:
 
 		if (IS_BINARY(value)) {
 			args |= AM_FIND_CASE;
-			if (!IS_BINARY(arg) && !IS_INTEGER(arg) && !IS_BITSET(arg)) Trap0(RE_NOT_SAME_TYPE);
+			if (!IS_BINARY(arg) && !IS_INTEGER(arg) && !IS_BITSET(arg) && !IS_CHAR(arg)) Trap0(RE_NOT_SAME_TYPE);
 			if (IS_INTEGER(arg)) {
 				if (VAL_INT64(arg) < 0 || VAL_INT64(arg) > 255) Trap_Range(arg);
 				len = 1;
@@ -672,7 +681,7 @@ pick_it:
 			return R_RET;
 		}
 		else {
-			REBUNI c;
+			REBUNI c = 0;
 			arg = D_ARG(3);
 			if (IS_CHAR(arg))
 				c = VAL_CHAR(arg);

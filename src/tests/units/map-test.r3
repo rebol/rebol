@@ -238,6 +238,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "reflection"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/597
 	;@@ https://github.com/Oldes/Rebol-issues/issues/774
 	m: make map! b: [a 1 b: 2 :c 3 'd 4 #e 5 /f 6 "a" 7 <b> 8 9 9 #"c" 10 a@b 11 3.14 12 1x0 13 $1 14]
 	--test-- "body of map"

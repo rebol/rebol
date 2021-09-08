@@ -142,6 +142,11 @@
 		--assert bs/8 = true
 		--assert bs/9 = false
 
+	--test-- "pick-9"
+		ABC: charset [#"A" #"B" #"C"]
+		--assert pick ABC "BCB"
+		--assert not pick ABC "BCBX"
+
 ===end-group===
 
 ===start-group=== "modify"
@@ -204,6 +209,51 @@
 			error? e: try [remove/part bs "01"]
 			e/id = 'bad-refines
 		]
+
+===end-group===
+
+
+===start-group=== "find"
+	--test-- "find bitset! char!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2166
+		ABC: charset [#"A" #"B" #"C"]
+		--assert find ABC #"a"
+		--assert find ABC #"A"
+		--assert find/case ABC #"A"
+		--assert not find/case ABC #"a"
+		; finding integer value is always case-sensitive
+		--assert find ABC to-integer #"A"
+		--assert not find ABC to-integer #"a"
+		; pick is always case-sensitive
+		--assert pick ABC #"A"
+		--assert not pick ABC #"a"
+
+	--test-- "find bitset! string!"
+		--assert find ABC "ABC"
+		--assert find ABC "BAC"
+		--assert find ABC "CA"
+		--assert find/any ABC "XCA"
+		--assert not find ABC "XCA"
+		--assert not find ABC "abc" ;@@ should be searching of a string case-insensitive?
+
+	--test-- "find bitset! block-of-integers"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1512
+		bits1-3: make bitset! [1 - 3]
+		--assert find bits1-3 [1]
+		--assert find bits1-3 [1 2]
+		--assert find bits1-3 [1 - 3]
+		--assert find bits1-3 as paren! [1 - 3]
+		--assert not find bits1-3 [4]
+		--assert not find bits1-3 [1 2 4]
+		--assert not find bits1-3 [1 - 4]
+		--assert find/any bits1-3 [4 1]
+		--assert find/any bits1-3 [1 2 4]
+		--assert find/any bits1-3 [1 - 4]
+
+	--test-- "find bitset! block-of-strings!"
+		--assert find ABC ["AB"]
+		--assert find ABC ["AB" "CB"]
+		--assert not find ABC ["AB" "CBX"]
 
 ===end-group===
 

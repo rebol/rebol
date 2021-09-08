@@ -1370,6 +1370,16 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		Mold_Event(value, mold);
 		break;
 
+	case REB_STRUCT:
+	{
+		REBSER *blk;
+		Pre_Mold(value, mold);
+		blk = Struct_To_Block(&VAL_STRUCT(value));
+		Mold_Block_Series(mold, blk, 0, 0);
+		End_Mold(mold);
+	}
+		break;
+
 	case REB_HANDLE:
 		Mold_Handle(value, mold);
 		break;
@@ -1377,7 +1387,6 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	case REB_REBCODE:
 	case REB_OP:
 	case REB_FRAME:
-	case REB_STRUCT:
 	case REB_LIBRARY:
 	case REB_UTYPE:
 		// Value has no printable form, so just print its name.
@@ -1572,7 +1581,7 @@ append:
 
 /***********************************************************************
 **
-*/  void Dispose_Mold()
+*/  void Dispose_Mold(void)
 /*
 ***********************************************************************/
 {

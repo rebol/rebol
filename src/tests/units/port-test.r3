@@ -29,6 +29,11 @@ Rebol [
 		url: decode-url http://host?query
 		--assert url/host = "host"
 		--assert url/path = "?query"
+	--test-- "decode-url tcp://:9000"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1275
+		url: decode-url tcp://:9000
+		--assert url/scheme = 'tcp
+		--assert url/port-id = 9000
 
 ===end-group===
 
@@ -119,6 +124,14 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/500
 		--assert error? e: try [read %carl-for-president/]
 		--assert e/id = 'cannot-open
+
+	--test-- "READ dir with single file"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/611
+		make-dir %dir-611/
+		write %dir-611/foo "foo"
+		--assert [%foo] = read  %dir-611/
+		delete %dir-611/foo
+		delete %dir-611/
 
 	--test-- "READ wildcard"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/158
@@ -229,6 +242,7 @@ if system/platform = 'Windows [
 		--assert not none? find (query/mode file 'name) file
 
 	--test-- "query file info (port)"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2008
 		file: open %units/files/alice29.txt.gz
 		--assert [name size date type] = query/mode file none
 		--assert 'file = query/mode file 'type

@@ -145,7 +145,7 @@ import module [
 				not match
 				either string? :pattern [
 					either wild [
-						tail? any [find/any/match str pattern pattern]
+						tail? any [find/any/match/tail str pattern pattern]
 					][
 						find str pattern
 					]

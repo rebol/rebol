@@ -150,7 +150,7 @@ if find codecs 'wav [
 			bin: none
 			
 		--test-- "Encode WAV"
-			samples: #[si16! [0 -1000 -2000 -1000 0 1000 2000 1000 0]]
+			samples: #[i16! [0 -1000 -2000 -1000 0 1000 2000 1000 0]]
 			--assert binary? bin: encode 'wav :samples
 			--assert object? snd: decode 'wav :bin
 			--assert   'wave = snd/type
@@ -401,6 +401,40 @@ if find codecs 'PNG [
 			3015 = size? %units/files/png-from-photoshop.png
 		]
 		try [delete %new.png]
+	===end-group===
+]
+
+if find codecs 'JPEG [
+	===start-group=== "JPEG codec"
+	--test-- "jpeg/size?"
+		--assert 256x256 = codecs/jpeg/size? %units/files/flower.jpg
+		--assert 256x256 = codecs/jpeg/size? %units/files/flower-from-photoshop.jpg
+		--assert 256x256 = codecs/jpeg/size? %units/files/flower-tiny.jpg
+		--assert none?     codecs/jpeg/size? %units/files/test.aar
+	===end-group===
+]
+
+if find codecs 'GIF [
+	===start-group=== "GIF codec"
+	--test-- "gif/size?"
+		--assert 256x256 = codecs/gif/size? %units/files/flower.gif
+		--assert none?     codecs/gif/size? %units/files/test.aar
+	===end-group===
+]
+
+if find codecs 'BMP [
+	===start-group=== "BMP codec"
+	--test-- "bmp/size?"
+		--assert 256x256 = codecs/bmp/size? %units/files/flower.bmp
+		--assert none?     codecs/bmp/size? %units/files/test.aar
+	===end-group===
+]
+
+if find codecs 'DDS [
+	===start-group=== "DDS codec"
+	--test-- "dds/size?"
+		--assert 256x256 = codecs/dds/size? %units/files/flower.dds
+		--assert none?     codecs/dds/size? %units/files/test.aar
 	===end-group===
 ]
 

@@ -778,8 +778,8 @@ is_none:
 	REBVAL *arg;
 	REBGOB *gob = 0;
 	REBGOB *ngob;
-	REBCNT index;
-	REBCNT tail;
+	REBCNT index = 0;
+	REBCNT tail = 0;
 	REBCNT len;
 
 	arg = D_ARG(2);

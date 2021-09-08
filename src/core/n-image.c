@@ -266,7 +266,7 @@ typedef struct REBCLR {
 	REBCNT  filter = 0;
 	REBDEC  blur = 1.0;
 	REBOOL  has_alpha = Image_Has_Alpha(val_img, FALSE);
-	REBINT  wide, high;
+	REBINT  wide = 0, high = 0;
 	
 	if (IS_INTEGER(val_filter))
 		filter = VAL_INT32(val_filter);
@@ -374,8 +374,8 @@ typedef struct REBCLR {
 //		 num       [integer!]  "1-based index of the image to receive"
 //		/as        "Used to define which codec should be used"
 //		 type      [word!] "One of: [PNG JPEG JPEGXR BMP DDS GIF TIFF] read only: [DNG ICO HEIF]"
-//		/scale
-//		 sc        [pair! percent!]
+//;		/scale
+//;		 sc        [pair! percent!]
 //  ]
 ***********************************************************************/
 {
@@ -388,17 +388,16 @@ typedef struct REBCLR {
 	REBVAL *val_frame    = D_ARG(7);
 	REBOOL  ref_as       = D_REF(8);
 	REBVAL *val_type     = D_ARG(9);
-	REBOOL  ref_scale    = D_REF(10);
-	REBVAL *val_scale    = D_ARG(11);
+	//REBOOL  ref_scale    = D_REF(10);
+	//REBVAL *val_scale    = D_ARG(11);
 
 	REBCDI codi;
 	REBSER *ser = NULL;
 	REBCNT  frm = ref_frame ? VAL_INT32(val_frame) - 1 : 0;
-	REBVAL *ret = D_RET;
 	REBCNT length;
 
 
-#if defined(TO_WINDOWS) && defined(INCLUDE_IMAGE_OS_CODEC)
+#ifdef INCLUDE_IMAGE_OS_CODEC
 	CLEARS(&codi);
 	if (ref_as) {
 		switch (VAL_WORD_CANON(val_type)) {
@@ -408,6 +407,7 @@ typedef struct REBCLR {
 			case SYM_JPEGXR:
 			case SYM_HDP:
 			case SYM_JXR:   codi.type = CODI_IMG_JXR;  break;
+			case SYM_JP2:   codi.type = CODI_IMG_JP2;  break;
 			case SYM_BMP:   codi.type = CODI_IMG_BMP;  break;
 			case SYM_GIF:   codi.type = CODI_IMG_GIF;  break;
 			case SYM_DDS:   codi.type = CODI_IMG_DDS;  break;
@@ -423,7 +423,11 @@ typedef struct REBCLR {
 	if (ref_load) {
 		
 		if (IS_FILE(val_src_file)) {
+#ifdef TO_WINDOWS
 			ser = Value_To_Local_Path(val_src_file, TRUE);
+#else
+			ser = Value_To_OS_Path(val_src_file, TRUE);
+#endif
 		} else {
 			// raw binary data
 			codi.data = VAL_BIN(val_src_file);
@@ -434,9 +438,11 @@ typedef struct REBCLR {
 
 		if(codi.error) {
 			switch (codi.error) {
+#ifdef TO_WINDOWS
 			case WINCODEC_ERR_COMPONENTNOTFOUND:
 				Trap1(RE_NO_CODEC, val_type);
 				break;
+#endif
 			default:
 				SET_INTEGER(D_RET, codi.error);
 				if (IS_BINARY(val_src_file)) {
@@ -459,7 +465,11 @@ typedef struct REBCLR {
 		codi.h    = VAL_IMAGE_HIGH(val_dst_img);
 
 		if (IS_FILE(val_dest)) {
+#ifdef TO_WINDOWS
 			ser = Value_To_Local_Path(val_dest, TRUE);
+#else
+			ser = Value_To_OS_Path(val_dest, TRUE);
+#endif
 		} else {
 			// raw binary data...
 			// ... predict number of bytes large enough to hold the result
@@ -494,9 +504,11 @@ typedef struct REBCLR {
 
 		if(codi.error) {
 			switch (codi.error) {
+#ifdef TO_WINDOWS
 			case WINCODEC_ERR_COMPONENTNOTFOUND:
 				Trap1(RE_NO_CODEC, val_type);
 				break;
+#endif
 			default:
 				SET_INTEGER(D_RET, codi.error);
 				if (IS_BINARY(val_dest)) {

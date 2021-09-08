@@ -37,6 +37,19 @@ Rebol [
 			e/id = 'invalid
 		]
 
+	--test-- "Invalid path"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1319
+		--assert all [
+			error? e: try [load {a/b<}]
+			e/id = 'invalid
+			e/arg1 = "word"
+		]
+		--assert all [
+			error? e: try [load {a/3<}]
+			e/id = 'invalid
+			e/arg1 = "integer"
+		]
+
 	--test-- "Invalid time"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/698
 		--assert all [
@@ -349,6 +362,7 @@ Rebol [
 		--assert  "b" = load {#[string! "ab" 2]}
 		--assert %ab  = load {#[file! "ab"]}
 		--assert  %b  = load {#[file! "ab" 2]}
+		--assert struct? load {#[struct! []]}
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1034
 		--assert error? try [load {#[string! "ab" 2 x]}]
 		--assert error? try [load {#[file! "ab" x]}]

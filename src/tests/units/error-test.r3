@@ -106,5 +106,17 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Error issues"
+	--test-- "issue-553"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/553
+		--assert all [
+			error? e: try [x: does [] length? :x]
+			e/id = 'expect-arg
+		]
+		--assert all [
+			error? e: try [x: does [] last :x]
+			e/id = 'expect-arg
+		]
+===end-group===
 
 ~~~end-file~~~

@@ -881,7 +881,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 {
 	REBVAL *value;
 	REBCNT index;
-	REBCNT tail;
+	REBCNT tail = 0;
 
 	value = Get_Var(D_ARG(1));
 

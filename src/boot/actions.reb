@@ -208,7 +208,7 @@ find: action [
 	/last {Backwards from end of series}
 	/reverse {Backwards from the current position}
 	/tail {Returns the end of the series}
-	/match {Performs comparison and returns the tail of the match}
+	/match {Performs comparison and returns the head of the match (not imply /tail)}
 ]
 
 select: action [
@@ -311,7 +311,7 @@ remove: action [
 
 change: action [
 	{Replaces element(s); returns just past the change.}
-	series [series! gob! port!]{At position (modified)}
+	series [series! gob! port! struct!]{At position (modified)}
 	value [any-type!] {The new value}
 	/part {Limits the amount to change to a given length or position}
 	length [number! series! pair!]

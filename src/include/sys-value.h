@@ -135,7 +135,8 @@ typedef struct Reb_Type {
 #define NONE_VALUE		ROOT_NONEVAL
 
 #define VAL_INT32(v)	(REBINT)((v)->data.integer)
-#define VAL_INT64(v)	((v)->data.integer)
+#define VAL_INT64(v)    ((v)->data.integer)
+#define VAL_UNT32(v)    (REBCNT)((v)->data.integer)
 #define VAL_UNT64(v)	((v)->data.unteger)
 #define	SET_INTEGER(v,n) VAL_SET(v, REB_INTEGER), ((v)->data.integer) = (n)
 #define	SET_INT32(v,n)  ((v)->data.integer) = (REBINT)(n)
@@ -1205,16 +1206,15 @@ typedef struct Reb_Typeset {
 
 typedef struct Reb_Struct {
 	REBSER	*spec;
-	REBSER	*vals;
+	REBSER  *fields;	// fields definition
 	REBSER	*data;
 } REBSTU;
 
 #define VAL_STRUCT(v)       (v->data.structure)
 #define VAL_STRUCT_SPEC(v)  (v->data.structure.spec)
-#define VAL_STRUCT_VALS(v)  (v->data.structure.vals)
+#define VAL_STRUCT_FIELDS(v) ((v)->data.structure.fields)
 #define VAL_STRUCT_DATA(v)  (v->data.structure.data)
 #define VAL_STRUCT_DP(v)    (STR_HEAD(VAL_STRUCT_DATA(v)))
-#define VAL_STRUCT_LEN(v)   (SERIES_TAIL(VAL_STRUCT_DATA(v)))
 
 /***********************************************************************
 **

@@ -53,6 +53,10 @@
 #include <type_traits> // used in CASTING MACROS
 #endif
 
+#ifdef __OBJC__
+#define HAS_BOOL // don't redefine BOOL in objective-c code
+#endif
+
 #if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 /* C-code types: use C99 */
 
@@ -237,7 +241,7 @@ enum {
 typedef long (__stdcall *FUNCPTR)();
 typedef void(__cdecl *CFUNC)(void *);
 #else
-typedef long (*FUNCPTR)();
+typedef long (*FUNCPTR)(void);
 typedef void(*CFUNC)(void *);
 #endif
 

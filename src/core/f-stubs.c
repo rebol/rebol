@@ -81,7 +81,7 @@
 **
 ***********************************************************************/
 {
-	REBINT n;
+	REBINT n = 0;
 
 	if (IS_INTEGER(val)) {
 		if (VAL_INT64(val) > (i64)MAX_I32 || VAL_INT64(val) < (i64)MIN_I32)
@@ -693,7 +693,7 @@
 **
 ***********************************************************************/
 {
-	REBI64 len;
+	REBI64 len = 0;
 	REBINT maxlen;
 	REBINT is_ser = ANY_SERIES(sval);
 

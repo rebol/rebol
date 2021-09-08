@@ -108,6 +108,7 @@ enum {
 	CODI_IMG_JXR,           // Windows Digital Photo (JpegXR)
 	CODI_IMG_HEIF,          // High Efficiency Image Format
 	CODI_IMG_WEBP,          //
+	CODI_IMG_JP2,           // JPEG 2000 (JP2)
 };
 
 //#ifndef WINCODEC_ERR_COMPONENTNOTFOUND

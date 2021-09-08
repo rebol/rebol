@@ -83,6 +83,11 @@ supplement system/options/module-paths join what-dir %units/files/
 ===end-group===
 
 ===start-group=== "make module"
+	--test-- "title-of"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/572
+		test: module [Title: "Test Module"] []
+		--assert "Test Module" = try [title-of test]
+		
 	--test-- "inlined module"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1628
 		unset 'z1 z2: 2

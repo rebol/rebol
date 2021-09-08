@@ -34,12 +34,12 @@ catalog: object [
 	errors:  none
 	; Reflectors are used on boot to create *-of functions
 	reflectors: [
-		spec   [any-function! any-object! vector! datatype!]
+		spec   [any-function! any-object! vector! datatype! struct!]
 		body   [any-function! any-object! map!]
 		words  [any-function! any-object! map! date!]
-		values [any-object! map!]
+		values [any-object! map! struct!]
 		types  [any-function!]
-		title  [any-function! datatype!]
+		title  [any-function! datatype! module!]
 	]
 	; Official list of system/options/flags that can appear.
 	; Must match host reb-args.h enum!
@@ -86,7 +86,8 @@ state: object [
 			0.0.0
 		extension: 2.2.2 ; execute only
 	]
-	last-error: none ; used by WHY?
+	last-error:  none ; used by WHY?
+	last-result: none ; used to store last console result
 ]
 
 modules: []

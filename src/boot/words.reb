@@ -27,25 +27,38 @@ any-object!
 any-block!
 
 ;- numeric types (used for "short" vector! construction)
-;- like: #[ui8! 4] which is same like: make vector! [unsigned integer! 8 4]
+;- like: #[u8! 4] which is same like: make vector! [unsigned integer! 8 4]
 ;  these numeric files are used in l-types.c and t-vector.c sources
 ;  and can be used for future struct! and routine! implementations
-si8!
-si16!
-si32!
-si64!
+i8!
+i16!
+i32!
+i64!
 
-ui8!
-ui16!
-ui32!
-ui64!
+u8!
+u16!
+u32!
+u64!
 
 f32!
 f64!
-;@@ O: Should be supported also longer variants like uint8! etc?
-; end of numeric types
 
-datatypes
+int8!
+int16!
+int32!
+int64!
+
+uint8!
+uint16!
+uint32!
+uint64!
+
+float!
+double!
+byte!
+; end of numeric types (code in l-types.c expects, that next word is `datatypes`)
+
+datatypes 
 
 native
 self
@@ -130,6 +143,7 @@ any
 opt
 not
 and
+ahead
 then
 remove
 insert

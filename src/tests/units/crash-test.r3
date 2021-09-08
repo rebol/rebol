@@ -178,6 +178,17 @@ Rebol [
 	loop 10 [--assert not error? try [close p open p]] ;- no crash
 	--assert not error? try [close p]
 
+--test-- "issue-589"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/589
+	--assert all [
+		error? e: try [system/schemes/tcp/actor] ;- no crash
+		e/id = 'invalid-port
+	]
+
+--test-- "issue-1295"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1295
+	--assert error? try [to-object now] ;-no crash
+
 ===end-group===
 
 ~~~end-file~~~

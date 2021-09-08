@@ -484,7 +484,7 @@
 {
 	REBVAL *val = D_ARG(1);
 	REBVAL *arg = D_ARG(2);
-	REBINT n;
+	REBINT n = 0;
 	REBSER *series = VAL_SERIES(val);
 
 	// Check must be in this order (to avoid checking a non-series value);

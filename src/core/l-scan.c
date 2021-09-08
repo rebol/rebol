@@ -483,7 +483,7 @@
 **
 ***********************************************************************/
 {
-    REBOOL comm = FALSE;
+//    REBOOL comm = FALSE;
 	REBINT chr;
 	REBCNT lines = 0;
 	REBSER *buf = BUF_MOLD;

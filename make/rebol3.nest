@@ -16,10 +16,10 @@ include:  %src/include/
 temp:     %make/tmp/
 ;output:   %build/
 
-stack-size: 4194304
+stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.5.5
+version: 3.5.6
 
 core-files: [
 	%core/a-constants.c
@@ -109,7 +109,7 @@ core-files: [
 	%core/t-pair.c
 	%core/t-port.c
 	%core/t-string.c
-;	%core/t-struct.c          ;not implemented
+	%core/t-struct.c
 	%core/t-time.c
 	%core/t-tuple.c
 	%core/t-typeset.c
@@ -296,6 +296,7 @@ config: [ ;- this is list of configuration (optional) defines
 
 	;SERIES_LABELS ; used for special debug purposes
 	;SHOW_SIZEOFS  ; for debugging ports to some new systems
+	;SHOW_EXPAND_STACK ; will print info when stack expands
 	;NDEBUG        ; removes some asserts
 	;TEST_SCAN
 	;_DEBUG
@@ -331,7 +332,17 @@ include-image-os-codec: [
 	#if Windows? [
 		config: INCLUDE_IMAGE_OS_CODEC
 		host-files: %os/win32/host-image.c
-		mezz-lib-files: %mezz/codec-image.reb
+		mezz-lib-files: %mezz/codec-image-win.reb
+	]
+	#if MacOS? [
+		config: INCLUDE_IMAGE_OS_CODEC
+		host-files: [
+			%os/osx/host-image.c
+			%os/osx/sys-codecs.m
+			%os/osx/sys-utils.m
+		]
+		frameworks: [CoreGraphics CoreImage ImageIO Foundation]
+		mezz-lib-files: %mezz/codec-image-osx.reb
 	]
 ]
 
@@ -339,11 +350,14 @@ include-image-codecs: [
 	#if Windows? [
 		:include-image-os-codec
 	]
-	#if Posix? [
+	#if Linux? [
 		:include-native-bmp-codec
 		:include-native-png-codec
 		:include-native-jpg-codec
 		:include-native-gif-codec
+	]
+	#if MacOS? [
+		:include-image-os-codec
 	]
 ]
 
@@ -353,6 +367,14 @@ include-clipboard: [
 		config:     INCLUDE_CLIPBOARD
 		core-files: %core/p-clipboard.c
 		host-files: %os/win32/dev-clipboard.c
+	]
+	#if macOS? [
+		config:     INCLUDE_CLIPBOARD
+		core-files: %core/p-clipboard.c
+		host-files: %os/osx/dev-clipboard.c
+		host-files: %os/osx/sys-clipboard.m
+		host-files: %os/osx/sys-utils.m
+		framework:  AppKit
 	]
 ]
 include-midi: [
@@ -364,7 +386,7 @@ include-midi: [
 	]
 	#if macOS? [
 		core-files: %core/p-midi.c
-		host-files: %os/posix/dev-midi-osx.c
+		host-files: %os/osx/dev-midi.c
 		config:     INCLUDE_MIDI_DEVICE
 		frameworks: [CoreServices CoreMIDI]
 

@@ -289,7 +289,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 **
 ***********************************************************************/
 {
-	REBINT				i, j, x, y, c;
+	REBINT				i, j, x = 0, y, c = 0;
 	REBINT				colors, compression, bitcount;
 	REBINT				w, h;
 	BITMAPFILEHEADER	bmfh;

@@ -7,6 +7,7 @@ make/host.exe
 make/libr3.so
 make/libr3.dll
 make/Rebol3.xcworkspace/
+make/*.xcodeproj
 src/boot/boot-code.reb
 src/boot/host-init.reb
 src/boot/gen-natives.reb

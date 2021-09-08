@@ -241,6 +241,7 @@ Rebol [
 
 
 ===start-group=== "APPEND on OBJECT"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/551
 	;@@ https://github.com/Oldes/Rebol-issues/issues/708
 	--test-- "issue-708"
 		o: object []
@@ -248,7 +249,7 @@ Rebol [
 		--assert none? o/x
 		append o [y]
 		--assert none? o/y
-		append o [x: 1 y: 2]
+		--assert object? append o [x: 1 y: 2]
 		--assert o/x = 1
 		--assert o/y = 2
 

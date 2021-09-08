@@ -2289,7 +2289,7 @@ bigcomp
 #endif
 {
 	Bigint *b, *d;
-	int b2, bbits, d2, dd, dig, dsign, i, j, nd, nd0, p2, p5, speccase;
+	int b2, bbits, d2, dd = 0, dig, dsign, i, j, nd, nd0, p2, p5, speccase;
 
 	dsign = bc->dsign;
 	nd = bc->nd;
@@ -3704,7 +3704,7 @@ dtoa
 	*/
 
 	int bbits, b2, b5, be, dig, i, ieps, ilim, ilim0, ilim1,
-		j, j1, k, k0, k_check, leftright, m2, m5, s2, s5,
+	j, j1 = 0, k, k0, k_check, leftright, m2, m5, s2, s5,
 		spec_case, try_quick;
 	Long L;
 #ifndef Sudden_Underflow

@@ -359,6 +359,7 @@ Rebol [
 ===start-group=== "form binary!"
 	;-- form on binary! removes decoration..
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2413
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1999
 	--test-- "form binary!"
 		--assert "DEADBEEF" = form #{DEADBEEF}
 		--assert "DEADBEEF" = append "" #{DEADBEEF}

@@ -65,11 +65,11 @@ BOM: [
 ]
 
 BOM-UTF-16?: func [data [string! binary!]][
-	any [find/match data BOM/UTF-16-BE  find/match data BOM/UTF-16-LE]
+	any [find/match/tail data BOM/UTF-16-BE  find/match/tail data BOM/UTF-16-LE]
 ]
 
 BOM-UTF-32?: func [data [string! binary!]][
-	any [find/match data BOM/UTF-32-BE  find/match data BOM/UTF-32-LE]
+	any [find/match/tail data BOM/UTF-32-BE  find/match/tail data BOM/UTF-32-LE]
 ]
 
 
