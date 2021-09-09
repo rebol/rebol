@@ -411,11 +411,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #endif
 	} else {
 		if (powerof2) {
-			// !!! WHO added this and why??? Just use a left shift and mask!
-			REBCNT len=2048;
-			while(len<length)
-				len*=2;
-			length=len;
+			U32_ROUND_UP_POWER_OF_2(length);
 		} else
 			length = ALIGN(length, 2048);
 #ifdef DEBUGGING
