@@ -61,8 +61,8 @@ foreach [codec handler] system/codecs [
 			]
 			title: form reduce ["Internal codec for" codec "media type"]
 			suffixes: select [
-				text [%.txt]
-				markup [%.html %.htm %.xsl %.wml %.sgml %.asp %.php %.cgi]
+				text [%.txt %.cgi]
+				markup [%.html %.htm %.xsl %.wml %.sgml %.asp %.php]
 			] codec
 			entry: handler
 		]
