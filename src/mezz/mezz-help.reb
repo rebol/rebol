@@ -47,6 +47,10 @@ import module [
       ? function!
       ? datatype!
   ^[[m
+  ^[[4;1;36mTo see all available codecs^[[m:
+  ^[[1;32m
+      ? codecs
+  ^[[m
   ^[[4;1;36mOther debug functions^[[m:
   
       ^[[1;32m??^[[m      - display a variable and its value
@@ -197,6 +201,16 @@ import module [
 				word? :word [
 					either value? :word [
 						value: get :word    ;lookup for word's value if any
+						if :word = 'codecs [
+							list-codecs :word
+							if same? :value system/codecs [throw true]
+							output lf
+							if any-function? :value [
+								; don't display help in case that user redefined `codecs` with a function
+								output ajoin ["^[[1;32m" uppercase mold word "^[[m is " form-type :value ".^[[m"]
+								throw true
+							]
+						]
 					][	word: mold :word ]  ;or use it as a string input
 				]
 				string? :word  [
@@ -362,6 +376,48 @@ import module [
 			]
 		]
 		either into [buffer][print head buffer]
+	]
+
+	list-codecs: function [][
+		names: sort keys-of codecs: system/codecs
+		foreach type common-types: [
+			time
+			text			
+			cryptography
+			compression
+			sound
+			image
+			other
+		][
+			tmp: clear []
+			foreach name names [
+				codec: codecs/:name
+				if any [
+					type = codec/type
+					all [type = 'other not find common-types codec/type]
+				][
+					append tmp codec
+				]
+			]
+			if empty? tmp [continue]
+
+			output ajoin [{^[[4;1;36m} uppercase form type { CODECS^[[m:}]
+			foreach codec tmp [
+				output ajoin ["^/    ^[[4;1;33m" uppercase form codec/name "^[[m^/    ^[[1;32m" codec/title]
+				if all [tmp: select codec 'suffixes not empty? tmp] [
+					output ajoin ["^[[m^/    Suffixes: ^[[31m" codec/suffixes]
+				]
+				tmp: exclude keys-of codec [name type title entry suffixes]
+				unless empty? tmp [
+					output ajoin ["^[[m^/    Includes: ^[[35m" tmp]
+				]
+				output lf
+			]
+			output "^[[m^/^/"
+		]
+		output ajoin [
+			"^[[1mTIP:^[[m use for example ^[[1;32mhelp system/codecs/" codec/name "^[[m to see more info.^/"
+		]
 	]
 
 	about: func [
