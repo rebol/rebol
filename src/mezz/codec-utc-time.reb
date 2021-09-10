@@ -8,6 +8,7 @@ REBOL [
 
 register-codec [
 	name: 'utc-time
+	type: 'time
 	title: "UTC time as used in ASN.1 data structures (BER/DER)"
 	decode: function [
 		"Converts DER/BER UTC-time data to Rebol date! value"

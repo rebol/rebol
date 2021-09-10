@@ -18,6 +18,7 @@ REBOL [
 
 register-codec [
 	name:  'tar
+	type:  'compression
 	title: "TAR File Format"
 	suffixes: [%.tar]
 

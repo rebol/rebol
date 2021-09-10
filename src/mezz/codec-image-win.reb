@@ -14,6 +14,7 @@ REBOL [
 register-codec [
 	name:  'dng
 	title: "Digital Negative"
+	type:  'image
 	suffixes: [%.dng]
 	comment: {Decodes only thumbnail, not RAW data!}
 
@@ -25,6 +26,7 @@ register-codec [
 register-codec [
 	name:  'dds
 	title: "DirectDraw Surface"
+	type:  'image
 	suffixes: [%.dds]
 
 	decode:   func [data [binary!]][lib/image/load/as data 'DDS]
@@ -35,6 +37,7 @@ register-codec [
 register-codec [
 	name:  'tiff
 	title: "Tagged Image File Format"
+	type:  'image
 	suffixes: [%.tif %.tiff]
 
 	decode:   func [data [binary!]][lib/image/load/as data 'TIFF]
@@ -45,6 +48,7 @@ register-codec [
 register-codec [
 	name:  'gif
 	title: "Graphics Interchange Format"
+	type:  'image
 	suffixes: [%.gif]
 
 	decode:   func [data [binary!]][lib/image/load/as data 'GIF]
@@ -54,6 +58,7 @@ register-codec [
 
 register-codec [
 	name:  'bmp
+	type:  'image
 	title: "Portable Bitmap"
 	suffixes: [%.bmp]
 
@@ -64,6 +69,7 @@ register-codec [
 
 register-codec [
 	name:  'jpegxr
+	type:  'image
 	title: "JPEG extended range"
 	suffixes: [%.jxr %.hdp %.wdp]
 
@@ -74,6 +80,7 @@ register-codec [
 
 register-codec [
 	name:  'jpeg
+	type:  'image
 	title: "Joint Photographic Experts Group"
 	suffixes: [%.jpg %.jpeg]
 
@@ -84,6 +91,7 @@ register-codec [
 
 register-codec [
 	name:  'png
+	type:  'image
 	title: "Portable Network Graphics"
 	suffixes: [%.png]
 
@@ -91,19 +99,3 @@ register-codec [
 	encode:   func [data [image! ]][lib/image/save/as none data 'PNG]
 	identify: func [data [binary!]][parse data [#{89504E47} to end]]
 ]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

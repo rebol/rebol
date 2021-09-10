@@ -18,6 +18,7 @@ REBOL [
 
 register-codec [
 	name:  'der
+	type:  'cryptography
 	title: "Distinguished Encoding Rules"
 	suffixes: [%.p12 %.pfx %.cer %.der %.jks]
 	decode: function[data [binary!]][
@@ -332,6 +333,7 @@ register-codec [
 
 register-codec [
 	name:  'mobileprovision
+	type:  'cryptography
 	title: "Apple's mobileprovision file"
 	suffixes: [%.mobileprovision]
 	decode: function[data [binary!]][

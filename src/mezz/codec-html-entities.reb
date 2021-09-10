@@ -278,6 +278,7 @@ digits:    charset [#"0" - #"9"]
 
 register-codec [
 	name:  'html-entities
+	type:  'text
 	title: "Reserved characters in HTML"
 
 	decode: func [

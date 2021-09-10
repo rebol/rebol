@@ -15,6 +15,7 @@ REBOL [
 
 register-codec [
 	name:  'unixtime
+	type:  'time
 	title: "Unix time stamp converter"
 	suffixes: []
 

@@ -173,6 +173,7 @@ REBOL [
 
 register-codec [
 	name:  'xml
+	type:  'text
 	title: "Extensible Markup Language"
 	suffixes: [%.xml %.pom]
 

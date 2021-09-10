@@ -29,6 +29,7 @@ wrap [
 
 	register-codec [
 		name: 'ssh-key
+		type: 'cryptography
 		title: "Secure Shell Key"
 		suffixes: [%.key]
 

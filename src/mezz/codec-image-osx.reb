@@ -12,6 +12,7 @@ REBOL [
 
 register-codec [
 	name:  'heif
+	type:  'image
 	title: "High Efficiency Image File Format"
 	suffixes: [%.heif %.heic]
 
@@ -22,6 +23,7 @@ register-codec [
 
 register-codec [
 	name:  'dds
+	type:  'image
 	title: "DirectDraw Surface"
 	suffixes: [%.dds]
 
@@ -32,6 +34,7 @@ register-codec [
 
 register-codec [
 	name:  'tiff
+	type:  'image
 	title: "Tagged Image File Format"
 	suffixes: [%.tif %.tiff]
 
@@ -42,6 +45,7 @@ register-codec [
 
 register-codec [
 	name:  'gif
+	type:  'image
 	title: "Graphics Interchange Format"
 	suffixes: [%.gif]
 
@@ -52,6 +56,7 @@ register-codec [
 
 register-codec [
 	name:  'bmp
+	type:  'image
 	title: "Portable Bitmap"
 	suffixes: [%.bmp]
 
@@ -62,6 +67,7 @@ register-codec [
 
 register-codec [
 	name:  'jpeg2000
+	type:  'image
 	title: "JPEG 2000"
 	suffixes: [%.jp2 %.j2k %.jpf %.jpm %.jpg2 %.j2c %.jpc %.jpx %.mj2]
 
@@ -72,6 +78,7 @@ register-codec [
 
 register-codec [
 	name:  'jpeg
+	type:  'image
 	title: "Joint Photographic Experts Group"
 	suffixes: [%.jpg %.jpeg]
 
@@ -82,6 +89,7 @@ register-codec [
 
 register-codec [
 	name:  'png
+	type:  'image
 	title: "Portable Network Graphics"
 	suffixes: [%.png]
 
@@ -89,19 +97,3 @@ register-codec [
 	encode:   func [data [image! ]][lib/image/save/as none data 'PNG]
 	identify: func [data [binary!]][parse data [#{89504E47} to end]]
 ]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

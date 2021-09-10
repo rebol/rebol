@@ -16,6 +16,7 @@ REBOL [
 
 register-codec [
 	name:  'wav
+	type:  'sound
 	title: "Waveform Audio File Format"
 	suffixes: [%.wav %.wave]
 
