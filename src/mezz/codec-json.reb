@@ -451,6 +451,7 @@ to-json: function [
 
 register-codec [
 	name:  'json
+	type:  'text
 	title: "JavaScript Object Notation"
 	suffixes: [%.json]
 

@@ -7,6 +7,7 @@ REBOL [
 
 register-codec [
 	name:  'crt
+	type:  'cryptography
 	title: "Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile"
 	suffixes: [%.crt]
 	decode: wrap [

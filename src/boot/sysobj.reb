@@ -176,6 +176,7 @@ standard: object [
 
 	codec: construct [
 		name:       ;word!
+		type:       ;word!
 		title:      ;string!
 		suffixes:   ;block!
 		decode:     ;[any-function! none!]

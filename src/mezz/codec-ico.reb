@@ -9,6 +9,7 @@ REBOL [
 system/options/log/ico: 2
 register-codec [
 	name:  'ico
+	type:  'image
 	title: "Windows icon or cursor file"
 	suffixes: [%.ico %.cur]
 

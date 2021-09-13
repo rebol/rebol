@@ -306,6 +306,16 @@ typedef void(*CFUNC)(void *);
 
 #define ROUND_TO_INT(d) (REBINT)(floor((d) + 0.5))
 
+// https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+// Note: 32bit, v must be > 0
+#define U32_ROUND_UP_POWER_OF_2(v) \
+                    v--;           \
+                    v |= v >> 1;   \
+                    v |= v >> 2;   \
+                    v |= v >> 4;   \
+                    v |= v >> 8;   \
+                    v |= v >> 16;  \
+                    v++;           \
 
 /***********************************************************************
 **

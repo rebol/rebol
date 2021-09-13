@@ -11,6 +11,7 @@ REBOL [
 
 register-codec [
 	name: 'ppk
+	type: 'cryptography
 	title: "PuTTY Private Key"
 	suffixes: [%.ppk]
 

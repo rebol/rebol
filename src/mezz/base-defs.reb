@@ -51,16 +51,20 @@ decode-url: none ; set in sys init
 
 foreach [codec handler] system/codecs [
 	if handle? handler [
-		; Change boot handle into object:
-		codec: set codec make object! [
-			entry: handler
-			title: form reduce ["Internal codec for" codec "media type"]
+		; Change boot handle (for internal native codecs) into object:
+		codec: set codec make object! [			
 			name: codec
-			type: 'image!
+			type: switch codec [
+				text markup      ['text ]
+				gif bmp jpeg png ['image]
+				wav              ['sound]
+			]
+			title: form reduce ["Internal codec for" codec "media type"]
 			suffixes: select [
-				text [%.txt]
-				markup [%.html %.htm %.xsl %.wml %.sgml %.asp %.php %.cgi]
+				text [%.txt %.cgi]
+				markup [%.html %.htm %.xsl %.wml %.sgml %.asp %.php]
 			] codec
+			entry: handler
 		]
 		; Media-types block format: [.abc .def type ...]
 		if codec/suffixes [ ;append to file-types only if there is any suffix

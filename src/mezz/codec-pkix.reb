@@ -17,6 +17,7 @@ wrap [
 
 	register-codec [
 		name:  'pkix
+		type:  'cryptography
 		title: "Public-Key Infrastructure (X.509)"
 		suffixes: [%.pem %.ssh %.certSigningRequest]
 		decode: function[
