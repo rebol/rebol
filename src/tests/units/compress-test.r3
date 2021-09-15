@@ -129,6 +129,66 @@ data: "test test test"
 
 ===end-group===
 
+===start-group=== "PNG Pre-compression"
+	bin: #{01020304050102030405}
+	--test-- "FILTER 2"
+		--assert #{0101030105FC02010401} = filter bin 2 'sub
+		--assert #{0102020202FDFD020202} = filter bin 2 'up
+		--assert #{0102030204FD00020302} = filter bin 2 'average
+		--assert #{0101020102FCFD020201} = filter bin 2 'paeth
+	--test-- "FILTER 5"
+		--assert #{01010101010101010101} = filter bin 5 'sub
+		--assert #{01020304050000000000} = filter bin 5 'up
+		--assert #{01020203030101010101} = filter bin 5 'average
+		--assert #{01010101010000000000} = filter bin 5 'paeth
+	--test-- "FILTER 10"
+		--assert #{0101010101FC01010101} = filter bin 10 'sub
+		--assert #{01020304050102030405} = filter bin 10 'up
+		--assert #{0102020303FF02020303} = filter bin 10 'average
+		--assert #{0101010101FC01010101} = filter bin 10 'paeth
+	--test-- "UNFILTER/AS 2"
+		--assert bin = unfilter/as #{0101030105FC02010401} 2 'sub
+		--assert bin = unfilter/as #{0102020202FDFD020202} 2 'up
+		--assert bin = unfilter/as #{0102030204FD00020302} 2 'average
+		--assert bin = unfilter/as #{0101020102FCFD020201} 2 'paeth
+	--test-- "UNFILTER/AS 5"
+		--assert bin = unfilter/as #{01010101010101010101} 5 'sub
+		--assert bin = unfilter/as #{01020304050000000000} 5 'up
+		--assert bin = unfilter/as #{01020203030101010101} 5 'average
+		--assert bin = unfilter/as #{01010101010000000000} 5 'paeth
+	--test-- "UNFILTER/AS 10"
+		--assert bin = unfilter/as #{0101010101FC01010101} 10 'sub
+		--assert bin = unfilter/as #{01020304050102030405} 10 'up
+		--assert bin = unfilter/as #{0102020303FF02020303} 10 'average
+		--assert bin = unfilter/as #{0101010101FC01010101} 10 'paeth
+	--test-- "UNFILTER 2"
+		--assert bin = unfilter #{01 0101 01 0301 01 05FC 01 0201 01 0401} 2
+		--assert bin = unfilter #{02 0102 02 0202 02 02FD 02 FD02 02 0202} 2
+		--assert bin = unfilter #{03 0102 03 0302 03 04FD 03 0002 03 0302} 2
+		--assert bin = unfilter #{04 0101 04 0201 04 02FC 04 FD02 04 0201} 2
+	--test-- "UNFILTER 5"
+		--assert bin = unfilter #{01 0101010101 01 0101010101} 5
+		--assert bin = unfilter #{02 0102030405 02 0000000000} 5
+		--assert bin = unfilter #{03 0102020303 03 0101010101} 5
+		--assert bin = unfilter #{04 0101010101 04 0000000000} 5
+	--test-- "UNFILTER 10"
+		--assert bin = unfilter #{01 0101010101FC01010101} 10
+		--assert bin = unfilter #{02 01020304050102030405} 10
+		--assert bin = unfilter #{03 0102020303FF02020303} 10
+		--assert bin = unfilter #{04 0101010101FC01010101} 10
+
+	bin: #{010203FF010203FF 020304FF030405FF}
+	--test-- "FILTER/SKIP"
+		--assert #{010203FF00000000020304FF01010100} = b1: filter/skip bin 8 'sub 4
+		--assert #{010203FF010203FF0101010002020200} = b2: filter/skip bin 8 'up 4
+		--assert #{010203FF010102800202038002020200} = b3: filter/skip bin 8 'average 4
+		--assert #{010203FF000000000101010001010100} = b4: filter/skip bin 8 'paeth 4
+	--test-- "FILTER/AS/SKIP"
+		--assert bin = unfilter/as/skip :b1 8 'sub 4
+		--assert bin = unfilter/as/skip :b2 8 'up 4
+		--assert bin = unfilter/as/skip :b3 8 'average 4 
+		--assert bin = unfilter/as/skip :b4 8 'paeth 4
+===end-group===
 
 
 ~~~end-file~~~

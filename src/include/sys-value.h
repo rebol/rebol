@@ -146,6 +146,8 @@ typedef struct Reb_Type {
 #define	SET_CHAR(v,n)	VAL_SET(v, REB_CHAR), VAL_CHAR(v) = (REBUNI)(n)
 
 #define IS_NUMBER(v)	(VAL_TYPE(v) == REB_INTEGER || VAL_TYPE(v) == REB_DECIMAL)
+#define	AS_INT32(v)     (IS_INTEGER(v) ? VAL_INT32(v) : (REBINT)VAL_DECIMAL(v))
+#define	AS_INT64(v)     (IS_INTEGER(v) ? VAL_INT64(v) : (REBI64)VAL_DECIMAL(v))
 
 
 /***********************************************************************

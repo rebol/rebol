@@ -474,7 +474,7 @@ static void process_row_6_16(unsigned char *p,int width,int r,int hoff,int hskip
 	}
 }
 
-static int paeth_predictor(int a,int b,int c) {
+int paeth_predictor(int a,int b,int c) {
 	int p,pa,pb,pc;
 
 	p=a+b-c;
