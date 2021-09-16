@@ -480,4 +480,6 @@ if find codecs 'html-entities [
 	===end-group===
 ]
 
+;@@ PDF codec test is in: codecs-test-pdf.r3
+
 ~~~end-file~~~
