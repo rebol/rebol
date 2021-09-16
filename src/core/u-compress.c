@@ -344,7 +344,7 @@ static const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 #endif //INCLUDE_LZMA
 
 
-
+#ifdef INCLUDE_PNG_FILTER
 #ifdef INCLUDE_PNG_CODEC
 int paeth_predictor(int a, int b, int c);
 #else
@@ -408,9 +408,9 @@ static REBYTE get_png_filter_type(REBVAL* val) {
 	REBVAL *val_bpp   = D_ARG(5);
 
 	REBSER *ser;
-	REBYTE *bin = (REBCHR *)VAL_BIN_DATA(val_data);
-	REBCNT r, c, rows, bytes;
+	REBYTE *bin = VAL_BIN_DATA(val_data);
 	REBYTE *scan, *prev, *temp, *out;
+	REBCNT r, c, rows, bytes;
 	REBINT width = AS_INT32(val_width);
 	REBYTE filter = get_png_filter_type(val_type);
 	REBCNT bpp = ref_skip ? VAL_INT32(val_bpp) : 1;
@@ -533,7 +533,6 @@ static REBYTE get_png_filter_type(REBVAL* val) {
 			out = BIN_SKIP(ser, r * (width));
 			filter = scan[0];
 			scan++;
-			//out++;
 		}
 		
 		switch (filter) {
@@ -567,3 +566,4 @@ static REBYTE get_png_filter_type(REBVAL* val) {
 	VAL_TAIL(D_RET) = ref_as ? bytes : bytes - rows;
 	return R_RET;
 }
+#endif //INCLUDE_PNG_FILTER

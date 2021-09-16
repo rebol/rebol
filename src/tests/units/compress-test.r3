@@ -129,6 +129,7 @@ data: "test test test"
 
 ===end-group===
 
+if all [native? :filter native? :unfilter][
 ===start-group=== "PNG Pre-compression"
 	bin: #{01020304050102030405}
 	--test-- "FILTER 2"
@@ -189,6 +190,6 @@ data: "test test test"
 		--assert bin = unfilter/as/skip :b3 8 'average 4 
 		--assert bin = unfilter/as/skip :b4 8 'paeth 4
 ===end-group===
-
+]
 
 ~~~end-file~~~
