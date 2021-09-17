@@ -27,7 +27,7 @@ if find codecs 'pdf [
 		try [delete %tmp.pdf]
 	]
 
-	--test-- "Save empty PDF"
+	--test-- "Minimal PDF file"
 		empty-pdf: object [
 			trailer: #(
 				Info: 1x0
@@ -52,7 +52,6 @@ if find codecs 'pdf [
 				;- Procedure Sets
 				4x0 [
 					PDF    ; Painting and graphics state
-					Text   ; Text
 				]
 				;- First page
 				5x0 #(
@@ -70,10 +69,36 @@ if find codecs 'pdf [
 				]]
 			)
 		]
-		--assert not error? try [save %tmp-empty.pdf p1: empty-pdf]
+		--assert not error? try [save %tmp-empty.pdf pdf]
 		--assert object?    try [p2: load %tmp-empty.pdf]
-		--assert attempt [(keys-of p1/objects) = (keys-of p2/objects)]
+		--assert attempt [(keys-of empty-pdf/objects) = (keys-of p2/objects)]
 		try [delete %tmp-empty.pdf]
+
+	--test-- "Save Simple Text PDF"
+		pdf: copy/deep empty-pdf
+		; include text processing..
+		append pdf/objects/4x0 'Text
+		; include font
+		put pdf/objects 7x0 #(
+			Type:     Font
+			Subtype:  Type1
+			Name:     F1
+			BaseFont: Helvetica
+			Encoding: MacRomanEncoding
+		)
+		pdf/objects/5x0/Resources/Font: #(F1: 7x0)
+		; make some content
+		pdf/objects/6x0/Data: {
+			BT
+				/F1 12 Tf 0 0 Td (0x0) Tj
+				/F1 24 Tf 100 750 Td (Hello World) Tj
+			ET
+		}
+		--assert not error? try [save %tmp-text.pdf pdf]
+		--assert object?    try [p2: load %tmp-text.pdf]
+		--assert attempt [(keys-of pdf/objects) = (keys-of p2/objects)]
+		try [delete %tmp-text.pdf]
+
 
 	===end-group===
 ]
