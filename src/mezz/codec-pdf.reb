@@ -31,7 +31,7 @@ rl_newline: [CRLF | LF | CR]
 ch_number:        #[bitset! #{000000000000FFC0}]                    ;charset "0123456789"
 ch_delimiter:     #[bitset! #{0000000004C1000A0000001400000014}]    ;charset "()<>[]{}/%"
 ch_str-valid:     #[bitset! [not bits #{00EC000000C0000000000008}]] ;complement charset "^/^M^-^H^L()\"
-sp:               #[bitset! #{0040000080}]                          ;charset " ^-"
+ch_sp:            #[bitset! #{0040000080}]                          ;charset " ^-"
 ch_newline:       #[bitset! #{0024}]                                ;charset CRLF
 ch_spnl:          #[bitset! #{0064000080}]                          ;charset " ^-^/^L^M"
 ch_hex:           #[bitset! #{000000000000FFC07FFFFFE07FFFFFE0}]    ;charset [#"0" - #"9" #"a" - #"z" #"A" - #"Z"]
@@ -122,12 +122,12 @@ rl_string:  [
 	(value: to string! value)
 ]
 rl_ref-id: [
-	copy n1 some ch_number some sp
+	copy n1 some ch_number some ch_sp
 	copy n2 some ch_number
 	(ref-id: as-pair n1: load n1 n2: load n2) ; ?? ref-id)
 ]
 rl_reference: [
-	rl_ref-id some sp #"R" (value: ref-id)
+	rl_ref-id some ch_sp #"R" (value: ref-id)
 ]
 
 *stack: copy []
@@ -201,7 +201,7 @@ rl_array: [
 
 rl_obj: [
 	rl_ref-id (obj-id: ref-id );? obj-id)
-	some sp
+	some ch_sp
 	"obj"
 	any ch_spnl
 		rl_value
@@ -266,7 +266,7 @@ rl_import-object: [
 ]
 
 rl_pdf: [
-	"%PDF-" copy value some ch_not-newline rl_newline
+	"%PDF-" copy value [some ch_number #"." some ch_number] any ch_sp rl_newline
 	(pdf/version: to string! value)
 	any ch_spnl
 	opt rl_comment
@@ -399,8 +399,10 @@ emit-val: func[val][
 emit-obj: func[obj][
 	out: insert out "<<"
 	foreach [key val] obj [
-		out: insert insert out "/" form key
-		emit-val val
+		unless none? val [
+			out: insert insert out "/" form key
+			emit-val val
+		]
 	]
 	out: insert out ">>"
 ]
@@ -417,8 +419,14 @@ get-xref-count: function[xrefs n][
 	to integer! n
 ]
 
-emit-stream: func[obj][
-	unless obj/spec/Filter [
+emit-stream: func[obj [object!]][
+	unless find obj 'spec [
+		extend obj 'spec #(Length: 0)
+	]
+	unless any [
+		obj/spec/Filter
+		300 > length? obj/data ; don't use compression on tiny strings
+	][
 		obj/spec/Filter: 'FlateDecode
 		obj/data: compress/zlib obj/data
 	]
@@ -426,6 +434,8 @@ emit-stream: func[obj][
 	emit-obj obj/spec
 	out: insert insert insert out "stream^M^/" obj/data "^M^/endstream"
 ]
+
+rebol-version-str: rejoin ["Rebol/" system/product " Version " system/version]
 
 
 remove-metadata: function [pdf [object!]][
@@ -598,29 +608,71 @@ register-codec [
 			system/options/log/pdf > 0
 			map? info: try [pdf/objects/(pdf/trailer/info)]
 		][
-			sys/log/info 'PDF ["Author:  ^[[m" info/Author]
-			sys/log/info 'PDF ["Title:   ^[[m" info/Title]
-			sys/log/info 'PDF ["Created: ^[[m" info/CreationDate]
-			sys/log/info 'PDF ["Modified:^[[m" info/ModDate]
-			sys/log/info 'PDF ["Producer:^[[m" info/Producer]
-			sys/log/info 'PDF ["Creator: ^[[m" info/Creator]
+			if info/Author       [sys/log/info 'PDF ["Author:  ^[[m" info/Author]]
+			if info/Title        [sys/log/info 'PDF ["Title:   ^[[m" info/Title]]
+			if info/CreationDate [sys/log/info 'PDF ["Created: ^[[m" info/CreationDate]]
+			if info/ModDate      [sys/log/info 'PDF ["Modified:^[[m" info/ModDate]]
+			if info/Producer     [sys/log/info 'PDF ["Producer:^[[m" info/Producer]]
+			if info/Creator      [sys/log/info 'PDF ["Creator: ^[[m" info/Creator]]
 		]
 		also pdf pdf: none ; return result and release the internal value
 	]
 	encode: func [
 		pdf [object!]
-		/local xref xref-pos i n last-obj-id
+		/local xref xref-pos i n last-obj-id version trailer objects info root
 	][
 		;@@ TODO!
 		;-- This is just very simple encoder with not linearized output!
 		;-- It does no input validity checks so user is responsible to provide
 		;-- well formated pdf input object.
 
+		;- validate minimal requirements...
+		objects: select pdf 'objects
+		unless any [map? objects block? objects][
+			sys/log/error 'PDF "Missing valid objects list!"
+			return none
+		]
+		trailer: select pdf 'trailer
+		unless trailer [
+			extend pdf 'trailer trailer: #(Info: #[none] Root: #[none])
+		]
+		unless root: trailer/Root [
+			sys/log/debug 'PDF "Trying to locate `Catalog` in PDF objects."
+			foreach [ref obj] pdf/objects [
+				if all [map? obj obj/Type = 'Catalog][
+					trailer/Root: ref
+					break
+				]
+			]
+		]
+		unless root: trailer/Root [
+			sys/log/error 'PDF "Missing required `Catalog` object!"
+			return none
+		]
+		if info: pick pdf/objects trailer/Info [
+			unless info/CreationDate [info/CreationDate: now]
+			if any [not info/Creator  info/Creator  = "Rebol"] [ info/Creator:  rebol-version-str ]
+			if any [not info/Producer info/Producer = "Rebol"] [ info/Producer: rebol-version-str ]
+			
+			
+			info/ModDate: now
+		]
+
+		unless version: select pdf 'version [ version: @1.3	]
+		if decimal?  version [version: form version]
+		unless parse version [some ch_number #"." some ch_number end][
+			sys/log/error 'PDF ["Invalid PDF version:" mold version]
+			return none
+		]
+
+		;- File header..                                              
 		out: make binary! any [select pdf 'file-size 60000]
-		out: insert out ajoin ["%PDF-" pdf/version "^M%"]
-		out: insert out #{E2E3CFD3}
-		out: insert out "^M^/"
+		out: insert out ajoin ["%PDF-" version "^M%"]
+		out: insert out #{E2E3CFD30D0A} ;= %âãÏÓ
 		xref: copy []
+
+
+		;- File body                                                  
 		foreach [ref obj] pdf/objects [
 			append xref reduce [ref -1 + index? out] 
 			out: insert insert out form-ref ref " obj^M"
@@ -628,9 +680,10 @@ register-codec [
 
 			out: insert out "^Mendobj^M"
 		]
+
+		;- Cross-Reference Table                                      
 		xref-pos: out
 		sort/skip xref 2
-	;? xref
 		i: 0
 		n: get-xref-count xref i
 		out: insert out ajoin [
@@ -656,8 +709,9 @@ register-codec [
 				++ i
 			]
 		]
+		;- File Trailer                                               
 		out: insert out "trailer^M^/"
-		emit-val pdf/trailer
+		emit-val trailer
 		out: insert out ajoin ["^M^/startxref^M^/" -1 + index? xref-pos "^M^/%%EOF^M^/"]
 
 		head out
