@@ -192,6 +192,12 @@ Rebol [
 --test-- "issue-802"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/802
 	--assert object? a: make object [b: self] []  ;-no crash
+--test-- "issue-1058"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1058
+	--assert not error? try [
+		o: make object! [w: self]
+		make o []
+	]
 
 ===end-group===
 
