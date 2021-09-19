@@ -69,13 +69,13 @@ if find codecs 'pdf [
 				]]
 			)
 		]
-		--assert not error? try [save %tmp-empty.pdf pdf]
+		--assert not error? try [save %tmp-empty.pdf empty-pdf]
 		--assert object?    try [p2: load %tmp-empty.pdf]
 		--assert attempt [(keys-of empty-pdf/objects) = (keys-of p2/objects)]
 		try [delete %tmp-empty.pdf]
 
 	--test-- "Save Simple Text PDF"
-		pdf: copy/deep empty-pdf
+		pdf: copy/deep/types empty-pdf any-type!
 		; include text processing..
 		append pdf/objects/4x0 'Text
 		; include font
@@ -90,7 +90,7 @@ if find codecs 'pdf [
 		; make some content
 		pdf/objects/6x0/Data: {
 			BT
-				/F1 12 Tf 0 0 Td (0x0) Tj
+				/F1 12 Tf 0 0 Td (0x0) Tj % left-bottom corner
 				/F1 24 Tf 100 750 Td (Hello World) Tj
 			ET
 		}
@@ -99,7 +99,42 @@ if find codecs 'pdf [
 		--assert attempt [(keys-of pdf/objects) = (keys-of p2/objects)]
 		try [delete %tmp-text.pdf]
 
+	--test-- "Save Simple Draw PDF"
+		pdf: copy/deep/types empty-pdf any-type!
+		; make some content
+		pdf/objects/6x0/Data: {
+% Draw black line segment, using the default line width.
+150 250 m
+150 350 l
+S
 
+% Draw a thicker, dashed line segment.
+4 w                 % Set line width to 4 points.
+[4 6] 0 d           % Set dash pattern.
+150 250 m
+400 250 l
+S
+
+[] 0 d              % Reset dash pattern to solid line.
+1 w                 % Reset line width to 1 unit.
+
+% Draw a rectangle with 1-unit red border, filled with light blue.
+1.0 0.0  0.0 RG     % Red for stroke color
+0.5 0.75 1.0 rg     % Fill color
+200 300 50 75 re
+B
+
+% Draw a curve filled with gray and with colored border.
+0.5 0.1 0.2 RG
+0.7 g
+300 300 m
+300 400 400 400 400 300 c
+b
+		}
+		--assert not error? try [save %tmp-draw.pdf pdf]
+		--assert object?    try [p2: load %tmp-draw.pdf]
+		--assert attempt [(keys-of pdf/objects) = (keys-of p2/objects)]
+		try [delete %tmp-draw.pdf]
 	===end-group===
 ]
 
