@@ -46,6 +46,13 @@ Rebol [
 --test-- "body-of FUNCTION"
 	fce: func[a [integer!]][probe a]
 	--assert [probe a] = body-of :fce
+	;@@ https://github.com/Oldes/Rebol-issues/issues/166
+	fce: func[a][append "xx" s]
+	clear second body-of :fce
+	--assert [append "xx" s] = body-of :fce
+	clear body-of :fce
+	--assert [append "xx" s] = body-of :fce
+
 
 --test-- "invalid MAKE"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1052
