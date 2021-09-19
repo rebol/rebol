@@ -189,6 +189,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1295
 	--assert error? try [to-object now] ;-no crash
 
+--test-- "issue-802"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/802
+	--assert object? a: make object [b: self] []  ;-no crash
+
 ===end-group===
 
 ~~~end-file~~~
