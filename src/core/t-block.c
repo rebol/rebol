@@ -754,7 +754,7 @@ zero_blk:
 			Set_Series(
 				VAL_TYPE(value), D_RET,
 				D_REF(ARG_TAKE_DEEP)
-					? Copy_Block_Values(ser, 0, len, CP_DEEP | TS_STD_SERIES)
+					? Copy_Block_Values(ser, 0, len, CP_DEEP | TS_DEEP_COPIED)
 					: Copy_Block_Len(ser, index, len)
 			);
 		}
@@ -847,7 +847,7 @@ zero_blk:
 	{
 		REBU64 types = 0;
 		if (D_REF(ARG_COPY_DEEP)) {
-			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? 0 : TS_STD_SERIES);
+			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? 0 : TS_DEEP_COPIED);
 		}
 		if D_REF(ARG_COPY_TYPES) {
 			arg = D_ARG(ARG_COPY_KINDS);

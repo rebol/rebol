@@ -453,7 +453,7 @@ static REBSER *Trim_Object(REBSER *obj)
 		REBU64 types = 0;
 		if (D_REF(ARG_COPY_PART)) Trap0(RE_BAD_REFINES);
 		if (D_REF(ARG_COPY_DEEP)) {
-			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? 0 : TS_STD_SERIES);
+			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? 0 : TS_DEEP_COPIED);
 		}
 		if D_REF(ARG_COPY_TYPES) {
 			arg = D_ARG(ARG_COPY_KINDS);
