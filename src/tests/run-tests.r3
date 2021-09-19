@@ -22,6 +22,7 @@ dt [ ;- delta time
 		%units/compare-test.r3
 		%units/compress-test.r3
 		%units/conditional-test.r3
+		%units/copy-test.r3
 		%units/crash-test.r3
 		%units/datatype-test.r3
 		%units/date-test.r3
