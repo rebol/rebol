@@ -15,6 +15,8 @@ REBOL [
 		The loading is not optimal. It tries to load all objects even these not referenced in cross-reference table.
 		It can be changed in the future, but so far, purpose of the code is to learn some PDF implementation details.
 		It is not designed for real life processing of large PDF documents.
+
+		Useful link for manual tests: https://www.pdf-online.com/osa/validate.aspx
 	}
 ]
 
@@ -419,20 +421,25 @@ get-xref-count: function[xrefs n][
 	to integer! n
 ]
 
-emit-stream: func[obj [object!]][
+emit-stream: func[obj [object!] /local data][
 	unless find obj 'spec [
 		extend obj 'spec #(Length: 0)
 	]
-	unless any [
-		obj/spec/Filter
-		300 > length? obj/data ; don't use compression on tiny strings
+	data: any [obj/data #{}]
+	unless any [           ; don't use compression 
+		obj/spec/Filter    ; if there is already some filter
+		300 > length? data ; if data are small enough
 	][
 		obj/spec/Filter: 'FlateDecode
-		obj/data: compress/zlib obj/data
+		data: compress/zlib obj/data
 	]
-	obj/spec/Length: length? obj/data
+	unless binary? data [
+		; make sure that data are in binary, so the length is correct!
+		data: to binary! data
+	]
+	obj/spec/Length: length? data
 	emit-obj obj/spec
-	out: insert insert insert out "stream^M^/" obj/data "^M^/endstream"
+	out: insert insert insert out "stream^M^/" data "^M^/endstream"
 ]
 
 rebol-version-str: rejoin ["Rebol/" system/product " Version " system/version]
