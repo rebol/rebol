@@ -360,7 +360,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Map(REBVAL *out, REBVAL *data, REBU64 type)
+*/	REBFLG MT_Map(REBVAL *out, REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
 {
@@ -575,11 +575,10 @@
 			else types |= VAL_TYPESET(arg);
 		}
 		if (D_REF(ARG_COPY_DEEP)) {
-			//puts("deep copy wanted");
 			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? types : TS_DEEP_COPIED);
 		}
-		if (MT_Map(D_RET, val, types)) return R_RET;
-		Trap_Arg(val);
+		Set_Series(REB_MAP, D_RET, Copy_Map(val, types));
+		break;
 	}
 	case A_CLEAR:
 		Clear_Series(series);
