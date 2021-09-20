@@ -52,6 +52,18 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "make/to date"
+	--test-- "make/to date! integer!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2456
+		--assert 20-Sep-2021/12:46:41 = make date! 1632142001
+		--assert 20-Sep-2021/12:46:41 =   to date! 1632142001
+		--assert 20-Sep-2021/12:46:42 = make date! 1632142002
+		--assert 20-Sep-2021/12:46:42 =   to date! 1632142002
+		--assert 20-Sep-2021/10:58:32 = make date! 1632135512
+		--assert 20-Sep-2021/10:58:32 =   to date! 1632135512
+
+===end-group===
+
 ===start-group=== "make/to integer"
 	--test-- "to integer! logic!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1018
@@ -71,6 +83,15 @@ Rebol [
 		--assert 0 = make 42 false
 		--assert error? try [to integer! true]
 		--assert error? try [to integer! false]
+
+	--test-- "make/to integer! date!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2456
+		--assert 1632142001 = make integer! 20-Sep-2021/12:46:41.3
+		--assert 1632142001 =   to integer! 20-Sep-2021/12:46:41.3
+		--assert 1632142002 = make integer! 20-Sep-2021/12:46:41.7
+		--assert 1632142002 =   to integer! 20-Sep-2021/12:46:41.7
+		--assert 1632135512 = make integer! 20-Sep-2021/12:58:32+2:00
+		--assert 1632135512 =   to integer! 20-Sep-2021/12:58:32+2:00
 
 ===end-group===
 
