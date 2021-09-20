@@ -245,6 +245,7 @@
 		else if (IS_CHAR(val))
 			num = VAL_CHAR(val);
 		// else if (IS_NONE(val)) num = 0;
+		else if (IS_DATE(val)) num = Date_To_Timestamp(val);
 		else if (IS_TIME (val)) num = SECS_IN(VAL_TIME(val));
 		else goto is_bad;
 		break;

@@ -26,12 +26,7 @@ register-codec [
 	][
 		if string? epoch [ epoch: debase epoch 16 ]
 		if binary? epoch [ epoch: to integer! epoch ]
-		days: to integer! tmp: epoch / 86400
-		hours: to integer! time: (tmp - days) * 24
-		minutes: to integer! tmp: (time - hours) * 60
-		seconds: to integer! 0.5 + ((tmp - minutes) * 60)
-		time: to time! ((((hours * 60) + minutes) * 60) + seconds)
-		result: 1-Jan-1970 + days + time
+		result: to date! epoch
 		unless utc [
 			result: result + now/zone
 			result/zone: now/zone
@@ -44,12 +39,7 @@ register-codec [
 		date [date!]
 		/as type [word! datatype!] {one of: [string! binary! integer!]}
 	][
-		time: any [date/time 0:0:0]
-		unix: ((date - 1-1-1970) * 86400)
-			+ (time/hour * 3600)
-			+ (time/minute * 60)
-			+  time/second
-			- to integer! (any [date/zone 0])
+		unix: to integer! date
 		if as [
 			type: to word! type
 			binary/write bin: #{} [ui32 :unix]

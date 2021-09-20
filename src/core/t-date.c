@@ -32,6 +32,8 @@
 
 #include "sys-core.h"
 
+static const REBI64 DAYS_OF_JAN_1ST_1970 = 719468; // number of days for 1st January 1970
+
 
 /***********************************************************************
 **
@@ -306,6 +308,36 @@
 	year1.date.month = 1;
 
 	return ((Diff_Date(date, year1) + 5) % 7) + 1;
+}
+
+
+/***********************************************************************
+**
+*/	REBCNT Date_To_Timestamp(REBVAL *date)
+/*
+**		Return the unix time stamp for a specific date value.
+**
+***********************************************************************/
+{
+	REBDAT d = VAL_DATE(date);
+	REBI64 epoch = (Days_Of_Date(d.date.day, d.date.month, d.date.year) - DAYS_OF_JAN_1ST_1970) * SECS_IN_DAY;
+	return epoch + ((VAL_TIME(date) + 500000000) / SEC_SEC);
+}
+
+/***********************************************************************
+**
+*/	void Timestamp_To_Date(REBVAL *date, REBI64 epoch)
+/*
+**		Set Rebol date from the unix time stamp epoch.
+**
+***********************************************************************/
+{
+	REBI64 days = (epoch / SECS_IN_DAY) + DAYS_OF_JAN_1ST_1970;
+
+	VAL_SET(date, REB_DATE);
+	Date_Of_Days(days, &VAL_DATE(date));
+	VAL_TIME(date) = TIME_SEC((epoch % 86400));
+	VAL_ZONE(date) = 0;
 }
 
 
@@ -882,6 +914,10 @@ setDate:
 				if (MT_Date(D_RET, VAL_BLK_DATA(arg), REB_DATE)) {
 					return R_RET;
 				}
+			}
+			else if (IS_INTEGER(arg)) {
+				Timestamp_To_Date(D_RET, VAL_INT64(arg));
+				return R_RET;
 			}
 //			else if (IS_NONE(arg)) {
 //				secs = nsec = day = month = year = tz = 0;
