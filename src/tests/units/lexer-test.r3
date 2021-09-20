@@ -320,6 +320,15 @@ Rebol [
 	--test-- "valid `tags`"
 		--assert tag? load {<a '"'>} ;@@ https://github.com/Oldes/Rebol-issues/issues/1873
 
+	--test-- "issue-1919"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1919
+		--assert all  [
+			block? b: try [load "<a<b b>>"]
+			b/1 = <a<b b>
+			b/2 = '>
+		]
+
+
 ===end-group===
 
 
