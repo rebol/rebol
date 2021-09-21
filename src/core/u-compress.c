@@ -384,6 +384,7 @@ static REBYTE get_png_filter_type(REBVAL* val) {
 		return MIN(PNG_FILTER_PAETH, MAX(0, VAL_INT32(val)));
 	}
 	Trap1(RE_INVALID_ARG, val);
+	return 0; // to make xcode happy
 }
 
 // See: https://www.rfc-editor.org/rfc/rfc2083.html#page-31
@@ -497,7 +498,7 @@ static REBYTE get_png_filter_type(REBVAL* val) {
 	REBINT width = AS_INT32(val_width);
 	REBCNT r, c, rows;
 	REBYTE *scan, *prev, *temp, *out;
-	REBYTE filter;
+	REBYTE filter = 0;
 	REBCNT bytes = VAL_LEN(val_data);
 	REBCNT bpp = ref_skip ? VAL_INT32(val_bpp) : 1;
 
