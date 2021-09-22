@@ -541,8 +541,20 @@ Rebol [
 	--test-- "FIND-MAX block!" --assert  3 = first find-max b
 	--test-- "FIND-MIN block!" --assert -1 = first find-min b
 	b: [1 a 2 b 3 c -1 d]
-	--test-- "FIND-MAX/skip block!" --assert  3 = first find-max/skip b 2
-	--test-- "FIND-MIN/skip block!" --assert -1 = first find-min/skip b 2
+	--test-- "FIND-MAX/skip block!"
+		--assert  3 = first find-max/skip b 2
+	--test-- "FIND-MIN/skip block!"
+		--assert -1 = first find-min/skip b 2
+		;@@ https://github.com/Oldes/Rebol-issues/issues/739
+		--assert all [
+			error? e: try [find-min/skip b 0]
+			e/id = 'out-of-range
+		]
+		--assert all [
+			error? e: try [find-min/skip b -2]
+			e/id = 'out-of-range
+		]
+
 ===end-group===
 
 ===start-group=== "++ & --"
