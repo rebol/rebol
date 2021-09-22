@@ -1052,6 +1052,17 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "MAP-EACH"
+
+--test-- "MAP-EACH []"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/541
+	--assert all [
+		error? e: try [map-each [][a b c][]]
+		e/id = 'invalid-arg
+	]
+
+===end-group===
+
 ===start-group=== "REMOVE-EACH"
 --test-- "remove-each result"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/931
