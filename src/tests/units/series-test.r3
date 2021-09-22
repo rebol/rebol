@@ -1049,6 +1049,16 @@ Rebol [
 		error? e: try [foreach [][][]]
 		e/id = 'invalid-arg
 	]
+--test-- "FOREACH [k v] object!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/542
+	o: object [a: 1 b: 2] x: 0
+	--assert 3 = foreach [k v] o [x: x + v]
+	--assert 6 = foreach [k] o [x: x + o/:k]
+	--assert 9 = foreach k o [x: x + o/:k]
+	--assert all [
+		error? e: try [foreach [k v b] o []]
+		e/id = 'invalid-arg
+	]
 
 ===end-group===
 
