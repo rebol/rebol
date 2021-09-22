@@ -1059,6 +1059,17 @@ Rebol [
 		error? e: try [foreach [k v b] o []]
 		e/id = 'invalid-arg
 	]
+--test-- "FOREACH [k v] map!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/722
+	m: map [a: 1 b: 2] x: 0
+	--assert 3 = foreach [k v] m [x: x + v]
+	--assert 6 = foreach [k] m [x: x + m/:k]
+	--assert 9 = foreach k m [x: x + m/:k]
+	--assert 9 = foreach [k v] m [if v = 1 [put m 'c -3] x: x + v]
+	--assert all [
+		error? e: try [foreach [k v b] m []]
+		e/id = 'invalid-arg
+	]
 
 ===end-group===
 
