@@ -217,6 +217,11 @@ Rebol [
 --test-- "SELECT/skip"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/101
 	--assert none? select/skip [1 2 3 4 5 6] 5 3
+	;@@ https://github.com/Oldes/Rebol-issues/issues/734
+	--assert all [
+		error? e: try [select/skip [1 2 3 4 5 6] 5 -4]
+		e/id = 'out-of-range
+	]
 
 --test-- "SELECT/skip/last"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/616
