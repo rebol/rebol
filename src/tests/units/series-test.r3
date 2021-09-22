@@ -536,6 +536,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "FIND-MAX / FIND-MIN"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/755
 	b: [1 2 3 -1]
 	--test-- "FIND-MAX block!" --assert  3 = first find-max b
 	--test-- "FIND-MIN block!" --assert -1 = first find-min b
