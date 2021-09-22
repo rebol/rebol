@@ -1043,6 +1043,12 @@ Rebol [
 	--assert 3 = foreach x [1 2 3] [x]
 	--assert unset? foreach x [1 2 3] [if x = 2 [break]]
 	--assert 4 = foreach x [1 2 3] [if x = 2 [break/return 4]]
+--test-- "FOREACH []"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/540
+	--assert all [
+		error? e: try [foreach [][][]]
+		e/id = 'invalid-arg
+	]
 
 ===end-group===
 
