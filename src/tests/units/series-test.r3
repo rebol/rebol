@@ -340,6 +340,12 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "APPEND block!"
+	--test-- "self-append"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/814
+		a: copy [1]
+		--assert [1 1] = append a a
+===end-group===
 
 ===start-group=== "APPEND string!"
 	--test-- "APPEND string! char!"
