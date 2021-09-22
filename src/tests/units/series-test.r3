@@ -1059,6 +1059,12 @@ Rebol [
 		error? e: try [foreach [k v b] o []]
 		e/id = 'invalid-arg
 	]
+--test-- "FOREACH [ref: k v] object!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/723
+	o: object [a: 1 b: 2] x: 0 ref: 'foo
+	--assert 3 = foreach [ref: k v] o [if ref = o [x: x + v]]
+	--assert 6 = foreach [ref: k] o [if ref = o [x: x + o/:k]]
+	--assert ref = 'foo
 --test-- "FOREACH [k v] map!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/722
 	m: map [a: 1 b: 2] x: 0
@@ -1070,7 +1076,12 @@ Rebol [
 		error? e: try [foreach [k v b] m []]
 		e/id = 'invalid-arg
 	]
-
+--test-- "FOREACH [ref: k v] map!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/723
+	m: map [a: 1 b: 2] x: 0 ref: 'foo
+	--assert 3 = foreach [ref: k v] m [if ref = m [x: x + v]]
+	--assert 6 = foreach [ref: k] m [if ref = m [x: x + m/:k]]
+	--assert ref = 'foo
 ===end-group===
 
 ===start-group=== "MAP-EACH"
