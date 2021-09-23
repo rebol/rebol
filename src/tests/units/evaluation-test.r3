@@ -574,6 +574,10 @@ Rebol [
 
 
 ===start-group=== "TRY"
+	--test-- "try [do..]"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1361
+		--assert error? try [do {"}]
+		--assert error? try [do "1" do {"}]
 	--test-- "try [catch..]"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/851
 		--assert error? try [do [1] do make error! "try failure"]
