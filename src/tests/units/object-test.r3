@@ -49,6 +49,7 @@ Rebol [
 
 ===start-group=== "RESOLVE object"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1107
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1108
 	src: object [a: 10 b: 20 c: 30]
 	--test-- "resolve object"
 		append o1: object [a: 1] 'b
@@ -68,6 +69,10 @@ Rebol [
 		append o4: object [a: 1] 'b
 		--assert o4 = resolve/all/extend o4 src
 		--assert all [o4/a: 10 o4/b = 20 o4/c = 30]
+	--test-- "resolve/all/only object"
+		o5: object [a: 1 b: 2 c: 3]
+		--assert o5 = resolve/all/only o5 src [b]
+		--assert all [o5/a: 1 o5/b = 20 o5/c = 3]
 ===end-group===
 
 
