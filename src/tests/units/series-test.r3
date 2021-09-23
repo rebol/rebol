@@ -390,6 +390,11 @@ Rebol [
 		a: "x" b: #{FF}
 		--assert "xx" = append a a
 		--assert #{FFFF} = append b b
+	--test-- "APPEND binary! block!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1452
+		--assert #{00010361} = append #{} [#{00} #{01} 3 #"a"]
+		--assert   error? try [append #{} [300]]
+
 ===end-group===
 
 ===start-group=== "INSERT binary!"
@@ -407,6 +412,10 @@ Rebol [
 	--test-- "INSERT binary! char!"
 		--assert #{0100}     = head insert #{00} #"^(01)"
 		--assert #{E2869000} = head insert #{00} #"^(2190)"
+	--test-- "INSERT binary! block!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1452
+		--assert #{00010361} = head insert #{} [#{00} #{01} 3 #"a"]
+		--assert   error? try [insert #{} [300]]
 	--test-- "INSERT/part binary!"
 		--assert #{0100} = head insert/part #{00} #{0102} 1
 		--assert #{0100} = head insert/part #{00} "^(01)^(02)" 1
