@@ -85,6 +85,16 @@ Rebol [
 		--assert is-invalid-path-error? [do in o [self/f: 2]]
 		--assert is-invalid-path-error? [do bind [self/f] o]
 
+	--test-- "resolve"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1095
+		obj: make object! [a: 1]
+		protect/deep obj
+		--assert is-protected-error? [resolve obj make object! [a: 99]]
+		a: make object! [pass: "1234" getp: does [return pass] protect/hide 'pass]
+		--assert is-invalid-path-error? [a/pass]
+		--assert object? resolve a make object! [pass: 999]
+		--assert "1234" = a/getp
+
 ===end-group===
 
 
