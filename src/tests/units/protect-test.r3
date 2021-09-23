@@ -20,6 +20,12 @@ Rebol [
 			err/id = 'protected
 		]
 	]
+	is-locked-error?: function[code][
+		true? all [
+			error? err: try code
+			err/id = 'locked-word
+		]
+	]
 
 	--test-- "clear"   --assert is-protected-error? [clear bin]
 	--test-- "append"  --assert is-protected-error? [append bin #{0bad}]
@@ -59,7 +65,16 @@ Rebol [
 		--assert is-protected-error? [clear ws  ]
 		--assert is-protected-error? [ws/1: true]
 
+	--test-- "protect inside an object"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1193
+		o: make object! [a: 1 f: does [a: 2] g: does [self/a: 3]]
+		protect in o 'a
+		--assert is-locked-error? [o/a: 4]
+		--assert is-locked-error? [o/f]
+		--assert is-locked-error? [o/g]
+
 ===end-group===
+
 
 ===start-group=== "protect/hide"
 	--test-- "trim object! with hidden fields"
