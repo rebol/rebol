@@ -47,6 +47,30 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "RESOLVE object"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1107
+	src: object [a: 10 b: 20 c: 30]
+	--test-- "resolve object"
+		append o1: object [a: 1] 'b
+		--assert o1 = resolve o1 src
+		--assert all [o1/a: 1 o1/b = 20]
+		--assert none? find o1 'c
+	--test-- "resolve/all object"
+		append o2: object [a: 1] 'b
+		--assert o2 = resolve/all o2 src
+		--assert all [o2/a: 10 o2/b = 20]
+		--assert none? find o2 'c
+	--test-- "resolve/extend object"
+		append o3: object [a: 1] 'b
+		--assert o3 = resolve/extend o3 src
+		--assert all [o3/a: 1 o3/b = 20 o3/c = 30]
+	--test-- "resolve/all/extend object"
+		append o4: object [a: 1] 'b
+		--assert o4 = resolve/all/extend o4 src
+		--assert all [o4/a: 10 o4/b = 20 o4/c = 30]
+===end-group===
+
+
 ===start-group=== "MAKE object"
 
 	;@@ https://github.com/Oldes/Rebol-issues/issues/711
