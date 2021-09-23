@@ -107,7 +107,7 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1769
 		con1: context [a: 1 b: 2 c: "hidden" protect/hide 'c]
 		con2: context [a: 9 b: 8 c: none]
-		--assert object? resolve/all con2 con
+		--assert object? resolve/all con2 con1
 		--assert all [con2/a = 1 con2/b = 2]
 		--assert none? con2/c ;- not holding "hidden"!
 
