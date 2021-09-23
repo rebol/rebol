@@ -246,9 +246,9 @@ Rebol [
 	--test-- "issue-708"
 		o: object []
 		append o 'x
-		--assert none? o/x
+		--assert unset? o/x
 		append o [y]
-		--assert none? o/y
+		--assert unset? o/y
 		--assert object? append o [x: 1 y: 2]
 		--assert o/x = 1
 		--assert o/y = 2
