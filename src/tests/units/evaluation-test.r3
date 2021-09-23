@@ -573,7 +573,14 @@ Rebol [
 ===end-group===
 
 
-===start-group=== "TRY/except"
+===start-group=== "TRY"
+	--test-- "try [catch..]"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/851
+		--assert error? try [do [1] do make error! "try failure"]
+		--assert error? try [do "1" do make error! "try failure"]
+		--assert error? try [catch/quit [1] do make error! "Hello"]
+		--assert error? try [try [catch/quit []] 1 / 0]
+
 	--test-- "try/except [1 / 0] block!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2419
 		system/state/last-error: none
