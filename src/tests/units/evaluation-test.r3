@@ -380,7 +380,7 @@ Rebol [
 	--assert x = ["a"]
 	--assert ["a"] = compose/into [a b] x
 	--assert x = [a b "a"]
-	--assert tail? compose/into [a (b)] tail? x
+	--assert tail? compose/into [a (b)] tail x
 	--assert x = [a b "a" a 2]
 	
 ===end-group===
