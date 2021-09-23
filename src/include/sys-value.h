@@ -89,6 +89,7 @@ enum {
 #define VAL_CLR_LINE(v)		VAL_CLR_OPT((v), OPTS_LINE)
 
 #define VAL_PROTECTED(v)	VAL_GET_OPT((v), OPTS_LOCK)
+#define VAL_HIDDEN(v)	    VAL_GET_OPT((v), OPTS_HIDE)
 
 // Used for datatype-dependent data (e.g. op! stores action!)
 #define VAL_GET_EXT(v)		((v)->flags.flags.exts)

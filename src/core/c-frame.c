@@ -735,7 +735,7 @@
 	// Done by marking all source words (in bind table):
 	words = FRM_WORDS(source)+1;
 	for (n = 1; NOT_END(words); n++, words++) {
-		if (IS_NONE(only_words) || binds[VAL_BIND_CANON(words)])
+		if ((IS_NONE(only_words) || binds[VAL_BIND_CANON(words)]) && !VAL_HIDDEN(words))
 			binds[VAL_WORD_CANON(words)] = n;
 	}
 

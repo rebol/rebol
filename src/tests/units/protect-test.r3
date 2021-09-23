@@ -103,6 +103,13 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1137
 		--assert 0 = length? trim make object! [f: 1 protect/hide 'f]
 		--assert 0 = length? trim make object! [f: none protect/hide 'f]
+	--test-- "resolve/all hidden"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1769
+		con1: context [a: 1 b: 2 c: "hidden" protect/hide 'c]
+		con2: context [a: 9 b: 8 c: none]
+		--assert object? resolve/all con2 con
+		--assert all [con2/a = 1 con2/b = 2]
+		--assert none? con2/c ;- not holding "hidden"!
 
 ===end-group===
 
