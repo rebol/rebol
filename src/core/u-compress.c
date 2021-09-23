@@ -181,7 +181,7 @@ void Trap_ZStream_Error(z_stream *stream, int err, REBOOL while_compression)
 	} else {
 		// Get the uncompressed size from last 4 source data bytes.
 		if (len < 4) Trap0(RE_PAST_END); // !!! better msg needed
-		size = cast(REBU64, Bytes_To_REBCNT(BIN_SKIP(input, len) - sizeof(REBCNT)));
+		size = cast(REBU64, Bytes_To_REBCNT(BIN_SKIP(input, index + len) - sizeof(REBCNT)));
 		if (size > (uLongf)len * 14) Trap_Num(RE_SIZE_LIMIT, size); // check for a realistic limit
 	}
 
@@ -322,7 +322,7 @@ static const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 		destLen = limit;
 	} else {
 		// Get the uncompressed size from last 4 source data bytes.
-		destLen = cast(REBU64, Bytes_To_REBCNT(BIN_SKIP(input, in_len) - sizeof(REBCNT)));
+		destLen = cast(REBU64, Bytes_To_REBCNT(BIN_SKIP(input, index + in_len) - sizeof(REBCNT)));
 	}
 
 	output = Make_Binary(destLen);

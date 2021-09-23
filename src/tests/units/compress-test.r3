@@ -39,15 +39,23 @@ data: "test test test"
 		--assert  #{74657374} = decompress compress/part skip data 5 4
 		--assert  #{74657374} = decompress compress/part tail data -4
 
+	--test-- "decompress when not at head"
+		--assert data = to string! decompress next join #{00} compress data
+
 ===end-group===
 
 ===start-group=== "GZIP compression / decompression"
 
 	--test-- "DEFLATE decompress"
 		--assert #{74657374} = decompress/deflate #{2B492D2E01000C7E7FD804}
+	--test-- "DEFLATE decompress when not at head"
+		--assert #{74657374} = decompress/deflate next #{002B492D2E01000C7E7FD804}
 
 	--test-- "GZIP compress/decompress"
 		--assert  data = to string! decompress/gzip compress/gzip data
+
+	--test-- "GZIP decompress when not at head"
+		--assert data = to string! decompress/gzip next join #{00} compress/gzip data
 
 	--test-- "GZIP compress/decompress while specifing level of compression"
 		--assert (skip compress/gzip/level ""   0 10) =
@@ -116,6 +124,9 @@ data: "test test test"
 			--assert  #{74657374} = decompress/lzma compress/lzma/part data 4
 			--assert  #{74657374} = decompress/lzma compress/lzma/part skip data 5 4
 			--assert  #{74657374} = decompress/lzma compress/lzma/part tail data -4
+
+		--test-- "LZMA decompress when not at head"
+			--assert data = to string! decompress/lzma next join #{00} compress/lzma data
 	]
 ===end-group===
 
