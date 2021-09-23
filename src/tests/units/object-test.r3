@@ -44,6 +44,17 @@ Rebol [
 		obj: object []
 		--assert 1 = extend obj 'a 1
 		--assert 1 = obj/a
+	--test-- "extend object with hidden value"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1140
+		obj: object [a: 1 protect/hide 'a]
+		--assert all [
+			error? e: try [extend obj 'a 2]
+			e/id = 'hidden
+		]
+		--assert all [
+			error? e: try [append obj [a: 2]]
+			e/id = 'hidden
+		]
 ===end-group===
 
 
