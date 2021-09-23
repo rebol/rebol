@@ -198,6 +198,20 @@ Rebol [
 		o: make object! [w: self]
 		make o []
 	]
+--test--  "make of huge block"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1172
+	--assert all [
+		error? e: try [make block! (shift 1 26)]
+		e/id = 'no-memory
+	]
+	--assert all [
+		error? e: try [make block! (shift 1 28)]
+		e/id = 'no-memory
+	]
+	--assert all [
+		error? e: try [append make block! -1 + (shift 1 28) 1] ;-no crash
+		e/id = 'no-memory
+	]
 
 ===end-group===
 
