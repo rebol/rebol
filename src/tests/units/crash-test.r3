@@ -212,6 +212,15 @@ Rebol [
 		error? e: try [append make block! -1 + (shift 1 28) 1] ;-no crash
 		e/id = 'no-memory
 	]
+--test-- "cyclic block comparison"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1049
+	a: copy []
+	insert/only a a
+	b: copy []
+	insert/only b b
+	--assert all [error? e: try [equal? a b] e/id = 'stack-overflow]
+	--assert all [error? e: try [equiv? a b] e/id = 'stack-overflow] 
+	--assert all [error? e: try [strict-equal? a b] e/id = 'stack-overflow] 
 
 ===end-group===
 
