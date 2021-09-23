@@ -477,6 +477,13 @@ Rebol [
 	cset: charset [#"^(00)" - #"^(FF)"]
 	--assert parse "a" ["a" any cset]
 
+--test-- "integer! repeat"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1237
+	--assert     parse [a] [1 'a]
+	--assert not parse [a] [9 'a]
+	--assert     parse [a] [1 3 'a]
+	--assert not parse [a] [2 3 'a]
+
 ===end-group===
 
 ~~~end-file~~~
