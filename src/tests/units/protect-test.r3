@@ -26,6 +26,12 @@ Rebol [
 			err/id = 'locked-word
 		]
 	]
+	is-invalid-path-error?: function[code][
+		true? all [
+			error? err: try code
+			err/id = 'invalid-path
+		]
+	]
 
 	--test-- "clear"   --assert is-protected-error? [clear bin]
 	--test-- "append"  --assert is-protected-error? [append bin #{0bad}]
@@ -72,6 +78,12 @@ Rebol [
 		--assert is-locked-error? [o/a: 4]
 		--assert is-locked-error? [o/f]
 		--assert is-locked-error? [o/g]
+	--test-- "protect/hide inside an object"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1139
+		o: make object! [f: 1 g: self h: does [f] protect/hide 'f]
+		--assert is-invalid-path-error? [do in o [self/f]]
+		--assert is-invalid-path-error? [do in o [self/f: 2]]
+		--assert is-invalid-path-error? [do bind [self/f] o]
 
 ===end-group===
 
