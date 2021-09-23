@@ -61,4 +61,12 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "protect/hide"
+	--test-- "trim object! with hidden fields"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1137
+		--assert 0 = length? trim make object! [f: 1 protect/hide 'f]
+		--assert 0 = length? trim make object! [f: none protect/hide 'f]
+
+===end-group===
+
 ~~~end-file~~~
