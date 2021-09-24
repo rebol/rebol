@@ -434,6 +434,11 @@ if find codecs 'PNG [
 
 if find codecs 'JPEG [
 	===start-group=== "JPEG codec"
+	--test-- "load jpeg"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/678
+		--assert image? load %units/files/flower.jpg
+		--assert image? load %units/files/flower-from-photoshop.jpg
+		--assert image? load %units/files/flower-tiny.jpg
 	--test-- "jpeg/size?"
 		--assert 256x256 = codecs/jpeg/size? %units/files/flower.jpg
 		--assert 256x256 = codecs/jpeg/size? %units/files/flower-from-photoshop.jpg
