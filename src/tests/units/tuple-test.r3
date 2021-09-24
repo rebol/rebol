@@ -54,6 +54,7 @@ Rebol [
 	--assert 254.255.255 = complement 1.0.0
 
 	--test-- "tuple shortening"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1365
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1639
 	t: 1.2.3.4 t/4: none
 	--assert t == 1.2.3
