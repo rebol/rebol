@@ -56,6 +56,9 @@ Rebol [
 	str: protect "a^M^/b"
 	--test-- "deline string"  --assert is-protected-error? [deline str]
 	--test-- "enline string"  --assert is-protected-error? [enline str]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/694
+	--test-- "uppercase string"  --assert is-protected-error? [uppercase str]
+	--test-- "lowercase string"  --assert is-protected-error? [lowercase str]
 
 	--test-- "delect"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1783
