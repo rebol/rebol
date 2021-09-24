@@ -1679,6 +1679,10 @@ Rebol [
 	--assert (split/at [1 2.3 /a word "str" #iss x: :y] "str") =	[[1 2.3 /a word] [#iss x: :y]]
 	--assert (split/at [1 2.3 /a word "str" #iss x: :y] 'word) =	[[1 2.3 /a] ["str" #iss x: :y]]
 
+--test-- "split using charset!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/690
+	--assert (split "This! is a. test? to see " charset "!?.") = ["This" " is a" " test" " to see "]
+
 ===end-group===
 
 
