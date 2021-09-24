@@ -918,7 +918,7 @@ eval_func2:
 		// Evaluate the function:
 		DSF = dsf;	// Set new DSF
 		if (!THROWN(DS_TOP)) {
-			//if (Trace_Flags) 
+			if (Trace_Flags) 
 				Trace_Func(word, value);
 			Func_Dispatch[ftype](value);
 		}
