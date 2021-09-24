@@ -83,4 +83,14 @@ Rebol [
 	
 ===end-group===
 
+===start-group=== "Other tuple"
+	--test-- "no power on tuple"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1214
+		--assert all [
+			error? e: try [1.2.3.4 ** 1]
+			e/id = 'cannot-use
+			e/arg2 = tuple!
+		]
+===end-group===
+
 ~~~end-file~~~
