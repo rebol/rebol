@@ -67,6 +67,14 @@ Rebol [
 		--assert all [error? e: try [load {%a%2h}] e/id = 'invalid]
 		--assert all [error? e: try [load {url:a%2h}] e/id = 'invalid]
 
+	--test-- "Invalid serialized value"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1429
+		--assert all [error? e: try [load {1#[logic! 1]}] e/id = 'invalid]
+		--assert all [error? e: try [load {a#[logic! 1]}] e/id = 'invalid]
+
+	--test-- "Invalid char"
+		--assert all [error? e: try [load {2#"a"}] e/id = 'invalid]
+
 ===end-group===
 
 ===start-group=== "Special % word"
