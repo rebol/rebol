@@ -81,6 +81,15 @@ Rebol [
 		--assert is-locked-error? [o/a: 4]
 		--assert is-locked-error? [o/f]
 		--assert is-locked-error? [o/g]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1323
+		a: object [b: "abc"]
+		protect/deep 'a
+		--assert is-protected-error? [insert a/b "x"]
+		unprotect 'a
+		a: object [b: "abc"]
+		protect/deep/words 'a
+		--assert is-protected-error? [insert a/b "x"]
+		unprotect 'a
 	--test-- "protect/hide inside an object"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1139
 		o: make object! [f: 1 g: self h: does [f] protect/hide 'f]
