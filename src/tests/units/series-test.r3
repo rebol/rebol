@@ -1451,6 +1451,12 @@ Rebol [
 --test-- "ENLINE modifies"
 	str: "a^/b^M^/c"
 	--assert str = enline str
+--test-- "ENLINE block!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/647
+	--assert all [
+		error? e: try [enline ["a"]]
+		e/id = 'not-done
+	]
 	
 ===end-group===
 
