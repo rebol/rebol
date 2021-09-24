@@ -1693,6 +1693,25 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "SPLIT-PATH"
+
+--test-- "split-path file!"
+	--assert [%./ %dir]  = split-path %dir
+	--assert [%./ %dir/] = split-path %dir/
+	--assert [%dir/ %file.txt] = split-path %dir/file.txt
+--test-- "split-path url!"
+	--assert [http://foo.net/ %aa.txt] = split-path http://foo.net/aa.txt
+	--assert [http:// %foo.net/] = split-path http://foo.net/ ;@@ could be better result!
+--test-- "split-path string!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1366
+	--assert [%./ %dir]  = split-path "dir"
+	--assert [%./ %dir/] = split-path "dir/"
+	--assert ["dir/" %file.txt] = split-path "dir/file.txt"
+
+===end-group===
+
+
+
 ===start-group=== "UNION"
 
 --test-- "union on 2 strings"
