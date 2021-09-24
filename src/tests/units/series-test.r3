@@ -212,6 +212,7 @@ Rebol [
 	--assert none? select/part [1 2 1 3 1 2] 2 2
 	--assert 3 = select/part (skip [1 2 1 3 1 2] 2) 1 2
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1936
+	;@@ https://github.com/Oldes/Rebol-issues/issues/686
 	--assert 9 = select [1 2 3 4 5 6 6 6 6 6 1 2 3 4 5 6 7 8 9 0 1] [6 7 8] 
 
 --test-- "SELECT/skip"
