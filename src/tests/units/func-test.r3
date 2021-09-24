@@ -30,6 +30,11 @@ Rebol [
 	--assert date?  apply :f [now]
 	--assert 'now = apply/only :f [now]
 
+--test-- "apply op!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/618
+	--assert 3 = apply :add [1 2]
+	--assert 3 = apply :+ [1 2]
+
 ===end-group===
 
 
