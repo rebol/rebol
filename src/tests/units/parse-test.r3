@@ -17,6 +17,11 @@ Rebol [
 	--assert try [parse "abc"  [@abc]]
 	--assert try [parse "a:bc" [a:bc]]
 	--assert      parse "<a>"  [<a> ]
+
+--test-- "changing input"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1263
+	b: "this"
+	--assert parse "test" ["test" :b "this"]
 ===end-group===
 
 
