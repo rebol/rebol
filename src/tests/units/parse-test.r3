@@ -84,7 +84,7 @@ Rebol [
 	--assert all [parse "abc" [#"a" and #"b" copy x to end]  x = "bc"]
 	--assert parse [1] [and integer! skip]
 	--assert parse [1 hi] [integer! and word! skip]
-	--assert all [parse [hi @bob] ['hi and ref! copy x skip] x = @bob]
+	--assert all [parse [hi @bob] ['hi and ref! set x skip] x = @bob]
 	--assert not parse "a" [and #"b" skip]
 	--assert not parse [1] [and word! skip]
 --test-- "ahead"
