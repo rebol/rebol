@@ -89,8 +89,9 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/886
 	f: func[arg][p: 'arg]
 	f 1 2
-	--assert none? context? p ; and no crash!
-
+	; --assert none? context? p ; and no crash!
+	; not using above, because tests are run from `do`, so the context is not none like in console!
+	--assert same? :do context? p ; and no crash!
 	c: closure[a][context? 'a]
 	--assert all [object? o: c 1  o/a = 1]
 ===end-group===
@@ -130,7 +131,10 @@ Rebol [
 	--assert (spec-of :. ) = [a "val1" b "val2" /local c]
 
 --test-- "make op! from action!"
-	--assert op? op1: make op! :remainder
+	--assert all [
+		op? op1: try [make op! :remainder]
+		0 = (6 op1 3)
+	]
 --test-- "make op! from function!"
 	fce: func[a b][a * b]
 	--assert op? op2: make op! :fce
