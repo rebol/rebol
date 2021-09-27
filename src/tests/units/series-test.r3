@@ -365,6 +365,16 @@ Rebol [
 		--assert @← = append @ #"^(2190)" ; wide char
 ===end-group===
 
+===start-group=== "INSERT ref!"
+	--test-- "INSERT ref! char!"
+		--assert @a = head insert @ #"a"
+		--assert @← = head insert @ #"^(2190)" ; wide char
+	--test-- "INSERT ref! string!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/700
+		--assert @ = i: @
+		--assert @ = insert i "abc"
+		--assert i = @abc
+===end-group===
 
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1791
 ===start-group=== "APPEND binary!"
