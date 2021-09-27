@@ -223,6 +223,11 @@ Rebol [
 		error? e: try [select/skip [1 2 3 4 5 6] 5 -4]
 		e/id = 'out-of-range
 	]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/735
+	--assert all [
+		error? e: try [find/skip [1 2 3 4 5 6] 5 -4]
+		e/id = 'out-of-range
+	]
 
 --test-- "SELECT/skip/last"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/616
