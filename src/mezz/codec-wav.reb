@@ -44,14 +44,14 @@ register-codec [
 			data:   copy []
 			chunks: copy []
 			
-			while [not tail? bin/buffer][
+			while [8 < length? bin/buffer][
 				binary/read bin [
 					id:     BYTES 4
 					size:   UI32LE
 					starts: INDEX
 				]
 				ends: starts + size
-				chunk: any [ try [to tag! id]  id ]
+				chunk: any [ attempt [to tag! id]  id ]
 				if verbose > 0 [
 					printf [
 						$32
@@ -112,7 +112,7 @@ register-codec [
 					]
 					<cue > [
 						count: binary/read bin 'UI32LE
-						append chunks cues: copy []
+						append/only chunks cues: copy []
 						loop count [
 							binary/read/into bin [
 								   UI32LE ; id            - unique identification value
@@ -151,7 +151,15 @@ register-codec [
 				channels: (format/2)
 				bits:     (format/6)
 				chunks:   (chunks)
-				data:     (either empty? data [none][make vector! reduce ['integer! format/6 rejoin data]])
+				data:     (
+					case [
+						empty? data [none]
+						; we don't have 24bit integer vectors
+						find [8 16 32] format/6 [make vector! reduce ['integer! format/6 rejoin data]]
+						; so provide raw binary data only...
+						'else data
+					]
+				)
 			]
 		]
 	]
@@ -254,5 +262,5 @@ register-codec [
 		parse data [#{52494646} 4 skip #{57415645} to end]
 	]
 
-	verbose: 0
+	verbose: 3
 ]
