@@ -366,9 +366,12 @@ enum {
 };
 
 static REBCNT bit_sizes[4] = { 8, 16, 32, 64 };
+static REBCNT byte_sizes[4] = { 1, 2, 4, 8 };
 
 #define VECT_TYPE(s) ((s)->size & 0xff)
 #define VECT_BIT_SIZE(bits) (bit_sizes[bits & 3])
+#define VECT_BYTE_SIZE(bits) (byte_sizes[bits & 3])
+#define VAL_VEC_WIDTH(v) VECT_BYTE_SIZE(VECT_TYPE(VAL_SERIES(v)))
 
 
 
@@ -604,8 +607,6 @@ typedef struct Reb_Series_Ref
 #define VAL_BIN_DATA(v)	BIN_SKIP(VAL_SERIES(v), VAL_INDEX(v))
 #define VAL_BIN_SKIP(v,n) BIN_SKIP(VAL_SERIES(v), (n))
 #define VAL_BIN_TAIL(v)	BIN_SKIP(VAL_SERIES(v), VAL_SERIES(v)->tail)
-
-#define VAL_VEC_WIDTH(v) (VAL_SERIES(v)->info)
 
 // Arg is a unicode value:
 #define VAL_UNI(v)		UNI_HEAD(VAL_SERIES(v))
