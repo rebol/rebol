@@ -290,7 +290,9 @@ if find codecs 'zip [
 			data: load %ico.zip
 			--assert 30 = length? data ; 14 files and 1 directory
 			--assert %ico/ = data/1
-			--assert %ico/icon_128.png = data/3
+			; the order of files is not same across all systems, so next assert is not used
+			; --assert %ico/icon_128.png = data/3
+			--assert block? select data %ico/icon_128.png
 			delete %ico.zip
 
 		--test-- "Encode ZIP using wildcard"
