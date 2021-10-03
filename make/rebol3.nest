@@ -358,6 +358,7 @@ include-image-codecs: [
 	#if MacOS? [
 		:include-image-os-codec
 	]
+	mezz-lib-files: %mezz/codec-image-ext.reb ; png/size? function and similar
 ]
 
 ;- native devices:                                                              
@@ -496,7 +497,6 @@ include-codec-ico: [
 	; at this moment ico can be encoded only from pngs!
 	;:include-native-png-codec 
 	mezz-lib-files: %mezz/codec-ico.reb
-	mezz-lib-files: %mezz/codec-image-ext.reb ; png/size? function
 ]
 include-codec-json:          [mezz-lib-files:  %mezz/codec-json.reb         ]
 include-codec-xml:           [mezz-lib-files:  %mezz/codec-xml.reb          ]
@@ -570,7 +570,7 @@ include-rebol-bulk: [
 	:include-codec-wav
 	:include-codec-ico
 
-	:include-image-codecs
+	:include-image-codecs ; use other optional image codecs before this include!
 
 	:include-mezz-date
 	:include-mezz-colors
