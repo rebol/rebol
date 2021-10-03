@@ -486,6 +486,7 @@ init_pattern:
 ***********************************************************************/
 {
 	ssize_t num_bytes;
+	struct stat info;
 
 	if (!file->id) {
 		file->error = -RFE_NO_HANDLE;
@@ -512,7 +513,12 @@ init_pattern:
 		else file->error = -RFE_BAD_WRITE;
 		return DR_ERROR;
 	} else {
+		//SET_FLAG(file->modes, RFM_RESEEK);
 		file->actual = (u32)num_bytes;
+	}
+	if (fstat(file->id, &info) == 0) {
+		file->file.size = info.st_size;
+		file->file.time.l = (i32)(info.st_mtime);
 	}
 
 	return DR_DONE;

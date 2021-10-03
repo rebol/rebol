@@ -337,6 +337,21 @@ if system/platform = 'Windows [
 		--assert "Hella World! Goodbye World!" = to-string read/seek f 0
 		--assert port? close f
 		try [delete %file-552]
+		--assert all [
+			port? p: open/new %file-552
+			file? write p "a"
+			tail? read p
+			file? write p "b"
+			tail? read p
+			#{6162} = read/seek p 0
+			tail? read p
+			file? write/seek p "c" 0
+			#{62} = read p
+			#{6362} = read/seek p 0
+			2 = length? p
+			port? close p
+		]
+		try [delete %file-552]
 
 	--test-- "clear file port"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/812
