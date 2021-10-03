@@ -565,13 +565,13 @@ Rebol [
 ===start-group=== "make/to tag"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1215
 	--test-- "make tag! .."
-		--assert <>  = try [make tag! quote #[unset!] ] ; unset!
+		--assert #[tag! ""]  = try [make tag! quote #[unset!] ] ; unset!
 		--assert error? try [make tag! quote #[none] ] ; none!
 		--assert <true>  = try [make tag! quote #[true] ] ; logic!
-		--assert <>  = try [make tag! quote 1 ] ; integer!
-		--assert <>  = try [make tag! quote 0 ] ; integer!
-		--assert <>  = try [make tag! quote 4 ] ; integer!
-		--assert <>  = try [make tag! quote 4.0 ] ; decimal!
+		--assert #[tag! ""]  = try [make tag! quote 1 ] ; integer!
+		--assert #[tag! ""]  = try [make tag! quote 0 ] ; integer!
+		--assert #[tag! ""]  = try [make tag! quote 4 ] ; integer!
+		--assert #[tag! ""]  = try [make tag! quote 4.0 ] ; decimal!
 		--assert <4%>  = try [make tag! quote 4% ] ; percent!
 		--assert <$4>  = try [make tag! quote $4 ] ; money!
 		--assert <a>  = try [make tag! quote #"a" ] ; char!
@@ -579,9 +579,9 @@ Rebol [
 		--assert <1.1.1>  = try [make tag! quote 1.1.1 ] ; tuple!
 		--assert <10:00>  = try [make tag! quote 10:00 ] ; time!
 		--assert <1-Jan-2000>  = try [make tag! quote 2000-01-01 ] ; date!
-		--assert <>  = try [make tag! quote #{00} ] ; binary!
+		--assert #[tag! "^@"]  = try [make tag! quote #{00} ] ; binary!
 		--assert <1 2>  = try [make tag! quote #{312032} ] ; binary!
-		--assert <>  = try [make tag! quote "" ] ; string!
+		--assert #[tag! ""]  = try [make tag! quote "" ] ; string!
 		--assert <1 2>  = try [make tag! quote "1 2" ] ; string!
 		--assert <file>  = try [make tag! quote %file ] ; file!
 		--assert <u@email>  = try [make tag! quote u@email ] ; email!
@@ -601,7 +601,7 @@ Rebol [
 		--assert <a: 1>  = try [make tag! quote #[object! [a: 1]] ] ; object!
 		--assert <integer! percent!>  = try [make tag! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
 	--test-- "to tag! .."
-		--assert <>  = try [to tag! quote #[unset!] ] ; unset!
+		--assert #[tag! ""] = try [to tag! quote #[unset!] ] ; unset!
 		--assert error? try [to tag! quote #[none] ] ; none!
 		--assert <true>  = try [to tag! quote #[true] ] ; logic!
 		--assert <1>  = try [to tag! quote 1 ] ; integer!
@@ -615,9 +615,9 @@ Rebol [
 		--assert <1.1.1>  = try [to tag! quote 1.1.1 ] ; tuple!
 		--assert <10:00>  = try [to tag! quote 10:00 ] ; time!
 		--assert <1-Jan-2000>  = try [to tag! quote 2000-01-01 ] ; date!
-		--assert <>  = try [to tag! quote #{00} ] ; binary!
+		--assert #[tag! "^@"] = try [to tag! quote #{00} ] ; binary!
 		--assert <1 2>  = try [to tag! quote #{312032} ] ; binary!
-		--assert <>  = try [to tag! quote "" ] ; string!
+		--assert #[tag! ""] = try [to tag! quote "" ] ; string!
 		--assert <1 2>  = try [to tag! quote "1 2" ] ; string!
 		--assert <file>  = try [to tag! quote %file ] ; file!
 		--assert <u@email>  = try [to tag! quote u@email ] ; email!
@@ -759,5 +759,6 @@ Rebol [
 		--assert error? try [to struct! none]
 		--assert error? try [to library! none]
 		--assert error? try [to utype! none]
+===end-group===
 
 ~~~end-file~~~
