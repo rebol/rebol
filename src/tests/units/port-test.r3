@@ -353,15 +353,31 @@ if system/platform = 'Windows [
 		]
 		try [delete %file-552]
 
-	--test-- "clear file port"
+	--test-- "CLEAR file port"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/812
-		--assert file? write %file-812 to-binary "Hello World!"
-		--assert port? f: open %file-812
-		--assert "Hello World!" = to-string read f
-		--assert port? clear f
-		--assert 0 = length? f
-		--assert port? close f
-		try [delete %file-812]
+		--assert all [
+			file? write %file-812 "Hello World!"
+			port? f: open %file-812
+			"Hello World!" = read/string f
+			port? clear f ; this actually does not clear the file as we are at the end of the stream
+			0 = length? f
+			"Hello" = read/seek/string/part f 0 5
+			7 = length? f
+			port? clear f ; this should truncate the file
+			0 = length? f
+			port? close f
+			5 = length? f ; because there is still "Hello" left
+			all [
+				error? e: try [clear f]
+				e/id = 'not-open
+			]
+			port? f: open %file-812
+			port? clear f ; this should clear the file completely, because the position is at its head
+			port? close f
+			0 = size? %file-812
+			not error? try [delete %file-812]
+		]
+
 
 	--test-- "RENAME file"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/446

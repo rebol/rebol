@@ -638,6 +638,7 @@ REBINT Mode_Syms[] = {
 		DECIDE(file->file.index > file->file.size);
 
 	case A_CLEAR:
+		if (!IS_OPEN(file)) Trap1(RE_NOT_OPEN, path);
 		// !! check for write enabled?
 		SET_FLAG(file->modes, RFM_RESEEK);
 		SET_FLAG(file->modes, RFM_TRUNCATE);
