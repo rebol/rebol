@@ -340,18 +340,24 @@ if system/platform = 'Windows [
 		--assert all [
 			port? p: open/new %file-552
 			file? write p "a"
+			0 = length? p
+			1 = size? p
 			tail? read p
 			file? write p "b"
+			0 = length? p
+			2 = size? p
 			tail? read p
 			#{6162} = read/seek p 0
 			tail? read p
-			file? write/seek p "c" 0
-			#{62} = read p
-			#{6362} = read/seek p 0
-			2 = length? p
+			file? write back p "xy"
+			#{617879} = read head p
+			#{617879} = read/seek p 0
+			0 = length? p
+			3 = size? p
 			port? close p
+			not error? try [delete %file-552]
 		]
-		try [delete %file-552]
+		
 
 	--test-- "CLEAR file port"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/812
@@ -360,22 +366,37 @@ if system/platform = 'Windows [
 			port? f: open %file-812
 			"Hello World!" = read/string f
 			port? clear f ; this actually does not clear the file as we are at the end of the stream
-			0 = length? f
+			0  = length? f
+			12 =   size? f
 			"Hello" = read/seek/string/part f 0 5
-			7 = length? f
+			7  = length? f
+			12 =   size? f
 			port? clear f ; this should truncate the file
 			0 = length? f
+			5 =   size? f
 			port? close f
-			5 = length? f ; because there is still "Hello" left
-			all [
+			5 = length? f ; because there is still "Hello" left and we are counting from head again (port is closed)
+			all [         ; it is not allowed to clear not opened port
 				error? e: try [clear f]
 				e/id = 'not-open
 			]
 			port? f: open %file-812
 			port? clear f ; this should clear the file completely, because the position is at its head
+			0 = size? f
 			port? close f
 			0 = size? %file-812
 			not error? try [delete %file-812]
+		]
+		--assert all [
+			file? write %file-812-b "Hello World!"
+			port? f: skip open %file-812-b 5
+			6 = index? f
+			port? clear f ; this should truncate the file
+			0 = length? f
+			5 = size? f   ; becase that is number of all bytes in the file
+			port? close f
+			5 = size? %file-812-b
+			not error? try [delete %file-812-b]
 		]
 
 

@@ -508,6 +508,7 @@ REBINT Mode_Syms[] = {
 
 		Write_File_Port(file, spec, len, args);
 
+		file->file.index += file->actual;
 		if (opened) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
 			Cleanup_File(file);
