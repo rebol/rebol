@@ -365,10 +365,12 @@ if system/platform = 'Windows [
 			file? write %file-812 "Hello World!"
 			port? f: open %file-812
 			"Hello World!" = read/string f
+			13 = index? f
 			port? clear f ; this actually does not clear the file as we are at the end of the stream
 			0  = length? f
 			12 =   size? f
 			"Hello" = read/seek/string/part f 0 5
+			6  =  index? f
 			7  = length? f
 			12 =   size? f
 			port? clear f ; this should truncate the file
