@@ -257,6 +257,7 @@ mezz-lib-files: [
 ;	%mezz/codec-xml.reb
 ;	%mezz/codec-html-entities.reb
 ;	%mezz/codec-wav.reb
+;	%mezz/codec-pdf.reb
 ;	%mezz/codec-swf.reb
 ;	%mezz/codec-image.reb ; included using: include-image-os-codec (windows and macos only so far)
 ;	%mezz/codec-image-ext.reb ; image codec extensions (codecs/png/size?)
@@ -357,6 +358,7 @@ include-image-codecs: [
 	#if MacOS? [
 		:include-image-os-codec
 	]
+	mezz-lib-files: %mezz/codec-image-ext.reb ; png/size? function and similar
 ]
 
 ;- native devices:                                                              
@@ -442,6 +444,11 @@ include-lzma-compression: [
 	core-files: %core/u-lzma.c
 ]
 
+include-png-filter-native: [
+	config: INCLUDE_PNG_FILTER
+	core-files: %core/u-png-filter.c
+]
+
 include-view: [
 	; currently only on Windows!
 	host-files: :host-files-view
@@ -495,10 +502,10 @@ include-codec-ico: [
 	; at this moment ico can be encoded only from pngs!
 	;:include-native-png-codec 
 	mezz-lib-files: %mezz/codec-ico.reb
-	mezz-lib-files: %mezz/codec-image-ext.reb ; png/size? function
 ]
 include-codec-json:          [mezz-lib-files:  %mezz/codec-json.reb         ]
 include-codec-xml:           [mezz-lib-files:  %mezz/codec-xml.reb          ]
+include-codec-pdf:           [mezz-lib-files:  %mezz/codec-pdf.reb :include-png-filter-native] ; pdf may use special png pre-compression
 include-codec-swf:           [mezz-lib-files:  %mezz/codec-swf.reb          ]
 include-codec-wav:           [mezz-lib-files:  %mezz/codec-wav.reb          ]
 include-codec-unixtime:      [mezz-lib-files:  %mezz/codec-unixtime.reb     ]
@@ -556,6 +563,7 @@ include-rebol-bulk: [
 	:include-view
 	:include-midi
 
+	:include-codec-pdf
 	:include-codec-swf
 	:include-codec-gzip
 	:include-codec-zip
@@ -567,7 +575,7 @@ include-rebol-bulk: [
 	:include-codec-wav
 	:include-codec-ico
 
-	:include-image-codecs
+	:include-image-codecs ; use other optional image codecs before this include!
 
 	:include-mezz-date
 	:include-mezz-colors
@@ -578,6 +586,8 @@ include-rebol-bulk: [
 	:include-prot-mysql
 
 	:include-dialecting  ;`delect`
+
+	config: INCLUDE_PNG_FILTER ; includes `filter` and `unfilter` natives
 
 	;- for tests:
 	;:include-test-extension

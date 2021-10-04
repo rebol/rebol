@@ -52,6 +52,18 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "make/to date"
+	--test-- "make/to date! integer!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2456
+		--assert 20-Sep-2021/12:46:41 = make date! 1632142001
+		--assert 20-Sep-2021/12:46:41 =   to date! 1632142001
+		--assert 20-Sep-2021/12:46:42 = make date! 1632142002
+		--assert 20-Sep-2021/12:46:42 =   to date! 1632142002
+		--assert 20-Sep-2021/10:58:32 = make date! 1632135512
+		--assert 20-Sep-2021/10:58:32 =   to date! 1632135512
+
+===end-group===
+
 ===start-group=== "make/to integer"
 	--test-- "to integer! logic!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1018
@@ -71,6 +83,15 @@ Rebol [
 		--assert 0 = make 42 false
 		--assert error? try [to integer! true]
 		--assert error? try [to integer! false]
+
+	--test-- "make/to integer! date!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2456
+		--assert 1632142001 = make integer! 20-Sep-2021/12:46:41.3
+		--assert 1632142001 =   to integer! 20-Sep-2021/12:46:41.3
+		--assert 1632142002 = make integer! 20-Sep-2021/12:46:41.7
+		--assert 1632142002 =   to integer! 20-Sep-2021/12:46:41.7
+		--assert 1632135512 = make integer! 20-Sep-2021/12:58:32+2:00
+		--assert 1632135512 =   to integer! 20-Sep-2021/12:58:32+2:00
 
 ===end-group===
 
@@ -541,6 +562,82 @@ Rebol [
 		--assert error? try [to map! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
 ===end-group===
 
+===start-group=== "make/to tag"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1215
+	--test-- "make tag! .."
+		--assert #[tag! ""]  = try [make tag! quote #[unset!] ] ; unset!
+		--assert error? try [make tag! quote #[none] ] ; none!
+		--assert <true>  = try [make tag! quote #[true] ] ; logic!
+		--assert #[tag! ""]  = try [make tag! quote 1 ] ; integer!
+		--assert #[tag! ""]  = try [make tag! quote 0 ] ; integer!
+		--assert #[tag! ""]  = try [make tag! quote 4 ] ; integer!
+		--assert #[tag! ""]  = try [make tag! quote 4.0 ] ; decimal!
+		--assert <4%>  = try [make tag! quote 4% ] ; percent!
+		--assert <$4>  = try [make tag! quote $4 ] ; money!
+		--assert <a>  = try [make tag! quote #"a" ] ; char!
+		--assert <2x2>  = try [make tag! quote 2x2 ] ; pair!
+		--assert <1.1.1>  = try [make tag! quote 1.1.1 ] ; tuple!
+		--assert <10:00>  = try [make tag! quote 10:00 ] ; time!
+		--assert <1-Jan-2000>  = try [make tag! quote 2000-01-01 ] ; date!
+		--assert #[tag! "^@"]  = try [make tag! quote #{00} ] ; binary!
+		--assert <1 2>  = try [make tag! quote #{312032} ] ; binary!
+		--assert #[tag! ""]  = try [make tag! quote "" ] ; string!
+		--assert <1 2>  = try [make tag! quote "1 2" ] ; string!
+		--assert <file>  = try [make tag! quote %file ] ; file!
+		--assert <u@email>  = try [make tag! quote u@email ] ; email!
+		--assert <ref>  = try [make tag! quote #[ref! "ref"] ] ; ref!
+		--assert <http://aa>  = try [make tag! quote http://aa ] ; url!
+		--assert <tag>  = try [make tag! quote <tag> ] ; tag!
+		--assert <12>  = try [make tag! quote [1 2] ] ; block!
+		--assert <12>  = try [make tag! quote (1 2) ] ; paren!
+		--assert <a/b>  = try [make tag! quote a/b ] ; path!
+		--assert <a/b:>  = try [make tag! quote a/b: ] ; set-path!
+		--assert <:a/b>  = try [make tag! quote :a/b ] ; get-path!
+		--assert </ref>  = try [make tag! quote /ref ] ; refinement!
+		--assert <#FF>  = try [make tag! quote #FF ] ; issue!
+		--assert <make bitset! #{FF}>  = try [make tag! quote #[bitset! #{FF}] ] ; bitset!
+		--assert <make image! [1x1 #{FFFFFF}]>  = try [make tag! quote #[image! 1x1 #{FFFFFF}] ] ; image!
+		--assert <0 0>  = try [make tag! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
+		--assert <a: 1>  = try [make tag! quote #[object! [a: 1]] ] ; object!
+		--assert <integer! percent!>  = try [make tag! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
+	--test-- "to tag! .."
+		--assert #[tag! ""] = try [to tag! quote #[unset!] ] ; unset!
+		--assert error? try [to tag! quote #[none] ] ; none!
+		--assert <true>  = try [to tag! quote #[true] ] ; logic!
+		--assert <1>  = try [to tag! quote 1 ] ; integer!
+		--assert <0>  = try [to tag! quote 0 ] ; integer!
+		--assert <4>  = try [to tag! quote 4 ] ; integer!
+		--assert <4.0>  = try [to tag! quote 4.0 ] ; decimal!
+		--assert <4%>  = try [to tag! quote 4% ] ; percent!
+		--assert <$4>  = try [to tag! quote $4 ] ; money!
+		--assert <a>  = try [to tag! quote #"a" ] ; char!
+		--assert <2x2>  = try [to tag! quote 2x2 ] ; pair!
+		--assert <1.1.1>  = try [to tag! quote 1.1.1 ] ; tuple!
+		--assert <10:00>  = try [to tag! quote 10:00 ] ; time!
+		--assert <1-Jan-2000>  = try [to tag! quote 2000-01-01 ] ; date!
+		--assert #[tag! "^@"] = try [to tag! quote #{00} ] ; binary!
+		--assert <1 2>  = try [to tag! quote #{312032} ] ; binary!
+		--assert #[tag! ""] = try [to tag! quote "" ] ; string!
+		--assert <1 2>  = try [to tag! quote "1 2" ] ; string!
+		--assert <file>  = try [to tag! quote %file ] ; file!
+		--assert <u@email>  = try [to tag! quote u@email ] ; email!
+		--assert <ref>  = try [to tag! quote #[ref! "ref"] ] ; ref!
+		--assert <http://aa>  = try [to tag! quote http://aa ] ; url!
+		--assert <tag>  = try [to tag! quote <tag> ] ; tag!
+		--assert <12>  = try [to tag! quote [1 2] ] ; block!
+		--assert <12>  = try [to tag! quote (1 2) ] ; paren!
+		--assert <a/b>  = try [to tag! quote a/b ] ; path!
+		--assert <a/b:>  = try [to tag! quote a/b: ] ; set-path!
+		--assert <:a/b>  = try [to tag! quote :a/b ] ; get-path!
+		--assert </ref>  = try [to tag! quote /ref ] ; refinement!
+		--assert <#FF>  = try [to tag! quote #FF ] ; issue!
+		--assert <make bitset! #{FF}>  = try [to tag! quote #[bitset! #{FF}] ] ; bitset!
+		--assert <make image! [1x1 #{FFFFFF}]>  = try [to tag! quote #[image! 1x1 #{FFFFFF}] ] ; image!
+		--assert <0 0>  = try [to tag! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
+		--assert <a: 1>  = try [to tag! quote #[object! [a: 1]] ] ; object!
+		--assert <integer! percent!>  = try [to tag! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
+===end-group===
+
 ===start-group=== "make special"
 	--test-- "make types from none!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1018
@@ -662,5 +759,6 @@ Rebol [
 		--assert error? try [to struct! none]
 		--assert error? try [to library! none]
 		--assert error? try [to utype! none]
+===end-group===
 
 ~~~end-file~~~

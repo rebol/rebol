@@ -84,7 +84,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 				Trap0(RE_SELF_PROTECTED);
 			Expand_Frame(obj, 1, 1); // copy word table also
 			val = Append_Frame(obj, 0, VAL_WORD_SYM(arg));
-			SET_NONE(val);
+			SET_UNSET(val);
 		}
 		return;
 	}
@@ -150,7 +150,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 			Trap0(RE_HIDDEN);
 		}
 
-		if (IS_END(word + 1)) SET_NONE(val);
+		if (IS_END(word + 1)) SET_UNSET(val);
 		else *val = word[1];
 
 		if (IS_END(word + 1)) break; // fix bug#708
@@ -453,7 +453,7 @@ static REBSER *Trim_Object(REBSER *obj)
 		REBU64 types = 0;
 		if (D_REF(ARG_COPY_PART)) Trap0(RE_BAD_REFINES);
 		if (D_REF(ARG_COPY_DEEP)) {
-			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? 0 : TS_STD_SERIES);
+			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? 0 : TS_DEEP_COPIED);
 		}
 		if D_REF(ARG_COPY_TYPES) {
 			arg = D_ARG(ARG_COPY_KINDS);

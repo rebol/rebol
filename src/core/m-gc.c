@@ -156,7 +156,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 ***********************************************************************/
 {
 	if (field->type == STRUCT_TYPE_STRUCT) {
-		int len = 0;
+		REBCNT len = 0;
 		REBSER *series = NULL;
 
 		CHECK_MARK(field->fields, depth);
@@ -189,7 +189,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 /*
 ***********************************************************************/
 {
-	int len = 0;
+	REBCNT len = 0;
 	REBSER *series = NULL;
 	if (IS_MARK_SERIES(STRUCT_DATA_BIN(stu))) return;
 

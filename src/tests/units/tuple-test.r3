@@ -54,6 +54,7 @@ Rebol [
 	--assert 254.255.255 = complement 1.0.0
 
 	--test-- "tuple shortening"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1365
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1639
 	t: 1.2.3.4 t/4: none
 	--assert t == 1.2.3
@@ -80,6 +81,16 @@ Rebol [
 		--assert 0.3.2.5  = (1.2.3.4   xor  1)
 
 	
+===end-group===
+
+===start-group=== "Other tuple"
+	--test-- "no power on tuple"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1214
+		--assert all [
+			error? e: try [1.2.3.4 ** 1]
+			e/id = 'cannot-use
+			e/arg2 = tuple!
+		]
 ===end-group===
 
 ~~~end-file~~~

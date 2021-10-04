@@ -177,7 +177,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 ***********************************************************************/
 {
 	if (mode >= 0) {
-		if (mode <= 1) return almost_equal(VAL_DECIMAL(a), VAL_DECIMAL(b), 10);
+		if (mode <= 1) return almost_equal(VAL_DECIMAL(a), VAL_DECIMAL(b), 21); //O: there was 10, but 21 is the minimum to have: (100% // 3% = 1%) == true
 		if (mode == 2) return almost_equal(VAL_DECIMAL(a), VAL_DECIMAL(b), 0);
 		return VAL_INT64(a) == VAL_INT64(b); // bits are identical
 	}

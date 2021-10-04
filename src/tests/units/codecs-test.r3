@@ -78,6 +78,34 @@ Rebol [
 			--assert error? try [save %temp.jpg "foo"]
 			--assert error? try [save %temp.jpg #{00}]
 		]
+	--test-- "SAVE/compress"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1466
+		--assert all [
+			binary? b: try [save/compress none [print "Hello World!"] true]
+			b = #{
+5245424F4C205B0A202020206F7074696F6E733A205B636F6D70726573735D0A
+5D0A789C2B28CACC2B5150F248CDC9C95708CF2FCA495154E20200526B06D915
+000000}
+			(load b) = [print "Hello World!"]
+			object? first load/header b
+		]
+		--assert all [
+			binary? b: try [save/compress none [print "Hello World!"] 'script]
+			b = #{
+5245424F4C205B0A202020206F7074696F6E733A205B636F6D70726573735D0A
+5D0A3634237B654A77724B4D724D4B314651386B6A4E79636C58434D3876796B
+6C52564F494341464A7242746B56414141417D}
+			(load b) = [print "Hello World!"]
+			object? first load/header b
+		]
+		--assert all [
+			binary? b: try [save/compress none [print "Hello World!"] false]
+			b = #{
+789C2B28CACC2B5150F248CDC9C95708CF2FCA495154E20200526B06D9150000
+00}
+			(load decompress b) = [print "Hello World!"]
+		]
+
 ===end-group===
 
 
@@ -262,7 +290,9 @@ if find codecs 'zip [
 			data: load %ico.zip
 			--assert 30 = length? data ; 14 files and 1 directory
 			--assert %ico/ = data/1
-			--assert %ico/icon_128.png = data/3
+			; the order of files is not same across all systems, so next assert is not used
+			; --assert %ico/icon_128.png = data/3
+			--assert block? select data %ico/icon_128.png
 			delete %ico.zip
 
 		--test-- "Encode ZIP using wildcard"
@@ -406,6 +436,11 @@ if find codecs 'PNG [
 
 if find codecs 'JPEG [
 	===start-group=== "JPEG codec"
+	--test-- "load jpeg"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/678
+		--assert image? load %units/files/flower.jpg
+		--assert image? load %units/files/flower-from-photoshop.jpg
+		--assert image? load %units/files/flower-tiny.jpg
 	--test-- "jpeg/size?"
 		--assert 256x256 = codecs/jpeg/size? %units/files/flower.jpg
 		--assert 256x256 = codecs/jpeg/size? %units/files/flower-from-photoshop.jpg
@@ -479,5 +514,7 @@ if find codecs 'html-entities [
 
 	===end-group===
 ]
+
+;@@ PDF codec test is in: codecs-test-pdf.r3
 
 ~~~end-file~~~

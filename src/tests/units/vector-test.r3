@@ -61,6 +61,11 @@ Rebol [
 	--assert [0 0] = to-block make vector! [integer! 32 2]
 	--assert [1 2] = to block! #[u16! [1 2]]
 
+--test-- "to-binary vector!"
+	--assert #{01000200} = to binary! #[u16! [1 2]]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2458
+	--assert #{01000200} = to binary! protect #[u16! [1 2]]
+
 --test-- "LOAD/MOLD on vector"
 	--assert v = load mold/all v
 	--assert v = do load mold v

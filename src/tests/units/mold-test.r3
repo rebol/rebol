@@ -217,6 +217,11 @@ Rebol [
 	--test-- "mold-all-block"
 		--assert "[#[true] #[false] #[none]]" = mold/all [#[true] #[false] #[none]]
 
+	--test-- "mold/all block at tail"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1192
+		--assert "#[path! [p p] 3]" = mold/all next next 'p/p
+		--assert "#[block! [a b] 3]" = mold/all next next [a b]
+
 ===end-group=== 
 
 

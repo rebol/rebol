@@ -370,7 +370,7 @@ alter: func [
 ][
 	if bitset? series [
 		return either find series :value [
-			remove/part series :value false
+			remove/key series :value false
 		][
 			append series :value true
 		]

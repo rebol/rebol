@@ -248,6 +248,18 @@ Rebol [
 		--assert native? second reduce/only [1 now 2] none
 		--assert word?   second reduce/only [1 now 2] [now]
 
+	--test-- "reduce/into"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/506
+		a: 1 b: 2 x: copy []
+		--assert tail? reduce/into a x
+		--assert x = [1]
+		--assert [1] = reduce/into b x
+		--assert x = [2 1]
+		--assert [2 1] = reduce/into [a b] x
+		--assert x = [1 2 2 1]
+		--assert tail? reduce/into [b a] tail x
+		--assert x = [1 2 2 1 2 1]
+
 ===end-group===
 
 ===start-group=== "compose"
@@ -361,8 +373,15 @@ Rebol [
 	--assert [1 no 7 8 9 20 5 6 2] = head b
 
 	--test-- "compose/into"
-	;@@ https://github.com/rebol/rebol-issues/issues/2062
-	--assert ["a"] = head compose/into "a" []
+	;@@ https://github.com/Oldes/Rebol-issues/issues/506
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2062
+	a: 1 b: 2 x: copy []
+	--assert tail? compose/into "a" x
+	--assert x = ["a"]
+	--assert ["a"] = compose/into [a b] x
+	--assert x = [a b "a"]
+	--assert tail? compose/into [a (b)] tail x
+	--assert x = [a b "a" a 2]
 	
 ===end-group===
 
@@ -554,7 +573,18 @@ Rebol [
 ===end-group===
 
 
-===start-group=== "TRY/except"
+===start-group=== "TRY"
+	--test-- "try [do..]"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1361
+		--assert error? try [do {"}]
+		--assert error? try [do "1" do {"}]
+	--test-- "try [catch..]"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/851
+		--assert error? try [do [1] do make error! "try failure"]
+		--assert error? try [do "1" do make error! "try failure"]
+		--assert error? try [catch/quit [1] do make error! "Hello"]
+		--assert error? try [try [catch/quit []] 1 / 0]
+
 	--test-- "try/except [1 / 0] block!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2419
 		system/state/last-error: none

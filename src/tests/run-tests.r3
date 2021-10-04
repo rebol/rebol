@@ -18,9 +18,11 @@ dt [ ;- delta time
 		%units/bincode-test.r3
 		%units/bitset-test.r3
 		%units/codecs-test.r3
+		%units/codecs-test-pdf.r3
 		%units/compare-test.r3
 		%units/compress-test.r3
 		%units/conditional-test.r3
+		%units/copy-test.r3
 		%units/crash-test.r3
 		%units/datatype-test.r3
 		%units/date-test.r3

@@ -486,7 +486,9 @@ init_pattern:
 ***********************************************************************/
 {
 	ssize_t num_bytes;
-
+	struct stat info;
+	file->actual = 0;
+	
 	if (!file->id) {
 		file->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
@@ -504,15 +506,20 @@ init_pattern:
 			if (ftruncate(file->id, file->file.index)) return DR_ERROR;
 	}
 
-	if (file->length == 0) return DR_DONE;
-
-	num_bytes = write(file->id, file->data, file->length);
-	if (num_bytes < 0) {
-		if (errno == ENOSPC) file->error = -RFE_DISK_FULL;
-		else file->error = -RFE_BAD_WRITE;
-		return DR_ERROR;
-	} else {
-		file->actual = (u32)num_bytes;
+	if (file->length > 0) {
+		num_bytes = write(file->id, file->data, file->length);
+		if (num_bytes < 0) {
+			if (errno == ENOSPC) file->error = -RFE_DISK_FULL;
+			else file->error = -RFE_BAD_WRITE;
+			return DR_ERROR;
+		} else {
+			file->actual = (u32)num_bytes;
+		}
+	}
+	// update new file info
+	if (fstat(file->id, &info) == 0) {
+		file->file.size = info.st_size;
+		file->file.time.l = (i32)(info.st_mtime);
 	}
 
 	return DR_DONE;

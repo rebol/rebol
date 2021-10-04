@@ -189,6 +189,39 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1295
 	--assert error? try [to-object now] ;-no crash
 
+--test-- "issue-802"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/802
+	--assert object? a: make object [b: self] []  ;-no crash
+--test-- "issue-1058"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1058
+	--assert not error? try [
+		o: make object! [w: self]
+		make o []
+	]
+--test--  "make of huge block"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1172
+	--assert all [
+		error? e: try [make block! (shift 1 26)]
+		e/id = 'no-memory
+	]
+	--assert all [
+		error? e: try [make block! (shift 1 28)]
+		e/id = 'no-memory
+	]
+	--assert all [
+		error? e: try [append make block! -1 + (shift 1 28) 1] ;-no crash
+		e/id = 'no-memory
+	]
+--test-- "cyclic block comparison"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1049
+	a: copy []
+	insert/only a a
+	b: copy []
+	insert/only b b
+	--assert all [error? e: try [equal? a b] e/id = 'stack-overflow]
+	--assert all [error? e: try [equiv? a b] e/id = 'stack-overflow] 
+	--assert all [error? e: try [strict-equal? a b] e/id = 'stack-overflow] 
+
 ===end-group===
 
 ~~~end-file~~~

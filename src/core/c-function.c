@@ -210,7 +210,7 @@
 		else
 			Make_Command(value, def);
 	}
-	else if (type == REB_OP && IS_FUNCTION(def)) {
+	else if (type == REB_OP && (IS_FUNCTION(def) || IS_ACTION(def))) {
 		VAL_FUNC_SPEC(value) = VAL_FUNC_SPEC(def);
 		VAL_FUNC_BODY(value) = VAL_FUNC_BODY(def);
 		VAL_FUNC_ARGS(value) = VAL_FUNC_ARGS(def);
@@ -229,10 +229,10 @@
 				w++;
 		}
 		if (w != 2) return FALSE;
-		VAL_SET_EXT(value, REB_FUNCTION);
+		VAL_SET_EXT(value, IS_ACTION(def)?REB_ACTION:REB_FUNCTION);
 	}
 
-	if (type == REB_FUNCTION || type == REB_CLOSURE || type == REB_OP)
+	if ((type == REB_FUNCTION || type == REB_CLOSURE || type == REB_OP) && !IS_ACTION(def))
 		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value));
 
 	return TRUE;

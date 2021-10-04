@@ -253,7 +253,7 @@ to: action [
 
 copy: action [
 	{Copies a series, object, or other value.}
-	value [series! port! map! object! bitset! any-function!] {At position}
+	value [series! port! map! object! bitset! any-function! error!] {At position}
 	/part {Limits to a given length or position}
 	length [number! series! pair!]
 	/deep {Also copies series values within the block}

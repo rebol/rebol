@@ -17,6 +17,11 @@ Rebol [
 	--assert try [parse "abc"  [@abc]]
 	--assert try [parse "a:bc" [a:bc]]
 	--assert      parse "<a>"  [<a> ]
+
+--test-- "changing input"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1263
+	b: "this"
+	--assert parse "test" ["test" :b "this"]
 ===end-group===
 
 
@@ -79,7 +84,7 @@ Rebol [
 	--assert all [parse "abc" [#"a" and #"b" copy x to end]  x = "bc"]
 	--assert parse [1] [and integer! skip]
 	--assert parse [1 hi] [integer! and word! skip]
-	--assert all [parse [hi @bob] ['hi and ref! copy x skip] x = @bob]
+	--assert all [parse [hi @bob] ['hi and ref! set x skip] x = @bob]
 	--assert not parse "a" [and #"b" skip]
 	--assert not parse [1] [and word! skip]
 --test-- "ahead"
@@ -476,6 +481,13 @@ Rebol [
 	--assert parse "a" ["a" any cset]
 	cset: charset [#"^(00)" - #"^(FF)"]
 	--assert parse "a" ["a" any cset]
+
+--test-- "integer! repeat"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1237
+	--assert     parse [a] [1 'a]
+	--assert not parse [a] [9 'a]
+	--assert     parse [a] [1 3 'a]
+	--assert not parse [a] [2 3 'a]
 
 ===end-group===
 

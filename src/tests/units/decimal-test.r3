@@ -322,7 +322,10 @@ Rebol [
 		--assert 1000 // #"a" == 30
 		--assert #"a" // 3    == #"^A"
 		--assert 10:0 // 3:0  == 1:0
-		--assert  10% // 3%   == 1%
+		--assert not (100% // 3% == 1%)
+		--assert     (100% // 3%  = 1%)
+		--assert not ( 10% // 3% == 1%)
+		--assert     ( 10% // 3%  = 1%)
 		--assert  10  // 3%   == 0  ; because result A was integer, result is also integer!
 		--assert 0.01 = round/to (10.0 // 3%) 0.00001
 

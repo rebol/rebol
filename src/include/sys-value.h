@@ -89,6 +89,7 @@ enum {
 #define VAL_CLR_LINE(v)		VAL_CLR_OPT((v), OPTS_LINE)
 
 #define VAL_PROTECTED(v)	VAL_GET_OPT((v), OPTS_LOCK)
+#define VAL_HIDDEN(v)	    VAL_GET_OPT((v), OPTS_HIDE)
 
 // Used for datatype-dependent data (e.g. op! stores action!)
 #define VAL_GET_EXT(v)		((v)->flags.flags.exts)
@@ -146,6 +147,8 @@ typedef struct Reb_Type {
 #define	SET_CHAR(v,n)	VAL_SET(v, REB_CHAR), VAL_CHAR(v) = (REBUNI)(n)
 
 #define IS_NUMBER(v)	(VAL_TYPE(v) == REB_INTEGER || VAL_TYPE(v) == REB_DECIMAL)
+#define	AS_INT32(v)     (IS_INTEGER(v) ? VAL_INT32(v) : (REBINT)VAL_DECIMAL(v))
+#define	AS_INT64(v)     (IS_INTEGER(v) ? VAL_INT64(v) : (REBI64)VAL_DECIMAL(v))
 
 
 /***********************************************************************
@@ -363,9 +366,12 @@ enum {
 };
 
 static REBCNT bit_sizes[4] = { 8, 16, 32, 64 };
+static REBCNT byte_sizes[4] = { 1, 2, 4, 8 };
 
 #define VECT_TYPE(s) ((s)->size & 0xff)
 #define VECT_BIT_SIZE(bits) (bit_sizes[bits & 3])
+#define VECT_BYTE_SIZE(bits) (byte_sizes[bits & 3])
+#define VAL_VEC_WIDTH(v) VECT_BYTE_SIZE(VECT_TYPE(VAL_SERIES(v)))
 
 
 
@@ -601,8 +607,6 @@ typedef struct Reb_Series_Ref
 #define VAL_BIN_DATA(v)	BIN_SKIP(VAL_SERIES(v), VAL_INDEX(v))
 #define VAL_BIN_SKIP(v,n) BIN_SKIP(VAL_SERIES(v), (n))
 #define VAL_BIN_TAIL(v)	BIN_SKIP(VAL_SERIES(v), VAL_SERIES(v)->tail)
-
-#define VAL_VEC_WIDTH(v) (VAL_SERIES(v)->info)
 
 // Arg is a unicode value:
 #define VAL_UNI(v)		UNI_HEAD(VAL_SERIES(v))

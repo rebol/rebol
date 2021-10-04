@@ -212,11 +212,22 @@ Rebol [
 	--assert none? select/part [1 2 1 3 1 2] 2 2
 	--assert 3 = select/part (skip [1 2 1 3 1 2] 2) 1 2
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1936
+	;@@ https://github.com/Oldes/Rebol-issues/issues/686
 	--assert 9 = select [1 2 3 4 5 6 6 6 6 6 1 2 3 4 5 6 7 8 9 0 1] [6 7 8] 
 
 --test-- "SELECT/skip"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/101
 	--assert none? select/skip [1 2 3 4 5 6] 5 3
+	;@@ https://github.com/Oldes/Rebol-issues/issues/734
+	--assert all [
+		error? e: try [select/skip [1 2 3 4 5 6] 5 -4]
+		e/id = 'out-of-range
+	]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/735
+	--assert all [
+		error? e: try [find/skip [1 2 3 4 5 6] 5 -4]
+		e/id = 'out-of-range
+	]
 
 --test-- "SELECT/skip/last"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/616
@@ -340,6 +351,12 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "APPEND block!"
+	--test-- "self-append"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/814
+		a: copy [1]
+		--assert [1 1] = append a a
+===end-group===
 
 ===start-group=== "APPEND string!"
 	--test-- "APPEND string! char!"
@@ -353,6 +370,16 @@ Rebol [
 		--assert @← = append @ #"^(2190)" ; wide char
 ===end-group===
 
+===start-group=== "INSERT ref!"
+	--test-- "INSERT ref! char!"
+		--assert @a = head insert @ #"a"
+		--assert @← = head insert @ #"^(2190)" ; wide char
+	--test-- "INSERT ref! string!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/700
+		--assert @ = i: @
+		--assert @ = insert i "abc"
+		--assert i = @abc
+===end-group===
 
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1791
 ===start-group=== "APPEND binary!"
@@ -379,6 +406,11 @@ Rebol [
 		a: "x" b: #{FF}
 		--assert "xx" = append a a
 		--assert #{FFFF} = append b b
+	--test-- "APPEND binary! block!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1452
+		--assert #{00010361} = append #{} [#{00} #{01} 3 #"a"]
+		--assert   error? try [append #{} [300]]
+
 ===end-group===
 
 ===start-group=== "INSERT binary!"
@@ -396,6 +428,10 @@ Rebol [
 	--test-- "INSERT binary! char!"
 		--assert #{0100}     = head insert #{00} #"^(01)"
 		--assert #{E2869000} = head insert #{00} #"^(2190)"
+	--test-- "INSERT binary! block!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1452
+		--assert #{00010361} = head insert #{} [#{00} #{01} 3 #"a"]
+		--assert   error? try [insert #{} [300]]
 	--test-- "INSERT/part binary!"
 		--assert #{0100} = head insert/part #{00} #{0102} 1
 		--assert #{0100} = head insert/part #{00} "^(01)^(02)" 1
@@ -525,12 +561,35 @@ Rebol [
 ===end-group===
 
 ===start-group=== "FIND-MAX / FIND-MIN"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/754
+	;@@ https://github.com/Oldes/Rebol-issues/issues/755
 	b: [1 2 3 -1]
 	--test-- "FIND-MAX block!" --assert  3 = first find-max b
 	--test-- "FIND-MIN block!" --assert -1 = first find-min b
 	b: [1 a 2 b 3 c -1 d]
-	--test-- "FIND-MAX/skip block!" --assert  3 = first find-max/skip b 2
-	--test-- "FIND-MIN/skip block!" --assert -1 = first find-min/skip b 2
+	--test-- "FIND-MAX/skip block!"
+		--assert  3 = first find-max/skip b 2
+		;@@ https://github.com/Oldes/Rebol-issues/issues/738
+		--assert all [
+			error? e: try [find-max/skip b 0]
+			e/id = 'out-of-range
+		]
+		--assert all [
+			error? e: try [find-max/skip b -2]
+			e/id = 'out-of-range
+		]
+	--test-- "FIND-MIN/skip block!"
+		--assert -1 = first find-min/skip b 2
+		;@@ https://github.com/Oldes/Rebol-issues/issues/739
+		--assert all [
+			error? e: try [find-min/skip b 0]
+			e/id = 'out-of-range
+		]
+		--assert all [
+			error? e: try [find-min/skip b -2]
+			e/id = 'out-of-range
+		]
+
 ===end-group===
 
 ===start-group=== "++ & --"
@@ -1043,6 +1102,55 @@ Rebol [
 	--assert 3 = foreach x [1 2 3] [x]
 	--assert unset? foreach x [1 2 3] [if x = 2 [break]]
 	--assert 4 = foreach x [1 2 3] [if x = 2 [break/return 4]]
+--test-- "FOREACH []"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/540
+	--assert all [
+		error? e: try [foreach [][][]]
+		e/id = 'invalid-arg
+	]
+--test-- "FOREACH [k v] object!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/542
+	o: object [a: 1 b: 2] x: 0
+	--assert 3 = foreach [k v] o [x: x + v]
+	--assert 6 = foreach [k] o [x: x + o/:k]
+	--assert 9 = foreach k o [x: x + o/:k]
+	--assert all [
+		error? e: try [foreach [k v b] o []]
+		e/id = 'invalid-arg
+	]
+--test-- "FOREACH [ref: k v] object!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/723
+	o: object [a: 1 b: 2] x: 0 ref: 'foo
+	--assert 3 = foreach [ref: k v] o [if ref = o [x: x + v]]
+	--assert 6 = foreach [ref: k] o [if ref = o [x: x + o/:k]]
+	--assert ref = 'foo
+--test-- "FOREACH [k v] map!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/722
+	m: map [a: 1 b: 2] x: 0
+	--assert 3 = foreach [k v] m [x: x + v]
+	--assert 6 = foreach [k] m [x: x + m/:k]
+	--assert 9 = foreach k m [x: x + m/:k]
+	--assert 9 = foreach [k v] m [if v = 1 [put m 'c -3] x: x + v]
+	--assert all [
+		error? e: try [foreach [k v b] m []]
+		e/id = 'invalid-arg
+	]
+--test-- "FOREACH [ref: k v] map!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/723
+	m: map [a: 1 b: 2] x: 0 ref: 'foo
+	--assert 3 = foreach [ref: k v] m [if ref = m [x: x + v]]
+	--assert 6 = foreach [ref: k] m [if ref = m [x: x + m/:k]]
+	--assert ref = 'foo
+===end-group===
+
+===start-group=== "MAP-EACH"
+
+--test-- "MAP-EACH []"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/541
+	--assert all [
+		error? e: try [map-each [][a b c][]]
+		e/id = 'invalid-arg
+	]
 
 ===end-group===
 
@@ -1359,6 +1467,12 @@ Rebol [
 --test-- "ENLINE modifies"
 	str: "a^/b^M^/c"
 	--assert str = enline str
+--test-- "ENLINE block!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/647
+	--assert all [
+		error? e: try [enline ["a"]]
+		e/id = 'not-done
+	]
 	
 ===end-group===
 
@@ -1588,7 +1702,30 @@ Rebol [
 	--assert (split/at [1 2.3 /a word "str" #iss x: :y] "str") =	[[1 2.3 /a word] [#iss x: :y]]
 	--assert (split/at [1 2.3 /a word "str" #iss x: :y] 'word) =	[[1 2.3 /a] ["str" #iss x: :y]]
 
+--test-- "split using charset!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/690
+	--assert (split "This! is a. test? to see " charset "!?.") = ["This" " is a" " test" " to see "]
+
 ===end-group===
+
+
+===start-group=== "SPLIT-PATH"
+
+--test-- "split-path file!"
+	--assert [%./ %dir]  = split-path %dir
+	--assert [%./ %dir/] = split-path %dir/
+	--assert [%dir/ %file.txt] = split-path %dir/file.txt
+--test-- "split-path url!"
+	--assert [http://foo.net/ %aa.txt] = split-path http://foo.net/aa.txt
+	--assert [http:// %foo.net/] = split-path http://foo.net/ ;@@ could be better result!
+--test-- "split-path string!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1366
+	--assert [%./ %dir]  = split-path "dir"
+	--assert [%./ %dir/] = split-path "dir/"
+	--assert ["dir/" %file.txt] = split-path "dir/file.txt"
+
+===end-group===
+
 
 
 ===start-group=== "UNION"

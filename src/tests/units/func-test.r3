@@ -30,6 +30,11 @@ Rebol [
 	--assert date?  apply :f [now]
 	--assert 'now = apply/only :f [now]
 
+--test-- "apply op!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/618
+	--assert 3 = apply :add [1 2]
+	--assert 3 = apply :+ [1 2]
+
 ===end-group===
 
 
@@ -46,6 +51,13 @@ Rebol [
 --test-- "body-of FUNCTION"
 	fce: func[a [integer!]][probe a]
 	--assert [probe a] = body-of :fce
+	;@@ https://github.com/Oldes/Rebol-issues/issues/166
+	fce: func[a][append "xx" s]
+	clear second body-of :fce
+	--assert [append "xx" s] = body-of :fce
+	clear body-of :fce
+	--assert [append "xx" s] = body-of :fce
+
 
 --test-- "invalid MAKE"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1052
@@ -82,8 +94,9 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/886
 	f: func[arg][p: 'arg]
 	f 1 2
-	--assert none? context? p ; and no crash!
-
+	; --assert none? context? p ; and no crash!
+	; not using above, because tests are run from `do`, so the context is not none like in console!
+	--assert same? :do context? p ; and no crash!
 	c: closure[a][context? 'a]
 	--assert all [object? o: c 1  o/a = 1]
 ===end-group===
@@ -123,7 +136,10 @@ Rebol [
 	--assert (spec-of :. ) = [a "val1" b "val2" /local c]
 
 --test-- "make op! from action!"
-	--assert op? op1: make op! :remainder
+	--assert all [
+		op? op1: try [make op! :remainder]
+		0 = (6 op1 3)
+	]
 --test-- "make op! from function!"
 	fce: func[a b][a * b]
 	--assert op? op2: make op! :fce

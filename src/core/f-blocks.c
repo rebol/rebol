@@ -120,12 +120,14 @@
 ***********************************************************************/
 {
 	REBVAL *val;
+	REBSER *ser;
+	REBU64 ts;
 
 	for (; index < tail; index++) {
 
 		val = BLK_SKIP(block, index);
-
-		if ((types & TYPESET(VAL_TYPE(val)) & TS_SERIES_OBJ) != 0) {
+		ts = types & TYPESET(VAL_TYPE(val));
+		if ((ts & TS_SERIES_OBJ) != 0) {
 			// Replace just the series field of the value
 			// Note that this should work for objects too (the frame).
 			VAL_SERIES(val) = Copy_Series(VAL_SERIES(val));
@@ -135,8 +137,13 @@
 				if ((types & CP_DEEP) != 0)
 					Copy_Deep_Values(VAL_SERIES(val), 0, VAL_TAIL(val), types);
 			}
-		} else if (types & TYPESET(VAL_TYPE(val)) & TS_FUNCLOS)
+		}
+		else if (ts & TS_FUNCLOS) {
 			Clone_Function(val, val);
+		}
+		else if (ts & TYPESET(REB_MAP)) {
+			Set_Series(REB_MAP, val, Copy_Map(val, types));
+		}
 	}
 }
 

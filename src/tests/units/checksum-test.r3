@@ -232,5 +232,6 @@ AF45D2E376484031617F78D2B58A6B1B9C7EF464F5A01B47E42EC3736322445E
 		h: checksum/with to binary! i 'hash 64
 		res: all [res h >= 0 h < 64]
 	]
+===end-group===
 
 ~~~end-file~~~
