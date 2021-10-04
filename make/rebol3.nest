@@ -444,6 +444,11 @@ include-lzma-compression: [
 	core-files: %core/u-lzma.c
 ]
 
+include-png-filter-native: [
+	config: INCLUDE_PNG_FILTER
+	core-files: %core/u-png-filter.c
+]
+
 include-view: [
 	; currently only on Windows!
 	host-files: :host-files-view
@@ -500,7 +505,7 @@ include-codec-ico: [
 ]
 include-codec-json:          [mezz-lib-files:  %mezz/codec-json.reb         ]
 include-codec-xml:           [mezz-lib-files:  %mezz/codec-xml.reb          ]
-include-codec-pdf:           [mezz-lib-files:  %mezz/codec-pdf.reb config: INCLUDE_PNG_FILTER] ; pdf may use special png pre-compression
+include-codec-pdf:           [mezz-lib-files:  %mezz/codec-pdf.reb :include-png-filter-native] ; pdf may use special png pre-compression
 include-codec-swf:           [mezz-lib-files:  %mezz/codec-swf.reb          ]
 include-codec-wav:           [mezz-lib-files:  %mezz/codec-wav.reb          ]
 include-codec-unixtime:      [mezz-lib-files:  %mezz/codec-unixtime.reb     ]
