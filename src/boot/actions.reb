@@ -176,6 +176,12 @@ index?: action [
 	/xy {Returns index as an XY pair offset}
 ]
 
+indexz?: action [
+	{Returns the current 0-based position (index) of the series.}
+	series [series! gob! port! none!]
+	/xy {Returns index as an XY pair offset}
+]
+
 length?: action [
 	{Returns the length (from the current position for series.)}
 	series [series! port! map! tuple! bitset! object! gob! struct! any-word! none!]

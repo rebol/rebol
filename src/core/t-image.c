@@ -1047,6 +1047,17 @@ find_none:
 			DS_RET_INT(index + 1);
 			return R_RET;
 		}
+	case A_INDEXZQ:
+		if (D_REF(2)) {
+			VAL_SET(D_RET, REB_PAIR);
+			VAL_PAIR_X(D_RET) = (REBD32)(index % VAL_IMAGE_WIDE(value));
+			VAL_PAIR_Y(D_RET) = (REBD32)(index / VAL_IMAGE_WIDE(value));
+			return R_RET;
+		}
+		else {
+			DS_RET_INT(index);
+			return R_RET;
+		}
 	case A_LENGTHQ:
 		DS_RET_INT(tail > index ? tail - index : 0);
 		return R_RET;

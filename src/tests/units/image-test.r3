@@ -69,6 +69,24 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "INDEX? / INDEXZ?"
+	img: make image! 2x2
+	--test-- "index? image!"
+		--assert 1   = index? img
+		--assert 2   = index? next img
+		--assert 5   = index? tail img
+		--assert 1x1 = index?/xy img
+		--assert 2x1 = index?/xy next img
+		--assert 1x3 = index?/xy tail img
+	--test-- "indexz? image!"
+		--assert 0   = indexz? img
+		--assert 1   = indexz? next img
+		--assert 4   = indexz? tail img
+		--assert 0x0 = indexz?/xy img
+		--assert 1x0 = indexz?/xy next img
+		--assert 0x2 = indexz?/xy tail img
+===end-group===
+
 ===start-group=== "FOREACH"
 	--test-- "issue-1479"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1479

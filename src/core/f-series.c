@@ -107,6 +107,10 @@
 		SET_INTEGER(DS_RETURN, ((REBI64)index) + 1);
 		return R_RET;
 
+	case A_INDEXZQ:
+		SET_INTEGER(DS_RETURN, ((REBI64)index));
+		return R_RET;
+
 	case A_LENGTHQ:
 		SET_INTEGER(DS_RETURN, tail > index ? tail - index : 0);
 		return R_RET;

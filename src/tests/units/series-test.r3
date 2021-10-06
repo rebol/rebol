@@ -620,6 +620,38 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "INDEXZ?"
+	--test-- "indexz? on string"
+		s: "abc"
+		--assert all [
+			0 = indexz? s
+			1 = indexz? next s
+			3 = indexz? tail s
+		]
+	--test-- "indexz? on binary"
+		s: to binary! "abc"
+		--assert all [
+			0 = indexz? s
+			1 = indexz? next s
+			3 = indexz? tail s
+		]
+	--test-- "indexz? on block"
+		s: [1 2 3]
+		--assert all [
+			0 = indexz? s
+			1 = indexz? next s
+			3 = indexz? tail s
+		]
+	--test-- "indexz? on vector"
+		s: #[u16! 3]
+		--assert all [
+			0 = indexz? s
+			1 = indexz? next s
+			3 = indexz? tail s
+		]
+===end-group===
+
+
 ===start-group=== "PICK"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/608
 	;@@ https://github.com/Oldes/Rebol-issues/issues/857
