@@ -348,6 +348,7 @@ chkDecimal:
 {
 	if(VAL_INT64(D_ARG(2))>=0) VAL_INT64(D_ARG(2)) += 1;
 	Do_Act(D_RET, VAL_TYPE(D_ARG(1)), A_PICK);
+	return R_RET;
 }
 
 /***********************************************************************
@@ -364,4 +365,5 @@ chkDecimal:
 {
 	if (VAL_INT64(D_ARG(2)) >= 0) VAL_INT64(D_ARG(2)) += 1;
 	Do_Act(D_RET, VAL_TYPE(D_ARG(1)), A_POKE);
+	return R_RET;
 }
