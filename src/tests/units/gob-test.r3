@@ -17,11 +17,13 @@ Rebol [
 		--assert 1   = index? back g
 		--assert 2   = index? next g
 		--assert 3   = index? tail g
+		--assert 2   = index? at g 2
 	--test-- "indexz? gob!"
 		--assert 0   = indexz? g
 		--assert 0   = indexz? back g
 		--assert 1   = indexz? next g
 		--assert 2   = indexz? tail g
+		--assert 1   = indexz? atz g 1
 ===end-group===
 
 ===start-group=== "gob issues"

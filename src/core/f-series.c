@@ -80,12 +80,13 @@
 
 	case A_SKIP:
 	case A_AT:
+	case A_ATZ:
 		len = Get_Num_Arg(arg);
 		{
 			REBI64 i = (REBI64)index + (REBI64)len;
 			if (action == A_SKIP) {
 				if (IS_LOGIC(arg)) i--;
-			} else { // A_AT
+			} else if (action == A_AT) {
 				if (len > 0) i--;
 			}
 			if (i > (REBI64)tail) i = (REBI64)tail;
@@ -93,16 +94,7 @@
 			VAL_INDEX(value) = (REBCNT)i;
 		}
 		break;
-/*
-	case A_ATZ:
-		len = Get_Num_Arg(arg);
-		{
-			REBI64 idx = Add_Max(0, index, len, MAX_I32);
-			if (idx < 0) idx = 0;
-			VAL_INDEX(value) = (REBCNT)idx;
-		}
-		break;
-*/
+
 	case A_INDEXQ:
 		SET_INTEGER(DS_RETURN, ((REBI64)index) + 1);
 		return R_RET;

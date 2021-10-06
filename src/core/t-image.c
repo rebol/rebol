@@ -1070,21 +1070,18 @@ find_none:
 		Pick_Path(value, arg, D_ARG(3));
 		return R_ARG3;
 
-	case A_SKIP:
-	case A_AT:
-		// This logic is somewhat complicated by the fact that INTEGER args use
-		// base-1 indexing, but PAIR args use base-0.
+	case A_AT:   // base-1
+	case A_ATZ:  // base-0
+	case A_SKIP: // base-0
 		if (IS_PAIR(arg)) {
-			if (action == A_AT) action = A_SKIP;
-			diff = (VAL_PAIR_Y_INT(arg) * VAL_IMAGE_WIDE(value) + VAL_PAIR_X_INT(arg)) +
-				((action == A_SKIP) ? 0 : 1);
+			diff = ((VAL_PAIR_Y_INT(arg) - ((action == A_AT) ? 1 : 0)) * VAL_IMAGE_WIDE(value) + VAL_PAIR_X_INT(arg));
 		} else
 			diff = Get_Num_Arg(arg);
 
 		index += diff;
 		if (action == A_SKIP) {
 			if (IS_LOGIC(arg)) index--;
-		} else {
+		} else if (action == A_AT) {
 			if (diff > 0) index--; // For at, pick, poke.
 		}
 

@@ -627,6 +627,10 @@ Rebol [
 			0 = indexz? s
 			1 = indexz? next s
 			3 = indexz? tail s
+			0 = indexz? atz s -1
+			0 = indexz? atz s 0
+			2 = indexz? atz s 2
+			3 = indexz? atz s 6
 		]
 	--test-- "indexz? on binary"
 		s: to binary! "abc"
@@ -634,6 +638,10 @@ Rebol [
 			0 = indexz? s
 			1 = indexz? next s
 			3 = indexz? tail s
+			0 = indexz? atz s -1
+			0 = indexz? atz s 0
+			2 = indexz? atz s 2
+			3 = indexz? atz s 6
 		]
 	--test-- "indexz? on block"
 		s: [1 2 3]
@@ -641,6 +649,10 @@ Rebol [
 			0 = indexz? s
 			1 = indexz? next s
 			3 = indexz? tail s
+			0 = indexz? atz s -1
+			0 = indexz? atz s 0
+			2 = indexz? atz s 2
+			3 = indexz? atz s 6
 		]
 	--test-- "indexz? on vector"
 		s: #[u16! 3]
@@ -648,6 +660,10 @@ Rebol [
 			0 = indexz? s
 			1 = indexz? next s
 			3 = indexz? tail s
+			0 = indexz? atz s -1
+			0 = indexz? atz s 0
+			2 = indexz? atz s 2
+			3 = indexz? atz s 6
 		]
 ===end-group===
 
