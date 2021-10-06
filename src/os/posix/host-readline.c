@@ -389,13 +389,35 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 **
 ***********************************************************************/
 {
+	int bytes;
 	//printf("\r\nins pos: %d end: %d ==", term->pos, term->end);
-    if (*cp < 32 && *cp != '\t') {
-        // ignore not-printable characters except TAB
-        Write_Char(BEL, 1); // bell
-        return ++cp;
-    }
-	int bytes = 1 + trailingBytesForUTF8[*cp];
+    
+	if(*cp == '\t') {
+		// convert TAB to 4 spaces
+		bytes = 4;
+		*cp = ' ';
+		if (term->end < TERM_BUF_LEN-bytes) {
+			MOVE_MEM(
+				term->buffer + term->pos + bytes,
+				term->buffer + term->pos,
+				bytes + term->end - term->pos
+			);
+		}
+		do {
+			WRITE_CHAR(cp);
+			term->buffer[term->pos] = ' ';
+			term->end++;
+			term->pos++;
+		} while (--bytes > 0);
+		return ++cp;
+	}
+	else if (*cp < 32) {
+		// ignore not-printable characters except TAB
+		Write_Char(BEL, 1); // bell
+		return ++cp;
+	}
+	
+	bytes = 1 + trailingBytesForUTF8[*cp];
 	if (term->end < TERM_BUF_LEN-bytes) { // avoid buffer overrun
 
 		if (term->pos < term->end) { // open space for it:
