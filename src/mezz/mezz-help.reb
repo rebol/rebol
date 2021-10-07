@@ -18,6 +18,7 @@ import module [
 	Exports: [? help about usage what license source dump-obj]
 ][
 	buffer: none
+	cols:   80 ; default terminal width
 	max-desc-width: 45
 
 	help-text: {
@@ -186,10 +187,11 @@ import module [
 		'word [any-type!]
 		/into "Help text will be inserted into provided string instead of printed"
 			string [string!] "Returned series will be past the insertion"
-		/local value spec args refs rets type ret desc arg def des ref str
+		/local value spec args refs rets type ret desc arg def des ref str cols
 	][
 		try [
-			max-desc-width: (query/mode system/ports/input 'buffer-cols) - 35
+			cols: query/mode system/ports/input 'buffer-cols
+			max-desc-width: cols - 35
 		]
 		buffer: any [string  clear ""]
 		catch [
@@ -260,7 +262,7 @@ import module [
 					throw true
 				]
 				not any [word? :word path? :word] [
-					output [mold :word "is" form-type :word]
+					output ajoin ["^[[1;32m" uppercase mold :word "^[[m is " form-type :word]
 					throw true
 				]
 				path? :word [
@@ -369,8 +371,15 @@ import module [
 					throw true
 				]
 				'else [
-					output ajoin ["^[[1;32m" uppercase mold word "^[[m is " form-type :value " of value: ^[[32m"]
-					output either any [any-object? value] [output lf dump-obj :value][mold :value]
+					word: uppercase mold word
+					type: form-type :value
+					output ajoin ["^[[1;32m" word "^[[m is " type " of value: ^[[32m"]
+					output either any [any-object? value] [
+						output lf dump-obj :value
+					][
+						max-desc-width: cols - (length? word) - (length? type) - 21
+						form-val :value
+					]
 					output "^[[m"
 				]
 			]
