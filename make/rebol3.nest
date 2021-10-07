@@ -496,6 +496,7 @@ include-codec-ssh-key:       [mezz-lib-files:  %mezz/codec-ssh-key.reb      ]
 include-codec-gzip:          [mezz-lib-files:  %mezz/codec-gzip.reb         ]
 include-codec-zip:           [mezz-lib-files:  %mezz/codec-zip.reb          ]
 include-codec-tar:           [mezz-lib-files:  %mezz/codec-tar.reb          ]
+include-codec-ar:            [mezz-lib-files:  %mezz/codec-ar.reb           ]
 ; other codecs:
 include-codec-bbcode:        [mezz-lib-files:  %mezz/codec-bbcode.reb       ]
 include-codec-html-entities: [mezz-lib-files:  %mezz/codec-html-entities.reb]
@@ -545,6 +546,7 @@ include-rebol-core: [
 	:include-https
 
 	:include-codec-unixtime
+	:include-codec-ar
 	:include-codec-gzip
 	:include-codec-zip
 	:include-codec-tar
