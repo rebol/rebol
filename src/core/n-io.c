@@ -131,15 +131,15 @@ static REBSER *Read_All_File(char *fname)
 {
 	REBVAL *val = D_ARG(1);
 	REB_MOLD mo = {0};
-	REBINT  len = -1; // no limit
+	REBINT  len = NO_LIMIT;
 
 	if (D_REF(3)) SET_FLAG(mo.opts, MOPT_MOLD_ALL);
 	if (D_REF(4)) SET_FLAG(mo.opts, MOPT_INDENT);
 	if (D_REF(5)) {
 		if (VAL_INT64(D_ARG(6)) > (i64)MAX_I32)
 			len = MAX_I32;
-		else if (VAL_INT64(D_ARG(6)) < 0)
-			len = 0;
+		else if (VAL_INT64(D_ARG(6)) <= 0)
+			len = NO_LIMIT;
 		else
 			len = VAL_INT32(D_ARG(6));
 	}

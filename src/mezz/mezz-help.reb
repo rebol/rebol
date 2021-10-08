@@ -71,15 +71,6 @@ import module [
 		buffer: insert buffer form reduce value
 	]
 
-	clip-str: func [str] [
-		; Keep string to one line.
-		unless string? str [str: mold/part/flat str max-desc-width]
-		replace/all str LF "^^/"
-		replace/all str CR "^^M"
-		if (length? str) > (max-desc-width - 1) [str: append copy/part str max-desc-width "..."]
-		str
-	]
-
 	interpunction: charset ";.?!"
 	dot: func[value [string!]][
 		unless find interpunction last value [append value #"."]
@@ -116,7 +107,8 @@ import module [
 			;none?         :val [ mold/all val]
 			true [:val]
 		]
-		clip-str val
+		unless string? val [val: mold/part/flat val max-desc-width]
+		ellipsize/one-line val max-desc-width - 1
 	]
 
 	form-pad: func [val size] [
