@@ -468,6 +468,36 @@ chk_neg:
 	return R_RET;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(to_real_file)
+/*
+//	to-real-file: native [
+//		"Returns canonicalized absolute pathname or none if path does not exists. Resolves symbolic links."
+//		path [file! string!]
+//	]
+***********************************************************************/
+{
+	REBVAL *path = D_ARG(1);
+	REBINT  len;
+	REBSER *ser;
+	REBSER *new;
+	char   *tmp;
+	
+	ser = Value_To_OS_Path(path, TRUE);
+	tmp = OS_REAL_PATH(cs_cast(VAL_BIN(path)));
+	if(!tmp) {
+		FREE_SERIES(ser);
+		return R_NONE;
+	}
+	len = strlen(tmp);
+	new = To_REBOL_Path(tmp, len, OS_WIDE, FALSE);
+	Set_Series(REB_FILE, D_RET, new);
+	FREE_SERIES(ser);
+	FREE_MEM(tmp);
+	return R_RET;
+}
+
 // Blog: http://www.rebol.net/cgi-bin/r3blog.r?view=0319
 /***********************************************************************
 **

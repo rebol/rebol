@@ -665,6 +665,23 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 /***********************************************************************
 **
+*/	char* OS_Real_Path(const char *path)
+/*
+**		Returns a null-terminated string containing the canonicalized
+**		absolute pathname corresponding to path. In the returned string,
+**		symbolic links are resolved, as are . and .. pathname components.
+**		Consecutive slash (/) characters are replaced by a single slash.
+**
+**		The result should be freed after copy/conversion.
+**
+***********************************************************************/
+{
+	return realpath(path, NULL); // Be sure to call free() after usage
+}
+
+
+/***********************************************************************
+**
 */	void OS_File_Time(REBREQ *file, REBOL_DAT *dat)
 /*
 **		Convert file.time to REBOL date/time format.

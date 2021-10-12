@@ -658,6 +658,21 @@ static void *Task_Ready;
 		return GetLastError();
 }
 
+/***********************************************************************
+**
+*/	char* OS_Real_Path(const char *path)
+/*
+**		Returns a null-terminated string containing the canonicalized
+**		absolute pathname corresponding to path. In the returned string,
+**		symbolic links are resolved, as are . and .. pathname components.
+**		Consecutive slash (/) characters are replaced by a single slash.
+**
+**		The result should be freed after copy/conversion.
+**
+***********************************************************************/
+{
+	return NULL; // not yet implemented
+}
 
 /***********************************************************************
 **
