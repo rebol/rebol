@@ -67,7 +67,7 @@ start: func [
 		file: second split-path boot
 		foreach dir parse any [get-env "PATH" ""] pick ";:" system/platform = 'Windows [
 			dir: dirize as file! dir
-			if exists? probe tmp: dir/:file [
+			if exists? tmp: dir/:file [
 				boot: tmp
 				break
 			]
