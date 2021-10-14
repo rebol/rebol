@@ -188,7 +188,7 @@ load-ext-module: function [
 	]
 	;assert/type [hdr object! hdr/options [block! none!] code [binary! block!]]
 
-	loud-print ["Extension:" select hdr 'title]
+	log/debug 'REBOL ["Extension:" select hdr 'title]
 	unless hdr/options [hdr/options: make block! 1]
 	append hdr/options 'extension ; So make module! special cases it
 	hdr/type: 'module             ; So load and do special case it
@@ -220,7 +220,7 @@ load-ext-module: function [
 load-boot-exts: function [
 	"INIT: Load boot-based extensions."
 ][
-	loud-print "Loading boot extensions..."
+	log/debug 'REBOL "Loading boot extensions..."
 
 	ext-objs: []
 

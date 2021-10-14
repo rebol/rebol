@@ -117,5 +117,5 @@ unset 'action ; this native was only for internal use, co unset it now!
 unset 'native ; no crash, but not useful -> https://github.com/Oldes/Rebol-issues/issues/918
 
 
-;secure: func ['d] [boot-print "SECURE is disabled"]
+;secure: func ['d] [print "SECURE is disabled"]
 

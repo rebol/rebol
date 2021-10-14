@@ -25,7 +25,7 @@ start: func [
 	;** Note ** We need to make this work for lower boot levels too!
 
 	;-- DEBUG: enable these lines for debug or related testing
-	loud-print ["Starting... boot level:" boot-level]
+	log/debug 'REBOL ["Starting... boot level:" boot-level]
 	;trace 1
 	;crash-here ; test error handling (undefined word)
 
@@ -41,19 +41,23 @@ start: func [
 	system/build/compiler: ver/6
 	system/build/date:     ver/7
 
+	if flags/verbose [system/options/log/rebol: 3] ;maximum log output for system messages
+
 	;-- Print minimal identification banner if needed:
 	if all [
 		not quiet
 		any [flags/verbose flags/usage flags/help]
 	][
-		boot-print boot-banner ; basic boot banner only
+		; basic boot banner only
+		prin "^/  "
+		print boot-banner: form ver
 	]
 	if any [do-arg script] [quiet: true]
 
 	;-- Set up option/paths for /path, /boot, /home, and script path (for SECURE):         
-	loud-print ["Initial path:" path]
-	loud-print ["Initial boot:" boot]
-	loud-print ["Initial home:" home] ; always NONE at this state! 
+	log/more 'REBOL ["Initial path:" path]
+	log/more 'REBOL ["Initial boot:" boot]
+	;log/more 'REBOL ["Initial home:" home] ; always NONE at this state! 
 	;-  1. /path - that is current directory (resolved from C as a part of args processing)
 	; nothing to do here
 	;-  2. /boot - path to executable (must handle relative paths)                         
@@ -69,7 +73,7 @@ start: func [
 			]
 		]
 		if boot <> tmp [
-			loud-print "Path to executable was not resolved!"
+			log/error 'REBOL "Path to executable was not resolved!"
 			boot: none
 		]
 	]	
@@ -110,7 +114,7 @@ start: func [
 	;   For example: mods, plus, host, and full
 	if boot-level [
 		load-boot-exts
-		loud-print "Init mezz plus..."
+		log/debug 'REBOL "Init mezz plus..."
 
 		do bind-lib boot-mezz
 		boot-mezz: 'done
@@ -128,7 +132,7 @@ start: func [
 		]
 
 		if boot-host [
-			loud-print "Init host code..."
+			log/debug 'REBOL "Init host code..."
 			;probe load boot-host
 			do load boot-host
 			boot-host: none
@@ -138,7 +142,7 @@ start: func [
 			flags/verbose
 			not any [quiet script do-arg]
 		][
-			boot-print boot-banner
+			print boot-banner
 		]
 	]
 
@@ -163,24 +167,25 @@ start: func [
 	;-- Evaluate rebol.reb script:
 	;@@ https://github.com/Oldes/Rebol-issues/issues/706
 	tmp: first split-path boot
-	loud-print ["Checking for rebol.reb file in" tmp]
+	log/info 'REBOL ["Checking for rebol.reb file in" tmp]
 	
 	if all [
 		#"/" = first tmp ; only if we know absolute path
 		exists? tmp/rebol.reb
 	][
-		do tmp/rebol.reb
+		try/except [do tmp/rebol.reb][log/error 'REBOL system/state/last-error]
 	]
 
 	;-- Make the user's global context:
 	tmp: make object! 320
-	append tmp reduce ['system :system 'lib-local :tmp]
+	append tmp reduce ['REBOL :system 'lib-local :tmp]
 	system/contexts/user: tmp
 
-	loud-print ["Checking for user.reb file in" home]
-	if exists? home/user.reb [do home/user.reb]
+	log/info 'REBOL ["Checking for user.reb file in" home]
+	if exists? home/user.reb [
+		try/except [do home/user.reb][log/error 'REBOL system/state/last-error]
+	]
 
-	boot-print ""
 
 	;if :lib/secure [protect-system-object]
 
@@ -194,7 +199,7 @@ start: func [
 	]
 
 	;-- Evaluate script argument?
-	either file? script [
+	if file? script [
 		; !!! Would be nice to use DO for this section. !!!
 		; NOTE: We can't use DO here because it calls the code it does with CATCH/quit
 		;   and we shouldn't catch QUIT in the top-level script, we should just quit.
@@ -203,7 +208,7 @@ start: func [
 		; /path dir is where our script gets started.
 		change-dir first script-path
 		either exists? second script-path [
-			boot-print ["Evaluating:" script]
+			log/info 'REBOL ["Evaluating:" script]
 			code: load/header/type second script-path 'unbound
 			; update system/script (Make into a function?)
 			system/script: make system/standard/script [
@@ -225,8 +230,6 @@ start: func [
 		] [
 			cause-error 'access 'no-script script
 		]
-	][
-		boot-print boot-help
 	]
 
 	exit

@@ -166,7 +166,7 @@ make-scheme: func [
 init-schemes: func [
 	"INIT: Init system native schemes and ports."
 ][
-	loud-print "Init schemes"
+	log/debug 'REBOL "Init schemes"
 
 	sys/decode-url: lib/decode-url: :sys/*parse-url/decode-url
 
@@ -174,7 +174,7 @@ init-schemes: func [
 
 	make-scheme [
 		title: "System Port"
-		name: 'system
+		name: 'REBOL
 		awake: func [
 			sport "System port (State block holds events)"
 			ports "Port list (Copy of block passed to WAIT)"
@@ -357,7 +357,7 @@ init-schemes: func [
 		]
 	]
 
-	system/ports/system:   open [scheme: 'system]
+	system/ports/system:   open [scheme: 'REBOL]
 	system/ports/input:    open [scheme: 'console]
 	system/ports/callback: open [scheme: 'callback]
 

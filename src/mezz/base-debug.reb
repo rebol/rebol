@@ -61,17 +61,3 @@ probe: func [
 	]
 	exit
 ]
-
-boot-print: func [
-	"Prints when not quiet."
-	data
-][
-	unless system/options/quiet [print :data]
-]
-
-loud-print: func [
-	"Prints when verbose."
-	data
-][
-	if system/options/flags/verbose [print :data]
-]
