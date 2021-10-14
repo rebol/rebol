@@ -19,13 +19,13 @@ REBOL [
 
 start: func [
 	"INIT: Completes the boot sequence. Loads extras, handles args, security, scripts."
-	/local dir file tmp script-path script-args code ver
-] bind [ ; context is: system/options
+	/local file tmp script-path script-args code ver
+] bind [ ; context is: system/options (must use full path sys/log/.. as there is options/log too!)
 
 	;** Note ** We need to make this work for lower boot levels too!
 
 	;-- DEBUG: enable these lines for debug or related testing
-	log/debug 'REBOL ["Starting... boot level:" boot-level]
+	sys/log/debug 'REBOL ["Starting... boot level:" boot-level]
 	;trace 1
 	;crash-here ; test error handling (undefined word)
 
@@ -55,9 +55,9 @@ start: func [
 	if any [do-arg script] [quiet: true]
 
 	;-- Set up option/paths for /path, /boot, /home, and script path (for SECURE):         
-	log/more 'REBOL ["Initial path:" path]
-	log/more 'REBOL ["Initial boot:" boot]
-	;log/more 'REBOL ["Initial home:" home] ; always NONE at this state! 
+	sys/log/more 'REBOL ["Initial path:" path]
+	sys/log/more 'REBOL ["Initial boot:" boot]
+	;sys/log/more 'REBOL ["Initial home:" home] ; always NONE at this state! 
 	;-  1. /path - that is current directory (resolved from C as a part of args processing)
 	; nothing to do here
 	;-  2. /boot - path to executable (must handle relative paths)                         
@@ -65,15 +65,15 @@ start: func [
 	unless exists? boot [
 		; the executable must be inside one of the system PATH directories... 
 		file: second split-path boot
-		foreach tmp parse any [get-env "PATH" ""] pick ";:" system/platform = 'Windows [
-			dir: dirize as file! tmp
-			if exists? tmp: dir/:file [
+		foreach dir parse any [get-env "PATH" ""] pick ";:" system/platform = 'Windows [
+			dir: dirize as file! dir
+			if exists? probe tmp: dir/:file [
 				boot: tmp
 				break
 			]
 		]
 		if boot <> tmp [
-			log/error 'REBOL "Path to executable was not resolved!"
+			sys/log/error 'REBOL "Path to executable was not resolved!"
 			boot: none
 		]
 	]	
@@ -114,7 +114,7 @@ start: func [
 	;   For example: mods, plus, host, and full
 	if boot-level [
 		load-boot-exts
-		log/debug 'REBOL "Init mezz plus..."
+		sys/log/debug 'REBOL "Init mezz plus..."
 
 		do bind-lib boot-mezz
 		boot-mezz: 'done
@@ -132,7 +132,7 @@ start: func [
 		]
 
 		if boot-host [
-			log/debug 'REBOL "Init host code..."
+			sys/log/debug 'REBOL "Init host code..."
 			;probe load boot-host
 			do load boot-host
 			boot-host: none
@@ -167,13 +167,13 @@ start: func [
 	;-- Evaluate rebol.reb script:
 	;@@ https://github.com/Oldes/Rebol-issues/issues/706
 	tmp: first split-path boot
-	log/info 'REBOL ["Checking for rebol.reb file in" tmp]
+	sys/log/info 'REBOL ["Checking for rebol.reb file in" tmp]
 	
 	if all [
 		#"/" = first tmp ; only if we know absolute path
 		exists? tmp/rebol.reb
 	][
-		try/except [do tmp/rebol.reb][log/error 'REBOL system/state/last-error]
+		try/except [do tmp/rebol.reb][sys/log/error 'REBOL system/state/last-error]
 	]
 
 	;-- Make the user's global context:
@@ -181,9 +181,9 @@ start: func [
 	append tmp reduce ['REBOL :system 'lib-local :tmp]
 	system/contexts/user: tmp
 
-	log/info 'REBOL ["Checking for user.reb file in" home]
+	sys/log/info 'REBOL ["Checking for user.reb file in" home]
 	if exists? home/user.reb [
-		try/except [do home/user.reb][log/error 'REBOL system/state/last-error]
+		try/except [do home/user.reb][sys/log/error 'REBOL system/state/last-error]
 	]
 
 
@@ -208,7 +208,7 @@ start: func [
 		; /path dir is where our script gets started.
 		change-dir first script-path
 		either exists? second script-path [
-			log/info 'REBOL ["Evaluating:" script]
+			sys/log/info 'REBOL ["Evaluating:" script]
 			code: load/header/type second script-path 'unbound
 			; update system/script (Make into a function?)
 			system/script: make system/standard/script [
