@@ -226,7 +226,7 @@ const struct arg_chr arg_chars2[] = {
 	// First arg is path to executable (on most systems):
 	if (argc > 0) rargs->exe_path = *argv;
 
-	OS_Get_Current_Dir(&rargs->home_dir);
+	OS_Get_Current_Dir(&rargs->current_dir);
 
 	// Parse each argument:
 	for (i = 1; i < argc ; i++) {

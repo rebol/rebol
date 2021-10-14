@@ -19,7 +19,7 @@ REBOL [
 
 start: func [
 	"INIT: Completes the boot sequence. Loads extras, handles args, security, scripts."
-	/local file tmp script-path script-args code ver
+	/local dir file tmp script-path script-args code ver
 ] bind [ ; context is: system/options
 
 	;** Note ** We need to make this work for lower boot levels too!
@@ -50,24 +50,41 @@ start: func [
 	]
 	if any [do-arg script] [quiet: true]
 
-	;-- Set up option/paths for /path, /boot, /home, and script path (for SECURE):
-	path: dirize any [path home]
-	home: dirize home
-	;if slash <> first boot [boot: clean-path boot] ;;;;; HAVE C CODE DO IT PROPERLY !!!!
-	file: first split-path boot
+	;-- Set up option/paths for /path, /boot, /home, and script path (for SECURE):         
+	loud-print ["Initial path:" path]
+	loud-print ["Initial boot:" boot]
+	loud-print ["Initial home:" home] ; always NONE at this state! 
+	;-  1. /path - that is current directory (resolved from C as a part of args processing)
+	; nothing to do here
+	;-  2. /boot - path to executable (must handle relative paths)                         
+	boot: any [to-real-file boot boot]
+	unless exists? boot [
+		; the executable must be inside one of the system PATH directories... 
+		file: second split-path boot
+		foreach tmp parse any [get-env "PATH" ""] pick ";:" system/platform = 'Windows [
+			dir: dirize as file! tmp
+			if exists? tmp: dir/:file [
+				boot: tmp
+				break
+			]
+		]
+		if boot <> tmp [
+			loud-print "Path to executable was not resolved!"
+			boot: none
+		]
+	]	
+	;-  3. /home - preferably one of environment variables or current starting dir         
 	home: dirize to-rebol-file any [
 		get-env "REBOL_HOME"  ; User can set this environment variable with own location
-		get-env "USERPROFILE" ; Default user's home directory on Windows
 		get-env "HOME"        ; Default user's home directory on Linux
-		file                  ; Directory where is the executable
+		get-env "USERPROFILE" ; Default user's home directory on Windows
+		path                  ; Directory where we started (O: not sure with this one)
 	]
+	
+
 	if file? script [ ; Get the path (needed for SECURE setup)
+		script: any [to-real-file script script]
 		script-path: split-path script
-		case [
-			slash = first first script-path []		; absolute
-			%./ = first script-path [script-path/1: path]	; curr dir
-			'else [insert first script-path path]	; relative
-		]
 	]
 
 	;-- Convert command line arg strings as needed:
@@ -134,7 +151,7 @@ start: func [
 			file? script [
 				compose [
 					file throw
-					(file) [allow read]
+					(path) [allow read]
 					(home) [allow read]
 					(first script-path) allow
 				]
@@ -144,15 +161,23 @@ start: func [
 	]
 
 	;-- Evaluate rebol.reb script:
-	loud-print ["Checking for rebol.reb file in" file]
-	if exists? file/rebol.reb [do file/rebol.reb] ; bug#706
+	;@@ https://github.com/Oldes/Rebol-issues/issues/706
+	tmp: first split-path boot
+	loud-print ["Checking for rebol.reb file in" tmp]
+	
+	if all [
+		#"/" = first tmp ; only if we know absolute path
+		exists? tmp/rebol.reb
+	][
+		do tmp/rebol.reb
+	]
 
 	;-- Make the user's global context:
 	tmp: make object! 320
 	append tmp reduce ['system :system 'lib-local :tmp]
 	system/contexts/user: tmp
 
-	boot-print ["Checking for user.reb file in" home]
+	loud-print ["Checking for user.reb file in" home]
 	if exists? home/user.reb [do home/user.reb]
 
 	boot-print ""
