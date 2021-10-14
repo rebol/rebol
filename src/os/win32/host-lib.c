@@ -660,7 +660,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	char* OS_Real_Path(const char *path)
+*/	REBCHR* OS_Real_Path(const REBCHR *path)
 /*
 **		Returns a null-terminated string containing the canonicalized
 **		absolute pathname corresponding to path. In the returned string,
@@ -671,7 +671,7 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	return NULL; // not yet implemented
+	return _wfullpath(NULL, path, MAX_PATH);
 }
 
 /***********************************************************************

@@ -473,28 +473,34 @@ chk_neg:
 */	REBNATIVE(to_real_file)
 /*
 //	to-real-file: native [
-//		"Returns canonicalized absolute pathname or none if path does not exists. Resolves symbolic links."
+//		"Returns canonicalized absolute pathname. On Posix resolves symbolic links and returns NONE if file does not exists!"
 //		path [file! string!]
 //	]
 ***********************************************************************/
 {
 	REBVAL *path = D_ARG(1);
-	REBINT  len;
-	REBSER *ser;
+	REBSER *ser = NULL;
 	REBSER *new;
-	char   *tmp;
-	
-	ser = Value_To_OS_Path(path, TRUE);
-	tmp = OS_REAL_PATH(cs_cast(VAL_BIN(path)));
-	if(!tmp) {
+	REBCHR *tmp;
+	// First normalize to OS native wide string
+	ser = Value_To_OS_Path(path, FALSE);
+	// Above function does . and .. pre-processing, which does also the OS_REAL_PATH.
+	// So it could be replaced with version, which just prepares the input to required OS wide! 
+	if (!ser) {
 		FREE_SERIES(ser);
 		return R_NONE;
 	}
-	len = strlen(tmp);
-	new = To_REBOL_Path(tmp, len, OS_WIDE, FALSE);
+	// Try to call realpath on posix or _fullpath on Windows
+	// Returned string must be released once done!
+	tmp = OS_REAL_PATH(SERIES_DATA(ser));
+	if (!tmp) return R_NONE;
+
+	// Convert OS native wide string back to Rebol file type
+	new = To_REBOL_Path(tmp, 0, OS_WIDE, FALSE);
+	OS_FREE(tmp);
+	if (!new) return R_NONE;
+	
 	Set_Series(REB_FILE, D_RET, new);
-	FREE_SERIES(ser);
-	FREE_MEM(tmp);
 	return R_RET;
 }
 
