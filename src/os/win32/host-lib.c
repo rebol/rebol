@@ -464,7 +464,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	REBOOL OS_Get_Boot_Path(REBCHR *name)
+*/	REBOOL OS_Get_Boot_Path(REBCHR **name)
 /*
 **		Used to determine the program file path for REBOL.
 **		This is the path stored in system->options->boot and
@@ -472,7 +472,8 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	return (GetModuleFileName(0, name, MAX_FILE_NAME) > 0);
+	*name = MAKE_STR(MAX_FILE_NAME);
+	return (GetModuleFileName(0, *name, MAX_FILE_NAME) > 0);
 }
 
 
