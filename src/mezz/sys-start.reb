@@ -19,7 +19,7 @@ REBOL [
 
 start: func [
 	"INIT: Completes the boot sequence. Loads extras, handles args, security, scripts."
-	/local file tmp script-path script-args code ver
+	/local tmp script-path script-args code ver
 ] bind [ ; context is: system/options (must use full path sys/log/.. as there is options/log too!)
 
 	;** Note ** We need to make this work for lower boot levels too!
@@ -55,28 +55,11 @@ start: func [
 	if any [do-arg script] [quiet: true]
 
 	;-- Set up option/paths for /path, /boot, /home, and script path (for SECURE):         
-	sys/log/more 'REBOL ["Initial path:" path]
-	sys/log/more 'REBOL ["Initial boot:" boot]
+	;sys/log/more 'REBOL ["Initial path:" path] ; current dir
+	;sys/log/more 'REBOL ["Initial boot:" boot] ; executable
 	;sys/log/more 'REBOL ["Initial home:" home] ; always NONE at this state! 
 	;-  1. /path - that is current directory (resolved from C as a part of args processing)
-	; nothing to do here
-	;-  2. /boot - path to executable (must handle relative paths)                         
-	boot: any [to-real-file boot boot]
-	unless exists? boot [
-		; the executable must be inside one of the system PATH directories... 
-		file: second split-path boot
-		foreach dir parse any [get-env "PATH" ""] pick ";:" system/platform = 'Windows [
-			dir: dirize as file! dir
-			if exists? tmp: dir/:file [
-				boot: tmp
-				break
-			]
-		]
-		if boot <> tmp [
-			sys/log/error 'REBOL "Path to executable was not resolved!"
-			boot: none
-		]
-	]	
+	;-  2. /boot - path to executable (resolved from C as well)                            
 	;-  3. /home - preferably one of environment variables or current starting dir         
 	home: dirize to-rebol-file any [
 		get-env "REBOL_HOME"  ; User can set this environment variable with own location
@@ -84,7 +67,6 @@ start: func [
 		get-env "USERPROFILE" ; Default user's home directory on Windows
 		path                  ; Directory where we started (O: not sure with this one)
 	]
-	
 
 	if file? script [ ; Get the path (needed for SECURE setup)
 		script: any [to-real-file script script]
