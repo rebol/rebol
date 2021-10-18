@@ -139,7 +139,7 @@ static REBSER *Read_All_File(char *fname)
 		if (VAL_INT64(D_ARG(6)) > (i64)MAX_I32)
 			len = MAX_I32;
 		else if (VAL_INT64(D_ARG(6)) <= 0)
-			len = NO_LIMIT;
+			len = 0;
 		else
 			len = VAL_INT32(D_ARG(6));
 	}
