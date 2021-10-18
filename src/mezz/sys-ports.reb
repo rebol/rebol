@@ -174,7 +174,7 @@ init-schemes: func [
 
 	make-scheme [
 		title: "System Port"
-		name: 'REBOL
+		name: 'system
 		awake: func [
 			sport "System port (State block holds events)"
 			ports "Port list (Copy of block passed to WAIT)"
@@ -357,7 +357,7 @@ init-schemes: func [
 		]
 	]
 
-	system/ports/system:   open [scheme: 'REBOL]
+	system/ports/system:   open [scheme: 'system]
 	system/ports/input:    open [scheme: 'console]
 	system/ports/callback: open [scheme: 'callback]
 
