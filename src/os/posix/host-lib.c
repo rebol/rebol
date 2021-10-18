@@ -439,9 +439,9 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 **
 ***********************************************************************/
 {
-	REBCNT size = 0;
 #ifdef TO_OSX
-	int rv;
+	REBCNT size = 0;
+	REBINT rv;
 	REBCHR *buf;
 	*path = NULL;
 	_NSGetExecutablePath(NULL, &size); // get size of the result
@@ -452,9 +452,15 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 		*path = realpath(buf, NULL); // needs FREE once not used!!
 	}
 	FREE_MEM(buf);
-	return TRUE;
+#else
+	// Linux version...
+	*path = MAKE_STR(PATH_MAX);            // needs FREE once not used!!
+	CLEAR(*path, PATH_MAX*sizeof(REBCHR)); // readlink does not null terminate!
+	if (readlink("/proc/self/exe", *path, PATH_MAX) == -1) {
+		return FALSE;
+	}
 #endif
-	return FALSE;
+	return TRUE;
 }
 
 
