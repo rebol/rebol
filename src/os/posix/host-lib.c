@@ -431,7 +431,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 /***********************************************************************
 **
-*/	REBOOL OS_Get_Boot_Path(REBCHR *name)
+*/	REBOOL OS_Get_Boot_Path(REBCHR **path)
 /*
 **		Used to determine the program file path for REBOL.
 **		This is the path stored in system->options->boot and
@@ -439,7 +439,22 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 **
 ***********************************************************************/
 {
-	return FALSE; // not yet used
+	REBCNT size = 0;
+#ifdef TO_OSX
+	int rv;
+	REBCHR *buf;
+	*path = NULL;
+	_NSGetExecutablePath(NULL, &size); // get size of the result
+	buf = MAKE_STR(size);
+	if (!buf) return FALSE;
+	if (0 == _NSGetExecutablePath(buf, &size)) {
+		// result from above still may be a relative path!
+		*path = realpath(buf, NULL); // needs FREE once not used!!
+	}
+	FREE_MEM(buf);
+	return TRUE;
+#endif
+	return FALSE;
 }
 
 
