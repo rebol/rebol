@@ -301,7 +301,7 @@ decompress-obj: func[obj [object!] /local p][
 		switch obj/spec/Filter [
 			FlateDecode [
 				try [
-					obj/data: decompress/deflate skip obj/data 2
+					obj/data: decompress skip obj/data 2 'deflate
 					obj/spec/Filter: none
 					obj/spec/Length: length? obj/data 
 
@@ -431,7 +431,7 @@ emit-stream: func[obj [object!] /local data][
 		300 > length? data ; if data are small enough
 	][
 		obj/spec/Filter: 'FlateDecode
-		data: compress/zlib obj/data
+		data: compress obj/data 'zlib
 	]
 	unless binary? data [
 		; make sure that data are in binary, so the length is correct!

@@ -170,8 +170,20 @@ at: action [
 	index [number! logic! pair!]
 ]
 
+atz: action [
+	{Returns the series at the specified 0-based index.}
+	series [series! gob! port!]
+	index [number! logic! pair!]
+]
+
 index?: action [
 	{Returns the current position (index) of the series.}
+	series [series! gob! port! none!]
+	/xy {Returns index as an XY pair offset}
+]
+
+indexz?: action [
+	{Returns the current 0-based position (index) of the series.}
 	series [series! gob! port! none!]
 	/xy {Returns index as an XY pair offset}
 ]

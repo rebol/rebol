@@ -65,7 +65,7 @@ speed?: function [
 			insert/dup tmp "abcdefghij" 50000
 			loop 10 [
 				random tmp
-				decompress compress tmp
+				decompress compress tmp 'zlib 'zlib
 			]
 			calc: [(length? tmp) * 10 / secs / 1900]
 		][

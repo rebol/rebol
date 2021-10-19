@@ -146,8 +146,8 @@ load-header: function/with [
 				find hdr/options 'compress [
 					rest: any [find rest non-ws rest] ; skip whitespace after header
 					unless rest: any [ ; automatic detection of compression type
-						attempt [decompress/part rest end] ; binary compression
-						attempt [decompress first transcode/next rest] ; script encoded
+						attempt [decompress/part rest 'zlib end] ; binary compression
+						attempt [decompress first transcode/next rest 'zlib] ; script encoded
 					] [return 'bad-compress]
 					if all [sum sum != checksum rest 'sha1] [return 'bad-checksum]
 				] ; else assumed not compressed
@@ -160,7 +160,7 @@ load-header: function/with [
 			rest: skip first set [data: end:] transcode/next data 2 ; decode embedded script
 			case [
 				find hdr/options 'compress [ ; script encoded only
-					unless rest: attempt [decompress first rest] [return 'bad-compress]
+					unless rest: attempt [decompress first rest 'zlib] [return 'bad-compress]
 					if all [sum sum != checksum rest 'sha1] [return 'bad-checksum]
 				]
 				all [sum sum != checksum/part tmp 'sha1 back end] [return 'bad-checksum]
@@ -188,7 +188,7 @@ load-ext-module: function [
 	]
 	;assert/type [hdr object! hdr/options [block! none!] code [binary! block!]]
 
-	loud-print ["Extension:" select hdr 'title]
+	log/debug 'REBOL ["Extension:" select hdr 'title]
 	unless hdr/options [hdr/options: make block! 1]
 	append hdr/options 'extension ; So make module! special cases it
 	hdr/type: 'module             ; So load and do special case it
@@ -220,7 +220,7 @@ load-ext-module: function [
 load-boot-exts: function [
 	"INIT: Load boot-based extensions."
 ][
-	loud-print "Loading boot extensions..."
+	log/debug 'REBOL "Loading boot extensions..."
 
 	ext-objs: []
 

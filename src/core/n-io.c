@@ -131,14 +131,14 @@ static REBSER *Read_All_File(char *fname)
 {
 	REBVAL *val = D_ARG(1);
 	REB_MOLD mo = {0};
-	REBINT  len = -1; // no limit
+	REBINT  len = NO_LIMIT;
 
 	if (D_REF(3)) SET_FLAG(mo.opts, MOPT_MOLD_ALL);
 	if (D_REF(4)) SET_FLAG(mo.opts, MOPT_INDENT);
 	if (D_REF(5)) {
 		if (VAL_INT64(D_ARG(6)) > (i64)MAX_I32)
 			len = MAX_I32;
-		else if (VAL_INT64(D_ARG(6)) < 0)
+		else if (VAL_INT64(D_ARG(6)) <= 0)
 			len = 0;
 		else
 			len = VAL_INT32(D_ARG(6));
@@ -465,6 +465,42 @@ chk_neg:
 	if (!ser) Trap_Arg(arg);
 	Set_Series(REB_STRING, D_RET, ser);
 
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(to_real_file)
+/*
+//	to-real-file: native [
+//		"Returns canonicalized absolute pathname. On Posix resolves symbolic links and returns NONE if file does not exists!"
+//		path [file! string!]
+//	]
+***********************************************************************/
+{
+	REBVAL *path = D_ARG(1);
+	REBSER *ser = NULL;
+	REBSER *new;
+	REBCHR *tmp;
+	// First normalize to OS native wide string
+	ser = Value_To_OS_Path(path, FALSE);
+	// Above function does . and .. pre-processing, which does also the OS_REAL_PATH.
+	// So it could be replaced with version, which just prepares the input to required OS wide! 
+	if (!ser) {
+		FREE_SERIES(ser);
+		return R_NONE;
+	}
+	// Try to call realpath on posix or _fullpath on Windows
+	// Returned string must be released once done!
+	tmp = OS_REAL_PATH(SERIES_DATA(ser));
+	if (!tmp) return R_NONE;
+
+	// Convert OS native wide string back to Rebol file type
+	new = To_REBOL_Path(tmp, 0, OS_WIDE, FALSE);
+	OS_FREE(tmp);
+	if (!new) return R_NONE;
+	
+	Set_Series(REB_FILE, D_RET, new);
 	return R_RET;
 }
 

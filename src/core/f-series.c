@@ -80,12 +80,13 @@
 
 	case A_SKIP:
 	case A_AT:
+	case A_ATZ:
 		len = Get_Num_Arg(arg);
 		{
 			REBI64 i = (REBI64)index + (REBI64)len;
 			if (action == A_SKIP) {
 				if (IS_LOGIC(arg)) i--;
-			} else { // A_AT
+			} else if (action == A_AT) {
 				if (len > 0) i--;
 			}
 			if (i > (REBI64)tail) i = (REBI64)tail;
@@ -93,18 +94,13 @@
 			VAL_INDEX(value) = (REBCNT)i;
 		}
 		break;
-/*
-	case A_ATZ:
-		len = Get_Num_Arg(arg);
-		{
-			REBI64 idx = Add_Max(0, index, len, MAX_I32);
-			if (idx < 0) idx = 0;
-			VAL_INDEX(value) = (REBCNT)idx;
-		}
-		break;
-*/
+
 	case A_INDEXQ:
 		SET_INTEGER(DS_RETURN, ((REBI64)index) + 1);
+		return R_RET;
+
+	case A_INDEXZQ:
+		SET_INTEGER(DS_RETURN, ((REBI64)index));
 		return R_RET;
 
 	case A_LENGTHQ:
@@ -337,4 +333,37 @@ chkDecimal:
 	}
 
 	return SERIES_TAIL(series);
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(pickz)
+/*
+//	pickz: native [
+//		{Returns the value at the specified position. (0-based wrapper over PICK action)}
+//		aggregate [series! bitset! tuple!]
+//		index [integer!] "Zero based"
+]
+***********************************************************************/
+{
+	if(VAL_INT64(D_ARG(2))>=0) VAL_INT64(D_ARG(2)) += 1;
+	Do_Act(D_RET, VAL_TYPE(D_ARG(1)), A_PICK);
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(pokez)
+/*
+//	pokez: native [
+//		{Replaces an element at a given position. (0-based wrapper over POKE action)}
+//		series [series! bitset! tuple!] "(modified)"
+//		index  [integer!]  "Zero based"
+//		value  [any-type!] "The new value (returned)"
+]
+***********************************************************************/
+{
+	if (VAL_INT64(D_ARG(2)) >= 0) VAL_INT64(D_ARG(2)) += 1;
+	Do_Act(D_RET, VAL_TYPE(D_ARG(1)), A_POKE);
+	return R_RET;
 }

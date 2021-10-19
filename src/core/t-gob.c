@@ -910,6 +910,7 @@ is_none:
 	case A_AT:
 		index--;
 	case A_SKIP:
+	case A_ATZ:
 		index += VAL_INT32(arg);
 		goto set_index;
 
@@ -935,6 +936,10 @@ is_none:
 
 	case A_INDEXQ:
 		SET_INTEGER(val, index+1);
+		break;
+
+	case A_INDEXZQ:
+		SET_INTEGER(val, index);
 		break;
 
 	case A_LENGTHQ:

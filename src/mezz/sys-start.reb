@@ -19,13 +19,13 @@ REBOL [
 
 start: func [
 	"INIT: Completes the boot sequence. Loads extras, handles args, security, scripts."
-	/local file tmp script-path script-args code ver
-] bind [ ; context is: system/options
+	/local tmp script-path script-args code ver
+] bind [ ; context is: system/options (must use full path sys/log/.. as there is options/log too!)
 
 	;** Note ** We need to make this work for lower boot levels too!
 
 	;-- DEBUG: enable these lines for debug or related testing
-	loud-print ["Starting... boot level:" boot-level]
+	sys/log/debug 'REBOL ["Starting... boot level:" boot-level]
 	;trace 1
 	;crash-here ; test error handling (undefined word)
 
@@ -41,33 +41,36 @@ start: func [
 	system/build/compiler: ver/6
 	system/build/date:     ver/7
 
+	if flags/verbose [system/options/log/rebol: 3] ;maximum log output for system messages
+
 	;-- Print minimal identification banner if needed:
 	if all [
 		not quiet
 		any [flags/verbose flags/usage flags/help]
 	][
-		boot-print boot-banner ; basic boot banner only
+		; basic boot banner only
+		prin "^/  "
+		print boot-banner: form ver
 	]
 	if any [do-arg script] [quiet: true]
 
-	;-- Set up option/paths for /path, /boot, /home, and script path (for SECURE):
-	path: dirize any [path home]
-	home: dirize home
-	;if slash <> first boot [boot: clean-path boot] ;;;;; HAVE C CODE DO IT PROPERLY !!!!
-	file: first split-path boot
+	;-- Set up option/paths for /path, /boot, /home, and script path (for SECURE):         
+	;sys/log/more 'REBOL ["Initial path:" path] ; current dir
+	;sys/log/more 'REBOL ["Initial boot:" boot] ; executable
+	;sys/log/more 'REBOL ["Initial home:" home] ; always NONE at this state! 
+	;-  1. /path - that is current directory (resolved from C as a part of args processing)
+	;-  2. /boot - path to executable (resolved from C as well)                            
+	;-  3. /home - preferably one of environment variables or current starting dir         
 	home: dirize to-rebol-file any [
 		get-env "REBOL_HOME"  ; User can set this environment variable with own location
-		get-env "USERPROFILE" ; Default user's home directory on Windows
 		get-env "HOME"        ; Default user's home directory on Linux
-		file                  ; Directory where is the executable
+		get-env "USERPROFILE" ; Default user's home directory on Windows
+		path                  ; Directory where we started (O: not sure with this one)
 	]
+
 	if file? script [ ; Get the path (needed for SECURE setup)
+		script: any [to-real-file script script]
 		script-path: split-path script
-		case [
-			slash = first first script-path []		; absolute
-			%./ = first script-path [script-path/1: path]	; curr dir
-			'else [insert first script-path path]	; relative
-		]
 	]
 
 	;-- Convert command line arg strings as needed:
@@ -93,7 +96,7 @@ start: func [
 	;   For example: mods, plus, host, and full
 	if boot-level [
 		load-boot-exts
-		loud-print "Init mezz plus..."
+		sys/log/debug 'REBOL "Init mezz plus..."
 
 		do bind-lib boot-mezz
 		boot-mezz: 'done
@@ -111,7 +114,7 @@ start: func [
 		]
 
 		if boot-host [
-			loud-print "Init host code..."
+			sys/log/debug 'REBOL "Init host code..."
 			;probe load boot-host
 			do load boot-host
 			boot-host: none
@@ -121,7 +124,7 @@ start: func [
 			flags/verbose
 			not any [quiet script do-arg]
 		][
-			boot-print boot-banner
+			print boot-banner
 		]
 	]
 
@@ -134,7 +137,7 @@ start: func [
 			file? script [
 				compose [
 					file throw
-					(file) [allow read]
+					(path) [allow read]
 					(home) [allow read]
 					(first script-path) allow
 				]
@@ -144,18 +147,27 @@ start: func [
 	]
 
 	;-- Evaluate rebol.reb script:
-	loud-print ["Checking for rebol.reb file in" file]
-	if exists? file/rebol.reb [do file/rebol.reb] ; bug#706
+	;@@ https://github.com/Oldes/Rebol-issues/issues/706
+	tmp: first split-path boot
+	sys/log/info 'REBOL ["Checking for rebol.reb file in" tmp]
+	
+	if all [
+		#"/" = first tmp ; only if we know absolute path
+		exists? tmp/rebol.reb
+	][
+		try/except [do tmp/rebol.reb][sys/log/error 'REBOL system/state/last-error]
+	]
 
 	;-- Make the user's global context:
 	tmp: make object! 320
-	append tmp reduce ['system :system 'lib-local :tmp]
+	append tmp reduce ['REBOL :system 'lib-local :tmp]
 	system/contexts/user: tmp
 
-	boot-print ["Checking for user.reb file in" home]
-	if exists? home/user.reb [do home/user.reb]
+	sys/log/info 'REBOL ["Checking for user.reb file in" home]
+	if exists? home/user.reb [
+		try/except [do home/user.reb][sys/log/error 'REBOL system/state/last-error]
+	]
 
-	boot-print ""
 
 	;if :lib/secure [protect-system-object]
 
@@ -169,7 +181,7 @@ start: func [
 	]
 
 	;-- Evaluate script argument?
-	either file? script [
+	if file? script [
 		; !!! Would be nice to use DO for this section. !!!
 		; NOTE: We can't use DO here because it calls the code it does with CATCH/quit
 		;   and we shouldn't catch QUIT in the top-level script, we should just quit.
@@ -178,7 +190,7 @@ start: func [
 		; /path dir is where our script gets started.
 		change-dir first script-path
 		either exists? second script-path [
-			boot-print ["Evaluating:" script]
+			sys/log/info 'REBOL ["Evaluating:" script]
 			code: load/header/type second script-path 'unbound
 			; update system/script (Make into a function?)
 			system/script: make system/standard/script [
@@ -200,8 +212,6 @@ start: func [
 		] [
 			cause-error 'access 'no-script script
 		]
-	][
-		boot-print boot-help
 	]
 
 	exit

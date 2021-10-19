@@ -640,8 +640,8 @@ decode-result: func[
 		either find ["gzip" "deflate"] encoding [
 			try/except [
 				result/2: switch encoding [
-					"gzip"    [ decompress/gzip    result/2 ]
-					"deflate" [ decompress/deflate result/2 ]
+					"gzip"    [ decompress result/2 'gzip]
+					"deflate" [ decompress result/2 'deflate]
 				]
 			][
 				sys/log/info 'HTTP ["Failed to decode data using:^[[22m" encoding]

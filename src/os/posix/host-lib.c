@@ -431,7 +431,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 /***********************************************************************
 **
-*/	REBOOL OS_Get_Boot_Path(REBCHR *name)
+*/	REBOOL OS_Get_Boot_Path(REBCHR **path)
 /*
 **		Used to determine the program file path for REBOL.
 **		This is the path stored in system->options->boot and
@@ -439,7 +439,28 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 **
 ***********************************************************************/
 {
-	return FALSE; // not yet used
+#ifdef TO_OSX
+	REBCNT size = 0;
+	REBINT rv;
+	REBCHR *buf;
+	*path = NULL;
+	_NSGetExecutablePath(NULL, &size); // get size of the result
+	buf = MAKE_STR(size);
+	if (!buf) return FALSE;
+	if (0 == _NSGetExecutablePath(buf, &size)) {
+		// result from above still may be a relative path!
+		*path = realpath(buf, NULL); // needs FREE once not used!!
+	}
+	FREE_MEM(buf);
+#else
+	// Linux version...
+	*path = MAKE_STR(PATH_MAX);            // needs FREE once not used!!
+	CLEAR(*path, PATH_MAX*sizeof(REBCHR)); // readlink does not null terminate!
+	if (readlink("/proc/self/exe", *path, PATH_MAX) == -1) {
+		return FALSE;
+	}
+#endif
+	return TRUE;
 }
 
 
@@ -660,6 +681,23 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 		return 0;
 	} else
 		return errno;
+}
+
+
+/***********************************************************************
+**
+*/	char* OS_Real_Path(const char *path)
+/*
+**		Returns a null-terminated string containing the canonicalized
+**		absolute pathname corresponding to path. In the returned string,
+**		symbolic links are resolved, as are . and .. pathname components.
+**		Consecutive slash (/) characters are replaced by a single slash.
+**
+**		The result should be freed after copy/conversion.
+**
+***********************************************************************/
+{
+	return realpath(path, NULL); // Be sure to call free() after usage
 }
 
 

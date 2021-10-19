@@ -884,10 +884,10 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 		Set_Option_File(OPTIONS_BOOT, (REBYTE*)rargs->exe_path, FALSE);
 	}
 
-	// Print("home: %s", rargs->home_dir);
-	if (rargs->home_dir) {
-		Set_Option_File(OPTIONS_HOME, (REBYTE*)rargs->home_dir, TRUE);
-		OS_FREE(rargs->home_dir);
+	// Print("home: %s", rargs->current_dir);
+	if (rargs->current_dir) {
+		Set_Option_File(OPTIONS_PATH, (REBYTE*)rargs->current_dir, TRUE);
+		OS_FREE(rargs->current_dir);
 	}
 	if (NZ(data = OS_GET_LOCALE(0))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE);

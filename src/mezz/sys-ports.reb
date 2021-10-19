@@ -166,7 +166,7 @@ make-scheme: func [
 init-schemes: func [
 	"INIT: Init system native schemes and ports."
 ][
-	loud-print "Init schemes"
+	log/debug 'REBOL "Init schemes"
 
 	sys/decode-url: lib/decode-url: :sys/*parse-url/decode-url
 

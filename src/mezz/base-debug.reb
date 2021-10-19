@@ -19,8 +19,14 @@ REBOL [
 probe: func [
 	{Debug print a molded value and returns that same value.}
 	value [any-type!]
+	/local len
 ][
-	print mold :value
+	len: system/options/probe-limit
+	print either 0 < len [
+		ellipsize (mold/part :value len + 1) len
+	][
+		mold :value
+	]
 	:value
 ]
 
@@ -33,7 +39,7 @@ probe: func [
 			word? :name
 			path? :name
 		][
-			prin ajoin ["^[[1;32;49m" mold :name "^[[0m: ^[[32m"] 
+			prin ajoin ["^[[1;32m" mold :name "^[[0m: ^[[32m"] 
     		prin either value? :name [mold/all get/any :name] ["#[unset!]"]
     		print "^[[0m"
 		]
@@ -43,29 +49,15 @@ probe: func [
 					word? :word
 					path? :word
 				][
-					prin ajoin ["^[[1;32;49m" mold :word "^[[0m: ^[[32m"] 
+					prin ajoin ["^[[1;32m" mold :word "^[[0m: ^[[32m"] 
 					prin either value? :word [mold/all get/any :word]["#[unset!]"]
 					print "^[[0m"
 				][
-					print ajoin ["^[[1;32;49m" mold/all word "^[[0m"]
+					print ajoin ["^[[1;32m" mold/all word "^[[0m"]
 				]
 			]
 		]
-		true [print ajoin ["^[[1;32;49m" mold/all :name "^[[0m"]]
+		true [print ajoin ["^[[1;32m" mold/all :name "^[[0m"]]
 	]
 	exit
-]
-
-boot-print: func [
-	"Prints when not quiet."
-	data
-][
-	unless system/options/quiet [print :data]
-]
-
-loud-print: func [
-	"Prints when verbose."
-	data
-][
-	if system/options/flags/verbose [print :data]
 ]

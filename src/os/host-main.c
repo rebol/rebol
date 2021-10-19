@@ -69,8 +69,19 @@
 
 REBARGS Main_Args;
 
-#define PROMPT_STR (REBYTE*)"\x1B[1;31;49m>>\x1B[1;33;49m "
-#define RESULT_STR (REBYTE*)"\x1B[32m==\x1B[1;32;49m "
+#ifdef COLOR_CONSOLE
+#define PROMPT_STR (REBYTE*)"\x1B[1;31m>>\x1B[1;33m "
+#define RESULT_STR (REBYTE*)"\x1B[32m==\x1B[1;32m "
+#define CONTIN_STR "\x1B[1;31;49m  \x1B[1;33;49m "
+#define CONTIN_POS 11
+#define RESET_COLOR Put_Str(b_cast("\x1B[0m"))
+#else
+#define PROMPT_STR (REBYTE*)">> "
+#define RESULT_STR (REBYTE*)"== "
+#define CONTIN_STR "  "
+#define CONTIN_POS 0
+#define RESET_COLOR
+#endif
 
 #ifdef TO_WINDOWS
 #define MAX_TITLE_LENGTH  1024
@@ -109,7 +120,7 @@ void Host_Repl(void) {
 //	REBOOL why_alert = TRUE;
 
 #define MAX_CONT_LEVEL 1024
-	REBYTE cont_str[] = "\x1B[1;31;49m  \x1B[1;33;49m ";
+	REBYTE cont_str[] = CONTIN_STR;
 	REBCNT cont_level = 0;
 	REBYTE cont_stack[MAX_CONT_LEVEL] = { 0 };
 
@@ -127,7 +138,7 @@ void Host_Repl(void) {
 
 	while (TRUE) {
 		if (cont_level > 0) {
-			cont_str[11] = cont_level <= MAX_CONT_LEVEL ? cont_stack[cont_level - 1] : '-';
+			cont_str[CONTIN_POS] = cont_level <= MAX_CONT_LEVEL ? cont_stack[cont_level - 1] : '-';
 			Put_Str(cont_str);
 		} else {
 			Put_Str(PROMPT_STR);
@@ -144,7 +155,7 @@ void Host_Repl(void) {
 				input[0] = 0;
 				continue;
 			}
-			Put_Str(b_cast("\x1B[0m")); //reset console color before leaving
+			RESET_COLOR;
 			goto cleanup_and_return;
 		}
 
@@ -198,7 +209,7 @@ void Host_Repl(void) {
 			tmp = OS_Make(input_max);
 			if (!tmp) {
 				crash_buffer:
-				Put_Str(b_cast("\x1B[0m")); //reset console color;
+				RESET_COLOR;
 				Host_Crash("Growing console input buffer failed!");
 				return; // make VS compiler happy
 			}
@@ -219,7 +230,7 @@ void Host_Repl(void) {
 		input_len = 0;
 		cont_level = 0;
 
-		Put_Str(b_cast("\x1B[0m")); //reset color
+		RESET_COLOR;
 
 		RL_Do_String(input, 0, 0);
 		RL_Print_TOS(TRUE, RESULT_STR);

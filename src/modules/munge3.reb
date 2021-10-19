@@ -1299,7 +1299,7 @@ ctx-munge: context [
 				either info [
 					to integer! reverse skip tail copy source -4
 				] [
-					decompress/gzip source
+					decompress source 'gzip
 				]
 			]
 			#{504B0304} <> copy/part source 4 [

@@ -293,17 +293,6 @@ Rebol [
 		--assert #{6163} = replace #{616263} #{6263} #{63}
 ===end-group===
 
-===start-group=== "POKE"
-	--test-- "poke unset value"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/1815
-		--assert all [
-			b: [1 2 3] 
-			not error? try [poke b 2 #[unset!]]
-			unset? pick b 2
-			unset? b/2
-		]
-===end-group===
-
 ===start-group=== "PATH"
 	--test-- "get on path"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/248
@@ -631,6 +620,54 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "INDEXZ?"
+	--test-- "indexz? on string"
+		s: "abc"
+		--assert all [
+			0 = indexz? s
+			1 = indexz? next s
+			3 = indexz? tail s
+			0 = indexz? atz s -1
+			0 = indexz? atz s 0
+			2 = indexz? atz s 2
+			3 = indexz? atz s 6
+		]
+	--test-- "indexz? on binary"
+		s: to binary! "abc"
+		--assert all [
+			0 = indexz? s
+			1 = indexz? next s
+			3 = indexz? tail s
+			0 = indexz? atz s -1
+			0 = indexz? atz s 0
+			2 = indexz? atz s 2
+			3 = indexz? atz s 6
+		]
+	--test-- "indexz? on block"
+		s: [1 2 3]
+		--assert all [
+			0 = indexz? s
+			1 = indexz? next s
+			3 = indexz? tail s
+			0 = indexz? atz s -1
+			0 = indexz? atz s 0
+			2 = indexz? atz s 2
+			3 = indexz? atz s 6
+		]
+	--test-- "indexz? on vector"
+		s: #[u16! 3]
+		--assert all [
+			0 = indexz? s
+			1 = indexz? next s
+			3 = indexz? tail s
+			0 = indexz? atz s -1
+			0 = indexz? atz s 0
+			2 = indexz? atz s 2
+			3 = indexz? atz s 6
+		]
+===end-group===
+
+
 ===start-group=== "PICK"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/608
 	;@@ https://github.com/Oldes/Rebol-issues/issues/857
@@ -677,6 +714,124 @@ Rebol [
 		none? pick tail s 0
 		#"3"= pick tail s -1
 	]
+
+===end-group===
+
+===start-group=== "PICKZ"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/613
+	--test-- "PICKZ of block!"
+	b: [1 2 3]
+	--assert all [
+		none? pickz b -1
+		1   = pickz b 0
+		2   = pickz b 1
+		3   = pickz b 2
+		none? pickz b 3
+	]
+	b: skip b 2
+	--assert all [
+		none? pickz b -3
+		1   = pickz b -2
+		2   = pickz b -1
+		3   = pickz b 0
+		none? pickz b 1
+		none? pickz b 2
+	]
+	--assert all [
+		none? pickz tail b 0
+		3   = pickz tail b -1
+	]
+
+	--test-- "PICKZ of string!"
+	s: "123"
+	--assert all [
+		none? pickz s -1
+		#"1"= pickz s 0
+		#"2"= pickz s 1
+		#"3"= pickz s 2
+		none? pickz s 3
+	]
+	s: skip s 2
+	--assert all [
+		#"1"= pickz s -2
+		#"2"= pickz s -1
+		#"3"= pickz s 0
+		none? pickz s 1
+		none? pickz s 2	
+	]
+	--assert all [
+		none? pickz tail s 0
+		#"3"= pickz tail s -1
+	]
+
+===end-group===
+
+===start-group=== "POKE"
+	--test-- "poke into block"
+		b: [1 2 3]
+		--assert all [
+			error? try [poke b 0 0]
+			0 =         poke b 1 0
+			error? try [poke b 4 0]
+			b = [0 2 3]
+		]
+	--test-- "poke into string"
+		s: "abc"
+		--assert all [
+			error? try [poke s -1 #"x"]
+			error? try [poke s  0 #"x"]
+			#"x" =      poke s  1 #"x"
+			error? try [poke s  4 #"x"]
+			s = "xbc"
+		]
+	--test-- "poke into binary"
+		s: to binary! "abc"
+		--assert all [
+			error? try [poke s -1 #"x"]
+			error? try [poke s  0 #"x"]
+			#"x" =      poke s  1 #"x"
+			error? try [poke s  4 #"x"]
+			"xbc" = to string! s
+		]
+	--test-- "poke unset value"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1815
+		--assert all [
+			b: [1 2 3] 
+			not error? try [poke b 2 #[unset!]]
+			unset? pick b 2
+			unset? b/2
+		]
+===end-group===
+
+===start-group=== "POKEZ"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/613
+	--test-- "pokez into block"
+		b: [1 2 3]
+		--assert all [
+			error? try [pokez b -1 0]
+			0 =         pokez b  0 0
+			0 =         pokez b  1 0
+			error? try [pokez b  4 0]
+			b = [0 0 3]
+		]
+	--test-- "pokez into string"
+		s: "abc"
+		--assert all [
+			error? try [pokez s -1 #"x"]
+			#"x" =      pokez s  0 #"x"
+			#"x" =      pokez s  1 #"x"
+			error? try [pokez s  4 #"x"]
+			s = "xxc"
+		]
+	--test-- "pokez into binary"
+		s: to binary! "abc"
+		--assert all [
+			error? try [pokez s -1 #"x"]
+			#"x" =      pokez s  0 #"x"
+			#"x" =      pokez s  1 #"x"
+			error? try [pokez s  4 #"x"]
+			"xxc" = to string! s
+		]
 
 ===end-group===
 

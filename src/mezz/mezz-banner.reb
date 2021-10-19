@@ -82,8 +82,8 @@ system/license: make-banner [
 ]
 
 
-sys/boot-help:
-{^[[1;33mImportant notes^[[0m:
+append sys/boot-banner
+{^/^[[1;33mImportant notes^[[0m:
 
   * Sandbox and security are not fully available.
   * Direct access to TCP HTTP required (no proxies).

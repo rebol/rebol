@@ -18,6 +18,7 @@ import module [
 	Exports: [? help about usage what license source dump-obj]
 ][
 	buffer: none
+	cols:   80 ; default terminal width
 	max-desc-width: 45
 
 	help-text: {
@@ -70,15 +71,6 @@ import module [
 		buffer: insert buffer form reduce value
 	]
 
-	clip-str: func [str] [
-		; Keep string to one line.
-		unless string? str [str: mold/part/flat str max-desc-width]
-		replace/all str LF "^^/"
-		replace/all str CR "^^M"
-		if (length? str) > (max-desc-width - 1) [str: append copy/part str max-desc-width "..."]
-		str
-	]
-
 	interpunction: charset ";.?!"
 	dot: func[value [string!]][
 		unless find interpunction last value [append value #"."]
@@ -115,7 +107,8 @@ import module [
 			;none?         :val [ mold/all val]
 			true [:val]
 		]
-		clip-str val
+		unless string? val [val: mold/part/flat val max-desc-width]
+		ellipsize/one-line val max-desc-width - 1
 	]
 
 	form-pad: func [val size] [
@@ -186,10 +179,11 @@ import module [
 		'word [any-type!]
 		/into "Help text will be inserted into provided string instead of printed"
 			string [string!] "Returned series will be past the insertion"
-		/local value spec args refs rets type ret desc arg def des ref str
+		/local value spec args refs rets type ret desc arg def des ref str cols
 	][
 		try [
-			max-desc-width: (query/mode system/ports/input 'buffer-cols) - 35
+			cols: query/mode system/ports/input 'buffer-cols
+			max-desc-width: cols - 35
 		]
 		buffer: any [string  clear ""]
 		catch [
@@ -260,7 +254,7 @@ import module [
 					throw true
 				]
 				not any [word? :word path? :word] [
-					output [mold :word "is" form-type :word]
+					output ajoin ["^[[1;32m" uppercase mold :word "^[[m is " form-type :word]
 					throw true
 				]
 				path? :word [
@@ -369,8 +363,15 @@ import module [
 					throw true
 				]
 				'else [
-					output ajoin ["^[[1;32m" uppercase mold word "^[[m is " form-type :value " of value: ^[[32m"]
-					output either any [any-object? value] [output lf dump-obj :value][mold :value]
+					word: uppercase mold word
+					type: form-type :value
+					output ajoin ["^[[1;32m" word "^[[m is " type " of value: ^[[32m"]
+					output either any [any-object? value] [
+						output lf dump-obj :value
+					][
+						max-desc-width: cols - (length? word) - (length? type) - 21
+						form-val :value
+					]
 					output "^[[m"
 				]
 			]

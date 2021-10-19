@@ -464,7 +464,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	REBOOL OS_Get_Boot_Path(REBCHR *name)
+*/	REBOOL OS_Get_Boot_Path(REBCHR **name)
 /*
 **		Used to determine the program file path for REBOL.
 **		This is the path stored in system->options->boot and
@@ -472,7 +472,8 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	return (GetModuleFileName(0, name, MAX_FILE_NAME) > 0);
+	*name = MAKE_STR(MAX_FILE_NAME);
+	return (GetModuleFileName(0, *name, MAX_FILE_NAME) > 0);
 }
 
 
@@ -658,6 +659,21 @@ static void *Task_Ready;
 		return GetLastError();
 }
 
+/***********************************************************************
+**
+*/	REBCHR* OS_Real_Path(const REBCHR *path)
+/*
+**		Returns a null-terminated string containing the canonicalized
+**		absolute pathname corresponding to path. In the returned string,
+**		symbolic links are resolved, as are . and .. pathname components.
+**		Consecutive slash (/) characters are replaced by a single slash.
+**
+**		The result should be freed after copy/conversion.
+**
+***********************************************************************/
+{
+	return _wfullpath(NULL, path, MAX_PATH);
+}
 
 /***********************************************************************
 **

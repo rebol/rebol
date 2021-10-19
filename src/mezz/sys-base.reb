@@ -78,10 +78,11 @@ do*: func [
 		]
 
 		; Print out the script info
-		boot-print [
-			pick ["Module:" "Script:"] mod?  mold select hdr 'title
-			"Version:" select hdr 'version
-			"Date:" select hdr 'date
+		log/info 'REBOL [
+			pick ["Module:" "Script:"] mod?
+			mold select hdr 'title
+			"Version:" any [select hdr 'version '_]
+			"Date:"    any [select hdr 'date    '_]
 		]
 
 		set/any 'value try [
@@ -247,8 +248,8 @@ log: func [
 		exit
 	]
 	if system/options/quiet [exit]
-	level: select system/options/log id
-	if any [none? level level <= 0] [exit]
+	level: any [select system/options/log id 3]
+	if level <= 0 [exit]
 	if block? msg [msg: form reduce :msg]
 	case [
 		info  [ if level > 0 [print ajoin [" ^[[1;33m[" id "] ^[[36m" msg "^[[0m"]]]

@@ -46,6 +46,7 @@
 #include "reb-args.h"
 
 extern int OS_Get_Current_Dir(REBCHR **lp);
+extern REBOOL OS_Get_Boot_Path(REBCHR **path);
 
 // REBOL Option --Words:
 
@@ -207,9 +208,12 @@ const struct arg_chr arg_chars2[] = {
 	CLEARS(rargs);
 	rargs->argc = argc;
 	rargs->argv = argv;
-	// First arg is path to executable (on most systems):
-	if (argc > 0) rargs->exe_path = *argv;
+	if (0 == OS_Get_Boot_Path(&rargs->exe_path)) {
+		// First arg is path to executable (on most systems):
+		if (argc > 0) rargs->exe_path = *argv;
+	}
 	OS_Get_Current_Dir(&rargs->home_dir);
+
 #else
 	int arg_buf_size=128;
 
@@ -223,10 +227,13 @@ const struct arg_chr arg_chars2[] = {
 
 	CLEARS(rargs);
 
-	// First arg is path to executable (on most systems):
-	if (argc > 0) rargs->exe_path = *argv;
+	if (!OS_Get_Boot_Path(&rargs->exe_path)) {
+		// In case of fail...
+		// First arg is path to executable (on most systems):
+		if (argc > 0) rargs->exe_path = *argv;
+	}
 
-	OS_Get_Current_Dir(&rargs->home_dir);
+	OS_Get_Current_Dir(&rargs->current_dir);
 
 	// Parse each argument:
 	for (i = 1; i < argc ; i++) {

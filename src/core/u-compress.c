@@ -131,26 +131,29 @@ void Trap_ZStream_Error(z_stream *stream, int err, REBOOL while_compression)
 	stream.next_in = cast(const z_Bytef*, BIN_HEAD(input) + index);
 
 	output = Make_Binary(size);
-	stream.avail_out = size;
+	stream.avail_out = SERIES_AVAIL(output);
 	stream.next_out = BIN_HEAD(output);
 
-	err = deflate(&stream, Z_FINISH);
-	//printf("deflate err: %i  stream.total_out: %i .avail_out: %i\n", err, stream.total_out, stream.avail_out);
-	
-	if (err != Z_STREAM_END)
-		Trap_ZStream_Error(&stream, err, TRUE);
+	for (;;) {
+		err = deflate(&stream, Z_FINISH);
+		if (err == Z_STREAM_END)
+			break; // Finished or we have enough data.
+		//printf("deflate err: %i  stream.total_out: %i .avail_out: %i\n", err, stream.total_out, stream.avail_out);
+		if (err != Z_OK)
+			Trap_ZStream_Error(&stream, err, FALSE);
+		if (stream.avail_out == 0) {
+			// expand output buffer...
+			SERIES_TAIL(output) = stream.total_out;
+			Expand_Series(output, AT_TAIL, in_len);
+			stream.next_out = BIN_SKIP(output, stream.total_out);
+			stream.avail_out = SERIES_REST(output) - stream.total_out;
+		}
+	}
 
 	SET_STR_END(output, stream.total_out);
 	SERIES_TAIL(output) = stream.total_out;
-
-	if((windowBits & 16) != 16) { // Not GZIP
-		// Tag the size to the end. Only when not using GZIP envelope.
-		REBYTE out_size[sizeof(REBCNT)];
-		REBCNT_To_Bytes(out_size, (REBCNT)in_len);
-		Append_Series(output, (REBYTE*)out_size, sizeof(REBCNT));
-	}
 	
-	if (SERIES_AVAIL(output) > 1024) // Is there wasted space?
+	if (SERIES_AVAIL(output) > 4096)  // Is there wasted space?
 		output = Copy_Series(output); // Trim it down if too big. !!! Revisit this based on mem alloc alg.
 
 	deflateEnd(&stream);
@@ -171,19 +174,7 @@ void Trap_ZStream_Error(z_stream *stream, int err, REBOOL while_compression)
 	REBINT err;
 
 	if (len < 0 || (index + len > BIN_LEN(input))) len = BIN_LEN(input) - index;
-	if (limit > 0) {
-		size = limit;
-	} else if (windowBits < 0) {
-		// limit was not specified, but data are supposed to be raw DEFLATE data
-		// max teoretic DEFLATE ration is 1032:1, but that is quite unrealistic
-		// it will be more around 3:1 or 4:1, so 10:1 could be enough for automatic setup.
-		size = 10 * (REBCNT)len; //@@ fix me, if you don't agree with above claim
-	} else {
-		// Get the uncompressed size from last 4 source data bytes.
-		if (len < 4) Trap0(RE_PAST_END); // !!! better msg needed
-		size = cast(REBU64, Bytes_To_REBCNT(BIN_SKIP(input, index + len) - sizeof(REBCNT)));
-		if (size > (uLongf)len * 14) Trap_Num(RE_SIZE_LIMIT, size); // check for a realistic limit
-	}
+	size = (limit > 0) ? limit : (uLongf)len * 3;
 
 	output = Make_Binary(size);
 
@@ -194,29 +185,39 @@ void Trap_ZStream_Error(z_stream *stream, int err, REBOOL while_compression)
 	stream.total_out = 0;
 
 	stream.avail_in = len;
-	stream.next_in = cast(const Bytef*, BIN_HEAD(input) + index);
+	stream.next_in = cast(const Bytef*, BIN_SKIP(input, index));
 	
 	err = inflateInit2(&stream, windowBits);
 	if (err != Z_OK) Trap_ZStream_Error(&stream, err, FALSE);
 	
-	stream.avail_out = size;
+	stream.avail_out = SERIES_AVAIL(output);
 	stream.next_out = BIN_HEAD(output);
 
 	for(;;) {
 		err = inflate(&stream, Z_NO_FLUSH);
-		if (err == Z_STREAM_END || stream.total_out == size)
-			break; // Finished. (and buffer was big enough)
+		if (err == Z_STREAM_END || (limit && stream.total_out >= limit))
+			break; // Finished or we have enough data.
 		//printf("err: %i size: %i avail_out: %i total_out: %i\n", err, size, stream.avail_out, stream.total_out);
-		if(err != Z_OK) Trap_ZStream_Error(&stream, err, FALSE);
-		//@@: may need to resize the destination buffer! But...
-		//@@: so far let's expect that size is always correct
-		//@@: and introduce self expanding buffers in compression port implementation
+		if (err != Z_OK) Trap_ZStream_Error(&stream, err, FALSE);
+		if (stream.avail_out == 0) {
+			// expand output buffer...
+			SERIES_TAIL(output) = stream.total_out;
+			Expand_Series(output, AT_TAIL, len);
+			stream.next_out = BIN_SKIP(output, stream.total_out);
+			stream.avail_out = SERIES_REST(output) - stream.total_out;
+		}
 	}
 	//printf("total_out: %i\n", stream.total_out);
 	inflateEnd(&stream);
 
+	if (limit && stream.total_out > limit) {
+		stream.total_out = limit;
+	}
 	SET_STR_END(output, stream.total_out);
 	SERIES_TAIL(output) = stream.total_out;
+
+	if (SERIES_AVAIL(output) > 4096) // Is there wasted space?
+		output = Copy_Series(output); // Trim it down if too big. !!! Revisit this based on mem alloc alg.
 
 	return output;
 }

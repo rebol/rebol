@@ -149,6 +149,7 @@ options: object [  ; Options supplied to REBOL during startup
 
 	binary-base: 16    ; Default base for FORMed binary values (64, 16, 2)
 	decimal-digits: 15 ; Max number of decimal digits to print.
+	probe-limit: 16000 ; Max probed output size
 	module-paths: [%./]
 	default-suffix: %.reb ; Used by IMPORT if no suffix is provided
 	file-types: []
@@ -157,6 +158,7 @@ options: object [  ; Options supplied to REBOL during startup
 	; verbosity of logs per service (codecs, schemes)
 	; 0 = nothing; 1 = info; 2 = more; 3 = debug
 	log: #[map! [
+		rebol: 1
 		http: 1
 		tls:  1
 		zip:  1
