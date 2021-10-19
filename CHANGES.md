@@ -17,22 +17,22 @@ This is just generated output from commits in [this repository](https://github.c
 * [`2ee6c0`](https://github.com/Oldes/Rebol3/commit/2ee6c0ab964158554a6e44143fb32f14a0ab0b55) Improved `ar` codec to be able decode also System V (or GNU) variant files
 * [`aaa70e`](https://github.com/Oldes/Rebol3/commit/aaa70ecb2d2c1688d681893290d7d6086645e303) Minimalistic Unix Archive File (AR) decoder
 * [`fb0daa`](https://github.com/Oldes/Rebol3/commit/fb0daad20211a8f5acc9f870c70cf130e011ec19) New `ATz` action returning the seriest at 0-based position (index)
-
-  CHANGE: `at` action on image with pair position was 0-based, now is 1-based
 * [`101284`](https://github.com/Oldes/Rebol3/commit/101284b78663859639c4f56a1596d5581dea4af5) New `indexz?` action returning 0-based position (index) of the series
 * [`7d3a04`](https://github.com/Oldes/Rebol3/commit/7d3a040091167ae11364d1ea21e938d3cc925f68) PICKZ and POKEZ functions for 0-based indexing
-
 * [`877514`](https://github.com/Oldes/Rebol3/commit/8775144375e930c6c1981d7153367823b0607455) Don't allow `clear` on not opened port, allow `size?` on port
 
 ### Changes:
+
+* [`2cd3c8`](https://github.com/Oldes/Rebol3/commit/2cd3c8f19b3c9096e442b7d16f16435b7fd755bd) Rewritten `compress` and `decompress` so it's now compatible with the recent Red language. Now it also correctly handles output buffer expansion. It does not store the uncompress length at the tail of compressed data anymore!
+* [`fb0daa`](https://github.com/Oldes/Rebol3/commit/fb0daad20211a8f5acc9f870c70cf130e011ec19) `at` action on image with pair position was 0-based, now is 1-based
 * [`c8a593`](https://github.com/Oldes/Rebol3/commit/c8a59362bc977556ed1876b6cb5c78f915cf29dd) Replaced internal `boot-print` and `loud-print` functions with system log calls
 * [`117e16`](https://github.com/Oldes/Rebol3/commit/117e1607d7adaa826a55c6f2855fd3393d2a9a8b) Limit output of `help` to single line if used with some value types
 * [`c5c3b4`](https://github.com/Oldes/Rebol3/commit/c5c3b45c31465971057edc051d76c7d76a0b8b62) Made colors in console's prompt and result optional
-
 * [`e4b1a8`](https://github.com/Oldes/Rebol3/commit/e4b1a8c33f62c54d05e743be9f064ac3312b6e29) Fine-tune decimal non-strict comparison (to cover also percent datatype)
 
 ### Fixes:
 
+* [`180264`](https://github.com/Oldes/Rebol3/commit/1802649a37489e208f70b0af4e1528a6b96b700c) Don't treat zero value in `mold/part` as unlimited output
 * [`aaed74`](https://github.com/Oldes/Rebol3/commit/aaed7495afe4cb6e9cd65748aca982d48ed28349) Removed debug trace
 * [`811bb3`](https://github.com/Oldes/Rebol3/commit/811bb35576964ea98b9df42a9968f4faa81c586f) Missing log traces in boot sequence
 * [`14a003`](https://github.com/Oldes/Rebol3/commit/14a003d29f9a102465043b798be92e5360276ebc) Resolve correct canonized absolute path to main process executable
