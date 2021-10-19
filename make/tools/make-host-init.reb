@@ -55,7 +55,7 @@ write-c-file: func [
 
 	write-generated gen-dir/gen-host-init.reb data
 
-	comp-data: compress data
+	comp-data: compress/level data 'zlib 9
 	comp-size: length? comp-data
 
 	emit ["#define REB_INIT_SIZE " comp-size newline newline]

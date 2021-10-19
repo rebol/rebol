@@ -1041,8 +1041,8 @@ data: mold reduce sections
 insert data reduce ["; Copyright (C) REBOL Technologies " now newline]
 insert tail data make char! 0 ; scanner requires zero termination
 
-comp-data: compress data: to-binary data
-;comp-data-zlib: compress/zlib/level data: to-binary data 9
+data: to binary! data
+comp-data: compress/level data 'zlib 9
 
 emit [
 {

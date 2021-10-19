@@ -11,7 +11,7 @@ REBOL [
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
 	Author: "Oldes"
-	Needs: 3.5.0
+	Needs: 3.6.0
 	Note: {
 		This script is comilation of multiple original Carl's make-* scripts.
 	}
