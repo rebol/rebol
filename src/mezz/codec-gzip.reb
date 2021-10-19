@@ -13,11 +13,11 @@ register-codec [
 	suffixes: [%.gz]
 	decode: function[data [binary!]] [
 		if verbose > 0 [ identify data ]
-		decompress/gzip data
+		decompress data 'gzip
 	]
 
 	encode: function [data [binary!]][
-		compress/gzip/level data level
+		compress/level data 'gzip level
 	]
 
 	identify: function [data [binary!]][

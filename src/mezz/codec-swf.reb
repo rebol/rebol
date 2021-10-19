@@ -1253,7 +1253,7 @@ import module [
 				; not a SWF file
 				return none
 			]
-			fileSize: binary/read bin 'UI32LE
+			fileSize: (binary/read bin 'UI32LE) - 8
 			if verbose > 0 [
 				print [
 					"SWF file version:" version
@@ -1263,17 +1263,17 @@ import module [
 						90 "compressed using LZMA"
 					] compression
 					lf
-					"Data size:" fileSize - 8 "bytes"
+					"Data size:" fileSize "bytes"
 				]
 			]
 			
 			switch compression [
 				67 [
-					binary/init bin decompress/zlib/size bin/buffer fileSize - 8
+					binary/init bin decompress/size bin/buffer 'zlib fileSize
 				]
 				90 [
 					packed: binary/read bin 'UI32LE
-					binary/init bin decompress/lzma/size bin/buffer fileSize - 8
+					binary/init bin decompress/size bin/buffer 'lzma fileSize
 				]
 			]
 

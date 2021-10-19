@@ -207,12 +207,11 @@ register-codec [
 			]
 			method: either any [
 				none? data
-				lesser-or-equal? size: length? data length? compressed-data: compress data
+				lesser-or-equal? size: length? data length? compressed-data: compress data 'deflate
 			][
 				compressed-data: data
 				0 ;store
 			][
-				compressed-data: copy/part skip compressed-data 2 skip tail compressed-data -8 ;@@ FIXME once compress/zlib will be fixed!
 				8 ;deflate
 			]
 
@@ -347,10 +346,10 @@ register-codec [
 
 		switch/default method [
 			8  [ ;- deflate
-				output: decompress/deflate/size data unc-size
+				output: decompress/size data 'deflate unc-size
 			]
 			14 [ ;- LZMA
-				output: decompress/lzma/part/size (skip data 4) cmp-size unc-size
+				output: decompress/part/size (skip data 4) 'lzma cmp-size unc-size
 			]
 			0  [ ;- store
 				output: copy/part data cmp-size

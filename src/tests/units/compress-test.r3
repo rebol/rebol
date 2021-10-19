@@ -9,78 +9,108 @@ Rebol [
 ~~~start-file~~~ "Compress/Decompress"
 
 data: "test test test"
+text: {Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempor incidunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquid ex ea commodi consequat. Quis aute iure reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint obcaecat cupiditat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.}
 
 ===start-group=== "ZLIB compression / decompression"
 
 	--test-- "basic compress/decompress"
-		--assert  #{789C03000000000100000000} = compress ""
-		--assert  data = to string! decompress compress data
+		--assert  #{789C030000000001} = compress "" 'zlib
+		--assert  data = to string! decompress compress data 'zlib 'zlib
 
 	--test-- "basic compress/decompress while specifing level of compression"
-		--assert (compress/level ""   0) = #{7801010000FFFF0000000100000000}
-		--assert (compress/level data 0) = #{7801010E00F1FF7465737420746573742074657374293905810E000000}
-		--assert  data = to string! decompress compress/level data 0
-		--assert  data = to string! decompress compress/level data 1
-		--assert  data = to string! decompress compress/level data 2
-		--assert  data = to string! decompress compress/level data 3
-		--assert  data = to string! decompress compress/level data 4
-		--assert  data = to string! decompress compress/level data 5
-		--assert  data = to string! decompress compress/level data 6
-		--assert  data = to string! decompress compress/level data 7
-		--assert  data = to string! decompress compress/level data 8
-		--assert  data = to string! decompress compress/level data 9
+		--assert (compress/level ""   'zlib 0) = #{7801010000FFFF00000001}
+		--assert (compress/level data 'zlib 0) = #{7801010E00F1FF746573742074657374207465737429390581}
+		--assert  text = to string! decompress compress/level text 'zlib 0 'zlib
+		--assert  text = to string! decompress compress/level text 'zlib 1 'zlib
+		--assert  text = to string! decompress compress/level text 'zlib 2 'zlib
+		--assert  text = to string! decompress compress/level text 'zlib 3 'zlib
+		--assert  text = to string! decompress compress/level text 'zlib 4 'zlib
+		--assert  text = to string! decompress compress/level text 'zlib 5 'zlib
+		--assert  text = to string! decompress compress/level text 'zlib 6 'zlib
+		--assert  text = to string! decompress compress/level text 'zlib 7 'zlib
+		--assert  text = to string! decompress compress/level text 'zlib 8 'zlib
+		--assert  text = to string! decompress compress/level text 'zlib 9 'zlib
 
 	--test-- "basic decompression with specified uncompressed size"
-		bin: compress data
-		--assert  #{74657374} = decompress/size bin 4
+		bin: compress data 'zlib
+		--assert  #{74657374} = decompress/size bin 'zlib 4
 
 	--test-- "compression when input is limited"
-		--assert  #{74657374} = decompress compress/part data 4
-		--assert  #{74657374} = decompress compress/part skip data 5 4
-		--assert  #{74657374} = decompress compress/part tail data -4
+		--assert  #{74657374} = decompress compress/part      data   'zlib  4 'zlib
+		--assert  #{74657374} = decompress compress/part skip data 5 'zlib  4 'zlib
+		--assert  #{74657374} = decompress compress/part tail data   'zlib -4 'zlib
 
 	--test-- "decompress when not at head"
-		--assert data = to string! decompress next join #{00} compress data
+		--assert data = to string! decompress next join #{00} compress data 'zlib 'zlib
+
+===end-group===
+
+===start-group=== "DEFLATE compression / decompression"
+
+	--test-- "basic compress/decompress"
+		--assert  #{0300} = compress "" 'deflate
+		--assert  data = to string! decompress compress data 'deflate 'deflate
+
+	--test-- "basic compress/decompress while specifing level of compression"
+		--assert (compress/level ""   'deflate 0) = #{010000FFFF}
+		--assert (compress/level data 'deflate 0) = #{010E00F1FF7465737420746573742074657374}
+		--assert  text = to string! decompress compress/level text 'deflate 0 'deflate
+		--assert  text = to string! decompress compress/level text 'deflate 1 'deflate
+		--assert  text = to string! decompress compress/level text 'deflate 2 'deflate
+		--assert  text = to string! decompress compress/level text 'deflate 3 'deflate
+		--assert  text = to string! decompress compress/level text 'deflate 4 'deflate
+		--assert  text = to string! decompress compress/level text 'deflate 5 'deflate
+		--assert  text = to string! decompress compress/level text 'deflate 6 'deflate
+		--assert  text = to string! decompress compress/level text 'deflate 7 'deflate
+		--assert  text = to string! decompress compress/level text 'deflate 8 'deflate
+		--assert  text = to string! decompress compress/level text 'deflate 9 'deflate
+
+	--test-- "basic decompression with specified uncompressed size"
+		bin: compress data 'deflate
+		--assert  #{74657374} = decompress/size bin 'deflate 4
+
+	--test-- "compression when input is limited"
+		--assert  #{74657374} = decompress compress/part      data   'deflate  4 'deflate
+		--assert  #{74657374} = decompress compress/part skip data 5 'deflate  4 'deflate
+		--assert  #{74657374} = decompress compress/part tail data   'deflate -4 'deflate
+
+	--test-- "decompress when not at head"
+		--assert data = to string! decompress next join #{00} compress data 'deflate 'deflate
 
 ===end-group===
 
 ===start-group=== "GZIP compression / decompression"
 
-	--test-- "DEFLATE decompress"
-		--assert #{74657374} = decompress/deflate #{2B492D2E01000C7E7FD804}
-	--test-- "DEFLATE decompress when not at head"
-		--assert #{74657374} = decompress/deflate next #{002B492D2E01000C7E7FD804}
-
 	--test-- "GZIP compress/decompress"
-		--assert  data = to string! decompress/gzip compress/gzip data
+		--assert  data = to string! decompress compress data 'gzip 'gzip
 
 	--test-- "GZIP decompress when not at head"
-		--assert data = to string! decompress/gzip next join #{00} compress/gzip data
+		--assert data = to string! decompress next join #{00} compress data 'gzip 'gzip
 
 	--test-- "GZIP compress/decompress while specifing level of compression"
-		--assert (skip compress/gzip/level ""   0 10) =
+		--assert (skip compress/level  ""  'gzip 0 10) =
 			#{010000FFFF0000000000000000}
-		--assert (skip compress/gzip/level data 0 10) =
+		--assert (skip compress/level data 'gzip 0 10) =
 			#{010E00F1FF7465737420746573742074657374026A5B230E000000}
-		--assert  data = to string! decompress/gzip compress/gzip/level data 0
-		--assert  data = to string! decompress/gzip compress/gzip/level data 1
-		--assert  data = to string! decompress/gzip compress/gzip/level data 2
-		--assert  data = to string! decompress/gzip compress/gzip/level data 3
-		--assert  data = to string! decompress/gzip compress/gzip/level data 4
-		--assert  data = to string! decompress/gzip compress/gzip/level data 5
-		--assert  data = to string! decompress/gzip compress/gzip/level data 6
-		--assert  data = to string! decompress/gzip compress/gzip/level data 7
-		--assert  data = to string! decompress/gzip compress/gzip/level data 8
-		--assert  data = to string! decompress/gzip compress/gzip/level data 9
+		--assert  text = to string! decompress compress/level text 'gzip 0 'gzip
+		--assert  text = to string! decompress compress/level text 'gzip 1 'gzip
+		--assert  text = to string! decompress compress/level text 'gzip 2 'gzip
+		--assert  text = to string! decompress compress/level text 'gzip 3 'gzip
+		--assert  text = to string! decompress compress/level text 'gzip 4 'gzip
+		--assert  text = to string! decompress compress/level text 'gzip 5 'gzip
+		--assert  text = to string! decompress compress/level text 'gzip 6 'gzip
+		--assert  text = to string! decompress compress/level text 'gzip 7 'gzip
+		--assert  text = to string! decompress compress/level text 'gzip 8 'gzip
+		--assert  text = to string! decompress compress/level text 'gzip 9 'gzip
 
 	--test-- "GZIP decompression with specified uncompressed size"
-		bin: compress/gzip data
-		--assert  #{74657374} = decompress/gzip/size bin 4
+		bin: compress data 'gzip
+		--assert  #{74657374} = decompress/size bin 'gzip 4
 
 	--test-- "GZIP compression when input is limited"
-		--assert  #{74657374} = decompress/gzip compress/gzip/part data 4
-		--assert  #{74657374} = decompress/gzip compress/gzip/part skip data 5 4
-		--assert  #{74657374} = decompress/gzip compress/gzip/part tail data -4
+		--assert  #{74657374} = decompress compress/part      data   'gzip  4 'gzip
+		--assert  #{74657374} = decompress compress/part skip data 5 'gzip  4 'gzip
+		--assert  #{74657374} = decompress compress/part tail data   'gzip -4 'gzip
 
 	--test-- "GZIP codec"
 		--assert  binary? alice: load %units/files/alice29.txt.gz
@@ -94,49 +124,49 @@ data: "test test test"
 
 ===start-group=== "LZMA compression / decompression"
 	--test-- "LZMA compress/decompress"
-	either error? e: try [compress/lzma "test"][
+	either error? e: try [compress "test" 'lzma][
 		;-- LZMA compression is not available in current build
 		--assert  'feature-na = e/id
 	][	
-		--assert  data = to string! decompress/lzma compress/lzma data
+		--assert  data = to string! decompress compress data 'lzma 'lzma
 
 		--test-- "LZMA compress/decompress while specifing level of compression"
-			--assert (compress/lzma/level ""   0) =
+			--assert (compress/level "" 'lzma 0) =
 			#{5D00400000000000000000000000}
-			--assert (compress/lzma/level data 0) =
+			--assert (compress/level data 'lzma 0) =
 			#{5D00400000003A194ACE1CFB1CD99000000E000000}
-			--assert  data = to string! decompress/lzma compress/lzma/level data 0
-			--assert  data = to string! decompress/lzma compress/lzma/level data 1
-			--assert  data = to string! decompress/lzma compress/lzma/level data 2
-			--assert  data = to string! decompress/lzma compress/lzma/level data 3
-			--assert  data = to string! decompress/lzma compress/lzma/level data 4
-			--assert  data = to string! decompress/lzma compress/lzma/level data 5
-			--assert  data = to string! decompress/lzma compress/lzma/level data 6
-			--assert  data = to string! decompress/lzma compress/lzma/level data 7
-			--assert  data = to string! decompress/lzma compress/lzma/level data 8
-			--assert  data = to string! decompress/lzma compress/lzma/level data 9
+			--assert  text = to string! decompress compress/level text 'lzma 0 'lzma
+			--assert  text = to string! decompress compress/level text 'lzma 1 'lzma
+			--assert  text = to string! decompress compress/level text 'lzma 2 'lzma
+			--assert  text = to string! decompress compress/level text 'lzma 3 'lzma
+			--assert  text = to string! decompress compress/level text 'lzma 4 'lzma
+			--assert  text = to string! decompress compress/level text 'lzma 5 'lzma
+			--assert  text = to string! decompress compress/level text 'lzma 6 'lzma
+			--assert  text = to string! decompress compress/level text 'lzma 7 'lzma
+			--assert  text = to string! decompress compress/level text 'lzma 8 'lzma
+			--assert  text = to string! decompress compress/level text 'lzma 9 'lzma
 
 		--test-- "LZMA decompression with specified uncompressed size"
-			bin: compress/lzma data
-			--assert  #{74657374} = decompress/lzma/size bin 4
+			bin: compress data 'lzma
+			--assert  #{74657374} = decompress/size bin 'lzma 4
 
 		--test-- "LZMA compression when input is limited"
-			--assert  #{74657374} = decompress/lzma compress/lzma/part data 4
-			--assert  #{74657374} = decompress/lzma compress/lzma/part skip data 5 4
-			--assert  #{74657374} = decompress/lzma compress/lzma/part tail data -4
+			--assert  #{74657374} = decompress compress/part      data   'lzma  4 'lzma
+			--assert  #{74657374} = decompress compress/part skip data 5 'lzma  4 'lzma
+			--assert  #{74657374} = decompress compress/part tail data   'lzma -4 'lzma
 
 		--test-- "LZMA decompress when not at head"
-			--assert data = to string! decompress/lzma next join #{00} compress/lzma data
+			--assert data = to string! decompress next join #{00} compress data 'lzma 'lzma
 	]
 ===end-group===
 
 ===start-group=== "ENCLOAK/DECLOAK"
 	--test-- "issue-48"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/48
-	--assert (a: compress  "a") = #{789C4B04000062006201000000}
-	--assert (b: encloak a "a") = #{2DD7F778DDDD45E040016E2B5E}
-	--assert (c: decloak b "a") = #{789C4B04000062006201000000}
-	--assert (d: decompress c ) = #{61}
+	--assert (a: compress  "a" 'zlib) = #{789C4B040000620062}
+	--assert (b: encloak a "a")       = #{2CD6F679DCDC44E141}
+	--assert (c: decloak b "a")       = #{789C4B040000620062}
+	--assert (d: decompress c 'zlib)  = #{61}
 
 ===end-group===
 

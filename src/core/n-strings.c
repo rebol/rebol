@@ -254,44 +254,53 @@ static struct digest {
 */	REBNATIVE(compress)
 /*
 //	compress: native [
-//		{Compresses data. Default is deflate with Adler32 checksum and uncompressed size in last 4 bytes.}
+//		{Compresses data.}
 //		data [binary! string!] {If string, it will be UTF8 encoded}
+//		method [word!] "zlib deflate gzip lzma"
 //		/part length {Length of source data}
-//		/zlib {Use ZLIB (Adler32 checksum) without uncompressed length appended}
-//		/gzip {Use ZLIB with GZIP envelope (using CRC32 checksum)}
-//		/lzma {Use LZMA compression}
 //		/level lvl [integer!] {Compression level 0-9}
 //	]
 ***********************************************************************/
 {
-	REBVAL *data    = D_ARG(1);
-  //REBOOL ref_part = D_REF(2);
-	REBVAL *length  = D_ARG(3);
-    REBOOL ref_zlib = D_REF(4);
-	REBOOL ref_gzip = D_REF(5);
-	REBOOL ref_lzma = D_REF(6);
-	REBOOL ref_level= D_REF(7);
-	REBVAL *level   = D_ARG(8);
+	REBVAL *data     = D_ARG(1);
+	REBINT  method   = VAL_WORD_CANON(D_ARG(2));
+//	REBOOL ref_part  = D_REF(3);
+	REBVAL *length   = D_ARG(4);
+	REBOOL ref_level = D_REF(5);
+	REBVAL *level    = D_ARG(6);
 
 	REBSER *ser;
 	REBCNT index;
 	REBCNT len;
-    
-    if ((ref_zlib && (ref_gzip || ref_lzma)) || (ref_gzip && ref_lzma)) Trap0(RE_BAD_REFINES);
+	REBINT windowBits = MAX_WBITS;
 
 	len = Partial1(data, length);
 	ser = Prep_Bin_Str(data, &index, &len); // result may be a SHARED BUFFER!
 
-	if(ref_lzma) {
+	switch (method) {
+	case SYM_ZLIB:
+	zlib_compress:
+		Set_Binary(D_RET, CompressZlib(ser, index, (REBINT)len, ref_level ? VAL_INT32(level) : -1, windowBits));
+		break;
+	
+	case SYM_DEFLATE:
+		windowBits = -windowBits;
+		goto zlib_compress;
+	
+	case SYM_GZIP:
+		windowBits |= 16;
+		goto zlib_compress;
+
+	case SYM_LZMA:
 #ifdef INCLUDE_LZMA
 		Set_Binary(D_RET, CompressLzma(ser, index, (REBINT)len, ref_level ? VAL_INT32(level) : -1));
 #else
 		Trap0(RE_FEATURE_NA);
 #endif
-	} else {
-		int windowBits = MAX_WBITS;
-		if (ref_gzip) windowBits |= 16;
-		Set_Binary(D_RET, CompressZlib(ser, index, (REBINT)len, ref_level ? VAL_INT32(level) : -1, windowBits));
+		break;
+
+	default:
+		Trap1(RE_INVALID_ARG, D_ARG(2));
 	}
 
 	return R_RET;
@@ -303,56 +312,56 @@ static struct digest {
 */	REBNATIVE(decompress)
 /*
 //	decompress: native [
-//		{Decompresses data. Result is binary.}
+//		{Decompresses data.}
 //		data [binary!] {Source data to decompress}
+//		method [word!] "zlib deflate gzip lzma" 
 //		/part "Limits source data to a given length or position"
 //			length [number! series!] {Length of compressed data (must match end marker)}
-//		/zlib {Data are in ZLIB format with Adler32 checksum}
-//		/gzip {Data are in ZLIB format with CRC32 checksum}
-//		/lzma {Data are in LZMA format}
-//		/deflate {Data are raw DEFLATE data}
 //		/size
-//			bytes [integer!] {Number of decompressed bytes. If not used, size is detected from last 4 source data bytes.}
+//			bytes [integer!] {Number of uncompressed bytes.}
 ]
 ***********************************************************************/
 {
-	REBVAL *data     = D_ARG(1);
-  //REBOOL ref_part  = D_REF(2);
-    REBVAL *length   = D_ARG(3);
-    REBOOL ref_zlib  = D_REF(4);
-	REBOOL ref_gzip  = D_REF(5);
-	REBOOL ref_lzma  = D_REF(6);
-	REBOOL ref_defl  = D_REF(7);
-	REBOOL ref_size  = D_REF(8);
-	REBVAL *size     = D_ARG(9);
+	REBVAL *data    = D_ARG(1);
+	REBINT  method  = VAL_WORD_CANON(D_ARG(2));
+//	REBOOL ref_part = D_REF(3);
+	REBVAL *length  = D_ARG(4);
+	REBOOL ref_size = D_REF(5);
+	REBVAL *size    = D_ARG(6);
 
 	REBCNT limit = 0;
 	REBCNT len;
 	REBINT windowBits = MAX_WBITS;
 
-	// test if only one compression type refinement is used 
-    if (
-		(ref_zlib && (ref_gzip || ref_lzma || ref_defl)) ||
-		(ref_gzip && (ref_zlib || ref_lzma || ref_defl)) ||
-		(ref_lzma && (ref_zlib || ref_gzip || ref_defl))
-	)	Trap0(RE_BAD_REFINES);
-    
 	len = Partial1(data, length);
 
 	if (ref_size) limit = (REBCNT)Int32s(size, 1); // /limit size
 
-	if (ref_lzma) {
+	switch (method) {
+	case SYM_ZLIB:
+	zlib_decompress:
+		Set_Binary(D_RET, DecompressZlib(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit, windowBits));
+		break;
+
+	case SYM_DEFLATE:
+		windowBits = -windowBits;
+		goto zlib_decompress;
+
+	case SYM_GZIP:
+		windowBits |= 16;
+		goto zlib_decompress;
+
+	case SYM_LZMA:
 #ifdef INCLUDE_LZMA
 		Set_Binary(D_RET, DecompressLzma(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit));
 #else
 		Trap0(RE_FEATURE_NA);
 #endif
-	} else {
-		if (ref_defl) windowBits = -windowBits;
-		else if (ref_gzip) windowBits |= 16;
-		Set_Binary(D_RET, DecompressZlib(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit, windowBits));
+		break;
+
+	default:
+		Trap1(RE_INVALID_ARG, D_ARG(2));
 	}
-	
 
 	return R_RET;
 }
