@@ -167,6 +167,7 @@ These are now obsolete (as of A107) and should be removed:
 #define INLINE
 
 #ifdef TO_OSX_X64
+#define TO_OSX
 #define FINITE isfinite
 #else
 #define FINITE finite
