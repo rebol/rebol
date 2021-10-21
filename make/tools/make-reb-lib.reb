@@ -48,11 +48,12 @@ memit: func [d /nol] [
 ]
 
 count: func [s c /local n] [
+	s: trim/all copy s
 	if find ["()" "(void)"] s [return "(void)"]
 	out: copy "(a"
 	n: 1
 	while [s: find/tail s c][
-		repend out [#"," #"a" + n]
+		repend out [#"," either s = "...)" ["__VA_ARGS__"][#"a" + n]]
 		n: n + 1
 	]
 	append out ")"
