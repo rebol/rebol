@@ -230,6 +230,21 @@ Rebol [
 		--assert 2 = t/2.1
 		--assert 2 = t/2.6
 
+	--test-- "equality of numerical values of different types"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1046
+		--assert 0 = 0%
+		--assert 0 = $0
+		--assert 0 = 0.0
+		--assert 0% = 0
+		--assert 0% = $0
+		--assert 0% = 0.0
+		--assert $0 = 0
+		--assert $0 = 0%
+		--assert $0 = 0.0
+		--assert 0.0 = 0%
+		--assert 0.0 = $0
+		--assert 0.0 = 0
+
 ===end-group===
 
 ===start-group=== "trigonometric function"
