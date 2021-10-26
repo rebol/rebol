@@ -22,7 +22,7 @@ repend: func [
 	value {The value to insert}
 	/part {Limits to a given length or position}
 	length [number! series! pair!]
-	/only {Inserts a series as a series}
+	/only {Appends a block value as a block}
 	/dup {Duplicates the insert a specified number of times}
 	count [number! pair!]
 ][
