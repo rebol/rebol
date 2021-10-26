@@ -388,6 +388,9 @@ Rebol [
 		--assert error? try [load {#[string! "ab" 2 x]}]
 		--assert error? try [load {#[file! "ab" x]}]
 		--assert error? try [load {#[file! "ab" 2 x]}]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/864
+		--assert block? try [transcode      to-binary "#[object! [a: 1 b: 2]]"]
+		--assert block? try [transcode/only to-binary "#[object! [a: 1 b: 2]]"]
 
 ===end-group===
 
