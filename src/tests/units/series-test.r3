@@ -285,6 +285,12 @@ Rebol [
 	--test-- "issue-54"
 		--assert "ABCDE456" = replace "123456" "123" "ABCDE"
 		--assert "1!!2!!3"  = replace/all "1 2 3" " " "!!"
+
+	--test-- "overlapping replace"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1162
+		s: copy "abcde"
+		--assert "bcdee" = replace/all s copy/part s 4 skip s 1
+		
 ===end-group===
 
 ===start-group=== "REPLACE binary!"
@@ -337,6 +343,11 @@ Rebol [
 		str: "abc"
 		--assert #"Á" = str/1: str/1 + 96
 		--assert "Ábc" = str
+
+	--test-- "overlapping change"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1162
+		s: copy "12345"
+		--assert "23455" = change at s 1 skip s 1 s
 
 ===end-group===
 
