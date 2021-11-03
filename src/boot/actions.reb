@@ -165,13 +165,13 @@ skip: action [
 ]
 
 at: action [
-	{Returns the series at the specified index.}
+	{Returns the series at the specified index, relative to the current position.}
 	series [series! gob! port!]
 	index [number! logic! pair!]
 ]
 
 atz: action [
-	{Returns the series at the specified 0-based index.}
+	{Returns the series at the specified 0-based index, relative to the current position.}
 	series [series! gob! port!]
 	index [number! logic! pair!]
 ]
