@@ -60,6 +60,9 @@ Rebol [
 		e/id   = 'invalid-arg
 		e/arg1 = 'foo
 	]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/975
+	--assert all [error? e: try [make error! 1] e/id = 'invalid-arg]
+	
 ===end-group===
 
 
