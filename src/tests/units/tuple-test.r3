@@ -59,7 +59,13 @@ Rebol [
 	t: 1.2.3.4 t/4: none
 	--assert t == 1.2.3
 	--assert (t + 0.0.0.0) == 1.2.3.0
-	
+
+	--test-- "tuple extending"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1077
+	t: 1.2.3
+	--assert 5 = t/5: 5
+	--assert t = 1.2.3.0.5
+		
 ===end-group===
 
 ===start-group=== "Logical operations"
