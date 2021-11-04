@@ -31,6 +31,15 @@ Rebol [
 			error? e: try [make image! 65536x65536]
 			e/id = 'size-limit
 		]
+	--test-- "to image from binary"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1048
+		--assert all [error? e: try [to image! #{0000}]   e/id = 'malconstruct]
+		--assert all [error? e: try [to image! #{000000}] e/id = 'malconstruct]
+		--assert all [image? img: to image! #{00000000}          img/size = 1x1]
+		--assert all [image? img: to image! #{0000000011}        img/size = 1x1]
+		--assert all [image? img: to image! #{000000001111}      img/size = 1x1]
+		--assert all [image? img: to image! #{0000000011111111}  img/size = 2x1]
+
 ===end-group===
 
 ===start-group=== "construct image"
