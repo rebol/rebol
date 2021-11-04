@@ -85,6 +85,13 @@ Rebol [
 		--assert 0.0.0.0  = (1.2.3.255 xor -11111111111)
 		--assert 0.0.0.0  = (1.2.3.255 xor -1)
 		--assert 0.3.2.5  = (1.2.3.4   xor  1)
+	--test-- "equality"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1097
+		--assert equal? 1.2.3 1.2.3.0
+		--assert equiv? 1.2.3 1.2.3.0
+		--assert not strict-equal? 1.2.3 1.2.3.0
+		--assert not same? 1.2.3 1.2.3.0
+		--assert not same? reverse 1.2.3 reverse 1.2.3.0
 
 	
 ===end-group===
