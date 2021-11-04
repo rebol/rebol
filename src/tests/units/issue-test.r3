@@ -42,6 +42,10 @@ Rebol [
 	--test-- "to-hex money!" ; not supported by design!
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1023
 		--assert error? try [to-hex $0]
+
+	--test-- "to-money issue!" ; not supported by design!
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1017
+		--assert error? try [to money! #000000000000000000000001]
 		
 
 ===end-group===
