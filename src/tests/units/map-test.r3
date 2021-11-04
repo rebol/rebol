@@ -29,6 +29,7 @@ Rebol [
 		--assert empty? #()
 
 	--test-- "case sensitivity"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1153
 		m: #(
 			 <a> 1   <A> 2   <ab> 3   <Ab> 4
 			 %a  5   %A  6   %ab  7   %Ab  8
