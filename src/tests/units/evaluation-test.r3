@@ -66,6 +66,7 @@ Rebol [
 
 	--test-- "do/next"
 		--assert 1 = do/next {1 2} 'n
+		;@@ https://github.com/Oldes/Rebol-issues/issues/901
 		--assert n = [2]
 		--assert 2 = do/next n 'n
 		--assert n = []
@@ -74,7 +75,6 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1951
 		--assert 2 = do/next 2 'n
 		--assert n = none
-
 		
 ===end-group===
 
