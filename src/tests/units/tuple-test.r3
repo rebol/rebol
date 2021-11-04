@@ -28,6 +28,12 @@ Rebol [
 	--assert 1.1.1 = to-tuple 1.1.1
 	--assert 1.0.0 = to-tuple "1"
 
+	--test-- "to-tuple issue!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1105
+	--assert 1.2.3 = to-tuple #010203
+	--assert 1.2.3 = to-tuple #{010203}
+	--assert error? try [to-tuple #01020]
+
 	--test-- "reverse tuple"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/211
 	--assert 3.2.1 = reverse 1.2.3
