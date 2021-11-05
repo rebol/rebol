@@ -37,9 +37,14 @@ start: func [
 	system/product:        ver/2
 	system/version:        ver/3
 	system/platform:       ver/4
-	system/build/target:   ver/5
-	system/build/compiler: ver/6
-	system/build/date:     ver/7
+	system/build/os:       ver/5
+	system/build/arch:     ver/6
+	system/build/vendor:   ver/7
+	system/build/sys:      ver/8
+	system/build/abi:      ver/9
+	system/build/compiler: ver/10
+	system/build/target:   ver/11
+	system/build/date:     ver/12
 
 	if flags/verbose [system/options/log/rebol: 3] ;maximum log output for system messages
 

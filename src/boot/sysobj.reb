@@ -22,7 +22,7 @@ product:  'core
 ; Next four fields are updated during build:
 platform: none
 version:  0.0.0
-build:    object [target: compiler: date: git: none]
+build:    object [os: arch: vendor: sys: abi: compiler: target: date: git: none]
 license: none
 
 catalog: object [

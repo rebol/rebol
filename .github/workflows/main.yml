@@ -22,10 +22,10 @@ jobs:
       uses: oldes/install-siskin@v0.4.1
 
     - name: Build 64bit Rebol/Bulk using MSVC
-      run: ./siskin.exe make/rebol3.nest [msvc %rebol3-bulk-x64-clang]
+      run: ./siskin.exe make/rebol3.nest [msvc %rebol3-bulk-windows-x64]
 
     - name: Prepare 64bit Rebol/Bulk for upload
-      run: MOVE ./msvc/Release-x64/rebol3-bulk-x64-vs.exe ./rebol3-bulk-x64.exe
+      run: MOVE ./msvc/Release-x64/rebol3-bulk-windows-x64-vs.exe ./rebol3-bulk-windows-x64.exe
 
     - name: Build 64bit test extension using MSVC
       run: ./siskin.exe make/rebol3.nest [msvc %test-x64.rebx]
@@ -34,7 +34,7 @@ jobs:
       run: MOVE ./msvc/Release-x64/test-x64.rebx.dll ./test-x64.rebx
 
     - name: Test 64bit Rebol/Bulk
-      run: ./rebol3-bulk-x64.exe -s ./src/tests/run-tests.r3
+      run: ./rebol3-bulk-windows-x64.exe -s ./src/tests/run-tests.r3
 
 
     ###############################################################################
@@ -60,7 +60,7 @@ jobs:
         uses: oldes/install-siskin@v0.4.1
 
       - name: Build 64bit Rebol/Bulk using gcc
-        run: ./siskin make/rebol3.nest %rebol3-bulk-x64-libc-gcc
+        run: ./siskin make/rebol3.nest %rebol3-bulk-linux-x64
 
       - name: Build 64bit test extension using gcc
         run: |
@@ -69,12 +69,12 @@ jobs:
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/$PWD/src/tests/
 
       - name: Test 64bit Rebol/Bulk
-        run: ./build/rebol3-bulk-x64-libc-gcc -s ./src/tests/run-tests.r3
+        run: ./build/rebol3-bulk-linux-x64 -s ./src/tests/run-tests.r3
 
       - name: Prepare 64bit Rebol/Bulk for upload
         run: |
-          mv ./build/rebol3-bulk-x64-libc-gcc ./rebol3-bulk-x64-libc
-          gzip -9 ./rebol3-bulk-x64-libc
+          mv ./build/rebol3-bulk-linux-x64 ./rebol3-bulk-linux-x64
+          gzip -9 ./rebol3-bulk-linux-x64
 
       #- name: Build 64bit Rebol/Bulk using clang
       #  run: |
@@ -97,7 +97,7 @@ jobs:
         uses: oldes/install-siskin@v0.4.1
 
       - name: Build 64bit Rebol/Bulk using clang
-        run: ./siskin make/rebol3.nest %rebol3-bulk-x64-osx
+        run: ./siskin make/rebol3.nest %rebol3-bulk-macos-x64
 
       - name: Build 64bit test extension
         run: |
@@ -105,12 +105,12 @@ jobs:
           cp ./build/test-x64.rebx ./src/tests/
 
       - name: Test 64bit Rebol/Bulk
-        run: ./build/rebol3-bulk-x64-osx -s ./src/tests/run-tests.r3
+        run: ./build/rebol3-bulk-macos-x64 -s ./src/tests/run-tests.r3
 
       - name: Prepare 64bit Rebol/Bulk for upload
         run: |
-          mv ./build/rebol3-bulk-x64-osx ./rebol3-bulk-x64-osx
-          gzip -9 ./rebol3-bulk-x64-osx
+          mv ./build/rebol3-bulk-macos-x64 ./rebol3-bulk-macos-x64
+          gzip -9 ./rebol3-bulk-macos-x64
 
       - uses: actions/upload-artifact@v2
         with:

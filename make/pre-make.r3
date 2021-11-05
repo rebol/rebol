@@ -109,18 +109,12 @@ mezz-files: reduce [
 version:  any [spec/version 3.5.0]
 platform: any [spec/platform system/platform]
 target:   any [spec/target spec/os-target spec/configuration]
-os-base:  'win32
-product:  any [spec/product 'Core]
-configs:  unique any [spec/config copy []]
-stack-size: any [spec/stack-size 1048576] ;default 1MiB
-
-
-unless target [
-	; if configuration is not fully provided, try to compose it
-	; EXAMPLES:
-	;	x86_64-linux-musl
-	;	ppc-apple-darwin
-	;
+vendor:   any [
+	;pc, apple, nvidia, ibm, etc.
+	all [word? spec/vendor        spec/vendor       ]
+	all [word? spec/manufacturer  spec/manufacturer ]
+]
+arch: any [
 	; list of LLVM (6) targets/archs:
 	;    aarch64    - AArch64 (little endian)
 	;    aarch64_be - AArch64 (big endian)
@@ -151,31 +145,63 @@ unless target [
 	;    thumb      - Thumb
 	;    thumbeb    - Thumb (big endian)
 	;    x86        - 32-bit X86: Pentium-Pro and above
-	;    x86-64     - 64-bit X86: EM64T and AMD64
+	;    x86_64     - 64-bit X86: EM64T and AMD64
 	;    xcore      - XCore
-	target: form any [
-		; i686, x86_64, amd64, arm ...
-		all [word? spec/arch          spec/arch       ]
-		all [word? spec/target-arch   spec/target-arch]
-		all [word? spec/build-type    spec/build-type ]
-		all [word? spec/cpu           spec/cpu        ]
-	]
-	if vendor: any [
-		;pc, apple, nvidia, ibm, etc.
-		all [word? spec/vendor        spec/vendor       ]
-		all [word? spec/manufacturer  spec/manufacturer ]
-	][
-		append append target #"-" vendor
-	]
-	if sys: any [spec/target-sys spec/kernel][
-		;none, linux, win32, darwin, cuda, etc.
-		append append target #"-" sys
-	]
-	if abi: any [spec/target-abi spec/abi][
-		;eabi, gnu, android, macho, elf, etc.
-		append append target #"-" abi
-	]
+	all [word? spec/arch          spec/arch       ]
+	all [word? spec/target-arch   spec/target-arch]
 ]
+os:  any [
+	all [word? spec/os spec/os]
+	select #(
+		Macintosh: macos
+		Windows:   windows
+		Linux:     linux
+	) platform	
+]
+sys: any [
+	; none, linux, win32, darwin, cuda, etc.
+	spec/sys
+	spec/kernel
+	select #(
+		macos:   darwin
+		ios:     darwin
+		windows: win32
+		linux:   linux
+	) os	
+]
+abi: any [
+	; eabi, gnu, android, macho, elf, musl etc.
+	spec/target-abi
+	spec/abi
+	select #(
+		macos:   macho
+		ios:     macho
+		windows: pe
+		reactos: pe
+		beos:    pe
+		linux:   elf
+		alpine:  musl
+	) os
+]    
+
+product:  any [spec/product 'Core]
+configs:  unique any [spec/config copy []]
+stack-size: any [spec/stack-size 1048576] ;default 1MiB
+
+unless target [
+	; if configuration is not fully provided, try to compose it
+	; EXAMPLES:
+	;	x86_64-linux-musl
+	;	ppc-apple-darwin
+	;
+	target: clear ""
+	if arch   [append append target arch   #"-"]
+	if vendor [append append target vendor #"-"]
+	if sys    [append append target sys    #"-"]
+	if abi    [append append target abi    #"-"]
+	take/last target
+]
+
 ;"Rebol Core 4.0.0 Windows x86_64 msvc-19 20-Feb-2021/17:31"
 ;"Rebol Core 4.0.0 Linux x86_64-linux-gnu gcc 20-Feb-2021/17:31"
 ;"Rebol Core 4.0.0 Linux x86_64-linux-musl gcc 20-Feb-2021/17:31"
@@ -189,8 +215,13 @@ str-version: reform [
 	product  ; like Core, View, etc...
 	version  ; triple value product version
 	platform ; Linux, Windows, macOS, Android...
-	target
+	os
+	arch
+	vendor
+	sys
+	abi
 	any [all [word? spec/compiler spec/compiler]] ; gcc, clang, msvc...
+	target
 	build-date
 ]
 

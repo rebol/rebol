@@ -4,11 +4,10 @@
 ;-===="="=======================================================================
 
 name:     %Rebol
-product:  Base    ; default product.. the others are by include: Core or Bulk
 group:    %rebol
-compiler: clang
+product:  Base    ; default product.. the others are by include: Core or Bulk
+
 strip:    on
-#if Windows? [upx: on]
 
 root:     %../
 source:   %src/
@@ -20,6 +19,26 @@ stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
 version: 3.6.0
+
+target-windows: [
+	os:       windows
+	sys:      win32
+	vendor:   pc
+	compiler: clang
+	upx:      on
+]
+target-macos: [
+	os:       macos
+	sys:      darwin
+	vendor:   apple
+	compiler: clang
+]
+target-linux: [
+	os:       linux
+	sys:      linux
+	vendor:   pc
+	compiler: gcc
+]
 
 core-files: [
 	%core/a-constants.c
@@ -683,7 +702,7 @@ arch-arm64: [
 	:arch-x64
 	arch: arm64
 	flags: ["-arch arm64"]
-	define: __arm64__
+	;define: __arm64__
 ]
 
 
@@ -729,8 +748,8 @@ make-exe: [
 	defines: [REB_EXE]
 	do %make/pre-make.r3 "$NEST_SPEC"
 ]
-make-x86-exe: [:arch-x86 :make-exe #if Windows? [target: x86-win32]]
-make-x64-exe: [:arch-x64 :make-exe #if Windows? [target: x64-win32]]
+make-x86-exe:   [:arch-x86   :make-exe ]
+make-x64-exe:   [:arch-x64   :make-exe ]
 make-arm64-exe: [:arch-arm64 :make-exe ]
 
 ; for making Rebol as a shared library
@@ -743,9 +762,6 @@ make-dll: [
 	#if macOS? [ flag: fno-common strip: off]
 	do %make/pre-make.r3 "$NEST_SPEC"
 ]
-make-x86-dll: [:arch-x86 :make-dll #if Windows? [target: x86-win32]]
-make-x64-dll: [:arch-x64 :make-dll #if Windows? [target: x64-win32]]
-
 ; for testing host app using shared library
 make-host: [
 	:common
@@ -754,18 +770,10 @@ make-host: [
 	#if Posix? [upx: off]
 	do %make/pre-make.r3 "$NEST_SPEC"
 ]
-make-x86-host: [
-	:arch-x86 :make-host
-	#if Windows? [target: x86-win32]
-	#if Linux?   [target: x86-libc ]
-	#if macOS?   [target: x86-osx  ]
-]
-make-x64-host: [
-	:arch-x64 :make-host
-	#if Windows? [target: x64-win32]
-	#if Linux?   [target: x64-libc ]
-	#if macOS?   [target: x64-osx  ]
-]
+make-x86-dll:  [:arch-x86 :make-dll  ]
+make-x64-dll:  [:arch-x64 :make-dll  ]
+make-x86-host: [:arch-x86 :make-host ]
+make-x64-host: [:arch-x64 :make-host ]
 
 eggs: [
 	#if Windows? [
@@ -776,163 +784,140 @@ eggs: [
 ;			:include-rebol-bulk
 ;			pre-make
 ;		]
-		"Rebol/Base x86-win32 (gcc)" [
-			name:     %rebol3-base-x86-gcc
-			compiler: gcc
+		"Rebol/Base windows-x86" [
+			name:     %rebol3-base-windows-x86
+			:target-windows
 			:make-x86-exe
 		]
-		"Rebol/Core x86-win32 (gcc)" [
-			name:     %rebol3-core-x86-gcc
-			compiler: gcc
+		"Rebol/Core windows-x86" [
+			name:     %rebol3-core-windows-x86
+			:target-windows
 			:include-rebol-core
 			:make-x86-exe
 		]
-		"Rebol/Bulk x86-win32 (clang)" [
-			name:     %rebol3-bulk-x86-clang
-			compiler: clang
+		"Rebol/Bulk windows-x86" [
+			name:     %rebol3-bulk-windows-x86
+			:target-windows
 			:include-rebol-bulk
 			:make-x86-exe
 		]
 
-		"Rebol/Base x64-win32 (gcc)" [
-			name:     %rebol3-base-x64-gcc
-			compiler: gcc
+		"Rebol/Base windows-x64" [
+			name:     %rebol3-base-windows-x64
+			:target-windows
 			:make-x64-exe
 		]
-		"Rebol/Core x64-win32 (gcc)" [
-			name:     %rebol3-core-x64-gcc
-			compiler: gcc
+		"Rebol/Core windows-x64" [
+			name:     %rebol3-core-windows-x64
+			:target-windows
 			:include-rebol-core
 			:make-x64-exe
 		]
-		"Rebol/Bulk x64-win32 (clang)" [
-			name:     %rebol3-bulk-x64-clang
-			compiler: clang
+		"Rebol/Bulk windows-x64" [
+			name:     %rebol3-bulk-windows-x64
+			:target-windows
 			:include-rebol-bulk
 			:make-x64-exe
 		]
 
-		"Rebol/Core x86-win32 shared library (gcc)" [
-			name:     %lib-rebol3-core-x86-gcc
-			compiler: gcc
+		"Rebol/Core windows-x86 shared library" [
+			name:     %lib-rebol3-core-windows-x86
+			:target-windows
 			:include-rebol-core
 			:make-x86-dll
 			upx:      off ; library compiled using MSVC seems to make problems when UPXed  
 		]
-		"Rebol/Core x86-win32 host application (gcc)" [
-			name:     %host-core-x86-gcc
-			compiler: gcc
+		"Rebol/Core windows-x86 host application" [
+			name:     %host-core-windows-x86
+			shared:   %lib-rebol3-core-windows-x86
+			:target-windows
 			:include-rebol-core
 			:make-x86-host
-			shared:   %lib-rebol3-core-x86-gcc
 		]
 
-		"Rebol/Core x64-win32 shared library (gcc)" [
-			name:     %lib-rebol3-core-x64-gcc
-			compiler: gcc
+		"Rebol/Core windows-x64 shared library" [
+			name:     %lib-rebol3-core-windows-x64
+			:target-windows
 			:include-rebol-core
 			:make-x64-dll
 		]
-		"Rebol/Core x64-win32 host application (gcc)" [
-			name:     %host-core-x64-gcc
-			compiler: gcc
+		"Rebol/Core windows-x64 host application" [
+			name:     %host-core-windows-x64
+			shared:   %lib-rebol3-core-windows-x64
+			:target-windows
 			:include-rebol-core
 			:make-x64-host
-			shared:   %lib-rebol3-core-x64-gcc
 		]
 	]
 	#if Linux? [
-		"Rebol/Base x64-libc (gcc)" [
-			name:     %rebol3-base-x64-libc-gcc
-			compiler: gcc
-			target:   x64-libc
+		"Rebol/Base linux-x64" [
+			name:     %rebol3-base-linux-x64
+			:target-linux
 			:make-x64-exe
 		]
-		"Rebol/Core x64-libc (gcc)" [
-			name:     %rebol3-core-x64-libc-gcc
-			compiler: gcc
+		"Rebol/Core linux-x64" [
+			name:     %rebol3-core-linux-x64
+			:target-linux
 			:include-rebol-core
 			:make-x64-exe
 		]
-		"Rebol/Bulk x64-libc (gcc)" [
-			name:     %rebol3-bulk-x64-libc-gcc
-			compiler: gcc
+		"Rebol/Bulk linux-x64" [
+			name:     %rebol3-bulk-linux-x64
+			:target-linux
 			:include-rebol-bulk
 			:make-x64-exe
 		]
 
-		;@@TODO: find a way for using one egg spec for multiple targets
-		"Rebol/Base x64-libc (clang)" [
-			name:     %rebol3-base-x64-libc-clang
-			compiler: clang
-			:make-x64-exe
-		]
-		"Rebol/Core x64-libc (clang)" [
-			name:     %rebol3-core-x64-libc-clang
-			compiler: clang
-			:include-rebol-core
-			:make-x64-exe
-		]
-		"Rebol/Bulk x64-libc (clang)" [
-			name:     %rebol3-bulk-x64-libc-clang
-			compiler: clang
-			:include-rebol-bulk
-			:make-x64-exe
-		]
-
-		"Rebol/Core x64-libc shared library (gcc)" [
-			name:     %lib-rebol3-core-x64-gcc
-			compiler: gcc
+		"Rebol/Core linux-x64 shared library" [
+			name:     %lib-rebol3-core-linux-x64
+			:target-linux
 			:include-rebol-core
 			:make-x64-dll
 		]
-		"Rebol/Core x64-libc host application (gcc)" [
-			name:     %host-core-x64-gcc
-			compiler: gcc
+		"Rebol/Core linux-x64 host application" [
+			name:     %host-core-linux-x64
+			shared:   %lib-rebol3-core-linux-x64
+			:target-linux
 			:include-rebol-core
 			:make-x64-host
-			shared:   %lib-rebol3-core-x64-gcc
 		]
 	]
 	#if macOS? [
-		"Rebol/Base x64-osx (clang)" [
-			name:     %rebol3-base-x64-osx
-			compiler: clang
-			target:   x64-osx
+		"Rebol/Base macos-x64" [
+			name:   %rebol3-base-macos-x64
+			:target-macos
 			:make-x64-exe
 		]
-		"Rebol/Core x64-osx (clang)" [
-			name:     %rebol3-core-x64-osx
-			compiler: clang
-			target:   x64-osx
+		"Rebol/Core macos-x64" [
+			name:   %rebol3-core-macos-x64
+			:target-macos
 			:include-rebol-core
 			:make-x64-exe
 		]
-		"Rebol/Bulk x64-osx (clang)" [
-			name:     %rebol3-bulk-x64-osx
-			compiler: clang
+		"Rebol/Bulk macos-x64" [
+			name:   %rebol3-bulk-macos-x64
+			:target-macos
 			:include-rebol-bulk
 			:make-x64-exe
 		]
-		"Rebol/Bulk arm64-osx (clang)" [
-			name:     %rebol3-bulk-arm64-osx
-			compiler: clang
+		"Rebol/Bulk macos-arm64" [
+			name:   %rebol3-bulk-macos-arm64
 			:include-rebol-bulk
 			:make-arm64-exe
 		]
 
-		"Rebol/Core x64-osx shared library (clang)" [
-			name:     %lib-rebol3-core-x64-osx
-			compiler: clang
+		"Rebol/Core macos-x64 shared library" [
+			name:   %lib-rebol3-core-macos-x64
+			:target-macos
 			:include-rebol-core
 			:make-x64-dll
 		]
-		"Rebol/Core x64-libc host application (clang)" [
-			name:     %host-core-x64-osx
-			compiler: clang
+		"Rebol/Core macos-x64 host application" [
+			name:   %host-core-macos-x64
+			shared: %lib-rebol3-core-macos-x64
+			:target-macos
 			:include-rebol-core
 			:make-x64-host
-			shared:   %lib-rebol3-core-x64-osx
 		]
 	]
 	"Test extension 32bit" [
@@ -942,7 +927,7 @@ eggs: [
 		compiler: gcc
 		flags: [-O2 shared]
 		#if Linux? [ flag: -fPIC ]
-		#either macOS? [compiler: clang][compiler: gcc]
+		#either macOS? [:target-macos][compiler: gcc]
 	]
 	"Test extension 64bit" [
 		name:  %test-x64.rebx
@@ -950,6 +935,6 @@ eggs: [
 		:arch-x64
 		flags: [-O2 shared]
 		#if Linux? [ flag: -fPIC ]
-		#either macOS? [compiler: clang][compiler: gcc]
+		#either macOS? [:target-macos][compiler: gcc]
 	]
 ]
