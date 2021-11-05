@@ -82,9 +82,11 @@ Rebol [
 
 	--test-- "tuple extending"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1077
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1110
 	t: 1.2.3
 	--assert 5 = t/5: 5
 	--assert t = 1.2.3.0.5
+	--assert 12 = try [t/12: 12]
 		
 ===end-group===
 
