@@ -130,6 +130,10 @@ Rebol [
 ===end-group===
 
 ===start-group=== "FOREACH"
+	--test-- "issue-1008"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1008
+	--assert tuple? foreach x make image! 1x1 [break/return x]
+	
 	--test-- "issue-1479"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1479
 	pix: copy []
