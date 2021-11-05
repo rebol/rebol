@@ -100,6 +100,10 @@ Rebol [
 		--assert 0:00:00.12345679  = 0:00:00.1234567895
 		--assert 0:00:00.123456789 = 0:00:00.123456789456
 
+	--test-- "divide by tuple"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1196
+		--assert all [error? e: try [0:0:01 / 1.1.1] e/id = 'not-related]
+		--assert all [error? e: try [1.1.1 / 0:0:01] e/id = 'not-related]
 
 ===end-group===
 
