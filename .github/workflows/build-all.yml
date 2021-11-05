@@ -24,32 +24,32 @@ jobs:
     - name: Build 64bit Rebol/Base using MSVC
       run: |
         ./siskin.exe make/rebol3.nest [msvc %rebol3-base-windows-x64]
-        MOVE ./msvc/Release-x64/rebol3-base-windows-x64-vs.exe ./
+        MOVE ./msvc/Release-x64/rebol3-base-windows-x64.exe ./
 
     - name: Build 64bit Rebol/Core using MSVC
       run: |
         ./siskin.exe make/rebol3.nest [msvc %rebol3-core-windows-x64]
-        MOVE ./msvc/Release-x64/rebol3-core-windows-x64-vs.exe ./
+        MOVE ./msvc/Release-x64/rebol3-core-windows-x64.exe ./
 
     - name: Build 64bit Rebol/Bulk using MSVC
       run: |
         ./siskin.exe make/rebol3.nest [msvc %rebol3-bulk-windows-x64]
-        MOVE ./msvc/Release-x64/rebol3-bulk-windows-x64-vs.exe ./
+        MOVE ./msvc/Release-x64/rebol3-bulk-windows-x64.exe ./
 
     - name: Build 32bit Rebol/Base using MSVC
       run: |
         ./siskin.exe make/rebol3.nest [msvc %rebol3-base-windows-x86]
-        MOVE ./msvc/Release-Win32/rebol3-base-windows-x86-vs.exe ./
+        MOVE ./msvc/Release-Win32/rebol3-base-windows-x86.exe ./
 
     - name: Build 32bit Rebol/Core using MSVC
       run: |
         ./siskin.exe make/rebol3.nest [msvc %rebol3-core-windows-x86]
-        MOVE ./msvc/Release-Win32/rebol3-core-windows-x86-vs.exe ./
+        MOVE ./msvc/Release-Win32/rebol3-core-windows-x86.exe ./
 
     - name: Build 32bit Rebol/Bulk using MSVC
       run: |
         ./siskin.exe make/rebol3.nest [msvc %rebol3-bulk-windows-x86]
-        MOVE ./msvc/Release-Win32/rebol3-bulk-windows-x86-vs.exe ./
+        MOVE ./msvc/Release-Win32/rebol3-bulk-windows-x86.exe ./
 
     ###############################################################################
     # Building Rebol as a shared library...
@@ -67,32 +67,51 @@ jobs:
 
     - name: Move library and host files into root
       run: |
-        MOVE ./msvc/Release-Win32/lib-rebol3-core-windows-x86-vs.dll ./
-        MOVE ./msvc/Release-Win32/lib-rebol3-core-windows-x86-vs.lib ./
-        MOVE ./msvc/Release-Win32/host-core-windows-x86-vs.exe ./
-        MOVE ./msvc/Release-x64/lib-rebol3-core-windows-x64-vs.dll ./
-        MOVE ./msvc/Release-x64/lib-rebol3-core-windows-x64-vs.lib ./
-        MOVE ./msvc/Release-x64/host-core-windows-x64-vs.exe ./
+        MOVE ./msvc/Release-Win32/lib-rebol3-core-windows-x86.dll ./
+        MOVE ./msvc/Release-Win32/lib-rebol3-core-windows-x86.lib ./
+        MOVE ./msvc/Release-Win32/host-core-windows-x86.exe ./
+        MOVE ./msvc/Release-x64/lib-rebol3-core-windows-x64.dll ./
+        MOVE ./msvc/Release-x64/lib-rebol3-core-windows-x64.lib ./
+        MOVE ./msvc/Release-x64/host-core-windows-x64.exe ./
 
     ###############################################################################
-    # Collecting build artifacts...
+    # Collecting 32bit build artifacts...
     - uses: actions/upload-artifact@v2
       with:
-        name: Rebol-win-vs
-        path: ./rebol3-*.exe
+        name: Rebol-32bit-Windows-${{github.run_id}}
+        path: ./rebol3-*-x86.exe
     # and lib/host variant...
     - uses: actions/upload-artifact@v2
       with:
-        name: Rebol-win-lib-vs
-        path: ./lib-*.dll
+        name: Rebol-32bit-Windows-lib-${{github.run_id}}
+        path: ./lib-*-x86.dll
     - uses: actions/upload-artifact@v2
       with:
-        name: Rebol-win-lib-vs
-        path: ./lib-*.lib
+        name: Rebol-32bit-Windows-lib-${{github.run_id}}
+        path: ./lib-*-x86.lib
     - uses: actions/upload-artifact@v2
       with:
-        name: Rebol-win-lib-vs
-        path: ./host-*.exe
+        name: Rebol-32bit-Windows-lib-${{github.run_id}}
+        path: ./host-*-x86.exe
+
+    # Collecting 64bit build artifacts...
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Rebol-64bit-Windows-${{github.run_id}}
+        path: ./rebol3-*-x64.exe
+    # and lib/host variant...
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Rebol-64bit-Windows-lib-${{github.run_id}}
+        path: ./lib-*-x64.dll
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Rebol-64bit-Windows-lib-${{github.run_id}}
+        path: ./lib-*-x64.lib
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Rebol-64bit-Windows-lib-${{github.run_id}}
+        path: ./host-*-x64.exe
 
   linux:
     strategy:
@@ -137,7 +156,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Rebol-64bit-linux-${{github.run_id}}
+          name: Rebol-64bit-Linux-${{github.run_id}}
           path: ./rebol3-*.gz
 
   macos:
@@ -217,5 +236,5 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Rebol-64bit-osx-${{github.run_id}}
+          name: Rebol-64bit-macOS-${{github.run_id}}
           path: ./*.gz

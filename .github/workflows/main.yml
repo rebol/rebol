@@ -25,7 +25,7 @@ jobs:
       run: ./siskin.exe make/rebol3.nest [msvc %rebol3-bulk-windows-x64]
 
     - name: Prepare 64bit Rebol/Bulk for upload
-      run: MOVE ./msvc/Release-x64/rebol3-bulk-windows-x64-vs.exe ./rebol3-bulk-windows-x64.exe
+      run: MOVE ./msvc/Release-x64/rebol3-bulk-windows-x64.exe ./rebol3-bulk-windows-x64.exe
 
     - name: Build 64bit test extension using MSVC
       run: ./siskin.exe make/rebol3.nest [msvc %test-x64.rebx]
