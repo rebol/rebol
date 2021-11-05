@@ -182,7 +182,7 @@ import module [
 		/local value spec args refs rets type ret desc arg def des ref str cols
 	][
 		try [
-			cols: query/mode system/ports/input 'buffer-cols
+			cols: any [query/mode system/ports/input 'buffer-cols 80]
 			max-desc-width: cols - 35
 		]
 		buffer: any [string  clear ""]
