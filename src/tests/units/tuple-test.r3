@@ -44,6 +44,7 @@ Rebol [
 
 	--test-- "to-tuple binary!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1105
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1022
 	--assert 1.2.3 = to-tuple #{010203}
 	--assert "1.2.3.4.5.6.7.8.9.10.11.12" = mold to tuple! #{0102030405060708090A0B0C}
 	--assert "1.2.3.4.5.6.7.8.9.10.11.12" = mold to tuple! #{0102030405060708090A0B0C0D} ;
@@ -56,6 +57,7 @@ Rebol [
 
 	--test-- "to-tuple block!"
 	;@@ https://github.com/Oldes/rebol-issues/issues/1219
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1022
 	--assert 1.2.3 = to-tuple [1 2 3]
 	--assert "1.2.3.4.5.6.7.8.9.10.11.12" = mold to tuple! [1 2 3 4 5 6 7 8 9 10 11 12]
 	--assert error? try [to tuple! [1 2 3 4 5 6 7 8 9 10 11 12 13]] ; too long
