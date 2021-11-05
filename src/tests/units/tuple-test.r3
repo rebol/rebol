@@ -9,6 +9,12 @@ Rebol [
 ~~~start-file~~~ "TUPLE!"
 
 ===start-group=== "tuple"
+	--test-- "load tuple"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2462
+	--assert tuple? t: load {1.2.3.4.5.6.7.8.9.10.11.12}
+	--assert 12 = length? t
+	--assert error? try [load {1.2.3.4.5.6.7.8.9.10.11.12.13}] ; too long
+
 	--test-- "tuple divide"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1974
 	--assert (1.1.1 / 0.1)                   == 10.10.10
@@ -30,9 +36,17 @@ Rebol [
 
 	--test-- "to-tuple issue!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1105
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1110
 	--assert 1.2.3 = to-tuple #010203
-	--assert 1.2.3 = to-tuple #{010203}
 	--assert error? try [to-tuple #01020]
+	--assert "1.2.3.4.5.6.7.8.9.10.11.12" = mold to tuple! #0102030405060708090A0B0C
+	--assert error? try [to tuple! #0102030405060708090A0B0C0D] ; too long
+
+	--test-- "to-tuple binary!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1105
+	--assert 1.2.3 = to-tuple #{010203}
+	--assert "1.2.3.4.5.6.7.8.9.10.11.12" = mold to tuple! #{0102030405060708090A0B0C}
+	--assert "1.2.3.4.5.6.7.8.9.10.11.12" = mold to tuple! #{0102030405060708090A0B0C0D} ;
 
 	--test-- "reverse tuple"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/211

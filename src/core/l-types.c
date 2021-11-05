@@ -893,7 +893,7 @@ end_date:
 		if (*ep == '.') size++;
 	if (size > MAX_TUPLE) return 0;
 	if (size < 3) size = 3;
-	VAL_TUPLE_LEN(value) = (REBYTE)size;
+	
 	tp = VAL_TUPLE(value);
 	memset(tp, 0, sizeof(REBTUP)-2);
 	for (ep = cp; len > (REBCNT)(ep - cp); ep++) {
@@ -904,6 +904,7 @@ end_date:
 	}
 	if (len > (REBCNT)(ep - cp)) return 0;
 	VAL_SET(value, REB_TUPLE);
+	VAL_TUPLE_LEN(value) = (REBYTE)size;
 	return ep;
 }
 

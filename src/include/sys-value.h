@@ -259,9 +259,9 @@ typedef struct Reb_Tuple {
 	REBYTE tuple[12];
 } REBTUP;
 
-#define	VAL_TUPLE(v)	((v)->data.tuple.tuple+1)
-#define	VAL_TUPLE_LEN(v) ((v)->data.tuple.tuple[0])
-#define MAX_TUPLE 10
+#define	VAL_TUPLE(v)	((v)->data.tuple.tuple)
+#define	VAL_TUPLE_LEN(v) (VAL_GET_EXT(v))
+#define MAX_TUPLE 12
 
 
 /***********************************************************************
