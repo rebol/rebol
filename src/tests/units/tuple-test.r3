@@ -99,6 +99,13 @@ Rebol [
 	--assert 5 = t/5: 5
 	--assert t = 1.2.3.0.5
 	--assert 12 = try [t/12: 12]
+
+	--test-- "setting tuple out-of bounds"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1384
+	t: 1.2.3
+	--assert 300 = t/1: 300
+	--assert -10 = t/2: -10
+	--assert t = 255.0.3
 		
 ===end-group===
 
