@@ -33,7 +33,7 @@ supplement system/options/module-paths join what-dir %units/files/
 		unset in system/contexts/user 'c
 		m: module [][export a: 1 b: 2 export c: does [a + b]]
 		--assert all [
-			object? spec: spec-of m
+			object? spec: spec-of m ;@@ https://github.com/Oldes/Rebol-issues/issues/1006
 			[a c] = spec/exports
 			m/c = 3
 			unset? :system/contexts/user/a
