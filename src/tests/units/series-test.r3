@@ -1758,6 +1758,16 @@ Rebol [
 	--assert "^M^/"  = to-string to-binary "^M^/"
 	--assert #{0D0A} = to-binary to-string #{0D0A}
 
+--test-- "binary AND binary"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1013
+	--assert #{0102} and #{00FF} == #{0002}
+	--assert #{0102} and #{0300} == #{0100}
+	--assert #{0102} and #{03}   == #{0100}
+--test-- "binary OR binary"
+	--assert #{0102}  or #{00FF} == #{01FF}
+	--assert #{0102}  or #{0300} == #{0302}
+	--assert #{0102}  or #{03}   == #{0302}
+
 ===end-group===
 
 
