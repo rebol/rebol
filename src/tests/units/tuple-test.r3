@@ -48,6 +48,18 @@ Rebol [
 	--assert "1.2.3.4.5.6.7.8.9.10.11.12" = mold to tuple! #{0102030405060708090A0B0C}
 	--assert "1.2.3.4.5.6.7.8.9.10.11.12" = mold to tuple! #{0102030405060708090A0B0C0D} ;
 
+	--test-- "to-tuple string!"
+	;@@ https://github.com/Oldes/rebol-issues/issues/1219
+	--assert 1.2.3 = to-tuple "1.2.3"
+	--assert "1.2.3.4.5.6.7.8.9.10.11.12" = mold to tuple! "1.2.3.4.5.6.7.8.9.10.11.12"
+	--assert error? try [to tuple! "1.2.3.4.5.6.7.8.9.10.11.12.13"] ; too long
+
+	--test-- "to-tuple block!"
+	;@@ https://github.com/Oldes/rebol-issues/issues/1219
+	--assert 1.2.3 = to-tuple [1 2 3]
+	--assert "1.2.3.4.5.6.7.8.9.10.11.12" = mold to tuple! [1 2 3 4 5 6 7 8 9 10 11 12]
+	--assert error? try [to tuple! [1 2 3 4 5 6 7 8 9 10 11 12 13]] ; too long
+
 	--test-- "reverse tuple"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/211
 	--assert 3.2.1 = reverse 1.2.3
