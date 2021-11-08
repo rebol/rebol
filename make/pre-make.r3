@@ -210,6 +210,13 @@ build-date: now/date
 build-time: now/time build-time/second: 0
 build-date/time: build-time
 
+
+;- resolving current git commit
+try/except [
+	parse read/string %../.git/HEAD [thru "ref: " copy git-header to lf]
+	git-commit: mold debase read/string join %../.git/ git-header 16
+][	git-commit: none]
+
 str-version: reform [
 	"Rebol" ; probably always same
 	product  ; like Core, View, etc...
@@ -223,6 +230,7 @@ str-version: reform [
 	any [all [word? spec/compiler spec/compiler]] ; gcc, clang, msvc...
 	target
 	build-date
+	git-commit
 ]
 
 ver3: version ver3/4: none ; trimmed version to just 3 parts

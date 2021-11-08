@@ -34,7 +34,7 @@
 
 #define BP (REBYTE*)
 
-const REBYTE Str_Banner[] = "REBOL 3 %d.%d.%d.%d.%d";
+const REBYTE Str_Banner[] = "%s";
 
 const char Str_REBOL[] = "REBOL";
 

@@ -548,6 +548,7 @@ emit [{
 #define REBOL_UPD } any [version/3 0] {
 #define REBOL_SYS } any [version/4 0] {
 #define REBOL_VAR } any [version/5 0] {
+#define REBOL_VERSION "} str-version {"
 }]
 
 ;-- Generate Lower-Level String Table ----------------------------------------

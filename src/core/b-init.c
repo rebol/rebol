@@ -117,7 +117,7 @@ extern const REBYTE Str_Banner[];
 ***********************************************************************/
 {
 	if (rargs->options & RO_VERS) {
-		Debug_Fmt(Str_Banner, REBOL_VER, REBOL_REV, REBOL_UPD, REBOL_SYS, REBOL_VAR);
+		Debug_Fmt(Str_Banner, REBOL_VERSION);
 		OS_EXIT(0);
 	}
 }
