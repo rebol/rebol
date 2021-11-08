@@ -902,6 +902,7 @@ eggs: [
 		]
 		"Rebol/Bulk macos-arm64" [
 			name:   %rebol3-bulk-macos-arm64
+			:target-macos
 			:include-rebol-bulk
 			:make-arm64-exe
 		]
