@@ -450,7 +450,7 @@ load-module: function [
 	; Returns block of name, and either built module or none if delayed.
 	; Returns none if source is word and no module of that name is loaded.
 	; Returns none if source is file/url and read or load-extension fails.
-
+	;sys/log/info 'REBOL ["load-module:" source]
 	assert/type [local none!] ; easiest way to protect against /local hacks
 	if import [delay: none]   ; /import overrides /delay
 
@@ -472,6 +472,8 @@ load-module: function [
 		binary? source [data: source]
 		string? source [data: to binary! source]
 		any [file? source url? source] [
+			; if possible, make absolute source path
+			if file? source [source: any [to-real-file source source]]
 			tmp: file-type? source
 			case [ ; Return none if read or load-extension fails
 				not tmp [unless attempt [data: read source] [return none]]
@@ -687,7 +689,7 @@ import: function [
 		; Unless /no-lib its exports are in lib already, so just import what we need.
 		not no-lib [resolve/only system/contexts/user lib exports]
 	]
-	protect 'mod/lib-base
+	protect      'mod/lib-base
 	protect/hide 'mod/lib-boot
 	mod ; module! returned
 ]
