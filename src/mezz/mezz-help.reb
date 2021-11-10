@@ -183,7 +183,8 @@ import module [
 	][
 		;@@ quering buffer width in CI under Windows now throws error: `Access error: protocol error: 6`
 		;@@ it should return `none` like under Posix systems!
-		cols: any [try [ query/mode system/ports/input 'buffer-cols ] 120 ]
+		cols: try [ query/mode system/ports/input 'buffer-cols ]
+		unless integer? cols [ cols: 120 ]
 		max-desc-width: cols - 35
 		buffer: any [string  clear ""]
 		catch [
