@@ -181,7 +181,8 @@ import module [
 			string [string!] "Returned series will be past the insertion"
 		/local value spec args refs rets type ret desc arg def des ref str cols
 	][
-		try/except [ cols: query/mode system/ports/input 'buffer-cols ][ cols: 120 ]
+		cols: 120
+		try/except [ cols: query/mode system/ports/input 'buffer-cols ][ print system/state/last-error ]
 		max-desc-width: cols - 35
 		buffer: any [string  clear ""]
 		catch [
