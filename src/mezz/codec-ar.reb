@@ -13,7 +13,7 @@ register-codec [
 	name:  'ar
 	type:  'compression
 	title: "Unix archive file"
-	suffixes: [%.ar %.a %.lib]
+	suffixes: [%.ar %.a %.lib %.deb]
 
 	decode: function [
 		{Extract content of the AR/LIB file}
