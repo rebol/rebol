@@ -323,8 +323,9 @@ load: function [
 
 		;-- Try to load the header, handle error:
 		not all [
-			set [hdr: data:] either object? data [load-ext-module data] [load-header data]
+			set [hdr: data: end:] either object? data [load-ext-module data] [load-header data]
 			if word? hdr [cause-error 'syntax hdr source]
+			unless tail? end [data: copy/part data end] 
 		]
 		; data is binary or block now, hdr is object or none
 
@@ -537,7 +538,8 @@ load-module: function [
 		; Get and process the header
 		not hdr [
 			; Only happens for string, binary or non-extension file/url source
-			set [hdr: code:] load-header/required data
+			set [hdr: code: end:] load-header/required data
+			unless tail? end [code: copy/part code end] 
 			case [
 				word? hdr [cause-error 'syntax hdr source]
 				import none ; /import overrides 'delay option
