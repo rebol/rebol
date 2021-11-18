@@ -129,6 +129,7 @@ supplement system/options/module-paths join what-dir %units/files/
 		]
 	--test-- "make module! integer!" ; not allowed
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1551
+	;@@ https://github.com/Oldes/Rebol-issues/issues/926
 		--assert all [
 			error? err: try [make module! 10]
 			err/id = 'bad-make-arg
