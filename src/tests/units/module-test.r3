@@ -78,6 +78,11 @@ supplement system/options/module-paths join what-dir %units/files/
 			unset? :system/contexts/user/b
 			none? system/contexts/user/c
 		]
+	--test-- "select"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1380
+		m: module [] [a: 1]
+		--assert 1 = select m 'a
+		--assert none? select m 'b
 
 
 ===end-group===

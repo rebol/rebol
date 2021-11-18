@@ -225,7 +225,7 @@ find: action [
 
 select: action [
 	{Searches for a value; returns the value that follows, else none.}
-	series [series! port! map! object! none!]
+	series [series! port! map! object! module! none!]
 	value [any-type!]
 	/part {Limits the search to a given length or position}
 	length [number! series! pair!]
