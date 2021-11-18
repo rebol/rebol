@@ -151,7 +151,7 @@ import module [
 				]
 			][
 				; don't show user context values if these are same like library ones
-				if all [user?  any [ word = 'lib-local same? val select system/contexts/lib word]][ continue ]
+				if all [user?  any [ word = 'lib-local same? :val select system/contexts/lib word ]][ continue ]
 
 				str: join "^[[1;32m" form-pad word 15
 				append str "^[[m "
