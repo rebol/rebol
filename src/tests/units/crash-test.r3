@@ -222,6 +222,10 @@ Rebol [
 	--assert all [error? e: try [equiv? a b] e/id = 'stack-overflow] 
 	--assert all [error? e: try [strict-equal? a b] e/id = 'stack-overflow] 
 
+--test-- "copy action!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/767
+	--assert same? :greater? copy :greater? ;-no crash
+
 ===end-group===
 
 ~~~end-file~~~
