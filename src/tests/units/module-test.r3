@@ -27,6 +27,7 @@ supplement system/options/module-paths join what-dir %units/files/
 		]
 
 	--test-- "export"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/689
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1446
 		unset in system/contexts/user 'a
 		unset in system/contexts/user 'b
