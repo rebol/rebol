@@ -145,7 +145,12 @@ supplement system/options/module-paths join what-dir %units/files/
 			error? err: try [make module! context [a: 1]]
 			err/id = 'bad-make-arg
 		]
-
+	--test-- "make module! empty block!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/898
+		--assert all [
+			error? err: try [to module! []]
+			err/id = 'bad-make-arg
+		]
 ===end-group===
 
 
