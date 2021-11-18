@@ -67,6 +67,14 @@ Rebol [
 ===end-group===
 
 ===start-group=== "APPEND on map!"
+	--test-- "append/insert"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/789
+	m: make map! []
+	--assert 1 = length? append m [a 1]
+	--assert 2 = length? insert m [b 2]
+	--assert [1 2] = values-of m
+
+
 	--test-- "appen on map with /part and /dup"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1158
 	m: make map! [a 1]

@@ -185,6 +185,13 @@
 		append bs ["hello" #"x" - #"z"]
 		--assert "make bitset! #{000000000000000000000000048900E0}" = mold bs
 
+	--test-- "insert-1"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/789
+		bs: make bitset! 8
+		--assert 8 = length? bs
+		insert bs ["hello" #"x" - #"z"]
+		--assert "make bitset! #{000000000000000000000000048900E0}" = mold bs
+
 	--test-- "clear-1"
 		clear bs
 		--assert "make bitset! #{}" = mold bs
