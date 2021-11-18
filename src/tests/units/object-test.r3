@@ -44,6 +44,11 @@ Rebol [
 		obj: object []
 		--assert 1 = extend obj 'a 1
 		--assert 1 = obj/a
+	;@@ https://github.com/Oldes/Rebol-issues/issues/789
+		--assert 2 = append obj 'b 2
+		--assert 2 = obj/b
+		--assert 3 = insert obj 'c 3
+		--assert 3 = obj/c
 	--test-- "extend object with hidden value"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1140
 		obj: object [a: 1 protect/hide 'a]

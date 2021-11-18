@@ -432,6 +432,7 @@ static REBSER *Trim_Object(REBSER *obj)
 		Trap_Make(type, arg);
 
 	case A_APPEND:
+	case A_INSERT:
 		TRAP_PROTECT(VAL_SERIES(value));
 		if (IS_OBJECT(value)) {
 			Append_Obj(VAL_OBJ_FRAME(value), arg);
