@@ -150,8 +150,14 @@ import module [
 					type = :pattern
 				]
 			][
-				; don't show user context values if these are same like library ones
-				if all [user?  any [ word = 'lib-local same? :val select system/contexts/lib word ]][ continue ]
+				if all [
+					user?   ; if we are using user's context (system/contexts/user)
+					match   ; with a pattern or a datatype
+					any [   ; don't show results
+						word = 'lib-local ; for internal `lib-local` value (as it would always match)
+						strict-equal? :val select system/contexts/lib word ; or if the same value is in the library context (already reported)
+					]
+				][ continue ]
 
 				str: join "^[[1;32m" form-pad word 15
 				append str "^[[m "
