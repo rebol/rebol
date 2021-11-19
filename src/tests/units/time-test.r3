@@ -23,6 +23,15 @@ Rebol [
 		; --assert 12:34:56.1 = round/to 12:34:56 0.3
 		; --assert 12:34:56.1 = round/to 12:34:56 30%
 
+	--test-- "compare with 0"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2463
+		--assert 0 < 0:0:0.1
+		--assert 0:0:0.1 > 0
+		--assert 0.0 < 0:0:0.1
+		--assert 0:0:0.1 > 0.0
+		--assert 0% < 0:0:0.1
+		--assert 0:0:0.1 > 0%
+
 	--test-- "issue-90"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/90
 		--assert -23:00 = (1:0:0 - 24:00)
