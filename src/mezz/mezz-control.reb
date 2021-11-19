@@ -18,13 +18,13 @@ launch: func [
 	/wait "Wait for the process to terminate"
 	/local exe
 ][
-	if file? script [script: to-local-file clean-path script]
+	if file? script [script: to-local-file any [to-real-file script script]]
 	exe: to-local-file system/options/boot
 
 	; Quote everything, just in case it has spaces:
 	args: to-string reduce [{"} exe {" "} script {" }]
 	if arg [append args arg]
-	either wait [call/wait args] [call args]
+	either wait [call/wait/shell args] [call/shell args]
 ]
 
 wrap: func [
