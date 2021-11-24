@@ -4,7 +4,12 @@
 
 1. Clone the Rebol 3 Repo if you haven't already: `git clone https://github.com/Oldes/Rebol3.git`
 2. Download the [Siskin build tool](https://github.com/Siskin-framework/Builder/releases/latest) for your platform
-3. Place the Siskin binary in the root of the repo (there seems to a bug in Siskin where it cannot find itself from the `PATH` and dies)
+3. Place the Siskin binary in the root of the repo (or into one of the `PATH` folders)
+
+macOS users on 10.15+ may need to remove the quarantine setting from the Siskin builder tool after download using:
+```
+xattr -d -r com.apple.quarantine /path/to/Siskin
+```
 
 ## Build Walkthrough
 
