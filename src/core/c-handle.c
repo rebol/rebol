@@ -34,7 +34,7 @@
 
 #include "sys-core.h"
 
-#define MAX_HANDLE_TYPES 16
+#define MAX_HANDLE_TYPES 64
 
 
 /***********************************************************************
@@ -55,9 +55,11 @@
 	//printf("Register_Handle: %s with size %u\n", SYMBOL_TO_NAME(sym),  size);
 
 	idx = Find_Handle_Index(sym);
-	if (idx != NOT_FOUND) Crash(RP_HANDLE_ALREADY_REGISTERED);
+	if (idx != NOT_FOUND)
+		return idx;            //TODO: make sure, that the already registered handle is compatible!
 	idx = VAL_TAIL(handles);
-	if (idx >= MAX_HANDLE_TYPES) Crash(RP_MAX_HANDLES);
+	if (idx >= MAX_HANDLE_TYPES)
+		Crash(RP_MAX_HANDLES); //TODO: realloc PG_Handles instead!
 
 	REBVAL *val = Append_Value(VAL_SERIES(handles));
 	Set_Word(val, sym, 0, 0);

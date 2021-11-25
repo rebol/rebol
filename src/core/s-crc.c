@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -262,6 +263,10 @@ static REBCNT *CRC32_Table = 0;
 
 	case REB_UNSET:
 		ret = 0;
+		break;
+
+	case REB_HANDLE:
+		ret = (REBCNT)VAL_HANDLE_I32(val);
 		break;
 
 	default:

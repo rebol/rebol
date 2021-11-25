@@ -118,6 +118,7 @@ core-files: [
 	%core/t-event.c
 	%core/t-function.c
 	%core/t-gob.c
+	%core/t-handle.c
 	%core/t-image.c
 	%core/t-integer.c
 	%core/t-logic.c
