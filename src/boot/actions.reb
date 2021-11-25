@@ -448,7 +448,7 @@ open?: action [
 
 query: action [
 	{Returns information about target if possible.}
-	target [port! file! url! block! vector! date!]
+	target [port! file! url! block! vector! date! handle!]
 	/mode "Get mode information"
 	field [word! block! none!] "NONE will return valid modes for target type"
 ]

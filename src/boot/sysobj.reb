@@ -36,7 +36,7 @@ catalog: object [
 	reflectors: [
 		spec   [any-function! any-object! vector! datatype! struct!]
 		body   [any-function! any-object! map!]
-		words  [any-function! any-object! map! date!]
+		words  [any-function! any-object! map! date! handle!]
 		values [any-object! map! struct!]
 		types  [any-function!]
 		title  [any-function! datatype! module!]
@@ -317,6 +317,9 @@ standard: object [
 		;isoweek:
 		utc:
 		julian:
+	]
+	handle-info: construct [
+		type:
 	]
 
 	midi-info: construct [

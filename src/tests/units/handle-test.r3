@@ -77,6 +77,16 @@ h4: aes/key #{00000000000000000000000000000000} none
 	--assert                "[#[handle! aes]]" = mold intersect  reduce [h1 h3] reduce [h3 h2]
 	--assert                "[#[handle! rc4]]" = mold exclude    reduce [h1 h3] reduce [h3 h2]
 
+--test-- "query handle's type"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2465
+	; short and easy way
+	--assert h1/type = 'rc4
+	--assert h3/type = 'aes
+	; for consistency with other types (like date, image, etc..)
+	--assert [type] = words-of h1
+	--assert 'rc4 = query/mode h1 'type
+	--assert all [object? o: query h1 o/type = 'rc4]
+
 ===end-group===
 
 ~~~end-file~~~
