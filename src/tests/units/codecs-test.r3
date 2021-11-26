@@ -222,6 +222,7 @@ if find codecs 'crt [
 	codecs/crt/verbose: 0
 ]
 
+import 'swf
 if find codecs 'swf [
 	codecs/swf/verbose: 1
 	===start-group=== "SWF codec"
@@ -384,6 +385,7 @@ if all [
 	===end-group===
 ]
 
+try [import 'json]
 if find codecs 'JSON [
 	===start-group=== "JSON codec"
 	--test-- "JSON encode/decode"
@@ -470,6 +472,7 @@ if find codecs 'DDS [
 	===end-group===
 ]
 
+try [import 'xml]
 if find codecs 'XML [
 	===start-group=== "XML codec"
 	--test-- "XML decode test1"
@@ -502,6 +505,7 @@ if find codecs 'XML [
 	===end-group===
 ]
 
+try [import 'html-entities]
 if find codecs 'html-entities [
 	===start-group=== "HTML-entities codec"
 	--test-- "decode html-entities"

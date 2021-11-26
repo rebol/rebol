@@ -6,6 +6,8 @@ Rebol [
 	Needs:   [%../quick-test-module.r3]
 ]
 
+import 'bbcode
+
 ~~~start-file~~~ "BBcode tests"
 if find codecs 'BBCode [
 ===start-group=== "bbcode function"

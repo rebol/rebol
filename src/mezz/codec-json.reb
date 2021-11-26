@@ -1,9 +1,12 @@
 Rebol [
-	Title:   "JSON codec"
-	Name:    'JSON
-	Purpose: "Convert Rebol value into JSON format and back."
-	File:    %codec-json.r
+	Name:    json
+	Type:    module
+	Options: [delay]
+	Exports: [to-json load-json]
 	Version: 0.1.0
+	Title:   "JSON codec"
+	Purpose: "Convert Rebol value into JSON format and back."
+	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-json.reb
 	Author: [
 		"Gregg Irwin" {
 			Ported from %json.r by Romano Paolo Tenca, Douglas Crockford, 
@@ -44,9 +47,6 @@ Rebol [
 		https://github.com/rebolek/red-tools/blob/master/json.red
 		https://github.com/rgchris/Scripts/blob/master/red/altjson.red
 	]
-
-	Type: 'module
-	Exports: [to-json load-json]
 ]
 
 ;----------------------------------------------------------------

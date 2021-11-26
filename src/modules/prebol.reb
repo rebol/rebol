@@ -1,9 +1,11 @@
 REBOL [
 	Name:    prebol
 	Type:    module
+	Options: [delay]
 	Exports: [process-source]
-	Title:   "Prebol - Official REBOL Preprocessor"
 	Version: 1.1.4
+	Title:   "Prebol - Official REBOL Preprocessor"
+	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/modules/prebol.reb
 	Author: ["Carl Sassenrath" "Holger Kruse" "Oldes"]
 	Purpose: {
 		The official REBOL preprocessor. Combines multiple
