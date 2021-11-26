@@ -90,7 +90,7 @@ state: object [
 	last-result: none ; used to store last console result
 ]
 
-modules: []
+modules: object []
 
 codecs: object []
 
@@ -208,10 +208,10 @@ standard: object [
 	]
 
 	header: construct [
+		version: 0.0.0
 		title: {Untitled}
 		name:
 		type:
-		version:
 		date:
 		file:
 		author:

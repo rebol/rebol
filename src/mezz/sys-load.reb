@@ -132,8 +132,10 @@ load-header: function/with [
 		set/any [hdr: rest:] transcode/next/error rest none ; get header block
 		not block? :hdr [return 'no-header] ; header block is incomplete
 		not attempt [hdr: construct/with :hdr system/standard/header][return 'bad-header]
+		word? :hdr/options [hdr/options: to block! :hdr/options]
 		not any [block? :hdr/options none? :hdr/options][return 'bad-header]
 		not any [binary? :hdr/checksum none? :hdr/checksum][return 'bad-checksum]
+		not tuple? :hdr/version [hdr/version: none]
 		find hdr/options 'content [repend hdr ['content data]] ; as of start of header
 		13 = rest/1 [rest: next rest] ; skip CR
 		10 = rest/1 [rest: next rest] ; skip LF
@@ -241,7 +243,9 @@ load-boot-exts: function [
 			not delay [hdr: spec-of mod: make module! load-ext-module ext]
 			; NOTE: This will error out if the code contains commands but
 			; no extension dispatcher (call) has been provided.
-			hdr/name [reduce/into [hdr/name mod if hdr/checksum [copy hdr/checksum]] system/modules]
+			hdr/name [
+				repend system/modules [hdr/name mod]
+			]
 		]
 		case [
 			not module? mod none
@@ -461,9 +465,10 @@ load-module: function [
 			case/all [
 				as [cause-error 'script 'bad-refine /as] ; no renaming
 				; Return none if no module of that name found
-				not tmp: find/skip system/modules source 3 [return none]
-				set [mod: modsum:] next tmp none ; get the module
+				not mod: select system/modules source [return none]
+
 				;assert/type [mod [module! block!] modsum [binary! none!]] none
+
 				; If no further processing is needed, shortcut return
 				all [not version not check any [delay module? :mod]] [
 					return reduce [source if module? :mod [mod]]
@@ -497,12 +502,14 @@ load-module: function [
 			]
 		]
 		module? source [ ; see if the same module is already in the list
-			if tmp: find/skip next system/modules mod: source 3 [
-				if as [cause-error 'script 'bad-refine /as] ; already imported
-				if all [ ; not /version, not /check, same as top module of that name
-					not version not check same? mod select system/modules pick tmp 0
-				] [return copy/part back tmp 2]
-				set [mod: modsum:] tmp
+			mod: source
+			foreach [n m] system/modules [
+				if source = m [
+					if as [cause-error 'script 'bad-refine /as] ; already imported
+					set mod: m
+					hdr: spec-of mod
+					return reduce [hdr/name mod]
+				]
 			]
 		]
 		block? source [
@@ -566,15 +573,17 @@ load-module: function [
 		; See if it's there already, or there is something more recent
 		all [
 			override?: not no-lib ; set to false later if existing module is used
-			set [name0: mod0: sum0:] pos: find/skip system/modules name 3
+			mod0: select system/modules name
 		] [
 			; Get existing module's info
 			case/all [
 				module? :mod0 [hdr0: spec-of mod0] ; final header
-				block? :mod0 [hdr0: first mod0] ; cached preparsed header
+				block?  :mod0 [hdr0: first   mod0] ; cached preparsed header
 				;assert/type [name0 word! hdr0 object! sum0 [binary! none!]] none
-				not tuple? set/any 'ver0 :hdr0/version [ver0: 0.0.0]
+				;not tuple? set/any 'ver0 :hdr0/version [ver0: 0.0.0] ;@@ remove?
 			]
+			ver0: any [hdr0/version 0.0.0]
+			sum0: hdr0/checksum
 			; Compare it to the module we want to load
 			case [
 				same? mod mod0 [override?: not any [delay module? mod]] ; here already
@@ -626,9 +635,8 @@ load-module: function [
 		]
 
 		all [not no-lib override?] [
+			repend system/modules [name mod]
 			case/all [
-				pos [pos/2: mod pos/3: modsum] ; replace delayed module
-				not pos [reduce/into [name mod modsum] system/modules]
 				all [module? mod not mixin? hdr block? select hdr 'exports] [
 					resolve/extend/only lib mod hdr/exports ; no-op if empty
 				]
