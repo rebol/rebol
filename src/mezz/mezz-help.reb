@@ -13,7 +13,7 @@ REBOL [
 
 import module [
 	Title:  "Help related functions"
-	Name:    Help
+	Name:    help
 	Version: 3.0.0
 	Exports: [? help about usage what license source dump-obj]
 ][
@@ -90,13 +90,18 @@ import module [
 		a-an head clear back tail mold type? :value
 	]
 
-	form-val: func [val /local limit] [
+	form-val: func [val /local limit hdr tmp] [
 		; Form a limited string from the value provided.
 		val: case [
 			string?       :val [ mold/part/flat val max-desc-width]
 			any-block?    :val [ reform ["length:" length? val mold/part/flat val max-desc-width] ]
 			object?       :val [ words-of val ]
-			module?       :val [ words-of val ]
+			module?       :val [
+				hdr: spec-of :val
+				either val: select hdr 'title [ if #"." <> last val [append val #"."] ][ val: copy "" ]
+				if tmp: select hdr 'exports [	append append val #" " mold/flat tmp ]
+				val
+			]
 			any-function? :val [ any [title-of :val spec-of :val] ]
 			datatype?     :val [ get in spec-of val 'title ]
 			typeset?      :val [ to block! val]
