@@ -272,6 +272,9 @@ if find codecs 'zip [
 				%file-2 "Hello, Hello, Hello, Hello, Hello!"
 				%file-3 #{000102030400010203040001020304}
 				%folder/file-4 [1-Jan-2021 "This file is with date!"]
+				%file-5 ["Uncompressed" store] ; this file will be included uncompressed
+				%file-6 ["This file have a comment" comment: "This file is not important."]
+				%file-7 ["File with attributes" att-int: 1 att-ext: 2175008768]
 			]]
 			data: decode 'ZIP bin
 			--assert all [
@@ -281,6 +284,10 @@ if find codecs 'zip [
 				data/5 = %file-2
 				data/9 = %folder/file-4
 				data/10/1 = 1-Jan-2021/0:00
+				"Uncompressed" = to string! second select data %file-5
+				"This file is not important." = to string! select select data %file-6 'comment
+				         1 = select select data %file-7 'att-int
+				2175008768 = select select data %file-7 'att-ext
 			]
 
 		--test-- "Encode ZIP using directory"
