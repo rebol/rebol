@@ -21,6 +21,16 @@ system/options/log/httpd: 3 ; for verbose output
 ; make sure that there is the directory for logs
 make-dir/deep %httpd-root/logs/
 
+humans.txt: {
+       __
+      (  )
+       ||
+       ||
+   ___|""|__.._
+  /____________\
+  \____________/~~~> http://github.com/oldes/
+}
+
 http-server/config/actor 8081 [
 	;- Main server configuration
 	
@@ -58,6 +68,13 @@ http-server/config/actor 8081 [
 				ctx/out/header/Content-Type: "text/plain; charset=UTF-8"
 				ctx/out/content: "hello"
 				; request processing will stop with response 200 serving the plain text content
+			]
+			%humans.txt [
+				;@@ https://codeburst.io/all-about-humans-humans-txt-actually-f571d37f92d2
+				;-- serving the content directly from the memory
+				ctx/out/status: 200
+				ctx/out/header/Content-Type: "text/plain; charset=UTF-8"
+				ctx/out/content: humans.txt
 			]
 		]
 	]
