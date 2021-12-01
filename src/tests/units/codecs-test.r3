@@ -440,6 +440,20 @@ if find codecs 'PNG [
 	===end-group===
 ]
 
+if find codecs 'QOI [
+	===start-group=== "QOI codec"
+	;@@ https://github.com/Oldes/Rebol3/issues/39
+	--test-- "save qoi"
+		img: make image! 256x256
+		--assert file? try [save %test.qoi img]
+	--test-- "load qoi"
+		--assert equal? img try [load %test.qoi]
+	--test-- "qoi/size?"
+		--assert 256x256 = codecs/qoi/size? %test.qoi
+		try [delete %test.qoi]
+	===end-group===
+]
+
 if find codecs 'JPEG [
 	===start-group=== "JPEG codec"
 	--test-- "load jpeg"

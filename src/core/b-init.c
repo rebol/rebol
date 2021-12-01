@@ -755,6 +755,9 @@ extern const REBYTE Str_Banner[];
 #ifdef INCLUDE_PNG_CODEC
 	Init_PNG_Codec();
 #endif
+#ifdef INCLUDE_QOI_CODEC
+	Init_QOI_Codec();
+#endif
 #ifdef INCLUDE_JPG_CODEC
 	Init_JPEG_Codec();
 #endif

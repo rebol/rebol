@@ -346,6 +346,7 @@ include-image-natives: [
 
 include-native-bmp-codec: [config: INCLUDE_BMP_CODEC core-files: %core/u-bmp.c]
 include-native-png-codec: [config: INCLUDE_PNG_CODEC core-files: %core/u-png.c]
+include-native-qoi-codec: [config: INCLUDE_QOI_CODEC core-files: %core/u-qoi.c]
 include-native-jpg-codec: [config: INCLUDE_JPG_CODEC core-files: %core/u-jpg.c]
 include-native-gif-codec: [config: INCLUDE_GIF_CODEC core-files: %core/u-gif.c]
 
@@ -379,6 +380,7 @@ include-image-codecs: [
 	#if MacOS? [
 		:include-image-os-codec
 	]
+	:include-native-qoi-codec
 	mezz-lib-files: %mezz/codec-image-ext.reb ; png/size? function and similar
 ]
 

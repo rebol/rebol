@@ -59,6 +59,11 @@ Credits for Non-REBOL orginated C files and modules
 * UTF-8 decoder:
   Copyright (c) 2008-2010 Bjoern Hoehrmann <bjoern@hoehrmann.de>
 
+* QOI codec (optional):
+  The "Quite OK Image" format for fast, lossless image compression
+  Copyright (c) 2021, Dominic Szablewski https://phoboslab.org
+  The MIT License(MIT) - https://github.com/phoboslab/qoi
+
 
 Credits for currently deprecated code
 -------------------------------------
