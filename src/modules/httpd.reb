@@ -763,10 +763,12 @@ sys/make-scheme [
 		Do-log ctx
 		clients: ctx/parent/locals/clients
 		keep-alive: ctx/config/keep-alive
+		
 		either all [
 			keep-alive
 			open? port
 			ctx/requests <= keep-alive/2 ; limit to max requests
+			"close" <> select port/locals/inp/Header 'Connection ; client don't want or cannot handle persistent connection
 		][
 			ctx/requests: ctx/requests + 1
 			sys/log/info 'HTTPD ["Keep-alive:^[[22m" ctx/remote "requests:" ctx/requests]

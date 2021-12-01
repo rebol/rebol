@@ -17,6 +17,7 @@ secure [%../modules/ allow]
 do %../modules/httpd.reb
 
 system/options/log/httpd: 3 ; for verbose output
+system/options/quiet: false
 
 ; make sure that there is the directory for logs
 make-dir/deep %httpd-root/logs/
