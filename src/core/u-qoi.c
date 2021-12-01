@@ -57,7 +57,7 @@
 	qoi_desc desc;
 	desc.width    = codi->w;
 	desc.height   = codi->h;
-	desc.channels = 4;// codi->alpha ? 4 : 3;
+	desc.channels = 4;
 	desc.colorspace = QOI_SRGB;
 
 	codi->data = qoi_encode(codi->bits, &desc, &codi->len);
