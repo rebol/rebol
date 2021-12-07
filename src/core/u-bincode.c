@@ -506,6 +506,13 @@ static REBCNT EncodedU32_Size(u32 value) {
 							continue;
 						}
 						goto error;
+					case SYM_PAD:
+						if (IS_INTEGER(next)) {
+							i = count % VAL_INT32(next);
+							count += (i > 0) ? VAL_INT32(next) - i : 0;
+							continue;
+						}
+						goto error;
 					case SYM_BYTES:
 						if (IS_BINARY(next)) {
 							count += VAL_LEN(next);
@@ -900,6 +907,14 @@ static REBCNT EncodedU32_Size(u32 value) {
 						VAL_INDEX(buffer_write) = VAL_INT32(next) - (cmd == SYM_AT ? 1 : 0);
 						cp = BIN_DATA(bin) + VAL_INDEX(buffer_write);
 						n = 0;
+						break;
+
+					case SYM_PAD:
+						n = VAL_INDEX(buffer_write) % VAL_INT32(next);
+						if (n > 0) {
+							n = VAL_INT32(next) - n;
+							memset(cp, 0, n);
+						}
 						break;
 
 					case SYM_ENCODEDU32:
@@ -1475,6 +1490,18 @@ static REBCNT EncodedU32_Size(u32 value) {
 							ASSERT_INDEX_RANGE(buffer_read, i, value);
 							VAL_INDEX(buffer_read) = i; //TODO: range test
 							cp = BIN_DATA(bin) + VAL_INDEX(buffer_read);
+							continue;
+						case SYM_PAD:
+							next = ++value;
+							if (IS_GET_WORD(next)) next = Get_Var(next);
+							if (!IS_INTEGER(next)) Trap1(RE_INVALID_SPEC, value);
+							i = VAL_INDEX(buffer_read) % VAL_INT32(next);
+							if (i > 0) {
+								i = VAL_INT32(next) - i;
+								ASSERT_INDEX_RANGE(buffer_read, i, value);
+								VAL_INDEX(buffer_read) += i;
+								cp = BIN_DATA(bin) + VAL_INDEX(buffer_read);
+							}
 							continue;
 						case SYM_SKIPBITS:
 							next = ++value;

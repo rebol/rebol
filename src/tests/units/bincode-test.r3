@@ -230,6 +230,11 @@ is-protected-error?: func[code][
 		--assert is-range-error? [binary/read b [AT 1 SKIP  5 UI8]]
 		--assert is-range-error? [binary/read b [AT 1 SKIP -1 UI8]]
 
+	--test-- "BinCode - PAD"
+		binary/write b: #{} [UI8 255 PAD 4 UI8 255]
+		--assert b = #{FF000000FF}
+		--assert [255 255] = binary/read b [UI8 PAD 4 UI8]
+
 	--test-- "BinCode - LENGTH?"
 		;LENGTH? returns number of bytes remaining in the buffer
 		b: binary #{01020304}
