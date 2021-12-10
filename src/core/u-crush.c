@@ -162,7 +162,7 @@ static inline int get_penalty(int a, int b) {
 
 	level = MAX(0, MIN(2, level));
 
-	ser = Make_Series(size + 4, sizeof(REBYTE), FALSE);
+	ser = Make_Series(MAX(16, size+4), sizeof(REBYTE), FALSE);
 	ctx.data = BIN_HEAD(ser);
 
 	((REBCNT *)ctx.data)[0] = size;
@@ -261,10 +261,11 @@ static inline int get_penalty(int a, int b) {
 			}
 		}
 
-		if (ctx.index >= SERIES_AVAIL(ser)) {
-			// If input is already well compressed, output from the Crush may be larger!
+		// If input is already well compressed, output from the Crush may be larger!
+		// Instead of adding this check to each `put_bits` call, count with some hopefuly safe range (16bytes)
+		if (ctx.index+16 >= SERIES_REST(ser)) {
 			SERIES_TAIL(ser) = ctx.index;
-			Expand_Series(ser, ctx.index, SERIES_AVAIL(ser) >> 3); // using 1/4 of the current size for the delta
+			Expand_Series(ser, ctx.index, MAX(16, SERIES_REST(ser) >> 3)); // using 1/4 of the current size for the delta
 			ctx.data = BIN_DATA(ser);
 		}
 

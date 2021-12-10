@@ -186,6 +186,15 @@ text: {Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempo
 
 		--test-- "CRUSH decompress when not at head"
 			--assert data = to string! decompress next join #{00} compress data 'crush 'crush
+
+		--test-- "CRUSH with bad compression ratio"
+			; CRUSH algorithm does not work well if there is no repeatable pattern
+			; These asserts also validates, that there is no memory coruption as internal extension is used
+			--assert #{0400000062C8984103} = compress "1234" 'crush
+			--assert #{0800000062C89841A3868D1B38} = compress "12345678" 'crush
+			--assert #{0D00000062C89841A3868D1B38720411328408} = compress "123456789ABCD" 'crush
+			--assert #{1100000062C89841A3868D1B387204113284481123479000} = compress "123456789ABCDEFGH" 'crush
+			--assert #{1500000062C89841A3868D1B38720411328448112347902451B28409} = compress "123456789ABCDEFGHIJKL" 'crush
 	]
 ===end-group===
 
@@ -195,7 +204,7 @@ text: {Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempo
 	--assert (a: compress  "a" 'zlib) = #{789C4B040000620062}
 	--assert (b: encloak a "a")       = #{2CD6F679DCDC44E141}
 	--assert (c: decloak b "a")       = #{789C4B040000620062}
-	--assert (d: decompress c 'zlib)  = #{61}
+	--assert (d: decompress a 'zlib)  = #{61}
 
 ===end-group===
 
