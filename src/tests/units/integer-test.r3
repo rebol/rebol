@@ -60,6 +60,17 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "gcd"
+	--test-- "gcd"
+		--assert 6 = gcd 54 24
+		--assert 6 = gcd 24 54
+		--assert 3 = gcd 0 3
+		--assert 3 = gcd 3 0
+		--assert 3 = gcd 21 -48
+===end-group===
+
+
 ===start-group=== "multiply"
 	--test-- "0 * 1"
 		i: 0
