@@ -359,6 +359,9 @@ static inline int get_penalty(int a, int b) {
 	ctx.bit_count = 0;
 	ctx.bit_buf = 0;
 
+	// allow partial output if specified...
+	if (limit && size > limit) size = limit;
+	
 	ser = Make_Binary(size); // output series
 	buf = BIN_HEAD(ser);     // output binary
 	

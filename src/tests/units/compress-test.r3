@@ -175,9 +175,9 @@ text: {Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempo
 			--assert  text = to string! decompress compress/level text 'crush 1 'crush
 			--assert  text = to string! decompress compress/level text 'crush 2 'crush
 
-;		--test-- "CRUSH decompression with specified uncompressed size"
-;			bin: compress data 'crush
-;			--assert  #{74657374} = decompress/size bin 'crush 4
+		--test-- "CRUSH decompression with specified uncompressed size"
+			bin: compress data 'crush
+			--assert  #{74657374} = decompress/size bin 'crush 4
 
 		--test-- "CRUSH compression when input is limited"
 			--assert  #{74657374} = decompress compress/part      data   'crush  4 'crush
