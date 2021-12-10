@@ -933,19 +933,28 @@ compare:
 */	REBNATIVE(gcd)
 /*
 //	gcd: native [
-//		{Returns greatest common divisor}
+//		{Returns the greatest common divisor}
 //		a [integer!]
 //		b [integer!]
 //	]
 ***********************************************************************/
 {
-	REBINT a = VAL_INT64(D_ARG(1));
-	REBINT b = VAL_INT64(D_ARG(2));
-
-	// Euclid's algorithm
-	if (a < 0) a = -a;
-	if (b < 0) b = -b;
-	if (b) while ((a %= b) && (b %= a));
-	SET_INTEGER(D_RET, a + b);
+	SET_INTEGER(D_RET, Gcd(VAL_INT64(D_ARG(1)), VAL_INT64(D_ARG(2))));
 	return R_RET;
 }
+
+/***********************************************************************
+**
+*/	REBNATIVE(lcm)
+/*
+//	lcm: native [
+//		{Returns the least common multiple}
+//		a [integer!]
+//		b [integer!]
+//	]
+***********************************************************************/
+{
+	SET_INTEGER(D_RET, Lcm(VAL_INT64(D_ARG(1)), VAL_INT64(D_ARG(2))));
+	return R_RET;
+}
+

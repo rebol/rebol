@@ -61,13 +61,20 @@ Rebol [
 ===end-group===
 
 
-===start-group=== "gcd"
+===start-group=== "gcd/lcm"
 	--test-- "gcd"
-		--assert 6 = gcd 54 24
-		--assert 6 = gcd 24 54
-		--assert 3 = gcd 0 3
-		--assert 3 = gcd 3 0
-		--assert 3 = gcd 21 -48
+		--assert  6 = gcd 54 24
+		--assert  6 = gcd 24 54
+		--assert  3 = gcd 0 3
+		--assert  3 = gcd 3 0
+		--assert  3 = gcd 21 -48
+	--test-- "lcm"
+		--assert 36 = lcm 12 18
+		--assert 36 = lcm 18 12
+		--assert  0 = lcm 0 1
+		--assert  0 = lcm 1 0
+		--assert  0 = lcm 0 0
+
 ===end-group===
 
 
