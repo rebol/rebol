@@ -467,6 +467,11 @@ include-lzma-compression: [
 	core-files: %core/u-lzma.c
 ]
 
+include-crush-compression: [
+	config: INCLUDE_CRUSH
+	core-files: %core/u-crush.c
+]
+
 include-png-filter-native: [
 	config: INCLUDE_PNG_FILTER
 	core-files: %core/u-png-filter.c
@@ -584,6 +589,7 @@ include-rebol-bulk: [
 	:include-optional-checksums
 	:include-image-natives
 	:include-lzma-compression
+	:include-crush-compression
 	:include-base85-encoding
 	:include-view
 	:include-midi

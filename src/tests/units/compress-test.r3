@@ -160,6 +160,35 @@ text: {Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempo
 	]
 ===end-group===
 
+===start-group=== "CRUSH compression / decompression"
+	--test-- "CRUSH compress/decompress"
+	either error? e: try [compress "test" 'crush][
+		;-- CRUSH compression is not available in current build
+		--assert  'feature-na = e/id
+	][	
+		--assert  data = to string! decompress compress data 'crush 'crush
+
+		--test-- "CRUSH compress/decompress while specifing level of compression"
+			--assert (compress/level ""   'crush 0) = #{00000000}
+			--assert (compress/level data 'crush 0) = #{0E000000E894994307A40201}
+			--assert  text = to string! decompress compress/level text 'crush 0 'crush
+			--assert  text = to string! decompress compress/level text 'crush 1 'crush
+			--assert  text = to string! decompress compress/level text 'crush 2 'crush
+
+;		--test-- "CRUSH decompression with specified uncompressed size"
+;			bin: compress data 'crush
+;			--assert  #{74657374} = decompress/size bin 'crush 4
+
+		--test-- "CRUSH compression when input is limited"
+			--assert  #{74657374} = decompress compress/part      data   'crush  4 'crush
+			--assert  #{74657374} = decompress compress/part skip data 5 'crush  4 'crush
+			--assert  #{74657374} = decompress compress/part tail data   'crush -4 'crush
+
+		--test-- "CRUSH decompress when not at head"
+			--assert data = to string! decompress next join #{00} compress data 'crush 'crush
+	]
+===end-group===
+
 ===start-group=== "ENCLOAK/DECLOAK"
 	--test-- "issue-48"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/48
