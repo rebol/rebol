@@ -25,7 +25,9 @@ dp: delta-profile: func [
 	block [block!]
 	/local start end adjust
 ][
-	; first count adjustments for empty code
+	; first force GC
+	recycle recycle
+	; than count adjustments for empty code
 	adjust: copy end: stats/profile 
 	do [] 
 	stats/profile 
