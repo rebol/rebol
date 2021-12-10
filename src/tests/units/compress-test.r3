@@ -204,7 +204,7 @@ text: {Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempo
 	--assert (a: compress  "a" 'zlib) = #{789C4B040000620062}
 	--assert (b: encloak a "a")       = #{2CD6F679DCDC44E141}
 	--assert (c: decloak b "a")       = #{789C4B040000620062}
-	--assert (d: decompress a 'zlib)  = #{61}
+	--assert (d: decompress c 'zlib)  = #{61}
 
 ===end-group===
 
