@@ -265,6 +265,7 @@ chkDecimal:
 	case REB_EMAIL:
 	case REB_URL:
 	case REB_TAG:
+	case REB_REF:
 		return Compare_String_Vals(s, t, (REBOOL)!is_case);
 
 	case REB_BITSET:
