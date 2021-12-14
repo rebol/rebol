@@ -222,6 +222,7 @@ if find codecs 'crt [
 	codecs/crt/verbose: 0
 ]
 
+import 'swf
 if find codecs 'swf [
 	codecs/swf/verbose: 1
 	===start-group=== "SWF codec"
@@ -271,6 +272,9 @@ if find codecs 'zip [
 				%file-2 "Hello, Hello, Hello, Hello, Hello!"
 				%file-3 #{000102030400010203040001020304}
 				%folder/file-4 [1-Jan-2021 "This file is with date!"]
+				%file-5 ["Uncompressed" store] ; this file will be included uncompressed
+				%file-6 ["This file have a comment" comment: "This file is not important."]
+				%file-7 ["File with attributes" att-int: 1 att-ext: 2175008768]
 			]]
 			data: decode 'ZIP bin
 			--assert all [
@@ -280,6 +284,10 @@ if find codecs 'zip [
 				data/5 = %file-2
 				data/9 = %folder/file-4
 				data/10/1 = 1-Jan-2021/0:00
+				"Uncompressed" = to string! second select data %file-5
+				"This file is not important." = to string! select select data %file-6 'comment
+				         1 = select select data %file-7 'att-int
+				2175008768 = select select data %file-7 'att-ext
 			]
 
 		--test-- "Encode ZIP using directory"
@@ -384,6 +392,7 @@ if all [
 	===end-group===
 ]
 
+try [import 'json]
 if find codecs 'JSON [
 	===start-group=== "JSON codec"
 	--test-- "JSON encode/decode"
@@ -431,6 +440,20 @@ if find codecs 'PNG [
 	===end-group===
 ]
 
+if find codecs 'QOI [
+	===start-group=== "QOI codec"
+	;@@ https://github.com/Oldes/Rebol3/issues/39
+	--test-- "save qoi"
+		img: make image! 256x256
+		--assert file? try [save %test.qoi img]
+	--test-- "load qoi"
+		--assert equal? img try [load %test.qoi]
+	--test-- "qoi/size?"
+		--assert 256x256 = codecs/qoi/size? %test.qoi
+		try [delete %test.qoi]
+	===end-group===
+]
+
 if find codecs 'JPEG [
 	===start-group=== "JPEG codec"
 	--test-- "load jpeg"
@@ -470,6 +493,7 @@ if find codecs 'DDS [
 	===end-group===
 ]
 
+try [import 'xml]
 if find codecs 'XML [
 	===start-group=== "XML codec"
 	--test-- "XML decode test1"
@@ -502,6 +526,7 @@ if find codecs 'XML [
 	===end-group===
 ]
 
+try [import 'html-entities]
 if find codecs 'html-entities [
 	===start-group=== "HTML-entities codec"
 	--test-- "decode html-entities"

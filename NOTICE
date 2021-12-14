@@ -42,6 +42,10 @@ Credits for Non-REBOL orginated C files and modules
   Copyright (C) 2018, Igor Pavlov
   Public domain - https://www.7-zip.org/sdk.html
 
+* CRUSH (optional):
+  Copyright (C) 2013, Ilya Muravyov
+  Public domain - https://compressme.net/
+
 * JPEG decoder:
   Copyright 1994-1996, Thomas G. Lane.
   This file is part of the Independent JPEG Group's software.
@@ -58,6 +62,11 @@ Credits for Non-REBOL orginated C files and modules
 
 * UTF-8 decoder:
   Copyright (c) 2008-2010 Bjoern Hoehrmann <bjoern@hoehrmann.de>
+
+* QOI codec (optional):
+  The "Quite OK Image" format for fast, lossless image compression
+  Copyright (c) 2021, Dominic Szablewski https://phoboslab.org
+  The MIT License(MIT) - https://github.com/phoboslab/qoi
 
 
 Credits for currently deprecated code

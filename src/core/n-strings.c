@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -298,7 +299,13 @@ static struct digest {
 		Trap0(RE_FEATURE_NA);
 #endif
 		break;
-
+	case SYM_CRUSH:
+#ifdef INCLUDE_CRUSH
+		Set_Binary(D_RET, CompressCrush(ser, index, (REBINT)len, ref_level ? VAL_INT32(level) : 2));
+#else
+		Trap0(RE_FEATURE_NA);
+#endif
+		break;
 	default:
 		Trap1(RE_INVALID_ARG, D_ARG(2));
 	}
@@ -358,7 +365,13 @@ static struct digest {
 		Trap0(RE_FEATURE_NA);
 #endif
 		break;
-
+	case SYM_CRUSH:
+#ifdef INCLUDE_CRUSH
+		Set_Binary(D_RET, DecompressCrush(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit));
+#else
+		Trap0(RE_FEATURE_NA);
+#endif
+		break;
 	default:
 		Trap1(RE_INVALID_ARG, D_ARG(2));
 	}

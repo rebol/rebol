@@ -165,13 +165,13 @@ skip: action [
 ]
 
 at: action [
-	{Returns the series at the specified index.}
+	{Returns the series at the specified index, relative to the current position.}
 	series [series! gob! port!]
 	index [number! logic! pair!]
 ]
 
 atz: action [
-	{Returns the series at the specified 0-based index.}
+	{Returns the series at the specified 0-based index, relative to the current position.}
 	series [series! gob! port!]
 	index [number! logic! pair!]
 ]
@@ -225,7 +225,7 @@ find: action [
 
 select: action [
 	{Searches for a value; returns the value that follows, else none.}
-	series [series! port! map! object! none!]
+	series [series! port! map! object! module! none!]
 	value [any-type!]
 	/part {Limits the search to a given length or position}
 	length [number! series! pair!]
@@ -341,7 +341,7 @@ poke: action [
 
 clear: action [
 	{Removes elements from current position to tail; returns at new tail.}
-	series [series! port! map! gob! bitset! none!] {At position (modified)}
+	series [series! port! map! gob! bitset! none!] {At position, if ordered collection (modified)}
 ]
 
 trim: action [
@@ -448,7 +448,7 @@ open?: action [
 
 query: action [
 	{Returns information about target if possible.}
-	target [port! file! url! block! vector! date!]
+	target [port! file! url! block! vector! date! handle!]
 	/mode "Get mode information"
 	field [word! block! none!] "NONE will return valid modes for target type"
 ]

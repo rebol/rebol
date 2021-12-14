@@ -17,6 +17,7 @@ Rebol [
 		--assert #00000000000000FF = to-hex 255
 
 	--test-- "to-hex tuple!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1105
 		--assert #010203 = to-hex 1.2.3
 		--assert #01020304 = to-hex 1.2.3.4
 		--assert #0102030405060708090A = to-hex 1.2.3.4.5.6.7.8.9.10
@@ -42,6 +43,10 @@ Rebol [
 	--test-- "to-hex money!" ; not supported by design!
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1023
 		--assert error? try [to-hex $0]
+
+	--test-- "to-money issue!" ; not supported by design!
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1017
+		--assert error? try [to money! #000000000000000000000001]
 		
 
 ===end-group===

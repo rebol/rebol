@@ -52,6 +52,7 @@ Rebol [
 	--assert -$2 = round -$1.5
 
 	--test-- "round/to"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/765
 	--assert $1.375 = round/to $1.333 $.125
 	--assert $1.33  = round/to $1.333 $.01
 	--assert     $1 = round/to $0.5   $1

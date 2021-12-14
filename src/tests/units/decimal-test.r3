@@ -45,6 +45,12 @@ Rebol [
 	--assert   $0 = round/to 0.499 $1
 	--assert money? round/to 0.5   $1
 
+	--test-- "round/to (percent)"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1028
+	--assert 150% = round/to 1.45677 10%
+	--assert 150% = round/to 145.6%  10%
+	--assert 150% = to percent! round/to 1.45677 to decimal! 10%
+
 	--test-- "round/down"
 	--assert  1.0 = round/down  1.999
 	--assert -1.0 = round/down -1.999
@@ -229,6 +235,21 @@ Rebol [
 		--assert 2 = t/2.0
 		--assert 2 = t/2.1
 		--assert 2 = t/2.6
+
+	--test-- "equality of numerical values of different types"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1046
+		--assert 0 = 0%
+		--assert 0 = $0
+		--assert 0 = 0.0
+		--assert 0% = 0
+		--assert 0% = $0
+		--assert 0% = 0.0
+		--assert $0 = 0
+		--assert $0 = 0%
+		--assert $0 = 0.0
+		--assert 0.0 = 0%
+		--assert 0.0 = $0
+		--assert 0.0 = 0
 
 ===end-group===
 

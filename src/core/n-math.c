@@ -652,7 +652,8 @@ enum {SINE, COSINE, TANGENT};
 			else if (tb == REB_INTEGER || tb == REB_CHAR) // special negative?, zero?, ...
 				goto compare;
 			else if (tb == REB_TIME) {
-				SET_INTEGER(b, (REBI64)SECS_IN(VAL_TIME(b)));
+				SET_DECIMAL(a, (REBDEC)VAL_INT64(a));
+				SET_DECIMAL(b, (REBDEC)VAL_TIME(b) * NANO);
 				goto compare;
 			}
 			break;
@@ -710,12 +711,12 @@ enum {SINE, COSINE, TANGENT};
 				goto compare;
 			break;
 		case REB_TIME:
+			SET_DECIMAL(a, (REBDEC)VAL_TIME(a) * NANO);
 			if (tb == REB_INTEGER) {
-				SET_INTEGER(a, (REBI64)SECS_IN(VAL_TIME(a)));
+				SET_DECIMAL(b, (REBDEC)VAL_INT64(b));
 				goto compare;
 			}
 			else if (tb == REB_DECIMAL || tb == REB_PERCENT) {
-				SET_DECIMAL(a, (REBDEC)VAL_TIME(a) * NANO);
 				goto compare;
 			}
 			break;
@@ -926,3 +927,34 @@ compare:
 		
 	return R_FALSE;
 }
+
+/***********************************************************************
+**
+*/	REBNATIVE(gcd)
+/*
+//	gcd: native [
+//		{Returns the greatest common divisor}
+//		a [integer!]
+//		b [integer!]
+//	]
+***********************************************************************/
+{
+	SET_INTEGER(D_RET, Gcd(VAL_INT64(D_ARG(1)), VAL_INT64(D_ARG(2))));
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(lcm)
+/*
+//	lcm: native [
+//		{Returns the least common multiple}
+//		a [integer!]
+//		b [integer!]
+//	]
+***********************************************************************/
+{
+	SET_INTEGER(D_RET, Lcm(VAL_INT64(D_ARG(1)), VAL_INT64(D_ARG(2))));
+	return R_RET;
+}
+

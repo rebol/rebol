@@ -30,5 +30,17 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "others"
+	--test-- "echo"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1224
+		echo %temp-echo
+		print 123
+		--assert not error? try [echo off]
+		--assert not error? try [echo none]
+		--assert 123 = try [load %temp-echo]
+		delete %temp-echo
+
+===end-group===
+
 
 ~~~end-file~~~

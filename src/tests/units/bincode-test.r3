@@ -230,6 +230,11 @@ is-protected-error?: func[code][
 		--assert is-range-error? [binary/read b [AT 1 SKIP  5 UI8]]
 		--assert is-range-error? [binary/read b [AT 1 SKIP -1 UI8]]
 
+	--test-- "BinCode - PAD"
+		binary/write b: #{} [UI8 255 PAD 4 UI8 255]
+		--assert b = #{FF000000FF}
+		--assert [255 255] = binary/read b [UI8 PAD 4 UI8]
+
 	--test-- "BinCode - LENGTH?"
 		;LENGTH? returns number of bytes remaining in the buffer
 		b: binary #{01020304}
@@ -383,7 +388,7 @@ is-protected-error?: func[code][
 		--assert 1.0 = binary/read #{0000803F} 'FLOAT
 		--assert 1.0 = binary/read #{000000000000F03F} 'DOUBLE
 
-	--test-- "BinCode - FLOAT16, FLOAT, DOUBLE (write)"
+	--test-- "BinCode - FLOAT16, FLOAT, DOUBLE"
 		b: binary/write #{} [float16 0.5 float16 1000 float16 32.5 float16 -32.5]
 		--assert b/buffer = #{0038D063105010D0}
 		--assert [0.5 1000.0 32.5 -32.5] = binary/read b [float16 float16 float16 float16]
@@ -393,6 +398,30 @@ is-protected-error?: func[code][
 		b: binary/write #{} [double  0.5 double  1000 double  32.5 double  -32.5]
 		--assert b/buffer = #{000000000000E03F0000000000408F40000000000040404000000000004040C0}
 		--assert [0.5 1000.0 32.5 -32.5] = binary/read b [double double double double]
+
+	--test-- "BinCode - F16LE, F16BE"
+		b: binary/write #{} [f16be   0.5 f16be   1000 f16be   32.5 f16be   -32.5]
+		--assert b/buffer = #{380063D05010D010}
+		--assert [0.5 1000.0 32.5 -32.5] = binary/read b [f16be f16be f16be f16be]
+		b: binary/write #{} [f16le   0.5 f16le   1000 f16le   32.5 f16le   -32.5]
+		--assert b/buffer = #{0038D063105010D0}
+		--assert [0.5 1000.0 32.5 -32.5] = binary/read b [f16le f16le f16le f16le]
+
+	--test-- "BinCode - F32LE, F32BE"
+		b: binary/write #{} [f32be   0.5 f32be   1000 f32be   32.5 f32be   -32.5]
+		--assert b/buffer = #{3F000000447A000042020000C2020000}
+		--assert [0.5 1000.0 32.5 -32.5] = binary/read b [f32be f32be f32be f32be]
+		b: binary/write #{} [f32le   0.5 f32le   1000 f32le   32.5 f32le   -32.5]
+		--assert b/buffer = #{0000003F00007A4400000242000002C2}
+		--assert [0.5 1000.0 32.5 -32.5] = binary/read b [f32le f32le f32le f32le]
+
+	--test-- "BinCode - F64LE, F64BE"
+		b: binary/write #{} [f64be   0.5 f64be   1000 f64be   32.5 f64be   -32.5]
+		--assert b/buffer = #{3FE0000000000000408F4000000000004040400000000000C040400000000000}
+		--assert [0.5 1000.0 32.5 -32.5] = binary/read b [f64be f64be f64be f64be]
+		b: binary/write #{} [f64le   0.5 f64le   1000 f64le   32.5 f64le   -32.5]
+		--assert b/buffer = #{000000000000E03F0000000000408F40000000000040404000000000004040C0}
+		--assert [0.5 1000.0 32.5 -32.5] = binary/read b [f64le f64le f64le f64le]
 
 	--test-- "BinCode - FLOAT16, FLOAT, DOUBLE (write/read NAN)"
 		b: binary/write #{} [float16 1.#NaN float 1.#NaN double 1.#NaN]

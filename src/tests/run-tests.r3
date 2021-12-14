@@ -34,6 +34,7 @@ dt [ ;- delta time
 		%units/evaluation-test.r3
 		%units/event-test.r3
 		%units/gob-test.r3
+		%units/handle-test.r3
 		%units/file-test.r3
 		%units/format-test.r3
 		%units/func-test.r3

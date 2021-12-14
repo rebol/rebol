@@ -8,7 +8,7 @@ Rebol [
 
 ~~~start-file~~~ "Codecs PDF"
 
-
+try [import 'pdf]
 if find codecs 'pdf [
 	===start-group=== "PDF codec"
 	foreach file [

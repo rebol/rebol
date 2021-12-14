@@ -31,6 +31,15 @@ Rebol [
 			error? e: try [make image! 65536x65536]
 			e/id = 'size-limit
 		]
+	--test-- "to image from binary"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1048
+		--assert all [error? e: try [to image! #{0000}]   e/id = 'bad-make-arg]
+		--assert all [error? e: try [to image! #{000000}] e/id = 'bad-make-arg]
+		--assert all [image? img: to image! #{00000000}          img/size = 1x1]
+		--assert all [image? img: to image! #{0000000011}        img/size = 1x1]
+		--assert all [image? img: to image! #{000000001111}      img/size = 1x1]
+		--assert all [image? img: to image! #{0000000011111111}  img/size = 2x1]
+
 ===end-group===
 
 ===start-group=== "construct image"
@@ -121,6 +130,10 @@ Rebol [
 ===end-group===
 
 ===start-group=== "FOREACH"
+	--test-- "issue-1008"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1008
+	--assert tuple? foreach x make image! 1x1 [break/return x]
+	
 	--test-- "issue-1479"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1479
 	pix: copy []

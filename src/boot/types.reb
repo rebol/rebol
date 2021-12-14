@@ -3,6 +3,7 @@ REBOL [
 	Title: "Datatype definitions"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2021 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -98,7 +99,7 @@ REBOL [
 
 	gob         self        gob         *        *       *      *   -  
 	event       self        event       *        *       *      *   -  
-	handle      self        0           -        -       -      -   -  
+	handle      self        handle      -        -       *      -   -
 	struct      self        struct      *        *       *      *   -  
 	library     invalid     0           -        -       -      -   -  
 	utype       self        utype       -        -       -      -   -  

@@ -60,6 +60,9 @@ Rebol [
 		e/id   = 'invalid-arg
 		e/arg1 = 'foo
 	]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/975
+	--assert all [error? e: try [make error! 1] e/id = 'invalid-arg]
+	
 ===end-group===
 
 
@@ -117,6 +120,12 @@ Rebol [
 			error? e: try [x: does [] last :x]
 			e/id = 'expect-arg
 		]
+	--test-- "object from error"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1001
+		--assert object? o: to-object try [1 / 0]
+		         o/code: 1
+		--assert error? e: to-error o
+		--assert e/code = 400
 ===end-group===
 
 ~~~end-file~~~

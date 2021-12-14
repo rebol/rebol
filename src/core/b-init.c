@@ -117,7 +117,7 @@ extern const REBYTE Str_Banner[];
 ***********************************************************************/
 {
 	if (rargs->options & RO_VERS) {
-		Debug_Fmt(Str_Banner, REBOL_VER, REBOL_REV, REBOL_UPD, REBOL_SYS, REBOL_VAR);
+		Debug_Fmt(Str_Banner, REBOL_VERSION);
 		OS_EXIT(0);
 	}
 }
@@ -754,6 +754,9 @@ extern const REBYTE Str_Banner[];
 #endif
 #ifdef INCLUDE_PNG_CODEC
 	Init_PNG_Codec();
+#endif
+#ifdef INCLUDE_QOI_CODEC
+	Init_QOI_Codec();
 #endif
 #ifdef INCLUDE_JPG_CODEC
 	Init_JPEG_Codec();

@@ -49,6 +49,12 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2428
 		--assert empty? exclude reduce [integer! decimal! percent! money! char! pair! tuple! time! date!] to-block scalar!
 
+	--test-- "immediate!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1195
+		--assert empty? exclude reduce [
+			none! logic! integer! decimal! percent! money! char! pair! tuple! time! date! datatype!
+			typeset! word! set-word! get-word! lit-word! refinement! issue! event!] to-block immediate!
+
 	--test-- "issue-456"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/456
 		--assert "make typeset! [none! logic!]" = mold third types-of :insert

@@ -60,6 +60,14 @@ Rebol [
 		--assert block? b: load ["print 'hello" "print 'there"]
 		--assert [print 'hello] = b/1
 		--assert [print 'there] = b/2
+
+	--test-- "Length-specified script embedding"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1941
+		--assert [print "hello"] = load {rebol [length: 14] print "hello" other stuff}
+		--assert 1 = try [do {rebol [length: 2] 1 other stuff}]
+		--assert [lib-local a] = words-of import {rebol [length: 5] a: 1 b: 2 print "evil code"}
+		--assert [lib-local a] = words-of import/check {rebol [length: 5 checksum: #{E9A16FDEC8FF093599E2AA10C30D2D98D1C541C5}] a: 1 b: 2 print "evil code"} #{E9A16FDEC8FF093599E2AA10C30D2D98D1C541C5}
+
 	--test-- "issue-858"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/858
 		--assert [<] = load mold [ < ]
@@ -77,7 +85,6 @@ Rebol [
 		]
 
 ===end-group===
-
 
 ===start-group=== "find-script native"
 	--test-- "find-script"

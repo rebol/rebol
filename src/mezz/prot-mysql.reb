@@ -1,9 +1,11 @@
 REBOL [
-	Title: "MySQL Protocol"
-	Purpose: "MySQL Driver for REBOL"
-	Name: 'mysql
-	Type: 'module
+	Name:     mysql
+	Type:     module
+	Options: [delay]
 	Exports: [connect-sql send-sql sql-escape to-sql-binary to-sql mysql-map-rebol-values]
+	Version: 2.1.0
+	Title:   "MySQL Protocol"
+	File:     https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/prot-mysql.reb
 	Authors: [
 		"Nenad Rakocevic / SOFTINNOV <mysql@softinnov.com>"
 		"Shixin Zeng <szeng@atronixengineering.com>"
@@ -11,8 +13,6 @@ REBOL [
 	]
 	Web: http://softinnov.org/rebol/mysql.shtml
 	Date: 27-May-2020
-	File: %prot-mysql.r
-	Version: 2.1.0
 	History: [
 		1.3.1 "Nenad Rakocevic" "Rebol2 original version"
 		2.0.0 "Shixin Zeng"     "Rebol3 async version"

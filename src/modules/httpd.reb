@@ -80,7 +80,6 @@ decode-target: wrap [
 		][
 			target
 		][	any [result/file %""] ]
-		if #"/" = first result/file [remove result/file]
 		new-line/skip result/values true 2 
 		result
 	]
@@ -238,7 +237,7 @@ sys/make-scheme [
 			/local target path info index modified If-Modified-Since
 		][
 			target: ctx/inp/target
-			target/file: path: join dirize ctx/config/root  clean-path/only target/file
+			target/file: path: join dirize ctx/config/root next clean-path/only target/file
 			ctx/out/header/Date: to-idate/gmt now
 			ctx/out/status: 200
 			either exists? path [
@@ -352,13 +351,13 @@ sys/make-scheme [
 				return false
 			]
 			dir: target/file
-			path: find/match dir ctx/config/root
+			path: join "/" find/match/tail dir ctx/config/root
 		
 			try/except [
 				out: make string! 2000
 				append out ajoin [
-					{<html><head><title>Index of /}	path
-					{</title></head><body bgcolor="white"><h1>Index of /} path
+					{<html><head><title>Index of } path
+					{</title></head><body bgcolor="white"><h1>Index of } path
 					{</h1><hr><pre>^/}
 				]
 				unless empty? path [
@@ -764,10 +763,12 @@ sys/make-scheme [
 		Do-log ctx
 		clients: ctx/parent/locals/clients
 		keep-alive: ctx/config/keep-alive
+		
 		either all [
 			keep-alive
 			open? port
 			ctx/requests <= keep-alive/2 ; limit to max requests
+			"close" <> select port/locals/inp/Header 'Connection ; client don't want or cannot handle persistent connection
 		][
 			ctx/requests: ctx/requests + 1
 			sys/log/info 'HTTPD ["Keep-alive:^[[22m" ctx/remote "requests:" ctx/requests]

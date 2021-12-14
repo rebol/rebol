@@ -27,13 +27,14 @@ supplement system/options/module-paths join what-dir %units/files/
 		]
 
 	--test-- "export"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/689
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1446
 		unset in system/contexts/user 'a
 		unset in system/contexts/user 'b
 		unset in system/contexts/user 'c
 		m: module [][export a: 1 b: 2 export c: does [a + b]]
 		--assert all [
-			object? spec: spec-of m
+			object? spec: spec-of m ;@@ https://github.com/Oldes/Rebol-issues/issues/1006
 			[a c] = spec/exports
 			m/c = 3
 			unset? :system/contexts/user/a
@@ -78,6 +79,11 @@ supplement system/options/module-paths join what-dir %units/files/
 			unset? :system/contexts/user/b
 			none? system/contexts/user/c
 		]
+	--test-- "select"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1380
+		m: module [] [a: 1]
+		--assert 1 = select m 'a
+		--assert none? select m 'b
 
 
 ===end-group===
@@ -123,6 +129,7 @@ supplement system/options/module-paths join what-dir %units/files/
 		]
 	--test-- "make module! integer!" ; not allowed
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1551
+	;@@ https://github.com/Oldes/Rebol-issues/issues/926
 		--assert all [
 			error? err: try [make module! 10]
 			err/id = 'bad-make-arg
@@ -139,7 +146,12 @@ supplement system/options/module-paths join what-dir %units/files/
 			error? err: try [make module! context [a: 1]]
 			err/id = 'bad-make-arg
 		]
-
+	--test-- "make module! empty block!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/898
+		--assert all [
+			error? err: try [to module! []]
+			err/id = 'bad-make-arg
+		]
 ===end-group===
 
 

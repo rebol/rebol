@@ -2,9 +2,14 @@ REBOL [
 	title: "REBOL 3 codec for ZIP files"
 	name: 'codec-zip
 	author: rights: "Oldes"
-	version: 0.0.3
+	version: 0.0.4
 	specification: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
 	history: [
+		30-Nov-2021 "Oldes" {
+			* Access to comment and extra field of uncompressed data
+			* Added support to include file comments, extras or insternal and external attributes
+			* Added support to include uncompressed data (useful when making APK targeting version 30 and above)
+		}
 		24-Oct-2019 "Oldes" {
 			* Refactored decoder so it is using central directory structure
 			* Added decode/info refinement used to resolve just the info about files without decompressing
@@ -78,7 +83,7 @@ register-codec [
 			cheader: binary/read bin [
 				          UI16LE         ; version made by
 				          UI16LE         ; version needed to extract
-				          BITSET16       ; general purpose bit flag
+				flags:    BITSET16       ; general purpose bit flag
 				method:   UI16LE         ; compression method
 				modified: MSDOS-DATETIME ; last modified
 				crc:      SI32LE         ; crc-32
@@ -131,7 +136,12 @@ register-codec [
 						sys/log/error 'ZIP ["CRC check failed!" crc "<>" crc2]
 					]
 				]
-				repend result [name reduce [modified data crc]]
+				data: reduce [modified data crc]
+				unless empty? extr [append append data quote   extra: extr]
+				unless empty? comm [append append data quote comment: comm]
+				if att-int <> 0    [append append data quote att-int: att-int]
+				if att-ext <> 0    [append append data quote att-ext: att-ext]
+				append/only append result name data
 			]
 
 			if only [
@@ -149,7 +159,7 @@ register-codec [
 
 	encode: wrap [
 		bin: dir: data: date: file: add-data: root: none
-		compressed-data: method:
+		compressed-data: method: att-ext: att-int:
 		compressed-size: size: crc: entries: filename-length: offset: 0
 
 		add-file: func[file [file!] /local dir spec][
@@ -178,12 +188,12 @@ register-codec [
 			]
 		]
 
-		add-data: func[file spec][
+		add-data: func[file spec /local no-compress? extra extra-length comm comm-length][
 			sys/log/info 'ZIP ["Adding:" as-green file]
 
 			any [file? file cause-error 'user 'message reduce [reform ["found" type? file "where file! expected"]]]
 			data: date: none
-			compressed-size: size: crc: filename-length: 0
+			compressed-size: size: crc: filename-length: extra-length: comm-length: att-ext: att-int: 0
 			any [
 				all [
 					block? spec 
@@ -192,6 +202,14 @@ register-codec [
 						  date!   (date: spec/1)
 						| string! (data: to binary! spec/1)
 						| binary! (data: spec/1)
+						| 'store  (no-compress?: true)
+						| quote extra: set extra binary! (extra-length: length? extra)
+						| quote comment: set comm [binary! | any-string!] (
+							if string? comm [comm: to binary! comm]
+							comm-length: length? comm
+						)
+						| quote att-int: set att-int integer!
+						| quote att-ext: set att-ext integer!
 						| 1 skip
 					]]
 				]
@@ -205,9 +223,13 @@ register-codec [
 					continue
 				]
 			]
+			data: any [data #{}]
+			crc: checksum data 'CRC32
+			size: length? data
 			method: either any [
-				none? data
-				lesser-or-equal? size: length? data length? compressed-data: compress data 'deflate
+				no-compress?
+				zero? size
+				lesser-or-equal? size length? compressed-data: compress data 'deflate
 			][
 				compressed-data: data
 				0 ;store
@@ -216,18 +238,21 @@ register-codec [
 			]
 
 			either compressed-data [
-				crc: checksum data 'CRC32
 				compressed-size: length? compressed-data
 			][	compressed-data: #{}
 				compressed-size: 0
 			]
+
 			if any [
 				none? date
 				"?date?" = form date ; temp fix for invalid date!
 			][	date: now ]
 
 			filename-length: length? file
-			offset: -1 + index? bin/buffer-write
+			offset: indexZ? bin/buffer-write
+
+			unless extra [extra: #{}]
+			unless comm  [comm:  #{}]
 
 			binary/write bin [
 				#{504B0304 1400 0000} ;signature / version / flags
@@ -242,22 +267,22 @@ register-codec [
 				BYTES          :compressed-data
 			]
 			binary/write dir [
-				#{504B0102 1400 1400 0000} ; signature / version made / version needed / flags
+				#{504B0102 1703 1400 0000} ; signature / version made / version needed / flags
 				UI16LE         :method
 				MSDOS-DATETIME :date
 				UI32LE         :crc
 				UI32LE         :compressed-size
 				UI32LE         :size
 				UI16LE         :filename-length
-				UI16LE         0 ; Extra field length
-				UI16LE         0 ; File comment length
-				UI16LE         0 ; Disk number where file starts
-				UI16LE         0 ; Internal file attributes
-				UI32LE         0 ; External file attributes
-				UI32LE         :offset ; Relative offset of local file header
+				UI16LE         :extra-length ; Extra field length
+				UI16LE         :comm-length  ; File comment length
+				UI16LE         0             ; Disk number where file starts
+				UI16LE         :att-int      ; Internal file attributes
+				UI32LE         :att-ext      ; External file attributes
+				UI32LE         :offset       ; Relative offset of local file header
 				BYTES          :file
-				;#{} ; Extra field
-				;#{} ; File comment
+				BYTES          :extra        ; Extra field
+				BYTES          :comm         ; File comment
 			]
 			++ entries
 		]
@@ -312,7 +337,7 @@ register-codec [
 		header [block!]  "[method cmp-size unc-size]"
 	][
 		bin: binary buffer
-		unless 67324752 = binary/read bin 'UI32LE [
+		unless 67324752 = binary/read bin 'UI32LE [ ;#{504B0304}
 			sys/log/error 'ZIP {Offset is not pointing to the "Local file header"}
 			return none
 		]

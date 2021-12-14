@@ -285,6 +285,12 @@ Rebol [
 	--test-- "issue-54"
 		--assert "ABCDE456" = replace "123456" "123" "ABCDE"
 		--assert "1!!2!!3"  = replace/all "1 2 3" " " "!!"
+
+	--test-- "overlapping replace"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1162
+		s: copy "abcde"
+		--assert "bcdee" = replace/all s copy/part s 4 skip s 1
+		
 ===end-group===
 
 ===start-group=== "REPLACE binary!"
@@ -337,6 +343,11 @@ Rebol [
 		str: "abc"
 		--assert #"Á" = str/1: str/1 + 96
 		--assert "Ábc" = str
+
+	--test-- "overlapping change"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1162
+		s: copy "12345"
+		--assert "23455" = change at s 1 skip s 1 s
 
 ===end-group===
 
@@ -1746,6 +1757,16 @@ Rebol [
 	--assert "^/" = to-string to-binary "^/"
 	--assert "^M^/"  = to-string to-binary "^M^/"
 	--assert #{0D0A} = to-binary to-string #{0D0A}
+
+--test-- "binary AND binary"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1013
+	--assert #{0102} and #{00FF} == #{0002}
+	--assert #{0102} and #{0300} == #{0100}
+	--assert #{0102} and #{03}   == #{0100}
+--test-- "binary OR binary"
+	--assert #{0102}  or #{00FF} == #{01FF}
+	--assert #{0102}  or #{0300} == #{0302}
+	--assert #{0102}  or #{03}   == #{0302}
 
 ===end-group===
 

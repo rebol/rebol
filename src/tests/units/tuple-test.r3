@@ -9,6 +9,12 @@ Rebol [
 ~~~start-file~~~ "TUPLE!"
 
 ===start-group=== "tuple"
+	--test-- "load tuple"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2462
+	--assert tuple? t: load {1.2.3.4.5.6.7.8.9.10.11.12}
+	--assert 12 = length? t
+	--assert error? try [load {1.2.3.4.5.6.7.8.9.10.11.12.13}] ; too long
+
 	--test-- "tuple divide"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1974
 	--assert (1.1.1 / 0.1)                   == 10.10.10
@@ -27,6 +33,34 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/180
 	--assert 1.1.1 = to-tuple 1.1.1
 	--assert 1.0.0 = to-tuple "1"
+
+	--test-- "to-tuple issue!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1105
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1110
+	--assert 1.2.3 = to-tuple #010203
+	--assert error? try [to-tuple #01020]
+	--assert "1.2.3.4.5.6.7.8.9.10.11.12" = mold to tuple! #0102030405060708090A0B0C
+	--assert error? try [to tuple! #0102030405060708090A0B0C0D] ; too long
+
+	--test-- "to-tuple binary!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1105
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1022
+	--assert 1.2.3 = to-tuple #{010203}
+	--assert "1.2.3.4.5.6.7.8.9.10.11.12" = mold to tuple! #{0102030405060708090A0B0C}
+	--assert "1.2.3.4.5.6.7.8.9.10.11.12" = mold to tuple! #{0102030405060708090A0B0C0D} ;
+
+	--test-- "to-tuple string!"
+	;@@ https://github.com/Oldes/rebol-issues/issues/1219
+	--assert 1.2.3 = to-tuple "1.2.3"
+	--assert "1.2.3.4.5.6.7.8.9.10.11.12" = mold to tuple! "1.2.3.4.5.6.7.8.9.10.11.12"
+	--assert error? try [to tuple! "1.2.3.4.5.6.7.8.9.10.11.12.13"] ; too long
+
+	--test-- "to-tuple block!"
+	;@@ https://github.com/Oldes/rebol-issues/issues/1219
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1022
+	--assert 1.2.3 = to-tuple [1 2 3]
+	--assert "1.2.3.4.5.6.7.8.9.10.11.12" = mold to tuple! [1 2 3 4 5 6 7 8 9 10 11 12]
+	--assert error? try [to tuple! [1 2 3 4 5 6 7 8 9 10 11 12 13]] ; too long
 
 	--test-- "reverse tuple"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/211
@@ -59,7 +93,22 @@ Rebol [
 	t: 1.2.3.4 t/4: none
 	--assert t == 1.2.3
 	--assert (t + 0.0.0.0) == 1.2.3.0
-	
+
+	--test-- "tuple extending"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1077
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1110
+	t: 1.2.3
+	--assert 5 = t/5: 5
+	--assert t = 1.2.3.0.5
+	--assert 12 = try [t/12: 12]
+
+	--test-- "setting tuple out-of bounds"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1384
+	t: 1.2.3
+	--assert 300 = t/1: 300
+	--assert -10 = t/2: -10
+	--assert t = 255.0.3
+		
 ===end-group===
 
 ===start-group=== "Logical operations"
@@ -79,6 +128,13 @@ Rebol [
 		--assert 0.0.0.0  = (1.2.3.255 xor -11111111111)
 		--assert 0.0.0.0  = (1.2.3.255 xor -1)
 		--assert 0.3.2.5  = (1.2.3.4   xor  1)
+	--test-- "equality"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1097
+		--assert equal? 1.2.3 1.2.3.0
+		--assert equiv? 1.2.3 1.2.3.0
+		--assert not strict-equal? 1.2.3 1.2.3.0
+		--assert not same? 1.2.3 1.2.3.0
+		--assert not same? reverse 1.2.3 reverse 1.2.3.0
 
 	
 ===end-group===

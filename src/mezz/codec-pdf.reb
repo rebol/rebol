@@ -1,12 +1,14 @@
 REBOL [
-	title: "REBOL 3 codec for PDF files"
-	name: 'codec-pdf
-	type: 'module
-	author: rights: "Oldes"
+	name:    pdf
+	type:    module
+	options: [delay]
 	version: 0.1.0
+	title:  "PDF file codec"
+	file:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-pdf.reb
+	author: "Oldes"
 	history: [16-Sep-2021 "Oldes" {Initial version - raw PDF data de/encode}]
 	notes: {
-		The codecs is so far able to decode PDF's Carousel Object Structure into Rebol structure.
+		The codec is so far able to decode PDF's Carousel Object Structure into Rebol structure.
 		https://web.archive.org/web/20121205012515/http://jimpravetz.com/blog/2012/12/in-defense-of-cos/
 		http://what-when-how.com/itext-5/understanding-the-carousel-object-system-itext-5/
 

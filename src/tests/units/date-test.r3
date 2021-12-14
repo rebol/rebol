@@ -174,6 +174,13 @@ Rebol [
 		--assert all [error? e: try [load {1/11/-00}] e/id = 'invalid]
 		--assert 1-Nov-2000 = try [load {1/11/0}] ; this is error in Red!
 
+	--test-- "invalid time in date"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1413
+		--assert error? try [load "3-Jan-2010/30:00"]
+		--assert error? try [load "3-Jan-2010/-30:00"]
+		--assert error? try [load "3-Jan-2010/-10:00"]
+		--assert error? try [load "3-Jan-2010/-30:00+1:0"]
+
 	--test-- "timezones"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1608
 		--assert all [date?  d: try [load {27-Jan-2009/13:50+5}] d/zone = 0:0]

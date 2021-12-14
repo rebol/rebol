@@ -177,3 +177,12 @@ if find codecs 'dds [
 		none
 	]
 ]
+
+if find codecs 'qoi [
+	extend codecs/qoi 'size? function ["Return QOI image size or none" img [file! url! binary!]][
+		unless binary? img [img: read/binary/part img 32]
+		unless find/match img #{716F6966} [return none]
+		try [return to pair! binary/read img [SKIP 4 UI32BE UI32BE]]
+		none
+	]
+]

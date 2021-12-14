@@ -548,6 +548,7 @@ emit [{
 #define REBOL_UPD } any [version/3 0] {
 #define REBOL_SYS } any [version/4 0] {
 #define REBOL_VAR } any [version/5 0] {
+#define REBOL_VERSION "} str-version {"
 }]
 
 ;-- Generate Lower-Level String Table ----------------------------------------
@@ -910,18 +911,41 @@ foreach section [boot-base boot-sys boot-mezz] [
 	set section make block! 200
 
 	foreach file first mezz-files [
-		file: load-file/header file
-		hdr: take file
+		code: load-file/header file
+		 hdr: take code
 		append get section either 'module = select hdr 'type [
-			compose/deep/only [
-				import module [
-					Title:   (select hdr 'title)
-					Name:    (select hdr 'name)
-					Version: (select hdr 'version)
-					Exports: (select hdr 'exports)
-				] ( file )
+			either find hdr/options 'delay [
+				compose [
+					sys/load-module/delay (
+						append
+						mold/only compose/deep/only [
+							Rebol [
+								Version: (any [select hdr 'version 0.0.0])
+								Title:   (select hdr 'title)
+								Name:    (select hdr 'name)
+								Date:    (select hdr 'date)
+								Author:  (select hdr 'author)
+								Exports: (select hdr 'exports)
+								Needs:   (select hdr 'needs)
+							]
+						]
+						mold/only/flat code
+					)
+				]
+			][
+				compose/deep/only [
+					import module [
+						Title:   (select hdr 'title)
+						Name:    (select hdr 'name)
+						Version: (select hdr 'version)
+						Date:    (select hdr 'date)
+						Author:  (select hdr 'author)
+						Exports: (select hdr 'exports)
+						Needs:   (select hdr 'needs)
+					] ( code )
+				]
 			]
-		][	file ]
+		][	code ]
 	]
 	remove-tests get section
 	mezz-files: next mezz-files
@@ -929,8 +953,8 @@ foreach section [boot-base boot-sys boot-mezz] [
 
 boot-protocols: make block! 20
 foreach file first mezz-files [
-	file: load-file/header file
-	hdr: to block! take file
+	code: load-file/header file
+	hdr: to block! take code
 	either all [
 		;- if protocol exports some function, import must be used so
 		;- the functions are available in user's context
@@ -939,17 +963,41 @@ foreach file first mezz-files [
 		'module  = select hdr 'type
 	][
 		;- using boot-mezz as this section is binded into lib context
-		append boot-mezz compose/deep/only [
-			import module [
-				Title:   (select hdr 'title)
-				Name:    (select hdr 'name)
-				Version: (select hdr 'version)
-				Exports: (select hdr 'exports)
-			] ( file )
+		append boot-mezz 
+		either find hdr/options 'delay [
+			compose [
+				sys/load-module/delay (
+					append
+					mold/only compose/deep/only [
+						Rebol [
+							Version: (any [select hdr 'version 0.0.0])
+							Title:   (select hdr 'title)
+							Name:    (select hdr 'name)
+							Date:    (select hdr 'date)
+							Author:  (select hdr 'author)
+							Exports: (select hdr 'exports)
+							Needs:   (select hdr 'needs)
+						]
+					]
+					mold/only/flat code
+				)
+			]
+		][ 
+			compose/deep/only [
+				import module [
+					Title:   (select hdr 'title)
+					Name:    (select hdr 'name)
+					Version: (select hdr 'version)
+					Date:    (select hdr 'date)
+					Author:  (select hdr 'author)
+					Exports: (select hdr 'exports)
+					Needs:   (select hdr 'needs)
+				] ( code )
+			]
 		]
 	][
 		;- else hidden module is used by default (see sys-start.reb)
-		append/only append/only boot-protocols hdr file
+		append/only append/only boot-protocols hdr code
 	]
 ]
 

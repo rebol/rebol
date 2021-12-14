@@ -1,18 +1,19 @@
 REBOL [
-	Title: "BBcode"
-	Name: 'codec-bbcode
-	Purpose: {Basic BBCode implementation. For more info about BBCode check http://en.wikipedia.org/wiki/BBCode}
-	Date: 24-Apr-2020/17:07:36+2:00
+	Name:    bbcode
+	Type:    module
+	Options: [delay]
 	Version: 0.3.0
+	Title:   "BBcode codec"
+	Purpose: {Basic BBCode implementation. For more info about BBCode check http://en.wikipedia.org/wiki/BBCode}
+	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-bbcode.reb
+	Date:    24-Apr-2020
+	Author:  "Oldes"
 	History: [
 		0.1.0  5-Jan-2009 "initial version"
 		0.2.0 19-Feb-2012 "review"
 		0.2.1 22-Aug-2012 "added [hr] and [anchor]"
 		0.3.0 24-Apr-2020 "ported to Rebol3"
 	]
-	File:    %codec-bbcode.r
-	Author:  "Oldes"
-	Type:    'module
 ]
 
 opened-tags: copy []
