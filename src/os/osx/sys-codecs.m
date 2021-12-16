@@ -27,6 +27,10 @@
 **
 ************************************************************************/
 #include "sys-codecs.h"
+#import <CoreGraphics/CGImage.h>
+#import <CoreGraphics/CGContext.h>
+#import <CoreGraphics/CGDataProvider.h>
+#import <ImageIO/ImageIO.h>
 #define kSDUTTypeHEIC ((__bridge CFStringRef)@"public.heic")
 #define kSDUTTypeHEIF ((__bridge CFStringRef)@"public.heif")
 #define kSDUTTypeDDS  ((__bridge CFStringRef)@"com.microsoft.dds")

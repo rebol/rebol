@@ -656,6 +656,7 @@ common: [
 		defines: ENDIAN_LITTLE
 		defines: USE_OLD_PIPE
 		cflags:  -Wno-pointer-sign
+		flag:    -mmacosx-version-min=10.9 
 	]
 	#if Linux? [
 		library: %m
