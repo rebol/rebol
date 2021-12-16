@@ -83,7 +83,7 @@ start: func [
 	script-args: args ; save for below
 	foreach [opt act] [
 		;args    [parse args ""]
-		do-arg  block!
+		do-arg  string!
 		debug   block!
 		secure  word!
 		import  [to-rebol-file import]
@@ -182,7 +182,7 @@ start: func [
 
 	;-- Evaluate: --do "some code" if found
 	if do-arg [
-		do intern do-arg
+		do intern load/all do-arg
 		unless script [quit/now]
 	]
 
