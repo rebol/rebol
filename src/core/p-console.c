@@ -116,12 +116,15 @@
 		return R_FALSE;
 
 	case A_MODIFY:
-		if (IS_WORD(arg)
-			&& (VAL_WORD_CANON(arg) == SYM_ECHO || VAL_WORD_CANON(arg) == SYM_LINE)
-		) {
+		if (IS_WORD(arg)) {
+			switch (VAL_WORD_CANON(arg)) {
+				case SYM_ECHO:  req->modify.mode = MODE_CONSOLE_ECHO; break;
+				case SYM_LINE:  req->modify.mode = MODE_CONSOLE_LINE; break;
+				case SYM_ERROR: req->modify.mode = MODE_CONSOLE_ERROR; break;
+				default: Trap1(RE_BAD_FILE_MODE, arg);
+			}
 			spec = D_ARG(3);
 			if (!IS_LOGIC(spec)) Trap2(RE_INVALID_VALUE_FOR, spec, arg);
-			req->modify.mode = (VAL_WORD_CANON(arg) == SYM_ECHO) ? MODE_CONSOLE_ECHO : MODE_CONSOLE_LINE;
 			req->modify.value = VAL_LOGIC(spec);
 			OS_DO_DEVICE(req, RDC_MODIFY);
 		} else Trap1(RE_BAD_FILE_MODE, arg);

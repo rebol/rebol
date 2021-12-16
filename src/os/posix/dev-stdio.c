@@ -309,18 +309,23 @@ static void Close_StdIO_Local(void)
 ***********************************************************************/
 {
 	long total;
-	if (req->modify.mode == MODE_CONSOLE_ECHO) {
-		if (Std_Out >= 0) {
-			if(req->modify.value) {
-				total = write(Std_Out, "\x1B[28m", 5);
-			} else {
-				total = write(Std_Out, "\x1B[8m", 4);
+	switch (req->modify.mode) {
+		case MODE_CONSOLE_ECHO:
+			if (Std_Out >= 0) {
+				if(req->modify.value) {
+					total = write(Std_Out, "\x1B[28m", 5);
+				} else {
+					total = write(Std_Out, "\x1B[8m", 4);
+				}
+				if (total < 0) {
+					req->error = errno;
+					return DR_ERROR;
+				}
 			}
-			if (total < 0) {
-				req->error = errno;
-				return DR_ERROR;
-			}
-		}
+			break;
+		case MODE_CONSOLE_ERROR:
+			Std_Out = req->modify.value ? STDERR_FILENO : STDOUT_FILENO;
+			break;
 	}
 	return DR_DONE;
 }
