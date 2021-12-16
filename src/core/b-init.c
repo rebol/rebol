@@ -895,6 +895,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	Set_Block(val, ser);
 
 	// other option values...
+	Set_Option_String(rargs->do_arg, OPTIONS_DO_ARG);
 	Set_Option_String(rargs->debug, OPTIONS_DEBUG);
 	Set_Option_String(rargs->version, OPTIONS_VERSION);
 	Set_Option_String(rargs->import, OPTIONS_IMPORT);
