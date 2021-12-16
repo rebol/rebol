@@ -204,7 +204,9 @@ start: func [
 				header: first code
 				parent: none
 				path: what-dir
-				args: script-args
+				; if there was used --args option, pass to script only this value
+				; and ignore other optional arguments
+				args: either system/options/flags/args [to block! first script-args][script-args]
 			]
 			either 'module = select first code 'type [
 				code: reduce [first+ code code]
