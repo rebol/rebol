@@ -189,15 +189,17 @@ static void Close_StdIO_Local(void)
 ***********************************************************************/
 {
 	long total;
+	int output;
 
 	if (GET_FLAG(req->modes, RDM_NULL)) {
 		req->actual = req->length;
 		return DR_DONE;
 	}
+	output = GET_FLAG(req->flags, RRF_ERROR) ? STDERR_FILENO : Std_Out;
 
-	if (Std_Out >= 0) {
+	if (output >= 0) {
 
-		total = write(Std_Out, req->data, req->length);
+		total = write(output, req->data, req->length);
 
 		if (total < 0) {
 			req->error = errno;

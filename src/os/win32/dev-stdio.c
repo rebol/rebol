@@ -427,11 +427,18 @@ static void Close_StdIO_Local(void)
 	const REBYTE *bp;
 	const REBYTE *cp;
 	const REBYTE *ep;
-	HANDLE hOutput = Std_Err ? Std_Err : Std_Out;
+	HANDLE hOutput;
 
 	if (GET_FLAG(req->modes, RDM_NULL)) {
 		req->actual = req->length;
 		return DR_DONE;
+	}
+	if (GET_FLAG(req->flags, RRF_ERROR)) {
+		hOutput = GetStdHandle(STD_ERROR_HANDLE);
+	}
+	else {
+		// use stderr if requested by user
+		hOutput = Std_Err ? Std_Err : Std_Out;
 	}
 
 	if (hOutput) {

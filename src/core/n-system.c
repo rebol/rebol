@@ -227,7 +227,7 @@ char *evoke_help = "Evoke values:\n"
 				Crash(9999);
 				break;
 			default:
-				Out_Str(cb_cast(evoke_help), 1);
+				Out_Str(cb_cast(evoke_help), 1, FALSE);
 			}
 		}
 		if (IS_INTEGER(arg)) {
@@ -246,7 +246,7 @@ char *evoke_help = "Evoke values:\n"
 				Check_Bind_Table();
 				break;
 			default:
-				Out_Str(cb_cast(evoke_help), 1);
+				Out_Str(cb_cast(evoke_help), 1, FALSE);
 			}
 		}
 	}

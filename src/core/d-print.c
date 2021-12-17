@@ -76,7 +76,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	static void Print_OS_Line(void)
+*/	static void Print_OS_Line(REBOOL err)
 /*
 **		Print a new line.
 **
@@ -89,6 +89,9 @@ static REBREQ *Req_SIO;
 	Req_SIO->length = 1;
 	Req_SIO->actual = 0;
 
+	if (err)
+		SET_FLAG(Req_SIO->flags, RRF_ERROR);
+
 	OS_DO_DEVICE(Req_SIO, RDC_WRITE);
 
 	if (Req_SIO->error) Crash(RP_IO_ERROR);
@@ -97,7 +100,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	static void Prin_OS_String(const REBYTE *bp, REBINT len, REBOOL uni)
+*/	static void Prin_OS_String(const REBYTE *bp, REBINT len, REBOOL uni, REBOOL err)
 /*
 **		Print a string, but no line terminator or space.
 **
@@ -118,6 +121,8 @@ static REBREQ *Req_SIO;
 	if (len == UNKNOWN) len = (REBINT)(uni ? wcslen((const wchar_t*)up) : LEN_BYTES(bp));
 
 	SET_FLAG(Req_SIO->flags, RRF_FLUSH);
+	if (err)
+		SET_FLAG(Req_SIO->flags, RRF_ERROR);
 
 	Req_SIO->actual = 0;
 	Req_SIO->data = buf;
@@ -144,23 +149,23 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/  void Out_Value(REBVAL *value, REBCNT limit, REBOOL mold, REBINT lines)
+*/  void Out_Value(REBVAL *value, REBCNT limit, REBOOL mold, REBINT lines, REBOOL err)
 /*
 ***********************************************************************/
 {
-	Print_Value(value, limit, mold); // higher level!
-	for (; lines > 0; lines--) Print_OS_Line();
+	Print_Value(value, limit, mold, err); // higher level!
+	for (; lines > 0; lines--) Print_OS_Line(err);
 }
 
 
 /***********************************************************************
 **
-*/	void Out_Str(const REBYTE *bp, REBINT lines)
+*/	void Out_Str(const REBYTE *bp, REBINT lines, REBOOL err)
 /*
 ***********************************************************************/
 {
-	Prin_OS_String(bp, UNKNOWN, 0);
-	for (; lines > 0; lines--) Print_OS_Line();
+	Prin_OS_String(bp, UNKNOWN, 0, err);
+	for (; lines > 0; lines--) Print_OS_Line(err);
 }
 
 
@@ -216,11 +221,11 @@ static REBREQ *Req_SIO;
 		}
 
 		if (lines == 0) i += 2; // start of next line
-		Prin_OS_String(BIN_SKIP(Trace_Buffer, i), tail-i, 0);
+		Prin_OS_String(BIN_SKIP(Trace_Buffer, i), tail-i, 0, TRUE);
 		//RESET_SERIES(Trace_Buffer);
 	}
 	else {
-		Out_Str(cb_cast("backtrace not enabled"), 1);
+		Out_Str(cb_cast("backtrace not enabled"), 1, TRUE);
 	}
 }
 
@@ -247,8 +252,8 @@ static REBREQ *Req_SIO;
 		for (; lines > 0; lines--) Append_Byte(Trace_Buffer, LF);
 	}
 	else {
-		Prin_OS_String(bp, len, uni);
-		for (; lines > 0; lines--) Print_OS_Line();
+		Prin_OS_String(bp, len, uni, TRUE);
+		for (; lines > 0; lines--) Print_OS_Line(TRUE);
 	}
 }
 
@@ -387,7 +392,7 @@ static REBREQ *Req_SIO;
 /*
 ***********************************************************************/
 {
-	Print_Value(value, limit, mold); // higher level!
+	Print_Value(value, limit, mold, TRUE); // higher level!
 }
 
 
@@ -797,7 +802,7 @@ mold_value:
 
 /***********************************************************************
 **
-*/  void Prin_Value(REBVAL *value, REBCNT limit, REBOOL mold)
+*/  void Prin_Value(REBVAL *value, REBCNT limit, REBOOL mold, REBOOL err)
 /*
 **		Print a value or block's contents for user viewing.
 **		Can limit output to a given size. Set limit to 0 for full size.
@@ -805,21 +810,21 @@ mold_value:
 ***********************************************************************/
 {
 	REBSER *out = Mold_Print_Value(value, limit, mold);
-	Prin_OS_String(out->data, out->tail, TRUE);
+	Prin_OS_String(out->data, out->tail, TRUE, err);
 }
 
 
 /***********************************************************************
 **
-*/  void Print_Value(REBVAL *value, REBCNT limit, REBOOL mold)
+*/  void Print_Value(REBVAL *value, REBCNT limit, REBOOL mold, REBOOL err)
 /*
 **		Print a value or block's contents for user viewing.
 **		Can limit output to a given size. Set limit to 0 for full size.
 **
 ***********************************************************************/
 {
-	Prin_Value(value, limit, mold);
-	Print_OS_Line();
+	Prin_Value(value, limit, mold, err);
+	Print_OS_Line(err);
 }
 
 

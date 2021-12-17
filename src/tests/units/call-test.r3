@@ -77,6 +77,12 @@ rebol-cmd: func[cmd][
 		--assert "13" = out-buffer
 		--assert "2"  = err-buffer
 
+	--test-- "Error printed to stderr"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1862
+		--assert -1 = rebol-cmd {--do "prin 1 1 / 0}
+		--assert "1" = out-buffer
+		--assert not none? find err-buffer "Math error"
+
 
 ===end-group===
 

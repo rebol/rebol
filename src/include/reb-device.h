@@ -96,6 +96,7 @@ enum {
 	RRF_ALLOC,		// Request is allocated, not a temp on stack
 	RRF_WIDE,		// Wide char IO
 	RRF_ACTIVE,		// Port is active, even no new events yet
+	RRF_ERROR,      // WRITE to std_err
 };
 
 // REBOL Device Errors:
