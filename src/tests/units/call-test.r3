@@ -32,8 +32,14 @@ rebol-cmd: func[cmd][
 		--assert out-buffer = {["a" "b"]^/["a" "b"]^/}
 		--assert 0 = rebol-cmd {units/files/print-args.r3 a "b c"}
 		--assert out-buffer = {["a" "b c"]^/["a" "b c"]^/}
-		--assert 0 = rebol-cmd {units/files/print-args.r3 a 'b " c'}
-		--assert out-buffer = {["a" {b " c}]^/["a" {b " c}]^/}
+		either find [Macintosh Linux] system/platform [
+			; single quotes are not used in Windows' command line
+			--assert 0 = rebol-cmd {units/files/print-args.r3 a 'b " c'}
+			--assert out-buffer = {["a" {b " c}]^/["a" {b " c}]^/}
+		][
+			--assert 0 = rebol-cmd {units/files/print-args.r3 a "b \" c"}
+			--assert out-buffer = {["a" {b " c}]^/["a" {b " c}]^/}
+		]
 	--test-- "script args 2"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2227
 		--assert 0 = rebol-cmd {-v}
