@@ -249,7 +249,7 @@ static void Close_StdIO_Local(void)
 										// WindowTitle.
 										// Fetch current window title.
 
-	GetConsoleTitle((LPWSTR)pszOldWindowTitle, MY_BUFSIZE);
+	GetConsoleTitle((LPWSTR)pszOldWindowTitle, MY_BUFSIZE>>1); // size is in wide chars, not bytes!
 
 	// Format a "unique" NewWindowTitle.
 	wsprintf((LPWSTR)pszNewWindowTitle, (LPCWSTR)"%d/%d",
