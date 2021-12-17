@@ -74,6 +74,7 @@
 		| ENABLE_EXTENDED_FLAGS | ENABLE_QUICK_EDIT_MODE | ENABLE_INSERT_MODE
 
 static HANDLE Std_Out = 0;
+static HANDLE Std_Err = 0;
 static HANDLE Std_Inp = 0;
 static HANDLE Std_Echo = 0;
 static REBCHR *Std_Buf = 0;		// for input and output
@@ -426,13 +427,14 @@ static void Close_StdIO_Local(void)
 	const REBYTE *bp;
 	const REBYTE *cp;
 	const REBYTE *ep;
+	HANDLE hOutput = Std_Err ? Std_Err : Std_Out;
 
 	if (GET_FLAG(req->modes, RDM_NULL)) {
 		req->actual = req->length;
 		return DR_DONE;
 	}
 
-	if (Std_Out) {
+	if (hOutput) {
 
 		bp = req->data;
 		ep = bp + req->length;
@@ -447,11 +449,11 @@ static void Close_StdIO_Local(void)
 
 				if (Redir_Out) { // for Console SubSystem (always UTF-8)
 					if (cp) {
-						ok = WriteFile(Std_Out, bp, cp - bp, &total, 0);
+						ok = WriteFile(hOutput, bp, cp - bp, &total, 0);
 						bp = Parse_ANSI_sequence(cp, ep);
 					}
 					else {
-						ok = WriteFile(Std_Out, bp, ep - bp, &total, 0);
+						ok = WriteFile(hOutput, bp, ep - bp, &total, 0);
 						bp = ep;
 					}
 					if (!ok) {
@@ -469,7 +471,7 @@ static void Close_StdIO_Local(void)
 						bp = ep;
 					}
 					if (len > 0) {// no error
-						ok = WriteConsoleW(Std_Out, Std_Buf, len, &total, 0);
+						ok = WriteConsoleW(hOutput, Std_Buf, len, &total, 0);
 						if (!ok) {
 							req->error = GetLastError();
 							return DR_ERROR;
@@ -484,7 +486,7 @@ static void Close_StdIO_Local(void)
 		} else {
 			// using MS built in ANSI processing
 			if (Redir_Out) { // Always UTF-8
-				ok = WriteFile(Std_Out, req->data, req->length, &total, 0);
+				ok = WriteFile(hOutput, req->data, req->length, &total, 0);
 			}
 			else {
 				// Convert UTF-8 buffer to Win32 wide-char format for console.
@@ -494,7 +496,7 @@ static void Close_StdIO_Local(void)
 				// because its UTF-8 with variable char sizes.
 				len = MultiByteToWideChar(CP_UTF8, 0, cs_cast(req->data), req->length, Std_Buf, BUF_SIZE);
 				if (len > 0) // no error
-					ok = WriteConsoleW(Std_Out, Std_Buf, len, &total, 0);
+					ok = WriteConsoleW(hOutput, Std_Buf, len, &total, 0);
 			}
 		}
 		req->actual = req->length;  // do not use "total" (can be byte or wide)
@@ -550,9 +552,10 @@ static void Close_StdIO_Local(void)
 					// CTRL-C pressed
 					Handled_Break = TRUE; // let the break handler (which is signaled later) to know,
 					                      // that we handled it already
-					SetConsoleTextAttribute(Std_Out, FOREGROUND_INTENSITY | FOREGROUND_MAGENTA);
-					WriteConsoleW(Std_Out, L"[ESC]\r\n", 7, NULL, 0);
-					SetConsoleTextAttribute(Std_Out, FOREGROUND_GREY);
+					HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
+					SetConsoleTextAttribute(hErr, FOREGROUND_INTENSITY | FOREGROUND_MAGENTA);
+					WriteConsoleW(hErr, L"[ESC]\r\n", 7, NULL, 0);
+					SetConsoleTextAttribute(hErr, FOREGROUND_GREY);
 					req->data[0] = '\x1B'; // ESC char
 					req->actual = 1;
 					return DR_DONE;
@@ -600,7 +603,7 @@ static void Close_StdIO_Local(void)
 	REBEVT evt;
 	DWORD  cNumRead, i, repeat; 
 	INPUT_RECORD irInBuf[8]; 
-	if (ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), irInBuf, 8, &cNumRead)) {
+	if (ReadConsoleInput(Std_Inp, irInBuf, 8, &cNumRead)) {
 		//printf("cNumRead: %u\n", cNumRead);
 		for (i = 0; i < cNumRead; i++) 
 		{
@@ -732,7 +735,7 @@ static void Close_StdIO_Local(void)
 	case MODE_CONSOLE_LINE:
 		Set_Input_Mode(ENABLE_LINE_INPUT | ENABLE_QUICK_EDIT_MODE | ENABLE_PROCESSED_INPUT, value);
 		Set_Input_Mode(ENABLE_MOUSE_INPUT, !value);
-		if(req->modify.value) {
+		if (value) {
 			SET_FLAG(req->modes, RDM_READ_LINE);
 		}
 		else {
@@ -740,6 +743,9 @@ static void Close_StdIO_Local(void)
 			SET_FLAG(req->flags, RRF_PENDING);
 			SET_FLAG(Devices[1]->flags, RDO_AUTO_POLL);
 		}
+		break;
+	case MODE_CONSOLE_ERROR:
+		Std_Err = value ? GetStdHandle(STD_ERROR_HANDLE) : 0;
 		break;
 	}
 	return DR_DONE;

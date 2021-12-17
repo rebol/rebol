@@ -9,11 +9,13 @@ Rebol [
 ~~~start-file~~~ "CALL"
 
 out-buffer: copy ""
+err-buffer: copy ""
 
 rebol-cmd: func[cmd][
 	clear out-buffer
+	clear err-buffer
 	insert cmd join to-local-file system/options/boot #" "
-	call/shell/wait/output cmd out-buffer
+	call/shell/wait/output/error cmd out-buffer err-buffer
 ] 
 
 ===start-group=== "Command-Line Interface"
@@ -58,6 +60,18 @@ rebol-cmd: func[cmd][
 			--assert 0 = rebol-cmd {--do "print system/options/args quit" `seq 1 1000`}
 			--assert #{17900469C3C78A614B60FEE4E3851EF6BAF9D876} =  checksum out-buffer 'sha1
 		]
+===end-group===
+
+
+===start-group=== "Error pipe"
+	--test-- "User controlled error output"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2468
+		; the port should be renamed from `input` to `io` or `console`, because it is not just an input!!
+		--assert 0 = rebol-cmd {--do "prin 1 modify system/ports/input 'error on prin 2 modify system/ports/input 'error off prin 3}
+		--assert "13" = out-buffer
+		--assert "2"  = err-buffer
+
+
 ===end-group===
 
 ~~~end-file~~~
