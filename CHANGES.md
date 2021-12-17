@@ -2,6 +2,82 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+## 2021 December
+
+### Features:
+
+* [`3d83ca`](https://github.com/Oldes/Rebol3/commit/3d83cac73affe6c07ae2fc08665a527ebf257d0c) Errors and debug messages printed to stderr
+* [`95d535`](https://github.com/Oldes/Rebol3/commit/95d5354c071290dcf8398d63c51d696cf8c1f4ce) Added possibility to change console output from `stdout` to `stderr` (windows)
+* [`9c4036`](https://github.com/Oldes/Rebol3/commit/9c40364ab6c5442ff0361456d6ed89ae60b651cd) Added possibility to change console output from `stdout` to `stderr` (posix)
+* [`53b04b`](https://github.com/Oldes/Rebol3/commit/53b04bd93c7d64f7d5f4e8f25308d51081055b96) New `lcm` native for resolving the least common multiple of two integers
+* [`12794b`](https://github.com/Oldes/Rebol3/commit/12794b36ca2758599e2f8647b6f68b796de0c5a6) New `gcd` native for resolving the greatest common divisor of two integers
+* [`f64cd3`](https://github.com/Oldes/Rebol3/commit/f64cd37ac70d36932215d226a5c85f110e8c973b) Partial `crush` decompression
+* [`b7fb49`](https://github.com/Oldes/Rebol3/commit/b7fb49bab839182c73aeacccf366ef4708b7b050) Optional custom LZ77-based compression algorithm (`crush`)
+* [`3a3076`](https://github.com/Oldes/Rebol3/commit/3a30769c1f03da4d78bcaace948b266c962b36cc) Bincode - added padding command `PAD`
+* [`fa46cb`](https://github.com/Oldes/Rebol3/commit/fa46cb46b1580f322b2007d16c3336defd074faa) BinCode - added commands: `F16LE`, `F16BE`, `F32LE`, `F32BE`, `F64LE` and `F64BE`
+* [`15de62`](https://github.com/Oldes/Rebol3/commit/15de62ce49cb6ead3478aa3062cc34e2eb1893df) QOI codec (The "Quite OK Image" format for fast, lossless image compression)
+* [`cc1025`](https://github.com/Oldes/Rebol3/commit/cc1025de878aebf9d39f0f8d783de9a99320754b) Added example how to prevent hacking attempts to the http test server
+* [`b4789f`](https://github.com/Oldes/Rebol3/commit/b4789fb597f0f14e9c17bd858395360b0875e116) Added example how to server `humans.txt` data from the test server
+
+### Changes:
+
+* [`3139f4`](https://github.com/Oldes/Rebol3/commit/3139f40e72fd34a626674b6d0aad949b7db1f648) Keep `/` at the head of the HTTP request target (`httpd` module)
+
+### Fixes:
+
+* [`84090f`](https://github.com/Oldes/Rebol3/commit/84090f9651be3d5d58b1fb2539257aea15b1d039) Resolved possible buffer overrun warning
+* [`738476`](https://github.com/Oldes/Rebol3/commit/738476556fe9202915859e738ed02cf4135d7772) Using system output to print version info
+* [`03a4b6`](https://github.com/Oldes/Rebol3/commit/03a4b6b64171a45eac4606c48e2ffb9979e5249f) Make project compile able with Xcode v13.2
+* [`d0aa12`](https://github.com/Oldes/Rebol3/commit/d0aa122b63c36d7a580b84cb62c33bed02dd24cc) Accidentally removed `--do` option storage done in https://github.com/Oldes/Rebol3/commit/ca7c0256d23f159dcebfa25146b4288efbe00cba
+* [`ca7c02`](https://github.com/Oldes/Rebol3/commit/ca7c0256d23f159dcebfa25146b4288efbe00cba) Interpreter too eagerly consuming command-line arguments & arguments containing whitespace
+* [`7f1343`](https://github.com/Oldes/Rebol3/commit/7f13439bd3f758b053bc5241db23b3bd4e5c7e17) Evaluate `--do` boot argument
+* [`6588c3`](https://github.com/Oldes/Rebol3/commit/6588c30fec0c92842f82fd35cb05c04426e0a1d3) `switch` with `ref!` value type
+* [`d744ce`](https://github.com/Oldes/Rebol3/commit/d744cee9ad83b76b61566b5de27b7a6e5c80afa6) Memory corruption when used `crush` compression
+* [`c33ff2`](https://github.com/Oldes/Rebol3/commit/c33ff26cbc272a863ab8f6de425af67622f50f46) Force garbage collection before measuring `delta-profile` stats
+* [`34e0e2`](https://github.com/Oldes/Rebol3/commit/34e0e2c29657dfaa8ebfc01342a4ff9339d23e0e) Missing change for: https://github.com/Oldes/Rebol3/commit/15de62ce49cb6ead3478aa3062cc34e2eb1893df
+* [`a09ee2`](https://github.com/Oldes/Rebol3/commit/a09ee2fc455af004f0a7d0f439615f9011ecd32d) `httpd` module: don't keep opened connection if client (like Rebol2) don't want it
+
+## 2021 November
+
+### Features:
+
+* [`5fa5b8`](https://github.com/Oldes/Rebol3/commit/5fa5b83a0ef64a68f0513112f6dc7171b5b2cc3f) Updated ZIP codec
+  * Access to comment and extra field of uncompressed data
+  * Added support to include file comments, extras or insternal and external attributes
+  * Added support to include uncompressed data (useful when making APK targeting version 30 and above)
+* [`b49781`](https://github.com/Oldes/Rebol3/commit/b4978111333a9af2228339ed3924bc6cc85c2d5b) Possibility to resolve context handle's type
+* [`27ab5a`](https://github.com/Oldes/Rebol3/commit/27ab5a4cbb934459ef2a04e4e06f93bccc137d1c) Make context type handles comparable
+* [`e837a8`](https://github.com/Oldes/Rebol3/commit/e837a88efb750bcee354a2306bdec19271782bf0) Allow `insert` on `object!`
+* [`cfe7e2`](https://github.com/Oldes/Rebol3/commit/cfe7e2a25534196a39f69866bb12a04829a44fb8) Allow `select` on `module`
+* [`5ae487`](https://github.com/Oldes/Rebol3/commit/5ae4871c87b839b8c1392fb3812f5d76c89ca06c) Register `.deb` file extension fith `AR` codec
+* [`3a5f9e`](https://github.com/Oldes/Rebol3/commit/3a5f9e50fa084954f76c8adf7bcb2e995d898a47) Including last git commit version in the `system/build/git` and full version info when used `-v` boot argument
+* [`4b321e`](https://github.com/Oldes/Rebol3/commit/4b321e3f0178056d1830e2f02b08ad557bdbc5d6) Extended maximum number of tuple values to 12
+* [`6f451f`](https://github.com/Oldes/Rebol3/commit/6f451f0c58a802ff598329320b29e8406e6be595) Tweaked doc-string of `clear` action
+* [`ab5ae7`](https://github.com/Oldes/Rebol3/commit/ab5ae7dd5573be0a2ef3d3c53e646e7721e10427) Improved doc-string for `at` and `atz` actions
+
+### Changes:
+
+* [`f9fe06`](https://github.com/Oldes/Rebol3/commit/f9fe06397609a60cfe32f66fb15d35ff402f5761) Including some of modules as a delayed (required to `import` them before use)
+* [`9458d4`](https://github.com/Oldes/Rebol3/commit/9458d4d6e34b9b263481ba4bf363aeb9ed56cb15) Modified single-line doc string for modules in the `help` output
+* [`d4e947`](https://github.com/Oldes/Rebol3/commit/d4e947639dff246565768892e623028eebae63ed) Storing `system/modules` as an `object!`; added support to include delayed modules
+* [`04c71d`](https://github.com/Oldes/Rebol3/commit/04c71d11d5f2bba500bd2a658336f33363ac6454) More detailed info about used compilation target; new build output names; rewritten build specification to be better prepared for a future cross-compilation possibility.
+
+### Fixes:
+
+* [`5f9695`](https://github.com/Oldes/Rebol3/commit/5f9695d9defe2bf3bcf6f07e1c0988471028d4c7) Enhanced precision in comparison of time with integer
+* [`b1a65b`](https://github.com/Oldes/Rebol3/commit/b1a65ba77e689905e241ac54c41aeaaa14210ea3) Using `call/shell` in the `launch` function
+* [`a14d3a`](https://github.com/Oldes/Rebol3/commit/a14d3afa777b6b67046b39a8127229da9347ae04) Use user context filtering only for pattern matches and with `strict-equal?`
+* [`74d0c3`](https://github.com/Oldes/Rebol3/commit/74d0c30fa98f5ab84a68748bdaf9641770b27d9d) There must be `get-word!` used in case that value is a function
+* [`e26d3d`](https://github.com/Oldes/Rebol3/commit/e26d3d40b955f71d1df2d598bff7880ce71076bf) Include user context values in the `help` output
+* [`067fee`](https://github.com/Oldes/Rebol3/commit/067fee59362a62858a99e309e4f4a2b4d3dc9c74) Length-specified script embedding
+* [`ef13db`](https://github.com/Oldes/Rebol3/commit/ef13db708605d3c192d2bf6ac9c85340772d8ac1) Improved resolving console width for help output trunctation
+* [`43886c`](https://github.com/Oldes/Rebol3/commit/43886c432448ebf82663e21dbd0cde4a2f2b777d) Improved resolving console width for help output trunctation
+* [`7a4a44`](https://github.com/Oldes/Rebol3/commit/7a4a441133d82c65364cbd8b5b8eadae354b6481) Improved resolving console width for help output trunctation
+* [`a96c89`](https://github.com/Oldes/Rebol3/commit/a96c89285e137795e3b29c86bc751520937aef50) Improved resolving console width for help output trunctation
+* [`cd1afe`](https://github.com/Oldes/Rebol3/commit/cd1afe70fe9d83dd33b19c88580341633bd3c9ba) Improved resolving console width for help output trunctation
+* [`e3520a`](https://github.com/Oldes/Rebol3/commit/e3520a2902f0efd9ef143ad6d5c9825b74e18cd0) Opening a library (extension import) requires absolute path
+* [`2b7b6c`](https://github.com/Oldes/Rebol3/commit/2b7b6cf9588a83351937657c3b473a7171ae3f01) Use default terminal width 80 chars when not resolved from system (CI)
+
 
 ## 2021 October
 
@@ -23,6 +99,7 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Changes:
 
+* [`5d1a4c`](https://github.com/Oldes/Rebol3/commit/5d1a4ca4809682cca267db5bfc01ba1a6426bd62) New wording for `repend/only` function doc string
 * [`2cd3c8`](https://github.com/Oldes/Rebol3/commit/2cd3c8f19b3c9096e442b7d16f16435b7fd755bd) Rewritten `compress` and `decompress` so it's now compatible with the recent Red language. Now it also correctly handles output buffer expansion. It does not store the uncompress length at the tail of compressed data anymore!
 * [`fb0daa`](https://github.com/Oldes/Rebol3/commit/fb0daad20211a8f5acc9f870c70cf130e011ec19) `at` action on image with pair position was 0-based, now is 1-based
 * [`c8a593`](https://github.com/Oldes/Rebol3/commit/c8a59362bc977556ed1876b6cb5c78f915cf29dd) Replaced internal `boot-print` and `loud-print` functions with system log calls
@@ -32,6 +109,10 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`502382`](https://github.com/Oldes/Rebol3/commit/50238280dd96bf386f3f4013026bb67bd4237d28) Generated RL defines were not counting with possibility of variadic arguments (like in RL_PRINT)
+* [`cd463f`](https://github.com/Oldes/Rebol3/commit/cd463feb183af76795f040108bbf43c773dd07fd) Make sure that TO_OSX define is used even for 64bit builds
+* [`5fcb00`](https://github.com/Oldes/Rebol3/commit/5fcb006327687a208bcc982bd2330d94e12bc89f) Using the new `compress` in build scripts
+* [`720514`](https://github.com/Oldes/Rebol3/commit/72051415e4a944b7d5042d93aa7db66cf62d655d) Wrong member name when `RAW_MAIN_ARGS` define is used
 * [`180264`](https://github.com/Oldes/Rebol3/commit/1802649a37489e208f70b0af4e1528a6b96b700c) Don't treat zero value in `mold/part` as unlimited output
 * [`aaed74`](https://github.com/Oldes/Rebol3/commit/aaed7495afe4cb6e9cd65748aca982d48ed28349) Removed debug trace
 * [`811bb3`](https://github.com/Oldes/Rebol3/commit/811bb35576964ea98b9df42a9968f4faa81c586f) Missing log traces in boot sequence
