@@ -117,7 +117,7 @@ extern const REBYTE Str_Banner[];
 ***********************************************************************/
 {
 	if (rargs->options & RO_VERS) {
-		Debug_Fmt(Str_Banner, REBOL_VERSION);
+		Out_Str(cb_cast(REBOL_VERSION), 0, FALSE);
 		OS_EXIT(0);
 	}
 }
@@ -819,12 +819,13 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 ***********************************************************************/
 {
 	REBVAL *val;
+	REBCHR *arg;
+	REBVAL *new;
 	REBSER *ser;
 	REBCHR *data;
 	REBCNT n;
 
 #ifdef RAW_MAIN_ARGS
-	REBVAL *new;
 	// make system/options/flags block even when not used...
 	val = Get_System(SYS_OPTIONS, OPTIONS_FLAGS);
 	Set_Block(val, Make_Block(3));
@@ -834,7 +835,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	// convert raw argument strings to block of strings...
 	ser = Make_Block(3);
 	for (n = 1; n < rargs->argc ; n++) {
-		REBCHR *arg = rargs->argv[n];
+		arg = rargs->argv[n];
 		if (arg == 0) continue; // shell bug
 		new = Append_Value(ser);
 		Set_String(new, Copy_OS_Str(arg, (REBINT)LEN_STR(arg)));
@@ -843,7 +844,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	val = Get_System(SYS_OPTIONS, OPTIONS_ARGS);
 	Set_Block(val, ser);
 #else
-
+	// collect flags...
 	ser = Make_Block(3);
 	n = 2; // skip first flag (ROF_EXT)
 	val = Get_System(SYS_CATALOG, CAT_BOOT_FLAGS);
@@ -874,8 +875,26 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	n = Set_Option_Word(rargs->boot, OPTIONS_BOOT_LEVEL);
 	if (n >= SYM_BASE && n <= SYM_MODS)
 		PG_Boot_Level = n - SYM_BASE; // 0 - 3
+	
+	// store args in a block
+	ser = Make_Block(3);
+	if (rargs->args) {
+		// if used --args, store this value as a first one
+		new = Append_Value(ser);
+		Set_String(new, Copy_OS_Str(rargs->args, (REBINT)LEN_STR(rargs->args)));
+	}
+	// the rest of args, if there are any...
+	for (n = 0; n < rargs->argc; n++) {
+		arg = rargs->argv[n];
+		if (arg == 0) continue; // shell bug
+		new = Append_Value(ser);
+		Set_String(new, Copy_OS_Str(arg, (REBINT)LEN_STR(arg)));
+		//if(arg[0]=='-')	VAL_SET_LINE(new);
+	}
+	val = Get_System(SYS_OPTIONS, OPTIONS_ARGS);
+	Set_Block(val, ser);
 
-	Set_Option_String(rargs->args, OPTIONS_ARGS);
+	// other option values...
 	Set_Option_String(rargs->do_arg, OPTIONS_DO_ARG);
 	Set_Option_String(rargs->debug, OPTIONS_DEBUG);
 	Set_Option_String(rargs->version, OPTIONS_VERSION);

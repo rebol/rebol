@@ -340,7 +340,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	val = Do_String(text->data, flags);
 	UNSAVE_SERIES(text);
 	if (IS_ERROR(val)) // && (VAL_ERR_NUM(val) != RE_QUIT)) {
-		Print_Value(val, 1000, FALSE);
+		Print_Value(val, 1000, FALSE, TRUE);
 
 	if (result) {
 		*result = Value_To_RXI(val);
@@ -457,7 +457,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	if (SET_JUMP(state)) {
 		POP_STATE(state, Saved_State);
 		Catch_Error(DS_NEXT); // Stores error value here
-		Out_Value(DS_NEXT, 0, FALSE, 0); // error
+		Out_Value(DS_NEXT, 0, FALSE, 0, TRUE); // error
 		DSP = 0;
 		return;
 	}
@@ -469,10 +469,10 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 			if (IS_TYPESET(types) && TYPE_CHECK(types, VAL_TYPE(top))) {
 				if (marker) {
 					DS_SKIP; // protect `top` from modification
-					Out_Str(marker, 0);
+					Out_Str(marker, 0, FALSE);
 					DS_DROP; 
 				}
-				Out_Value(top, 500, TRUE, 1); // limit, molded
+				Out_Value(top, 500, TRUE, 1, FALSE); // limit, molded
 			}
 //			else {
 //				Out_Str(Get_Type_Name(top), 1);
@@ -480,14 +480,14 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		} else {
 			if (VAL_ERR_NUM(top) != RE_HALT) {
 #ifdef COLOR_CONSOLE 
-				Out_Str(cb_cast("\x1B[1;35m"), 0);
-				Out_Value(top, 640, FALSE, 0); // error FORMed
-				Out_Str(cb_cast("\x1B[0m"), 0);
+				Out_Str(cb_cast("\x1B[1;35m"), 0, TRUE);
+				Out_Value(top, 640, FALSE, 0, TRUE); // error FORMed
+				Out_Str(cb_cast("\x1B[0m"), 0, TRUE);
 #else
 				Out_Value(top, 640, FALSE, 0); // error FORMed
 #endif
 //				if (VAL_ERR_NUM(top) > RE_THROW_MAX) {
-//					Out_Str("** Note: use WHY? for more about this error", 1);
+//					Out_Str("** Note: use WHY? for more about this error", 1, TRUE);
 //				}
 			}
 		}

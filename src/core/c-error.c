@@ -705,7 +705,7 @@ invalid_id:
 		POP_STATE(Top_State, Saved_State);
 		DSP++; // Room for return value
 		Catch_Error(DS_TOP); // Stores error value here
-		Print_Value(DS_TOP, 0, FALSE);
+		Print_Value(DS_TOP, 0, FALSE, TRUE);
 		Crash(RP_NO_CATCH);
 	}
 	SET_STATE(Top_State, Saved_State);

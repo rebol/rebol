@@ -55,6 +55,11 @@ Rebol [
 ===end-group===
 
 ===start-group=== "Load issues/wishes"
+	--test-- "load UTF8 string from binary with BOM"
+	;@@ https://github.com/red/red/issues/5000
+		--assert "3" = load #{223322}
+		--assert "3" = load #{EFBBBF223322}
+
 	--test-- "Load of a block!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/691
 		--assert block? b: load ["print 'hello" "print 'there"]

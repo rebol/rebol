@@ -166,7 +166,7 @@ static REBSER *Read_All_File(char *fname)
 	REBVAL *value = D_ARG(1);
 
 	if (IS_BLOCK(value)) Reduce_Block(VAL_SERIES(value), VAL_INDEX(value), 0);
-	Print_Value(DS_TOP, NO_LIMIT, 0);
+	Print_Value(DS_TOP, NO_LIMIT, 0, FALSE);
 	return R_UNSET; // reloads ds
 }
 
@@ -180,7 +180,7 @@ static REBSER *Read_All_File(char *fname)
 	REBVAL *value = D_ARG(1);
 
 	if (IS_BLOCK(value)) Reduce_Block(VAL_SERIES(value), VAL_INDEX(value), 0);
-	Prin_Value(DS_TOP, 0, 0);
+	Prin_Value(DS_TOP, 0, 0, FALSE);
 	return R_UNSET; // reloads ds
 }
 

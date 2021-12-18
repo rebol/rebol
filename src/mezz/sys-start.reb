@@ -83,7 +83,7 @@ start: func [
 	script-args: args ; save for below
 	foreach [opt act] [
 		;args    [parse args ""]
-		do-arg  block!
+		do-arg  string!
 		debug   block!
 		secure  word!
 		import  [to-rebol-file import]
@@ -182,7 +182,7 @@ start: func [
 
 	;-- Evaluate: --do "some code" if found
 	if do-arg [
-		do intern do-arg
+		do intern load/all do-arg
 		unless script [quit/now]
 	]
 
@@ -204,7 +204,9 @@ start: func [
 				header: first code
 				parent: none
 				path: what-dir
-				args: script-args
+				; if there was used --args option, pass to script only this value
+				; and ignore other optional arguments
+				args: either system/options/flags/args [to block! first script-args][script-args]
 			]
 			either 'module = select first code 'type [
 				code: reduce [first+ code code]

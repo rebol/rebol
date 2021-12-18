@@ -215,15 +215,9 @@ const struct arg_chr arg_chars2[] = {
 	OS_Get_Current_Dir(&rargs->current_dir);
 
 #else
-	int arg_buf_size=128;
 
 	REBCHR *arg;
-	REBCHR *args = NULL; // holds trailing args
-	int flag;
-	int i;
-	int len;
-	int size;
-	REBCHR *tmp;
+	int flag, i;
 
 	CLEARS(rargs);
 
@@ -241,6 +235,10 @@ const struct arg_chr arg_chars2[] = {
 		if (arg == 0) continue; // shell bug
 		if (*arg == '-') {
 			if (arg[1] == '-') {
+				if (arg[2] == 0) {
+					// --  stops options parsing for the interpreter
+					break;
+				}
 				// --option words
 				flag = find_option_word(arg+2);
 				if (flag & RO_EXT) {
@@ -280,35 +278,16 @@ const struct arg_chr arg_chars2[] = {
 		}
 		else {
 			// script filename
-			if (!rargs->script)
-				rargs->script = arg;
-			else {
-				if (!args) {
-					args = MAKE_STR(arg_buf_size);
-					if (!args) return;
-					args[0] = 0;
-				}
-				len = (int)LEN_STR(arg) + (int)LEN_STR(args) + 2;
-				size = arg_buf_size;
-				while (size < len) size *= 2;
-				if (size > arg_buf_size) {
-					tmp = args;
-					args = MAKE_STR(size);
-					if (!args) return;
-					memcpy(args, tmp, arg_buf_size);
-					arg_buf_size = size;
-					FREE_MEM(tmp);
-				}
-				len = arg_buf_size - (int)LEN_STR(args) - 2; // space remaining
-				JOIN_STR(args, arg, len);
-				JOIN_STR(args, TXT(" "), 1);
-			}
+			rargs->script = arg;
+			// after having processed a command-line argument as scriptname,
+			// all remaining arguments are passed as-is to the script (via system/options/args)
+			break;
 		}
 	}
-
-	if (args) {
-		args[LEN_STR(args)-1] = 0; // remove trailing space
-		Get_Ext_Arg(RO_ARGS, rargs, args);
+	// if there are still unprocessed args, pass them as a block (converted later in b-init.c)
+	if (argc > i++) {
+		rargs->argc = argc - i;
+		rargs->argv = argv + i;
 	}
 #endif
 }

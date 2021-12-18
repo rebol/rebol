@@ -26,4 +26,5 @@ REBOL [
 *console-modes* [
 	echo
 	line
+	error
 ]
