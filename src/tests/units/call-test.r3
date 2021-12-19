@@ -79,14 +79,14 @@ rebol-cmd: func[cmd][
 	--test-- "User controlled error output"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2468
 		; the port should be renamed from `input` to `io` or `console`, because it is not just an input!!
-		--assert 0 = rebol-cmd {--do "prin 1 modify system/ports/input 'error on prin 2 modify system/ports/input 'error off prin 3}
+		--assert 0 = rebol-cmd {--do "prin 1 modify system/ports/input 'error on prin 2 modify system/ports/input 'error off prin 3"}
 		--assert "13" = out-buffer
 		--assert "2"  = err-buffer
 
 	--test-- "Error printed to stderr"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1862
-		--assert -1 = rebol-cmd {--do "prin 1 1 / 0}
-		--assert "1" = out-buffer
+		--assert 1 = rebol-cmd {--do "prin 2 1 / 0"}
+		--assert "2" = out-buffer
 		--assert not none? find err-buffer "Math error"
 
 
