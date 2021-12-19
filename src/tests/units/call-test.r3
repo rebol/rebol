@@ -54,8 +54,14 @@ rebol-cmd: func[cmd][
 		--assert out-buffer = {["-v" "--" "-x"]^/["-v" "--" "-x"]^/}
 		--assert 0 = rebol-cmd {--args "a b" units/files/print-args.r3 -v}
 		--assert out-buffer = {["a b" "-v"]^/["a b"]^/}
+		; providing script using --script option
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2469
 		--assert 0 = rebol-cmd {--script units/files/print-args.r3 --args "a b" -- -v}
 		--assert out-buffer = {["a b" "-v"]^/["a b"]^/}
+		--assert 0 = rebol-cmd {--script units/files/print-args.r3 1 2}
+		--assert out-buffer = {["1" "2"]^/["1" "2"]^/}
+		--assert 0 = rebol-cmd {--args 1 --script units/files/print-args.r3 2}
+		--assert out-buffer = {["1" "2"]^/["1"]^/}
 	--test-- "script args 3"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2140
 		cmd: "units/files/print-args.r3"

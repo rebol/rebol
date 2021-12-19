@@ -278,9 +278,16 @@ const struct arg_chr arg_chars2[] = {
 		}
 		else {
 			// script filename
-			rargs->script = arg;
-			// after having processed a command-line argument as scriptname,
-			// all remaining arguments are passed as-is to the script (via system/options/args)
+			if (rargs->script) {
+				// we already have the script from --script option
+				// so this should be first arg instead.
+				--i; // revert the counter so this value is collected later
+			}
+			else {
+				rargs->script = arg;
+				// after having processed a command-line argument as scriptname,
+				// all remaining arguments are passed as-is to the script (via system/options/args)
+			}
 			break;
 		}
 	}
