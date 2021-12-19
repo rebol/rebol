@@ -85,8 +85,8 @@ rebol-cmd: func[cmd][
 
 	--test-- "Error printed to stderr"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1862
-		--assert 0 <> rebol-cmd {--do "prin 1 1 / 0"} ; returned number is not same across all systems!
-		--assert "1" = out-buffer
+		--assert 1 = rebol-cmd {--do "prin 2 1 / 0"}
+		--assert "2" = out-buffer
 		--assert not none? find err-buffer "Math error"
 
 

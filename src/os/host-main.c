@@ -346,7 +346,8 @@ int main(int argc, char **argv) {
 		)
 	){
 		if (n < 0 && !(Main_Args.options & RO_HALT)) {
-			RL_Do_String(b_cast("unless system/options/quiet [print {^[[mClosing in 3s!} wait 3] quit/return -1"), 0, 0);
+			RL_Do_String(b_cast("unless system/options/quiet [print {^[[mClosing in 3s!} wait 3]"), 0, 0);
+			OS_Exit(-n);
 		}
 		Host_Repl();
 	}
