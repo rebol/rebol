@@ -6,29 +6,33 @@ Rebol [
 	Version: 1.0.0
 ]
 
-unless exists? %sqlite.rebx [
-	;@@ this part should be part of the built-in system!
-	use [url bin compressed?][
-		;-- download extension for correct platform...      
-		url: rejoin [
-			https://github.com/Siskin-framework/Rebol-SQLite/releases/latest/download/
-			%sqlite- system/build/os #"-" system/build/arch %.rebx
-		]
-		if system/build/os <> 'windows [
-			append url %.gz
-			compressed?: true
-		]
+unless find system/modules 'sqlite [
+	unless exists? %sqlite.rebx [
+		;@@ this part should be part of the built-in system!
+		use [url bin compressed?][
+			;-- download extension for correct platform...      
+			url: rejoin [
+				https://github.com/Siskin-framework/Rebol-SQLite/releases/latest/download/
+				%sqlite- system/build/os #"-" system/build/arch %.rebx
+			]
+			if system/build/os <> 'windows [
+				append url %.gz
+				compressed?: true
+			]
 
-		print [as-green "Downloading:" as-yellow url]
-
-		bin: read url
-		if compressed? [ bin: decode 'GZIP bin ]
-		write %sqlite.rebx bin
+			print [as-green "Downloading:" as-yellow url]
+			if "true" = get-env "CI" [
+				;enhancing verbosity to try locate source of occasional read errors in CI
+				system/schemes/tls/set-verbose 4
+				codecs/der/verbose: 4
+			]
+			bin: read url
+			if compressed? [ bin: decode 'GZIP bin ]
+			write %sqlite.rebx bin
+		]
 	]
+	sqlite: import %sqlite.rebx
 ]
-
-sqlite: import %sqlite.rebx
-
 ? sqlite
 
 print sqlite/info

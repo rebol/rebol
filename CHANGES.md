@@ -25,6 +25,8 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`50caf1`](https://github.com/Oldes/Rebol3/commit/50caf12ba82301211bf4db3413f9891b4f849463) Returning same status code across all systems
+* [`993380`](https://github.com/Oldes/Rebol3/commit/9933803576873d1b38eeb2c148f97550f3de16a5) Command line consumes first argument when --script is used
 * [`84090f`](https://github.com/Oldes/Rebol3/commit/84090f9651be3d5d58b1fb2539257aea15b1d039) Resolved possible buffer overrun warning
 * [`738476`](https://github.com/Oldes/Rebol3/commit/738476556fe9202915859e738ed02cf4135d7772) Using system output to print version info
 * [`03a4b6`](https://github.com/Oldes/Rebol3/commit/03a4b6b64171a45eac4606c48e2ffb9979e5249f) Make project compile able with Xcode v13.2
