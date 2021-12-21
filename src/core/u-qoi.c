@@ -36,12 +36,13 @@
 #include "sys-core.h"
 
 #ifdef INCLUDE_QOI_CODEC
-#define QOI_IMPLEMENTATION
-#define QOI_NO_STDIO
-#include "sys-qoi.h"
 
 #define QOI_MALLOC(sz) Make_Mem(sz)
 #define QOI_FREE(p)    free(p)
+
+#define QOI_IMPLEMENTATION
+#define QOI_NO_STDIO
+#include "sys-qoi.h"
 
 /***********************************************************************
 **
