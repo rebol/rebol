@@ -78,8 +78,7 @@ rebol-cmd: func[cmd][
 ===start-group=== "Error pipe"
 	--test-- "User controlled error output"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2468
-		; the port should be renamed from `input` to `io` or `console`, because it is not just an input!!
-		--assert 0 = rebol-cmd {--do "prin 1 modify system/ports/input 'error on prin 2 modify system/ports/input 'error off prin 3"}
+		--assert 0 = rebol-cmd {--do "prin 1 modify system/ports/output 'error on prin 2 modify system/ports/output 'error off prin 3"}
 		--assert "13" = out-buffer
 		--assert "2"  = err-buffer
 
