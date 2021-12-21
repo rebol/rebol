@@ -372,14 +372,7 @@ context?: native [ ; was originally named `bound?`
 	;return: [object! function! none!]
 ]
 
-collect-words: native [
-	"Collect unique words used in a block (used for context construction)."
-	block [block!]
-	/deep "Include nested blocks"
-	/set "Only include set-words"
-	/ignore "Ignore prior words"
-	words [any-object! block! none!] "Words to ignore"
-]
+;collect-words: native [] ;defined in %n-data.c
 
 ;checksum:   native [] ; defined in %n-string.c
 ;compress:   native [] ; defined in %n-string.c

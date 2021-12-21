@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -365,7 +366,7 @@
 
 /***********************************************************************
 **
-*/  void Collect_Simple_Words(REBVAL *block, REBCNT modes)
+*/  void Collect_Simple_Words(REBVAL *block, REBCNT modes, REBINT type)
 /*
 **		Used for Collect_Block_Words().
 **
@@ -381,17 +382,20 @@
 		) {
 			binds[VAL_WORD_CANON(block)] = 1;
 			val = Append_Value(BUF_WORDS);
-			Init_Word(val, VAL_WORD_SYM(block));
+			VAL_SET(val, type);
+			VAL_WORD_INDEX(val) = 0;
+			VAL_WORD_FRAME(val) = 0;
+			VAL_WORD_SYM(val) = VAL_WORD_SYM(block);
 		}
 		else if (ANY_EVAL_BLOCK(block) && (modes & BIND_DEEP))
-			Collect_Simple_Words(VAL_BLK_DATA(block), modes);
+			Collect_Simple_Words(VAL_BLK_DATA(block), modes, type);
 	}
 }
 
 
 /***********************************************************************
 **
-*/  REBSER *Collect_Block_Words(REBVAL *block, REBVAL *prior, REBCNT modes)
+*/  REBSER *Collect_Block_Words(REBVAL *block, REBVAL *prior, REBCNT modes, REBINT type)
 /*
 **		Collect words from a prior block and new block.
 **
@@ -405,10 +409,10 @@
 	if (SERIES_TAIL(BUF_WORDS)) Crash(RP_WORD_LIST); // still in use
 
 	if (prior)
-		Collect_Simple_Words(prior, BIND_ALL);
+		Collect_Simple_Words(prior, BIND_ALL, type);
 
 	start = SERIES_TAIL(BUF_WORDS);
-	Collect_Simple_Words(block, modes);
+	Collect_Simple_Words(block, modes, type);
 
 	// Reset word markers:
 	for (block = BLK_HEAD(BUF_WORDS); NOT_END(block); block++)

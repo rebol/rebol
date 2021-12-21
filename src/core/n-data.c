@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -383,12 +384,16 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 **
 */	REBNATIVE(collect_words)
 /*
-**		1 block
-**		3 /deep
-**		4 /set
-**      4 /ignore
-**      5 object | block
-**
+//	collect-words: native [
+//		"Collect unique words used in a block (used for context construction)."
+//		block [block!]
+//		/deep    "Include nested blocks"
+//		/set     "Only include set-words"
+//		/ignore  "Ignore prior words"
+//		 words [any-object! block! none!] "Words to ignore"
+//		/as   "Datatype of the words in the returned block"
+//		 type [datatype!] "Any word type"
+//	]
 ***********************************************************************/
 {
 	REBSER *words;
@@ -396,6 +401,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	REBVAL *prior = 0;
 	REBVAL *block;
 	REBVAL *obj;
+	REBINT type;
 
 	block = VAL_BLK_DATA(D_ARG(1));
 
@@ -411,8 +417,11 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			prior = VAL_BLK_DATA(obj);
 		// else stays 0
 	}
+	type = D_REF(6) ? VAL_DATATYPE(D_ARG(7)) : REB_WORD;
+	if (type < REB_WORD || type > REB_ISSUE)
+		Trap1(RE_BAD_FUNC_ARG, D_ARG(7));
 
-	words = Collect_Block_Words(block, prior, modes);
+	words = Collect_Block_Words(block, prior, modes, type);
 	Set_Block(D_RET, words);
 	return R_RET;
 }
