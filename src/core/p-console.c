@@ -64,7 +64,6 @@
 	switch (action) {
 
 	case A_READ:
-
 		// If not open, open it:
 		if (!IS_OPEN(req)) {
 			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
@@ -92,7 +91,15 @@
 		if (req->actual > 0) req->actual -= 1; // remove LF from tail
 #endif
 
-		Set_Binary(ds, Copy_Bytes(req->data, req->actual));
+		// Convert to string or block of strings.
+		args = Find_Refines(ds, ALL_READ_REFS);
+		if (args & (AM_READ_STRING | AM_READ_LINES)) {
+			ser = Decode_UTF_String(req->data, req->actual, -1, TRUE, FALSE);
+			Set_String(ds, ser);
+			if (args & AM_READ_LINES) Set_Block(ds, Split_Lines(ds));
+		} else {
+			Set_Binary(ds, Copy_Bytes(req->data, req->actual));
+		}
 		break;
 
 	case A_UPDATE:
