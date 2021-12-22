@@ -1891,6 +1891,10 @@ Rebol [
 	--assert [%./ %dir]  = split-path %dir
 	--assert [%./ %dir/] = split-path %dir/
 	--assert [%dir/ %file.txt] = split-path %dir/file.txt
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2474
+	--assert [%/ %""] = split-path %/
+	--assert [%./ %""] = split-path %./
+	--assert [%../ %""] = split-path %../
 --test-- "split-path url!"
 	--assert [http://foo.net/ %aa.txt] = split-path http://foo.net/aa.txt
 	--assert [http:// %foo.net/] = split-path http://foo.net/ ;@@ could be better result!

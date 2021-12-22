@@ -161,8 +161,8 @@ split-path: func [
 	target [file! url! string!]
 	/local dir pos
 ][
-	parse/all target [
-		[#"/" | 1 2 #"." opt #"/"] end (dir: dirize target) |
+	parse target [
+		[#"/" | 1 2 #"." opt #"/"] end (pos: %"" dir: dirize target) |
 		pos: any [thru #"/" [end | pos:]] (
 			all [empty? dir: copy/part target at head target index? pos dir: %./]
 			all [find [%. %..] pos: to file! pos insert tail pos #"/"]
