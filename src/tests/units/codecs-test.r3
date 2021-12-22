@@ -399,6 +399,8 @@ if find codecs 'JSON [
 		data: #(a: 1 b: #(c: 2.0) d: "^/^-")
 		str: encode 'JSON data
 		--assert data = decode 'JSON str
+		; Github is using "+1" and "-1" keys in the `reactions` data now
+		--assert ["+1" 1] = to block! decode 'JSON {{"+1": 1}}
 	===end-group===
 ]
 
