@@ -79,7 +79,7 @@ typedef union rxi_arg_val {
 	} handle;
 	struct {
 		// keeping the same layout how it was before (first byte is size)
-		// there could probably be a more optimal way how to pass colors!
+		// There could be a more optimal way how to pass colors!
 		REBYTE tuple_len;
 		REBYTE tuple_bytes[MAX_TUPLE];
 	};
@@ -120,7 +120,7 @@ typedef int (*RXICAL)(int cmd, RXIFRM *args, REBCEC *ctx);
 #define RXA_WORD(f,n)	(RXA_ARG(f,n).int32a)
 #define RXA_PAIR(f,n)	(RXA_ARG(f,n).pair)
 #define RXA_TUPLE(f,n)	(RXA_ARG(f,n).tuple_bytes)
-#define RXA_TUPLE_SIZE(f,n)	(RXA_ARG(f,n).tuple_size)
+#define RXA_TUPLE_LEN(f,n)	(RXA_ARG(f,n).tuple_len)
 #define RXA_SERIES(f,n)	(RXA_ARG(f,n).series)
 #define RXA_INDEX(f,n)	(RXA_ARG(f,n).index)
 #define RXA_OBJECT(f,n)	(RXA_ARG(f,n).addr)
