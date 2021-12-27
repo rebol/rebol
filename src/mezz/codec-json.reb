@@ -236,10 +236,8 @@ json-object: [
 property-list: [property any [sep property]]
 property: [
 	json-name (
-		emit either parse _str [
-			and [word-1st any word-char]
-			not [#"+" | #"-"] some digit end ; do not try to convert +1 or -1 to words
-		] [to word! _str] [_str]
+		try [_str: to word! _str]
+		emit _str
 	)
 	json-value
 ]
