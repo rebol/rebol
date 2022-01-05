@@ -42,7 +42,16 @@ target-linux: [
 target-openbsd: [
 	os:       openbsd
 	sys:      openbsd
-	vendor:   unknown
+	platform: OpenBSD
+	vendor:   pc
+	compiler: clang
+]
+
+target-freebsd: [
+	os:       freebsd
+	sys:      freebsd
+	platform: FreeBSD
+	vendor:   pc
 	compiler: clang
 ]
 
@@ -377,16 +386,10 @@ include-image-codecs: [
 	#if Windows? [
 		:include-image-os-codec
 	]
-	#if Linux? [
-		:include-native-bmp-codec
-		:include-native-png-codec
-		:include-native-jpg-codec
-		:include-native-gif-codec
-	]
 	#if MacOS? [
 		:include-image-os-codec
 	]
-	#if OpenBSD? [
+	#if (any [Linux? OpenBSD? FreeBSD?]) [
 		:include-native-bmp-codec
 		:include-native-png-codec
 		:include-native-jpg-codec
@@ -442,10 +445,10 @@ include-iconv: [
 	#if macOS? [
 		library: %iconv
 	]
-	#if OpenBSD? [
+	#if (any [OpenBSD? FreeBSD?]) [
+		include: %/usr/local/include
+		library: %/usr/local/lib/
 		library: %iconv
-		cflags:  "-I/usr/local/include"
-		lflag: "-L/usr/local/lib"
 	]
 ]
 
@@ -683,11 +686,7 @@ common: [
 		cflags:  -Wno-pointer-sign
 		flag:    -mmacosx-version-min=10.9 
 	]
-	#if Linux? [
-		library: %m
-		defines: ENDIAN_LITTLE
-	]
-	#if OpenBSD? [
+	#if (any [Linux? OpenBSD? FreeBSD?]) [
 		library: %m
 		defines: ENDIAN_LITTLE
 	]
@@ -702,12 +701,8 @@ common-host: [
 		resource: %make/r3.rc
 	]
 	;#if Posix []
-	#if Linux? [
-	;	flag: -fvisibility=hidden
-		flag: -fPIC       ; position independent (used for libs)
-	]
-	#if OpenBSD? [
-		flag: -fPIC	; position independent (used for libs)
+	#if (any [Linux? OpenBSD? FreeBSD?]) [
+		flag: -fPIC ; position independent (used for libs)
 	]
 ]
 
@@ -731,6 +726,9 @@ arch-x64: [
 	#if OpenBSD? [
 		defines: TO_OPENBSD
 	]
+	#if FreeBSD? [
+		defines: TO_FREEBSD
+	]
 ]
 arch-x86: [
 	arch: x86
@@ -744,6 +742,9 @@ arch-x86: [
 	]
 	#if OpenBSD? [
 		defines: TO_OPENBSD
+	]
+	#if FreeBSD? [
+		defines: TO_FREEBSD
 	]
 ]
 arch-arm64: [
@@ -1003,6 +1004,39 @@ eggs: [
 			:make-x64-host
 		]
 	]
+	#if FreeBSD? [
+		"Rebol/Base freebsd-x64" [
+			name:   %rebol3-base-freebsd-x64
+			:target-freebsd
+			:make-x64-exe
+		]
+		"Rebol/Core freebsd-x64" [
+			name:   %rebol3-core-freebsd-x64
+			:target-freebsd
+			:include-rebol-core
+			:make-x64-exe
+		]
+		"Rebol/Bulk freebsd-x64" [
+			name:   %rebol3-bulk-freebsd-x64
+			:target-freebsd
+			:include-rebol-bulk
+			:make-x64-exe
+		]
+
+		"Rebol/Core freebsd-x64 shared library" [
+			name:   %lib-rebol3-core-freebsd-x64
+			:target-freebsd
+			:include-rebol-core
+			:make-x64-dll
+		]
+		"Rebol/Core freebsd-x64 host application" [
+			name:   %host-core-freebsd-x64
+			shared: %lib-rebol3-core-freebsd-x64
+			:target-freebsd
+			:include-rebol-core
+			:make-x64-host
+		]
+	]
 	"Test extension 32bit" [
 		name:  %test-x86.rebx
 		files: only %tests/extension/test.c
@@ -1020,6 +1054,10 @@ eggs: [
 			flag: -fPIC
 			:target-openbsd
 		]
+		#if FreeBSD? [
+			flag: -fPIC
+			:target-freebsd
+		]
 	]
 	"Test extension 64bit" [
 		name:  %test-x64.rebx
@@ -1036,6 +1074,10 @@ eggs: [
 		#if OpenBSD? [
 			flag: -fPIC
 			:target-openbsd
+		]
+		#if FreeBSD? [
+			flag: -fPIC
+			:target-freebsd
 		]
 	]
 ]
