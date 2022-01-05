@@ -1,7 +1,7 @@
 REBOL [
 	title: "REBOL3 TLSv1.2 protocol scheme"
-	name: 'tls
-	type: 'module
+	name:  tls
+	type:  module
 	author: rights: ["Richard 'Cyphre' Smolak" "Oldes" "Brian Dickens (Hostilefork)"]
 	version: 0.7.4
 	history: [
@@ -1599,7 +1599,8 @@ TLS-parse-handshake-message: function [
 							rsa_fixed_dh [
 								log-more "Checking signature using RSA_fixed_DH"
 								der: decode 'der signature
-								signature: join der/2/2 der/2/4
+								;@@ Review: der codec skips null char, which is needed here (reason for `head` calls)!
+								signature: join head der/2/2 head der/2/4
 								;? ctx/pub-key
 								;? signature
 								;? ctx/pub-key

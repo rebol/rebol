@@ -121,6 +121,7 @@ register-codec [
 						;data: enbase data 2
 					]
 					INTEGER [
+						;@@ TODO: review if the null skipping is correct!
 						if data/1 = 0 [data: next data]
 					]
 				]
