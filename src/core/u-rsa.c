@@ -43,6 +43,8 @@
 
 #if defined(TO_OSX_X64) || defined(TO_OSXI) || defined(TO_OSX)
 	#include <sys/malloc.h>
+#elif defined(TO_OPENBSD)
+	/* malloc(3) is inside stdlib.h */
 #else
 	#include <malloc.h>
 #endif
