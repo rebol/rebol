@@ -444,6 +444,7 @@ include-iconv: [
 	]
 	#if OpenBSD? [
 		library: %iconv
+		cflags:  "-I/usr/local/include"
 		lflag: "-L/usr/local/lib"
 	]
 ]
@@ -689,7 +690,6 @@ common: [
 	#if OpenBSD? [
 		library: %m
 		defines: ENDIAN_LITTLE
-		cflags:  "-I/usr/local/include"
 	]
 ]
 
