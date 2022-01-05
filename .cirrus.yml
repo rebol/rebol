@@ -1,0 +1,8 @@
+freebsd_instance:
+  image_family: freebsd-13-0
+
+task:
+#  install_script: pkg install -y ...
+  script:
+    - date
+    - uname -a

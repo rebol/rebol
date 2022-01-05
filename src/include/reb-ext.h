@@ -42,6 +42,11 @@
 */
 
 // Value structure (for passing args to and from):
+// o: originaly (before 64bit) it was designed to fit to 8bytes
+// o: but tuple was still allowed to have 10 bytes, so one could not receive
+// o: all possible tuple values in the extension side!!
+// Now, when there can be stored all 12 allowed tuple bytes, the value must have 16bytes
+// on both (32 and 64bit) targets, so maximum number of arguments could be extended (from 7 to 15)
 #pragma pack(4)
 typedef union rxi_arg_val {
 	void *addr;
@@ -72,6 +77,12 @@ typedef union rxi_arg_val {
 		REBFLG flags:16;  // Handle_Flags
 		REBCNT index:16;  // Index into Reb_Handle_Spec value
 	} handle;
+	struct {
+		// keeping the same layout how it was before (first byte is size)
+		// There could be a more optimal way how to pass colors!
+		REBYTE tuple_len;
+		REBYTE tuple_bytes[MAX_TUPLE];
+	};
 } RXIARG;
 
 // For direct access to arg array:
@@ -108,7 +119,8 @@ typedef int (*RXICAL)(int cmd, RXIFRM *args, REBCEC *ctx);
 #define RXA_DATE(f,n)	(RXA_ARG(f,n).int32a)
 #define RXA_WORD(f,n)	(RXA_ARG(f,n).int32a)
 #define RXA_PAIR(f,n)	(RXA_ARG(f,n).pair)
-#define RXA_TUPLE(f,n)	(RXA_ARG(f,n).bytes)
+#define RXA_TUPLE(f,n)	(RXA_ARG(f,n).tuple_bytes)
+#define RXA_TUPLE_LEN(f,n)	(RXA_ARG(f,n).tuple_len)
 #define RXA_SERIES(f,n)	(RXA_ARG(f,n).series)
 #define RXA_INDEX(f,n)	(RXA_ARG(f,n).index)
 #define RXA_OBJECT(f,n)	(RXA_ARG(f,n).addr)

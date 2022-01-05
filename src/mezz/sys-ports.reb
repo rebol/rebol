@@ -358,7 +358,8 @@ init-schemes: func [
 	]
 
 	system/ports/system:   open [scheme: 'system]
-	system/ports/input:    open [scheme: 'console]
+	system/ports/input:
+	system/ports/output:   open [scheme: 'console]
 	system/ports/callback: open [scheme: 'callback]
 
 	init-schemes: 'done ; only once

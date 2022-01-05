@@ -19,16 +19,16 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Install Siskin Builder
-      uses: oldes/install-siskin@v0.4.1
+      uses: oldes/install-siskin@v0.7.1
 
     - name: Build 64bit Rebol/Bulk using MSVC
-      run: ./siskin.exe make/rebol3.nest [msvc %rebol3-bulk-windows-x64]
+      run: ./siskin.exe make/rebol3.nest --msvc %rebol3-bulk-windows-x64
 
     - name: Prepare 64bit Rebol/Bulk for upload
       run: MOVE ./msvc/Release-x64/rebol3-bulk-windows-x64.exe ./rebol3-bulk-windows-x64.exe
 
     - name: Build 64bit test extension using MSVC
-      run: ./siskin.exe make/rebol3.nest [msvc %test-x64.rebx]
+      run: ./siskin.exe make/rebol3.nest --msvc %test-x64.rebx
 
     - name: Prepare 64bit test extension
       run: MOVE ./msvc/Release-x64/test-x64.rebx.dll ./test-x64.rebx
@@ -60,7 +60,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install Siskin Builder
-        uses: oldes/install-siskin@v0.4.1
+        uses: oldes/install-siskin@v0.7.1
 
       - name: Build 64bit Rebol/Bulk using gcc
         run: ./siskin make/rebol3.nest %rebol3-bulk-linux-x64
@@ -100,7 +100,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install Siskin Builder
-        uses: oldes/install-siskin@v0.4.1
+        uses: oldes/install-siskin@v0.7.1
 
       - name: Build 64bit Rebol/Bulk using clang
         run: ./siskin make/rebol3.nest %rebol3-bulk-macos-x64

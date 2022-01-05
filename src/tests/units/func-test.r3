@@ -190,6 +190,31 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "COLLECT-WORDS"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/544
+	blk: [a "b" c: 2 [:d e:]]
+	--test-- "collect-words"
+		--assert [a c] = collect-words blk
+	--test-- "collect-words/deep"
+		--assert [a c d e] = collect-words/deep blk
+	--test-- "collect-words/set"
+		--assert [c] = collect-words/set blk
+		--assert [c e] = collect-words/set/deep blk
+	--test-- "collect-words/ignore"
+		--assert [a c] = collect-words/ignore blk none
+		--assert [a] = collect-words/ignore blk [c]
+		--assert [c] = collect-words/ignore blk object [a: 1]
+	--test-- "collect-words/as"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/724
+		--assert [:a :c] = collect-words/as blk get-word!
+		--assert [a: c:] = collect-words/as blk set-word!
+		--assert ['a 'c] = collect-words/as blk lit-word!
+		--assert [/a /c] = collect-words/as blk refinement!
+		--assert [#a #c] = collect-words/as blk issue!
+		--assert all [error? e: try [collect-words/as blk string!] e/id = 'bad-func-arg]
+===end-group===
+
+
 ===start-group=== "Other issues"
 
 --test-- "issue-2025"

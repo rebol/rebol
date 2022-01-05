@@ -1,7 +1,7 @@
 REBOL [
 	title: "REBOL3 TLSv1.2 protocol scheme"
-	name: 'tls
-	type: 'module
+	name:  tls
+	type:  module
 	author: rights: ["Richard 'Cyphre' Smolak" "Oldes" "Brian Dickens (Hostilefork)"]
 	version: 0.7.4
 	history: [
@@ -411,6 +411,18 @@ TLS-init-cipher-suite: func [
 			]
 		)
 	]
+]
+
+pad-bin: function[
+	"Left binary padding"
+	bin [binary!]
+	len [integer!]
+][
+	if len > n: length? bin [
+		; using copy, because binary may not be at its head!
+		insert/dup copy bin 0 len - n
+	]
+	bin
 ]
 
 make-TLS-error: func [
@@ -1599,7 +1611,10 @@ TLS-parse-handshake-message: function [
 							rsa_fixed_dh [
 								log-more "Checking signature using RSA_fixed_DH"
 								der: decode 'der signature
-								signature: join der/2/2 der/2/4
+								n: select [secp256r1 32 secp384r1 48 secp521r1 66] ctx/pub-exp
+								x: pad-bin der/2/2 n
+								y: pad-bin der/2/4 n
+								signature: join x y
 								;? ctx/pub-key
 								;? signature
 								;? ctx/pub-key

@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.7.1
+version: 3.7.2
 
 target-windows: [
 	os:       windows
@@ -38,6 +38,12 @@ target-linux: [
 	sys:      linux
 	vendor:   pc
 	compiler: gcc
+]
+target-openbsd: [
+	os:       openbsd
+	sys:      openbsd
+	vendor:   unknown
+	compiler: clang
 ]
 
 core-files: [
@@ -380,6 +386,12 @@ include-image-codecs: [
 	#if MacOS? [
 		:include-image-os-codec
 	]
+	#if OpenBSD? [
+		:include-native-bmp-codec
+		:include-native-png-codec
+		:include-native-jpg-codec
+		:include-native-gif-codec
+	]
 	:include-native-qoi-codec
 	mezz-lib-files: %mezz/codec-image-ext.reb ; png/size? function and similar
 ]
@@ -417,12 +429,25 @@ include-midi: [
 	#if Linux? [
 		; there is no support yet
 	]
+	#if OpenBSD? [
+		; there is no support yet
+	]
 ]
 
 ;- native utilities:                                                            
 include-bincode:    [core-files: %core/u-bincode.c]
 include-dialecting: [core-files: %core/u-dialect.c config: INCLUDE_DELECT]
-include-iconv:      [core-files: %core/u-iconv.c #if macOS? [library: %iconv]]
+include-iconv: [
+	core-files: %core/u-iconv.c
+	#if macOS? [
+		library: %iconv
+	]
+	#if OpenBSD? [
+		library: %iconv
+		cflags:  "-I/usr/local/include"
+		lflag: "-L/usr/local/lib"
+	]
+]
 
 ;- native cryptography:                                                         
 include-cryptography: [
@@ -662,6 +687,10 @@ common: [
 		library: %m
 		defines: ENDIAN_LITTLE
 	]
+	#if OpenBSD? [
+		library: %m
+		defines: ENDIAN_LITTLE
+	]
 ]
 
 common-host: [
@@ -676,6 +705,9 @@ common-host: [
 	#if Linux? [
 	;	flag: -fvisibility=hidden
 		flag: -fPIC       ; position independent (used for libs)
+	]
+	#if OpenBSD? [
+		flag: -fPIC	; position independent (used for libs)
 	]
 ]
 
@@ -696,6 +728,9 @@ arch-x64: [
 		defines: TO_OSX_X64
 		defines: __LP64__ ; same like LLP64, but long (integer) has 64 bits instead of 32
 	] 
+	#if OpenBSD? [
+		defines: TO_OPENBSD
+	]
 ]
 arch-x86: [
 	arch: x86
@@ -706,6 +741,9 @@ arch-x86: [
 	#if Windows? [
 		resource-options: "--target=pe-i386"
 		defines: TO_WIN32
+	]
+	#if OpenBSD? [
+		defines: TO_OPENBSD
 	]
 ]
 arch-arm64: [
@@ -768,6 +806,7 @@ make-dll: [
 	;:common-host
 	defines: [REB_API]
 	flags:   [-O2 shared]
+	upx: off
 	#if Posix? [ flag: fPIC upx: off ]
 	#if macOS? [ flag: fno-common strip: off]
 	do %make/pre-make.r3 "$NEST_SPEC"
@@ -931,21 +970,72 @@ eggs: [
 			:make-x64-host
 		]
 	]
+	#if OpenBSD? [
+		"Rebol/Base openbsd-x64" [
+			name:   %rebol3-base-openbsd-x64
+			:target-openbsd
+			:make-x64-exe
+		]
+		"Rebol/Core openbsd-x64" [
+			name:   %rebol3-core-openbsd-x64
+			:target-openbsd
+			:include-rebol-core
+			:make-x64-exe
+		]
+		"Rebol/Bulk openbsd-x64" [
+			name:   %rebol3-bulk-openbsd-x64
+			:target-openbsd
+			:include-rebol-bulk
+			:make-x64-exe
+		]
+
+		"Rebol/Core openbsd-x64 shared library" [
+			name:   %lib-rebol3-core-openbsd-x64
+			:target-openbsd
+			:include-rebol-core
+			:make-x64-dll
+		]
+		"Rebol/Core openbsd-x64 host application" [
+			name:   %host-core-openbsd-x64
+			shared: %lib-rebol3-core-openbsd-x64
+			:target-openbsd
+			:include-rebol-core
+			:make-x64-host
+		]
+	]
 	"Test extension 32bit" [
 		name:  %test-x86.rebx
 		files: only %tests/extension/test.c
 		:arch-x86
 		compiler: gcc
 		flags: [-O2 shared]
-		#if Linux? [ flag: -fPIC ]
-		#either macOS? [:target-macos][compiler: gcc]
+		#if Linux? [
+			flag: -fPIC
+			compiler: gcc
+		]
+		#if MacOS? [
+			:target-macos
+		]
+		#if OpenBSD? [
+			flag: -fPIC
+			:target-openbsd
+		]
 	]
 	"Test extension 64bit" [
 		name:  %test-x64.rebx
 		files: only %tests/extension/test.c
 		:arch-x64
 		flags: [-O2 shared]
-		#if Linux? [ flag: -fPIC ]
-		#either macOS? [:target-macos][compiler: gcc]
+		#if Linux? [
+			flag: -fPIC
+			compiler: gcc
+		]
+		#if MacOS? [
+			:target-macos
+		]
+		#if OpenBSD? [
+			flag: -fPIC
+			:target-openbsd
+		]
 	]
 ]

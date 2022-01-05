@@ -45,6 +45,7 @@ enum {
 	RXE_IMAGE,	// image
 	RXE_DATE,	// from upper section
 	RXE_OBJECT, // any object
+	RXE_TUPLE,  // 3-12 bytes tuple value
 	RXE_MAX
 };
 
@@ -113,6 +114,10 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 		arg.width  = VAL_IMAGE_WIDE(val);
 		arg.height = VAL_IMAGE_HIGH(val);
 		break;
+	case RXE_TUPLE:
+		arg.tuple_len = VAL_TUPLE_LEN(val);
+		COPY_MEM(arg.tuple_bytes, VAL_TUPLE(val), MAX_TUPLE);
+		break;
 	case RXE_NULL:
 	default:
 		arg.int64 = 0;
@@ -160,6 +165,10 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 		VAL_SERIES(val) = arg.series;
 		VAL_IMAGE_WIDE(val) = arg.width;
 		VAL_IMAGE_HIGH(val) = arg.height;
+		break;
+	case RXE_TUPLE:
+		VAL_TUPLE_LEN(val) = arg.tuple_len;
+		COPY_MEM(VAL_TUPLE(val), arg.tuple_bytes, MAX_TUPLE);
 		break;
 	case RXE_NULL:
 		VAL_INT64(val) = 0;

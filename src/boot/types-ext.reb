@@ -26,7 +26,7 @@ percent		*	64
 
 char		10	32
 pair		*	64
-tuple		*	64
+tuple		*	tuple
 time		*	64
 date		*	date
 

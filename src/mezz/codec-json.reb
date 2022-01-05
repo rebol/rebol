@@ -3,7 +3,7 @@ Rebol [
 	Type:    module
 	Options: [delay]
 	Exports: [to-json load-json]
-	Version: 0.1.0
+	Version: 0.1.1
 	Title:   "JSON codec"
 	Purpose: "Convert Rebol value into JSON format and back."
 	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-json.reb
@@ -27,6 +27,7 @@ Rebol [
 		0.0.3 31-Aug-2018 "Gabriele" "Converted to non-recursive version"
 		0.0.4  9-Oct-2018 "Gabriele" "Back to an easier to read recursive version"
 		0.1.0 13-Feb-2020 "Oldes"    "Ported Red's version back to Rebol"
+		0.1.1 22-Dec-2021 "Oldes"    "Handle '+1' and/or '-1' JSON keys"
 	]
 
 	Rights:  "Copyright (C) 2019 Red Foundation. All rights reserved."
@@ -233,7 +234,13 @@ json-object: [
 ]
 
 property-list: [property any [sep property]]
-property: [json-name (emit either parse _str [word-1st any word-char] [to word! _str] [_str]) json-value]
+property: [
+	json-name (
+		try [_str: to word! _str]
+		emit _str
+	)
+	json-value
+]
 json-name: [ws* string-literal ws* #":"]
 
 ;-----------------------------------------------------------

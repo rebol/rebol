@@ -132,8 +132,12 @@ func-header: [
 				demit [tab p2 ","]
 				remit [tab p1 "(*" p2l ")" p3 ";"]
 				args: count p3 #","
+				argsd: either find args "__VA_ARGS__" [
+					;warning: __VA_ARGS__ can only appear in the expansion of a C99 variadic macro
+					replace copy args "__VA_ARGS__" "..."
+				][	args ]
 				m: tail mlib
-				memit/nol ["#define " p2u args]
+				memit/nol ["#define " p2u argsd]
 				memit [pads m 35 " RL->" p2l args]
 				if w: find cmt "****" [append clear w "*/"]
 				memit ["/*^/**^-" spec "^/**" cmt newline]

@@ -6,6 +6,8 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Features:
 
+* [`c474d0`](https://github.com/Oldes/Rebol3/commit/c474d052c13b2bbbf55b9f2d604560960ebf9a9a) Updated optional `qoi` (Quite OK Image) codec
+* [`b26f9b`](https://github.com/Oldes/Rebol3/commit/b26f9bff05bc8a73657ad62a7827c1d8bc28f370) `COLLECT-WORDS /as type [datatype!]` option
 * [`3d83ca`](https://github.com/Oldes/Rebol3/commit/3d83cac73affe6c07ae2fc08665a527ebf257d0c) Errors and debug messages printed to stderr
 * [`95d535`](https://github.com/Oldes/Rebol3/commit/95d5354c071290dcf8398d63c51d696cf8c1f4ce) Added possibility to change console output from `stdout` to `stderr` (windows)
 * [`9c4036`](https://github.com/Oldes/Rebol3/commit/9c40364ab6c5442ff0361456d6ed89ae60b651cd) Added possibility to change console output from `stdout` to `stderr` (posix)
@@ -21,10 +23,18 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Changes:
 
+* [`061773`](https://github.com/Oldes/Rebol3/commit/061773c4b206b650c0a57fc17903231df290b26d) Have `system/ports/output` to be same as `system/ports/input` (instead of `none`)
 * [`3139f4`](https://github.com/Oldes/Rebol3/commit/3139f40e72fd34a626674b6d0aad949b7db1f648) Keep `/` at the head of the HTTP request target (`httpd` module)
 
 ### Fixes:
 
+* [`c99eb2`](https://github.com/Oldes/Rebol3/commit/c99eb2ee16e1c02497e2aaa3e5ec4c6870b587cc) Better fix of JSON's non-valid-word keys (https://github.com/Oldes/Rebol3/commit/82efc99dca20e8d5b938ea51569cb7c208031b20)
+* [`dcdb67`](https://github.com/Oldes/Rebol3/commit/dcdb6711eb087a8122cc31742ee1fb72965d86d3) Correct tuple length struct name
+* [`015441`](https://github.com/Oldes/Rebol3/commit/015441e9701d538bdb64386fb25bf83b14204fca) Pass all 12 tuple bytes in the extension argument including info about tuple's size
+* [`ea3e47`](https://github.com/Oldes/Rebol3/commit/ea3e47ac39b9e8ca19f521b0c6377cf4a36efaa0) Warning: __VA_ARGS__ can only appear in the expansion of a C99 variadic macro
+* [`cf9b34`](https://github.com/Oldes/Rebol3/commit/cf9b34bc7bf7cdbfe33fd7711db475650523e4e1) `split-path` was returning `none` for these paths: `%/`, `%./` and `%../`
+* [`82efc9`](https://github.com/Oldes/Rebol3/commit/82efc99dca20e8d5b938ea51569cb7c208031b20) Don't fail when decoding "+1" key from `JSON` data
+* [`68679a`](https://github.com/Oldes/Rebol3/commit/68679a1ab82af1ad38ea64c792e9d828def70a65) `read/lines` and `read/string` on `system/ports/input` not working
 * [`50caf1`](https://github.com/Oldes/Rebol3/commit/50caf12ba82301211bf4db3413f9891b4f849463) Returning same status code across all systems
 * [`993380`](https://github.com/Oldes/Rebol3/commit/9933803576873d1b38eeb2c148f97550f3de16a5) Command line consumes first argument when --script is used
 * [`84090f`](https://github.com/Oldes/Rebol3/commit/84090f9651be3d5d58b1fb2539257aea15b1d039) Resolved possible buffer overrun warning
