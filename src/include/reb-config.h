@@ -210,10 +210,9 @@ These are now obsolete (as of A107) and should be removed:
 #define USE_SETENV 
 #endif
 
-#ifdef TO_OBSD					// OpenBSD
+#ifdef TO_OPENBSD				// OpenBSD
 #undef INCLUDE_MIDI_DEVICE      // Not implemented!
-#define COPY_STR(d,s,m) strlcpy(d,s,m)
-#define JOIN_STR(d,s,m) strlcat(d,s,m)
+#define USE_SETENV 
 #endif
 
 #ifdef TO_AMIGA					// Target for OS4
