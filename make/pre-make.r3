@@ -156,6 +156,7 @@ os:  any [
 		Macintosh: macos
 		Windows:   windows
 		Linux:     linux
+		OpenBSD:   openbsd
 	) platform	
 ]
 sys: any [
@@ -167,6 +168,7 @@ sys: any [
 		ios:     darwin
 		windows: win32
 		linux:   linux
+		openbsd: openbsd
 	) os	
 ]
 abi: any [
