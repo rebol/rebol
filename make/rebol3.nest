@@ -988,12 +988,6 @@ eggs: [
 			:include-rebol-bulk
 			:make-x64-exe
 		]
-		"Rebol/Bulk openbsd-arm64" [
-			name:   %rebol3-bulk-openbsd-arm64
-			:target-openbsd
-			:include-rebol-bulk
-			:make-arm64-exe
-		]
 
 		"Rebol/Core openbsd-x64 shared library" [
 			name:   %lib-rebol3-core-openbsd-x64
