@@ -2,7 +2,27 @@ freebsd_instance:
   image_family: freebsd-13-0
 
 task:
-#  install_script: pkg install -y ...
-  script:
+  install_script:
     - date
     - uname -a
+    - pkg install -y wget
+    - wget https://github.com/Siskin-framework/Builder/releases/download/0.7.2/Siskin-x64-freebsd.gz
+    - gunzip ./Siskin-x64-freebsd.gz
+    - mv ./Siskin-x64-freebsd.gz ./Siskin
+    - chmod u+x ./Siskin
+    - ./Siskin --version
+  matrix:
+    - name: Build Rebol3/Base
+      script:
+        - ./Siskin make/rebol3.nest %rebol3-base-freebsd-x64
+        - ./build/rebol3-base-freebsd-x64 -v
+
+    - name: Build Rebol3/Core
+      script:
+        - ./Siskin make/rebol3.nest %rebol3-core-freebsd-x64
+        - ./build/rebol3-core-freebsd-x64 -v
+
+    - name: Build Rebol3/Bulk
+      script:
+        - ./Siskin make/rebol3.nest %rebol3-bulk-freebsd-x64
+        - ./build/rebol3-bulk-freebsd-x64 -v
