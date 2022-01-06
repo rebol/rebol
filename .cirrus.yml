@@ -8,7 +8,7 @@ task:
     - pkg install -y wget
     - wget https://github.com/Siskin-framework/Builder/releases/download/0.7.2/Siskin-x64-freebsd.gz
     - gunzip ./Siskin-x64-freebsd.gz
-    - mv ./Siskin-x64-freebsd.gz ./Siskin
+    - mv ./Siskin-x64-freebsd ./Siskin
     - chmod u+x ./Siskin
     - ./Siskin --version
   matrix:
