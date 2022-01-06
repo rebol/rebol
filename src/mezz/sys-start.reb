@@ -19,7 +19,7 @@ REBOL [
 
 start: func [
 	"INIT: Completes the boot sequence. Loads extras, handles args, security, scripts."
-	/local tmp script-path script-args code ver
+	/local file dir tmp script-path script-args code ver
 ] bind [ ; context is: system/options (must use full path sys/log/.. as there is options/log too!)
 
 	;** Note ** We need to make this work for lower boot levels too!
@@ -66,6 +66,24 @@ start: func [
 	;sys/log/more 'REBOL ["Initial home:" home] ; always NONE at this state! 
 	;-  1. /path - that is current directory (resolved from C as a part of args processing)
 	;-  2. /boot - path to executable (resolved from C as well)                            
+	; Although the C is trying to resolve the exe path, on some platforms (BSD) it may fail.
+	; In such a case, try to find the exe in one of PATH directories...
+	; NOTE: this may be considered as not secure!
+	boot: any [to-real-file boot boot]
+	unless exists? boot [ 
+		file: second split-path boot
+		foreach tmp parse any [get-env "PATH" ""] pick ";:" system/platform = 'Windows [
+			dir: dirize as file! tmp
+			if exists? tmp: dir/:file [
+				boot: file: tmp
+				break
+			]
+		]
+		if boot <> file [
+			sys/log/error 'REBOL "Path to executable was not resolved!"
+			boot: none
+		]
+	]
 	;-  3. /home - preferably one of environment variables or current starting dir         
 	home: dirize to-rebol-file any [
 		get-env "REBOL_HOME"  ; User can set this environment variable with own location
