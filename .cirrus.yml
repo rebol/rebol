@@ -6,23 +6,24 @@ task:
     - date
     - uname -a
     - pkg install -y wget
-    - wget https://github.com/Siskin-framework/Builder/releases/download/0.7.2/Siskin-x64-freebsd.gz
+    - wget -nv https://github.com/Siskin-framework/Builder/releases/download/0.7.2/Siskin-x64-freebsd.gz
     - gunzip ./Siskin-x64-freebsd.gz
     - mv ./Siskin-x64-freebsd ./Siskin
     - chmod u+x ./Siskin
     - ./Siskin --version
   matrix:
-    - name: Build Rebol3/Base
-      script:
-        - ./Siskin make/rebol3.nest %rebol3-base-freebsd-x64
-        - ./build/rebol3-base-freebsd-x64 -v
+  # - name: Rebol3/Base FreeBSD ARM64
+  #   script:
+  #     - ./Siskin make/rebol3.nest %rebol3-base-freebsd-x64
+  #     - ./build/rebol3-base-freebsd-x64 -v
+  #
+  # - name: Rebol3/Core FreeBSD ARM64
+  #   script:
+  #     - ./Siskin make/rebol3.nest %rebol3-core-freebsd-x64
+  #     - ./build/rebol3-core-freebsd-x64 -v
 
-    - name: Build Rebol3/Core
-      script:
-        - ./Siskin make/rebol3.nest %rebol3-core-freebsd-x64
-        - ./build/rebol3-core-freebsd-x64 -v
-
-    - name: Build Rebol3/Bulk
+    - name: Rebol3/Bulk FreeBSD ARM64
       script:
         - ./Siskin make/rebol3.nest %rebol3-bulk-freebsd-x64
         - ./build/rebol3-bulk-freebsd-x64 -v
+        - ./build/rebol3-bulk-freebsd-x64 -s ./src/tests/run-tests.r3
