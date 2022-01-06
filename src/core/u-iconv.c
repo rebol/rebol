@@ -83,21 +83,18 @@ static struct {
 	{12001, "UCS4BE"},
 	{12001, "CP12001"},
 
-//#ifndef GLIB_COMPILATION
-//    /*
-//     * Default is big endian.
-//     * See rfc2781 4.3 Interpreting text labelled as UTF-16.
-//     */
-//    {1201, "UTF16"},
-//    {1201, "UTF-16"},
-//    {1201, "UCS2"},
-//    {1201, "UCS-2"},
-//    {12001, "UTF32"},
-//    {12001, "UTF-32"},
-//    {12001, "UCS-4"},
-//    {12001, "UCS4"},
-//#else
-	/* Default is little endian, because the platform is */
+#ifdef BIG_ENDIAN
+    // Big endian...
+    {1201, "UTF16"},
+    {1201, "UTF-16"},
+    {1201, "UCS2"},
+    {1201, "UCS-2"},
+    {12001, "UTF32"},
+    {12001, "UTF-32"},
+    {12001, "UCS-4"},
+    {12001, "UCS4"},
+#else
+    // Little endian variants
 	{1200, "UTF-16"},
 	{1200, "UTF16"},
 	{1200, "UCS-2"},
@@ -106,7 +103,7 @@ static struct {
 	{12000, "UTF32"},
 	{12000, "UCS-4"},
 	{12000, "UCS4"},
-//#endif
+#endif
 
 	/* copy from libiconv `iconv -l` */
 	/* !IsValidCodePage(367) */
@@ -231,6 +228,7 @@ static struct {
 	{936, "WINDOWS-936"},
 
 	{950, "CP950"},
+	{950, "BIG-5"},
 	{950, "BIG5"},
 	{950, "BIG5HKSCS"},
 	{950, "BIG5-HKSCS"},
@@ -319,31 +317,32 @@ static struct {
 	/* 709 		Arabic (ASMO-449+, BCON V4) */
 	/* 710 		Arabic - Transparent Arabic */
 	{720, "DOS-720"}, /* Arabic (Transparent ASMO); Arabic (DOS) */
-	{737, "ibm737"}, /* OEM Greek (formerly 437G); Greek (DOS) */
-	{775, "ibm775"}, /* OEM Baltic; Baltic (DOS) */
-	{850, "ibm850"}, /* OEM Multilingual Latin 1; Western European (DOS) */
-	{852, "ibm852"}, /* OEM Latin 2; Central European (DOS) */
+	{737, "IBM737"}, /* OEM Greek (formerly 437G); Greek (DOS) */
+	{775, "IBM775"}, /* OEM Baltic; Baltic (DOS) */
+	{850, "IBM850"}, /* OEM Multilingual Latin 1; Western European (DOS) */
+	{852, "IBM852"}, /* OEM Latin 2; Central European (DOS) */
 	{855, "IBM855"}, /* OEM Cyrillic (primarily Russian) */
-	{857, "ibm857"}, /* OEM Turkish; Turkish (DOS) */
+	{857, "IBM857"}, /* OEM Turkish; Turkish (DOS) */
 	{858, "IBM00858"}, /* OEM Multilingual Latin 1 + Euro symbol */
 	{860, "IBM860"}, /* OEM Portuguese; Portuguese (DOS) */
-	{861, "ibm861"}, /* OEM Icelandic; Icelandic (DOS) */
+	{861, "IBM861"}, /* OEM Icelandic; Icelandic (DOS) */
 	{862, "DOS-862"}, /* OEM Hebrew; Hebrew (DOS) */
 	{863, "IBM863"}, /* OEM French Canadian; French Canadian (DOS) */
 	{864, "IBM864"}, /* OEM Arabic; Arabic (864) */
 	{865, "IBM865"}, /* OEM Nordic; Nordic (DOS) */
-	{866, "cp866"}, /* OEM Russian; Cyrillic (DOS) */
-	{869, "ibm869"}, /* OEM Modern Greek; Greek, Modern (DOS) */
+	{866, "CP866"}, /* OEM Russian; Cyrillic (DOS) */
+	{869, "IBM869"}, /* OEM Modern Greek; Greek, Modern (DOS) */
 	{870, "IBM870"}, /* IBM EBCDIC Multilingual/ROECE (Latin 2); IBM EBCDIC Multilingual Latin 2 */
-	{874, "windows-874"}, /* ANSI/OEM Thai (same as 28605, ISO 8859-15); Thai (Windows) */
-	{875, "cp875"}, /* IBM EBCDIC Greek Modern */
-	{932, "shift_jis"}, /* ANSI/OEM Japanese; Japanese (Shift-JIS) */
-	{932, "shift-jis"}, /* alternative name for it */
-	{936, "gb2312"}, /* ANSI/OEM Simplified Chinese (PRC, Singapore); Chinese Simplified (GB2312) */
-	{949, "ks_c_5601-1987"}, /* ANSI/OEM Korean (Unified Hangul Code) */
-	{950, "big5"}, /* ANSI/OEM Traditional Chinese (Taiwan; Hong Kong SAR, PRC); Chinese Traditional (Big5) */
-	{950, "big5hkscs"}, /* ANSI/OEM Traditional Chinese (Hong Kong SAR); Chinese Traditional (Big5-HKSCS) */
-	{950, "big5-hkscs"}, /* alternative name for it */
+	{874, "WINDOWS-874"}, /* ANSI/OEM Thai (same as 28605, ISO 8859-15); Thai (Windows) */
+	{875, "CP875"}, /* IBM EBCDIC Greek Modern */
+	{932, "SHIFT_JIS"}, /* ANSI/OEM Japanese; Japanese (Shift-JIS) */
+	{932, "SHIFT-JIS"}, /* alternative name for it */
+	{936, "GB2312"}, /* ANSI/OEM Simplified Chinese (PRC, Singapore); Chinese Simplified (GB2312) */
+	{949, "KS_C_5601-1987"}, /* ANSI/OEM Korean (Unified Hangul Code) */
+	{950, "BIG-5"}, /* ANSI/OEM Traditional Chinese (Taiwan; Hong Kong SAR, PRC); Chinese Traditional (Big5) */
+	{950, "BIG5"},
+	{950, "BIG5-HKSCS"}, /* ANSI/OEM Traditional Chinese (Hong Kong SAR); Chinese Traditional (Big5-HKSCS) */
+	{950, "BIG5HKSCS"}, /* alternative name for it */
 	{1026, "IBM1026"}, /* IBM EBCDIC Turkish (Latin 5) */
 	{1047, "IBM01047"}, /* IBM EBCDIC Latin 1/Open System */
 	{1140, "IBM01140"}, /* IBM EBCDIC US-Canada (037 + Euro symbol); IBM EBCDIC (US-Canada-Euro) */
@@ -365,8 +364,8 @@ static struct {
 	{1256, "windows-1256"}, /* ANSI Arabic; Arabic (Windows) */
 	{1257, "windows-1257"}, /* ANSI Baltic; Baltic (Windows) */
 	{1258, "windows-1258"}, /* ANSI/OEM Vietnamese; Vietnamese (Windows) */
-	{1361, "Johab"}, /* Korean (Johab) */
-	{10000, "macintosh"}, /* MAC Roman; Western European (Mac) */
+	{1361, "JOHAB"}, /* Korean (Johab) */
+	{10000, "MACINTOSH"}, /* MAC Roman; Western European (Mac) */
 	{10001, "x-mac-japanese"}, /* Japanese (Mac) */
 	{10002, "x-mac-chinesetrad"}, /* MAC Traditional Chinese (Big5); Chinese Traditional (Mac) */
 	{10003, "x-mac-korean"}, /* Korean (Mac) */
@@ -392,7 +391,7 @@ static struct {
 	{20106, "x-IA5-German"}, /* IA5 German (7-bit) */
 	{20107, "x-IA5-Swedish"}, /* IA5 Swedish (7-bit) */
 	{20108, "x-IA5-Norwegian"}, /* IA5 Norwegian (7-bit) */
-	{20127, "us-ascii"}, /* US-ASCII (7-bit) */
+	{20127, "US-ASCII"}, /* US-ASCII (7-bit) */
 	{20261, "x-cp20261"}, /* T.61 */
 	{20269, "x-cp20269"}, /* ISO 6937 Non-Spacing Accent */
 	{20273, "IBM273"}, /* IBM EBCDIC Germany */
@@ -408,7 +407,7 @@ static struct {
 	{20424, "IBM424"}, /* IBM EBCDIC Hebrew */
 	{20833, "x-EBCDIC-KoreanExtended"}, /* IBM EBCDIC Korean Extended */
 	{20838, "IBM-Thai"}, /* IBM EBCDIC Thai */
-	{20866, "koi8-r"}, /* Russian (KOI8-R); Cyrillic (KOI8-R) */
+	{20866, "KOI8-R"}, /* Russian (KOI8-R); Cyrillic (KOI8-R) */
 	{20871, "IBM871"}, /* IBM EBCDIC Icelandic */
 	{20880, "IBM880"}, /* IBM EBCDIC Cyrillic Russian */
 	{20905, "IBM905"}, /* IBM EBCDIC Turkish */
@@ -416,63 +415,63 @@ static struct {
 	{20932, "EUC-JP"}, /* Japanese (JIS 0208-1990 and 0121-1990) */
 	{20936, "x-cp20936"}, /* Simplified Chinese (GB2312); Chinese Simplified (GB2312-80) */
 	{20949, "x-cp20949"}, /* Korean Wansung */
-	{21025, "cp1025"}, /* IBM EBCDIC Cyrillic Serbian-Bulgarian */
+	{21025, "CP1025"}, /* IBM EBCDIC Cyrillic Serbian-Bulgarian */
 	/* 21027 		(deprecated) */
-	{21866, "koi8-u"}, /* Ukrainian (KOI8-U); Cyrillic (KOI8-U) */
-	{28591, "iso-8859-1"}, /* ISO 8859-1 Latin 1; Western European (ISO) */
-	{28591, "iso8859-1"}, /* ISO 8859-1 Latin 1; Western European (ISO) */
-	{28591, "iso_8859-1"},
-	{28591, "iso_8859_1"},
-	{28592, "iso-8859-2"}, /* ISO 8859-2 Central European; Central European (ISO) */
-	{28592, "iso8859-2"}, /* ISO 8859-2 Central European; Central European (ISO) */
-	{28592, "iso_8859-2"},
-	{28592, "iso_8859_2"},
-	{28593, "iso-8859-3"}, /* ISO 8859-3 Latin 3 */
-	{28593, "iso8859-3"}, /* ISO 8859-3 Latin 3 */
-	{28593, "iso_8859-3"},
-	{28593, "iso_8859_3"},
-	{28594, "iso-8859-4"}, /* ISO 8859-4 Baltic */
-	{28594, "iso8859-4"}, /* ISO 8859-4 Baltic */
-	{28594, "iso_8859-4"},
-	{28594, "iso_8859_4"},
-	{28595, "iso-8859-5"}, /* ISO 8859-5 Cyrillic */
-	{28595, "iso8859-5"}, /* ISO 8859-5 Cyrillic */
-	{28595, "iso_8859-5"},
-	{28595, "iso_8859_5"},
-	{28596, "iso-8859-6"}, /* ISO 8859-6 Arabic */
-	{28596, "iso8859-6"}, /* ISO 8859-6 Arabic */
-	{28596, "iso_8859-6"},
-	{28596, "iso_8859_6"},
-	{28597, "iso-8859-7"}, /* ISO 8859-7 Greek */
-	{28597, "iso8859-7"}, /* ISO 8859-7 Greek */
-	{28597, "iso_8859-7"},
-	{28597, "iso_8859_7"},
-	{28598, "iso-8859-8"}, /* ISO 8859-8 Hebrew; Hebrew (ISO-Visual) */
-	{28598, "iso8859-8"}, /* ISO 8859-8 Hebrew; Hebrew (ISO-Visual) */
-	{28598, "iso_8859-8"},
-	{28598, "iso_8859_8"},
-	{28599, "iso-8859-9"}, /* ISO 8859-9 Turkish */
-	{28599, "iso8859-9"}, /* ISO 8859-9 Turkish */
-	{28599, "iso_8859-9"},
-	{28599, "iso_8859_9"},
-	{28603, "iso-8859-13"}, /* ISO 8859-13 Estonian */
-	{28603, "iso8859-13"}, /* ISO 8859-13 Estonian */
-	{28603, "iso_8859-13"},
-	{28603, "iso_8859_13"},
-	{28605, "iso-8859-15"}, /* ISO 8859-15 Latin 9 */
-	{28605, "iso8859-15"}, /* ISO 8859-15 Latin 9 */
-	{28605, "iso_8859-15"},
-	{28605, "iso_8859_15"},
+	{21866, "KOI8-U"}, /* Ukrainian (KOI8-U); Cyrillic (KOI8-U) */
+	{28591, "ISO-8859-1"}, /* ISO 8859-1 Latin 1; Western European (ISO) */
+	{28591, "ISO8859-1"}, /* ISO 8859-1 Latin 1; Western European (ISO) */
+	{28591, "ISO_8859-1"},
+	{28591, "ISO_8859_1"},
+	{28592, "ISO-8859-2"}, /* ISO 8859-2 Central European; Central European (ISO) */
+	{28592, "ISO8859-2"}, /* ISO 8859-2 Central European; Central European (ISO) */
+	{28592, "ISO_8859-2"},
+	{28592, "ISO_8859_2"},
+	{28593, "ISO-8859-3"}, /* ISO 8859-3 Latin 3 */
+	{28593, "ISO8859-3"}, /* ISO 8859-3 Latin 3 */
+	{28593, "ISO_8859-3"},
+	{28593, "ISO_8859_3"},
+	{28594, "ISO-8859-4"}, /* ISO 8859-4 Baltic */
+	{28594, "ISO8859-4"}, /* ISO 8859-4 Baltic */
+	{28594, "ISO_8859-4"},
+	{28594, "ISO_8859_4"},
+	{28595, "ISO-8859-5"}, /* ISO 8859-5 Cyrillic */
+	{28595, "ISO8859-5"}, /* ISO 8859-5 Cyrillic */
+	{28595, "ISO_8859-5"},
+	{28595, "ISO_8859_5"},
+	{28596, "ISO-8859-6"}, /* ISO 8859-6 Arabic */
+	{28596, "ISO8859-6"}, /* ISO 8859-6 Arabic */
+	{28596, "ISO_8859-6"},
+	{28596, "ISO_8859_6"},
+	{28597, "ISO-8859-7"}, /* ISO 8859-7 Greek */
+	{28597, "ISO8859-7"}, /* ISO 8859-7 Greek */
+	{28597, "ISO_8859-7"},
+	{28597, "ISO_8859_7"},
+	{28598, "ISO-8859-8"}, /* ISO 8859-8 Hebrew; Hebrew (ISO-Visual) */
+	{28598, "ISO8859-8"}, /* ISO 8859-8 Hebrew; Hebrew (ISO-Visual) */
+	{28598, "ISO_8859-8"},
+	{28598, "ISO_8859_8"},
+	{28599, "ISO-8859-9"}, /* ISO 8859-9 Turkish */
+	{28599, "ISO8859-9"}, /* ISO 8859-9 Turkish */
+	{28599, "ISO_8859-9"},
+	{28599, "ISO_8859_9"},
+	{28603, "ISO-8859-13"}, /* ISO 8859-13 Estonian */
+	{28603, "ISO8859-13"}, /* ISO 8859-13 Estonian */
+	{28603, "ISO_8859-13"},
+	{28603, "ISO_8859_13"},
+	{28605, "ISO-8859-15"}, /* ISO 8859-15 Latin 9 */
+	{28605, "ISO8859-15"}, /* ISO 8859-15 Latin 9 */
+	{28605, "ISO_8859-15"},
+	{28605, "ISO_8859_15"},
 	{29001, "x-Europa"}, /* Europa 3 */
-	{38598, "iso-8859-8-i"}, /* ISO 8859-8 Hebrew; Hebrew (ISO-Logical) */
-	{38598, "iso8859-8-i"}, /* ISO 8859-8 Hebrew; Hebrew (ISO-Logical) */
-	{38598, "iso_8859-8-i"},
-	{38598, "iso_8859_8-i"},
-	{50220, "iso-2022-jp"}, /* ISO 2022 Japanese with no halfwidth Katakana; Japanese (JIS) */
+	{38598, "ISO-8859-8-I"}, /* ISO 8859-8 Hebrew; Hebrew (ISO-Logical) */
+	{38598, "ISO8859-8-I"}, /* ISO 8859-8 Hebrew; Hebrew (ISO-Logical) */
+	{38598, "ISO_8859-8-I"},
+	{38598, "ISO_8859_8-I"},
+	{50220, "ISO-2022-JP"}, /* ISO 2022 Japanese with no halfwidth Katakana; Japanese (JIS) */
 	{50221, "csISO2022JP"}, /* ISO 2022 Japanese with halfwidth Katakana; Japanese (JIS-Allow 1 byte Kana) */
-	{50222, "iso-2022-jp"}, /* ISO 2022 Japanese JIS X 0201-1989; Japanese (JIS-Allow 1 byte Kana - SO/SI) */
-	{50225, "iso-2022-kr"}, /* ISO 2022 Korean */
-	{50225, "iso2022-kr"}, /* ISO 2022 Korean */
+	{50222, "ISO-2022-JP"}, /* ISO 2022 Japanese JIS X 0201-1989; Japanese (JIS-Allow 1 byte Kana - SO/SI) */
+	{50225, "ISO-2022-KR"}, /* ISO 2022 Korean */
+	{50225, "ISO2022-KR"}, /* ISO 2022 Korean */
 	{50227, "x-cp50227"}, /* ISO 2022 Simplified Chinese; Chinese Simplified (ISO 2022) */
 	/* 50229 		ISO 2022 Traditional Chinese */
 	/* 50930 		EBCDIC Japanese (Katakana) Extended */
@@ -482,11 +481,11 @@ static struct {
 	/* 50936 		EBCDIC Simplified Chinese */
 	/* 50937 		EBCDIC US-Canada and Traditional Chinese */
 	/* 50939 		EBCDIC Japanese (Latin) Extended and Japanese */
-	{51932, "euc-jp"}, /* EUC Japanese */
+	{51932, "EUC-JP"}, /* EUC Japanese */
 	{51936, "EUC-CN"}, /* EUC Simplified Chinese; Chinese Simplified (EUC) */
-	{51949, "euc-kr"}, /* EUC Korean */
+	{51949, "EUC-KR"}, /* EUC Korean */
 	/* 51950 		EUC Traditional Chinese */
-	{52936, "hz-gb-2312"}, /* HZ-GB2312 Simplified Chinese; Chinese Simplified (HZ) */
+	{52936, "HZ-GB-2312"}, /* HZ-GB2312 Simplified Chinese; Chinese Simplified (HZ) */
 	{54936, "GB18030"}, /* Windows XP and later: GB18030 Simplified Chinese (4 byte); Chinese Simplified (GB18030) */
 	{57002, "x-iscii-de"}, /* ISCII Devanagari */
 	{57003, "x-iscii-be"}, /* ISCII Bengali */
@@ -523,7 +522,7 @@ static REBINT get_codepage_id(REBVAL *cp)
 	else if ('0' <= name[0] && name[0] <= '9')
 		return atoi(cs_cast(name));     /* 123 */
 
-	for (i = 0; codepage_alias[i].name != NULL; ++i)
+	for (i = 0; codepage_alias[i].name != NULL; i++)
 		if (_stricmp(cs_cast(name), codepage_alias[i].name) == 0)
 			return codepage_alias[i].codepage;
 #else
@@ -532,9 +531,10 @@ static REBINT get_codepage_id(REBVAL *cp)
 	else if ('0' <= name[0] && name[0] <= '9')
 		return atoi(cs_cast(name));     /* 123 */
 
-	for (i = 0; codepage_alias[i].name != NULL; ++i)
+	for (i = 0; codepage_alias[i].name != NULL; i++) {
 		if (strcasecmp(cs_cast(name), codepage_alias[i].name) == 0)
 			return codepage_alias[i].codepage;
+	}
 #endif
 	return -1;
 }
@@ -554,7 +554,7 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 
 	//printf("get_codepage_name from: %d\n", id);
 
-	for (i = 0; codepage_alias[i].name != NULL; ++i) {
+	for (i = 0; codepage_alias[i].name != NULL; i++) {
 		if (codepage_alias[i].codepage == id) {
 			// printf("found: %s\n", codepage_alias[i].name);
 			return (REBYTE*)codepage_alias[i].name;
@@ -576,6 +576,27 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 		u16 num = data[i];
 		data[i] = (num>>8) | (num<<8);
 	}
+}
+#else
+/***********************************************************************
+**  Some iconv versions accepts only some names!
+**  For example on BSD `UTF-8` is accepted, but not `UTF8`.
+**  This function converts the input into numeric ID (as used on Windows)
+**  and than back to name, where prefered (supported) name should be first.
+**
+*/	static REBYTE* norm_codepage_name(REBVAL *cp)
+/*
+***********************************************************************/
+{
+	REBINT id;
+	REBYTE *name;
+	id = get_codepage_id(cp);
+	if (id == -1) return NULL;
+	for(int i = 0; codepage_alias[i].name != NULL; i++) {
+		if(codepage_alias[i].codepage == id)
+			return (REBYTE*)codepage_alias[i].name;
+	}
+	return NULL;
 }
 #endif
 
@@ -720,13 +741,20 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 	size_t dst_size;
 	size_t nread;
 	REBCNT tail;
-	const char *fromcode = cs_cast(get_codepage_name(val_from));
+
+	//TODO: currently only strings regisered in the aliases are supported
+	//      but iconv may support more variants, so we could try to convert
+	//      any given codepage names, and do normalization only when it fails!
+
+	const char *fromcode = cs_cast(norm_codepage_name(val_from));
 	const char *tocode;
 	int wide;
 
-	if (!fromcode) Trap1(RE_INVALID_ARG, val_from);
+	if (!fromcode) {
+		Trap1(RE_INVALID_ARG, val_from);
+	}
 	if (ref_to) {
-		tocode = cs_cast(get_codepage_name(val_to));
+		tocode = cs_cast(norm_codepage_name(val_to));
 		if (!tocode) Trap1(RE_INVALID_ARG, val_to);
 		wide = 1; // result is raw binary series
 	} else {
@@ -737,7 +765,7 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 	cd = iconv_open(tocode, fromcode);
 	if (cd == (iconv_t)-1) {
 		if (get_codepage_id(val_from) < 0) Trap1(RE_INVALID_ARG, val_from);
-		if (get_codepage_id(val_to) < 0) Trap1(RE_INVALID_ARG, val_to);
+		if (ref_to && get_codepage_id(val_to) < 0) Trap1(RE_INVALID_ARG, val_to);
 		Trap0(RE_FEATURE_NA);
 	}
 		

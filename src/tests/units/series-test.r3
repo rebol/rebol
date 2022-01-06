@@ -1476,6 +1476,15 @@ Rebol [
 	;--assert txt = iconv #{FFFE50005901690068006C00E100730069007400} 'UTF16
 	--assert (next txt) = iconv next #{50F869686CE1736974} 28592
 
+--test-- "ICONV from UTF-8"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2475
+	--assert "š" = iconv #{C5A1} 'utf8
+	--assert "š" = iconv #{C5A1} 'utf-8
+	--assert "š" = iconv #{C5A1} 'UTF8
+	--assert "š" = iconv #{C5A1} 'UTF-8
+	--assert "š" = iconv #{C5A1} 'CP65001
+	--assert "š" = iconv #{C5A1} 65001
+
 --test-- "ICONV with empty imput"
 	--assert "" = iconv #{} 28592
 	--assert "" = iconv #{} 'utf8
