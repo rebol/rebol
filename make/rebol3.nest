@@ -825,6 +825,30 @@ make-x64-dll:  [:arch-x64 :make-dll  ]
 make-x86-host: [:arch-x86 :make-host ]
 make-x64-host: [:arch-x64 :make-host ]
 
+make-ext-test: [
+	files: only %tests/extension/test.c
+	flags: [-O2 shared]
+	compiler: clang
+	#if Windows? [
+		defines: _CRT_SECURE_NO_WARNINGS
+	]
+	#if Linux? [
+		flag: -fPIC
+		compiler: gcc
+	]
+	#if MacOS? [
+		:target-macos
+	]
+	#if OpenBSD? [
+		flag: -fPIC
+		:target-openbsd
+	]
+	#if FreeBSD? [
+		flag: -fPIC
+		:target-freebsd
+	]
+]
+
 eggs: [
 	#if Windows? [
 ;		"Pre-make (minimum included)" [
@@ -1039,45 +1063,12 @@ eggs: [
 	]
 	"Test extension 32bit" [
 		name:  %test-x86.rebx
-		files: only %tests/extension/test.c
 		:arch-x86
-		compiler: gcc
-		flags: [-O2 shared]
-		#if Linux? [
-			flag: -fPIC
-			compiler: gcc
-		]
-		#if MacOS? [
-			:target-macos
-		]
-		#if OpenBSD? [
-			flag: -fPIC
-			:target-openbsd
-		]
-		#if FreeBSD? [
-			flag: -fPIC
-			:target-freebsd
-		]
+		:make-ext-test
 	]
 	"Test extension 64bit" [
 		name:  %test-x64.rebx
-		files: only %tests/extension/test.c
 		:arch-x64
-		flags: [-O2 shared]
-		#if Linux? [
-			flag: -fPIC
-			compiler: gcc
-		]
-		#if MacOS? [
-			:target-macos
-		]
-		#if OpenBSD? [
-			flag: -fPIC
-			:target-openbsd
-		]
-		#if FreeBSD? [
-			flag: -fPIC
-			:target-freebsd
-		]
+		:make-ext-test
 	]
 ]
