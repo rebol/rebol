@@ -781,7 +781,7 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 		nread = iconv(cd, &src, &src_size, &dst, &dst_size);
 		//printf("ret: %d src_size: %d dst_size: %d %d\n", nread, src_size, dst_size, (REBYTE *)dst - BIN_HEAD(dst_wide));
 		if(nread == (size_t)-1) {
-			printf("iconv failed: %d\n", errno );
+			//printf("iconv failed: %d\n", errno );
 			if(errno == E2BIG) {
 				// There is not sufficient room at destination
 				if (SERIES_SPACE(dst_wide) < (4 * src_len)) {
