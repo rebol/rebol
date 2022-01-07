@@ -40,7 +40,6 @@
 #ifdef INCLUDE_CRUSH
 
 #ifdef _MSC_VER
-#define _CRT_SECURE_NO_WARNINGS
 #define _CRT_DISABLE_PERFCRIT_LOCKS
 #endif
 
