@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,6 +51,18 @@
 	#define MBEDTLS_RIPEMD160_C
 	#else
 	#undef MBEDTLS_RIPEMD160_C
+	#endif
+
+	#if defined(INCLUDE_SHA224)
+	#define MBEDTLS_SHA224_C
+	#else
+	#undef MBEDTLS_SHA224_C
+	#endif
+
+	#if defined(INCLUDE_SHA384)
+	#define MBEDTLS_SHA384_C
+	#else
+	#undef MBEDTLS_SHA384_C
 	#endif
 #else
 	// no mbedTLS
