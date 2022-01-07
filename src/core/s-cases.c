@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -901,6 +902,22 @@ static const REBUNI Char_Cases[] = {
 	0, 0
 };
 
+#ifdef _DEBUG
+/*
+ * Debug helpers to easily find location of issues like
+ * https://github.com/Oldes/Rebol-issues/issues/2476
+ */
+REBCNT _To_Upper_Case(REBCNT c) {
+	if (c >= UNICODE_CASES)
+		abort();
+	return Upper_Cases[c];
+}
+REBCNT _To_Lower_Case(REBCNT c) {
+	if (c >= UNICODE_CASES)
+		abort();
+	return Lower_Cases[c];
+}
+#endif
 
 /***********************************************************************
 **
@@ -927,15 +944,15 @@ static const REBUNI Char_Cases[] = {
 	Lower_Cases = Make_Mem(UNICODE_CASES * sizeof(REBUNI));
 
 	for (n = 0; n < UNICODE_CASES; n++) {
-		UP_CASE(n) = n;
-		LO_CASE(n) = n;
+		Upper_Cases[n] = n;
+		Lower_Cases[n] = n;
 	}
 
 	for (up = &Char_Cases[0]; *up; up += 2) {
 		//ASSERT2(UP_CASE(up[1]) == up[1], 910);
 		// Only map if not already set (multiple mappings exist):
-		if (UP_CASE(up[1]) == up[1]) UP_CASE(up[1]) = up[0];
-		if (LO_CASE(up[1]) == up[1]) LO_CASE(up[0]) = up[1];
+		if (Upper_Cases[up[1]] == up[1]) Upper_Cases[up[1]] = up[0];
+		if (Lower_Cases[up[1]] == up[1]) Lower_Cases[up[0]] = up[1];
 	}
 }
 

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -183,6 +184,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	// !!! THIS CODE NEEDS CLEANUP AND REWRITE BASED ON OTHER CHANGES
 	REBSER *series = parse->series;
 	REBCNT flags = parse->flags | AM_FIND_MATCH | AM_FIND_TAIL;
+	REBUNI ch1, ch2;
 //	int rewrite_needed;
 
 	if (Trace_Level) {
@@ -200,8 +202,13 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	case REB_CHAR:
 		if (HAS_CASE(parse))
 			index = (VAL_CHAR(item) == GET_ANY_CHAR(series, index)) ? index+1 : NOT_FOUND;
-		else
-			index = (UP_CASE(VAL_CHAR(item)) == UP_CASE(GET_ANY_CHAR(series, index))) ? index+1 : NOT_FOUND;
+		else {
+			ch1 = VAL_CHAR(item);
+			ch2 = GET_ANY_CHAR(series, index);
+			if (ch1 < UNICODE_CASES) ch1 = UP_CASE(ch1);
+			if (ch2 < UNICODE_CASES) ch2 = UP_CASE(ch2);
+			index = (ch1 == ch2) ? index + 1 : NOT_FOUND;
+		}
 		break;
 
 	case REB_STRING:
@@ -410,15 +417,15 @@ no_result:
 				else goto bad_target;
 			}
 			else { // String
-				REBCNT ch1 = GET_ANY_CHAR(series, index);
-				REBCNT ch2;
+				REBUNI ch1 = GET_ANY_CHAR(series, index);
+				REBUNI ch2;
 
-				if (!HAS_CASE(parse)) ch1 = UP_CASE(ch1);
+				if (!HAS_CASE(parse) && ch1 < UNICODE_CASES) ch1 = UP_CASE(ch1);
 
 				// Handle special string types:
 				if (IS_CHAR(item)) {
 					ch2 = VAL_CHAR(item);
-					if (!HAS_CASE(parse)) ch2 = UP_CASE(ch2);
+					if (!HAS_CASE(parse) && ch2 < UNICODE_CASES) ch2 = UP_CASE(ch2);
 					if (ch1 == ch2) goto found1;
 				}
 				else if (IS_TAG(item)) {
@@ -438,7 +445,7 @@ no_result:
 				}
 				else if (ANY_STR(item)) {
 					ch2 = VAL_ANY_CHAR(item);
-					if (!HAS_CASE(parse)) ch2 = UP_CASE(ch2);
+					if (!HAS_CASE(parse) && ch2 < UNICODE_CASES) ch2 = UP_CASE(ch2);
 					if (ch1 == ch2) {
 						len = VAL_LEN(item);
 						if (len == 1) goto found1;

@@ -489,6 +489,23 @@ Rebol [
 	--assert     parse [a] [1 3 'a]
 	--assert not parse [a] [2 3 'a]
 
+if not error? try [str: to string! #{A032}][
+	--test-- "parse with uni-replacement-char"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2476
+	;- expected no crashes...
+	--assert parse str [str]
+	--assert parse str [thru ["2"]]
+	--assert parse str [to [ "2"] 1 skip]
+	--assert parse str [to [#"2"] 1 skip]
+	--assert not parse "a" [to [str]]
+	--assert not parse str [#"a"]
+	c: first str
+	--assert not parse "a" [c]
+	--assert not parse [#"a"][c]
+	; and also not parse related:
+	--assert not equal? [#"a"] reduce [c]
+]
+
 ===end-group===
 
 ~~~end-file~~~
