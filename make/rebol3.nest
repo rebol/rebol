@@ -900,6 +900,24 @@ eggs: [
 		]
 	]
 	#if Linux? [
+		"Rebol/Base linux-x86" [
+			name:     %rebol3-base-linux-x86
+			:target-linux
+			:make-x86-exe
+		]
+		"Rebol/Core linux-x86" [
+			name:     %rebol3-core-linux-x86
+			:target-linux
+			:include-rebol-core
+			:make-x86-exe
+		]
+		"Rebol/Bulk linux-x86" [
+			name:     %rebol3-bulk-linux-x86
+			:target-linux
+			:include-rebol-bulk
+			:make-x86-exe
+		]
+
 		"Rebol/Base linux-x64" [
 			name:     %rebol3-base-linux-x64
 			:target-linux
