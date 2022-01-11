@@ -128,6 +128,16 @@ jobs:
       - name: Install Siskin Builder
         uses: oldes/install-siskin@v0.7.1
 
+      - name: Install GCC multilib
+        run: apt-get install gcc-multilib
+
+      - name: Build 32bit Rebol/Base using gcc
+        run: ./siskin make/rebol3.nest %rebol3-base-linux-x86
+      - name: Build 32bit Rebol/Core using gcc
+        run: ./siskin make/rebol3.nest %rebol3-core-linux-x86
+      - name: Build 32bit Rebol/Bulk using gcc
+        run: ./siskin make/rebol3.nest %rebol3-bulk-linux-x86
+
       - name: Build 64bit Rebol/Base using gcc
         run: ./siskin make/rebol3.nest %rebol3-base-linux-x64
       - name: Build 64bit Rebol/Core using gcc
