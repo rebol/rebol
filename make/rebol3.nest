@@ -1014,6 +1014,24 @@ eggs: [
 		]
 	]
 	#if OpenBSD? [
+		"Rebol/Base openbsd-x86" [
+			name:   %rebol3-base-openbsd-x86
+			:target-openbsd
+			:make-x86-exe
+		]
+		"Rebol/Core openbsd-x86" [
+			name:   %rebol3-core-openbsd-x86
+			:target-openbsd
+			:include-rebol-core
+			:make-x86-exe
+		]
+		"Rebol/Bulk openbsd-x86" [
+			name:   %rebol3-bulk-openbsd-x86
+			:target-openbsd
+			:include-rebol-bulk
+			:make-x86-exe
+		]
+
 		"Rebol/Base openbsd-x64" [
 			name:   %rebol3-base-openbsd-x64
 			:target-openbsd
