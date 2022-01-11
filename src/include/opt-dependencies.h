@@ -35,34 +35,38 @@
 //** dependency fixes! ****************************************//
 
 #if defined(INCLUDE_MBEDTLS)
-	#if !defined(MBEDTLS_CONFIG_FILE)
-	#include "mbedtls/config.h"
-	#else
-	#include MBEDTLS_CONFIG_FILE
-	#endif
+	//#include "mbedtls/config.h"
+
+	#define MBEDTLS_HAVE_ASM
+	#define MBEDTLS_HAVE_SSE2
+	#define MBEDTLS_HAVE_TIME
+	#define MBEDTLS_HAVE_TIME_DATE
+	#define MBEDTLS_PLATFORM_C
+
+	//#define MBEDTLS_PLATFORM_MEMORY
+	//#define MBEDTLS_MEMORY_BUFFER_ALLOC_C
+
+	#define MBEDTLS_MD5_C
+	#define MBEDTLS_SHA1_C
+	#define MBEDTLS_SHA224_C
+	#define MBEDTLS_SHA256_C
+	#define MBEDTLS_SHA512_C
 
 	#if defined(INCLUDE_MD4)
 	#define MBEDTLS_MD4_C
-	#else
-	#undef MBEDTLS_MD4_C
 	#endif
 
 	#if defined(INCLUDE_RIPEMD160)
 	#define MBEDTLS_RIPEMD160_C
-	#else
-	#undef MBEDTLS_RIPEMD160_C
 	#endif
 
-	#if defined(INCLUDE_SHA224)
-	#define MBEDTLS_SHA224_C
-	#else
-	#undef MBEDTLS_SHA224_C
-	#endif
+	// INCLUDE_SHA224 is now required for SHA256, which is always included!
+	//#if defined(INCLUDE_SHA224)
+	//#define MBEDTLS_SHA224_C
+	//#endif
 
 	#if defined(INCLUDE_SHA384)
 	#define MBEDTLS_SHA384_C
-	#else
-	#undef MBEDTLS_SHA384_C
 	#endif
 #else
 	// no mbedTLS

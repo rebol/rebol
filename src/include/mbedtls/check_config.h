@@ -23,11 +23,6 @@
 #ifndef MBEDTLS_CHECK_CONFIG_H
 #define MBEDTLS_CHECK_CONFIG_H
 
-/* MD4 was removed from mbedtls, because it is considered to be unsecure,
- * but I'm keeping the old source file for use in Rebol
- */
-#define MBEDTLS_MD4_C
-
 /*
  * We assume CHAR_BIT is 8 in many places. In practice, this is true on our
  * target platforms, so not an issue, but let's just be extra sure.

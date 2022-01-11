@@ -53,10 +53,10 @@
 #define _CRT_SECURE_NO_DEPRECATE 1
 #endif
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
+#if !defined(REBOL_OPTIONS_FILE)
+#include "opt-config.h"
 #else
-#include MBEDTLS_CONFIG_FILE
+#include REBOL_OPTIONS_FILE
 #endif
 
 #if defined(MBEDTLS_CONFIG_VERSION) && ( \

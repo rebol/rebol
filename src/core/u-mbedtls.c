@@ -32,14 +32,14 @@
 
 #include "sys-core.h"
 #ifdef INCLUDE_MBEDTLS
-#ifdef MBEDTLS_MD4_C
+#ifdef INCLUDE_MD4
 #include "mbedtls/md4.h"
 #endif
 #include "mbedtls/md5.h"
 #include "mbedtls/sha1.h"
 #include "mbedtls/sha256.h"
 #include "mbedtls/sha512.h"
-#ifdef MBEDTLS_RIPEMD160_C
+#ifdef INCLUDE_RIPEMD160
 #include "mbedtls/ripemd160.h"
 #endif
 
