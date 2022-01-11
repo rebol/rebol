@@ -13,3 +13,6 @@ mv ./tree/rebol/Rebol/build/rebol3-bulk-linux-x64 /out/rebol3-bulk-linux-x64-mus
 chmod a+x /out/rebol3-base-linux-x64-musl
 chmod a+x /out/rebol3-core-linux-x64-musl
 chmod a+x /out/rebol3-bulk-linux-x64-musl
+gzip -9 /out/rebol3-base-linux-x64-musl
+gzip -9 /out/rebol3-core-linux-x64-musl
+gzip -9 /out/rebol3-bulk-linux-x64-musl

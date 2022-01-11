@@ -188,7 +188,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Rebol-64bit-Linux-${{github.run_id}}
+          name: Rebol-64bit-Linux-musl-${{github.run_id}}
           path: .github/workflows/alpine/*.gz
 
 
