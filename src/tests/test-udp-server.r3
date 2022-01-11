@@ -1,7 +1,7 @@
 Rebol [
 	Title: "Test UDP server"
 	File: %test-udp-server.r3
-	Note: https://github.com/rebol/rebol/pull/218
+	Note: https://github.com/Oldes/Rebol-issues/issues/1803
 ]
 
 print [as-red "Opening UDP server listening on port" as-yellow 1189]
