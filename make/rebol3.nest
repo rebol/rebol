@@ -24,6 +24,7 @@ target-windows: [
 	os:       windows
 	sys:      win32
 	vendor:   pc
+	platform: Windows
 	compiler: clang
 	upx:      on
 ]
@@ -31,11 +32,13 @@ target-macos: [
 	os:       macos
 	sys:      darwin
 	vendor:   apple
+	platform: macOS
 	compiler: clang
 ]
 target-linux: [
 	os:       linux
 	sys:      linux
+	platform: Linux
 	vendor:   pc
 	compiler: gcc
 ]
