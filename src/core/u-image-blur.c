@@ -45,6 +45,7 @@ static void boxes_for_gauss(REBDEC sigma, REBINT sizes[3])
 	REBDEC mIdeal;
 	REBINT m;
 	REBINT n = 3;
+	REBINT i;
 
 	wIdeal = sqrt((REBDEC)(12 * sigma * sigma / n) + 1); /* Ideal averaging filter width */
 	wl = (REBINT)floor(wIdeal);
@@ -55,7 +56,7 @@ static void boxes_for_gauss(REBDEC sigma, REBINT sizes[3])
 	mIdeal = (12 * sigma * sigma - (REBDEC)wl * wl * n - 4.0 * n * wl - 3.0 * n) / (-4.0 * wl - 4);
 	m = (REBINT)round(mIdeal);
 
-	for (REBINT i = 0; i < n; i++)
+	for (i = 0; i < n; i++)
 	{
 		if (i < m)
 		{
@@ -70,28 +71,29 @@ static void boxes_for_gauss(REBDEC sigma, REBINT sizes[3])
 
 static void box_blur_H(REBYTE *scl, REBYTE*tcl, REBINT w, REBINT h, REBINT r, REBINT bpp)
 {
-	for (REBINT i = 0; i < h; i++)
+	REBINT i, j, k, ti, li, ri, fv, lv, val;
+	for (i = 0; i < h; i++)
 	{
-		for (REBINT k = 0; k < bpp; k++)
+		for (k = 0; k < bpp; k++)
 		{
-			REBINT ti = i * w * bpp + k;
-			REBINT li = ti;
-			REBINT ri = ti + r * bpp;
-			REBINT fv = scl[li];
-			REBINT lv = scl[ti + (w - 1) * bpp];
-			REBINT val = (r + 1) * fv;
-			for (REBINT j = 0; j < r; j++)
+			ti  = i * w * bpp + k;
+			li  = ti;
+			ri  = ti + r * bpp;
+			fv  = scl[li];
+			lv  = scl[ti + (w - 1) * bpp];
+			val = (r + 1) * fv;
+			for (j = 0; j < r; j++)
 			{
 				val += scl[ti + (j * bpp)];
 			}
-			for (REBINT j = 0; j <= r; j++)
+			for (j = 0; j <= r; j++)
 			{
 				val += scl[ri] - fv;
 				tcl[ti] = (REBYTE)round(val / (r + r + 1));
 				ri += bpp;
 				ti += bpp;
 			}
-			for (REBINT j = r + 1; j < (w - r); j++)
+			for (j = r + 1; j < (w - r); j++)
 			{
 				val += scl[ri] - scl[li];
 				tcl[ti] = (REBYTE)round(val / (r + r + 1));
@@ -99,7 +101,7 @@ static void box_blur_H(REBYTE *scl, REBYTE*tcl, REBINT w, REBINT h, REBINT r, RE
 				ri += bpp;
 				ti += bpp;
 			}
-			for (REBINT j = w - r; j < w; j++)
+			for (j = w - r; j < w; j++)
 			{
 				val += lv - scl[li];
 				tcl[ti] = (REBYTE)round(val / (r + r + 1));
@@ -155,7 +157,8 @@ static void box_blur_T(REBYTE*scl, REBYTE*tcl, REBINT w, REBINT h, REBINT r, REB
 
 static void box_blur(REBYTE*scl, REBYTE*tcl, REBINT w, REBINT h, REBINT r, REBINT bpp)
 {
-	for (REBINT i = 0; i < (h * w * bpp); i++)
+	REBINT i;
+	for (i = 0; i < (h * w * bpp); i++)
 	{
 		tcl[i] = scl[i];
 	}
@@ -165,13 +168,14 @@ static void box_blur(REBYTE*scl, REBYTE*tcl, REBINT w, REBINT h, REBINT r, REBIN
 
 void fast_gauss_blur(REBYTE*scl, REBYTE*tcl, REBINT w, REBINT h, REBINT r, REBINT bpp)
 {
+	REBINT i;
 	REBINT bxs[3];
 	boxes_for_gauss(r, bxs);
 	box_blur(scl, tcl, w, h, (bxs[0] - 1) / 2, bpp);
 	box_blur(tcl, scl, w, h, (bxs[1] - 1) / 2, bpp);
 	box_blur(scl, tcl, w, h, (bxs[2] - 1) / 2, bpp);
 	// result would be in tcl, so copy it back to source, as it is modified anyway
-	for (REBINT i = 0; i < (h * w * bpp); i++)
+	for (i = 0; i < (h * w * bpp); i++)
 	{
 		scl[i] = tcl[i];
 	}

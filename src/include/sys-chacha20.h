@@ -23,7 +23,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define ROTL32(v, n) ((v) << (n)) | ((v) >> (32 - (n)))
 
 
-#define U32V(v) ((uint32_t)(v) & U32_C(0xFFFFFFFF))
+#define U32V(v) ((u32)(v) & U32_C(0xFFFFFFFF))
 #define ROTATE(v,c) (ROTL32(v,c))
 #define XOR(v,w) ((v) ^ (w))
 #define PLUS(v,w) (U32V((v) + (w)))
@@ -41,8 +41,8 @@ extern "C"
 
 struct chacha20_ctx
 {
-	uint32_t schedule[16];
-	uint32_t keystream[16];
+	u32 schedule[16];
+	u32 keystream[16];
 	size_t available;
 	size_t nonce_length; // may be 8 or 12 
 };
@@ -51,30 +51,30 @@ typedef struct chacha20_ctx chacha20_ctx;
 
 typedef struct chacha20poly1305_ctx {
 	chacha20_ctx local_chacha;
-	uint8_t      local_iv[12];
+	u8      local_iv[12];
 	chacha20_ctx remote_chacha;
-	uint8_t      remote_iv[12];
+	u8      remote_iv[12];
 } chacha20poly1305_ctx;
 
 
 
 //Call this to initilize a chacha20_ctx, must be called before all other functions
-void chacha20_keysetup(chacha20_ctx *ctx, const uint8_t *key, size_t length);
-void chacha20_ivsetup(chacha20_ctx *ctx, const uint8_t *nonce, size_t nonce_length, uint64_t counter, const uint8_t *sequence);
+void chacha20_keysetup(chacha20_ctx *ctx, const u8 *key, size_t length);
+void chacha20_ivsetup(chacha20_ctx *ctx, const u8 *nonce, size_t nonce_length, u64 counter, const u8 *sequence);
 
 
 //Call this if you need to process a particular block number
-void chacha20_counter_set(chacha20_ctx *ctx, uint64_t counter);
+void chacha20_counter_set(chacha20_ctx *ctx, u64 counter);
 
-//Raw keystream for the current block, convert output to uint8_t[] for individual bytes. Counter is incremented upon use
-void chacha20_block(chacha20_ctx *ctx, uint32_t output[16]);
+//Raw keystream for the current block, convert output to u8[] for individual bytes. Counter is incremented upon use
+void chacha20_block(chacha20_ctx *ctx, u32 output[16]);
 
 //Encrypt an arbitrary amount of plaintext, call continuously as needed
-void chacha20_encrypt(chacha20_ctx *ctx, const uint8_t *in, uint8_t *out, size_t length);
-void chacha_encrypt_bytes(chacha20_ctx *x, const uint8_t *m, uint8_t *c, uint32_t bytes) ;
+void chacha20_encrypt(chacha20_ctx *ctx, const u8 *in, u8 *out, size_t length);
+void chacha_encrypt_bytes(chacha20_ctx *x, const u8 *m, u8 *c, u32 bytes) ;
 
 //Decrypt an arbitrary amount of ciphertext. Actually, for chacha20, decryption is the same function as encryption
-void chacha20_decrypt(chacha20_ctx *ctx, const uint8_t *in, uint8_t *out, size_t length);
+void chacha20_decrypt(chacha20_ctx *ctx, const u8 *in, u8 *out, size_t length);
 
 //Generate POLY1305 key
 void chacha20_poly1305_key(struct chacha20_ctx *ctx, unsigned char *poly1305_key);
