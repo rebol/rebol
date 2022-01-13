@@ -52,6 +52,7 @@
 	#define MBEDTLS_OID_C
 	#define MBEDTLS_ENTROPY_C
 	#define MBEDTLS_AES_C
+	#define MBEDTLS_DHM_C
 	#define MBEDTLS_CTR_DRBG_C
 
 	#define MBEDTLS_MD_C

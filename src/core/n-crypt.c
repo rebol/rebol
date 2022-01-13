@@ -31,13 +31,14 @@
 #include "sys-core.h"
 #include "sys-rc4.h"
 #include "sys-aes.h"
-#include "sys-dh.h"
 #include "uECC.h"
 #ifndef EXCLUDE_CHACHA20POLY1305
 #include "sys-chacha20.h"
 #include "sys-poly1305.h"
 #endif
 #include "mbedtls/rsa.h"
+#include "mbedtls/dhm.h"
+#include "mbedtls/bignum.h"
 #include "mbedtls/sha256.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
@@ -53,6 +54,12 @@ typedef struct {
 } ECC_CTX;
 
 typedef mbedtls_rsa_context RSA_CTX;
+typedef mbedtls_dhm_context DHM_CTX;
+
+// these 2 functions were defined as static in dhm.c file, so are not in the header!
+extern int dhm_check_range(const mbedtls_mpi *param, const mbedtls_mpi *P);
+extern int dhm_random_below(mbedtls_mpi *R, const mbedtls_mpi *M,
+	int (*f_rng)(void *, unsigned char *, size_t), void *p_rng);
 
 /***********************************************************************
 **
@@ -71,6 +78,7 @@ typedef mbedtls_rsa_context RSA_CTX;
 	Register_Handle(SYM_AES,  sizeof(AES_CTX), NULL);
 	Register_Handle(SYM_ECDH, sizeof(ECC_CTX), NULL);
 	Register_Handle(SYM_RC4,  sizeof(RC4_CTX), NULL);
+	Register_Handle(SYM_DHM,  sizeof(DHM_CTX), (REB_HANDLE_FREE_FUNC)mbedtls_dhm_free);
 	Register_Handle(SYM_RSA,  sizeof(RSA_CTX), (REB_HANDLE_FREE_FUNC)mbedtls_rsa_free);
 #ifndef EXCLUDE_CHACHA20POLY1305
 	Register_Handle(SYM_CHACHA20, sizeof(poly1305_context), NULL);
@@ -382,7 +390,7 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 
 	//allocate new binary!
 	outBytes = mbedtls_rsa_get_len(rsa);
-	data = Make_Binary(outBytes);
+	data = Make_Binary(outBytes-1);
 	outBinary = BIN_DATA(data);
 
 	if (refSign) {
@@ -404,7 +412,7 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 
 	return R_RET;
 error:
-	//printf("err: -0x%0x\n", (unsigned int)-err);
+	//printf("RSA key init failed with error:: -0x%0x\n", (unsigned int)-err);
 	Free_Series(data);
 	return R_NONE;
 }
@@ -418,78 +426,58 @@ error:
 //		"Generates a new Diffie-Hellman private/public key pair"
 //		g [binary!] "Generator"
 //		p [binary!] "Field prime"
-//		/into
-//			dh-key [handle!] "Existing DH key handle"
 //  ]
 ***********************************************************************/
 {
-	REBSER *g = VAL_SERIES(D_ARG(1));
-	REBSER *p = VAL_SERIES(D_ARG(2));
-	REBOOL  ref_into =     D_REF(3);
-	REBVAL *val_dh   =     D_ARG(4);
+	REBVAL *g        = D_ARG(1);
+	REBVAL *p        = D_ARG(2);
+	REBOOL  ref_into = D_REF(3);
+	REBVAL *val_dh   = D_ARG(4);
 	
-	DH_CTX *dh;
-	REBYTE *bin;
-	REBVAL *ret;
+	REBINT  err = 0;
+	DHM_CTX *dhm;
 
-	REBCNT  len_g = BIN_LEN(g);
-	REBCNT  len_p = BIN_LEN(p);
-	REBYTE *buffer = NULL;
-	REBSER *dh_ser;
+	MAKE_HANDLE(D_RET, SYM_DHM);
+	dhm = (DHM_CTX*)VAL_HANDLE_CONTEXT_DATA(D_RET);
+	mbedtls_dhm_init(dhm);
 
-	// allocating buffers for all keys as a one blob
-	REBCNT  buffer_len = BIN_LEN(g) + (5 * BIN_LEN(p));
-	
-	if(ref_into) {
-		if(!IS_HANDLE(val_dh) || VAL_HANDLE_TYPE(val_dh) != SYM_DH) {
-			//error!
-			return R_NONE;
-		}
-		ret = val_dh;
-		*D_RET = *D_ARG(4);
-		dh_ser = VAL_HANDLE_DATA(val_dh);
-		if (dh_ser == NULL) goto new_dh_handle;
-		HANDLE_CLR_FLAG(val_dh, HANDLE_RELEASABLE);
-		if(SERIES_REST(dh_ser) < (sizeof(DH_CTX) + buffer_len)) {
-			//needs more space for keys
-			Expand_Series(dh_ser, AT_TAIL, (sizeof(DH_CTX) + buffer_len) - SERIES_TAIL(dh_ser));
-		}
-	} else {
-		ret = D_RET;
-	new_dh_handle:
-		dh_ser = Make_Series(sizeof(DH_CTX) + buffer_len, 1, FALSE);
-		SET_HANDLE(ret, dh_ser, SYM_DH, HANDLE_SERIES);
-	}
-	dh = (DH_CTX*)SERIES_DATA(dh_ser);
-	buffer = SERIES_DATA(dh_ser) + sizeof(DH_CTX);
-	CLEAR(buffer, buffer_len);
-	dh->len_data = buffer_len;
+	err = mbedtls_mpi_read_binary(&dhm->MBEDTLS_PRIVATE(P), VAL_BIN_AT(p), VAL_SERIES(p)->tail - VAL_INDEX(p) );
+	if (err) goto error;
+	err = mbedtls_mpi_read_binary( &dhm->MBEDTLS_PRIVATE(G), VAL_BIN_AT(g), VAL_SERIES(g)->tail - VAL_INDEX(g));
+	if (err) goto error;
 
-	bin = BIN_DATA(g); //@@ use VAL_BIN_AT instead?
-	dh->len_g = len_g;
-	dh->g = buffer;
-	COPY_MEM(dh->g, bin, len_g);
-	
-	buffer += len_g;
+	size_t n = mbedtls_dhm_get_len(dhm);
+	if (n < 64 || n > 512) goto error;
 
-	bin = BIN_DATA(p);
-	dh->len = len_p;
-	dh->p = buffer;
-	COPY_MEM(dh->p, bin, len_p);
-	
-	buffer += len_p;
-	
-	dh->x  = buffer; //private key
-	buffer += len_p;
-	dh->gx = buffer; //public key (self)
-	buffer += len_p;
-	dh->gy = buffer; //public key (peer)
-	buffer += len_p;
-	dh->k  = buffer; //negotiated key
-	
-	DH_generate_key(dh);
+	/* Generate private key X as large as possible ( <= P - 2 ) */
+	err = dhm_random_below(
+		&dhm->MBEDTLS_PRIVATE(X),
+		&dhm->MBEDTLS_PRIVATE(P),
+		mbedtls_ctr_drbg_random, &ctr_drbg);
+	if (err) goto error;
+
+	/*
+	 * Calculate public key (self) GX = G^X mod P
+	 */
+	err = mbedtls_mpi_exp_mod(
+		&dhm->MBEDTLS_PRIVATE(GX),
+		&dhm->MBEDTLS_PRIVATE(G),
+		&dhm->MBEDTLS_PRIVATE(X),
+		&dhm->MBEDTLS_PRIVATE(P),
+		&dhm->MBEDTLS_PRIVATE(RP));
+	if (err) goto error;
+
+	err = dhm_check_range(
+		&dhm->MBEDTLS_PRIVATE(GX),
+		&dhm->MBEDTLS_PRIVATE(P));
+	if (err) goto error;
 
 	return R_RET;
+
+error:
+	//printf("DHM key init failed with error: -0x%0x\n", (unsigned int)-err);
+	Free_Hob(VAL_HANDLE_CTX(D_RET));
+	return R_NONE;
 }
 
 /***********************************************************************
@@ -506,62 +494,54 @@ error:
 //  ]
 ***********************************************************************/
 {
-	REBVAL *val_dh      = D_ARG(1);
-	REBOOL  ref_release = D_REF(2);
-	REBOOL  ref_public  = D_REF(3);
-	REBOOL  ref_secret  = D_REF(4);
-	REBVAL *pub_key     = D_ARG(5);
+	REBVAL *key        = D_ARG(1);
+	REBOOL  refRelease = D_REF(2);
+	REBOOL  refPublic  = D_REF(3);
+	REBOOL  refSecret  = D_REF(4);
+	REBVAL *gy         = D_ARG(5);
 
-	REBVAL *ret = D_RET;
-	REBSER *bin;
-	REBCNT len;
+	REBSER  *out = NULL;
+	REBINT   err;
+	DHM_CTX *dhm;
+	size_t   gx_len, gy_len, olen = 0;
 
-	if (ref_public && ref_secret) {
+	if (refPublic && refSecret) {
 		// only one can be used
 		Trap0(RE_BAD_REFINES);
 	}
 
-	if (VAL_HANDLE_TYPE(val_dh) != SYM_DH || VAL_HANDLE_DATA(val_dh) == NULL) {
-		Trap0(RE_INVALID_HANDLE);
+	if (NOT_VALID_CONTEXT_HANDLE(key, SYM_DHM))
+		return R_NONE;	//or? Trap0(RE_INVALID_HANDLE);
+
+	dhm = (DHM_CTX *)VAL_HANDLE_CONTEXT_DATA(key);
+
+	if (refPublic) {
+		gx_len = mbedtls_mpi_size(&dhm->MBEDTLS_PRIVATE(GX));
+		if (gx_len <= 0) goto error;
+		out = Make_Binary(gx_len-1);
+		mbedtls_mpi_write_binary(&dhm->MBEDTLS_PRIVATE(GX), BIN_DATA(out), gx_len);
+		BIN_LEN(out) = gx_len;
 	}
-
-	REBSER *dh_ser = VAL_HANDLE_DATA(val_dh);
-	DH_CTX *dh = (DH_CTX*)SERIES_DATA(dh_ser);
-	
-	if (dh->g == NULL) return R_NONE; //or error?
-
-	if(ref_public) {
-		bin = Make_Binary(dh->len);
-		COPY_MEM(BIN_DATA(bin), dh->gx, dh->len);
-		SET_BINARY(ret, bin);
-		BIN_LEN(bin) = dh->len;
+	if (refSecret) {
+		// import oposite's side public data...
+		gy_len = VAL_SERIES(gy)->tail - VAL_INDEX(gy);
+		err = mbedtls_mpi_read_binary(&dhm->MBEDTLS_PRIVATE(GY), VAL_BIN_AT(gy), gy_len);
+		if (err) goto error;
+		out = Make_Binary(gy_len-1);
+		// and derive the shared secret of these 2 public parts
+		err = mbedtls_dhm_calc_secret(dhm, BIN_DATA(out), gy_len, &olen, mbedtls_ctr_drbg_random, &ctr_drbg);
+		if (err) goto error;
+		BIN_LEN(out) = olen;
 	}
-
-	if(ref_secret) {
-		bin = VAL_SERIES(pub_key); //@@ use VAL_BIN_AT instead?
-		len = BIN_LEN(bin);
-		if(len != dh->len) {
-			return R_NONE; // throw an error?
-		}
-		COPY_MEM(dh->gy, BIN_DATA(bin), len);
-
-		DH_compute_key(dh);
-
-		bin = Make_Binary(len);
-		COPY_MEM(BIN_DATA(bin), dh->k, len);
-		SET_BINARY(ret, bin);
-		BIN_LEN(bin) = len;
+	if (refRelease) {
+		Free_Hob(VAL_HANDLE_CTX(key));
+		if (!out) return R_TRUE;
 	}
-
-	if(ref_release) {
-	//	if(dh->data != NULL) FREE_MEM(dh->data);
-		CLEARS(dh);
-		HANDLE_SET_FLAG(val_dh, HANDLE_RELEASABLE);
-		if(!ref_public && !ref_secret) return R_ARG1;
-	}
-	
+	SET_BINARY(D_RET, out);
 	return R_RET;
-
+error:
+	if (out != NULL) FREE_SERIES(out);
+	return R_NONE;
 }
 
 

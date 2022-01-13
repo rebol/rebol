@@ -26,21 +26,23 @@ C79E915C3277361FBFA587C6DC06FEDE0B7E57FEC0B68F96B3AD651D54264357
 	;- Boban and Alice both have G and P values and generates DH keys...
 
 	--assert handle? k-Alice: dh-init g p
-	--assert "#[handle! dh]" = mold k-Alice
+	--assert "#[handle! dhm]" = mold k-Alice
 	
 	--assert handle? k-Boban: dh-init g p
-	--assert "#[handle! dh]" = mold k-Boban
+	--assert "#[handle! dhm]" = mold k-Boban
 
---test-- "DH public key exportion"	
+--test-- "DH public key exportation"	
 
-	;- They exchange their public keys...
+	;- They create their public keys...
 
 	--assert binary? pub-Alice: dh/public k-Alice
 	--assert binary? pub-Boban: dh/public k-Boban
 
+	;- and exchange it somehow...
+
 --test-- "DH secret computation"
 
-	;- And use them to compute shared secret...
+	;- Now use these to compute shared secret...
 
 	--assert binary? secret-Alice: dh/secret k-Alice pub-Boban
 	--assert binary? secret-Boban: dh/secret k-Boban pub-Alice
@@ -55,7 +57,7 @@ C79E915C3277361FBFA587C6DC06FEDE0B7E57FEC0B68F96B3AD651D54264357
 
 	;- Once done with the exchange, the DH key must be released!
 
-	--assert handle? dh/release k-Alice
+	--assert true? dh/release k-Alice
 	--assert none? dh/public k-Alice
 	
 	;- the release may be also used while getting the secret
@@ -68,12 +70,6 @@ C79E915C3277361FBFA587C6DC06FEDE0B7E57FEC0B68F96B3AD651D54264357
 	--assert none? dh/secret k-Boban pub-Alice
 	--assert none? dh/public k-Boban
 
---test-- "DH handle re-initialization"
-
-	;- released handle can be reused with new params
-
-	--assert handle? dh-init/into g p k-Alice
-	--assert binary? dh/public k-Alice
 
 ===end-group===
 

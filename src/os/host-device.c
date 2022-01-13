@@ -72,6 +72,7 @@ extern REBDEV Dev_Event;
 extern REBDEV Dev_Net;
 extern REBDEV Dev_DNS;
 extern REBDEV Dev_Checksum;
+extern REBDEV Dev_Crypt;
 #ifdef INCLUDE_CLIPBOARD
 extern REBDEV Dev_Clipboard;
 #define DEVICE_PTR_CLIPBOARD &Dev_Clipboard
@@ -96,7 +97,8 @@ REBDEV *Devices[RDI_LIMIT] =
 	&Dev_DNS,
 	0,//&Dev_Checksum,
 	DEVICE_PTR_CLIPBOARD,
-	DEVICE_PTR_MIDI
+	DEVICE_PTR_MIDI,
+	&Dev_Crypt
 };
 
 
