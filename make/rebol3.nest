@@ -458,13 +458,25 @@ include-cryptography: [
 	core-files: [
 		%core/n-crypt.c
 		%core/u-aes.c 
-		%core/u-bigint.c ;needed for RSA which is needed in TLS protocol (HTTPS)
+		%core/u-bigint.c ;needed for RSA abd DH which is needed in TLS protocol (HTTPS)
 		%core/u-chacha20.c
 		%core/u-dh.c
 		%core/u-poly1305.c
 		%core/u-rc4.c
-		%core/u-rsa.c
+		;%core/deprecated/u-rsa.c
 		%core/u-uECC.c
+
+		%core/p-crypt.c
+		%core/mbedtls/aes.c
+		%core/mbedtls/md.c
+		%core/mbedtls/oid.c
+		%core/mbedtls/bignum.c
+		%core/mbedtls/rsa.c
+		%core/mbedtls/rsa_alt_helpers.c
+		%core/mbedtls/constant_time.c
+		%core/mbedtls/ctr_drbg.c
+		%core/mbedtls/entropy.c
+		%core/mbedtls/entropy_poll.c
 	]
 	:include-codec-crt
 	:include-codec-der

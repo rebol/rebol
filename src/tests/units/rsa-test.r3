@@ -71,26 +71,26 @@ Rebol [
 
 	;-- note: you could use key-pri only as it contains the public properties too
 	;-- the key-pub is there just to simulate situation, where user have only the public parts
-
+	bin-data: #{41686F6A21}
 	--test-- "RSA encrypt"
 		;you can use both keys for encryption (only the public parts are used)
-		--assert binary? secret: rsa/encrypt key-pub #{41686F6A21}
-		--assert binary?         rsa/encrypt key-pri #{41686F6A21}
+		--assert binary? secret: rsa/encrypt key-pub bin-data
+		--assert binary?         rsa/encrypt key-pri bin-data
 
 	--test-- "RSA decrypt"
 		;decrypting needs private parts in the key
-		--assert #{41686F6A21} = rsa/decrypt key-pri secret 
-		--assert         none?   rsa/decrypt key-pub secret ;because private key is needed
+		--assert bin-data = rsa/decrypt key-pri secret 
+		--assert    none?   rsa/decrypt key-pub secret ;because private key is needed
 
 	--test-- "RSA signing"
 		;signing needs private parts in the key
-		--assert binary? sign-hash: rsa/sign key-pri #{41686F6A21}
-		--assert              none? rsa/sign key-pub #{41686F6A21} ;because private key is needed
+		--assert binary? sign-hash: rsa/sign key-pri bin-data
+		--assert              none? rsa/sign key-pub bin-data ;because private key is needed
 
 	--test-- "RSA verification"
 		;you can use both keys for verification (only the public parts are used)
-		--assert #{41686F6A21} = rsa/verify key-pub sign-hash
-		--assert #{41686F6A21} = rsa/verify key-pri sign-hash
+		--assert true? rsa/verify key-pub bin-data sign-hash
+		--assert true? rsa/verify key-pri bin-data sign-hash
 
 	--test-- "RSA key release"
 		;once RSA key is not needed, release the resources using NONE data
@@ -114,7 +114,7 @@ Rebol [
 	; than sends data, and signed hash to Eve, who have his public key 
 	--assert handle? try [public-key: load %units/files/rebol-public.ppk]
 	; Eve uses the key to verify the checksum...
-	--assert (checksum data 'sha1) = rsa/verify public-key signed-hash
+	--assert true? rsa/verify public-key (checksum data 'sha1) signed-hash
 	; so she know, that data were not modified
 
 	; cleanup:

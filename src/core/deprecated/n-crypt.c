@@ -31,19 +31,13 @@
 #include "sys-core.h"
 #include "sys-rc4.h"
 #include "sys-aes.h"
+#include "sys-rsa.h"
 #include "sys-dh.h"
 #include "uECC.h"
 #ifndef EXCLUDE_CHACHA20POLY1305
 #include "sys-chacha20.h"
 #include "sys-poly1305.h"
 #endif
-#include "mbedtls/rsa.h"
-#include "mbedtls/sha256.h"
-#include "mbedtls/entropy.h"
-#include "mbedtls/ctr_drbg.h"
-
-static mbedtls_entropy_context entropy;
-static mbedtls_ctr_drbg_context ctr_drbg;
 
 const struct uECC_Curve_t* ECC_curves[5] = {0,0,0,0,0};
 typedef struct {
@@ -52,26 +46,16 @@ typedef struct {
 	uint8_t private[32];
 } ECC_CTX;
 
-typedef mbedtls_rsa_context RSA_CTX;
-
 /***********************************************************************
 **
 */	void Init_Crypt(void)
 /*
 ***********************************************************************/
 {
-	mbedtls_ctr_drbg_init(&ctr_drbg);
-	mbedtls_entropy_init(&entropy);
-	const char *pers = "rebol";
-
-	mbedtls_ctr_drbg_seed(
-		&ctr_drbg, mbedtls_entropy_func, &entropy,
-		(const unsigned char *)pers, strlen(pers));
-
 	Register_Handle(SYM_AES,  sizeof(AES_CTX), NULL);
 	Register_Handle(SYM_ECDH, sizeof(ECC_CTX), NULL);
 	Register_Handle(SYM_RC4,  sizeof(RC4_CTX), NULL);
-	Register_Handle(SYM_RSA,  sizeof(RSA_CTX), (REB_HANDLE_FREE_FUNC)mbedtls_rsa_free);
+	Register_Handle(SYM_RSA,  sizeof(RSA_CTX), (REB_HANDLE_FREE_FUNC)RSA_free);
 #ifndef EXCLUDE_CHACHA20POLY1305
 	Register_Handle(SYM_CHACHA20, sizeof(poly1305_context), NULL);
 	Register_Handle(SYM_POLY1305, sizeof(poly1305_context), NULL);
@@ -240,6 +224,9 @@ typedef mbedtls_rsa_context RSA_CTX;
 //			d [binary!] "Private exponent"
 //			p [binary!] "Prime number 1"
 //			q [binary!] "Prime number 2"
+//			dP [binary! none!] "Exponent1: d mod (p-1)"
+//			dQ [binary! none!] "Exponent2: d mod (q-1)"
+//			qInv [binary!] "Coefficient: (inverse of q) mod p"
 //  ]
 ***********************************************************************/
 {
@@ -249,66 +236,49 @@ typedef mbedtls_rsa_context RSA_CTX;
 	REBSER *d       = VAL_SERIES(D_ARG(4));
 	REBSER *p       = VAL_SERIES(D_ARG(5));
 	REBSER *q       = VAL_SERIES(D_ARG(6));
+	REBVAL *val_dp  =            D_ARG(7) ;
+	REBVAL *val_dq  =            D_ARG(8) ;
+	REBSER *qInv    = VAL_SERIES(D_ARG(9));
 
-	int err = 0;
+	REBYTE *dp = NULL;
+	REBYTE *dq = NULL;
+	REBCNT len_dp = 0;
+	REBCNT len_dq = 0;
+
 	REBVAL *ret = D_RET;
 	RSA_CTX *rsa_ctx;
 
 	MAKE_HANDLE(ret, SYM_RSA);
 	rsa_ctx = (RSA_CTX*)VAL_HANDLE_CONTEXT_DATA(ret);
 
-	mbedtls_rsa_init(rsa_ctx);
-
-	if (ref_private) {
-		err = mbedtls_rsa_import_raw(
+	if(ref_private) {
+		if (IS_BINARY(val_dp)) {
+			dp     = BIN_DATA(VAL_SERIES(val_dp));
+			len_dp = BIN_LEN(VAL_SERIES(val_dp));
+		}
+		if (IS_BINARY(val_dq)) {
+			dq     = BIN_DATA(VAL_SERIES(val_dq));
+			len_dq = BIN_LEN(VAL_SERIES(val_dq));
+		}
+		RSA_priv_key_new(
 			rsa_ctx,
 			BIN_DATA(n), BIN_LEN(n),
+			BIN_DATA(e), BIN_LEN(e),
+			BIN_DATA(d), BIN_LEN(d),
 			BIN_DATA(p), BIN_LEN(p),
 			BIN_DATA(q), BIN_LEN(q),
-			BIN_DATA(d), BIN_LEN(d),
-			BIN_DATA(e), BIN_LEN(e)
+			dp, len_dp, dq, len_dq,
+			BIN_DATA(qInv), BIN_LEN(qInv)
 		);
-		if (err != 0 
-			|| mbedtls_rsa_complete(rsa_ctx) != 0
-			|| mbedtls_rsa_check_privkey(rsa_ctx) != 0 
-		) return R_NONE;
 	} else {
-		err = mbedtls_rsa_import_raw(
+		RSA_pub_key_new(
 			rsa_ctx,
 			BIN_DATA(n), BIN_LEN(n),
-			NULL, 0,
-			NULL, 0,
-			NULL, 0,
 			BIN_DATA(e), BIN_LEN(e)
 		);
-		if (err != 0 
-			|| mbedtls_rsa_complete(rsa_ctx) != 0
-			|| mbedtls_rsa_check_pubkey(rsa_ctx) != 0 
-		) return R_NONE;
 	}
 	return R_RET;
 }
-#ifdef unused 
-static int myrand(void *rng_state, unsigned char *output, size_t len)
-{
-#if !defined(__OpenBSD__) && !defined(__NetBSD__)
-	size_t i;
-
-	if (rng_state != NULL)
-		rng_state = NULL;
-
-	for (i = 0; i < len; ++i)
-		output[i] = rand();
-#else
-	if (rng_state != NULL)
-		rng_state = NULL;
-
-	arc4random_buf(output, len);
-#endif /* !OpenBSD && !NetBSD */
-
-	return(0);
-}
-#endif
 
 /***********************************************************************
 **
@@ -321,8 +291,7 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 //		/encrypt  "Use public key to encrypt data"
 //		/decrypt  "Use private key to decrypt data"
 //		/sign     "Use private key to sign data"
-//		/verify   "Use public key to verify signed data (returns TRUE or FALSE)"
-//		 signature [binary!] "Result of the sign call"
+//		/verify   "Use public key to verify signed data"
 //  ]
 ***********************************************************************/
 {
@@ -331,31 +300,21 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 	REBOOL  refEncrypt  = D_REF(3);
 	REBOOL  refDecrypt  = D_REF(4);
 	REBOOL  refSign     = D_REF(5);
-	REBOOL  refVerify   = D_REF(6);
-	REBVAL *val_sign    = D_ARG(7);
-
-	RSA_CTX *rsa;
-	REBSER  *data;
-	REBYTE  *inBinary;
-	REBYTE  *outBinary;
-	REBYTE   hash[32];
-	REBINT   inBytes;
-	REBINT   outBytes;
-	REBINT   err = 0;
+	REBOOL  refverify   = D_REF(6);
 
 	// make sure that only one refinement is used!
 	if(
-		(refEncrypt && (refDecrypt || refSign    || refVerify)) ||
-		(refDecrypt && (refEncrypt || refSign    || refVerify)) ||
-		(refSign    && (refDecrypt || refEncrypt || refVerify)) ||
-		(refVerify  && (refDecrypt || refSign    || refEncrypt))
+		(refEncrypt && (refDecrypt || refSign    || refverify)) ||
+		(refDecrypt && (refEncrypt || refSign    || refverify)) ||
+		(refSign    && (refDecrypt || refEncrypt || refverify)) ||
+		(refverify  && (refDecrypt || refSign    || refEncrypt))
 	) {
 		Trap0(RE_BAD_REFINES);
 	}
 
 	if (NOT_VALID_CONTEXT_HANDLE(key, SYM_RSA)) Trap0(RE_INVALID_HANDLE);
 
-	rsa = (RSA_CTX*)VAL_HANDLE_CONTEXT_DATA(key);
+	RSA_CTX *rsa_ctx = (RSA_CTX*)VAL_HANDLE_CONTEXT_DATA(key);
 
 	if (IS_NONE(val_data)) {
 		// release RSA key resources
@@ -363,50 +322,53 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 		return R_TRUE;
 	}
 
+	REBSER *data = VAL_SERIES(val_data);
+	REBVAL *ret = D_RET;
+	REBINT  outBytes;
+	bigint *data_bi;
+
 	if(
-		(mbedtls_rsa_check_pubkey(rsa) != 0) ||
-		((refDecrypt || refSign) && (mbedtls_rsa_check_privkey(rsa) != 0))
+		(rsa_ctx->m == NULL || rsa_ctx->e == NULL) ||
+		((refDecrypt || refSign) && (
+			rsa_ctx->d  == NULL ||
+			rsa_ctx->p  == NULL ||
+			rsa_ctx->q  == NULL ||
+			rsa_ctx->dP == NULL ||
+			rsa_ctx->dQ == NULL ||
+			rsa_ctx->qInv == NULL
+		))
 	) {
+		//puts("[RSA] Missing RSA key data!");
 		return R_NONE;
 	}
 
-	data = VAL_SERIES(val_data);
-	inBinary = BIN_DATA(data);
-	inBytes = BIN_LEN(data);
+	REBYTE* inBinary = BIN_DATA(data);
+	REBINT  inBytes = BIN_LEN(data);
 
-	if (refVerify) {
-		SHA256(inBinary, inBytes, hash);
-		err = mbedtls_rsa_rsassa_pkcs1_v15_verify(rsa, MBEDTLS_MD_SHA256, 32, hash, VAL_BIN(val_sign));
-		return (err == 0) ? R_TRUE : R_FALSE;
-	}
+	data_bi = bi_import(rsa_ctx->bi_ctx, inBinary, inBytes);
 
 	//allocate new binary!
-	outBytes = mbedtls_rsa_get_len(rsa);
-	data = Make_Binary(outBytes);
-	outBinary = BIN_DATA(data);
+	REBSER* output = Make_Binary(rsa_ctx->num_octets);
+	REBYTE* outBinary = BIN_DATA(output);
 
-	if (refSign) {
-		SHA256(inBinary, inBytes, hash);
-		err = mbedtls_rsa_rsassa_pkcs1_v15_sign(rsa, mbedtls_ctr_drbg_random, &ctr_drbg, MBEDTLS_MD_SHA256, 32, hash, outBinary);
+	if(refDecrypt || refverify) {
+		outBytes = RSA_decrypt(rsa_ctx, inBinary, outBinary, refDecrypt, FALSE);
+	} else {
+		outBytes = RSA_encrypt(rsa_ctx, inBinary, inBytes, outBinary, refSign, TRUE);
 	}
-	else if (refEncrypt) {
-		err = mbedtls_rsa_rsaes_pkcs1_v15_encrypt(rsa, mbedtls_ctr_drbg_random, &ctr_drbg, inBytes, inBinary, outBinary);
-	}
-	else {
-		size_t olen = 0;
-		err = mbedtls_rsa_rsaes_pkcs1_v15_decrypt(rsa, mbedtls_ctr_drbg_random, &ctr_drbg, &olen, inBinary, outBinary, outBytes);
-		outBytes = olen;
-	}
-	if (err) goto error;
 
-	SET_BINARY(D_RET, data);
-	VAL_TAIL(D_RET) = outBytes;
+	bi_free(rsa_ctx->bi_ctx, data_bi);
+
+	if(outBytes < 0) {
+		Free_Series(output);
+		return R_NONE;
+	}
+
+	SET_BINARY(ret, output);
+	VAL_TAIL(ret) = outBytes;
 
 	return R_RET;
-error:
-	//printf("err: -0x%0x\n", (unsigned int)-err);
-	Free_Series(data);
-	return R_NONE;
+
 }
 
 
