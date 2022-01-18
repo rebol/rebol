@@ -614,7 +614,6 @@ client-key-exchange: function [
 			ECDHE_ECDSA
 			ECDHE_RSA [
 				log-more ["W[" ctx/seq-write "] Using ECDH key-method"]
-				insert key-data #{04} ; ECDH key seems to have this byte at its head
 				key-data-len-bytes: 1
 			]
 			RSA [
@@ -1504,7 +1503,6 @@ TLS-parse-handshake-message: function [
 				switch key/1 [
 					ecPublicKey [
 						ctx/pub-key: key/3
-						remove ctx/pub-key  ;don't include the first byte 0x04
 						ctx/pub-exp: key/2      ;curve name
 					]
 					rsaEncryption [
@@ -1541,7 +1539,7 @@ TLS-parse-handshake-message: function [
 
 					if any [
 						3 <> ECCurveType
-						4 <> take pub_key
+						4 <> first pub_key
 						none? curve: *EllipticCurves/name ECCurve
 					][
 						log-error ["Unsupported ECurve type:" ECCurveType ECCurve ]
@@ -1610,15 +1608,6 @@ TLS-parse-handshake-message: function [
 							]
 							rsa_fixed_dh [
 								log-more "Checking signature using RSA_fixed_DH"
-								der: decode 'der signature
-								n: select [secp256r1 32 secp384r1 48 secp521r1 66] ctx/pub-exp
-								x: pad-bin der/2/2 n
-								y: pad-bin der/2/4 n
-								signature: join x y
-								;? ctx/pub-key
-								;? signature
-								;? ctx/pub-key
-
 								; test validity:
 								ecdsa/verify/curve ctx/pub-key message-hash signature ctx/pub-exp
 							]

@@ -45,6 +45,9 @@
 #endif /* MBEDTLS_PLATFORM_C */
 #endif /* MBEDTLS_SELF_TEST */
 
+#ifndef INT_MAX
+#define INT_MAX       2147483647
+#endif
 /*
  * CTR_DRBG context initialization
  */

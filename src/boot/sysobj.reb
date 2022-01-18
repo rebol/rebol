@@ -61,6 +61,21 @@ catalog: object [
 	]
 	checksums: [adler32 crc24 crc32 tcp md4 md5 sha1 sha224 sha256 sha384 sha512 ripemd160]
 	compressions: [gzip deflate zlib lzma crush]
+	elliptic-curves: [
+		secp192r1      ; 192-bit curve defined by FIPS 186-4 and SEC1
+		secp224r1      ; 224-bit curve defined by FIPS 186-4 and SEC1
+		secp256r1      ; 256-bit curve defined by FIPS 186-4 and SEC1
+		secp384r1      ; 384-bit curve defined by FIPS 186-4 and SEC1
+		secp521r1      ; 521-bit curve defined by FIPS 186-4 and SEC1
+		bp256r1        ; 256-bit Brainpool curve
+		bp384r1        ; 384-bit Brainpool curve
+		bp512r1        ; 512-bit Brainpool curve
+		curve25519     ; Curve25519
+		secp192k1      ; 192-bit "Koblitz" curve
+		secp224k1      ; 224-bit "Koblitz" curve
+		secp256k1      ; 256-bit "Koblitz" curve
+		curve448       ; Curve448
+	]
 ]
 
 contexts: construct [
@@ -265,6 +280,12 @@ standard: object [
 	port-spec-checksum: make port-spec-head [
 		scheme: 'checksum
 		method: none
+	]
+
+	port-spec-crypt: make port-spec-head [
+		scheme: 'crypt
+		algorithm: 'aes
+    	direction: 'encrypt
 	]
 
 	port-spec-midi: make port-spec-head [

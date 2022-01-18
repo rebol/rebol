@@ -31,7 +31,7 @@
 #include "sys-core.h"
 #include "sys-rc4.h"
 #include "sys-aes.h"
-#include "uECC.h"
+
 #ifndef EXCLUDE_CHACHA20POLY1305
 #include "sys-chacha20.h"
 #include "sys-poly1305.h"
@@ -42,24 +42,31 @@
 #include "mbedtls/sha256.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
+#include "mbedtls/ecdh.h"
+#include "mbedtls/ecdsa.h"
+#include "mbedtls/asn1.h"
+//#include "mbedtls/asn1write.h"
 
 static mbedtls_entropy_context entropy;
 static mbedtls_ctr_drbg_context ctr_drbg;
 
-const struct uECC_Curve_t* ECC_curves[5] = {0,0,0,0,0};
-typedef struct {
-	REBCNT  curve_type;
-	uint8_t public[64];
-	uint8_t private[32];
-} ECC_CTX;
+typedef mbedtls_rsa_context   RSA_CTX;
+typedef mbedtls_dhm_context   DHM_CTX;
+typedef mbedtls_ecdh_context ECDH_CTX;
 
-typedef mbedtls_rsa_context RSA_CTX;
-typedef mbedtls_dhm_context DHM_CTX;
-
-// these 2 functions were defined as static in dhm.c file, so are not in the header!
+// these 3 functions were defined as static in dhm.c file, so are not in the header!
 extern int dhm_check_range(const mbedtls_mpi *param, const mbedtls_mpi *P);
 extern int dhm_random_below(mbedtls_mpi *R, const mbedtls_mpi *M,
 	int (*f_rng)(void *, unsigned char *, size_t), void *p_rng);
+// originally static in ecdsa.c
+extern int ecdsa_signature_to_asn1(const mbedtls_mpi *r, const mbedtls_mpi *s,
+	unsigned char *sig, size_t sig_size,
+	size_t *slen);
+extern int ecdsa_verify_restartable(mbedtls_ecp_group *grp,
+	const unsigned char *buf, size_t blen,
+	const mbedtls_ecp_point *Q,
+	const mbedtls_mpi *r, const mbedtls_mpi *s,
+	mbedtls_ecdsa_restart_ctx *rs_ctx);
 
 /***********************************************************************
 **
@@ -76,10 +83,10 @@ extern int dhm_random_below(mbedtls_mpi *R, const mbedtls_mpi *M,
 		(const unsigned char *)pers, strlen(pers));
 
 	Register_Handle(SYM_AES,  sizeof(AES_CTX), NULL);
-	Register_Handle(SYM_ECDH, sizeof(ECC_CTX), NULL);
 	Register_Handle(SYM_RC4,  sizeof(RC4_CTX), NULL);
 	Register_Handle(SYM_DHM,  sizeof(DHM_CTX), (REB_HANDLE_FREE_FUNC)mbedtls_dhm_free);
 	Register_Handle(SYM_RSA,  sizeof(RSA_CTX), (REB_HANDLE_FREE_FUNC)mbedtls_rsa_free);
+	Register_Handle(SYM_ECDH, sizeof(ECDH_CTX), (REB_HANDLE_FREE_FUNC)mbedtls_ecdh_free);
 #ifndef EXCLUDE_CHACHA20POLY1305
 	Register_Handle(SYM_CHACHA20, sizeof(poly1305_context), NULL);
 	Register_Handle(SYM_POLY1305, sizeof(poly1305_context), NULL);
@@ -544,48 +551,7 @@ error:
 	return R_NONE;
 }
 
-
-static uECC_Curve get_ecc_curve(REBCNT curve_type) {
-	uECC_Curve curve = NULL;
-	switch (curve_type) {
-		case SYM_SECP256K1:
-			curve = ECC_curves[4];
-			if(curve == NULL) {
-				curve = uECC_secp256k1();
-				ECC_curves[4] = curve;
-			}
-			break;
-		case SYM_SECP256R1:
-			curve = ECC_curves[3];
-			if(curve == NULL) {
-				curve = uECC_secp256r1();
-				ECC_curves[3] = curve;
-			}
-			break;
-		case SYM_SECP224R1:
-			curve = ECC_curves[2];
-			if(curve == NULL) {
-				curve = uECC_secp224r1();
-				ECC_curves[2] = curve;
-			}
-			break;
-		case SYM_SECP192R1:
-			curve = ECC_curves[1];
-			if(curve == NULL) {
-				curve = uECC_secp192r1();
-				ECC_curves[1] = curve;
-			}
-			break;		
-		case SYM_SECP160R1:
-			curve = ECC_curves[0];
-			if(curve == NULL) {
-				curve = uECC_secp160r1();
-				ECC_curves[0] = curve;
-			}
-			break;
-	}
-	return curve;
-}
+#define ECP_GROUP_ID_VAL(v) (mbedtls_ecp_group_id)(VAL_WORD_CANON(v) - SYM_SECP192R1 + 1);
 
 /***********************************************************************
 **
@@ -595,7 +561,7 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 //		"Elliptic-curve Diffie-Hellman key exchange"
 //		key [handle! none!] "Keypair to work with, may be NONE for /init refinement"
 //		/init   "Initialize ECC keypair."
-//			type [word!] "One of supported curves: [secp256k1 secp256r1 secp224r1 secp192r1 secp160r1]"
+//			type [word!] "One of supported curves: system/catalog/elliptic-curves"
 //		/curve  "Returns handles curve type"
 //		/public "Returns public key as a binary"
 //		/secret  "Computes secret result using peer's public key"
@@ -613,64 +579,144 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 	REBVAL *val_public  = D_ARG(7);
 	REBOOL  ref_release = D_REF(8);
 
+
+	ECDH_CTX *ctx;
+	REBINT err = 0;
 	REBSER *bin = NULL;
-	uECC_Curve curve = NULL;
-	ECC_CTX *ecc = NULL;
+	mbedtls_ecp_group_id gid;
+	mbedtls_ecdh_context_mbed *mbed;
+	size_t olen = 0;
+
+	// make sure that only valid combination of refinements is used!
+	if (
+		(ref_type   && (ref_public || ref_secret || ref_release)) ||
+		(ref_public && (ref_type   || ref_secret )) ||
+		(ref_secret && (ref_public || ref_type   ))
+	) {
+		Trap0(RE_BAD_REFINES);
+	}
 
 	if (ref_init) {
 		MAKE_HANDLE(val_handle, SYM_ECDH);
-		ecc = (ECC_CTX*)VAL_HANDLE_CONTEXT_DATA(val_handle);
-		ecc->curve_type = VAL_WORD_CANON(val_curve);
-		curve = get_ecc_curve(ecc->curve_type);
-		if (!curve) return R_NONE;
-		if(!uECC_make_key(ecc->public, ecc->private, curve)) {
-			//puts("failed to init ECDH key");
-			return R_NONE;
-		}
-		else return R_ARG1;
-	} else {
-		if (NOT_VALID_CONTEXT_HANDLE(val_handle, SYM_ECDH)) {
-			// not throwing an error.. just returning NONE
-			return R_NONE;
-		}
-		ecc = (ECC_CTX*)VAL_HANDLE_CONTEXT_DATA(val_handle);
-		curve = get_ecc_curve(ecc->curve_type);
-		if (!curve) return R_NONE;
 	}
+	if (NOT_VALID_CONTEXT_HANDLE(val_handle, SYM_ECDH))
+		return R_NONE;	//or? Trap0(RE_INVALID_HANDLE);
 
-	if (ref_secret) {
-		bin = Make_Binary(32);
-		if (!uECC_shared_secret(VAL_DATA(val_public), ecc->private, BIN_DATA(bin), curve)) {
-			return R_NONE;
-        }
-		if(ref_release) {
-			Free_Hob(VAL_HANDLE_CTX(val_handle));
-		}
-		SET_BINARY(D_RET, bin);
-		BIN_LEN(bin) = 32;
-		return R_RET;
-	}
+	ctx = (ECDH_CTX *)VAL_HANDLE_CONTEXT_DATA(val_handle);
 
-	if (ref_public) {
-		bin = Make_Binary(64);
-		COPY_MEM(BIN_DATA(bin), ecc->public, 64);
-		SET_BINARY(D_RET, bin);
-		BIN_LEN(bin) = 64;
-		return R_RET;
-	}
-
-	if(ref_release) {
-		Free_Hob(VAL_HANDLE_CTX(val_handle));
-		return R_ARG1;
+	if (ref_init) {
+		mbedtls_ecdh_init(ctx);
+		gid = ECP_GROUP_ID_VAL(val_curve);
+		err = mbedtls_ecdh_setup(ctx, gid);
+		if (err) goto error;
+		mbed = &ctx->MBEDTLS_PRIVATE(ctx).MBEDTLS_PRIVATE(mbed_ecdh);
+		err = mbedtls_ecdh_gen_public(
+			&mbed->MBEDTLS_PRIVATE(grp), &mbed->MBEDTLS_PRIVATE(d), &mbed->MBEDTLS_PRIVATE(Q),
+			mbedtls_ctr_drbg_random, &ctr_drbg);
+		if (err) goto error;
+		if (!(ref_type || ref_public || ref_secret)) return R_ARG1;
 	}
 
 	if (ref_type) {
-		Init_Word(val_curve, ecc->curve_type);
+		gid = ctx->MBEDTLS_PRIVATE(grp_id);
+		if (gid < 1) return R_NONE;
+		Init_Word(val_curve, gid + SYM_SECP192R1 - 1);
 		return R_ARG3;
 	}
-	return R_ARG1;
+	if (ref_public) {
+		bin = Make_Binary(256);
+		mbed = &ctx->MBEDTLS_PRIVATE(ctx).MBEDTLS_PRIVATE(mbed_ecdh);
+		mbedtls_ecp_point Q = mbed->MBEDTLS_PRIVATE(Q);
+		// generate the public key, if it does not exists yet
+		if (Q.private_X.private_p == NULL) {
+			err = mbedtls_ecdh_gen_public(
+				&mbed->MBEDTLS_PRIVATE(grp), &mbed->MBEDTLS_PRIVATE(d), &mbed->MBEDTLS_PRIVATE(Q),
+				mbedtls_ctr_drbg_random, &ctr_drbg);
+			if (err) goto error;
+		}
+		// and return it.
+		err = mbedtls_ecp_point_write_binary(
+			&mbed->MBEDTLS_PRIVATE(grp),
+			&mbed->MBEDTLS_PRIVATE(Q),
+			MBEDTLS_ECP_PF_UNCOMPRESSED,
+			&olen, BIN_DATA(bin), 256
+		);
+		if (err) goto error;
+		SET_BINARY(D_RET, bin);
+		BIN_LEN(bin) = olen;
+	}
+	if (ref_secret) {
+		mbed = &ctx->MBEDTLS_PRIVATE(ctx).MBEDTLS_PRIVATE(mbed_ecdh);
+		err = mbedtls_ecp_point_read_binary(
+			&mbed->MBEDTLS_PRIVATE(grp),
+			&mbed->MBEDTLS_PRIVATE(Qp),
+			VAL_BIN_AT(val_public),
+			VAL_LEN(val_public)
+		);
+		if (err) goto error;
+		bin = Make_Binary(256);
+		err = mbedtls_ecdh_calc_secret(ctx, &olen, BIN_DATA(bin), SERIES_REST(bin), mbedtls_ctr_drbg_random, &ctr_drbg);
+		if (err) goto error;
+		
+		SET_BINARY(D_RET, bin);
+		BIN_LEN(bin) = olen;
+	}
+	if (ref_release) {
+		Free_Hob(VAL_HANDLE_CTX(val_handle));
+		if (bin == NULL) return R_TRUE;
+	}
+	return R_RET;
+
+error:
+	//printf("ECDH failed with error: -0x%0x\n", (unsigned int)-err);
+	if (ref_init) Free_Hob(VAL_HANDLE_CTX(val_handle));
+	if (bin != NULL) Free_Series(bin);
+	return R_NONE;
 }
 
+
+/***********************************************************************
+**
+*/	REBNATIVE(generate)
+/*
+//  generate: native [
+//		"Generate specified cryptographic key"
+//		type [word!] "Key type: system/catalog/elliptic-curves"
+//  ]
+***********************************************************************/
+{
+	REBVAL *val_type = D_ARG(1);
+	REBINT  err;
+	REBSER *bin = NULL;
+	
+	mbedtls_ecdsa_context ctx;
+	mbedtls_ecp_group_id gid;
+
+	gid = ECP_GROUP_ID_VAL(val_type);
+	if (gid < 1 || gid >= MBEDTLS_ECP_DP_MAX)
+		Trap_Arg(val_type);
+
+	mbedtls_ecdsa_init(&ctx);
+
+	//err = mbedtls_ecdsa_genkey(&ctx, gid, mbedtls_ctr_drbg_random, &ctr_drbg);
+	//if (err) goto exit;
+	err = mbedtls_ecp_group_load(&ctx.MBEDTLS_PRIVATE(grp), MBEDTLS_ECP_DP_SECP192R1);
+	//err = mbedtls_ecp_gen_keypair(&ctx.MBEDTLS_PRIVATE(grp), &ctx->d, &ctx->Q, f_rng, p_rng);
+	size_t len;
+	bin = Make_Binary(300);
+	err = mbedtls_ecp_point_write_binary(&ctx.MBEDTLS_PRIVATE(grp), &ctx.MBEDTLS_PRIVATE(Q),
+		MBEDTLS_ECP_PF_UNCOMPRESSED, &len, BIN_DATA(bin), SERIES_REST(bin));
+	if (err) {
+		FREE_SERIES(bin);
+	}
+	else {
+		SET_BINARY(D_RET, bin);
+		BIN_LEN(bin) = len;
+	}
+exit:
+	mbedtls_ecdsa_free(&ctx);
+	return (err) ? R_NONE : R_RET;
+}
 
 /***********************************************************************
 **
@@ -680,11 +726,11 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 //		"Elliptic Curve Digital Signature Algorithm"
 //		key [handle! binary!] "Keypair to work with, created using ECDH function, or raw binary key (needs /curve)"
 //		hash [binary!] "Data to sign or verify"
-//		/sign   "Use private key to sign data, returns 64 bytes of signature"
+//		/sign   "Use private key to sign data, returns ASN1 encoded result"
 //		/verify "Use public key to verify signed data, returns true or false"
-//			signature [binary!] "Signature (64 bytes)"
+//			signature [binary!] "ASN1 encoded"
 //		/curve "Used if key is just a binary"
-//			type [word!] "One of supported curves: [secp256k1 secp256r1 secp224r1 secp192r1 secp160r1]"
+//			type [word!] "One of supported curves: system/catalog/elliptic-curves"
 //  ]
 ***********************************************************************/
 {
@@ -697,59 +743,102 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 	REBVAL *val_curve   = D_ARG(7);
 
 	REBSER *bin = NULL;
-	REBYTE *key = NULL;
-	REBCNT curve_type = 0;
-	uECC_Curve curve = NULL;
-	ECC_CTX *ecc = NULL;
+	size_t  len = 0;
+	REBINT  err = 0;
+	mbedtls_ecp_group_id gid;
+	ECDH_CTX *ctx_ecdh = NULL;
+	mbedtls_ecdh_context_mbed *mbed;
+	mbedtls_mpi r, s;
 
 	if (IS_BINARY(val_key)) {
 		if (!ref_curve) Trap0(RE_MISSING_ARG);
-		curve_type = VAL_WORD_CANON(val_curve);
+		gid = ECP_GROUP_ID_VAL(val_curve);
+		if (gid < 1 || gid >= MBEDTLS_ECP_DP_MAX)
+			Trap_Arg(val_curve);
+
+		ctx_ecdh = (ECDH_CTX *)malloc(sizeof(ECDH_CTX));
+		mbedtls_ecdh_init(ctx_ecdh);
+		err = mbedtls_ecdh_setup(ctx_ecdh, gid);
+		if (err) goto failed_init;
+		mbed = &ctx_ecdh->MBEDTLS_PRIVATE(ctx);
+		err = mbedtls_ecp_point_read_binary(
+			&mbed->MBEDTLS_PRIVATE(grp),
+			&mbed->MBEDTLS_PRIVATE(Q),
+			VAL_BIN_AT(val_key),
+			VAL_LEN(val_key)
+		);
+		if (err) {
+		failed_init:
+			mbedtls_ecdh_free(ctx_ecdh);
+			free(ctx_ecdh);
+			return R_NONE;
+		}
 	}
 	else {
 		if (NOT_VALID_CONTEXT_HANDLE(val_key, SYM_ECDH)) {
 			Trap0(RE_INVALID_HANDLE);
 		}
-		ecc = (ECC_CTX*)VAL_HANDLE_CONTEXT_DATA(val_key);
-		curve_type = ecc->curve_type;
+		ctx_ecdh = (ECDH_CTX *)VAL_HANDLE_CONTEXT_DATA(val_key);
+		gid = ctx_ecdh->MBEDTLS_PRIVATE(grp_id);
 	}
-
-	curve = get_ecc_curve(curve_type);
-	if (!curve) return R_NONE;
 
 	if (ref_sign) {
-		if (ecc) {
-			key = ecc->private;
-		}
-		else {
-			if (VAL_LEN(val_key) != 32) return R_NONE;
-			key = VAL_BIN(val_key);
-		}
-		bin = Make_Series(64, 1, FALSE);
-		if(!uECC_sign(key, VAL_DATA(val_hash), VAL_LEN(val_hash), BIN_DATA(bin), curve)) {
-			return R_NONE;
+		mbed = &ctx_ecdh->MBEDTLS_PRIVATE(ctx);
+		mbedtls_mpi_init(&r);
+		mbedtls_mpi_init(&s);
+		err = mbedtls_ecp_gen_keypair(
+			&mbed->MBEDTLS_PRIVATE(grp),
+			&mbed->MBEDTLS_PRIVATE(d),
+			&mbed->MBEDTLS_PRIVATE(Q),
+			mbedtls_ctr_drbg_random, &ctr_drbg);
+		if (err) goto done;
+
+		err = mbedtls_ecdsa_sign(
+			&mbed->MBEDTLS_PRIVATE(grp),
+			&r, &s,
+			&mbed->MBEDTLS_PRIVATE(d),
+			VAL_BIN_AT(val_hash), VAL_LEN(val_hash),
+			mbedtls_ctr_drbg_random, &ctr_drbg);
+		if (err) goto done;
+
+		bin = Make_Binary(300);
+		err = ecdsa_signature_to_asn1(&r, &s, BIN_DATA(bin), SERIES_REST(bin), &len);
+		if (err) {
+			FREE_SERIES(bin);
+			goto done;
 		}
 		SET_BINARY(D_RET, bin);
-		VAL_TAIL(D_RET) = 64;
-		return R_RET;
+		BIN_LEN(bin) = len;
+	}
+	if (ref_verify) {
+		mbed = &ctx_ecdh->MBEDTLS_PRIVATE(ctx);
+		unsigned char *p = VAL_BIN_AT(val_sign);
+		const unsigned char *end = VAL_BIN_TAIL(val_sign);
+		mbedtls_mpi_init(&r);
+		mbedtls_mpi_init(&s);
+		err = mbedtls_asn1_get_tag(&p, end, &len, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE);
+		if (err || p + len != end) goto done;
+		if ((err = mbedtls_asn1_get_mpi(&p, end, &r)) != 0 ||
+			(err = mbedtls_asn1_get_mpi(&p, end, &s)) != 0) {
+			goto done;
+		}
+		err = ecdsa_verify_restartable(
+			&mbed->MBEDTLS_PRIVATE(grp),
+			VAL_BIN_AT(val_hash), VAL_LEN(val_hash),
+			&mbed->MBEDTLS_PRIVATE(Q), &r, &s, NULL);
+		if (err) goto done;
+		SET_TRUE(D_RET);
 	}
 
-	if (ref_verify) {
-		if (ecc) {
-			key = ecc->public;
-		}
-		else {
-			if (VAL_LEN(val_key) != 64) return R_FALSE;
-			key = VAL_BIN(val_key);
-		}
-		if(VAL_LEN(val_sign) == 64 && uECC_verify(key, VAL_DATA(val_hash), VAL_LEN(val_hash), VAL_DATA(val_sign), curve)) {
-			return R_TRUE;
-		}
-		else {
-			return R_FALSE;
-		}
+done:
+	mbedtls_mpi_free(&r);
+	mbedtls_mpi_free(&s);
+	if (IS_BINARY(val_key)) {
+		mbedtls_ecdh_free(ctx_ecdh);
+		free(ctx_ecdh);
 	}
-	return R_UNSET;
+	return err ? R_NONE : R_RET;
+
 }
 
 

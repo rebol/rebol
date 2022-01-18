@@ -77,8 +77,8 @@ C79E915C3277361FBFA587C6DC06FEDE0B7E57FEC0B68F96B3AD651D54264357
 
 
 ===start-group=== "Elliptic-curve Diffie-Hellman key exchange"
-curves: [secp256k1 secp256r1 secp224r1 secp192r1 secp160r1]
-foreach ecurve curves [
+
+foreach ecurve system/catalog/elliptic-curves [
 	--test-- rejoin ["ECDH (" ecurve ") keys usage"]
 
 		;- Boban and Alice both init key with same curve
@@ -95,7 +95,7 @@ foreach ecurve curves [
 		;- These keys should be same on both sides
 		--assert secret-Alice = secret-Boban
 		;- Once done with the exchange, the ECDH key must be released!
-		--assert handle? ecdh/release k-Alice
+		--assert true? ecdh/release k-Alice
 		--assert none? ecdh/public k-Alice
 
 		;- re-initialization...
@@ -106,6 +106,10 @@ foreach ecurve curves [
 		--assert binary? secret-Boban: ecdh/secret/release k-Boban pub-Alice
 		--assert secret-Alice = secret-Boban
 
+	if find [curve25519 curve448] ecurve [
+		; these curves are not for signing
+		continue
+	]
 	--test-- rejoin ["ECDSA (" ecurve ") signing"]
 
 		;- Alice generates her key-pair
@@ -117,7 +121,8 @@ foreach ecurve curves [
 		;- and use ECDSA to sign it using her private key
 		signature: ecdsa/sign k-Alice hash
 		--assert binary? signature
-		--assert 64 = length? signature
+		; signature is encoded as ASN1
+		--assert block? try [decode 'der signature]
 		;- can verify if it really works:
 		--assert ecdsa/verify k-Alice hash signature
 
