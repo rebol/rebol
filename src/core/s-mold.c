@@ -1053,7 +1053,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	err = VAL_ERR_VALUES(value);
 
 	// Form: ** <type> Error:
-	Emit(mold, "** WB", &err->type, RS_ERRS+0);
+	Emit(mold, "\n** WB", &err->type, RS_ERRS+0);
 
 	// Append: error message ARG1, ARG2, etc.
 	msg = Find_Error_Info(err, 0);
