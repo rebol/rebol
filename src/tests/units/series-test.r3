@@ -324,6 +324,11 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/825
 		--assert [1 #[none] 2 #[none]] = trim/head copy blk
 		--assert [#[none] 1 #[none] 2] = trim/tail copy blk
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2482
+		--assert [1 #[none] 2] = trim     copy blk
+		--assert [1 2]         = trim/all copy blk
+		--assert all [error? e: try [trim/head/all []] e/id = 'bad-refines]
+		--assert all [error? e: try [trim/tail/all []] e/id = 'bad-refines]
 
 ===end-group===
 

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -329,5 +330,44 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 	// these are not supported on binary values
 	if (flags & (AM_TRIM_AUTO | AM_TRIM_LINES)) {
 		Trap0(RE_BAD_REFINES);
+	}
+}
+
+/***********************************************************************
+**
+*/	void Trim_Block(REBSER *ser, REBCNT index, REBCNT flags)
+/*
+***********************************************************************/
+{
+	REBVAL *blk = BLK_HEAD(ser);
+	REBCNT out = index;
+	REBCNT end = ser->tail;
+
+	if (flags & AM_TRIM_ALL) {
+		if (flags != (flags & AM_TRIM_ALL)) Trap0(RE_BAD_REFINES);
+		for (; index < end; index++) {
+			if (VAL_TYPE(blk + index) > REB_NONE) {
+				*BLK_SKIP(ser, out) = blk[index];
+				out++;
+			}
+		}
+		Remove_Series(ser, out, end - out);
+		return;
+	}
+	
+	if (flags & ~(AM_TRIM_HEAD | AM_TRIM_TAIL)) Trap0(RE_BAD_REFINES);
+
+	if (!flags || flags & AM_TRIM_TAIL) {
+		for (; end >= (index + 1); end--) {
+			if (VAL_TYPE(blk + end - 1) > REB_NONE) break;
+		}
+		Remove_Series(ser, end, ser->tail - end);
+	}
+
+	if (!flags || flags & AM_TRIM_HEAD) {
+		for (; index < end; index++) {
+			if (VAL_TYPE(blk + index) > REB_NONE) break;
+		}
+		Remove_Series(ser, out, index - out);
 	}
 }
