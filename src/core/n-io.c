@@ -82,6 +82,7 @@ static REBSER *Read_All_File(char *fname)
 {
 	REBVAL *val = D_ARG(1);
 	REBSER *ser = 0;
+	REBINT err;
 
 	Echo_File(0);
 
@@ -91,7 +92,11 @@ static REBSER *Read_All_File(char *fname)
 		ser = To_Local_Path("output.txt", 10, FALSE, TRUE);
 
 	if (ser) {
-		if (!Echo_File((REBCHR*)(ser->data))) Trap1(RE_CANNOT_OPEN, val);
+		err = Echo_File((REBCHR *)(ser->data));
+		if (err != DR_DONE) {
+			SET_INTEGER(D_RET, -err);
+			Trap2(RE_CANNOT_OPEN, val, D_RET);
+		}
 	}
 
 	return R_RET;

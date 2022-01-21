@@ -130,4 +130,17 @@ secure [%/ allow]
 
 ===end-group===
 
+
+===start-group=== "ECHO"
+	--test-- "echo test"
+		echo %echo-result print 1 echo none
+		--assert "1^/" = read/string %echo-result
+
+	--test-- "echo failed"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/834
+		--assert all [error? e: try [echo %not-existing-dir/foo] e/id = 'cannot-open]
+===end-group===
+
+echo %/r/sss/xxxx
+
 ~~~end-file~~~
