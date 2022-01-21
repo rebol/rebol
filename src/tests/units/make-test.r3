@@ -236,6 +236,7 @@ Rebol [
 
 ===start-group=== "make/to logic!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/763
+	;@@ https://github.com/Oldes/Rebol-issues/issues/951
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2055
 	--test-- "make logic! .."
 		--assert #[true]  = try [make logic! quote #[unset!] ] ; unset!
