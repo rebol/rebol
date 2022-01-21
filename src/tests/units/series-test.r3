@@ -319,6 +319,11 @@ Rebol [
 		--assert #{00001100} = head trim/tail at copy bin 5
 		--assert #{00110000} = head trim/head at copy bin 2
 		--assert #{0011}     = head trim/all  at copy bin 2
+	--test-- "trim block!"
+		blk: [#[none] 1 #[none] 2 #[none]]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/825
+		--assert [1 #[none] 2 #[none]] = trim/head copy blk
+		--assert [#[none] 1 #[none] 2] = trim/tail copy blk
 
 ===end-group===
 
