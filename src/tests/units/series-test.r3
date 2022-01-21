@@ -306,6 +306,14 @@ Rebol [
 		--assert #{} = trim      #{0000}
 		--assert #{} = trim/tail #{0000}
 		--assert #{} = trim/head #{0000}
+		--assert #{2061626320} = trim/head/tail to-binary " abc "
+	--test-- "trim binary! incompatible"
+		--assert all [error? e: try [trim/auto  #{00}] e/id = 'bad-refines]
+		--assert all [error? e: try [trim/lines #{00}] e/id = 'bad-refines]
+		--assert all [error? e: try [trim/head/all #{00}] e/id = 'bad-refines]
+		--assert all [error? e: try [trim/tail/all #{00}] e/id = 'bad-refines]
+		--assert all [error? e: try [trim/tail/with #{00} 0] e/id = 'bad-refines]
+		--assert all [error? e: try [trim/head/with #{00} 0] e/id = 'bad-refines]
 	--test-- "trim binary! with index > 1"
 		bin: #{0000110000}
 		--assert #{00001100} = head trim/tail at copy bin 5
