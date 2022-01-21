@@ -1850,6 +1850,13 @@ Rebol [
 	--assert block?   random      next [1 2]
 	--assert integer? random/only next [1 2]
 
+--test-- "copy/part limit"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/853
+	--assert [1] = copy/part tail [1] -2147483647
+	--assert [1] = copy/part tail [1] -2147483648
+	--assert all [error? e: try [copy/part tail [1] -2147483649] e/id = 'out-of-range]
+
+
 ===end-group===
 
 
