@@ -506,6 +506,10 @@ if not error? try [str: to string! #{A032}][
 	--assert not equal? [#"a"] reduce [c]
 ]
 
+--test-- "invalid rule error message"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1273
+	--assert all [error? e: try [parse "abc" [huh "b"]] e/id = 'parse-rule e/arg1 = 'huh]
+
 ===end-group===
 
 ~~~end-file~~~
