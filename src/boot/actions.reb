@@ -345,7 +345,7 @@ clear: action [
 ]
 
 trim: action [
-	{Removes spaces from strings or nones from blocks or objects.}
+	{Removes spaces from strings, nulls from binary, nones from blocks or objects.}
 	series [series! object! error! module!] {Series (modified) or object (made)}
 	/head {Removes only from the head}
 	/tail {Removes only from the tail}

@@ -293,3 +293,41 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 		trim_head_tail(ser, index, tail, flags & AM_TRIM_HEAD, flags & AM_TRIM_TAIL);
 	}
 }
+
+/***********************************************************************
+**
+*/	void Trim_Binary(REBSER *ser, REBCNT index, REBCNT len, REBCNT flags, REBVAL *with)
+/*
+***********************************************************************/
+{
+	REBCNT tail = index + len;
+	REBCNT n;
+
+	// /all or /with
+	if (flags & (AM_TRIM_ALL | AM_TRIM_WITH)) {
+		if (IS_NONE(with)) SET_INTEGER(with, 0); // only NULL by default on binary
+		replace_with(ser, index, tail, with);
+		return;
+	}
+	// /head
+	if (!flags || flags & AM_TRIM_HEAD) {
+		for (n = 0; n < len; n++) {
+			if (BIN_HEAD(ser)[index + n]) break;
+		}
+		if (n > 0) {
+			Remove_Series(ser, index, n);
+			tail -= n;
+		}
+	}
+	// /tail
+	if (!flags || flags & AM_TRIM_TAIL) {
+		for (; index < tail; tail--) {
+			if (BIN_HEAD(ser)[tail - 1]) break;
+		}
+		SERIES_TAIL(ser) = tail;
+	}
+	// these are not supported on binary values
+	if (flags & (AM_TRIM_AUTO | AM_TRIM_LINES)) {
+		Trap0(RE_BAD_REFINES);
+	}
+}

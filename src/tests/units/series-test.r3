@@ -280,6 +280,42 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "TRIM"
+	--test-- "trim string!"
+		str1: " a b c "
+		str2: " ^(A0) ^-a b  ^- c  ^(2000) "
+		mstr: {   a ^-1^/    ab2^-  ^/  ac3  ^/  ^/^/}
+		--assert "a b c"  = trim copy str1
+		--assert "a b c"  = trim/head/tail copy str1
+		--assert "a b c " = trim/head copy str1
+		--assert " a b c" = trim/tail copy str1
+	;	--assert "a b  ^- c" = trim copy str2 ;- not like Red!
+		--assert "a ^-1^/ab2^/ac3^/" = trim copy mstr
+		--assert "a1ab2ac3" = trim/all { a ^-1^/ ab2^- ^/ ac3 ^/ ^/^/}
+		--assert "    ^-1^/    b2^-  ^/  c3  ^/  ^/^/" = trim/with copy mstr #"a"
+		--assert "    ^-1^/    b2^-  ^/  c3  ^/  ^/^/" = trim/with copy mstr 97
+	--test-- "trim binary!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1482
+		bin: #{0011001100}
+		--assert #{110011}   = trim           copy bin
+		--assert #{110011}   = trim/head/tail copy bin
+		--assert #{11001100} = trim/head      copy bin
+		--assert #{00110011} = trim/tail      copy bin
+		--assert #{1111}     = trim/all       copy bin
+		--assert #{000000}   = trim/all/with  copy bin #{11}
+		--assert #{} = trim      #{0000}
+		--assert #{} = trim/tail #{0000}
+		--assert #{} = trim/head #{0000}
+	--test-- "trim binary! with index > 1"
+		bin: #{0000110000}
+		--assert #{00001100} = head trim/tail at copy bin 5
+		--assert #{00110000} = head trim/head at copy bin 2
+		--assert #{0011}     = head trim/all  at copy bin 2
+
+===end-group===
+
+
+
 ===start-group=== "REPLACE string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/54
 	--test-- "issue-54"
