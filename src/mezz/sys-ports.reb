@@ -328,6 +328,31 @@ init-schemes: func [
 		]
 
 	]
+
+	make-scheme [
+		title: "Crypt"
+		spec: system/standard/port-spec-crypt
+		name: 'crypt
+		init: function [
+			port [port!]
+		][
+			spec: port/spec
+			algorithm: any [
+				select spec 'algorithm
+				select spec 'host   ; if scheme was opened using url type
+				'AES-256-CBC        ; default cipher
+			]
+			if any [
+				error? try [spec/algorithm: to word! algorithm] ; in case it was not
+				not find system/catalog/ciphers spec/algorithm
+			][
+				cause-error 'access 'invalid-spec algorithm
+			] 
+			set port/spec: copy system/standard/port-spec-crypt spec
+			;protect/words port/spec ; protect spec object keys of modification
+		]
+	]
+
 	make-scheme [
 		title: "Clipboard"
 		name: 'clipboard

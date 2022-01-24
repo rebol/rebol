@@ -28,45 +28,22 @@
 **
 ***********************************************************************/
 
-#include "sys-core.h"
+#include "sys-crypt.h"
 #include "sys-rc4.h"
+#ifdef INCLUDE_AES_DEPRECATED
 #include "sys-aes.h"
+#endif
+#include "mbedtls/cipher_wrap.h"
 
-#ifndef EXCLUDE_CHACHA20POLY1305
+#ifdef INCLUDE_CHACHA20POLY1305_DEPRECATED
 #include "sys-chacha20.h"
 #include "sys-poly1305.h"
 #endif
-#include "mbedtls/rsa.h"
-#include "mbedtls/dhm.h"
-#include "mbedtls/bignum.h"
-#include "mbedtls/sha256.h"
-#include "mbedtls/entropy.h"
-#include "mbedtls/ctr_drbg.h"
-#include "mbedtls/ecdh.h"
-#include "mbedtls/ecdsa.h"
-#include "mbedtls/asn1.h"
-//#include "mbedtls/asn1write.h"
+
 
 static mbedtls_entropy_context entropy;
 static mbedtls_ctr_drbg_context ctr_drbg;
 
-typedef mbedtls_rsa_context   RSA_CTX;
-typedef mbedtls_dhm_context   DHM_CTX;
-typedef mbedtls_ecdh_context ECDH_CTX;
-
-// these 3 functions were defined as static in dhm.c file, so are not in the header!
-extern int dhm_check_range(const mbedtls_mpi *param, const mbedtls_mpi *P);
-extern int dhm_random_below(mbedtls_mpi *R, const mbedtls_mpi *M,
-	int (*f_rng)(void *, unsigned char *, size_t), void *p_rng);
-// originally static in ecdsa.c
-extern int ecdsa_signature_to_asn1(const mbedtls_mpi *r, const mbedtls_mpi *s,
-	unsigned char *sig, size_t sig_size,
-	size_t *slen);
-extern int ecdsa_verify_restartable(mbedtls_ecp_group *grp,
-	const unsigned char *buf, size_t blen,
-	const mbedtls_ecp_point *Q,
-	const mbedtls_mpi *r, const mbedtls_mpi *s,
-	mbedtls_ecdsa_restart_ctx *rs_ctx);
 
 /***********************************************************************
 **
@@ -74,6 +51,10 @@ extern int ecdsa_verify_restartable(mbedtls_ecp_group *grp,
 /*
 ***********************************************************************/
 {
+	REBVAL *blk;
+	REBVAL  tmp;
+	REBCNT  sym;
+
 	mbedtls_ctr_drbg_init(&ctr_drbg);
 	mbedtls_entropy_init(&entropy);
 	const char *pers = "rebol";
@@ -81,17 +62,78 @@ extern int ecdsa_verify_restartable(mbedtls_ecp_group *grp,
 	mbedtls_ctr_drbg_seed(
 		&ctr_drbg, mbedtls_entropy_func, &entropy,
 		(const unsigned char *)pers, strlen(pers));
-
+#ifdef INCLUDE_AES_DEPRECATED
 	Register_Handle(SYM_AES,  sizeof(AES_CTX), NULL);
+#endif
+#ifdef INCLUDE_RC4
 	Register_Handle(SYM_RC4,  sizeof(RC4_CTX), NULL);
+#endif
 	Register_Handle(SYM_DHM,  sizeof(DHM_CTX), (REB_HANDLE_FREE_FUNC)mbedtls_dhm_free);
+#ifdef INCLUDE_RSA
 	Register_Handle(SYM_RSA,  sizeof(RSA_CTX), (REB_HANDLE_FREE_FUNC)mbedtls_rsa_free);
+#endif
 	Register_Handle(SYM_ECDH, sizeof(ECDH_CTX), (REB_HANDLE_FREE_FUNC)mbedtls_ecdh_free);
-#ifndef EXCLUDE_CHACHA20POLY1305
+	Register_Handle(SYM_CRYPT, sizeof(CRYPT_CTX), (REB_HANDLE_FREE_FUNC)crypt_context_free);
+#ifdef INCLUDE_CHACHA20POLY1305_DEPRECATED
 	Register_Handle(SYM_CHACHA20, sizeof(poly1305_context), NULL);
 	Register_Handle(SYM_POLY1305, sizeof(poly1305_context), NULL);
 	Register_Handle(SYM_CHACHA20POLY1305, sizeof(chacha20poly1305_ctx), NULL);
 #endif
+
+	blk = Get_System(SYS_CATALOG, CAT_CIPHERS);
+	if (blk && IS_BLOCK(blk)) {
+		const mbedtls_cipher_definition_t *def;
+		for (def = mbedtls_cipher_definitions; def->info != NULL; def++) {
+			sym = Make_Word(def->info->MBEDTLS_PRIVATE(name), 0);
+			Init_Word(&tmp, sym);
+			VAL_SET_LINE(&tmp);
+			Append_Val(VAL_SERIES(blk), &tmp);
+		}
+	}
+	blk = Get_System(SYS_CATALOG, CAT_ELLIPTIC_CURVES);
+	if (blk && IS_BLOCK(blk)) {
+		#define add_ec_word(sym) Init_Word(&tmp, sym); VAL_SET_LINE(&tmp); Append_Val(VAL_SERIES(blk), &tmp);
+		#ifdef MBEDTLS_ECP_DP_SECP192R1_ENABLED
+		add_ec_word(SYM_SECP192R1)
+		#endif
+		#ifdef MBEDTLS_ECP_DP_SECP224R1_ENABLED
+		add_ec_word(SYM_SECP224R1)
+		#endif
+		#ifdef MBEDTLS_ECP_DP_SECP256R1_ENABLED
+		add_ec_word(SYM_SECP256R1)
+		#endif
+		#ifdef MBEDTLS_ECP_DP_SECP384R1_ENABLED
+		add_ec_word(SYM_SECP384R1)
+		#endif
+		#ifdef MBEDTLS_ECP_DP_SECP521R1_ENABLED
+		add_ec_word(SYM_SECP521R1)
+		#endif
+		#ifdef MBEDTLS_ECP_DP_SECP192K1_ENABLED
+		add_ec_word(SYM_SECP192K1)
+		#endif
+		#ifdef MBEDTLS_ECP_DP_SECP224K1_ENABLED
+		add_ec_word(SYM_SECP224K1)
+		#endif
+		#ifdef MBEDTLS_ECP_DP_SECP256K1_ENABLED
+		add_ec_word(SYM_SECP256K1)
+		#endif
+		#ifdef MBEDTLS_ECP_DP_BP256R1_ENABLED
+		add_ec_word(SYM_BP256R1)
+		#endif
+		#ifdef MBEDTLS_ECP_DP_BP384R1_ENABLED
+		add_ec_word(SYM_BP384R1)
+		#endif
+		#ifdef MBEDTLS_ECP_DP_BP512R1_ENABLED
+		add_ec_word(SYM_BP512R1)
+		#endif
+		#ifdef MBEDTLS_ECP_DP_CURVE25519_ENABLED
+		add_ec_word(SYM_CURVE25519)
+		#endif
+		#ifdef MBEDTLS_ECP_DP_CURVE448_ENABLED
+		add_ec_word(SYM_CURVE448)
+		#endif
+	}
+	
 }
 
 /***********************************************************************
@@ -109,6 +151,9 @@ extern int ecdsa_verify_restartable(mbedtls_ecp_group *grp,
 //	]
 ***********************************************************************/
 {
+#ifndef INCLUDE_RC4
+	Trap0(RE_FEATURE_NA);
+#else
     REBOOL  ref_key       = D_REF(1);
     REBVAL *val_crypt_key = D_ARG(2); 
     REBOOL  ref_stream    = D_REF(3);
@@ -134,114 +179,9 @@ extern int ecdsa_verify_restartable(mbedtls_ecp_group *grp,
         );
     }
     return R_RET;
+#endif //INCLUDE_RC4
 }
 
-
-/***********************************************************************
-**
-*/	REBNATIVE(aes)
-/*
-//  aes: native [
-//		"Encrypt/decrypt data using AES algorithm. Returns stream cipher context handle or encrypted/decrypted data."
-//		/key                "Provided only for the first time to get stream HANDLE!"
-//			crypt-key [binary!] "Crypt key (16 or 32 bytes)."
-//			iv  [none! binary!] "Optional initialization vector (16 bytes)."
-//		/decrypt            "Use the crypt-key for decryption (default is to encrypt)"
-//		/stream
-//			ctx [handle!]   "Stream cipher context."
-//			data [binary!]  "Data to encrypt/decrypt."
-//  ]
-***********************************************************************/
-{
-	REBOOL  ref_key       = D_REF(1);
-    REBVAL *val_crypt_key = D_ARG(2);
-    REBVAL *val_iv        = D_ARG(3);
-	REBOOL  ref_decrypt   = D_REF(4);
-    REBOOL  ref_stream    = D_REF(5);
-    REBVAL *val_ctx       = D_ARG(6);
-    REBVAL *val_data      = D_ARG(7);
-    
-    REBVAL *ret = D_RET;
-	REBINT  len, pad_len;
-
-	//TODO: could be optimized by reusing the handle
-
-	if (ref_key) {
-    	//key defined - setup new context
-
-    	uint8_t iv[AES_IV_SIZE];
-
-		if (IS_BINARY(val_iv)) {
-			if (VAL_LEN(val_iv) < AES_IV_SIZE) {
-				return R_NONE;
-			}
-			memcpy(iv, VAL_BIN_AT(val_iv), AES_IV_SIZE);
-		} else {
-			//TODO: Use ECB encryption if IV is not specified
-			memset(iv, 0, AES_IV_SIZE);
-		}
-		
-		len = VAL_LEN(val_crypt_key) << 3;
-
-		if (len != 128 && len != 256) {
-			return R_NONE;
-		}
-
-		MAKE_HANDLE(ret, SYM_AES);
-
-		AES_set_key(
-			(AES_CTX*)VAL_HANDLE_CONTEXT_DATA(ret),
-			VAL_BIN_AT(val_crypt_key),
-			(const uint8_t *)iv,
-			(len == 128) ? AES_MODE_128 : AES_MODE_256
-		);
-
-		if (ref_decrypt) AES_convert_key((AES_CTX*)VAL_HANDLE_CONTEXT_DATA(ret));
-
-    } else if(ref_stream) {
-
-    	if (NOT_VALID_CONTEXT_HANDLE(val_ctx, SYM_AES)) {
-			Trap0(RE_INVALID_HANDLE);
-			return R_NONE;
-		}		
-		AES_CTX *aes_ctx = (AES_CTX *)VAL_HANDLE_CONTEXT_DATA(val_ctx);
-
-    	len = VAL_LEN(val_data);
-    	if (len == 0) return R_NONE;
-
-		pad_len = (((len - 1) >> 4) << 4) + AES_BLOCKSIZE;
-
-		REBYTE *data = VAL_BIN_AT(val_data);
-		REBYTE *pad_data;
-
-		if (len < pad_len) {
-			//  make new data input with zero-padding
-			//TODO: instead of making new data, the original could be extended with padding.
-			pad_data = (REBYTE*)MAKE_MEM(pad_len);
-			memset(pad_data, 0, pad_len);
-			memcpy(pad_data, data, len);
-			data = pad_data;
-		}
-		else {
-			pad_data = NULL;
-		}
-
-		REBSER  *binaryOut = Make_Binary(pad_len);
-
-		if (aes_ctx->key_mode == AES_MODE_DECRYPT) {
-			AES_cbc_decrypt(aes_ctx, data, BIN_HEAD(binaryOut),	pad_len);
-		}
-		else {
-			AES_cbc_encrypt(aes_ctx, data, BIN_HEAD(binaryOut),	pad_len);
-		}
-		if (pad_data) FREE_MEM(pad_data);
-
-		SET_BINARY(ret, binaryOut);
-		VAL_TAIL(ret) = pad_len;
-
-    }
-	return R_RET;
-}
 
 /***********************************************************************
 **
@@ -258,6 +198,9 @@ extern int ecdsa_verify_restartable(mbedtls_ecp_group *grp,
 //  ]
 ***********************************************************************/
 {
+#ifndef INCLUDE_RSA
+	Trap0(RE_FEATURE_NA);
+#else
 	REBSER *n       = VAL_SERIES(D_ARG(1));
 	REBSER *e       = VAL_SERIES(D_ARG(2));
 	REBOOL  ref_private =        D_REF(3);
@@ -302,6 +245,7 @@ extern int ecdsa_verify_restartable(mbedtls_ecp_group *grp,
 		) return R_NONE;
 	}
 	return R_RET;
+#endif //INCLUDE_RSA
 }
 #ifdef unused 
 static int myrand(void *rng_state, unsigned char *output, size_t len)
@@ -341,6 +285,9 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 //  ]
 ***********************************************************************/
 {
+#ifndef INCLUDE_RSA
+	Trap0(RE_FEATURE_NA);
+#else
 	REBVAL *key         = D_ARG(1);
 	REBVAL *val_data    = D_ARG(2);
 	REBOOL  refEncrypt  = D_REF(3);
@@ -422,6 +369,7 @@ error:
 	//printf("RSA key init failed with error:: -0x%0x\n", (unsigned int)-err);
 	Free_Series(data);
 	return R_NONE;
+#endif //INCLUDE_RSA
 }
 
 
@@ -860,7 +808,7 @@ done:
 //  ]
 ***********************************************************************/
 {
-#ifdef EXCLUDE_CHACHA20POLY1305
+#ifndef INCLUDE_CHACHA20POLY1305_DEPRECATED
 	Trap0(RE_FEATURE_NA);
 #else
 	REBVAL *val_ctx       = D_ARG(1);
@@ -951,7 +899,7 @@ done:
 //  ]
 ***********************************************************************/
 {
-#ifdef EXCLUDE_CHACHA20POLY1305
+#ifndef INCLUDE_CHACHA20POLY1305_DEPRECATED
 	Trap0(RE_FEATURE_NA);
 #else
 	REBVAL *val_ctx       = D_ARG(1);
@@ -1029,7 +977,7 @@ done:
 //  ]
 ***********************************************************************/
 {
-#ifdef EXCLUDE_CHACHA20POLY1305
+#ifndef INCLUDE_CHACHA20POLY1305_DEPRECATED
 	Trap0(RE_FEATURE_NA);
 #else
 	REBVAL *val_ctx        = D_ARG(1);

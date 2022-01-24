@@ -453,16 +453,96 @@ include-iconv: [
 ]
 
 ;- native cryptography:                                                         
+include-cipher-camelia: [
+	core-files: %core/mbedtls/camellia.c
+	config: MBEDTLS_CAMELLIA_C
+]
+include-cipher-gcm: [
+	core-files: %core/mbedtls/gcm.c
+	config: MBEDTLS_GCM_C
+]
+include-cipher-cbc: [
+	; costs cca 1.5kB uncompressed (for AES)
+	config: MBEDTLS_CIPHER_MODE_CBC
+]
+include-cipher-chacha20: [
+	; costs cca 3kB uncompressed
+	core-files: %core/mbedtls/chacha20.c
+	config: MBEDTLS_CHACHA20_C
+]
+include-cipher-chachapoly: [
+	core-files: %core/mbedtls/chachapoly.c
+	core-files: %core/mbedtls/poly1305.c
+	config: MBEDTLS_CHACHAPOLY_C
+	config: MBEDTLS_POLY1305_C
+]
+
+include-cipher-aes-deprecated: [
+	; costs cca 5kB uncompressed
+	config: INCLUDE_AES_DEPRECATED
+	include: %src/include/deprecated/
+	core-files: %core/deprecated/u-aes.c
+	core-files: %core/deprecated/n-crypt-aes.c
+]
+
+include-cipher-chacha20-deprecated: [
+	; costs cca 10kB uncompressed
+	config: INCLUDE_CHACHA20POLY1305_DEPRECATED
+	include: %src/include/deprecated/
+	core-files: %core/deprecated/u-chacha20.c
+	core-files: %core/deprecated/u-poly1305.c
+]
+
+include-rsa: [
+	; costs cca 12kB uncompressed
+	config: INCLUDE_RSA
+	core-files: %core/mbedtls/rsa.c
+	core-files: %core/mbedtls/rsa_alt_helpers.c
+]
+include-rc4: [
+	; costs cca 0.5kB uncompressed
+	config: INCLUDE_RC4
+	core-files: %core/u-rc4.c
+]
+
+include-curves-sec1: [
+	; curves defined by FIPS 186-4 and SEC1
+	config: MBEDTLS_ECP_DP_SECP192R1_ENABLED   ; costs 2kB
+	config: MBEDTLS_ECP_DP_SECP224R1_ENABLED   ; costs 2.5kB
+	config: MBEDTLS_ECP_DP_SECP256R1_ENABLED   ; costs 2.5kB
+	config: MBEDTLS_ECP_DP_SECP384R1_ENABLED
+	config: MBEDTLS_ECP_DP_SECP521R1_ENABLED
+]
+include-curves-koblitz: [
+	; "Koblitz" curves
+	config: MBEDTLS_ECP_DP_SECP192K1_ENABLED
+	config: MBEDTLS_ECP_DP_SECP224K1_ENABLED
+	config: MBEDTLS_ECP_DP_SECP256K1_ENABLED
+]
+include-curves-brainpool: [
+	; "Brainpool" curves
+	config: MBEDTLS_ECP_DP_BP256R1_ENABLED
+	config: MBEDTLS_ECP_DP_BP384R1_ENABLED
+	config: MBEDTLS_ECP_DP_BP512R1_ENABLED
+]
+include-curves-x: [
+	config: MBEDTLS_ECP_DP_CURVE25519_ENABLED  ; costs 7.6kB
+	config: MBEDTLS_ECP_DP_CURVE448_ENABLED    ; costs 7.6kB; together with CURVE25519 8.1!
+]
+
+
+
 include-cryptography: [
+	; so far cca 183kB uncompressed (basic AES, all ellyptic curves, rsa, rc4, bignum, entropy )
 	config: INCLUDE_CRYPTOGRAPHY
+
 	core-files: [
 		%core/n-crypt.c
-		%core/u-aes.c 
+		
 		;%core/deprecated/u-bigint.c ;needed for RSA abd DH which is needed in TLS protocol (HTTPS)
-		%core/u-chacha20.c
 		;%core/deprecated/u-dh.c
-		%core/u-poly1305.c
-		%core/u-rc4.c
+		;%core/u-poly1305.c
+		
 		;%core/deprecated/u-rsa.c
 		;%core/deprecated/u-uECC.c
 
@@ -474,8 +554,7 @@ include-cryptography: [
 		%core/mbedtls/md.c
 		%core/mbedtls/oid.c
 		%core/mbedtls/bignum.c
-		%core/mbedtls/rsa.c
-		%core/mbedtls/rsa_alt_helpers.c
+		
 		%core/mbedtls/constant_time.c
 		%core/mbedtls/ctr_drbg.c
 		%core/mbedtls/entropy.c
@@ -484,7 +563,27 @@ include-cryptography: [
 		%core/mbedtls/ecdsa.c
 		%core/mbedtls/ecp.c
 		%core/mbedtls/ecp_curves.c
+
+		%core/mbedtls/cipher.c
+		%core/mbedtls/cipher_wrap.c
 	]
+
+	:include-curves-sec1
+	:include-curves-koblitz
+	:include-curves-brainpool
+	:include-curves-x
+
+	:include-rsa
+	:include-rc4
+
+	:include-cipher-camelia
+	:include-cipher-cbc
+	;:include-cipher-gcm
+	;:include-cipher-chacha20
+	;:include-cipher-chachapoly
+	:include-cipher-chacha20-deprecated
+	:include-cipher-aes-deprecated
+
 	:include-codec-crt
 	:include-codec-der
 	:include-codec-pkix
