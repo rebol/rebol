@@ -498,7 +498,7 @@ HorizontalFilter(const REBSER *source, REBSER *destination, REBSER *data_set,
 	for (x=0; x < (long) IMG_WIDE(destination); x++) {
 		REBDEC center;
 		REBDEC density = 0.0;
-		REBINT n, start, stop;
+		REBINT n, start, stop, i, j;
 
 		center = (REBDEC) (x+0.5)/x_factor;
 		start  = (REBINT) MAX(center-support+0.5,0);
@@ -513,13 +513,12 @@ HorizontalFilter(const REBSER *source, REBSER *destination, REBSER *data_set,
 		if ((density != 0.0) && (density != 1.0)) {
 			// Normalize.
 			density = 1.0 / density;
-			for (i32 i=0; i < n; i++)
+			for (i=0; i < n; i++)
 				contribution[i].weight*=density;
 		}
 
 		for (y=0; y < (long) IMG_HIGH(destination); y++) {
 			REBDEC weight;
-			REBINT j, i;
 			DoublePixelPacket pixel = zero;
 
 			if (has_alpha) {
@@ -586,7 +585,7 @@ VerticalFilter(const REBSER *source, REBSER *destination, REBSER *data_set,
 	for (y=0; y < (long) IMG_HIGH(destination); y++) {
 		REBDEC center;
 		REBDEC density = 0.0;
-		REBINT n, start, stop;
+		REBINT n, start, stop, i, j;
 		ContributionInfo *contribution = (ContributionInfo*)SERIES_DATA(data_set);
 
 		center = (REBDEC)(y+0.5) / y_factor;
@@ -601,12 +600,11 @@ VerticalFilter(const REBSER *source, REBSER *destination, REBSER *data_set,
 		if ((density != 0.0) && (density != 1.0)) {
 			// Normalize.
 			density = 1.0 / density;
-			for (i32 i=0; i < n; i++)
+			for (i=0; i < n; i++)
 				contribution[i].weight *= density;
 		}
 		for (x=0; x < (long) IMG_WIDE(destination); x++) {
 			REBDEC weight;
-			REBINT j, i;
 			DoublePixelPacket pixel = zero;
 
 			if (has_alpha) {

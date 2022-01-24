@@ -280,6 +280,60 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "TRIM"
+	--test-- "trim string!"
+		str1: " a b c "
+		str2: " ^(A0) ^-a b  ^- c  ^(2000) "
+		mstr: {   a ^-1^/    ab2^-  ^/  ac3  ^/  ^/^/}
+		--assert "a b c"  = trim copy str1
+		--assert "a b c"  = trim/head/tail copy str1
+		--assert "a b c " = trim/head copy str1
+		--assert " a b c" = trim/tail copy str1
+	;	--assert "a b  ^- c" = trim copy str2 ;- not like Red!
+		--assert "a ^-1^/ab2^/ac3^/" = trim copy mstr
+		--assert "a1ab2ac3" = trim/all { a ^-1^/ ab2^- ^/ ac3 ^/ ^/^/}
+		--assert "    ^-1^/    b2^-  ^/  c3  ^/  ^/^/" = trim/with copy mstr #"a"
+		--assert "    ^-1^/    b2^-  ^/  c3  ^/  ^/^/" = trim/with copy mstr 97
+	--test-- "trim binary!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1482
+		bin: #{0011001100}
+		--assert #{110011}   = trim           copy bin
+		--assert #{110011}   = trim/head/tail copy bin
+		--assert #{11001100} = trim/head      copy bin
+		--assert #{00110011} = trim/tail      copy bin
+		--assert #{1111}     = trim/all       copy bin
+		--assert #{000000}   = trim/all/with  copy bin #{11}
+		--assert #{} = trim      #{0000}
+		--assert #{} = trim/tail #{0000}
+		--assert #{} = trim/head #{0000}
+		--assert #{2061626320} = trim/head/tail to-binary " abc "
+	--test-- "trim binary! incompatible"
+		--assert all [error? e: try [trim/auto  #{00}] e/id = 'bad-refines]
+		--assert all [error? e: try [trim/lines #{00}] e/id = 'bad-refines]
+		--assert all [error? e: try [trim/head/all #{00}] e/id = 'bad-refines]
+		--assert all [error? e: try [trim/tail/all #{00}] e/id = 'bad-refines]
+		--assert all [error? e: try [trim/tail/with #{00} 0] e/id = 'bad-refines]
+		--assert all [error? e: try [trim/head/with #{00} 0] e/id = 'bad-refines]
+	--test-- "trim binary! with index > 1"
+		bin: #{0000110000}
+		--assert #{00001100} = head trim/tail at copy bin 5
+		--assert #{00110000} = head trim/head at copy bin 2
+		--assert #{0011}     = head trim/all  at copy bin 2
+	--test-- "trim block!"
+		blk: [#[none] 1 #[none] 2 #[none]]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/825
+		--assert [1 #[none] 2 #[none]] = trim/head copy blk
+		--assert [#[none] 1 #[none] 2] = trim/tail copy blk
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2482
+		--assert [1 #[none] 2] = trim     copy blk
+		--assert [1 2]         = trim/all copy blk
+		--assert all [error? e: try [trim/head/all []] e/id = 'bad-refines]
+		--assert all [error? e: try [trim/tail/all []] e/id = 'bad-refines]
+
+===end-group===
+
+
+
 ===start-group=== "REPLACE string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/54
 	--test-- "issue-54"
@@ -1197,7 +1251,11 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1083
 	    s: "0123456789" b: copy []
     	loop 100 [append b random/only s]
-		--assert [#"0" #"1" #"2" #"3" #"4" #"5" #"6" #"7" #"8" #"9"] = sort unique b 
+		--assert [#"0" #"1" #"2" #"3" #"4" #"5" #"6" #"7" #"8" #"9"] = sort unique b
+	--test-- "random on path"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/912
+		; not supported..
+		--assert all [error? e: try [random 'a/b/c] e/id = 'cannot-use]
 
 ===end-group===
 
@@ -1791,6 +1849,13 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1875
 	--assert block?   random      next [1 2]
 	--assert integer? random/only next [1 2]
+
+--test-- "copy/part limit"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/853
+	--assert [1] = copy/part tail [1] -2147483647
+	--assert [1] = copy/part tail [1] -2147483648
+	--assert all [error? e: try [copy/part tail [1] -2147483649] e/id = 'out-of-range]
+
 
 ===end-group===
 

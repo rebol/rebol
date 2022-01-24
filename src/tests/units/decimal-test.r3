@@ -250,6 +250,10 @@ Rebol [
 		--assert 0.0 = 0%
 		--assert 0.0 = $0
 		--assert 0.0 = 0
+	;@@ https://github.com/Oldes/Rebol-issues/issues/952
+		--assert not ($0 == 0)
+		--assert not ($0.0 == 0)
+		--assert not (0.0 == 0)
 
 ===end-group===
 

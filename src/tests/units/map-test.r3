@@ -213,6 +213,14 @@ Rebol [
 		m: make map! ["foo" 1 "FOO" 2 %foo 1 %FOO 2]
 		--assert ["foo" "FOO" %foo %FOO] = keys-of m
 
+	;@@ https://github.com/Oldes/Rebol-issues/issues/969
+	;@@ https://github.com/Oldes/Rebol-issues/issues/970
+	--test-- "strict-equal? and strict-not-equal? on map"
+		m: make map! []
+		--assert strict-equal? m m
+		--assert not strict-equal? "" m
+		--assert not strict-not-equal? m m
+		--assert strict-not-equal? "" m
 
 ===end-group===
 

@@ -82,6 +82,7 @@ static REBSER *Read_All_File(char *fname)
 {
 	REBVAL *val = D_ARG(1);
 	REBSER *ser = 0;
+	REBINT err;
 
 	Echo_File(0);
 
@@ -91,7 +92,11 @@ static REBSER *Read_All_File(char *fname)
 		ser = To_Local_Path("output.txt", 10, FALSE, TRUE);
 
 	if (ser) {
-		if (!Echo_File((REBCHR*)(ser->data))) Trap1(RE_CANNOT_OPEN, val);
+		err = Echo_File((REBCHR *)(ser->data));
+		if (err != DR_DONE) {
+			SET_INTEGER(D_RET, -err);
+			Trap2(RE_CANNOT_OPEN, val, D_RET);
+		}
 	}
 
 	return R_RET;
@@ -587,7 +592,7 @@ chk_neg:
 	REBVAL *arg = D_ARG(1);
 	REBSER *ser;
 	REBINT n;
-	REBVAL val, reason;
+	REBVAL val;
 
 	ser = Value_To_OS_Path(arg, TRUE);
 	// it should be safe not to check result from Value_To_OS_Path (it always succeeds)
@@ -604,8 +609,8 @@ chk_neg:
 	SET_FILE(arg, ser);
 
 	if (NZ(n)) {
-		SET_INTEGER(&reason, n);
-		Trap2(RE_CANNOT_OPEN, arg, &reason);
+		SET_INTEGER(D_RET, -n);
+		Trap2(RE_CANNOT_OPEN, arg, D_RET);
 	}
 	return R_ARG1;
 }
