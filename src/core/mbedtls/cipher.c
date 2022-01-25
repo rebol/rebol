@@ -386,9 +386,15 @@ int mbedtls_cipher_set_iv( mbedtls_cipher_context_t *ctx,
 #if defined(MBEDTLS_CHACHA20_C)
     if ( ctx->cipher_info->type == MBEDTLS_CIPHER_CHACHA20 )
     {
+		unsigned int counter = 0U;  /* Initial counter value */
+		if (iv_len == 16) {
+			counter = ((unsigned int)iv[12] << 32)
+				    | ((unsigned int)iv[13] << 16)
+				    | ((unsigned int)iv[14] << 8)
+				    |  (unsigned int)iv[15];
+		}
         if ( 0 != mbedtls_chacha20_starts( (mbedtls_chacha20_context*)ctx->cipher_ctx,
-                                           iv,
-                                           0U ) ) /* Initial counter value */
+                                           iv, counter) )
         {
             return( MBEDTLS_ERR_CIPHER_BAD_INPUT_DATA );
         }

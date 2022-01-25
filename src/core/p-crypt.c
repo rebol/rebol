@@ -174,11 +174,13 @@ static REBOOL init_crypt_algorithm(CRYPT_CTX *ctx, REBVAL *val) {
 
 	err = mbedtls_cipher_set_iv(&ctx->cipher, ctx->IV, 16);
 	if (err) goto failed;
+
 	err = mbedtls_cipher_reset(&ctx->cipher);
 	if (err) goto failed;
 
 	ctx->buffer = Make_Binary(256);
-	// protect the buffer using KEEP, because it is not accesible from any other Rebol value!
+	// buffer is extended when needed.
+	// protected using KEEP, because it is not accesible from any real Rebol value!
 	KEEP_SERIES(ctx->buffer, "crypt");
 
 	return TRUE;
@@ -208,6 +210,7 @@ failed:
 	REBSER *bin;
 	REBSER *out;
 	REBCNT  len;
+	REBCNT  ofs, blk;
 	REBINT  err;
 	size_t olen = 0;
 	CRYPT_CTX *ctx = NULL;
@@ -253,8 +256,9 @@ failed:
 			Expand_Series(bin, AT_TAIL, len);
 			// reset the tail (above expand modifies it!)
 			SERIES_TAIL(bin) = olen;
-			REBCNT ofs = 0;
-			REBCNT blk = mbedtls_cipher_get_block_size(&ctx->cipher);
+			ofs = 0;
+			blk = mbedtls_cipher_get_block_size(&ctx->cipher);
+			if (blk == 1) blk = len; // MBEDTLS_MODE_STREAM, so we can process all data at once
 			REBYTE *p = VAL_BIN_AT(arg1);
 			if (ctx->unprocessed_len > 0) {
 				if (ctx->unprocessed_len > blk) abort();
@@ -300,21 +304,22 @@ failed:
 		break;
 	case A_UPDATE:
 		if (ctx->unprocessed_len > 0) {
-			REBCNT ofs = 0;
-			REBCNT blk = mbedtls_cipher_get_block_size(&ctx->cipher);
+			ofs = 0;
+			blk = mbedtls_cipher_get_block_size(&ctx->cipher);
 			olen = SERIES_TAIL(bin);
 			Expand_Series(bin, AT_TAIL, blk);
 			// reset the tail (above expand modifies it!)
 			SERIES_TAIL(bin) = olen;
 
 			if (ctx->unprocessed_len > blk) abort();
-			REBCNT n = blk - ctx->unprocessed_len;
+			len = blk - ctx->unprocessed_len;
 			// pad with zeros...
-			memset(ctx->unprocessed_data + ctx->unprocessed_len, 0, n);
+			memset(ctx->unprocessed_data + ctx->unprocessed_len, 0, len);
 			err = mbedtls_cipher_update(&ctx->cipher, ctx->unprocessed_data, blk, BIN_TAIL(bin), &olen);
 			SERIES_TAIL(bin) += olen;
 			ctx->unprocessed_len = 0;
 		}
+		//TODO... do we really want to finish on update?!
 		mbedtls_cipher_finish(&ctx->cipher, BIN_TAIL(bin), &olen);
 		SERIES_TAIL(bin) += olen;
 		break;

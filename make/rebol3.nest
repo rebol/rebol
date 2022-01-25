@@ -582,7 +582,7 @@ include-cryptography: [
 	:include-cipher-camelia
 	:include-cipher-cbc
 	;:include-cipher-gcm
-	;:include-cipher-chacha20
+	:include-cipher-chacha20
 	;:include-cipher-chachapoly
 	:include-cipher-chacha20-deprecated
 	:include-cipher-aes-deprecated
