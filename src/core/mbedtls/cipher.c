@@ -388,10 +388,7 @@ int mbedtls_cipher_set_iv( mbedtls_cipher_context_t *ctx,
     {
 		unsigned int counter = 0U;  /* Initial counter value */
 		if (iv_len == 16) {
-			counter = ((unsigned int)iv[12] << 32)
-				    | ((unsigned int)iv[13] << 16)
-				    | ((unsigned int)iv[14] << 8)
-				    |  (unsigned int)iv[15];
+			counter = MBEDTLS_GET_UINT32_BE(iv, 12);
 		}
         if ( 0 != mbedtls_chacha20_starts( (mbedtls_chacha20_context*)ctx->cipher_ctx,
                                            iv, counter) )

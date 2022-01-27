@@ -460,6 +460,10 @@ include-cipher-camelia: [
 	core-files: %core/mbedtls/camellia.c
 	config: MBEDTLS_CAMELLIA_C
 ]
+include-cipher-aria: [
+	core-files: %core/mbedtls/aria.c
+	config: MBEDTLS_ARIA_C
+]
 include-cipher-gcm: [
 	core-files: %core/mbedtls/gcm.c
 	config: MBEDTLS_GCM_C
@@ -567,8 +571,8 @@ include-cryptography: [
 		%core/mbedtls/ecp.c
 		%core/mbedtls/ecp_curves.c
 
-		%core/mbedtls/cipher.c
-		%core/mbedtls/cipher_wrap.c
+	;	%core/mbedtls/cipher.c
+	;	%core/mbedtls/cipher_wrap.c
 	]
 
 	:include-curves-sec1
@@ -579,11 +583,12 @@ include-cryptography: [
 	:include-rsa
 	:include-rc4
 
+	:include-cipher-aria
 	:include-cipher-camelia
 	:include-cipher-cbc
 	;:include-cipher-gcm
 	:include-cipher-chacha20
-	;:include-cipher-chachapoly
+	:include-cipher-chachapoly
 	:include-cipher-chacha20-deprecated
 	:include-cipher-aes-deprecated
 

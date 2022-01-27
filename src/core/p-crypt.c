@@ -40,24 +40,37 @@
 #ifdef INCLUDE_MBEDTLS
 
 
-void crypt_context_free(CRYPT_CTX *ctx) {
+/***********************************************************************
+**
+*/	void crypt_context_free(void *ctx)
+/*
+***********************************************************************/
+{
+	CRYPT_CTX *crypt;
 	if (ctx == NULL) return;
-	if (ctx->buffer) {
-		CLEAR(ctx->buffer->data, ctx->buffer->rest);
-		Free_Series(ctx->buffer);
+	crypt = (CRYPT_CTX *)ctx;
+	if (crypt->buffer) {
+		CLEAR(crypt->buffer->data, crypt->buffer->rest);
+		Free_Series(crypt->buffer);
 	}
-	mbedtls_cipher_free(&ctx->cipher);
-	CLEARS(ctx);
+	free_crypt_cipher_context(crypt);
+	CLEARS(crypt);
 }
 
 
-static REBOOL init_crypt_key(CRYPT_CTX *ctx, REBVAL *val) {
+/***********************************************************************
+**
+*/	static REBOOL init_crypt_key(CRYPT_CTX *ctx, REBVAL *val)
+/*
+***********************************************************************/
+{
 	REBSER *ser;
 	REBCNT  len = 0;
 	REBYTE *bin = NULL;
 	if (val == NULL) return FALSE;
+	ctx->state = CRYPT_PORT_NEEDS_INIT;
 	if (IS_NONE(val)) {
-		memset(&ctx->key, 0, 512);
+		CLEAR(&ctx->key, MBEDTLS_MAX_KEY_LENGTH);
 		return TRUE;
 	}
 	if (IS_STRING(val)) {
@@ -70,35 +83,51 @@ static REBOOL init_crypt_key(CRYPT_CTX *ctx, REBVAL *val) {
 		bin = VAL_BIN_AT(val);
 	}
 	if (bin && len > 0) {
-		if (len > 512) len = 512;
-		memset(&ctx->key, 0, 512);
-		memcpy(&ctx->key, bin, len);
+		if (len > MBEDTLS_MAX_KEY_LENGTH)
+			len = MBEDTLS_MAX_KEY_LENGTH;
+		CLEAR(&ctx->key, MBEDTLS_MAX_KEY_LENGTH);
+		COPY_MEM(&ctx->key, bin, len);
 		return TRUE;
 	}
 	return FALSE;
 }
 
-static REBOOL init_crypt_iv(CRYPT_CTX *ctx, REBVAL *val) {
+/***********************************************************************
+**
+*/	static REBOOL init_crypt_iv(CRYPT_CTX *ctx, REBVAL *val)
+/*
+***********************************************************************/
+{
 	REBCNT len;
 	if (val == NULL) return FALSE;
+	ctx->state = CRYPT_PORT_NEEDS_INIT;
 	if (IS_NONE(val)) {
-		memset(&ctx->IV, 0, 16);
+		CLEAR(&ctx->IV, MBEDTLS_MAX_IV_LENGTH);
+		CLEAR(&ctx->nonce, MBEDTLS_MAX_IV_LENGTH);
 		return TRUE;
 	}
 	if (IS_BINARY(val)) {
 		len = VAL_LEN(val);
 		if (len > 0) {
-			if (len > 16) len = 16;
-			memset(&ctx->IV, 0, 16);
-			memcpy(&ctx->IV, VAL_BIN_AT(val), len);
+			if (len > MBEDTLS_MAX_IV_LENGTH)
+				len = MBEDTLS_MAX_IV_LENGTH;
+			CLEAR(&ctx->IV, MBEDTLS_MAX_IV_LENGTH);
+			CLEAR(&ctx->nonce, MBEDTLS_MAX_IV_LENGTH);
+			COPY_MEM(&ctx->IV, VAL_BIN_AT(val), len);
 		}
 		return TRUE;
 	}
 	return FALSE;
 }
 
-static REBOOL init_crypt_direction(CRYPT_CTX *ctx, REBVAL *val) {
+/***********************************************************************
+**
+*/	static REBOOL init_crypt_direction(CRYPT_CTX *ctx, REBVAL *val)
+/*
+***********************************************************************/
+{
 	if (!val || !IS_WORD(val)) return FALSE;
+	ctx->state = CRYPT_PORT_NEEDS_INIT;
 	switch (VAL_WORD_CANON(val)) {
 	case SYM_ENCRYPT:
 		ctx->operation = MBEDTLS_ENCRYPT;
@@ -112,14 +141,165 @@ static REBOOL init_crypt_direction(CRYPT_CTX *ctx, REBVAL *val) {
 	return TRUE;
 }
 
-static REBOOL init_crypt_algorithm(CRYPT_CTX *ctx, REBVAL *val) {
-	const mbedtls_cipher_info_t *cipher_info;
+/***********************************************************************
+**
+*/	static void free_crypt_cipher_context(CRYPT_CTX *ctx)
+/*
+***********************************************************************/
+{
+	REBCNT type = ctx->cipher_type;
+	if (ctx->cipher_ctx == NULL) return;
+	ctx->state = CRYPT_PORT_CLOSED;
+	switch (type) {
+	case SYM_AES_128_ECB:
+	case SYM_AES_192_ECB:
+	case SYM_AES_256_ECB:
+	case SYM_AES_128_CBC:
+	case SYM_AES_192_CBC:
+	case SYM_AES_256_CBC:
+		mbedtls_aes_free((mbedtls_aes_context *)ctx->cipher_ctx);
+		break;
 
-	if (val == NULL || !IS_WORD(val)) return FALSE;
-	cipher_info = mbedtls_cipher_info_from_string(VAL_WORD_NAME(val));
-	if (!cipher_info) return FALSE;
-	ctx->key_bitlen = cipher_info->private_key_bitlen;
-	return (0 == mbedtls_cipher_setup(&ctx->cipher, cipher_info));
+
+#ifdef MBEDTLS_CAMELLIA_C
+	case SYM_CAMELLIA_128_ECB:
+	case SYM_CAMELLIA_192_ECB:
+	case SYM_CAMELLIA_256_ECB:
+	case SYM_CAMELLIA_128_CBC:
+	case SYM_CAMELLIA_192_CBC:
+	case SYM_CAMELLIA_256_CBC:
+		mbedtls_camellia_free((mbedtls_camellia_context *)ctx->cipher_ctx);
+		break;
+#endif
+
+
+#ifdef MBEDTLS_CHACHA20_C
+	case SYM_CHACHA20:
+		mbedtls_chacha20_free((mbedtls_chacha20_context *)ctx->cipher_ctx);
+		break;
+#endif
+
+
+#ifdef MBEDTLS_CHACHAPOLY_C
+	case SYM_CHACHA20_POLY1305:
+		mbedtls_chachapoly_free((mbedtls_chachapoly_context *)ctx->cipher_ctx);
+		break;
+#endif
+	}
+	free(ctx->cipher_ctx);
+	ctx->cipher_ctx = NULL;
+}
+
+
+
+/***********************************************************************
+**
+*/	static REBOOL init_crypt_algorithm(CRYPT_CTX *ctx, REBVAL *val)
+/*
+***********************************************************************/
+{
+	REBCNT type;
+
+	if (!IS_WORD(val)) return FALSE;
+	type = VAL_WORD_CANON(val);
+	if (type != ctx->cipher_type) {
+		free_crypt_cipher_context(ctx);
+	}
+	ctx->state = CRYPT_PORT_NEEDS_INIT;
+	switch (type) {
+
+	case SYM_AES_128_ECB:
+	case SYM_AES_192_ECB:
+	case SYM_AES_256_ECB:
+#ifdef MBEDTLS_CIPHER_MODE_CBC
+	case SYM_AES_128_CBC:
+	case SYM_AES_192_CBC:
+	case SYM_AES_256_CBC:
+#endif
+		if (ctx->cipher_ctx == NULL)
+			ctx->cipher_ctx = malloc(sizeof(mbedtls_aes_context));
+		mbedtls_aes_init((mbedtls_aes_context*)ctx->cipher_ctx);
+		switch (type) {
+		case SYM_AES_128_ECB:
+		case SYM_AES_128_CBC: ctx->key_bitlen = 128; break;
+		case SYM_AES_192_ECB:
+		case SYM_AES_192_CBC: ctx->key_bitlen = 192; break;
+		case SYM_AES_256_ECB:
+		case SYM_AES_256_CBC: ctx->key_bitlen = 256; break;
+		}
+		ctx->cipher_block_size = 16;
+		break;
+
+
+#ifdef MBEDTLS_CAMELLIA_C
+	case SYM_CAMELLIA_128_ECB:
+	case SYM_CAMELLIA_192_ECB:
+	case SYM_CAMELLIA_256_ECB:
+#ifdef MBEDTLS_CIPHER_MODE_CBC
+	case SYM_CAMELLIA_128_CBC:
+	case SYM_CAMELLIA_192_CBC:
+	case SYM_CAMELLIA_256_CBC:
+#endif
+		if (ctx->cipher_ctx == NULL)
+			ctx->cipher_ctx = malloc(sizeof(mbedtls_camellia_context));
+		switch (type) {
+		case SYM_CAMELLIA_128_ECB:
+		case SYM_CAMELLIA_128_CBC: ctx->key_bitlen = 128; break;
+		case SYM_CAMELLIA_192_ECB:
+		case SYM_CAMELLIA_192_CBC: ctx->key_bitlen = 192; break;
+		case SYM_CAMELLIA_256_ECB:
+		case SYM_CAMELLIA_256_CBC: ctx->key_bitlen = 256; break;
+		}
+		ctx->cipher_block_size = 16;
+		break;
+#endif
+
+
+#ifdef MBEDTLS_ARIA_C
+	case SYM_ARIA_128_ECB:
+	case SYM_ARIA_192_ECB:
+	case SYM_ARIA_256_ECB:
+#ifdef MBEDTLS_CIPHER_MODE_CBC
+	case SYM_ARIA_128_CBC:
+	case SYM_ARIA_192_CBC:
+	case SYM_ARIA_256_CBC:
+#endif
+		if (ctx->cipher_ctx == NULL)
+			ctx->cipher_ctx = malloc(sizeof(mbedtls_camellia_context));
+		switch (type) {
+		case SYM_ARIA_128_ECB:
+		case SYM_ARIA_128_CBC: ctx->key_bitlen = 128; break;
+		case SYM_ARIA_192_ECB:
+		case SYM_ARIA_192_CBC: ctx->key_bitlen = 192; break;
+		case SYM_ARIA_256_ECB:
+		case SYM_ARIA_256_CBC: ctx->key_bitlen = 256; break;
+		}
+		ctx->cipher_block_size = 16;
+		break;
+#endif
+
+
+#ifdef MBEDTLS_CHACHA20_C
+	case SYM_CHACHA20:
+		if (ctx->cipher_ctx == NULL)
+			ctx->cipher_ctx = malloc(sizeof(mbedtls_chacha20_context));
+		mbedtls_chacha20_init((mbedtls_chacha20_context *)ctx->cipher_ctx);
+		ctx->cipher_block_size = 16U;
+		break;
+#endif
+
+
+#ifdef MBEDTLS_CHACHAPOLY_C
+	case SYM_CHACHA20_POLY1305:
+		if (ctx->cipher_ctx == NULL)
+			ctx->cipher_ctx = malloc(sizeof(CHACHAPOLY_CTX));
+		mbedtls_chachapoly_init((CHACHAPOLY_CTX *)ctx->cipher_ctx);
+		ctx->cipher_block_size = 0;
+		break;
+#endif
+	}
+	ctx->cipher_type = type;
+	return TRUE;
 }
 
 
@@ -151,37 +331,26 @@ static REBOOL init_crypt_algorithm(CRYPT_CTX *ctx, REBVAL *val) {
 		return FALSE;
 	}
 
-	mbedtls_cipher_init(&ctx->cipher);
-
 	val = Obj_Value(spec, STD_PORT_SPEC_CRYPT_ALGORITHM);
-	if (!init_crypt_algorithm(ctx, val)) goto failed;
+	if (!init_crypt_algorithm(ctx, val)) { err = 1;  goto failed; }
 
-	val = Obj_Value(spec, STD_PORT_SPEC_CRYPT_IV);
+	val = Obj_Value(spec, STD_PORT_SPEC_CRYPT_INIT_VECTOR);
 	if (!init_crypt_iv(ctx, val)) { err = 1; goto failed; }
-	// as we have a copy, make it invisible from the spec
-	SET_NONE(val);
+	SET_NONE(val); // as we have a copy, make it invisible from the spec
 
 	val = Obj_Value(spec, STD_PORT_SPEC_CRYPT_KEY);
 	if(!init_crypt_key(ctx, val)) { err = 1; goto failed; }
-	// as we have a copy, make it invisible from the spec
-	SET_NONE(val);
+	SET_NONE(val); // as we have a copy, make it invisible from the spec
 
 	val = Obj_Value(spec, STD_PORT_SPEC_CRYPT_DIRECTION);
 	if (!init_crypt_direction(ctx, val)) { err = 1; goto failed; }
-
-	err = mbedtls_cipher_setkey(&ctx->cipher, ctx->key, ctx->key_bitlen, ctx->operation);
-	if (err) goto failed;
-
-	err = mbedtls_cipher_set_iv(&ctx->cipher, ctx->IV, 16);
-	if (err) goto failed;
-
-	err = mbedtls_cipher_reset(&ctx->cipher);
-	if (err) goto failed;
 
 	ctx->buffer = Make_Binary(256);
 	// buffer is extended when needed.
 	// protected using KEEP, because it is not accesible from any real Rebol value!
 	KEEP_SERIES(ctx->buffer, "crypt");
+
+	ctx->state = CRYPT_PORT_NEEDS_INIT;
 
 	return TRUE;
 
@@ -193,6 +362,317 @@ failed:
 	}
 	Trap_Port(RE_CANNOT_OPEN, port, err);
 	return FALSE;
+}
+
+
+/***********************************************************************
+**
+*/	static REBINT Crypt_Crypt(CRYPT_CTX *ctx, REBYTE *input, REBCNT len, REBCNT *olen)
+/*
+***********************************************************************/
+{
+	REBINT  err;
+	REBSER *bin;
+	REBCNT  blk, ofs;
+	REBYTE *start = input;
+
+	*olen = 0;
+
+	if (len == 0) return 0;
+
+	bin = ctx->buffer;
+	blk = ctx->cipher_block_size;
+
+	// make sure, that input is not less than required block size
+	// unhandled input data are stored later in the ctx->unprocessed_data
+	if (blk > 0 && len < blk) return 0;
+
+	// make space at tail if needed...
+	ofs = SERIES_TAIL(bin);
+	Expand_Series(bin, AT_TAIL, len);
+	// reset the tail (above expand modifies it!)
+	SERIES_TAIL(bin) = ofs;
+
+	switch (ctx->cipher_type) {
+
+	case SYM_AES_128_ECB:
+	case SYM_AES_192_ECB:
+	case SYM_AES_256_ECB:
+		for (ofs = 0; ofs <= len - blk; ofs += blk) {
+			err = mbedtls_aes_crypt_ecb((mbedtls_aes_context *)ctx->cipher_ctx, ctx->operation, input, BIN_TAIL(bin));
+			if (err) return err;
+			SERIES_TAIL(bin) += blk;
+			input += blk;
+		}
+		break;
+#ifdef MBEDTLS_CIPHER_MODE_CBC
+	case SYM_AES_128_CBC:
+	case SYM_AES_192_CBC:
+	case SYM_AES_256_CBC:
+		blk = len - (len % 16);
+		err = mbedtls_aes_crypt_cbc((mbedtls_aes_context *)ctx->cipher_ctx, ctx->operation, blk, ctx->IV, input, BIN_TAIL(bin));
+		if (err) return err;
+		SERIES_TAIL(bin) += blk;
+		input += blk;
+		break;
+#endif
+
+#ifdef MBEDTLS_CAMELLIA_C
+	case SYM_CAMELLIA_128_ECB:
+	case SYM_CAMELLIA_192_ECB:
+	case SYM_CAMELLIA_256_ECB:
+		for (ofs = 0; ofs <= len - blk; ofs += blk) {
+			err = mbedtls_camellia_crypt_ecb((mbedtls_camellia_context *)ctx->cipher_ctx, ctx->operation, input, BIN_TAIL(bin));
+			if (err) return err;
+			SERIES_TAIL(bin) += blk;
+			input += blk;
+		}
+		break;
+#ifdef MBEDTLS_CIPHER_MODE_CBC
+	case SYM_CAMELLIA_128_CBC:
+	case SYM_CAMELLIA_192_CBC:
+	case SYM_CAMELLIA_256_CBC:
+		blk = len - (len % blk);
+		err = mbedtls_camellia_crypt_cbc((mbedtls_camellia_context *)ctx->cipher_ctx, ctx->operation, blk, ctx->nonce, input, BIN_TAIL(bin));
+		if (err) return err;
+		SERIES_TAIL(bin) += blk;
+		input += blk;
+		break;
+#endif
+#endif
+
+
+#ifdef MBEDTLS_ARIA_C
+	case SYM_ARIA_128_ECB:
+	case SYM_ARIA_192_ECB:
+	case SYM_ARIA_256_ECB:
+		for (ofs = 0; ofs <= len - blk; ofs += blk) {
+			err = mbedtls_aria_crypt_ecb((mbedtls_aria_context *)ctx->cipher_ctx, input, BIN_TAIL(bin));
+			if (err) return err;
+			SERIES_TAIL(bin) += blk;
+			input += blk;
+		}
+		break;
+#ifdef MBEDTLS_CIPHER_MODE_CBC
+	case SYM_ARIA_128_CBC:
+	case SYM_ARIA_192_CBC:
+	case SYM_ARIA_256_CBC:
+		blk = len - (len % blk);
+		err = mbedtls_aria_crypt_cbc((mbedtls_aria_context *)ctx->cipher_ctx, ctx->operation, blk, ctx->nonce, input, BIN_TAIL(bin));
+		if (err) return err;
+		SERIES_TAIL(bin) += blk;
+		input += blk;
+		break;
+#endif
+#endif
+
+
+#ifdef MBEDTLS_CHACHA20_C
+	case SYM_CHACHA20:
+		err = mbedtls_chacha20_update((mbedtls_chacha20_context *)ctx->cipher_ctx, len, input, BIN_TAIL(bin));
+		if (err) return err;
+		SERIES_TAIL(bin) += len;
+		input += len;
+		break;
+#endif
+
+#ifdef MBEDTLS_CHACHAPOLY_C
+	case SYM_CHACHA20_POLY1305:
+		if (ctx->state == CRYPT_PORT_FINISHED) {
+			err = mbedtls_chachapoly_starts((CHACHAPOLY_CTX *)ctx->cipher_ctx, ctx->nonce, ctx->operation);
+			if (err) return err;
+			ctx->state = CRYPT_PORT_NEEDS_AAD;
+		}
+		if (ctx->state == CRYPT_PORT_NEEDS_AAD) {
+			err = mbedtls_chachapoly_update_aad((mbedtls_chachapoly_context *)ctx->cipher_ctx, input, len);
+			if (err) return err;
+			*olen = len;
+			ctx->state = CRYPT_PORT_READY;
+			// exit, because aad is not part of the output
+			return CRYPT_OK;
+		}
+		else {
+			err = mbedtls_chachapoly_update((CHACHAPOLY_CTX *)ctx->cipher_ctx, len, input, BIN_TAIL(bin));
+		}
+		
+		
+		if (err) return err;
+		SERIES_TAIL(bin) += len;
+		input += len;
+		//err = mbedtls_chachapoly_encrypt_and_tag((CHACHAPOLY_CTX*)ctx->cipher_ctx, len, ctx->IV, 
+		//	input_str->len, nonce_str->x,
+		//	aad_str->x, aad_str->len,
+		//	input_str->x, output, mac)
+		break;
+#endif
+	}
+
+	*olen = input - start;
+	return CRYPT_OK;
+}
+
+/***********************************************************************
+**
+*/	static REBINT Crypt_Init(CRYPT_CTX *ctx)
+/*
+***********************************************************************/
+{
+	REBINT  err = 0;
+	REBCNT  counter;
+
+	CLEAR_SERIES(ctx->buffer);
+	SERIES_TAIL(ctx->buffer) = 0;
+	CLEAR(ctx->unprocessed_data, MBEDTLS_MAX_BLOCK_LENGTH);
+	ctx->unprocessed_len = 0;
+
+	switch (ctx->cipher_type) {
+
+	case SYM_AES_128_ECB:
+	case SYM_AES_192_ECB:
+	case SYM_AES_256_ECB:
+	case SYM_AES_128_CBC:
+	case SYM_AES_192_CBC:
+	case SYM_AES_256_CBC:
+		if (ctx->operation == MBEDTLS_ENCRYPT) {
+			err = mbedtls_aes_setkey_enc((mbedtls_aes_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
+		}
+		else {
+			err = mbedtls_aes_setkey_dec((mbedtls_aes_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
+		}
+		break;
+
+
+	#ifdef MBEDTLS_CAMELLIA_C
+	case SYM_CAMELLIA_128_ECB:
+	case SYM_CAMELLIA_192_ECB:
+	case SYM_CAMELLIA_256_ECB:
+	case SYM_CAMELLIA_128_CBC:
+	case SYM_CAMELLIA_192_CBC:
+	case SYM_CAMELLIA_256_CBC:
+		mbedtls_camellia_init((mbedtls_camellia_context *)ctx->cipher_ctx);
+		if (ctx->operation == MBEDTLS_ENCRYPT) {
+			err = mbedtls_camellia_setkey_enc((mbedtls_camellia_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
+		}
+		else {
+			err = mbedtls_camellia_setkey_dec((mbedtls_camellia_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
+		}
+		COPY_MEM(ctx->nonce, ctx->IV, MBEDTLS_MAX_IV_LENGTH);
+		break;
+	#endif
+
+	#ifdef MBEDTLS_ARIA_C
+	case SYM_ARIA_128_ECB:
+	case SYM_ARIA_192_ECB:
+	case SYM_ARIA_256_ECB:
+	case SYM_ARIA_128_CBC:
+	case SYM_ARIA_192_CBC:
+	case SYM_ARIA_256_CBC:
+		mbedtls_aria_init((mbedtls_aria_context *)ctx->cipher_ctx);
+		if (ctx->operation == MBEDTLS_ENCRYPT) {
+			err = mbedtls_aria_setkey_enc((mbedtls_camellia_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
+		}
+		else {
+			err = mbedtls_aria_setkey_dec((mbedtls_camellia_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
+		}
+		COPY_MEM(ctx->nonce, ctx->IV, MBEDTLS_MAX_IV_LENGTH);
+		break;
+#endif
+
+	#ifdef MBEDTLS_CHACHA20_C
+	case SYM_CHACHA20:
+		err = mbedtls_chacha20_setkey((mbedtls_chacha20_context *)ctx->cipher_ctx, ctx->key);
+		if (err) return err;
+		counter = MBEDTLS_GET_UINT32_BE(ctx->IV, 12);
+		err = mbedtls_chacha20_starts((mbedtls_chacha20_context *)ctx->cipher_ctx, ctx->IV, counter);
+		break;
+	#endif
+
+
+	#ifdef MBEDTLS_CHACHAPOLY_C
+	case SYM_CHACHA20_POLY1305:
+		err = mbedtls_chachapoly_setkey((CHACHAPOLY_CTX *)ctx->cipher_ctx, ctx->key);
+		if (err) return err;
+		COPY_MEM(ctx->nonce, ctx->IV, MBEDTLS_MAX_IV_LENGTH);
+		err = mbedtls_chachapoly_starts((CHACHAPOLY_CTX *)ctx->cipher_ctx, ctx->nonce, ctx->operation);
+		if (err) return err;
+		ctx->state = CRYPT_PORT_NEEDS_AAD;
+		return CRYPT_OK;
+	#endif
+
+	}
+	if (err) return err;
+
+
+	ctx->state = CRYPT_PORT_READY;
+
+
+	return CRYPT_OK;
+}
+
+
+/***********************************************************************
+**
+*/	static REBINT Crypt_Write(CRYPT_CTX *ctx, REBYTE *input, REBCNT len)
+/*
+***********************************************************************/
+{
+	REBINT  err;
+	REBSER *bin;
+	REBCNT  blk, olen, ofs;
+	REBCNT unprocessed_free;
+	REBCNT counter;
+	REBYTE *end = input + len;
+
+	if (len == 0) return 0;
+
+	if (ctx->state == CRYPT_PORT_NEEDS_INIT) {
+		err = Crypt_Init(ctx);
+		if (err) return err;
+	}
+
+	blk = ctx->cipher_block_size;
+	if (blk > MBEDTLS_MAX_BLOCK_LENGTH) return CRYPT_ERROR_BAD_BLOCK_SIZE;
+
+
+	unprocessed_free = blk - ctx->unprocessed_len;
+	if (len < unprocessed_free) {
+		// input has not enough bytes to fill the block!
+		COPY_MEM(ctx->unprocessed_data + ctx->unprocessed_len, input, len);
+		ctx->unprocessed_len += len;
+		if (ctx->unprocessed_len < blk)	return CRYPT_OK;
+	}
+
+	if (ctx->unprocessed_len > 0) {
+		if (ctx->unprocessed_len > blk)
+			return CRYPT_ERROR_BAD_UNPROCESSED_SIZE;
+		// complete the block using the current input
+		COPY_MEM(ctx->unprocessed_data + ctx->unprocessed_len, input, unprocessed_free);
+		// complete the block
+		Crypt_Crypt(ctx, ctx->unprocessed_data, blk, &olen);
+		input += unprocessed_free;
+		len -= unprocessed_free;
+		// make the processed block empty again
+		ctx->unprocessed_len = 0;
+	}
+	// input data could be already consumed on the unprocessed buffer
+	if (len == 0) {
+		return CRYPT_OK;
+	}
+	// test if input have enough data to do the block crypt
+	if (len > blk) {
+		// we have enough data to call crypt
+		Crypt_Crypt(ctx, input, len, &olen);
+		if (olen > len) return CRYPT_ERROR_BAD_PROCESSED_SIZE;
+		len -= olen;
+	}
+	// test if there are some unprocessed data
+	if (len > 0) {
+		if (len > MBEDTLS_MAX_BLOCK_LENGTH) return CRYPT_ERROR_BAD_UNPROCESSED_SIZE;
+		COPY_MEM(ctx->unprocessed_data, input, len);
+		ctx->unprocessed_len = len;
+	}
+	// done
+	return CRYPT_OK;
 }
 
 
@@ -245,52 +725,16 @@ failed:
 
 	switch (action) {
 	case A_WRITE:
+		//puts("write");
 		arg1 = D_ARG(2);
 		if (!IS_BINARY(arg1)) {
 			Trap_Port(RE_FEATURE_NA, port, 0);
 		}
-		len = VAL_LEN(arg1);
-		if (len > 0) {
-			// make space at tail if needed...
-			olen = SERIES_TAIL(bin);
-			Expand_Series(bin, AT_TAIL, len);
-			// reset the tail (above expand modifies it!)
-			SERIES_TAIL(bin) = olen;
-			ofs = 0;
-			blk = mbedtls_cipher_get_block_size(&ctx->cipher);
-			if (blk == 1) blk = len; // MBEDTLS_MODE_STREAM, so we can process all data at once
-			REBYTE *p = VAL_BIN_AT(arg1);
-			if (ctx->unprocessed_len > 0) {
-				if (ctx->unprocessed_len > blk) abort();
-				REBCNT n = blk - ctx->unprocessed_len;
-				memcpy(ctx->unprocessed_data + ctx->unprocessed_len, p, n);
-				err = mbedtls_cipher_update(&ctx->cipher, ctx->unprocessed_data, blk, BIN_TAIL(bin), &olen);
-				SERIES_TAIL(bin) += olen;
-				p += n;
-				len -= n;
-				ctx->unprocessed_len = 0;
-				
-			}
-			if (len >= blk) {
-				for (ofs = 0; ofs <= len - blk; ofs += blk) {
-					err = mbedtls_cipher_update(&ctx->cipher, p, blk, BIN_TAIL(bin), &olen);
-					if (err) {
-						Trap1(RE_INVALID_ARG, arg1);
-					}
-					SERIES_TAIL(bin) += olen;
-					p += blk;
-				}
-			}
-			if (ofs < len) {
-				// unprocessed data...
-				len -= ofs;
-				memcpy(ctx->unprocessed_data, p, len);
-				ctx->unprocessed_len = len;
-			}
-		}
+		Crypt_Write(ctx, VAL_BIN_AT(arg1), VAL_LEN(arg1));
 		break;
 	case A_READ:
 	case A_TAKE:
+		//puts("read");
 		len = BIN_LEN(bin);
 		if (len > 0) {
 			out = Make_Binary(len);
@@ -303,9 +747,21 @@ failed:
 		else return R_NONE;
 		break;
 	case A_UPDATE:
+		//puts("update");
+#ifdef MBEDTLS_CHACHAPOLY_C
+		if (ctx->cipher_type == SYM_CHACHA20_POLY1305) {
+			olen = SERIES_TAIL(bin);
+			Expand_Series(bin, AT_TAIL, 16);
+			SERIES_TAIL(bin) = olen; // reset the tail (above expand modifies it!)
+			err = mbedtls_chachapoly_finish((mbedtls_chachapoly_context*)ctx->cipher_ctx, BIN_TAIL(bin));
+			SERIES_TAIL(bin) += 16;
+			ctx->state = CRYPT_PORT_FINISHED;
+			return R_ARG1;
+		}
+#endif
 		if (ctx->unprocessed_len > 0) {
 			ofs = 0;
-			blk = mbedtls_cipher_get_block_size(&ctx->cipher);
+			blk = ctx->cipher_block_size;
 			olen = SERIES_TAIL(bin);
 			Expand_Series(bin, AT_TAIL, blk);
 			// reset the tail (above expand modifies it!)
@@ -314,23 +770,10 @@ failed:
 			if (ctx->unprocessed_len > blk) abort();
 			len = blk - ctx->unprocessed_len;
 			// pad with zeros...
-			memset(ctx->unprocessed_data + ctx->unprocessed_len, 0, len);
-			err = mbedtls_cipher_update(&ctx->cipher, ctx->unprocessed_data, blk, BIN_TAIL(bin), &olen);
-			SERIES_TAIL(bin) += olen;
-			ctx->unprocessed_len = 0;
-		}
-		//TODO... do we really want to finish on update?!
-		mbedtls_cipher_finish(&ctx->cipher, BIN_TAIL(bin), &olen);
-		SERIES_TAIL(bin) += olen;
-		break;
+			CLEAR(ctx->unprocessed_data + ctx->unprocessed_len, len);
 
-	case A_OPEN:
-		if (ctx) {
-			Trap_Port(RE_ALREADY_OPEN, port, 0);
-		}
-		if (!Crypt_Open(port)) {
-			Trap_Port(RE_CANNOT_OPEN, port, 0);
-			return R_FALSE;
+			Crypt_Crypt(ctx, ctx->unprocessed_data, blk, &olen);
+			ctx->unprocessed_len = 0;
 		}
 		break;
 
@@ -351,6 +794,15 @@ failed:
 		arg2 = D_ARG(3); // value
 		if (!IS_WORD(arg1)) break;
 		switch (VAL_WORD_CANON(arg1)) {
+//		case SYM_AAD:
+//		case SYM_DATA:
+//			if (IS_BINARY(arg2)) {
+//			#ifdef MBEDTLS_CHACHAPOLY_C
+//				err = mbedtls_chachapoly_update_aad((mbedtls_chachapoly_context *)ctx->cipher_ctx, VAL_BIN_AT(arg2), VAL_LEN(arg2));
+//				if (!err) return R_TRUE;
+//			#endif
+//			}
+//			return FALSE;
 		case SYM_ALGORITHM:
 			if (!init_crypt_algorithm(ctx, arg2)) return FALSE;
 			break;
@@ -361,16 +813,17 @@ failed:
 			if (!init_crypt_key(ctx, arg2)) return R_FALSE;
 			break;
 		case SYM_IV:
+		case SYM_INIT_VECTOR:
 			if (!init_crypt_iv(ctx, arg2)) return R_FALSE;
 			break;
 		default:
 			Trap1(RE_INVALID_ARG, arg1);
 		}
-		err = mbedtls_cipher_setkey(&ctx->cipher, ctx->key, ctx->key_bitlen, ctx->operation);
-		if (err) return R_FALSE;
-		err = mbedtls_cipher_set_iv(&ctx->cipher, ctx->IV, 16);
-		if (err) return R_FALSE;
-		err = mbedtls_cipher_reset(&ctx->cipher);
+		//err = mbedtls_cipher_setkey(&ctx->cipher, ctx->key, ctx->key_bitlen, ctx->operation);
+		//if (err) return R_FALSE;
+		//err = mbedtls_cipher_set_iv(&ctx->cipher, ctx->IV, 16);
+		//if (err) return R_FALSE;
+		//err = mbedtls_cipher_reset(&ctx->cipher);
 		break;
 	default:
 		puts("not supported command");

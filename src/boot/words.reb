@@ -305,3 +305,26 @@ secp192k1      ; 192-bit "Koblitz" curve
 secp224k1      ; 224-bit "Koblitz" curve
 secp256k1      ; 256-bit "Koblitz" curve
 curve448       ; Curve448
+
+init-vector
+
+aes-128-ecb
+aes-192-ecb
+aes-256-ecb
+aes-128-cbc
+aes-192-cbc
+aes-256-cbc
+camellia-128-ecb
+camellia-192-ecb
+camellia-256-ecb
+camellia-128-cbc
+camellia-192-cbc
+camellia-256-cbc
+aria-128-ecb
+aria-192-ecb
+aria-256-ecb
+aria-128-cbc
+aria-192-cbc
+aria-256-cbc
+chacha20
+chacha20-poly1305

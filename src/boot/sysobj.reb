@@ -277,9 +277,8 @@ standard: object [
 		scheme:    'crypt
 		direction: 'encrypt
 		algorithm: 
-		;hash:     'SHA1
-		key:       ;#{E76B2413958B00E193}
-		iv:        none
+		init-vector:
+		key: none
 	]
 
 	port-spec-midi: make port-spec-head [

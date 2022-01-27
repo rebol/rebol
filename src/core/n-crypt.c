@@ -80,19 +80,48 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 	Register_Handle(SYM_CHACHA20POLY1305, sizeof(chacha20poly1305_ctx), NULL);
 #endif
 
+	#define add_ec_word(sym) Init_Word(&tmp, sym); VAL_SET_LINE(&tmp); Append_Val(VAL_SERIES(blk), &tmp);
 	blk = Get_System(SYS_CATALOG, CAT_CIPHERS);
 	if (blk && IS_BLOCK(blk)) {
-		const mbedtls_cipher_definition_t *def;
-		for (def = mbedtls_cipher_definitions; def->info != NULL; def++) {
-			sym = Make_Word(def->info->MBEDTLS_PRIVATE(name), 0);
-			Init_Word(&tmp, sym);
-			VAL_SET_LINE(&tmp);
-			Append_Val(VAL_SERIES(blk), &tmp);
-		}
+		add_ec_word(SYM_AES_128_ECB)
+		add_ec_word(SYM_AES_192_ECB)
+		add_ec_word(SYM_AES_256_ECB)
+		#ifdef MBEDTLS_CIPHER_MODE_CBC
+			add_ec_word(SYM_AES_128_CBC)
+			add_ec_word(SYM_AES_192_CBC)
+			add_ec_word(SYM_AES_256_CBC)
+		#endif
+		#ifdef MBEDTLS_CAMELLIA_C
+			add_ec_word(SYM_CAMELLIA_128_ECB)
+			add_ec_word(SYM_CAMELLIA_192_ECB)
+			add_ec_word(SYM_CAMELLIA_256_ECB)
+		#ifdef MBEDTLS_CIPHER_MODE_CBC
+			add_ec_word(SYM_CAMELLIA_128_CBC)
+			add_ec_word(SYM_CAMELLIA_192_CBC)
+			add_ec_word(SYM_CAMELLIA_256_CBC)
+		#endif
+		#endif
+		#ifdef MBEDTLS_ARIA_C
+		add_ec_word(SYM_ARIA_128_ECB)
+		add_ec_word(SYM_ARIA_192_ECB)
+		add_ec_word(SYM_ARIA_256_ECB)
+		#ifdef MBEDTLS_CIPHER_MODE_CBC
+		add_ec_word(SYM_ARIA_128_CBC)
+		add_ec_word(SYM_ARIA_192_CBC)
+		add_ec_word(SYM_ARIA_256_CBC)
+		#endif
+		#endif
+		#ifdef MBEDTLS_CHACHA20_C
+			add_ec_word(SYM_CHACHA20)
+		#endif
+		#ifdef MBEDTLS_CHACHAPOLY_C
+			add_ec_word(SYM_CHACHA20_POLY1305)
+		#endif
 	}
+
 	blk = Get_System(SYS_CATALOG, CAT_ELLIPTIC_CURVES);
 	if (blk && IS_BLOCK(blk)) {
-		#define add_ec_word(sym) Init_Word(&tmp, sym); VAL_SET_LINE(&tmp); Append_Val(VAL_SERIES(blk), &tmp);
+		
 		#ifdef MBEDTLS_ECP_DP_SECP192R1_ENABLED
 		add_ec_word(SYM_SECP192R1)
 		#endif
@@ -576,7 +605,7 @@ error:
 		mbed = &ctx->MBEDTLS_PRIVATE(ctx).MBEDTLS_PRIVATE(mbed_ecdh);
 		mbedtls_ecp_point Q = mbed->MBEDTLS_PRIVATE(Q);
 		// generate the public key, if it does not exists yet
-		if (Q.private_X.private_p == NULL) {
+		if (Q.MBEDTLS_PRIVATE(X).MBEDTLS_PRIVATE(p) == NULL) {
 			err = mbedtls_ecdh_gen_public(
 				&mbed->MBEDTLS_PRIVATE(grp), &mbed->MBEDTLS_PRIVATE(d), &mbed->MBEDTLS_PRIVATE(Q),
 				mbedtls_ctr_drbg_random, &ctr_drbg);

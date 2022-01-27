@@ -26,6 +26,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include "mbedtls/common.h"
 #include "mbedtls/rsa.h"
 #include "mbedtls/dhm.h"
 #include "mbedtls/bignum.h"
@@ -42,22 +43,65 @@
 //#include "mbedtls/asn1write.h"
 
 
+#ifdef MBEDTLS_CAMELLIA_C
+#include "mbedtls/camellia.h"
+#endif
+
+#ifdef MBEDTLS_ARIA_C
+#include "mbedtls/aria.h"
+#endif
+
+#ifdef MBEDTLS_CHACHA20_C
+#include "mbedtls/chacha20.h"
+#endif
+
+#ifdef MBEDTLS_CHACHAPOLY_C
+#include "mbedtls/chachapoly.h"
+typedef mbedtls_chachapoly_context CHACHAPOLY_CTX;
+#define CHACHAPOLY_STATE_AAD (1)
+#define CHACHAPOLY_STATE_CIPHERTEXT (2)
+#endif
+
+
 typedef mbedtls_rsa_context   RSA_CTX;
 typedef mbedtls_dhm_context   DHM_CTX;
 typedef mbedtls_ecdh_context ECDH_CTX;
+//typedef mbedtls_aes_context   AES_CTX;
+
+typedef enum {
+	CRYPT_PORT_CLOSED = 0,
+	CRYPT_PORT_NEEDS_INIT,
+	CRYPT_PORT_NEEDS_AAD,
+	CRYPT_PORT_READY,
+	CRYPT_PORT_FINISHED,
+} crypt_port_state_t;
+
+typedef enum {
+	CRYPT_OK = 0,
+	CRYPT_ERROR_BAD_BLOCK_SIZE,
+	CRYPT_ERROR_BAD_PROCESSED_SIZE,
+	CRYPT_ERROR_BAD_UNPROCESSED_SIZE,
+} crypt_port_error_t;
 
 typedef struct crypt_ctx {
-	mbedtls_cipher_context_t cipher;
+	crypt_port_state_t  state;
 	mbedtls_operation_t operation;
-	int key_bitlen;
-	unsigned char IV[MBEDTLS_MAX_IV_LENGTH];
-	unsigned char key[512];
-	unsigned char unprocessed_data[MBEDTLS_MAX_BLOCK_LENGTH];
-	REBCNT unprocessed_len;
-	REBSER *buffer;
+	REBCNT              cipher_type;
+	REBCNT              cipher_block_size;
+	void                *cipher_ctx;
+	REBSER              *buffer;
+	unsigned int        key_bitlen;
+	unsigned int        unprocessed_len;
+	unsigned char       nonce[MBEDTLS_MAX_IV_LENGTH]; // nonce may be changed, like in Camellia cipher!
+	unsigned char       IV[MBEDTLS_MAX_IV_LENGTH];
+	unsigned char       key[MBEDTLS_MAX_KEY_LENGTH];
+	// Block-based ciphers needs full block to process, if the input is not long enough,
+	// it is stored in this temp buffer...
+	unsigned char       unprocessed_data[MBEDTLS_MAX_BLOCK_LENGTH];
 } CRYPT_CTX;
 
-void crypt_context_free(CRYPT_CTX *ctx);
+void crypt_context_free(void *ctx);
+void free_crypt_cipher_context(CRYPT_CTX *ctx);
 
 
 // these 3 functions were defined as static in dhm.c file, so are not in the header!
