@@ -173,6 +173,18 @@
 #endif
 
 
+#ifdef MBEDTLS_ARIA_C
+	case SYM_ARIA_128_ECB:
+	case SYM_ARIA_192_ECB:
+	case SYM_ARIA_256_ECB:
+	case SYM_ARIA_128_CBC:
+	case SYM_ARIA_192_CBC:
+	case SYM_ARIA_256_CBC:
+		mbedtls_aria_free((mbedtls_aria_context *)ctx->cipher_ctx);
+		break;
+#endif
+
+
 #ifdef MBEDTLS_CHACHA20_C
 	case SYM_CHACHA20:
 		mbedtls_chacha20_free((mbedtls_chacha20_context *)ctx->cipher_ctx);
