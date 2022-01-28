@@ -39,6 +39,17 @@
 
 #ifdef INCLUDE_MBEDTLS
 
+#ifndef MBEDTLS_GET_UINT32_BE
+// including it here as it is defined only for private use in the mbedTLS sources
+#define MBEDTLS_GET_UINT32_BE( data , offset )                  \
+    (                                                           \
+          ( (uint32_t) ( data )[( offset )    ] << 24 )         \
+        | ( (uint32_t) ( data )[( offset ) + 1] << 16 )         \
+        | ( (uint32_t) ( data )[( offset ) + 2] <<  8 )         \
+        | ( (uint32_t) ( data )[( offset ) + 3]       )         \
+    )
+#endif
+
 
 /***********************************************************************
 **

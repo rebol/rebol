@@ -26,7 +26,6 @@
 ***********************************************************************/
 
 #include "sys-core.h"
-#include "mbedtls/common.h"
 #include "mbedtls/rsa.h"
 #include "mbedtls/dhm.h"
 #include "mbedtls/bignum.h"
