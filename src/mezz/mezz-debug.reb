@@ -16,7 +16,7 @@ dt: delta-time: function [
 	{Delta-time - returns the time it takes to evaluate the block.}
 	block [block!]
 ][
-	recycle ; force GC, so there is less change that it is fired in `do block`
+	recycle ; force GC, so there is less chance that it is fired in `do block`
 	start: stats/timer
 	do block
 	stats/timer - start
@@ -190,6 +190,7 @@ profile: function [
 				all [word? :blk block? code: get/any :blk][]
 				code: to block! :blk
 			]
+			code: copy/deep code
 			data: try [delta-profile :code]
 			if error? data [
 				keep/only reduce [0:0:0 0 0 0 0 :blk]
