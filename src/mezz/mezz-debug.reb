@@ -190,21 +190,24 @@ profile: function [
 				all [word? :blk block? code: get/any :blk][]
 				code: to block! :blk
 			]
-			code: copy/deep code
-			data: try [delta-profile :code]
+			; to get the most precise results, make a deep copy for each test!
+			; GC is done in `delta-profile` call.
+			test: copy/deep :code
+			data: try [delta-profile :test]
 			if error? data [
 				keep/only reduce [0:0:0 0 0 0 0 :blk]
 				continue
 			]
 			loop count - 1 [
-				temp: delta-profile copy/deep :code
+				test: copy/deep :code
+				temp: delta-profile :test
 				foreach [k v] data [ data/(k): v + temp/:k ]
 			]
 			keep/only reduce [
 				data/timer / count
 				to integer! data/evals / count
-				to integer! data/series-made / count
-				to integer! data/series-expanded / count
+				to integer! round/ceiling data/series-made / count
+				to integer! round/ceiling data/series-expanded / count
 				to integer! data/series-bytes / count
 				:blk
 			]
