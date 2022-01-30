@@ -197,7 +197,7 @@ profile: function [
 				continue
 			]
 			loop count - 1 [
-				temp: delta-profile :code
+				temp: delta-profile copy/deep :code
 				foreach [k v] data [ data/(k): v + temp/:k ]
 			]
 			keep/only reduce [
