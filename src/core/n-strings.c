@@ -72,6 +72,58 @@ static struct digest {
 
 /***********************************************************************
 **
+*/	REBOOL *Message_Digest(REBYTE *output, REBYTE *input, REBCNT length, REBCNT method, REBCNT *olen)
+/*
+***********************************************************************/
+{
+	switch (method) {
+	case SYM_MD5:
+		MD5(input, length, output);
+		*olen = 16;
+		break;
+	case SYM_SHA1:
+		SHA1(input, length, output);
+		*olen = 20;
+		break;
+	case SYM_SHA256:
+		SHA256(input, length, output);
+		*olen = 32;
+		break;
+	case SYM_SHA224:
+		SHA224(input, length, output);
+		*olen = 28;
+		break;
+	case SYM_SHA512:
+		SHA512(input, length, output);
+		*olen = 64;
+		break;
+#ifdef INCLUDE_SHA384
+	case SYM_SHA384:
+		SHA384(input, length, output);
+		*olen = 48;
+		break;
+#endif
+#ifdef INCLUDE_RIPEMD160
+	case SYM_RIPEMD160:
+		RIPEMD160(input, length, output);
+		*olen = 20;
+		break;
+#endif
+#ifdef INCLUDE_MD4
+	case SYM_MD4:
+		MD4(input, length, output);
+		*olen = 16;
+		break;
+#endif
+	default:
+		return FALSE;
+	}
+	return TRUE;
+}
+
+
+/***********************************************************************
+**
 */	REBNATIVE(ajoin)
 /*
 ***********************************************************************/

@@ -308,9 +308,11 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 //		data    [binary! none!] "Data to work with. Use NONE to release the RSA handle resources!"
 //		/encrypt  "Use public key to encrypt data"
 //		/decrypt  "Use private key to decrypt data"
-//		/sign     "Use private key to sign data"
+//		/sign     "Use private key to sign data. Result is PKCS1 v1.5 binary"
 //		/verify   "Use public key to verify signed data (returns TRUE or FALSE)"
-//		 signature [binary!] "Result of the sign call"
+//		 signature [binary!] "Result of the /sign call"
+//		/hash     "Signature's message digest algorithm"
+//		 algorithm [word!] "Default value is SHA256"
 //  ]
 ***********************************************************************/
 {
@@ -324,20 +326,23 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 	REBOOL  refSign     = D_REF(5);
 	REBOOL  refVerify   = D_REF(6);
 	REBVAL *val_sign    = D_ARG(7);
+	REBOOL  refHash     = D_REF(8);
+	REBVAL *val_hash    = D_ARG(9);
 
 	RSA_CTX *rsa;
 	REBSER  *data;
 	REBYTE  *inBinary;
 	REBYTE  *outBinary;
-	REBYTE   hash[32];
+	REBYTE   hash[64];
 	REBINT   inBytes;
 	REBINT   outBytes;
 	REBINT   err = 0;
+	mbedtls_md_type_t md_alg;
 
 	// make sure that only one refinement is used!
 	if(
-		(refEncrypt && (refDecrypt || refSign    || refVerify)) ||
-		(refDecrypt && (refEncrypt || refSign    || refVerify)) ||
+		(refEncrypt && (refDecrypt || refSign    || refVerify || refHash)) ||
+		(refDecrypt && (refEncrypt || refSign    || refVerify || refHash)) ||
 		(refSign    && (refDecrypt || refEncrypt || refVerify)) ||
 		(refVerify  && (refDecrypt || refSign    || refEncrypt))
 	) {
@@ -365,10 +370,26 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 	inBinary = BIN_DATA(data);
 	inBytes = BIN_LEN(data);
 
-	if (refVerify) {
-		SHA256(inBinary, inBytes, hash);
-		err = mbedtls_rsa_rsassa_pkcs1_v15_verify(rsa, MBEDTLS_MD_SHA256, 32, hash, VAL_BIN(val_sign));
-		return (err == 0) ? R_TRUE : R_FALSE;
+	if (refVerify || refSign) {
+		if (IS_NONE(val_hash)) {
+			md_alg = MBEDTLS_MD_NONE;
+		}
+		else {
+			// count message digest off the input data
+			if (Message_Digest(hash, inBinary, inBytes, VAL_WORD_CANON(val_hash), &inBytes)) {
+				// map Rebol word to mbedtls_md_type_t (expets that have same order!)
+				// no need to test a range as only known will pass above run
+				md_alg = VAL_WORD_CANON(val_hash) - SYM_MD5 + 1;
+				inBinary = hash;
+			}
+			else {
+				return R_NONE;
+			}
+		}
+		if (refVerify) {
+			err = mbedtls_rsa_rsassa_pkcs1_v15_verify(rsa, md_alg, inBytes, inBinary, VAL_BIN(val_sign));
+			return (err == 0) ? R_TRUE : R_FALSE;
+		}
 	}
 
 	//allocate new binary!
@@ -377,8 +398,7 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 	outBinary = BIN_DATA(data);
 
 	if (refSign) {
-		SHA256(inBinary, inBytes, hash);
-		err = mbedtls_rsa_rsassa_pkcs1_v15_sign(rsa, mbedtls_ctr_drbg_random, &ctr_drbg, MBEDTLS_MD_SHA256, 32, hash, outBinary);
+		err = mbedtls_rsa_rsassa_pkcs1_v15_sign(rsa, mbedtls_ctr_drbg_random, &ctr_drbg, md_alg, inBytes, inBinary, outBinary);
 	}
 	else if (refEncrypt) {
 		err = mbedtls_rsa_rsaes_pkcs1_v15_encrypt(rsa, mbedtls_ctr_drbg_random, &ctr_drbg, inBytes, inBinary, outBinary);

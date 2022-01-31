@@ -201,12 +201,12 @@ crc24
 crc32
 md4
 md5
-ripemd160
 sha1
 sha224
 sha256
 sha384
 sha512
+ripemd160
 
 ; Codec actions
 identify
