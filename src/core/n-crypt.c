@@ -334,8 +334,8 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 	REBYTE  *inBinary;
 	REBYTE  *outBinary;
 	REBYTE   hash[64];
-	REBINT   inBytes;
-	REBINT   outBytes;
+	REBCNT   inBytes;
+	REBCNT   outBytes;
 	REBINT   err = 0;
 	mbedtls_md_type_t md_alg;
 
