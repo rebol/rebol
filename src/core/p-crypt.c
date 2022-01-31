@@ -599,10 +599,10 @@ failed:
 	case SYM_ARIA_256_CBC:
 		mbedtls_aria_init((mbedtls_aria_context *)ctx->cipher_ctx);
 		if (ctx->operation == MBEDTLS_ENCRYPT) {
-			err = mbedtls_aria_setkey_enc((mbedtls_camellia_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
+			err = mbedtls_aria_setkey_enc((mbedtls_aria_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
 		}
 		else {
-			err = mbedtls_aria_setkey_dec((mbedtls_camellia_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
+			err = mbedtls_aria_setkey_dec((mbedtls_aria_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
 		}
 		COPY_MEM(ctx->nonce, ctx->IV, MBEDTLS_MAX_IV_LENGTH);
 		break;
