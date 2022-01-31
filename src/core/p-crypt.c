@@ -50,6 +50,8 @@
     )
 #endif
 
+static void free_crypt_cipher_context(CRYPT_CTX *ctx);
+
 
 /***********************************************************************
 **
@@ -501,12 +503,23 @@ failed:
 
 #ifdef MBEDTLS_CHACHAPOLY_C
 	case SYM_CHACHA20_POLY1305:
-		if (ctx->state == CRYPT_PORT_FINISHED) {
-			err = mbedtls_chachapoly_starts((CHACHAPOLY_CTX *)ctx->cipher_ctx, ctx->nonce, ctx->operation);
-			if (err) return err;
-			ctx->state = CRYPT_PORT_NEEDS_AAD;
-		}
 		if (ctx->state == CRYPT_PORT_NEEDS_AAD) {
+			size_t i;
+			size_t dynamic_iv_len = len < 8 ? len : 8;
+			unsigned char *dst_iv;
+			dst_iv = ctx->nonce;
+			memset(dst_iv, 0, 12);
+			memcpy(dst_iv, ctx->IV, 12);
+			dst_iv += 12 - dynamic_iv_len;
+			for (i = 0; i < dynamic_iv_len; i++)
+				dst_iv[i] ^= input[i];
+
+			// https://github.com/ARMmbed/mbedtls/issues/5474
+			mbedtls_chachapoly_mode_t mode = ctx->operation == MBEDTLS_ENCRYPT ? MBEDTLS_CHACHAPOLY_ENCRYPT : MBEDTLS_CHACHAPOLY_DECRYPT;
+			
+			err = mbedtls_chachapoly_starts((CHACHAPOLY_CTX *)ctx->cipher_ctx, ctx->nonce, mode);
+			if (err) return err;
+
 			err = mbedtls_chachapoly_update_aad((mbedtls_chachapoly_context *)ctx->cipher_ctx, input, len);
 			if (err) return err;
 			*olen = len;
@@ -517,15 +530,9 @@ failed:
 		else {
 			err = mbedtls_chachapoly_update((CHACHAPOLY_CTX *)ctx->cipher_ctx, len, input, BIN_TAIL(bin));
 		}
-		
-		
 		if (err) return err;
 		SERIES_TAIL(bin) += len;
 		input += len;
-		//err = mbedtls_chachapoly_encrypt_and_tag((CHACHAPOLY_CTX*)ctx->cipher_ctx, len, ctx->IV, 
-		//	input_str->len, nonce_str->x,
-		//	aad_str->x, aad_str->len,
-		//	input_str->x, output, mac)
 		break;
 #endif
 	}
@@ -615,9 +622,8 @@ failed:
 	case SYM_CHACHA20_POLY1305:
 		err = mbedtls_chachapoly_setkey((CHACHAPOLY_CTX *)ctx->cipher_ctx, ctx->key);
 		if (err) return err;
-		COPY_MEM(ctx->nonce, ctx->IV, MBEDTLS_MAX_IV_LENGTH);
-		err = mbedtls_chachapoly_starts((CHACHAPOLY_CTX *)ctx->cipher_ctx, ctx->nonce, ctx->operation);
-		if (err) return err;
+		//COPY_MEM(ctx->nonce, ctx->IV, MBEDTLS_MAX_IV_LENGTH);
+		// before start, we use part of the AAD as a dynamic_IV
 		ctx->state = CRYPT_PORT_NEEDS_AAD;
 		return CRYPT_OK;
 	#endif
@@ -778,7 +784,7 @@ failed:
 			SERIES_TAIL(bin) = olen; // reset the tail (above expand modifies it!)
 			err = mbedtls_chachapoly_finish((mbedtls_chachapoly_context*)ctx->cipher_ctx, BIN_TAIL(bin));
 			SERIES_TAIL(bin) += 16;
-			ctx->state = CRYPT_PORT_FINISHED;
+			ctx->state = CRYPT_PORT_NEEDS_AAD;
 			return R_ARG1;
 		}
 #endif
@@ -837,6 +843,17 @@ failed:
 			break;
 		case SYM_IV:
 		case SYM_INIT_VECTOR:
+	//		if (ctx->cipher_type == SYM_CHACHA20_POLY1305) {
+	//			if (IS_BINARY(arg2)) {
+	//				CLEAR(ctx->IV, MBEDTLS_MAX_IV_LENGTH);
+	//				len = VAL_LEN(arg2);
+	//				if (len > MBEDTLS_MAX_IV_LENGTH)
+	//					len = MBEDTLS_MAX_IV_LENGTH;
+	//				COPY_MEM(&ctx->IV, VAL_BIN_AT(arg2), len);
+	//				return R_TRUE;
+	//			}
+	//			return R_FALSE;
+	//		}
 			if (!init_crypt_iv(ctx, arg2)) return R_FALSE;
 			break;
 		default:

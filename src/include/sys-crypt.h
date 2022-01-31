@@ -100,7 +100,7 @@ typedef struct crypt_ctx {
 } CRYPT_CTX;
 
 void crypt_context_free(void *ctx);
-void free_crypt_cipher_context(CRYPT_CTX *ctx);
+
 
 
 // these 3 functions were defined as static in dhm.c file, so are not in the header!
