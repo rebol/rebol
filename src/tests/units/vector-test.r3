@@ -107,6 +107,7 @@ Rebol [
 	--assert none? v/5
 
 --test-- "Vector created with specified index"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1038
 	--assert 2 = index? v: make vector! [integer! 16 [1 2] 2]
 	--assert 2 = index? v: make vector! [integer! 16 #{01000200} 2]
 	--assert 2 = index? v: #[i16! [1 2] 2]
