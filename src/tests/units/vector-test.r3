@@ -33,6 +33,7 @@ Rebol [
 	--assert 98 = v/5
 
 --test-- "Random shuffle of vector vs. block"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/910
 	;@@ https://github.com/Oldes/Rebol-issues/issues/947
 	v1: make vector! [integer! 32 5 [1 2 3 4 5]]
 	v2: random v1
