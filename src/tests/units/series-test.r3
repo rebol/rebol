@@ -957,6 +957,22 @@ Rebol [
 		--assert 3 = length? x
 		x: copy [] insert/dup x 5 -1
 		--assert 0 = length? x
+	--test-- "insert/part"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/856
+		a: make block! 10
+		b: at [1 2 3 4 5 6 7 8 9] 5
+		--assert tail? insert/part a b 2
+		--assert a = [5 6]
+		insert/part clear a b 2147483647
+		--assert a = [5 6 7 8 9]
+		insert/part clear a b -2
+		--assert a = [3 4]
+		insert/part clear a b -2147483647
+		--assert a = [1 2 3 4]
+		--assert all [error? e: try [insert/part clear a b  2147483648] e/id = 'out-of-range]
+		--assert all [error? e: try [insert/part clear a b -2147483649] e/id = 'out-of-range]
+
+
 
 ===end-group===
 
