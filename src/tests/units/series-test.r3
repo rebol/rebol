@@ -866,6 +866,18 @@ Rebol [
 			unset? pick b 2
 			unset? b/2
 		]
+	--test-- "out of range"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1057
+		a: #{0102}
+		--assert 3 = poke a 1 3
+		--assert a = #{0302}
+		--assert all [error? e: try [poke a 1 300] e/id = 'out-of-range]
+		--assert 4 = a/1: 4
+		--assert a = #{0402}
+		--assert all [error? e: try [a/1: 400] e/id = 'out-of-range]
+		--assert #{02} = change a 5
+		--assert a = #{0502}
+		--assert all [error? e: try [change a 500] e/id = 'out-of-range]
 ===end-group===
 
 ===start-group=== "POKEZ"
