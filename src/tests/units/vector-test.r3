@@ -18,6 +18,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1036
 	--assert 2 = index? load mold/all next make vector! [integer! 32 4 [1 2 3 4]]
 
+--test-- "issue/1026"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1026
+	--assert all [error? e: try [to vector! []] e/id = 'bad-make-arg]
+	
 --test-- "VECTOR can be initialized using a block with CHARs"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2348
 	--assert vector? v: make vector! [integer! 8 [#"^(00)" #"^(01)" #"^(02)" #"a" #"b"]]
