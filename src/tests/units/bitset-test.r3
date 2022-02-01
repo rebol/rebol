@@ -326,6 +326,13 @@
 		--assert b = make bitset! [not bits #{00000000800080}]
 		b/48: true
 		--assert b = make bitset! [not bits #{00000000800000}]
+	--test-- "issue-1357"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1357
+		b: make bitset! #{00}
+		--assert not equiv? b complement b
+		--assert not equal? b complement b
+		--assert not strict-equal? b complement b
+		--assert not same? b complement b
 
 ===end-group===
 
