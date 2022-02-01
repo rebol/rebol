@@ -248,6 +248,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2387
 		--assert "make event! [type: 'lookup]" = mold/flat make event! [type: 'lookup]
 
+	--test-- "mold/all event!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/990
+		--assert event? load mold/all make event! []
+
 	--test-- "issues/2362"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2362
 		p: make object! [x: "foo"]
