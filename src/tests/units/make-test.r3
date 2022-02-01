@@ -488,6 +488,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "make/to map"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/982
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2451
 	--test-- "make map! .."
 		--assert error? try [make map! quote #[unset!] ] ; unset!
