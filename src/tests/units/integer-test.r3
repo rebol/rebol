@@ -21,6 +21,7 @@ Rebol [
 
 ===start-group=== "shift"
 	--test-- "shift native"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1125
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1310
 		m: to-integer #{8000 0000 0000 0000}
 		--assert  0 = shift 0 0
