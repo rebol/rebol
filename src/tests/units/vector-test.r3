@@ -73,6 +73,8 @@ Rebol [
 --test-- "LOAD/MOLD on vector"
 	--assert v = load mold/all v
 	--assert v = do load mold v
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1036
+	--assert 2 = index? load mold/all next make vector! [integer! 32 4 [1 2 3 4]]
 
 --test-- "Conversion from VECTOR to BINARY"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2347
