@@ -106,6 +106,14 @@ Rebol [
 		--assert is-invalid-path-error? [a/pass]
 		--assert object? resolve a make object! [pass: 999]
 		--assert "1234" = a/getp
+	--test-- "SET object!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1090
+		obj: make object! [a: 1 b: 2]
+		protect/deep obj
+		--assert all [error? e: try [obj/a: 99] e/id = 'locked-word]
+		--assert all [error? e: try [set in obj 'a 99] e/id = 'locked-word]
+		--assert all [error? e: try [set obj [99]] e/id = 'locked-word]
+
 
 ===end-group===
 
