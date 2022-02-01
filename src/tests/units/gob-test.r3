@@ -107,6 +107,9 @@ Rebol [
 			error? e: try [make gob! append [data:] make unset! none]
 			e/id = 'need-value
 		]
+	--test-- "issue-992"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/992
+		--assert gob? load mold/all make gob! []
 
 ===end-group===
 
