@@ -135,6 +135,7 @@ Rebol [
 			e/id = 'expect-arg
 		]
 	--test-- "object from error"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/889
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1001
 		--assert object? o: to-object try [1 / 0]
 		         o/code: 1
