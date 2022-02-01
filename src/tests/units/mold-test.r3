@@ -488,6 +488,17 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "mold error!"
+	--test-- "mold error!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1003
+		--assert {make error! [code: 101 type: 'Note id: 'exited arg1: none arg2: none arg3: none near: none where: none]} mold/flat make error! [type: 'Note id: 'exited]
+		--assert {#[error! [code: 101 type: Note id: exited arg1: #[none] arg2: #[none] arg3: #[none] near: #[none] where: #[none]]]} = mold/all/flat make error! [type: 'Note id: 'exited]
+		--assert {#[error! [code: 401 type: Math id: overflow arg1: #[none] arg2: #[none] arg3: #[none] near: #[none] where: #[none]]]} = mold/all/flat make error! [type: 'Math id: 'overflow]
+===end-group===
+
+
+
+
 
 ===start-group=== "mold/form path!"
 	--test-- "mold/form path!"

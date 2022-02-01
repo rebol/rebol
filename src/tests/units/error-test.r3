@@ -69,6 +69,13 @@ Rebol [
 	]
 	;@@ https://github.com/Oldes/Rebol-issues/issues/975
 	--assert all [error? e: try [make error! 1] e/id = 'invalid-arg]
+
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1003
+	; it is not posible to make `Throw` type errors!
+	--assert all [
+		error? e: try [mold/all/flat make error! [type: 'Throw id: 'halt]]
+		e/id = 'invalid-arg
+	]
 	
 ===end-group===
 
