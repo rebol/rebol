@@ -24,6 +24,12 @@ Rebol [
 		e/type = 'Math
 		e/id   = 'overflow
 	]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/993
+	--assert all [
+		error? e: make e "message"
+		e/type = 'User
+		e/arg1 = "message"
+	]
 
 	--test-- "make invalid error!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1002

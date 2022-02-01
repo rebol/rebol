@@ -396,6 +396,11 @@ static REBSER *Trim_Object(REBSER *obj)
 				break; // returns obj
 			}
 		}
+		else if (IS_ERROR(value)) {
+			Make_Error_Object(arg, value); // arg is block/string, returns value
+			type = 0;
+			break; // returns value
+		}
 		Trap_Make(VAL_TYPE(value), value);
 
 	case A_TO:
