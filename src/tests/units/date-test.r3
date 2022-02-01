@@ -52,6 +52,10 @@ Rebol [
 		--assert 1-Jan-2000/10:00 = make date! [1-1-2000 10:0]
 		--assert 1-Jan-2000/10:00+2:00 = make date! [1-1-2000 10:0 2:0]
 		--assert 5-Jan-2000/4:00 = make date! [1-1-2000 100:0]
+
+	--test-- "zero year"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1062
+		--assert 1-Jan-0000 = make date! [1 1 0]
 		
 	--test-- "invalid input"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/878
