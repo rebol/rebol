@@ -101,6 +101,7 @@ Rebol [
 ===start-group=== "Various date issues"
 	--test-- "issue 1637"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1637
+		;@@ https://github.com/Oldes/Rebol-issues/issues/994
 		d: now/date
 		--assert none? d/time
 		--assert none? d/zone
