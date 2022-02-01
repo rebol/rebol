@@ -114,6 +114,12 @@ Rebol [
 		--assert all [error? e: try [0:0:01 / 1.1.1] e/id = 'not-related]
 		--assert all [error? e: try [1.1.1 / 0:0:01] e/id = 'not-related]
 
+	--test-- "issue-1054"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1054
+		--assert 596523:14:07 = to-time (to-integer #{8000 0000}) - 1
+		--assert -596523:14:07 = to-time negate (to-integer #{8000 0000}) - 1
+		--assert all [error? e: try [to-time 2 ** 63 / (10 ** 9) - 1 + 0.9999999] e/id = 'out-of-range]
+
 ===end-group===
 
 ===start-group=== "random"
