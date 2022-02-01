@@ -242,6 +242,13 @@ Rebol [
 		--assert n = (d/utc: n) ; result is passed thru
 		--assert d = 27-Nov-2020/17:15:57 ; but d is now adjusted
 
+	--test-- "/weekday"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1063
+		monday: 6-7-09
+		tuesday: 7-7-09
+		--assert 1 = monday/weekday
+		--assert 2 = tuesday/weekday
+
 
 ===end-group===
 
