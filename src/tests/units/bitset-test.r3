@@ -216,6 +216,12 @@
 			error? e: try [remove/part bs "01"]
 			e/id = 'bad-refines
 		]
+	--test-- "issue-1355"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1355
+		--assert pick charset [not "a"] #"b"
+		--assert not pick charset [not "a"] #"a"
+		--assert "make bitset! #{00000000000000000000000060}" = mold poke charset "a" #"b" true
+		--assert {make bitset! [not bits #{00000000000000000000000040}]} = mold poke charset [not "a"] #"b" true
 
 ===end-group===
 
