@@ -71,6 +71,7 @@ Rebol [
 		--assert 1-Feb-0003/4:00 = #[date! 1 2 3 4:0]
 		--assert 1-Feb-0003/4:00+5:00 = #[date! 1 2 3 4:0 5:0]
 		;@@ https://github.com/Oldes/Rebol-wishes/issues/1
+		;@@ https://github.com/Oldes/Rebol-issues/issues/991
 		--assert 1-Jan-2000 = #[date! 1-1-2000]
 		--assert 1-Jan-2000/10:00 = #[date! 1-1-2000 10:0]
 		--assert 1-Jan-2000/10:00+2:00 = #[date! 1-1-2000 10:0 2:0]
