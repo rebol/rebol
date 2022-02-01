@@ -26,6 +26,7 @@ Rebol [
 	]
 
 	--test-- "make invalid error!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1002
 	--assert all [ ;missing type and id
 		error? e: try [make error! []]
 		e/type = 'Internal
