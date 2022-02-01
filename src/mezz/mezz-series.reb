@@ -68,8 +68,10 @@ remold: func [
 	/only {For a block value, mold only its contents, no outer []}
 	/all  {Mold in serialized format}
 	/flat {No indentation}
+	/part {Limit the length of the result}
+	limit [integer!]
 ][
-	apply :mold [reduce :value only all flat]
+	apply :mold [reduce :value only all flat part limit]
 ]
 
 charset: func [

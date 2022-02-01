@@ -304,6 +304,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2279
 		--assert "[[[^/    1^/]]]" = mold load {[[[^/1^/]]]}
 
+	--test-- "remold"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/983
+		--assert {[[1 2 3 4] ["A" [1 2 3 4]]]} = remold/flat [b c]
+
 ===end-group===
 
 ===start-group=== "mold map!"
