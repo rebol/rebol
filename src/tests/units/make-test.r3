@@ -718,6 +718,83 @@ Rebol [
 		--assert #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]]  = try [to typeset! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
 ===end-group===
 
+===start-group=== "make/to event"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/986
+	--test-- "make event! .."
+		--assert event? try [make event! make event! [type: 'connect]]
+		--assert error? try [make event! quote #[unset!] ] ; unset!
+		--assert error? try [make event! quote #[none] ] ; none!
+		--assert error? try [make event! quote #[true] ] ; logic!
+		--assert error? try [make event! quote 1 ] ; integer!
+		--assert error? try [make event! quote 0 ] ; integer!
+		--assert error? try [make event! quote 4 ] ; integer!
+		--assert error? try [make event! quote 4.0 ] ; decimal!
+		--assert error? try [make event! quote 4.0000000000000001% ] ; percent!
+		--assert error? try [make event! quote $4 ] ; money!
+		--assert error? try [make event! quote #"a" ] ; char!
+		--assert error? try [make event! quote 2x2 ] ; pair!
+		--assert error? try [make event! quote 1.1.1 ] ; tuple!
+		--assert error? try [make event! quote 10:00 ] ; time!
+		--assert error? try [make event! quote 2000-01-01 ] ; date!
+		--assert error? try [make event! quote #{00} ] ; binary!
+		--assert error? try [make event! quote #{312032} ] ; binary!
+		--assert error? try [make event! quote "" ] ; string!
+		--assert error? try [make event! quote "1 2" ] ; string!
+		--assert error? try [make event! quote %file ] ; file!
+		--assert error? try [make event! quote u@email ] ; email!
+		--assert error? try [make event! quote #[ref! "ref"] ] ; ref!
+		--assert error? try [make event! quote http://aa ] ; url!
+		--assert error? try [make event! quote <tag> ] ; tag!
+		--assert error? try [make event! quote [1 2] ] ; block!
+		--assert error? try [make event! quote (1 2) ] ; paren!
+		--assert error? try [make event! quote a/b ] ; path!
+		--assert error? try [make event! quote a/b: ] ; set-path!
+		--assert error? try [make event! quote :a/b ] ; get-path!
+		--assert error? try [make event! quote /ref ] ; refinement!
+		--assert error? try [make event! quote #FF ] ; issue!
+		--assert error? try [make event! quote #[bitset! #{FF}] ] ; bitset!
+		--assert error? try [make event! quote #[image! 1x1 #{FFFFFF}] ] ; image!
+		--assert error? try [make event! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
+		--assert error? try [make event! quote #[object! [a: 1]] ] ; object!
+		--assert error? try [make event! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
+	--test-- "to event! .."
+		--assert event? try [to event! to event! [type: 'connect]]
+		--assert error? try [to event! quote #[unset!] ] ; unset!
+		--assert error? try [to event! quote #[none] ] ; none!
+		--assert error? try [to event! quote #[true] ] ; logic!
+		--assert error? try [to event! quote 1 ] ; integer!
+		--assert error? try [to event! quote 0 ] ; integer!
+		--assert error? try [to event! quote 4 ] ; integer!
+		--assert error? try [to event! quote 4.0 ] ; decimal!
+		--assert error? try [to event! quote 4.0000000000000001% ] ; percent!
+		--assert error? try [to event! quote $4 ] ; money!
+		--assert error? try [to event! quote #"a" ] ; char!
+		--assert error? try [to event! quote 2x2 ] ; pair!
+		--assert error? try [to event! quote 1.1.1 ] ; tuple!
+		--assert error? try [to event! quote 10:00 ] ; time!
+		--assert error? try [to event! quote 2000-01-01 ] ; date!
+		--assert error? try [to event! quote #{00} ] ; binary!
+		--assert error? try [to event! quote #{312032} ] ; binary!
+		--assert error? try [to event! quote "" ] ; string!
+		--assert error? try [to event! quote "1 2" ] ; string!
+		--assert error? try [to event! quote %file ] ; file!
+		--assert error? try [to event! quote u@email ] ; email!
+		--assert error? try [to event! quote #[ref! "ref"] ] ; ref!
+		--assert error? try [to event! quote http://aa ] ; url!
+		--assert error? try [to event! quote <tag> ] ; tag!
+		--assert error? try [to event! quote [1 2] ] ; block!
+		--assert error? try [to event! quote (1 2) ] ; paren!
+		--assert error? try [to event! quote a/b ] ; path!
+		--assert error? try [to event! quote a/b: ] ; set-path!
+		--assert error? try [to event! quote :a/b ] ; get-path!
+		--assert error? try [to event! quote /ref ] ; refinement!
+		--assert error? try [to event! quote #FF ] ; issue!
+		--assert error? try [to event! quote #[bitset! #{FF}] ] ; bitset!
+		--assert error? try [to event! quote #[image! 1x1 #{FFFFFF}] ] ; image!
+		--assert error? try [to event! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
+		--assert error? try [to event! quote #[object! [a: 1]] ] ; object!
+		--assert error? try [to event! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
+===end-group===
 
 ===start-group=== "make special"
 	--test-- "make types from none!"
