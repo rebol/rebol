@@ -1179,6 +1179,20 @@ Rebol [
 		--assert not past? b
 ===end-group===
 
+===start-group=== "SNGLE?"
+	--test-- "single? block"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/875
+		--assert single? [a]
+		--assert single? next [a b]
+		--assert not single? [a b]
+		--assert not single? []
+	--test-- "single? string!"
+		--assert single? "a"
+		--assert single? next "ab"
+		--assert not single? "ab"
+		--assert not single? ""
+===end-group===
+
 
 ===start-group=== "SORT"
 
