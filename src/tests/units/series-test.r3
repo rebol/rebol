@@ -2171,6 +2171,8 @@ Rebol [
 	--assert [#[none] #[none]] = array 2
 --test-- "array/initial"
 	--assert [0 0] = array/initial 2 0
+	;@@ https://github.com/Oldes/Rebol-issues/issues/360
+	--assert [["" ""] ["" ""]] = array/initial [2 2] ""
 --test-- "array/initial func"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2193
 	--assert [10 9 8 7 6 5 4 3 2 1] = array/initial length: 10 func [] [-- length]
