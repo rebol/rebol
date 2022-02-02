@@ -36,9 +36,11 @@ Rebol [
 	--assert "1.0" = mold round/to 1   0.1
 
 	--test-- "round/to (integer)"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/936
 	--assert     1 = round/to 0.5   1
 	--assert     0 = round/to 0.499 1
 	--assert integer? round/to 0.5  1
+	--assert   1.0 = round/to 1 0.1
 
 	--test-- "round/to (money)"
 	--assert   $1 = round/to 0.5   $1
