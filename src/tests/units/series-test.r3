@@ -1816,6 +1816,12 @@ Rebol [
 	--assert "<a<b b>>" = mold append <a> <b b>
 	--assert "<a<b b>>" = mold join <a> <b b>
 
+--test-- "CRLF inside tag"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1233
+	; CRLF is not automatically converted inside tags
+	--assert #{410D0A} = to-binary        first transcode #{3C410D0A3E}
+	--assert #{410A}   = to-binary deline first transcode #{3C410D0A3E}
+
 ===end-group===
 
 
