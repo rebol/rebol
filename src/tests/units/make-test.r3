@@ -110,6 +110,11 @@ Rebol [
 		--assert 0.0 = make 0.0 false
 		--assert error? try [to decimal! true]
 		--assert error? try [to decimal! false]
+	--test-- "make decimal from string"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/956
+		ch: copy ""
+		repeat x 255 [unless error? try [to-decimal join "1" to-char x] [append ch to-char x]]
+		--assert ch = "^- ',.0123456789Ee"
 
 ===end-group===
 
