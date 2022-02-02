@@ -255,6 +255,10 @@ Rebol [
 		--assert 1 = monday/weekday
 		--assert 2 = tuesday/weekday
 
+	--test-- "numerical accessors"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1292
+		d: now repeat i 15 [try [d/:i: i]]
+		--assert "14-Jan-0001/13:08:09+12:00" = mold d
 
 ===end-group===
 
