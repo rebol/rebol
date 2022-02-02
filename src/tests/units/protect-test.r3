@@ -48,9 +48,16 @@ Rebol [
 	--test-- "random string" --assert is-protected-error? [random str]
 	--test-- "random binary" --assert is-protected-error? [random bin]
 
-	--test-- "swap block"  --assert is-protected-error? [swap blk [0]]
-	--test-- "swap string" --assert is-protected-error? [swap str "0bad"]
-	--test-- "swap binary" --assert is-protected-error? [swap bin #{0bad}]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/695
+	--test-- "swap block" 
+		--assert is-protected-error? [swap blk [0]]
+		--assert is-protected-error? [swap [0] blk]
+	--test-- "swap string"
+		--assert is-protected-error? [swap str "0bad"]
+		--assert is-protected-error? [swap "0bad" str]
+	--test-- "swap binary"
+		--assert is-protected-error? [swap bin #{0bad}]
+		--assert is-protected-error? [swap #{0bad} bin]
 
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2325
 	str: protect "a^M^/b"
