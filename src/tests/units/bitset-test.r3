@@ -70,6 +70,8 @@
 		--assert #[bitset! #{700000}] = make bitset! [#{010203}]
 		--assert #[bitset! #{00008000800080}] = make bitset! [#{102030}]
 		--assert #[bitset! #{7C00800080008000}] = make bitset! [#{0102030405102030}]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1226
+		--assert #[bitset! #{FFFE}] = make bitset! [#"^(00)" - #"^(0E)"]
 
 ===end-group===
 
