@@ -243,7 +243,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "mold event!"
-
+	;@@ https://github.com/Oldes/Rebol-issues/issues/830
 	--test-- "mold/flat event!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2387
 		--assert "make event! [type: 'lookup]" = mold/flat make event! [type: 'lookup]
