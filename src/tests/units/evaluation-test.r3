@@ -108,6 +108,10 @@ Rebol [
 		--assert unset? do %units/files/quit.r3
 		--assert 42 = do %units/files/quit-return.r3
 
+	--test-- "do needs"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/891
+		--assert all [error? e: try [do "rebol[needs: 255.8.5]"] e/id = 'needs]
+
 ===end-group===
 
 ===start-group=== "do function"
