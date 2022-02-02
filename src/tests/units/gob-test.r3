@@ -119,6 +119,12 @@ Rebol [
 		--assert c = first+ a
 		--assert none? first+ a
 
+	--test-- "invalid pick/poke"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1379
+		g: make gob! []
+		--assert all [error? e: try [poke g 'offset 1x1] e/id = 'invalid-arg]
+		--assert all [error? e: try [pick g 'offset    ] e/id = 'invalid-arg]
+
 ===end-group===
 
 ~~~end-file~~~
