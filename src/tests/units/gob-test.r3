@@ -111,6 +111,14 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/992
 		--assert gob? load mold/all make gob! []
 
+	--test-- "first+ gob!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/810
+		foreach w [a b c] [set w make gob! compose [text: (to-string w)]]
+		repend a [b c]
+		--assert b = first+ a
+		--assert c = first+ a
+		--assert none? first+ a
+
 ===end-group===
 
 ~~~end-file~~~
