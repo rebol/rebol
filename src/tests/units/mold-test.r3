@@ -464,6 +464,17 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "mold path!"
+	--test-- "mold path"
+		--assert "a/b" = mold 'a/b
+		--assert "b" = mold next 'a/b
+		--assert "#[path! [a b] 2]" = mold/all next 'a/b
+	--test-- "mold empty path"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/868
+		--assert "#[path! []]" = mold make path! []
+
+===end-group===
+
 
 ===start-group=== "mold/all"
 	--test-- "mold/all datatype!"
