@@ -69,6 +69,7 @@ Rebol [
 		--assert logic? do 'true
 
 	--test-- "do/next"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/902
 		--assert 1 = do/next {1 2} 'n
 		;@@ https://github.com/Oldes/Rebol-issues/issues/901
 		--assert n = [2]
