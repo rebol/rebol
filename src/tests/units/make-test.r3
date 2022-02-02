@@ -166,6 +166,7 @@ Rebol [
 
 
 ===start-group=== "make/to pair!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/925
 	--test-- "make pair! .."
 		--assert 1x1 = make pair! "1x1"
 		--assert error? try [make pair! quote #[unset!]  ] ; unset!
