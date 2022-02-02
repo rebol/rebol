@@ -22,6 +22,9 @@ Rebol [
 		--assert $15 =   to money! #{00000000000000000000000F}
 		--assert $15 = make money! #{0F}
 		--assert $15 =   to money! #{0F}
+	;@@ https://github.com/Oldes/Rebol-issues/issues/946
+		--assert #{0029B7D2DCC80CD2E3FFFFFF} = to-binary to-money #{0029B7D2DCC80CD2E3FFFFFF}
+		--assert (to-money #{000100000000000000000000}) = ($1 + to-money #{0000FFFFFFFFFFFFFFFFFFFF})
 
 	--test-- "make money! issue!" ; not supported by design
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1130
