@@ -686,7 +686,7 @@ pick_it:
 	case A_TAKE:
 		// take/part:
 		if (D_REF(ARG_TAKE_PART)) {
-			len = Partial1(value, D_ARG(ARG_TAKE_LENGTH));
+			len = Partial1(value, D_ARG(ARG_TAKE_RANGE));
 			if (len == 0) {
 zero_blk:
 				Set_Block(D_RET, Make_Block(0));
@@ -749,7 +749,7 @@ zero_blk:
 		args = Find_Refines(ds, ALL_FIND_REFS);
 //		if (ANY_BLOCK(arg) || args) {
 			len = ANY_BLOCK(arg) ? VAL_BLK_LEN(arg) : 1;
-			if (args & AM_FIND_PART) tail = index + Partial1(value, D_ARG(ARG_FIND_LENGTH));
+			if (args & AM_FIND_PART) tail = index + Partial1(value, D_ARG(ARG_FIND_RANGE));
 			ret = 1;
 			if (args & AM_FIND_SKIP) ret = Int32s(D_ARG(ARG_FIND_SIZE), 1);
 			ret = Find_Block(ser, index, tail, arg, len, args, ret);
@@ -801,7 +801,7 @@ zero_blk:
 	case A_COPY: // /PART len /DEEP /TYPES kinds
 #if 0
 		args = D_REF(ARG_COPY_DEEP) ? COPY_ALL : 0;
-		len = Partial1(value, D_ARG(ARG_COPY_LENGTH));
+		len = Partial1(value, D_ARG(ARG_COPY_RANGE));
 		index = (REBINT)VAL_INDEX(value);
 //		VAL_SERIES(value) = (len > 0) ? Copy_Block_Deep(ser, index, len, args) : Make_Block(0);
 		VAL_INDEX(value) = 0;
@@ -816,7 +816,7 @@ zero_blk:
 			if (IS_DATATYPE(arg)) types |= TYPESET(VAL_DATATYPE(arg));
 			else types |= VAL_TYPESET(arg);
 		}
-		len = Partial1(value, D_ARG(ARG_COPY_LENGTH));
+		len = Partial1(value, D_ARG(ARG_COPY_RANGE));
 		VAL_SERIES(value) = Copy_Block_Values(ser, VAL_INDEX(value), VAL_INDEX(value)+len, types);
 		VAL_INDEX(value) = 0;
 	}
