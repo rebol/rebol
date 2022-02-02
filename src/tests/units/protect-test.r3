@@ -97,6 +97,15 @@ Rebol [
 		protect/deep/words 'a
 		--assert is-protected-error? [insert a/b "x"]
 		unprotect 'a
+
+	--test-- "protect object inside an object"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1324
+		o: make object! [b: context [c: "d"]]
+		--assert not error? try [protect/deep 'o/b]
+		--assert not error? try [protect/deep/words [o/b]]
+		--assert is-locked-error? [o/b/c: 4]
+		--assert is-locked-error? [clear o/b/c]
+
 	--test-- "protect/hide inside an object"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1139
 		o: make object! [f: 1 g: self h: does [f] protect/hide 'f]
