@@ -63,6 +63,14 @@
 		--assert #[bitset! #{80}] = charset #"^@"
 		--assert #[bitset! #{8000}] = charset/length #"^@" 16
 
+	--test-- "make bitset! from block"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1335
+		--assert #[bitset! #{6000}] = make bitset! [#{0102}]
+		--assert #[bitset! #{60}] = make bitset! [1 2]
+		--assert #[bitset! #{700000}] = make bitset! [#{010203}]
+		--assert #[bitset! #{00008000800080}] = make bitset! [#{102030}]
+		--assert #[bitset! #{7C00800080008000}] = make bitset! [#{0102030405102030}]
+
 ===end-group===
 
 ===start-group=== "pick bitset!"
