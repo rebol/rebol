@@ -134,6 +134,11 @@ Rebol [
 		--assert $0 = make $111 false
 		--assert error? try [to money! true]
 		--assert error? try [to money! false]
+	--test-- "make money from string"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/957
+		ch: copy ""
+		repeat x 255 [unless error? try [to-money join "1" to-char x] [append ch to-char x]]
+		--assert ch = "^- ',.0123456789Ee"
 ===end-group===
 
 
