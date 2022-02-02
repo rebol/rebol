@@ -147,6 +147,14 @@
 		--assert pick ABC "BCB"
 		--assert not pick ABC "BCBX"
 
+	--test-- "pick logic" ; not allowed
+		;@@ https://github.com/Oldes/Rebol-issues/issues/823
+		b: make bitset! #{C0}
+		--assert pick b 0
+		--assert all [error? e: try [pick b true]  e/id = 'invalid-type]
+		--assert all [error? e: try [poke b true none]  e/id = 'invalid-type]
+
+
 ===end-group===
 
 ===start-group=== "modify"
