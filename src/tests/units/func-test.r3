@@ -385,6 +385,9 @@ Rebol [
 		e/id = 'dup-vars
 		e/arg1 = 'b
 	]
+--test-- "PICK and the ordinals for reflection"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/660
+	--assert all [error? e: try [first :append] e/id = 'cannot-use]
 
 ===end-group===
 
