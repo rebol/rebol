@@ -146,6 +146,11 @@ Rebol [
 		--assert object? resolve/all con2 con1
 		--assert all [con2/a = 1 con2/b = 2]
 		--assert none? con2/c ;- not holding "hidden"!
+	--test-- "protect/hide on series" ;not allowed
+	;@@ https://github.com/Oldes/Rebol-issues/issues/697
+		a: "123"
+		--assert all [error? e: try [protect/hide :a] e/id = 'bad-refines]
+
 
 ===end-group===
 
