@@ -202,6 +202,15 @@ Rebol [
 		--assert all [date?  d: try [load {27-Jan-2009/13:50+5:45}] d/zone = 5:45]
 		--assert all [error? e: try [load {27-Jan-2009/15:05+24:00}]  e/id = 'invalid]
 		--assert all [error? e: try [load {27-Jan-2009/15:05-+26:00}] e/id = 'invalid]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/973
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+5:30 }] d/zone =   5:30] ; Sri Lanka
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+5:45 }] d/zone =   5:45] ; Kathmandu, Nepal
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+8:45 }] d/zone =   8:45] ; Caiguna, Western Australia
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+12:45}] d/zone =  12:45] ; Chatham Islands, New Zealand (dst)
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+13:00}] d/zone =  13:00] ; Tonga
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+14:00}] d/zone =  14:00] ; Line Islands, Kiribati
+		--assert all [date?  d: try [load {24-Jun-2009/1:00-12:00}] d/zone = -12:00]
+		--assert all [date?  d: try [load {24-Jun-2009/1:00-13:00}] d/zone = -13:00]
 
 	--test-- "poke on date not supported"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1074
