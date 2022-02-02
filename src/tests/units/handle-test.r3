@@ -85,6 +85,7 @@ h4: aes/key #{00000000000000000000000000000000} none
 	--assert h1/type = 'rc4
 	--assert h3/type = 'aes
 	; for consistency with other types (like date, image, etc..)
+	;@@ https://github.com/Oldes/Rebol-issues/issues/906
 	--assert [type] = words-of h1
 	--assert 'rc4 = query/mode h1 'type
 	--assert all [object? o: query h1 o/type = 'rc4]
