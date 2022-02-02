@@ -9,6 +9,7 @@ Rebol [
 ~~~start-file~~~ "ERROR"
 
 ===start-group=== "make error!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/835
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1593
 	--test-- "make error!"
 	k: keys-of system/catalog/errors/Math
