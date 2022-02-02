@@ -2245,6 +2245,13 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "MOVE"
+--test-- "move/skip"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/740
+	--assert all [error? e: try [move/skip [1 2 3] 2 0] e/id = 'out-of-range]
+
+===end-group===
+
 ;-- VECTOR related tests moved to %vector-test.r3
 
 ~~~end-file~~~
