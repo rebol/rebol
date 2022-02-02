@@ -12,12 +12,14 @@ Rebol [
 
 ===start-group=== "context handles"
 
+; do this test only if `rc4` and `aes` natives are available!
+if not error? try [
 ; create some context handles for testing
 h1: rc4/key #{0000}
 h2: rc4/key #{0000}
 h3: aes/key #{00000000000000000000000000000000} none
 h4: aes/key #{00000000000000000000000000000000} none
-
+][
 --test-- "same? handles"
 	; handles are same if they have same type and also same data
 	--assert h1  == h1
@@ -86,7 +88,7 @@ h4: aes/key #{00000000000000000000000000000000} none
 	--assert [type] = words-of h1
 	--assert 'rc4 = query/mode h1 'type
 	--assert all [object? o: query h1 o/type = 'rc4]
-
+] ;<- if not error? try []
 ===end-group===
 
 ~~~end-file~~~
