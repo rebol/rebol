@@ -407,6 +407,14 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/660
 	--assert all [error? e: try [first :append] e/id = 'cannot-use]
 
+--test-- "issue-313"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/313
+	obj: make object! [a: none f: func [v] [a: v]]
+	abc: make obj []
+	abc/f 3
+	--assert abc/a = 3
+	--assert obj/a = none
+
 ===end-group===
 
 ~~~end-file~~~
