@@ -142,6 +142,12 @@ Rebol [
 		         o/code: 1
 		--assert error? e: to-error o
 		--assert e/code = 400
+
+	--test-- "protected catalog"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/840
+		--assert all [error? e: try [system/catalog/errors: none] e/id = 'locked-word]
+		--assert all [error? e: try [system/catalog/errors/Math: none] e/id = 'locked-word]
+
 ===end-group===
 
 ~~~end-file~~~
