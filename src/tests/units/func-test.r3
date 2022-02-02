@@ -219,11 +219,16 @@ Rebol [
 	--test-- "function/with"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/766
 		fun: funct/with [i [integer!]][
+			blk: [1 2 3]
 			return pick data i
 		][
 			data: ["ab" "cd"]
 		]
 		--assert "ab" = fun 1
+		;@@ https://github.com/Oldes/Rebol-issues/issues/900
+		b: body-of :fun
+		clear second b
+		--assert [1 2 3] = second body-of :fun
 
 ===end-group===
 
