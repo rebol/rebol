@@ -41,6 +41,10 @@ Rebol [
 	--test-- "do-9"
 		--assert word! = do [type? first [a]]
 
+	--test-- "do-10"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/871
+		--assert 1 = do "1"
+
 	--test-- "do/next-1"
 		code: [3 4 + 5 length? mold 8 + 9 append copy "hel" form 'lo]
 		--assert 3 		 = do/next code 'code
