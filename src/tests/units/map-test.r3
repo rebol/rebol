@@ -223,6 +223,10 @@ Rebol [
 		--assert not strict-equal? "" m
 		--assert not strict-not-equal? m m
 		--assert strict-not-equal? "" m
+		;@@ https://github.com/Oldes/Rebol-issues/issues/905
+		--assert m == m
+		--assert not (m !== m)
+		--assert "" !== m
 
 ===end-group===
 
