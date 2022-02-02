@@ -208,7 +208,7 @@ find: action [
 	series [series! gob! port! bitset! typeset! object! map! none!]
 	value [any-type!]
 	/part {Limits the search to a given length or position}
-	length [number! series! pair!]
+	range [number! series! pair!]
 	/only {Treats a series value as only a single value}
 	/case {Characters are case-sensitive}
 	/same {Use "same?" as comparator}
@@ -228,7 +228,7 @@ select: action [
 	series [series! port! map! object! module! none!]
 	value [any-type!]
 	/part {Limits the search to a given length or position}
-	length [number! series! pair!]
+	range [number! series! pair!]
 	/only {Treats a series value as only a single value}
 	/case {Characters are case-sensitive}
 	/same {Use "same?" as comparator}
@@ -266,8 +266,8 @@ to: action [
 copy: action [
 	{Copies a series, object, or other value.}
 	value [series! port! map! object! bitset! any-function! error!] {At position}
-	/part {Limits to a given length or position}
-	length [number! series! pair!]
+	/part {Limits to a given length or end position}
+	range [number! series! pair!]
 	/deep {Also copies series values within the block}
 	/types {What datatypes to copy}
 	kinds [typeset! datatype!]
@@ -277,7 +277,7 @@ take: action [
 	{Removes and returns one or more elements.}
 	series [series! port! gob! none!] {At position (modified)}
 	/part {Specifies a length or end position}
-	length [number! series! pair!]
+	range [number! series! pair!]
 	/deep {Also copies series values within the block}
 	/last {Take it from the tail end}
 ]
@@ -295,7 +295,7 @@ insert: action [
 	series [series! port! map! gob! object! bitset!] {At position (modified)}
 	value [any-type!] {The value to insert}
 	/part {Limits to a given length or position}
-	length [number! series! pair!]
+	range [number! series! pair!]
 	/only {Only insert a block as a single value (not the contents of the block)}
 	/dup {Duplicates the insert a specified number of times}
 	count [number! pair!]
@@ -306,7 +306,7 @@ append: action [
 	series [series! port! map! gob! object! bitset!] {Any position (modified)}
 	value [any-type!] {The value to insert}
 	/part {Limits to a given length or position}
-	length [number! series! pair!]
+	range [number! series! pair!]
 	/only {Only insert a block as a single value (not the contents of the block)}
 	/dup {Duplicates the insert a specified number of times}
 	count [number! pair!]
@@ -326,7 +326,7 @@ change: action [
 	series [series! gob! port! struct!]{At position (modified)}
 	value [any-type!] {The new value}
 	/part {Limits the amount to change to a given length or position}
-	length [number! series! pair!]
+	range [number! series! pair!]
 	/only {Only change a block as a single value (not the contents of the block)}
 	/dup {Duplicates the change a specified number of times}
 	count [number! pair!]
@@ -365,7 +365,7 @@ reverse: action [
 	{Reverses the order of elements; returns at same position.}
 	series [series! gob! tuple! pair!] {At position (modified)}
 	/part {Limits to a given length or position}
-	length [number! series!]
+	range [number! series!]
 ]
 
 sort: action [
@@ -376,8 +376,8 @@ sort: action [
 	size [integer!] {Size of each record}
 	/compare  {Comparator offset, block or function}
 	comparator [integer! block! any-function!]
-	/part {Sort only part of a series}
-	length [number! series!] {Length of series to sort}
+	/part {Limits the sorting to a given length or position}
+	range [number! series!]
 	/all {Compare all fields}
 	/reverse {Reverse sort order}
 ]
