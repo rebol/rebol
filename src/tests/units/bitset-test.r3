@@ -164,6 +164,15 @@
 		--assert all [error? e: try [pick b true]  e/id = 'invalid-type]
 		--assert all [error? e: try [poke b true none]  e/id = 'invalid-type]
 
+	--test-- "path expression"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/759
+		b: make bitset! "abc"
+		--assert b/#"a"
+		--assert b/(to-integer #"a")
+		--assert b/97  ; 97 is to-integer #"a"
+		b/97: false  ; Just like POKE
+		--assert not b/97
+
 
 ===end-group===
 
