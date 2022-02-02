@@ -215,6 +215,19 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "FUNCTION (funct)"
+	--test-- "function/with"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/766
+		fun: funct/with [i [integer!]][
+			return pick data i
+		][
+			data: ["ab" "cd"]
+		]
+		--assert "ab" = fun 1
+
+===end-group===
+
+
 ===start-group=== "Other issues"
 
 --test-- "issue-2025"
