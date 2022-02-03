@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,6 +60,10 @@
 typedef mbedtls_chachapoly_context CHACHAPOLY_CTX;
 #define CHACHAPOLY_STATE_AAD (1)
 #define CHACHAPOLY_STATE_CIPHERTEXT (2)
+#endif
+
+#ifdef MBEDTLS_GCM_C
+#include "mbedtls/gcm.h"
 #endif
 
 

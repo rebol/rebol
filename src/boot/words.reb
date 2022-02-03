@@ -3,6 +3,7 @@ REBOL [
 	Title: "Canonical words"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2022 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -314,17 +315,26 @@ aes-256-ecb
 aes-128-cbc
 aes-192-cbc
 aes-256-cbc
+aes-128-gcm
+aes-192-gcm
+aes-256-gcm
 camellia-128-ecb
 camellia-192-ecb
 camellia-256-ecb
 camellia-128-cbc
 camellia-192-cbc
 camellia-256-cbc
+camellia-128-gcm
+camellia-192-gcm
+camellia-256-gcm
 aria-128-ecb
 aria-192-ecb
 aria-256-ecb
 aria-128-cbc
 aria-192-cbc
 aria-256-cbc
+aria-128-gcm
+aria-192-gcm
+aria-256-gcm
 chacha20
 chacha20-poly1305

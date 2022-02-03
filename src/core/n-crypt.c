@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,6 +91,11 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 			add_ec_word(SYM_AES_192_CBC)
 			add_ec_word(SYM_AES_256_CBC)
 		#endif
+		#ifdef MBEDTLS_GCM_C
+			add_ec_word(SYM_AES_128_GCM)
+			add_ec_word(SYM_AES_192_GCM)
+			add_ec_word(SYM_AES_256_GCM)
+		#endif
 		#ifdef MBEDTLS_CAMELLIA_C
 			add_ec_word(SYM_CAMELLIA_128_ECB)
 			add_ec_word(SYM_CAMELLIA_192_ECB)
@@ -99,6 +104,11 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 			add_ec_word(SYM_CAMELLIA_128_CBC)
 			add_ec_word(SYM_CAMELLIA_192_CBC)
 			add_ec_word(SYM_CAMELLIA_256_CBC)
+		#endif
+		#ifdef MBEDTLS_GCM_C
+			add_ec_word(SYM_CAMELLIA_128_GCM)
+			add_ec_word(SYM_CAMELLIA_192_GCM)
+			add_ec_word(SYM_CAMELLIA_256_GCM)
 		#endif
 		#endif
 		#ifdef MBEDTLS_ARIA_C
@@ -109,6 +119,11 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 		add_ec_word(SYM_ARIA_128_CBC)
 		add_ec_word(SYM_ARIA_192_CBC)
 		add_ec_word(SYM_ARIA_256_CBC)
+		#endif
+		#ifdef MBEDTLS_GCM_C
+		add_ec_word(SYM_ARIA_128_GCM)
+		add_ec_word(SYM_ARIA_192_GCM)
+		add_ec_word(SYM_ARIA_256_GCM)
 		#endif
 		#endif
 		#ifdef MBEDTLS_CHACHA20_C

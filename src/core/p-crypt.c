@@ -255,6 +255,37 @@ static void free_crypt_cipher_context(CRYPT_CTX *ctx);
 		ctx->cipher_block_size = 16;
 		break;
 
+#ifdef MBEDTLS_GCM_C
+	case SYM_AES_128_GCM:
+	case SYM_AES_192_GCM:
+	case SYM_AES_256_GCM:
+#ifdef MBEDTLS_CAMELLIA_C
+	case SYM_CAMELLIA_128_GCM:
+	case SYM_CAMELLIA_192_GCM:
+	case SYM_CAMELLIA_256_GCM:
+#endif
+#ifdef MBEDTLS_ARIA_C
+	case SYM_ARIA_128_GCM:
+	case SYM_ARIA_192_GCM:
+	case SYM_ARIA_256_GCM:
+#endif
+		if (ctx->cipher_ctx == NULL)
+			ctx->cipher_ctx = malloc(sizeof(mbedtls_gcm_context));
+		mbedtls_gcm_init((mbedtls_gcm_context *)ctx->cipher_ctx);
+		switch (type) {
+		case SYM_AES_128_GCM:
+		case SYM_ARIA_128_GCM:
+		case SYM_CAMELLIA_128_GCM: ctx->key_bitlen = 128; break;
+		case SYM_AES_192_GCM:
+		case SYM_ARIA_192_GCM:
+		case SYM_CAMELLIA_192_GCM: ctx->key_bitlen = 192; break;
+		case SYM_AES_256_GCM:
+		case SYM_ARIA_256_GCM:
+		case SYM_CAMELLIA_256_GCM: ctx->key_bitlen = 256; break;
+		}
+		ctx->cipher_block_size = 0;
+		break;
+#endif
 
 #ifdef MBEDTLS_CAMELLIA_C
 	case SYM_CAMELLIA_128_ECB:
@@ -442,6 +473,30 @@ failed:
 		break;
 #endif
 
+#ifdef MBEDTLS_GCM_C
+	case SYM_AES_128_GCM:
+	case SYM_AES_192_GCM:
+	case SYM_AES_256_GCM:
+#ifdef MBEDTLS_CAMELLIA_C
+	case SYM_CAMELLIA_128_GCM:
+	case SYM_CAMELLIA_192_GCM:
+	case SYM_CAMELLIA_256_GCM:
+#endif
+#ifdef MBEDTLS_ARIA_C
+	case SYM_ARIA_128_GCM:
+	case SYM_ARIA_192_GCM:
+	case SYM_ARIA_256_GCM:
+#endif
+	{
+		size_t out_bytes = 0;
+		err = mbedtls_gcm_update((mbedtls_gcm_context *)ctx->cipher_ctx, input, len, BIN_TAIL(bin), len, &out_bytes);
+		if (err) return err;
+		SERIES_TAIL(bin) += out_bytes;
+		input += out_bytes;
+		break;
+	}
+#endif
+
 #ifdef MBEDTLS_CAMELLIA_C
 	case SYM_CAMELLIA_128_ECB:
 	case SYM_CAMELLIA_192_ECB:
@@ -571,6 +626,29 @@ failed:
 		}
 		break;
 
+	#ifdef MBEDTLS_GCM_C
+	case SYM_AES_128_GCM:
+	case SYM_AES_192_GCM:
+	case SYM_AES_256_GCM:
+	#ifdef MBEDTLS_CAMELLIA_C
+	case SYM_CAMELLIA_128_GCM:
+	case SYM_CAMELLIA_192_GCM:
+	case SYM_CAMELLIA_256_GCM:
+	#endif
+	#ifdef MBEDTLS_ARIA_C
+	case SYM_ARIA_128_GCM:
+	case SYM_ARIA_192_GCM:
+	case SYM_ARIA_256_GCM:
+	#endif
+	{
+		mbedtls_gcm_context *gcm = (mbedtls_gcm_context *)ctx->cipher_ctx;
+		err = mbedtls_gcm_setkey(gcm, MBEDTLS_CIPHER_ID_AES, ctx->key, ctx->key_bitlen);
+		if (err) return err;
+		err = mbedtls_gcm_starts(gcm, ctx->operation, ctx->IV, 16);
+		ctx->unprocessed_len = 0;
+		break;
+	}
+	#endif
 
 	#ifdef MBEDTLS_CAMELLIA_C
 	case SYM_CAMELLIA_128_ECB:
@@ -692,6 +770,7 @@ failed:
 		// we have enough data to call crypt
 		Crypt_Crypt(ctx, input, len, &olen);
 		if (olen > len) return CRYPT_ERROR_BAD_PROCESSED_SIZE;
+		input += olen;
 		len -= olen;
 	}
 	// test if there are some unprocessed data
