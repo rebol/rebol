@@ -93,6 +93,10 @@ Rebol [
 		--assert 1632135512 = make integer! 20-Sep-2021/12:58:32+2:00
 		--assert 1632135512 =   to integer! 20-Sep-2021/12:58:32+2:00
 	--test-- "make/to integer! string!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2164
+		--assert 9223372036854775807 = to integer! "9223372036854775807"
+		--assert 9223372036854775807 = to integer! "9'223'372'036'854'775'807"
+		--assert all [error? e: try [to integer! "9'223'372'036'854'775'808"] e/id = 'bad-make-arg]
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2099
 	 	--assert 302961000000 = to integer! "3.02961E+11"
 
