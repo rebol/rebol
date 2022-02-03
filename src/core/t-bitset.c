@@ -700,9 +700,18 @@ set_bits:
 		Trap_Arg(arg);
 
 	case A_REMOVE:	// #"a" "abc"  remove/key bs "abcd"
-		if (D_REF(ARG_REMOVE_PART)) Trap0(RE_BAD_REFINES);
-		if (!D_REF(ARG_REMOVE_KEY)) Trap0(RE_MISSING_ARG); // /key required
-		if (Set_Bits(VAL_SERIES(value), D_ARG(ARG_REMOVE_KEY_ARG), FALSE)) break;
+		if (D_REF(ARG_REMOVE_KEY)) {
+			if (D_REF(ARG_REMOVE_PART))
+				Trap0(RE_BAD_REFINES);
+			arg = D_ARG(ARG_REMOVE_KEY_ARG);
+		} else if (D_REF(ARG_REMOVE_PART)) {
+			arg = D_ARG(ARG_REMOVE_RANGE);
+			// remove/part is allowed only with block, string, binary and char
+			if (!(IS_BLOCK(arg) || IS_STRING(arg) || IS_BINARY(arg) || IS_CHAR(arg)))
+				Trap_Arg(arg);
+		}
+		else Trap0(RE_MISSING_ARG); // /key or /part is required
+		if (Set_Bits(VAL_SERIES(value), arg, FALSE)) break;
 		Trap_Arg(D_ARG(3));
 
 	case A_COPY:

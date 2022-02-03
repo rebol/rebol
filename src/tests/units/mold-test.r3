@@ -243,10 +243,14 @@ Rebol [
 ===end-group===
 
 ===start-group=== "mold event!"
-
+	;@@ https://github.com/Oldes/Rebol-issues/issues/830
 	--test-- "mold/flat event!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2387
 		--assert "make event! [type: 'lookup]" = mold/flat make event! [type: 'lookup]
+
+	--test-- "mold/all event!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/990
+		--assert event? load mold/all make event! []
 
 	--test-- "issues/2362"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2362
@@ -299,6 +303,10 @@ Rebol [
 	--test-- "issue-2279"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2279
 		--assert "[[[^/    1^/]]]" = mold load {[[[^/1^/]]]}
+
+	--test-- "remold"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/983
+		--assert {[[1 2 3 4] ["A" [1 2 3 4]]]} = remold/flat [b c]
 
 ===end-group===
 
@@ -456,6 +464,17 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "mold path!"
+	--test-- "mold path"
+		--assert "a/b" = mold 'a/b
+		--assert "b" = mold next 'a/b
+		--assert "#[path! [a b] 2]" = mold/all next 'a/b
+	--test-- "mold empty path"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/868
+		--assert "#[path! []]" = mold make path! []
+
+===end-group===
+
 
 ===start-group=== "mold/all"
 	--test-- "mold/all datatype!"
@@ -479,6 +498,17 @@ Rebol [
 		]
 
 ===end-group===
+
+===start-group=== "mold error!"
+	--test-- "mold error!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1003
+		--assert {make error! [code: 101 type: 'Note id: 'exited arg1: none arg2: none arg3: none near: none where: none]} mold/flat make error! [type: 'Note id: 'exited]
+		--assert {#[error! [code: 101 type: Note id: exited arg1: #[none] arg2: #[none] arg3: #[none] near: #[none] where: #[none]]]} = mold/all/flat make error! [type: 'Note id: 'exited]
+		--assert {#[error! [code: 401 type: Math id: overflow arg1: #[none] arg2: #[none] arg3: #[none] near: #[none] where: #[none]]]} = mold/all/flat make error! [type: 'Math id: 'overflow]
+===end-group===
+
+
+
 
 
 ===start-group=== "mold/form path!"

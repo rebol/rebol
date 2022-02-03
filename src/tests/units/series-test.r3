@@ -866,6 +866,18 @@ Rebol [
 			unset? pick b 2
 			unset? b/2
 		]
+	--test-- "out of range"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1057
+		a: #{0102}
+		--assert 3 = poke a 1 3
+		--assert a = #{0302}
+		--assert all [error? e: try [poke a 1 300] e/id = 'out-of-range]
+		--assert 4 = a/1: 4
+		--assert a = #{0402}
+		--assert all [error? e: try [a/1: 400] e/id = 'out-of-range]
+		--assert #{02} = change a 5
+		--assert a = #{0502}
+		--assert all [error? e: try [change a 500] e/id = 'out-of-range]
 ===end-group===
 
 ===start-group=== "POKEZ"
@@ -957,6 +969,22 @@ Rebol [
 		--assert 3 = length? x
 		x: copy [] insert/dup x 5 -1
 		--assert 0 = length? x
+	--test-- "insert/part"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/856
+		a: make block! 10
+		b: at [1 2 3 4 5 6 7 8 9] 5
+		--assert tail? insert/part a b 2
+		--assert a = [5 6]
+		insert/part clear a b 2147483647
+		--assert a = [5 6 7 8 9]
+		insert/part clear a b -2
+		--assert a = [3 4]
+		insert/part clear a b -2147483647
+		--assert a = [1 2 3 4]
+		--assert all [error? e: try [insert/part clear a b  2147483648] e/id = 'out-of-range]
+		--assert all [error? e: try [insert/part clear a b -2147483649] e/id = 'out-of-range]
+
+
 
 ===end-group===
 
@@ -1149,6 +1177,20 @@ Rebol [
 		b: tail [1 2 3]
 		--assert     tail? b
 		--assert not past? b
+===end-group===
+
+===start-group=== "SNGLE?"
+	--test-- "single? block"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/875
+		--assert single? [a]
+		--assert single? next [a b]
+		--assert not single? [a b]
+		--assert not single? []
+	--test-- "single? string!"
+		--assert single? "a"
+		--assert single? next "ab"
+		--assert not single? "ab"
+		--assert not single? ""
 ===end-group===
 
 
@@ -1774,6 +1816,12 @@ Rebol [
 	--assert "<a<b b>>" = mold append <a> <b b>
 	--assert "<a<b b>>" = mold join <a> <b b>
 
+--test-- "CRLF inside tag"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1233
+	; CRLF is not automatically converted inside tags
+	--assert #{410D0A} = to-binary        first transcode #{3C410D0A3E}
+	--assert #{410A}   = to-binary deline first transcode #{3C410D0A3E}
+
 ===end-group===
 
 
@@ -2123,6 +2171,8 @@ Rebol [
 	--assert [#[none] #[none]] = array 2
 --test-- "array/initial"
 	--assert [0 0] = array/initial 2 0
+	;@@ https://github.com/Oldes/Rebol-issues/issues/360
+	--assert [["" ""] ["" ""]] = array/initial [2 2] ""
 --test-- "array/initial func"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2193
 	--assert [10 9 8 7 6 5 4 3 2 1] = array/initial length: 10 func [] [-- length]
@@ -2192,6 +2242,13 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/880
 	--assert unset? first collect [keep #[unset!]]
 	--assert unset? first head insert copy [] #[unset!]
+
+===end-group===
+
+===start-group=== "MOVE"
+--test-- "move/skip"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/740
+	--assert all [error? e: try [move/skip [1 2 3] 2 0] e/id = 'out-of-range]
 
 ===end-group===
 

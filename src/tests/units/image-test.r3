@@ -74,6 +74,9 @@ Rebol [
 		--assert error? try [load {#[image! 1x1 #{FF} x]}]
 		--assert error? try [load {#[image! 1x1 20.20.20.60 x]}]
 		--assert error? try [load {#[image! 1x1 #{FFFFFF} #{30} x]}]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1037
+		--assert all [error? e: try [make image! [3x2 #{000000000000000000000000000000000000} 1x0]] e/id = 'malconstruct]
+		--assert all [error? e: try [load {#[image! 3x2 #{000000000000000000000000000000000000} 1x0]}] e/id = 'malconstruct]
 
 
 ===end-group===
@@ -127,6 +130,10 @@ Rebol [
 		--assert 0x2 = indexz?/xy atz img 2x2
 		--assert 0x2 = indexz?/xy atz img 20x2
 		--assert 0x1 = indexz?/xy skip atz img 1x1 -1x0
+	--test-- "mold/all image with modified index"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1037
+		--assert 2x1 = index?/xy load mold/all next make image! 3x2
+
 ===end-group===
 
 ===start-group=== "FOREACH"

@@ -152,6 +152,13 @@ Rebol [
 		bin: save/header none [1] true
 		--assert bin = #{5245424F4C205B5D0A310A}
 		--assert 1 = load bin
+
+	--test-- "save/header to string"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1065
+		save/header s: "script: "  "1" []
+		--assert s = "script: #{5245424F4C205B5D0A2231220A}"
+		--assert #{5245424F4C205B5D0A2231220A} = save/header #{}  "1" []
+
 ===end-group===
 
 

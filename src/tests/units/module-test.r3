@@ -141,9 +141,18 @@ supplement system/options/module-paths join what-dir %units/files/
 			err/id = 'bad-make-arg
 		]
 	--test-- "make module! object!" ; not allowed
+	;@@ https://github.com/Oldes/Rebol-issues/issues/899
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1551
 		--assert all [
 			error? err: try [make module! context [a: 1]]
+			err/id = 'bad-make-arg
+		]
+		--assert all [
+			error? err: try [to module! context []]
+			err/id = 'bad-make-arg
+		]
+		--assert all [
+			error? err: try [make module! context []]
 			err/id = 'bad-make-arg
 		]
 	--test-- "make module! empty block!"
@@ -152,6 +161,7 @@ supplement system/options/module-paths join what-dir %units/files/
 			error? err: try [to module! []]
 			err/id = 'bad-make-arg
 		]
+
 ===end-group===
 
 

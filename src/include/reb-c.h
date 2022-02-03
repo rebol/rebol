@@ -213,7 +213,7 @@ enum {
 **
 ***********************************************************************/
 
-#define MAX_INT_LEN     21
+#define MAX_INT_LEN     25
 #define MAX_HEX_LEN     16
 
 #ifdef ITOA64           // Integer to ascii conversion

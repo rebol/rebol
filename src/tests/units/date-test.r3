@@ -52,6 +52,10 @@ Rebol [
 		--assert 1-Jan-2000/10:00 = make date! [1-1-2000 10:0]
 		--assert 1-Jan-2000/10:00+2:00 = make date! [1-1-2000 10:0 2:0]
 		--assert 5-Jan-2000/4:00 = make date! [1-1-2000 100:0]
+
+	--test-- "zero year"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1062
+		--assert 1-Jan-0000 = make date! [1 1 0]
 		
 	--test-- "invalid input"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/878
@@ -67,6 +71,7 @@ Rebol [
 		--assert 1-Feb-0003/4:00 = #[date! 1 2 3 4:0]
 		--assert 1-Feb-0003/4:00+5:00 = #[date! 1 2 3 4:0 5:0]
 		;@@ https://github.com/Oldes/Rebol-wishes/issues/1
+		;@@ https://github.com/Oldes/Rebol-issues/issues/991
 		--assert 1-Jan-2000 = #[date! 1-1-2000]
 		--assert 1-Jan-2000/10:00 = #[date! 1-1-2000 10:0]
 		--assert 1-Jan-2000/10:00+2:00 = #[date! 1-1-2000 10:0 2:0]
@@ -96,6 +101,7 @@ Rebol [
 ===start-group=== "Various date issues"
 	--test-- "issue 1637"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1637
+		;@@ https://github.com/Oldes/Rebol-issues/issues/994
 		d: now/date
 		--assert none? d/time
 		--assert none? d/zone
@@ -196,6 +202,15 @@ Rebol [
 		--assert all [date?  d: try [load {27-Jan-2009/13:50+5:45}] d/zone = 5:45]
 		--assert all [error? e: try [load {27-Jan-2009/15:05+24:00}]  e/id = 'invalid]
 		--assert all [error? e: try [load {27-Jan-2009/15:05-+26:00}] e/id = 'invalid]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/973
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+5:30 }] d/zone =   5:30] ; Sri Lanka
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+5:45 }] d/zone =   5:45] ; Kathmandu, Nepal
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+8:45 }] d/zone =   8:45] ; Caiguna, Western Australia
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+12:45}] d/zone =  12:45] ; Chatham Islands, New Zealand (dst)
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+13:00}] d/zone =  13:00] ; Tonga
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+14:00}] d/zone =  14:00] ; Line Islands, Kiribati
+		--assert all [date?  d: try [load {24-Jun-2009/1:00-12:00}] d/zone = -12:00]
+		--assert all [date?  d: try [load {24-Jun-2009/1:00-13:00}] d/zone = -13:00]
 
 	--test-- "poke on date not supported"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1074
@@ -242,6 +257,17 @@ Rebol [
 		--assert n = (d/utc: n) ; result is passed thru
 		--assert d = 27-Nov-2020/17:15:57 ; but d is now adjusted
 
+	--test-- "/weekday"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1063
+		monday: 6-7-09
+		tuesday: 7-7-09
+		--assert 1 = monday/weekday
+		--assert 2 = tuesday/weekday
+
+	--test-- "numerical accessors"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1292
+		d: now repeat i 15 [try [d/:i: i]]
+		--assert "14-Jan-0001/13:08:09+12:00" = mold d
 
 ===end-group===
 

@@ -107,6 +107,23 @@ Rebol [
 			error? e: try [make gob! append [data:] make unset! none]
 			e/id = 'need-value
 		]
+	--test-- "issue-992"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/992
+		--assert gob? load mold/all make gob! []
+
+	--test-- "first+ gob!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/810
+		foreach w [a b c] [set w make gob! compose [text: (to-string w)]]
+		repend a [b c]
+		--assert b = first+ a
+		--assert c = first+ a
+		--assert none? first+ a
+
+	--test-- "invalid pick/poke"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1379
+		g: make gob! []
+		--assert all [error? e: try [poke g 'offset 1x1] e/id = 'invalid-arg]
+		--assert all [error? e: try [pick g 'offset    ] e/id = 'invalid-arg]
 
 ===end-group===
 

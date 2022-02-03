@@ -14,6 +14,8 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/132
 	--assert  event? e: make event! [type: 'connect]
 	--assert  'connect = e/type
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2484
+	--assert all [event? e2: make e [offset: 0x0] e2/offset = 0x0]
 
 --test-- "event! offset out of range"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1635

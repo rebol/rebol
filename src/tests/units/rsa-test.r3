@@ -68,6 +68,9 @@ Rebol [
 		--assert handle? key-pri:  rsa-init/private ko/n ko/e ko/d ko/p ko/q ko/dp ko/dq ko/qi
 		--assert "#[handle! rsa]" = mold key-pub
 		--assert "#[handle! rsa]" = mold key-pri
+		;@@ https://github.com/Oldes/Rebol-issues/issues/906
+		--assert [type] = words-of key-pri
+		--assert 'rsa = query/mode key-pri 'type
 
 	;-- note: you could use key-pri only as it contains the public properties too
 	;-- the key-pub is there just to simulate situation, where user have only the public parts

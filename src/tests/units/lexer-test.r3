@@ -75,6 +75,10 @@ Rebol [
 	--test-- "Invalid char"
 		--assert all [error? e: try [load {2#"a"}] e/id = 'invalid]
 
+	--test-- "Invalid path construction"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/863
+		--assert all [error? e: try [load {#[path! [0]]}] e/id = 'malconstruct]
+
 ===end-group===
 
 ===start-group=== "Special % word"
