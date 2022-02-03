@@ -174,7 +174,7 @@ profile: function [
 	blocks [block!]   "Block of code values (block, word, or function) to profile"
 	/times            "Running the test code multiple times, results are average"
 	 count [integer!] "Default value is 10, minimum is 2 and maximum 1000"
-	/quiet "Don't print results, return [time evaluations series-made series-expanded memory source] results instead"
+	/quiet "Returns [time evaluations series-made series-expanded memory source] results only"
 ][
 	; limit the number of code runs. There is GC forced between each run, which may be time consuming!
 	; As the output is counted as an average of each run result, it does not make sense to have too many of them.
