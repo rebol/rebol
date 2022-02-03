@@ -94,7 +94,7 @@ Rebol [
 		--assert 1632135512 =   to integer! 20-Sep-2021/12:58:32+2:00
 	--test-- "make/to integer! string!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2099
-	 	--assert -2147483648 = to integer! "3.02961E+11"
+	 	--assert 302961000000 = to integer! "3.02961E+11"
 
 ===end-group===
 
