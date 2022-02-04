@@ -1,9 +1,18 @@
 REBOL [
-	title: "REBOL3 TLSv1.2 protocol scheme"
-	name:  tls
-	type:  module
-	author: rights: ["Richard 'Cyphre' Smolak" "Oldes" "Brian Dickens (Hostilefork)"]
-	version: 0.7.4
+	Title: "REBOL3 TLSv1.2 protocol scheme"
+	Name:  tls
+	Type:  module
+	Rights: {
+		Copyright 2012 REBOL Technologies
+		Copyright 2012-2022 Rebol Open Source Contributors
+		REBOL is a trademark of REBOL Technologies
+	}
+	License: {
+		Licensed under the Apache License, Version 2.0
+		See: http://www.apache.org/licenses/LICENSE-2.0
+	}
+	Author: ["Richard 'Cyphre' Smolak" "Oldes" "Brian Dickens (Hostilefork)"]
+	Version: 0.8.0
 	history: [
 		0.6.1 "Cyphre" "Initial implementation used in old R3-alpha"
 		0.7.0 "Oldes" {
@@ -22,6 +31,7 @@ REBOL [
 		}
 		0.7.3 "Oldes" "Fixed RSA memory leak"
 		0.7.4 "Oldes" "Pass data to parent handler even when ALERT message is not decoded"
+		0.8.0 "Oldes" "Using new `crypt` port introduced in Rebol 3.8.0"
 	]
 	todo: {
 		* cached sessions
@@ -103,13 +113,13 @@ REBOL [
 	TLS_RSA_WITH_NULL_MD5:               #{0001}
 	TLS_RSA_WITH_NULL_SHA:               #{0002}
 	TLS_RSA_WITH_NULL_SHA256:            #{003B}
-	TLS_RSA_WITH_RC4_128_MD5:            #{0004}
-	TLS_RSA_WITH_RC4_128_SHA:            #{0005}
-	TLS_RSA_WITH_3DES_EDE_CBC_SHA:       #{000A}
-	TLS_RSA_WITH_AES_128_CBC_SHA:        #{002F}
-	TLS_RSA_WITH_AES_256_CBC_SHA:        #{0035}
-	TLS_RSA_WITH_AES_128_CBC_SHA256:     #{003C}
-	TLS_RSA_WITH_AES_256_CBC_SHA256:     #{003D}
+	TLS_RSA_WITH_RC4-128_MD5:            #{0004}
+	TLS_RSA_WITH_RC4-128_SHA:            #{0005}
+	TLS_RSA_WITH_3DES-EDE-CBC_SHA:       #{000A}
+	TLS_RSA_WITH_AES-128-CBC_SHA:        #{002F}
+	TLS_RSA_WITH_AES-256-CBC_SHA:        #{0035}
+	TLS_RSA_WITH_AES-128-CBC_SHA256:     #{003C}
+	TLS_RSA_WITH_AES-256-CBC_SHA256:     #{003D}
 
 ;   The following cipher suite definitions are used for server-
 ;   authenticated (and optionally client-authenticated) Diffie-Hellman.
@@ -125,26 +135,26 @@ REBOL [
 ;   must use the parameters (group and generator) described by the
 ;   server.
 
-	TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA:    #{000D}
-	TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA:    #{0010}
-	TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA:   #{0013}
-	TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA:   #{0016}
-	TLS_DH_DSS_WITH_AES_128_CBC_SHA:     #{0030}
-	TLS_DH_RSA_WITH_AES_128_CBC_SHA:     #{0031}
-	TLS_DHE_DSS_WITH_AES_128_CBC_SHA:    #{0032}
-	TLS_DHE_RSA_WITH_AES_128_CBC_SHA:    #{0033}
-	TLS_DH_DSS_WITH_AES_256_CBC_SHA:     #{0036}
-	TLS_DH_RSA_WITH_AES_256_CBC_SHA:     #{0037}
-	TLS_DHE_DSS_WITH_AES_256_CBC_SHA:    #{0038}
-	TLS_DHE_RSA_WITH_AES_256_CBC_SHA:    #{0039}
-	TLS_DH_DSS_WITH_AES_128_CBC_SHA256:  #{003E}
-	TLS_DH_RSA_WITH_AES_128_CBC_SHA256:  #{003F}
-	TLS_DHE_DSS_WITH_AES_128_CBC_SHA256: #{0040}
-	TLS_DHE_RSA_WITH_AES_128_CBC_SHA256: #{0067}
-	TLS_DH_DSS_WITH_AES_256_CBC_SHA256:  #{0068}
-	TLS_DH_RSA_WITH_AES_256_CBC_SHA256:  #{0069}
-	TLS_DHE_DSS_WITH_AES_256_CBC_SHA256: #{006A}
-	TLS_DHE_RSA_WITH_AES_256_CBC_SHA256: #{006B}
+	TLS_DH_DSS_WITH_3DES-EDE-CBC_SHA:    #{000D}
+	TLS_DH_RSA_WITH_3DES-EDE-CBC_SHA:    #{0010}
+	TLS_DHE_DSS_WITH_3DES-EDE-CBC_SHA:   #{0013}
+	TLS_DHE_RSA_WITH_3DES-EDE-CBC_SHA:   #{0016}
+	TLS_DH_DSS_WITH_AES-128-CBC_SHA:     #{0030}
+	TLS_DH_RSA_WITH_AES-128-CBC_SHA:     #{0031}
+	TLS_DHE_DSS_WITH_AES-128-CBC_SHA:    #{0032}
+	TLS_DHE_RSA_WITH_AES-128-CBC_SHA:    #{0033}
+	TLS_DH_DSS_WITH_AES-256-CBC_SHA:     #{0036}
+	TLS_DH_RSA_WITH_AES-256-CBC_SHA:     #{0037}
+	TLS_DHE_DSS_WITH_AES-256-CBC_SHA:    #{0038}
+	TLS_DHE_RSA_WITH_AES-256-CBC_SHA:    #{0039}
+	TLS_DH_DSS_WITH_AES-128-CBC_SHA256:  #{003E}
+	TLS_DH_RSA_WITH_AES-128-CBC_SHA256:  #{003F}
+	TLS_DHE_DSS_WITH_AES-128-CBC_SHA256: #{0040}
+	TLS_DHE_RSA_WITH_AES-128-CBC_SHA256: #{0067}
+	TLS_DH_DSS_WITH_AES-256-CBC_SHA256:  #{0068}
+	TLS_DH_RSA_WITH_AES-256-CBC_SHA256:  #{0069}
+	TLS_DHE_DSS_WITH_AES-256-CBC_SHA256: #{006A}
+	TLS_DHE_RSA_WITH_AES-256-CBC_SHA256: #{006B}
 
 ;   The following cipher suites are used for completely anonymous
 ;   Diffie-Hellman communications in which neither party is
@@ -158,27 +168,27 @@ REBOL [
 ;   complex security protocols that have other means to ensure
 ;   authentication.)
 
-	TLS_DH_anon_WITH_RC4_128_MD5:        #{0018}
-	TLS_DH_anon_WITH_3DES_EDE_CBC_SHA:   #{001B}
-	TLS_DH_anon_WITH_AES_128_CBC_SHA:    #{0034}
-	TLS_DH_anon_WITH_AES_256_CBC_SHA:    #{003A}
-	TLS_DH_anon_WITH_AES_128_CBC_SHA256: #{006C}
-	TLS_DH_anon_WITH_AES_256_CBC_SHA256: #{006D}
+	TLS_DH_anon_WITH_RC4-128_MD5:        #{0018}
+	TLS_DH_anon_WITH_3DES-EDE-CBC_SHA:   #{001B}
+	TLS_DH_anon_WITH_AES-128-CBC_SHA:    #{0034}
+	TLS_DH_anon_WITH_AES-256-CBC_SHA:    #{003A}
+	TLS_DH_anon_WITH_AES-128-CBC_SHA256: #{006C}
+	TLS_DH_anon_WITH_AES-256-CBC_SHA256: #{006D}
 
 ;   Elyptic curves:
 
-	TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256:   #{CCA8}
-	TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256: #{CCA9}
-	TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384:         #{C028}
-	TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256:         #{C02F}
-	TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384:         #{C030}
-	TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256:       #{C02B}
-	TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384:       #{C02C}
-	TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256:         #{C027}
-	TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA:            #{C013}
-	TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA:          #{C009}
-	TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA:            #{C014}
-	TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA:          #{C00A}
+	TLS_ECDHE_RSA_WITH_CHACHA20-POLY1305_SHA256:   #{CCA8}
+	TLS_ECDHE_ECDSA_WITH_CHACHA20-POLY1305_SHA256: #{CCA9}
+	TLS_ECDHE_RSA_WITH_AES-256-CBC_SHA384:         #{C028}
+	TLS_ECDHE_RSA_WITH_AES-128-GCM_SHA256:         #{C02F}
+	TLS_ECDHE_RSA_WITH_AES-256-GCM_SHA384:         #{C030}
+	TLS_ECDHE_ECDSA_WITH_AES-128-GCM_SHA256:       #{C02B}
+	TLS_ECDHE_ECDSA_WITH_AES-256-GCM_SHA384:       #{C02C}
+	TLS_ECDHE_RSA_WITH_AES-128-CBC_SHA256:         #{C027}
+	TLS_ECDHE_RSA_WITH_AES-128-CBC_SHA:            #{C013}
+	TLS_ECDHE_ECDSA_WITH_AES-128-CBC_SHA:          #{C009}
+	TLS_ECDHE_RSA_WITH_AES-256-CBC_SHA:            #{C014}
+	TLS_ECDHE_ECDSA_WITH_AES-256-CBC_SHA:          #{C00A}
 
 ] 'TLS-Cipher-suite
 
@@ -251,11 +261,14 @@ REBOL [
 ] 'TLS-Alert
 
 *TLS-Extension: enum [
-	ServerName:          #{0000}
-	SupportedGroups:     #{000A}
-	SignatureAlgorithms: #{000D}
-	KeyShare:            #{0033}
-	RenegotiationInfo:   #{FF01} ;@@ https://tools.ietf.org/html/rfc5746
+	ServerName:            #{0000}
+	SupportedGroups:       #{000A}
+	SupportedPointFormats: #{000B}
+	SignatureAlgorithms:   #{000D}
+	EncryptThenMAC:        #{0016}
+	ExtendedMasterSecret:  #{0017}
+	KeyShare:              #{0033}
+	RenegotiationInfo:     #{FF01} ;@@ https://tools.ietf.org/html/rfc5746
 ] 'TLS-Extension
 
 
@@ -299,9 +312,10 @@ log-error: :_log-error ;- use error logs by default
 ;-- list of supported suites as a single binary
 ; This list is sent to the server when negotiating which one to use.  Hence
 ; it should be ORDERED BY CLIENT PREFERENCE (more preferred suites first).
+;@@ TODO: use only ciphers which are really available!!!
 suported-cipher-suites: rejoin [
-	#{CCA9} ;TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
-	#{CCA8} ;TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+;@@	#{CCA9} ;TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 ; some issue!
+;@@	#{CCA8} ;TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256   ; some issue!
 	;#{C02F} ;TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
 	;#{C030} ;TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 	;#{C02B} ;TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
@@ -319,8 +333,8 @@ suported-cipher-suites: rejoin [
 	#{003C} ;TLS_RSA_WITH_AES_128_CBC_SHA256
 	#{0035} ;TLS_RSA_WITH_AES_256_CBC_SHA
 	#{002F} ;TLS_RSA_WITH_AES_128_CBC_SHA
-	#{0038} ;TLS_DHE_DSS_WITH_AES_256_CBC_SHA
-	#{0032} ;TLS_DHE_DSS_WITH_AES_128_CBC_SHA
+	;#{0038} ;TLS_DHE_DSS_WITH_AES_256_CBC_SHA
+	;#{0032} ;TLS_DHE_DSS_WITH_AES_128_CBC_SHA
 	#{0039} ;TLS_DHE_RSA_WITH_AES_256_CBC_SHA
 	#{0033} ;TLS_DHE_RSA_WITH_AES_128_CBC_SHA
 	;- RC4 is prohibited by https://tools.ietf.org/html/rfc7465 for insufficient security
@@ -329,12 +343,13 @@ suported-cipher-suites: rejoin [
 ]
 
 supported-signature-algorithms: rejoin [
+;@@ TODO: review this list!
 	;#{0703} ; curve25519 (EdDSA algorithm)
 	#{0601} ; rsa_pkcs1_sha512
-	#{0602} ; SHA512 DSA
-	;#{0603} ; ecdsa_secp521r1_sha512
+	;#{0602} ; SHA512 DSA
+	#{0603} ; ecdsa_secp521r1_sha512
 	#{0501} ; rsa_pkcs1_sha384
-	#{0502} ; SHA384 DSA
+	;#{0502} ; SHA384 DSA
 	;#{0503} ; ecdsa_secp384r1_sha384
 	#{0401} ; rsa_pkcs1_sha256
 	#{0402} ; SHA256 DSA
@@ -364,13 +379,12 @@ TLS-init-cipher-suite: func [
 	cipher-suite [binary!]
 	/local suite key-method cipher
 ][
+	suite: *Cipher-suite/name to integer! cipher-suite
 	unless find/skip suported-cipher-suites cipher-suite 2 [
-		log-error "Requested cipher suite is not supported!"
+		log-error ["Server requests" suite "cipher suite!"]
 		return false
 	]
 
-	suite: *Cipher-suite/name to integer! cipher-suite
-	
 	if none? suite [
 		log-error ["Unknown cipher suite:" cipher-suite]
 		return false
@@ -382,18 +396,19 @@ TLS-init-cipher-suite: func [
 		opt "TLS_"
 		copy key-method to "_WITH_" 6 skip
 		copy cipher [
-			  "CHACHA20_POLY1305" (ctx/crypt-size: 32 ctx/IV-size: 12 ctx/block-size: 16  )
-			;| "AES_256_GCM"  (ctx/crypt-size: 32 ctx/IV-size: 4  ctx/block-size: 16  )
-			;| "AES_128_GCM"  (ctx/crypt-size: 16 ctx/IV-size: 4  ctx/block-size: 16  )
-			| "AES_128_CBC"  (ctx/crypt-size: 16 ctx/IV-size: 16 ctx/block-size: 16  ) ; more common than AES_256_CBC
-			| "AES_256_CBC"  (ctx/crypt-size: 32 ctx/IV-size: 16 ctx/block-size: 16  )
-			;| "3DES_EDE_CBC" (ctx/crypt-size: 24 ctx/IV-size: 8  ctx/block-size: 8   )
-			| "RC4_128"      (ctx/crypt-size: 16 ctx/IV-size: 0  ctx/block-size: none)
+			  "CHACHA20-POLY1305" (ctx/crypt-size: 32 ctx/IV-size: 12 ctx/block-size: 16  )
+			;| "AES-256-GCM"  (ctx/crypt-size: 32 ctx/IV-size: 4  ctx/block-size: 16  )
+			;| "AES-128-GCM"  (ctx/crypt-size: 16 ctx/IV-size: 4  ctx/block-size: 16  )
+			| "AES-128-CBC"  (ctx/crypt-size: 16 ctx/IV-size: 16 ctx/block-size: 16  ) ; more common than AES-256-CBC
+			| "AES-256-CBC"  (ctx/crypt-size: 32 ctx/IV-size: 16 ctx/block-size: 16  )
+			;| "3DES-EDE-CBC" (ctx/crypt-size: 24 ctx/IV-size: 8  ctx/block-size: 8   )
+			| "RC4-128"      (ctx/crypt-size: 16 ctx/IV-size: 0  ctx/block-size: none)
 			| "NULL"         (ctx/crypt-size: 0  ctx/IV-size: 0  ctx/block-size: none)
 		] #"_" [
 			  "SHA384" end (ctx/hash-method: 'SHA384 ctx/mac-size: 48)
 			| "SHA256" end (ctx/hash-method: 'SHA256 ctx/mac-size: 32)
 			| "SHA"    end (ctx/hash-method: 'SHA1   ctx/mac-size: 20)
+			| "SHA512" end (ctx/hash-method: 'SHA512 ctx/mac-size: 64)
 			| "MD5"    end (ctx/hash-method: 'MD5    ctx/mac-size: 16)
 			| "NULL"   end (ctx/hash-method: none    ctx/mac-size: 0 )
 			;NOTE: in RFC mac-size is named mac_length and there is also mac_key_length, which has same value
@@ -401,7 +416,7 @@ TLS-init-cipher-suite: func [
 		(
 			ctx/key-method:   to word! key-method
 			ctx/crypt-method: to word! cipher
-			ctx/is-aead?: to logic! find [AES_128_GCM AES_256_GCM CHACHA20_POLY1305] ctx/crypt-method
+			ctx/is-aead?: to logic! find [AES-128-GCM AES-256-GCM CHACHA20-POLY1305] ctx/crypt-method
 
 			log-more [
 				"Key:^[[1m" ctx/key-method
@@ -536,6 +551,13 @@ client-hello: function [
 		; Advertise it, but refuse renegotiation
 		append extensions #{ff01 0001 00} ; (extensionID, 1 byte length, zero byte)
 
+		;- encrypt_then_mac extension
+		;append extensions #{0016 0000} ;???
+		;- extended_master_secret extension
+		;append extensions #{0017 0000} ;???
+		;- session ticket extension
+		;append extensions #{0023 0000} ;empty!
+
 		;- Signed certificate timestamp (extension)
 		; The client provides permission for the server to return a signed certificate timestamp. 
 
@@ -584,7 +606,7 @@ client-hello: function [
 			"extensions:" length-extensions
 			"signatures:" length-signatures
 		]
-		log-more ["W[" ctx/seq-write "] Client random:" mold client-random]
+		log-more ["W[" ctx/seq-write "] CRandom:^[[32m" client-random]
 	]
 ]
 
@@ -688,33 +710,36 @@ client-key-exchange: function [
 		client-crypt-key: take/part key-expansion crypt-size
 		server-crypt-key: take/part key-expansion crypt-size
 
-		log-more ["Client-mac-key:   " mold client-mac-key  ]
-		log-more ["Server-mac-key:   " mold server-mac-key  ]
-		log-more ["Client-crypt-key: " mold client-crypt-key]
-		log-more ["Server-crypt-key: " mold server-crypt-key]
+		log-more ["Client-mac-key:   ^[[32m" client-mac-key  ]
+		log-more ["Server-mac-key:   ^[[32m" server-mac-key  ]
+		log-more ["Client-crypt-key: ^[[32m" client-crypt-key]
+		log-more ["Server-crypt-key: ^[[32m" server-crypt-key]
 
 		client-iv: take/part key-expansion iv-size
 		server-iv: take/part key-expansion iv-size
 		
-		log-more ["Client-IV: " mold client-iv]
-		log-more ["Server-IV: " mold server-iv]
-
+		log-more ["Client-IV:        ^[[32m" client-iv]
+		log-more ["Server-IV:        ^[[32m" server-iv]
 
 		key-expansion: none
 
-		switch crypt-method [
-			CHACHA20_POLY1305 [
-				aead: chacha20poly1305/init none client-crypt-key client-iv server-crypt-key server-iv 
-			]
-			RC4_128 [
-				decrypt-stream: rc4/key server-crypt-key
-			]
-			;AES_128_GCM
-			;AES_256_GCM [
-			;	local-aead-iv:  copy client-iv
-			;	remote-aead-iv: copy server-iv
-			;]
+		encrypt-port: open [
+			scheme:      'crypt
+			algorithm:   :crypt-method
+			init-vector: :client-iv
+			key:         :client-crypt-key
 		]
+		decrypt-port: open [
+			scheme:      'crypt
+			direction:   'decrypt
+			algorithm:   :crypt-method
+			init-vector: :server-iv
+			key:         :server-crypt-key
+		]
+
+		; not needed anymore...
+		client-crypt-key: none
+		server-crypt-key: none
 
 		TLS-update-messages-hash ctx (at head out/buffer pos-record) length-record
 	]
@@ -779,12 +804,8 @@ finished: function [
 	log-info ["FINISHED^[[22m write sequence:" ctx/seq-write]
 	ctx/seq-write: 0
 
-	seed: either ctx/legacy? [
-		rejoin [
-			read ctx/md5-port
-			read ctx/sha-port
-		]
-	][	read ctx/sha-port ]
+	seed: read ctx/sha-port
+	if ctx/legacy? [ insert seed read ctx/md5-port ]
 	;?? seed
 
 	unencrypted: rejoin [
@@ -805,7 +826,7 @@ encrypt-handshake-msg: function [
 		plain-msg
 ][
 	log-more ["W[" ctx/seq-write "] encrypting-handshake-msg"]
-
+	;?? unencrypted
 	encrypted: encrypt-data/type ctx unencrypted 22
 	;?? encrypted
 
@@ -822,18 +843,20 @@ decrypt-msg: function [
 	ctx [object!]
 	data [binary!]
 ][
-	;print "CRYPTED message!" ? data
+	;print "CRYPTED message!" 
 	with ctx [
 		binary/write bin compose [
 			UI64  :seq-read
 			UI8   23
 			UI16  :version
 		]
+		;probe is-aead?
 		either is-aead? [
 			switch crypt-method [
-				CHACHA20_POLY1305 [
+				CHACHA20-POLY1305 [
 					binary/write bin reduce ['UI16 (length? data) - 16]
-					data: chacha20poly1305/decrypt aead data bin/buffer
+					write decrypt-port bin/buffer ;AAD
+					data: read update write decrypt-port data
 				]
 			]
 		][
@@ -845,7 +868,10 @@ decrypt-msg: function [
 				server-iv: take/part data block-size
 			]
 			;?? data
-			change data decrypt-data ctx data
+			modify decrypt-port 'init-vector server-iv
+			data: read update write decrypt-port :data
+
+			;change data decrypt-data ctx data
 			;?? data
 			if block-size [
 				; deal with padding in CBC mode
@@ -874,6 +900,7 @@ decrypt-msg: function [
 	unless data [
 	;	critical-error: *Alert/Bad_record_MAC
 	]
+	;? data
 	data
 ]
 
@@ -890,6 +917,7 @@ encrypt-data: function [
 	;?? content
 
 	with ctx [
+		; record header
 		binary/write bin compose [
 			UI64  :seq-write
 			UI8   :msg-type
@@ -897,18 +925,11 @@ encrypt-data: function [
 			UI16  (length? content)
 		]
 		either is-aead? [
-
-			switch crypt-method [
-				CHACHA20_POLY1305 [
-					cipher: chacha20poly1305/encrypt aead content bin/buffer
-				]
-				AES_256_GCM	
-				AES_128_GCM [
-					;@@ TODO: needs AES_GCM computation			
-					log-error ["Not yet implemented crypt-method:" crypt-method]
-				]
-			]
-
+			aad: bin/buffer
+			?? aad
+			write encrypt-port bin/buffer ; AAD chunk
+			; on next line are 3 ops.. encrypting content, counting its MAC and getting the result  
+			encrypted: read update write encrypt-port content
 		][
 
 			;@@ GenericBlockCipher: https://tools.ietf.org/html/rfc5246#section-6.2.3.2
@@ -922,95 +943,45 @@ encrypt-data: function [
 				;  ciphers, the IV length is SecurityParameters.record_iv_length,
 				;  which is equal to the SecurityParameters.block_size."
 				;
-				client-iv: make binary! block-size
-				binary/write client-iv [RANDOM-BYTES :block-size]
+				binary/write clear client-iv [RANDOM-BYTES :block-size]
+				modify encrypt-port 'init-vector client-iv
 			]
 
 			;?? ctx/seq-write
-			log-more ["Client-iv:     " client-iv]
-			log-more ["Client-mac-key:" client-mac-key]
-			log-more ["Hash-method:   " hash-method]
+			log-more ["Client-IV:        ^[[32m" client-iv]
+			log-more ["Client-mac-key:   ^[[32m" client-mac-key]
+			log-more ["Hash-method:      ^[[32m" hash-method]
 
 			; Message Authentication Code
 			; https://tools.ietf.org/html/rfc5246#section-6.2.3.1
 
 			binary/write bin content
-
+			; computing MAC on the header + content 
 			MAC: checksum/with bin/buffer ctx/hash-method ctx/client-mac-key
-
-			;?? MAC
-			data: rejoin [content MAC]
-			;??  block-size
-
+			; padding the message to achieve a multiple of block length
+			len: length? append content MAC
+			;?? MAC ?? content ??  block-size ?? len
 			if block-size [
-				; add the padding data in CBC mode
-				padding: block-size - (remainder (1 + length? data) block-size)
-				insert/dup tail data (to char! padding) (padding + 1)
+				; add the padding data in CBC mode (PKCS5 Padding)
+				padding: block-size - ((len + 1) % block-size)
+				insert/dup tail content padding padding + 1
+				;?? padding
 			]
+			;?? content
 
-			switch crypt-method [
-			; no need for default in this SWITCH as only available methods will pass
-			; thru TLS-init-cipher-suite function call
-				AES_256_CBC
-				AES_128_CBC [
-					unless encrypt-stream [
-						encrypt-stream: aes/key client-crypt-key client-iv
-					]
-					cipher: aes/stream encrypt-stream data
-
-					if version > *Protocol-version/TLS1.0 [
-						; encrypt-stream must be reinitialized each time with the
-						; new initialization vector.
-						encrypt-stream: none
-					]
-				]
-				RC4_128 [
-					unless encrypt-stream [
-						encrypt-stream: rc4/key client-crypt-key
-					]
-					cipher: rc4/stream encrypt-stream data
-				]
-			]
+			; on next line are 3 ops.. encrypting content, padding and getting the result  
+			encrypted: read update write encrypt-port content
 
 			;-- TLS versions 1.1 and above include the client-iv in plaintext.
 			if version > *Protocol-version/TLS1.0 [
-				insert cipher client-iv
-				unset 'client-iv ;-- avoid accidental reuse
+				insert encrypted client-iv
+				;clear client-iv ;-- avoid accidental reuse
 			]
 		]
-		binary/init bin 0 ;clear the bin buffer
+		binary/init bin 0 ;reset the bin buffer
 	]
-	cipher
+	encrypted
 ]
-
-decrypt-data: func [
-	ctx [object!]
-	data [binary!]
-	/local
-		crypt-data
-][
-	;print "DECRYPT DATA" ? data
-	switch ctx/crypt-method [
-		AES_128_CBC
-		AES_256_CBC [
-			unless ctx/decrypt-stream [
-				ctx/decrypt-stream: aes/key/decrypt ctx/server-crypt-key ctx/server-iv
-			]
-			data: aes/stream ctx/decrypt-stream data
-
-			;-- TLS 1.1 and above must use a new initialization vector each time
-			if ctx/version > *Protocol-version/TLS1.0 [
-				;@@TODO: it must be possible to reuse the stream instead of recreating it on each message!
-				ctx/decrypt-stream: none
-			]
-		]
-		RC4_128 [
-			rc4/stream ctx/decrypt-stream data
-		]
-	]
-	data
-]
-
 
 prf: function [
 	{(P)suedo-(R)andom (F)unction, generates arbitrarily long binaries}
@@ -1190,8 +1161,8 @@ make-TLS-ctx: does [ context [
 	pub-key: pub-exp:
 	key-data:
 
-	encrypt-stream:
-	decrypt-stream: none
+	encrypt-port:
+	decrypt-port: none
 
 	connection: none
 ]]
@@ -1203,22 +1174,8 @@ TLS-init: func [
 	ctx/seq-read: ctx/seq-write: 0
 	ctx/protocol: ctx/state: ctx/state-prev: none
 	ctx/cipher-spec-set: 0 ;no encryption yet
-
 	ctx/legacy?: (255 & ctx/version) < 3 ;- TLSv1.1 and older
-
 	clear ctx/server-certs
-
-	;@@ review code bellow if reset for other crypt method is not needed:
-	switch ctx/crypt-method [
-		RC4_128 [
-			if ctx/encrypt-stream [
-				rc4/stream ctx/encrypt-stream none
-				rc4/stream ctx/decrypt-stream none
-				ctx/encrypt-stream: none
-				ctx/decrypt-stream: none
-			]
-		]
-	]
 ]
 
 
@@ -1239,7 +1196,7 @@ TLS-read-data: function [
 
 	while [ctx/reading? and ((available: length? inp/buffer) >= 5)][
 
-		log-debug ["Data starts: " mold copy/part inp/buffer 16]
+		;log-debug ["Data starts: " copy/part inp/buffer 16]
 
 		binary/read inp [
 			start:   INDEX
@@ -1265,7 +1222,7 @@ TLS-read-data: function [
 			log-info ["Incomplete fragment:^[[22m available^[[1m" available "^[[22mof^[[1m" len "^[[22mbytes"]
 			;?? inp/buffer
 			binary/read inp [AT :start] ;resets position
-			log-debug ["Data starts: " mold copy/part inp/buffer 10]
+			log-debug ["Data starts: " copy/part inp/buffer 10]
 			return false
 		]
 
@@ -1349,6 +1306,9 @@ TLS-read-data: function [
 				if ctx/cipher-spec-set > 1 [
 					if data: decrypt-msg ctx data [
 						append ctx/port-data data
+						;@@ TODO: the parent scheme (HTTPS) should be notified here,
+						;@@ that there are already some decrypted data available!   
+						;@@ Now it is awaked only when data are complete :-/        
 					]
 				]
 			]
@@ -1419,8 +1379,8 @@ TLS-parse-handshake-message: function [
 				]
 
 				log-more ["R[" seq-read "] Version:" *Protocol-version/name server-version "len:" len "cipher-suite:" cipher-suite]
-				log-more ["R[" seq-read "] Random: ^[[1m" mold server-random ]
-				log-more ["R[" seq-read "] Session:^[[1m" mold server-session]
+				log-more ["R[" seq-read "] SRandom:^[[32m" server-random ]
+				log-more ["R[" seq-read "] Session:^[[32m" server-session]
 
 				if server-version <> version [
 					log-error [
@@ -1438,7 +1398,7 @@ TLS-parse-handshake-message: function [
 				]
 
 				unless empty? compressions [
-					log-more ["R[" seq-read "] Compressions:^[[1m" mold compressions  ]
+					log-more ["R[" seq-read "] Compressions:^[[1m" compressions ]
 					log-error "COMPRESSION NOT SUPPORTED"
 					return *Alert/Decompression_failure
 				]
@@ -1546,7 +1506,7 @@ TLS-parse-handshake-message: function [
 						return *Alert/User_cancelled
 					]
 					log-more ["R[" ctx/seq-read "] Elyptic curve type:" ECCurve "=>" curve]
-					log-more ["R[" ctx/seq-read "] Elyptic curve data:" pub_key]
+					log-more ["R[" ctx/seq-read "] Elyptic curve data:" mold pub_key]
 				]
 				DHE_DSS
 				DHE_RSA [
@@ -1578,19 +1538,15 @@ TLS-parse-handshake-message: function [
 				hash-algorithm:         *HashAlgorithm/name binary/read msg 'UI8
 				sign-algorithm: *ClientCertificateType/name binary/read msg 'UI8
 				log-more ["R[" ctx/seq-read "] Using algorithm:" hash-algorithm "with" sign-algorithm]
-				binary/read msg [signature: UI16BYTES]
-				;? signature
-				insert message rejoin [
-					ctx/client-random
-					ctx/server-random
-				]
 				if hash-algorithm = 'md5_sha1 [
 					;__private_rsa_verify_hash_md5sha1
 					log-error "legacy __private_rsa_verify_hash_md5sha1 not implemented yet!"
 					return *Alert/Decode_error
 				]
-				message-hash: checksum message hash-algorithm
-				;? message-hash
+				binary/read msg [signature: UI16BYTES]
+				;? signature
+				insert message join ctx/client-random ctx/server-random
+
 				if any [
 					error? valid?: try [
 						switch sign-algorithm [
@@ -1598,16 +1554,13 @@ TLS-parse-handshake-message: function [
 								log-more "Checking signature using RSA"
 								;decrypt the `signature` with server's public key
 								rsa-key: apply :rsa-init ctx/server-certs/1/public-key/rsaEncryption
-								signature: rsa/verify rsa-key signature
-								rsa rsa-key none ;@@ releases the internal RSA data, should be done by GC one day!
-								;?? signature
-								signature: decode 'der signature
-								;note tls1.3 is different a little bit here!
-								; test validity:
-								message-hash == signature/sequence/octet_string
+								also rsa/verify/hash rsa-key message signature hash-algorithm
+								     rsa rsa-key none ;@@ releases the internal RSA data, should be done by GC one day!
 							]
 							rsa_fixed_dh [
 								log-more "Checking signature using RSA_fixed_DH"
+								;@@ TODO: rewrite ecdsa/verify to count the hash automatically like it is in rsa/verify now?
+								message-hash: checksum message hash-algorithm
 								; test validity:
 								ecdsa/verify/curve ctx/pub-key message-hash signature ctx/pub-exp
 							]
@@ -1633,7 +1586,7 @@ TLS-parse-handshake-message: function [
 				if dh_p [
 					dh-key: dh-init dh_g dh_p
 					ctx/pre-master-secret: dh/secret dh-key pub_key
-					log-more ["DH common secret:" mold ctx/pre-master-secret]
+					log-more ["DH common secret:" ctx/pre-master-secret]
 					ctx/key-data: dh/public/release dh-key
 				]
 				if curve [
@@ -1641,7 +1594,7 @@ TLS-parse-handshake-message: function [
 					;curve is defined above (send from server as well as server's public key)
 					dh-key: ecdh/init none curve
 					ctx/pre-master-secret: ecdh/secret dh-key pub_key
-					log-more ["ECDH common secret:" mold ctx/pre-master-secret]
+					log-more ["ECDH common secret:^[[32m" ctx/pre-master-secret]
 					; resolve the public key to supply it to server
 					ctx/key-data: ecdh/public/release dh-key
 
@@ -1675,19 +1628,13 @@ TLS-parse-handshake-message: function [
 			binary/read msg [verify-data: BYTES] ;rest of data
 			;? verify-data
 			seed: either ctx/legacy? [
-				rejoin [
-					read ctx/md5-port
-					read ctx/sha-port
-				]
+				join read ctx/md5-port read ctx/sha-port
 			][	read ctx/sha-port ]
 			;?? seed
 
 			result: prf "client finished" ctx/legacy? seed ctx/master-secret  12
 			;? result
 			;ask ""
-
-
-
 		]
 	][
 		log-error ["Unknown state: " ctx/state "-" type]
@@ -1696,7 +1643,7 @@ TLS-parse-handshake-message: function [
 
 	if ends <> i: index? msg/buffer [
 		log-error ["Wrong fragment message tail!" ends "<>" i]
-		log-error ["in/buffer starts:" mold copy/part msg/buffer 20]
+		log-error ["in/buffer starts:" copy/part msg/buffer 20]
 		return *Alert/Record_overflow
 	]
 	log-more ["R[" ctx/seq-read "] DONE: handshake^[[1m" ctx/state] log-----
@@ -1899,38 +1846,10 @@ sys/make-scheme [
 			;?? port/state/connection
 			close port/state/connection
 
-			; The symmetric ciphers used by TLS are able to encrypt chunks of
-			; data one at a time.  It keeps the progressive state of the
-			; encryption process in the -stream variables, which under the
-			; hood are memory-allocated items stored as a HANDLE!.  The
-			; memory they represent will not be automatically freed by
-			; garbage collection.
-			;
-			; Calling the encryption functions with NONE! as the data to
-			; input will assume you are done, and will free the handle.
-			;
-			; !!! Is there a good reason for not doing this with an ordinary
-			; OBJECT! containing a BINARY! ?
-			;
-			switch port/state/crypt-method [
-				RC4_128 [
-					if port/state/encrypt-stream [
-						rc4/stream port/state/encrypt-stream none
-					]
-					if port/state/decrypt-stream [
-						rc4/stream port/state/decrypt-stream none
-					]
-				]
-				AES_128_CBC
-				AES_256_CBC [
-					if port/state/encrypt-stream [
-						aes/stream port/state/encrypt-stream none
-					]
-					if port/state/decrypt-stream [
-						aes/stream port/state/decrypt-stream none
-					]
-				]
-			]
+			if port? port/state/encrypt-port [ close port/state/encrypt-port ]
+			if port? port/state/decrypt-port [ close port/state/decrypt-port ]
+			port/state/encrypt-port: none
+			port/state/decrypt-port: none
 
 			log-more "Port closed"
 			port/state/connection/awake: none
