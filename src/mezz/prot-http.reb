@@ -1,18 +1,19 @@
 REBOL [
 	System: "REBOL [R3] Language Interpreter and Run-time Environment"
 	Title: "REBOL 3 HTTP protocol scheme"
+	Name: http
+	Type: module
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2022 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
 		Licensed under the Apache License, Version 2.0
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-	Name: 'http
-	Type: 'module
-	Version: 0.3.5
-	Date: 26-Oct-2020
+	Version: 0.4.0
+	Date: 4-Feb-2022
 	File: %prot-http.r
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -34,6 +35,7 @@ REBOL [
 		0.3.3 25-Feb-2020 "Oldes" "FEAT: support for read/binary and write/binary to force raw data result"
 		0.3.4 26-Feb-2020 "Oldes" "FIX: limit input data according Content-Length (#issues/2386)"
 		0.3.5 26-Oct-2020 "Oldes" "FEAT: support for read/part (using Range request with read/part/binary)"
+		0.4.0 04-Feb-2022 "Oldes" "FIX: situation when server does not provide Content-Length and just closes connection"
 	]
 ]
 
@@ -41,13 +43,20 @@ sync-op: func [port body /local header state][
 	unless port/state [open port port/state/close?: yes]
 	state: port/state
 	state/awake: :read-sync-awake
+	;print ["sync-op" mold/flat body]
 	do body
+	;? state/state
 	if state/state = 'ready [do-request port]
 	;NOTE: We'll wait in a WHILE loop so the timeout cannot occur during 'reading-data state.
 	;The timeout should be triggered only when the response from other side exceeds the timeout value.
 	;--Richard
 	while [not find [ready close] state/state][
-		;print "HTTP sync-op loop"
+		;print ["HTTP sync-op loop.. state:" state/state "open?" open? state/connection]
+		if all [state/state = 'closing not open? state/connection][
+			; server already closed connection
+			state/state: 'ready
+			break
+		]
 		unless port? wait [state/connection port/spec/timeout][
 			throw-http-error port make error! [
 				type: 'Access
@@ -57,6 +66,7 @@ sync-op: func [port body /local header state][
 			]
 			exit
 		]
+		;? state/state
 		switch state/state [
 			inited [
 				if not open? state/connection [
@@ -86,7 +96,7 @@ sync-op: func [port body /local header state][
 
 	header: copy port/state/info/headers
 
-	if state/close? [
+	if all [state/close? open? port][
 		sys/log/more 'HTTP ["Closing port for:^[[m" port/spec/ref]
 		close port
 	]
@@ -136,12 +146,14 @@ http-awake: func [event /local port http-port state awake res][
 	if any-function? :http-port/awake [state/awake: :http-port/awake]
 	awake: :state/awake
 
+	;? awake
+
 	sys/log/debug 'HTTP ["Awake:^[[1m" event/type "^[[22mstate:^[[1m" state/state]
 
-	switch/default event/type [
+	res: switch/default event/type [
 		read [
 			awake make event! [type: 'read port: http-port]
-			check-response http-port
+			check-response http-port ;@@ really check response on every read event?!
 		]
 		wrote [
 			awake make event! [type: 'wrote port: http-port]
@@ -150,14 +162,14 @@ http-awake: func [event /local port http-port state awake res][
 			false
 		]
 		lookup [
-			open port false]
+			open port false
+		]
 		connect [
 			state/state: 'ready
 			awake make event! [type: 'connect port: http-port]
 		]
 		close
 		error [
-			;?? state/state
 			res: switch state/state [
 				ready [
 					awake make event! [type: 'close port: http-port]
@@ -187,7 +199,7 @@ http-awake: func [event /local port http-port state awake res][
 						throw-http-error http-port "Server closed connection"
 					][
 						;set state to CLOSE so the WAIT loop in 'sync-op can be interrupted --Richard
-						state/state: 'close
+						state/state: 'ready
 						any [
 							awake make event! [type: 'done  port: http-port]
 							awake make event! [type: 'close port: http-port]
@@ -205,6 +217,8 @@ http-awake: func [event /local port http-port state awake res][
 			res
 		]
 	][true]
+	;print ["http-awake res:" mold res]
+	res
 ]
 
 throw-http-error: func [
@@ -290,13 +304,13 @@ parse-write-dialect: func [port block /local spec][
 	]
 ]
 check-response: func [port /local conn res headers d1 d2 line info state awake spec][
-	state: port/state
-	conn: state/connection
-	info: state/info
+	state:   port/state
+	spec:    port/spec
+	conn:    state/connection
+	info:    state/info
 	headers: info/headers
-	line: info/response-line
-	awake: :state/awake
-	spec: port/spec
+	line:    info/response-line
+	awake:  :state/awake
 	
 	if all [
 		not headers
@@ -620,6 +634,7 @@ check-data: func [port /local headers res data available out chunk-size pos trai
 		]
 		true [
 			port/data: conn/data
+			;? state/info/response-parsed
 			either state/info/response-parsed = 'ok [
 				;Awake from the WAIT loop to prevent timeout when reading big data. --Richard
 				res: true
@@ -741,6 +756,14 @@ sys/make-scheme [
 				result/2
 			]
 		]
+		update: func[
+			port [port!]
+		][
+			? port
+			? port/state
+			read port/state/connection
+
+		]
 		open: func [
 			port [port!]
 			/local conn
@@ -789,7 +812,9 @@ sys/make-scheme [
 				close port/state/connection
 				port/state/connection/awake: none
 				; release state and if there was error, keep it there
-				port/state: port/state/error
+				if error? port/state/error [
+					port/state: port/state/error
+				]
 			]
 			if error? port/state [do port/state]
 			port
