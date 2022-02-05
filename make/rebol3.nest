@@ -588,8 +588,8 @@ include-cryptography: [
 	:include-cipher-mode-cbc
 	:include-cipher-mode-gcm
 
-	:include-deprecated-cipher-chacha20
-	:include-deprecated-cipher-aes
+	;:include-deprecated-cipher-chacha20
+	;:include-deprecated-cipher-aes
 
 	:include-codec-crt
 	:include-codec-der
