@@ -1,5 +1,5 @@
 REBOL [
-	Title: "REBOL3 TLSv1.2 protocol scheme"
+	Title: "Rebol3 TLSv1.2 protocol scheme"
 	Name:  tls
 	Type:  module
 	Rights: {
@@ -13,6 +13,7 @@ REBOL [
 	}
 	Author: ["Richard 'Cyphre' Smolak" "Oldes" "Brian Dickens (Hostilefork)"]
 	Version: 0.8.0
+	Date: 5-Feb-2022
 	history: [
 		0.6.1 "Cyphre" "Initial implementation used in old R3-alpha"
 		0.7.0 "Oldes" {
@@ -1651,14 +1652,11 @@ TLS-parse-handshake-message: function [
 ]
 
 send-event: function[
-	type [word!]
-	port [port!]
+	event  [word!]
+	target [port!]
 ][
-	log-debug ["Send-event:^[[1m" type]
-	insert system/ports/system make event! compose [
-		type: (to lit-word! type)
-		port: (port)
-	]
+	log-debug ["Send-event:^[[1m" event]
+	insert system/ports/system make event! [ type: event port: target ]
 ]
 
 TLS-awake: function [event [event!]][
@@ -1728,6 +1726,7 @@ TLS-awake: function [event [event!]][
 		read [
 			error: try [
 				log-info ["READ TCP" length? TCP-port/data "bytes proto-state:" TLS-port/state/protocol]
+				;@@ This part deserves a serious review!                         
 				;dump/fmt TCP-port/data
 				complete?: TLS-read-data TLS-port/state TCP-port/data
 				;? port
