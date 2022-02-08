@@ -1087,7 +1087,7 @@ do-commands: func [
 			log-error "Timeout"
 			;? ctx
 			? ctx/connection
-			send-event 'close ctx/connection/locals
+			send-event 'close ctx/connection/extra
 			do make error! "port timeout"
 		]
 	]
@@ -1662,7 +1662,7 @@ send-event: function[
 TLS-awake: function [event [event!]][
 	log-more ["AWAKE:^[[1m" event/type]
 	TCP-port:   event/port
-	TLS-port:   TCP-port/locals
+	TLS-port:   TCP-port/extra
 	TLS-awake: :TLS-port/awake
 
 	if all [
@@ -1700,10 +1700,10 @@ TLS-awake: function [event [event!]][
 				]
 				TLS-error *Alert/Close_notify
 			]
-			if error? TLS-port/locals/state [
+			if error? TLS-port/extra/state [
 				; upper protocol was already closed and reports the error in its state
 				; it's safe to throw the error now
-				do TLS-port/locals/state
+				do TLS-port/extra/state
 			]
 			; in case that the upper protocol is not yet closed, store error and report it
 			if TLS-port/state [ TLS-port/state/error: error ]
@@ -1829,7 +1829,7 @@ sys/make-scheme [
 			port/data: port/state/port-data
 
 			conn/awake: :TLS-awake
-			conn/locals: port
+			conn/extra: port
 			open conn
 			port
 		]

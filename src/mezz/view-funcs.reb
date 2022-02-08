@@ -89,7 +89,7 @@ view: func [
 		]
 		; Set up default handler...
 		if all [
-			empty? system/view/event-port/locals/handlers ; ...if there is no other handler
+			empty? system/view/event-port/extra/handlers  ; ...if there is no other handler
 			not opts/handler                              ; ...and user did not provide one
 		][
 			handle-events [
@@ -189,7 +189,7 @@ handle-events: func [
 	/local sys-hand
 ][
 	handler: make base-handler handler
-	sys-hand: system/view/event-port/locals/handlers
+	sys-hand: system/view/event-port/extra/handlers
 	; First check if there is not any handler with such a name...
 	forall sys-hand [
 		if handler/name = sys-hand/1/name [
@@ -214,7 +214,7 @@ unhandle-events: func [
 	"Removes a handler from the view event system."
 	handler [object!]
 ][
-	remove find system/view/event-port/locals/handlers handler
+	remove find system/view/event-port/extra/handlers handler
 	exit
 ]
 
@@ -222,7 +222,7 @@ handled-events?: func [
 	"Returns event handler object matching a given name."
 	name
 ][
-	foreach hand system/view/event-port/locals/handlers [
+	foreach hand system/view/event-port/extra/handlers [
 		if hand/name = name [return hand]
 	]
 	none
@@ -254,11 +254,11 @@ init-view-system: func [
 	system/view/event-port: ep
 
 	; Create block of event handlers:
-	ep/locals: object [handlers: copy []]
+	ep/extra: object [handlers: copy []]
 
 	; Global event handler for view system:
 	ep/awake: func [event /local h] [
-		h: event/port/locals/handlers
+		h: event/port/extra/handlers
 		while [ ; (no binding needed)
 			all [event not tail? h]
 		][

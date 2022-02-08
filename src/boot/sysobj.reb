@@ -247,8 +247,8 @@ standard: object [
 		actor:		; port action handler (script driven)
 		awake:		; port awake function (event driven)
 		state:		; internal state values (private)
+		extra:		; user-defined storage of local data
 		data:		; data buffer (usually binary or block)
-		locals:		; user-defined storage of local data
 ;		stats:		; stats on operation (optional)
 	]
 

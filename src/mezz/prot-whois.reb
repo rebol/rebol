@@ -28,7 +28,7 @@ sys/make-scheme [
 	awake: func [event /local port parent] [
 		sys/log/debug 'WHOIS ["Awake:^[[22m" event/type]
 		port: event/port
-		parent: port/locals
+		parent: port/extra
 		switch event/type [
 			lookup  [ open port ]
 			connect [
@@ -87,7 +87,7 @@ sys/make-scheme [
 				port-id: port/spec/port-id
 				ref: rejoin [tcp:// host #":" port-id]
 			]
-			conn/locals: port
+			conn/extra: port
 			conn/awake: :awake
 			open conn
 			port

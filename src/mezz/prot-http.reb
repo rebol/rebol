@@ -1,6 +1,6 @@
 REBOL [
 	System: "REBOL [R3] Language Interpreter and Run-time Environment"
-	Title: "REBOL 3 HTTP protocol scheme"
+	Title: "Rebol3 HTTP protocol scheme"
 	Name: http
 	Type: module
 	Rights: {
@@ -141,7 +141,7 @@ read-sync-awake: func [event [event!] /local error][
 ]
 http-awake: func [event /local port http-port state awake res][
 	port: event/port
-	http-port: port/locals
+	http-port: port/extra
 	state: http-port/state
 	if any-function? :http-port/awake [state/awake: :http-port/awake]
 	awake: :state/awake
@@ -792,7 +792,7 @@ sys/make-scheme [
 			]
 			
 			conn/awake: :http-awake
-			conn/locals: port
+			conn/extra: port
 			sys/log/info 'HTTP ["Opening connection:^[[22m" conn/spec/ref]
 			open conn
 

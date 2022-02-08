@@ -200,18 +200,18 @@ sys/make-scheme [
 		Open: func [port [port!]][
 			; probe port/spec
 			sys/log/info 'HTTPD ["Opening server at port:^[[22m" port/spec/port-id]
-			port/locals: make object! [
+			port/extra: make object! [
 				subport: open compose [
 					scheme: 'tcp
 					port-id: (port/spec/port-id)
 				]
 				subport/awake: :port/scheme/awake-server
-				subport/locals: make object! [
+				subport/extra: make object! [
 					parent: port
 					config: none
 					clients: make block! 16
 				]
-				subport/locals/config:
+				subport/extra/config:
 				config: make object! [
 					root: system/options/home
 					index: [%index.html %index.htm]
@@ -219,14 +219,14 @@ sys/make-scheme [
 					server-name: "Rebol3-HTTPD"
 				]
 			]
-			port/state: port/locals/subport/locals/clients
+			port/state: port/extra/subport/extra/clients
 			port/awake: :awake-client
 			port
 		]
 
 		Close: func [port [port!]][
 			sys/log/info 'HTTPD ["Closing server at port:^[[22m" port/spec/port-id]
-			close port/locals/subport
+			close port/extra/subport
 		]
 
 		On-Accept: func [ctx [object!]][ true ]
@@ -495,7 +495,7 @@ sys/make-scheme [
 	]
 
 	Respond: function [port [port!]][
-		ctx: port/locals
+		ctx: port/extra
 		out: ctx/out
 		sys/log/info 'HTTPD ["Respond:^[[22m" out/status status-codes/(out/status) length? out/content]
 		; send the response header
@@ -597,7 +597,7 @@ sys/make-scheme [
 			event [event!]
 		][
 			port: event/port
-			ctx: port/locals
+			ctx: port/extra
 			inp: ctx/inp
 			out: ctx/out
 
@@ -636,7 +636,7 @@ sys/make-scheme [
 									break
 								]
 							]
-							actor/on-read port/locals
+							actor/on-read port/extra
 						][
 							print system/state/last-error
 							ctx/state: 'error
@@ -692,7 +692,7 @@ sys/make-scheme [
 				]
 				CLOSE [
 					sys/log/info 'HTTPD ["Closing:^[[22m" ctx/remote]
-					if pos: find ctx/parent/locals/clients port [ remove pos ]
+					if pos: find ctx/parent/extra/clients port [ remove pos ]
 					close port
 				]
 			]
@@ -705,7 +705,7 @@ sys/make-scheme [
 			ACCEPT [ New-Client event/port ]
 			CLOSE  [
 				close event/port
-				close event/port/locals/parent
+				close event/port/extra/parent
 			]
 		]
 		true
@@ -723,7 +723,7 @@ sys/make-scheme [
 			return false
 		]
 		client/awake: :Awake-Client
-		client/locals: make object! [
+		client/extra: make object! [
 			state: none
 			parent: port
 			remote-ip: info/remote-ip
@@ -748,27 +748,27 @@ sys/make-scheme [
 			requests: 0   ; number of already served requests per connection
 		]
 		;? port
-		client/locals/config: port/locals/config
-		append port/locals/clients client
+		client/extra/config: port/extra/config
+		append port/extra/clients client
 
-		sys/log/info 'HTTPD ["New client:^[[1;31m" client/locals/remote]
+		sys/log/info 'HTTPD ["New client:^[[1;31m" client/extra/remote]
 		try/except [read client][
-			print ["** Failed to read new client:" client/locals/remote]
+			print ["** Failed to read new client:" client/extra/remote]
 			print system/state/last-error
 		]
 	]
 
 	End-Client: function [port [port!]][
-		ctx: port/locals
+		ctx: port/extra
 		Do-log ctx
-		clients: ctx/parent/locals/clients
+		clients: ctx/parent/extra/clients
 		keep-alive: ctx/config/keep-alive
 		
 		either all [
 			keep-alive
 			open? port
 			ctx/requests <= keep-alive/2 ; limit to max requests
-			"close" <> select port/locals/inp/Header 'Connection ; client don't want or cannot handle persistent connection
+			"close" <> select port/extra/inp/Header 'Connection ; client don't want or cannot handle persistent connection
 		][
 			ctx/requests: ctx/requests + 1
 			sys/log/info 'HTTPD ["Keep-alive:^[[22m" ctx/remote "requests:" ctx/requests]
@@ -801,10 +801,10 @@ sys/make-scheme [
 		;sys/log/debug 'HTTPD ["Check-Clients:" length? port/state #"-" now]
 		if block? port/state [
 			foreach client reverse copy port/state [
-				;sys/log/debug 'HTTPD ["Checking:" client/locals/remote client/locals/timeout]
+				;sys/log/debug 'HTTPD ["Checking:" client/extra/remote client/extra/timeout]
 				try [
 					if all [
-						date? tmc: client/locals/timeout
+						date? tmc: client/extra/timeout
 						tm >= tmc
 					][
 						Awake-Client make event! [type: 'CLOSE port: client]
@@ -831,11 +831,11 @@ http-server: function [
 			file? spec/root [spec/root: dirize clean-path spec/root]
 			none? spec/root [spec/root: what-dir]
 		]
-		append server/locals/config spec
+		append server/extra/config spec
 	]
 	
 	unless system/options/quiet [
-		? server/locals/config
+		? server/extra/config
 	]
 
 	if actor [
@@ -845,7 +845,7 @@ http-server: function [
 	]
 	unless no-wait [
 		forever [
-			p: wait [server server/locals/subport 15]
+			p: wait [server server/extra/subport 15]
 			if all [port? p not open? p] [
 				return p/data
 			]
