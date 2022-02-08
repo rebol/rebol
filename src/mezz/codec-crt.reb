@@ -23,7 +23,7 @@ register-codec [
 				length > length? bin/buffer
 			][	return none ]
 		]
-		checksum/part at data 5 'sha256 probe (length + 4)
+		checksum/part at data 5 :method (length + 4)
 	]
 	decode: wrap [
 		*oid:
