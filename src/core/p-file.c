@@ -329,15 +329,25 @@ REBINT Mode_Syms[] = {
 #endif
 		len += n;
 	}
-
-	// Auto convert string to UTF-8
-	if (IS_STRING(data)) {
+	
+	if (IS_BINARY(data)) {
+		file->data = VAL_BIN_DATA(data);
+	}
+	else if (IS_STRING(data)) {
+		// Auto convert string to UTF-8
 		ser = Encode_UTF8_Value(data, len, ENCF_OS_CRLF);
 		file->data = ser? BIN_HEAD(ser) : VAL_BIN_DATA(data); // No encoding may be needed
 		len = SERIES_TAIL(ser);
 	}
+	else if (IS_CHAR(data)) {
+		// Auto convert char to UTF-8
+		REBYTE buf[8];
+		len = Encode_UTF8_Char(buf, VAL_CHAR(data));
+		file->data = &buf;
+	}
 	else {
-		file->data = VAL_BIN_DATA(data);
+		// it should be already handled
+		//Trap1(PE_BAD_ARGUMENT, data);
 	}
 	file->length = len;
 	OS_DO_DEVICE(file, RDC_WRITE);
@@ -464,14 +474,16 @@ REBINT Mode_Syms[] = {
 		break;
 
 	case A_APPEND:
+		args = Find_Refines(ds, AM_APPEND_DUP | AM_APPEND_ONLY );
+		if (args > 0) Trap0(RE_BAD_REFINES); // should be used some new port related error!
 		file->file.index = file->file.size;
 		SET_FLAG(file->modes, RFM_RESEEK);
 
 	case A_WRITE:
 		args = Find_Refines(ds, ALL_WRITE_REFS);
-		spec = D_ARG(2); // data (binary, string, or block)
+		spec = D_ARG(2); // data (binary, string, char or block)
 
-		if (!(IS_BINARY(spec) || IS_STRING(spec) || (IS_BLOCK(spec) && (args & AM_WRITE_LINES)))) {
+		if (!(IS_BINARY(spec) || IS_STRING(spec) || IS_CHAR(spec) || (IS_BLOCK(spec) && (args & AM_WRITE_LINES)))) {
 			//Trap1(RE_INVALID_ARG, spec);
 			REB_MOLD mo = {0};
 			Reset_Mold(&mo);
@@ -493,14 +505,14 @@ REBINT Mode_Syms[] = {
 		}
 
 		// Setup for /append or /seek:
-		if (args & AM_WRITE_APPEND) {
+		if (args & AM_WRITE_APPEND || action == A_APPEND) {
 			file->file.index = -1; // append
 			SET_FLAG(file->modes, RFM_RESEEK);
 		}
 		if (args & AM_WRITE_SEEK) Set_Seek(file, D_ARG(ARG_WRITE_INDEX));
 
+		len = IS_CHAR(spec) ? 0 : VAL_LEN(spec);
 		// Determine length. Clip /PART to size of string if needed.
-		len = VAL_LEN(spec);
 		if (args & AM_WRITE_PART) {
 			REBCNT n = Int32s(D_ARG(ARG_WRITE_LENGTH), 0);
 			if (n <= len) len = n;

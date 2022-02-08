@@ -296,6 +296,7 @@ context [
 	acts: load root-dir/src/boot/actions.reb
 
 	foreach word [
+		append
 		copy
 		find
 		put

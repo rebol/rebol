@@ -435,6 +435,38 @@ if system/platform = 'Windows [
 		; validate...
 		--assert not exists? %issue-2447
 
+	--test-- "WRITE/APPEND file-port"
+		--assert all [
+			not error? try [
+				p: open/new %issue-1894
+				write/append p "Hello"
+				write/append p newline
+				close p
+				p: open %issue-1894
+				write/append p #{5265626F6C}
+				close p
+			]
+			"Hello^/Rebol" = read/string %issue-1894
+		]
+
+	--test-- "APPEND file-port"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1894
+		--assert all [
+			not error? try [
+				p: open/new %issue-1894
+				append p "Hello"
+				append p newline
+				close p
+				p: open %issue-1894
+				append p #{5265626F6C}
+				close p
+			]
+			"Hello^/Rebol" = read/string %issue-1894
+		]
+		--assert all [error? e: try [append/dup p LF 10]  e/id = 'bad-refines]
+		--assert all [error? e: try [append/only p "aa"]  e/id = 'bad-refines]
+		try [delete %issue-1894]
+
 ===end-group===
 
 if system/platform = 'Windows [
