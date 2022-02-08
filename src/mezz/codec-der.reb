@@ -247,6 +247,8 @@ register-codec [
 					| #"^(04)" (name: 'md5withRSAEncryption)
 					| #"^(05)" (name: 'sha1WithRSAEncrption)
 					| #"^(0B)" (name: 'sha256WithRSAEncryption)
+					| #"^(0C)" (name: 'sha384WithRSAEncryption)
+					| #"^(0D)" (name: 'sha512WithRSAEncryption)
 
 				] end
 				|

@@ -10,6 +10,21 @@ register-codec [
 	type:  'cryptography
 	title: "Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile"
 	suffixes: [%.crt]
+
+	get-fingerprint: function[data [binary!] method [word!]][
+		bin: binary data
+		loop 2 [
+			binary/read bin [
+				flags:    UI8
+				length:   LENGTH
+			]
+			if any [
+				flags <> 48 ; 0x30 = class universal, constructed, SEQUENCE
+				length > length? bin/buffer
+			][	return none ]
+		]
+		checksum/part at data 5 'sha256 probe (length + 4)
+	]
 	decode: wrap [
 		*oid:
 		*val:
@@ -99,7 +114,7 @@ register-codec [
 
 		func [
 			data [binary! block!]
-			/local pkix version serialNumber issuer subject validity
+			/local pkix version serialNumber issuer subject validity der
 		][
 			try [all [
 				; as there seems to be no standard, the *.crt file
@@ -108,12 +123,15 @@ register-codec [
 				pkix/label = "CERTIFICATE"
 				data: pkix/binary
 			]]
-			if binary? data [ data: der-codec/decode data ]
+
+			der: either binary? data [
+				der-codec/decode data
+			][	data ]
 			if all [
-				2 = length? data
-				'SEQUENCE = data/1 
-				block? data/2 
-			] [data: data/2]
+				2 = length? der
+				'SEQUENCE = der/1 
+				block? der/2 
+			] [der: der/2]
 
 			result: object [
 				version:
@@ -127,10 +145,11 @@ register-codec [
 				issuer-id:
 				subject-id:
 				extensions:
+				fingerprint:
 					none
 			]
 
-			parse data [
+			parse der [
 				'SEQUENCE into [
 					;-- version:
 					'CS0 into [
@@ -198,6 +217,18 @@ register-codec [
 					print " result:^[[0m"
 					print dump-obj result
 				]
+			]
+			if all [
+				binary? data
+				hash: select [
+					sha256WithRSAEncryption sha256
+					sha384WithRSAEncryption sha384
+					sha512WithRSAEncryption sha512
+					md5withRSAEncryption    md5
+					md4withRSAEncryption    md4
+				] result/signature/1
+			][
+				try [result/fingerprint: get-fingerprint :data :hash]
 			]
 			result
 		]
