@@ -281,8 +281,8 @@ load: function [
 	source [file! url! string! binary! block!] {Source or block of sources}
 	/header  {Result includes REBOL header object (preempts /all)}
 	/all     {Load all values (does not evaluate REBOL header)}
-	/type    {Override default file-type; use NONE to always load as code}
-		ftype [word! none!] "E.g. text, markup, jpeg, unbound, etc."
+	/as      {Override default file-type; use NONE to always load as code}
+	 type [word! none!] "E.g. text, markup, jpeg, unbound, etc."
 ] [
 	; WATCH OUT: for ALL and NEXT words! They are local.
 
@@ -290,13 +290,13 @@ load: function [
 	; Note that code/data can be embedded in other datatypes, including
 	; not just text, but any binary data, including images, etc. The type
 	; argument can be used to control how the raw source is converted.
-	; Pass a /type of none or 'unbound if you want embedded code or data.
+	; Pass a /as of none or 'unbound if you want embedded code or data.
 	; Scripts are normally bound to the user context, but no binding will
-	; happen for a module or if the /type is 'unbound. This allows the result
+	; happen for a module or if the /as is 'unbound. This allows the result
 	; to be handled properly by DO (keeping it out of user context.)
 	; Extensions will still be loaded properly if /type is 'unbound.
 	; Note that IMPORT has its own loader, and does not use LOAD directly.
-	; /type with anything other than 'extension disables extension loading.
+	; /as with anything other than 'extension disables extension loading.
 
 	assert/type [local none!] ; easiest way to protect against /local hacks
 
@@ -305,23 +305,23 @@ load: function [
 
 		;-- Load multiple sources?
 		block? source [
-			return map-each item source [apply :load [:item header all type ftype]]
+			return map-each item source [apply :load [:item header all as type]]
 		]
 
 		;-- What type of file? Decode it too:
 		any [file? source url? source] [
-			sftype: file-type? source
-			ftype: case [
-				lib/all ['unbound = ftype 'extension = sftype] [sftype]
-				type [ftype]
-				'else [sftype]
+			stype: file-type? source
+			type: case [
+				lib/all ['unbound = as 'extension = stype] [stype]
+				as      [type]
+				'else   [stype]
 			]
-			data: read-decode source ftype
+			data: read-decode source type
 		]
 		none? data [data: source]
 
 		;-- Is it not source code? Then return it now:
-		any [block? data not find [0 extension unbound] any [ftype 0]][ ; due to make-boot issue with #[none]
+		any [block? data not find [0 extension unbound] any [type 0]][ ; due to make-boot issue with #[none]
 			return data ; directory, image, txt, markup, etc.
 		]
 
@@ -339,7 +339,7 @@ load: function [
 
 		;-- Bind code to user context:
 		not any [
-			'unbound = ftype
+			'unbound = type
 			'module = select hdr 'type
 			find select hdr 'options 'unbound
 		][data: intern data]
@@ -710,7 +710,7 @@ export [load import]
 test: [
 	[
 		write %test-emb.reb {123^/[REBOL [title: "embed"] 1 2 3]^/123^/}
-		[1 2 3] = xload/header/type %test-emb.reb 'unbound
+		[1 2 3] = xload/header/as %test-emb.reb 'unbound
 	]
 ][	; General function:
 	[[1 2 3] = xload ["1" "2" "3"]]
@@ -718,7 +718,7 @@ test: [
 	[1 = xload "1"]
 	[[1] = xload "[1]"]
 	[[1 2 3] = xload "1 2 3"]
-	[[1 2 3] = xload/type "1 2 3" none]
+	[[1 2 3] = xload/as "1 2 3" none]
 	[[1 2 3] = xload "rebol [] 1 2 3"]
 	[
 		d: xload/header "rebol [] 1 2 3"

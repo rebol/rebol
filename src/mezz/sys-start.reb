@@ -33,7 +33,7 @@ start: func [
 	start: 'done ; only once
 	init-schemes ; only once
 
-	ver: load/type lib/version 'unbound
+	ver: load/as lib/version 'unbound
 	system/product:        ver/2
 	system/version:        ver/3
 	system/platform:       ver/4
@@ -215,7 +215,7 @@ start: func [
 		change-dir first script-path
 		either exists? second script-path [
 			sys/log/info 'REBOL ["Evaluating:" script]
-			code: load/header/type second script-path 'unbound
+			code: load/header/as second script-path 'unbound
 			; update system/script (Make into a function?)
 			system/script: make system/standard/script [
 				title: select first code 'title
