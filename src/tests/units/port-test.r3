@@ -22,7 +22,7 @@ Rebol [
 		--assert url/user   = "švéd"
 		--assert url/pass   = "břéťa"
 		--assert url/host   = "example.com"
-		--assert url/port-id = 8080
+		--assert url/port   = 8080
 		--assert url/path   = "/get?q=ščř"
 		--assert url/tag    = "kovtička"
 	--test-- "decode-url http://host?query"
@@ -33,7 +33,7 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1275
 		url: decode-url tcp://:9000
 		--assert url/scheme = 'tcp
-		--assert url/port-id = 9000
+		--assert url/port   = 9000
 
 ===end-group===
 

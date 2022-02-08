@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -133,7 +134,7 @@ enum Transport_Types {
 		case A_OPEN:
 
 			arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
-			val = Obj_Value(spec, STD_PORT_SPEC_NET_PORT_ID);
+			val = Obj_Value(spec, STD_PORT_SPEC_NET_PORT);
 
 			if (OS_DO_DEVICE(sock, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, -12);
 			SET_OPEN(sock);

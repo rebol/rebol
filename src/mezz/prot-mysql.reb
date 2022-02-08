@@ -1394,17 +1394,18 @@ mysql-driver: make object! [
 
 	open-tcp-port: func [
 		port [port!] "mysql port"
-		/local conn
+		/local conn spec
 	][
+		spec: port/spec
 		conn: make port![
 			scheme: 'tcp
-			host: port/spec/host
-			port-id: port/spec/port-id
-			ref: rejoin [tcp:// host ":" port-id port/spec/path]
-			user: port/spec/user
-			pass: port/spec/pass
-			path: port/spec/path
-			timeout: port/spec/timeout
+			host:    spec/host
+			port:    spec/port
+			ref:     rejoin [tcp:// host ":" port spec/path]
+			user:    spec/user
+			pass:    spec/pass
+			path:    spec/path
+			timeout: spec/timeout
 		]
 
 		conn/extra: make locals-class [
@@ -1486,7 +1487,7 @@ sys/make-scheme [
 	
 	spec: make system/standard/port-spec-net [
 		path: %""
-		port-id: 3306
+		port: 3306
 		timeout: 120
 		user:
 		pass: none
@@ -1510,7 +1511,7 @@ sys/make-scheme [
 				spec: event/port/spec
 				spec/pass: none
 				spec/ref: rejoin [
-					mysql:// spec/user #"@" spec/host #":" spec/port-id spec/path
+					mysql:// spec/user #"@" spec/host #":" spec/port spec/path
 				]
 				sys/log/info 'MySQL ["Connected:^[[22m" spec/ref]
 				pl/handshaked?: true
@@ -1708,7 +1709,7 @@ send-sql: func [
 ]
 
 throw-timeout: func[port [port!]] [
-	cause-error 'Access 'timeout to url! rejoin [port/spec/scheme "://" port/spec/host #":" port/spec/port-id]
+	cause-error 'Access 'timeout to url! rejoin [port/spec/scheme "://" port/spec/host #":" port/spec/port]
 ]
 
 connect-sql: func [

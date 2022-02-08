@@ -197,13 +197,13 @@ sys/make-scheme [
 	Name: 'httpd
 
 	Actor: [
-		Open: func [port [port!]][
-			; probe port/spec
-			sys/log/info 'HTTPD ["Opening server at port:^[[22m" port/spec/port-id]
+		Open: func [port [port!] /local spec][
+			spec: port/spec
+			sys/log/info 'HTTPD ["Opening server at port:^[[22m" spec/port]
 			port/extra: make object! [
-				subport: open compose [
+				subport: open [
 					scheme: 'tcp
-					port-id: (port/spec/port-id)
+					port:   spec/port
 				]
 				subport/awake: :port/scheme/awake-server
 				subport/extra: make object! [
@@ -225,7 +225,7 @@ sys/make-scheme [
 		]
 
 		Close: func [port [port!]][
-			sys/log/info 'HTTPD ["Closing server at port:^[[22m" port/spec/port-id]
+			sys/log/info 'HTTPD ["Closing server at port:^[[22m" port/spec/port]
 			close port/extra/subport
 		]
 

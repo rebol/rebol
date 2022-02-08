@@ -1811,23 +1811,21 @@ sys/make-scheme [
 			]
 		]
 
-		open: func [port [port!] /local conn][
+		open: func [port [port!] /local conn spec][
 			log-more "OPEN"
 			if port/state [return port]
 
 			if none? port/spec/host [TLS-error "Missing host address"]
 
+			spec: port/spec
 			port/state: make-TLS-ctx
-
 			port/state/connection: conn: make port! [
 				scheme: 'tcp
-				host:    port/spec/host
-				port-id: port/spec/port-id
-				ref:     rejoin [tcp:// host ":" port-id]
+				host:    spec/host
+				port:    spec/port
+				ref:     rejoin [tcp:// host ":" port]
 			]
-
-			port/data: port/state/port-data
-
+			port/data:  port/state/port-data
 			conn/awake: :TLS-awake
 			conn/extra: port
 			open conn

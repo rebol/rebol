@@ -112,7 +112,7 @@ make-port*: func [
 			; optional host [:port]
 			opt [
 				copy s1 any host-char
-				opt [#":" copy s2 digits (compose/into [port-id: (to integer! s2)] tail out)]
+				opt [#":" copy s2 digits (compose/into [port: (to integer! s2)] tail out)]
 				(unless empty? s1 [attempt [s1: to tuple! s1] emit host s1])
 			]
 		]

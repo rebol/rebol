@@ -265,7 +265,7 @@ standard: object [
 
 	port-spec-net: make port-spec-file [
 		host: none
-		port-id: 80
+		port: 80
 	]
 
 	port-spec-checksum: make port-spec-head [
@@ -491,7 +491,7 @@ view: object [
 ;		user:		; User data
 
 ;		host:
-;		port-id:
+;		port:
 ;		user:
 ;		pass:
 ;		target:

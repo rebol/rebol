@@ -278,8 +278,8 @@ do-request: func [
 		Accept: "*/*"
 		Accept-charset: "utf-8"
 		Accept-Encoding: "gzip,deflate"
-		Host: either not find [80 443] spec/port-id [
-			ajoin [spec/host #":" spec/port-id]
+		Host: either not find [80 443] spec/port [
+			ajoin [spec/host #":" spec/port]
 		][
 			form spec/host
 		]
@@ -508,22 +508,22 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 			do-request port
 			return true
 		]
-		new-uri: as url! ajoin [spec/scheme "://" spec/host #":" spec/port-id new-uri]
+		new-uri: as url! ajoin [spec/scheme "://" spec/host #":" spec/port new-uri]
 	]
 	new-uri: decode-url new-uri
 	spec/headers/host: new-uri/host
 
-	unless select new-uri 'port-id [
+	unless select new-uri 'port [
 		switch new-uri/scheme [
-			'https [append new-uri [port-id: 443]]
-			'http  [append new-uri [port-id: 80 ]]
+			'https [append new-uri [port: 443]]
+			'http  [append new-uri [port: 80 ]]
 		]
 	]
 	new-uri: construct/with new-uri port/scheme/spec
 	new-uri/method: spec/method
-	new-uri/ref: as url! ajoin either find [#[none] 80 443] new-uri/port-id [
+	new-uri/ref: as url! ajoin either find [#[none] 80 443] new-uri/port [
 		[new-uri/scheme "://" new-uri/host new-uri/path]
-	][	[new-uri/scheme "://" new-uri/host #":" new-uri/port-id new-uri/path]]
+	][	[new-uri/scheme "://" new-uri/host #":" new-uri/port new-uri/path]]
 
 	unless find [http https] new-uri/scheme [
 		return throw-http-error port {Redirect to a protocol different from HTTP or HTTPS not supported}
@@ -783,12 +783,12 @@ sys/make-scheme [
 				chunk: none
 				chunk-size: none
 			]
-			;? port/state/info
+			spec: port/spec
 			port/state/connection: conn: make port! compose [
-				scheme: (to lit-word! either port/spec/scheme = 'http ['tcp]['tls])
-				host: port/spec/host
-				port-id: port/spec/port-id
-				ref: as url! ajoin [scheme "://" host #":" port-id]
+				scheme: (to lit-word! either spec/scheme = 'http ['tcp]['tls])
+				host: spec/host
+				port: spec/port
+				ref: as url! ajoin [scheme "://" host #":" port]
 			]
 			
 			conn/awake: :http-awake
@@ -877,6 +877,6 @@ sys/make-scheme/with [
 	name: 'https
 	title: "Secure HyperText Transport Protocol v1.1"
 	spec: make spec [
-		port-id: 443
+		port: 443
 	]
 ] 'http
