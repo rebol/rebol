@@ -402,7 +402,7 @@
 		return R_FALSE;
 
 	default:
-		Trap_Action(REB_PORT, action);
+		Trap1(RE_NO_PORT_ACTION, Get_Action_Word(action));
 	}
 	return R_RET;
 }

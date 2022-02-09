@@ -576,6 +576,17 @@ if all [
 		--assert "dns.google" = try [probe read dns://8.8.8.8]
 	--test-- "read dns://google.com"
 		--assert tuple? try [read dns://google.com]
+
+	--test-- "query dns://"
+	;@@ https://github.com/Oldes/rebol-issues/issues/1826
+		--assert all [error? e: try [query dns://]  e/id = 'no-port-action]
+===end-group===
+
+
+===start-group=== "SYSTEM"
+	--test-- "query system://"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1373
+		--assert all [error? e: try [query system://]  e/id = 'no-port-action]
 ===end-group===
 
 ~~~end-file~~~
