@@ -705,6 +705,7 @@ sys/make-scheme [
 			port [port!]
 			/binary
 			/part length [number!]
+			/lines
 			/local result
 		][
 			sys/log/debug 'HTTP "READ"
@@ -720,7 +721,12 @@ sys/make-scheme [
 			][
 				result: sync-op port []
 				unless binary [decode-result result]
-				if all [part result/2] [ clear skip result/2 length ]
+				if result/2 [
+					case/all [
+						lines [ result/2: split-lines result/2 ]
+						part  [ clear skip result/2 length ]
+					]
+				]
 				result/2
 			]
 		]
