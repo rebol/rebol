@@ -48,6 +48,7 @@ Rebol [
 		--assert  not empty? open %./
 		--assert  not error? [delete %port-issue-2320/]
 	--test-- "query directory info"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1712
 		--assert [name size date type] = query/mode %. none
 		--assert 'dir     = query/mode %. 'type
 		--assert date?      query/mode %. 'date
@@ -228,6 +229,7 @@ if system/platform = 'Windows [
 
 ===start-group=== "file port"
 	--test-- "query file info"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1712
 		file: %units/files/alice29.txt.gz
 		--assert [name size date type] = query/mode file none
 		--assert 'file = query/mode file 'type
