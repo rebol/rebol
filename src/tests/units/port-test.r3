@@ -490,6 +490,13 @@ if system/platform = 'Windows [
 				not error? try [write clipboard:// c]
 				strict-equal? c try [read clipboard://]
 			]
+		--test-- "issue-2486"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2486
+			foreach ch [#"a" #"^(7F)" #"^(80)" #"^(A0)"][
+				write clipboard:// append copy "" ch
+				--assert (to binary! ch) = to binary! read clipboard://
+			]
+			
 	===end-group===
 ]
 

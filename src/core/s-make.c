@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -246,7 +247,7 @@ cp_same:
 	bp = BIN_SKIP(dst, idx);
 	up = UNI_SKIP(src, pos);
 	for (n = 0; n < len; n++) {
-		if (up[n] > 0xFF) {
+		if (up[n] >= 0x80) {
 			//Debug_Num("##Widen-series because char value is:", up[n]);
 			// Expand dst and restart:
 			idx += n;
