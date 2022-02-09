@@ -1002,3 +1002,18 @@ static struct digest {
 	VAL_INDEX(arg) = bp - VAL_BIN_HEAD(arg);
 	return R_ARG1;
 }
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(split_lines)
+/*
+**  Note: It should be part of the new `split` native in the future!
+**
+***********************************************************************/
+{
+	REBVAL *arg = D_ARG(1);
+
+	Set_Block(D_RET, Split_Lines(arg));
+	return R_RET;
+}

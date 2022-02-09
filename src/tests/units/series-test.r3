@@ -2007,6 +2007,12 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "SPLIT-LINES"
+--test-- "split-lines string!"
+	--assert ["a" "b" "c"]  = split-lines "a^/b^M^/c"
+===end-group===
+
+
 ===start-group=== "SPLIT-PATH"
 
 --test-- "split-path file!"

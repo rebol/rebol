@@ -587,6 +587,11 @@ to-value: native [
 	value [any-type!]
 ]
 
+split-lines: native [
+	{Given a string series, split lines on CR-LF.}
+	value [string!]
+]
+
 ;-- IO Natives - nat_io.c
 
 print: native [
