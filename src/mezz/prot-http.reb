@@ -766,7 +766,7 @@ sys/make-scheme [
 		]
 		open: func [
 			port [port!]
-			/local conn
+			/local conn spec
 		][
 			sys/log/debug 'HTTP ["OPEN, state:" port/state]
 			if port/state [return port]
