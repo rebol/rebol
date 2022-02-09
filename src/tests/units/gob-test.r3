@@ -125,6 +125,10 @@ Rebol [
 		--assert all [error? e: try [poke g 'offset 1x1] e/id = 'invalid-arg]
 		--assert all [error? e: try [pick g 'offset    ] e/id = 'invalid-arg]
 
+	--test-- "equality"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1490
+		--assert not equal? (make gob! []) (make gob! []) ; not equal by design
+
 ===end-group===
 
 ~~~end-file~~~
