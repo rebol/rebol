@@ -738,25 +738,22 @@ client-key-exchange: function [
 		;?? iv-size
 
 		unless is-aead? [
-			local-mac: take/part key-expansion mac-size
+			local-mac:  take/part key-expansion mac-size
 			remote-mac: take/part key-expansion mac-size
 		]
 
-		local-key: take/part key-expansion crypt-size
+		local-key:  take/part key-expansion crypt-size
 		remote-key: take/part key-expansion crypt-size
 
-		log-more ["Client-mac:   ^[[32m" local-mac  ]
-		log-more ["Server-mac:   ^[[32m" remote-mac  ]
-		log-more ["Client-key: ^[[32m" local-key]
-		log-more ["Server-key: ^[[32m" remote-key]
-
-		local-IV: take/part key-expansion iv-size
+		local-IV:  take/part key-expansion iv-size
 		remote-IV: take/part key-expansion iv-size
-		
-		log-more ["Client-IV:        ^[[32m" local-IV]
-		log-more ["Server-IV:        ^[[32m" remote-IV]
 
-		key-expansion: none
+		log-more ["Local-IV:   ^[[32m" local-IV]
+		log-more ["Local-mac:  ^[[32m" local-mac]
+		log-more ["Local-key:  ^[[32m" local-key]
+		log-more ["Remote-IV:  ^[[32m" remote-IV]
+		log-more ["Remote-mac: ^[[32m" remote-mac]
+		log-more ["Remote-key: ^[[32m" remote-key]
 
 		encrypt-port: open [
 			scheme:      'crypt
@@ -773,8 +770,7 @@ client-key-exchange: function [
 		]
 
 		; not needed anymore...
-		local-key: none
-		remote-key: none
+		key-expansion: local-key: remote-key: none
 
 		TLS-update-messages-hash ctx (at head out/buffer pos-record) length-record
 	]
@@ -973,9 +969,9 @@ encrypt-data: function [
 			modify encrypt-port 'init-vector local-IV
 
 			;?? ctx/seq-write
-			log-more ["Client-IV:   ^[[32m" local-IV]
-			log-more ["Client-mac:  ^[[32m" local-mac]
-			log-more ["Hash-method: ^[[32m" hash-method]
+			log-more ["Local-IV:   ^[[32m" local-IV]
+			log-more ["Local-mac:  ^[[32m" local-mac]
+			log-more ["Hash-method:^[[32m" hash-method]
 
 			; Message Authentication Code
 			; https://tools.ietf.org/html/rfc5246#section-6.2.3.1
@@ -1515,10 +1511,7 @@ TLS-parse-handshake-message: function [
 			if ends > pos: index? msg/buffer [
 				len: ends - pos
 				binary/read msg [extra: BYTES :len]
-				log-error [
-					"Extra" len "bytes at the end of message:"
-					mold extra
-				]
+				log-error ["Extra" len "bytes at the end of message:" ellipsize form extra 40]
 				return *Alert/Decode_error
 			]
 
