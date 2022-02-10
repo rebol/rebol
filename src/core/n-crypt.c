@@ -772,7 +772,7 @@ exit:
 		mbedtls_ecdh_init(ctx_ecdh);
 		err = mbedtls_ecdh_setup(ctx_ecdh, gid);
 		if (err) goto failed_init;
-		mbed = &ctx_ecdh->MBEDTLS_PRIVATE(ctx);
+		mbed = &ctx_ecdh->MBEDTLS_PRIVATE(ctx).private_mbed_ecdh;
 		err = mbedtls_ecp_point_read_binary(
 			&mbed->MBEDTLS_PRIVATE(grp),
 			&mbed->MBEDTLS_PRIVATE(Q),
@@ -795,7 +795,7 @@ exit:
 	}
 
 	if (ref_sign) {
-		mbed = &ctx_ecdh->MBEDTLS_PRIVATE(ctx);
+		mbed = &ctx_ecdh->MBEDTLS_PRIVATE(ctx).private_mbed_ecdh;
 		mbedtls_mpi_init(&r);
 		mbedtls_mpi_init(&s);
 		err = mbedtls_ecp_gen_keypair(
@@ -823,7 +823,7 @@ exit:
 		BIN_LEN(bin) = len;
 	}
 	if (ref_verify) {
-		mbed = &ctx_ecdh->MBEDTLS_PRIVATE(ctx);
+		mbed = &ctx_ecdh->MBEDTLS_PRIVATE(ctx).private_mbed_ecdh;
 		unsigned char *p = VAL_BIN_AT(val_sign);
 		const unsigned char *end = VAL_BIN_TAIL(val_sign);
 		mbedtls_mpi_init(&r);
