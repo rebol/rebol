@@ -103,33 +103,33 @@ TLS-context: context [
 	hash-method:           ; one of: [MD5 SHA1 SHA256 SHA384]
 	crypt-method:   none
 	is-aead?:       false  ; crypt-method with "Authenticated Encryption with Additional Data" (not yet supported!)
-	mac-size:            ; Size of message authentication code
+	   IV-size:            ; The amount of data needed to be generated for the initialization vector.
+	  mac-size:            ; Size of message authentication code
 	crypt-size:            ; The number of bytes from the key_block that are used for generating the write keys.
-	block-size:            ; The amount of data a block cipher enciphers in one chunk; a block
+	block-size:  0         ; The amount of data a block cipher enciphers in one chunk; a block
 						   ; cipher running in CBC mode can only encrypt an even multiple of
 						   ; its block size.
-	IV-size: 0             ; The amount of data needed to be generated for the initialization vector.
-	
 
-	local-iv:
+	local-IV:
 	local-mac:
 	local-key:
 	local-random:
 
-	remote-iv:
+	remote-IV:
 	remote-mac:
 	remote-key:
 	remote-random:
 
 	aead: none ; used now for chacha20/poly1305 combo
 
+	server-session: none
 	server-certs: copy []
 	server-extensions: copy []
 
 	seq-read:  0 ; sequence counters
 	seq-write: 0
 
-	server-session:
+	
 	pre-master-secret:
 	master-secret:
 	certificate:
@@ -723,22 +723,19 @@ client-key-exchange: function [
 			AT :pos-key (pick [UI8BYTES UI16BYTES] key-data-len-bytes) :key-data
 		]
 
-
 		;-- make all secure data
-		if ctx/version >= *Protocol-version/TLS1.0 [
-			; NOTE: key-expansion is used just to generate keys so it does not need to be stored in context!
-			ctx/master-secret: prf "master secret" (append copy ctx/local-random ctx/remote-random) pre-master-secret 48
-				key-expansion: prf "key expansion" (append copy ctx/remote-random ctx/local-random) master-secret 
-								   (mac-size + crypt-size + iv-size) * 2
+		; NOTE: key-expansion is used just to generate keys so it does not need to be stored in context!
+		ctx/master-secret: prf "master secret" (append copy ctx/local-random ctx/remote-random) pre-master-secret 48
+			key-expansion: prf "key expansion" (append copy ctx/remote-random ctx/local-random) master-secret 
+							   (mac-size + crypt-size + iv-size) * 2
 
-			pre-master-secret: none ;-- not needed anymore
+		pre-master-secret: none ;-- not needed anymore
 
-			;?? master-secret
-			;?? key-expansion
-			;?? mac-size
-			;?? crypt-size
-			;?? iv-size
-		]
+		;?? master-secret
+		;?? key-expansion
+		;?? mac-size
+		;?? crypt-size
+		;?? iv-size
 
 		unless is-aead? [
 			local-mac: take/part key-expansion mac-size
@@ -753,25 +750,25 @@ client-key-exchange: function [
 		log-more ["Client-key: ^[[32m" local-key]
 		log-more ["Server-key: ^[[32m" remote-key]
 
-		local-iv: take/part key-expansion iv-size
-		remote-iv: take/part key-expansion iv-size
+		local-IV: take/part key-expansion iv-size
+		remote-IV: take/part key-expansion iv-size
 		
-		log-more ["Client-IV:        ^[[32m" local-iv]
-		log-more ["Server-IV:        ^[[32m" remote-iv]
+		log-more ["Client-IV:        ^[[32m" local-IV]
+		log-more ["Server-IV:        ^[[32m" remote-IV]
 
 		key-expansion: none
 
 		encrypt-port: open [
 			scheme:      'crypt
 			algorithm:   :crypt-method
-			init-vector: :local-iv
+			init-vector: :local-IV
 			key:         :local-key
 		]
 		decrypt-port: open [
 			scheme:      'crypt
 			direction:   'decrypt
 			algorithm:   :crypt-method
-			init-vector: :remote-iv
+			init-vector: :remote-IV
 			key:         :remote-key
 		]
 
@@ -896,15 +893,12 @@ decrypt-msg: function [
 				]
 			]
 		][
-			if all [
-				block-size
-				version > *Protocol-version/TLS1.0
-			][
+			if block-size [
 				;server's initialization vector is new with each message
-				remote-iv: take/part data block-size
+				remote-IV: take/part data block-size
 			]
 			;?? data
-			modify decrypt-port 'init-vector remote-iv
+			modify decrypt-port 'init-vector remote-IV
 			data: read update write decrypt-port :data
 
 			;change data decrypt-data ctx data
@@ -926,9 +920,7 @@ decrypt-msg: function [
 
 				if mac <> mac-check [ critical-error: *Alert/Bad_record_MAC ]
 				
-				if version > *Protocol-version/TLS1.0 [
-					unset 'remote-iv ;-- avoid reuse in TLS 1.1 and above
-				]
+				unset 'remote-IV ;-- avoid reuse in TLS 1.1 and above
 			]
 		]
 		binary/init  bin 0 ;clear the temp bin buffer
@@ -969,24 +961,21 @@ encrypt-data: function [
 		][
 
 			;@@ GenericBlockCipher: https://tools.ietf.org/html/rfc5246#section-6.2.3.2
-			if version > *Protocol-version/TLS1.0 [
-				;
-				; "The Initialization Vector (IV) SHOULD be chosen at random, and
-				;  MUST be unpredictable.  Note that in versions of TLS prior to 1.1,
-				;  there was no IV field, and the last ciphertext block of the
-				;  previous record (the "CBC residue") was used as the IV.  This was
-				;  changed to prevent the attacks described in [CBCATT].  For block
-				;  ciphers, the IV length is SecurityParameters.record_iv_length,
-				;  which is equal to the SecurityParameters.block_size."
-				;
-				binary/write clear local-iv [RANDOM-BYTES :block-size]
-				modify encrypt-port 'init-vector local-iv
-			]
+			; "The Initialization Vector (IV) SHOULD be chosen at random, and
+			;  MUST be unpredictable.  Note that in versions of TLS prior to 1.1,
+			;  there was no IV field, and the last ciphertext block of the
+			;  previous record (the "CBC residue") was used as the IV.  This was
+			;  changed to prevent the attacks described in [CBCATT].  For block
+			;  ciphers, the IV length is SecurityParameters.record_iv_length,
+			;  which is equal to the SecurityParameters.block_size."
+			;
+			binary/write clear local-IV [RANDOM-BYTES :block-size]
+			modify encrypt-port 'init-vector local-IV
 
 			;?? ctx/seq-write
-			log-more ["Client-IV:        ^[[32m" local-iv]
-			log-more ["Client-mac:   ^[[32m" local-mac]
-			log-more ["Hash-method:      ^[[32m" hash-method]
+			log-more ["Client-IV:   ^[[32m" local-IV]
+			log-more ["Client-mac:  ^[[32m" local-mac]
+			log-more ["Hash-method: ^[[32m" hash-method]
 
 			; Message Authentication Code
 			; https://tools.ietf.org/html/rfc5246#section-6.2.3.1
@@ -1008,11 +997,9 @@ encrypt-data: function [
 			; on next line are 3 ops.. encrypting content, padding and getting the result  
 			encrypted: read update write encrypt-port content
 
-			;-- TLS versions 1.1 and above include the local-iv in plaintext.
-			if version > *Protocol-version/TLS1.0 [
-				insert encrypted local-iv
-				;clear local-iv ;-- avoid accidental reuse
-			]
+			;-- TLS versions 1.1 and above include the local-IV in plaintext.
+			insert encrypted local-IV
+			;clear local-IV ;-- avoid accidental reuse
 		]
 		binary/init bin 0 ;reset the bin buffer
 	]
