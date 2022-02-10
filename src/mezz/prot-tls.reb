@@ -73,6 +73,71 @@ REBOL [
 	}
 ]
 
+TLS-context: context [
+	connection:
+	encrypt-port:
+	decrypt-port: 
+	sha-port:      ;used for progressive checksum computations
+	md5-port:      ;used for progressive checksum computations (in TLSv1.0)
+
+	version: none  ; TLS version (currently just TLSv1.2)
+
+	in:  binary 16104 ;input binary codec
+	out: binary 16104 ;output binary codec
+	bin: binary 64    ;temporary binary
+
+	port-data:   make binary! 32000 ;this holds received decrypted application data
+	rest:        make binary! 8 ;packet may not be fully processed, this value is used to keep temporary leftover
+	reading?:       false  ;if client is reading or writing data
+	server?:        false  ;always FALSE now as we have just a client
+	protocol:       none   ;current protocol state. One of: [HANDSHAKE APPLICATION ALERT]
+	state:         'lookup ;current state in context of the protocol
+	state-prev:     none   ;previous state
+
+	error:                 ;used to hold Rebol error object (for reports to above layer)
+	critical-error: none   ;used to signalize error state
+	cipher-spec-set: 0     ;stores state of cipher spec exchange (0 = none, 1 = client, 2 = both)
+
+	;- values defined inside TLS-init-cipher-suite:
+	key-method:            ; one of: [RSA DH_DSS DH_RSA DHE_DSS DHE_RSA]
+	hash-method:           ; one of: [MD5 SHA1 SHA256 SHA384]
+	crypt-method:   none
+	is-aead?:       false  ; crypt-method with "Authenticated Encryption with Additional Data" (not yet supported!)
+	mac-size:            ; Size of message authentication code
+	crypt-size:            ; The number of bytes from the key_block that are used for generating the write keys.
+	block-size:            ; The amount of data a block cipher enciphers in one chunk; a block
+						   ; cipher running in CBC mode can only encrypt an even multiple of
+						   ; its block size.
+	IV-size: 0             ; The amount of data needed to be generated for the initialization vector.
+	
+
+	local-iv:
+	local-mac:
+	local-key:
+	local-random:
+
+	remote-iv:
+	remote-mac:
+	remote-key:
+	remote-random:
+
+	aead: none ; used now for chacha20/poly1305 combo
+
+	server-certs: copy []
+	server-extensions: copy []
+
+	seq-read:  0 ; sequence counters
+	seq-write: 0
+
+	server-session:
+	pre-master-secret:
+	master-secret:
+	certificate:
+	pub-key: pub-exp:
+	key-data:
+		none
+]
+
 *Protocol-type: enum [
 	CHANGE_CIPHER_SPEC: 20
 	ALERT:              21
@@ -429,30 +494,6 @@ TLS-init-cipher-suite: func [
 	]
 ]
 
-pad-bin: function[
-	"Left binary padding"
-	bin [binary!]
-	len [integer!]
-][
-	if len > n: length? bin [
-		; using copy, because binary may not be at its head!
-		insert/dup copy bin 0 len - n
-	]
-	bin
-]
-
-make-TLS-error: func [
-	"Make an error for the TLS protocol"
-	message [string! block!]
-][
-	if block? message [message: ajoin message]
-	make error! [
-		type: 'Access
-		id: 'Protocol
-		arg1: message
-	]
-]
-
 TLS-error: function [
 	id [integer!]
 ][
@@ -461,7 +502,11 @@ TLS-error: function [
 
 	log-error join "ERROR: " message
 
-	do make-TLS-error message
+	do make error! [
+		type: 'Access
+		id: 'Protocol
+		arg1: message
+	]
 ]
 
 change-state: function [
@@ -495,18 +540,10 @@ TLS-update-messages-hash: function [
 ][
 	log-more ["Update-messages-hash bytes:" len "hash:" all [ctx/sha-port ctx/sha-port/spec/method]]
 	if none? ctx/sha-port [
-		either ctx/legacy? [
-			ctx/sha-port: open checksum:sha1
-			ctx/md5-port: open checksum:md5
-		][
-			ctx/sha-port: open either ctx/mac-size = 48 [checksum:sha384][checksum:sha256]
-		]
+		ctx/sha-port: open either ctx/mac-size = 48 [checksum:sha384][checksum:sha256]
 		log-more ["Initialized SHA method:" ctx/sha-port/spec/method]
 	]
 	write/part ctx/sha-port msg len
-	if ctx/legacy? [;TLS1.1 and older
-		write/part ctx/md5-port msg len
-	]
 ]
 
 client-hello: function [
@@ -577,12 +614,12 @@ client-hello: function [
 
 		binary/write out [
 			UI8       22                  ; protocol type (22=Handshake)
-			UI16      :version            ; protocol version (minimal supported)
+			UI16      :version     ; protocol version (minimal supported)
 			UI16      :length-record      ; length of SSL record data
 			;client-hello message:
 			UI8       1                   ; protocol message type	(1=ClientHello)
 			UI24      :length-message     ; protocol message length
-			UI16      :version            ; max supported version by client
+			UI16      :version     ; max supported version by client
 			UNIXTIME-NOW RANDOM-BYTES 28  ; random struct
 			UI8       0                   ; session ID length
 			UI16BYTES :suported-cipher-suites
@@ -598,7 +635,7 @@ client-hello: function [
 
 		out/buffer: head out/buffer
 		
-		client-random: copy/part (at out/buffer 12) 32
+		local-random: copy/part (at out/buffer 12) 32
 		TLS-update-messages-hash ctx (at out/buffer 6) (4 + length-message)
 		log-more [
 			"W[" ctx/seq-write "] Bytes:" length? out/buffer "=>"
@@ -607,7 +644,7 @@ client-hello: function [
 			"extensions:" length-extensions
 			"signatures:" length-signatures
 		]
-		log-more ["W[" ctx/seq-write "] CRandom:^[[32m" client-random]
+		log-more ["W[" ctx/seq-write "] CRandom:^[[32m" local-random]
 	]
 ]
 
@@ -690,8 +727,8 @@ client-key-exchange: function [
 		;-- make all secure data
 		if ctx/version >= *Protocol-version/TLS1.0 [
 			; NOTE: key-expansion is used just to generate keys so it does not need to be stored in context!
-			ctx/master-secret: prf "master secret" legacy? (join ctx/client-random ctx/server-random) pre-master-secret 48
-				key-expansion: prf "key expansion" legacy? (join ctx/server-random ctx/client-random) master-secret 
+			ctx/master-secret: prf "master secret" (append copy ctx/local-random ctx/remote-random) pre-master-secret 48
+				key-expansion: prf "key expansion" (append copy ctx/remote-random ctx/local-random) master-secret 
 								   (mac-size + crypt-size + iv-size) * 2
 
 			pre-master-secret: none ;-- not needed anymore
@@ -704,43 +741,43 @@ client-key-exchange: function [
 		]
 
 		unless is-aead? [
-			client-mac-key: take/part key-expansion mac-size
-			server-mac-key: take/part key-expansion mac-size
+			local-mac: take/part key-expansion mac-size
+			remote-mac: take/part key-expansion mac-size
 		]
 
-		client-crypt-key: take/part key-expansion crypt-size
-		server-crypt-key: take/part key-expansion crypt-size
+		local-key: take/part key-expansion crypt-size
+		remote-key: take/part key-expansion crypt-size
 
-		log-more ["Client-mac-key:   ^[[32m" client-mac-key  ]
-		log-more ["Server-mac-key:   ^[[32m" server-mac-key  ]
-		log-more ["Client-crypt-key: ^[[32m" client-crypt-key]
-		log-more ["Server-crypt-key: ^[[32m" server-crypt-key]
+		log-more ["Client-mac:   ^[[32m" local-mac  ]
+		log-more ["Server-mac:   ^[[32m" remote-mac  ]
+		log-more ["Client-key: ^[[32m" local-key]
+		log-more ["Server-key: ^[[32m" remote-key]
 
-		client-iv: take/part key-expansion iv-size
-		server-iv: take/part key-expansion iv-size
+		local-iv: take/part key-expansion iv-size
+		remote-iv: take/part key-expansion iv-size
 		
-		log-more ["Client-IV:        ^[[32m" client-iv]
-		log-more ["Server-IV:        ^[[32m" server-iv]
+		log-more ["Client-IV:        ^[[32m" local-iv]
+		log-more ["Server-IV:        ^[[32m" remote-iv]
 
 		key-expansion: none
 
 		encrypt-port: open [
 			scheme:      'crypt
 			algorithm:   :crypt-method
-			init-vector: :client-iv
-			key:         :client-crypt-key
+			init-vector: :local-iv
+			key:         :local-key
 		]
 		decrypt-port: open [
 			scheme:      'crypt
 			direction:   'decrypt
 			algorithm:   :crypt-method
-			init-vector: :server-iv
-			key:         :server-crypt-key
+			init-vector: :remote-iv
+			key:         :remote-key
 		]
 
 		; not needed anymore...
-		client-crypt-key: none
-		server-crypt-key: none
+		local-key: none
+		remote-key: none
 
 		TLS-update-messages-hash ctx (at head out/buffer pos-record) length-record
 	]
@@ -806,13 +843,11 @@ finished: function [
 	ctx/seq-write: 0
 
 	seed: read ctx/sha-port
-	if ctx/legacy? [ insert seed read ctx/md5-port ]
-	;?? seed
 
 	unencrypted: rejoin [
 		#{14}		; protocol message type	(20=Finished)
 		#{00000C}   ; protocol message length (12 bytes)
-		prf "client finished" ctx/legacy? seed ctx/master-secret  12
+		prf "client finished" seed ctx/master-secret  12
 	]
 	;?? unencrypted
 	
@@ -866,10 +901,10 @@ decrypt-msg: function [
 				version > *Protocol-version/TLS1.0
 			][
 				;server's initialization vector is new with each message
-				server-iv: take/part data block-size
+				remote-iv: take/part data block-size
 			]
 			;?? data
-			modify decrypt-port 'init-vector server-iv
+			modify decrypt-port 'init-vector remote-iv
 			data: read update write decrypt-port :data
 
 			;change data decrypt-data ctx data
@@ -884,7 +919,7 @@ decrypt-msg: function [
 				binary/write bin [
 					UI16BYTES :data
 				]
-				mac-check: checksum/with bin/buffer hash-method server-mac-key
+				mac-check: checksum/with bin/buffer hash-method remote-mac
 
 				;?? mac
 				;?? mac-check
@@ -892,7 +927,7 @@ decrypt-msg: function [
 				if mac <> mac-check [ critical-error: *Alert/Bad_record_MAC ]
 				
 				if version > *Protocol-version/TLS1.0 [
-					unset 'server-iv ;-- avoid reuse in TLS 1.1 and above
+					unset 'remote-iv ;-- avoid reuse in TLS 1.1 and above
 				]
 			]
 		]
@@ -944,13 +979,13 @@ encrypt-data: function [
 				;  ciphers, the IV length is SecurityParameters.record_iv_length,
 				;  which is equal to the SecurityParameters.block_size."
 				;
-				binary/write clear client-iv [RANDOM-BYTES :block-size]
-				modify encrypt-port 'init-vector client-iv
+				binary/write clear local-iv [RANDOM-BYTES :block-size]
+				modify encrypt-port 'init-vector local-iv
 			]
 
 			;?? ctx/seq-write
-			log-more ["Client-IV:        ^[[32m" client-iv]
-			log-more ["Client-mac-key:   ^[[32m" client-mac-key]
+			log-more ["Client-IV:        ^[[32m" local-iv]
+			log-more ["Client-mac:   ^[[32m" local-mac]
 			log-more ["Hash-method:      ^[[32m" hash-method]
 
 			; Message Authentication Code
@@ -958,7 +993,7 @@ encrypt-data: function [
 
 			binary/write bin content
 			; computing MAC on the header + content 
-			MAC: checksum/with bin/buffer ctx/hash-method ctx/client-mac-key
+			MAC: checksum/with bin/buffer ctx/hash-method ctx/local-mac
 			; padding the message to achieve a multiple of block length
 			len: length? append content MAC
 			;?? MAC ?? content ??  block-size ?? len
@@ -973,10 +1008,10 @@ encrypt-data: function [
 			; on next line are 3 ops.. encrypting content, padding and getting the result  
 			encrypted: read update write encrypt-port content
 
-			;-- TLS versions 1.1 and above include the client-iv in plaintext.
+			;-- TLS versions 1.1 and above include the local-iv in plaintext.
 			if version > *Protocol-version/TLS1.0 [
-				insert encrypted client-iv
-				;clear client-iv ;-- avoid accidental reuse
+				insert encrypted local-iv
+				;clear local-iv ;-- avoid accidental reuse
 			]
 		]
 		binary/init bin 0 ;reset the bin buffer
@@ -987,7 +1022,6 @@ encrypt-data: function [
 prf: function [
 	{(P)suedo-(R)andom (F)unction, generates arbitrarily long binaries}
 	label   [string! binary!]
-	legacy  [logic!] "TRUE for TLS 1.1 and older"
 	seed    [binary!]
 	secret  [binary!]
 	output-length [integer!]
@@ -1000,36 +1034,6 @@ prf: function [
 
 	log-more ["PRF" mold label "len:" output-length]
 	seed: join to binary! label seed
-	if legacy [
-		;
-		; Prior to TLS 1.2, the pseudo-random function was driven by a strange
-		; mixed method that's half MD5 and half SHA-1 hashing, regardless of
-		; cipher suite used: https://tools.ietf.org/html/rfc4346#section-5
-
-		len: length? secret
-		mid: to integer! (len + 1) * 0.5
-
-		s-1: copy/part secret mid
-		s-2: copy at secret (len - mid + 1)
-
-		p-md5: copy #{}
-		a: seed ; A(0)
-		while [output-length > length? p-md5][
-			a: checksum/with a 'md5 s-1 ; A(n)
-			append p-md5 checksum/with rejoin [a seed] 'md5 s-1
-		]
-
-		p-sha1: copy #{}
-		a: seed ; A(0)
-		while [output-length > length? p-sha1][
-			a: checksum/with a 'sha1 s-2 ; A(n)
-			append p-sha1 checksum/with rejoin [a seed] 'sha1 s-2
-		]
-		return (
-			(copy/part p-md5 output-length)
-			xor+ (copy/part p-sha1 output-length)
-		)
-	]
 
 	; TLS 1.2 includes the pseudorandom function as part of its cipher
 	; suite definition.  No cipher suites assume the md5/sha1 combination
@@ -1083,7 +1087,7 @@ do-commands: func [
 
 	unless no-wait [
 		log-more "Waiting for responses"
-		unless port? wait [ctx/connection 130][
+		unless port? wait [ctx/connection 260][
 			log-error "Timeout"
 			;? ctx
 			? ctx/connection
@@ -1099,75 +1103,6 @@ do-commands: func [
 ;--- TLS scheme -------------------------------;
 ;----------------------------------------------;
 
-make-TLS-ctx: does [ context [
-	version:  *Protocol-version/TLS1.2
-	server-version: none
-
-	legacy?: false
-
-	in:  binary 16104 ;input binary codec
-	out: binary 16104 ;output binary codec
-	bin: binary 64    ;temporary binary
-
-	port-data:   make binary! 32000 ;this holds received decrypted application data
-	rest:        make binary! 8 ;packet may not be fully processed, this value is used to keep temporary leftover
-	reading?:       false  ;if client is reading or writing data
-	;server?:       false  ;always FALSE now as we have just a client
-	protocol:       none   ;current protocol state. One of: [HANDSHAKE APPLICATION ALERT]
-	state:         'lookup ;current state in context of the protocol
-	state-prev:     none   ;previous state
-
-	error:                 ;used to hold Rebol error object (for reports to above layer)
-	critical-error: none   ;used to signalize error state
-	cipher-spec-set: 0     ;stores state of cipher spec exchange (0 = none, 1 = client, 2 = both)
-
-	sha-port:       none   ;used for progressive checksum computations
-	md5-port:       none   ;used for progressive checksum computations (in TLSv1.0)
-
-	;- values defined inside TLS-init-cipher-suite:
-	key-method:            ; one of: [RSA DH_DSS DH_RSA DHE_DSS DHE_RSA]
-	hash-method:           ; one of: [MD5 SHA1 SHA256 SHA384]
-	crypt-method:   none
-	is-aead?:       false  ; crypt-method with "Authenticated Encryption with Additional Data" (not yet supported!)
-	mac-size:            ; Size of message authentication code
-	crypt-size:            ; The number of bytes from the key_block that are used for generating the write keys.
-	block-size:            ; The amount of data a block cipher enciphers in one chunk; a block
-						   ; cipher running in CBC mode can only encrypt an even multiple of
-						   ; its block size.
-	IV-size: 0             ; The amount of data needed to be generated for the initialization vector.
-	
-
-	client-crypt-key:
-	server-crypt-key:
-	client-mac-key:
-	server-mac-key:
-	client-iv:
-	server-iv: none
-
-	aead: none ; used now for chacha20/poly1305 combo
-
-	server-extensions: copy []
-
-	seq-read:  0 ; sequence counters
-	seq-write: 0
-
-	server-certs: copy []
-
-	client-random:
-	server-random:
-	server-session:
-	pre-master-secret:
-	master-secret:
-	certificate:
-	pub-key: pub-exp:
-	key-data:
-
-	encrypt-port:
-	decrypt-port: none
-
-	connection: none
-]]
-
 TLS-init: func [
 	"Resets existing TLS context"
 	ctx [object!]
@@ -1175,7 +1110,6 @@ TLS-init: func [
 	ctx/seq-read: ctx/seq-write: 0
 	ctx/protocol: ctx/state: ctx/state-prev: none
 	ctx/cipher-spec-set: 0 ;no encryption yet
-	ctx/legacy?: (255 & ctx/version) < 3 ;- TLSv1.1 and older
 	clear ctx/server-certs
 ]
 
@@ -1200,20 +1134,17 @@ TLS-read-data: function [
 		;log-debug ["Data starts: " copy/part inp/buffer 16]
 
 		binary/read inp [
-			start:   INDEX
-			type:    UI8
-			version: UI16
-			len:     UI16
+			start:          INDEX
+			type:           UI8
+			server-version: UI16
+			len:            UI16
 		]
 		available: available - 5
 
-		log-debug ["fragment type: ^[[1m" type "^[[22mver:^[[1m" version *Protocol-version/name version "^[[22mbytes:^[[1m" len "^[[22mbytes"]
+		log-debug ["fragment type: ^[[1m" type "^[[22mver:^[[1m" server-version *Protocol-version/name server-version "^[[22mbytes:^[[1m" len "^[[22mbytes"]
 
-		if all [
-			ctx/server-version
-			version <> ctx/server-version
-		][
-			log-error ["Version mismatch:^[[22m" version "<>" ctx/server-version]
+		if ctx/version <> server-version [
+			log-error ["Version mismatch:^[[22m" ctx/version "<>" server-version]
 			ctx/critical-error: *Alert/Internal_error
 			return false
 		]
@@ -1228,21 +1159,36 @@ TLS-read-data: function [
 		]
 
 		*protocol-type/assert type
-		*protocol-version/assert version
+		*protocol-version/assert server-version
 
 		protocol: *protocol-type/name type
-		version:  *protocol-version/name version
+		version:  *protocol-version/name server-version
 
 		ctx/seq-read: ctx/seq-read + 1
 
 		end: start + len + 5 ; header size is 5 bytes
 
 		;log-debug "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-		log-info ["^[[22mR[" ctx/seq-read "] Protocol^[[1m" protocol "^[[22m" version "bytes:^[[1m" len "^[[22mfrom^[[1m" start "^[[22mto^[[1m" end]
+		log-info ["^[[22mR[" ctx/seq-read "] Protocol^[[1m" protocol "^[[22m" server-version "bytes:^[[1m" len "^[[22mfrom^[[1m" start "^[[22mto^[[1m" end]
 
 		ctx/protocol: protocol
 
 		switch protocol [
+			APPLICATION [
+				; first one, as it's the most common
+				change-state ctx 'APPLICATION
+				assert-prev-state ctx [APPLICATION ALERT FINISHED]
+				binary/read inp [data: BYTES :len]
+
+				if ctx/cipher-spec-set > 1 [
+					if data: decrypt-msg ctx data [
+						append ctx/port-data data
+						;@@ TODO: the parent scheme (HTTPS) should be notified here,
+						;@@ that there are already some decrypted data available!   
+						;@@ Now it is awaked only when data are complete :-/        
+					]
+				]
+			]
 			HANDSHAKE [
 				binary/read inp [data: BYTES :len]
 				
@@ -1251,8 +1197,20 @@ TLS-read-data: function [
 				][
 					TLS-update-messages-hash ctx data len
 				]
-				
+				; process the handshake message, set `critical-error` if there is any
 				ctx/critical-error: TLS-parse-handshake-message ctx data
+			]
+			CHANGE_CIPHER_SPEC [
+				binary/read inp [value: UI8]
+				either 1 = value [
+					ctx/cipher-spec-set: 2
+					ctx/seq-read: 0
+					ctx/reading?: false
+					ctx/protocol: 'APPLICATION
+					change-state ctx 'APPLICATION
+				][
+					log-error ["*** CHANGE_CIPHER_SPEC value should be 1 but is:" value]
+				]
 			]
 			ALERT [
 				log-debug ["ALERT len:" :len "ctx/cipher-spec-set:" ctx/cipher-spec-set]
@@ -1287,32 +1245,6 @@ TLS-read-data: function [
 					log-more ["ALERT:" level "-" description]
 				]
 			]
-			CHANGE_CIPHER_SPEC [
-				binary/read inp [value: UI8]
-				either 1 = value [
-					ctx/cipher-spec-set: 2
-					ctx/seq-read: 0
-					ctx/reading?: false
-					ctx/protocol: 'APPLICATION
-					change-state ctx 'APPLICATION
-				][
-					log-error ["*** CHANGE_CIPHER_SPEC value should be 1 but is:" value]
-				]
-			]
-			APPLICATION [
-				change-state ctx 'APPLICATION
-				assert-prev-state ctx [APPLICATION ALERT FINISHED]
-				binary/read inp [data: BYTES :len]
-
-				if ctx/cipher-spec-set > 1 [
-					if data: decrypt-msg ctx data [
-						append ctx/port-data data
-						;@@ TODO: the parent scheme (HTTPS) should be notified here,
-						;@@ that there are already some decrypted data available!   
-						;@@ Now it is awaked only when data are complete :-/        
-					]
-				]
-			]
 		]
 
 		;?? ctx/critical-error
@@ -1324,7 +1256,7 @@ TLS-read-data: function [
 			return false
 		]
 
-		if not ctx/reading? [
+		unless ctx/reading? [
 			;? ctx
 			;print "^/================================================================"
 			log-more ["Reading finished!"]
@@ -1358,6 +1290,30 @@ TLS-parse-handshake-message: function [
 
 	switch/default ctx/state [
 		;----------------------------------------------------------
+		CLIENT_HELLO [
+			?? msg
+			;if 22 <> binary/read msg 
+			;binary/read msg [
+			;	UI8  ; protocol type (22=Handshake)
+			;	version: UI16 ; protocol version (minimal supported)
+			;	length-record: UI16      :length-record      ; length of SSL record data
+			;	;client-hello message:
+			;	UI8       1                   ; protocol message type	(1=ClientHello)
+			;	UI24      :length-message     ; protocol message length
+			;	UI16      :version     ; max supported version by client
+			;	UNIXTIME-NOW RANDOM-BYTES 28  ; random struct
+			;	UI8       0                   ; session ID length
+			;	UI16BYTES :suported-cipher-suites
+			;	UI8       1                   ; compression method length
+			;	UI8       0                   ; no compression
+			;	;extensions
+			;	UI16      :length-extensions
+			;	UI16      13                  ; extension type: signature-algorithms
+			;	UI16      :length-signatures  ; note: there is another length following
+			;	UI16BYTES :supported-signature-algorithms
+			;	BYTES     :extensions
+			;]
+		]
 		SERVER_HELLO [
 			;NOTE: `len` should be now >= 38 for TLS and 41 for DTLS
 			assert-prev-state ctx [CLIENT_HELLO]
@@ -1367,7 +1323,7 @@ TLS-parse-handshake-message: function [
 					error? try [
 						binary/read msg [
 							server-version: UI16
-							server-random:  BYTES 32
+							remote-random:  BYTES 32
 							server-session: UI8BYTES						
 							cipher-suite:   BYTES 2
 							compressions:   UI8BYTES ;<- must be empty
@@ -1380,7 +1336,7 @@ TLS-parse-handshake-message: function [
 				]
 
 				log-more ["R[" seq-read "] Version:" *Protocol-version/name server-version "len:" len "cipher-suite:" cipher-suite]
-				log-more ["R[" seq-read "] SRandom:^[[32m" server-random ]
+				log-more ["R[" seq-read "] SRandom:^[[32m" remote-random ]
 				log-more ["R[" seq-read "] Session:^[[32m" server-session]
 
 				if server-version <> version [
@@ -1395,7 +1351,6 @@ TLS-parse-handshake-message: function [
 					]
 
 					version: server-version
-					;ctx/legacy?: (255 & version) < 3
 				]
 
 				unless empty? compressions [
@@ -1531,75 +1486,70 @@ TLS-parse-handshake-message: function [
 			;print ["DH:" dh_p dh_g dh_Ys] 
 			;?? message
 			
-			hash-algorithm: 'md5_sha1
-			sign-algorithm: 'rsa_sign
 			;-- check signature
-			unless ctx/legacy? [
-				;signature
-				hash-algorithm:         *HashAlgorithm/name binary/read msg 'UI8
-				sign-algorithm: *ClientCertificateType/name binary/read msg 'UI8
-				log-more ["R[" ctx/seq-read "] Using algorithm:" hash-algorithm "with" sign-algorithm]
-				if hash-algorithm = 'md5_sha1 [
-					;__private_rsa_verify_hash_md5sha1
-					log-error "legacy __private_rsa_verify_hash_md5sha1 not implemented yet!"
-					return *Alert/Decode_error
-				]
-				binary/read msg [signature: UI16BYTES]
-				;? signature
-				insert message join ctx/client-random ctx/server-random
+			hash-algorithm:         *HashAlgorithm/name binary/read msg 'UI8
+			sign-algorithm: *ClientCertificateType/name binary/read msg 'UI8
+			log-more ["R[" ctx/seq-read "] Using algorithm:" hash-algorithm "with" sign-algorithm]
+			if hash-algorithm = 'md5_sha1 [
+				;__private_rsa_verify_hash_md5sha1
+				log-error "legacy __private_rsa_verify_hash_md5sha1 not implemented yet!"
+				return *Alert/Decode_error
+			]
+			binary/read msg [signature: UI16BYTES]
+			;? signature
+			insert message join ctx/local-random ctx/remote-random
 
-				if any [
-					error? valid?: try [
-						switch sign-algorithm [
-							rsa_sign [
-								log-more "Checking signature using RSA"
-								;decrypt the `signature` with server's public key
-								rsa-key: apply :rsa-init ctx/server-certs/1/public-key/rsaEncryption
-								also rsa/verify/hash rsa-key message signature hash-algorithm
-								     rsa rsa-key none ;@@ releases the internal RSA data, should be done by GC one day!
-							]
-							rsa_fixed_dh [
-								log-more "Checking signature using RSA_fixed_DH"
-								;@@ TODO: rewrite ecdsa/verify to count the hash automatically like it is in rsa/verify now?
-								message-hash: checksum message hash-algorithm
-								; test validity:
-								ecdsa/verify/curve ctx/pub-key message-hash signature ctx/pub-exp
-							]
+			if any [
+				error? valid?: try [
+					switch sign-algorithm [
+						rsa_sign [
+							log-more "Checking signature using RSA"
+							;decrypt the `signature` with server's public key
+							rsa-key: apply :rsa-init ctx/server-certs/1/public-key/rsaEncryption
+							also rsa/verify/hash rsa-key message signature hash-algorithm
+							     rsa rsa-key none ;@@ releases the internal RSA data, should be done by GC one day!
+						]
+						rsa_fixed_dh [
+							log-more "Checking signature using RSA_fixed_DH"
+							;@@ TODO: rewrite ecdsa/verify to count the hash automatically like it is in rsa/verify now?
+							message-hash: checksum message hash-algorithm
+							; test validity:
+							ecdsa/verify/curve ctx/pub-key message-hash signature ctx/pub-exp
 						]
 					]
-					not valid?
-				][
-					log-error "Failed to validate signature"
-					if error? valid? [print valid?]
-					return *Alert/Decode_error
 				]
-				log-more "Signature valid!"
-				if ends > pos: index? msg/buffer [
-					len: ends - pos
-					binary/read msg [extra: BYTES :len]
-					log-error [
-						"Extra" len "bytes at the end of message:"
-						mold extra
-					]
-					return *Alert/Decode_error
+				not valid?
+			][
+				log-error "Failed to validate signature"
+				if error? valid? [print valid?]
+				return *Alert/Decode_error
+			]
+			log-more "Signature valid!"
+			if ends > pos: index? msg/buffer [
+				len: ends - pos
+				binary/read msg [extra: BYTES :len]
+				log-error [
+					"Extra" len "bytes at the end of message:"
+					mold extra
 				]
+				return *Alert/Decode_error
+			]
 
-				if dh_p [
-					dh-key: dh-init dh_g dh_p
-					ctx/pre-master-secret: dh/secret dh-key pub_key
-					log-more ["DH common secret:" ctx/pre-master-secret]
-					ctx/key-data: dh/public/release dh-key
-				]
-				if curve [
-					;- elyptic curve init
-					;curve is defined above (send from server as well as server's public key)
-					dh-key: ecdh/init none curve
-					ctx/pre-master-secret: ecdh/secret dh-key pub_key
-					log-more ["ECDH common secret:^[[32m" ctx/pre-master-secret]
-					; resolve the public key to supply it to server
-					ctx/key-data: ecdh/public/release dh-key
+			if dh_p [
+				dh-key: dh-init dh_g dh_p
+				ctx/pre-master-secret: dh/secret dh-key pub_key
+				log-more ["DH common secret:" ctx/pre-master-secret]
+				ctx/key-data: dh/public/release dh-key
+			]
+			if curve [
+				;- elyptic curve init
+				;curve is defined above (send from server as well as server's public key)
+				dh-key: ecdh/init none curve
+				ctx/pre-master-secret: ecdh/secret dh-key pub_key
+				log-more ["ECDH common secret:^[[32m" ctx/pre-master-secret]
+				; resolve the public key to supply it to server
+				ctx/key-data: ecdh/public/release dh-key
 
-				]
 			]
 		]
 		;----------------------------------------------------------
@@ -1627,15 +1577,8 @@ TLS-parse-handshake-message: function [
 
 		FINISHED [
 			binary/read msg [verify-data: BYTES] ;rest of data
-			;? verify-data
-			seed: either ctx/legacy? [
-				join read ctx/md5-port read ctx/sha-port
-			][	read ctx/sha-port ]
-			;?? seed
-
-			result: prf "client finished" ctx/legacy? seed ctx/master-secret  12
-			;? result
-			;ask ""
+			seed: read ctx/sha-port
+			result: prf "client finished" seed ctx/master-secret  12
 		]
 	][
 		log-error ["Unknown state: " ctx/state "-" type]
@@ -1659,11 +1602,40 @@ send-event: function[
 	insert system/ports/system make event! [ type: event port: target ]
 ]
 
-TLS-awake: function [event [event!]][
-	log-more ["AWAKE:^[[1m" event/type]
+TLS-server-awake: func [event /local port] [
+	log-more ["AWAKE Server:^[[1m" event/type]
+	if event/type = 'accept [
+		port: first event/port
+		probe query port
+		port/awake: function[event][
+			probe event/type
+			switch event/type [
+				read [
+					print ["Client said:" mold event/port/data]
+					clear event/port/data
+					write event/port to-binary "pong!"
+				]
+				wrote [
+					print "Server sent pong to client"
+					;read event/port
+					close event/port
+				]
+				close [
+					close event/port
+					return true
+				]
+			]
+			false
+		]
+		read port
+	]
+	false
+]
+
+TLS-client-awake: function [event [event!]][
+	log-more ["AWAKE Client:^[[1m" event/type]
 	TCP-port:   event/port
 	TLS-port:   TCP-port/extra
-	TLS-awake: :TLS-port/awake
 
 	if all [
 		TLS-port/state/protocol = 'APPLICATION
@@ -1811,23 +1783,29 @@ sys/make-scheme [
 			]
 		]
 
-		open: func [port [port!] /local conn spec][
+		open: func [port [port!] /local conn spec state][
 			log-more "OPEN"
 			if port/state [return port]
-
-			if none? port/spec/host [TLS-error "Missing host address"]
-
-			spec: port/spec
-			port/state: make-TLS-ctx
-			port/state/connection: conn: make port! [
+			spec:  port/spec
+			port/state: state: make TLS-context [
+				version: *Protocol-version/TLS1.2
+			]
+			state/connection: conn: make port! [
 				scheme: 'tcp
 				host:    spec/host
 				port:    spec/port
 				ref:     rejoin [tcp:// host ":" port]
 			]
-			port/data:  port/state/port-data
-			conn/awake: :TLS-awake
+			port/data:  state/port-data
 			conn/extra: port
+			conn/awake: either spec/host [
+				:TLS-client-awake
+			][
+				state/server?: true
+				state/state: 'CLIENT_HELLO
+				:TLS-server-awake
+			]
+			
 			open conn
 			port
 		]
