@@ -23,8 +23,36 @@ wrap [
 				return rsa-init n e
 			]
 		]
-		print ["Not RSA key! (" v ")"]
+		sys/log/error 'REBOL ["Not RSA key! (" v ")"]
 		none
+	]
+	init-rsa-public-key: function [data [block!]][
+		parse data [
+			'SEQUENCE into [
+				'INTEGER set n:   binary! ;modulus        
+				'INTEGER set e:   binary! ;publicExponent 
+			]
+		]
+		rsa-init n e
+	]
+	init-rsa-private-key: function [data [block!]][
+		parse data [
+			'SEQUENCE into [
+				'INTEGER set v:   binary! ;version
+				'INTEGER set n:   binary! ;modulus
+				'INTEGER set e:   binary! ;publicExponent
+				'INTEGER set d:   binary! ;privateExponent
+				'INTEGER set p:   binary! ;prime1
+				'INTEGER set q:   binary! ;prime2
+				;- dp, dq and qp are computed when initialized, so not used here 
+				;'INTEGER set dp:  binary! ;exponent1       d mod (p-1)
+				;'INTEGER set dq:  binary! ;exponent2       d mod (q-1)
+				;'INTEGER set qp:  binary! ;coefficient     (inverse of q) mod p
+				to end
+			]
+			to end
+		]
+		rsa-init/private n e d p q
 	]
 
 	register-codec [
@@ -52,22 +80,21 @@ wrap [
 				][	init-from-ssh2-key key ]
 			]
 			if "4,ENCRYPTED" = select pkix/header "Proc-Type" [
-				print "ENCRYPTED key!"
+				sysl/log/info 'REBOL "ENCRYPTED key!"
 				try/except [
 					dek-info: select pkix/header "DEK-Info"
-					;probe dek-info
+					sysl/log/info 'REBOL ["Using:" dek-info]
 					parse dek-info [
 						"AES-128-CBC" #"," copy iv to end
 					]
 					iv: debase iv 16
 					unless p [p: ask/hide "Pasword: "]
-					p: checksum
-						join to binary! p copy/part iv 8
-						'md5
+					p: checksum (join to binary! p copy/part iv 8) 'md5
 					d: aes/key/decrypt p iv
 					pkix/binary: aes/stream d pkix/binary
 				][	return none ]
 			]
+			sys/log/info 'REBOL ["Trying to resolve:" pkix/label]
 
 			switch pkix/label [
 				"SSH2 PUBLIC KEY" [
@@ -78,66 +105,43 @@ wrap [
 			try/except [
 				data: codecs/der/decode pkix/binary
 			][
-				print "Failed to decode DER day for RSA key!"
-				probe system/state/last-error
+				sys/log/error 'REBOL "Failed to decode DER day for RSA key!"
+				sys/log/error 'REBOL system/state/last-error
 				return none
 			]
 			
 			switch pkix/label [
-				"PUBLIC KEY" [
-					; resolve RSA public data from the DER structure (PKCS#1)
-					all [
+				"PUBLIC KEY"
+				"PRIVATE KEY" [
+					; resolve key data from the DER structure (PKCS#1)
+					return attempt [
 						parse data [
 							'SEQUENCE into [
-								'SEQUENCE   set v:    block!  ; AlgorithmIdentifier 
-								'BIT_STRING set data: binary! ; PublicKey
+								opt ['INTEGER binary!]
+								'SEQUENCE into [
+									'OBJECT_IDENTIFIER set oid: binary! ; AlgorithmIdentifier 
+									to end ;'NULL binary!
+								]
+								['BIT_STRING | 'OCTET_STRING] set data: binary! ; PublicKey
 								(
 									data: codecs/der/decode data
 								)
 							]
 						]
-						v/OBJECT_IDENTIFIER = #{2A864886F70D010101} ;= rsaEncryption
-						parse data [
-							'SEQUENCE into [
-								'INTEGER set n:   binary! ;modulus        
-								'INTEGER set e:   binary! ;publicExponent 
+						switch/default oid [
+							#{2A864886F70D010101} [ ;= rsaEncryption
+								return either pkix/label = "PUBLIC KEY" [
+									init-rsa-public-key  data
+								][  init-rsa-private-key data ]
 							]
+						][
+							sys/log/error 'REBOL ["Unknown key type:" codecs/der/decode-OID oid]
+							none
 						]
 					]
-					; resolve RSA handle from parsed data
-					return rsa-init n e
 				]
-				"RSA PUBLIC KEY" [
-					; resolve RSA public data from the DER structure (PKCS#1)
-					parse data [
-						'SEQUENCE into [
-							'INTEGER set n:   binary! ;modulus        
-							'INTEGER set e:   binary! ;publicExponent 
-						]
-					]
-					; resolve RSA handle from parsed data
-					return rsa-init n e
-				]
-				"RSA PRIVATE KEY" [
-					; resolve RSA private data from the DER structure (PKCS#1)
-					parse data [
-						'SEQUENCE into [
-							'INTEGER set v:   binary! ;version
-							'INTEGER set n:   binary! ;modulus        
-							'INTEGER set e:   binary! ;publicExponent 
-							'INTEGER set d:   binary! ;privateExponent
-							'INTEGER set p:   binary! ;prime1         
-							'INTEGER set q:   binary! ;prime2         
-							'INTEGER set dp:  binary! ;exponent1       d mod (p-1)
-							'INTEGER set dq:  binary! ;exponent2       d mod (q-1)
-							'INTEGER set inv: binary! ;coefficient     (inverse of q) mod p
-							to end
-						]
-						to end
-					]
-					; resolve RSA handle from parsed data
-					return rsa-init/private n e d p q dp dq inv
-				]
+				"RSA PUBLIC KEY"  [ return init-rsa-public-key  data ]
+				"RSA PRIVATE KEY" [ return init-rsa-private-key data ]
 			]
 			none ; no success!
 		]
