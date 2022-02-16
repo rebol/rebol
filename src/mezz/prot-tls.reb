@@ -12,8 +12,8 @@ REBOL [
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
 	Author: ["Richard 'Cyphre' Smolak" "Oldes" "Brian Dickens (Hostilefork)"]
-	Version: 0.8.0
-	Date: 5-Feb-2022
+	Version: 0.9.0
+	Date: 16-Feb-2022
 	history: [
 		0.6.1 "Cyphre" "Initial implementation used in old R3-alpha"
 		0.7.0 "Oldes" {
@@ -33,12 +33,12 @@ REBOL [
 		0.7.3 "Oldes" "Fixed RSA memory leak"
 		0.7.4 "Oldes" "Pass data to parent handler even when ALERT message is not decoded"
 		0.8.0 "Oldes" "Using new `crypt` port introduced in Rebol 3.8.0"
+		0.9.0 "Oldes" "Added (limited) support for a `server` role"
 	]
 	todo: {
 		* cached sessions
 		* automagic cert data lookup
 		* add more cipher suites (based on DSA, 3DES, ECDSA, ...)
-		* server role support
 		* TLS1.3 support
 		* cert validation
 	}
@@ -50,6 +50,8 @@ REBOL [
 		https://fly.io/articles/how-ciphersuites-work/
 		https://tls12.ulfheim.net/
 		https://tls13.ulfheim.net/
+
+		https://hpbn.co/transport-layer-security-tls/
 		
 		; If you want to get a report on what suites a particular site has:
 		https://www.ssllabs.com/ssltest/analyze.html
@@ -74,7 +76,8 @@ REBOL [
 ]
 
 TLS-context: context [
-	connection:
+	tcp-port:
+	tls-port:
 	encrypt-port:
 	decrypt-port: 
 	sha-port:      ;used for progressive checksum computations
@@ -95,7 +98,8 @@ TLS-context: context [
 	state-prev:     none   ;previous state
 
 	error:                 ;used to hold Rebol error object (for reports to above layer)
-	critical-error: none   ;used to signalize error state
+	critical-error:        ;used to signalize error state
+	cipher-suite:   none
 	cipher-spec-set: 0     ;stores state of cipher spec exchange (0 = none, 1 = client, 2 = both)
 
 	;- values defined inside TLS-init-cipher-suite:
@@ -120,17 +124,18 @@ TLS-context: context [
 	remote-key:
 	remote-random:
 
+	dh-key:
 	aead: none ; used now for chacha20/poly1305 combo
 
-	server-session: none
+	session-id: none        ; https://hpbn.co/transport-layer-security-tls/#tls-session-resumption
 	server-certs: copy []
-	server-extensions: copy []
+	extensions: copy []
 
 	seq-read:  0 ; sequence counters
 	seq-write: 0
 
 	
-	pre-master-secret:
+	pre-secret:
 	master-secret:
 	certificate:
 	pub-key: pub-exp:
@@ -331,6 +336,7 @@ TLS-context: context [
 	SupportedGroups:       #{000A}
 	SupportedPointFormats: #{000B}
 	SignatureAlgorithms:   #{000D}
+	SCT:                   #{0012} ;Signed_certificate_timestamp -> https://www.rfc-editor.org/rfc/rfc6962.html
 	EncryptThenMAC:        #{0016}
 	ExtendedMasterSecret:  #{0017}
 	KeyShare:              #{0033}
@@ -375,11 +381,55 @@ tls-verbosity: func[
 log-error: :_log-error ;- use error logs by default
 ;tls-verbosity 3
 
+decode-cipher-suites: function[
+	bin [binary!]
+][
+	num: (length? bin) >> 1
+	out: make block! num
+	bin: binary bin
+	loop num [
+		append out cipher: *Cipher-suite/name binary/read bin 'UI16
+		log-debug ["Cipher-suite:" cipher]
+	]
+	out
+]
+decode-supported-groups: function[
+	bin [binary!]
+][
+	num: (length? bin) >> 1
+	blk: make block! num
+	loop num [
+		append blk *EllipticCurves/name binary/read bin 'UI16
+		bin: skip bin 2
+	]
+	log-debug ["SupportedGroups:" mold blk]
+	blk
+]
+decode-extensions: function[
+	bin [binary!]
+][
+	bin: binary bin
+	out: make block! 4
+	while [not empty? bin/buffer][
+		binary/read bin [
+			ext-type: UI16
+			ext-data: UI16BYTES
+		]
+		ext-type: any [*TLS-Extension/name ext-type  ext-type]
+		log-more ["Extension:" ext-type "bytes:" length? ext-data mold ext-data ]
+		switch ext-type [
+			SupportedGroups [ ext-data: decode-supported-groups skip ext-data 2 ]
+		]
+		repend out [ext-type ext-data]
+	]
+	out
+]
+
 ;-- list of supported suites as a single binary
 ; This list is sent to the server when negotiating which one to use.  Hence
 ; it should be ORDERED BY CLIENT PREFERENCE (more preferred suites first).
 ;@@ TODO: use only ciphers which are really available!!!
-suported-cipher-suites: rejoin [
+suported-cipher-suites: decode-cipher-suites suported-cipher-suites-binary: rejoin [
 ;@@	#{CCA9} ;TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 ; some issue!
 ;@@	#{CCA8} ;TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256   ; some issue!
 	;#{C02F} ;TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
@@ -441,22 +491,23 @@ supported-elliptic-curves: rejoin [
 
 TLS-init-cipher-suite: func [
 	"Initialize context for current cipher-suite. Returns false if unknown suite is used."
-	ctx          [object! ]
-	cipher-suite [binary!]
+	ctx          [object!]
 	/local suite key-method cipher
 ][
-	suite: *Cipher-suite/name to integer! cipher-suite
-	unless find/skip suported-cipher-suites cipher-suite 2 [
-		log-error ["Server requests" suite "cipher suite!"]
+	cipher: ctx/cipher-suite
+	suite: *Cipher-suite/name :cipher
+	unless suite [
+		; unknown suite... convert back to binary befor reporting
+		binary/write suite: #{} [UI16 :cipher]
+		log-error ["Unknown cipher suite:" suite]
+		return false
+	]
+	unless find suported-cipher-suites suite [
+		unless ctx/server? [log-error ["Server requests" suite "cipher suite!"]]
 		return false
 	]
 
-	if none? suite [
-		log-error ["Unknown cipher suite:" cipher-suite]
-		return false
-	]
-
-	log-info ["Init TLS Cipher-suite:^[[35m" suite "^[[22m" cipher-suite]
+	log-info ["Init TLS Cipher-suite:^[[35m" suite "^[[22m" skip to binary! cipher 6]
 
 	parse form suite [
 		opt "TLS_"
@@ -494,7 +545,7 @@ TLS-init-cipher-suite: func [
 	]
 ]
 
-TLS-error: function [
+cause-TLS-error: function [
 	id [integer!]
 ][
 	message: to string! any [*Alert/name id  "unknown"]
@@ -527,7 +578,7 @@ assert-prev-state: function [
 ][
 	if not find legal-states ctx/state-prev [
 		log-error ["State" ctx/state "is not expected after" ctx/state-prev]
-		TLS-error *Alert/Internal_error
+		cause-TLS-error *Alert/Internal_error
 	]
 ]
 
@@ -544,6 +595,7 @@ TLS-update-messages-hash: function [
 		log-more ["Initialized SHA method:" ctx/sha-port/spec/method]
 	]
 	write/part ctx/sha-port msg len
+	log-debug ["messages-hash:" read ctx/sha-port]
 ]
 
 client-hello: function [
@@ -557,8 +609,8 @@ client-hello: function [
 		;- Server Name Indication (extension)
 		;  https://tools.ietf.org/html/rfc6066#section-3
 		if all [
-			ctx/connection
-			host-name: ctx/connection/spec/host
+			ctx/tcp-port
+			host-name: ctx/tcp-port/spec/host
 		][
 			host-name: to binary! host-name
 			length-name: length? host-name
@@ -609,20 +661,20 @@ client-hello: function [
 		;precomputing the extension's lengths so I can write them in one WRITE call
 		length-signatures:  2 + length? supported-signature-algorithms
 		length-extensions:  4 + length-signatures + length? extensions
-		length-message:    41 + length-extensions + length? suported-cipher-suites
+		length-message:    41 + length-extensions + length? suported-cipher-suites-binary
 		length-record:      4 + length-message
 
 		binary/write out [
 			UI8       22                  ; protocol type (22=Handshake)
-			UI16      :version     ; protocol version (minimal supported)
+			UI16      :version            ; protocol version (minimal supported)
 			UI16      :length-record      ; length of SSL record data
 			;client-hello message:
 			UI8       1                   ; protocol message type	(1=ClientHello)
 			UI24      :length-message     ; protocol message length
-			UI16      :version     ; max supported version by client
+			UI16      :version            ; max supported version by client
 			UNIXTIME-NOW RANDOM-BYTES 28  ; random struct
 			UI8       0                   ; session ID length
-			UI16BYTES :suported-cipher-suites
+			UI16BYTES :suported-cipher-suites-binary
 			UI8       1                   ; compression method length
 			UI8       0                   ; no compression
 			;extensions
@@ -647,6 +699,183 @@ client-hello: function [
 		log-more ["W[" ctx/seq-write "] CRandom:^[[32m" local-random]
 	]
 ]
+
+server-hello: function [ctx [object!]][
+	change-state ctx 'SERVER_HELLO
+	with ctx [
+		binary/init out none ;reset output buffer
+
+		session-id: checksum to-binary 1 'sha256 ;@@ real number!
+		extensions: #{00000000FF01000100000B000403000102} ;@@ real!
+
+		binary/write out [
+		 pos-start:
+			UI8       22        ; protocol type (22=Handshake)
+			UI16      :version  ; protocol version (minimal supported)
+		 pos-record-len:
+			UI16      0         ; will be set later
+		 pos-record:
+			;server-hello message:
+			UI8       2         ; protocol message type (2=ServerHello)
+		 pos-message-len:
+			UI24      0         ; will be set later
+			UI16      :version  ; prefered version by server
+			UNIXTIME-NOW RANDOM-BYTES 28  ; random struct
+			UI8BYTES  :session-id
+			UI16      :cipher-suite
+			UI8       0         ;no compression
+			UI16BYTES :extensions
+		 pos-end:
+		]
+		local-random: copy/part (at out/buffer 12) 32
+		log-more ["W[" ctx/seq-write "] SRandom:^[[32m" local-random]
+		
+		;; fill the missing lengths
+		binary/write out compose [
+			AT :pos-record-len  UI16 (length-record:  pos-end - pos-record)
+			AT :pos-message-len UI24 (length-message: length-record - 4)
+			AT :pos-end
+		]
+		;; and count record's hash
+		TLS-update-messages-hash ctx (at head out/buffer :pos-record) :length-record
+		log-more [
+			"W[" ctx/seq-write "] Bytes:" pos-end - pos-start "=>"
+			"record:"     length-record
+			"message:"    length-message
+		]
+	]
+]
+server-certificate: function [ctx [object!]][
+	change-state ctx 'CERTIFICATE
+	with ctx [
+		; certificates are stored in the server (tpc's parent) settings
+		certificates: tcp-port/parent/state/certificates
+		binary/write out [
+		 pos-start:
+			UI8       22        ; protocol type (22=Handshake)
+			UI16      :version  ; protocol version (minimal supported)
+		 pos-record-len:
+			UI16      0         ; will be set later
+		 pos-record:
+			;certificate message:
+			UI8       11         ; protocol message type (11=Certificate)
+		 pos-message-len:
+			UI24      0         ; will be set later
+			UI24BYTES :certificates
+		 pos-end:
+		]
+		;; fill the missing lengths
+		binary/write out compose [
+			AT :pos-record-len  UI16 (length-record:  pos-end - pos-record)
+			AT :pos-message-len UI24 (length-message: length-record - 4)
+			AT :pos-end
+		]
+		;; and count record's hash
+		TLS-update-messages-hash ctx (at head out/buffer :pos-record) :length-record
+		log-more [
+			"W[" ctx/seq-write "] Bytes:" pos-end - pos-start "=>"
+			"record:"     length-record
+			"message:"    length-message
+		]
+		;? key-method
+		if find [ECDHE_RSA ECDHE_ECDSA DHE_RSA] key-method [
+			;; is emphemeral cipher
+			change-state ctx 'SERVER_KEY_EXCHANGE
+			binary/write out [
+			 pos-start:
+				UI8       22        ; protocol type (22=Handshake)
+				UI16      :version  ; protocol version (minimal supported)
+			 pos-record-len:
+				UI16      0         ; will be set later
+			 pos-record:
+				UI8       12         ; protocol message type (12=ServerKeyExchange)
+			 pos-message-len:
+				UI24      0         ; will be set later
+			]
+
+			switch key-method [
+				ECDHE_RSA [
+					spec: TCP-port/parent/state
+					;@@ TODO: make sure, that curve is supported by client!
+					curve: first spec/elliptic-curves
+					dh-key: ecdh/init none curve
+					pub-key: ecdh/public dh-key
+
+					;log-more ["Server's ECDHE" curve "pub-key:^[[1m" mold pub-key]
+
+					curve: *EllipticCurves/:curve  ; converted to integer for writting
+					;@@ TODO: detect sign-algorithm from the certificate!
+					sign-algorithm: *ClientCertificateType/rsa_sign
+					hash-method-int: *HashAlgorithm/:hash-method
+
+					binary/write message: #{} [
+						BYTES :remote-random
+						BYTES :local-random
+					 pos-msg:
+						UI8      3 ;= ECDHE_RSA
+						UI16     :curve
+						UI8BYTES :pub-key
+					]
+					signature: rsa/sign/hash spec/private-key :message :hash-method
+					remove/part message (pos-msg - 1) ; removing random bytes
+					binary/write out [
+						BYTES     :message
+						UI8       :hash-method-int
+						UI8       :sign-algorithm
+						UI16BYTES :signature
+					 pos-end:
+					]
+
+				] 
+			]
+			;; fill the missing lengths
+			binary/write out compose [
+				AT :pos-record-len  UI16 (length-record:  pos-end - pos-record)
+				AT :pos-message-len UI24 (length-message: length-record - 4)
+				AT :pos-end
+			]
+			;; and count record's hash
+			TLS-update-messages-hash ctx (at head out/buffer :pos-record) :length-record
+			log-more [
+				"W[" ctx/seq-write "] Bytes:" pos-end - pos-start "=>"
+				"record:"     length-record
+				"message:"    length-message
+			]
+		]
+	]
+]
+server-hello-done: function [ctx [object!]][
+	change-state ctx 'SERVER_HELLO_DONE
+	with ctx [
+		binary/write out [
+		 pos-start:
+			UI8       22        ; protocol type (22=Handshake)
+			UI16      :version  ; protocol version (minimal supported)
+		 pos-record-len:
+			UI16      0         ; will be set later
+		 pos-record:
+			;server-hello-done message:
+			UI8       14        ; protocol message type (14=ServerHelloDone)
+		 pos-message-len:
+		 	UI24      0         ; will be set later
+		 pos-end:
+		]
+		;; fill the missing lengths
+		binary/write out compose [
+			AT :pos-record-len  UI16 (length-record:  pos-end - pos-record)
+			AT :pos-message-len UI24 (length-message: length-record - 4)
+			AT :pos-end
+		]
+		;; and count record's hash
+		TLS-update-messages-hash ctx (at head out/buffer :pos-record) :length-record
+		log-more [
+			"W[" ctx/seq-write "] Bytes:" pos-end - pos-start "=>"
+			"record:"     length-record
+			"message:"    length-message
+		]
+	]
+]
+
 
 client-key-exchange: function [
 	ctx [object!]
@@ -673,40 +902,40 @@ client-key-exchange: function [
 		switch key-method [
 			ECDHE_ECDSA
 			ECDHE_RSA [
-				log-more ["W[" ctx/seq-write "] Using ECDH key-method"]
+				log-more ["W[" seq-write "] Using ECDH key-method"]
 				key-data-len-bytes: 1
 			]
 			RSA [
-				log-more ["W[" ctx/seq-write "] Using RSA key-method"]
+				log-more ["W[" seq-write "] Using RSA key-method"]
 
-				; generate pre-master-secret
+				; generate pre-secret
 				binary/write bin [
 					UI16 :version RANDOM-BYTES 46 ;writes genereted secret (first 2 bytes are version)
 				]
 				; read the temprary random bytes back to store them for client's use
-				binary/read bin [pre-master-secret: BYTES 48]
+				binary/read bin [pre-secret: BYTES 48]
 				binary/init bin 0 ;clears temp bin buffer
 
 
-				log-more ["W[" ctx/seq-write "] pre-master-secret:" mold pre-master-secret]
+				log-more ["W[" seq-write "] pre-secret:" mold pre-secret]
 
-				;log-debug "encrypting pre-master-secret:"
+				;log-debug "encrypting pre-secret:"
 
-				;?? pre-master-secret
+				;?? pre-secret
 				;?? pub-key
 				;?? pub-exp
 
 				rsa-key: rsa-init pub-key pub-exp
 
-				; supply encrypted pre-master-secret to server
-				key-data: rsa/encrypt rsa-key pre-master-secret
+				; supply encrypted pre-secret to server
+				key-data: rsa/encrypt rsa-key pre-secret
 				key-data-len-bytes: 2
-				log-more ["W[" ctx/seq-write "] key-data:" mold key-data]
+				log-more ["W[" seq-write "] key-data:" mold key-data]
 				rsa rsa-key none ;@@ releases the internal RSA data, should be done by GC one day!
 			]
 			DHE_DSS
 			DHE_RSA [
-				log-more ["W[" ctx/seq-write "] Using DH key-method"]
+				log-more ["W[" seq-write "] Using DH key-method"]
 				key-data-len-bytes: 2
 			]
 		]
@@ -722,60 +951,10 @@ client-key-exchange: function [
 			; for ECDH only 1 byte is used to store length!
 			AT :pos-key (pick [UI8BYTES UI16BYTES] key-data-len-bytes) :key-data
 		]
-
-		;-- make all secure data
-		; NOTE: key-expansion is used just to generate keys so it does not need to be stored in context!
-		ctx/master-secret: prf "master secret" (append copy ctx/local-random ctx/remote-random) pre-master-secret 48
-			key-expansion: prf "key expansion" (append copy ctx/remote-random ctx/local-random) master-secret 
-							   (mac-size + crypt-size + iv-size) * 2
-
-		pre-master-secret: none ;-- not needed anymore
-
-		;?? master-secret
-		;?? key-expansion
-		;?? mac-size
-		;?? crypt-size
-		;?? iv-size
-
-		unless is-aead? [
-			local-mac:  take/part key-expansion mac-size
-			remote-mac: take/part key-expansion mac-size
-		]
-
-		local-key:  take/part key-expansion crypt-size
-		remote-key: take/part key-expansion crypt-size
-
-		local-IV:  take/part key-expansion iv-size
-		remote-IV: take/part key-expansion iv-size
-
-		log-more ["Local-IV:   ^[[32m" local-IV]
-		log-more ["Local-mac:  ^[[32m" local-mac]
-		log-more ["Local-key:  ^[[32m" local-key]
-		log-more ["Remote-IV:  ^[[32m" remote-IV]
-		log-more ["Remote-mac: ^[[32m" remote-mac]
-		log-more ["Remote-key: ^[[32m" remote-key]
-
-		encrypt-port: open [
-			scheme:      'crypt
-			algorithm:   :crypt-method
-			init-vector: :local-IV
-			key:         :local-key
-		]
-		decrypt-port: open [
-			scheme:      'crypt
-			direction:   'decrypt
-			algorithm:   :crypt-method
-			init-vector: :remote-IV
-			key:         :remote-key
-		]
-
-		; not needed anymore...
-		key-expansion: local-key: remote-key: none
-
+		TLS-key-expansion ctx
 		TLS-update-messages-hash ctx (at head out/buffer pos-record) length-record
 	]
 ]
-
 
 change-cipher-spec: function [
 	ctx [object!]
@@ -832,7 +1011,7 @@ alert-close-notify: func [
 finished: function [
 	ctx [object!]
 ][
-	log-info ["FINISHED^[[22m write sequence:" ctx/seq-write]
+	change-state ctx 'FINISHED
 	ctx/seq-write: 0
 
 	seed: read ctx/sha-port
@@ -840,9 +1019,8 @@ finished: function [
 	unencrypted: rejoin [
 		#{14}		; protocol message type	(20=Finished)
 		#{00000C}   ; protocol message length (12 bytes)
-		prf "client finished" seed ctx/master-secret  12
+		prf either ctx/server? ["server finished"]["client finished"] seed ctx/master-secret  12
 	]
-	;?? unencrypted
 	
 	TLS-update-messages-hash ctx unencrypted length? unencrypted
 	encrypt-handshake-msg ctx unencrypted
@@ -894,6 +1072,8 @@ decrypt-msg: function [
 				remote-IV: take/part data block-size
 			]
 			;?? data
+			;? decrypt-port
+			;? block-size
 			modify decrypt-port 'init-vector remote-IV
 			data: read update write decrypt-port :data
 
@@ -909,6 +1089,7 @@ decrypt-msg: function [
 				binary/write bin [
 					UI16BYTES :data
 				]
+				;?? bin/buffer
 				mac-check: checksum/with bin/buffer hash-method remote-mac
 
 				;?? mac
@@ -950,7 +1131,7 @@ encrypt-data: function [
 		]
 		either is-aead? [
 			aad: bin/buffer
-			?? aad
+			;?? aad
 			write encrypt-port bin/buffer ; AAD chunk
 			; on next line are 3 ops.. encrypting content, counting its MAC and getting the result  
 			encrypted: read update write encrypt-port content
@@ -978,6 +1159,7 @@ encrypt-data: function [
 
 			binary/write bin content
 			; computing MAC on the header + content 
+			;?? bin/buffer
 			MAC: checksum/with bin/buffer ctx/hash-method ctx/local-mac
 			; padding the message to achieve a multiple of block length
 			len: length? append content MAC
@@ -1037,6 +1219,71 @@ prf: function [
 	p-sha256
 ]
 
+TLS-key-expansion: func[
+	ctx [object!]
+	/local rnd1 rnd2 key-expansion
+][
+	with ctx [
+		;-- make all secure data
+		either server? [
+			rnd1: append copy ctx/remote-random ctx/local-random
+			rnd2: append copy ctx/local-random ctx/remote-random
+		][
+			rnd2: append copy ctx/remote-random ctx/local-random
+			rnd1: append copy ctx/local-random ctx/remote-random
+		]
+		master-secret: prf "master secret" rnd1 pre-secret 48
+		key-expansion: prf "key expansion" rnd2 master-secret (mac-size + crypt-size + iv-size) * 2
+
+		either server? [
+			unless is-aead? [
+				remote-mac: take/part key-expansion mac-size
+				local-mac:  take/part key-expansion mac-size
+			]
+
+			remote-key: take/part key-expansion crypt-size
+			local-key:  take/part key-expansion crypt-size
+
+			remote-IV: take/part key-expansion iv-size
+			local-IV:  take/part key-expansion iv-size
+		][
+			unless is-aead? [
+				local-mac:  take/part key-expansion mac-size
+				remote-mac: take/part key-expansion mac-size
+			]
+
+			local-key:  take/part key-expansion crypt-size
+			remote-key: take/part key-expansion crypt-size
+
+			local-IV:  take/part key-expansion iv-size
+			remote-IV: take/part key-expansion iv-size
+		]
+		log-more ["Local-IV:   ^[[32m" local-IV]
+		log-more ["Local-mac:  ^[[32m" local-mac]
+		log-more ["Local-key:  ^[[32m" local-key]
+		log-more ["Remote-IV:  ^[[32m" remote-IV]
+		log-more ["Remote-mac: ^[[32m" remote-mac]
+		log-more ["Remote-key: ^[[32m" remote-key]
+
+		encrypt-port: open [
+			scheme:      'crypt
+			algorithm:   :crypt-method
+			init-vector: :local-IV
+			key:         :local-key
+		]
+		decrypt-port: open [
+			scheme:      'crypt
+			direction:   'decrypt
+			algorithm:   :crypt-method
+			init-vector: :remote-IV
+			key:         :remote-key
+		]
+
+		; not needed anymore...
+		pre-secret: local-key: remote-key: none	
+	]
+]
+
 do-commands: func [
 	ctx [object!]
 	commands [block!]
@@ -1064,23 +1311,24 @@ do-commands: func [
 	;?? ctx/out/buffer
 	log-info ["Writing bytes:" length? ctx/out/buffer]
 	ctx/out/buffer: head ctx/out/buffer
-	write ctx/connection ctx/out/buffer
+	write ctx/tcp-port ctx/out/buffer
 
 	;?? ctx/out/buffer
 
 	unless no-wait [
 		log-more "Waiting for responses"
-		unless port? wait [ctx/connection 260][
+		unless port? wait [ctx/tcp-port 260][
 			log-error "Timeout"
 			;? ctx
-			? ctx/connection
-			send-event 'close ctx/connection/extra
+			? ctx/tcp-port
+			send-event 'close ctx/tcp-port/extra
 			do make error! "port timeout"
 		]
 	]
 	ctx/reading?: true
 	binary/init ctx/out none ;resets the output buffer
 ]
+
 
 ;----------------------------------------------;
 ;--- TLS scheme -------------------------------;
@@ -1101,8 +1349,11 @@ TLS-read-data: function [
 	ctx       [object!]
 	tcp-data  [binary!] 
 ][
-	log-more ["read-data:^[[1m" length? tcp-data "^[[22mbytes previous rest:" length? ctx/rest]
+;@@ NOTE: this is not the best solution! Complete stream is collected in the `inp` buffer,
+;@@       but we need just parts of it, before it is decrypted! Unfortunatelly the current
+;@@       bincode does not allow shrinking of the buffer :-/  NEEDS REWRITE!!!            
 
+	log-more ["read-data:^[[1m" length? tcp-data "^[[22mbytes previous rest:" length? ctx/rest]
 	inp: ctx/in
 
 	binary/write inp ctx/rest  ;- possible leftover from previous packet
@@ -1162,7 +1413,8 @@ TLS-read-data: function [
 				change-state ctx 'APPLICATION
 				assert-prev-state ctx [APPLICATION ALERT FINISHED]
 				binary/read inp [data: BYTES :len]
-
+				;?? data
+				;?? ctx/cipher-spec-set
 				if ctx/cipher-spec-set > 1 [
 					if data: decrypt-msg ctx data [
 						append ctx/port-data data
@@ -1174,21 +1426,25 @@ TLS-read-data: function [
 			]
 			HANDSHAKE [
 				binary/read inp [data: BYTES :len]
-				
+				;?? data
+				;? ctx/cipher-spec-set
 				either ctx/cipher-spec-set > 1 [
 					data: decrypt-msg ctx data
+					;?? data
 				][
 					TLS-update-messages-hash ctx data len
 				]
 				; process the handshake message, set `critical-error` if there is any
-				ctx/critical-error: TLS-parse-handshake-message ctx data
+				unless empty? data [
+					ctx/critical-error: TLS-parse-handshake-message ctx data
+				]
 			]
 			CHANGE_CIPHER_SPEC [
 				binary/read inp [value: UI8]
 				either 1 = value [
 					ctx/cipher-spec-set: 2
 					ctx/seq-read: 0
-					ctx/reading?: false
+					ctx/reading?: ctx/server?
 					ctx/protocol: 'APPLICATION
 					change-state ctx 'APPLICATION
 				][
@@ -1273,31 +1529,52 @@ TLS-parse-handshake-message: function [
 
 	switch/default ctx/state [
 		;----------------------------------------------------------
-		CLIENT_HELLO [
-			?? msg
-			;if 22 <> binary/read msg 
-			;binary/read msg [
-			;	UI8  ; protocol type (22=Handshake)
-			;	version: UI16 ; protocol version (minimal supported)
-			;	length-record: UI16      :length-record      ; length of SSL record data
-			;	;client-hello message:
-			;	UI8       1                   ; protocol message type	(1=ClientHello)
-			;	UI24      :length-message     ; protocol message length
-			;	UI16      :version     ; max supported version by client
-			;	UNIXTIME-NOW RANDOM-BYTES 28  ; random struct
-			;	UI8       0                   ; session ID length
-			;	UI16BYTES :suported-cipher-suites
-			;	UI8       1                   ; compression method length
-			;	UI8       0                   ; no compression
-			;	;extensions
-			;	UI16      :length-extensions
-			;	UI16      13                  ; extension type: signature-algorithms
-			;	UI16      :length-signatures  ; note: there is another length following
-			;	UI16BYTES :supported-signature-algorithms
-			;	BYTES     :extensions
+		CLIENT_HELLO [	;- this is the initial message from client to server
+			binary/read msg [
+				client-version: UI16 ; max supported version by client
+				;client-hello message:
+				remote-random: BYTES 32 ; random struct
+				session-id:    UI8BYTES
+				cipher-suites: UI16BYTES
+				compressions:  UI8BYTES
+				extensions:    UI16BYTES
+			]
+			log-debug ["Client requests:" *Protocol-version/name :client-version]
+			log-debug ["Client random:^[[1m" remote-random]
+			ctx/remote-random: remote-random
+			unless empty? session-id [
+				;@@ could be used for Session Resumption
+				;https://hpbn.co/transport-layer-security-tls/#tls-session-resumption
+				log-debug ["Client session:" session-id]
+			]
+
+			client-cipher-suites: decode-cipher-suites :cipher-suites
+			foreach cipher client-cipher-suites [
+				if find suported-cipher-suites cipher [
+					; store as an integer
+					ctx/cipher-suite: *Cipher-suite/:cipher
+					TLS-init-cipher-suite ctx
+					break
+				]
+			]
+			; now we should have initialized cipher suites, return error, if not
+			unless ctx/crypt-method [
+				log-error "No supported cipher-suite!"
+				return *Alert/Handshake_failure
+			]
+
+			if #{00} <> compressions [
+				log-error ["Client requests compression:" compressions]
+				return *Alert/Unexpected_message
+			]
+			;? extensions
+			extensions: decode-extensions :extensions
+			;if groups: select extensions 'SupportedGroups [
 			;]
+			;'clear TCP-port/data
+			ctx/reading?: false
 		]
-		SERVER_HELLO [
+		SERVER_HELLO [ ;- this is the server's response to clients initial message
 			;NOTE: `len` should be now >= 38 for TLS and 41 for DTLS
 			assert-prev-state ctx [CLIENT_HELLO]
 
@@ -1307,20 +1584,22 @@ TLS-parse-handshake-message: function [
 						binary/read msg [
 							server-version: UI16
 							remote-random:  BYTES 32
-							server-session: UI8BYTES						
-							cipher-suite:   BYTES 2
+							session-id:     UI8BYTES						
+							cipher-suite:   UI16 2
 							compressions:   UI8BYTES ;<- must be empty
+							extensions:     UI16BYTES
+							pos:            INDEX
 						]
 					]
-					32 < length? server-session  ;@@ limit session-id size; TLSe has it max 32 bytes
+					32 < length? session-id  ;@@ limit session-id size; TLSe has it max 32 bytes
 				][
 					log-error "Failed to read server hello."
 					return *Alert/Handshake_failure
 				]
 
-				log-more ["R[" seq-read "] Version:" *Protocol-version/name server-version "len:" len "cipher-suite:" cipher-suite]
+				log-more ["R[" seq-read "] Version:" *Protocol-version/name server-version "len:" len "cipher-suite:" *Cipher-suite/name cipher-suite]
 				log-more ["R[" seq-read "] SRandom:^[[32m" remote-random ]
-				log-more ["R[" seq-read "] Session:^[[32m" server-session]
+				log-more ["R[" seq-read "] Session:^[[32m" session-id]
 
 				if server-version <> version [
 					log-error [
@@ -1342,34 +1621,13 @@ TLS-parse-handshake-message: function [
 					return *Alert/Decompression_failure
 				]
 
-				unless TLS-init-cipher-suite ctx cipher-suite [
+				unless TLS-init-cipher-suite ctx [
 					log-error "Unsupported cipher suite!"
 					return *Alert/Handshake_failure
 				]
 
 				;-- extensions handling
-				clear server-extensions
-				if ends > (i: binary/read msg 'index) [
-					pos: i + 2 + binary/read msg 'ui16
-
-					if ends <> pos [
-						log-error  "Warning: unexpected number of extension bytes in SERVER_HELLO fragment!"
-						log-error ["Expected position:" ends "got:" pos]
-					]
-					while [ 4 <= (ends - binary/read msg 'index)][
-						binary/read msg [
-							ext-type: UI16
-							ext-data: UI16BYTES
-						]
-						log-more [
-							"R[" seq-read "] Extension:" any [*TLS-Extension/name ext-type  ext-type]
-							"bytes:" length? ext-data
-						]
-						repend server-extensions [
-							ext-type ext-data
-						]
-					]
-				]
+				extensions: decode-extensions :extensions
 				false ;= no error
 			][; ctx
 				; WITH block catches RETURNs so just throw it again
@@ -1390,7 +1648,7 @@ TLS-parse-handshake-message: function [
 				;probe copy/part msg/buffer 10
 				binary/read msg [cert: UI24BYTES]
 				;probe cert
-				;i: i + 1 write rejoin [%/x/cert i %.der] cert
+				;i: i + 1 write rejoin [%/x/cert i %.crt] cert
 				append ctx/server-certs decode 'CRT cert
 			]
 			log-more ["Received" length? ctx/server-certs "server certificates."]
@@ -1419,6 +1677,7 @@ TLS-parse-handshake-message: function [
 		SERVER_KEY_EXCHANGE [
 			assert-prev-state ctx [CERTIFICATE SERVER_HELLO]
 			log-more ["R[" ctx/seq-read "] Using key method:^[[1m" ctx/key-method]
+			;?? msg
 			switch ctx/key-method [
 				ECDHE_RSA
 				ECDHE_ECDSA [
@@ -1479,9 +1738,9 @@ TLS-parse-handshake-message: function [
 				return *Alert/Decode_error
 			]
 			binary/read msg [signature: UI16BYTES]
-			;? signature
+			;?? signature
 			insert message join ctx/local-random ctx/remote-random
-
+			;?? message
 			if any [
 				error? valid?: try [
 					switch sign-algorithm [
@@ -1517,20 +1776,45 @@ TLS-parse-handshake-message: function [
 
 			if dh_p [
 				dh-key: dh-init dh_g dh_p
-				ctx/pre-master-secret: dh/secret dh-key pub_key
-				log-more ["DH common secret:" ctx/pre-master-secret]
+				ctx/pre-secret: dh/secret dh-key pub_key
+				log-more ["DH common secret:" ctx/pre-secret]
 				ctx/key-data: dh/public/release dh-key
 			]
 			if curve [
 				;- elyptic curve init
-				;curve is defined above (send from server as well as server's public key)
+				;curve is defined above (sent from server as well as server's public key)
 				dh-key: ecdh/init none curve
-				ctx/pre-master-secret: ecdh/secret dh-key pub_key
-				log-more ["ECDH common secret:^[[32m" ctx/pre-master-secret]
+				ctx/pre-secret: ecdh/secret dh-key pub_key
+				log-more ["ECDH common secret:^[[32m" ctx/pre-secret]
 				; resolve the public key to supply it to server
 				ctx/key-data: ecdh/public/release dh-key
-
+				dh-key: none
 			]
+		]
+		CLIENT_KEY_EXCHANGE [
+			unless ctx/server? [
+				log-error "This message is expected on server!"
+				return *Alert/Decode_error
+			]
+			switch ctx/key-method [
+				ECDHE_RSA
+				ECDHE_ECDSA [
+					key-data: binary/read msg 'UI8BYTES
+					ctx/pre-secret: ecdh/secret ctx/dh-key key-data 
+					log-more ["ECDH common secret:^[[32m" ctx/pre-secret]
+				]
+				DHE_DSS
+				DHE_RSA [
+					;- has DS params
+					key-data: binary/read msg 'UI8BYTES
+					;@@TODO!!!
+				]
+				RSA [
+					key-data: binary/read msg 'UI16BYTES 
+					;@@TODO!!!
+				]
+			]
+			TLS-key-expansion ctx
 		]
 		;----------------------------------------------------------
 		CERTIFICATE_REQUEST [
@@ -1558,7 +1842,11 @@ TLS-parse-handshake-message: function [
 		FINISHED [
 			binary/read msg [verify-data: BYTES] ;rest of data
 			seed: read ctx/sha-port
-			result: prf "client finished" seed ctx/master-secret  12
+			result: prf either ctx/server? ["client finished"]["server finished"] seed ctx/master-secret  12
+			;? verify-data ? result
+			if result <> verify-data [
+				return *Alert/Handshake_failure
+			]
 		]
 	][
 		log-error ["Unknown state: " ctx/state "-" type]
@@ -1579,46 +1867,113 @@ send-event: function[
 	target [port!]
 ][
 	log-debug ["Send-event:^[[1m" event]
+	;if 'error = event [ ? target ? target/extra ]
 	insert system/ports/system make event! [ type: event port: target ]
 ]
 
-TLS-server-awake: func [event /local port] [
-	log-more ["AWAKE Server:^[[1m" event/type]
-	if event/type = 'accept [
-		port: first event/port
-		probe query port
-		port/awake: function[event][
-			probe event/type
-			switch event/type [
-				read [
-					print ["Client said:" mold event/port/data]
-					clear event/port/data
-					write event/port to-binary "pong!"
+
+TLS-server-client-awake: function [event [event!]][
+	TCP-port: event/port
+	;? TCP-port
+	ctx: TCP-port/extra
+	log-debug ["Server's client awake event:" event/type "state:" ctx/state]
+	switch event/type [
+		read [
+			error: try [
+				complete?: TLS-read-data ctx TCP-port/data
+				if error-id: ctx/critical-error [ cause-TLS-error error-id ]
+				log-debug ["Read complete?" complete?]
+				either complete? [
+					switch ctx/state [
+						CLIENT_HELLO [
+							server-hello ctx
+							server-certificate ctx
+							server-hello-done ctx
+							write TCP-port head ctx/out/buffer
+						]
+						FINISHED [
+							binary/init ctx/out none
+							change-cipher-spec ctx
+							finished ctx
+							ctx/cipher-spec-set: 2
+							ctx/seq-read: 0
+							ctx/seq-write: 1 ;@@TODO: it cannot be here and it must be incremented on each write!
+							write TCP-port head ctx/out/buffer
+						]
+						APPLICATION [
+							;? ctx
+							;print to-string ctx/port-data
+							;send-event 'read TCP-port/parent
+							;? TCP-port
+							;? TCP-port/extra
+							;? TCP-port/parent/state
+							TCP-port/parent/actor/On-Read TCP-port
+							;do-TLS-close TCP-port
+						]
+					]
+				][
+					read TCP-port
 				]
-				wrote [
-					print "Server sent pong to client"
-					;read event/port
-					close event/port
-				]
-				close [
-					close event/port
-					return true
-				]
+				return false
 			]
-			false
+			; on error:
+			if ctx [ log-error ctx/error: error ]
+			;send-event 'error TLS-port
+			do-TLS-close TCP-port
+			return true
 		]
-		read port
+		wrote [
+			either ctx/protocol = 'APPLICATION [
+				TCP-port/parent/actor/On-Wrote TCP-port
+			][
+				read TCP-port
+			]
+			return false
+		]
+		close [
+			do-TLS-close TCP-port
+			return true
+		]
+	]
+	false
+]
+TLS-server-awake: func [event /local port info serv] [
+	log-more ["AWAKE Server:^[[1m" event/type]
+	switch event/type [
+		accept [
+			serv: event/port
+			port: first serv
+			info: query port
+			;? info
+			;? serv
+			port/extra: make TLS-context [
+				tcp-port: port
+				tls-port: serv/parent
+				server?:  true
+				state:   'CLIENT_HELLO
+				version:  serv/extra/version
+			]
+			port/spec/title: "TLS Server's client"
+			port/spec/ref: rejoin [tcp:// info/remote-ip #":" info/remote-port]
+			port/awake: :TLS-server-client-awake
+			;? port
+			read port
+		]
 	]
 	false
 ]
 
+
 TLS-client-awake: function [event [event!]][
 	log-more ["AWAKE Client:^[[1m" event/type]
-	TCP-port:   event/port
-	TLS-port:   TCP-port/extra
+	TCP-port: event/port
+;? TCP-port
+	ctx: TCP-port/extra
+	TLS-port: ctx/TLS-port
 
+;? TLS-port
 	if all [
-		TLS-port/state/protocol = 'APPLICATION
+		ctx/protocol = 'APPLICATION
 		not TCP-port/data
 	][
 		; reset the data field when interleaving port r/w states
@@ -1630,17 +1985,16 @@ TLS-client-awake: function [event [event!]][
 	switch/default event/type [
 		lookup [
 			open TCP-port
-			TLS-init TLS-port/state
-			send-event 'lookup TLS-port
+			TLS-init ctx
 			return false
 		]
 		connect [
 			error: try [
-				do-commands TLS-port/state [client-hello]
-				if none? TLS-port/state [return true] ;- probably closed meanwhile
-				log-info ["CONNECT^[[22m: client-hello done; protocol:^[[1m" TLS-port/state/protocol]
-				if TLS-port/state/protocol = 'HANDSHAKE [
-					do-commands TLS-port/state [
+				do-commands ctx [client-hello]
+				if none? ctx [return true] ;- probably closed meanwhile
+				log-info ["CONNECT^[[22m: client-hello done; protocol:^[[1m" ctx/protocol]
+				if ctx/protocol = 'HANDSHAKE [
+					do-commands ctx [
 						client-key-exchange
 						change-cipher-spec
 						finished
@@ -1650,20 +2004,23 @@ TLS-client-awake: function [event [event!]][
 					send-event 'connect TLS-port
 					return false
 				]
-				TLS-error *Alert/Close_notify
+				cause-TLS-error *Alert/Close_notify
 			]
-			if error? TLS-port/extra/state [
-				; upper protocol was already closed and reports the error in its state
-				; it's safe to throw the error now
-				do TLS-port/extra/state
+			;?? error
+			if ctx [
+				if error? ctx/state [
+					; upper protocol was already closed and reports the error in its state
+					; it's safe to throw the error now
+					do ctx/state
+				]
+				; in case that the upper protocol is not yet closed, store error and report it
+				ctx/error: error
 			]
-			; in case that the upper protocol is not yet closed, store error and report it
-			if TLS-port/state [ TLS-port/state/error: error ]
 			send-event 'error TLS-port
 			return true
 		]
 		wrote [
-			switch TLS-port/state/protocol [
+			switch ctx/protocol [
 				CLOSE-NOTIFY [
 					return true
 				]
@@ -1677,49 +2034,40 @@ TLS-client-awake: function [event [event!]][
 		]
 		read [
 			error: try [
-				log-info ["READ TCP" length? TCP-port/data "bytes proto-state:" TLS-port/state/protocol]
+				log-info ["READ TCP" length? TCP-port/data "bytes proto-state:" ctx/protocol]
 				;@@ This part deserves a serious review!                         
-				;dump/fmt TCP-port/data
-				complete?: TLS-read-data TLS-port/state TCP-port/data
+				complete?: TLS-read-data ctx TCP-port/data
 				;? port
-				if error-id: TLS-port/state/critical-error [
-					;? TLS-port
-					;? TLS-port/spec
-					;? TLS-port/state/connection
-					; trying to close internal connection before throwing the error
-					TLS-error error-id
-				]
+				if error-id: ctx/critical-error [ cause-TLS-error error-id ]
 				log-debug ["Read complete?" complete?]
 				unless complete? [
 					read TCP-port
 					return false
 				]
-				TLS-port/data: TLS-port/state/port-data
-				binary/init TLS-port/state/in none ; resets input buffer
-				;?? TLS-port/state/protocol
-				either 'APPLICATION = TLS-port/state/protocol [
+				TLS-port/data: ctx/port-data
+				binary/init ctx/in none ; resets input buffer
+				;?? ctx/protocol
+				either 'APPLICATION = ctx/protocol [
 					;print "------------------"
 					;- report that we have data to higher layer
+					;probe to-string TLS-port/data
 					send-event 'read TLS-port 
 				][	read TCP-port ]
 				return true
 			]
+			;print error
 			; on error:
-			if TLS-port/state [ TLS-port/state/error: error ]
+			if ctx [ ctx/error: error ]
 			send-event 'error TLS-port
 			return true
 		]
 		close [
-			log-info "CLOSE"
 			send-event 'close TLS-port
 			return true
 		]
 		error [
-			if all [
-				TLS-port/state
-				TLS-port/state/state = 'lookup
-			][
-				TLS-port/state/error: make error! [
+			if all [ctx ctx/state = 'lookup][
+				ctx/error: make error! [
 					code: 500 type: 'access id: 'cannot-open
 					arg1: TCP-port/spec/ref
 				]
@@ -1735,91 +2083,118 @@ TLS-client-awake: function [event [event!]][
 ]
 
 
+do-TLS-open: func [
+	port [port!]
+	/local spec conn config certs bin der key
+][
+	log-more "OPEN"
+	if port/state [return port]
+	spec: port/spec
+	conn: make port! [
+		scheme: 'tcp
+		host:    spec/host
+		port:    spec/port
+		ref:     rejoin [tcp:// any [host ""] ":" port]
+	]
+	either spec/host [
+		port/extra: conn/extra: make TLS-context [
+			tcp-port: conn
+			tls-port: port
+			version: *Protocol-version/TLS1.2
+		]
+		port/data: conn/extra/port-data
+		conn/awake: :TLS-client-awake
+	][
+		spec/ref: rejoin [tls://: spec/port]
+		port/spec/title: "TLS Server"
+		conn/spec/title: "TLS Server (internal)"
+		port/state: conn/extra: object [
+			TCP-port: conn
+			certificates: none
+			private-key:  none
+			elliptic-curves: decode-supported-groups :supported-elliptic-curves
+			version: *Protocol-version/TLS1.2
+		]
+		? spec
+		if config: select spec 'config [
+			certs: any [select config 'certificates []]
+			unless block? certs [certs: to block! certs]
+			bin: binary 4000
+			foreach file certs [
+				try/except [
+					der: select decode 'pkix read file 'binary
+					binary/write bin [UI24BYTES :der]
+				][
+					log-error ["Failed to import certificate:" file]
+				]
+			]
+			port/state/certificates: bin/buffer
+
+			if key: select config 'private-key [
+				if file? key [try [key: load key]]
+				either handle? key [
+					port/state/private-key: key
+				][	log-error ["Failed to import private key:" key] ]
+			]
+		]
+		port/actor: context [
+			On-Read: func [port [port!]][
+				log-debug "TLS On-Read"
+				print to string! port/extra/port-data
+				do-TLS-write port "HTTP/1.1 200 OK^M^/Content-type: text/plain^M^/^M^/Hello from Rebol using TLS v1.2"
+			]
+			On-Wrote: func [port [port!]][
+				send-event 'close port
+			]
+		]
+		conn/parent: port
+		conn/awake: :TLS-server-awake
+	]
+	open conn
+	port
+]
+do-TLS-close: func [port [port!] /local ctx][
+	log-more "CLOSE"
+	unless ctx: port/extra [return port]
+	log-debug "Closing port/extra/tcp-port"
+	close ctx/tcp-port
+	if port? ctx/encrypt-port [ close ctx/encrypt-port ]
+	if port? ctx/decrypt-port [ close ctx/decrypt-port ]
+	ctx/encrypt-port: none
+	ctx/decrypt-port: none
+	ctx/tcp-port/awake: none
+	port/extra: none
+	log-more "Port closed"
+	port
+]
+do-TLS-read: func [port [port!]][
+	log-more "READ"
+	read port/extra/tcp-port
+	port
+]
+do-TLS-write: func[port [port!] value [any-type!]][
+	log-more "WRITE"
+	if port/extra/protocol = 'APPLICATION [
+		do-commands/no-wait port/extra compose [
+			application (value)
+		]
+		return port
+	]
+]
+
 sys/make-scheme [
 	name: 'tls
 	title: "TLS protocol v1.2"
 	spec: make system/standard/port-spec-net []
-	parent: none
-	actor: [
-		read: func [
-			port [port!]
-			/local
-				resp data msg
-		][
-			log-more "READ"
-			;? port
-			read port/state/connection
-			return port
-		]
-
-		write: func [port [port!] value [any-type!]][
-			log-more "WRITE"
-			;?? port/state/protocol
-			if port/state/protocol = 'APPLICATION [ ;encrypted-handshake?
-				do-commands/no-wait port/state compose [
-					application (value)
-				]
-				return port
-			]
-		]
-
-		open: func [port [port!] /local conn spec state][
-			log-more "OPEN"
-			if port/state [return port]
-			spec:  port/spec
-			port/state: state: make TLS-context [
-				version: *Protocol-version/TLS1.2
-			]
-			state/connection: conn: make port! [
-				scheme: 'tcp
-				host:    spec/host
-				port:    spec/port
-				ref:     rejoin [tcp:// host ":" port]
-			]
-			port/data:  state/port-data
-			conn/extra: port
-			conn/awake: either spec/host [
-				:TLS-client-awake
-			][
-				state/server?: true
-				state/state: 'CLIENT_HELLO
-				:TLS-server-awake
-			]
-			
-			open conn
-			port
-		]
-		open?: func [port [port!]][
-			all [port/state open? port/state/connection true]
-		]
-		close: func [port [port!] /local ctx check1 check2][
-			log-more "CLOSE"
-			;? port ? port/scheme
-			unless port/state [return port]
-
-			log-debug "Closing port/state/connection"
-			;?? port/state/connection
-			close port/state/connection
-
-			if port? port/state/encrypt-port [ close port/state/encrypt-port ]
-			if port? port/state/decrypt-port [ close port/state/decrypt-port ]
-			port/state/encrypt-port: none
-			port/state/decrypt-port: none
-
-			log-more "Port closed"
-			port/state/connection/awake: none
-			port/state: none
-			port
-		]
-		copy: func [port [port!]][
-			if port/data [copy port/data]
-		]
-		query: func [port [port!]][
-			all [port/state query port/state/connection]
-		]
-		length?: func [port [port!]][
-			either port/data [length? port/data][0]
-		]
+	actor: reduce/no-set [
+		read:    :do-TLS-read
+		write:   :do-TLS-write
+		open:    :do-TLS-open
+		close:   :do-TLS-close
+		query:   func [port [port!]][all [port/extra query port/extra/tcp-port]]
+		open?:   func [port [port!]][all [port/extra open? port/extra/tcp-port]]
+		copy:    func [port [port!]][if port/data [copy port/data]]
+		length?: func [port [port!]][either port/data [length? port/data][0]]
 	]
 	set-verbose: :tls-verbosity
 ]

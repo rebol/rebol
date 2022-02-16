@@ -141,7 +141,8 @@ read-sync-awake: func [event [event!] /local error][
 ]
 http-awake: func [event /local port http-port state awake res][
 	port: event/port
-	http-port: port/extra
+	http-port: port/parent
+
 	state: http-port/state
 	if any-function? :http-port/awake [state/awake: :http-port/awake]
 	awake: :state/awake
@@ -798,7 +799,7 @@ sys/make-scheme [
 			]
 			
 			conn/awake: :http-awake
-			conn/extra: port
+			conn/parent: port
 			sys/log/info 'HTTP ["Opening connection:^[[22m" conn/spec/ref]
 			open conn
 

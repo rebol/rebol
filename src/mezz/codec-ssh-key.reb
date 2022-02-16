@@ -94,7 +94,7 @@ wrap [
 					pkix/binary: aes/stream d pkix/binary
 				][	return none ]
 			]
-			sys/log/info 'REBOL ["Trying to resolve:" pkix/label]
+			sys/log/info 'REBOL ["Importing:" pkix/label]
 
 			switch pkix/label [
 				"SSH2 PUBLIC KEY" [

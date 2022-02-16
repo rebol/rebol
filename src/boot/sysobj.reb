@@ -244,6 +244,7 @@ standard: object [
 	port: construct [ ; Port specification object
 		spec:		; published specification of the port
 		scheme:		; scheme object used for this port
+		parent:     ; port's parent (for example HTTPS port in TLS)
 		actor:		; port action handler (script driven)
 		awake:		; port awake function (event driven)
 		state:		; internal state values (private)

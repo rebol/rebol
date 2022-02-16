@@ -140,7 +140,7 @@ make-scheme: func [
 	"INIT: Make a scheme from a specification and add it to the system."
 	def [block!] "Scheme specification"
 	/with 'scheme "Scheme name to use as base"
-	/local actor
+	/local actor name func* args body pos
 ][
 	with: either with [get in system/schemes scheme][system/standard/scheme]
 	unless with [cause-error 'access 'no-scheme scheme]
@@ -152,11 +152,24 @@ make-scheme: func [
 
 	; If actor is block build a non-contextual actor object:
 	if block? :def/actor [
-		actor: make object! (length? def/actor) / 4
-		foreach [name func* args body] def/actor [ ; (maybe PARSE is better here)
-			name: to word! name ; bug!!! (should not be necessary?)
-			repend actor [name func args body]
-		]
+		actor: make object! (length? :def/actor) / 4
+		parse :def/actor [any [
+			set name set-word! [
+				set func* any-function!
+				(append actor reduce [name :func*])
+				|
+				'func set args block! set body block!
+				(append actor reduce [name func args body])
+				|
+				'function set args block! set body block!
+				(append actor reduce [name function args body])
+			]
+			| end
+			| pos: (
+				cause-error 'script 'invalid-arg pos
+			)
+		]]
+
 		def/actor: actor
 	]
 
