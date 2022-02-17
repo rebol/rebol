@@ -701,6 +701,8 @@ include-prot-mysql:          [mezz-prot-files: %mezz/prot-mysql.reb         ]
 
 include-prebol:              [mezz-lib-files: %modules/prebol.reb           ]
 
+include-native-oid: [core-files: %core/n-oid.c] ; `form-oid` native (used in DER codec)
+
 include-https: [
 	:include-bincode
 	:include-cryptography
@@ -770,6 +772,7 @@ include-rebol-bulk: [
 	:include-prot-mysql
 
 	:include-dialecting  ;`delect`
+	:include-native-oid  ;`form-oid`
 
 	config: INCLUDE_PNG_FILTER ; includes `filter` and `unfilter` natives
 

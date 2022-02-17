@@ -2,10 +2,11 @@ REBOL [
 	title: "REBOL3 codec for DER/BER structures"
 	name: 'codec-der
 	author: "Oldes"
-	version: 0.1.0
-	date:    17-Oct-2018
+	version: 0.2.0
+	date:    17-Feb-2022
 	history: [
 		0.1.0 17-Oct-2018 "Oldes" {Initial version with DECODE and IDENTIFY functions.}
+		0.2.0 17-Feb-2022 "Oldes" {Including `form-id`}
 	]
 	notes: {
 	Useful command for cross-testing:
@@ -198,7 +199,33 @@ register-codec [
 		BMP_STRING        ;= 1e Basic Multilingual Plane/Unicode string
 	]
 
+	form-OID: either find lib 'form-oid [
+		; native version
+		:lib/form-oid
+	][
+		function[
+			"Return the x.y.z.... style numeric string for the given OID"
+			oid [binary!]
+		][
+			len: length?  oid
+			out: make string! 3 * len
+			append out ajoin [to integer! oid/1 / 40  #"."  oid/1 % 40]
+			++ oid
+			value: 0
+			while [not tail? oid][
+				value: (value << 7)
+				value: value + (oid/1 & 127)
+				if oid/1 & 128 = 0 [
+					append append out #"." value
+					value: 0
+				]
+				++ oid
+			]
+			out
+		]
+	]
 	decode-OID: function[
+		"Convert given OID to its name if recognized or a numeric string"
 		oid [binary!]
 		/full "Returns name with group name as a string"
 		/local main name warn
@@ -237,10 +264,16 @@ register-codec [
 					;| #"^(03)"  (name: 'prime192v3)  
 					| #"^(01)"  (name: 'secp192r1)
 				]
+				| #{0403} [
+					  #"^(01)" (name: 'ecdsa-with-SHA224)
+					| #"^(02)" (name: 'ecdsa-with-SHA256)
+					| #"^(03)" (name: 'ecdsa-with-SHA384)
+					| #"^(04)" (name: 'ecdsa-with-SHA512)
+				]
 			]
 			|
 			#{2A864886F70D01} [
-				#{01} (main: "PKCS #1") [
+				#"^(01)" (main: "PKCS #1") [
 					  #"^(01)" (name: 'rsaEncryption)
 					| #"^(02)" (name: 'md2WithRSAEncryption)
 					| #"^(03)" (name: 'md4withRSAEncryption)
@@ -252,13 +285,13 @@ register-codec [
 
 				] end
 				|
-				#{07} (main: "PKCS #7") [
+				#"^(07)" (main: "PKCS #7") [
 					  #"^(01)" (name: 'data)
 					| #"^(02)" (name: 'signedData)
 					| #"^(06)" (name: 'encryptedData)
 				] end
 				|
-				#{09} (main: "PKCS #9") [
+				#"^(09)" (main: "PKCS #9") [
 				;http://oid-info.com/get/1.2.840.113549.1.9
 					  #"^(01)" (name: 'emailAddress warn: "Deprecated, use an altName extension instead")
 					| #"^(03)" (name: 'contentType)
@@ -270,7 +303,7 @@ register-codec [
 					| #"^(34)" (name: 'CMSAlgorithmProtect)
 				] end
 				|
-				#{0C} (main: "PKCS #12") [
+				#"^(0C)" (main: "PKCS #12") [
 					  #{0106}   (name: 'pbeWithSHAAnd40BitRC2-CBC)
 					| #{0103}   (name: 'pbeWithSHAAnd3-KeyTripleDES-CBC)
 					| #{0A0102} (name: 'pkcs-12-pkcs-8ShroudedKeyBag)
@@ -312,8 +345,40 @@ register-codec [
 			|
 			#{2B060105050703} (main: "PKIX key purpose") [
 				  #"^(01)" (name: 'serverAuth)
-				  #"^(02)" (name: 'clientAuth)
+				| #"^(02)" (name: 'clientAuth)
 				| #"^(03)" (name: 'codeSigning)
+				| #"^(04)" (name: 'emailProtection)
+				;| #"^(05)" (name: 'ipsecEndSystem)
+				;| #"^(06)" (name: 'ipsecTunnel)
+				;| #"^(07)" (name: 'ipsecUser)
+				| #"^(08)" (name: 'timeStamping)
+				;| #"^(09)" (name: 'OCSPSigning)
+				;| #"^(0A)" (name: 'dvcs)
+				;| #"^(0B)" (name: 'sbgpCertAAServerAuth)
+				;| #"^(0C)" (name: 'scvp)
+				;| #"^(0D)" (name: 'eapOverPPP)
+				;| #"^(0E)" (name: 'eapOverLAN)
+				;| #"^(0F)" (name: 'scvpServer)
+				;| #"^(10)" (name: 'scvpClient)
+				;| #"^(11)" (name: 'ipsecIKE)
+				;| #"^(12)" (name: 'capwapAC)
+				;| #"^(13)" (name: 'capwapWTP)
+				;| #"^(14)" (name: 'sipDomain)
+				;| #"^(15)" (name: 'secureShellClient)
+				;| #"^(16)" (name: 'secureShellServer)
+				;| #"^(17)" (name: 'sendRouter)
+				;| #"^(18)" (name: 'sendProxiedRouter)
+				;| #"^(19)" (name: 'sendOwner)
+				;| #"^(1A)" (name: 'sendProxiedOwner)
+				;| #"^(1B)" (name: 'cmcCA)
+				;| #"^(1C)" (name: 'cmcRA)
+				;| #"^(1D)" (name: 'cmcArchive)
+				;| #"^(1E)" (name: 'bgpsec-router)
+				;| #"^(1F)" (name: 'BrandIndicatorforMessageIdentification)
+				;| #"^(20)" (name: 'cmKGA)
+				;| #"^(21)" (name: 'rpcTLSClient)
+				;| #"^(22)" (name: 'rpcTLSServer)
+				;| #"^(23)" (name: 'bundleSecurity)
 			] end
 			|
 			#{2B0601040182370201} (main: "Microsoft") [
@@ -328,7 +393,7 @@ register-codec [
 			either full [
 				rejoin [ any [name "<?name>"] " (" any [main "<?main>"] ")"]
 			][	name ]
-		][ oid ]
+		][ form-oid oid ]
 	]
 
 	verbose: 0
