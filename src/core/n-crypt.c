@@ -245,12 +245,12 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 #ifndef INCLUDE_RSA
 	Trap0(RE_FEATURE_NA);
 #else
-	REBSER *n       = VAL_SERIES(D_ARG(1));
-	REBSER *e       = VAL_SERIES(D_ARG(2));
+	REBVAL *n       = D_ARG(1);
+	REBVAL *e       = D_ARG(2);
 	REBOOL  ref_private =        D_REF(3);
-	REBSER *d       = VAL_SERIES(D_ARG(4));
-	REBSER *p       = VAL_SERIES(D_ARG(5));
-	REBSER *q       = VAL_SERIES(D_ARG(6));
+	REBVAL *d       = D_ARG(4);
+	REBVAL *p       = D_ARG(5);
+	REBVAL *q       = D_ARG(6);
 
 	int err = 0;
 	REBVAL *ret = D_RET;
@@ -264,11 +264,11 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 	if (ref_private) {
 		err = mbedtls_rsa_import_raw(
 			rsa_ctx,
-			BIN_DATA(n), BIN_LEN(n),
-			BIN_DATA(p), BIN_LEN(p),
-			BIN_DATA(q), BIN_LEN(q),
-			BIN_DATA(d), BIN_LEN(d),
-			BIN_DATA(e), BIN_LEN(e)
+			VAL_BIN_AT(n), VAL_LEN(n),
+			VAL_BIN_AT(p), VAL_LEN(p),
+			VAL_BIN_AT(q), VAL_LEN(q),
+			VAL_BIN_AT(d), VAL_LEN(d),
+			VAL_BIN_AT(e), VAL_LEN(e)
 		);
 		if (err != 0 
 			|| mbedtls_rsa_complete(rsa_ctx) != 0
@@ -277,11 +277,11 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 	} else {
 		err = mbedtls_rsa_import_raw(
 			rsa_ctx,
-			BIN_DATA(n), BIN_LEN(n),
+			VAL_BIN_AT(n), VAL_LEN(n),
 			NULL, 0,
 			NULL, 0,
 			NULL, 0,
-			BIN_DATA(e), BIN_LEN(e)
+			VAL_BIN_AT(e), VAL_LEN(e)
 		);
 		if (err != 0 
 			|| mbedtls_rsa_complete(rsa_ctx) != 0
@@ -327,7 +327,7 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 //		/verify   "Use public key to verify signed data (returns TRUE or FALSE)"
 //		 signature [binary!] "Result of the /sign call"
 //		/hash     "Signature's message digest algorithm"
-//		 algorithm [word!] "Default value is SHA256"
+//		 algorithm [word! none!]
 //  ]
 ***********************************************************************/
 {
@@ -349,6 +349,7 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 	REBYTE  *inBinary;
 	REBYTE  *outBinary;
 	REBYTE   hash[64];
+	REBCNT   hashSym;
 	REBCNT   inBytes;
 	REBCNT   outBytes;
 	REBINT   err = 0;
@@ -381,20 +382,23 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 		return R_NONE;
 	}
 
-	data = VAL_SERIES(val_data);
-	inBinary = BIN_DATA(data);
-	inBytes = BIN_LEN(data);
+	data     = VAL_SERIES(val_data);
+	inBinary = VAL_BIN_AT(val_data);
+	inBytes  = VAL_LEN(val_data);
 
 	if (refVerify || refSign) {
-		if (IS_NONE(val_hash)) {
+		if (refHash && IS_NONE(val_hash)) {
+			// use none if really requested
 			md_alg = MBEDTLS_MD_NONE;
 		}
 		else {
+			// if /hash was not used, make default to SHA256
+			hashSym = IS_NONE(val_hash) ? SYM_SHA256 : VAL_WORD_CANON(val_hash);
 			// count message digest off the input data
-			if (Message_Digest(hash, inBinary, inBytes, VAL_WORD_CANON(val_hash), &inBytes)) {
+			if (Message_Digest(hash, inBinary, inBytes, hashSym, &inBytes)) {
 				// map Rebol word to mbedtls_md_type_t (expets that have same order!)
 				// no need to test a range as only known will pass above run
-				md_alg = VAL_WORD_CANON(val_hash) - SYM_MD5 + 1;
+				md_alg = hashSym - SYM_MD5 + 1;
 				inBinary = hash;
 			}
 			else {
@@ -402,7 +406,7 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 			}
 		}
 		if (refVerify) {
-			err = mbedtls_rsa_rsassa_pkcs1_v15_verify(rsa, md_alg, inBytes, inBinary, VAL_BIN(val_sign));
+			err = mbedtls_rsa_rsassa_pkcs1_v15_verify(rsa, md_alg, inBytes, inBinary, VAL_BIN_AT(val_sign));
 			return (err == 0) ? R_TRUE : R_FALSE;
 		}
 	}
