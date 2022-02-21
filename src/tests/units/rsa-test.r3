@@ -103,7 +103,7 @@ Rebol [
 		; released handle is now unusable:
 		--assert error? try [rsa/verify/hash key-pub bin-data signature 'SHA512]
 
-	--test-- "Test input where it's not exactly at its head"
+	--test-- "Test input which isn't exactly at its head"
 		key-pub: rsa-init
 			at #{0BADCAFE
 			D2FC7B6A0A1E6C67104AEB8F88B257669B4DF679DDAD099B5C4A6CD9A88015B5
@@ -114,7 +114,7 @@ Rebol [
 			0740647CEEEAA310BD12F985A8EB9F59FDD426CEA5B2120F4F2A34BCAB764B7E
 			6C54D6840238BCC40587A59E66ED1F33894577635C470AF75CF92C20D1DA43E1
 			BFC419E222A6F0D0BB358C5E38F9CB050AEAFE904814F1AC1AA49CCA9EA0CA83
-			} 5	#{010001}
+			} 5	next #{FF010001}
 		--assert rsa/verify key-pub bin-data sign-hash
 		bin-data:  insert bin-data  #{0BADCAFE}
 		sign-hash: insert sign-hash #{0BADCAFE}
