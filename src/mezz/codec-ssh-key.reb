@@ -142,6 +142,17 @@ wrap [
 				]
 				"RSA PUBLIC KEY"  [ return init-rsa-public-key  data ]
 				"RSA PRIVATE KEY" [ return init-rsa-private-key data ]
+				"DH PARAMETERS" [
+					parse data [
+						'SEQUENCE into [
+							'INTEGER set p binary!
+							'INTEGER set g binary!
+						] (
+							return dh-init :g :p
+						)
+					]
+					
+				]
 			]
 			none ; no success!
 		]

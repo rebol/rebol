@@ -224,6 +224,13 @@ sY29ouezv4Xz2PuMch5VGPP+CDqzCM4loWgV
 --test-- "Init RSA key from file"
 	--assert handle? try [key: decode 'ssh-key read %units/files/rebol-public.ppk]
 	rsa key none ; release it, as it is not GCed yet.
+
+--test-- "Init public DH params from file"
+	--assert all [
+		handle? key: load %units/files/dhparam2048.key
+		'dhm = query/mode key 'type
+		dh/release key
+	]
 ===end-group===
 
 ===start-group=== "PPK codec"
