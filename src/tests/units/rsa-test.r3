@@ -97,9 +97,10 @@ Rebol [
 		--assert rsa/verify key-pri bin-data sign-hash
 
 	--test-- "RSA key release"
-		;once RSA key is not needed, release the resources using NONE data
-		--assert rsa key-pub none
-		--assert rsa key-pri none
+		;once RSA key is not needed, release its resources
+		;(it is safe not to manually release it. It would be released by GC, when unused)
+		--assert release key-pub
+		--assert release key-pri
 		; released handle is now unusable:
 		--assert error? try [rsa/verify/hash key-pub bin-data signature 'SHA512]
 
@@ -139,18 +140,18 @@ Rebol [
 	; so she knows, that data were not modified
 
 	; used keys should be released by GC, when not referenced, but we can release them immediately:
-	rsa public-key  none
-	rsa private-key none
+	release public-key 
+	release private-key
 ===end-group===
 
 ===start-group=== "RSA initialization from file"
 	--test-- "RSA private key from OpenSSL format (RSA PRIVATE KEY)"
 	--assert handle? try [private-key: load %units/files/rebol-private-no-pass.key]
-	rsa private-key none
+	release private-key
 	--test-- "RSA private key from OpenSSL x509 format (PRIVATE KEY)"
 	; openssl req -new -newkey rsa:4096 -x509 -sha256 -days 365 -nodes -out MyCertificate.crt -keyout MyKey.key
 	--assert handle? try [private-key: load %units/files/MyKey.key]
-	rsa private-key none
+	release private-key
 ===end-group===
 
 

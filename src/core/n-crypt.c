@@ -320,7 +320,7 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 //  rsa: native [
 //		"Encrypt/decrypt/sign/verify data using RSA cryptosystem. Only one refinement must be used!"
 //		rsa-key [handle!] "RSA context created using `rsa-init` function"
-//		data    [binary! none!] "Data to work with. Use NONE to release the RSA handle resources!"
+//		data    [binary!] "Data to work with."
 //		/encrypt  "Use public key to encrypt data"
 //		/decrypt  "Use private key to decrypt data"
 //		/sign     "Use private key to sign data. Result is PKCS1 v1.5 binary"
@@ -368,12 +368,6 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 	if (NOT_VALID_CONTEXT_HANDLE(key, SYM_RSA)) Trap0(RE_INVALID_HANDLE);
 
 	rsa = (RSA_CTX*)VAL_HANDLE_CONTEXT_DATA(key);
-
-	if (IS_NONE(val_data)) {
-		// release RSA key resources
-		Free_Hob(VAL_HANDLE_CTX(key));
-		return R_TRUE;
-	}
 
 	if(
 		(mbedtls_rsa_check_pubkey(rsa) != 0) ||
@@ -510,7 +504,6 @@ error:
 //  dh: native [
 //		"Diffie-Hellman key exchange"
 //		dh-key [handle!] "DH key created using `dh-init` function"
-//		/release "Releases internal DH key resources"
 //		/public  "Returns public key as a binary"
 //		/secret  "Computes secret result using peer's public key"
 //			public-key [binary!] "Peer's public key"
@@ -518,10 +511,9 @@ error:
 ***********************************************************************/
 {
 	REBVAL *key        = D_ARG(1);
-	REBOOL  refRelease = D_REF(2);
-	REBOOL  refPublic  = D_REF(3);
-	REBOOL  refSecret  = D_REF(4);
-	REBVAL *gy         = D_ARG(5);
+	REBOOL  refPublic  = D_REF(2);
+	REBOOL  refSecret  = D_REF(3);
+	REBVAL *gy         = D_ARG(4);
 
 	REBSER  *out = NULL;
 	REBINT   err;
@@ -556,10 +548,6 @@ error:
 		if (err) goto error;
 		BIN_LEN(out) = olen;
 	}
-	if (refRelease) {
-		Free_Hob(VAL_HANDLE_CTX(key));
-		if (!out) return R_TRUE;
-	}
 	SET_BINARY(D_RET, out);
 	return R_RET;
 error:
@@ -582,7 +570,6 @@ error:
 //		/public "Returns public key as a binary"
 //		/secret  "Computes secret result using peer's public key"
 //			public-key [binary!] "Peer's public key"
-//		/release "Releases internal ECDH key resources"
 //  ]
 ***********************************************************************/
 {
@@ -593,7 +580,6 @@ error:
 	REBOOL  ref_public  = D_REF(5);
 	REBOOL  ref_secret  = D_REF(6);
 	REBVAL *val_public  = D_ARG(7);
-	REBOOL  ref_release = D_REF(8);
 
 
 	ECDH_CTX *ctx;
@@ -605,7 +591,7 @@ error:
 
 	// make sure that only valid combination of refinements is used!
 	if (
-		(ref_type   && (ref_public || ref_secret || ref_release)) ||
+		(ref_type   && (ref_public || ref_secret )) ||
 		(ref_public && (ref_type   || ref_secret )) ||
 		(ref_secret && (ref_public || ref_type   ))
 	) {
@@ -676,10 +662,6 @@ error:
 		
 		SET_BINARY(D_RET, bin);
 		BIN_LEN(bin) = olen;
-	}
-	if (ref_release) {
-		Free_Hob(VAL_HANDLE_CTX(val_handle));
-		if (bin == NULL) return R_TRUE;
 	}
 	return R_RET;
 

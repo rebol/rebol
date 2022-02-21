@@ -929,7 +929,7 @@ client-key-exchange: function [
 				key-data: rsa/encrypt rsa-key pre-secret
 				key-data-len-bytes: 2
 				log-more ["W[" seq-write "] key-data:" mold key-data]
-				rsa rsa-key none ;@@ releases the internal RSA data, should be done by GC one day!
+				release :rsa-key ; don't wait on GC and release it immediately
 			]
 			DHE_DSS
 			DHE_RSA [
@@ -1747,7 +1747,7 @@ TLS-parse-handshake-message: function [
 							;decrypt the `signature` with server's public key
 							rsa-key: apply :rsa-init ctx/server-certs/1/public-key/rsaEncryption
 							also rsa/verify/hash rsa-key message signature hash-algorithm
-							     rsa rsa-key none ;@@ releases the internal RSA data, should be done by GC one day!
+							     release :rsa-key ; release it immediately, don't wait on GC
 						]
 						rsa_fixed_dh [
 							log-more "Checking signature using RSA_fixed_DH"
@@ -1775,18 +1775,21 @@ TLS-parse-handshake-message: function [
 			if dh_p [
 				dh-key: dh-init dh_g dh_p
 				ctx/pre-secret: dh/secret dh-key pub_key
-				log-more ["DH common secret:" ctx/pre-secret]
-				ctx/key-data: dh/public/release dh-key
+				log-more ["DH common secret:" mold ctx/pre-secret]
+				ctx/key-data: dh/public :dh-key
+				; release immediately, don't wait on GC
+				release :dh-key dh-key: none
 			]
 			if curve [
 				;- elyptic curve init
 				;curve is defined above (sent from server as well as server's public key)
 				dh-key: ecdh/init none curve
 				ctx/pre-secret: ecdh/secret dh-key pub_key
-				log-more ["ECDH common secret:^[[32m" ctx/pre-secret]
+				log-more ["ECDH common secret:^[[32m" mold  ctx/pre-secret]
 				; resolve the public key to supply it to server
-				ctx/key-data: ecdh/public/release dh-key
-				dh-key: none
+				ctx/key-data: ecdh/public :dh-key
+				; release immediately, don't wait on GC
+				release :dh-key dh-key: none
 			]
 		]
 		CLIENT_KEY_EXCHANGE [

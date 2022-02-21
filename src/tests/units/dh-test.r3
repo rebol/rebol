@@ -57,13 +57,12 @@ C79E915C3277361FBFA587C6DC06FEDE0B7E57FEC0B68F96B3AD651D54264357
 
 	;- Once done with the exchange, the DH key must be released!
 
-	--assert true? dh/release k-Alice
+	--assert true? release k-Alice
 	--assert none? dh/public k-Alice
 	
-	;- the release may be also used while getting the secret
-	
-	--assert binary? secret-Boban-2: dh/secret/release k-Boban pub-Alice
+	--assert binary? secret-Boban-2: dh/secret k-Boban pub-Alice
 	--assert secret-Boban = secret-Boban-2
+	--assert true? release k-Boban
 	
 	;- once released, the secret and public will be unavailable
 
@@ -95,16 +94,18 @@ foreach ecurve system/catalog/elliptic-curves [
 		;- These keys should be same on both sides
 		--assert secret-Alice = secret-Boban
 		;- Once done with the exchange, the ECDH key must be released!
-		--assert true? ecdh/release k-Alice
+		--assert true? release k-Alice
 		--assert none? ecdh/public k-Alice
 
 		;- re-initialization...
 		--assert handle? ecdh/init k-Alice ecurve ;- using existing key for a new init
 		--assert binary? pub-Alice: ecdh/public k-Alice
-		;- /release may be used with /secret
-		--assert binary? secret-Alice: ecdh/secret/release k-Alice pub-Boban
-		--assert binary? secret-Boban: ecdh/secret/release k-Boban pub-Alice
+		--assert binary? secret-Alice: ecdh/secret k-Alice pub-Boban
+		--assert binary? secret-Boban: ecdh/secret k-Boban pub-Alice
 		--assert secret-Alice = secret-Boban
+		; It is safe not to release (it would be done on GC), but it's better to do it
+		--assert true? release k-Alice
+		--assert true? release k-Boban
 
 	if find [curve25519 curve448] ecurve [
 		; these curves are not for signing

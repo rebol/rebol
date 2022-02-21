@@ -247,6 +247,11 @@ recycle: native [
 	/torture {Constant recycle (for internal debugging)}
 ]
 
+release: native [
+	"Release internal resources of the handle. Returns true on success."
+	handle [handle!]
+]
+
 reduce: native [
 	{Evaluates expressions and returns multiple results.}
 	value
