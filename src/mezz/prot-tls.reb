@@ -175,6 +175,20 @@ TLS-context: context [
 ] 'TLS-Handshake-type
 
 *Cipher-suite: enum [
+;   Elyptic curves:
+
+	TLS_ECDHE_RSA_WITH_CHACHA20-POLY1305_SHA256:   #{CCA8}
+	TLS_ECDHE_ECDSA_WITH_CHACHA20-POLY1305_SHA256: #{CCA9}
+	TLS_ECDHE_RSA_WITH_AES-256-CBC_SHA384:         #{C028}
+	TLS_ECDHE_RSA_WITH_AES-128-GCM_SHA256:         #{C02F}
+	TLS_ECDHE_RSA_WITH_AES-256-GCM_SHA384:         #{C030}
+	TLS_ECDHE_ECDSA_WITH_AES-128-GCM_SHA256:       #{C02B}
+	TLS_ECDHE_ECDSA_WITH_AES-256-GCM_SHA384:       #{C02C}
+	TLS_ECDHE_RSA_WITH_AES-128-CBC_SHA256:         #{C027}
+	TLS_ECDHE_RSA_WITH_AES-128-CBC_SHA:            #{C013}
+	TLS_ECDHE_ECDSA_WITH_AES-128-CBC_SHA:          #{C009}
+	TLS_ECDHE_RSA_WITH_AES-256-CBC_SHA:            #{C014}
+	TLS_ECDHE_ECDSA_WITH_AES-256-CBC_SHA:          #{C00A}
 
 ;   The following CipherSuite definitions require that the server provide
 ;   an RSA certificate that can be used for key exchange.  The server may
@@ -245,21 +259,6 @@ TLS-context: context [
 	TLS_DH_anon_WITH_AES-256-CBC_SHA:    #{003A}
 	TLS_DH_anon_WITH_AES-128-CBC_SHA256: #{006C}
 	TLS_DH_anon_WITH_AES-256-CBC_SHA256: #{006D}
-
-;   Elyptic curves:
-
-	TLS_ECDHE_RSA_WITH_CHACHA20-POLY1305_SHA256:   #{CCA8}
-	TLS_ECDHE_ECDSA_WITH_CHACHA20-POLY1305_SHA256: #{CCA9}
-	TLS_ECDHE_RSA_WITH_AES-256-CBC_SHA384:         #{C028}
-	TLS_ECDHE_RSA_WITH_AES-128-GCM_SHA256:         #{C02F}
-	TLS_ECDHE_RSA_WITH_AES-256-GCM_SHA384:         #{C030}
-	TLS_ECDHE_ECDSA_WITH_AES-128-GCM_SHA256:       #{C02B}
-	TLS_ECDHE_ECDSA_WITH_AES-256-GCM_SHA384:       #{C02C}
-	TLS_ECDHE_RSA_WITH_AES-128-CBC_SHA256:         #{C027}
-	TLS_ECDHE_RSA_WITH_AES-128-CBC_SHA:            #{C013}
-	TLS_ECDHE_ECDSA_WITH_AES-128-CBC_SHA:          #{C009}
-	TLS_ECDHE_RSA_WITH_AES-256-CBC_SHA:            #{C014}
-	TLS_ECDHE_ECDSA_WITH_AES-256-CBC_SHA:          #{C00A}
 
 ] 'TLS-Cipher-suite
 
@@ -825,7 +824,6 @@ server-certificate: function [ctx [object!]][
 						UI16BYTES :signature
 					 pos-end:
 					]
-
 				] 
 			]
 			;; fill the missing lengths
@@ -1725,7 +1723,7 @@ TLS-parse-handshake-message: function [
 				AT :s
 				message: BYTES :message-len
 			]
-			;print ["DH:" dh_p dh_g dh_Ys] 
+			;print ["DH:" mold dh_p mold dh_g mold pub_key] 
 			;?? message
 			
 			;-- check signature
