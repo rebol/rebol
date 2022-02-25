@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Developers
+**  Copyright 2012-2022 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -581,7 +581,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	}
 
 	// Is value a block?
-	if (IS_BLOCK(val)) {
+	if (ANY_BLOCK(val)) {
 		if (not_only) val = VAL_BLK_DATA(val);
 		if (IS_END(val)) val = NONE_VALUE;
 		else is_blk = TRUE;
