@@ -317,6 +317,10 @@ register-codec [
 			#{2B0601040182370201} (main: "Microsoft") [
 				  #"^(15)" (name: 'individualCodeSigning)
 			] end
+			|
+			#{0992268993F22C6401} (main: "Attribute") [
+				#"^(01)" (name: 'uid)
+			] end
 		]
 		;?? main
 		;?? name
