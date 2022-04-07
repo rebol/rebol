@@ -310,7 +310,7 @@ register-codec [
 			|
 			#{2B060105050703} (main: "PKIX key purpose") [
 				  #"^(01)" (name: 'serverAuth)
-				  #"^(02)" (name: 'clientAuth)
+				| #"^(02)" (name: 'clientAuth)
 				| #"^(03)" (name: 'codeSigning)
 			] end
 			|
@@ -319,6 +319,7 @@ register-codec [
 			] end
 			|
 			#{0992268993F22C6401} (main: "Attribute") [
+				; http://oid-info.com/cgi-bin/display?tree=0.9.2342.19200300.100.1.1
 				#"^(01)" (name: 'uid)
 			] end
 		]
@@ -334,18 +335,4 @@ register-codec [
 	]
 
 	verbose: 0
-]
-
-register-codec [
-	name:  'mobileprovision
-	type:  'cryptography
-	title: "Apple's mobileprovision file"
-	suffixes: [%.mobileprovision]
-	decode: function[data [binary!]][
-		try [
-			der: codecs/DER/decode data
-			result: to string! der/sequence/cs0/sequence/sequence/cs0/2
-		]
-		result
-	]
 ]

@@ -2,20 +2,21 @@ REBOL [
 	name:    plist
 	type:    module
 	options: [delay]
-	version: 0.0.1
-	title:   "REBOL 3 codec for PLIST files"
+	version: 1.0.0
+	title:   "PLIST codec"
 	file:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-plist.reb
 	author:  "Oldes"
 	history: [
-		07-Apr-2022 "Oldes" {Initial version of the PLIST decoder}
+		07-Apr-2022 "Oldes" {Initial version of the PLIST and Provisioning Profile decoder}
 	]
-	References: [
+	references: [
 		https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/PropertyLists/Introduction/Introduction.html
 		https://medium.com/@karaiskc/understanding-apples-binary-property-list-format-281e6da00dbd
 	]
 	todo: {
 		* Support binary PLIST version
 		* PLIST encoder
+		* Provision profile data validation?
 	}
 ]
 
@@ -113,7 +114,7 @@ register-codec [
 								change/only v compose [
 									commonName:  (crt/subject/commonName)
 									valid-to:    (crt/valid-to)
-									fingerprint: (crt/fingerprint)
+									fingerprint: (select crt 'fingerprint)
 								]
 							]
 						]
@@ -138,5 +139,52 @@ register-codec [
 			thru "<!DOCTYPE plist"
 			thru "<plist " to end
 		]
+	]
+]
+
+register-codec [
+	name:  'provision
+	type:  'cryptography
+	title: "Apple's Provisioning Profile File Format"
+	suffixes: [%.provisionprofile %.mobileprovision]
+
+	decode: function [
+		{Extract PLIST data from a provision profile}
+		data  [binary! file! url!]
+		;return: [map!]
+	] [
+		unless binary? data [ data: read data ]
+
+		der: codecs/der/decode data
+		parse der [
+			'SEQUENCE into [
+				'OBJECT_IDENTIFIER #{2A864886F70D010702} 'CS0 into [
+					'SEQUENCE into [
+						'INTEGER set version: binary!
+						'SET into [
+							'SEQUENCE into [
+								'OBJECT_IDENTIFIER set oid: binary! (
+									hash-alg: codecs/der/decode-oid oid
+								)
+								to end
+							]
+						]
+						'SEQUENCE into [
+							'OBJECT_IDENTIFIER #{2A864886F70D010701} 'CS0 into [
+								'OCTET_STRING set plist: binary!
+							]
+						]
+						; follows certificates used to sign the data..
+						; validation is not implemented!
+						to end
+					]
+					to end
+				]
+				to end
+			]
+		]
+		either binary? plist [
+			codecs/plist/decode plist
+		][	none ]
 	]
 ]
