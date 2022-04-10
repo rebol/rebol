@@ -388,6 +388,11 @@ register-codec [
 			#{2B0601040182370201} (main: "Microsoft") [
 				  #"^(15)" (name: 'individualCodeSigning)
 			] end
+			|
+			#{0992268993F22C6401} (main: "Attribute") [
+				; http://oid-info.com/cgi-bin/display?tree=0.9.2342.19200300.100.1.1
+				#"^(01)" (name: 'uid)
+			] end
 		]
 		;?? main
 		;?? name
@@ -401,18 +406,4 @@ register-codec [
 	]
 
 	verbose: 0
-]
-
-register-codec [
-	name:  'mobileprovision
-	type:  'cryptography
-	title: "Apple's mobileprovision file"
-	suffixes: [%.mobileprovision]
-	decode: function[data [binary!]][
-		try [
-			der: codecs/DER/decode data
-			result: to string! der/sequence/cs0/sequence/sequence/cs0/2
-		]
-		result
-	]
 ]

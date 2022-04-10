@@ -547,6 +547,26 @@ if find codecs 'html-entities [
 	===end-group===
 ]
 
+try [import 'plist]
+if find codecs 'plist [
+	===start-group=== "PLIST codec"		
+		--test-- "Load PLIST file (XML version)"
+			--assert map? data: load %units/files/Some.plist
+			--assert data/AppIDName = "Test Application"
+			--assert data/UUID      = "bba91992-3a72-46b3-bc5f-f7b59aa49236"
+	
+		--test-- "Load mobileprovision file"
+			--assert all [
+				map? data: load %units/files/Some.mobileprovision
+				data/AppIDName = "Samorost 1"
+				data/UUID      = "be387546-d90d-40cd-83e6-95eb6f5f0861"
+				block? data/ProvisionedDevices
+				block? data/DeveloperCertificates
+				object? decode 'crt data/DeveloperCertificates/1
+			]
+	===end-group===
+]
+
 ;@@ PDF codec test is in: codecs-test-pdf.r3
 
 ~~~end-file~~~
