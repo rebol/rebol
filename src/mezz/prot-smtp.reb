@@ -1,13 +1,12 @@
 Rebol [
-	system: "Rebol [R3] Language interpreter"
-	title: "Rebol 3 SMTP scheme"
-	author: "Graham"
-	date: [ 9-Jan-2010 20-Jan-2013 ]
-	rights: 'BSD
-	name: 'smtp
-	type: 'module
-	version: 0.0.6
-	file: %prot-smtp.r
+	title:  "Rebol3 SMTP protocol scheme"
+	name:    smtp
+	type:    module
+	author:  ["Graham" "Oldes"]
+	rights:  BSD
+	version: 0.1.0
+	date:    5-Feb-2022
+	file:    %prot-smtp.reb
 	notes: {
 		0.0.1 original tested in 2010
 		0.0.2 updated for the open source versions
@@ -15,6 +14,10 @@ Rebol [
 		0.0.4 Added LOGIN, PLAIN and CRAM-MD5 authentication.  Tested against CommunigatePro
 		0.0.5 Changed to move credentials to the url or port specification
 		0.0.6 Fixed some bugs in transferring email greater than the buffer size.
+        0.1.0 Oldes: Updated to work with my Rebol3 fork; including TLS.
+
+        Note that if your password does not work for gmail then you need to 
+        generate an app password.  See https://support.google.com/accounts/answer/185833
 		
 		synchronous mode
 		write smtp://user:password@smtp.clear.net.nz [ 
@@ -46,7 +49,7 @@ where's my kibble?}]
 			host: "smtp.yourisp.com"
 			user: "joe"
 			pass: "password"
-			ehlo: "FQDN"
+            ehlo: "FQDN" ; if you don't have one, then substitute your IP address
 		] compose [
 			from: me@somewhere.com
 			to: recipient@other.com
@@ -63,14 +66,16 @@ where's my kibble?}]
 	}
 ]
 
+system/options/log/smtp: 2
+
 bufsize: 32000 ;-- use a write buffer of 32k for sending large attachments
 
 mail-obj: make object! [ 
-			from: 
-			to:
-			name: 
-			subject:
-			message: none
+	from: 
+	to:
+	name: 
+	subject:
+	message: none
 ]
 
 make-smtp-error: func [
@@ -84,245 +89,218 @@ make-smtp-error: func [
 ]
 
 ; auth-methods: copy []
-alpha: charset [#"a" - #"z" #"A" - #"Z"]
-net-log: func [txt
-	/C
-	/S
-] [
-	if C [prin "C: "]
-	if S [prin "S: "]
-	print txt
-	txt
+alpha: system/catalog/bitsets/alpha
+digit: system/catalog/bitsets/numeric
+
+net-log: func[data /C /S /local msg][
+	msg: clear ""
+	case [
+		C [append msg "Client: "]
+		S [append msg "Server: "]
+	]
+	append msg data
+	sys/log/more 'SMTP trim/tail msg
+	data
 ]
 
-sync-smtp-handler: func [ event 
-		/local client response state code line-response auth-key auth-methods ptr
-	] [
-		line-response: none
-		auth-methods: copy []
-		print ["=== Client event:" event/type]
-		; client is the real port ie. port/state/connection
-		client: event/port
-		switch event/type [
-			error [
-				net-log "Network error"
-				close client
-				return true
+sync-smtp-handler: function [event][
+	; client is the real port ie. port/state/connection
+	client: event/port
+	state: client/spec/state
+	sys/log/debug 'SMTP [state " event " event/type]
+
+	switch event/type [
+		error [
+			sys/log/error 'SMTP "Network error"
+			close client
+			return true
+		]
+		lookup [
+			open client
+			false
+		]
+		connect [
+			client/spec/state: 'EHLO
+			;write client to binary! net-log/C ajoin ["EHLO " client/spec/ehlo CRLF]
+			;client/spec/state: 'AUTH
+			read client
+			false
+		]
+
+		read [
+			response: to string! client/data
+			clear client/data
+			if empty? response [return false]
+			
+			code: none
+			parse response [copy code: 3 digit to end (code: to integer! code)]
+
+			if system/options/log/smtp > 1 [
+				foreach line split trim/tail response CRLF [
+					sys/log/more 'SMTP ["Server:^[[32m" line]
+				]
 			]
-			lookup [
-				; print "DNS lookup"
-				open client
+
+			switch/default state [
+				EHLO
+				INIT [
+					write client to binary! net-log/C ajoin ["EHLO " client/spec/ehlo CRLF]
+					client/spec/state: 'AUTH
+					return false
+				]
+				AUTH [
+					if code = 250 [
+						if parse response [
+							thru "STARTTLS" CRLF to end (
+								make-smtp-error "STARTTLS not implemented!"
+							)
+							|
+							thru "AUTH" [#" " | #"="] copy auth-methods: to CRLF to end (
+								auth-methods: split auth-methods #" "
+								foreach auth auth-methods [
+									try [auth: to word! auth]
+									switch auth [
+										CRAM-MD5 [
+											client/spec/state: 'CRAM-MD5
+											write client to binary! net-log/C "AUTH CRAM-MD5^M^/"
+											return false
+										]
+										LOGIN [
+											client/spec/state: 'LOGIN
+											write client to binary! net-log/C "AUTH LOGIN^M^/"
+											return false
+										]
+										PLAIN [
+											client/spec/state: 'PLAIN
+											write client to binary! ajoin [
+												"AUTH PLAIN "
+												enbase ajoin [client/spec/user #"^@" client/spec/user #"^@" client/spec/pass] 64
+												CRLF
+											]
+											return false
+										]
+										'else [
+											sys/log/debug 'SMTP ["Unknown authentication method:" auth]
+										]
+									]
+								]
+							)
+						]
+						sys/log/debug 'SMTP ["Trying to send without authentication!"]
+						client/spec/state: 'FROM
+						write client to binary! net-log/C ajoin ["MAIL FROM: <" client/spec/email/from ">" CRLF]
+						return false
+					]
+				]
+
+				LOGIN [
+					case [
+						find/part response "334 VXNlcm5hbWU6" 16 [ ;enbased "Username:"
+							; username being requested
+							sys/log/more 'SMTP "Client: ***user-name***"
+							write client to binary! ajoin [enbase client/spec/user 64 CRLF]
+						]
+						find/part response "334 UGFzc3dvcmQ6" 16 [ ;enbased "Password:"
+                            ; pass being requested
+                            sys/log/more 'SMTP "Client: ***user-pass***"
+							write client to binary! ajoin [enbase client/spec/pass 64 CRLF]
+							client/spec/state: 'PASSWORD
+						]
+						true [
+							make-smtp-error join "Unknown response in AUTH LOGIN " response						
+						]
+					]
+				]
+				
+				CRAM-MD5 [
+					either code = 334 [
+						auth-key: skip response 4
+						auth-key: debase auth-key 64
+						; compute challenge response
+						auth-key: checksum/with auth-key 'md5 client/spec/pass
+						sys/log/more 'SMTP "Client: ***auth-key***"
+						write client to binary! ajoin [enbase ajoin [client/spec/user #" " lowercase enbase auth-key 16] 64 CRLF]
+						client/spec/state: 'PASSWORD
+					][
+						make-smtp-error join "Unknown response in AUTH CRAM-MD5 " response						
+					]
+				]
+				
+				PASSWORD [
+					either code = 235 [
+						client/spec/state: 'FROM
+						write client to binary! net-log/C ajoin ["MAIL FROM: <" client/spec/email/from ">" CRLF	]
+					][
+						make-smtp-error "Failed authentication"
+					]
+				]
+
+				FROM [
+					either code = 250 [
+						write client to binary! net-log/C ajoin ["RCPT TO: <" client/spec/email/to ">" crlf]
+						client/spec/state: 'TO
+					] [
+						net-log "Rejected by server"
+						return true
+					]
+				]
+				TO [
+					either code = 250 [
+						client/spec/state: 'DATA
+						write client to binary! net-log/C join "DATA" CRLF
+					] [
+						net-log "server rejects TO address"
+						return true
+					]
+				]
+				DATA [
+					either code = 354 [
+						replace/all client/spec/email/message "^/." "^/.."
+						client/spec/email/message: ptr: rejoin [ enline client/spec/email/message ]
+						sys/log/more 'SMTP ["Sending"  min bufsize length? ptr "bytes of" length? ptr ]
+						write client take/part ptr bufsize
+						client/spec/state: 'SENDING
+					] [
+						net-log "Not allowing us to send ... quitting"
+					]
+				]
+				
+				END [
+					either code = 250 [
+						net-log "Message successfully sent."
+						client/spec/state: 'QUIT
+						write client to binary!  net-log/C join "QUIT" crlf
+						return true
+					][
+						net-log "Some error occurred on sending."
+						return true
+					]
+				]
+				QUIT [
+					net-log "Should never get here"
+				]
+			][
+				net-log join "Unknown state " state
 			]
-			connect [
-				net-log "connected"
-				client/spec/state: 'EHLO
+		]
+		wrote [
+			either state = 'SENDING [
+				either not empty? ptr: client/spec/email/message [
+					sys/log/debug 'SMTP ["Sending "  min bufsize length? ptr " bytes of " length? ptr ]
+					write client to binary! take/part ptr bufsize
+				][
+					sys/log/debug 'SMTP "Sending ends."
+					write client to binary! rejoin [ crlf "." crlf ]
+					client/spec/state: 'END
+				]
+			][
 				read client
 			]
-
-			read [
-				net-log/S response: enline to-string client/data
-				code: copy/part response 3
-				if code = "501" [
-					make-smtp-error join "Unknown server error " response
-				]
-				switch/default client/spec/state [
-					INIT [
-						if find/part response "220 " 4 [
-							; wants me to send EHLO
-							write client to-binary net-log/C rejoin ["EHLO " any [ client/spec/ehlo "Rebol-PC" ] CRLF]
-							client/spec/state: 'AUTH
-						]
-					]
-					EHLO [
-						if find/part response "220 " 4 [
-							; wants me to send EHLO
-							write client to-binary net-log/C rejoin ["EHLO " any [ client/spec/ehlo "Rebol-PC" ] CRLF]
-							client/spec/state: 'AUTH
-						]
-						if find/part response "5" 1 [
-							net-log join "Server error code: " response
-							client/spec/state: 'END
-							return true
-						]
-						if find/part response "4" 1 [
-							net-log join  "Server error code: " response
-							client/spec/state: 'END
-							return true
-						]
-					]
-					LOGIN [
-						case [
-							find/part response "334 VXNlcm5hbWU6" 16 [
-								; username being requested
-								write client to-binary net-log/C join enbase client/spec/user 64 CRLF
-							]
-							find/part response "334 UGFzc3dvcmQ6" 16 [
-								; pass being requested
-								write client to-binary net-log/C join enbase client/spec/pass 64 CRLF
-								client/spec/state: 'PASSWORD
-							]
-							true [
-								make-smtp-error join "Unknown response in AUTH LOGIN " response						
-							]
-						]
-
-					]
-					
-					CRAM-MD5 [
-						case [
-							find/part response "334 " 4 [
-								auth-key: skip response 4
-								auth-key: debase auth-key 64
-								; compute challenge response
-								auth-key: checksum/with auth-key 'md5 client/spec/pass
-								write client to-binary net-log/C join 
-								enbase reform [client/spec/user lowercase enbase auth-key 16] 64 CRLF
-								client/spec/state: 'PASSWORD
-							]
-							true [ 
-								make-smtp-error join "Unknown response in AUTH CRAM-MD5 " response						
-							]
-						]
-					]
-					
-					PASSWORD [
-						either find/part response "235 " 4 [
-							client/spec/state: 'FROM
-							write client to-binary net-log/C rejoin ["MAIL FROM: <" client/spec/email/from ">" CRLF	]
-						][
-							;-- failed authentication so close
-							make-smtp-error "Failed authentication"
-						]
-					]
-										
-					AUTH [
-						if find/part response "220 " 4 [
-							; wants me to send EHLO
-							write client to-binary net-log/C rejoin ["EHLO " any [ client/spec/ehlo "Rebol-PC" ] CRLF]
-						]
-						; should get a long string with all the options including authentication methods.
-						if code = "250" [
-							clear head auth-methods
-							parse/all response [
-								some [
-									copy line-response to CRLF (
-										parse/all line-response [
-"250" 
-["-" | " " ] 
-["AUTH" [" " | "="]
-any
-[ 
-	"CRAM-MD5" (append auth-methods 'cram) |
-	"PLAIN" (append auth-methods 'plain) |
-	"LOGIN" (append auth-methods 'login) |
-	space |
-	some alpha
-] 
-| some alpha thru CRLF ]
-]) crlf
-								]
-							]
-							if find auth-methods 'plain [ client/spec/state: 'PLAIN ]
-							if find auth-methods 'login [ client/spec/state: 'LOGIN ]
-							if find auth-methods 'cram [ client/spec/state: 'CRAM-MD5 ]
-						]
-
-						; should now have switched from AUTH to a type of authentication
-						if client/spec/state != 'AUTH [
-							; some servers will let you send without authentication if you're hosted on their network
-							either all [
-								none? client/spec/user
-								none? client/spec/pass
-							][
-								client/spec/state: 'FROM
-								write client to-binary net-log/C rejoin ["MAIL FROM: <" client/spec/email/from ">" CRLF]					   ][
-							switch/default client/spec/state [
-								PLAIN [
-									write client to-binary net-log/C rejoin [ "AUTH PLAIN " enbase rejoin [client/spec/user #"^@" client/spec/user #"^@" client/spec/pass] 64 CRLF  ]
-									client/spec/state: 'PASSWORD
-									]
-								LOGIN [
-									; tell the server we are going to use AUTH LOGIN
-									write client to-binary net-log/C join "AUTH LOGIN" CRLF
-									client/spec/state: 'LOGIN
-								]
-								CRAM-MD5 [
-									; tell server we are using CRAM-MD5
-									write client to-binary net-log/C join "AUTH CRAM-MD5" CRLF
-									client/spec/state: 'CRAM-MD5	
-								]
-							][
-								make-smtp-error "No supported authentication method"							
-							]
-							; authentication is now handled by the main state loop except for Plain
-							]
-						]
-					]
-					FROM [
-						either code = "250" [
-							write client to-binary net-log/C rejoin ["RCPT TO: <" client/spec/email/to ">" crlf]
-							client/spec/state: 'TO
-						] [
-							net-log "rejected by server"
-							return true
-						]
-					]
-					TO [
-						either code = "250" [
-							client/spec/state: 'DATA
-							write client to-binary net-log/C join "DATA" CRLF
-						] [
-							net-log "server rejects TO address"
-							return true
-						]
-					]
-					DATA [
-						either code = "354" [
-							replace/all client/spec/email/message "^/." "^/.."
-							client/spec/email/message: ptr: rejoin [ enline client/spec/email/message ]
-							net-log/C "sending 32K"
-							write client copy/part ptr bufsize
-							remove/part ptr bufsize
-							client/spec/state: 'SENDING
-						] [
-							net-log "Not allowing us to send ... quitting"
-						]
-					]
-					
-					END [
-						either code = "250" [
-							net-log "message successfully sent."
-							client/spec/state: 'QUIT
-							write client to-binary  net-log/C join "QUIT" crlf
-							return true
-						] [
-							net-log "some error occurred on sending."
-							return true
-						]
-					]
-					QUIT [
-						net-log "Should never get here"
-					]
-				] [net-log join "Unknown state " client/spec/state]
-			]
-			wrote [
-				either client/spec/state = 'SENDING [
-					either not empty? ptr: client/spec/email/message [
-						net-log/C [ "sending " min bufsize length? ptr " bytes of " length? ptr ]
-						write client to-binary copy/part ptr bufsize
-						remove/part ptr bufsize
-					][
-						write client to-binary net-log/C rejoin [ crlf "." crlf ]
-						client/spec/state: 'END
-					]
-				][
-					read client
-				]
-			]
-			close [net-log "Port closed on me"]
 		]
-		false
+		close [net-log "Port closed on me"]
 	]
+	false
+]
 	
 sync-write: func [ port [port!] body
 	/local state result
@@ -344,9 +322,9 @@ sync-write: func [ port [port!] body
 	
 sys/make-scheme [
 	name: 'smtp
-	title: "SMTP Protocol"
+	title: "Simple Mail Transfer Protocol"
 	spec: make system/standard/port-spec-net [
-		port-id: 25
+		port: 25
 		timeout: 60
 		email: ;-- object constructed from argument
 		ehlo: 
@@ -356,7 +334,7 @@ sys/make-scheme [
 	actor: [
 		open: func [
 			port [port!]
-			/local conn
+			/local conn spec
 		] [
 			if port/state [return port]
 			if none? port/spec/host [
@@ -370,21 +348,37 @@ sys/make-scheme [
 				awake: none  ;-- so port/state/awake will hold the awake handler :port/awake
 				close?: no   ;-- flag for us to decide whether to close the port eg in syn mode
 			]
-			; create the tcp port and set it to port/state/connection
-			port/state/connection: conn: make port! [
-				scheme: 'tcp
-				host: port/spec/host
-				port-id: port/spec/port-id
-				state: 'INIT
-				ref: rejoin [tcp:// host ":" port-id]
-				email: port/spec/email
-				user: port/spec/user
-				pass: port/spec/pass
-				ehlo: any [ port/spec/ehlo "Rebol3 User PC" ]
-			]
+			spec: port/spec
+            ; create the tcp port and set it to port/state/connection
+           ; unless system/user/identity/fqdn [make-smtp-error "Need to provide a value for the system/user/identity/fqdn"]
+            either 465 = spec/port [
+                port/state/connection: conn: make port! [
+                    scheme: 'tls
+                    host:   spec/host
+                    port:   spec/port
+                    state:  'INIT
+                    ref:    rejoin [tls:// host ":" port]
+                    email:  spec/email
+                    user:   spec/user
+                    pass:   spec/pass
+                    ehlo:   spec/ehlo ; "system/user/identity/fqdn]
+                ]
+            ][
+                port/state/connection: conn: make port! [
+                    scheme: 'tcp
+                    host:   spec/host
+                    port:   spec/port
+                    state:  'INIT
+                    ref:    rejoin [tcp:// host ":" port]
+                    email:  spec/email
+                    user:   spec/user
+                    pass:   spec/pass
+                    ehlo:   spec/ehlo ;any [port/spec/ehlo system/user/identity/fqdn]
+                ]
+            ]
+            conn/extra: port
 			open conn ;-- open the actual tcp port
 			
-			print "port opened ..."
 			; return the newly created and open port
 			port
 		]
@@ -432,3 +426,11 @@ sys/make-scheme [
 		]
 	]
 ]
+
+sys/make-scheme/with [
+	name: 'smtps
+	title: "Secure Simple Mail Transfer Protocol"
+	spec: make spec [
+		port: 465
+	]
+] 'smtp

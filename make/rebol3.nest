@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.7.2
+version: 3.8.0
 
 target-windows: [
 	os:       windows
@@ -279,10 +279,10 @@ mezz-lib-files: [
 	%mezz/mezz-tail.reb
 ;	%mezz/codec-unixtime.reb
 ;-- cryptographic           
-;	%mezz/codec-utc-time.reb ; include-https
+;	%mezz/codec-utc-time.reb ; include-prot-https
 ;	%mezz/codec-pkix.reb
-;	%mezz/codec-der.reb      ; include-https
-;	%mezz/codec-crt.reb      ; include-https
+;	%mezz/codec-der.reb      ; include-prot-https
+;	%mezz/codec-crt.reb      ; include-prot-https
 ;	%mezz/codec-ppk.reb
 ;	%mezz/codec-ssh-key.reb
 ;-- compression             
@@ -698,24 +698,22 @@ include-mezz-colors:         [mezz-lib-files:  %mezz/mezz-colors.reb        ]
 ; protocols:
 include-prot-whois:          [mezz-prot-files: %mezz/prot-whois.reb         ]
 include-prot-mysql:          [mezz-prot-files: %mezz/prot-mysql.reb         ]
+include-prot-smtp:           [mezz-prot-files: %mezz/prot-smtp.reb :include-prot-tls]
+include-prot-https:          [mezz-prot-files: %mezz/prot-http.reb :include-prot-tls]
+include-prot-tls: [
+	:include-bincode
+	:include-cryptography
+	mezz-lib-files:  %mezz/codec-utc-time.reb
+	mezz-lib-files:  %mezz/codec-der.reb
+	mezz-lib-files:  %mezz/codec-crt.reb
+	mezz-prot-files: %mezz/prot-tls.reb
+]
+
 
 include-prebol:              [mezz-lib-files: %modules/prebol.reb           ]
 
 include-native-oid: [core-files: %core/n-oid.c] ; `form-oid` native (used in DER codec)
 
-include-https: [
-	:include-bincode
-	:include-cryptography
-	mezz-lib-files: [
-		%mezz/codec-utc-time.reb
-		%mezz/codec-der.reb
-		%mezz/codec-crt.reb
-	]
-	mezz-prot-files: [
-		%mezz/prot-http.reb
-		%mezz/prot-tls.reb
-	]
-]
 
 ;- Product specifications                                                       
 
@@ -725,7 +723,8 @@ include-rebol-core: [
 	:include-cryptography
 	:include-bincode
 	:include-iconv
-	:include-https
+	:include-prot-https
+	:include-prot-smtp
 
 	:include-codec-unixtime
 	:include-codec-ar
