@@ -145,8 +145,8 @@ wrap [
 				"DH PARAMETERS" [
 					parse data [
 						'SEQUENCE into [
-							'INTEGER set p binary!
-							'INTEGER set g binary!
+							'INTEGER set p: binary!
+							'INTEGER set g: binary!
 						] (
 							return dh-init :g :p
 						)
