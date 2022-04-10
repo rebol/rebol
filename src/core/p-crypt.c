@@ -444,10 +444,7 @@ failed:
 	if (blk > 0 && len < blk) return 0;
 
 	// make space at tail if needed...
-	ofs = SERIES_TAIL(bin);
-	Expand_Series(bin, AT_TAIL, len);
-	// reset the tail (above expand modifies it!)
-	SERIES_TAIL(bin) = ofs;
+	Extend_Series(bin, len);
 
 	switch (ctx->cipher_type) {
 
@@ -858,9 +855,7 @@ failed:
 		//puts("update");
 #ifdef MBEDTLS_CHACHAPOLY_C
 		if (ctx->cipher_type == SYM_CHACHA20_POLY1305) {
-			olen = SERIES_TAIL(bin);
-			Expand_Series(bin, AT_TAIL, 16);
-			SERIES_TAIL(bin) = olen; // reset the tail (above expand modifies it!)
+			Extend_Series(bin, 16);
 			err = mbedtls_chachapoly_finish((mbedtls_chachapoly_context*)ctx->cipher_ctx, BIN_TAIL(bin));
 			SERIES_TAIL(bin) += 16;
 			ctx->state = CRYPT_PORT_NEEDS_AAD;
@@ -870,10 +865,7 @@ failed:
 		if (ctx->unprocessed_len > 0) {
 			ofs = 0;
 			blk = ctx->cipher_block_size;
-			olen = SERIES_TAIL(bin);
-			Expand_Series(bin, AT_TAIL, blk);
-			// reset the tail (above expand modifies it!)
-			SERIES_TAIL(bin) = olen;
+			Extend_Series(bin, blk);
 
 			if (ctx->unprocessed_len > blk) abort();
 			len = blk - ctx->unprocessed_len;
