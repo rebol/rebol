@@ -29,12 +29,16 @@ register-codec [
 			wl: length? form length? data
 			wr: negate wl
 		]
-		if data/1 <> 48 [
-			if verbose > 0 [
-				prin "*** DER data does not start with SEQUENCE tag ***^/*** "
-				probe copy/part data 10
+
+		case [
+			all [data/1 = 0 data/2 = 48][data: next data]
+			data/1 <> 48 [
+				if verbose > 0 [
+					prin "*** DER data does not start with SEQUENCE tag ***^/*** "
+					probe copy/part data 10
+				]
+				return none
 			]
-			return none
 		]
 
 		der: binary data
@@ -118,12 +122,12 @@ register-codec [
 						;data: none
 					;]
 					BIT_STRING [
-						if data/1 = 0 [data: next data]
+						;@@if data/1 = 0 [data: next data]
 						;data: enbase data 2
 					]
 					INTEGER [
 						;@@ TODO: review if the null skipping is correct!
-						if data/1 = 0 [data: next data]
+						;@@if data/1 = 0 [data: next data]
 					]
 				]
 				if data [
