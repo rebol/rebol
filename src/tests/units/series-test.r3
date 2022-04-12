@@ -2004,6 +2004,19 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/690
 	--assert (split "This! is a. test? to see " charset "!?.") = ["This" " is a" " test" " to see "]
 
+--test-- "split/at"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2490
+	--assert (split/at "a:b"   #":") = ["a" "b"]
+	--assert (split/at "a:b:c" #":") = ["a" "b:c"]
+	--assert (split/at "a"     #":") = ["a"]
+	--assert (split/at "a:"    #":") = ["a" ""]
+	--assert (split/at ":b"    #":") = ["" "b"]
+	--assert (split/at [1 a 2]     'a) = [[1] [2]]
+	--assert (split/at [1 a 2 3]   'a) = [[1] [2 3]]
+	--assert (split/at [1 a 2 a 3] 'a) = [[1] [2 a 3]]
+	--assert (split/at [1 2]       'a) = [[1 2]]
+
+
 ===end-group===
 
 
