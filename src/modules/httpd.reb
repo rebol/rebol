@@ -201,9 +201,9 @@ sys/make-scheme [
 			spec: port/spec
 			sys/log/info 'HTTPD ["Opening server at port:^[[22m" spec/port]
 			port/extra: make object! [
-				subport: open [
+				subport: open compose [
 					scheme: 'tcp
-					port:   spec/port
+					port: (spec/port)
 				]
 				subport/awake: :port/scheme/awake-server
 				subport/extra: make object! [
