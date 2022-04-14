@@ -1597,6 +1597,9 @@ append:
 	// so include also folowing chars for url escaping...
 	dc = b_cast("\x5C\x5E\x60\x7C\x7F");
 	for (c = (REBYTE)LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_URL;
+	// required file escaping... https://github.com/Oldes/Rebol-issues/issues/2491
+	dc = b_cast("\x3A\x40\x5C\x5E\x7F");
+	for (c = (REBYTE)LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_FILE;
 }
 
 

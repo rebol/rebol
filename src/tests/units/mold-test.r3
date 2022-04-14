@@ -198,6 +198,18 @@ Rebol [
 ===end-group=== 
 
 
+===start-group=== "mold file!"
+	
+	--test-- "mold file escaping"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2491
+		for i 0 255 1 [
+			f2: try [load mold f1: append copy %a to char! i]
+			--assert f1 == f2
+		]
+
+===end-group=== 
+
+
 ===start-group=== "mold-all"
 	
 	--test-- "mold-true" --assert "true" = mold true
