@@ -474,15 +474,23 @@ STOID Mold_Issue(REBVAL *value, REB_MOLD *mold)
 STOID Mold_Url(REBVAL *value, REB_MOLD *mold)
 {
 	REBUNI *dp;
-	REBCNT n;
+	REBCNT n, i;
 	REBUNI c;
 	REBCNT len = VAL_LEN(value);
 	REBSER *ser = VAL_SERIES(value);
+	REBYTE buf[10];
+	REBCNT ulen;
 
 	// Compute extra space needed for hex encoded characters:
 	for (n = VAL_INDEX(value); n < VAL_TAIL(value); n++) {
 		c = GET_ANY_CHAR(ser, n);
 		if (IS_URL_ESC(c)) len += 2;
+		// unicode chars must be also encoded...
+		else if (c <  (REBCNT)0x80) continue;
+		else if (c >= (REBCNT)0x0010FFFF) len += 14;
+		else if (c >= (REBCNT)0x10000) len += 11;
+		else if (c >= (REBCNT)0x800) len += 8;
+		else if (c >= (REBCNT)0x80) len += 5;
 	}
 
 	dp = Prep_Uni_Series(mold, len);
@@ -490,6 +498,14 @@ STOID Mold_Url(REBVAL *value, REB_MOLD *mold)
 	for (n = VAL_INDEX(value); n < VAL_TAIL(value); n++) {
 		c = GET_ANY_CHAR(ser, n);
 		if (IS_URL_ESC(c)) dp = Form_Hex_Esc_Uni(dp, c);  // c => %xx
+		else if (c >= 0x80) {
+			// to avoid need to first convert whole url to utf8,
+			// use the temp buffer for any unicode char...
+			ulen = Encode_UTF8_Char(&buf, c);
+			for (i = 0; i < ulen; i++) {
+				dp = Form_Hex_Esc_Uni(dp, (REBUNI)buf[i]);
+			}
+		}
 		else *dp++ = c;
 	}
 
@@ -1570,12 +1586,17 @@ append:
 	Char_Escapes[LF]  = '/';
 	Char_Escapes['"'] = '"';
 	Char_Escapes['^'] = '^';
-
+	
 	URL_Escapes = cp = Make_Mem(MAX_URL_CHAR+1); // cleared
-	//for (c = 0; c <= MAX_URL_CHAR; c++) if (IS_LEX_DELIMIT(c)) cp[c] = ESC_URL;
+	// escape all chars from #"^(00)" to #"^(20)"
 	for (c = 0; c <= ' '; c++) cp[c] = ESC_URL | ESC_FILE;
+	// and also all chars which are a lexer delimiters
 	dc = b_cast(";%\"()[]{}<>");
 	for (c = (REBYTE)LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
+	// RFC3986 allows unescaped only: ALPHA, DIGIT and "-._~:/?#[]@!$&'()*+,;="
+	// so include also folowing chars for url escaping...
+	dc = b_cast("\x5C\x5E\x60\x7C\x7F");
+	for (c = (REBYTE)LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_URL;
 }
 
 
