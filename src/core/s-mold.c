@@ -1590,16 +1590,16 @@ append:
 	URL_Escapes = cp = Make_Mem(MAX_URL_CHAR+1); // cleared
 	// escape all chars from #"^(00)" to #"^(20)"
 	for (c = 0; c <= ' '; c++) cp[c] = ESC_URL | ESC_FILE;
-	// and also all chars which are a lexer delimiters
-	dc = b_cast(";%\"()[]{}<>");
+	// and also all chars which are a lexer delimiters + 3 common extra chars
+	dc = b_cast(";%\"()[]{}<>\x5C\x5E\x7F");
 	for (c = (REBYTE)LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
 	// RFC3986 allows unescaped only: ALPHA, DIGIT and "-._~:/?#[]@!$&'()*+,;="
 	// so include also folowing chars for url escaping...
-	dc = b_cast("\x5C\x5E\x60\x7C\x7F");
-	for (c = (REBYTE)LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_URL;
+	URL_Escapes['\x60'] |= ESC_URL;
+	URL_Escapes['\x7C'] |= ESC_URL;
 	// required file escaping... https://github.com/Oldes/Rebol-issues/issues/2491
-	dc = b_cast("\x3A\x40\x5C\x5E\x7F");
-	for (c = (REBYTE)LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_FILE;
+	URL_Escapes['\x3A'] |= ESC_FILE;
+	URL_Escapes['\x40'] |= ESC_FILE;
 }
 
 
