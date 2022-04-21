@@ -241,33 +241,50 @@ throw-http-error: func [
 ]
 
 make-http-request: func [
-	"Create an HTTP request (returns string!)"
-	method [word! string!] "E.g. GET, HEAD, POST etc."
-	target [file! string!] {In case of string!, no escaping is performed (eg. useful to override escaping etc.). Careful!}
-	headers [block! map!] "Request headers (set-word! string! pairs)"
-	content [any-string! binary! map! none!] {Request contents (Content-Length is created automatically). Empty string not exactly like none.}
-	/local result
+	"Create an HTTP request (returns binary!)"
+	spec [block!] "Request specification from an opened port"
+	/local method path target query headers content request 
 ][
-	result: rejoin [
-		uppercase form method #" "
-		either file? target [next mold target][target]
-		" HTTP/1.1" CRLF
-	]
-	foreach [word string] headers [
-		repend result [mold word #" " string CRLF]
-	]
-	if content [
-		if map? content [content: to-json content]
-		content: to binary! content
-		repend result ["Content-Length: " length? content CRLF]
-	]
-	sys/log/info 'HTTP ["Request:^[[22m" mold result]
+	method:  any [select spec 'method 'GET]
+	path:    any [select spec 'path    %/]
+	target:       select spec 'target
+	query:        select spec 'query
+	headers: any [select spec 'headers []]
+	content:      select spec 'content
 
-	append result CRLF
-	result: to binary! result
-	if content [append result content]
-	result
+	request: ajoin [
+		uppercase form :method SP
+		mold as url! :path        ;; `mold as url!` is used because it produces correct escaping
+	]
+	if :target [append request mold as url! :target]
+	if :query  [append append request #"?"  :query]
+
+	append request " HTTP/1.1^M^/"
+	
+	foreach [word string] :headers [
+		append request ajoin [form :word #":" SP :string CRLF]
+	]
+
+	if :content [
+		if map? :content [
+			content: to-json content
+			unless find headers 'Content-Type [
+				append request "Content-Type: application/json^M^/" 
+			]
+		]
+		content: to binary! :content
+		append request ajoin [
+			"Content-Length: " length? content CRLF
+		]
+	]
+	sys/log/info 'HTTP ["Request:^[[22m" mold request]
+
+	append request CRLF
+	request: to binary! request
+	if content [append request content]
+	request
 ]
+
 do-request: func [
 	"Perform an HTTP request"
 	port [port!]
@@ -275,25 +292,22 @@ do-request: func [
 ][
 	spec: port/spec
 	info: port/state/info
-	spec/headers: body-of make make object! [
-		Accept: "*/*"
-		Accept-charset: "utf-8"
-		Accept-Encoding: "gzip,deflate"
-		Host: either not find [80 443] spec/port [
-			ajoin [spec/host #":" spec/port]
-		][
+
+	spec/headers: make system/schemes/http/headers to block! spec/headers
+
+	unless spec/headers/host [
+		spec/headers/host: either find [80 443] spec/port [
+			; default http/https scheme port ids
 			form spec/host
+		][	; custom port id
+			ajoin [spec/host #":" spec/port]
 		]
-		User-Agent: any [system/schemes/http/User-Agent "REBOL"]
-	] to block! spec/headers
+	]
 	port/state/state: 'doing-request
 	info/headers: info/response-line: info/response-parsed: port/data:
 	info/size: info/date: info/name: none
 
-	;sys/log/info 'HTTP ["Request:^[[22m" spec/method spec/host mold spec/path]
-
-	;write port/state/connection make-http-request spec/method enhex as file! any [spec/path %/] spec/headers spec/content
-	write port/state/connection make-http-request spec/method any [spec/path %/] spec/headers spec/content
+	write port/state/connection make-http-request :spec
 ]
 parse-write-dialect: func [port block /local spec][
 	spec: port/spec
@@ -875,9 +889,16 @@ sys/make-scheme [
 			either port/data [length? port/data][0]
 		]
 	]
-	User-Agent: none
-	;@@ One can set above value for example to: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
-	;@@ And so pretend that request is coming from Chrome on Windows10
+	; default request header values...
+	headers: context [
+		Host: none
+		Accept: "*/*"
+		Accept-charset: "utf-8"
+		Accept-Encoding: "gzip,deflate"
+		User-Agent: ajoin ["rebol/" system/version " (" system/platform "; " system/build/arch #")"]
+		;@@ One can set above value for example to: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+		;@@ And so pretend that request is coming from Chrome on Windows10
+	]
 ]
 
 sys/make-scheme/with [

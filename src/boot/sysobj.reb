@@ -264,9 +264,13 @@ standard: object [
 		path:  none
 	]
 
-	port-spec-net: make port-spec-file [
-		host: none
-		port: 80
+	port-spec-net: make port-spec-head [
+		host:   none
+		port:   80
+		path:   
+		target: 
+		query:  
+		fragment: none
 	]
 
 	port-spec-checksum: make port-spec-head [
