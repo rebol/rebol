@@ -536,7 +536,7 @@ mark_obj:
 			MUNG_CHECK(SERIES_POOL, series, sizeof(*series));
 			if (!SERIES_FREED(series)) {
 				if (IS_FREEABLE(series)) {
-					//printf("free: %0xh\n", (int)series);
+					//printf("free: %0xh %s\n", (int)series, series->label);
 					Free_Series(series);
 					count++;
 				} else
