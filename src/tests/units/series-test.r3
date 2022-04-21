@@ -1938,6 +1938,12 @@ Rebol [
 	--assert ["c" "c"]  = split "c c" " "
 	--assert ["1,2"]    = split "1,2" " "
 	--assert ["c" "c "] = split "c,c " ","
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1096
+	--assert [""] = split/parts "" 1
+	--assert ["" ""] = split/parts "" 2
+	--assert ["" "" ""] = split/parts "" 3
+	--assert ["x" ""] = split/parts "x" 2
+
 --test-- "split gregg 1"
 	;@@ https://gist.github.com/greggirwin/66d7c6892fc310097cd91ab354189542
 	--assert (split "1234567812345678" 4)       = ["1234" "5678" "1234" "5678"]
