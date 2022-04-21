@@ -242,7 +242,7 @@ throw-http-error: func [
 
 make-http-request: func [
 	"Create an HTTP request (returns binary!)"
-	spec [block!] "Request specification from an opened port"
+	spec [block! object!] "Request specification from an opened port"
 	/local method path target query headers content request 
 ][
 	method:  any [select spec 'method 'GET]
@@ -371,23 +371,26 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 			"HTTP/1." [#"0" | #"1"] some #" " [
 				#"1" (info/response-parsed: 'info)
 				|
-				#"2" [["04" | "05"] (info/response-parsed: 'no-content)
+				#"2" [
+					#"0" [#"4" | #"5"] (info/response-parsed: 'no-content)
 					| (info/response-parsed: 'ok)
 				]
 				|
-				#"3" [
-					"03" (info/response-parsed: 'see-other)
+				#"3" #"0" [
+					#"2" (info/response-parsed: 'found)
 					|
-					"04" (info/response-parsed: 'not-modified)
+					#"3" (info/response-parsed: 'see-other)
 					|
-					"05" (info/response-parsed: 'use-proxy)
+					#"4" (info/response-parsed: 'not-modified)
+					|
+					#"5" (info/response-parsed: 'use-proxy)
 					| (info/response-parsed: 'redirect)
 				]
 				|
-				#"4" [
-					"01" (info/response-parsed: 'unauthorized)
+				#"4" #"0" [
+					#"1" (info/response-parsed: 'unauthorized)
 					|
-					"07" (info/response-parsed: 'proxy-auth)
+					#"7" (info/response-parsed: 'proxy-auth)
 					| (info/response-parsed: 'client-error)
 				]
 				|
@@ -418,7 +421,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 				]
 			]
 		]
-		redirect see-other [
+		redirect see-other found [
 			either spec/method = 'HEAD [
 				state/state: 'ready
 				res: awake make event! [type: 'custom port: port code: 0]
@@ -430,9 +433,9 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 					state/state: 'ready
 				]
 			]
-			;?? res
-			;?? headers
-			;?? state/state
+			?? res
+			?? headers
+			?? state/state
 
 			if all [not res state/state = 'ready][
 				either all [
@@ -516,6 +519,8 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 		res: throw-http-error port {Too many redirections}
 	]
 
+	spec/query: spec/target: none ; old parts not used in redirection!
+
 	if #"/" = first new-uri [
 		; if it's redirection under same url, we can reuse the opened connection
 		if "keep-alive" = select state/info/headers 'Connection [
@@ -548,7 +553,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 	headers: spec/headers
 	; we need to reset tcp connection here before doing a redirect
 	close port/state/connection
-	port/spec: spec: new-uri
+	port/spec: new-uri
 	port/state: none
 	open port
 	; restore original request headers
