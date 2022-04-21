@@ -418,7 +418,7 @@ init-schemes: func [
 			spec: port/spec
 			method: any [
 				select spec 'method
-				select spec 'host   ; if scheme was opened using url type
+				select spec 'target ; if scheme was opened using url type
 				'md5                ; default method
 			]
 			if any [
@@ -444,7 +444,7 @@ init-schemes: func [
 			spec: port/spec
 			algorithm: any [
 				select spec 'algorithm
-				select spec 'host   ; if scheme was opened using url type
+				select spec 'target ; if scheme was opened using url type
 				'AES-256-CBC        ; default cipher
 			]
 			if any [
