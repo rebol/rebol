@@ -819,6 +819,88 @@ Rebol [
 		--assert error? try [to event! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
 ===end-group===
 
+
+===start-group=== "make/to word"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2492
+	--test-- "make word! ..."
+		--assert error? try [make word! quote #[unset!] ] ; unset!
+		--assert error? try [make word! quote #[none] ] ; none!
+		--assert 'true = try [make word! quote #[true] ] ; logic!
+		--assert error? try [make word! quote 1 ] ; integer!
+		--assert error? try [make word! quote 0 ] ; integer!
+		--assert error? try [make word! quote 4 ] ; integer!
+		--assert error? try [make word! quote 4.0 ] ; decimal!
+		--assert error? try [make word! quote 4% ] ; percent!
+		--assert error? try [make word! quote $4 ] ; money!
+		--assert 'a   = try [make word! quote #"a" ] ; char!
+		--assert error? try [make word! quote 2x2 ] ; pair!
+		--assert error? try [make word! quote 1.1.1 ] ; tuple!
+		--assert error? try [make word! quote 10:00 ] ; time!
+		--assert error? try [make word! quote 2000-01-01 ] ; date!
+		--assert error? try [make word! quote #{00} ] ; binary!
+		--assert error? try [make word! quote #{312032} ] ; binary!
+		--assert error? try [make word! quote "" ] ; string!
+		--assert error? try [make word! quote "1 2" ] ; string!
+		--assert 'file = try [make word! quote %file ] ; file!
+		--assert error? try [make word! quote u@email ] ; email!
+		--assert 'foo = try [make word! to email! "foo" ] ; email!
+		--assert 'ref = try [make word! quote #[ref! "ref"] ] ; ref!
+		--assert error? try [make word! quote http://aa ] ; url!
+		--assert 'foo = try [make word! to url! "foo" ] ; url
+		--assert 'tag = try [make word! quote <tag> ] ; tag!
+		--assert error? try [make word! quote [1 2] ] ; block!
+		--assert error? try [make word! quote (1 2) ] ; paren!
+		--assert error? try [make word! quote a/b ] ; path!
+		--assert error? try [make word! quote a/b: ] ; set-path!
+		--assert error? try [make word! quote :a/b ] ; get-path!
+		--assert 'ref = try [make word! quote /ref ] ; refinement!
+		--assert 'FF  = try [make word! quote #FF ] ; issue!
+		--assert error? try [make word! quote #[bitset! #{FF}] ] ; bitset!
+		--assert error? try [make word! quote #[image! 1x1 #{FFFFFF}] ] ; image!
+		--assert error? try [make word! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
+		--assert error? try [make word! quote #[object! [a: 1]] ] ; object!
+		--assert error? try [make word! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
+	--test-- "to word! ..."
+		--assert error? try [to word! quote #[unset!] ] ; unset!
+		--assert error? try [to word! quote #[none] ] ; none!
+		--assert 'true = try [to word! quote #[true] ] ; logic!
+		--assert error? try [to word! quote 1 ] ; integer!
+		--assert error? try [to word! quote 0 ] ; integer!
+		--assert error? try [to word! quote 4 ] ; integer!
+		--assert error? try [to word! quote 4.0 ] ; decimal!
+		--assert error? try [to word! quote 4.0000000000000001% ] ; percent!
+		--assert error? try [to word! quote $4 ] ; money!
+		--assert 'a   = try [to word! quote #"a" ] ; char!
+		--assert error? try [to word! quote 2x2 ] ; pair!
+		--assert error? try [to word! quote 1.1.1 ] ; tuple!
+		--assert error? try [to word! quote 10:00 ] ; time!
+		--assert error? try [to word! quote 2000-01-01 ] ; date!
+		--assert error? try [to word! quote #{00} ] ; binary!
+		--assert error? try [to word! quote #{312032} ] ; binary!
+		--assert error? try [to word! quote "" ] ; string!
+		--assert error? try [to word! quote "1 2" ] ; string!
+		--assert 'file = try [to word! quote %file ] ; file!
+		--assert error? try [to word! quote u@email ] ; email!
+		--assert 'foo = try [to word! to email! "foo" ] ; email!
+		--assert 'ref = try [to word! quote #[ref! "ref"] ] ; ref!
+		--assert error? try [to word! quote http://aa ] ; url!
+		--assert 'foo = try [to word! to url! "foo" ] ; url
+		--assert 'tag = try [to word! quote <tag> ] ; tag!
+		--assert error? try [to word! quote [1 2] ] ; block!
+		--assert error? try [to word! quote (1 2) ] ; paren!
+		--assert error? try [to word! quote a/b ] ; path!
+		--assert error? try [to word! quote a/b: ] ; set-path!
+		--assert error? try [to word! quote :a/b ] ; get-path!
+		--assert 'ref = try [to word! quote /ref ] ; refinement!
+		--assert 'FF  = try [to word! quote #FF ] ; issue!
+		--assert error? try [to word! quote #[bitset! #{FF}] ] ; bitset!
+		--assert error? try [to word! quote #[image! 1x1 #{FFFFFF}] ] ; image!
+		--assert error? try [to word! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
+		--assert error? try [to word! quote #[object! [a: 1]] ] ; object!
+		--assert error? try [to word! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
+===end-group===
+
+
 ===start-group=== "make special"
 	--test-- "make types from none!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1018

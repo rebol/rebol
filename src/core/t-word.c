@@ -98,7 +98,7 @@
 			return R_ARG2;
 		}
 		else {
-			if (IS_STRING(arg) || IS_REF(arg) || IS_TAG(arg)) {
+			if (ANY_STR(arg)) {
 				REBYTE *bp;
 				REBCNT len;
 				// Set sym. Rest is set below.
