@@ -104,6 +104,19 @@ http-server/config/actor 8081 [
 				ctx/out/header/Content-Type: "text/plain; charset=UTF-8"
 				ctx/out/content: humans.txt
 			]
+			%/ip [
+				; service to resolve the remote ip like: http://ifconfig.me/ip
+				ctx/out/status: 200
+				ctx/out/header/Content-Type: "text/plain"
+				ctx/out/content: form ctx/remote-ip
+			]
+			%/header [
+				ctx/out/status: 200
+				ctx/out/header/Content-Type: "text/plain"
+				ctx/out/content: ajoin [
+					"Request input:" mold ctx/inp
+				]
+			]
 		]
 	]
 	On-Post-Received: func [ctx [object!]][
