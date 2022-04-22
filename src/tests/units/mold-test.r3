@@ -511,7 +511,7 @@ Rebol [
 	--test-- "form error!"
 		; no ANSI escape sequence!
 		--assert parse (form try [1 / 0]) [
-			{** Math error: attempt to divide by zero^/}
+			{^/** Math error: attempt to divide by zero^/}
 			{** Where: / try} thru #"^/"
 			{** Near: / 0^/}
 		]
