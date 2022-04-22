@@ -403,8 +403,10 @@ Rebol [
 		--assert "a@b" = mold a@b
 	--test-- "issue-2406"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2406
-		--assert "a@šiška" = mold a@šiška
-		--assert "a@š" = mold a@%C5%A1
+		--assert "a@%C5%A1i%C5%A1ka" = mold a@šiška
+		--assert "a@šiška"           = form a@šiška
+		--assert "a@%C5%A1" = mold a@%C5%A1
+		--assert "a@š"      = form a@%C5%A1
 ===end-group===
 
 ===start-group=== "mold ref!"
