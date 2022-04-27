@@ -393,7 +393,7 @@ construct: native [
 debase: native [
 	{Decodes binary-coded string to binary value.}
 	value [binary! any-string!] {The string to decode}
-	base  [integer!] {Binary base to use: 85, 64, 16, or 2}
+	base  [integer!] {Binary base to use: 85, 64, 36, 16, or 2}
 	/url  {Base 64 Decoding with URL and Filename Safe Alphabet}
 	/part {Limit the length of the input}
 	limit [integer!]
@@ -402,7 +402,7 @@ debase: native [
 enbase: native [
 	{Encodes a string into a binary-coded string.}
 	value [binary! string!] {If string, will be UTF8 encoded}
-	base  [integer!] {Binary base to use: 85, 64, 16, or 2}
+	base  [integer!] {Binary base to use: 85, 64, 36, 16, or 2}
 	/url  {Base 64 Encoding with URL and Filename Safe Alphabet}
 	/part {Limit the length of the input}
 	limit [integer!]

@@ -613,6 +613,9 @@ include-base85-encoding: [
 	; adds support for enbase/debase with base 85 (ASCII85)
 	config: INCLUDE_BASE85
 ]
+include-base36-encoding: [
+	config: INCLUDE_BASE36
+]
 
 ;- native additional compressions:                                              
 include-lzma-compression: [
@@ -745,6 +748,7 @@ include-rebol-bulk: [
 	:include-image-natives
 	:include-lzma-compression
 	:include-crush-compression
+	:include-base36-encoding
 	:include-base85-encoding
 	:include-view
 	:include-midi

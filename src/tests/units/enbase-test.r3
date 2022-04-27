@@ -239,4 +239,52 @@ if any [
 	===end-group===
 ]
 
+if any [
+	not error? err: try [enbase #{} 36]
+	err/id <> 'feature-na
+][
+	base36-int-tests: [
+		0          "0"
+		1          "1"
+		36         "10"
+		64         "1S"
+		1024       "SG"
+		19930503   "BV6H3"
+		1843067821 "UHBC8D"
+		3951668550778163018 "U0TPLAQIV70Q"
+	]
+	
+	===start-group=== "de/enbase-36"
+		--test-- "enbase debase 36"
+			--assert ""  = enbase debase ""  36 36
+			--assert "0" = enbase debase "0" 36 36
+			--assert "1" = enbase debase "1" 36 36
+			--assert "0" = enbase debase "000" 36 36
+			--assert "1" = enbase debase "001" 36 36
+
+		--test-- "enbase int 36"    
+			foreach [inp out] base36-int-tests [
+				--assert out = enbase to binary! inp 36
+			]
+
+		--test-- "debase int 36"    
+			foreach [out inp] base36-int-tests [
+				--assert out = to integer! debase inp 36
+			]
+
+		--test-- "enbase 36"
+			--assert "0" = enbase #{00} 36
+			--assert "0" = enbase #{00000000} 36
+			--assert "0" = enbase #{0000000000000000} 36
+			--assert "3W5E11264SGSF" = enbase #{FFFFFFFFFFFFFFFF} 36
+
+		--test-- "debase 36 errors"
+			--assert all [error? e: try [debase "00000000000000" 36] e/id = 'invalid-data]
+			--assert all [error? e: try [debase "0.0" 36] e/id = 'invalid-data]
+		--test-- "enbase 36 errors"
+			--assert all [error? e: try [enbase #{000000000000000000} 36] e/id = 'out-of-range]
+
+	===end-group===
+]
+
 ~~~end-file~~~

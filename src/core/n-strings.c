@@ -544,7 +544,13 @@ static struct digest {
 #else
 		Trap0(RE_FEATURE_NA);
 #endif
-		
+		break;
+	case 36:
+#ifdef INCLUDE_BASE36
+		ser = Encode_Base36(arg, 0, limit, FALSE);
+#else
+		Trap0(RE_FEATURE_NA);
+#endif
 		break;
 	default:
 		Trap_Arg(D_ARG(2));
