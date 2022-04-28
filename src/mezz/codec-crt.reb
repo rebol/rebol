@@ -23,6 +23,8 @@ register-codec [
 				length > length? bin/buffer
 			][	return none ]
 		]
+		probe xxx: copy/part at data 5 (length + 4)
+		probe length? xxx
 		checksum/part at data 5 :method (length + 4)
 	]
 	decode: wrap [
@@ -133,10 +135,11 @@ register-codec [
 				block? der/2 
 			] [der: der/2]
 
-			result: object [
+			result: construct [
 				version:
 				serial-number:
-				signature:
+				fingerprint:
+				algorithm:
 				issuer:
 				valid-from:
 				valid-to:
@@ -145,8 +148,7 @@ register-codec [
 				issuer-id:
 				subject-id:
 				extensions:
-				fingerprint:
-					none
+				signature:
 			]
 
 			parse der [
@@ -162,7 +164,7 @@ register-codec [
 					'INTEGER set *val binary! (	result/serial-number: *val	)
 					
 					;-- signature:
-					AlgorithmIdentifier ( result/signature: copy *blk )
+					AlgorithmIdentifier ( result/algorithm: copy *blk )
 
 					;-- issuer:
 					Name (result/issuer: copy *blk)
@@ -206,17 +208,21 @@ register-codec [
 				]
 
 				;-- signature:
-				AlgorithmIdentifier ( result/signature: copy *blk )
+				AlgorithmIdentifier (
+					; MUST be same like result/algorithm!
+					either *blk <> result/algorithm [
+						print "Invalid certificate! Signature alrgorithm mischmasch."
+						? result/algorithm
+						? *blk
+						result/algorithm: none
+					][
+						if 1 = length? result/algorithm [
+							result/algorithm: first result/algorithm
+						]
+					]
+				)
+				'BIT_STRING set *val binary! ( result/signature: *val )
 				to end
-			]
-			if verbose > 0 [
-				prin "^/^[[1;32mCRT "
-				either verbose > 1 [
-					?? result
-				][
-					print " result:^[[0m"
-					print dump-obj result
-				]
 			]
 			if all [
 				binary? data
@@ -226,28 +232,28 @@ register-codec [
 					sha512WithRSAEncryption sha512
 					md5withRSAEncryption    md5
 					md4withRSAEncryption    md4
-				] result/signature/1
+					ecdsa-with-SHA224       sha224
+					ecdsa-with-SHA256       sha256
+					ecdsa-with-SHA384       sha384
+					ecdsa-with-SHA512       sha512
+					sha1WithRSAEncrption    sha1
+				] result/algorithm
 			][
-				try [result/fingerprint: get-fingerprint :data :hash]
+				try [
+					result/fingerprint: get-fingerprint :data :hash
+				]
+			]
+			if verbose > 0 [
+				prin "^/^[[1;32mCRT"
+				either verbose > 1 [
+					?? result
+				][
+					print " result:^[[0m"
+					print dump-obj result
+				]
 			]
 			result
 		]
 	]
-	fingerprint: function [
-		"Computes Certificate Fingerprint of the cert's data sequence"
-		data   [binary!] "Raw CRT data"
-		/method          "If not used, default is sha256"
-			m [word!]    "One of: sha256, sha1 or md5"
-	][
-		der: binary data
-		binary/read der [UB 2 BIT tag: UB 5 LENGTH pos: INDEX]
-		if tag <> 16 [return none]
-		binary/read der [UB 2 BIT tag: UB 5 length: LENGTH]
-		if not find [sha256 sha1 md5] m [m: 'sha256]
-		hash: open join checksum:// m
-		write/part hash (at data pos) (pos + length + 5)
-		read hash
-	]
-
 	verbose: 0
 ]
