@@ -23,8 +23,6 @@ register-codec [
 				length > length? bin/buffer
 			][	return none ]
 		]
-		probe xxx: copy/part at data 5 (length + 4)
-		probe length? xxx
 		checksum/part at data 5 :method (length + 4)
 	]
 	decode: wrap [
