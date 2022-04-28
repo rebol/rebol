@@ -904,7 +904,7 @@ failed:
 //			}
 //			return FALSE;
 		case SYM_ALGORITHM:
-			if (!init_crypt_algorithm(ctx, arg2)) return FALSE;
+			if (!init_crypt_algorithm(ctx, arg2)) return R_FALSE;
 			break;
 		case SYM_DIRECTION:
 			if (!init_crypt_direction(ctx, arg2)) return R_FALSE;
