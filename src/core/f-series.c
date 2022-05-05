@@ -234,7 +234,11 @@ is_true:
 chkDecimal:
 		if (Eq_Decimal(d1, d2))
 			return 0;
-		if (d1 < d2)
+		if (d1 < d2
+#ifndef USE_NO_INFINITY
+			|| isnan(d2)
+#endif
+		)
 			return -1;
 		return 1;
 
