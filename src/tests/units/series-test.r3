@@ -1172,6 +1172,16 @@ Rebol [
 	--assert ["fred" "Fred" "FRED"] == sort      ["fred" "Fred" "FRED"]
 	--assert ["FRED" "Fred" "fred"] == sort/case ["Fred" "fred" "FRED"]
 
+--test-- "SORT with NaN"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2493
+	; using `mold` in this test, because currently `(1.#NaN = 1.#NaN) == false` and so the test would fail! 
+	--assert "[-1.#INF -1.0 0 1.0 1.#INF 1.#NaN 1.#NaN]" = mold sort [1.#inf -1.0 1.#nan 1.0 -1.#inf 0 1.#NAN]
+	--assert "[-1.#INF -1.0 0 1.0 1.#INF 1.#NaN 1.#NaN]" = mold sort [1.#inf -1.0 1.#nan 1.0 -1.#inf 1.#NAN 0]
+	--assert "[-1.#INF -1.0 0 1.0 1.#INF 1.#NaN 1.#NaN]" = mold sort [1.#inf -1.0 1.#nan 1.0 1.#NAN -1.#inf 0]
+	--assert "[-1.#INF -1.0 0 1.0 1.#INF 1.#NaN 1.#NaN]" = mold sort [1.#inf -1.0 1.#nan 1.#NAN 1.0 -1.#inf 0]
+	--assert "[-1.#INF -1.0 0 1.0 1.#INF 1.#NaN 1.#NaN]" = mold sort [1.#inf 1.#NAN -1.0 1.#nan 1.0 -1.#inf 0]
+	--assert "[-1.#INF -1.0 0 1.0 1.#INF 1.#NaN 1.#NaN]" = mold sort [1.#NAN 1.#inf -1.0 1.#nan 1.0 -1.#inf 0]
+
 ===end-group===
 
 

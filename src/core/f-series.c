@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -229,7 +229,11 @@ is_true:
 chkDecimal:
 		if (Eq_Decimal(d1, d2))
 			return 0;
-		if (d1 < d2)
+		if (d1 < d2
+#ifndef USE_NO_INFINITY
+			|| isnan(d2)
+#endif
+		)
 			return -1;
 		return 1;
 
