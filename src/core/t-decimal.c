@@ -96,7 +96,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 	REBI64 int_diff;
 
 #ifndef USE_NO_INFINITY
-	if(isnan(a) || isnan(b)) return FALSE;
+	if (isnan(a) && isnan(b)) return max_diff > 0;
 #endif // !USE_NO_INFINITY
 
 	ua.d = a;

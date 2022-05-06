@@ -257,6 +257,16 @@ Rebol [
 		--assert not ($0.0 == 0)
 		--assert not (0.0 == 0)
 
+	--test-- "NaN equality"
+	;@@  https://github.com/Oldes/Rebol-issues/issues/2494
+		--assert 1.#NaN = 1.#NaN
+		--assert not 1.#NaN != 1.#NaN
+		--assert not 1.#NaN == 1.#NaN
+		--assert 1.#NaN !== 1.#NaN
+		--assert same? 1.#NaN 1.#NaN
+		--assert equal? 1.#NaN 1.#NaN
+		--assert not strict-equal? 1.#NaN 1.#NaN
+
 ===end-group===
 
 ===start-group=== "trigonometric function"
