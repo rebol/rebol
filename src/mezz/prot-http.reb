@@ -104,8 +104,9 @@ sync-op: func [port body /local header state][
 	reduce [header body]
 ]
 
-read-sync-awake: func [event [event!] /local error][
+read-sync-awake: func [event [event!] /local error state][
 	sys/log/debug 'HTTP ["Read-sync-awake:" event/type]
+	state: event/port/state
 	switch/default event/type [
 		connect ready [
 			do-request event/port
@@ -119,15 +120,15 @@ read-sync-awake: func [event [event!] /local error][
 		]
 		custom [
 			if event/code = 300 [
-				event/port/state/state: 'redirect
+				state/state: 'redirect
 				return true
 			]
 			false
 		]
 		error [
 			if all [
-				event/port/state
-				event/port/state/state <> 'closing
+				state
+				state/state <> 'closing
 			][
 				sys/log/debug 'HTTP ["Closing (sync-awake):^[[1m" event/port/spec/ref]
 				close event/port
