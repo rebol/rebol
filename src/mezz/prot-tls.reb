@@ -12,8 +12,8 @@ REBOL [
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
 	Author: ["Richard 'Cyphre' Smolak" "Oldes" "Brian Dickens (Hostilefork)"]
-	Version: 0.9.0
-	Date: 16-Feb-2022
+	Version: 0.9.1
+	Date: 6-May-2022
 	history: [
 		0.6.1 "Cyphre" "Initial implementation used in old R3-alpha"
 		0.7.0 "Oldes" {
@@ -34,6 +34,7 @@ REBOL [
 		0.7.4 "Oldes" "Pass data to parent handler even when ALERT message is not decoded"
 		0.8.0 "Oldes" "Using new `crypt` port introduced in Rebol 3.8.0"
 		0.9.0 "Oldes" "Added (limited) support for a `server` role"
+		0.9.1 "Oldes" "Improved initialization to be able reuse already opened TCP port"
 	]
 	todo: {
 		* cached sessions
@@ -359,7 +360,7 @@ _log-debug: func[msg][
 	if block? msg [msg: reform msg]
 	print rejoin [" ^[[33m[TLS] ^[[0;32m" msg "^[[0m"]
 ]
-_log-----: does [print "----------------------------------------------------------------"]
+_log-----: does [print-horizontal-line]
 
 log-error: log-info: log-more: log-debug: log-----: none
 
@@ -439,8 +440,8 @@ suported-cipher-suites: decode-cipher-suites suported-cipher-suites-binary: rejo
 	#{C027} ;TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
 	#{C014} ;TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
 	#{C013} ;TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
-	#{C00A} ;TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
-	#{C009} ;TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA
+;@@	#{C00A} ;TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA  ; some issue!
+;@@	#{C009} ;TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA  ; some issue!
 	;#{006A} ;TLS_DHE_DSS_WITH_AES_256_CBC_SHA256
 	#{006B} ;TLS_DHE_RSA_WITH_AES_256_CBC_SHA256
 	#{0067} ;TLS_DHE_RSA_WITH_AES_128_CBC_SHA256
@@ -565,8 +566,7 @@ change-state: function [
 ][
 	ctx/state-prev: ctx/state
 	if ctx/state <> new-state [
-		;log-info "_________________________________________________________"
-		log-info ["New state:^[[33m" new-state "^[[22mfrom:" ctx/state]
+		log-more ["New state:^[[33m" new-state "^[[22mfrom:" ctx/state]
 		ctx/state: new-state
 	]
 ]
@@ -978,7 +978,8 @@ application-data: func [
 	ctx [object!]
 	message [binary! string!]
 ][
-	log-more "application-data"
+	log-debug "application-data"
+	log-more ["W[" ctx/seq-write "] application data:" length? message "bytes"]
 	;prin "unencrypted: " ?? message
 	message: encrypt-data ctx to binary! message
 	;prin "encrypted: " ?? message
@@ -1307,7 +1308,7 @@ do-commands: func [
 	]
 	;ctx/out/buffer: head ctx/out/buffer
 	;?? ctx/out/buffer
-	log-info ["Writing bytes:" length? ctx/out/buffer]
+	log-debug ["Writing bytes:" length? ctx/out/buffer]
 	ctx/out/buffer: head ctx/out/buffer
 	write ctx/tcp-port ctx/out/buffer
 
@@ -1332,7 +1333,7 @@ do-commands: func [
 ;--- TLS scheme -------------------------------;
 ;----------------------------------------------;
 
-TLS-init: func [
+TLS-init-context: func [
 	"Resets existing TLS context"
 	ctx [object!]
 ][
@@ -1342,6 +1343,38 @@ TLS-init: func [
 	clear ctx/server-certs
 ]
 
+TLS-init-connection: function [ctx [object!]][
+	error: try [
+		TLS-port: ctx/TLS-port
+		do-commands ctx [client-hello]
+		log-debug ["CONNECT^[[22m: client-hello done; protocol:^[[1m" ctx/protocol]
+		if ctx/protocol = 'HANDSHAKE [
+			do-commands ctx [
+				client-key-exchange
+				change-cipher-spec
+				finished
+			]
+		]
+		if open? TLS-port [
+			;send-event 'connect TLS-port
+			return false
+		]
+		cause-TLS-error *Alert/Close_notify
+	]
+	print error
+	log-error error
+	if ctx [
+		if error? ctx/state [
+			; upper protocol was already closed and reports the error in its state
+			; it's safe to throw the error now
+			do ctx/state
+		]
+		; in case that the upper protocol is not yet closed, store error and report it
+		ctx/error: error
+	]
+	send-event 'error TLS-port
+	false
+]
 
 TLS-read-data: function [
 	ctx       [object!]
@@ -1351,7 +1384,7 @@ TLS-read-data: function [
 ;@@       but we need just parts of it, before it is decrypted! Unfortunatelly the current
 ;@@       bincode does not allow shrinking of the buffer :-/  NEEDS REWRITE!!!            
 
-	log-more ["read-data:^[[1m" length? tcp-data "^[[22mbytes previous rest:" length? ctx/rest]
+	log-debug ["read-data:^[[1m" length? tcp-data "^[[22mbytes previous rest:" length? ctx/rest]
 	inp: ctx/in
 
 	binary/write inp ctx/rest  ;- possible leftover from previous packet
@@ -1383,7 +1416,7 @@ TLS-read-data: function [
 
 		if available < len [
 			;probe inp/buffer
-			log-info ["Incomplete fragment:^[[22m available^[[1m" available "^[[22mof^[[1m" len "^[[22mbytes"]
+			log-debug ["Incomplete fragment:^[[22m available^[[1m" available "^[[22mof^[[1m" len "^[[22mbytes"]
 			;?? inp/buffer
 			binary/read inp [AT :start] ;resets position
 			log-debug ["Data starts: " copy/part inp/buffer 10]
@@ -1401,7 +1434,7 @@ TLS-read-data: function [
 		end: start + len + 5 ; header size is 5 bytes
 
 		;log-debug "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-		log-info ["^[[22mR[" ctx/seq-read "] Protocol^[[1m" protocol "^[[22m" server-version "bytes:^[[1m" len "^[[22mfrom^[[1m" start "^[[22mto^[[1m" end]
+		log-more ["^[[22mR[" ctx/seq-read "] Protocol^[[1m" protocol "^[[22mbytes:^[[1m" len "^[[22mfrom^[[1m" start "^[[22mto^[[1m" end]
 
 		ctx/protocol: protocol
 
@@ -1494,11 +1527,8 @@ TLS-read-data: function [
 		]
 
 		unless ctx/reading? [
-			;? ctx
-			;print "^/================================================================"
-			log-more ["Reading finished!"]
-			log-----
-
+			log-debug ["Reading finished!"]
+			;log-----
 			return true
 		]
 	]
@@ -1867,9 +1897,15 @@ send-event: function[
 	event  [word!]
 	target [port!]
 ][
-	log-debug ["Send-event:^[[1m" event]
-	;if 'error = event [ ? target ? target/extra ]
-	insert system/ports/system make event! [ type: event port: target ]
+	log-debug ["Send-event:^[[1m" pad event 8 "^[[m->" target/spec/ref]
+	either all [
+		port? target/parent
+		function? :target/parent/awake
+	][  ;; If there is parent scheme, send the event to its awake function 
+		target/parent/awake make event! [ type: event port: target ]
+	][  ;; If not, insert the event into the system port's que
+		insert system/ports/system make event! [ type: event port: target ]
+	]
 ]
 
 
@@ -1966,7 +2002,7 @@ TLS-server-awake: func [event /local port info serv] [
 
 
 TLS-client-awake: function [event [event!]][
-	log-more ["AWAKE Client:^[[1m" event/type]
+	log-debug ["AWAKE Client:^[[1m" event/type]
 	TCP-port: event/port
 ;? TCP-port
 	ctx: TCP-port/extra
@@ -1986,39 +2022,12 @@ TLS-client-awake: function [event [event!]][
 	switch/default event/type [
 		lookup [
 			open TCP-port
-			TLS-init ctx
+			TLS-init-context ctx
 			return false
 		]
 		connect [
-			error: try [
-				do-commands ctx [client-hello]
-				if none? ctx [return true] ;- probably closed meanwhile
-				log-info ["CONNECT^[[22m: client-hello done; protocol:^[[1m" ctx/protocol]
-				if ctx/protocol = 'HANDSHAKE [
-					do-commands ctx [
-						client-key-exchange
-						change-cipher-spec
-						finished
-					]
-				]
-				if open? TLS-port [
-					send-event 'connect TLS-port
-					return false
-				]
-				cause-TLS-error *Alert/Close_notify
-			]
-			;?? error
-			if ctx [
-				if error? ctx/state [
-					; upper protocol was already closed and reports the error in its state
-					; it's safe to throw the error now
-					do ctx/state
-				]
-				; in case that the upper protocol is not yet closed, store error and report it
-				ctx/error: error
-			]
-			send-event 'error TLS-port
-			return true
+			if none? ctx [return true] ;- probably closed meanwhile
+			return TLS-init-connection ctx
 		]
 		wrote [
 			switch ctx/protocol [
@@ -2035,7 +2044,7 @@ TLS-client-awake: function [event [event!]][
 		]
 		read [
 			error: try [
-				log-info ["READ TCP" length? TCP-port/data "bytes proto-state:" ctx/protocol]
+				log-debug ["READ TCP" length? TCP-port/data "bytes proto-state:" ctx/protocol]
 				;@@ This part deserves a serious review!                         
 				complete?: TLS-read-data ctx TCP-port/data
 				;? port
@@ -2049,14 +2058,14 @@ TLS-client-awake: function [event [event!]][
 				binary/init ctx/in none ; resets input buffer
 				;?? ctx/protocol
 				either 'APPLICATION = ctx/protocol [
-					;print "------------------"
 					;- report that we have data to higher layer
-					;probe to-string TLS-port/data
-					send-event 'read TLS-port 
+					either ctx/state-prev = 'FINISHED [
+						send-event 'connect TLS-port 
+					][	send-event 'read TLS-port ]
+					;print-horizontal-line
 				][	read TCP-port ]
 				return true
 			]
-			;print error
 			; on error:
 			if ctx [ ctx/error: error ]
 			send-event 'error TLS-port
@@ -2088,16 +2097,33 @@ do-TLS-open: func [
 	port [port!]
 	/local spec conn config certs bin der key
 ][
-	log-more "OPEN"
+	log-debug "OPEN"
 	if port/state [return port]
 	spec: port/spec
-	conn: make port! [
-		scheme: 'tcp
-		host:    spec/host
-		port:    spec/port
-		ref:     rejoin [tcp:// any [host ""] ":" port]
+
+	either port? conn: select spec 'conn [
+		;- reusing already prepared TCP connection      
+		spec/host: conn/spec/host
+		spec/port: conn/spec/port
+		if block? spec/ref [
+			spec/ref: rejoin [tls:// any [spec/host ""] ":" spec/port]
+		]
+	][
+		;- opening new low level TCP connection         
+		conn: make port! [
+			scheme: 'tcp
+			host:    spec/host
+			port:    spec/port
+			ref:     rejoin [tcp:// any [host ""] ":" port]
+		]
+		if port/parent [
+			conn/state: port/parent/state
+		]
+		conn/parent: port
 	]
+
 	either spec/host [
+		;- CLIENT connection ---------------------------
 		port/extra: conn/extra: make TLS-context [
 			tcp-port: conn
 			tls-port: port
@@ -2106,6 +2132,7 @@ do-TLS-open: func [
 		port/data: conn/extra/port-data
 		conn/awake: :TLS-client-awake
 	][
+		;- SERVER connection ---------------------------
 		spec/ref: rejoin [tls://: spec/port]
 		port/spec/title: "TLS Server"
 		conn/spec/title: "TLS Server (internal)"
@@ -2116,7 +2143,7 @@ do-TLS-open: func [
 			elliptic-curves: decode-supported-groups :supported-elliptic-curves
 			version: *Protocol-version/TLS1.2
 		]
-		? spec
+		;? spec
 		if config: select spec 'config [
 			certs: any [select config 'certificates []]
 			unless block? certs [certs: to block! certs]
@@ -2151,12 +2178,18 @@ do-TLS-open: func [
 		conn/parent: port
 		conn/awake: :TLS-server-awake
 	]
-	open conn
+	either open? conn [
+		TLS-init-context    conn/extra
+		TLS-init-connection conn/extra
+	][
+		open conn
+	]
 	port
 ]
-do-TLS-close: func [port [port!] /local ctx][
-	log-more "CLOSE"
+do-TLS-close: func [port [port!] /local ctx parent][
+	log-debug "CLOSE"
 	unless ctx: port/extra [return port]
+	parent: port/parent
 	log-debug "Closing port/extra/tcp-port"
 	close ctx/tcp-port
 	if port? ctx/encrypt-port [ close ctx/encrypt-port ]
@@ -2164,17 +2197,22 @@ do-TLS-close: func [port [port!] /local ctx][
 	ctx/encrypt-port: none
 	ctx/decrypt-port: none
 	ctx/tcp-port/awake: none
+	ctx/tcp-port: none
+	ctx/tls-port: none
 	port/extra: none
 	log-more "Port closed"
+	if parent [
+		insert system/ports/system make event! [type: 'close port: parent]
+	]
 	port
 ]
 do-TLS-read: func [port [port!]][
-	log-more "READ"
+	log-debug "READ"
 	read port/extra/tcp-port
 	port
 ]
 do-TLS-write: func[port [port!] value [any-type!]][
-	log-more "WRITE"
+	log-debug "WRITE"
 	if port/extra/protocol = 'APPLICATION [
 		do-commands/no-wait port/extra compose [
 			application (value)
