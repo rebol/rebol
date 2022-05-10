@@ -4,8 +4,8 @@ Rebol [
 	type:    module
 	author:  ["Graham" "Oldes"]
 	rights:  BSD
-	version: 0.1.0
-	date:    5-Feb-2022
+	version: 1.0.0
+	date:    10-May-2022
 	file:    %prot-smtp.reb
 	notes: {
 		0.0.1 original tested in 2010
@@ -14,7 +14,7 @@ Rebol [
 		0.0.4 Added LOGIN, PLAIN and CRAM-MD5 authentication.  Tested against CommunigatePro
 		0.0.5 Changed to move credentials to the url or port specification
 		0.0.6 Fixed some bugs in transferring email greater than the buffer size.
-        0.1.0 Oldes: Updated to work with my Rebol3 fork; including TLS.
+        1.0.0 Oldes: Updated to work with my Rebol3 fork; including TLS.
 
         Note that if your password does not work for gmail then you need to 
         generate an app password.  See https://support.google.com/accounts/answer/185833
@@ -78,25 +78,35 @@ mail-obj: make object! [
 	message: none
 ]
 
-make-smtp-error: func [
-	message
+
+throw-smtp-error: func [
+	smtp-port  [port!]
+	error [error! string! block!]
 ][
-	do make error! [
-		type: 'Access
-		id: 'Protocol
-		arg1: message
+	sys/log/error 'SMTP error
+	unless error? error [
+		error: make error! [
+			type: 'Access
+			id:   'Protocol
+			arg1: either block? error [ajoin error][error]
+		]
 	]
+	either object? smtp-port/extra [
+		smtp-port/extra/error: error
+		smtp-port/awake make event! [type: 'error port: smtp-port]
+	][  do error ]
 ]
 
 ; auth-methods: copy []
 alpha: system/catalog/bitsets/alpha
 digit: system/catalog/bitsets/numeric
 
-net-log: func[data /C /S /local msg][
+net-log: func[data /C /S /E /local msg][
 	msg: clear ""
 	case [
 		C [append msg "Client: "]
 		S [append msg "Server: "]
+		E [sys/log/error 'SMTP :data return :data]
 	]
 	append msg data
 	sys/log/more 'SMTP trim/tail msg
@@ -104,10 +114,14 @@ net-log: func[data /C /S /local msg][
 ]
 
 sync-smtp-handler: function [event][
+	sys/log/debug 'SMTP ["sync-smtp-handler event:" event/type event/port/spec/ref]
 	; client is the real port ie. port/state/connection
-	client: event/port
-	state: client/spec/state
-	sys/log/debug 'SMTP [state " event " event/type]
+	client:    event/port
+	smtp-port: client/parent
+	spec:      smtp-port/spec
+	state:     smtp-port/state
+	smtp-ctx:  smtp-port/extra
+	sys/log/debug 'SMTP ["State:" state]
 
 	switch event/type [
 		error [
@@ -120,9 +134,7 @@ sync-smtp-handler: function [event][
 			false
 		]
 		connect [
-			client/spec/state: 'EHLO
-			;write client to binary! net-log/C ajoin ["EHLO " client/spec/ehlo CRLF]
-			;client/spec/state: 'AUTH
+			smtp-port/state: 'EHLO
 			read client
 			false
 		]
@@ -144,15 +156,18 @@ sync-smtp-handler: function [event][
 			switch/default state [
 				EHLO
 				INIT [
-					write client to binary! net-log/C ajoin ["EHLO " client/spec/ehlo CRLF]
-					client/spec/state: 'AUTH
+					write client to binary! net-log/C ajoin ["EHLO " spec/ehlo CRLF]
+					smtp-port/state: 'AUTH
 					return false
 				]
 				AUTH [
 					if code = 250 [
 						if parse response [
 							thru "STARTTLS" CRLF to end (
-								make-smtp-error "STARTTLS not implemented!"
+								;throw-smtp-error "STARTTLS not implemented!"
+								smtp-port/state: 'STARTTLS
+								write client to binary! net-log/C "STARTTLS^M^/"
+								return false
 							)
 							|
 							thru "AUTH" [#" " | #"="] copy auth-methods: to CRLF to end (
@@ -161,20 +176,20 @@ sync-smtp-handler: function [event][
 									try [auth: to word! auth]
 									switch auth [
 										CRAM-MD5 [
-											client/spec/state: 'CRAM-MD5
+											smtp-port/state: 'CRAM-MD5
 											write client to binary! net-log/C "AUTH CRAM-MD5^M^/"
 											return false
 										]
 										LOGIN [
-											client/spec/state: 'LOGIN
+											smtp-port/state: 'LOGIN
 											write client to binary! net-log/C "AUTH LOGIN^M^/"
 											return false
 										]
 										PLAIN [
-											client/spec/state: 'PLAIN
+											smtp-port/state: 'PLAIN
 											write client to binary! ajoin [
 												"AUTH PLAIN "
-												enbase ajoin [client/spec/user #"^@" client/spec/user #"^@" client/spec/pass] 64
+												enbase ajoin [spec/user #"^@" spec/user #"^@" spec/pass] 64
 												CRLF
 											]
 											return false
@@ -187,8 +202,29 @@ sync-smtp-handler: function [event][
 							)
 						]
 						sys/log/debug 'SMTP ["Trying to send without authentication!"]
-						client/spec/state: 'FROM
-						write client to binary! net-log/C ajoin ["MAIL FROM: <" client/spec/email/from ">" CRLF]
+						smtp-port/state: 'FROM
+						write client to binary! net-log/C ajoin ["MAIL FROM: <" smtp-ctx/mail/from ">" CRLF]
+						return false
+					]
+				]
+
+				STARTTLS [
+					if code = 220 [
+						;- Upgrading client's connection to TLS port                                      
+						;; tls-port will be a new layer between existing smtp and client (tcp) connections
+						;? client
+						;? smtp-port
+						tls-port: open [scheme: 'tls conn: client]
+						tls-port/parent: smtp-port
+						client/parent: tls-port
+						sys/log/more 'SMTP "TLS connection established..."
+						;? tls-port
+						;? client
+						;? client/parent
+						;? client/extra/tls-port
+						smtp-port/extra/connection: client/extra/tls-port
+						write tls-port to binary! net-log/C ajoin ["EHLO " spec/ehlo CRLF]
+						smtp-port/state: 'AUTH
 						return false
 					]
 				]
@@ -198,125 +234,148 @@ sync-smtp-handler: function [event][
 						find/part response "334 VXNlcm5hbWU6" 16 [ ;enbased "Username:"
 							; username being requested
 							sys/log/more 'SMTP "Client: ***user-name***"
-							write client to binary! ajoin [enbase client/spec/user 64 CRLF]
+							write client to binary! ajoin [enbase spec/user 64 CRLF]
 						]
 						find/part response "334 UGFzc3dvcmQ6" 16 [ ;enbased "Password:"
                             ; pass being requested
                             sys/log/more 'SMTP "Client: ***user-pass***"
-							write client to binary! ajoin [enbase client/spec/pass 64 CRLF]
-							client/spec/state: 'PASSWORD
+							write client to binary! ajoin [enbase spec/pass 64 CRLF]
+							smtp-port/state: 'PASSWORD
 						]
 						true [
-							make-smtp-error join "Unknown response in AUTH LOGIN " response						
+							throw-smtp-error smtp-port join "Unknown response in AUTH LOGIN " response						
 						]
 					]
 				]
-				
 				CRAM-MD5 [
 					either code = 334 [
 						auth-key: skip response 4
 						auth-key: debase auth-key 64
 						; compute challenge response
-						auth-key: checksum/with auth-key 'md5 client/spec/pass
+						auth-key: checksum/with auth-key 'md5 spec/pass
 						sys/log/more 'SMTP "Client: ***auth-key***"
-						write client to binary! ajoin [enbase ajoin [client/spec/user #" " lowercase enbase auth-key 16] 64 CRLF]
-						client/spec/state: 'PASSWORD
+						write client to binary! ajoin [enbase ajoin [spec/user #" " lowercase enbase auth-key 16] 64 CRLF]
+						smtp-port/state: 'PASSWORD
+						false
 					][
-						make-smtp-error join "Unknown response in AUTH CRAM-MD5 " response						
+						throw-smtp-error smtp-port join "Unknown response in AUTH CRAM-MD5 " response						
 					]
 				]
-				
 				PASSWORD [
 					either code = 235 [
-						client/spec/state: 'FROM
-						write client to binary! net-log/C ajoin ["MAIL FROM: <" client/spec/email/from ">" CRLF	]
+						smtp-port/state: 'FROM
+						write client to binary! net-log/C ajoin ["MAIL FROM: <" smtp-ctx/mail/from ">" CRLF	]
+						false
 					][
-						make-smtp-error "Failed authentication"
+						throw-smtp-error smtp-port "Failed authentication"
 					]
 				]
-
 				FROM [
 					either code = 250 [
-						write client to binary! net-log/C ajoin ["RCPT TO: <" client/spec/email/to ">" crlf]
-						client/spec/state: 'TO
+						write client to binary! net-log/C ajoin ["RCPT TO: <" smtp-ctx/mail/to ">" crlf]
+						smtp-port/state: 'TO
+						false
 					] [
-						net-log "Rejected by server"
-						return true
+						throw-smtp-error smtp-port "Rejected by server"
 					]
 				]
 				TO [
 					either code = 250 [
-						client/spec/state: 'DATA
+						smtp-port/state: 'DATA
 						write client to binary! net-log/C join "DATA" CRLF
+						false
 					] [
-						net-log "server rejects TO address"
-						return true
+						throw-smtp-error smtp-port "Server rejects TO address"
 					]
 				]
 				DATA [
 					either code = 354 [
-						replace/all client/spec/email/message "^/." "^/.."
-						client/spec/email/message: ptr: rejoin [ enline client/spec/email/message ]
+						replace/all smtp-ctx/mail/message "^/." "^/.."
+						smtp-ctx/mail/message: ptr: rejoin [ enline smtp-ctx/mail/message ]
 						sys/log/more 'SMTP ["Sending"  min bufsize length? ptr "bytes of" length? ptr ]
 						write client take/part ptr bufsize
-						client/spec/state: 'SENDING
+						smtp-port/state: 'SENDING
+						false
 					] [
-						net-log "Not allowing us to send ... quitting"
+						throw-smtp-error smtp-port "Not allowing us to send ... quitting"
 					]
 				]
-				
 				END [
 					either code = 250 [
-						net-log "Message successfully sent."
-						client/spec/state: 'QUIT
+						sys/log/info 'SMTP "Message successfully sent."
+						smtp-port/state: 'QUIT
 						write client to binary!  net-log/C join "QUIT" crlf
-						return true
+						true
 					][
-						net-log "Some error occurred on sending."
-						return true
+						throw-smtp-error smtp-port "Some error occurred on sending."
 					]
 				]
 				QUIT [
-					net-log "Should never get here"
+					throw-smtp-error smtp-port "Should never get here"
 				]
 			][
-				net-log join "Unknown state " state
+				throw-smtp-error smtp-port ["Unknown state " state]
 			]
 		]
 		wrote [
-			either state = 'SENDING [
-				either not empty? ptr: client/spec/email/message [
-					sys/log/debug 'SMTP ["Sending "  min bufsize length? ptr " bytes of " length? ptr ]
-					write client to binary! take/part ptr bufsize
-				][
-					sys/log/debug 'SMTP "Sending ends."
-					write client to binary! rejoin [ crlf "." crlf ]
-					client/spec/state: 'END
+			switch/default state [
+				SENDING [
+					either not empty? ptr: smtp-ctx/mail/message [
+						sys/log/debug 'SMTP ["Sending "  min bufsize length? ptr " bytes of " length? ptr ]
+						write client to binary! take/part ptr bufsize
+					][
+						sys/log/debug 'SMTP "Sending ends."
+						write client to binary! rejoin [ crlf "." crlf ]
+						smtp-port/state: 'END
+					]
+				]
+				QUIT [
+					close client
+					true
 				]
 			][
 				read client
+				false
 			]
 		]
-		close [net-log "Port closed on me"]
+		close [
+			net-log/E "Port closed on me"
+			true
+		]
 	]
-	false
 ]
 	
-sync-write: func [ port [port!] body
-	/local state result
+sync-write: func [
+	port [port!]
+	body [block!]
+	/local ctx result
 ][
-	unless port/state [ open port port/state/close?: yes ]
-	state: port/state
-	; construct the email from the specs 
-	port/state/connection/spec/email: construct/with body mail-obj
-	
-	port/state/connection/awake: :sync-smtp-handler
-	if state/state = 'ready [ 
-		; the read gets the data from the smtp server and triggers the events that follow that is handled by our state engine in the sync-smtp-handler
+	sys/log/debug 'SMTP ["sync-write state:" port/state]
+	unless ctx: port/extra [
+		open port
+		ctx: port/extra
+		port/state: 'READY
+	]
+	; construct the email object from the specs 
+	ctx/mail: construct/with body mail-obj
+
+	ctx/connection/awake: :sync-smtp-handler
+
+	if port/state = 'READY [ 
+		; the read gets the data from the smtp server and triggers the events
+		; that follow that is handled by our state engine in the sync-smtp-handler
 		read port 
 	]
-	unless port? wait [ state/connection port/spec/timeout ] [ make error! "SMTP timeout" ]
-	if state/close? [ close port ]
+	until [
+		result: wait [ port ctx/connection port/spec/timeout ]
+		unless port? result [
+			throw-smtp-error port "SMTP timeout"
+		]
+		any [none? result none? port/state port/state = 'CLOSE]
+	]
+	if port/state = 'CLOSE [
+		close port
+	]
 	true
 ]
 	
@@ -324,9 +383,8 @@ sys/make-scheme [
 	name: 'smtp
 	title: "Simple Mail Transfer Protocol"
 	spec: make system/standard/port-spec-net [
-		port: 25
+		port:    25
 		timeout: 60
-		email: ;-- object constructed from argument
 		ehlo: 
 		user:
 		pass: none
@@ -335,48 +393,36 @@ sys/make-scheme [
 		open: func [
 			port [port!]
 			/local conn spec
-		] [
-			if port/state [return port]
+		][
+			if port/extra [return port]
 			if none? port/spec/host [
-				make-smtp-error "Missing host address when opening smtp server"
+				throw-smtp-error port "Missing host address when opening smtp server"
 			]
 			; set the port state to hold the tcp port
-			port/state: construct [
-				state:
+			port/extra: construct [
 				connection:
+				mail:
 				error:
-				awake: none  ;-- so port/state/awake will hold the awake handler :port/awake
-				close?: no   ;-- flag for us to decide whether to close the port eg in syn mode
 			]
 			spec: port/spec
-            ; create the tcp port and set it to port/state/connection
-           ; unless system/user/identity/fqdn [make-smtp-error "Need to provide a value for the system/user/identity/fqdn"]
-            either 465 = spec/port [
-                port/state/connection: conn: make port! [
-                    scheme: 'tls
-                    host:   spec/host
-                    port:   spec/port
-                    state:  'INIT
-                    ref:    rejoin [tls:// host ":" port]
-                    email:  spec/email
-                    user:   spec/user
-                    pass:   spec/pass
-                    ehlo:   spec/ehlo ; "system/user/identity/fqdn]
-                ]
-            ][
-                port/state/connection: conn: make port! [
-                    scheme: 'tcp
-                    host:   spec/host
-                    port:   spec/port
-                    state:  'INIT
-                    ref:    rejoin [tcp:// host ":" port]
-                    email:  spec/email
-                    user:   spec/user
-                    pass:   spec/pass
-                    ehlo:   spec/ehlo ;any [port/spec/ehlo system/user/identity/fqdn]
-                ]
+			; create the tcp port and set it to port/state/connection
+			; unless system/user/identity/fqdn [throw-smtp-error "Need to provide a value for the system/user/identity/fqdn"]
+			conn: context [
+				scheme: none
+				host:   spec/host
+				port:   spec/port
+				ref:    none
+			]
+            conn/scheme: either 465 = spec/port ['tls]['tcp]
+            conn/ref: as url! ajoin [conn/scheme "://" spec/host #":" spec/port]
+
+            port/state: 'INIT
+            port/extra/connection: conn: make port! conn
+            if block? spec/ref [
+            	spec/ref: rejoin [smtp:// enhex spec/user #"@" spec/host #":" spec/port]
             ]
-            conn/extra: port
+            
+            conn/parent: port
 			open conn ;-- open the actual tcp port
 			
 			; return the newly created and open port
@@ -384,16 +430,17 @@ sys/make-scheme [
 		]
 		open?: func [
 			port [port!]
-		] [
-			all [port/state]
+		][
+			not none? port/state
 		]
 
 		close: func [
 			port [port!]
-		] [
+		][
+			sys/log/debug 'SMTP "Close"
 			if open? port [
-				close port/state/connection
-				port/state/connection/awake: none
+				close port/extra/connection
+				port/extra/connection/awake: none
 				port/state: none
 			]
 			port
@@ -401,35 +448,41 @@ sys/make-scheme [
 
 		read: func [
 			port [port!]
-		] [
-			either any-function? :port/awake [
-				either not open? port [
-					print "opening & waiting on port"
-					unless port? wait [open port/state/connection port/spec/timeout] [make-smtp-error "Timeout"]
-					; wait open port/state/connection
-				] [
-					print "waiting on port"
-					unless port? wait [ port/state/connection port/spec/timeout] [make-smtp-error "Timeout"]
-				]
-				port
-			] [
-				print "No handler for the port exists yet"
-				; should this be used at all for smtp?
-			]
+		][
+			sys/log/debug 'SMTP "Read"
 		]
 
 		write: func [
-			port [port!] body [block!]
-			/local conn email
+			port [port!]
+			body [block!]
 		][
 			sync-write port body
+		]
+	]
+	awake: func[event /local port type error][
+		port: event/port
+		type: event/type
+		sys/log/debug 'SMTP ["SMTP-Awake event:" type]
+		switch/default type [
+			error [
+				error: all [port/extra port/extra/error]
+				close port
+				wait [port 0.1]
+				do error
+			]
+			close [
+				port/state: 'CLOSE
+				true
+			]
+		][
+			sync-smtp-handler :event
 		]
 	]
 ]
 
 sys/make-scheme/with [
 	name: 'smtps
-	title: "Secure Simple Mail Transfer Protocol"
+	title: "Simple Mail Transfer Protocol Secure"
 	spec: make spec [
 		port: 465
 	]
