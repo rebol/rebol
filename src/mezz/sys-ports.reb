@@ -418,7 +418,8 @@ init-schemes: func [
 			spec: port/spec
 			method: any [
 				select spec 'method
-				select spec 'target ; if scheme was opened using url type
+				select spec 'target ; if scheme was opened using url type (checksum:sha1)
+				select spec 'host   ; when used as: checksum://sha1
 				'md5                ; default method
 			]
 			if any [
@@ -427,7 +428,7 @@ init-schemes: func [
 			][
 				cause-error 'access 'invalid-spec method
 			] 
-			; make port/spec to be only with midi related keys
+			; make port/spec to be only with checksum related keys
 			set port/spec: copy system/standard/port-spec-checksum spec
 			;protect/words port/spec ; protect spec object keys of modification
 		]
@@ -444,19 +445,34 @@ init-schemes: func [
 			spec: port/spec
 			algorithm: any [
 				select spec 'algorithm
-				select spec 'target ; if scheme was opened using url type
-				'AES-256-CBC        ; default cipher
+				select spec 'target ; if scheme was opened using url type: crypt:chacha20
+				select spec 'host   ; or when used as: crypt://chacha20
+			]
+			direction: any [
+				select spec 'fragment ; from: crypt://chacha20#decrypt
+				select spec 'direction
 			]
 			if any [
-				error? try [spec/algorithm: to word! algorithm] ; in case it was not
+				error? try [spec/algorithm: to word! :algorithm] ; in case it was not
 				not find system/catalog/ciphers spec/algorithm
 			][
-				cause-error 'access 'invalid-spec algorithm
-			] 
+				cause-error 'access 'invalid-spec :algorithm
+			]
+			if any [
+				error? try [spec/direction: to word! :direction] ; in case it was not
+				not find [encrypt decrypt] spec/direction
+			][
+				cause-error 'access 'invalid-spec :direction
+			]
+			; make port/spec to be only with crypt related keys
 			set port/spec: copy system/standard/port-spec-crypt spec
+			if block? port/spec/ref [
+				port/spec/ref: as url! ajoin ["crypt://" :algorithm #"#" :direction]
+			]
 			;protect/words port/spec ; protect spec object keys of modification
 		]
 	]
+
 
 	make-scheme [
 		title: "Clipboard"

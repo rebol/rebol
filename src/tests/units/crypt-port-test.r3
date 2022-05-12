@@ -13,9 +13,10 @@ Rebol [
 test-crypt: func[port key iv plain cipher][
 	modify port 'direction 'encrypt
 	modify port 'key key
-	modify port 'iv  iv
+	modify port 'init-vector  iv
 	--assert cipher = try [read write port plain]
 	modify port 'direction 'decrypt
+	modify port 'init-vector  iv ; must reset IV, because it was changed internally!
 	--assert plain  = try [read write port cipher]
 ]
 tests: [
@@ -109,6 +110,69 @@ foreach [cipher tests] tests [
 		close port
 	]
 ]
+	--test-- "AES-128-CBC with chunked input"
+		port: open make port! [
+			scheme:    'crypt
+			algorithm: 'AES-128-CBC
+			key:       #{2B7E151628AED2A6ABF7158809CF4F3C}
+		]
+		iv: #{000102030405060708090A0B0C0D0E0F}
+		modify port 'init-vector :iv
+		; writing data in 2 chunks
+		write port #{6BC1BEE22E409F96}
+		write port #{E93D7E117393172A}
+		; no need to `update`, because the input has full block size now
+		--assert #{7649ABAC8119B246CEE98E9B12E9197D} = read port
+
+		modify port 'init-vector :iv
+		write port #{6BC1BEE22E409F96}
+
+		--assert none? read port         ; because the input was not long enough
+		crypted: read update port         ; the input is padded by `update` call
+		--assert crypted = #{6F8BB83BE51C9A7DE442745E517D4377}
+		--assert none? read update port  ; there are no more data
+		--assert none? take port
+
+		modify port 'direction 'decrypt
+		modify port 'init-vector :iv
+		; result contains padded data!
+		--assert #{6BC1BEE22E409F960000000000000000} = read write port :crypted
+
+	--test-- "AES-128-CBC with chunked input which needs padding"
+		c-port: open make port! [
+			scheme:      'crypt
+			algorithm:   'AES-128-CBC
+			key:         #{2B7E151628AED2A6ABF7158809CF4F3C}
+			init-vector: #{000102030405060708090A0B0C0D0E0F}
+		]
+		;d-port: open make port! [
+		;	scheme:      'crypt
+		;	direction:   'decrypt
+		;	algorithm:   'AES-128-CBC
+		;	key:         #{2B7E151628AED2A6ABF7158809CF4F3C}
+		;	init-vector: #{000102030405060708090A0B0C0D0E0F}
+		;]
+		;- above code can be also done using:
+		d-port: open crypt://AES-128-CBC#decrypt
+		modify d-port 'key         #{2B7E151628AED2A6ABF7158809CF4F3C}
+		modify d-port 'init-vector #{000102030405060708090A0B0C0D0E0F}
+
+		write c-port #{6BC1BEE22E409F96}
+		write c-port #{E93D7E117393172ADEADBEEF}
+		; notice that there is just a partial output, because the input is longer than a block!
+		crypted: read c-port
+		--assert crypted = #{7649ABAC8119B246CEE98E9B12E9197D}
+		write d-port :crypted
+		crypted: take c-port ; same as `read update c-port` -> take forces the padding
+		--assert crypted = #{00CA0B3A31A8BD78A2815653B0C4C9DB}
+		write d-port :crypted
+		plain: take d-port
+		; the output is padded!
+		--assert plain = #{6BC1BEE22E409F96E93D7E117393172ADEADBEEF000000000000000000000000}
+		close c-port
+		close d-port
+
+
 ===end-group===
 
 
@@ -118,7 +182,7 @@ foreach [cipher tests] tests [
 monte-carlo-test-crypt: function[port key iv plain cipher][
 	modify port 'direction 'encrypt
 	modify port 'key key
-	modify port 'iv  iv
+	modify port 'init-vector  iv
 	x: plain
 	loop 10000 [ x: read write port x ]
 	--assert cipher = x
@@ -172,7 +236,7 @@ foreach [cipher tests] monte-carlo-ecb-tests [
 monte-carlo-cbc-test-crypt: function[port key iv plain cipher][
 	modify port 'direction 'encrypt
 	modify port 'key key
-	modify port 'iv  iv
+	modify port 'init-vector  iv
 	pt: plain
 	ct-1: iv
 	loop 10000 [
@@ -283,10 +347,11 @@ foreach [cipher tests] monte-carlo-cbc-tests [
 	foreach [cipher tests] tests [
 		unless find system/catalog/ciphers cipher [continue]
 		foreach [k i p c] tests [
-			port: open [scheme: 'crypt algorithm: cipher key: k iv: i]
+			port: open [scheme: 'crypt algorithm: cipher key: k init-vector: i]
 			--test-- join "Crypt port: " cipher
 			--assert c = read write port p
 			modify port 'direction 'decrypt
+			modify port 'init-vector  i ; must reset IV, because it was changed internally!
 			--assert p = read write port c
 			close port
 		]
@@ -330,7 +395,7 @@ if find system/catalog/ciphers 'CHACHA20 [
 	foreach [key nonce plain cipher] tests [
 		--test-- join "Test Vector #" n
 		modify port 'key key
-		modify port 'iv  nonce
+		modify port 'init-vector  nonce
 		--assert cipher = read write port plain
 		++ n
 	]
@@ -339,7 +404,7 @@ if find system/catalog/ciphers 'CHACHA20 [
 
 ===start-group=== "The ChaCha20 encryption from RFC7539"
 	;https://datatracker.ietf.org/doc/rfc7539/
-	port: open crypt://CHACHA20
+	port: open crypt:CHACHA20
 
 	tests: [
 		#{0000000000000000000000000000000000000000000000000000000000000000}
@@ -371,7 +436,7 @@ if find system/catalog/ciphers 'CHACHA20 [
 	foreach [key nonce plain cipher] tests [
 		--test-- join "Test Vector #" n
 		modify port 'key key
-		modify port 'iv  nonce
+		modify port 'init-vector  nonce
 		--assert cipher = read write port plain
 		++ n
 	]

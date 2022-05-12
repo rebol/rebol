@@ -713,6 +713,44 @@ failed:
 	return CRYPT_OK;
 }
 
+/***********************************************************************
+**
+*/	static REBINT Crypt_Update(CRYPT_CTX* ctx)
+/*
+***********************************************************************/
+{
+	REBSER* bin;
+	REBCNT  len, ofs, blk;
+	REBINT  err;
+	size_t olen = 0;
+
+	bin = ctx->buffer;
+
+	//puts("update");
+#ifdef MBEDTLS_CHACHAPOLY_C
+	if (ctx->cipher_type == SYM_CHACHA20_POLY1305) {
+		Extend_Series(bin, 16);
+		err = mbedtls_chachapoly_finish((mbedtls_chachapoly_context*)ctx->cipher_ctx, BIN_TAIL(bin));
+		SERIES_TAIL(bin) += 16;
+		ctx->state = CRYPT_PORT_NEEDS_AAD;
+		return R_ARG1;
+	}
+#endif
+	if (ctx->unprocessed_len > 0) {
+		ofs = 0;
+		blk = ctx->cipher_block_size;
+		Extend_Series(bin, blk);
+
+		if (ctx->unprocessed_len > blk) abort();
+		len = blk - ctx->unprocessed_len;
+		// pad with zeros...
+		CLEAR(ctx->unprocessed_data + ctx->unprocessed_len, len);
+
+		Crypt_Crypt(ctx, ctx->unprocessed_data, blk, &olen);
+		ctx->unprocessed_len = 0;
+	}
+	return R_ARG1;
+}
 
 /***********************************************************************
 **
@@ -763,7 +801,7 @@ failed:
 		return CRYPT_OK;
 	}
 	// test if input have enough data to do the block crypt
-	if (len > blk) {
+	if (len >= blk) {
 		// we have enough data to call crypt
 		Crypt_Crypt(ctx, input, len, &olen);
 		if (olen > len) return CRYPT_ERROR_BAD_PROCESSED_SIZE;
@@ -837,8 +875,11 @@ failed:
 		}
 		Crypt_Write(ctx, VAL_BIN_AT(arg1), VAL_LEN(arg1));
 		break;
-	case A_READ:
 	case A_TAKE:
+		// `take` is same like `read`, but also calls `update` to process also
+		//  yet not processed data from the unprocessed buffer
+		Crypt_Update(ctx);
+	case A_READ:
 		//puts("read");
 		len = BIN_LEN(bin);
 		if (len > 0) {
@@ -852,30 +893,7 @@ failed:
 		else return R_NONE;
 		break;
 	case A_UPDATE:
-		//puts("update");
-#ifdef MBEDTLS_CHACHAPOLY_C
-		if (ctx->cipher_type == SYM_CHACHA20_POLY1305) {
-			Extend_Series(bin, 16);
-			err = mbedtls_chachapoly_finish((mbedtls_chachapoly_context*)ctx->cipher_ctx, BIN_TAIL(bin));
-			SERIES_TAIL(bin) += 16;
-			ctx->state = CRYPT_PORT_NEEDS_AAD;
-			return R_ARG1;
-		}
-#endif
-		if (ctx->unprocessed_len > 0) {
-			ofs = 0;
-			blk = ctx->cipher_block_size;
-			Extend_Series(bin, blk);
-
-			if (ctx->unprocessed_len > blk) abort();
-			len = blk - ctx->unprocessed_len;
-			// pad with zeros...
-			CLEAR(ctx->unprocessed_data + ctx->unprocessed_len, len);
-
-			Crypt_Crypt(ctx, ctx->unprocessed_data, blk, &olen);
-			ctx->unprocessed_len = 0;
-		}
-		break;
+		return Crypt_Update(ctx);
 
 	case A_CLOSE:
 		if (ctx) {
