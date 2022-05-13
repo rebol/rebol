@@ -1954,7 +1954,7 @@ TLS-server-client-awake: function [event [event!]][
 				return false
 			]
 			; on error:
-			if ctx [ log-error ctx/error: error ]
+			if ctx [ log-error ctx/error: probe error ]
 			;send-event 'error TLS-port
 			do-TLS-close TCP-port
 			return true
@@ -2067,7 +2067,7 @@ TLS-client-awake: function [event [event!]][
 				return true
 			]
 			; on error:
-			if ctx [ ctx/error: error ]
+			if ctx [ ctx/error: probe error ]
 			send-event 'error TLS-port
 			return true
 		]
