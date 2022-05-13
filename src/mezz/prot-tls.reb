@@ -440,8 +440,8 @@ suported-cipher-suites: decode-cipher-suites suported-cipher-suites-binary: rejo
 	#{C027} ;TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
 	#{C014} ;TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
 	#{C013} ;TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
-;@@	#{C00A} ;TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA  ; some issue!
-;@@	#{C009} ;TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA  ; some issue!
+	#{C00A} ;TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
+	#{C009} ;TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA
 	;#{006A} ;TLS_DHE_DSS_WITH_AES_256_CBC_SHA256
 	#{006B} ;TLS_DHE_RSA_WITH_AES_256_CBC_SHA256
 	#{0067} ;TLS_DHE_RSA_WITH_AES_128_CBC_SHA256
@@ -1689,6 +1689,7 @@ TLS-parse-handshake-message: function [
 					ecPublicKey [
 						ctx/pub-key: key/3
 						ctx/pub-exp: key/2      ;curve name
+						if 0 = ctx/pub-key/1 [next ctx/pub-key]
 					]
 					rsaEncryption [
 						ctx/pub-key: key/2/1
