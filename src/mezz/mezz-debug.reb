@@ -164,7 +164,9 @@ print-table: function [
 ]
 
 print-horizontal-line: does [
-	loop -1 + any [query/mode system/ports/output 'window-cols 76][ prin #"-" ] prin lf
+	;@@ quering window-cols width in CI under Windows now throws error: `Access error: protocol error: 6`
+	;@@ it should return `none` like under Posix systems!
+	loop -1 + any [attempt [query/mode system/ports/output 'window-cols] 76][ prin #"-" ] prin lf
 ]
 
 ;@@ profile idea is based on code from https://gist.github.com/giesse/1232d7f71a15a3a8417ec6f091398811
