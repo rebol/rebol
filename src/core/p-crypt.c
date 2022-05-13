@@ -368,11 +368,7 @@ static void free_crypt_cipher_context(CRYPT_CTX *ctx);
 	REBVAL *spec;
 	REBVAL *state;
 	REBVAL *val;
-	REBVAL *val_key;
-	REBYTE *name;
 	REBINT  err = 0;
-	REBCNT  len;
-	REBINT  i;
 	CRYPT_CTX *ctx;
 
 	spec = BLK_SKIP(port, STD_PORT_SPEC);
@@ -697,7 +693,6 @@ failed:
 	case SYM_CHACHA20_POLY1305:
 		err = mbedtls_chachapoly_setkey((CHACHAPOLY_CTX *)ctx->cipher_ctx, ctx->key);
 		if (err) return err;
-		//COPY_MEM(ctx->nonce, ctx->IV, MBEDTLS_MAX_IV_LENGTH);
 		// before start, we use part of the AAD as a dynamic_IV
 		ctx->state = CRYPT_PORT_NEEDS_AAD;
 		return CRYPT_OK;
@@ -726,7 +721,6 @@ failed:
 
 	bin = ctx->buffer;
 
-	//puts("update");
 #ifdef MBEDTLS_CHACHAPOLY_C
 	if (ctx->cipher_type == SYM_CHACHA20_POLY1305) {
 		Extend_Series(bin, 16);
@@ -758,12 +752,9 @@ failed:
 /*
 ***********************************************************************/
 {
-	REBINT  err;
-	REBSER *bin;
-	REBCNT  blk, olen, ofs;
+	REBINT err;
+	REBCNT blk, olen;
 	REBCNT unprocessed_free;
-	REBCNT counter;
-	REBYTE *end = input + len;
 
 	if (len == 0) return 0;
 
@@ -825,22 +816,15 @@ failed:
 /*
 ***********************************************************************/
 {
-	REBVAL *spec;
 	REBVAL *state;
-	REBVAL *data;
 	REBVAL *arg1;
 	REBVAL *arg2;
 	REBSER *bin;
 	REBSER *out;
 	REBCNT  len;
-	REBCNT  ofs, blk;
-	REBINT  err;
-	size_t olen = 0;
 	CRYPT_CTX *ctx = NULL;
 
 	Validate_Port(port, action);
-
-	//printf("Crypt device action: %i\n", action);
 	
 	state = BLK_SKIP(port, STD_PORT_STATE);
 	if (IS_HANDLE(state)) {
@@ -868,19 +852,18 @@ failed:
 
 	switch (action) {
 	case A_WRITE:
-		//puts("write");
 		arg1 = D_ARG(2);
 		if (!IS_BINARY(arg1)) {
 			Trap_Port(RE_FEATURE_NA, port, 0);
 		}
 		Crypt_Write(ctx, VAL_BIN_AT(arg1), VAL_LEN(arg1));
 		break;
+
 	case A_TAKE:
 		// `take` is same like `read`, but also calls `update` to process also
 		//  yet not processed data from the unprocessed buffer
 		Crypt_Update(ctx);
 	case A_READ:
-		//puts("read");
 		len = BIN_LEN(bin);
 		if (len > 0) {
 			out = Make_Binary(len);
@@ -892,6 +875,7 @@ failed:
 		}
 		else return R_NONE;
 		break;
+
 	case A_UPDATE:
 		return Crypt_Update(ctx);
 
