@@ -453,4 +453,84 @@ if find system/catalog/ciphers 'CHACHA20 [
 ===end-group===
 ] ;end if
 
+
+if find system/catalog/ciphers 'CHACHA20-POLY1305 [
+===start-group=== "ChaCha20-Poly1305"
+	--test-- "ChaCha20-Poly1305 use-case simulation"
+		;- server and client exchange it's keys and initialization vectors
+		server-key: #{AE8A57A15387FD92E9DAA50FECD6CA31044A7EEC9459EC9C6ED6A93EE4F6CC42}
+		client-key: #{438D7027FD611C1A5CD532D1151665EA3BB925CF1F37453C109790B604E7A0C4}
+		server-IV:  #{F01A5EF18B11C15FB97AE808}
+		client-IV:  #{9F45E14C213A3719186DDF50}
+
+		;- client uses for the encryption own key
+		c-enc: open crypt:chacha20-poly1305
+		c-dec: open crypt:chacha20-poly1305#decrypt
+		modify c-enc 'key :client-key
+		modify c-enc 'iv  :client-IV
+		modify c-dec 'key :server-key
+		modify c-dec 'iv  :server-IV
+		; first chunk of data is used as AAD
+		write c-enc #{0000000000000000 16 0303 0010}
+			; AAD structure used in TLS protocol:
+			; 8 bytes - sequence ID (starting from 0)
+			; 1 byte  - sequence type
+			; 2 bytes - TLS version
+			; 2 bytes - length of data
+			; AAD is internally padded to 16 bytes with zeros
+
+		; second chunk are real data we want to transfer
+		write c-enc #{1400000C89F6A49D54518857D140BE74}
+
+		--assert #{AE84B0499E0B7837027C6FD712A68894} == crypt: read c-enc
+		--assert #{3604F4477DCA0C6856559D1DD2EEC03C} == mac:   take c-enc
+		;; client than sends the crypted data and computed mac to server...
+
+		;- server uses clients key/IV to decrypt received data
+		s-dec: open crypt:chacha20-poly1305#decrypt
+		modify s-dec 'key :client-key
+		modify s-dec 'iv  :client-IV
+
+		;; using the same AAD in the first chunk of data
+		write s-dec #{0000000000000000 16 0303 0010}
+		write s-dec :crypt
+
+		--assert #{1400000C89F6A49D54518857D140BE74} == read s-dec
+		;; computed mac must be same like
+		--assert mac == take s-dec
+
+		;- for response server uses own key and IV
+		s-enc: open crypt:chacha20-poly1305
+		modify s-enc 'key :server-key
+		modify s-enc 'iv  :server-IV
+		write s-enc #{0000000000000000 16 0303 0010 000000} ; as it is first server's message, the seqence is = 0
+		write s-enc #{DEADBEAF}
+		;; it's possible to send data in multiple chunks..
+		write s-enc #{0BADCAFE}
+		;; when used only `take`, we get crypted data and 16 bytes of MAC on the tail
+		--assert (data: take s-enc) == #{E3B37D390075D5A09549BA5853B40E0A8368918B7DDD425A}
+		;; this is transfered back to client...
+
+		;- client extracts the mac from the received data
+		expectec-mac: take/last/part :data 16
+		--assert expectec-mac == #{9549BA5853B40E0A8368918B7DDD425A}
+		; the data without mac are decrypted using same AAD as server used
+		write c-dec #{0000000000000000 16 0303 0010 000000}
+		write c-dec :data
+		;; using just `read` we get data without it's MAC
+		--assert #{DEADBEAF 0BADCAFE} == read c-dec
+		;; using `take` is same like `read update`
+		--assert expectec-mac == read update c-dec ;<- could be used just `take c-dec`
+
+		;; when sending another message, the client and server increments the AAD sequence counter
+		;; so would use: #{0000000000000001 ...}
+
+		close c-enc
+		close c-dec
+		close s-enc
+		close s-dec
+
+===end-group===
+] ;end if
+
 ~~~end-file~~~
