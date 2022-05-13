@@ -912,15 +912,6 @@ failed:
 		arg2 = D_ARG(3); // value
 		if (!IS_WORD(arg1)) break;
 		switch (VAL_WORD_CANON(arg1)) {
-//		case SYM_AAD:
-//		case SYM_DATA:
-//			if (IS_BINARY(arg2)) {
-//			#ifdef MBEDTLS_CHACHAPOLY_C
-//				err = mbedtls_chachapoly_update_aad((mbedtls_chachapoly_context *)ctx->cipher_ctx, VAL_BIN_AT(arg2), VAL_LEN(arg2));
-//				if (!err) return R_TRUE;
-//			#endif
-//			}
-//			return FALSE;
 		case SYM_ALGORITHM:
 			if (!init_crypt_algorithm(ctx, arg2)) return R_FALSE;
 			break;
@@ -932,27 +923,11 @@ failed:
 			break;
 		case SYM_IV:
 		case SYM_INIT_VECTOR:
-	//		if (ctx->cipher_type == SYM_CHACHA20_POLY1305) {
-	//			if (IS_BINARY(arg2)) {
-	//				CLEAR(ctx->IV, MBEDTLS_MAX_IV_LENGTH);
-	//				len = VAL_LEN(arg2);
-	//				if (len > MBEDTLS_MAX_IV_LENGTH)
-	//					len = MBEDTLS_MAX_IV_LENGTH;
-	//				COPY_MEM(&ctx->IV, VAL_BIN_AT(arg2), len);
-	//				return R_TRUE;
-	//			}
-	//			return R_FALSE;
-	//		}
 			if (!init_crypt_iv(ctx, arg2)) return R_FALSE;
 			break;
 		default:
 			Trap1(RE_INVALID_ARG, arg1);
 		}
-		//err = mbedtls_cipher_setkey(&ctx->cipher, ctx->key, ctx->key_bitlen, ctx->operation);
-		//if (err) return R_FALSE;
-		//err = mbedtls_cipher_set_iv(&ctx->cipher, ctx->IV, 16);
-		//if (err) return R_FALSE;
-		//err = mbedtls_cipher_reset(&ctx->cipher);
 		break;
 	default:
 		Trap1(RE_NO_PORT_ACTION, Get_Action_Word(action));
