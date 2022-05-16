@@ -62,6 +62,10 @@ typedef mbedtls_chachapoly_context CHACHAPOLY_CTX;
 #define CHACHAPOLY_STATE_CIPHERTEXT (2)
 #endif
 
+#ifdef MBEDTLS_CCM_C
+#include "mbedtls/ccm.h"
+#endif
+
 #ifdef MBEDTLS_GCM_C
 #include "mbedtls/gcm.h"
 #endif
@@ -95,6 +99,7 @@ typedef struct crypt_ctx {
 	void                *cipher_ctx;
 	REBSER              *buffer;
 	unsigned int        key_bitlen;
+	unsigned int        IV_len;
 	unsigned int        unprocessed_len;
 	unsigned char       nonce[MBEDTLS_MAX_IV_LENGTH]; // nonce may be changed, like in Camellia cipher!
 	unsigned char       IV[MBEDTLS_MAX_IV_LENGTH];

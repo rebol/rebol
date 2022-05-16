@@ -50,6 +50,31 @@
     )
 #endif
 
+
+/***********************************************************************
+**
+*/	static mbedtls_cipher_id_t get_cipher_id(REBCNT sym)
+/*
+**  Note: requires exact word order defined in boot/words.reb file
+**
+***********************************************************************/
+{
+	if (sym >= SYM_AES_128_ECB && sym <= SYM_AES_256_GCM) {
+		return MBEDTLS_CIPHER_ID_AES;
+	}
+	if (sym >= SYM_CAMELLIA_128_ECB && sym <= SYM_CAMELLIA_256_GCM) {
+		return MBEDTLS_CIPHER_ID_CAMELLIA;
+	}
+	if (sym >= SYM_ARIA_128_ECB && sym <= SYM_ARIA_256_GCM) {
+		return MBEDTLS_CIPHER_ID_ARIA;
+	}
+	if (sym >= SYM_CHACHA20 && sym <= SYM_CHACHA20_POLY1305) {
+		return MBEDTLS_CIPHER_ID_CHACHA20;
+	}
+	return MBEDTLS_CIPHER_ID_NULL;
+}
+
+
 static void free_crypt_cipher_context(CRYPT_CTX *ctx);
 
 
@@ -117,6 +142,7 @@ static void free_crypt_cipher_context(CRYPT_CTX *ctx);
 	if (IS_NONE(val)) {
 		CLEAR(&ctx->IV, MBEDTLS_MAX_IV_LENGTH);
 		CLEAR(&ctx->nonce, MBEDTLS_MAX_IV_LENGTH);
+		ctx->IV_len = 0;
 		return TRUE;
 	}
 	if (IS_BINARY(val)) {
@@ -127,6 +153,7 @@ static void free_crypt_cipher_context(CRYPT_CTX *ctx);
 			CLEAR(&ctx->IV, MBEDTLS_MAX_IV_LENGTH);
 			CLEAR(&ctx->nonce, MBEDTLS_MAX_IV_LENGTH);
 			COPY_MEM(&ctx->IV, VAL_BIN_AT(val), len);
+			ctx->IV_len = len;
 		}
 		return TRUE;
 	}
@@ -254,6 +281,39 @@ static void free_crypt_cipher_context(CRYPT_CTX *ctx);
 		}
 		ctx->cipher_block_size = 16;
 		break;
+
+#ifdef MBEDTLS_CCM_C
+	case SYM_AES_128_CCM:
+	case SYM_AES_192_CCM:
+	case SYM_AES_256_CCM:
+#ifdef MBEDTLS_CAMELLIA_C
+	case SYM_CAMELLIA_128_CCM:
+	case SYM_CAMELLIA_192_CCM:
+	case SYM_CAMELLIA_256_CCM:
+#endif
+#ifdef MBEDTLS_ARIA_C
+	case SYM_ARIA_128_CCM:
+	case SYM_ARIA_192_CCM:
+	case SYM_ARIA_256_CCM:
+#endif
+		if (ctx->cipher_ctx == NULL)
+			ctx->cipher_ctx = malloc(sizeof(mbedtls_ccm_context));
+		mbedtls_ccm_init((mbedtls_ccm_context*)ctx->cipher_ctx);
+		switch (type) {
+		case SYM_AES_128_CCM:
+		case SYM_ARIA_128_CCM:
+		case SYM_CAMELLIA_128_CCM: ctx->key_bitlen = 128; break;
+		case SYM_AES_192_CCM:
+		case SYM_ARIA_192_CCM:
+		case SYM_CAMELLIA_192_CCM: ctx->key_bitlen = 192; break;
+		case SYM_AES_256_CCM:
+		case SYM_ARIA_256_CCM:
+		case SYM_CAMELLIA_256_CCM: ctx->key_bitlen = 256; break;
+		}
+		ctx->cipher_block_size = 0;
+		break;
+
+#endif
 
 #ifdef MBEDTLS_GCM_C
 	case SYM_AES_128_GCM:
@@ -466,6 +526,30 @@ failed:
 		break;
 #endif
 
+#ifdef MBEDTLS_CCM_C
+	case SYM_AES_128_CCM:
+	case SYM_AES_192_CCM:
+	case SYM_AES_256_CCM:
+#ifdef MBEDTLS_CAMELLIA_C
+	case SYM_CAMELLIA_128_CCM:
+	case SYM_CAMELLIA_192_CCM:
+	case SYM_CAMELLIA_256_CCM:
+#endif
+#ifdef MBEDTLS_ARIA_C
+	case SYM_ARIA_128_CCM:
+	case SYM_ARIA_192_CCM:
+	case SYM_ARIA_256_CCM:
+#endif
+	{
+		size_t out_bytes = 0;
+		err = mbedtls_ccm_update((mbedtls_ccm_context*)ctx->cipher_ctx, input, len, BIN_TAIL(bin), len, &out_bytes);
+		if (err) return err;
+		SERIES_TAIL(bin) += out_bytes;
+		input += out_bytes;
+		break;
+	}
+#endif
+
 #ifdef MBEDTLS_GCM_C
 	case SYM_AES_128_GCM:
 	case SYM_AES_192_GCM:
@@ -589,6 +673,7 @@ failed:
 	return CRYPT_OK;
 }
 
+
 /***********************************************************************
 **
 */	static REBINT Crypt_Init(CRYPT_CTX *ctx)
@@ -619,6 +704,31 @@ failed:
 		}
 		break;
 
+	#ifdef MBEDTLS_CCM_C
+	case SYM_AES_128_CCM:
+	case SYM_AES_192_CCM:
+	case SYM_AES_256_CCM:
+	#ifdef MBEDTLS_CAMELLIA_C
+	case SYM_CAMELLIA_128_CCM:
+	case SYM_CAMELLIA_192_CCM:
+	case SYM_CAMELLIA_256_CCM:
+	#endif
+	#ifdef MBEDTLS_ARIA_C
+	case SYM_ARIA_128_CCM:
+	case SYM_ARIA_192_CCM:
+	case SYM_ARIA_256_CCM:
+	#endif
+	{
+		mbedtls_ccm_context* ccm = (mbedtls_ccm_context*)ctx->cipher_ctx;
+		err = mbedtls_ccm_setkey(ccm, get_cipher_id(ctx->cipher_type), ctx->key, ctx->key_bitlen);
+		if (err) return err;
+		ctx->IV_len = MAX(7, MIN(13, ctx->IV_len));
+		err = mbedtls_ccm_starts(ccm, ctx->operation, ctx->IV, ctx->IV_len);
+		ctx->unprocessed_len = 0;
+		break;
+	}
+	#endif
+
 	#ifdef MBEDTLS_GCM_C
 	case SYM_AES_128_GCM:
 	case SYM_AES_192_GCM:
@@ -635,7 +745,7 @@ failed:
 	#endif
 	{
 		mbedtls_gcm_context *gcm = (mbedtls_gcm_context *)ctx->cipher_ctx;
-		err = mbedtls_gcm_setkey(gcm, MBEDTLS_CIPHER_ID_AES, ctx->key, ctx->key_bitlen);
+		err = mbedtls_gcm_setkey(gcm, get_cipher_id(ctx->cipher_type), ctx->key, ctx->key_bitlen);
 		if (err) return err;
 		err = mbedtls_gcm_starts(gcm, ctx->operation, ctx->IV, 16);
 		ctx->unprocessed_len = 0;

@@ -91,6 +91,11 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 			add_ec_word(SYM_AES_192_CBC)
 			add_ec_word(SYM_AES_256_CBC)
 		#endif
+		#ifdef MBEDTLS_CCM_C
+			add_ec_word(SYM_AES_128_CCM)
+			add_ec_word(SYM_AES_192_CCM)
+			add_ec_word(SYM_AES_256_CCM)
+		#endif
 		#ifdef MBEDTLS_GCM_C
 			add_ec_word(SYM_AES_128_GCM)
 			add_ec_word(SYM_AES_192_GCM)
@@ -104,6 +109,11 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 			add_ec_word(SYM_CAMELLIA_128_CBC)
 			add_ec_word(SYM_CAMELLIA_192_CBC)
 			add_ec_word(SYM_CAMELLIA_256_CBC)
+		#endif
+		#ifdef MBEDTLS_CCM_C
+			add_ec_word(SYM_CAMELLIA_128_CCM)
+			add_ec_word(SYM_CAMELLIA_192_CCM)
+			add_ec_word(SYM_CAMELLIA_256_CCM)
 		#endif
 		#ifdef MBEDTLS_GCM_C
 			add_ec_word(SYM_CAMELLIA_128_GCM)
@@ -119,6 +129,11 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 		add_ec_word(SYM_ARIA_128_CBC)
 		add_ec_word(SYM_ARIA_192_CBC)
 		add_ec_word(SYM_ARIA_256_CBC)
+		#endif
+		#ifdef MBEDTLS_CCM_C
+			add_ec_word(SYM_ARIA_128_CCM)
+			add_ec_word(SYM_ARIA_192_CCM)
+			add_ec_word(SYM_ARIA_256_CCM)
 		#endif
 		#ifdef MBEDTLS_GCM_C
 		add_ec_word(SYM_ARIA_128_GCM)

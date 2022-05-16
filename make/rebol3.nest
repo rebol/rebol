@@ -482,6 +482,13 @@ include-cipher-mode-gcm: [
 	core-files: %core/mbedtls/cipher_wrap.c
 	config: MBEDTLS_GCM_C
 ]
+include-cipher-mode-ccm: [
+	core-files: %core/mbedtls/ccm.c
+	; CCM runs with multiple ciphers and internally uses the generic wrapper
+	core-files: %core/mbedtls/cipher.c
+	core-files: %core/mbedtls/cipher_wrap.c
+	config: MBEDTLS_CCM_C
+]
 include-cipher-mode-cbc: [
 	; costs cca 1.5kB uncompressed (for AES)
 	config: MBEDTLS_CIPHER_MODE_CBC
@@ -586,6 +593,7 @@ include-cryptography: [
 	:include-cipher-chacha20
 	:include-cipher-chachapoly
 	:include-cipher-mode-cbc
+	:include-cipher-mode-ccm
 	:include-cipher-mode-gcm
 
 	;:include-deprecated-cipher-chacha20

@@ -309,12 +309,16 @@ curve448       ; Curve448
 
 init-vector
 
+; the order is important!
 aes-128-ecb
 aes-192-ecb
 aes-256-ecb
 aes-128-cbc
 aes-192-cbc
 aes-256-cbc
+aes-128-ccm
+aes-192-ccm
+aes-256-ccm
 aes-128-gcm
 aes-192-gcm
 aes-256-gcm
@@ -324,6 +328,9 @@ camellia-256-ecb
 camellia-128-cbc
 camellia-192-cbc
 camellia-256-cbc
+camellia-128-ccm
+camellia-192-ccm
+camellia-256-ccm
 camellia-128-gcm
 camellia-192-gcm
 camellia-256-gcm
@@ -333,6 +340,9 @@ aria-256-ecb
 aria-128-cbc
 aria-192-cbc
 aria-256-cbc
+aria-128-ccm
+aria-192-ccm
+aria-256-ccm
 aria-128-gcm
 aria-192-gcm
 aria-256-gcm
