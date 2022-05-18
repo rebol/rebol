@@ -233,6 +233,9 @@ Rebol [
 	--assert 'c = select/skip tbl 'c 3
 	--assert 'y = select/skip next tbl 'b 3
 	--assert 'y = select/skip tbl [b b] 3
+	tbl: [[a a] x  [b b] y  [c c] z]
+	--assert 'y = select/skip/only tbl [b b] 2
+	--assert 'y = select/only tbl [b b] ; this one is faster than above!
 
 --test-- "SELECT/skip/last"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/616
