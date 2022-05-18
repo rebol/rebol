@@ -6,7 +6,7 @@ Rebol [
 	Needs:   [%../quick-test-module.r3]
 ]
 
-~~~start-file~~~ "Crypt port"
+~~~start-file~~~ "Crypt port (CAMELLIA)"
 
 ===start-group=== "CAMELLIA-128-ECB"
 ;@@ https://info.isl.ntt.co.jp/crypt/eng/camellia/

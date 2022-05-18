@@ -298,6 +298,7 @@ static void free_crypt_cipher_context(CRYPT_CTX *ctx);
 #endif
 		if (ctx->cipher_ctx == NULL)
 			ctx->cipher_ctx = malloc(sizeof(mbedtls_ccm_context));
+		ctx->cipher_mode = MBEDTLS_MODE_CCM;
 		mbedtls_ccm_init((mbedtls_ccm_context*)ctx->cipher_ctx);
 		switch (type) {
 		case SYM_AES_128_CCM:
@@ -511,6 +512,7 @@ failed:
 			err = mbedtls_aes_crypt_ecb((mbedtls_aes_context *)ctx->cipher_ctx, ctx->operation, input, BIN_TAIL(bin));
 			if (err) return err;
 			SERIES_TAIL(bin) += blk;
+			ctx->state = CRYPT_PORT_HAS_DATA;
 			input += blk;
 		}
 		break;
@@ -522,6 +524,7 @@ failed:
 		err = mbedtls_aes_crypt_cbc((mbedtls_aes_context *)ctx->cipher_ctx, ctx->operation, blk, ctx->IV, input, BIN_TAIL(bin));
 		if (err) return err;
 		SERIES_TAIL(bin) += blk;
+		ctx->state = CRYPT_PORT_HAS_DATA;
 		input += blk;
 		break;
 #endif
@@ -542,10 +545,48 @@ failed:
 #endif
 	{
 		size_t out_bytes = 0;
-		err = mbedtls_ccm_update((mbedtls_ccm_context*)ctx->cipher_ctx, input, len, BIN_TAIL(bin), len, &out_bytes);
+		size_t plaintext_len = len - ctx->aad_len;
+		mbedtls_ccm_context* ccm = (mbedtls_ccm_context*)ctx->cipher_ctx;
+
+		if (ctx->operation == MBEDTLS_DECRYPT) {
+			plaintext_len -= ctx->tag_len;
+		}
+
+		if (plaintext_len < 0) return -0x0001;
+		err = mbedtls_ccm_set_lengths(ccm, ctx->aad_len, plaintext_len, ctx->tag_len);
+		if (err) return err;
+		if (ctx->aad_len) {
+			err = mbedtls_ccm_update_ad(ccm, input, ctx->aad_len);
+			if (err) return err;
+			input += ctx->aad_len;
+			len   -= ctx->aad_len;
+		}
+		err = mbedtls_ccm_update(ccm, input, plaintext_len, BIN_TAIL(bin), len, &out_bytes);
 		if (err) return err;
 		SERIES_TAIL(bin) += out_bytes;
+		ctx->state = CRYPT_PORT_HAS_DATA;
 		input += out_bytes;
+
+		if (ctx->tag_len) {
+			// compute tag
+			Extend_Series(bin, ctx->tag_len);
+			err = mbedtls_ccm_finish(ccm, BIN_TAIL(bin), ctx->tag_len);
+			if (err) return err;
+			if (ctx->operation == MBEDTLS_DECRYPT) {
+				err = mbedtls_ccm_compare_tags(input, BIN_TAIL(bin), ctx->tag_len);
+				if (err) return err;
+				input += ctx->tag_len;
+			}
+			else {
+				SERIES_TAIL(bin) += ctx->tag_len;
+			}
+		}
+		else {
+			err = mbedtls_ccm_finish(ccm, NULL, 0);
+			if (err) return err;
+		}
+		ctx->state = CRYPT_PORT_HAS_DATA;
+		
 		break;
 	}
 #endif
@@ -569,6 +610,7 @@ failed:
 		err = mbedtls_gcm_update((mbedtls_gcm_context *)ctx->cipher_ctx, input, len, BIN_TAIL(bin), len, &out_bytes);
 		if (err) return err;
 		SERIES_TAIL(bin) += out_bytes;
+		ctx->state = CRYPT_PORT_HAS_DATA;
 		input += out_bytes;
 		break;
 	}
@@ -582,6 +624,7 @@ failed:
 			err = mbedtls_camellia_crypt_ecb((mbedtls_camellia_context *)ctx->cipher_ctx, ctx->operation, input, BIN_TAIL(bin));
 			if (err) return err;
 			SERIES_TAIL(bin) += blk;
+			ctx->state = CRYPT_PORT_HAS_DATA;
 			input += blk;
 		}
 		break;
@@ -593,6 +636,7 @@ failed:
 		err = mbedtls_camellia_crypt_cbc((mbedtls_camellia_context *)ctx->cipher_ctx, ctx->operation, blk, ctx->nonce, input, BIN_TAIL(bin));
 		if (err) return err;
 		SERIES_TAIL(bin) += blk;
+		ctx->state = CRYPT_PORT_HAS_DATA;
 		input += blk;
 		break;
 #endif
@@ -607,6 +651,7 @@ failed:
 			err = mbedtls_aria_crypt_ecb((mbedtls_aria_context *)ctx->cipher_ctx, input, BIN_TAIL(bin));
 			if (err) return err;
 			SERIES_TAIL(bin) += blk;
+			ctx->state = CRYPT_PORT_HAS_DATA;
 			input += blk;
 		}
 		break;
@@ -618,6 +663,7 @@ failed:
 		err = mbedtls_aria_crypt_cbc((mbedtls_aria_context *)ctx->cipher_ctx, ctx->operation, blk, ctx->nonce, input, BIN_TAIL(bin));
 		if (err) return err;
 		SERIES_TAIL(bin) += blk;
+		ctx->state = CRYPT_PORT_HAS_DATA;
 		input += blk;
 		break;
 #endif
@@ -629,13 +675,14 @@ failed:
 		err = mbedtls_chacha20_update((mbedtls_chacha20_context *)ctx->cipher_ctx, len, input, BIN_TAIL(bin));
 		if (err) return err;
 		SERIES_TAIL(bin) += len;
+		ctx->state = CRYPT_PORT_HAS_DATA;
 		input += len;
 		break;
 #endif
 
 #ifdef MBEDTLS_CHACHAPOLY_C
 	case SYM_CHACHA20_POLY1305:
-		if (ctx->state == CRYPT_PORT_NEEDS_AAD) {
+		if (ctx->state == CRYPT_PORT_NO_DATA) {
 			size_t i;
 			size_t dynamic_iv_len = len < 8 ? len : 8;
 			unsigned char *dst_iv;
@@ -664,6 +711,7 @@ failed:
 		}
 		if (err) return err;
 		SERIES_TAIL(bin) += len;
+		ctx->state = CRYPT_PORT_HAS_DATA;
 		input += len;
 		break;
 #endif
@@ -680,13 +728,15 @@ failed:
 /*
 ***********************************************************************/
 {
-	REBINT  err = 0;
+	REBINT  ret = CRYPT_OK;
 	REBCNT  counter;
 
 	CLEAR_SERIES(ctx->buffer);
 	SERIES_TAIL(ctx->buffer) = 0;
 	CLEAR(ctx->unprocessed_data, MBEDTLS_MAX_BLOCK_LENGTH);
 	ctx->unprocessed_len = 0;
+	ctx->state = CRYPT_PORT_NO_DATA;
+	ctx->error = 0;
 
 	switch (ctx->cipher_type) {
 
@@ -697,10 +747,10 @@ failed:
 	case SYM_AES_192_CBC:
 	case SYM_AES_256_CBC:
 		if (ctx->operation == MBEDTLS_ENCRYPT) {
-			err = mbedtls_aes_setkey_enc((mbedtls_aes_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
+			ret = mbedtls_aes_setkey_enc((mbedtls_aes_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
 		}
 		else {
-			err = mbedtls_aes_setkey_dec((mbedtls_aes_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
+			ret = mbedtls_aes_setkey_dec((mbedtls_aes_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
 		}
 		break;
 
@@ -720,10 +770,15 @@ failed:
 	#endif
 	{
 		mbedtls_ccm_context* ccm = (mbedtls_ccm_context*)ctx->cipher_ctx;
-		err = mbedtls_ccm_setkey(ccm, get_cipher_id(ctx->cipher_type), ctx->key, ctx->key_bitlen);
-		if (err) return err;
+		ret = mbedtls_ccm_setkey(ccm, get_cipher_id(ctx->cipher_type), ctx->key, ctx->key_bitlen);
+		if (ret) return ret;
 		ctx->IV_len = MAX(7, MIN(13, ctx->IV_len));
-		err = mbedtls_ccm_starts(ccm, ctx->operation, ctx->IV, ctx->IV_len);
+		ret = mbedtls_ccm_starts(ccm, ctx->operation, ctx->IV, ctx->IV_len);
+		if (!ctx->tag_len && !ctx->aad_len) {
+			// if there was not defined size of tag and aad, than we must  use STAR variant,
+			// which ignores them correctly
+			ccm->private_mode = ctx->operation == MBEDTLS_ENCRYPT ? MBEDTLS_CCM_STAR_ENCRYPT : MBEDTLS_CCM_STAR_DECRYPT;
+		}
 		ctx->unprocessed_len = 0;
 		break;
 	}
@@ -745,9 +800,9 @@ failed:
 	#endif
 	{
 		mbedtls_gcm_context *gcm = (mbedtls_gcm_context *)ctx->cipher_ctx;
-		err = mbedtls_gcm_setkey(gcm, get_cipher_id(ctx->cipher_type), ctx->key, ctx->key_bitlen);
-		if (err) return err;
-		err = mbedtls_gcm_starts(gcm, ctx->operation, ctx->IV, 16);
+		ret = mbedtls_gcm_setkey(gcm, get_cipher_id(ctx->cipher_type), ctx->key, ctx->key_bitlen);
+		if (ret) return ret;
+		ret = mbedtls_gcm_starts(gcm, ctx->operation, ctx->IV, 16);
 		ctx->unprocessed_len = 0;
 		break;
 	}
@@ -762,10 +817,10 @@ failed:
 	case SYM_CAMELLIA_256_CBC:
 		mbedtls_camellia_init((mbedtls_camellia_context *)ctx->cipher_ctx);
 		if (ctx->operation == MBEDTLS_ENCRYPT) {
-			err = mbedtls_camellia_setkey_enc((mbedtls_camellia_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
+			ret = mbedtls_camellia_setkey_enc((mbedtls_camellia_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
 		}
 		else {
-			err = mbedtls_camellia_setkey_dec((mbedtls_camellia_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
+			ret = mbedtls_camellia_setkey_dec((mbedtls_camellia_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
 		}
 		COPY_MEM(ctx->nonce, ctx->IV, MBEDTLS_MAX_IV_LENGTH);
 		break;
@@ -780,10 +835,10 @@ failed:
 	case SYM_ARIA_256_CBC:
 		mbedtls_aria_init((mbedtls_aria_context *)ctx->cipher_ctx);
 		if (ctx->operation == MBEDTLS_ENCRYPT) {
-			err = mbedtls_aria_setkey_enc((mbedtls_aria_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
+			ret = mbedtls_aria_setkey_enc((mbedtls_aria_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
 		}
 		else {
-			err = mbedtls_aria_setkey_dec((mbedtls_aria_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
+			ret = mbedtls_aria_setkey_dec((mbedtls_aria_context *)ctx->cipher_ctx, ctx->key, ctx->key_bitlen);
 		}
 		COPY_MEM(ctx->nonce, ctx->IV, MBEDTLS_MAX_IV_LENGTH);
 		break;
@@ -791,31 +846,22 @@ failed:
 
 	#ifdef MBEDTLS_CHACHA20_C
 	case SYM_CHACHA20:
-		err = mbedtls_chacha20_setkey((mbedtls_chacha20_context *)ctx->cipher_ctx, ctx->key);
-		if (err) return err;
+		ret = mbedtls_chacha20_setkey((mbedtls_chacha20_context *)ctx->cipher_ctx, ctx->key);
+		if (ret) return ret;
 		counter = MBEDTLS_GET_UINT32_BE(ctx->IV, 12);
-		err = mbedtls_chacha20_starts((mbedtls_chacha20_context *)ctx->cipher_ctx, ctx->IV, counter);
+		ret = mbedtls_chacha20_starts((mbedtls_chacha20_context *)ctx->cipher_ctx, ctx->IV, counter);
 		break;
 	#endif
 
 
 	#ifdef MBEDTLS_CHACHAPOLY_C
 	case SYM_CHACHA20_POLY1305:
-		err = mbedtls_chachapoly_setkey((CHACHAPOLY_CTX *)ctx->cipher_ctx, ctx->key);
-		if (err) return err;
-		// before start, we use part of the AAD as a dynamic_IV
-		ctx->state = CRYPT_PORT_NEEDS_AAD;
-		return CRYPT_OK;
+		ret = mbedtls_chachapoly_setkey((CHACHAPOLY_CTX *)ctx->cipher_ctx, ctx->key);
+		break;
 	#endif
 
 	}
-	if (err) return err;
-
-
-	ctx->state = CRYPT_PORT_READY;
-
-
-	return CRYPT_OK;
+	return ret;
 }
 
 /***********************************************************************
@@ -826,7 +872,7 @@ failed:
 {
 	REBSER* bin;
 	REBCNT  len, ofs, blk;
-	REBINT  err;
+	REBINT  ret = CRYPT_OK;
 	size_t olen = 0;
 
 	bin = ctx->buffer;
@@ -834,12 +880,20 @@ failed:
 #ifdef MBEDTLS_CHACHAPOLY_C
 	if (ctx->cipher_type == SYM_CHACHA20_POLY1305) {
 		Extend_Series(bin, 16);
-		err = mbedtls_chachapoly_finish((mbedtls_chachapoly_context*)ctx->cipher_ctx, BIN_TAIL(bin));
+		ret = mbedtls_chachapoly_finish((mbedtls_chachapoly_context*)ctx->cipher_ctx, BIN_TAIL(bin));
 		SERIES_TAIL(bin) += 16;
-		ctx->state = CRYPT_PORT_NEEDS_AAD;
-		return R_ARG1;
+		ctx->state = CRYPT_PORT_FINISHED;
+		return ret;
 	}
 #endif
+
+#ifdef MBEDTLS_CCM_C
+	if (ctx->cipher_mode == MBEDTLS_MODE_CCM) {
+		// the tag is computed immediatelly, so no need to finish CCM
+		return CRYPT_OK;
+	}
+#endif
+
 	if (ctx->unprocessed_len > 0) {
 		ofs = 0;
 		blk = ctx->cipher_block_size;
@@ -850,10 +904,10 @@ failed:
 		// pad with zeros...
 		CLEAR(ctx->unprocessed_data + ctx->unprocessed_len, len);
 
-		Crypt_Crypt(ctx, ctx->unprocessed_data, blk, &olen);
+		ret = Crypt_Crypt(ctx, ctx->unprocessed_data, blk, &olen);
 		ctx->unprocessed_len = 0;
 	}
-	return R_ARG1;
+	return ret;
 }
 
 /***********************************************************************
@@ -862,15 +916,15 @@ failed:
 /*
 ***********************************************************************/
 {
-	REBINT err;
+	REBINT ret = CRYPT_OK;
 	REBCNT blk, olen;
 	REBCNT unprocessed_free;
 
 	if (len == 0) return 0;
 
 	if (ctx->state == CRYPT_PORT_NEEDS_INIT) {
-		err = Crypt_Init(ctx);
-		if (err) return err;
+		ret = Crypt_Init(ctx);
+		if (ret) return ret;
 	}
 
 	blk = ctx->cipher_block_size;
@@ -891,7 +945,7 @@ failed:
 		// complete the block using the current input
 		COPY_MEM(ctx->unprocessed_data + ctx->unprocessed_len, input, unprocessed_free);
 		// complete the block
-		Crypt_Crypt(ctx, ctx->unprocessed_data, blk, &olen);
+		ret = Crypt_Crypt(ctx, ctx->unprocessed_data, blk, &olen);
 		input += unprocessed_free;
 		len -= unprocessed_free;
 		// make the processed block empty again
@@ -899,12 +953,13 @@ failed:
 	}
 	// input data could be already consumed on the unprocessed buffer
 	if (len == 0) {
-		return CRYPT_OK;
+		return ret;
 	}
 	// test if input have enough data to do the block crypt
 	if (len >= blk) {
 		// we have enough data to call crypt
-		Crypt_Crypt(ctx, input, len, &olen);
+		ret = Crypt_Crypt(ctx, input, len, &olen);
+		if (ret) return ret;
 		if (olen > len) return CRYPT_ERROR_BAD_PROCESSED_SIZE;
 		input += olen;
 		len -= olen;
@@ -916,7 +971,7 @@ failed:
 		ctx->unprocessed_len = len;
 	}
 	// done
-	return CRYPT_OK;
+	return ret;
 }
 
 
@@ -966,28 +1021,37 @@ failed:
 		if (!IS_BINARY(arg1)) {
 			Trap_Port(RE_FEATURE_NA, port, 0);
 		}
-		Crypt_Write(ctx, VAL_BIN_AT(arg1), VAL_LEN(arg1));
+		ctx->error = Crypt_Write(ctx, VAL_BIN_AT(arg1), VAL_LEN(arg1));
 		break;
 
 	case A_TAKE:
 		// `take` is same like `read`, but also calls `update` to process also
 		//  yet not processed data from the unprocessed buffer
-		Crypt_Update(ctx);
+		ctx->error = Crypt_Update(ctx);
 	case A_READ:
-		len = BIN_LEN(bin);
-		if (len > 0) {
-			out = Make_Binary(len);
-			COPY_MEM(BIN_DATA(out), BIN_DATA(bin), len);
-			SET_BINARY(D_RET, out);
-			BIN_LEN(out) = len;
-			BIN_LEN(bin) = 0;
-			return R_RET;
+		if (ctx->state == CRYPT_PORT_FINISHED) {
+			// result of chacha20-poly1305 is in two steps...
+			// TODO: make it in one as with the CCM mode?
+			ctx->state = CRYPT_PORT_HAS_DATA;
 		}
-		else return R_NONE;
-		break;
+		if (ctx->state != CRYPT_PORT_HAS_DATA || ctx->error) {
+			return R_NONE;
+		}
+		ctx->state = CRYPT_PORT_NO_DATA;
+
+		len = BIN_LEN(bin);
+		out = Make_Binary(len);
+		if (len > 0) {
+			COPY_MEM(BIN_DATA(out), BIN_DATA(bin), len);
+		}
+		SET_BINARY(D_RET, out);
+		BIN_LEN(out) = len;
+		BIN_LEN(bin) = 0;
+		return R_RET;
 
 	case A_UPDATE:
-		return Crypt_Update(ctx);
+		ctx->error = Crypt_Update(ctx);
+		return R_ARG1;
 
 	case A_CLOSE:
 		if (ctx) {
@@ -1018,6 +1082,14 @@ failed:
 		case SYM_IV:
 		case SYM_INIT_VECTOR:
 			if (!init_crypt_iv(ctx, arg2)) return R_FALSE;
+			break;
+		case SYM_TAG_LENGTH:
+			if (!ctx) return R_FALSE;
+			ctx->tag_len = VAL_UNT32(arg2);
+			break;
+		case SYM_AAD_LENGTH:
+			if (!ctx) return R_FALSE;
+			ctx->aad_len = VAL_UNT32(arg2);
 			break;
 		default:
 			Trap1(RE_INVALID_ARG, arg1);

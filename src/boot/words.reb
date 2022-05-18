@@ -348,3 +348,6 @@ aria-192-gcm
 aria-256-gcm
 chacha20
 chacha20-poly1305
+
+tag-length
+aad-length

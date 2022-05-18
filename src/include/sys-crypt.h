@@ -79,7 +79,8 @@ typedef mbedtls_ecdh_context ECDH_CTX;
 typedef enum {
 	CRYPT_PORT_CLOSED = 0,
 	CRYPT_PORT_NEEDS_INIT,
-	CRYPT_PORT_NEEDS_AAD,
+	CRYPT_PORT_NO_DATA,
+	CRYPT_PORT_HAS_DATA,
 	CRYPT_PORT_READY,
 	CRYPT_PORT_FINISHED,
 } crypt_port_state_t;
@@ -95,11 +96,15 @@ typedef struct crypt_ctx {
 	crypt_port_state_t  state;
 	mbedtls_operation_t operation;
 	REBCNT              cipher_type;
+	mbedtls_cipher_mode_t cipher_mode;
 	REBCNT              cipher_block_size;
 	void                *cipher_ctx;
 	REBSER              *buffer;
+	REBINT              error;
 	unsigned int        key_bitlen;
 	unsigned int        IV_len;
+	unsigned int        tag_len;
+	unsigned int        aad_len;
 	unsigned int        unprocessed_len;
 	unsigned char       nonce[MBEDTLS_MAX_IV_LENGTH]; // nonce may be changed, like in Camellia cipher!
 	unsigned char       IV[MBEDTLS_MAX_IV_LENGTH];

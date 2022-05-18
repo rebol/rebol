@@ -533,4 +533,56 @@ if find system/catalog/ciphers 'CHACHA20-POLY1305 [
 ===end-group===
 ] ;end if
 
+
+if find system/catalog/ciphers 'AES-128-CCM [
+===start-group=== "AES-128-CCM"
+--test-- "Encrypt/decrypt AES-128-CCM"
+	key:   #{C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF}
+	iv:    #{00000003020100A0A1A2A3A4A5}
+	nonce: #{0102030405060708} 
+	plain: #{DEADBEAFDEADBEAF}
+	port: open crypt://aes-128-ccm
+	modify port 'key :key
+	modify port 'iv  :iv
+	modify port 'tag-length 8
+	modify port 'aad-length length? nonce
+	write  port join nonce plain
+	--assert #{8E28233EB366D372A7B0AA6A5A3DD56D} = crypt: take port
+
+	modify port 'direction 'decrypt
+	write port join nonce crypt
+	--assert plain = take port
+	close port
+
+--test-- "Encrypt/decrypt AES-128-CCM (no auth)"
+	port: open crypt://aes-128-ccm
+	modify port 'key #{90929a4b0ac65b350ad1591611fe4829}
+	modify port 'iv  #{5a8aa485c316e9403aff859fbb}
+	plain: #{4bfe4e35784f0a65b545477e5e2f4bae0e1e6fa717eaf2cb}
+	crypt: take write port plain
+	--assert crypt == #{a16a2e741f1cd9717285b6d882c1fc53655e9773761ad697}
+
+	modify port 'direction 'decrypt
+	--assert plain == take write port :crypt
+	close port
+===end-group===
+] ;end if
+
+if find system/catalog/ciphers 'AES-256-CCM [
+===start-group=== "AES-256-CCM"
+--test-- "Encrypt/decrypt AES-256-CCM (no auth)"
+	port: open crypt://aes-256-ccm
+	modify port 'key #{26511fb51fcfa75cb4b44da75a6e5a0eb8d9c8f3b906f886df3ba3e6da3a1389}
+	modify port 'iv  #{72a60f345a1978fb40f28a2fa4}
+	plain: #{30d56ff2a25b83fee791110fcaea48e41db7c7f098a81000}
+	crypt: take write port plain
+	--assert crypt == #{55f068c0bbba8b598013dd1841fd740fda2902322148ab5e}
+
+	modify port 'direction 'decrypt
+	--assert plain == take write port :crypt
+	close port
+===end-group===
+] ;end if
+
+
 ~~~end-file~~~
