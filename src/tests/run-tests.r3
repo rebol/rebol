@@ -73,6 +73,8 @@ dt [ ;- delta time
 		%units/crypt-test.r3
 		%units/crypt-port-test.r3
 		%units/crypt-port-camelia-test.r3
+		%units/crypt-port-ccm-test.r3
+		%units/crypt-port-gcm-test.r3
 		%units/poly1305-test.r3
 		%units/rc4-test.r3
 		%units/rsa-test.r3

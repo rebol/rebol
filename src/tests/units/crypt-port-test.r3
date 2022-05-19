@@ -585,4 +585,65 @@ if find system/catalog/ciphers 'AES-256-CCM [
 ] ;end if
 
 
+
+if find system/catalog/ciphers 'AES-128-GCM [
+===start-group=== "AES-128-GCM"
+--test-- "Encrypt/decrypt AES-128-GCM"
+	key:   #{C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF}
+	iv:    #{00000003020100A0A1A2A3A4A5}
+	aad:   #{00000000000000011703030528}
+	plain: #{DEADBEAFDEADBEAF}
+	port: open crypt://aes-128-gcm
+	modify port 'key :key
+	modify port 'iv  :iv
+	modify port 'tag-length 16
+	modify port 'aad-length length? aad
+	write  port :aad
+	write  port :plain
+	crypt: read port
+	tag1:  take port
+	--assert all [crypt = #{4EA8867212D35BE6} tag1 = #{5711DE15F3686A9A872EDD9AF33055F6}]
+
+	modify port 'direction 'decrypt
+	write port :aad
+	write port :crypt
+	res:   read port
+	tag2:  take port
+	--assert all [res = plain tag2 = tag1]
+
+	modify port 'direction 'encrypt
+	; using shorter AAD this time
+	modify port 'aad-length length? aad: #{decafe00}
+	write port :aad
+	; writing data as multipart...
+	write port #{DEADBEAF}
+	write port #{DEADBEAF}
+	; reading all data at once..
+	crypt: read port
+	tag1:  take port
+
+	modify port 'direction 'decrypt
+	write port :aad
+	write port :crypt
+	res:   read port
+	tag2:  take port
+	--assert all [res = plain tag2 = tag1]
+
+	close port
+
+--test-- "Encrypt/decrypt AES-128-GCM (no auth)"
+	port: open crypt://aes-128-gcm
+	modify port 'key #{90929a4b0ac65b350ad1591611fe4829}
+	modify port 'iv  #{5a8aa485c316e9403aff859fbb}
+	plain: #{4bfe4e35784f0a65b545477e5e2f4bae0e1e6fa717eaf2cb}
+	crypt: take write port plain
+	--assert crypt == #{74252FD3102ED6A1448D28DC32F0EB864E00E8652974BD2B}
+
+	modify port 'direction 'decrypt
+	--assert plain == take write port :crypt
+	close port
+===end-group===
+] ;end if
+
+
 ~~~end-file~~~

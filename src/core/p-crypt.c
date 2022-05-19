@@ -336,6 +336,7 @@ static void free_crypt_cipher_context(CRYPT_CTX *ctx);
 		if (ctx->cipher_ctx == NULL)
 			ctx->cipher_ctx = malloc(sizeof(mbedtls_gcm_context));
 		mbedtls_gcm_init((mbedtls_gcm_context *)ctx->cipher_ctx);
+		ctx->cipher_mode = MBEDTLS_MODE_GCM;
 		switch (type) {
 		case SYM_AES_128_GCM:
 		case SYM_ARIA_128_GCM:
@@ -494,8 +495,6 @@ failed:
 
 	*olen = 0;
 
-	if (len == 0) return 0;
-
 	bin = ctx->buffer;
 	blk = ctx->cipher_block_size;
 
@@ -610,6 +609,14 @@ failed:
 #endif
 	{
 		size_t out_bytes = 0;
+
+		if (ctx->state == CRYPT_PORT_NO_DATA && ctx->aad_len) {
+			if (len < ctx->aad_len) return 1;
+			err = mbedtls_gcm_update_ad((mbedtls_gcm_context *)ctx->cipher_ctx, input, ctx->aad_len);
+			if (err) return err;
+			input += ctx->aad_len;
+			len -= ctx->aad_len;
+		}
 		err = mbedtls_gcm_update((mbedtls_gcm_context *)ctx->cipher_ctx, input, len, BIN_TAIL(bin), len, &out_bytes);
 		if (err) return err;
 		SERIES_TAIL(bin) += out_bytes;
@@ -876,7 +883,7 @@ failed:
 	REBSER* bin;
 	REBCNT  len, ofs, blk;
 	REBINT  ret = CRYPT_OK;
-	REBCNT  olen = 0;
+	size_t  olen = 0;
 
 	bin = ctx->buffer;
 
@@ -910,6 +917,19 @@ failed:
 		ret = Crypt_Crypt(ctx, ctx->unprocessed_data, blk, &olen);
 		ctx->unprocessed_len = 0;
 	}
+	if (ctx->tag_len) {
+		#ifdef MBEDTLS_GCM_C
+		if (ctx->cipher_mode == MBEDTLS_MODE_GCM) {
+			// compute tag
+			Extend_Series(bin, ctx->tag_len);
+			ret = mbedtls_gcm_finish((mbedtls_gcm_context*)ctx->cipher_ctx, NULL, 0, &olen, BIN_TAIL(bin), ctx->tag_len);
+			if (ret) return ret;
+			SERIES_TAIL(bin) += ctx->tag_len;
+			ctx->state = CRYPT_PORT_FINISHED;
+		}
+		#endif
+	}
+
 	return ret;
 }
 
@@ -923,11 +943,17 @@ failed:
 	REBCNT blk, olen;
 	REBCNT unprocessed_free;
 
-	if (len == 0) return 0;
-
 	if (ctx->state == CRYPT_PORT_NEEDS_INIT) {
 		ret = Crypt_Init(ctx);
 		if (ret) return ret;
+	}
+
+	if (len == 0) {
+		// it is valid to encrypt empty message
+		if (ctx->cipher_mode == MBEDTLS_MODE_GCM) {
+			ret = Crypt_Crypt(ctx, input, 0, &olen);
+		}
+		return ret;
 	}
 
 	blk = ctx->cipher_block_size;
