@@ -50,6 +50,9 @@
     )
 #endif
 
+// This function was defined as `static` in the mbedtls sources, but I want to use it here as well.
+extern int mbedtls_ccm_compare_tags(const unsigned char *tag1, const unsigned char *tag2, size_t tag_len);
+
 
 /***********************************************************************
 **
@@ -873,7 +876,7 @@ failed:
 	REBSER* bin;
 	REBCNT  len, ofs, blk;
 	REBINT  ret = CRYPT_OK;
-	size_t olen = 0;
+	REBCNT  olen = 0;
 
 	bin = ctx->buffer;
 
