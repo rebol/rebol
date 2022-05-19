@@ -430,8 +430,8 @@ decode-extensions: function[
 ; it should be ORDERED BY CLIENT PREFERENCE (more preferred suites first).
 ;@@ TODO: use only ciphers which are really available!!!
 suported-cipher-suites: decode-cipher-suites suported-cipher-suites-binary: rejoin [
-;@@	#{CCA9} ;TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 ; some issue!
-;@@	#{CCA8} ;TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256   ; some issue!
+	#{CCA9} ;TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+	#{CCA8} ;TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
 	;#{C02F} ;TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
 	;#{C030} ;TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 	;#{C02B} ;TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
@@ -1056,13 +1056,16 @@ decrypt-msg: function [
 			UI8   23
 			UI16  :version
 		]
-		;probe is-aead?
 		either is-aead? [
 			switch crypt-method [
 				CHACHA20-POLY1305 [
 					binary/write bin reduce ['UI16 (length? data) - 16]
 					write decrypt-port bin/buffer ;AAD
-					data: read update write decrypt-port data
+					mac: take/last/part data 16 ; expected mac
+					data: read write decrypt-port data
+					if mac <> take decrypt-port [
+						critical-error: *Alert/Bad_record_MAC
+					]
 				]
 			]
 		][
@@ -1665,7 +1668,6 @@ TLS-parse-handshake-message: function [
 		;----------------------------------------------------------
 		CERTIFICATE [
 			assert-prev-state ctx [SERVER_HELLO]
-			;probe msg/buffer
 			tmp: binary/read msg [UI24 INDEX]
 			if ends <> (tmp/1 + tmp/2) [
 				log-error ["Improper certificate list end?" ends "<>" (tmp/1 + tmp/2)]
@@ -1689,7 +1691,7 @@ TLS-parse-handshake-message: function [
 					ecPublicKey [
 						ctx/pub-key: key/3
 						ctx/pub-exp: key/2      ;curve name
-						if 0 = ctx/pub-key/1 [next ctx/pub-key]
+						if 0 = ctx/pub-key/1 [remove ctx/pub-key]
 					]
 					rsaEncryption [
 						ctx/pub-key: key/2/1
