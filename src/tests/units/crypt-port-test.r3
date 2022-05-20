@@ -602,7 +602,7 @@ if find system/catalog/ciphers 'AES-128-GCM [
 	write  port :plain
 	crypt: read port
 	tag1:  take port
-	--assert all [crypt = #{4EA8867212D35BE6} tag1 = #{5711DE15F3686A9A872EDD9AF33055F6}]
+	--assert all [crypt = #{E647A20A318C2C9D} tag1 = #{BF0C5A7A09E536B0234153A2E0EE010A}]
 
 	modify port 'direction 'decrypt
 	write port :aad
@@ -637,7 +637,7 @@ if find system/catalog/ciphers 'AES-128-GCM [
 	modify port 'iv  #{5a8aa485c316e9403aff859fbb}
 	plain: #{4bfe4e35784f0a65b545477e5e2f4bae0e1e6fa717eaf2cb}
 	crypt: take write port plain
-	--assert crypt == #{74252FD3102ED6A1448D28DC32F0EB864E00E8652974BD2B}
+	--assert crypt == #{F67D24DEA38559C1AAF75406642EB0D3EE83F18A10E321BF}
 
 	modify port 'direction 'decrypt
 	--assert plain == take write port :crypt

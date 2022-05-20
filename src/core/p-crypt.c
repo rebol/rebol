@@ -812,7 +812,7 @@ failed:
 		mbedtls_gcm_context *gcm = (mbedtls_gcm_context *)ctx->cipher_ctx;
 		ret = mbedtls_gcm_setkey(gcm, get_cipher_id(ctx->cipher_type), ctx->key, ctx->key_bitlen);
 		if (ret) return ret;
-		ret = mbedtls_gcm_starts(gcm, ctx->operation, ctx->IV, 16);
+		ret = mbedtls_gcm_starts(gcm, ctx->operation, ctx->IV, ctx->IV_len);
 		ctx->unprocessed_len = 0;
 		break;
 	}
