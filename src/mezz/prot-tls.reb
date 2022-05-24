@@ -35,7 +35,7 @@ REBOL [
 		0.8.0 "Oldes" "Using new `crypt` port introduced in Rebol 3.8.0"
 		0.9.0 "Oldes" "Added (limited) support for a `server` role"
 		0.9.1 "Oldes" "Improved initialization to be able reuse already opened TCP port"
-		0.9.2 "Oldes" "Added support for GCM crypt mode"
+		0.9.2 "Oldes" "Added support for GCM and SHA384 crypt modes"
 	]
 	todo: {
 		* cached sessions
@@ -82,7 +82,9 @@ TLS-context: context [
 	tls-port:
 	encrypt-port:
 	decrypt-port: 
-	sha-port:      ;used for progressive checksum computations
+	sha256-port:   ;used for progressive checksum computations
+	sha384-port:   ;used for progressive checksum computations with SHA384 cipher modes
+	sha-port:      ;one of the above
 	md5-port:      ;used for progressive checksum computations (in TLSv1.0)
 
 	version: none  ; TLS version (currently just TLSv1.2)
@@ -447,14 +449,14 @@ suported-cipher-suites: decode-cipher-suites suported-cipher-suites-binary: rejo
 	#{CCA9} ;TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
 	#{CCA8} ;TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
 	#{C02F} ;TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-	;#{C030} ;TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+	#{C030} ;TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 	#{C02B} ;TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
-	;#{C02C} ;TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+	#{C02C} ;TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
 	#{009C} ;TLS-RSA-WITH-AES-128-GCM-SHA256
 
 	;- CBC mode is considered to be weak, but still used!
-	;#{C028} ;TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384 ;need test with https://snappygoat.com/b/8d6492a33fee8f8f0ea289203fdf080608d9d61d
-	;#{C024} ;TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384
+	#{C028} ;TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384
+	#{C024} ;TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384
 	#{C027} ;TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
 	#{C023} ;TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
 	#{C014} ;TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
@@ -554,6 +556,17 @@ TLS-init-cipher-suite: func [
 			ctx/crypt-method: to word! cipher
 			ctx/is-aead?: to logic! find [AES-128-GCM AES-256-GCM CHACHA20-POLY1305] ctx/crypt-method
 
+			either ctx/hash-method = 'SHA384 [
+				; upgrade hashing from default sha256 to sha384
+				close ctx/sha256-port
+				ctx/sha256-port: none
+				ctx/sha-port: ctx/sha384-port
+			][
+				; the sha384 hasning is not needed anymore
+				close ctx/sha384-port
+				ctx/sha384-port: none
+			]
+
 			log-more [
 				"Key:^[[1m" ctx/key-method
 				"^[[22mcrypt:^[[1m" ctx/crypt-method
@@ -609,9 +622,12 @@ TLS-update-messages-hash: function [
 ][
 	log-more ["Update-messages-hash bytes:" len "hash:" all [ctx/sha-port ctx/sha-port/spec/method]]
 	if none? ctx/sha-port [
-		ctx/sha-port: open either ctx/mac-size = 48 [checksum:sha384][checksum:sha256]
+		ctx/sha256-port: open checksum:sha256
+		ctx/sha384-port: open checksum:sha384
+		ctx/sha-port: ctx/sha256-port
 		log-more ["Initialized SHA method:" ctx/sha-port/spec/method]
 	]
+	unless ctx/hash-method [ write/part ctx/sha384-port msg len ]
 	write/part ctx/sha-port msg len
 	log-debug ["messages-hash:" read ctx/sha-port]
 ]
@@ -1046,7 +1062,7 @@ finished: function [
 	unencrypted: rejoin [
 		#{14}		; protocol message type	(20=Finished)
 		#{00000C}   ; protocol message length (12 bytes)
-		prf either ctx/server? ["server finished"]["client finished"] seed ctx/master-secret  12
+		prf :ctx/sha-port/spec/method either ctx/server? ["server finished"]["client finished"] seed ctx/master-secret  12
 	]
 	
 	TLS-update-messages-hash ctx unencrypted length? unencrypted
@@ -1077,15 +1093,13 @@ encrypt-handshake-msg: function [
 decrypt-msg: function [
 	ctx [object!]
 	data [binary!]
-	/type
-		msg-type [integer!] "application data is default"
+	type [integer!]
 ][
 	;print "CRYPTED message!" 
-	msg-type: any [msg-type 23]
 	with ctx [
 		binary/write bin compose [
 			UI64  :seq-read
-			UI8   :msg-type
+			UI8   :type
 			UI16  :version
 		]
 		either is-aead? [
@@ -1095,13 +1109,13 @@ decrypt-msg: function [
 				;? remote-IV
 				modify decrypt-port 'iv remote-IV
 
-				log-more ["Remote-IV:   ^[[32m" remote-IV]
+				log-more ["Remote-IV:^[[32m" remote-IV]
 			]
 
 			binary/write bin reduce ['UI16 (length? data) - 16]
 			write  decrypt-port  bin/buffer ; AAD chunk
 
-			log-more ["AAD:        ^[[32m" bin/buffer]
+			log-more ["AAD:      ^[[32m" bin/buffer]
 
 			mac: take/last/part data 16 ; expected mac
 			data: read write decrypt-port data
@@ -1246,6 +1260,7 @@ encrypt-data: function [
 
 prf: function [
 	{(P)suedo-(R)andom (F)unction, generates arbitrarily long binaries}
+	hash    [word!]
 	label   [string! binary!]
 	seed    [binary!]
 	secret  [binary!]
@@ -1257,7 +1272,7 @@ prf: function [
 	; PRF(secret, label, seed) = P_<hash>(secret, label + seed)
 	;
 
-	log-more ["PRF" mold label "len:" output-length]
+	log-more ["PRF" hash mold label "len:" output-length]
 	seed: join to binary! label seed
 
 	; TLS 1.2 includes the pseudorandom function as part of its cipher
@@ -1269,8 +1284,8 @@ prf: function [
 	p-sha256: make binary! output-length
 	a: seed ; A(0)
 	while [output-length >= length? p-sha256][
-		a: checksum/with a 'sha256 secret
-		append p-sha256 checksum/with append copy :a :seed 'sha256 secret
+		a: checksum/with a :hash :secret
+		append p-sha256 checksum/with append copy :a :seed :hash :secret
 		;?? p-sha256
 	]
 	;trim the result to required output length
@@ -1281,7 +1296,7 @@ prf: function [
 
 TLS-key-expansion: func[
 	ctx [object!]
-	/local rnd1 rnd2 key-expansion
+	/local rnd1 rnd2 key-expansion sha
 ][
 	with ctx [
 		;-- make all secure data
@@ -1292,8 +1307,9 @@ TLS-key-expansion: func[
 			rnd2: append copy ctx/remote-random ctx/local-random
 			rnd1: append copy ctx/local-random ctx/remote-random
 		]
-		master-secret: prf "master secret" rnd1 pre-secret 48
-		key-expansion: prf "key expansion" rnd2 master-secret (mac-size + crypt-size + iv-size) * 2
+		sha: ctx/sha-port/spec/method
+		master-secret: prf :sha "master secret" rnd1 pre-secret 48
+		key-expansion: prf :sha "key expansion" rnd2 master-secret (mac-size + crypt-size + iv-size) * 2
 
 		either server? [
 			unless is-aead? [
@@ -1373,13 +1389,7 @@ TLS-init-context: func [
 TLS-init-connection: function [ctx [object!]][
 	binary/init ctx/out none ;reset output buffer
 	client-hello ctx
-	;ctx/out/buffer: head ctx/out/buffer
-	;?? ctx/out/buffer
-	log-debug ["Writing bytes:" length? ctx/out/buffer]
-	ctx/out/buffer: head ctx/out/buffer
-	write ctx/tcp-port ctx/out/buffer
-	binary/init ctx/out none ;reset output buffer
-	ctx/reading?: true
+	do-TCP-write ctx
 	
 	false
 ]
@@ -1455,7 +1465,7 @@ TLS-read-data: function [
 				;?? data
 				;?? ctx/cipher-spec-set
 				if ctx/cipher-spec-set > 1 [
-					if data: decrypt-msg ctx data [
+					if data: decrypt-msg ctx data :type [
 						append ctx/port-data data
 						;@@ TODO: the parent scheme (HTTPS) should be notified here,
 						;@@ that there are already some decrypted data available!   
@@ -1469,7 +1479,7 @@ TLS-read-data: function [
 				;? ctx/cipher-spec-set
 				either ctx/cipher-spec-set > 1 [
 					ctx/seq-read: 0
-					data: decrypt-msg/type ctx data 22
+					data: decrypt-msg ctx data :type
 					;ctx/protocol: 'APPLICATION
 					;change-state ctx 'APPLICATION
 					ctx/reading?: ctx/server?
@@ -1499,7 +1509,7 @@ TLS-read-data: function [
 				binary/read inp [data: BYTES :len]
 				if ctx/cipher-spec-set > 1 [
 					log-debug ["Decrypting ALERT message:" mold data]
-					data: decrypt-msg ctx data
+					data: decrypt-msg ctx data :type
 					unless data [
 						log-error "Failed to decode ALERT message!"
 						;@@ TODO: inspect how it's possible that decrypt failes
@@ -1885,7 +1895,7 @@ TLS-parse-handshake-message: function [
 		FINISHED [
 			binary/read msg [verify-data: BYTES] ;rest of data
 			seed: read ctx/sha-port
-			result: prf either ctx/server? ["client finished"]["server finished"] seed ctx/master-secret  12
+			result: prf :ctx/sha-port/spec/method either ctx/server? ["client finished"]["server finished"] seed ctx/master-secret  12
 			;? verify-data ? result
 			if result <> verify-data [
 				return *Alert/Handshake_failure
@@ -2080,8 +2090,7 @@ TLS-client-awake: function [event [event!]][
 								client-key-exchange ctx
 								change-cipher-spec ctx
 								finished ctx
-								write ctx/tcp-port ctx/out/buffer
-								ctx/reading?: true
+								do-TCP-write ctx
 								return false
 							]
 							FINISHED [
@@ -2250,14 +2259,19 @@ do-TLS-write: func[port [port!] value [any-type!] /local ctx][
 		binary/init ctx/out none ;resets the output buffer
 		application-data ctx :value
 
-		log-debug ["Writing bytes:" length? ctx/out/buffer]
-		;ctx/out/buffer: head ctx/out/buffer
-		write ctx/tcp-port ctx/out/buffer
-
-		ctx/reading?: true
-		binary/init ctx/out none ;resets the output buffer
+		do-TCP-write ctx
 		return port
 	]
+]
+
+do-TCP-write: func[ctx][
+	log-debug ["Writing bytes:" length? ctx/out/buffer]
+	;?? ctx/out/buffer
+	;ctx/out/buffer: head ctx/out/buffer
+	write ctx/tcp-port ctx/out/buffer
+
+	ctx/reading?: true
+	binary/init ctx/out none ;resets the output buffer
 ]
 
 sys/make-scheme [
