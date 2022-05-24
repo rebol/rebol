@@ -616,6 +616,10 @@ failed:
 			if (err) return err;
 			input += ctx->aad_len;
 			len -= ctx->aad_len;
+			if (len == 0) {
+				ctx->state = CRYPT_PORT_HAS_DATA;
+				break;
+			}
 		}
 		err = mbedtls_gcm_update((mbedtls_gcm_context *)ctx->cipher_ctx, input, len, BIN_TAIL(bin), len, &out_bytes);
 		if (err) return err;
@@ -924,7 +928,7 @@ failed:
 			Extend_Series(bin, ctx->tag_len);
 			ret = mbedtls_gcm_finish((mbedtls_gcm_context*)ctx->cipher_ctx, NULL, 0, &olen, BIN_TAIL(bin), ctx->tag_len);
 			if (ret) return ret;
-			SERIES_TAIL(bin) += ctx->tag_len;
+			SERIES_TAIL(bin) += ctx->tag_len; // don't use olen, because it is not set!!!
 			ctx->state = CRYPT_PORT_FINISHED;
 		}
 		#endif
