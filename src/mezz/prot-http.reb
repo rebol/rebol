@@ -434,9 +434,6 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 					state/state: 'ready
 				]
 			]
-			?? res
-			?? headers
-			?? state/state
 
 			if all [not res state/state = 'ready][
 				either all [
@@ -692,12 +689,17 @@ decode-result: func[
 		content-type: select result/1 'Content-Type
 		any [
 			; consider content to be a text if charset specification is included
-			parse content-type [to #";" thru "charset=" copy code-page to end]
+			parse content-type [
+				to #";" thru "charset=" [
+					  #"^"" copy code-page to #"^"" to end ; Facebook is using this!
+					| copy code-page to end
+				]
+			]
 			; or when it is without charset, but of type text/*
 			parse content-type [["text/" | "application/json"] to end]
 		]
 	][
-		unless code-page [code-page: "utf-8"]
+		code-page: any [code-page "utf-8"]
 		sys/log/info 'HTTP ["Trying to decode from code-page:^[[m" code-page]
 		; using also deline to normalize possible CRLF to LF
 		try [result/2: deline iconv result/2 code-page]
