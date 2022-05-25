@@ -401,7 +401,8 @@ Rebol [
 	--test-- "overlapping change"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1162
 		s: copy "12345"
-		--assert "23455" = change at s 1 skip s 1 s
+		--assert     "5" = change at s 1 skip s 1 ;change returns just past the change
+		--assert "23455" = s
 
 ===end-group===
 
