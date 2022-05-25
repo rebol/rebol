@@ -10,7 +10,8 @@ Rebol [
 ]
 
 ~~~start-file~~~ "ChaCha20"
-unless all [error? e: try [chacha20 #{}] e/id = 'feature-na][
+if native? :chacha20 [
+;- this tests are only for the now deprecated `chacha20` native function!
 ===start-group=== "ChaCha20 test vectors"
 foreach [test-id key nonce counter plain cipher] [
 	1
@@ -71,7 +72,8 @@ foreach [test-id key nonce counter plain cipher] [
 ===end-group===
 ]
 
-unless all [error? e: try [chacha20poly1305 none] e/id = 'feature-na][
+if native? :chacha20poly1305 [
+;- this tests are only for the now deprecated `chacha20poly1305` native function!
 ===start-group=== "ChaCha20Poly1305"
 	--test-- "TLS with ChaCha20Poly1305 use-case simulation"
 

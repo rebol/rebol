@@ -508,6 +508,7 @@ include-deprecated-cipher-chacha20: [
 	include: %src/include/deprecated/
 	core-files: %core/deprecated/u-chacha20.c
 	core-files: %core/deprecated/u-poly1305.c
+	core-files: %core/deprecated/n-crypt-chacha.c
 ]
 
 include-rsa: [
