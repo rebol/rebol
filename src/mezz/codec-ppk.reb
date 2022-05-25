@@ -69,8 +69,10 @@ register-codec [
 					]
 					key: join checksum join #{00000000} pass 'sha1
 					          checksum join #{00000001} pass 'sha1
-					key: aes/decrypt/key copy/part key 32 none
-					pri: aes/decrypt/stream key pri
+					aes: open crypt:aes-256-cbc#decrypt
+					modify aes 'key copy/part key 32
+					pri: take write aes :pri
+					close aes
 				][
 					;clean pass data in memory
 					forall pass [pass/1: random 255]
