@@ -697,6 +697,7 @@ include-codec-ico: [
 	;:include-native-png-codec 
 	mezz-lib-files: %mezz/codec-ico.reb
 ]
+include-codec-csv:           [mezz-lib-files:  %mezz/codec-csv.reb          ]
 include-codec-json:          [mezz-lib-files:  %mezz/codec-json.reb         ]
 include-codec-xml:           [mezz-lib-files:  %mezz/codec-xml.reb          ]
 include-codec-pdf:           [mezz-lib-files:  %mezz/codec-pdf.reb :include-png-filter-native] ; pdf may use special png pre-compression
@@ -768,7 +769,8 @@ include-rebol-bulk: [
 	:include-codec-zip
 	:include-codec-tar
 	:include-codec-bbcode
-	:include-codec-html-entities	
+	:include-codec-html-entities
+	:include-codec-csv
 	:include-codec-json
 	:include-codec-xml
 	:include-codec-wav
