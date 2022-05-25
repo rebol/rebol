@@ -141,6 +141,5 @@ secure [%/ allow]
 		--assert all [error? e: try [echo %not-existing-dir/foo] e/id = 'cannot-open]
 ===end-group===
 
-echo %/r/sss/xxxx
 
 ~~~end-file~~~

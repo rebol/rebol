@@ -7,7 +7,8 @@ Rebol [
 ]
 
 ~~~start-file~~~ "AES"
-
+if native? :aes [
+;- this tests are only for the now deprecated `aes` native function!
 ===start-group=== "The Advanced Encryption Standard (AES) test vectors"
 
 --test-- "AES-128"
@@ -82,5 +83,6 @@ Rebol [
 	]
 
 ===end-group===
+] ; if ends
 
 ~~~end-file~~~
