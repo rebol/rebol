@@ -546,12 +546,12 @@ load-module: function [
 		not hdr [
 			; Only happens for string, binary or non-extension file/url source
 			set [hdr: code: end:] load-header/required data
-			unless tail? end [code: copy/part code end] 
 			case [
 				word? hdr [cause-error 'syntax hdr source]
 				import none ; /import overrides 'delay option
 				not delay [delay: true? find hdr/options 'delay]
 			]
+			unless tail? end [code: copy/part code end] 
 			if hdr/checksum [modsum: copy hdr/checksum]
 		]
 		no-share [hdr/options: append any [hdr/options make block! 1] 'isolate]
