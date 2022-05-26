@@ -909,7 +909,6 @@ failed:
 #endif
 
 	if (ctx->unprocessed_len > 0) {
-		ofs = 0;
 		blk = ctx->cipher_block_size;
 		Extend_Series(bin, blk);
 
@@ -918,7 +917,7 @@ failed:
 		// pad with zeros...
 		CLEAR(ctx->unprocessed_data + ctx->unprocessed_len, len);
 
-		ret = Crypt_Crypt(ctx, ctx->unprocessed_data, blk, &olen);
+		ret = Crypt_Crypt(ctx, ctx->unprocessed_data, blk, &ofs);
 		ctx->unprocessed_len = 0;
 	}
 	if (ctx->tag_len) {
