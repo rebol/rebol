@@ -27,12 +27,6 @@
 #ifndef MBEDTLS_MD4_H
 #define MBEDTLS_MD4_H
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
-
 #include <stddef.h>
 #include <stdint.h>
 
