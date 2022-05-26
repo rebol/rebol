@@ -135,7 +135,13 @@ sync-smtp-handler: function [event][
 		]
 		connect [
 			smtp-port/state: 'EHLO
-			read client
+			either state = 'STARTTLS [
+				sys/log/more 'SMTP "TLS connection established..."
+				write smtp-ctx/connection to binary! net-log/C ajoin ["EHLO " spec/ehlo CRLF]
+				smtp-port/state: 'AUTH
+			][
+				read client
+			]
 			false
 		]
 
@@ -210,21 +216,12 @@ sync-smtp-handler: function [event][
 
 				STARTTLS [
 					if code = 220 [
-						;- Upgrading client's connection to TLS port                                      
+						sys/log/more 'SMTP "Upgrading client's connection to TLS port"
 						;; tls-port will be a new layer between existing smtp and client (tcp) connections
-						;? client
-						;? smtp-port
 						tls-port: open [scheme: 'tls conn: client]
 						tls-port/parent: smtp-port
 						client/parent: tls-port
-						sys/log/more 'SMTP "TLS connection established..."
-						;? tls-port
-						;? client
-						;? client/parent
-						;? client/extra/tls-port
-						smtp-port/extra/connection: client/extra/tls-port
-						write tls-port to binary! net-log/C ajoin ["EHLO " spec/ehlo CRLF]
-						smtp-port/state: 'AUTH
+						smtp-ctx/connection: client/extra/tls-port
 						return false
 					]
 				]
