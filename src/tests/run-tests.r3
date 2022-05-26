@@ -25,6 +25,7 @@ dt [ ;- delta time
 		%units/conditional-test.r3
 		%units/copy-test.r3
 		%units/crash-test.r3
+		%units/csv-test.r3
 		%units/datatype-test.r3
 		%units/date-test.r3
 		%units/decimal-test.r3
