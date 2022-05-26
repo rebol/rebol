@@ -487,8 +487,8 @@ STOID Mold_Url(REBVAL *value, REB_MOLD *mold)
 		if (IS_URL_ESC(c)) len += 2;
 		// unicode chars must be also encoded...
 		else if (c <  (REBCNT)0x80) continue;
-		else if (c >= (REBCNT)0x0010FFFF) len += 14;
-		else if (c >= (REBCNT)0x10000) len += 11;
+		//else if (c >= (REBCNT)0x0010FFFF) len += 14; // REBUNI is just 16bit, so this is useless now!
+		//else if (c >= (REBCNT)0x10000) len += 11;
 		else if (c >= (REBCNT)0x800) len += 8;
 		else if (c >= (REBCNT)0x80) len += 5;
 	}
