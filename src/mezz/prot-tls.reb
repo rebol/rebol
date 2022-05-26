@@ -280,14 +280,18 @@ TLS-context: context [
 ] 'TLS-Cipher-suite
 
 *EllipticCurves: enum [
-	secp192r1: #{0013}
-	secp224k1: #{0014}
-	secp224r1: #{0015}
-	secp256k1: #{0016}
-	secp256r1: #{0017}
-	secp384r1: #{0018}
-	secp521r1: #{0019}
-	x25519:    #{001D}
+	secp192r1:  19 ;#{0013}
+	secp224k1:  20 ;#{0014}
+	secp224r1:  21 ;#{0015}
+	secp256k1:  22 ;#{0016}
+	secp256r1:  23 ;#{0017}
+	secp384r1:  24 ;#{0018}
+	secp521r1:  25 ;#{0019}
+	bp256r1:    26 ;#{001A}
+	bp384r1:    27 ;#{001B}
+	bp512r1:    28 ;#{001C}
+	curve25519: 29 ;#{001D} ;? or x25519
+	curve448:   30 ;#{001E} ;? or x448
 ] 'EllipticCurves
 
 *HashAlgorithm: enum [
@@ -444,40 +448,58 @@ decode-extensions: function[
 ;-- list of supported suites as a single binary
 ; This list is sent to the server when negotiating which one to use.  Hence
 ; it should be ORDERED BY CLIENT PREFERENCE (more preferred suites first).
-;@@ TODO: use only ciphers which are really available!!!
-suported-cipher-suites: decode-cipher-suites suported-cipher-suites-binary: rejoin [
-	#{CCA9} ;TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
-	#{CCA8} ;TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
-	#{C02F} ;TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-	#{C030} ;TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-	#{C02B} ;TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
-	#{C02C} ;TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
-	#{009C} ;TLS-RSA-WITH-AES-128-GCM-SHA256
+; Use https://ciphersuite.info for security info!
 
-	;- CBC mode is considered to be weak, but still used!
-	#{C028} ;TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384
-	#{C024} ;TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384
-	#{C027} ;TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
-	#{C023} ;TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
-	#{C014} ;TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
-	#{C013} ;TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
-	#{C00A} ;TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
-	#{C009} ;TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA
-	;#{006A} ;TLS_DHE_DSS_WITH_AES_256_CBC_SHA256
-	#{006B} ;TLS_DHE_RSA_WITH_AES_256_CBC_SHA256
-	#{0067} ;TLS_DHE_RSA_WITH_AES_128_CBC_SHA256
-	#{003D} ;TLS_RSA_WITH_AES_256_CBC_SHA256
-	#{003C} ;TLS_RSA_WITH_AES_128_CBC_SHA256
-	#{0035} ;TLS_RSA_WITH_AES_256_CBC_SHA
-	#{002F} ;TLS_RSA_WITH_AES_128_CBC_SHA
-	;#{0038} ;TLS_DHE_DSS_WITH_AES_256_CBC_SHA
-	;#{0032} ;TLS_DHE_DSS_WITH_AES_128_CBC_SHA
-	#{0039} ;TLS_DHE_RSA_WITH_AES_256_CBC_SHA
-	#{0033} ;TLS_DHE_RSA_WITH_AES_128_CBC_SHA
-	;- RC4 is prohibited by https://tools.ietf.org/html/rfc7465 for insufficient security
-	;#{0004} ;TLS_RSA_WITH_RC4_128_MD5 
-	;#{0005} ;TLS_RSA_WITH_RC4_128_SHA
+suported-cipher-suites-binary: make binary! 60
+if find system/catalog/ciphers 'chacha20-poly1305 [
+	binary/write tail suported-cipher-suites-binary [
+	UI16BE 52393 ;= CCA9 ;TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 ;= recommended
+	UI16BE 52392 ;= CCA8 ;TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256   ;= secure
+	]
 ]
+if find system/catalog/ciphers 'aes-128-gcm [
+	binary/write tail suported-cipher-suites-binary [
+	UI16BE 49195 ;= C02B ;TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 ;= recommended
+	UI16BE 49196 ;= C02C ;TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 ;= recommended
+	UI16BE 49199 ;= C02F ;TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256   ;= secure
+	UI16BE 49200 ;= C030 ;TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384   ;= secure
+	UI16BE   156 ;= 009C ;TLS_RSA_WITH_AES_128_GCM_SHA256         ;= weak
+	]
+]
+if find system/catalog/ciphers 'aes-128-cbc [
+	binary/write tail suported-cipher-suites-binary [
+	;- CBC mode is considered to be weak, but still used!
+	UI16BE 49192 ;= C028 ;TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384
+	UI16BE 49188 ;= C024 ;TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384
+	UI16BE 49191 ;= C027 ;TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+	UI16BE 49187 ;= C023 ;TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+	UI16BE 49172 ;= C014 ;TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
+	UI16BE 49171 ;= C013 ;TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
+	UI16BE 49162 ;= C00A ;TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
+	UI16BE 49161 ;= C009 ;TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA
+;	UI16BE   106 ;= 006A ;TLS_DHE_DSS_WITH_AES_256_CBC_SHA256
+	UI16BE   107 ;= 006B ;TLS_DHE_RSA_WITH_AES_256_CBC_SHA256
+	UI16BE   103 ;= 0067 ;TLS_DHE_RSA_WITH_AES_128_CBC_SHA256
+	UI16BE    61 ;= 003D ;TLS_RSA_WITH_AES_256_CBC_SHA256
+	UI16BE    60 ;= 003C ;TLS_RSA_WITH_AES_128_CBC_SHA256
+	UI16BE    53 ;= 0035 ;TLS_RSA_WITH_AES_256_CBC_SHA
+	UI16BE    47 ;= 002F ;TLS_RSA_WITH_AES_128_CBC_SHA
+;	UI16BE    56 ;= 0038 ;TLS_DHE_DSS_WITH_AES_256_CBC_SHA
+;	UI16BE    50 ;= 0032 ;TLS_DHE_DSS_WITH_AES_128_CBC_SHA
+	UI16BE    57 ;= 0039 ;TLS_DHE_RSA_WITH_AES_256_CBC_SHA
+	UI16BE    51 ;= 0033 ;TLS_DHE_RSA_WITH_AES_128_CBC_SHA
+	]
+]
+
+;- RC4 is prohibited by https://tools.ietf.org/html/rfc7465 for insufficient security
+;if native? :rc4 [
+;	binary/write tail suported-cipher-suites-binary [
+;	UI16BE 4 ;= 0004 ;TLS_RSA_WITH_RC4_128_MD5 
+;	UI16BE 5 ;= 0005 ;TLS_RSA_WITH_RC4_128_SHA
+;	]
+;]
+
+suported-cipher-suites: decode-cipher-suites suported-cipher-suites-binary
 
 supported-signature-algorithms: rejoin [
 ;@@ TODO: review this list!
@@ -499,14 +521,25 @@ supported-signature-algorithms: rejoin [
 	;#{0203} ; ecdsa_sha1
 ]
 
-supported-elliptic-curves: rejoin [
-	;#{001D} ; x25519
-	;#{0019} ; secp521r1
-	;#{0018} ; secp384r1
-	#{0017} ; secp256r1
-	#{0015} ; secp224r1
-	#{0014} ; secp224k1
-	#{0013} ; secp192r1
+supported-elliptic-curves: make binary! 22
+foreach [curve id] [
+;;  curves in the prefered order!
+;	curve448   30 ;#{001E}
+;	curve25519 29 ;#{001D} ;= needs some work - signature-algorithm 0703 not done!
+	secp521r1  25 ;#{0019}
+;	bp512r1    28 ;        ;= needs tests!
+;	bp384r1    27 ;        ;= needs tests!
+;	bp256r1    26 ;        ;= needs tests!
+	secp384r1  24 ;#{0018}
+	secp256r1  23 ;#{0017}
+	secp256k1  22 ;#{0016}
+	secp224r1  21 ;#{0015}
+	secp224k1  20 ;#{0014}
+	secp192r1  19 ;#{0013}
+][
+	if find system/catalog/elliptic-curves curve [
+		binary/write tail supported-elliptic-curves [UI16BE :id]
+	]
 ]
 
 
