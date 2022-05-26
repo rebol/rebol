@@ -83,52 +83,144 @@ make-port*: func [
 	port
 ]
 
-*parse-url: make object! [
-	digit:       make bitset! "0123456789"
-	digits:      [1 5 digit]
-	alpha-num:   make bitset! [#"a" - #"z" #"A" - #"Z" #"0" - #"9"]
-	scheme-char: insert copy alpha-num "+-."
-	path-char:   complement make bitset! "#" 
-	user-char:   complement make bitset! ":@"
-	host-char:   complement make bitset! ":/?"
-	s1: s2: none ; in R3, input datatype is preserved - these are now URL strings!
-	out: []
-	emit: func ['w v] [reduce/into [to set-word! w if :v [to string! :v]] tail out]
+url-parser: make object! [
+	;; Source of this url-parser is inspired by Gregg Irwin's code:
+	;; https://gist.github.com/greggirwin/207149d46441cd48a1426e60926a7d25
+	;; which is now used in Red:
+	;; https://github.com/red/red/blob/f619641b573621ee4c0ca7e0a8b706053db53a36/environment/networking.red#L34-L209
+	;; Output of this version is different than in Red!
 
-	rules: [
-		; Scheme://user-host-part
-		[
-			; scheme name: [//]
-			copy s1 some scheme-char ":" opt "//" ; we allow it
-			(reduce/into [to set-word! 'scheme to lit-word! to string! s1] tail out)
+	out: make block! 14
+	value: none
 
-			; optional user [:pass]
-			opt [
-				copy s1 some user-char
-				opt [#":" copy s2 to #"@" (emit pass s2)]
-				#"@" (emit user s1)
+	;-- Basic Character Sets
+	digit:       system/catalog/bitsets/numeric
+	alpha:       system/catalog/bitsets/alpha
+	alpha-num:   system/catalog/bitsets/alpha-numeric
+	hex-digit:   system/catalog/bitsets/hex-digits
+
+	;-- URL Character Sets
+	;URIs include components and subcomponents that are delimited by characters in the "reserved" set.
+	gen-delims:  #[bitset! #{000000001001002180000014}]         ;= charset ":/?#[]@"
+	sub-delims:  #[bitset! #{000000004BF80014}]                 ;= charset "!$&'()*+,;="
+	reserved:    #[bitset! #{000000005BF9003580000014}]         ;= [gen-delims | sub-delims]
+	;The purpose of reserved characters is to provide a set of delimiting
+	;characters that are distinguishable from other data within a URI.
+
+	;Characters that are allowed in a URI but do not have a reserved purpose are "unreserved"
+	unreserved:  #[bitset! #{000000000006FFC07FFFFFE17FFFFFE2}] ;= compose [alpha | digit | (charset "-._~")]
+	scheme-char: #[bitset! #{000000000016FFC07FFFFFE07FFFFFE0}] ;= union alpha-num "+-."
+	
+	;-- URL Grammar
+	url-rules:   [
+		scheme-part
+		hier-part (
+			if all [value not empty? value][
+				case [
+					out/scheme = 'mailto [
+						emit target to string! dehex :value
+					]
+
+					all [out/scheme = 'urn parse value [
+						; case like: urn:example:animal:ferret:nose (#":" is not a valid file char)
+						; https://datatracker.ietf.org/doc/html/rfc2141
+						copy value to #":" (
+							emit path   to string! dehex value ;= Namespace Identifier
+						)
+						1 skip
+						copy value to end (
+							emit target to string! dehex value ;= Namespace Specific String
+						)
+					]] true
+
+					'else [
+						value: to file! dehex :value
+						either dir? value [
+							emit path value
+						][
+							value: split-path value
+							if %./ <> value/1 [emit path value/1]
+							emit target value/2
+						]
+					]
+				]
 			]
+		)
+		opt query
+		opt fragment
+	]
+	scheme-part: [copy value [alpha any scheme-char] #":" (emit scheme to lit-word! lowercase to string! :value)]
+	hier-part:   [#"/" #"/" authority path-abempty | path-absolute | path-rootless | path-empty]
 
-			; optional host [:port]
-			opt [
-				copy s1 any host-char
-				opt [#":" copy s2 digits (compose/into [port-id: (to integer! s2)] tail out)]
-				(unless empty? s1 [attempt [s1: to tuple! s1] emit host s1])
+	;   The authority component is preceded by a double slash ("//") and is
+	;   terminated by the next slash ("/"), question mark ("?"), or number
+	;   sign ("#") character, or by the end of the URI.
+	authority:   [opt user  host  opt [#":" port]]
+	user:	 [
+		copy value [any [unreserved | pct-encoded | sub-delims | #":"] #"@"]
+		(
+			take/last value
+			value: to string! dehex value
+			parse value [
+				copy value to #":" (emit user value)
+				1 skip
+				copy value to end ( emit pass value)
+				|
+				(emit user value)
 			]
+		)
+	]
+	host: [
+		ip-literal (emit host to string! dehex :value) 
+		|
+		copy value any [unreserved | pct-encoded | sub-delims]
+		(unless empty? value [emit host to string! dehex :value])
+	]
+	ip-literal:    [copy value [[#"[" thru #"]"] | ["%5B" thru "%5D"]]] ; simplified from [IPv6address | IPvFuture]
+	port:          [copy value [1 5 digit] (emit port to integer! to string! :value)]
+	pct-encoded:   [#"%" 2 hex-digit]
+	pchar:         [unreserved | pct-encoded | sub-delims | #":" | #"@"]	; path characters
+	path-abempty:  [copy value any-segments | path-empty]
+	path-absolute: [copy value [#"/" opt [segment-nz any-segments]]]
+	path-rootless: [copy value [segment-nz any-segments]]
+	path-empty:    [none]
+	segment:       [any pchar]
+	segment-nz:    [some pchar]
+	segment-nz-nc: [some [unreserved | pct-encoded | sub-delims | #"@"]]	; non-zero-length segment with no colon
+	any-segments:  [any [#"/" segment]]
+	query:         [#"?" copy value any [pchar | slash | #"?"] (emit query    to string! dehex :value)]
+	fragment:      [#"#" copy value any [pchar | slash | #"?"] (emit fragment to string! dehex :value)]
+
+	; Helper function
+	emit: func ['w v] [reduce/into [to set-word! w :v] tail out]
+
+
+	;-- Parse Function
+	parse-url: function [
+		"Return object with URL components, or cause an error if not a valid URL"
+		url  [url! string!]
+	][
+		;@@ MOLD of the url! preserves (and also adds) the percent encoding.      
+		;@@ binary! is used to have `dehex` on results decode UTF8 chars correctly
+		;@@ see: https://github.com/Oldes/Rebol-issues/issues/1986                
+		result: either parse to binary! mold as url! url url-rules [
+			copy out
+		][
+			none
 		]
-
-		; optional path
-		opt [copy s1 some path-char (emit path s1)]
-
-		; optional bookmark
-		opt [#"#" copy s1 to end (emit tag s1)]
+		; cleanup (so there are no remains visible in the url-parser object)
+		clear out
+		set 'value none
+		; done
+		result
 	]
 
-	decode-url: func ["Decode a URL according to rules of sys/*parse-url." url] [
-		--- "This function is bound in the context of sys/*parse-url."
-		out: make block! 8
-		parse/all url rules
-		out
+	; Exported function (Rebol compatible name)
+	set 'decode-url function [
+		"Decode a URL into an object containing its constituent parts"
+		url [url! string!]
+	][
+		parse-url url
 	]
 ]
 
@@ -140,7 +232,7 @@ make-scheme: func [
 	"INIT: Make a scheme from a specification and add it to the system."
 	def [block!] "Scheme specification"
 	/with 'scheme "Scheme name to use as base"
-	/local actor
+	/local actor name func* args body pos
 ][
 	with: either with [get in system/schemes scheme][system/standard/scheme]
 	unless with [cause-error 'access 'no-scheme scheme]
@@ -152,11 +244,24 @@ make-scheme: func [
 
 	; If actor is block build a non-contextual actor object:
 	if block? :def/actor [
-		actor: make object! (length? def/actor) / 4
-		foreach [name func* args body] def/actor [ ; (maybe PARSE is better here)
-			name: to word! name ; bug!!! (should not be necessary?)
-			repend actor [name func args body]
-		]
+		actor: make object! (length? :def/actor) / 4
+		parse :def/actor [any [
+			set name set-word! [
+				set func* any-function!
+				(append actor reduce [name :func*])
+				|
+				'func set args block! set body block!
+				(append actor reduce [name func args body])
+				|
+				'function set args block! set body block!
+				(append actor reduce [name function args body])
+			]
+			| end
+			| pos: (
+				cause-error 'script 'invalid-arg pos
+			)
+		]]
+
 		def/actor: actor
 	]
 
@@ -168,7 +273,7 @@ init-schemes: func [
 ][
 	log/debug 'REBOL "Init schemes"
 
-	sys/decode-url: lib/decode-url: :sys/*parse-url/decode-url
+	sys/decode-url: lib/decode-url: :sys/url-parser/parse-url
 
 	system/schemes: make object! 11
 
@@ -313,7 +418,8 @@ init-schemes: func [
 			spec: port/spec
 			method: any [
 				select spec 'method
-				select spec 'host   ; if scheme was opened using url type
+				select spec 'target ; if scheme was opened using url type (checksum:sha1)
+				select spec 'host   ; when used as: checksum://sha1
 				'md5                ; default method
 			]
 			if any [
@@ -322,12 +428,52 @@ init-schemes: func [
 			][
 				cause-error 'access 'invalid-spec method
 			] 
-			; make port/spec to be only with midi related keys
+			; make port/spec to be only with checksum related keys
 			set port/spec: copy system/standard/port-spec-checksum spec
 			;protect/words port/spec ; protect spec object keys of modification
 		]
 
 	]
+
+	make-scheme [
+		title: "Crypt"
+		spec: system/standard/port-spec-crypt
+		name: 'crypt
+		init: function [
+			port [port!]
+		][
+			spec: port/spec
+			algorithm: any [
+				select spec 'algorithm
+				select spec 'target ; if scheme was opened using url type: crypt:chacha20
+				select spec 'host   ; or when used as: crypt://chacha20
+			]
+			direction: any [
+				select spec 'fragment ; from: crypt://chacha20#decrypt
+				select spec 'direction
+			]
+			if any [
+				error? try [spec/algorithm: to word! :algorithm] ; in case it was not
+				not find system/catalog/ciphers spec/algorithm
+			][
+				cause-error 'access 'invalid-spec :algorithm
+			]
+			if any [
+				error? try [spec/direction: to word! :direction] ; in case it was not
+				not find [encrypt decrypt] spec/direction
+			][
+				cause-error 'access 'invalid-spec :direction
+			]
+			; make port/spec to be only with crypt related keys
+			set port/spec: copy system/standard/port-spec-crypt spec
+			if block? port/spec/ref [
+				port/spec/ref: as url! ajoin ["crypt://" :algorithm #"#" :direction]
+			]
+			;protect/words port/spec ; protect spec object keys of modification
+		]
+	]
+
+
 	make-scheme [
 		title: "Clipboard"
 		name: 'clipboard

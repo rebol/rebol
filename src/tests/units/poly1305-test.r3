@@ -7,7 +7,8 @@ Rebol [
 ]
 
 ~~~start-file~~~ "Poly1305 mmessage authentication"
-
+if native? :poly1305 [
+;- this tests are only for the now deprecated `poly1305` native function!
 ===start-group=== "Poly1305 test vectors"
 foreach [test-id key msg mac] [
 	1
@@ -43,5 +44,6 @@ foreach [test-id key msg mac] [
 	--assert not poly1305/update/verify key msg #{01020304050607082a7dfb4b3d3305d9} ; mac not correct
 
 ===end-group===
+]
 
 ~~~end-file~~~

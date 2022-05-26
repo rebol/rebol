@@ -46,6 +46,13 @@
 	//#define MBEDTLS_PLATFORM_MEMORY
 	//#define MBEDTLS_MEMORY_BUFFER_ALLOC_C
 
+	#ifdef INCLUDE_RSA
+	#define MBEDTLS_RSA_C
+	#endif
+
+	#define MBEDTLS_CIPHER_C
+
+	#define MBEDTLS_MD_C
 	#define MBEDTLS_MD5_C
 	#define MBEDTLS_SHA1_C
 	#define MBEDTLS_SHA224_C

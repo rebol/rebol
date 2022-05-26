@@ -21,11 +21,11 @@ unless find system/modules 'sqlite [
 			]
 
 			print [as-green "Downloading:" as-yellow url]
-			if "true" = get-env "CI" [
-				;enhancing verbosity to try locate source of occasional read errors in CI
-				system/schemes/tls/set-verbose 4
-				codecs/der/verbose: 4
-			]
+			;if "true" = get-env "CI" [
+			;	;enhancing verbosity to try locate source of occasional read errors in CI
+			;	system/schemes/tls/set-verbose 4
+			;	codecs/der/verbose: 4
+			;]
 			bin: read url
 			if compressed? [ bin: decode 'GZIP bin ]
 			write %sqlite.rebx bin

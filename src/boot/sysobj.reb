@@ -61,6 +61,12 @@ catalog: object [
 	]
 	checksums: [adler32 crc24 crc32 tcp md4 md5 sha1 sha224 sha256 sha384 sha512 ripemd160]
 	compressions: [gzip deflate zlib lzma crush]
+	elliptic-curves: [
+		; will be filled on boot from `Init_Crypt` in `n-crypt.c`
+	]
+	ciphers: [
+		; will be filled on boot from `Init_Crypt` in `n-crypt.c`
+	]
 ]
 
 contexts: construct [
@@ -238,11 +244,12 @@ standard: object [
 	port: construct [ ; Port specification object
 		spec:		; published specification of the port
 		scheme:		; scheme object used for this port
+		parent:     ; port's parent (for example HTTPS port in TLS)
 		actor:		; port action handler (script driven)
 		awake:		; port awake function (event driven)
 		state:		; internal state values (private)
+		extra:		; user-defined storage of local data
 		data:		; data buffer (usually binary or block)
-		locals:		; user-defined storage of local data
 ;		stats:		; stats on operation (optional)
 	]
 
@@ -257,14 +264,26 @@ standard: object [
 		path:  none
 	]
 
-	port-spec-net: make port-spec-file [
-		host: none
-		port-id: 80
+	port-spec-net: make port-spec-head [
+		host:   none
+		port:   80
+		path:   
+		target: 
+		query:  
+		fragment: none
 	]
 
 	port-spec-checksum: make port-spec-head [
 		scheme: 'checksum
 		method: none
+	]
+
+	port-spec-crypt: make port-spec-head [
+		scheme:    'crypt
+		direction: 'encrypt
+		algorithm: 
+		init-vector:
+		key: none
 	]
 
 	port-spec-midi: make port-spec-head [
@@ -477,7 +496,7 @@ view: object [
 ;		user:		; User data
 
 ;		host:
-;		port-id:
+;		port:
 ;		user:
 ;		pass:
 ;		target:

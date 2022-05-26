@@ -8,34 +8,6 @@ Rebol [
 
 ~~~start-file~~~ "port"
 
-===start-group=== "decode-url"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/2380
-	--test-- "decode-url-unicode"
-		url: decode-url http://example.com/get?q=ščř#kovtička
-		--assert url/scheme = 'http
-		--assert url/host   = "example.com"
-		--assert url/path   = "/get?q=ščř"
-		--assert url/tag    = "kovtička"
-	--test-- "decode-url-unicode"
-		url: decode-url http://švéd:břéťa@example.com:8080/get?q=ščř#kovtička
-		--assert url/scheme = 'http
-		--assert url/user   = "švéd"
-		--assert url/pass   = "břéťa"
-		--assert url/host   = "example.com"
-		--assert url/port-id = 8080
-		--assert url/path   = "/get?q=ščř"
-		--assert url/tag    = "kovtička"
-	--test-- "decode-url http://host?query"
-		url: decode-url http://host?query
-		--assert url/host = "host"
-		--assert url/path = "?query"
-	--test-- "decode-url tcp://:9000"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/1275
-		url: decode-url tcp://:9000
-		--assert url/scheme = 'tcp
-		--assert url/port-id = 9000
-
-===end-group===
 
 ===start-group=== "directory port"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2320
@@ -48,6 +20,7 @@ Rebol [
 		--assert  not empty? open %./
 		--assert  not error? [delete %port-issue-2320/]
 	--test-- "query directory info"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1712
 		--assert [name size date type] = query/mode %. none
 		--assert 'dir     = query/mode %. 'type
 		--assert date?      query/mode %. 'date
@@ -228,6 +201,7 @@ if system/platform = 'Windows [
 
 ===start-group=== "file port"
 	--test-- "query file info"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1712
 		file: %units/files/alice29.txt.gz
 		--assert [name size date type] = query/mode file none
 		--assert 'file = query/mode file 'type
@@ -435,6 +409,38 @@ if system/platform = 'Windows [
 		; validate...
 		--assert not exists? %issue-2447
 
+	--test-- "WRITE/APPEND file-port"
+		--assert all [
+			not error? try [
+				p: open/new %issue-1894
+				write/append p "Hello"
+				write/append p newline
+				close p
+				p: open %issue-1894
+				write/append p #{5265626F6C}
+				close p
+			]
+			"Hello^/Rebol" = read/string %issue-1894
+		]
+
+	--test-- "APPEND file-port"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1894
+		--assert all [
+			not error? try [
+				p: open/new %issue-1894
+				append p "Hello"
+				append p newline
+				close p
+				p: open %issue-1894
+				append p #{5265626F6C}
+				close p
+			]
+			"Hello^/Rebol" = read/string %issue-1894
+		]
+		--assert all [error? e: try [append/dup p LF 10]  e/id = 'bad-refines]
+		--assert all [error? e: try [append/only p "aa"]  e/id = 'bad-refines]
+		try [delete %issue-1894]
+
 ===end-group===
 
 if system/platform = 'Windows [
@@ -456,6 +462,13 @@ if system/platform = 'Windows [
 				not error? try [write clipboard:// c]
 				strict-equal? c try [read clipboard://]
 			]
+		--test-- "issue-2486"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2486
+			foreach ch [#"a" #"^(7F)" #"^(80)" #"^(A0)"][
+				write clipboard:// append copy "" ch
+				--assert (to binary! ch) = to binary! read clipboard://
+			]
+			
 	===end-group===
 ]
 
@@ -535,6 +548,17 @@ if all [
 		--assert "dns.google" = try [probe read dns://8.8.8.8]
 	--test-- "read dns://google.com"
 		--assert tuple? try [read dns://google.com]
+
+	--test-- "query dns://"
+	;@@ https://github.com/Oldes/rebol-issues/issues/1826
+		--assert all [error? e: try [query dns://]  e/id = 'no-port-action]
+===end-group===
+
+
+===start-group=== "SYSTEM"
+	--test-- "query system://"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1373
+		--assert all [error? e: try [query system://]  e/id = 'no-port-action]
 ===end-group===
 
 ~~~end-file~~~

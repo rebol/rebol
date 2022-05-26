@@ -133,7 +133,7 @@
 ***********************************************************************/
 {
 	//REBVAL *data = BLK_SKIP(port, STD_PORT_DATA);
-	REBVAL *ctx  = BLK_SKIP(port, STD_PORT_LOCALS);
+	REBVAL *ctx  = BLK_SKIP(port, STD_PORT_EXTRA);
 
 	if(!IS_BINARY(ctx)) {
 		SET_BINARY(ctx, Make_Binary(ctx_size));
@@ -224,7 +224,7 @@
 	req = Use_Port_State(port, RDI_CHECKSUM, sizeof(REBREQ));
 
 	data = BLK_SKIP(port, STD_PORT_DATA); //will hold result
-	ctx  = BLK_SKIP(port, STD_PORT_LOCALS);
+	ctx  = BLK_SKIP(port, STD_PORT_EXTRA);
 	int ctx_size = 0, blk_size = 0;
 
 	Init_sizes(method, &blk_size, &ctx_size);
@@ -402,7 +402,7 @@
 		return R_FALSE;
 
 	default:
-		Trap_Action(REB_PORT, action);
+		Trap1(RE_NO_PORT_ACTION, Get_Action_Word(action));
 	}
 	return R_RET;
 }

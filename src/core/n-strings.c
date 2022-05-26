@@ -72,6 +72,58 @@ static struct digest {
 
 /***********************************************************************
 **
+*/	REBOOL Message_Digest(REBYTE *output, REBYTE *input, REBCNT length, REBCNT method, REBCNT *olen)
+/*
+***********************************************************************/
+{
+	switch (method) {
+	case SYM_MD5:
+		MD5(input, length, output);
+		*olen = 16;
+		break;
+	case SYM_SHA1:
+		SHA1(input, length, output);
+		*olen = 20;
+		break;
+	case SYM_SHA256:
+		SHA256(input, length, output);
+		*olen = 32;
+		break;
+	case SYM_SHA224:
+		SHA224(input, length, output);
+		*olen = 28;
+		break;
+	case SYM_SHA512:
+		SHA512(input, length, output);
+		*olen = 64;
+		break;
+#ifdef INCLUDE_SHA384
+	case SYM_SHA384:
+		SHA384(input, length, output);
+		*olen = 48;
+		break;
+#endif
+#ifdef INCLUDE_RIPEMD160
+	case SYM_RIPEMD160:
+		RIPEMD160(input, length, output);
+		*olen = 20;
+		break;
+#endif
+#ifdef INCLUDE_MD4
+	case SYM_MD4:
+		MD4(input, length, output);
+		*olen = 16;
+		break;
+#endif
+	default:
+		return FALSE;
+	}
+	return TRUE;
+}
+
+
+/***********************************************************************
+**
 */	REBNATIVE(ajoin)
 /*
 ***********************************************************************/
@@ -492,7 +544,13 @@ static struct digest {
 #else
 		Trap0(RE_FEATURE_NA);
 #endif
-		
+		break;
+	case 36:
+#ifdef INCLUDE_BASE36
+		ser = Encode_Base36(arg, 0, limit, FALSE);
+#else
+		Trap0(RE_FEATURE_NA);
+#endif
 		break;
 	default:
 		Trap_Arg(D_ARG(2));
@@ -949,4 +1007,19 @@ static struct digest {
 
 	VAL_INDEX(arg) = bp - VAL_BIN_HEAD(arg);
 	return R_ARG1;
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(split_lines)
+/*
+**  Note: It should be part of the new `split` native in the future!
+**
+***********************************************************************/
+{
+	REBVAL *arg = D_ARG(1);
+
+	Set_Block(D_RET, Split_Lines(arg));
+	return R_RET;
 }

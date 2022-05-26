@@ -539,7 +539,40 @@ Rebol [
 		--assert error? try [set [/e][5]]
 		--assert error? try [set [#f][6]]
 		--assert error? try [set /a 1]
-		
+
+	--test-- "set any block"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2488
+		--assert all [
+			[[][]] = set [a b] first [[[][]]]
+			a = []
+			b = []
+		]
+		--assert all [
+			paren? set [a b] first [([][])]
+			a = []
+			b = []
+		]
+		--assert all [
+			path? set [a b] first [x/y]
+			a = 'x
+			b = 'y
+		]
+		--assert all [
+			[[][]] = set/only [a b] val: first [[[][]]]
+			a = val
+			b = val
+		]
+		--assert all [
+			paren? set/only [a b] val: first [([][])]
+			a = val
+			b = val
+		]
+		--assert all [
+			path? set/only [a b] val: first [x/y]
+			a = val
+			b = val
+		]
+
 	--test-- "set path"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2275
 	;Parenthesized expressions on left for SET-PATH! evaluate after right hand expressions 

@@ -286,7 +286,7 @@ mysql-driver: make object! [
 	]
 
 	set 'change-type-handler func [p [port!] type [word!] blk [block!]][
-		head change/only next find p/locals/conv-list type blk
+		head change/only next find p/extra/conv-list type blk
 	]
 	
 	convert-types: func [
@@ -295,12 +295,12 @@ mysql-driver: make object! [
 		/local row i convert-body action cols col conv-func tmp
 	][
 		;;sys/log/more 'MySQL["converting types"]
-		cols: p/locals/current-result/columns
+		cols: p/extra/current-result/columns
 		convert-body: make block! 1
 		action: [if tmp: pick row (i)]
 		foreach col cols [
 			i: index? find cols col
-			if 'none <> conv-func: select p/locals/conv-list col/type [
+			if 'none <> conv-func: select p/extra/conv-list col/type [
 				;;sys/log/more 'MySQL["conv-func:" mold conv-func "for" col/type]
 				append convert-body append/only compose action head
 					insert* at compose [change at row (i) :tmp] 5 conv-func
@@ -308,7 +308,7 @@ mysql-driver: make object! [
 		]
 		;;sys/log/more 'MySQL["convert-body:" mold convert-body]
 		if not empty? convert-body [
-			either p/locals/result-options/flat? [
+			either p/extra/result-options/flat? [
 				while [not tail? rows][
 					row: rows
 					do convert-body
@@ -532,10 +532,10 @@ mysql-driver: make object! [
 		
 		scramble: func [data [string! none!] port [port!] /v10 /local seed][
 			if any [none? data empty? data][return make binary! 0]
-			seed: port/locals/crypt-seed
+			seed: port/extra/crypt-seed
 			if v10 [return crypt-v10 data copy*/part seed 8]
-			either port/locals/protocol > 9 [
-				either port/locals/auth-v11 [
+			either port/extra/protocol > 9 [
+				either port/extra/auth-v11 [
 					crypt-v11 to-binary data seed
 				][
 					crypt-v10 data seed
@@ -598,7 +598,7 @@ mysql-driver: make object! [
 			to-string read-packet port
 		][
 			res: read-packet port
-			either all [cmd = defs/cmd/ping zero? port/locals/last-status][true][none]
+			either all [cmd = defs/cmd/ping zero? port/extra/last-status][true][none]
 		]
 	]
 	
@@ -637,17 +637,17 @@ mysql-driver: make object! [
 		while [16777215 <= length? data] [; size < 2**24 - 1
 			header: join
 				#{FFFFFF}
-				write-byte port/locals/seq-num: port/locals/seq-num + 1
+				write-byte port/extra/seq-num: port/extra/seq-num + 1
 
 			insert data header
 			data: skip data 16777215 + length? header
 		]
 		;;sys/log/more 'MySQL["write function port state " open? tcp-port]
 		;if not open? tcp-port [open tcp-port]
-		;sys/log/more 'MySQL["state:" tcp-port/locals/state]
+		;sys/log/more 'MySQL["state:" tcp-port/extra/state]
 		header: join
 			write-int24 length? data
-			write-byte port/locals/seq-num: port/locals/seq-num + 1
+			write-byte port/extra/seq-num: port/extra/seq-num + 1
 
 		insert data header
 		head data
@@ -658,12 +658,12 @@ mysql-driver: make object! [
 	]
 
 	send-cmd: func [port [port!] cmd [integer!] cmd-data] compose/deep [
-		port/locals/seq-num: -1
-		port/locals/current-cmd: cmd
+		port/extra/seq-num: -1
+		port/extra/current-cmd: cmd
 		;sys/log/more 'MySQL["sending cmd:" cmd]
 		send-packet port rejoin [
 			write-byte cmd
-			port/locals/current-cmd-data: 
+			port/extra/current-cmd-data: 
 			switch/default cmd [
 				(defs/cmd/quit)			[""]
 				(defs/cmd/shutdown)		[""]
@@ -683,7 +683,7 @@ mysql-driver: make object! [
 			][either string? cmd-data [cmd-data][pick cmd-data 1]]
 		]
 		;sys/log/more 'MySQL["sent a command"]
-		port/locals/state: 'sending-cmd
+		port/extra/state: 'sending-cmd
 	]
 	
 	insert-query: func [port [port!] data [string! block!]][
@@ -693,7 +693,7 @@ mysql-driver: make object! [
 	]
 	
 	insert-all-queries: func [port [port!] data [string!] /local s e res d][
-		d: port/locals/delimiter
+		d: port/extra/delimiter
 		parse/all s: data [
 			any [
 				#"#" thru newline
@@ -727,7 +727,7 @@ mysql-driver: make object! [
 		port [port!]
 		/local pl
 	][
-		pl: port/locals
+		pl: port/extra
 		parse next port/data case [
 			pl/capabilities and defs/client/protocol-41 [
 				[
@@ -754,7 +754,7 @@ mysql-driver: make object! [
 		port [port!]
 		/local pl status rules
 	][
-		pl: port/locals
+		pl: port/extra
 
 		sys/log/debug 'MySQL["parsing a packet:" mold port/data]
 		pl/last-status: status: to integer! port/data/1
@@ -806,7 +806,7 @@ mysql-driver: make object! [
 		port [port!]
 		/local pl qry
 	][
-		pl: port/locals
+		pl: port/extra
 		either empty? pl/o-buf [
 			pl/state: 'idle
 		][
@@ -820,7 +820,7 @@ mysql-driver: make object! [
 		evt-type
 		/local mysql-port pl
 	][
-		pl: port/locals
+		pl: port/extra
 		mysql-port: pl/mysql-port
 		sys/log/more 'MySQL ["Event:^[[22m" evt-type]
 		case compose [
@@ -854,7 +854,7 @@ mysql-driver: make object! [
 		text-type
 		infile-data
 	][
-		pl: port/locals
+		pl: port/extra
 		mysql-port: pl/mysql-port
 		sys/log/more 'MySQL["processing a packet in state:" pl/state]
 		sys/log/debug 'MySQL["buf:" mold buf]
@@ -881,7 +881,7 @@ mysql-driver: make object! [
 					sys/log/more 'MySQL "handshaked"
 					;OK?
 					emit-event port 'connect
-					;sys/log/more 'MySQL["o-buf after auth resp:" mold port/locals/o-buf]
+					;sys/log/more 'MySQL["o-buf after auth resp:" mold port/extra/o-buf]
 					start-next-cmd port
 				]
 				pl/stream-end?: true ;done or wait for a WROTE event
@@ -891,7 +891,7 @@ mysql-driver: make object! [
 				if buf/1 = #"^(00)"[
 					emit-event port 'connect
 
-					;sys/log/more 'MySQL["o-buf after old auth resp:" mold port/locals/o-buf]
+					;sys/log/more 'MySQL["o-buf after old auth resp:" mold port/extra/o-buf]
 					start-next-cmd port
 				]
 				pl/stream-end?: true ;done or wait for a WROTE event
@@ -1083,7 +1083,7 @@ mysql-driver: make object! [
 							pl/stream-end?: true
 							sys/log/more 'MySQL["Emitting read event because of no more results"]
 							emit-event port 'read
-							;sys/log/more 'MySQL["o-buf after reading query resp:" mold port/locals/o-buf]
+							;sys/log/more 'MySQL["o-buf after reading query resp:" mold port/extra/o-buf]
 							start-next-cmd port
 							exit
 						]
@@ -1112,7 +1112,7 @@ mysql-driver: make object! [
 	][
 		sys/log/more 'MySQL["processing a greeting packet"]
 		tcp-port: port
-		pl: port/locals
+		pl: port/extra
 		if data/1 = 255 [;error packet
 			parse/all skip data 1 [
 				read-int 	(pl/error-code: int)
@@ -1170,7 +1170,7 @@ mysql-driver: make object! [
 		port [port!]
 		/local pl auth-pack path key
 	][
-		pl: port/locals
+		pl: port/extra
 		path: to binary! skip port/spec/path 1
 		auth-pack: either pl/capabilities and defs/client/protocol-41 [
 			rejoin [
@@ -1203,7 +1203,7 @@ mysql-driver: make object! [
 ;------ Public interface ------
 	clear-data: func [ port ][
 		clear port/data
-		;port/locals/tcp-port/spec/response: make binary! 0
+		;port/extra/tcp-port/spec/response: make binary! 0
 	]
 
 	tcp-awake: func [event
@@ -1214,13 +1214,13 @@ mysql-driver: make object! [
 		packet-len
 	][
 		tcp-port: event/port
-		mysql-port: tcp-port/locals/mysql-port
-		pl: tcp-port/locals
+		mysql-port: tcp-port/extra/mysql-port
+		pl: tcp-port/extra
 		pl/last-activity: now/precise
 
 		sys/log/more 'MySQL["tcp event:" event/type]
-		;sys/log/more 'MySQL["o-buf:" mold tcp-port/locals/o-buf]
-		;;sys/log/more 'MySQL["locals:" mold tcp-port/locals]
+		;sys/log/more 'MySQL["o-buf:" mold tcp-port/extra/o-buf]
+		;;sys/log/more 'MySQL["locals:" mold tcp-port/extra]
 		;pl/exit-wait?: false
 		switch event/type [
 			error [
@@ -1352,13 +1352,13 @@ mysql-driver: make object! [
 		options [object!]
 	][
 		;;sys/log/more 'MySQL["inserting to " mold port]
-		;sys/log/more 'MySQL["state:" port/locals/state]
-		either 'idle = port/locals/state [
+		;sys/log/more 'MySQL["state:" port/extra/state]
+		either 'idle = port/extra/state [
 			do-tcp-insert port data options
 		][
-			append/only port/locals/o-buf reduce [data options]
+			append/only port/extra/o-buf reduce [data options]
 		]
-		;sys/log/more 'MySQL[port/spec/scheme "o-buf:" mold port/locals/o-buf]
+		;sys/log/more 'MySQL[port/spec/scheme "o-buf:" mold port/extra/o-buf]
 	]
 
 	do-tcp-insert: func [
@@ -1368,7 +1368,7 @@ mysql-driver: make object! [
 		options [object!]
 		/local pl res
 	][
-		pl: port/locals
+		pl: port/extra
 		;sys/log/more 'MySQL["do-tcp-insert" mold data]
 		
 		pl/result-options: options
@@ -1382,7 +1382,7 @@ mysql-driver: make object! [
 				insert-cmd port data
 			]
 		][
-			either port/locals/capabilities and defs/client/protocol-41[
+			either port/extra/capabilities and defs/client/protocol-41[
 				insert-query port data
 			][
 				insert-all-queries port data ;FIXME: not tested
@@ -1394,20 +1394,21 @@ mysql-driver: make object! [
 
 	open-tcp-port: func [
 		port [port!] "mysql port"
-		/local conn
+		/local conn spec
 	][
+		spec: port/spec
 		conn: make port![
 			scheme: 'tcp
-			host: port/spec/host
-			port-id: port/spec/port-id
-			ref: rejoin [tcp:// host ":" port-id port/spec/path]
-			user: port/spec/user
-			pass: port/spec/pass
-			path: port/spec/path
-			timeout: port/spec/timeout
+			host:    spec/host
+			port:    spec/port
+			ref:     rejoin [tcp:// host ":" port spec/path]
+			user:    spec/user
+			pass:    spec/pass
+			path:    spec/path
+			timeout: spec/timeout
 		]
 
-		conn/locals: make locals-class [
+		conn/extra: make locals-class [
 			state: 'init
 			mysql-port: port
 			o-buf: make block! 10
@@ -1430,7 +1431,7 @@ mysql-driver: make object! [
 	][
 		;sys/log/more 'MySQL["converting results:" mold results]
 		either any [
-			port/locals/current-cmd != defs/cmd/query
+			port/extra/current-cmd != defs/cmd/query
 		][;results from multiple queries
 			return results
 		][
@@ -1486,7 +1487,7 @@ sys/make-scheme [
 	
 	spec: make system/standard/port-spec-net [
 		path: %""
-		port-id: 3306
+		port: 3306
 		timeout: 120
 		user:
 		pass: none
@@ -1501,7 +1502,7 @@ sys/make-scheme [
 		/local pl cb mode spec
 	][
 		sys/log/more 'MySQL["mysql port event:" event/type]
-		pl: event/port/locals
+		pl: event/port/extra
 		pl/last-activity: now/precise
 		switch/default event/type [
 			connect [
@@ -1510,7 +1511,7 @@ sys/make-scheme [
 				spec: event/port/spec
 				spec/pass: none
 				spec/ref: rejoin [
-					mysql:// spec/user #"@" spec/host #":" spec/port-id spec/path
+					mysql:// spec/user #"@" spec/host #":" spec/port spec/path
 				]
 				sys/log/info 'MySQL ["Connected:^[[22m" spec/ref]
 				pl/handshaked?: true
@@ -1575,7 +1576,7 @@ sys/make-scheme [
 		][	
 			;;sys/log/more 'MySQL" new open function "
 			if none? port/spec/host [http-error "Missing host address"]
-			port/locals: make object! [
+			port/extra: make object! [
 				handshaked?: false
 				exit-wait-after-handshaked?: false
 				pending-requests: copy []
@@ -1590,14 +1591,14 @@ sys/make-scheme [
 		]
 		
 		open?: func [port [port!]][
-			all [open? port/locals/tcp-port port/locals/handshaked?]
+			all [open? port/extra/tcp-port port/extra/handshaked?]
 		]
 
 		close: func [
 			port [port!]
 			/local tcp-port
 		][
-			tcp-port: port/locals/tcp-port
+			tcp-port: port/extra/tcp-port
 			tcp-port/spec/timeout: 4
 			if open? tcp-port [
 				try [;allow this to fail, so the port will always be closed
@@ -1616,7 +1617,7 @@ sys/make-scheme [
 			data [block!] "hackish: if the first element in the block is an object, then it's an option object"
 			/local tcp-port options pl query
 		][
-			pl: port/locals
+			pl: port/extra
 			tcp-port: pl/tcp-port
 			options: data/1
 			either object? options [
@@ -1635,7 +1636,7 @@ sys/make-scheme [
 			]
 			sys/log/debug 'MySQL["inserting a query:" mold data mold pl/pending-requests]
 			mysql-driver/tcp-insert tcp-port query options
-			;sys/log/debug 'MySQL["tcp-port locals after insert" mold tcp-port/locals]
+			;sys/log/debug 'MySQL["tcp-port locals after insert" mold tcp-port/extra]
 		]
 		
 		copy: func [
@@ -1663,7 +1664,7 @@ send-sql: func [
 	/verbose "return detailed info"
 	/local result pl old-handshaked? ret-from-wait
 ][
-	pl: port/locals
+	pl: port/extra
 
 	unless any [async open? port] [
 		cause-error 'Access 'not-connected reduce [port none none]
@@ -1688,14 +1689,14 @@ send-sql: func [
 		old-handshaked?: pl/handshaked?
 		while [pl/last-activity + port/spec/timeout >= now/precise][
 			;will not return unless: 1) handshaked, 2) sync request processed, or 3) error
-			ret-from-wait: wait/only [port port/locals/tcp-port port/spec/timeout]
+			ret-from-wait: wait/only [port port/extra/tcp-port port/spec/timeout]
 			either port = ret-from-wait [
 				;assert [empty? pl/pending-requests]
 				;sys/log/more 'MySQL["port/data:" mold port/data]
 				return port/data
 			][
 				if port? ret-from-wait [
-					assert [ret-from-wait = port/locals/tcp-port]
+					assert [ret-from-wait = port/extra/tcp-port]
 					print ["******* Unexpected wakeup from tcp-port *********"]
 				]
 				;sys/log/more 'MySQL"wait returned none"
@@ -1708,7 +1709,7 @@ send-sql: func [
 ]
 
 throw-timeout: func[port [port!]] [
-	cause-error 'Access 'timeout to url! rejoin [port/spec/scheme "://" port/spec/host #":" port/spec/port-id]
+	cause-error 'Access 'timeout to url! rejoin [port/spec/scheme "://" port/spec/host #":" port/spec/port]
 ]
 
 connect-sql: func [
@@ -1717,8 +1718,8 @@ connect-sql: func [
 	/local p
 ][
 	if any [url? port not open? port][ port: open port ]
-	port/locals/exit-wait-after-handshaked?: true
-	p: wait/only [port port/locals/tcp-port port/spec/timeout]
+	port/extra/exit-wait-after-handshaked?: true
+	p: wait/only [port port/extra/tcp-port port/spec/timeout]
 	if port? p [return port]
 	throw-timeout port
 ]

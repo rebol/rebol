@@ -517,7 +517,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 **
 ***********************************************************************/
 
-#define MAX_SCHEMES 12		// max native schemes
+#define MAX_SCHEMES 13		// max native schemes
 
 typedef struct rebol_scheme_actions {
 	REBCNT sym;
@@ -619,7 +619,7 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 **
 **		In mezz-ports.reb add a make-scheme.
 **		Add an Init_*_Scheme() here.
-**		Be sure host-devices.c has the device enabled.
+**		Be sure host-device.c has the device enabled.
 **
 ***********************************************************************/
 {
@@ -638,6 +638,9 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 #endif
 #ifdef INCLUDE_MIDI_DEVICE
 	Init_MIDI_Scheme();
+#endif
+#ifdef INCLUDE_CRYPTOGRAPHY
+	Init_Crypt_Scheme();
 #endif
 }
 

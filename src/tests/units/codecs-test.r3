@@ -199,6 +199,14 @@ if find codecs 'der [
 			--assert binary? try [c: b/sequence/sequence/4/2]
 			--assert block? d: decode 'DER c
 
+		--test-- "form-OID"
+			--assert "2.5.29.17" = codecs/der/form-oid #{551D11}
+			--assert "1.2.840.10045.4.3.2" = codecs/der/form-oid #{2A8648CE3D040302}
+
+		--test-- "decode-OID"
+			--assert 'subjectAltName = codecs/der/decode-oid #{551D11}
+			--assert 'ecdsa-with-SHA256 = codecs/der/decode-oid #{2A8648CE3D040302}
+
 	===end-group===
 	codecs/der/verbose: 0
 ]

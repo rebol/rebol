@@ -247,6 +247,11 @@ recycle: native [
 	/torture {Constant recycle (for internal debugging)}
 ]
 
+release: native [
+	"Release internal resources of the handle. Returns true on success."
+	handle [handle!]
+]
+
 reduce: native [
 	{Evaluates expressions and returns multiple results.}
 	value
@@ -388,7 +393,7 @@ construct: native [
 debase: native [
 	{Decodes binary-coded string to binary value.}
 	value [binary! any-string!] {The string to decode}
-	base  [integer!] {Binary base to use: 85, 64, 16, or 2}
+	base  [integer!] {Binary base to use: 85, 64, 36, 16, or 2}
 	/url  {Base 64 Decoding with URL and Filename Safe Alphabet}
 	/part {Limit the length of the input}
 	limit [integer!]
@@ -397,7 +402,7 @@ debase: native [
 enbase: native [
 	{Encodes a string into a binary-coded string.}
 	value [binary! string!] {If string, will be UTF8 encoded}
-	base  [integer!] {Binary base to use: 85, 64, 16, or 2}
+	base  [integer!] {Binary base to use: 85, 64, 36, 16, or 2}
 	/url  {Base 64 Encoding with URL and Filename Safe Alphabet}
 	/part {Limit the length of the input}
 	limit [integer!]
@@ -585,6 +590,11 @@ value?: native [
 to-value: native [
 	{Returns the value if it is a value, NONE if unset.}
 	value [any-type!]
+]
+
+split-lines: native [
+	{Given a string series, split lines on CR-LF.}
+	value [string!]
 ]
 
 ;-- IO Natives - nat_io.c

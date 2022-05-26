@@ -182,7 +182,7 @@ Rebol [
 	
 	--test-- "mold url"
 		--assert "ftp://"  = mold ftp://
-		--assert "ftp://š" = mold ftp://š
+		--assert "ftp://%C5%A1" = mold ftp://š
 		--assert "ftp://+" = mold ftp://+
 		--assert "ftp://+" = mold ftp://%2b
 		--assert "ftp://+" = mold ftp://%2B
@@ -190,10 +190,27 @@ Rebol [
 	--test-- "mold append url"
 		--assert "ftp://a" = mold append ftp:// #"a"
 		--assert "ftp://a" = mold append ftp://  "a"
-		--assert "ftp://š" = mold append ftp://  "š"
+		--assert "ftp://%C5%A1" = mold append ftp://  "š"
 		--assert "ftp://+" = mold append ftp://  "+"
 		--assert "ftp://%2528" = mold append ftp:// "%28"
 		--assert "ftp://%28" = dehex mold append ftp:// "%28"
+	--test-- "mold url escaping"
+		for i 0 255 1 [
+			f2: try [load mold f1: append copy a:/ to char! i]
+			--assert f1 == f2
+		]
+
+===end-group=== 
+
+
+===start-group=== "mold file!"
+	
+	--test-- "mold file escaping"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2491
+		for i 0 255 1 [
+			f2: try [load mold f1: append copy %a to char! i]
+			--assert f1 == f2
+		]
 
 ===end-group=== 
 
@@ -386,8 +403,10 @@ Rebol [
 		--assert "a@b" = mold a@b
 	--test-- "issue-2406"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2406
-		--assert "a@šiška" = mold a@šiška
-		--assert "a@š" = mold a@%C5%A1
+		--assert "a@%C5%A1i%C5%A1ka" = mold a@šiška
+		--assert "a@šiška"           = form a@šiška
+		--assert "a@%C5%A1" = mold a@%C5%A1
+		--assert "a@š"      = form a@%C5%A1
 ===end-group===
 
 ===start-group=== "mold ref!"
@@ -492,7 +511,7 @@ Rebol [
 	--test-- "form error!"
 		; no ANSI escape sequence!
 		--assert parse (form try [1 / 0]) [
-			{** Math error: attempt to divide by zero^/}
+			{^/** Math error: attempt to divide by zero^/}
 			{** Where: / try} thru #"^/"
 			{** Near: / 0^/}
 		]
@@ -502,7 +521,7 @@ Rebol [
 ===start-group=== "mold error!"
 	--test-- "mold error!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1003
-		--assert {make error! [code: 101 type: 'Note id: 'exited arg1: none arg2: none arg3: none near: none where: none]} mold/flat make error! [type: 'Note id: 'exited]
+		--assert {make error! [code: 101 type: 'Note id: 'exited arg1: none arg2: none arg3: none near: none where: none]} = mold/flat make error! [type: 'Note id: 'exited]
 		--assert {#[error! [code: 101 type: Note id: exited arg1: #[none] arg2: #[none] arg3: #[none] near: #[none] where: #[none]]]} = mold/all/flat make error! [type: 'Note id: 'exited]
 		--assert {#[error! [code: 401 type: Math id: overflow arg1: #[none] arg2: #[none] arg3: #[none] near: #[none] where: #[none]]]} = mold/all/flat make error! [type: 'Math id: 'overflow]
 ===end-group===

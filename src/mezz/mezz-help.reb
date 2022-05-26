@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Mezzanine: Help"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2022 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -282,7 +283,7 @@ import module [
 					throw true
 				]
 				not any [word? :word path? :word] [
-					output ajoin ["^[[1;32m" uppercase mold :word "^[[m is " form-type :word]
+					output ajoin ["^[[1;32m" :word "^[[m is " form-type :word]
 					throw true
 				]
 				path? :word [
@@ -303,6 +304,9 @@ import module [
 							throw true
 						]
 					]
+				]
+				port? :value [
+					output ajoin ["^[[1;32m" uppercase mold :word "^[[m is " a-an value/spec/title " ^[[1;32m" value/spec/ref "^[[m^/"]
 				]
 				any-function? :value [
 					spec: copy/deep spec-of :value

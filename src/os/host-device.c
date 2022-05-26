@@ -85,6 +85,13 @@ extern REBDEV Dev_MIDI;
 #define DEVICE_PTR_MIDI 0
 #endif
 
+#ifdef INCLUDE_CRYPTOGRAPHY
+extern REBDEV Dev_Crypt;
+#define DEVICE_PTR_CRYPT &Dev_Crypt
+#else
+#define DEVICE_PTR_CRYPT 0
+#endif
+
 REBDEV *Devices[RDI_LIMIT] =
 {
 	0,
@@ -96,7 +103,8 @@ REBDEV *Devices[RDI_LIMIT] =
 	&Dev_DNS,
 	0,//&Dev_Checksum,
 	DEVICE_PTR_CLIPBOARD,
-	DEVICE_PTR_MIDI
+	DEVICE_PTR_MIDI,
+	DEVICE_PTR_CRYPT
 };
 
 
