@@ -87,8 +87,6 @@ This is just generated output from commits in [this repository](https://github.c
 * [`ace3ec`](https://github.com/Oldes/Rebol3/commit/ace3eca70ccaabe6861eedb56508bf45dd881c0a) Providing better info on `port!` values from `help`
 * [`8c051b`](https://github.com/Oldes/Rebol3/commit/8c051b1101585bff6b1d43f2b580f9b6489cb79f) Added support to load X.509 encoded private RSA keys
 * [`07f79c`](https://github.com/Oldes/Rebol3/commit/07f79c39248d39cbccdac9049d0237abb3600fcf) Allow `read/lines` on urls (HTTP scheme)
-
-  resolves: https://github.com/Oldes/Rebol-issues/issues/1943
 * [`ab481c`](https://github.com/Oldes/Rebol3/commit/ab481cc1dc7855d35c65132f52f1baf1a6b4c44d) New `split-lines` native
 * [`5ec4bb`](https://github.com/Oldes/Rebol3/commit/5ec4bb22ee5d928abb4d062ef508787bddae0452) Allow char as an argument for writing to a file port
 * [`e22657`](https://github.com/Oldes/Rebol3/commit/e22657f3d7f4e57d344079f6580336a79dbb90c8) Added certificate's `fingerprint` calculation
