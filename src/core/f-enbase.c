@@ -769,7 +769,6 @@ err:
 	const REBYTE* cp;
 	REBSER* ser;
 	REBCNT ser_size;
-	REBCNT chunk;
 	REBINT pad = 0;
 	REBU64 c = 0;
 	REBINT i, d = 0;
