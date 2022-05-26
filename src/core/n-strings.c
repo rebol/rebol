@@ -72,7 +72,7 @@ static struct digest {
 
 /***********************************************************************
 **
-*/	REBOOL *Message_Digest(REBYTE *output, REBYTE *input, REBCNT length, REBCNT method, REBCNT *olen)
+*/	REBOOL Message_Digest(REBYTE *output, REBYTE *input, REBCNT length, REBCNT method, REBCNT *olen)
 /*
 ***********************************************************************/
 {
