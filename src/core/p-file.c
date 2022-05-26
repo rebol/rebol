@@ -344,7 +344,7 @@ REBINT Mode_Syms[] = {
 		// Auto convert char to UTF-8
 		REBYTE buf[8];
 		len = Encode_UTF8_Char(buf, VAL_CHAR(data));
-		file->data = &buf;
+		file->data = (REBYTE*)&buf;
 	}
 	else {
 		// it should be already handled
