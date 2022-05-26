@@ -501,7 +501,7 @@ STOID Mold_Url(REBVAL *value, REB_MOLD *mold)
 		else if (c >= 0x80) {
 			// to avoid need to first convert whole url to utf8,
 			// use the temp buffer for any unicode char...
-			ulen = Encode_UTF8_Char(&buf, c);
+			ulen = Encode_UTF8_Char((REBYTE*)&buf, c);
 			for (i = 0; i < ulen; i++) {
 				dp = Form_Hex_Esc_Uni(dp, (REBUNI)buf[i]);
 			}
