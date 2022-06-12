@@ -447,6 +447,21 @@ if find codecs 'PNG [
 			3015 = size? %units/files/png-from-photoshop.png
 		]
 		try [delete %new.png]
+
+	--test-- "png rgb image"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2495
+		--assert all [
+			image? img: try [load %units/files/rbgw.png]
+			img/1 = 200.0.0.255
+			img/2 = 0.0.200.255
+			img/3 = 0.200.0.255
+			img/rgb = #{C800000000C800C800FFFFFF}
+		]
+		--assert all [
+			image? img: try [load save %new.png make image! [2x2 #{C800000000C800C800FFFFFF}]]
+			img/rgb = #{C800000000C800C800FFFFFF}
+		]
+		try [delete %new.png]
 	===end-group===
 ]
 
@@ -484,6 +499,21 @@ if find codecs 'GIF [
 	--test-- "gif/size?"
 		--assert 256x256 = codecs/gif/size? %units/files/flower.gif
 		--assert none?     codecs/gif/size? %units/files/test.aar
+
+	--test-- "gif rgb image"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2495
+		--assert all [
+			image? img: try [load %units/files/rbgw.gif]
+			img/1 = 200.0.0.255
+			img/2 = 0.0.200.255
+			img/3 = 0.200.0.255
+			img/rgb = #{C800000000C800C800FFFFFF}
+		]
+		--assert all [
+			image? img: try [load save %new.gif make image! [2x2 #{C800000000C800C800FFFFFF}]]
+			img/rgb = #{C800000000C800C800FFFFFF}
+		]
+		try [delete %new.gif]
 	===end-group===
 ]
 

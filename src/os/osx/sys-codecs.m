@@ -80,7 +80,7 @@ int DecodeImageFromFile(const char *uri, unsigned int frame, REBCDI *codi)
 		pixels = (UInt32*)malloc(w * h * 4); // Rebol's library side must free it!
 		ASSERT_NOT_NULL(pixels, 4, "allocate pixels buffer");
 		space = CGColorSpaceCreateDeviceRGB();
-		ctx = CGBitmapContextCreate(pixels, w, h, bitsPerComponent, bytesPerPixel * w, space, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+		ctx = CGBitmapContextCreate(pixels, w, h, bitsPerComponent, bytesPerPixel * w, space, kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
 		ASSERT_NOT_NULL(ctx, 5, "create a bitmap context");
 		CGContextDrawImage(ctx, CGRectMake(0, 0, w, h), img);
 		CGColorSpaceRelease(space);
@@ -126,7 +126,7 @@ int EncodeImageToFile(const char *uri, REBCDI *codi)
 		data = CGDataProviderCreateWithData(NULL, codi->bits, codi->w * codi->h * 4, NULL);
 		ASSERT_NOT_NULL(data, 1, "prepare input data");
 		colorSpace = CGColorSpaceCreateDeviceRGB();
-		img = CGImageCreate(codi->w, codi->h, 8, 32, codi->w * 4, colorSpace, (kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big), data, NULL, TRUE, 0);
+		img = CGImageCreate(codi->w, codi->h, 8, 32, codi->w * 4, colorSpace, (kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little), data, NULL, TRUE, 0);
 		CGDataProviderRelease(data);
 		CGColorSpaceRelease(colorSpace);
 		ASSERT_NOT_NULL(img, 2, "create an image");
