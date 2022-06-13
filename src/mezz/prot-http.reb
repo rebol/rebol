@@ -12,8 +12,8 @@ REBOL [
 		Licensed under the Apache License, Version 2.0
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-	Version: 0.4.0
-	Date: 4-Feb-2022
+	Version: 0.4.1
+	Date: 13-Jun-2022
 	File: %prot-http.r
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -36,6 +36,7 @@ REBOL [
 		0.3.4 26-Feb-2020 "Oldes" "FIX: limit input data according Content-Length (#issues/2386)"
 		0.3.5 26-Oct-2020 "Oldes" "FEAT: support for read/part (using Range request with read/part/binary)"
 		0.4.0 04-Feb-2022 "Oldes" "FIX: situation when server does not provide Content-Length and just closes connection"
+		0.4.1 13-Jun-2022 "Oldes" "FIX: Using `query` on URL sometimes reports `date: none`"
 	]
 ]
 
@@ -319,7 +320,7 @@ parse-write-dialect: func [port block /local spec][
 		[set block [any-string! | binary! | map!] (spec/content: block) | (spec/content: none)]
 	]
 ]
-check-response: func [port /local conn res headers d1 d2 line info state awake spec][
+check-response: func [port /local conn res headers d1 d2 line info state awake spec date][
 	state:   port/state
 	spec:    port/spec
 	conn:    state/connection
@@ -356,8 +357,14 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 		][
 			awake make event! [type: 'error port: port]
 		]
-		; allow invalid date, but ignore it on error
-		try [if headers/last-modified  [info/date: to-date/utc headers/last-modified]]
+		if date: any [
+			;@@ https://github.com/Oldes/Rebol-issues/issues/2496
+			select headers 'last-modified
+			select headers 'date
+		][
+			; allow invalid date, but ignore it on error
+			try [info/date: to-date/utc date]
+		]
 		remove/part conn/data d2
 		state/state: 'reading-data
 	]
