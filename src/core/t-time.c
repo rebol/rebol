@@ -29,6 +29,10 @@
 
 #include "sys-core.h"
 
+// these are used in TIME * MONEY action
+deci deci_multiply(const deci a, const deci b);
+deci decimal_to_deci(REBDEC a);
+
 /***********************************************************************
 **
 */	void Split_Time(REBI64 t, REB_TIMEF *tf)
@@ -477,12 +481,18 @@
 			T_Date(ds, action);
 			return R_RET;
 		}
-		else if (type == REB_PERCENT && action == A_MULTIPLY) { // handle PERCENT * TIME case
+		else if (type == REB_PERCENT && action == A_MULTIPLY) { // handle TIME * PERCENT case
 			// https://github.com/Oldes/Rebol-issues/issues/1391
 			//O: this could be handled like REB_DECIMAL above, but I think that support
 			//O: for actions like A_ADD does not make sense, so only MULTIPLY is supported!
 			secs = (REBI64)(secs * VAL_DECIMAL(arg));
 			goto setTime;
+		}
+		else if (type == REB_MONEY && action == A_MULTIPLY) { // handle TIME * MONEY case
+			// https://github.com/Oldes/Rebol-issues/issues/2497
+			VAL_DECI(D_RET) = deci_multiply(decimal_to_deci(secs * NANO / 3600.0), VAL_DECI(arg));
+			SET_TYPE(D_RET, REB_MONEY);
+			return R_RET;
 		}
 		Trap_Math_Args(REB_TIME, action);
 	}

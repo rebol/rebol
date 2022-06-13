@@ -124,6 +124,13 @@ Rebol [
 		--assert -596523:14:07 = to-time negate (to-integer #{8000 0000}) - 1
 		--assert all [error? e: try [to-time 2 ** 63 / (10 ** 9) - 1 + 0.9999999] e/id = 'out-of-range]
 
+	--test-- "time! money! math"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2497
+		--assert $7.5 = (1:30:0 * $5)
+		--assert error? try [1:30:0 / $5]
+		--assert error? try [1:30:0 + $5]
+		--assert error? try [1:30:0 - $5]
+
 ===end-group===
 
 ===start-group=== "random"

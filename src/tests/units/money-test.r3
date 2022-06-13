@@ -168,6 +168,13 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/569
 		--assert not strict-equal? $1 1
 
+	--test-- "money! time! math"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2497
+		--assert $7.5 = ($5 * 1:30:0)
+		--assert error? try [$5 / 1:30:0]
+		--assert error? try [$5 + 1:30:0]
+		--assert error? try [$5 - 1:30:0]
+
 ===end-group===
 	
 ~~~end-file~~~
