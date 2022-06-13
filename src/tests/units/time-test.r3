@@ -127,7 +127,7 @@ Rebol [
 	--test-- "time! money! math"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2497
 		--assert $7.5 = (1:30:0 * $5)
-		--assert error? try [1:30:0 / $5]
+		--assert $25  = (4:0:0 / $100) ; an hourly rate
 		--assert error? try [1:30:0 + $5]
 		--assert error? try [1:30:0 - $5]
 

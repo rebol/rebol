@@ -31,6 +31,7 @@
 
 // these are used in TIME * MONEY action
 deci deci_multiply(const deci a, const deci b);
+deci deci_divide(const deci a, const deci b);
 deci decimal_to_deci(REBDEC a);
 
 /***********************************************************************
@@ -377,6 +378,7 @@ deci decimal_to_deci(REBDEC a);
 	REBVAL	*val;
 	REBVAL	*arg = NULL;
 	REBI64	num;
+	deci    hours; // used with money type math
 
 	val = D_ARG(1);
 
@@ -488,9 +490,17 @@ deci decimal_to_deci(REBDEC a);
 			secs = (REBI64)(secs * VAL_DECIMAL(arg));
 			goto setTime;
 		}
-		else if (type == REB_MONEY && action == A_MULTIPLY) { // handle TIME * MONEY case
+		else if (type == REB_MONEY && (action == A_MULTIPLY || action == A_DIVIDE)) {
 			// https://github.com/Oldes/Rebol-issues/issues/2497
-			VAL_DECI(D_RET) = deci_multiply(decimal_to_deci(secs * NANO / 3600.0), VAL_DECI(arg));
+			hours = decimal_to_deci(secs * NANO / 3600.0);
+			if (action == A_MULTIPLY) {
+				// handle TIME * MONEY case
+				VAL_DECI(D_RET) = deci_multiply(hours, VAL_DECI(arg));
+			}
+			else {
+				// handle TIME / MONEY case (an horly money rate)
+				VAL_DECI(D_RET) = deci_divide(VAL_DECI(arg), hours);
+			}
 			SET_TYPE(D_RET, REB_MONEY);
 			return R_RET;
 		}
