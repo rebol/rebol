@@ -633,7 +633,7 @@ invalid_id:
 	val = Get_Object(spec, STD_PORT_SPEC_HEAD_REF); // most informative
 	if (IS_NONE(val)) val = Get_Object(spec, STD_PORT_SPEC_HEAD_TITLE);
 
-	DS_PUSH_INTEGER(err_code);
+	DS_PUSH_INTEGER(-err_code);
 	Trap2(errnum, val, DS_TOP);
 }
 

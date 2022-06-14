@@ -24,7 +24,7 @@ spotify: object [
 	client-id:     none
 	client-secret: none
 	scope:         ""
-	port-id:       8989
+	port:          8989
 	token:         none
 	get: func [what [any-string!]           ][request self 'GET    what none]
 	put: func [what [any-string!] /with data][request self 'PUT    what data]
@@ -44,14 +44,14 @@ authorize: function [
 		return none
 	]
 	unless string?  ctx/client-id [ ctx/client-id: form ctx/client-id ]
-	unless integer? ctx/port-id   [ ctx/port-id:   8989               ]
+	unless integer? ctx/port      [ ctx/port:      8989               ]
 	unless string?  ctx/scope     [ ctx/scope:     form ctx/scope     ]
 
 	; url-encode spaces in scopes 
 	parse ctx/scope [any [change some #[bitset! #{0064000080}] #"+" | skip]]
 
 	redirect-uri: rejoin [
-		"http%3A%2F%2Flocalhost:" ctx/port-id "%2Fspotify-callback%2F"
+		"http%3A%2F%2Flocalhost:" ctx/port "%2Fspotify-callback%2F"
 	]
 
 	unless ctx/client-secret [
@@ -81,7 +81,7 @@ authorize: function [
 	; Result from the server is returned as a redirect, so let's start simple server
 	; listening on specified port (limited to accept only local requests, as the redirect is
 	; going from the browser actually.. it automaticaly close itself once data are received
-	result: system/modules/httpd/http-server/config/actor ctx/port-id [
+	result: system/modules/httpd/http-server/config/actor ctx/port [
 		root:       #[false] ; we are not serving any content!
 		keep-alive: #[false]
 	] [

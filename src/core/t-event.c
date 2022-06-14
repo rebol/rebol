@@ -379,10 +379,8 @@ is_none:
 	value = D_ARG(1);
 	arg = D_ARG(2);
 
-	if (action == A_MAKE) {
-		// Clone an existing event?
-		if (IS_EVENT(value)) return R_ARG1;
-		else if (IS_DATATYPE(value)) {
+	if (action == A_MAKE || action == A_TO) {
+		if (IS_EVENT(value) || IS_DATATYPE(value)) {
 			if (IS_EVENT(arg)) return R_ARG2;
 			//Trap_Make(REB_EVENT, value);
 			VAL_SET(D_RET, REB_EVENT);
@@ -392,7 +390,7 @@ is_none:
 is_arg_error:
 			Trap_Types(RE_EXPECT_VAL, REB_EVENT, VAL_TYPE(arg));
 
-		// Initialize GOB from block:
+		// Initialize event from block:
 		if (IS_BLOCK(arg)) Set_Event_Vars(D_RET, VAL_BLK_DATA(arg));
 		else goto is_arg_error;
 	}

@@ -4,10 +4,14 @@ Rebol [
 	File: 	 %chacha20-test.r3
 	Tabs:	 4
 	Needs:   [%../quick-test-module.r3]
+	Note: {
+		This test is deprecated as `chacha20` and `chacha20poly1305` functions
+		are removed in favour of the new `crypt` port.}
 ]
 
 ~~~start-file~~~ "ChaCha20"
-
+if native? :chacha20 [
+;- this tests are only for the now deprecated `chacha20` native function!
 ===start-group=== "ChaCha20 test vectors"
 foreach [test-id key nonce counter plain cipher] [
 	1
@@ -66,7 +70,10 @@ foreach [test-id key nonce counter plain cipher] [
 ]
 
 ===end-group===
+]
 
+if native? :chacha20poly1305 [
+;- this tests are only for the now deprecated `chacha20poly1305` native function!
 ===start-group=== "ChaCha20Poly1305"
 	--test-- "TLS with ChaCha20Poly1305 use-case simulation"
 
@@ -106,9 +113,9 @@ foreach [test-id key nonce counter plain cipher] [
 	--assert data = chacha20poly1305/decrypt server-ctx result aad
 
 	;- server responds with encrypted data (also with 16 bytes of MAC at tail):
-	data: #{291EC39A1BAD9E855CA8EB042014C4AFBDE4C13241E44B5B926435BB79EB89AF}
+	data: #{291EC39A1BAD9E855CA8EB042014C4AF BDE4C13241E44B5B926435BB79EB89AF}
 	; it is a little bit more optimal if AAD is already 16 bytes
-	aad:  #{00000000000000001603030010000000} ; as it is first server's message, the seqence is = 0
+	aad:  #{0000000000000000 16 0303 0010 000000} ; as it is first server's message, the seqence is = 0
 
 	expect: #{1400000C107581DB64B051DA4C250603}
 	result: chacha20poly1305/decrypt client-ctx data aad
@@ -117,17 +124,13 @@ foreach [test-id key nonce counter plain cipher] [
 	;- and other data...
 
 	data: #{567E44EDD0CD6C88EEC4187CE3A7323016561788BE45D5246005025F4691B1C415A6B902F8ABD95A6C57A0168E9FAC5FDC6B606477DE4072AE7B5A78C5B5513217CB213F2DBCBFE9D774A916FABCD4690BD8CDE45847A250FF34F28861553BC7514A0EC51205CCC56D9C294033B015BD}
-	aad:  #{00000000000000011703030060000000} ; notice that seqence is now incremented to 1
+	aad:  #{0000000000000001 17 0303 0060 000000} ; notice that seqence is now incremented to 1
 
 	expect: #{485454502F312E3120323030204F4B0D0A436F6E74656E742D6C656E6774683A2033310D0A436F6E74656E742D747970653A20746578742F706C61696E0D0A0D0A48656C6C6F20776F726C642066726F6D20544C53652028544C5320312E3229}
 	result: chacha20poly1305/decrypt client-ctx data aad
 	--assert expect = result
 
-
-
-
-
-
 ===end-group===
+]
 
 ~~~end-file~~~

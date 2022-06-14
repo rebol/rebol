@@ -303,10 +303,9 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	if (!dig) return 0;
 	if (*cp == 'E' || *cp == 'e') {
 			*ep++ = *cp++;
-			dig = 0;
+			dig = 1;
 			if (*cp == '-' || *cp == '+') *ep++ = *cp++;
-			while (IS_LEX_NUMBER(*cp)) *ep++ = *cp++, dig=1;
-			if (!dig) return 0;
+			while (IS_LEX_NUMBER(*cp)) *ep++ = *cp++;
 	}
 	if (*cp == '%') {
 		if (dec_only) return 0;
@@ -372,7 +371,9 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	if (len > 19) return 0;
 
 	// Convert, check, and return:
+	errno = 0;
 	n = CHR_TO_INT(buf);
+	if (errno != 0) return 0; //overflow
 	if ((n > 0 && neg) || (n < 0 && !neg)) return 0;
 	SET_INTEGER(value, n);
 	return cp;

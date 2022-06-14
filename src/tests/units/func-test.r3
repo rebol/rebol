@@ -215,6 +215,24 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "FUNCTION (funct)"
+	--test-- "function/with"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/766
+		fun: funct/with [i [integer!]][
+			blk: [1 2 3]
+			return pick data i
+		][
+			data: ["ab" "cd"]
+		]
+		--assert "ab" = fun 1
+		;@@ https://github.com/Oldes/Rebol-issues/issues/900
+		b: body-of :fun
+		clear second b
+		--assert [1 2 3] = second body-of :fun
+
+===end-group===
+
+
 ===start-group=== "Other issues"
 
 --test-- "issue-2025"
@@ -385,6 +403,17 @@ Rebol [
 		e/id = 'dup-vars
 		e/arg1 = 'b
 	]
+--test-- "PICK and the ordinals for reflection"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/660
+	--assert all [error? e: try [first :append] e/id = 'cannot-use]
+
+--test-- "issue-313"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/313
+	obj: make object! [a: none f: func [v] [a: v]]
+	abc: make obj []
+	abc/f 3
+	--assert abc/a = 3
+	--assert obj/a = none
 
 ===end-group===
 

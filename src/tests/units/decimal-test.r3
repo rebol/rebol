@@ -36,9 +36,11 @@ Rebol [
 	--assert "1.0" = mold round/to 1   0.1
 
 	--test-- "round/to (integer)"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/936
 	--assert     1 = round/to 0.5   1
 	--assert     0 = round/to 0.499 1
 	--assert integer? round/to 0.5  1
+	--assert   1.0 = round/to 1 0.1
 
 	--test-- "round/to (money)"
 	--assert   $1 = round/to 0.5   $1
@@ -250,6 +252,20 @@ Rebol [
 		--assert 0.0 = 0%
 		--assert 0.0 = $0
 		--assert 0.0 = 0
+	;@@ https://github.com/Oldes/Rebol-issues/issues/952
+		--assert not ($0 == 0)
+		--assert not ($0.0 == 0)
+		--assert not (0.0 == 0)
+
+	--test-- "NaN equality"
+	;@@  https://github.com/Oldes/Rebol-issues/issues/2494
+		--assert 1.#NaN = 1.#NaN
+		--assert not 1.#NaN != 1.#NaN
+		--assert not 1.#NaN == 1.#NaN
+		--assert 1.#NaN !== 1.#NaN
+		--assert same? 1.#NaN 1.#NaN
+		--assert equal? 1.#NaN 1.#NaN
+		--assert not strict-equal? 1.#NaN 1.#NaN
 
 ===end-group===
 

@@ -46,7 +46,7 @@ do*: func [
 	;       Currently, load of URL has no special block forms.
 
 	; Load the data, first so it will error before change-dir
-	data: load/header/type value 'unbound ; unbound so DO-NEEDS runs before INTERN
+	data: load/header/as value 'unbound ; unbound so DO-NEEDS runs before INTERN
 	; Get the header and advance 'data to the code position
 	hdr: first+ data  ; object or none
 	; data is a block! here, with the header object in the first position back

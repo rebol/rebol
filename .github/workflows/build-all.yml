@@ -129,7 +129,7 @@ jobs:
         uses: oldes/install-siskin@v0.7.1
 
       - name: Install GCC multilib
-        run: apt-get install gcc-multilib
+        run: sudo apt-get install gcc-multilib
 
       - name: Build 32bit Rebol/Base using gcc
         run: ./siskin make/rebol3.nest %rebol3-base-linux-x86
@@ -180,22 +180,15 @@ jobs:
       - name: Download Rebol-dev container
         run: docker pull oldes/rebol-dev:alpine
 
-      - name: Build all Rebol versions
+      - name: Build all Rebol Alpine (musl) x64 versions
         run: |
           cd .github/workflows/alpine/
-          chmod +x ./build-all.sh
-          docker run -v $PWD:/out/ oldes/rebol-dev:alpine /out/build-all.sh
-
-      - name: Create archives from each version
-        run: |
-          cd .github/workflows/alpine/
-          gzip -9 ./rebol3-base-linux-x64-musl
-          gzip -9 ./rebol3-core-linux-x64-musl
-          gzip -9 ./rebol3-bulk-linux-x64-musl
+          chmod +x ./build-all-alpine.sh
+          docker run -v $PWD:/out/ oldes/rebol-dev:alpine /out/build-all-alpine.sh
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Rebol-64bit-Linux-${{github.run_id}}
+          name: Rebol-64bit-Linux-musl-${{github.run_id}}
           path: .github/workflows/alpine/*.gz
 
 

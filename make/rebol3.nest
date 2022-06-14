@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.7.2
+version: 3.8.0
 
 target-windows: [
 	os:       windows
@@ -279,10 +279,10 @@ mezz-lib-files: [
 	%mezz/mezz-tail.reb
 ;	%mezz/codec-unixtime.reb
 ;-- cryptographic           
-;	%mezz/codec-utc-time.reb ; include-https
+;	%mezz/codec-utc-time.reb ; include-prot-https
 ;	%mezz/codec-pkix.reb
-;	%mezz/codec-der.reb      ; include-https
-;	%mezz/codec-crt.reb      ; include-https
+;	%mezz/codec-der.reb      ; include-prot-https
+;	%mezz/codec-crt.reb      ; include-prot-https
 ;	%mezz/codec-ppk.reb
 ;	%mezz/codec-ssh-key.reb
 ;-- compression             
@@ -456,24 +456,178 @@ include-iconv: [
 ]
 
 ;- native cryptography:                                                         
+include-cipher-camelia: [
+	core-files: %core/mbedtls/camellia.c
+	config: MBEDTLS_CAMELLIA_C
+]
+include-cipher-aria: [
+	core-files: %core/mbedtls/aria.c
+	config: MBEDTLS_ARIA_C
+]
+include-cipher-chacha20: [
+	; costs cca 3kB uncompressed
+	core-files: %core/mbedtls/chacha20.c
+	config: MBEDTLS_CHACHA20_C
+]
+include-cipher-chachapoly: [
+	core-files: %core/mbedtls/chachapoly.c
+	core-files: %core/mbedtls/poly1305.c
+	config: MBEDTLS_CHACHAPOLY_C
+	config: MBEDTLS_POLY1305_C
+]
+include-cipher-mode-gcm: [
+	core-files: %core/mbedtls/gcm.c
+	; GCM runs with multiple ciphers and internally uses the generic wrapper
+	core-files: %core/mbedtls/cipher.c
+	core-files: %core/mbedtls/cipher_wrap.c
+	config: MBEDTLS_GCM_C
+]
+include-cipher-mode-ccm: [
+	core-files: %core/mbedtls/ccm.c
+	; CCM runs with multiple ciphers and internally uses the generic wrapper
+	core-files: %core/mbedtls/cipher.c
+	core-files: %core/mbedtls/cipher_wrap.c
+	config: MBEDTLS_CCM_C
+]
+include-cipher-mode-cbc: [
+	; costs cca 1.5kB uncompressed (for AES)
+	config: MBEDTLS_CIPHER_MODE_CBC
+]
+
+include-deprecated-cipher-aes: [
+	; costs cca 5kB uncompressed
+	config: INCLUDE_AES_DEPRECATED
+	include: %src/include/deprecated/
+	core-files: %core/deprecated/u-aes.c
+	core-files: %core/deprecated/n-crypt-aes.c
+]
+
+include-deprecated-cipher-chacha20: [
+	; costs cca 10kB uncompressed
+	config: INCLUDE_CHACHA20POLY1305_DEPRECATED
+	include: %src/include/deprecated/
+	core-files: %core/deprecated/u-chacha20.c
+	core-files: %core/deprecated/u-poly1305.c
+	core-files: %core/deprecated/n-crypt-chacha.c
+]
+
+include-rsa: [
+	; costs cca 12kB uncompressed
+	config: INCLUDE_RSA
+	core-files: %core/mbedtls/rsa.c
+	core-files: %core/mbedtls/rsa_alt_helpers.c
+]
+include-rc4: [
+	; costs cca 0.5kB uncompressed
+	config: INCLUDE_RC4
+	core-files: %core/u-rc4.c
+]
+
+include-curves-sec1: [
+	; curves defined by FIPS 186-4 and SEC1
+	config: MBEDTLS_ECP_DP_SECP192R1_ENABLED   ; costs 2kB
+	config: MBEDTLS_ECP_DP_SECP224R1_ENABLED   ; costs 2.5kB
+	config: MBEDTLS_ECP_DP_SECP256R1_ENABLED   ; costs 2.5kB
+	config: MBEDTLS_ECP_DP_SECP384R1_ENABLED
+	config: MBEDTLS_ECP_DP_SECP521R1_ENABLED
+]
+include-curves-koblitz: [
+	; "Koblitz" curves
+	config: MBEDTLS_ECP_DP_SECP192K1_ENABLED
+	config: MBEDTLS_ECP_DP_SECP224K1_ENABLED
+	config: MBEDTLS_ECP_DP_SECP256K1_ENABLED
+]
+include-curves-brainpool: [
+	; "Brainpool" curves
+	config: MBEDTLS_ECP_DP_BP256R1_ENABLED
+	config: MBEDTLS_ECP_DP_BP384R1_ENABLED
+	config: MBEDTLS_ECP_DP_BP512R1_ENABLED
+]
+include-curves-x: [
+	config: MBEDTLS_ECP_DP_CURVE25519_ENABLED  ; costs 7.6kB
+	config: MBEDTLS_ECP_DP_CURVE448_ENABLED    ; costs 7.6kB; together with CURVE25519 8.1!
+]
+
 include-cryptography: [
+	; so far cca 183kB uncompressed (basic AES, all ellyptic curves, rsa, rc4, bignum, entropy )
 	config: INCLUDE_CRYPTOGRAPHY
+
+	define: MBEDTLS_ASN1_PARSE_C ; The generic ASN1 parser.
+	define: MBEDTLS_ASN1_WRITE_C ; The generic ASN1 writer.
+
+	define: MBEDTLS_CTR_DRBG_C   ; The CTR_DRBG AES-based random generator.
+
+	define: MBEDTLS_AES_C        ; The AES block cipher.
+	define: MBEDTLS_DHM_C        ; The Diffie-Hellman-Merkle module.
+	define: MBEDTLS_ECDSA_C      ; The elliptic curve DSA library.
+	define: MBEDTLS_ECP_C        ; The elliptic curve over GF(p) library.
+	define: MBEDTLS_ECDH_C       ; The elliptic curve Diffie-Hellman library.
+	define: MBEDTLS_BIGNUM_C     ; The multi-precision integer library. Required for: RSA, ECDSA, ECP, DHM
+	define: MBEDTLS_ENTROPY_C    ; The platform-specific entropy code.
+	define: MBEDTLS_OID_C        ; Required for RSA
+	define: MBEDTLS_PKCS1_V15
+
 	core-files: [
 		%core/n-crypt.c
-		%core/u-aes.c 
-		%core/u-bigint.c ;needed for RSA which is needed in TLS protocol (HTTPS)
-		%core/u-chacha20.c
-		%core/u-dh.c
-		%core/u-poly1305.c
-		%core/u-rc4.c
-		%core/u-rsa.c
-		%core/u-uECC.c
+		%core/p-crypt.c
+
+		%core/mbedtls/aes.c
+		%core/mbedtls/asn1parse.c
+		%core/mbedtls/asn1write.c
+		%core/mbedtls/dhm.c
+		%core/mbedtls/md.c
+		%core/mbedtls/oid.c
+		%core/mbedtls/bignum.c
+		
+		%core/mbedtls/constant_time.c
+		%core/mbedtls/ctr_drbg.c
+		%core/mbedtls/entropy.c
+		%core/mbedtls/entropy_poll.c
+		%core/mbedtls/ecdh.c
+		%core/mbedtls/ecdsa.c
+		%core/mbedtls/ecp.c
+		%core/mbedtls/ecp_curves.c
 	]
+
+	:include-curves-sec1
+
+	:include-rsa
+	
+	:include-cipher-mode-gcm ; By default just GCM as it is the most secure.
+
 	:include-codec-crt
 	:include-codec-der
 	:include-codec-pkix
 	:include-codec-ppk
 	:include-codec-ssh-key
+]
+
+include-cryptography-bulk: [
+	:include-curves-koblitz
+	:include-curves-brainpool
+	:include-curves-x
+
+	:include-cipher-mode-ccm
+	:include-cipher-mode-cbc	
+
+	:include-rc4
+
+	:include-cipher-aria
+	:include-cipher-camelia
+	:include-cipher-chacha20
+	:include-cipher-chachapoly
+]
+
+include-cryptography-deprecated: [
+	;@@  This should not be used anymore, but keeping it here just in case...
+	%core/deprecated/u-bigint.c ;needed for RSA abd DH which is needed in TLS protocol (HTTPS)
+	%core/deprecated/u-dh.c
+	%core/deprecated/u-poly1305.c
+	%core/deprecated/u-rsa.c
+	%core/deprecated/u-uECC.c
+
+	:include-deprecated-cipher-chacha20
+	:include-deprecated-cipher-aes
 ]
 
 ;- native additional checksums:                                                 
@@ -490,6 +644,9 @@ include-optional-checksums: [
 include-base85-encoding: [
 	; adds support for enbase/debase with base 85 (ASCII85)
 	config: INCLUDE_BASE85
+]
+include-base36-encoding: [
+	config: INCLUDE_BASE36
 ]
 
 ;- native additional compressions:                                              
@@ -563,9 +720,11 @@ include-codec-ico: [
 	;:include-native-png-codec 
 	mezz-lib-files: %mezz/codec-ico.reb
 ]
+include-codec-csv:           [mezz-lib-files:  %mezz/codec-csv.reb          ]
 include-codec-json:          [mezz-lib-files:  %mezz/codec-json.reb         ]
 include-codec-xml:           [mezz-lib-files:  %mezz/codec-xml.reb          ]
 include-codec-pdf:           [mezz-lib-files:  %mezz/codec-pdf.reb :include-png-filter-native] ; pdf may use special png pre-compression
+include-codec-plist:         [mezz-lib-files:  %mezz/codec-plist.reb        ]
 include-codec-swf:           [mezz-lib-files:  %mezz/codec-swf.reb          ]
 include-codec-wav:           [mezz-lib-files:  %mezz/codec-wav.reb          ]
 include-codec-unixtime:      [mezz-lib-files:  %mezz/codec-unixtime.reb     ]
@@ -576,22 +735,22 @@ include-mezz-colors:         [mezz-lib-files:  %mezz/mezz-colors.reb        ]
 ; protocols:
 include-prot-whois:          [mezz-prot-files: %mezz/prot-whois.reb         ]
 include-prot-mysql:          [mezz-prot-files: %mezz/prot-mysql.reb         ]
+include-prot-smtp:           [mezz-prot-files: %mezz/prot-smtp.reb :include-prot-tls]
+include-prot-https:          [mezz-prot-files: %mezz/prot-http.reb :include-prot-tls]
+include-prot-tls: [
+	:include-bincode
+	:include-cryptography
+	mezz-lib-files:  %mezz/codec-utc-time.reb
+	mezz-lib-files:  %mezz/codec-der.reb
+	mezz-lib-files:  %mezz/codec-crt.reb
+	mezz-prot-files: %mezz/prot-tls.reb
+]
+
 
 include-prebol:              [mezz-lib-files: %modules/prebol.reb           ]
 
-include-https: [
-	:include-bincode
-	:include-cryptography
-	mezz-lib-files: [
-		%mezz/codec-utc-time.reb
-		%mezz/codec-der.reb
-		%mezz/codec-crt.reb
-	]
-	mezz-prot-files: [
-		%mezz/prot-http.reb
-		%mezz/prot-tls.reb
-	]
-]
+include-native-oid: [core-files: %core/n-oid.c] ; `form-oid` native (used in DER codec)
+
 
 ;- Product specifications                                                       
 
@@ -601,7 +760,8 @@ include-rebol-core: [
 	:include-cryptography
 	:include-bincode
 	:include-iconv
-	:include-https
+	:include-prot-https
+	:include-prot-smtp
 
 	:include-codec-unixtime
 	:include-codec-ar
@@ -621,9 +781,13 @@ include-rebol-bulk: [
 	:include-image-natives
 	:include-lzma-compression
 	:include-crush-compression
+	:include-base36-encoding
 	:include-base85-encoding
 	:include-view
 	:include-midi
+
+	; Extended crypto features
+	:include-cryptography-bulk
 
 	:include-codec-pdf
 	:include-codec-swf
@@ -631,11 +795,13 @@ include-rebol-bulk: [
 	:include-codec-zip
 	:include-codec-tar
 	:include-codec-bbcode
-	:include-codec-html-entities	
+	:include-codec-html-entities
+	:include-codec-csv
 	:include-codec-json
 	:include-codec-xml
 	:include-codec-wav
 	:include-codec-ico
+	:include-codec-plist
 
 	:include-image-codecs ; use other optional image codecs before this include!
 
@@ -648,6 +814,7 @@ include-rebol-bulk: [
 	:include-prot-mysql
 
 	:include-dialecting  ;`delect`
+	:include-native-oid  ;`form-oid`
 
 	config: INCLUDE_PNG_FILTER ; includes `filter` and `unfilter` natives
 
@@ -828,6 +995,30 @@ make-x64-dll:  [:arch-x64 :make-dll  ]
 make-x86-host: [:arch-x86 :make-host ]
 make-x64-host: [:arch-x64 :make-host ]
 
+make-ext-test: [
+	files: only %tests/extension/test.c
+	flags: [-O2 shared]
+	compiler: clang
+	#if Windows? [
+		defines: _CRT_SECURE_NO_WARNINGS
+	]
+	#if Linux? [
+		flag: -fPIC
+		compiler: gcc
+	]
+	#if MacOS? [
+		:target-macos
+	]
+	#if OpenBSD? [
+		flag: -fPIC
+		:target-openbsd
+	]
+	#if FreeBSD? [
+		flag: -fPIC
+		:target-freebsd
+	]
+]
+
 eggs: [
 	#if Windows? [
 ;		"Pre-make (minimum included)" [
@@ -993,6 +1184,24 @@ eggs: [
 		]
 	]
 	#if OpenBSD? [
+		"Rebol/Base openbsd-x86" [
+			name:   %rebol3-base-openbsd-x86
+			:target-openbsd
+			:make-x86-exe
+		]
+		"Rebol/Core openbsd-x86" [
+			name:   %rebol3-core-openbsd-x86
+			:target-openbsd
+			:include-rebol-core
+			:make-x86-exe
+		]
+		"Rebol/Bulk openbsd-x86" [
+			name:   %rebol3-bulk-openbsd-x86
+			:target-openbsd
+			:include-rebol-bulk
+			:make-x86-exe
+		]
+
 		"Rebol/Base openbsd-x64" [
 			name:   %rebol3-base-openbsd-x64
 			:target-openbsd
@@ -1060,45 +1269,12 @@ eggs: [
 	]
 	"Test extension 32bit" [
 		name:  %test-x86.rebx
-		files: only %tests/extension/test.c
 		:arch-x86
-		compiler: gcc
-		flags: [-O2 shared]
-		#if Linux? [
-			flag: -fPIC
-			compiler: gcc
-		]
-		#if MacOS? [
-			:target-macos
-		]
-		#if OpenBSD? [
-			flag: -fPIC
-			:target-openbsd
-		]
-		#if FreeBSD? [
-			flag: -fPIC
-			:target-freebsd
-		]
+		:make-ext-test
 	]
 	"Test extension 64bit" [
 		name:  %test-x64.rebx
-		files: only %tests/extension/test.c
 		:arch-x64
-		flags: [-O2 shared]
-		#if Linux? [
-			flag: -fPIC
-			compiler: gcc
-		]
-		#if MacOS? [
-			:target-macos
-		]
-		#if OpenBSD? [
-			flag: -fPIC
-			:target-openbsd
-		]
-		#if FreeBSD? [
-			flag: -fPIC
-			:target-freebsd
-		]
+		:make-ext-test
 	]
 ]

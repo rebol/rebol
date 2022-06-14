@@ -199,6 +199,14 @@ if find codecs 'der [
 			--assert binary? try [c: b/sequence/sequence/4/2]
 			--assert block? d: decode 'DER c
 
+		--test-- "form-OID"
+			--assert "2.5.29.17" = codecs/der/form-oid #{551D11}
+			--assert "1.2.840.10045.4.3.2" = codecs/der/form-oid #{2A8648CE3D040302}
+
+		--test-- "decode-OID"
+			--assert 'subjectAltName = codecs/der/decode-oid #{551D11}
+			--assert 'ecdsa-with-SHA256 = codecs/der/decode-oid #{2A8648CE3D040302}
+
 	===end-group===
 	codecs/der/verbose: 0
 ]
@@ -439,6 +447,21 @@ if find codecs 'PNG [
 			3015 = size? %units/files/png-from-photoshop.png
 		]
 		try [delete %new.png]
+
+	--test-- "png rgb image"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2495
+		--assert all [
+			image? img: try [load %units/files/rbgw.png]
+			img/1 = 200.0.0.255
+			img/2 = 0.0.200.255
+			img/3 = 0.200.0.255
+			img/rgb = #{C800000000C800C800FFFFFF}
+		]
+		--assert all [
+			image? img: try [load save %new.png make image! [2x2 #{C800000000C800C800FFFFFF}]]
+			img/rgb = #{C800000000C800C800FFFFFF}
+		]
+		try [delete %new.png]
 	===end-group===
 ]
 
@@ -476,6 +499,21 @@ if find codecs 'GIF [
 	--test-- "gif/size?"
 		--assert 256x256 = codecs/gif/size? %units/files/flower.gif
 		--assert none?     codecs/gif/size? %units/files/test.aar
+
+	--test-- "gif rgb image"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2495
+		--assert all [
+			image? img: try [load %units/files/rbgw.gif]
+			img/1 = 200.0.0.255
+			img/2 = 0.0.200.255
+			img/3 = 0.200.0.255
+			img/rgb = #{C800000000C800C800FFFFFF}
+		]
+		--assert all [
+			image? img: try [load save %new.gif make image! [2x2 #{C800000000C800C800FFFFFF}]]
+			img/rgb = #{C800000000C800C800FFFFFF}
+		]
+		try [delete %new.gif]
 	===end-group===
 ]
 
@@ -536,6 +574,26 @@ if find codecs 'html-entities [
 		--assert "Test: ♠ & ¢ <a> and Δδ ¾" = decode 'html-entities test
 		--assert "Test: ♠ & ¢ <a> and Δδ ¾" = decode 'html-entities to binary! test
 
+	===end-group===
+]
+
+try [import 'plist]
+if find codecs 'plist [
+	===start-group=== "PLIST codec"		
+		--test-- "Load PLIST file (XML version)"
+			--assert map? data: load %units/files/Some.plist
+			--assert data/AppIDName = "Test Application"
+			--assert data/UUID      = "bba91992-3a72-46b3-bc5f-f7b59aa49236"
+	
+		--test-- "Load mobileprovision file"
+			--assert all [
+				map? data: load %units/files/Some.mobileprovision
+				data/AppIDName = "Samorost 1"
+				data/UUID      = "be387546-d90d-40cd-83e6-95eb6f5f0861"
+				block? data/ProvisionedDevices
+				block? data/DeveloperCertificates
+				object? decode 'crt data/DeveloperCertificates/1
+			]
 	===end-group===
 ]
 

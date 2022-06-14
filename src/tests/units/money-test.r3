@@ -22,6 +22,9 @@ Rebol [
 		--assert $15 =   to money! #{00000000000000000000000F}
 		--assert $15 = make money! #{0F}
 		--assert $15 =   to money! #{0F}
+	;@@ https://github.com/Oldes/Rebol-issues/issues/946
+		--assert #{0029B7D2DCC80CD2E3FFFFFF} = to-binary to-money #{0029B7D2DCC80CD2E3FFFFFF}
+		--assert (to-money #{000100000000000000000000}) = ($1 + to-money #{0000FFFFFFFFFFFFFFFFFFFF})
 
 	--test-- "make money! issue!" ; not supported by design
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1130
@@ -57,12 +60,17 @@ Rebol [
 	--assert $1.33  = round/to $1.333 $.01
 	--assert     $1 = round/to $0.5   $1
 	--assert     $0 = round/to $0.499 $1
+	;@@ https://github.com/Oldes/Rebol-issues/issues/945
+	--assert $0.9 = round/to $1 $0.9
+	--assert $1.0 = round/to $1 $0.1
 
 	--test-- "round/to (decimal)"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/936
 	--assert 1.375 = round/to $1.333 .125
 	--assert 1.33  = round/to $1.333 .01
 
 	--test-- "round/to (integer)"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/936
 	--assert     1 = round/to $0.5   1
 	--assert     0 = round/to $0.499 1
 
@@ -159,6 +167,13 @@ Rebol [
 	--test-- "issue-569"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/569
 		--assert not strict-equal? $1 1
+
+	--test-- "money! time! math"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2497
+		--assert $7.5 = ($5 * 1:30:0)
+		--assert error? try [$5 / 1:30:0]
+		--assert error? try [$5 + 1:30:0]
+		--assert error? try [$5 - 1:30:0]
 
 ===end-group===
 	

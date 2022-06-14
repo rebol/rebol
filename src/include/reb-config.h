@@ -215,6 +215,11 @@ These are now obsolete (as of A107) and should be removed:
 #define USE_SETENV 
 #endif
 
+#ifdef TO_FREEBSD				// FreeBSD
+#undef INCLUDE_MIDI_DEVICE      // Not implemented!
+#define USE_SETENV 
+#endif
+
 #ifdef TO_AMIGA					// Target for OS4
 #undef INCLUDE_MIDI_DEVICE      // Not implemented!
 #define HAS_BOOL

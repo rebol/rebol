@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -157,7 +158,7 @@
 		else Trap_Arg(src_val);
 	}
 	else if (IS_CHAR(src_val)) {
-		if (VAL_CHAR(src_val) < 256) {
+		if (VAL_CHAR(src_val) < 128) {
 			src_ser = BUF_FORM;
 			*SERIES_DATA(src_ser) = (REBYTE)VAL_CHAR(src_val);
 		}

@@ -26,21 +26,23 @@ C79E915C3277361FBFA587C6DC06FEDE0B7E57FEC0B68F96B3AD651D54264357
 	;- Boban and Alice both have G and P values and generates DH keys...
 
 	--assert handle? k-Alice: dh-init g p
-	--assert "#[handle! dh]" = mold k-Alice
+	--assert "#[handle! dhm]" = mold k-Alice
 	
 	--assert handle? k-Boban: dh-init g p
-	--assert "#[handle! dh]" = mold k-Boban
+	--assert "#[handle! dhm]" = mold k-Boban
 
---test-- "DH public key exportion"	
+--test-- "DH public key exportation"	
 
-	;- They exchange their public keys...
+	;- They create their public keys...
 
 	--assert binary? pub-Alice: dh/public k-Alice
 	--assert binary? pub-Boban: dh/public k-Boban
 
+	;- and exchange it somehow...
+
 --test-- "DH secret computation"
 
-	;- And use them to compute shared secret...
+	;- Now use these to compute shared secret...
 
 	--assert binary? secret-Alice: dh/secret k-Alice pub-Boban
 	--assert binary? secret-Boban: dh/secret k-Boban pub-Alice
@@ -55,25 +57,18 @@ C79E915C3277361FBFA587C6DC06FEDE0B7E57FEC0B68F96B3AD651D54264357
 
 	;- Once done with the exchange, the DH key must be released!
 
-	--assert handle? dh/release k-Alice
+	--assert true? release k-Alice
 	--assert none? dh/public k-Alice
 	
-	;- the release may be also used while getting the secret
-	
-	--assert binary? secret-Boban-2: dh/secret/release k-Boban pub-Alice
+	--assert binary? secret-Boban-2: dh/secret k-Boban pub-Alice
 	--assert secret-Boban = secret-Boban-2
+	--assert true? release k-Boban
 	
 	;- once released, the secret and public will be unavailable
 
 	--assert none? dh/secret k-Boban pub-Alice
 	--assert none? dh/public k-Boban
 
---test-- "DH handle re-initialization"
-
-	;- released handle can be reused with new params
-
-	--assert handle? dh-init/into g p k-Alice
-	--assert binary? dh/public k-Alice
 
 ===end-group===
 
@@ -81,8 +76,8 @@ C79E915C3277361FBFA587C6DC06FEDE0B7E57FEC0B68F96B3AD651D54264357
 
 
 ===start-group=== "Elliptic-curve Diffie-Hellman key exchange"
-curves: [secp256k1 secp256r1 secp224r1 secp192r1 secp160r1]
-foreach ecurve curves [
+
+foreach ecurve system/catalog/elliptic-curves [
 	--test-- rejoin ["ECDH (" ecurve ") keys usage"]
 
 		;- Boban and Alice both init key with same curve
@@ -99,17 +94,23 @@ foreach ecurve curves [
 		;- These keys should be same on both sides
 		--assert secret-Alice = secret-Boban
 		;- Once done with the exchange, the ECDH key must be released!
-		--assert handle? ecdh/release k-Alice
+		--assert true? release k-Alice
 		--assert none? ecdh/public k-Alice
 
 		;- re-initialization...
 		--assert handle? ecdh/init k-Alice ecurve ;- using existing key for a new init
 		--assert binary? pub-Alice: ecdh/public k-Alice
-		;- /release may be used with /secret
-		--assert binary? secret-Alice: ecdh/secret/release k-Alice pub-Boban
-		--assert binary? secret-Boban: ecdh/secret/release k-Boban pub-Alice
+		--assert binary? secret-Alice: ecdh/secret k-Alice pub-Boban
+		--assert binary? secret-Boban: ecdh/secret k-Boban pub-Alice
 		--assert secret-Alice = secret-Boban
+		; It is safe not to release (it would be done on GC), but it's better to do it
+		--assert true? release k-Alice
+		--assert true? release k-Boban
 
+	if find [curve25519 curve448] ecurve [
+		; these curves are not for signing
+		continue
+	]
 	--test-- rejoin ["ECDSA (" ecurve ") signing"]
 
 		;- Alice generates her key-pair
@@ -121,7 +122,8 @@ foreach ecurve curves [
 		;- and use ECDSA to sign it using her private key
 		signature: ecdsa/sign k-Alice hash
 		--assert binary? signature
-		--assert 64 = length? signature
+		; signature is encoded as ASN1
+		--assert block? try [decode 'der signature]
 		;- can verify if it really works:
 		--assert ecdsa/verify k-Alice hash signature
 

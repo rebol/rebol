@@ -44,58 +44,82 @@ Rebol [
 		55E38967EDFCD1848A8BE89E2CE12A9A3D5554BBF13CC583190876B79C45ECEC
 		67ED6461DFECD6A0DBC6D9031207C0213006F4B527003BA7E2F21C6FAC9E9719
 		}
-		dp: #{
-		1B8B0F5E473A61AF72F28256F7F20B8F8C6EA69BB49738BF1FB553912F318F94
-		9D5F7728134A22998C31222D9E99302E7B450E6B97698051B2049E1CF2D43654
-		5E34D9746E80A0D33FC6A4621168E6D000EFB41EFCD9ADB9865CDC2DE6DC8DB8
-		1B61AF479B120F153200DDB3ABC2DF9FD1149ACEAB63739BF187A22A44E2063D
-		}
-		dq: #{
-		B3D9401FD7E0801B28151F0E69CD91FC4DA0C36F36AD3DA418E021BC89651131
-		3579FAC0EA1B9452F31F05C3299FC96A796EAFCF39D8639492405EE931D0BF6A
-		02379C6F086E9D4151BD09522ADA44DA947CB85C41BFDDF461780E1EDEEF859B
-		46CA1B4689EE8D360DD7109A3FA4CEEB58EF5AB5FE2F5F2DC57C38F7843F7209
-		}
-		qi: #{
-		1B233FA7A26B5F24A2CF5B6816029B595F89748DE3438CA9BBDADB316C77AD02
-		417E6B7416863381421911514470EAB07A644DF35CE80C069AF819342963460E
-		3247643743985856DC037B948FA9BB193F987646275D6BC7247C3B9E572D27B7
-		48F9917CAC1923AC94DB8671BD0285608B5D95D50A1B33BA21AEB34CA8405515
-		}
+		;- dp, dq and qp are computed when initialized, so not used here
+		;dp: #{
+		;1B8B0F5E473A61AF72F28256F7F20B8F8C6EA69BB49738BF1FB553912F318F94
+		;9D5F7728134A22998C31222D9E99302E7B450E6B97698051B2049E1CF2D43654
+		;5E34D9746E80A0D33FC6A4621168E6D000EFB41EFCD9ADB9865CDC2DE6DC8DB8
+		;1B61AF479B120F153200DDB3ABC2DF9FD1149ACEAB63739BF187A22A44E2063D
+		;}
+		;dq: #{
+		;B3D9401FD7E0801B28151F0E69CD91FC4DA0C36F36AD3DA418E021BC89651131
+		;3579FAC0EA1B9452F31F05C3299FC96A796EAFCF39D8639492405EE931D0BF6A
+		;02379C6F086E9D4151BD09522ADA44DA947CB85C41BFDDF461780E1EDEEF859B
+		;46CA1B4689EE8D360DD7109A3FA4CEEB58EF5AB5FE2F5F2DC57C38F7843F7209
+		;}
+		;qp: #{
+		;1B233FA7A26B5F24A2CF5B6816029B595F89748DE3438CA9BBDADB316C77AD02
+		;417E6B7416863381421911514470EAB07A644DF35CE80C069AF819342963460E
+		;3247643743985856DC037B948FA9BB193F987646275D6BC7247C3B9E572D27B7
+		;48F9917CAC1923AC94DB8671BD0285608B5D95D50A1B33BA21AEB34CA8405515
+		;}
 	]
 	--test-- "Init RSA keys"
 		--assert handle? key-pub:  rsa-init ko/n ko/e ;<-- this key has only public properties
-		--assert handle? key-pri:  rsa-init/private ko/n ko/e ko/d ko/p ko/q ko/dp ko/dq ko/qi
+		--assert handle? key-pri:  rsa-init/private ko/n ko/e ko/d ko/p ko/q ;ko/dp ko/dq ko/qp
 		--assert "#[handle! rsa]" = mold key-pub
 		--assert "#[handle! rsa]" = mold key-pri
+		;@@ https://github.com/Oldes/Rebol-issues/issues/906
+		--assert [type] = words-of key-pri
+		--assert 'rsa = query/mode key-pri 'type
 
 	;-- note: you could use key-pri only as it contains the public properties too
 	;-- the key-pub is there just to simulate situation, where user have only the public parts
-
+	bin-data: #{41686F6A21}
 	--test-- "RSA encrypt"
 		;you can use both keys for encryption (only the public parts are used)
-		--assert binary? secret: rsa/encrypt key-pub #{41686F6A21}
-		--assert binary?         rsa/encrypt key-pri #{41686F6A21}
+		--assert binary? secret: rsa/encrypt key-pub bin-data
+		--assert binary?         rsa/encrypt key-pri bin-data
 
 	--test-- "RSA decrypt"
 		;decrypting needs private parts in the key
-		--assert #{41686F6A21} = rsa/decrypt key-pri secret 
-		--assert         none?   rsa/decrypt key-pub secret ;because private key is needed
+		--assert bin-data = rsa/decrypt key-pri secret 
+		--assert    none?   rsa/decrypt key-pub secret ;because private key is needed
 
 	--test-- "RSA signing"
 		;signing needs private parts in the key
-		--assert binary? sign-hash: rsa/sign key-pri #{41686F6A21}
-		--assert              none? rsa/sign key-pub #{41686F6A21} ;because private key is needed
+		--assert binary? sign-hash: rsa/sign key-pri bin-data
+		--assert              none? rsa/sign key-pub bin-data ;because private key is needed
 
 	--test-- "RSA verification"
 		;you can use both keys for verification (only the public parts are used)
-		--assert #{41686F6A21} = rsa/verify key-pub sign-hash
-		--assert #{41686F6A21} = rsa/verify key-pri sign-hash
+		--assert rsa/verify key-pub bin-data sign-hash
+		--assert rsa/verify key-pri bin-data sign-hash
 
 	--test-- "RSA key release"
-		;once RSA key is not needed, release the resources using NONE data
-		--assert rsa key-pub none
-		--assert rsa key-pri none
+		;once RSA key is not needed, release its resources
+		;(it is safe not to manually release it. It would be released by GC, when unused)
+		--assert release key-pub
+		--assert release key-pri
+		; released handle is now unusable:
+		--assert error? try [rsa/verify/hash key-pub bin-data signature 'SHA512]
+
+	--test-- "Test input which isn't exactly at its head"
+		key-pub: rsa-init
+			at #{0BADCAFE
+			D2FC7B6A0A1E6C67104AEB8F88B257669B4DF679DDAD099B5C4A6CD9A88015B5
+			A133BF0B856C7871B6DF000B554FCEB3C2ED512BB68F145C6E8434752FAB52A1
+			CFC124408F79B58A4578C16428855789F7A249E384CB2D9FAE2D67FD96FB926C
+			198E077399FDC815C0AF097DDE5AADEFF44DE70E827F4878432439BFEEB96068
+			D0474FC50D6D90BF3A98DFAF1040C89C02D692AB3B3C2896609D86FD73B774CE
+			0740647CEEEAA310BD12F985A8EB9F59FDD426CEA5B2120F4F2A34BCAB764B7E
+			6C54D6840238BCC40587A59E66ED1F33894577635C470AF75CF92C20D1DA43E1
+			BFC419E222A6F0D0BB358C5E38F9CB050AEAFE904814F1AC1AA49CCA9EA0CA83
+			} 5	next #{FF010001}
+		--assert rsa/verify key-pub bin-data sign-hash
+		bin-data:  insert bin-data  #{0BADCAFE}
+		sign-hash: insert sign-hash #{0BADCAFE}
+		--assert rsa/verify key-pub bin-data sign-hash
 
 ===end-group===
 
@@ -103,30 +127,31 @@ Rebol [
 ===start-group=== "RSA initialization using codecs"
 	--test-- "RSA sign/verify using external file"
 	; Bob has data, which wants to sign, so it's clear, that nobody modifies them
-	data: "Hello!"
-	; As RSA is slow, it is used on hashes.. for example SHA1
-	hash: checksum data 'sha1
+	data: read %units/files/apiserver.crt
 	; Bob uses private key which keeps secret...
 	--assert handle? try [private-key: load %units/files/rebol-private-no-pass.ppk]
-	; .. to sign the hash..
-	--assert binary? signed-hash: rsa/sign private-key hash
+	; .. and signs data with specified message digest algorithm
+	--assert binary? signature: rsa/sign/hash private-key data 'SHA512
 
-	; than sends data, and signed hash to Eve, who have his public key 
+	; than sends data and its signature to Eve, who have his public key, even using some unsecure way
 	--assert handle? try [public-key: load %units/files/rebol-public.ppk]
-	; Eve uses the key to verify the checksum...
-	--assert (checksum data 'sha1) = rsa/verify public-key signed-hash
-	; so she know, that data were not modified
+	; Eve uses the key to verify the received data using its signature and hash
+	--assert rsa/verify/hash public-key data signature 'SHA512
+	; so she knows, that data were not modified
 
-	; cleanup:
-	rsa public-key none
-	rsa private-key none
+	; used keys should be released by GC, when not referenced, but we can release them immediately:
+	release public-key 
+	release private-key
 ===end-group===
 
 ===start-group=== "RSA initialization from file"
-	--test-- "RSA private key from OpenSSL format"
+	--test-- "RSA private key from OpenSSL format (RSA PRIVATE KEY)"
 	--assert handle? try [private-key: load %units/files/rebol-private-no-pass.key]
-	; cleanup:
-	rsa private-key none
+	release private-key
+	--test-- "RSA private key from OpenSSL x509 format (PRIVATE KEY)"
+	; openssl req -new -newkey rsa:4096 -x509 -sha256 -days 365 -nodes -out MyCertificate.crt -keyout MyKey.key
+	--assert handle? try [private-key: load %units/files/MyKey.key]
+	release private-key
 ===end-group===
 
 

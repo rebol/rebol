@@ -10,6 +10,21 @@ register-codec [
 	type:  'cryptography
 	title: "Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile"
 	suffixes: [%.crt]
+
+	get-fingerprint: function[data [binary!] method [word!]][
+		bin: binary data
+		loop 2 [
+			binary/read bin [
+				flags:    UI8
+				length:   LENGTH
+			]
+			if any [
+				flags <> 48 ; 0x30 = class universal, constructed, SEQUENCE
+				length > length? bin/buffer
+			][	return none ]
+		]
+		checksum/part at data 5 :method (length + 4)
+	]
 	decode: wrap [
 		*oid:
 		*val:
@@ -99,7 +114,7 @@ register-codec [
 
 		func [
 			data [binary! block!]
-			/local pkix version serialNumber issuer subject validity
+			/local pkix version serialNumber issuer subject validity der
 		][
 			try [all [
 				; as there seems to be no standard, the *.crt file
@@ -108,17 +123,21 @@ register-codec [
 				pkix/label = "CERTIFICATE"
 				data: pkix/binary
 			]]
-			if binary? data [ data: der-codec/decode data ]
-			if all [
-				2 = length? data
-				'SEQUENCE = data/1 
-				block? data/2 
-			] [data: data/2]
 
-			result: object [
+			der: either binary? data [
+				der-codec/decode data
+			][	data ]
+			if all [
+				2 = length? der
+				'SEQUENCE = der/1 
+				block? der/2 
+			] [der: der/2]
+
+			result: construct [
 				version:
 				serial-number:
-				signature:
+				fingerprint:
+				algorithm:
 				issuer:
 				valid-from:
 				valid-to:
@@ -127,10 +146,10 @@ register-codec [
 				issuer-id:
 				subject-id:
 				extensions:
-					none
+				signature:
 			]
 
-			parse data [
+			parse der [
 				'SEQUENCE into [
 					;-- version:
 					'CS0 into [
@@ -143,7 +162,7 @@ register-codec [
 					'INTEGER set *val binary! (	result/serial-number: *val	)
 					
 					;-- signature:
-					AlgorithmIdentifier ( result/signature: copy *blk )
+					AlgorithmIdentifier ( result/algorithm: copy *blk )
 
 					;-- issuer:
 					Name (result/issuer: copy *blk)
@@ -187,11 +206,43 @@ register-codec [
 				]
 
 				;-- signature:
-				AlgorithmIdentifier ( result/signature: copy *blk )
+				AlgorithmIdentifier (
+					; MUST be same like result/algorithm!
+					either *blk <> result/algorithm [
+						print "Invalid certificate! Signature alrgorithm mischmasch."
+						? result/algorithm
+						? *blk
+						result/algorithm: none
+					][
+						if 1 = length? result/algorithm [
+							result/algorithm: first result/algorithm
+						]
+					]
+				)
+				'BIT_STRING set *val binary! ( result/signature: *val )
 				to end
 			]
+			if all [
+				binary? data
+				hash: select [
+					sha256WithRSAEncryption sha256
+					sha384WithRSAEncryption sha384
+					sha512WithRSAEncryption sha512
+					md5withRSAEncryption    md5
+					md4withRSAEncryption    md4
+					ecdsa-with-SHA224       sha224
+					ecdsa-with-SHA256       sha256
+					ecdsa-with-SHA384       sha384
+					ecdsa-with-SHA512       sha512
+					sha1WithRSAEncrption    sha1
+				] result/algorithm
+			][
+				try [
+					result/fingerprint: get-fingerprint :data :hash
+				]
+			]
 			if verbose > 0 [
-				prin "^/^[[1;32mCRT "
+				prin "^/^[[1;32mCRT"
 				either verbose > 1 [
 					?? result
 				][
@@ -202,21 +253,5 @@ register-codec [
 			result
 		]
 	]
-	fingerprint: function [
-		"Computes Certificate Fingerprint of the cert's data sequence"
-		data   [binary!] "Raw CRT data"
-		/method          "If not used, default is sha256"
-			m [word!]    "One of: sha256, sha1 or md5"
-	][
-		der: binary data
-		binary/read der [UB 2 BIT tag: UB 5 LENGTH pos: INDEX]
-		if tag <> 16 [return none]
-		binary/read der [UB 2 BIT tag: UB 5 length: LENGTH]
-		if not find [sha256 sha1 md5] m [m: 'sha256]
-		hash: open join checksum:// m
-		write/part hash (at data pos) (pos + length + 5)
-		read hash
-	]
-
 	verbose: 0
 ]

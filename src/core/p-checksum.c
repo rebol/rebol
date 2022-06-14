@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -132,7 +133,7 @@
 ***********************************************************************/
 {
 	//REBVAL *data = BLK_SKIP(port, STD_PORT_DATA);
-	REBVAL *ctx  = BLK_SKIP(port, STD_PORT_LOCALS);
+	REBVAL *ctx  = BLK_SKIP(port, STD_PORT_EXTRA);
 
 	if(!IS_BINARY(ctx)) {
 		SET_BINARY(ctx, Make_Binary(ctx_size));
@@ -144,33 +145,33 @@
 	switch (VAL_WORD_CANON(method)) {
 #ifdef INCLUDE_MBEDTLS
 		case SYM_MD5:
-			mbedtls_md5_starts_ret((mbedtls_md5_context*)VAL_BIN(ctx));
+			mbedtls_md5_starts((mbedtls_md5_context*)VAL_BIN(ctx));
 			return TRUE;
 		case SYM_SHA1:
-			mbedtls_sha1_starts_ret((mbedtls_sha1_context*)VAL_BIN(ctx));
+			mbedtls_sha1_starts((mbedtls_sha1_context*)VAL_BIN(ctx));
 			return TRUE;
 		case SYM_SHA256:
-			mbedtls_sha256_starts_ret((mbedtls_sha256_context*)VAL_BIN(ctx), 0);
+			mbedtls_sha256_starts((mbedtls_sha256_context*)VAL_BIN(ctx), 0);
 			return TRUE;
 		case SYM_SHA224:
-			mbedtls_sha256_starts_ret((mbedtls_sha256_context*)VAL_BIN(ctx), 1);
+			mbedtls_sha256_starts((mbedtls_sha256_context*)VAL_BIN(ctx), 1);
 			return TRUE;
 		case SYM_SHA512:
-			mbedtls_sha512_starts_ret((mbedtls_sha512_context*)VAL_BIN(ctx), 0);
+			mbedtls_sha512_starts((mbedtls_sha512_context*)VAL_BIN(ctx), 0);
 			return TRUE;
 	#ifdef INCLUDE_SHA384
 		case SYM_SHA384:
-			mbedtls_sha512_starts_ret((mbedtls_sha512_context*)VAL_BIN(ctx), 1);
+			mbedtls_sha512_starts((mbedtls_sha512_context*)VAL_BIN(ctx), 1);
 			return TRUE;
 	#endif
 	#ifdef INCLUDE_RIPEMD160
 		case SYM_RIPEMD160:
-			mbedtls_ripemd160_starts_ret((mbedtls_ripemd160_context*)VAL_BIN(ctx));
+			mbedtls_ripemd160_starts((mbedtls_ripemd160_context*)VAL_BIN(ctx));
 			return TRUE;
 	#endif
 	#ifdef INCLUDE_MD4
 		case SYM_MD4:
-			mbedtls_md4_starts_ret((mbedtls_md4_context*)VAL_BIN(ctx));
+			mbedtls_md4_starts((mbedtls_md4_context*)VAL_BIN(ctx));
 			return TRUE;
 	#endif
 #else
@@ -223,7 +224,7 @@
 	req = Use_Port_State(port, RDI_CHECKSUM, sizeof(REBREQ));
 
 	data = BLK_SKIP(port, STD_PORT_DATA); //will hold result
-	ctx  = BLK_SKIP(port, STD_PORT_LOCALS);
+	ctx  = BLK_SKIP(port, STD_PORT_EXTRA);
 	int ctx_size = 0, blk_size = 0;
 
 	Init_sizes(method, &blk_size, &ctx_size);
@@ -261,29 +262,29 @@
 		switch (VAL_WORD_CANON(method)) {
 #ifdef INCLUDE_MBEDTLS
 			case SYM_MD5:
-				mbedtls_md5_update_ret((mbedtls_md5_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				mbedtls_md5_update((mbedtls_md5_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
 				break;
 			case SYM_SHA1:
-				mbedtls_sha1_update_ret((mbedtls_sha1_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				mbedtls_sha1_update((mbedtls_sha1_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
 				break;
 			case SYM_SHA256:
 			case SYM_SHA224:
-				mbedtls_sha256_update_ret((mbedtls_sha256_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				mbedtls_sha256_update((mbedtls_sha256_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
 				break;
 			case SYM_SHA512:
 #ifdef INCLUDE_SHA384
 			case SYM_SHA384:
 #endif
-				mbedtls_sha512_update_ret((mbedtls_sha512_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				mbedtls_sha512_update((mbedtls_sha512_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
 				break;
 #ifdef INCLUDE_RIPEMD160
 			case SYM_RIPEMD160:
-				mbedtls_ripemd160_update_ret((mbedtls_ripemd160_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				mbedtls_ripemd160_update((mbedtls_ripemd160_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
 				break;
 #endif
 #ifdef INCLUDE_MD4
 			case SYM_MD4:
-				mbedtls_md4_update_ret((mbedtls_md4_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				mbedtls_md4_update((mbedtls_md4_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
 				break;
 #endif
 #else
@@ -329,29 +330,29 @@
 
 #ifdef INCLUDE_MBEDTLS
 		case SYM_MD5:
-			mbedtls_md5_finish_ret((mbedtls_md5_context*)DS_TOP, VAL_BIN_DATA(data));
+			mbedtls_md5_finish((mbedtls_md5_context*)DS_TOP, VAL_BIN_DATA(data));
 			break;
 		case SYM_SHA1:
-			mbedtls_sha1_finish_ret((mbedtls_sha1_context*)DS_TOP, VAL_BIN_DATA(data));
+			mbedtls_sha1_finish((mbedtls_sha1_context*)DS_TOP, VAL_BIN_DATA(data));
 			break;
 		case SYM_SHA256:
 		case SYM_SHA224:
-			mbedtls_sha256_finish_ret((mbedtls_sha256_context*)DS_TOP, VAL_BIN_DATA(data));
+			mbedtls_sha256_finish((mbedtls_sha256_context*)DS_TOP, VAL_BIN_DATA(data));
 			break;
 		case SYM_SHA512:
 #ifdef INCLUDE_SHA384
 		case SYM_SHA384:
 #endif
-			mbedtls_sha512_finish_ret((mbedtls_sha512_context*)DS_TOP, VAL_BIN_DATA(data));
+			mbedtls_sha512_finish((mbedtls_sha512_context*)DS_TOP, VAL_BIN_DATA(data));
 			break;
 #ifdef INCLUDE_RIPEMD160
 		case SYM_RIPEMD160:
-			mbedtls_ripemd160_finish_ret((mbedtls_ripemd160_context*)DS_TOP, VAL_BIN_DATA(data));
+			mbedtls_ripemd160_finish((mbedtls_ripemd160_context*)DS_TOP, VAL_BIN_DATA(data));
 			break;
 #endif
 #ifdef INCLUDE_MD4
 		case SYM_MD4:
-			mbedtls_md4_finish_ret((mbedtls_md4_context*)DS_TOP, VAL_BIN_DATA(data));
+			mbedtls_md4_finish((mbedtls_md4_context*)DS_TOP, VAL_BIN_DATA(data));
 			break;
 #endif
 #else
@@ -401,7 +402,7 @@
 		return R_FALSE;
 
 	default:
-		Trap_Action(REB_PORT, action);
+		Trap1(RE_NO_PORT_ACTION, Get_Action_Word(action));
 	}
 	return R_RET;
 }

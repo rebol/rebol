@@ -441,6 +441,37 @@
 #endif
 
 
+#ifdef INCLUDE_BASE36
+#define BASE36_LENGTH 13
+/***********************************************************************
+**
+*/	static const REBYTE Enbase36[36] =
+/*
+**		Base-36 binary encoder table.
+**
+***********************************************************************/
+{
+	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+};
+
+static REBU64 base36_powers[BASE36_LENGTH] = {
+	1ULL,
+	36ULL,
+	1296ULL,
+	46656ULL,
+	1679616ULL,
+	60466176ULL,
+	2176782336ULL,
+	78364164096ULL,
+	2821109907456ULL,
+	101559956668416ULL,
+	3656158440062976ULL,
+	131621703842267136ULL,
+	4738381338321616896ULL
+};
+#endif
+
+
 /***********************************************************************
 **
 */	static REBSER *Decode_Base2(const REBYTE **src, REBCNT len, REBYTE delim)
@@ -727,6 +758,60 @@ err:
 }
 #endif
 
+#ifdef INCLUDE_BASE36
+/***********************************************************************
+**
+*/	static REBSER* Decode_Base36(const REBYTE** src, REBCNT len, REBYTE delim)
+/*
+***********************************************************************/
+{
+	REBYTE* bp;
+	const REBYTE* cp;
+	REBSER* ser;
+	REBCNT ser_size;
+	REBINT pad = 0;
+	REBU64 c = 0;
+	REBINT i, d = 0;
+
+	cp = *src;
+
+	if (len > BASE36_LENGTH) goto err;
+	else if (len == 0) {
+		ser = Make_Binary(1);
+		ser->tail = 0;
+		return ser;
+	}
+
+	for (i = 0; i < len; i++) {
+		if (cp[i] >= '0' && cp[i] <= '9')
+			d = cp[i] - '0';
+		else if (cp[i] >= 'A' && cp[i] <= 'Z')
+			d = 10 + cp[i] - 'A';
+		else if (cp[i] >= 'a' && cp[i] <= 'z')
+			d = 10 + cp[i] - 'a';
+		else goto err;
+
+		c += d * base36_powers[len - i - 1];
+		if (c < 0) goto err;
+	}
+	// Allocate buffer large enough to hold result:
+	ser = Make_Binary(8);
+	ser_size = SERIES_AVAIL(ser);
+	bp = STR_HEAD(ser);
+
+	for (i = 7; i >= 0; i--) {
+		bp[i] = (REBYTE)(c & 0xFF);
+		c >>= 8;
+	}
+	ser->tail = 8;
+	return ser;
+
+err:
+	*src = cp;
+	return 0;
+}
+#endif
+
 
 /***********************************************************************
 **
@@ -751,6 +836,13 @@ err:
 	case 85:
 #ifdef INCLUDE_BASE85
 		ser = Decode_Base85 (&src, len, delim);
+#else
+		Trap0(RE_FEATURE_NA);
+#endif
+		break;
+	case 36:
+#ifdef INCLUDE_BASE36
+		ser = Decode_Base36(&src, len, delim);
 #else
 		Trap0(RE_FEATURE_NA);
 #endif
@@ -952,6 +1044,51 @@ err:
 	*bp = 0;
 	SERIES_TAIL(series) = DIFF_PTRS(bp, series->data);
 
+	return series;
+}
+#endif
+
+
+#ifdef INCLUDE_BASE36
+/***********************************************************************
+**
+*/  REBSER* Encode_Base36(REBVAL* value, REBSER* series, REBCNT len, REBFLG brk)
+/*
+**		Base36 encode a given series. Must be BYTES, not UNICODE.
+**
+***********************************************************************/
+{
+	REBYTE* bp;
+	REBYTE* src;
+	REBOOL discard = TRUE;
+	REBU64 d, m = 0;
+	REBCNT n, p = 0;
+	REBINT i;
+
+	if (len > VAL_LEN(value)) len = VAL_LEN(value);
+	if (len > sizeof(REBI64)) {
+		Trap1(RE_OUT_OF_RANGE, value);
+	}
+	else if (len == 0) {
+		series = Prep_String(series, &bp, 1);
+		SERIES_TAIL(series) = 0;
+		return series;
+	}
+	src = VAL_BIN_DATA(value);
+
+	for (bp = src, n = len; n; n--, bp++)
+		m = (m << 8) | *bp;
+
+	series = Prep_String(series, &bp, BASE36_LENGTH + 1);
+
+	for (i = BASE36_LENGTH - 1; i >= 0; i--) {
+		d = m / base36_powers[i];
+		m = m - base36_powers[i] * d;
+		discard = discard && (d == 0 && i > 0);
+		if (!discard)
+			bp[p++] = Enbase36[d];
+	}
+	SERIES_TAIL(series) = p;
 	return series;
 }
 #endif

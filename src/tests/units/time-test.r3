@@ -109,10 +109,27 @@ Rebol [
 		--assert 0:00:00.12345679  = 0:00:00.1234567895
 		--assert 0:00:00.123456789 = 0:00:00.123456789456
 
+	--test-- "issue-1055"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1055
+		--assert "[0:00:00.12345679 1:00:00.12345679]" = remold [make time! 0.1234567896 make time! [1 0 0.1234567896]]
+
 	--test-- "divide by tuple"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1196
 		--assert all [error? e: try [0:0:01 / 1.1.1] e/id = 'not-related]
 		--assert all [error? e: try [1.1.1 / 0:0:01] e/id = 'not-related]
+
+	--test-- "issue-1054"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1054
+		--assert 596523:14:07 = to-time (to-integer #{8000 0000}) - 1
+		--assert -596523:14:07 = to-time negate (to-integer #{8000 0000}) - 1
+		--assert all [error? e: try [to-time 2 ** 63 / (10 ** 9) - 1 + 0.9999999] e/id = 'out-of-range]
+
+	--test-- "time! money! math"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2497
+		--assert $7.5 = (1:30:0 * $5)
+		--assert $25  = (4:0:0 / $100) ; an hourly rate
+		--assert error? try [1:30:0 + $5]
+		--assert error? try [1:30:0 - $5]
 
 ===end-group===
 

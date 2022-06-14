@@ -24,11 +24,11 @@ append system/options/log [whois: 1]
 sys/make-scheme [
 	name: 'whois
 	title: "WHOIS Protocol"
-	spec: make system/standard/port-spec-net [port-id: 43 timeout: 15 ]
+	spec: make system/standard/port-spec-net [port: 43 timeout: 15 ]
 	awake: func [event /local port parent] [
 		sys/log/debug 'WHOIS ["Awake:^[[22m" event/type]
 		port: event/port
-		parent: port/locals
+		parent: port/extra
 		switch event/type [
 			lookup  [ open port ]
 			connect [
@@ -58,7 +58,7 @@ sys/make-scheme [
 	actor: [
 		open: func [
 			port [port!]
-			/local conn
+			/local conn spec
 		] [
 			if all [
 				port/state
@@ -72,8 +72,8 @@ sys/make-scheme [
 				]
 				return port 
 			]
-
-			if none? port/spec/host [ port/spec/host: "whois.iana.org" ]
+			spec: port/spec
+			if none? spec/host [ spec/host: "whois.iana.org" ]
 
 			port/state: object [
 				state: 'inited
@@ -83,11 +83,11 @@ sys/make-scheme [
 			]
 			port/state/connection: conn: make port! [
 				scheme: 'tcp
-				host:    port/spec/host
-				port-id: port/spec/port-id
-				ref: rejoin [tcp:// host #":" port-id]
+				host: spec/host
+				port: spec/port
+				ref: rejoin [tcp:// host #":" port]
 			]
-			conn/locals: port
+			conn/extra: port
 			conn/awake: :awake
 			open conn
 			port

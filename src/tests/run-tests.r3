@@ -25,6 +25,7 @@ dt [ ;- delta time
 		%units/conditional-test.r3
 		%units/copy-test.r3
 		%units/crash-test.r3
+		%units/csv-test.r3
 		%units/datatype-test.r3
 		%units/date-test.r3
 		%units/decimal-test.r3
@@ -63,6 +64,7 @@ dt [ ;- delta time
 		%units/time-test.r3
 		%units/tuple-test.r3
 		%units/typeset-test.r3
+		%units/url-test.r3
 		%units/vector-test.r3
 		%units/word-test.r3
 		;- cryptography tests:
@@ -71,6 +73,10 @@ dt [ ;- delta time
 		%units/checksum-test.r3
 		%units/dh-test.r3
 		%units/crypt-test.r3
+		%units/crypt-port-test.r3
+		%units/crypt-port-camelia-test.r3
+		%units/crypt-port-ccm-test.r3
+		%units/crypt-port-gcm-test.r3
 		%units/poly1305-test.r3
 		%units/rc4-test.r3
 		%units/rsa-test.r3

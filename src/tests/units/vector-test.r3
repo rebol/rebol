@@ -18,6 +18,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1036
 	--assert 2 = index? load mold/all next make vector! [integer! 32 4 [1 2 3 4]]
 
+--test-- "issue/1026"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1026
+	--assert all [error? e: try [to vector! []] e/id = 'bad-make-arg]
+	
 --test-- "VECTOR can be initialized using a block with CHARs"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2348
 	--assert vector? v: make vector! [integer! 8 [#"^(00)" #"^(01)" #"^(02)" #"a" #"b"]]
@@ -29,6 +33,7 @@ Rebol [
 	--assert 98 = v/5
 
 --test-- "Random shuffle of vector vs. block"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/910
 	;@@ https://github.com/Oldes/Rebol-issues/issues/947
 	v1: make vector! [integer! 32 5 [1 2 3 4 5]]
 	v2: random v1
@@ -69,6 +74,8 @@ Rebol [
 --test-- "LOAD/MOLD on vector"
 	--assert v = load mold/all v
 	--assert v = do load mold v
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1036
+	--assert 2 = index? load mold/all next make vector! [integer! 32 4 [1 2 3 4]]
 
 --test-- "Conversion from VECTOR to BINARY"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2347
@@ -107,6 +114,7 @@ Rebol [
 	--assert none? v/5
 
 --test-- "Vector created with specified index"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1038
 	--assert 2 = index? v: make vector! [integer! 16 [1 2] 2]
 	--assert 2 = index? v: make vector! [integer! 16 #{01000200} 2]
 	--assert 2 = index? v: #[i16! [1 2] 2]

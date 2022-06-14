@@ -20,15 +20,15 @@ batch-size: 8000 ; higher batch size means higher CPU use!
 timeout: 0:0:0.5 ; setting timeout too low may result in not resolved opened ports!
 
 ; actor:
-on-awake: func [event /local port id] [
+on-awake: func [event /local port number] [
 	port: event/port
-	;print [as-green "==TCP-event:" as-red event/type "port:" as-red port/spec/port-id]
+	;print [as-green "==TCP-event:" as-red event/type "port:" as-red port/spec/port]
 	switch/default event/type [
 		lookup  [open port]
 		connect [
-			id: port/spec/port-id
-			print ["Open port found:" as-red id]
-			append found id
+			number: port/spec/port
+			print ["Open port found:" as-red number]
+			append found number
 			false
 		]
 	][true]
@@ -71,7 +71,7 @@ scan-ports: function [
 		port: make port! compose [
 			scheme:  'tcp
 			host:    (ip)
-			port-id: (id)
+			port:    (id)
 			awake:   :on-awake
 		]
 		open port

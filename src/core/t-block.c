@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -507,45 +508,6 @@ static struct {
 
 /***********************************************************************
 **
-*/	static void Trim_Block(REBSER *ser, REBCNT index, REBCNT flags)
-/*
-**		See Trim_String().
-**
-***********************************************************************/
-{
-	REBVAL *blk = BLK_HEAD(ser);
-	REBCNT out = index;
-	REBCNT end = ser->tail;
-
-	if (flags & AM_TRIM_TAIL) {
-		for (; end >= (index+1); end--) {
-			if (VAL_TYPE(blk+end-1) > REB_NONE) break;
-		}
-		Remove_Series(ser, end, ser->tail - end);
-		if (!(flags & AM_TRIM_HEAD) || index >= end) return;
-	}
-
-	if (flags & AM_TRIM_HEAD) {
-		for (; index < end; index++) {
-			if (VAL_TYPE(blk+index) > REB_NONE) break;
-		}
-		Remove_Series(ser, out, index - out);
-	}
-
-	if (flags == 0) {
-		for (; index < end; index++) {
-			if (VAL_TYPE(blk+index) > REB_NONE) {
-				*BLK_SKIP(ser, out) = blk[index];
-				out++;
-			}
-		}
-		Remove_Series(ser, out, end - out);
-	}
-}
-
-
-/***********************************************************************
-**
 */	void Shuffle_Block(REBVAL *value, REBFLG secure)
 /*
 ***********************************************************************/
@@ -724,7 +686,7 @@ pick_it:
 	case A_TAKE:
 		// take/part:
 		if (D_REF(ARG_TAKE_PART)) {
-			len = Partial1(value, D_ARG(ARG_TAKE_LENGTH));
+			len = Partial1(value, D_ARG(ARG_TAKE_RANGE));
 			if (len == 0) {
 zero_blk:
 				Set_Block(D_RET, Make_Block(0));
@@ -787,7 +749,7 @@ zero_blk:
 		args = Find_Refines(ds, ALL_FIND_REFS);
 //		if (ANY_BLOCK(arg) || args) {
 			len = ANY_BLOCK(arg) ? VAL_BLK_LEN(arg) : 1;
-			if (args & AM_FIND_PART) tail = index + Partial1(value, D_ARG(ARG_FIND_LENGTH));
+			if (args & AM_FIND_PART) tail = index + Partial1(value, D_ARG(ARG_FIND_RANGE));
 			ret = 1;
 			if (args & AM_FIND_SKIP) ret = Int32s(D_ARG(ARG_FIND_SIZE), 1);
 			ret = Find_Block(ser, index, tail, arg, len, args, ret);
@@ -839,7 +801,7 @@ zero_blk:
 	case A_COPY: // /PART len /DEEP /TYPES kinds
 #if 0
 		args = D_REF(ARG_COPY_DEEP) ? COPY_ALL : 0;
-		len = Partial1(value, D_ARG(ARG_COPY_LENGTH));
+		len = Partial1(value, D_ARG(ARG_COPY_RANGE));
 		index = (REBINT)VAL_INDEX(value);
 //		VAL_SERIES(value) = (len > 0) ? Copy_Block_Deep(ser, index, len, args) : Make_Block(0);
 		VAL_INDEX(value) = 0;
@@ -854,7 +816,7 @@ zero_blk:
 			if (IS_DATATYPE(arg)) types |= TYPESET(VAL_DATATYPE(arg));
 			else types |= VAL_TYPESET(arg);
 		}
-		len = Partial1(value, D_ARG(ARG_COPY_LENGTH));
+		len = Partial1(value, D_ARG(ARG_COPY_RANGE));
 		VAL_SERIES(value) = Copy_Block_Values(ser, VAL_INDEX(value), VAL_INDEX(value)+len, types);
 		VAL_INDEX(value) = 0;
 	}
@@ -865,7 +827,6 @@ zero_blk:
 
 	case A_TRIM:
 		args = Find_Refines(ds, ALL_TRIM_REFS);
-		if (args & ~(AM_TRIM_HEAD|AM_TRIM_TAIL)) Trap0(RE_BAD_REFINES);
 		Trim_Block(ser, index, args);
 		break;
 

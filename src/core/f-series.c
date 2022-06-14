@@ -217,7 +217,12 @@ is_true:
 
 	case REB_CHAR:
 		if (is_case) return THE_SIGN(VAL_CHAR(s) - VAL_CHAR(t));
-		return THE_SIGN((REBINT)(UP_CASE(VAL_CHAR(s)) - UP_CASE(VAL_CHAR(t))));
+		REBUNI ch1, ch2;
+		ch1 = VAL_CHAR(s);
+		ch2 = VAL_CHAR(t);
+		if (ch1 < UNICODE_CASES) ch1 = UP_CASE(ch1);
+		if (ch2 < UNICODE_CASES) ch2 = UP_CASE(ch2);
+		return THE_SIGN((REBINT)(ch1 - ch2));
 
 	case REB_DECIMAL:
 	case REB_MONEY:

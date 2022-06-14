@@ -512,12 +512,12 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	REBFLG Echo_File(REBCHR *file)
+*/	REBINT Echo_File(REBCHR *file)
 /*
 ***********************************************************************/
 {
 	Req_SIO->file.path = file;
-	return (DR_ERROR != OS_DO_DEVICE(Req_SIO, RDC_CREATE));
+	return OS_DO_DEVICE(Req_SIO, RDC_CREATE);
 }
 
 

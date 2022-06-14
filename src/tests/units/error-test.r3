@@ -9,6 +9,7 @@ Rebol [
 ~~~start-file~~~ "ERROR"
 
 ===start-group=== "make error!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/835
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1593
 	--test-- "make error!"
 	k: keys-of system/catalog/errors/Math
@@ -24,8 +25,15 @@ Rebol [
 		e/type = 'Math
 		e/id   = 'overflow
 	]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/993
+	--assert all [
+		error? e: make e "message"
+		e/type = 'User
+		e/arg1 = "message"
+	]
 
 	--test-- "make invalid error!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1002
 	--assert all [ ;missing type and id
 		error? e: try [make error! []]
 		e/type = 'Internal
@@ -62,6 +70,13 @@ Rebol [
 	]
 	;@@ https://github.com/Oldes/Rebol-issues/issues/975
 	--assert all [error? e: try [make error! 1] e/id = 'invalid-arg]
+
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1003
+	; it is not posible to make `Throw` type errors!
+	--assert all [
+		error? e: try [mold/all/flat make error! [type: 'Throw id: 'halt]]
+		e/id = 'invalid-arg
+	]
 	
 ===end-group===
 
@@ -121,11 +136,18 @@ Rebol [
 			e/id = 'expect-arg
 		]
 	--test-- "object from error"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/889
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1001
 		--assert object? o: to-object try [1 / 0]
 		         o/code: 1
 		--assert error? e: to-error o
 		--assert e/code = 400
+
+	--test-- "protected catalog"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/840
+		--assert all [error? e: try [system/catalog/errors: none] e/id = 'locked-word]
+		--assert all [error? e: try [system/catalog/errors/Math: none] e/id = 'locked-word]
+
 ===end-group===
 
 ~~~end-file~~~

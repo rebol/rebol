@@ -1,18 +1,19 @@
 REBOL [
 	System: "REBOL [R3] Language Interpreter and Run-time Environment"
-	Title: "REBOL 3 HTTP protocol scheme"
+	Title: "Rebol3 HTTP protocol scheme"
+	Name: http
+	Type: module
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2022 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
 		Licensed under the Apache License, Version 2.0
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-	Name: 'http
-	Type: 'module
-	Version: 0.3.5
-	Date: 26-Oct-2020
+	Version: 0.4.1
+	Date: 13-Jun-2022
 	File: %prot-http.r
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -34,6 +35,8 @@ REBOL [
 		0.3.3 25-Feb-2020 "Oldes" "FEAT: support for read/binary and write/binary to force raw data result"
 		0.3.4 26-Feb-2020 "Oldes" "FIX: limit input data according Content-Length (#issues/2386)"
 		0.3.5 26-Oct-2020 "Oldes" "FEAT: support for read/part (using Range request with read/part/binary)"
+		0.4.0 04-Feb-2022 "Oldes" "FIX: situation when server does not provide Content-Length and just closes connection"
+		0.4.1 13-Jun-2022 "Oldes" "FIX: Using `query` on URL sometimes reports `date: none`"
 	]
 ]
 
@@ -41,13 +44,20 @@ sync-op: func [port body /local header state][
 	unless port/state [open port port/state/close?: yes]
 	state: port/state
 	state/awake: :read-sync-awake
+	;print ["sync-op" mold/flat body]
 	do body
+	;? state/state
 	if state/state = 'ready [do-request port]
 	;NOTE: We'll wait in a WHILE loop so the timeout cannot occur during 'reading-data state.
 	;The timeout should be triggered only when the response from other side exceeds the timeout value.
 	;--Richard
 	while [not find [ready close] state/state][
-		;print "HTTP sync-op loop"
+		;print ["HTTP sync-op loop.. state:" state/state "open?" open? state/connection]
+		if all [state/state = 'closing not open? state/connection][
+			; server already closed connection
+			state/state: 'ready
+			break
+		]
 		unless port? wait [state/connection port/spec/timeout][
 			throw-http-error port make error! [
 				type: 'Access
@@ -57,6 +67,7 @@ sync-op: func [port body /local header state][
 			]
 			exit
 		]
+		;? state/state
 		switch state/state [
 			inited [
 				if not open? state/connection [
@@ -86,7 +97,7 @@ sync-op: func [port body /local header state][
 
 	header: copy port/state/info/headers
 
-	if state/close? [
+	if all [state/close? open? port][
 		sys/log/more 'HTTP ["Closing port for:^[[m" port/spec/ref]
 		close port
 	]
@@ -94,8 +105,9 @@ sync-op: func [port body /local header state][
 	reduce [header body]
 ]
 
-read-sync-awake: func [event [event!] /local error][
+read-sync-awake: func [event [event!] /local error state][
 	sys/log/debug 'HTTP ["Read-sync-awake:" event/type]
+	state: event/port/state
 	switch/default event/type [
 		connect ready [
 			do-request event/port
@@ -109,15 +121,15 @@ read-sync-awake: func [event [event!] /local error][
 		]
 		custom [
 			if event/code = 300 [
-				event/port/state/state: 'redirect
+				state/state: 'redirect
 				return true
 			]
 			false
 		]
 		error [
 			if all [
-				event/port/state
-				event/port/state/state <> 'closing
+				state
+				state/state <> 'closing
 			][
 				sys/log/debug 'HTTP ["Closing (sync-awake):^[[1m" event/port/spec/ref]
 				close event/port
@@ -131,17 +143,20 @@ read-sync-awake: func [event [event!] /local error][
 ]
 http-awake: func [event /local port http-port state awake res][
 	port: event/port
-	http-port: port/locals
+	http-port: port/parent
+
 	state: http-port/state
 	if any-function? :http-port/awake [state/awake: :http-port/awake]
 	awake: :state/awake
 
+	;? awake
+
 	sys/log/debug 'HTTP ["Awake:^[[1m" event/type "^[[22mstate:^[[1m" state/state]
 
-	switch/default event/type [
+	res: switch/default event/type [
 		read [
 			awake make event! [type: 'read port: http-port]
-			check-response http-port
+			check-response http-port ;@@ really check response on every read event?!
 		]
 		wrote [
 			awake make event! [type: 'wrote port: http-port]
@@ -150,14 +165,14 @@ http-awake: func [event /local port http-port state awake res][
 			false
 		]
 		lookup [
-			open port false]
+			open port false
+		]
 		connect [
 			state/state: 'ready
 			awake make event! [type: 'connect port: http-port]
 		]
 		close
 		error [
-			;?? state/state
 			res: switch state/state [
 				ready [
 					awake make event! [type: 'close port: http-port]
@@ -187,7 +202,7 @@ http-awake: func [event /local port http-port state awake res][
 						throw-http-error http-port "Server closed connection"
 					][
 						;set state to CLOSE so the WAIT loop in 'sync-op can be interrupted --Richard
-						state/state: 'close
+						state/state: 'ready
 						any [
 							awake make event! [type: 'done  port: http-port]
 							awake make event! [type: 'close port: http-port]
@@ -205,6 +220,8 @@ http-awake: func [event /local port http-port state awake res][
 			res
 		]
 	][true]
+	;print ["http-awake res:" mold res]
+	res
 ]
 
 throw-http-error: func [
@@ -226,33 +243,50 @@ throw-http-error: func [
 ]
 
 make-http-request: func [
-	"Create an HTTP request (returns string!)"
-	method [word! string!] "E.g. GET, HEAD, POST etc."
-	target [file! string!] {In case of string!, no escaping is performed (eg. useful to override escaping etc.). Careful!}
-	headers [block! map!] "Request headers (set-word! string! pairs)"
-	content [any-string! binary! map! none!] {Request contents (Content-Length is created automatically). Empty string not exactly like none.}
-	/local result
+	"Create an HTTP request (returns binary!)"
+	spec [block! object!] "Request specification from an opened port"
+	/local method path target query headers content request 
 ][
-	result: rejoin [
-		uppercase form method #" "
-		either file? target [next mold target][target]
-		" HTTP/1.1" CRLF
-	]
-	foreach [word string] headers [
-		repend result [mold word #" " string CRLF]
-	]
-	if content [
-		if map? content [content: to-json content]
-		content: to binary! content
-		repend result ["Content-Length: " length? content CRLF]
-	]
-	sys/log/info 'HTTP ["Request:^[[22m" mold result]
+	method:  any [select spec 'method 'GET]
+	path:    any [select spec 'path    %/]
+	target:       select spec 'target
+	query:        select spec 'query
+	headers: any [select spec 'headers []]
+	content:      select spec 'content
 
-	append result CRLF
-	result: to binary! result
-	if content [append result content]
-	result
+	request: ajoin [
+		uppercase form :method SP
+		mold as url! :path        ;; `mold as url!` is used because it produces correct escaping
+	]
+	if :target [append request mold as url! :target]
+	if :query  [append append request #"?"  :query]
+
+	append request " HTTP/1.1^M^/"
+	
+	foreach [word string] :headers [
+		append request ajoin [form :word #":" SP :string CRLF]
+	]
+
+	if :content [
+		if map? :content [
+			content: to-json content
+			unless find headers 'Content-Type [
+				append request "Content-Type: application/json^M^/" 
+			]
+		]
+		content: to binary! :content
+		append request ajoin [
+			"Content-Length: " length? content CRLF
+		]
+	]
+	sys/log/info 'HTTP ["Request:^[[22m" mold request]
+
+	append request CRLF
+	request: to binary! request
+	if content [append request content]
+	request
 ]
+
 do-request: func [
 	"Perform an HTTP request"
 	port [port!]
@@ -260,25 +294,22 @@ do-request: func [
 ][
 	spec: port/spec
 	info: port/state/info
-	spec/headers: body-of make make object! [
-		Accept: "*/*"
-		Accept-charset: "utf-8"
-		Accept-Encoding: "gzip,deflate"
-		Host: either not find [80 443] spec/port-id [
-			ajoin [spec/host #":" spec/port-id]
-		][
+
+	spec/headers: make system/schemes/http/headers to block! spec/headers
+
+	unless spec/headers/host [
+		spec/headers/host: either find [80 443] spec/port [
+			; default http/https scheme port ids
 			form spec/host
+		][	; custom port id
+			ajoin [spec/host #":" spec/port]
 		]
-		User-Agent: any [system/schemes/http/User-Agent "REBOL"]
-	] to block! spec/headers
+	]
 	port/state/state: 'doing-request
 	info/headers: info/response-line: info/response-parsed: port/data:
 	info/size: info/date: info/name: none
 
-	;sys/log/info 'HTTP ["Request:^[[22m" spec/method spec/host mold spec/path]
-
-	;write port/state/connection make-http-request spec/method enhex as file! any [spec/path %/] spec/headers spec/content
-	write port/state/connection make-http-request spec/method any [spec/path %/] spec/headers spec/content
+	write port/state/connection make-http-request :spec
 ]
 parse-write-dialect: func [port block /local spec][
 	spec: port/spec
@@ -289,14 +320,14 @@ parse-write-dialect: func [port block /local spec][
 		[set block [any-string! | binary! | map!] (spec/content: block) | (spec/content: none)]
 	]
 ]
-check-response: func [port /local conn res headers d1 d2 line info state awake spec][
-	state: port/state
-	conn: state/connection
-	info: state/info
+check-response: func [port /local conn res headers d1 d2 line info state awake spec date][
+	state:   port/state
+	spec:    port/spec
+	conn:    state/connection
+	info:    state/info
 	headers: info/headers
-	line: info/response-line
-	awake: :state/awake
-	spec: port/spec
+	line:    info/response-line
+	awake:  :state/awake
 	
 	if all [
 		not headers
@@ -326,8 +357,14 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 		][
 			awake make event! [type: 'error port: port]
 		]
-		; allow invalid date, but ignore it on error
-		try [if headers/last-modified  [info/date: to-date/utc headers/last-modified]]
+		if date: any [
+			;@@ https://github.com/Oldes/Rebol-issues/issues/2496
+			select headers 'last-modified
+			select headers 'date
+		][
+			; allow invalid date, but ignore it on error
+			try [info/date: to-date/utc date]
+		]
 		remove/part conn/data d2
 		state/state: 'reading-data
 	]
@@ -342,23 +379,26 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 			"HTTP/1." [#"0" | #"1"] some #" " [
 				#"1" (info/response-parsed: 'info)
 				|
-				#"2" [["04" | "05"] (info/response-parsed: 'no-content)
+				#"2" [
+					#"0" [#"4" | #"5"] (info/response-parsed: 'no-content)
 					| (info/response-parsed: 'ok)
 				]
 				|
-				#"3" [
-					"03" (info/response-parsed: 'see-other)
+				#"3" #"0" [
+					#"2" (info/response-parsed: 'found)
 					|
-					"04" (info/response-parsed: 'not-modified)
+					#"3" (info/response-parsed: 'see-other)
 					|
-					"05" (info/response-parsed: 'use-proxy)
+					#"4" (info/response-parsed: 'not-modified)
+					|
+					#"5" (info/response-parsed: 'use-proxy)
 					| (info/response-parsed: 'redirect)
 				]
 				|
-				#"4" [
-					"01" (info/response-parsed: 'unauthorized)
+				#"4" #"0" [
+					#"1" (info/response-parsed: 'unauthorized)
 					|
-					"07" (info/response-parsed: 'proxy-auth)
+					#"7" (info/response-parsed: 'proxy-auth)
 					| (info/response-parsed: 'client-error)
 				]
 				|
@@ -389,7 +429,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 				]
 			]
 		]
-		redirect see-other [
+		redirect see-other found [
 			either spec/method = 'HEAD [
 				state/state: 'ready
 				res: awake make event! [type: 'custom port: port code: 0]
@@ -401,9 +441,6 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 					state/state: 'ready
 				]
 			]
-			;?? res
-			;?? headers
-			;?? state/state
 
 			if all [not res state/state = 'ready][
 				either all [
@@ -487,6 +524,8 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 		res: throw-http-error port {Too many redirections}
 	]
 
+	spec/query: spec/target: none ; old parts not used in redirection!
+
 	if #"/" = first new-uri [
 		; if it's redirection under same url, we can reuse the opened connection
 		if "keep-alive" = select state/info/headers 'Connection [
@@ -494,22 +533,22 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 			do-request port
 			return true
 		]
-		new-uri: as url! ajoin [spec/scheme "://" spec/host #":" spec/port-id new-uri]
+		new-uri: as url! ajoin [spec/scheme "://" spec/host #":" spec/port new-uri]
 	]
 	new-uri: decode-url new-uri
 	spec/headers/host: new-uri/host
 
-	unless select new-uri 'port-id [
+	unless select new-uri 'port [
 		switch new-uri/scheme [
-			'https [append new-uri [port-id: 443]]
-			'http  [append new-uri [port-id: 80 ]]
+			'https [append new-uri [port: 443]]
+			'http  [append new-uri [port: 80 ]]
 		]
 	]
 	new-uri: construct/with new-uri port/scheme/spec
 	new-uri/method: spec/method
-	new-uri/ref: as url! ajoin either find [#[none] 80 443] new-uri/port-id [
+	new-uri/ref: as url! ajoin either find [#[none] 80 443] new-uri/port [
 		[new-uri/scheme "://" new-uri/host new-uri/path]
-	][	[new-uri/scheme "://" new-uri/host #":" new-uri/port-id new-uri/path]]
+	][	[new-uri/scheme "://" new-uri/host #":" new-uri/port new-uri/path]]
 
 	unless find [http https] new-uri/scheme [
 		return throw-http-error port {Redirect to a protocol different from HTTP or HTTPS not supported}
@@ -519,7 +558,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 	headers: spec/headers
 	; we need to reset tcp connection here before doing a redirect
 	close port/state/connection
-	port/spec: spec: new-uri
+	port/spec: new-uri
 	port/state: none
 	open port
 	; restore original request headers
@@ -620,6 +659,7 @@ check-data: func [port /local headers res data available out chunk-size pos trai
 		]
 		true [
 			port/data: conn/data
+			;? state/info/response-parsed
 			either state/info/response-parsed = 'ok [
 				;Awake from the WAIT loop to prevent timeout when reading big data. --Richard
 				res: true
@@ -656,12 +696,17 @@ decode-result: func[
 		content-type: select result/1 'Content-Type
 		any [
 			; consider content to be a text if charset specification is included
-			parse content-type [to #";" thru "charset=" copy code-page to end]
+			parse content-type [
+				to #";" thru "charset=" [
+					  #"^"" copy code-page to #"^"" to end ; Facebook is using this!
+					| copy code-page to end
+				]
+			]
 			; or when it is without charset, but of type text/*
 			parse content-type [["text/" | "application/json"] to end]
 		]
 	][
-		unless code-page [code-page: "utf-8"]
+		code-page: any [code-page "utf-8"]
 		sys/log/info 'HTTP ["Trying to decode from code-page:^[[m" code-page]
 		; using also deline to normalize possible CRLF to LF
 		try [result/2: deline iconv result/2 code-page]
@@ -690,6 +735,7 @@ sys/make-scheme [
 			port [port!]
 			/binary
 			/part length [number!]
+			/lines
 			/local result
 		][
 			sys/log/debug 'HTTP "READ"
@@ -705,7 +751,12 @@ sys/make-scheme [
 			][
 				result: sync-op port []
 				unless binary [decode-result result]
-				if all [part result/2] [ clear skip result/2 length ]
+				if result/2 [
+					case/all [
+						lines [ result/2: split-lines result/2 ]
+						part  [ clear skip result/2 length ]
+					]
+				]
 				result/2
 			]
 		]
@@ -741,9 +792,17 @@ sys/make-scheme [
 				result/2
 			]
 		]
+		update: func[
+			port [port!]
+		][
+			? port
+			? port/state
+			read port/state/connection
+
+		]
 		open: func [
 			port [port!]
-			/local conn
+			/local conn spec
 		][
 			sys/log/debug 'HTTP ["OPEN, state:" port/state]
 			if port/state [return port]
@@ -760,16 +819,16 @@ sys/make-scheme [
 				chunk: none
 				chunk-size: none
 			]
-			;? port/state/info
+			spec: port/spec
 			port/state/connection: conn: make port! compose [
-				scheme: (to lit-word! either port/spec/scheme = 'http ['tcp]['tls])
-				host: port/spec/host
-				port-id: port/spec/port-id
-				ref: as url! ajoin [scheme "://" host #":" port-id]
+				scheme: (to lit-word! either spec/scheme = 'http ['tcp]['tls])
+				host: spec/host
+				port: spec/port
+				ref: as url! ajoin [scheme "://" host #":" port]
 			]
 			
 			conn/awake: :http-awake
-			conn/locals: port
+			conn/parent: port
 			sys/log/info 'HTTP ["Opening connection:^[[22m" conn/spec/ref]
 			open conn
 
@@ -789,7 +848,9 @@ sys/make-scheme [
 				close port/state/connection
 				port/state/connection/awake: none
 				; release state and if there was error, keep it there
-				port/state: port/state/error
+				if error? port/state/error [
+					port/state: port/state/error
+				]
 			]
 			if error? port/state [do port/state]
 			port
@@ -843,15 +904,22 @@ sys/make-scheme [
 			either port/data [length? port/data][0]
 		]
 	]
-	User-Agent: none
-	;@@ One can set above value for example to: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
-	;@@ And so pretend that request is coming from Chrome on Windows10
+	; default request header values...
+	headers: context [
+		Host: none
+		Accept: "*/*"
+		Accept-charset: "utf-8"
+		Accept-Encoding: "gzip,deflate"
+		User-Agent: ajoin ["rebol/" system/version " (" system/platform "; " system/build/arch #")"]
+		;@@ One can set above value for example to: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+		;@@ And so pretend that request is coming from Chrome on Windows10
+	]
 ]
 
 sys/make-scheme/with [
 	name: 'https
 	title: "Secure HyperText Transport Protocol v1.1"
 	spec: make spec [
-		port-id: 443
+		port: 443
 	]
 ] 'http

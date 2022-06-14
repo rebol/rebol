@@ -18,7 +18,7 @@ REBOL [
 
 probe: func [
 	{Debug print a molded value and returns that same value.}
-	value [any-type!]
+	value [any-type!] {The output is truncated to size defined in: system/options/probe-limit}
 	/local len
 ][
 	len: system/options/probe-limit

@@ -41,6 +41,10 @@ Rebol [
 	--test-- "do-9"
 		--assert word! = do [type? first [a]]
 
+	--test-- "do-10"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/871
+		--assert 1 = do "1"
+
 	--test-- "do/next-1"
 		code: [3 4 + 5 length? mold 8 + 9 append copy "hel" form 'lo]
 		--assert 3 		 = do/next code 'code
@@ -65,6 +69,7 @@ Rebol [
 		--assert logic? do 'true
 
 	--test-- "do/next"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/902
 		--assert 1 = do/next {1 2} 'n
 		;@@ https://github.com/Oldes/Rebol-issues/issues/901
 		--assert n = [2]
@@ -79,6 +84,11 @@ Rebol [
 		--assert unset? do/next a: [] 'b
 		--assert same? a b
 		--assert 1 = index? b
+
+	--test-- "issue-903"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/903
+		--assert all [error? e: try [do "<> 0"]  e/id = 'missing-arg]
+		--assert all [error? e: try [do next [1 <> 0]]  e/id = 'missing-arg]
 		
 ===end-group===
 
@@ -98,6 +108,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2250
 		--assert unset? do %units/files/quit.r3
 		--assert 42 = do %units/files/quit-return.r3
+
+	--test-- "do needs"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/891
+		--assert all [error? e: try [do "rebol[needs: 255.8.5]"] e/id = 'needs]
 
 ===end-group===
 
@@ -525,7 +539,40 @@ Rebol [
 		--assert error? try [set [/e][5]]
 		--assert error? try [set [#f][6]]
 		--assert error? try [set /a 1]
-		
+
+	--test-- "set any block"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2488
+		--assert all [
+			[[][]] = set [a b] first [[[][]]]
+			a = []
+			b = []
+		]
+		--assert all [
+			paren? set [a b] first [([][])]
+			a = []
+			b = []
+		]
+		--assert all [
+			path? set [a b] first [x/y]
+			a = 'x
+			b = 'y
+		]
+		--assert all [
+			[[][]] = set/only [a b] val: first [[[][]]]
+			a = val
+			b = val
+		]
+		--assert all [
+			paren? set/only [a b] val: first [([][])]
+			a = val
+			b = val
+		]
+		--assert all [
+			path? set/only [a b] val: first [x/y]
+			a = val
+			b = val
+		]
+
 	--test-- "set path"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2275
 	;Parenthesized expressions on left for SET-PATH! evaluate after right hand expressions 

@@ -68,8 +68,10 @@ remold: func [
 	/only {For a block value, mold only its contents, no outer []}
 	/all  {Mold in serialized format}
 	/flat {No indentation}
+	/part {Limit the length of the result}
+	limit [integer!]
 ][
-	apply :mold [reduce :value only all flat]
+	apply :mold [reduce :value only all flat part limit]
 ]
 
 charset: func [
@@ -502,21 +504,20 @@ split: function [
 		return res
 	]
 	if at [
-		return reduce either integer? dlm [
-			[
-				copy/part series dlm
-				copy lib/at series dlm + 1
+		unless integer? :dlm [
+			return reduce either dlm: find series :dlm [
+				dlm: index? dlm
+				[
+					copy/part   series dlm - 1 ; excluding the delimiter
+					copy lib/at series dlm + 1
+				]
+			][
+				[copy series]
 			]
-		][
-			;-- Without adding a /tail refinement, we don't know if they want
-			;	to split at the head or tail of the delimiter, so we'll exclude
-			;	the delimiter from the result entirely. They know what the dlm
-			;	was that they passed in, so they can add it back to either side
-			;	of the result if they want to.
-			[
-				copy/part series find series :dlm
-				copy find/tail series :dlm
-			]
+		]
+		return reduce [
+			copy/part   series dlm
+			copy lib/at series dlm + 1
 		]
 	]
 	;print ['split 'parts? parts mold series mold dlm]

@@ -126,6 +126,10 @@
 			VAL_DECI(D_RET) = decimal_to_deci(VAL_DECIMAL(arg));
 			arg = D_RET;
 		}
+		else if (IS_TIME(arg) && action == A_MULTIPLY) {
+			VAL_DECI(D_RET) = decimal_to_deci(VAL_TIME(arg) * NANO / 3600.0);
+			arg = D_RET;
+		}
 		else Trap_Math_Args(REB_MONEY, action);
 
 		switch (action) {
