@@ -674,7 +674,7 @@ download-extension: function[
 	try/except [
 		if exists? file [
 			; we don't want to overwrite existing files!
-			log/error ["File already exists:^[[m" file]
+			log/error 'REBOL ["File already exists:^[[m" file]
 			return file
 		]
 		log/info 'REBOL ["Downloading:^[[m" url]
@@ -684,7 +684,7 @@ download-extension: function[
 		write file bin
 		file: to-real-file file ; makes it absolute
 	][
-		log/error ["Failed to download:^[[m" file]
+		log/error 'REBOL ["Failed to download:^[[m" file]
 		file: none
 	]
 	system/options/log: opt
@@ -723,7 +723,7 @@ import: function [
 			]
 			unless name [
 				; try to locate as an extension...
-				if file: any [
+				either file: any [
 					locate-extension module
 					all [
 						url? mod: select system/modules module
@@ -734,6 +734,8 @@ import: function [
 					set [name: mod:] apply :load-module [
 						file version ver check sum no-share no-lib /import /as module
 					]
+				][
+					mod: none ; failed
 				]
 			]
 		]
