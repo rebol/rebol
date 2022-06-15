@@ -3,7 +3,7 @@ Rebol [
 	Type:    module
 	Options: [delay]
 	Version: 1.0.0
-	Title:   "HTML entities codec"
+	Title:   "Codec: HTML entities"
 	Purpose: "To decode HTML entities in a text"
 	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-html-entities.reb
 	Date:    12-May-2020

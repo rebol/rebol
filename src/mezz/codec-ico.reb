@@ -1,9 +1,11 @@
 REBOL [
-	title: "REBOL 3 codec for ICO files"
-	name: 'codec-ico
-	author: rights: "Oldes"
-	version: 0.0.1
-	history: [6-Mar-2021 "Oldes" {Initial version}]
+	Name:   'ico
+	Type:    module
+	Options: [delay]
+	Version: 0.0.1
+	Title: "Codec: ICO"
+	Author: Rights: "Oldes"
+	History: [6-Mar-2021 "Oldes" {Initial version}]
 ]
 
 system/options/log/ico: 2

@@ -1,5 +1,5 @@
 REBOL [
-	Title:   "REBOL 3 codec: UTC time as used in ASN.1 data structures (BER/DER)"
+	Title:   "Codec: UTC time as used in ASN.1 data structures (BER/DER)"
 	Author:  "Oldes"
 	Rights:  "Copyright (C) 2018 Oldes. All rights reserved."
 	License: "BSD-3"

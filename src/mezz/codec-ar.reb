@@ -1,5 +1,5 @@
 REBOL [
-	title: "REBOL 3 codec for AR files"
+	title: "Codec: AR"
 	name: 'codec-ar
 	author: rights: "Oldes"
 	version: 0.0.2

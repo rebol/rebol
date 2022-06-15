@@ -3,7 +3,7 @@ REBOL [
 	type:    module
 	options: [delay]
 	version: 0.1.0
-	title:  "PDF file codec"
+	title:  "Codec: PDF"
 	file:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-pdf.reb
 	author: "Oldes"
 	history: [16-Sep-2021 "Oldes" {Initial version - raw PDF data de/encode}]

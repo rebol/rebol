@@ -1,5 +1,5 @@
 REBOL [
-	title: "REBOL3 codec for DER/BER structures"
+	title: "Codec: DER/BER structures"
 	name: 'codec-der
 	author: "Oldes"
 	version: 0.2.0

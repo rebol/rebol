@@ -1,5 +1,5 @@
 REBOL [
-	title:  "REBOL 3 codec for Unix time stamp"
+	title:  "Codec: Unix time stamp"
 	name:   'codec-unixtime
 	author: "Oldes"
 	version: 0.1.0
