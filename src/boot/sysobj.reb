@@ -98,9 +98,25 @@ state: object [
 ]
 
 modules: object [
+	help:    none
+	;; external native extensions
 	blend2d: https://github.com/Siskin-framework/Rebol-Blend2D/releases/download/0.0.18.0/
 	sqlite:  https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.38.5.0/
-	httpd:   https://raw.githubusercontent.com/Oldes/Rebol3/master/src/modules/httpd.reb
+	;; optional modules, protocol and codecs
+	httpd:         https://raw.githubusercontent.com/Oldes/Rebol3/master/src/modules/httpd.reb
+	prebol:        https://raw.githubusercontent.com/Oldes/Rebol3/master/src/modules/prebol.reb
+	mysql:         https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/prot-mysql.reb
+	csv:           https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-csv.reb
+	ico:           https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-ico.reb
+	pdf:           https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-pdf.reb
+	swf:           https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-swf.reb
+	xml:           https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-xml.reb
+	json:          https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-json.reb
+	plist:         https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-plist.reb
+	bbcode:        https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-bbcode.reb
+	html-entities: https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-html-entities.reb
+	;; and..
+	window: none ;- internal extension for gui (on Windows so far!)
 ]
 
 codecs: object []
