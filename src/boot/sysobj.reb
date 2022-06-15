@@ -97,7 +97,11 @@ state: object [
 	last-result: none ; used to store last console result
 ]
 
-modules: object []
+modules: object [
+	blend2d: https://github.com/Siskin-framework/Rebol-Blend2D/releases/download/0.0.18.0/
+	sqlite:  https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.38.5.0/
+	httpd:   https://raw.githubusercontent.com/Oldes/Rebol3/master/src/modules/httpd.reb
+]
 
 codecs: object []
 

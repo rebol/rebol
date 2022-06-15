@@ -539,8 +539,8 @@ load-module: function [
 			delay: no-share: none  hdr: spec-of mod
 			assert/type [hdr/options [block! none!]]
 		]
-		block? mod [set/any [hdr: code:] mod]
-		; module/block mod used later for override testing
+		block? mod [set/any [hdr: code:] mod] ; module/block mod used later for override testing
+		url?   mod [return none ] ; used by `import` for downloading extensions
 
 		; Get and process the header
 		not hdr [
@@ -579,6 +579,7 @@ load-module: function [
 			case/all [
 				module? :mod0 [hdr0: spec-of mod0] ; final header
 				block?  :mod0 [hdr0: first   mod0] ; cached preparsed header
+				url?    :mod0 [hdr0: object [version: 0.0.0 url: :mod0 checksum: none]]
 				;assert/type [name0 word! hdr0 object! sum0 [binary! none!]] none
 				;not tuple? set/any 'ver0 :hdr0/version [ver0: 0.0.0] ;@@ remove?
 			]
@@ -647,6 +648,49 @@ load-module: function [
 	reduce [name if module? mod [mod]]
 ]
 
+locate-extension: function[name [word!]][
+	foreach path system/options/module-paths [
+		file: append to file! name %.rebx
+		if exists? path/:file [ return path/:file ]
+		file: repend to file! name [#"-" system/build/os #"-" system/build/arch %.rebx]
+		if exists? path/:file [ return path/:file ]
+	]
+	none
+]
+
+download-extension: function[
+	"Downloads extension from a given url and stores it in a current directory!"
+	name [word!]
+	url  [url!]
+][
+	either dir? url [
+		file: repend to file! name [#"-" system/build/os #"-" system/build/arch %.rebx]
+		url:  append copy url file
+		if system/platform <> 'Windows [append url %.gz]
+	][
+		file: select decode-url url 'target
+	]
+	opt: system/options/log
+	try/except [
+		if exists? file [
+			; we don't want to overwrite existing files!
+			log/error ["File already exists:^[[m" file]
+			return file
+		]
+		log/info 'REBOL ["Downloading:^[[m" url]
+		system/options/log: make map! [http: 0 tls: 0]
+		bin: read url
+		if %.gz = suffix? url [bin: decompress bin 'gzip]
+		write file bin
+		file: to-real-file file ; makes it absolute
+	][
+		log/error ["Failed to download:^[[m" file]
+		file: none
+	]
+	system/options/log: opt
+	file
+]
+
 import: function [
 	"Imports a module; locate, load, make, and setup its bindings."
 	module [word! file! url! string! binary! module! block!]
@@ -677,7 +721,23 @@ import: function [
 					path/:file version ver check sum no-share no-lib /import /as module
 				] [break]
 			]
+			unless name [
+				; try to locate as an extension...
+				if file: any [
+					locate-extension module
+					all [
+						url? mod: select system/modules module
+						download-extension module mod
+					]
+				][
+					log/info 'REBOL ["Importing extension:^[[m" file]
+					set [name: mod:] apply :load-module [
+						file version ver check sum no-share no-lib /import /as module
+					]
+				]
+			]
 		]
+
 		any [file? module url? module] [
 			cause-error 'access 'cannot-open reduce [module "not found or not valid"]
 		]
