@@ -100,7 +100,7 @@ state: object [
 modules: object [
 	help:    none
 	;; external native extensions
-	blend2d:       https://github.com/Siskin-framework/Rebol-Blend2D/releases/download/0.0.18.0/
+	blend2d:       https://github.com/Siskin-framework/Rebol-Blend2D/releases/download/0.0.18.1/
 	sqlite:        https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.38.5.0/
 	triangulate:   https://github.com/Siskin-framework/Rebol-Triangulate/releases/download/1.6.0.0/
 	;; optional modules, protocol and codecs
