@@ -41,7 +41,9 @@ jobs:
 
     - name: Test Rebol/Blend2D extension
       run: ./rebol3-bulk-windows-x64.exe -s ./src/tests/test-extension-blend2d.r3
-      
+    
+    - name: Test Rebol/Triangulate extension
+      run: ./rebol3-bulk-windows-x64.exe -s ./src/tests/test-extension-triangulate.r3
 
     ###############################################################################
     # Collecting build artifacts...
@@ -82,6 +84,9 @@ jobs:
 
       - name: Test Rebol/Blend2D extension
         run: ./build/rebol3-bulk-linux-x64 -s ./src/tests/test-extension-blend2d.r3
+
+      - name: Test Rebol/Triangulate extension
+        run: ./build/rebol3-bulk-linux-x64 -s ./src/tests/test-extension-triangulate.r3
 
       - name: Prepare 64bit Rebol/Bulk for upload
         run: |
@@ -124,6 +129,9 @@ jobs:
 
       - name: Test Rebol/Blend2D extension
         run: ./build/rebol3-bulk-macos-x64 -s ./src/tests/test-extension-blend2d.r3
+
+      - name: Test Rebol/Triangulate extension
+        run: ./build/rebol3-bulk-macos-x64 -s ./src/tests/test-extension-triangulate.r3
 
       - name: Prepare 64bit Rebol/Bulk for upload
         run: |
