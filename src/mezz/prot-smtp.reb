@@ -258,6 +258,7 @@ sync-smtp-handler: function [event][
 						throw-smtp-error smtp-port join "Unknown response in AUTH CRAM-MD5 " response						
 					]
 				]
+				PLAIN
 				PASSWORD [
 					either code = 235 [
 						smtp-port/state: 'FROM
