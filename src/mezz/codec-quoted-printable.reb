@@ -1,7 +1,7 @@
 REBOL [
 	Name:    quoted-printable
 	Type:    module
-	;Options: [delay]
+	Options: [delay]
 	Version: 1.0.0
 	Title:   "Codec: quoted-printable encoding"
 	Author:  "Oldes"
@@ -14,7 +14,7 @@ REBOL [
 register-codec [
 	name: 'quoted-printable
 	type: 'text
-	title: "quoted-printable encoding"
+	title: "Quoted-Printable encoding"
 	
 	decode: function [
 		"Decodes quoted-printable data"
