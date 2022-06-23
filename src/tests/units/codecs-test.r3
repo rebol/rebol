@@ -577,6 +577,50 @@ if find codecs 'html-entities [
 	===end-group===
 ]
 
+try [import 'quoted-printable]
+if find codecs 'quoted-printable [
+	was-length: :codecs/quoted-printable/max-line-length
+	===start-group=== "Quoted-Printable codec"
+	--test-- "encode Quoted-Printable"
+		--assert (encode 'quoted-printable "Holčička") == "Hol=C4=8Di=C4=8Dka"
+		--assert (encode 'quoted-printable @Holčička ) == @Hol=C4=8Di=C4=8Dka
+		--assert (encode 'quoted-printable %Holčička ) == %Hol=C4=8Di=C4=8Dka
+		--assert (encode 'quoted-printable #{486F6CC48D69C48D6B61}) == #{486F6C3D43343D3844693D43343D38446B61}
+	--test-- "decode Quoted-Printable"
+		--assert (decode 'quoted-printable "Hol=C4=8Di=C4=8Dka") == "Holčička"
+		--assert (decode 'quoted-printable @Hol=C4=8Di=C4=8Dka ) == @Holčička
+		--assert (decode 'quoted-printable %Hol=C4=8Di=C4=8Dka ) == %Holčička
+		--assert (decode 'quoted-printable #{486F6C3D43343D3844693D43343D38446B61}) == #{486F6CC48D69C48D6B61}
+
+	--test-- "multiline Quoted-Printable"
+		codecs/quoted-printable/max-line-length: 76
+		text-encoded: {J'interdis aux marchands de vanter trop leurs marchandises. Car ils se font=^M
+ vite p=C3=A9dagogues et t'enseignent comme but ce qui n'est par essence qu=^M
+'un moyen, et te trompant ainsi sur la route =C3=A0 suivre les voil=C3=^M
+=A0 bient=C3=B4t qui te d=C3=A9gradent, car si leur musique est vulgaire il=^M
+s te fabriquent pour te la vendre une =C3=A2me vulgaire.^M
+   =E2=80=94=E2=80=89Antoine de Saint-Exup=C3=A9ry, Citadelle (1948)}
+   		text-expected: {J'interdis aux marchands de vanter trop leurs marchandises. Car ils se font vite pédagogues et t'enseignent comme but ce qui n'est par essence qu'un moyen, et te trompant ainsi sur la route à suivre les voilà bientôt qui te dégradent, car si leur musique est vulgaire ils te fabriquent pour te la vendre une âme vulgaire.^M
+   — Antoine de Saint-Exupéry, Citadelle (1948)}
+
+		--assert text-expected == decode 'quoted-printable text-encoded  
+		--assert text-expected == decode 'quoted-printable encode 'quoted-printable text-expected
+		
+	--test-- "encode with line length limit"
+		codecs/quoted-printable/max-line-length: 4
+		--assert "a" = encode 'quoted-printable "a"
+		--assert "ab" = encode 'quoted-printable "ab"
+		--assert "abc" = encode 'quoted-printable "abc"
+		--assert "abcd" = encode 'quoted-printable "abcd"
+		--assert "abc=^M^/de" = encode 'quoted-printable "abcde"
+		--assert "abc=^M^/def" = encode 'quoted-printable "abcdef"
+		--assert "abc=^M^/defg" = encode 'quoted-printable "abcdefg"
+
+	===end-group===
+	codecs/quoted-printable/max-line-length: :was-length
+]
+
+
 try [import 'plist]
 if find codecs 'plist [
 	===start-group=== "PLIST codec"		

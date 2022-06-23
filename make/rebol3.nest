@@ -728,6 +728,7 @@ include-codec-plist:         [mezz-lib-files:  %mezz/codec-plist.reb        ]
 include-codec-swf:           [mezz-lib-files:  %mezz/codec-swf.reb          ]
 include-codec-wav:           [mezz-lib-files:  %mezz/codec-wav.reb          ]
 include-codec-unixtime:      [mezz-lib-files:  %mezz/codec-unixtime.reb     ]
+include-codec-quoted-printable: [mezz-lib-files: %mezz/codec-quoted-printable.reb]
 ; mezzanines:
 include-mezz-ansi:           [mezz-lib-files:  %mezz/mezz-ansi.reb          ]
 include-mezz-date:           [mezz-lib-files:  %mezz/mezz-date.reb          ]
@@ -768,6 +769,7 @@ include-rebol-core: [
 	:include-codec-gzip
 	:include-codec-zip
 	:include-codec-tar
+	:include-codec-quoted-printable
 	
 	config: INCLUDE_SHA224
 	config: INCLUDE_SHA384
