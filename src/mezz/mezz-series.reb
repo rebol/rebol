@@ -435,7 +435,7 @@ format: function [
 	/pad p {Pattern to use instead of spaces}
 ][
 	p: any [p #" "]
-	unless block? :rules [rules: reduce [:rules]]
+	unless block? :rules  [rules:  reduce [:rules ]]
 	unless block? :values [values: reduce [:values]]
 
 	; Compute size of output (for better mem usage):
@@ -447,6 +447,7 @@ format: function [
 			string!  [length? rule]
 			char!    [1]
 			money!   [2 + length? form rule]
+			tag!     [length? rule] ;@@ does not handle variadic length results (for example month names)!
 		][0]
 	]
 
@@ -471,7 +472,19 @@ format: function [
 			]
 			string!  [out: change out rule]
 			char!    [out: change out rule]
-			money!   [out: change out replace rejoin ["^[[" next form rule #"m"] #"." #";"]
+			money!   [out: change out replace ajoin ["^[[" next form rule #"m"] #"." #";"]
+			tag! [
+				out: change out switch/default type?/word val: first+ values [
+					date! time! [
+						format-date-time val rule
+					]
+					;TODO: other types formatting...
+				][	
+					; when there is not expected value, ignore it and output just the rule
+					-- values
+					form rule
+				]
+			]
 		]
 	]
 
@@ -479,6 +492,71 @@ format: function [
 	if not tail? values [append out values]
 	head out
 ]
+
+format-date-time: function/with [
+	value [date! time!]
+	rule  [string! tag!]
+][
+	;-- inspired by https://github.com/greggirwin/red-formatting/blob/master/format-date-time.red
+	tmp: to string! rule
+	either time? value [
+		d: now
+		t: value
+	][
+		d: value
+		t: any [d/time 0:0:0]
+	]
+	either parse/case tmp [
+	any [
+		  change "dddd" (pick system/locale/days d/weekday)
+		| change "ddd"  (copy/part pick system/locale/days d/weekday 3)
+		| change "dd"   (pad/with d/day -2 #"0")
+		| change #"d"   (d/day)
+		| change "mmmm" (pick system/locale/months d/month)
+		| change "mmm"  (copy/part pick system/locale/months d/month 3)
+		| change "mm"   (pad/with either as-time? [t/minute][d/month] -2 #"0") (as-time?: true)
+		| change #"m"   (either as-time? [t/minute][d/month]) (as-time?: true)
+		| change "yyyy" (pad/with d/year -4 #"0")
+		| change "yy"   (skip tail form d/year -2)
+		| change #"y"   (d/year)
+		| change "hh"   (pad/with t/hour -2 #"0") (as-time?: true)
+		| change #"h"   (t/hour) (as-time?: true)
+		|
+		[ change "ss"   (pad/with to integer! t/second -2 #"0")
+		| change #"s"   (to integer! t/second)
+		] opt [
+			#"." s: some #"s" e: (
+				n: (index? e) - (index? s)
+				v: any [find/tail form t/second #"." ""]
+				either n <= length? v [
+					; trim result if it is too long
+					clear skip v n
+				][	; or pad it if too short
+					v: pad/with v n #"0"
+				]
+				change/part s v e
+			)
+		]
+		| change "MM"   (pad/with d/month -2 #"0") (as-time?: true)
+		| change #"M"   (d/month) (as-time?: true)
+		| change [opt #"±" "zz:zz"] (zone/with d/zone #":")
+		| change [opt #"±" "zzzz" ] (zone d/zone)
+		| change "unixepoch" (to integer! d)
+		| skip ;@@ or better limit to just some delimiters?
+		]
+	][ tmp ][ form rule ]
+][
+	zone: function[z [time! none!] /with sep][
+		z: any [z 0:0]
+		ajoin [
+			pick "-+" negative? z
+			pad/with absolute z/hour -2 #"0"
+			any [sep ""]
+			pad/with z/minute 2 #"0"
+		]
+	]
+]
+
 
 printf: func [
 	"Formatted print."
