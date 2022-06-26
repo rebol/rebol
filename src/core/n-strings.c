@@ -613,12 +613,13 @@ static struct digest {
 	REBVAL *arg        = D_ARG(1);
 //	REBOOL  ref_escape = D_REF(2);
 //	REBVAL *val_escape = D_ARG(3);
-	REBOOL as_url      = D_REF(4);
+	REBOOL as_uri      = D_REF(4);
 	REBINT len = (REBINT)VAL_LEN(arg); // due to len -= 2 below
 	REBUNI n;
 	REBSER *ser;
 
 	const REBCHR escape_char = D_REF(2) ? VAL_CHAR(D_ARG(3)) : '%';
+	const REBCHR space_char = escape_char == '=' ? '_' : '+';
 
 	if (VAL_BYTE_SIZE(arg)) {
 		REBYTE *bp = VAL_BIN_DATA(arg);
@@ -629,7 +630,12 @@ static struct digest {
 				*dp++ = (REBYTE)n;
 				bp += 3;
 				len -= 2;
-			} else {
+			}
+			else if (*bp == space_char && as_uri) {
+				*dp++ = ' ';
+				bp++;
+			}
+			else {
 				*dp++ = *bp++;
 			}
 		}
@@ -680,10 +686,12 @@ static struct digest {
 //	REBVAL *val_escape = D_ARG(3);
 	REBOOL  ref_bitset = D_REF(4);
 	REBVAL *val_bitset = D_ARG(5);
+	REBOOL  no_space   = D_REF(6);
 	REBYTE encoded[4];
 	REBCNT n, encoded_size;
 	REBSER *ser;
 	const REBCHR escape_char = D_REF(2) ? VAL_CHAR(D_ARG(3)) : '%';
+	const REBCHR space_char = escape_char == '=' ? '_' : '+';
 
 	if (!ref_bitset) {
 		// use bitset value from system/catalog/bitsets
@@ -710,10 +718,18 @@ static struct digest {
 		while (bp < ep) {
 			REBYTE c = bp[0];
 			bp++;
+			if (no_space) {
+				if (c == ' ') {
+					*dp++ = space_char;
+					continue;
+				}
+				if (c == space_char) goto escaped;
+			}
 			if (Check_Bit_Cased(VAL_SERIES(val_bitset), c)) {
 				*dp++ = c;
 				continue;
 			}
+		escaped:
 			*dp++ = escape_char;
 			*dp++ = Hex_Digits[(c & 0xf0) >> 4];
 			*dp++ = Hex_Digits[ c & 0xf];

@@ -1720,6 +1720,18 @@ Rebol [
 	--assert "12%20%61%62" = enhex/except "12 ab" charset "12"
 	--assert "12 %61%62"   = enhex/except "12 ab" charset "12 "
 
+--test-- "ENHEX/uri"
+	--assert "a%20b%2B" = enhex "a b+"
+	--assert "a+b%2B" = enhex/uri "a b+"
+	; quoted-printable:
+	--assert "a=20b_" = enhex/escape "a b_" #"="
+	--assert "a_b=5F" = enhex/uri/escape "a b_" #"=" 
+--test-- "DEHEX/uri"
+	--assert "a+b+"   = dehex "a+b%2B"
+	--assert "a b+"   = dehex/uri "a+b%2B"
+	; quoted-printable:
+	--assert "a_b_"   = dehex/escape"a_b=5F" #"="
+	--assert "a b_"   = dehex/uri/escape"a_b=5F" #"="
 
 ===end-group===
 

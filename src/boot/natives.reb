@@ -511,7 +511,7 @@ dehex: native [
 	{Converts URL-style hex encoded (%xx) strings. If input is UTF-8 encode, you should first convert it to binary!}
 	value [any-string! binary!] {The string to dehex}
 	/escape char [char!] {Can be used to change the default escape char #"%"}
-	/url {Decode + as a space}
+	/uri {Decode space from a special char (#"+" by default or #"_" when escape char is #"=")}
 ]
 
 enhex: native [
@@ -521,6 +521,7 @@ enhex: native [
 	 char [char!] 
 	/except {Can be used to specify, which chars can be left unescaped}
 	 unescaped [bitset!] {By default it is URI bitset when value is file or url, else URI-Component}
+	/uri {Encode space using a special char (#"+" by default or #"_" when escape char is #"=")}
 ]
 
 get: native [
