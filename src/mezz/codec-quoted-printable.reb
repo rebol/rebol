@@ -19,19 +19,26 @@ register-codec [
 	decode: function [
 		"Decodes quoted-printable data"
 		data [binary! any-string!]
+		/space
 	][
 		output: either binary? data [ copy data ][ to binary! data ]
 		; remove soft line breaks
 		parse output [any [to #"=" remove [#"=" [LF | CR LF]] | skip] to end]
-		to data dehex/escape output #"="
+		to data either space [
+			dehex/escape/uri output #"="
+		][	dehex/escape     output #"="]
 	]
 
 	encode: function/with [
 		"Encodes data using quoted-printable encoding"
 		data [binary! any-string!]
+		/no-space "Q-encoding - space may not be represented directly"
 	][
-		output: enhex/escape/except to binary! data #"=" :quoted-printable
 		assert [number? :max-line-length]
+
+		output: either no-space [
+			enhex/escape/except/uri to binary! data #"=" :quoted-printable
+		][	enhex/escape/except     to binary! data #"=" :quoted-printable]
 
 		if 0 < length: to integer! max-line-length - 1 [
 			; limit line length to 76 chars

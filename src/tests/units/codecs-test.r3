@@ -580,6 +580,8 @@ if find codecs 'html-entities [
 try [import 'quoted-printable]
 if find codecs 'quoted-printable [
 	was-length: :codecs/quoted-printable/max-line-length
+	qp-encode: :codecs/quoted-printable/encode
+	qp-decode: :codecs/quoted-printable/decode
 	===start-group=== "Quoted-Printable codec"
 	--test-- "encode Quoted-Printable"
 		--assert (encode 'quoted-printable "Holčička") == "Hol=C4=8Di=C4=8Dka"
@@ -603,21 +605,29 @@ s te fabriquent pour te la vendre une =C3=A2me vulgaire.^M
    		text-expected: {J'interdis aux marchands de vanter trop leurs marchandises. Car ils se font vite pédagogues et t'enseignent comme but ce qui n'est par essence qu'un moyen, et te trompant ainsi sur la route à suivre les voilà bientôt qui te dégradent, car si leur musique est vulgaire ils te fabriquent pour te la vendre une âme vulgaire.^M
    — Antoine de Saint-Exupéry, Citadelle (1948)}
 
-		--assert text-expected == decode 'quoted-printable text-encoded  
-		--assert text-expected == decode 'quoted-printable encode 'quoted-printable text-expected
-		
+		--assert text-expected == qp-decode text-encoded  
+		--assert text-expected == qp-decode qp-encode text-expected
+
 	--test-- "encode with line length limit"
 		codecs/quoted-printable/max-line-length: 4
-		--assert "a" = encode 'quoted-printable "a"
-		--assert "ab" = encode 'quoted-printable "ab"
-		--assert "abc" = encode 'quoted-printable "abc"
-		--assert "abcd" = encode 'quoted-printable "abcd"
-		--assert "abc=^M^/de" = encode 'quoted-printable "abcde"
-		--assert "abc=^M^/def" = encode 'quoted-printable "abcdef"
-		--assert "abc=^M^/defg" = encode 'quoted-printable "abcdefg"
+		--assert "a" = qp-encode "a"
+		--assert "ab" = qp-encode "ab"
+		--assert "abc" = qp-encode "abc"
+		--assert "abcd" = qp-encode "abcd"
+		--assert "abc=^M^/de" = qp-encode "abcde"
+		--assert "abc=^M^/def" = qp-encode "abcdef"
+		--assert "abc=^M^/defg" = qp-encode "abcdefg"
+
+	--test-- "quoted-encode with spaces"
+		--assert "a b" = qp-encode "a b"
+		--assert "a_b" = qp-encode/no-space "a b"
+		--assert "a_b" = qp-decode "a_b"
+		--assert "a b" = qp-decode/space "a_b"
 
 	===end-group===
 	codecs/quoted-printable/max-line-length: :was-length
+	unset 'qp-encode
+	unset 'qp-decode
 ]
 
 
