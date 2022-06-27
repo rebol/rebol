@@ -1708,6 +1708,7 @@ Rebol [
 	--assert http://a?b=%25C5%25A1 = enhex http://a?b=š
 	--assert "%C5%A1ik"  = to-string enhex %šik
 	--assert       "šik" = to-string dehex enhex to-binary "šik"
+	--assert       "šik" = dehex enhex "šik"
 	--assert       "%7F" = enhex to-string #{7F}
 	--assert "%EF%BF%BD" = enhex to-string #{80} ; #{80} is not valid UTF-8!
 	--assert "%EF%BF%BD" = enhex to-string #{81}
