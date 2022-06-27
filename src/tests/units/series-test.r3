@@ -1690,6 +1690,10 @@ Rebol [
 	--assert "++"   = dehex "%2b%2b"
 	--assert 127 = to-integer first dehex "%7F"
 
+	--assert "áaá" = dehex "áa%C3%A1"
+	--assert "aá"  = dehex next "áa%C3%A1"
+	--assert "aa"  = dehex next "áaa"
+
 --test-- "ENHEX"
 	;@@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent
 	--assert "%C2%A3"   = enhex "£"
@@ -1732,16 +1736,16 @@ Rebol [
 	--assert "a_=C3=A1=5F" = enhex/escape/uri "a á_" #"="
 
 --test-- "DEHEX/uri"
-	--assert "a+b+"   = dehex "a+b%2B"
-	--assert "a b+"   = dehex/uri "a+b%2B"
+	--assert "a+b+" = dehex "a+b%2B"
+	--assert "a b+" = dehex/uri "a+b%2B"
 	; quoted-printable:
-	--assert "a_b_"   = dehex/escape"a_b=5F" #"="
-	--assert "a b_"   = dehex/uri/escape"a_b=5F" #"="
+	--assert "a_b_" = dehex/escape"a_b=5F" #"="
+	--assert "a b_" = dehex/uri/escape"a_b=5F" #"="
 	; to get propper UTF8 results, we must use binary input (for now?)
-	--assert "a á+" = to string! dehex to binary! "a%20%C3%A1%2B"
-	--assert "a á+" = to string! dehex/uri to binary! "a+%C3%A1%2B"
-	--assert "a á_" = to string! dehex/escape to binary! "a=20=C3=A1_" #"="
-	--assert "a á_" = to string! dehex/escape/uri to binary! "a_=C3=A1=5F" #"="
+	--assert "a á+" = dehex "a%20%C3%A1%2B"
+	--assert "a á+" = dehex/uri "a+%C3%A1%2B"
+	--assert "a á_" = dehex/escape "a=20=C3=A1_" #"="
+	--assert "a á_" = dehex/escape/uri "a_=C3=A1=5F" #"="
 
 ===end-group===
 

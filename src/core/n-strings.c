@@ -617,53 +617,43 @@ static struct digest {
 	REBINT len = (REBINT)VAL_LEN(arg); // due to len -= 2 below
 	REBUNI n;
 	REBSER *ser;
+	REBYTE *bp, *dp;
 
 	const REBCHR escape_char = D_REF(2) ? VAL_CHAR(D_ARG(3)) : '%';
 	const REBCHR space_char = escape_char == '=' ? '_' : '+';
 
 	if (VAL_BYTE_SIZE(arg)) {
-		REBYTE *bp = VAL_BIN_DATA(arg);
-		REBYTE *dp = Reset_Buffer(BUF_FORM, len);
-
-		for (; len > 0; len--) {
-			if (*bp == escape_char && len > 2 && Scan_Hex2(bp+1, &n, FALSE)) {
-				*dp++ = (REBYTE)n;
-				bp += 3;
-				len -= 2;
-			}
-			else if (*bp == space_char && as_uri) {
-				*dp++ = ' ';
-				bp++;
-			}
-			else {
-				*dp++ = *bp++;
-			}
-		}
-
-		*dp = 0;
-		ser = Copy_String(BUF_FORM, 0, dp - BIN_HEAD(BUF_FORM));
+		bp = VAL_BIN_DATA(arg);
 	}
 	else {
-		REBUNI *up = VAL_UNI_DATA(arg);
-		REBUNI *dp = (REBUNI*)Reset_Buffer(BUF_MOLD, len);
+		// if the input is an unicode string, convert it to UTF8
+		ser = Encode_UTF8_String(VAL_UNI_DATA(arg), len, TRUE, 0);
+		len = BIN_LEN(ser); // because the lengh may be changed!
+		bp = BIN_HEAD(ser);
+	}
 
-		for (; len > 0; len--) {
-			if (*up == escape_char && len > 2 && Scan_Hex2((REBYTE*)(up+1), &n, TRUE)) {
-				*dp++ = (REBUNI)n;
-				up += 3;
-				len -= 2;
-			}
-			else if (*up == space_char && as_uri) {
-				*dp++ = ' ';
-				up++;
-			}
-			else {
-				*dp++ = *up++;
-			}
+	dp = Reset_Buffer(BUF_FORM, len+1); // count also the terminating null byte
+
+	for (; len > 0; len--) {
+		if (*bp == escape_char && len > 2 && Scan_Hex2(bp+1, &n, FALSE)) {
+			*dp++ = (REBYTE)n;
+			bp  += 3;
+			len -= 2;
 		}
+		else if (*bp == space_char && as_uri) {
+			*dp++ = ' ';
+			bp++;
+		}
+		else {
+			*dp++ = *bp++;
+		}
+	}
 
-		*dp = 0;
-		ser = Copy_String(BUF_MOLD, 0, dp - UNI_HEAD(BUF_MOLD));
+	*dp = 0;
+	if (IS_BINARY(arg)) {
+		ser = Copy_String(BUF_FORM, 0, dp - BIN_HEAD(BUF_FORM));
+	} else {
+		ser = Decode_UTF_String(VAL_BIN_DATA(TASK_BUF_FORM), dp - BIN_HEAD(BUF_FORM), -1, FALSE, FALSE);
 	}
 
 	Set_Series(VAL_TYPE(arg), D_RET, ser);
