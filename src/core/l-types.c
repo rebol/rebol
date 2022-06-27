@@ -1196,6 +1196,7 @@ end_date:
 			if (*cp == LF) cp++;
 			if (IS_LEX_SPACE(*cp)) {
 				while (IS_LEX_SPACE(*cp)) cp++;
+				len++;
 				while (NOT_NEWLINE(*cp)) len++, cp++;
 			}
 			else break;
@@ -1213,6 +1214,7 @@ end_date:
 			if (*cp == LF) cp++;
 			if (IS_LEX_SPACE(*cp)) {
 				while (IS_LEX_SPACE(*cp)) cp++;
+				*str++ = ' ';
 				while (NOT_NEWLINE(*cp)) *str++ = *cp++;
 			}
 			else break;

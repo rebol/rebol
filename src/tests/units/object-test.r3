@@ -221,6 +221,9 @@ Rebol [
 		--assert ["1"] = values-of construct to-binary "a: 1"
 		--assert ["1" "yes"] = values-of construct "a: 1^/b: yes"
 		--assert ["1 b: yes"] = values-of construct "a: 1 b: yes" ; there is not the newline!
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2499
+		--assert ["a b c"] = values-of construct "f: a b^M^/ c"
+		--assert ["a b c"] = values-of construct "f: a b^M^/    c"
 
 	--test-- "red-issue-4765"
 		a4765: make object! [ x: 1 show: does [x] ]
