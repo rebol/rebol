@@ -476,19 +476,19 @@ static struct digest {
 **
 ***********************************************************************/
 {
+	REBVAL *arg = D_ARG(1);
 	REBINT base = VAL_INT32(D_ARG(2));
+	REBVAL *part = D_ARG(5);
 	REBSER *ser;
 	REBCNT index;
 	REBCNT len = 0;
 
 	if (D_REF(4)) {
-		if (VAL_INT64(D_ARG(5)) > (i64)MAX_I32) {
-			len = MAX_I32;
-		} else if (VAL_INT64(D_ARG(5)) <= 0) {
+		len = Partial(arg, 0, part, 0); // Can modify value index.
+		if (len == 0) {
 			Set_Binary(D_RET, Make_Binary(0));
 			return R_RET;
-		} else
-			len = VAL_INT32(D_ARG(5));
+		}
 	}
 
 	ser = Prep_Bin_Str(D_ARG(1), &index, &len); // result may be a SHARED BUFFER!
@@ -514,15 +514,14 @@ static struct digest {
 	REBVAL *arg = D_ARG(1);
 	REBINT base = VAL_INT32(D_ARG(2));
 	REBCNT limit = NO_LIMIT;
+	REBVAL *part = D_ARG(5);
 
 	if (D_REF(4)) {
-		if (VAL_INT64(D_ARG(5)) > (i64)MAX_I32) {
-			limit = MAX_I32;
-		} else if (VAL_INT64(D_ARG(5)) <= 0) {
+		limit = Partial(arg, 0, part, 0); // Can modify value index.
+		if (limit == 0) {
 			Set_String(D_RET, Make_Binary(0));
 			return R_RET;
-		} else
-			limit = VAL_INT32(D_ARG(5));
+		}
 	}
 
 	Set_Binary(arg, Prep_Bin_Str(arg, &index, (limit == NO_LIMIT) ? 0 : &limit)); // may be SHARED buffer

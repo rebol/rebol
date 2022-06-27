@@ -396,16 +396,16 @@ debase: native [
 	base  [integer!] {Binary base to use: 85, 64, 36, 16, or 2}
 	/url  {Base 64 Decoding with URL and Filename Safe Alphabet}
 	/part {Limit the length of the input}
-	limit [integer!]
+	limit [integer! binary! any-string!]
 ]
 
 enbase: native [
 	{Encodes a string into a binary-coded string.}
-	value [binary! string!] {If string, will be UTF8 encoded}
+	value [binary! any-string!] {If string, will be UTF8 encoded}
 	base  [integer!] {Binary base to use: 85, 64, 36, 16, or 2}
 	/url  {Base 64 Encoding with URL and Filename Safe Alphabet}
 	/part {Limit the length of the input}
-	limit [integer!]
+	limit [integer! binary! any-string!]
 ]
 
 decloak: native [

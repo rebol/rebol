@@ -140,6 +140,11 @@ Rebol [
 		--assert "Zm9vZm9v"  = enbase/part "foofoo" 64 6
 		--assert "Zm9v"  = enbase/part "foošřž" 64 3
 		--assert "Zm9v"  = enbase/part skip "šřžfoo" 3 64 3
+	--test-- "enbase/part with series as a length"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2500
+		--assert "YWI=" = enbase/part s: "abcd" 64 skip s 2
+		--assert "Y2Q=" = enbase/part s: tail "abcd" 64 skip s -2
+		--assert "Y2Q=" = enbase/part s: tail "abcd" 64 -2
 ===end-group===
 
 ===start-group=== "debase/part"
@@ -163,6 +168,11 @@ Rebol [
 		--assert #{666F6F666F6F}  = debase/part "Zm9vZm9v" 64 8
 		--assert #{666F6F666F6F}  = debase/part "Zm9vZm9v!!!" 64 8
 		--assert #{666F6F666F6F}  = debase/part "Zm9vZm9vščř" 64 8
+	--test-- "debase/part with series as a length"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2500
+		--assert #{6162} = debase/part s: "YWI=XXXX" 64 find s #"X"
+		--assert #{6162} = debase/part s: tail "XXXYWI=" 64 -4
+		--assert #{6162} = debase/part s: tail "XXXYWI=" 64 find/tail/reverse s #"X"
 ===end-group===
 
 if any [
