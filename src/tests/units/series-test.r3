@@ -1723,15 +1723,25 @@ Rebol [
 --test-- "ENHEX/uri"
 	--assert "a%20b%2B" = enhex "a b+"
 	--assert "a+b%2B" = enhex/uri "a b+"
+	--assert "a%20%C3%A1%2B" = enhex "a á+"
+	--assert "a+%C3%A1%2B" = enhex/uri "a á+"
 	; quoted-printable:
 	--assert "a=20b_" = enhex/escape "a b_" #"="
-	--assert "a_b=5F" = enhex/uri/escape "a b_" #"=" 
+	--assert "a_b=5F" = enhex/uri/escape "a b_" #"="
+	--assert "a=20=C3=A1_" = enhex/escape "a á_" #"="
+	--assert "a_=C3=A1=5F" = enhex/escape/uri "a á_" #"="
+
 --test-- "DEHEX/uri"
 	--assert "a+b+"   = dehex "a+b%2B"
 	--assert "a b+"   = dehex/uri "a+b%2B"
 	; quoted-printable:
 	--assert "a_b_"   = dehex/escape"a_b=5F" #"="
 	--assert "a b_"   = dehex/uri/escape"a_b=5F" #"="
+	; to get propper UTF8 results, we must use binary input (for now?)
+	--assert "a á+" = to string! dehex to binary! "a%20%C3%A1%2B"
+	--assert "a á+" = to string! dehex/uri to binary! "a+%C3%A1%2B"
+	--assert "a á_" = to string! dehex/escape to binary! "a=20=C3=A1_" #"="
+	--assert "a á_" = to string! dehex/escape/uri to binary! "a_=C3=A1=5F" #"="
 
 ===end-group===
 

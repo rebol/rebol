@@ -652,7 +652,12 @@ static struct digest {
 				*dp++ = (REBUNI)n;
 				up += 3;
 				len -= 2;
-			} else {
+			}
+			else if (*up == space_char && as_uri) {
+				*dp++ = ' ';
+				up++;
+			}
+			else {
 				*dp++ = *up++;
 			}
 		}
@@ -723,13 +728,13 @@ static struct digest {
 					*dp++ = space_char;
 					continue;
 				}
-				if (c == space_char) goto escaped;
+				if (c == space_char) goto escaped_ascii;
 			}
 			if (Check_Bit_Cased(VAL_SERIES(val_bitset), c)) {
 				*dp++ = c;
 				continue;
 			}
-		escaped:
+		escaped_ascii:
 			*dp++ = escape_char;
 			*dp++ = Hex_Digits[(c & 0xf0) >> 4];
 			*dp++ = Hex_Digits[ c & 0xf];
@@ -742,7 +747,16 @@ static struct digest {
 		while (up < ep) {
 			REBUNI c = up[0];
 			up++;
-
+			if (no_space) {
+				if (c == ' ') {
+					*dp++ = space_char;
+					continue;
+				}
+				if (c == space_char) {
+					encoded_size = Encode_UTF8_Char(encoded, c);
+					goto escaped_uni;
+				}
+			}
 			if (c >= 0x80) {// all non-ASCII characters *must* be percent encoded
 				encoded_size = Encode_UTF8_Char(encoded, c);
 			} else {
@@ -753,6 +767,7 @@ static struct digest {
 				encoded[0] = cast(REBYTE, c);
 				encoded_size = 1;
 			}
+		escaped_uni:
 			for (n = 0; n < encoded_size; ++n) {
 				*dp++ = escape_char;
 				*dp++ = Hex_Digits[(encoded[n] & 0xf0) >> 4];
