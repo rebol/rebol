@@ -8,6 +8,13 @@ Rebol [
 
 ~~~start-file~~~ "ERROR"
 
+===start-group=== "TRY"
+	--test-- "basic TRY"
+	--assert 2 = try [1 + 1]
+	--assert 2 = try first [(1 + 1)]
+===end-group===
+
+
 ===start-group=== "make error!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/835
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1593

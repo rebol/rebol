@@ -307,7 +307,7 @@ trace: native [
 
 try: native [
 	{Tries to DO a block and returns its value or an error.}
-	block [block!]
+	block [block! paren!]
 	/except "On exception, evaluate this code block"
 	code [block! any-function!]
 ]
