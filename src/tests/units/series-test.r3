@@ -2315,6 +2315,52 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "COMBINE"
+;@@ https://github.com/Oldes/Rebol-wishes/issues/19
+--test-- "combine to string"
+	--assert "abc" = combine [a b c]
+	--assert "abc" = combine [a #[none] b () c #[unset!]]
+	--assert "a|b|c" = combine/with [a #[none] b () c #[unset!]] #"|"
+	--assert "abcghi" = combine [{abc} (if false {def}) {ghi}]
+	--assert "abcghi" = combine reduce [{abc} if false {def} {ghi}]
+	--assert "a, b, c" = combine/with [a b c] ", "
+	--assert "x, a, b, c" = combine/with/into [a b c] ", " "x"
+
+--test-- "combine to block"
+	--assert [a c]  = combine/into [a (if/only false [b]) c] []
+	--assert [a b c] = combine/into [a (if/only true [b]) c] []
+	--assert [x a b c] = combine/into [a b c] [x]
+	--assert [x -- a -- b -- c] = combine/into/with [a [b c]] [x] '--
+
+--test-- "combine to file"
+	--assert %a/1/c = combine/into/with [#"a" 1 "c"] %"" #"/"
+
+--test-- "combine to path"
+	--assert 'a/b/c = combine/into [a b #[none] c] make path! 3
+
+--test-- "combine to tag"
+	url: http://rebol.com
+	--assert <a href=http://rebol.com> = combine/into [{a href=} :url] make tag! 10
+
+--test-- "combine/only"
+	--assert [1 [a b] 2] = combine/only/into [1 [a b] 2] []
+	--assert "1, [a b], 2" = combine/only/with [1 [a b] 2] ", "
+
+--test-- "combine/ignore"
+	--assert "ab" = combine/ignore [1 a b 1.0] number!
+	--assert [a b] = combine/ignore/into [1 a b 1.0] number! []
+
+--test-- "combine with get-word"
+	--assert "<span>one</span>^/<span>1 < 2</span>" = combine [
+		<span> "one" </span> :LF
+		(if/only 1 < 2 [<span> "1 < 2" </span>])
+		(if/only 1 > 2 [<span> "1 > 2" </span>])
+	]
+
+===end-group===
+
+
 ===start-group=== "COLLECT"
 --test-- "collect unset"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/880

@@ -677,6 +677,55 @@ split: function [
 	]
 ]
 
+combine: func [
+	"Combines a block of values with a possibility to ignore by its types. Content of parens is evaluated."
+	data  [block!] "Input values"
+	/with "Add delimiter between values"
+	 delimiter 
+	/into "Output results into a serie of required type"
+	 out [series!]
+	/ignore  "Fine tune, what value types will be ignored"
+	 ignored [typeset!] "Default is: #[typeset! [none! unset! error! any-function!]]"
+	/only "Insert a block as a single value"
+	/local val rule append-del append-val block-rule
+][
+	out: any [out make string! 15]
+	ignored: any [ignored make typeset! [none! unset! error! any-function!]]
+
+	append-del: either/only delimiter [
+		(unless empty? out [append out :delimiter])
+	][]
+
+	append-val: [
+		opt [
+			if (not find ignored type? :val)[
+				append-del (append out :val)
+			]
+		]
+	]
+
+	block-rule: either/only only [
+		set val block! append-del (
+			if any-string? out [val: mold val]
+			append/only out :val
+		)
+	][	ahead block! into rule]
+
+	parse data rule: [
+		any [
+			block-rule
+			|
+			[
+				  set val paren!    (set/any 'val try :val)
+				| set val get-word! (set/any 'val get/any :val)
+				| set val skip
+			]
+			append-val
+		]
+	]
+	out
+]
+
 find-all: func [
 	"Find all occurrences of a value within a series (allows modification)."
 	'series [word!] "Variable for block, string, or other series"
