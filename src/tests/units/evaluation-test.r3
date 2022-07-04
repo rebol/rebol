@@ -178,6 +178,10 @@ Rebol [
 		b: [print "OK"]
 		--assert block? do 'b
 
+	--test-- "do set-word!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1883
+		--assert all [error? e: try [do quote a:] e/id = 'invalid-arg]
+
 ===end-group===
 
 ===start-group=== "do path!"
@@ -200,6 +204,10 @@ Rebol [
 		b: ['a 'a/1]
 		--assert word? do first b
 		--assert path? do second b
+
+	--test-- "do set-path!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1883
+		--assert all [error? e: try [do quote a/1:] e/id = 'invalid-arg]
 
 ===end-group===
 
