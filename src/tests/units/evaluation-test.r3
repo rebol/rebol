@@ -162,8 +162,26 @@ Rebol [
 
 ===end-group===
 
-===start-group=== "do path!"
+===start-group=== "do word!"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1882
+	--test-- "do-word-1"
+		a: does ["OK"] b: 23
+		--assert "OK" == do 'a
+		--assert  23  == do 'b
 
+	--test-- "do-word-2"
+		o: make object! [a: does ["OK"] b: 23]
+		--assert "OK" == do in o 'a
+		--assert  23  == do in o 'b
+
+	--test-- "do-word-3"
+		b: [print "OK"]
+		--assert block? do 'b
+
+===end-group===
+
+===start-group=== "do path!"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1881
 	--test-- "do-path-1"
 		o: make object! [a: does ["OK"] b: 23]
 		--assert "OK" == do 'o/a

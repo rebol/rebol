@@ -609,6 +609,7 @@ got_err:
 	case REB_WORD:
 	case REB_GET_WORD:
 		*D_RET = *Get_Var(value);
+		if (ANY_FUNC(D_RET)) VAL_SET_OPT(D_RET, OPTS_REVAL);
 		break;
 
 	case REB_LIT_WORD:
