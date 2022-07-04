@@ -192,6 +192,15 @@ Rebol [
 		b: [["OK"]]
 		--assert ["OK"] == do first [b/1]
 
+	--test-- "do-path-3"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1434
+		a: [[1 + 2]] b: [a a/1]
+		--assert [[1 + 2]] = do first b
+		--assert  [1 + 2]  = do second b
+		b: ['a 'a/1]
+		--assert word? do first b
+		--assert path? do second b
+
 ===end-group===
 
 ===start-group=== "attempt"
