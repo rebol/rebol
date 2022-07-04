@@ -162,6 +162,20 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "do path!"
+
+	--test-- "do-path-1"
+		o: make object! [a: does ["OK"] b: 23]
+		--assert "OK" == do 'o/a
+		--assert  23  == do 'o/b
+		--assert all [error? e: try [do 'o/x] e/id = 'invalid-path]
+		
+	--test-- "do-path-2"
+		b: [["OK"]]
+		--assert ["OK"] == do first [b/1]
+
+===end-group===
+
 ===start-group=== "attempt"
 	--test-- "issue-41"
 		--assert none? attempt [2 / 0] ;@@ https://github.com/Oldes/Rebol-issues/issues/41
