@@ -878,9 +878,13 @@ reval:
 	case ET_WORD:
 		value = Get_Var(word = value);
 		if (IS_UNSET(value)) Trap1(RE_NO_VALUE, word);
-		if (VAL_TYPE(value) >= REB_NATIVE && VAL_TYPE(value) <= REB_FUNCTION) goto reval; // || IS_LIT_PATH(value)
+		if (ANY_FUNC(value)) goto reval;
 		DS_PUSH(value);
-		if (IS_LIT_WORD(value)) VAL_SET(DS_TOP, REB_WORD);
+		
+		// Following line was added by Atronix, but I don't know why.
+		//if (IS_LIT_WORD(value)) VAL_SET(DS_TOP, REB_WORD);
+		// `b: quote 'a  b` would return just `a` in console, while in R2 and Red it is `'a`
+
 		if (IS_FRAME(value)) Init_Obj_Value(DS_TOP, VAL_WORD_FRAME(word));
 		index++;
 		break;
