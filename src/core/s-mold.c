@@ -725,7 +725,7 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 	Remove_Last(MOLD_LOOP);
 }
 
-STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
+STOID Mold_Block(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 {
 	REBYTE *sep = NULL;
 	REBOOL all = GET_MOPT(mold, MOPT_MOLD_ALL);
@@ -772,12 +772,12 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 			break;
 
 		case REB_GET_PATH:
-			series = Append_Byte(series, ':');
+			if (molded) series = Append_Byte(series, ':');
 			sep = b_cast("/");
 			break;
 
 		case REB_LIT_PATH:
-			series = Append_Byte(series, '\'');
+			if (molded) series = Append_Byte(series, '\'');
 			/* fall through */
 		case REB_PATH:
 		case REB_SET_PATH:
@@ -789,7 +789,7 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 		else Mold_Block_Series(mold, VAL_SERIES(value), VAL_INDEX(value), sep);
 
 		if (VAL_TYPE(value) == REB_SET_PATH)
-			Append_Byte(series, ':');
+			if (molded) Append_Byte(series, ':');
 	}
 }
 
@@ -1272,7 +1272,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	case REB_BLOCK:
 	case REB_PAREN:
 		if (molded)
-			Mold_Block(value, mold);
+			Mold_Block(value, mold, molded);
 		else
 			Form_Block_Series(VAL_SERIES(value), VAL_INDEX(value), mold, 0);
 		break;
@@ -1281,7 +1281,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	case REB_SET_PATH:
 	case REB_GET_PATH:
 	case REB_LIT_PATH:
-		Mold_Block(value, mold);
+		Mold_Block(value, mold, molded);
 		break;
 
 	case REB_VECTOR:
