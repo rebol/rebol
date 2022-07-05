@@ -70,9 +70,9 @@ static REBOOL Equal_Object(REBVAL *val, REBVAL *arg)
 	return TRUE;
 }
 
-static void Append_Obj(REBSER *obj, REBVAL *arg)
+static void Append_Obj(REBSER *obj, REBVAL *arg, REBCNT part)
 {
-	REBCNT i, len;
+	REBCNT i, n, len;
 	REBVAL *word, *val;
 	REBINT *binds; // for binding table
 
@@ -102,7 +102,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 	Collect_Object(obj);
 
 	// Examine word/value argument block
-	for (word = arg; NOT_END(word); word += 2) {
+	for (word = arg, n = 0; ++n < part && NOT_END(word); word += 2, n++) {
 
 		if (!IS_WORD(word) && !IS_SET_WORD(word)) {
 			// release binding table
@@ -138,7 +138,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 		Append_Frame(obj, 0, VAL_WORD_SYM(word));
 
 	// Set new values to obj words
-	for (word = arg; NOT_END(word); word += 2) {
+	for (word = arg, n = 0; ++n < part && NOT_END(word); word += 2, n++) {
 
 		i = binds[VAL_WORD_CANON(word)];
 		val = FRM_VALUE(obj, i);
@@ -440,7 +440,11 @@ static REBSER *Trim_Object(REBSER *obj)
 	case A_INSERT:
 		TRAP_PROTECT(VAL_SERIES(value));
 		if (IS_OBJECT(value)) {
-			Append_Obj(VAL_OBJ_FRAME(value), arg);
+			if (DS_REF(AN_DUP)) {
+				n = Int32(DS_ARG(AN_COUNT));
+				if (n <= 0) break;
+			}
+			Append_Obj(VAL_OBJ_FRAME(value), arg, Partial1(arg, D_ARG(AN_LENGTH)));
 			return R_ARG1;
 		}
 		else

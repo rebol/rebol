@@ -60,6 +60,19 @@ Rebol [
 			error? e: try [append obj [a: 2]]
 			e/id = 'hidden
 		]
+	--test-- "append/part object!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1754
+		--assert []          == body-of append/part make object! [] [a 1 b 2 c 3] 1
+		--assert [a: 1]      == body-of append/part make object! [] [a 1 b 2 c 3] 2
+		--assert [a: 1]      == body-of append/part make object! [] [a 1 b 2 c 3] 3
+		--assert [a: 1 b: 2] == body-of append/part make object! [] [a 1 b 2 c 3] 4
+		--assert [a: 1 b: 2] == body-of append/part make object! [] b: [a 1 b 2 c 3] find b 'c
+		--assert [a: 1 b: 2] == body-of append/part make object! [a: 10] [a 1 b 2 c 3] 4
+		--assert [b: 2 c: 3] == body-of append/part make object! [] tail [a 1 b 2 c 3] -4
+	--test-- "append/dup object!"
+		--assert []     == body-of append/dup make object! [] [a 1] 0
+		--assert [a: 1] == body-of append/dup make object! [] [a 1] 1
+		--assert [a: 1] == body-of append/dup make object! [] [a 1] 10
 ===end-group===
 
 
@@ -295,8 +308,10 @@ Rebol [
 		o: object []
 		append o 'x
 		--assert unset? o/x
-		append o [y]
-		--assert unset? o/y
+		append o [y] ; does nothing now!
+		--assert [x] = keys-of o
+		append o [y 100]
+		--assert o/y = 100
 		--assert object? append o [x: 1 y: 2]
 		--assert o/x = 1
 		--assert o/y = 2
