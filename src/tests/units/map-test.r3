@@ -84,8 +84,17 @@ Rebol [
 	--assert 2 = length? append/dup  m [c 3] 0
 	--assert 3 = length? append/dup  m [c 3] 1
 	--assert 4 = length? append/dup  m [d 4] 2
-	--assert 5 = length? append/part m [e 5 f 6] 1
+	--assert 4 = length? append/part m [e 5 f 6] 1 ;no-op!
+	--assert 5 = length? append/part m [e 5 f 6] 2
 	--assert [1 2 3 4 5] = values-of m
+
+	--test-- "append/part map! with odd part"
+	--assert []     == body-of append/part make map! [] [a 1 b 2 c 3] 1
+	--assert [a: 1] == body-of append/part make map! [] [a 1 b 2 c 3] 2
+	--assert [a: 1] == body-of append/part make map! [] [a 1 b 2 c 3] 3
+	--assert []     == body-of append/part make map! [] tail [a 1 b 2 c 3] -1
+	--assert [c: 3] == body-of append/part make map! [] tail [a 1 b 2 c 3] -2
+	--assert [2 c]  == body-of append/part make map! [] tail [a 1 b 2 c 3] -3 ;NOTE that it is not [c: 3] and its ok!
 
 ===end-group===
 

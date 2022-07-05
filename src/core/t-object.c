@@ -101,8 +101,10 @@ static void Append_Obj(REBSER *obj, REBVAL *arg, REBCNT part)
 	// Setup binding table with obj words:
 	Collect_Object(obj);
 
+	part >>= 1; // part must be number of key/value pairs
+
 	// Examine word/value argument block
-	for (word = arg, n = 0; ++n < part && NOT_END(word); word += 2, n++) {
+	for (word = arg, n = 0; n < part && NOT_END(word); word += 2, n++) {
 
 		if (!IS_WORD(word) && !IS_SET_WORD(word)) {
 			// release binding table
@@ -138,7 +140,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg, REBCNT part)
 		Append_Frame(obj, 0, VAL_WORD_SYM(word));
 
 	// Set new values to obj words
-	for (word = arg, n = 0; ++n < part && NOT_END(word); word += 2, n++) {
+	for (word = arg, n = 0; n < part && NOT_END(word); word += 2, n++) {
 
 		i = binds[VAL_WORD_CANON(word)];
 		val = FRM_VALUE(obj, i);
