@@ -462,6 +462,15 @@ if find codecs 'PNG [
 			img/rgb = #{C800000000C800C800FFFFFF}
 		]
 		try [delete %new.png]
+
+	--test-- "encode/decode PNG"
+		--assert all [
+			binary? try [b: encode 'png make image! 1x1] 
+			image?  try [i: decode 'png b]
+			i/rgb == #{FFFFFF}
+		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2503
+		--assert error? try [decode 'png #{}]
 	===end-group===
 ]
 
@@ -476,6 +485,14 @@ if find codecs 'QOI [
 	--test-- "qoi/size?"
 		--assert 256x256 = codecs/qoi/size? %test.qoi
 		try [delete %test.qoi]
+	--test-- "encode/decode QOI"
+		--assert all [
+			binary? try [b: encode 'qoi make image! 1x1] 
+			image?  try [i: decode 'qoi b]
+			i/rgb == #{FFFFFF}
+		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2503
+		--assert error? try [decode 'qoi #{}]
 	===end-group===
 ]
 
@@ -491,6 +508,15 @@ if find codecs 'JPEG [
 		--assert 256x256 = codecs/jpeg/size? %units/files/flower-from-photoshop.jpg
 		--assert 256x256 = codecs/jpeg/size? %units/files/flower-tiny.jpg
 		--assert none?     codecs/jpeg/size? %units/files/test.aar
+
+	--test-- "encode/decode JPEG"
+		--assert all [
+			binary? try [b: encode 'jpeg make image! 1x1] 
+			image?  try [i: decode 'jpeg b]
+			i/rgb == #{FFFFFF}
+		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2503
+		--assert error? try [decode 'jpeg #{}]
 	===end-group===
 ]
 
@@ -499,6 +525,15 @@ if find codecs 'GIF [
 	--test-- "gif/size?"
 		--assert 256x256 = codecs/gif/size? %units/files/flower.gif
 		--assert none?     codecs/gif/size? %units/files/test.aar
+
+	--test-- "encode/decode GIF"
+		--assert all [
+			binary? try [b: encode 'gif make image! 1x1] 
+			image?  try [i: decode 'gif b]
+			i/rgb == #{FFFFFF}
+		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2503
+		--assert error? try [decode 'gif #{}]
 
 	--test-- "gif rgb image"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2495
@@ -522,6 +557,15 @@ if find codecs 'BMP [
 	--test-- "bmp/size?"
 		--assert 256x256 = codecs/bmp/size? %units/files/flower.bmp
 		--assert none?     codecs/bmp/size? %units/files/test.aar
+	--test-- "encode/decode BMP"
+		--assert all [
+			binary? try [b: encode 'bmp make image! 1x1] 
+			image?  try [i: decode 'bmp b]
+			i/rgb == #{FFFFFF}
+		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2503
+		--assert error? try [decode 'bmp #{}]
+
 	===end-group===
 ]
 
