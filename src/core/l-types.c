@@ -334,7 +334,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	REBINT num = (REBINT)len;
 	REBYTE buf[MAX_NUM_LEN+4];
 	REBYTE *bp;
-	REBI64 n;
+	REBI64 n = 0;
 	REBOOL neg = FALSE;
 
 	// Super-fast conversion of zero and one (most common cases):
@@ -369,12 +369,13 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	len = (REBCNT)(bp - &buf[0]);
 	if (neg) len--;
 	if (len > 19) return 0;
-
-	// Convert, check, and return:
-	errno = 0;
-	n = CHR_TO_INT(buf);
-	if (errno != 0) return 0; //overflow
-	if ((n > 0 && neg) || (n < 0 && !neg)) return 0;
+	if (len > 0) {
+		// Convert, check, and return:
+		errno = 0;
+		n = CHR_TO_INT(buf);
+		if (errno != 0) return 0; //overflow
+		if ((n > 0 && neg) || (n < 0 && !neg)) return 0;
+	}
 	SET_INTEGER(value, n);
 	return cp;
 }

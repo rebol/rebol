@@ -99,6 +99,10 @@ Rebol [
 		--assert all [error? e: try [to integer! "9'223'372'036'854'775'808"] e/id = 'bad-make-arg]
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2099
 	 	--assert 302961000000 = to integer! "3.02961E+11"
+	 	;@@ https://github.com/Oldes/Rebol-issues/issues/2504
+	 	--assert 0 = to integer! "0"
+	 	--assert 0 = to integer! "00"
+	 	--assert 0 = to integer! "00000000000"
 
 ===end-group===
 
