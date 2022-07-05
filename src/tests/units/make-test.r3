@@ -103,6 +103,13 @@ Rebol [
 	 	--assert 0 = to integer! "0"
 	 	--assert 0 = to integer! "00"
 	 	--assert 0 = to integer! "00000000000"
+	 	--assert 0 = to integer! "-0"
+	 	--assert 0 = to integer! "-00"
+	 	--assert 0 = to integer! "-00000000000"
+	 	--assert 0 = to integer! "+0"
+	 	--assert 0 = to integer! "+00"
+	 	--assert 0 = to integer! "+00000000000"
+	 	--assert 0 = to integer! "000'000'000"
 
 ===end-group===
 

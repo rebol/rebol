@@ -365,11 +365,11 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	}
 	*bp = 0;
 
-	// Too many digits?
+	// Count number of digits
 	len = (REBCNT)(bp - &buf[0]);
 	if (neg) len--;
-	if (len > 19) return 0;
 	if (len > 0) {
+		if (len > 19) return 0; // Too many digits
 		// Convert, check, and return:
 		errno = 0;
 		n = CHR_TO_INT(buf);
