@@ -267,7 +267,7 @@ REBINT Mode_Syms[] = {
 
 /***********************************************************************
 **
-*/	static void Read_File_Port(REBSER *port, REBREQ *file, REBVAL *path, REBCNT args, REBCNT len)
+*/	static void Read_File_Port(REBREQ *file, REBVAL *path, REBCNT args, REBCNT len)
 /*
 **		Read from a file port.
 **
@@ -283,7 +283,11 @@ REBINT Mode_Syms[] = {
 	// Do the read, check for errors:
 	file->data = BIN_HEAD(ser);
 	file->length = len;
-	if (OS_DO_DEVICE(file, RDC_READ) < 0) Trap_Port(RE_READ_ERROR, port, file->error);
+	if (OS_DO_DEVICE(file, RDC_READ) < 0) return; // Trap_Port(RE_READ_ERROR, port, file->error);
+	// Not throwing the error from here!
+	// We may want to close the port before error reporting.
+	// It is passed above in the file->error
+
 	SERIES_TAIL(ser) = file->actual;
 	STR_TERM(ser);
 
@@ -351,7 +355,9 @@ REBINT Mode_Syms[] = {
 		//Trap1(PE_BAD_ARGUMENT, data);
 	}
 	file->length = len;
-	OS_DO_DEVICE(file, RDC_WRITE);
+	OS_DO_DEVICE(file, RDC_WRITE); // don't report error here!
+	// We may want to close the port before error reporting.
+	// It is passed above in the file->error
 	
 	if(n > 0) {
 		// remove the temporary added newline from the series
@@ -427,7 +433,7 @@ REBINT Mode_Syms[] = {
 	REBREQ *file = 0;
 	REBCNT args = 0;
 	REBCNT len;
-	REBINT result;
+	REBINT result, error;
 	REBOOL opened = FALSE;	// had to be opened (shortcut case)
 
 	//Print("FILE ACTION: %r", Get_Action_Word(action));
@@ -464,14 +470,15 @@ REBINT Mode_Syms[] = {
 
 		if (args & AM_READ_SEEK) Set_Seek(file, D_ARG(ARG_READ_INDEX));
 		len = Set_Length(ds, file, ARG_READ_PART);
-		Read_File_Port(port, file, path, args, len);
+		Read_File_Port(file, path, args, len);
 
+		error = (REBINT)file->error; // store error value, before closing the file!
 		if (opened) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
 			Cleanup_File(file);
 		}
 
-		if (file->error) Trap_Port(RE_READ_ERROR, port, file->error);
+		if (error) Trap_Port(RE_READ_ERROR, port, error);
 		break;
 
 	case A_APPEND:
@@ -522,12 +529,14 @@ REBINT Mode_Syms[] = {
 		Write_File_Port(file, spec, len, args);
 
 		file->file.index += file->actual;
+
+		error = (REBINT)file->error; // store error value, before closing the file!
 		if (opened) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
 			Cleanup_File(file);
 		}
 
-		if (file->error) Trap1(RE_WRITE_ERROR, path);
+		if (error) Trap_Port(RE_WRITE_ERROR, port, error);
 		*D_RET = *path;
 		break;
 
@@ -542,7 +551,7 @@ REBINT Mode_Syms[] = {
 	case A_COPY:
 		if (!IS_OPEN(file)) Trap1(RE_NOT_OPEN, path); //!!!! wrong msg
 		len = Set_Length(ds, file, 2);
-		Read_File_Port(port, file, path, args, len);
+		Read_File_Port(file, path, args, len);
 		break;
 
 	case A_OPENQ:
