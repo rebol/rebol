@@ -47,6 +47,10 @@ Rebol [
 	--test-- "to-money issue!" ; not supported by design!
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1017
 		--assert error? try [to money! #000000000000000000000001]
+
+	--test-- "unicode issue"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/640
+		--assert "#Àlain" == mold to issue! "Àlain"
 		
 
 ===end-group===
