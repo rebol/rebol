@@ -539,7 +539,7 @@ in: native [
 parse: native [
 	{Parses a string or block series according to grammar rules.}
 	input [series!] {Input series to parse}
-	rules [block! string! char! none!] {Rules to parse by (none = ",;")}
+	rules [block!] {Rules to parse}
 	/all {For simple rules (not blocks) parse all chars including whitespace}
 	/case {Uses case-sensitive comparison}
 ]
