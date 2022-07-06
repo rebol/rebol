@@ -204,17 +204,18 @@ static REBVAL *Func_Word(REBINT dsf)
 	return R_UNSET;
 }
 
-static REBINT Init_Depth(void)
+static REBINT Init_Depth(REBINT plus)
 {
 	// Check the trace depth is ok:
-	int depth = Eval_Depth() - Trace_Depth;
+	int depth = Eval_Depth() - Trace_Depth + plus;
 	if (depth < 0 || depth >= Trace_Level) return -1;
 	if (depth > 10) depth = 10;
-	Debug_Space(4 * depth);
+	Debug_Space(3 * depth);
 	return depth;
 }
 
-#define CHECK_DEPTH(d) if ((d = Init_Depth()) < 0) return;\
+#define CHECK_DEPTH(d) if ((d = Init_Depth(0)) < 0) return;
+#define CHECK_DEPTH_RET(d) if ((d = Init_Depth(1)) < 0) return;
 
 void Trace_Line(REBSER *block, REBINT index, REBVAL *value)
 {
@@ -258,7 +259,7 @@ void Trace_Func(REBVAL *word, REBVAL *value)
 void Trace_Return(REBVAL *word, REBVAL *value)
 {
 	int depth;
-	CHECK_DEPTH(depth);
+	CHECK_DEPTH_RET(depth);
 	Debug_Fmt_(BOOT_STR(RS_TRACE,6), Get_Word_Name(word));
 	Debug_Values(value, 1, 50);
 }
