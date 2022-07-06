@@ -73,6 +73,16 @@ Rebol [
 		--assert []     == body-of append/dup make object! [] [a 1] 0
 		--assert [a: 1] == body-of append/dup make object! [] [a 1] 1
 		--assert [a: 1] == body-of append/dup make object! [] [a 1] 10
+
+	--test-- "bind to object"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/890
+		o: make object! [a: 0]
+		--assert all [error? e: try [bind 's o] e/id = 'not-in-context]
+		--assert all [
+			's = bind/new 's o
+			[a s] = keys-of o
+			unset? :o/s
+		]
 ===end-group===
 
 
