@@ -309,10 +309,16 @@ Rebol [
 
 --test-- "issue-215"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/215
-	--assert ["a" "b" "c"] = parse     "a/b/c" #"/"
-	--assert ["a" "b" "c"] = parse     "a/b/c"  "/"
-	--assert ["a" "b" "c"] = parse/all "a/b/c" #"/"
-	--assert ["a" "b" "c"] = parse/all "a/b/c"  "/"
+;-- This functionality was removed!
+;	--assert ["a" "b" "c"] = parse     "a/b/c" #"/"
+;	--assert ["a" "b" "c"] = parse     "a/b/c"  "/"
+;	--assert ["a" "b" "c"] = parse/all "a/b/c" #"/"
+;	--assert ["a" "b" "c"] = parse/all "a/b/c"  "/"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2046
+	--assert ["a" "b" "c"] = split     "a/b/c" #"/"
+	--assert ["a" "b" "c"] = split     "a/b/c"  "/"
+	--assert all [error? e: try [parse "a b c" none] e/id = 'expect-arg]
+	--assert all [error? e: try [parse "a/b/c" #"/"] e/id = 'expect-arg]
 
 --test-- "issue-367"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/367

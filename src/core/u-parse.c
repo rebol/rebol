@@ -1137,12 +1137,11 @@ bad_end:
 	return 0;
 }
 
-
+#ifdef INCLUDE_PARSE_SERIES_SPLITTING
 /***********************************************************************
 **
 */	REBSER *Parse_String(REBSER *series, REBCNT index, REBVAL *rules, REBCNT flags)
-/*
-***********************************************************************/
+/************************************************************************/
 {
 	REBCNT tail = series->tail;
 	REBSER *blk;
@@ -1229,7 +1228,7 @@ bad_end:
 
 	return Copy_Block(blk, 0);
 }
-
+#endif
 
 /***********************************************************************
 **
@@ -1292,6 +1291,7 @@ bad_end:
 
 	if (IS_BINARY(val)) opts |= PF_ALL | PF_CASE;
 
+#ifdef INCLUDE_PARSE_SERIES_SPLITTING
 	// Is it a simple string?
 	if (IS_NONE(arg) || IS_STRING(arg) || IS_CHAR(arg)) {
 		REBSER *ser;
@@ -1303,6 +1303,7 @@ bad_end:
 		Set_Block(DS_RETURN, Parse_Lines(VAL_SERIES(val)));
 	}
 	else {
+#endif
 		REBCNT n;
 		REBOL_STATE state;
 		// Let user RETURN and THROW out of the PARSE. All other errors should relay.
@@ -1327,7 +1328,9 @@ bad_end:
 		n = Parse_Series(val, VAL_BLK_DATA(arg), (opts & PF_CASE) ? AM_FIND_CASE : 0, 0);
 		SET_LOGIC(DS_RETURN, n >= VAL_TAIL(val) && n != NOT_FOUND);
 		POP_STATE(state, Saved_State);
+#ifdef INCLUDE_PARSE_SERIES_SPLITTING
 	}
+#endif
 
 	return R_RET;
 }
