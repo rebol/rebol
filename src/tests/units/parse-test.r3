@@ -122,6 +122,24 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "CASE / NO-CASE"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1898
+--test-- "case/no-case 1"
+	--assert parse      "aAaBbBcccDDD" [no-case "AAA" case "BbB" "ccc" no-case "ddd"]
+	--assert parse/case "aAaBbBcccDDD" [no-case "AAA" case "BbB" "ccc" no-case "ddd"]
+--test-- "case/no-case 2"
+	--assert all [parse b: ["aAa"][case ["AAA" | change "aAa" "AAA"]] b == ["AAA"]]
+	--assert all [parse b: ["aAa"][case "AAA" | no-case change "aaa" "AAA"] b == ["AAA"]]
+--test-- "case/no-case 3"
+	--assert parse "aaaAB" [case thru #"A" #"B"]
+	--assert parse "aaaAB" [case thru #"A" no-case #"b"]
+--test-- "case/no-case 4"
+	--assert     parse to binary! "aaaAB" [thru #"A" #"B"]
+	--assert     parse to binary! "aaaAB" [thru #"A" no-case #"b"]
+	--assert not parse to binary! "aaaAB" [thru #"A" #"b"]
+===end-group===
+
+
 ===start-group=== "CHANGE"
 
 --test-- "CHANGE string"

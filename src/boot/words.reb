@@ -156,6 +156,8 @@ while
 return
 limit
 ??
+case
+no-case
 accept
 break
 ; match words:

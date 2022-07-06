@@ -810,6 +810,13 @@ bad_target:
 					case SYM_QQ:
 						Print_Parse_Index(parse->type, rules, series, index);
 						continue;
+
+					case SYM_CASE:
+						parse->flags |= AM_FIND_CASE;
+						continue;
+					case SYM_NO_CASE:
+						parse->flags &= ~AM_FIND_CASE;
+						continue;
 					}
 				}
 				// Any other cmd must be a match command, so proceed...
