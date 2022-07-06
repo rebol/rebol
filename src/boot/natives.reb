@@ -358,7 +358,7 @@ as: native [
 bind: native [
 	{Binds words to the specified context.}
 	word [block! any-word!] {A word or block (modified) (returned)}
-	context [any-word! any-object!] {A reference to the target context}
+	context [any-word! object! module! port!] {A reference to the target context}
 	/copy {Bind and return a deep copy of a block, don't modify original}
 	/only {Bind only first block (not deep)}
 	/new {Add to context any new words found}
