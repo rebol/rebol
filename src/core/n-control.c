@@ -742,7 +742,7 @@ got_err:
 	REBVAL *val = D_ARG(1);
 	REBVAL *into = D_REF(5) ? D_ARG(6) : 0;
 
-	if (IS_BLOCK(val)) {
+	if (IS_BLOCK(val) || IS_PAREN(val)) {
 		REBSER *ser = VAL_SERIES(val);
 		REBCNT index = VAL_INDEX(val);
 
@@ -752,6 +752,10 @@ got_err:
 			Reduce_Only(ser, index, D_ARG(4), into);
 		else
 			Reduce_Block(ser, index, into);
+
+		if(!into)
+			SET_TYPE(DS_TOP, VAL_TYPE(val));
+
 		return R_TOS;
 	}
 	else if (into != 0) {

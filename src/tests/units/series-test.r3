@@ -288,6 +288,32 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "REDUCE"
+	--test-- "reduce block!"
+		--assert [2 6] == reduce [1 + 1 3 + 3]
+		--assert all [
+			[x] == reduce/into [1 + 1 3 + 3] b: [x]
+			b = [2 6 x]
+		]
+		--assert all [
+			tail? reduce/into ['a 1 + 1 3 + 3] p: make path! 3
+			p = 'a/2/6
+		]
+	--test-- "reduce paren!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2060
+		--assert 2 = reduce (1 + 1)
+		--assert quote (2 6) == reduce quote (1 + 1 3 + 3)
+		--assert all [
+			[x] == reduce/into quote (1 + 1 3 + 3) b: [x]
+			b = [2 6 x]
+		]
+		--assert all [
+			tail? reduce/into quote ('a 1 + 1 3 + 3) p: make path! 3
+			p = 'a/2/6
+		]
+===end-group===
+
+
 ===start-group=== "TRIM"
 	--test-- "trim string!"
 		str1: " a b c "
