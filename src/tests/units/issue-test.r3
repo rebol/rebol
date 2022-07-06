@@ -54,7 +54,9 @@ Rebol [
 
 	--test-- "bad chars in issue"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1199
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1201
 		--assert all [error? e: try [make issue! "a a"] e/id = 'invalid-chars]
+		--assert all [error? e: try [make issue! "^(01)a"] e/id = 'invalid-chars]
 		
 
 ===end-group===
