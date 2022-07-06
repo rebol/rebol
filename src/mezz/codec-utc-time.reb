@@ -15,7 +15,7 @@ register-codec [
 		utc [binary! string!]
 	][
 		ch_digits: charset [#"0" - #"9"]
-		parse/all utc [
+		parse utc [
 			insert "20"
 			  2 ch_digits   insert #"-"
 			  2 ch_digits   insert #"-"

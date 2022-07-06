@@ -87,7 +87,7 @@ form-attribute: func[name /default value][
 
 encode-value: func[value [any-string!] /local out tmp][
 	out: copy ""
-	parse/all value [
+	parse value [
 		any [
 			;pos: ;(probe pos)
 			[ 

@@ -54,7 +54,7 @@ decode-target: wrap [
 		
 		result: object [file: none values: make block! 8 fragment: none original: target]
 		unless target [return result]
-		parse/all to binary! target [
+		parse to binary! target [
 			opt [
 				copy val any chars (result/file: val) [
 					  #"?" 

@@ -347,10 +347,10 @@ Rebol [
 	abc: charset [ "a" "b" "c" ]
 	rls: [ "a" some ws copy b some abc some ws "c" ]
 	rla: [ "a"  any ws copy b some abc  any ws "c" ]
-	--assert     parse/all "a b c" rls
-	--assert     parse/all "a b c" rla
-	--assert not parse/all "a b"   rls
-	--assert not parse/all "a b"   rla
+	--assert     parse "a b c" rls
+	--assert     parse "a b c" rla
+	--assert not parse "a b"   rls
+	--assert not parse "a b"   rla
 
 
 --test-- "issue-967"
@@ -392,7 +392,7 @@ Rebol [
 --test-- "issue-206"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/206
 	any-char: complement charset ""
-	--assert parse/all "^(80)" [any-char]
+	--assert parse "^(80)" [any-char]
 
 --test-- "issue-1895"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1895

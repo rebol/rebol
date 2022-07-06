@@ -375,7 +375,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 	res: false
 	unless info/response-parsed [
 		;?? line
-		parse/all line [
+		parse line [
 			"HTTP/1." [#"0" | #"1"] some #" " [
 				#"1" (info/response-parsed: 'info)
 				|
@@ -600,7 +600,7 @@ check-data: func [port /local headers res data available out chunk-size pos trai
 			]
 			if not empty? data [
 				until [
-					either parse/all data [
+					either parse data [
 						copy chunk-size some hex-digits
 						crlfbin pos: to end
 					][
@@ -610,7 +610,7 @@ check-data: func [port /local headers res data available out chunk-size pos trai
 						available: length? data
 						sys/log/more 'HTTP ["Chunk-size:^[[m" chunk-size " ^[[36mavailable:^[[m " available]
 						either chunk-size = 0 [
-							if parse/all data [
+							if parse data [
 								crlfbin (trailer: "") to end | copy trailer to crlf2bin to end
 							][
 								trailer: construct trailer

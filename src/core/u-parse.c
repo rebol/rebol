@@ -1286,10 +1286,13 @@ bad_end:
 	REBVAL *arg = D_ARG(2);
 	REBCNT opts = 0;
 
-	if (D_REF(3)) opts |= PF_ALL;
-	if (D_REF(4)) opts |= PF_CASE;
+	if (D_REF(3)) opts |= PF_CASE;
+	if (IS_BINARY(val)) opts |= PF_CASE;
 
-	if (IS_BINARY(val)) opts |= PF_ALL | PF_CASE;
+// There was originally also /all
+//	if (D_REF(3)) opts |= PF_ALL;
+//	if (D_REF(4)) opts |= PF_CASE;
+//	if (IS_BINARY(val)) opts |= PF_ALL | PF_CASE;
 
 #ifdef INCLUDE_PARSE_SERIES_SPLITTING
 	// Is it a simple string?
