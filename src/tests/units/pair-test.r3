@@ -238,6 +238,28 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "pair - even?/odd?"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1884
+	--test-- "odd?"
+		--assert not odd? 0x0
+		--assert not odd? 0x1
+		--assert not odd? 1x0
+		--assert     odd? 1x1
+		--assert not odd? 2x2
+		--assert     odd? 1.1x2.9
+		--assert not odd? 1.1x2.2
+		
+	--test-- "even?"
+		--assert     even? 0x0
+		--assert not even? 0x1
+		--assert not even? 1x0
+		--assert not even? 1x1
+		--assert     even? 2x2
+		--assert     even? 1.9x2.1
+		--assert not even? 1.1x2.2
+
+===end-group===
+
 ===start-group=== "pair - issues"
 
 	--test-- "invalid construction"
