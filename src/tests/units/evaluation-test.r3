@@ -211,6 +211,17 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "with"
+	--test-- "with"
+		o: object [a: 1]
+		--assert 2 = with o [2 * a]
+		; test that return is not catched by `with`
+		f: does [with o [return a] 2]
+		--assert 1 = f
+===end-group===
+
+
 ===start-group=== "attempt"
 	--test-- "issue-41"
 		--assert none? attempt [2 / 0] ;@@ https://github.com/Oldes/Rebol-issues/issues/41

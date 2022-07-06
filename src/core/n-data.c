@@ -517,6 +517,28 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 /***********************************************************************
 **
+*/	REBNATIVE(with)
+/*
+//  with: native [
+//		"Evaluates a block binded to the specified context"
+//		context [object! module! port!] "A reference to the target context"
+//		body    [block!]      "A code to be evaluated"
+//  ]
+***********************************************************************/
+{
+	REBSER *frame = VAL_OBJ_FRAME(D_ARG(1));
+	REBSER *body  = VAL_SERIES   (D_ARG(2));
+
+	Bind_Block(frame, BLK_HEAD(body), BIND_DEEP);
+
+	// Evaluate the body:
+	DO_BLK(D_ARG(2));
+	return R_TOS1;
+}
+
+
+/***********************************************************************
+**
 */	REBNATIVE(not)
 /*
 ***********************************************************************/
