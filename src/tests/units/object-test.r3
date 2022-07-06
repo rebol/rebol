@@ -83,6 +83,10 @@ Rebol [
 			[a s] = keys-of o
 			unset? :o/s
 		]
+	--test-- "bind to error"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/894
+		err: make error! "foo"
+		--assert all [error? e: try [bind 'id err] e/id = 'expect-arg]
 ===end-group===
 
 
