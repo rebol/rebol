@@ -213,6 +213,9 @@ Rebol [
 		]
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1415
 		--assert "%%5E" == mold to-file "^^"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1442
+		--assert "%a%02c" == mold to-file "a^Bc"
+		--assert "%a%20b" == mold to-file "a^ b"
 
 ===end-group=== 
 
