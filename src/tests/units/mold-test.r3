@@ -211,6 +211,8 @@ Rebol [
 			f2: try [load mold f1: append copy %a to char! i]
 			--assert f1 == f2
 		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1415
+		--assert "%%5E" == mold to-file "^^"
 
 ===end-group=== 
 
