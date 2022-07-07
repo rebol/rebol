@@ -1024,7 +1024,7 @@ register-codec [
 			; Parse the document and capture the return code from the REBOL
 			; parse.
 			;
-			parse-result: parse/case/all xml-string xmlDocument
+			parse-result: parse/case xml-string xmlDocument
 			;
 			; If the handler doesn't return a specific parse result, then  
 			; return the parse-result we obtained from the REBOL parse.
