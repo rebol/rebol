@@ -24,6 +24,7 @@ register-codec [
 	][
 		output: either binary? data [ copy data ][ to binary! data ]
 		parse output [
+			no-case ; binary input is by default case-sensitive
 			any [
 				to ch-crlf= [
 					s: [#"^M" #"^/" | #"^/" #"^M" | #"^/"] some ch-space e: [
@@ -33,7 +34,8 @@ register-codec [
 					|
 					s: "=?" [
 						copy chr: to #"?" skip
-						[[#"q" | #"Q"] (enc: #"q") | [#"b" | #"B"] (enc: #"b")]  #"?"
+						; q and b bellow are handled as case-insensitive!
+						[#"q" (enc: #"q") | #"b" (enc: #"b")] #"?"
 						copy txt: to "?=" 2 skip
 						;Any amount of linear-space-white between 'encoded-word's,
 						;even if it includes a CRLF followed by one or more SPACEs,
