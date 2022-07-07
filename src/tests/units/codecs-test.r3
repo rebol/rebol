@@ -695,6 +695,51 @@ if find codecs 'plist [
 	===end-group===
 ]
 
+try [import 'mime-field]
+if find codecs 'mime-field [
+	===start-group=== "MIME-field codec"		
+		--test-- "decode/encode mime-field"
+foreach str [
+	"Labels: =?UTF-8?Q?Doru=C4=8Den=C3=A9,Nep=C5=99e=C4=8Dten=C3=A9?="
+	"=?UTF-8?B?d2ViIHBybyDFvmFyb8WhaWNl?="
+	"=?ISO-8859-1?Q?Patrik_F=E4ltstr=F6m?= <paf@nada.kth.se>"
+	"From: =?US-ASCII?Q?Keith_Moore?= <moore@cs.utk.edu>"
+	"=?ISO-8859-1?B?SWYgeW91IGNhbiByZWFkIHRoaXMgeW8=?==?ISO-8859-2?B?dSB1bmRlcnN0YW5kIHRoZSBleGFtcGxlLg==?="
+	{Subject: =?UTF-8?B?W0plIHZ5xb5hZG92w6FuYSBha2NlXSBVcGdyYWR1anRlLCBhYnlzdGUgbW9obGkgemHEjQ==?=
+	=?UTF-8?B?w610IHBvdcW+w612YXQgc2x1xb5idSBHb29nbGUgV29ya3NwYWNl?=}
+	{Subject: =?UTF-8?B?8J+OgiBLYXRlxZlpbmEgUnVzxYg=?=
+ =?UTF-8?B?w6Frb3bDoSwgQ2FzYSBCZWw=?=
+ =?UTF-8?B?bGEgRmF1eCBGaW5pc2hl?=
+ =?UTF-8?B?cyBhIEdhYnJpZWxhIEty?=
+ =?UTF-8?B?YXNvdsOhIFBldHJvdmnEhyA=?=
+ =?UTF-8?B?bWFqw60gZG5lc2thIG5hcg==?=
+ =?UTF-8?B?b3plbmlueQ==?=}
+	{X-Gmail-Labels: =?UTF-8?Q?Archivov=C3=A1no,Kategorie:_Soci=C3=A1?=
+ =?UTF-8?Q?ln=C3=AD_s=C3=ADt=C4=9B,Nep=C5=99e=C4=8Dten=C3=A9,Facebook?=}
+	{Subject: =?UTF-8?Q?=C4=8D_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?=
+	=?UTF-8?Q?xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?=
+	=?UTF-8?Q?xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?=}
+	{Subject: Fwd: Cron <root@forum> test -x /usr/sbin/anacron || ( cd / &&
+  run-parts --report /etc/cron.weekly )}
+  {xxxxx^M^/ =?utf-8?Q?yyyy?=}
+  {xxxxx^M^/ yyyy}
+	"(=?ISO-8859-1?Q?a?= =?ISO-8859-1?Q?b?=)" ;"(ab)"
+	"(=?ISO-8859-1?Q?a?=  =?ISO-8859-1?Q?b?=)" ;<== should be "(ab)"
+	"(=?ISO-8859-1?Q?a?=^M^/ =?ISO-8859-1?Q?b?=)" ;"(ab)"
+	"(=?ISO-8859-1?Q?a_b?=)" ;<= "(a b)"
+	"(=?ISO-8859-1?Q?a?= =?ISO-8859-2?Q?_b?=)" ; "(a b)"
+	"(=?ISO-8859-1?Q?a?= b)" ;"(a b)"
+	{Subject: =?UTF-8?Q?Fwd=3A_objedn=C3=A1vka?=}
+	"Subject: Hello Mail"
+][
+	x: decode 'mime-field :str
+	y: encode 'mime-field :x
+	z: decode 'mime-field :y
+	--assert z = x
+]
+	===end-group===
+]
+
 ;@@ PDF codec test is in: codecs-test-pdf.r3
 
 ~~~end-file~~~

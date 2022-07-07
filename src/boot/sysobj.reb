@@ -118,6 +118,7 @@ modules: object [
 	plist:         https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-plist.reb
 	bbcode:        https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-bbcode.reb
 	html-entities: https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-html-entities.reb
+	mime-field:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-mime-field.reb
 	quoted-printable: https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-quoted-printable.reb
 	;; and..
 	window: none ;- internal extension for gui (on Windows so far!)
