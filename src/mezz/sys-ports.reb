@@ -266,6 +266,7 @@ make-scheme: func [
 	]
 
 	append system/schemes reduce [def/name def]
+	def
 ]
 
 init-schemes: func [
