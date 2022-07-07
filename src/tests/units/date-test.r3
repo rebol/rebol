@@ -325,6 +325,7 @@ Rebol [
 		--assert 28-Mar-2019/0:00 = to-date to-binary "Thu, 28 Mar 2019 00:00:00 +0000"
 		--assert 4-Apr-2019/19:41:46 = to-date "Thu, 04 Apr 2019 19:41:46 GMT"
 		--assert 1-Apr-2019/21:50:04 = to-date "Mon, 1 Apr 2019 21:50:04 GMT"
+		--assert 30-Jul-2013/2:17:58-7:00 = to-date "Tue, 30 Jul 2013 02:17:58 -0700 (PDT)"
 
 
 ===end-group===
