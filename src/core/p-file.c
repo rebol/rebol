@@ -370,7 +370,7 @@ REBINT Mode_Syms[] = {
 
 /***********************************************************************
 **
-*/	static REBCNT Set_Length(const REBVAL *ds, const REBREQ *file, const REBCNT arg)
+*/	static REBCNT Set_Length(const REBVAL *ds, REBREQ *file, const REBCNT arg)
 /*
 **		Computes the length of data based on the argument number
 **		provided for the ARG_*_PART stack value (which, when there,
@@ -395,6 +395,16 @@ REBINT Mode_Syms[] = {
 
 	// Limit size of requested read:
 	cnt = VAL_INT64(D_ARG(arg+1));
+	if (cnt < 0) {
+		cnt = -cnt;
+		if (cnt > file->file.index) {
+			Trap1(RE_OUT_OF_RANGE, D_ARG(arg + 1));
+			//cnt = file->file.index;
+		}
+		file->file.index -= cnt;
+		len += cnt;
+		SET_FLAG(file->modes, RFM_RESEEK);
+	}
 	if (cnt > len) return (REBCNT)len;
 	return (REBCNT)cnt;
 }

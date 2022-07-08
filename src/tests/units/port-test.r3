@@ -331,7 +331,22 @@ if system/platform = 'Windows [
 			port? close p
 			not error? try [delete %file-552]
 		]
-		
+
+	--test-- "read/part"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2505
+		--assert all [
+			file? write %12345 "12345"
+			port? p: open/read/seek %12345
+			#{31}   == read/part p 1 ; advances!
+			#{3233} == read/part p 2
+			#{3132} == read/part head p 2
+			#{}     == read/part tail p 2
+			#{35}   == read/part tail p -1 ;- no crash!
+			#{3435} == read/part tail p -2
+			all [error? e: try [read/part p -20]  e/id = 'out-of-range]
+			port? close p
+			not error? try [delete %12345]
+		]
 
 	--test-- "CLEAR file port"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/812
