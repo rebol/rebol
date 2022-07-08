@@ -347,6 +347,46 @@ if system/platform = 'Windows [
 			port? close p
 			not error? try [delete %12345]
 		]
+	--test-- "skip/at on file port"
+		write %12345 "12345"
+		p: open/read/seek %12345
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2506
+		--assert all [
+			1 = index? head p
+			3 = index? skip p 2
+			5 = index? skip p 2
+			6 = index? tail p
+			6 = index? skip p 20
+			1 = index? skip head p -10
+			1 = index? back head p  
+			1 = index? back back head p
+		]
+		--assert all [
+			6 = index? tail p
+			6 = index? at p 20
+			2 = index? at p 2
+			2 = index? at p 2
+			1 = index? at p 0
+			1 = index? at p -10
+		]
+		--assert all [
+			6 = index? tail p
+			6 = index? atz p 20
+			3 = index? atz p 2
+			3 = index? atz p 2
+			1 = index? atz p 0
+			1 = index? atz p -10
+		]
+		--assert all [
+			5 = indexz? tail p
+			5 = indexz? atz p 20
+			2 = indexz? atz p 2
+			2 = indexz? atz p 2
+			0 = indexz? atz p 0
+			0 = indexz? atz p -10
+		]
+		close p
+		delete %12345
 
 	--test-- "CLEAR file port"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/812

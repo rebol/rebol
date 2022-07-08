@@ -636,6 +636,9 @@ REBINT Mode_Syms[] = {
 	case A_INDEXQ:
 		SET_INTEGER(D_RET, file->file.index + 1);
 		break;
+	case A_INDEXZQ:
+		SET_INTEGER(D_RET, file->file.index);
+		break;
 
 	case A_LENGTHQ:
 		SET_INTEGER(D_RET, file->file.size - file->file.index); // !clip at zero
@@ -654,11 +657,18 @@ REBINT Mode_Syms[] = {
 		goto seeked;
 
 	case A_BACK:
-		if (file->file.index > 0) file->file.index--;
+		file->file.index--;
 		goto seeked;
 
 	case A_SKIP:
 		file->file.index += Get_Num_Arg(D_ARG(2));
+		goto seeked;
+
+	case A_AT:
+		file->file.index = Get_Num_Arg(D_ARG(2)) - 1;
+		goto seeked;
+	case A_ATZ:
+		file->file.index = Get_Num_Arg(D_ARG(2));
 		goto seeked;
 
     case A_HEADQ:
@@ -680,7 +690,6 @@ REBINT Mode_Syms[] = {
 		break;
 
 	/* Not yet implemented:
-		A_AT,					// 38
 		A_PICK,					// 41
 		A_PATH,					// 42
 		A_PATH_SET,				// 43
@@ -701,6 +710,12 @@ REBINT Mode_Syms[] = {
 	return R_RET;
 
 seeked:
+	// fit index in available range...
+	if (file->file.index < 0)
+		file->file.index = 0;
+	else if (file->file.index > file->file.size)
+		file->file.index = file->file.size;
+
 	SET_FLAG(file->modes, RFM_RESEEK);
 	return R_ARG1;
 
