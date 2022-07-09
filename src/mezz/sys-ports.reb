@@ -240,6 +240,7 @@ make-scheme: func [
 	def: make with def
 	;print ["Scheme:" def/name]
 	unless def/name [cause-error 'access 'no-scheme-name def]
+	unless def/title [def/title: uppercase/part form def/name 1]
 	set-scheme def
 
 	; If actor is block build a non-contextual actor object:
