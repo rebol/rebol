@@ -740,6 +740,23 @@ foreach str [
 	===end-group===
 ]
 
+
+if find codecs 'safe [
+	===start-group=== "SAFE codec"		
+		--test-- "Save/Load SAFE file"
+			foreach data [
+				#(key: "Hello")
+				43
+				#{DEADBEEF}
+				[key: "aaa" value: 12]
+			][
+				--assert equal? data load save %temp.safe data
+				delete %temp.safe
+			]
+	===end-group===
+]
+
+
 ;@@ PDF codec test is in: codecs-test-pdf.r3
 
 ~~~end-file~~~
