@@ -642,6 +642,19 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "EXTEND"
+	--test-- "extend object!"
+		--assert all [1 == extend  o: object[] 'a 1  o = #[object! [a: 1]]]
+	--test-- "extend block!"
+		--assert all [1 == extend  b: [] 'a 1  b = [a: 1]]
+	--test-- "extend paren!"
+		--assert all [1 == extend  b: quote () 'a 1  b = quote (a: 1)]
+	--test-- "extend map!"
+		--assert all [1 == extend  m: #() 'a 1  m = #(a: 1)]
+===end-group===
+
+
 ===start-group=== "MOVE"
 	--test-- "move/skip"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1629

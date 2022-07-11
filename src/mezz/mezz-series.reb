@@ -47,7 +47,7 @@ extend: func [
 	word [any-word!]
 	val
 ][
-	if :val [append obj reduce [to-set-word word :val]]
+	if :val [put obj to-set-word word :val]
 	:val
 ]
 
