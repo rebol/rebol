@@ -104,7 +104,7 @@ Rebol [
 		--assert not error? try [protect/deep 'o/b]
 		--assert not error? try [protect/deep/words [o/b]]
 		--assert is-locked-error? [o/b/c: 4]
-		--assert is-locked-error? [clear o/b/c]
+		--assert is-protected-error? [clear o/b/c]
 
 	--test-- "protect/hide inside an object"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1139
