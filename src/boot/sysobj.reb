@@ -23,7 +23,49 @@ product:  'core
 platform: none
 version:  0.0.0
 build:    object [os: arch: vendor: sys: abi: compiler: target: date: git: none]
-license: none
+
+user: construct [
+	name: none
+	data: #()
+]
+
+options: object [  ; Options supplied to REBOL during startup
+	boot:           ; The path to the executable
+	path:           ; Where script was started or the startup dir
+	home:           ; Path of home directory
+		none
+
+	flags:          ; Boot flag bits (see system/catalog/boot-flags)
+	script:         ; Filename of script to evaluate
+	args:           ; Command line arguments passed to script
+	do-arg:         ; Set to a block if --do was specified
+	import:         ; imported modules
+	debug:          ; debug flags
+	secure:         ; security policy
+	version:        ; script version needed
+	boot-level:     ; how far to boot up
+		none
+
+	quiet: false    ; do not show startup info (compatibility)
+
+	binary-base: 16    ; Default base for FORMed binary values (64, 16, 2)
+	decimal-digits: 15 ; Max number of decimal digits to print.
+	probe-limit: 16000 ; Max probed output size
+	module-paths: [%./]
+	default-suffix: %.reb ; Used by IMPORT if no suffix is provided
+	file-types: []
+	result-types: none
+
+	; verbosity of logs per service (codecs, schemes)
+	; 0 = nothing; 1 = info; 2 = more; 3 = debug
+	log: #[map! [
+		rebol: 1
+		http: 1
+		tls:  1
+		zip:  1
+		tar:  1
+	]]
+]
 
 catalog: object [
 	; Static (non-changing) values, blocks, objects
@@ -159,44 +201,6 @@ locale: object [
 	days: [
 		"Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday"
 	]
-]
-
-options: object [  ; Options supplied to REBOL during startup
-	boot:           ; The path to the executable
-	path:           ; Where script was started or the startup dir
-	home:           ; Path of home directory
-		none
-
-	flags:          ; Boot flag bits (see system/catalog/boot-flags)
-	script:         ; Filename of script to evaluate
-	args:           ; Command line arguments passed to script
-	do-arg:         ; Set to a block if --do was specified
-	import:         ; imported modules
-	debug:          ; debug flags
-	secure:         ; security policy
-	version:        ; script version needed
-	boot-level:     ; how far to boot up
-		none
-
-	quiet: false    ; do not show startup info (compatibility)
-
-	binary-base: 16    ; Default base for FORMed binary values (64, 16, 2)
-	decimal-digits: 15 ; Max number of decimal digits to print.
-	probe-limit: 16000 ; Max probed output size
-	module-paths: [%./]
-	default-suffix: %.reb ; Used by IMPORT if no suffix is provided
-	file-types: []
-	result-types: none
-
-	; verbosity of logs per service (codecs, schemes)
-	; 0 = nothing; 1 = info; 2 = more; 3 = debug
-	log: #[map! [
-		rebol: 1
-		http: 1
-		tls:  1
-		zip:  1
-		tar:  1
-	]]
 ]
 
 script: construct [
@@ -502,6 +506,8 @@ view: object [
 		f12
 	]
 ]
+
+license: none
 
 ;;stats: none
 
