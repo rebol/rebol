@@ -40,7 +40,8 @@ Rebol [
 ===end-group===
 
 
-===start-group=== "PUT object"
+
+===start-group=== "EXTEND object"
 	--test-- "put object"
 		obj: object []
 		--assert 1 = put obj 'a 1 ; extends with a new key/value
@@ -51,10 +52,16 @@ Rebol [
 		--assert 3 = obj/b
 		--assert unset? put obj 'b #[unset!]
 		--assert unset? obj/b
-===end-group===
+		
+	--test-- "compare extended objects"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2507
+		--assert equal? #[object! [a: 1]] #[object! [a: 1]]
+		--assert equal? #[object! [a: 1]] make object! [a: 1]
+		put obj: #[object! []] 'a 1
+		--assert equal? obj #[object! [a: 1]]
+		append obj: #[object! []] [a 1]
+		--assert equal? obj #[object! [a: 1]]
 
-
-===start-group=== "EXTEND object"
 	--test-- "extend object"
 		obj: object []
 		--assert 1 = extend obj 'a 1
