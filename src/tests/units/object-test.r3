@@ -39,6 +39,21 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "PUT object"
+	--test-- "put object"
+		obj: object []
+		--assert 1 = put obj 'a 1 ; extends with a new key/value
+		--assert 1 = obj/a
+		--assert 2 = put obj 'a 2 ; overwrites existing
+		--assert 2 = obj/a
+		--assert 3 = put obj 'b 3
+		--assert 3 = obj/b
+		--assert unset? put obj 'b #[unset!]
+		--assert unset? obj/b
+===end-group===
+
+
 ===start-group=== "EXTEND object"
 	--test-- "extend object"
 		obj: object []

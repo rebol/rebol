@@ -254,7 +254,7 @@ make-scheme: func [
 				|
 				'function set args block! set body block! (func*: function args body)
 			] (
-				forall name [append actor reduce [name/1 :func*]]
+				forall name [put actor name/1 :func*]
 			)
 			| end
 			| pos: (

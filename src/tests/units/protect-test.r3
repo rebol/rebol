@@ -130,6 +130,17 @@ Rebol [
 		--assert all [error? e: try [set in obj 'a 99] e/id = 'locked-word]
 		--assert all [error? e: try [set obj [99]] e/id = 'locked-word]
 
+	--test-- "EXTEND object!"
+		obj: object [a: 1] protect/deep 'obj
+		--assert all [error? e: try [obj/a: 2]  e/id = 'locked-word] 
+		--assert all [error? e: try [put obj 'a 2]  e/id = 'protected] ; cannot modify the value
+		--assert all [error? e: try [append obj [b: 2]]  e/id = 'protected]
+		--assert all [error? e: try [put obj 'b 2]  e/id = 'protected]
+		unprotect obj
+		--assert object? append obj [b: 2]
+		--assert all [22 = put obj 'a 22  22 == obj/a]
+		unprotect 'obj
+
 
 ===end-group===
 

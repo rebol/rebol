@@ -425,7 +425,7 @@ get-xref-count: function[xrefs n][
 
 emit-stream: func[obj [object!] /local data][
 	unless find obj 'spec [
-		extend obj 'spec #(Length: 0)
+		put obj 'spec #(Length: 0)
 	]
 	data: any [obj/data #{}]
 	unless any [           ; don't use compression 
@@ -643,7 +643,7 @@ register-codec [
 		]
 		trailer: select pdf 'trailer
 		unless trailer [
-			extend pdf 'trailer trailer: #(Info: #[none] Root: #[none])
+			put pdf 'trailer trailer: #(Info: #[none] Root: #[none])
 		]
 		unless root: trailer/Root [
 			sys/log/debug 'PDF "Trying to locate `Catalog` in PDF objects."

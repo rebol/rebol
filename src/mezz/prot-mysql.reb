@@ -1474,7 +1474,7 @@ mysql-driver: make object! [
 	]
 
 	
-	extend system/catalog/errors 'MySQL make object! [
+	put system/catalog/errors 'MySQL make object! [
 		code: 1000
 		type: "MySQL-errors"
 		message: ["[" :arg1 "]" :arg2] ;arg1: [error code] ;arg2: error message

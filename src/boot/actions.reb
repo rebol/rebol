@@ -284,7 +284,7 @@ take: action [
 
 put: action [
 	{Replaces the value following a key, and returns the new value.}
-	series [any-block! map! port!] {(modified)}
+	series [any-block! map! port! object!] {(modified)}
 	key    [scalar! any-string! any-word! binary!] 
 	value  [any-type!] {The new value (returned)}
 	/case  {Perform a case-sensitive search}
