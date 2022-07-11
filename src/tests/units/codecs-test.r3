@@ -742,6 +742,9 @@ foreach str [
 
 
 if find codecs 'safe [
+	;- using environmental variable to avoid interactive password input using `ask`
+	temp: get-env "REBOL_SAFE_PASS"
+	set-env "REBOL_SAFE_PASS" "my-pass"
 	===start-group=== "SAFE codec"		
 		--test-- "Save/Load SAFE file"
 			foreach data [
@@ -754,6 +757,7 @@ if find codecs 'safe [
 				delete %temp.safe
 			]
 	===end-group===
+	set-env "REBOL_SAFE_PASS" :temp
 ]
 
 
