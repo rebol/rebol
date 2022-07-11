@@ -245,7 +245,7 @@ reword: func [
 				if any [set-word? :w lit-word? :w] [w: to word! :w]
 				lib/case [
 					wtype = type? :w none
-					wtype <> binary! [w: to wtype :w]
+					wtype <> binary! [w: mold :w]
 					any-string? :w [w: to binary! :w]
 					'else [w: to binary! to string! :w]
 				]

@@ -2307,6 +2307,8 @@ Rebol [
 
 	--assert (reword/escape "ba" [a 1 b 2] none)
 		== "21"  ; /escape none like /escape ""
+	--assert (reword/escape to file! "ba" [a 1 b 2] none)
+		== %21   ; /escape none like /escape ""
 
 	--assert (reword "$a$A$a" [a 1 A 2])
 		== "222"  ; case-insensitive, last value wins
@@ -2342,8 +2344,8 @@ Rebol [
 		== "1"  ; It should be easy to explicitly reduce the same spec
 	--assert (reword "$a" reduce ['a 1])
 		== "1"  ; ... like this, so we should special-case lit-words
-	--assert (reword/escape "a :a /a #a" [a 1 :a 2 /a 3 #a 4] none)
-		== "1 2 3 4"  ; But otherwise let word types be distinct
+;	--assert (reword/escape "a :a /a #a" [a 1 :a 2 /a 3 #a 4] none)
+;		== "1 2 3 4"  ; But otherwise let word types be distinct
 
 	--assert (reword to-binary "$a$A$a" [a 1 A 2])
 		== #{010201}  ; binaries supported, note the case-sensitivity, same key rules, values inserted by binary rules
