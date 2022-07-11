@@ -247,16 +247,15 @@ make-scheme: func [
 	if block? :def/actor [
 		actor: make object! (length? :def/actor) / 4
 		parse :def/actor [any [
-			set name set-word! [
+			copy name some set-word! [
 				set func* any-function!
-				(append actor reduce [name :func*])
 				|
-				'func set args block! set body block!
-				(append actor reduce [name func args body])
+				'func set args block! set body block! (func*: func args body)
 				|
-				'function set args block! set body block!
-				(append actor reduce [name function args body])
-			]
+				'function set args block! set body block! (func*: function args body)
+			] (
+				forall name [append actor reduce [name/1 :func*]]
+			)
 			| end
 			| pos: (
 				cause-error 'script 'invalid-arg pos
