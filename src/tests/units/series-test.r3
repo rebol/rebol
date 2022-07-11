@@ -2282,8 +2282,8 @@ Rebol [
 	--assert new-line? next foo
 --test-- "new-line with negative skip"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/737
-	--assert all [error? e: try [new-line/skip a [1 2]  0] e/id = 'out-of-range]
-	--assert all [error? e: try [new-line/skip a [1 2] -2] e/id = 'out-of-range]
+	--assert all [error? e: try [new-line/skip [1 2] true  0] e/id = 'out-of-range]
+	--assert all [error? e: try [new-line/skip [1 2] true -2] e/id = 'out-of-range]
 
 ===end-group===
 
