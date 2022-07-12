@@ -3,8 +3,14 @@ REBOL [
 	Version: 1.0.0
 	Title:   "Codec: SAFE"
 	Author:  "Oldes"
-	History: [10-Jul-2022 "Oldes" "Initial version"]
+	History: [
+		10-Jul-2022 "Oldes" "Initial version"
+		12-Jul-2022 "Oldes" "Included SAFE scheme"
+	]
 	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-safe.reb
+	TODO: [
+		"The scheme could require to enter the password again after some time of inactivity."
+	]
 ]
 
 register-codec [
@@ -16,7 +22,7 @@ register-codec [
 	encode: function [
 		data  [any-type!]
 		/key
-		 password [any-string! binary!]
+		 password [any-string! binary! none!]
 		/as
 		 cipher [word!]
 	][
@@ -73,10 +79,11 @@ register-codec [
 	]
 
 	decode: function [
-		data  [binary!]
+		data  [binary! file! url!]
 		/key
-		 password [any-string! binary!]
+		 password [any-string! binary! none!]
 	][
+		unless binary? data [ data: read/binary data ]
 		unless parse data [id data: to end][return none]
 		binary/read data [
 			flags:        UI16
@@ -120,9 +127,130 @@ register-codec [
 			ask/hide "Enter SAFE Password: "
 		]
 	]
-
-	;probe decode encode #(a: 1)
-	;probe decode encode #(a: 1 b: 2)
-	;probe decode encode #{DEAD}
 ]
 
+
+sys/make-scheme [
+	title: "Persistent key/value storage"
+	name: 'safe
+	actor: [
+		open: func [port [port!] /local spec host][
+			spec: port/spec
+			spec/ref: rejoin either/only host: select spec 'host [
+				https:// host
+				select spec 'path
+				select spec 'target %""
+			][
+				any [select spec 'path   system/options/home]
+				any [select spec 'target %.safe]
+			]
+			if %.safe <> suffix? spec/ref [
+				append spec/ref %.safe
+			]
+
+			port/data: object [
+				data: none
+				pass: any [
+					select spec 'pass
+					ask/hide "Enter password: "
+				]
+				file: port/spec/ref
+				date: none
+				get:  func[key][select data :key]
+				set:  func[key [word!] val [any-type!]][put data :key :val]
+				rem:  func[key][remove/key data :key #[unset!]]
+				load: does [
+					date: modified? file
+					data: system/codecs/safe/decode/key :file :pass
+					unless data [
+						print [as-purple "*** Failed to decrypt data from:" as-red file]
+					]
+				]
+				save: does [
+					if url? file [
+						print as-purple "*** Saving to URL is not yet implemented!"
+						exit
+					]
+					;@@ TODO: prevent collision when 2 processes tries to write in the same time!
+					write/binary file system/codecs/safe/encode/key :data :pass
+					date: modified? file
+				]
+				sync: func[/close /local modf] [
+					if data [
+						;; There are already some data..
+						case [
+							not exists? file [ save ]
+							date > modf: modified? file [ save ]
+							date < modf [ load ]
+						]
+						data
+					]
+					case [
+						close [
+							data: date: pass: none
+						]
+						none? data [
+							;; There are no data yet, so load it or make a new map!
+							either exists? file [ load ][
+								data: make map! 4
+								save
+							]
+						]
+					]
+					file
+				]
+				open?: does [ map? data ]
+				change-pass: func[new [string! binary!]][
+					either pass = ask/hide "Old password: " [
+						pass: new
+						date: now/precise
+						sync
+						true
+					][
+						sys/log/error 'REBOL "Password validation failed!"
+						false
+					]
+				]
+				
+				sync
+
+				protect/words/hide [data pass load save]
+				protect/words [get set rem sync open? change-pass]
+			]
+
+			; make only these required values availeble in the spec:
+			set port/spec: object [title: scheme: ref: none] spec
+
+			;- It is not possible to protect data so far, because of:
+			;- https://github.com/Oldes/Rebol-issues/issues/1148     
+			;protect/words port/data
+			port
+		]
+		; We must use the inner functions bellow, because the inner data are hidden!
+		open?: func[port][
+			port/data/open?
+		]
+		close: func[port][
+			port/data/sync/close
+		]
+		put:
+		poke: func[port key value][
+			port/data/date: now/precise
+			port/data/set :key :value
+		]
+		pick:
+		select: func[port key][
+			port/data/get :key
+		]
+		remove: func[port /part range /key key-arg][
+			port/data/date: now/precise
+			port/data/rem :key-arg
+		]
+		update: func[port][
+			port/data/sync
+		]
+		modify: func[port field value][
+			if field = 'password [port/data/change-pass :value]
+		]
+	]
+]
