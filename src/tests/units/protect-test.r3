@@ -141,6 +141,10 @@ Rebol [
 		--assert all [22 = put obj 'a 22  22 == obj/a]
 		unprotect 'obj
 
+	--test-- "protect recursion"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1764
+		--assert is-locked-error? [new-block: reduce [1 2 protect/deep 'new-block 3 4]]
+
 
 ===end-group===
 
