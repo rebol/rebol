@@ -156,7 +156,13 @@ sys/make-scheme [
 				]
 				file: port/spec/ref
 				date: none
-				get:  func[key][select data :key]
+				get:  func[key /local value][
+					; returned values are always copied, if possible, so
+					; they are not modified by accident from outside
+					either find copyable! type? value: select data :key [
+						copy/deep :value
+					][	:value ]
+				]
 				set:  func[key [word!] val [any-type!]][put data :key :val]
 				rem:  func[key][remove/key data :key #[unset!]]
 				load: does [
