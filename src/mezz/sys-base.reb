@@ -237,7 +237,7 @@ log: func [
 ][
 	if error [
 		msg: form either block? msg [reduce msg][msg]
-		foreach line split msg #"^/" [
+		foreach line split-lines msg [
 			print ajoin [
 				" ^[[35m[" id "] ^[[1m"
 				either line/1 = #"*" []["** Error: "]

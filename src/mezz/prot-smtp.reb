@@ -154,7 +154,7 @@ sync-smtp-handler: function [event][
 			parse response [copy code: 3 digit to end (code: to integer! code)]
 
 			if system/options/log/smtp > 1 [
-				foreach line split trim/tail response CRLF [
+				foreach line split-lines trim/tail response [
 					sys/log/more 'SMTP ["Server:^[[32m" line]
 				]
 			]
