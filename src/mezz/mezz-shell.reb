@@ -60,7 +60,7 @@ user's: func[
 
 su: set-user: func[
 	"Initialize user's persistent data under system/user"
-	'name [word! ref! string! unset!] "User's name"
+	'name [word! ref! string! email! unset!] "User's name"
 	/p "Password used to encrypt the data"
 	 password [string! binary!]
 	/f "Use custom persistent data file location"
@@ -88,8 +88,9 @@ su: set-user: func[
 	]
 	
 	if port? su/data [ close su/data ]
-	su/name: to ref! :name
+
 	file: split-path :file
+	su/name: either email? :name [:name][to ref! :name]
 	su/data: open [
 		scheme: 'safe
 		pass:   password
