@@ -406,7 +406,7 @@ enbase: native [
 	/url  {Base 64 Encoding with URL and Filename Safe Alphabet}
 	/part {Limit the length of the input}
 	limit [integer! binary! any-string!]
-	/flat {Base 64 Encoding without line breaks}
+	/flat {No line breaks}
 ]
 
 decloak: native [
