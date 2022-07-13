@@ -65,6 +65,7 @@ options: object [  ; Options supplied to REBOL during startup
 		zip:  1
 		tar:  1
 	]]
+	domain-name: none ; Specifies system's domain name (used in SMTP scheme so far)
 ]
 
 catalog: object [

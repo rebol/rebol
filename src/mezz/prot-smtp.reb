@@ -4,8 +4,8 @@ Rebol [
 	type:    module
 	author:  ["Graham" "Oldes"]
 	rights:  BSD
-	version: 1.0.0
-	date:    10-May-2022
+	version: 1.0.1
+	date:    13-Jul-2022
 	file:    %prot-smtp.reb
 	notes: {
 		0.0.1 original tested in 2010
@@ -15,6 +15,7 @@ Rebol [
 		0.0.5 Changed to move credentials to the url or port specification
 		0.0.6 Fixed some bugs in transferring email greater than the buffer size.
         1.0.0 Oldes: Updated to work with my Rebol3 fork; including TLS.
+        1.0.1 Oldes: Using extenal IP in the EHLO message, when domain-name is not available
 
         Note that if your password does not work for gmail then you need to 
         generate an app password.  See https://support.google.com/accounts/answer/185833
@@ -49,7 +50,7 @@ where's my kibble?}]
 			host: "smtp.yourisp.com"
 			user: "joe"
 			pass: "password"
-            ehlo: "FQDN" ; if you don't have one, then substitute your IP address
+            ehlo: "local.domain.name" ; optional, if not available, external IP will be used
 		] compose [
 			from: me@somewhere.com
 			to: recipient@other.com
@@ -404,7 +405,17 @@ sys/make-scheme [
 			]
 			spec: port/spec
 			; create the tcp port and set it to port/state/connection
-			; unless system/user/identity/fqdn [throw-smtp-error "Need to provide a value for the system/user/identity/fqdn"]
+
+			unless spec/ehlo [
+				unless spec/ehlo: select system/options 'domain-name [
+					try [
+						;; resolve external IP and use it as domain name
+						spec/ehlo: read http://ifconfig.me/ip
+						;; and store it for later use
+						put system/options 'domain-name :spec/ehlo
+					]
+				]
+			]
 			conn: context [
 				scheme: none
 				host:   spec/host
