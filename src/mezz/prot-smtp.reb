@@ -196,7 +196,7 @@ sync-smtp-handler: function [event][
 											smtp-port/state: 'PLAIN
 											write client to binary! ajoin [
 												"AUTH PLAIN "
-												enbase ajoin [spec/user #"^@" spec/user #"^@" spec/pass] 64
+												enbase/flat ajoin [spec/user #"^@" spec/user #"^@" spec/pass] 64
 												CRLF
 											]
 											return false
@@ -232,12 +232,12 @@ sync-smtp-handler: function [event][
 						find/part response "334 VXNlcm5hbWU6" 16 [ ;enbased "Username:"
 							; username being requested
 							sys/log/more 'SMTP "Client: ***user-name***"
-							write client to binary! ajoin [enbase spec/user 64 CRLF]
+							write client to binary! ajoin [enbase/flat spec/user 64 CRLF]
 						]
 						find/part response "334 UGFzc3dvcmQ6" 16 [ ;enbased "Password:"
                             ; pass being requested
                             sys/log/more 'SMTP "Client: ***user-pass***"
-							write client to binary! ajoin [enbase spec/pass 64 CRLF]
+							write client to binary! ajoin [enbase/flat spec/pass 64 CRLF]
 							smtp-port/state: 'PASSWORD
 						]
 						true [
@@ -252,7 +252,7 @@ sync-smtp-handler: function [event][
 						; compute challenge response
 						auth-key: checksum/with auth-key 'md5 spec/pass
 						sys/log/more 'SMTP "Client: ***auth-key***"
-						write client to binary! ajoin [enbase ajoin [spec/user #" " lowercase enbase auth-key 16] 64 CRLF]
+						write client to binary! ajoin [enbase/flat ajoin [spec/user #" " lowercase enbase auth-key 16] 64 CRLF]
 						smtp-port/state: 'PASSWORD
 						false
 					][

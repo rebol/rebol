@@ -515,6 +515,7 @@ static struct digest {
 	REBINT base = VAL_INT32(D_ARG(2));
 	REBCNT limit = NO_LIMIT;
 	REBVAL *part = D_ARG(5);
+	REBOOL brk = !D_REF(6);
 
 	if (D_REF(4)) {
 		limit = Partial(arg, 0, part, 0); // Can modify value index.
@@ -529,13 +530,13 @@ static struct digest {
 
 	switch (base) {
 	case 64:
-		ser = Encode_Base64(arg, 0, limit, FALSE, D_REF(3));
+		ser = Encode_Base64(arg, 0, limit, brk, D_REF(3));
 		break;
 	case 16:
-		ser = Encode_Base16(arg, 0, limit, FALSE);
+		ser = Encode_Base16(arg, 0, limit, brk);
 		break;
 	case 2:
-		ser = Encode_Base2(arg, 0, limit, FALSE);
+		ser = Encode_Base2(arg, 0, limit, brk);
 		break;
 	case 85:
 #ifdef INCLUDE_BASE85
