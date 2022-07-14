@@ -150,20 +150,20 @@ modules: object [
 	sqlite:        https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.38.5.0/
 	triangulate:   https://github.com/Siskin-framework/Rebol-Triangulate/releases/download/1.6.0.0/
 	;; optional modules, protocol and codecs
-	httpd:         https://raw.githubusercontent.com/Oldes/Rebol3/master/src/modules/httpd.reb
-	prebol:        https://raw.githubusercontent.com/Oldes/Rebol3/master/src/modules/prebol.reb
-	mysql:         https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/prot-mysql.reb
-	csv:           https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-csv.reb
-	ico:           https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-ico.reb
-	pdf:           https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-pdf.reb
-	swf:           https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-swf.reb
-	xml:           https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-xml.reb
-	json:          https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-json.reb
-	plist:         https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-plist.reb
-	bbcode:        https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-bbcode.reb
-	html-entities: https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-html-entities.reb
-	mime-field:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-mime-field.reb
-	quoted-printable: https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-quoted-printable.reb
+	httpd:            https://src.rebol.tech/modules/httpd.reb
+	prebol:           https://src.rebol.tech/modules/prebol.reb
+	mysql:            https://src.rebol.tech/mezz/prot-mysql.reb
+	csv:              https://src.rebol.tech/mezz/codec-csv.reb
+	ico:              https://src.rebol.tech/mezz/codec-ico.reb
+	pdf:              https://src.rebol.tech/mezz/codec-pdf.reb
+	swf:              https://src.rebol.tech/mezz/codec-swf.reb
+	xml:              https://src.rebol.tech/mezz/codec-xml.reb
+	json:             https://src.rebol.tech/mezz/codec-json.reb
+	plist:            https://src.rebol.tech/mezz/codec-plist.reb
+	bbcode:           https://src.rebol.tech/mezz/codec-bbcode.reb
+	html-entities:    https://src.rebol.tech/mezz/codec-html-entities.reb
+	mime-field:       https://src.rebol.tech/mezz/codec-mime-field.reb
+	quoted-printable: https://src.rebol.tech/mezz/codec-quoted-printable.reb
 	;; and..
 	window: none ;- internal extension for gui (on Windows so far!)
 ]
