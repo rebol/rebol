@@ -54,6 +54,7 @@ options: object [  ; Options supplied to REBOL during startup
 	module-paths: [%./]
 	default-suffix: %.reb ; Used by IMPORT if no suffix is provided
 	file-types: []
+	mime-types: none
 	result-types: none
 
 	; verbosity of logs per service (codecs, schemes)
@@ -152,6 +153,7 @@ modules: object [
 	;; optional modules, protocol and codecs
 	httpd:            https://src.rebol.tech/modules/httpd.reb
 	prebol:           https://src.rebol.tech/modules/prebol.reb
+	mail:             https://src.rebol.tech/mezz/prot-mail.reb
 	mysql:            https://src.rebol.tech/mezz/prot-mysql.reb
 	csv:              https://src.rebol.tech/mezz/codec-csv.reb
 	ico:              https://src.rebol.tech/mezz/codec-ico.reb
@@ -163,6 +165,7 @@ modules: object [
 	bbcode:           https://src.rebol.tech/mezz/codec-bbcode.reb
 	html-entities:    https://src.rebol.tech/mezz/codec-html-entities.reb
 	mime-field:       https://src.rebol.tech/mezz/codec-mime-field.reb
+	mime-types:       https://src.rebol.tech/mezz/codec-mime-types.reb
 	quoted-printable: https://src.rebol.tech/mezz/codec-quoted-printable.reb
 	;; and..
 	window: none ;- internal extension for gui (on Windows so far!)
@@ -185,6 +188,7 @@ ports: object [
 	input:          ; Port for user input.
 	output:         ; Port for user output
 	echo:           ; Port for echoing output
+	mail:           ; Port for sending and receiving emails
 	system:         ; Port for system events
 	callback: none	; Port for callback events
 ;	serial: none	; serial device name block
