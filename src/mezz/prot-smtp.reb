@@ -69,7 +69,7 @@ where's my kibble?}]
 
 system/options/log/smtp: 2
 
-bufsize: 32000 ;-- use a write buffer of 32k for sending large attachments
+bufsize: 16384 ;-- use a write buffer of 16KiB (maximum TLS record size!) for sending large attachments
 
 mail-obj: make object! [ 
 	from: 
@@ -320,7 +320,7 @@ sync-smtp-handler: function [event][
 			switch/default state [
 				SENDING [
 					either not empty? ptr: smtp-ctx/mail/message [
-						sys/log/debug 'SMTP ["Sending "  min bufsize length? ptr " bytes of " length? ptr ]
+						sys/log/more 'SMTP ["Sending"  min bufsize length? ptr "bytes of" length? ptr ]
 						write client to binary! take/part ptr bufsize
 					][
 						sys/log/debug 'SMTP "Sending ends."
@@ -478,6 +478,8 @@ sys/make-scheme [
 				close port
 				wait [port 0.1]
 				do error
+				port/state: 'ERROR
+				true
 			]
 			close [
 				port/state: 'CLOSE

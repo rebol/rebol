@@ -2145,10 +2145,23 @@ TLS-client-awake: function [event [event!]][
 			return true
 		]
 		error [
-			if all [ctx ctx/state = 'lookup][
-				ctx/error: make error! [
-					code: 500 type: 'access id: 'cannot-open
-					arg1: TCP-port/spec/ref
+			unless ctx/error [
+				ctx/error: case [
+					ctx/state = 'lookup [
+						make error! [
+							code: 500 type: 'access id: 'cannot-open
+							arg1: TCP-port/spec/ref
+						]
+					]
+					'else [
+						;@@ needs better error (unknown reason)
+						; So far this error is used, when we try to write
+						; application data larger than 16KiB!
+						make error! [
+							code: 500 type: 'access id: 'protocol
+							arg1: TCP-port/spec/ref
+						]
+					]
 				]
 			]
 			send-event 'error TLS-port
@@ -2284,7 +2297,8 @@ do-TLS-write: func[port [port!] value [any-type!] /local ctx][
 	log-debug "WRITE"
 	ctx: port/extra
 	if ctx/protocol = 'APPLICATION [
-
+		;@@ FIXME: size limit for application data is 16KiB,
+		;@@ else server closes connection, which is not detected!
 		binary/init ctx/out none ;resets the output buffer
 		application-data ctx :value
 
