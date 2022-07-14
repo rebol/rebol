@@ -14,12 +14,12 @@ Rebol [
 		0.0.4 Added LOGIN, PLAIN and CRAM-MD5 authentication.  Tested against CommunigatePro
 		0.0.5 Changed to move credentials to the url or port specification
 		0.0.6 Fixed some bugs in transferring email greater than the buffer size.
-        1.0.0 Oldes: Updated to work with my Rebol3 fork; including TLS.
-        1.0.1 Oldes: Using extenal IP in the EHLO message, when domain-name is not available
-        1.1.0 Oldes: Recipient's address validation and possibility to have more than one
+		1.0.0 Oldes: Updated to work with my Rebol3 fork; including TLS.
+		1.0.1 Oldes: Using extenal IP in the EHLO message, when domain-name is not available
+		1.1.0 Oldes: Recipient's address validation and possibility to have more than one
 
-        Note that if your password does not work for gmail then you need to 
-        generate an app password.  See https://support.google.com/accounts/answer/185833
+		Note that if your password does not work for gmail then you need to 
+		generate an app password.  See https://support.google.com/accounts/answer/185833
 		
 		synchronous mode
 		write smtp://user:password@smtp.clear.net.nz [ 
@@ -47,7 +47,7 @@ where's my kibble?}]
 			host: "smtp.yourisp.com"
 			user: "joe"
 			pass: "password"
-            ehlo: "local.domain.name" ; optional, if not available, external IP will be used
+			ehlo: "local.domain.name" ; optional, if not available, external IP will be used
 		] compose [
 			from: me@somewhere.com
 			to:   recipient@other.com
@@ -230,8 +230,8 @@ sync-smtp-handler: function [event][
 							write client to binary! ajoin [enbase/flat spec/user 64 CRLF]
 						]
 						find/part response "334 UGFzc3dvcmQ6" 16 [ ;enbased "Password:"
-                            ; pass being requested
-                            sys/log/more 'SMTP "Client: ***user-pass***"
+							; pass being requested
+							sys/log/more 'SMTP "Client: ***user-pass***"
 							write client to binary! ajoin [enbase/flat spec/pass 64 CRLF]
 							smtp-port/state: 'PASSWORD
 						]
@@ -457,16 +457,13 @@ sys/make-scheme [
 				port:   spec/port
 				ref:    none
 			]
-            conn/scheme: either 465 = spec/port ['tls]['tcp]
-            conn/ref: as url! ajoin [conn/scheme "://" spec/host #":" spec/port]
+			conn/scheme: either 465 = spec/port ['tls]['tcp]
+			conn/ref: as url! ajoin [conn/scheme "://" spec/host #":" spec/port]
 
-            port/state: 'INIT
-            port/extra/connection: conn: make port! conn
-            if block? spec/ref [
-            	spec/ref: rejoin [smtp:// enhex spec/user #"@" spec/host #":" spec/port]
-            ]
-            
-            conn/parent: port
+			port/state: 'INIT
+			port/extra/connection: conn: make port! conn
+			
+			conn/parent: port
 			open conn ;-- open the actual tcp port
 			
 			; return the newly created and open port
