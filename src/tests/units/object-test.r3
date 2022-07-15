@@ -251,6 +251,7 @@ Rebol [
 
 	--test-- "construct/only"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/687
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2176
 		--assert word? get in construct/only [a: true] 'a
 		--assert word? get in construct/only [a: false] 'a
 		--assert word? get in construct/only [a: on] 'a
