@@ -743,6 +743,25 @@ Rebol [
 			e/id = 'overflow
 			num = 1
 		]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1994
+		num: 0
+		--assert all [
+			error? e: try [
+				for i 9223372036854775807 9223372036854775807 9223372036854775807 [
+				    num: num + 1
+				    if num <> 1 [break/return false]
+				    true
+				]
+			]
+			e/id = 'overflow
+			num == 1 ;- note that num was incremented!
+		]
+		--assert all [
+			nnum: 0
+			for i 1 1 1 [num: num + 1]
+			num == 1 ;- also incremented
+		]
+		
 	--test-- "FOR with series! start and number! end"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1601
 		out: copy ""
