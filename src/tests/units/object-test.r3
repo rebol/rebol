@@ -71,6 +71,13 @@ Rebol [
 		--assert 2 = obj/b
 		--assert object? insert obj [c 3]
 		--assert 3 = obj/c
+	--test-- "append with duplicates"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1979
+		--assert all [
+			object? append obj: object [] [b: 2 b: 3 b: 4]
+			[b] = words-of obj
+			obj/b == 4
+		]
 	--test-- "extend object with hidden value"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1140
 		obj: object [a: 1 protect/hide 'a]
