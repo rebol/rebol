@@ -750,6 +750,7 @@ include-prot-tls: [
 include-mail: [
 	:include-prot-tls
 	mezz-prot-files: %mezz/prot-smtp.reb
+	mezz-prot-files: %mezz/prot-pop3.reb
 	mezz-lib-files:  %mezz/prot-mail.reb
 	mezz-lib-files:  %mezz/codec-mime-field.reb
 	mezz-lib-files:  %mezz/codec-mime-types.reb

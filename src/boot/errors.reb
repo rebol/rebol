@@ -148,6 +148,7 @@ Access: [
 ;   already-closed:     [{port} :arg1 {already closed}]
 	no-connect:         [{cannot connect:} :arg1 {reason:} :arg2]
 	not-connected:      [{port is not connected:} :arg1]
+	not-ready:          [{port is not ready:} :arg1]
 ;   socket-open:        [{error opening socket:} :arg1]
 	no-script:          [{script not found:} :arg1]
 
