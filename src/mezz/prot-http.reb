@@ -762,7 +762,7 @@ sys/make-scheme [
 			][
 				result: sync-op port []
 				either binary [
-					if result/1 == 206 [ ;= Partial
+					if result/1 <> 206 [ ;= Partial
 						case/all [
 							seek  [result/3: at result/3 index  if part [length: length - index]]
 							part  [clear skip result/3 length]
