@@ -527,58 +527,7 @@ if system/platform = 'Windows [
 	===end-group===
 ]
 
-===start-group=== "HTTP scheme"
-	--test-- "read HTTP"
-		--assert  string? try [read http://google.com]
-	--test-- "read HTTPS"
-		--assert  string? try [read https://www.google.com]
-	--test-- "exists? url"
-		;@@ https://github.com/Oldes/Rebol3/issues/14
-		;@@ https://github.com/Oldes/Rebol-issues/issues/1613
-		--assert 'url = exists? http://httpbin.org/  ;@@ https://github.com/Oldes/Rebol-issues/issues/612
-		--assert not exists? http://httpbin.org/not-exists
-	--test-- "read/part"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/2434
-		--assert "<!DOCTYPE" = read/part http://httpbin.org/ 9
-		--assert #{89504E47} = read/binary/part http://avatars-04.gitter.im/gh/uv/4/oldes 4
-	--test-- "read not existing url"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/470
-		--assert all [
-			error? e: try [read http://www.r]
-			e/id = 'no-connect
-		]
-		;@@ https://github.com/Oldes/Rebol-issues/issues/2441
-		--assert string? try [read http://www.rebol.com]
-	--test-- "query url"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/467
-		--assert error? try [query https://www]
-		--assert object? query https://www.google.com
-
-	--test-- "read/seek/part"
-		; first results without read/part
-		--assert "<!doctype html>" = copy/part str: read/string http://example.com 15
-		--assert "<!doctype html>" = copy/part skip str 0 15
-		--assert   "doctype html>" = copy/part skip str 2 13
-		; using read/part
-		--assert "<!doctype html>" = read/part http://example.com 15
-		--assert "<!doctype html>" = read/seek/part/string http://example.com 0 15
-		--assert   "doctype html>" = read/seek/part/string http://example.com 2 13
-		; when used /seek without /string, than result is always binary!
-		--assert #{3C21646F63747970652068746D6C3E} = read/seek/part http://example.com 0 15
-		--assert     #{646F63747970652068746D6C3E} = read/seek/part http://example.com 2 13
-
-	--test-- "read/lines/seek/part"
-		--assert ["<!doctype html>" "<html>" "<head>"] = read/lines/part http://example.com 3
-		--assert ["<!doctype html>" "<html>" "<head>"] = read/lines/seek/part http://example.com 0 3
-		--assert                   ["<html>" "<head>"] = read/lines/seek/part http://example.com 1 2
-		; using /lines with /binary is not allowed
-		--assert all [error? e: try [read/lines/binary http://example.com] e/id = 'bad-refine]
-		--assert all [block? b: try [read/lines/seek http://example.com 2] b/1 = "<head>"]
-
-	--test-- "read/string/binary"
-		--assert all [error? e: try [read/string/binary http://example.com] e/id = 'bad-refines]
-
-===end-group===
+;- "HTTP scheme" moved to %port-http-test.r3
 
 
 ===start-group=== "WHOIS scheme"

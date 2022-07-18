@@ -419,7 +419,8 @@ read: action [
 		index [number!]
 	/string {Convert UTF and line terminators to standard text string}
 	/binary {Preserves contents exactly}
-	/lines {Convert to block of strings (implies /string)}
+	/lines  {Convert to block of strings (implies /string)}
+	/all    {Response may include additional information (source relative)}
 ;	/as {Convert to string using a specified encoding}
 ;		encoding [none! number!] {UTF number (0 8 16 -16)}
 ]
@@ -433,10 +434,11 @@ write: action [
 	/seek {Write at a specific position}
 		index [number!]
 	/append {Write data at end of file}
-	/allow {Specifies protection attributes}
+	/allow  {Specifies protection attributes}
 		access [block!]
-	/lines {Write each value in a block as a separate line}
+	/lines  {Write each value in a block as a separate line}
 	/binary {Preserves contents exactly}
+	/all    {Response may include additional information (source relative)}
 ;	/as {Convert string to a specified encoding}
 ;		encoding [none! number!] {UTF number (0 8 16 -16)}
 ]

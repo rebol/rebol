@@ -2311,6 +2311,7 @@ do-TCP-write: func[ctx][
 	log-debug ["Writing bytes:" length? ctx/out/buffer]
 	;?? ctx/out/buffer
 	;ctx/out/buffer: head ctx/out/buffer
+	clear ctx/port-data
 	write ctx/tcp-port ctx/out/buffer
 
 	ctx/reading?: true
