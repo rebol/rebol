@@ -733,15 +733,28 @@ sys/make-scheme [
 	actor: [
 		read: func [
 			port [port!]
-			/binary
-			/part length [number!]
-			/lines
+			/part {Partial read a given number of units (source relative)}
+				length [integer!]
+			/seek {Read from a specific position (source relative)}
+				index  [integer!] "zero-based!"
+			/string {Convert UTF and line terminators to standard text string}
+			/binary {Preserves contents exactly}
+			/lines  {Convert to block of strings (implies /string)}
 			/local result
 		][
 			sys/log/debug 'HTTP "READ"
+			if lines [
+				if binary [cause-error 'Script 'bad-refine /binary ]
+				seek: part: none
+			]
+			if all [string binary] [cause-error 'Script 'bad-refines none]
+
 			unless port/state [open port port/state/close?: yes]
-			if all [part binary length > 0] [
-				append port/spec/headers compose [Range: (join "bytes=0-" (to integer! length) - 1)]
+
+			if all [any [part seek] not string] [
+				either seek [ binary: true assert [index >= 0]][ index: 0 ]
+				length: either part [ assert [length > 0] length + index][ none ]
+				put port/spec/headers quote Range: ajoin ["bytes=" index #"-" any [all [length length - 1] ""]]
 			]
 			either any-function? :port/awake [
 				unless open? port [cause-error 'Access 'not-open port/spec/ref]
@@ -750,11 +763,19 @@ sys/make-scheme [
 				do-request port
 			][
 				result: sync-op port []
-				unless binary [decode-result result]
-				if result/2 [
+				either binary [
+					unless find result/1 'Accept-Ranges [
+						case/all [
+							seek  [ result/2: at result/2 index  if part [length: length - index]]
+							part  [ clear skip result/2 length]
+						]
+					]
+				][
+					decode-result result
 					case/all [
-						lines [ result/2: split-lines result/2 ]
-						part  [ clear skip result/2 length ]
+						lines  [ result/2: split-lines result/2 ]
+						index  [ result/2: skip result/2 index ]
+						length [ clear skip result/2 length]
 					]
 				]
 				result/2
