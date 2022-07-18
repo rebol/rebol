@@ -152,7 +152,6 @@ Rebol [
 		--assert all [ ;= Use Proxy
 			block? res: try [read/all http://httpbin.org/status/305]
 			res/1 = 200
-			none? res/3
 		]
 	--test-- "redirect https"
 		--assert all [ ;= Multiple Choices
@@ -180,7 +179,6 @@ Rebol [
 		--assert all [ ;= Use Proxy
 			block? res: try [read/all https://httpbin.org/status/305]
 			res/1 = 200
-			none? res/3
 		]
 ===end-group===
 
