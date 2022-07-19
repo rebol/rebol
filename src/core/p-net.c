@@ -42,22 +42,99 @@ enum Transport_Types {
 
 /***********************************************************************
 **
-*/	static void Ret_Query_Net(REBSER *port, REBREQ *sock, REBVAL *ret)
+*/	static REBOOL Set_Net_Mode_Value(REBREQ *sock, REBCNT mode, REBVAL *ret)
+/*
+**		Set a value with net data according specified mode
+**
+***********************************************************************/
+{
+	switch (mode) {
+	case SYM_REMOTE_IP:
+		Set_Tuple(ret, (REBYTE *)&sock->net.remote_ip, 4);
+		break;
+	case SYM_REMOTE_PORT:
+		SET_INTEGER(ret, sock->net.remote_port);
+		break;
+	case SYM_LOCAL_IP:
+		Set_Tuple(ret, (REBYTE *)&sock->net.local_ip, 4);
+		break;
+	case SYM_LOCAL_PORT:
+		SET_INTEGER(ret, sock->net.local_port);
+		break;
+	default:
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/***********************************************************************
+**
+*/	static void Ret_Query_Net(REBSER *port, REBREQ *sock, REBVAL *ret, REBVAL *info)
 /*
 ***********************************************************************/
 {
-	REBVAL *info = In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0);
 	REBSER *obj;
+	REBVAL *val;
+	
+	if (IS_WORD(info)) {
+		if (!Set_Net_Mode_Value(sock, VAL_WORD_CANON(info), ret))
+			Trap1(RE_INVALID_ARG, info);
+	}
+	else if (IS_BLOCK(info)) {
+		// example:
+		//	query/mode port [remote-ip remote-port] ;== [127.0.0.1 1234]
+		// or:
+		//	 query/mode port [remote-ip: remote-port:] ;== [remote-ip: 127.0.0.1 remote-port: 1234]
+		// or combined:
+		//	 query/mode file [remote-ip: remote-port] ;== [remote-ip: 127.0.0.1 1234]
+		// When not supported word is used, if will throw an error
 
-	if (!info || !IS_OBJECT(info)) Trap_Port(RE_INVALID_SPEC, port, -10);
+		REBSER *values = Make_Block(2 * BLK_LEN(VAL_SERIES(info)));
+		REBVAL *word = VAL_BLK_DATA(info);
+		for (; NOT_END(word); word++) {
+			if (ANY_WORD(word)) {
+				if (IS_SET_WORD(word)) {
+					// keep the set-word in result
+					val = Append_Value(values);
+					*val = *word;
+					VAL_SET_LINE(val);
+				}
+				val = Append_Value(values);
+				if (!Set_Net_Mode_Value(sock, VAL_WORD_CANON(word), val))
+					Trap1(RE_INVALID_ARG, word);
+			}
+			else  Trap1(RE_INVALID_ARG, word);
+		}
+		Set_Series(REB_BLOCK, ret, values);
+	}
+	else {
+		//@@ oldes: is returning object really still needed?
+		info = In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0);
 
-	obj = CLONE_OBJECT(VAL_OBJ_FRAME(info));
+		if (!info || !IS_OBJECT(info)) {
+			Trap_Port(RE_INVALID_SPEC, port, -10);
+			return; // prevents compiler's warning
+		}
 
-	SET_OBJECT(ret, obj);
-	Set_Tuple(OFV(obj, STD_NET_INFO_LOCAL_IP), (REBYTE*)&sock->net.local_ip, 4);
-	Set_Tuple(OFV(obj, STD_NET_INFO_REMOTE_IP), (REBYTE*)&sock->net.remote_ip, 4);
-	SET_INTEGER(OFV(obj, STD_NET_INFO_LOCAL_PORT), sock->net.local_port);
-	SET_INTEGER(OFV(obj, STD_NET_INFO_REMOTE_PORT), sock->net.remote_port);
+		obj = CLONE_OBJECT(VAL_OBJ_FRAME(info));
+
+		SET_OBJECT(ret, obj);
+		Set_Tuple(OFV(obj, STD_NET_INFO_LOCAL_IP), (REBYTE *)&sock->net.local_ip, 4);
+		Set_Tuple(OFV(obj, STD_NET_INFO_REMOTE_IP), (REBYTE *)&sock->net.remote_ip, 4);
+		SET_INTEGER(OFV(obj, STD_NET_INFO_LOCAL_PORT), sock->net.local_port);
+		SET_INTEGER(OFV(obj, STD_NET_INFO_REMOTE_PORT), sock->net.remote_port);
+	}
+}
+
+/***********************************************************************
+**
+*/	void Ret_Net_Modes(REBSER *port, REBVAL *ret)
+/*
+**		Sets value with block of possible net mode names
+**
+***********************************************************************/
+{
+	Set_Block(ret, Get_Object_Words(In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0)));
 }
 
 
@@ -264,7 +341,12 @@ enum Transport_Types {
 	case A_QUERY:
 		// Get specific information - the scheme's info object.
 		// Special notation allows just getting part of the info.
-		Ret_Query_Net(port, sock, D_RET);
+		refs = Find_Refines(ds, ALL_QUERY_REFS);
+		if ((refs & AM_QUERY_MODE) && IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
+			Ret_Net_Modes(port, D_RET);
+			return R_RET;
+		}
+		Ret_Query_Net(port, sock, D_RET, D_ARG(ARG_QUERY_FIELD));
 		break;
 
 	case A_OPENQ:

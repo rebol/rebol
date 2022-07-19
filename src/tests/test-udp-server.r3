@@ -14,7 +14,7 @@ stdout: system/ports/output
 
 udp-server/awake: func [event /local port str] [
 	port: event/port
-	print ["[UDP Server] event:" event/type]
+	print ["[UDP Server] event:" event/type "from ip:" query/mode port 'remote-ip ]
 	switch event/type [
 		read [
 			str: to string! port/data

@@ -583,6 +583,25 @@ if all [
 ===end-group===
 
 
+===start-group=== "TCP"
+	--test-- "query net info"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1712
+		port: open tcp://8.8.8.8:80
+		--assert [local-ip local-port remote-ip remote-port] = query/mode port none
+		--assert 0.0.0.0 = query/mode port 'local-ip
+		--assert       0 = query/mode port 'local-port
+		--assert 0.0.0.0 = query/mode port 'remote-ip
+		--assert      80 = query/mode port 'remote-port
+		--assert all [
+			port? wait [port 1] ;= wait for lookup, so remote-ip is resolved
+			8.8.8.8 = query/mode port 'remote-ip
+			[80 8.8.8.8] = query/mode port [remote-port remote-ip]
+			[local-ip: 0.0.0.0 local-port: 0] = query/mode port [local-ip: local-port:]
+		]
+		try [close port]
+===end-group===
+
+
 ===start-group=== "SYSTEM"
 	--test-- "query system://"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1373
