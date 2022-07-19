@@ -216,8 +216,11 @@ enum Transport_Types {
 
 		//Print("(max read length %d)", sock->length);
 		result = OS_DO_DEVICE(sock, RDC_READ); // recv can happen immediately
-		if (result < 0) Trap_Port(RE_READ_ERROR, port, sock->error);
-		VAL_TAIL(arg) += sock->actual;
+		if (GET_FLAG(sock->modes, RST_UDP && result == 0))
+			VAL_TAIL(arg) += sock->actual;
+		if (result < 0)
+			Trap_Port(RE_READ_ERROR, port, sock->error);
+		
 		break;
 
 	case A_WRITE:
