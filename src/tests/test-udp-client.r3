@@ -35,6 +35,8 @@ wait 1 ;= pretending some work here...
 write-udp "I'm done!"
 write-udp "quit"
 
-either system/options/script [
-	  ask as-red "CLIENT DONE"
-][	print as-red "CLIENT DONE" wait 0.5]
+print as-red "CLIENT DONE"
+wait 0.5
+if system/options/script [
+	ask "ENTER to quit"
+]

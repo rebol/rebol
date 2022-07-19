@@ -12,21 +12,28 @@ udp-server: try/except [open udp://:1189][
 ]
 stdout: system/ports/output
 
-udp-server/awake: func [event] [
+udp-server/awake: func [event /local port str] [
+	port: event/port
 	print ["[UDP Server] event:" event/type]
+	switch event/type [
+		read [
+			str: to string! port/data
+			clear port/data
+			print ["[UDP Server] received:" as-green mold str]
+			if str = "quit" [port/state: 'quit]
+		]
+	]
 	;; console output is buffered and so messages could come out of order;
 	;; to prevent it, just use the `flush`! 
-	flush stdout
+	flush stdout 
 	true
 ]
-
 forever [
 	wait read udp-server
-	str: to string! udp-server/data
-	print ["[UDP Server] received:" as-green mold str]
-	flush stdout ;= flush console buffer!
-	if str = "quit" [close udp-server break]
-	clear udp-server/data
+	if udp-server/state  = 'quit [
+		close udp-server
+		break
+	]
 ]
  
 print as-red "SERVER DONE"
