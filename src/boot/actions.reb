@@ -473,3 +473,8 @@ rename: action [
 	to [port! file! url! block!]
 ]
 
+flush: action [
+	{Flush output stream buffer.}
+	port [port!]
+]
+

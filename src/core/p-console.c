@@ -156,6 +156,10 @@
 		Ret_Query_Console(req, D_RET, D_ARG(ARG_QUERY_FIELD), spec);
 		break;
 
+	case A_FLUSH:
+		OS_DO_DEVICE(req, RDC_FLUSH);
+		break;
+
 	default:
 		Trap1(RE_NO_PORT_ACTION, Get_Action_Word(action));
 	}
