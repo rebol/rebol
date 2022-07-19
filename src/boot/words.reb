@@ -256,6 +256,11 @@ owner
 *port-modes*     ;@@ modes are defined in modes.r file and these
 *console-modes*  ;@@ placeholders are replaced here by make-boot.r script
 
+local-ip
+local-port
+remote-ip
+remote-port
+
 bits
 crash
 crash-dump
