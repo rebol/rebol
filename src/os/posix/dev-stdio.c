@@ -391,6 +391,9 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 	Query_IO,
 	Modify_IO,	// modify
 	Open_Echo,	// CREATE used for opening echo file
+	0, // delete
+	0, // rename
+	0, // lookup
 	Flush_IO
 };
 

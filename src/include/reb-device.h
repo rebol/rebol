@@ -64,10 +64,11 @@ enum {
 	RDC_MODIFY,		// set modes (also get modes)
 
 	RDC_CREATE,		// create unit target
-	RDC_FLUSH,      // flush output buffers
 	RDC_DELETE,		// delete unit target
 	RDC_RENAME,
 	RDC_LOOKUP,
+
+	RDC_FLUSH,
 	RDC_MAX,
 
 	RDC_CUSTOM=32	// start of custom commands
