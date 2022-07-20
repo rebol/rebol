@@ -153,6 +153,7 @@ modules: object [
 	;; optional modules, protocol and codecs
 	httpd:            https://src.rebol.tech/modules/httpd.reb
 	prebol:           https://src.rebol.tech/modules/prebol.reb
+	daytime:          https://src.rebol.tech/mezz/prot-daytime.reb
 	mail:             https://src.rebol.tech/mezz/prot-mail.reb
 	mysql:            https://src.rebol.tech/mezz/prot-mysql.reb
 	csv:              https://src.rebol.tech/mezz/codec-csv.reb

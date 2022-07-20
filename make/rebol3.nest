@@ -737,6 +737,7 @@ include-mezz-colors:         [mezz-lib-files:  %mezz/mezz-colors.reb        ]
 ; protocols:
 include-prot-whois:          [mezz-prot-files: %mezz/prot-whois.reb         ]
 include-prot-mysql:          [mezz-prot-files: %mezz/prot-mysql.reb         ]
+include-prot-daytime:        [mezz-prot-files: %mezz/prot-daytime.reb       ]
 include-prot-https:          [mezz-prot-files: %mezz/prot-http.reb :include-prot-tls]
 include-prot-tls: [
 	:include-bincode
@@ -823,6 +824,7 @@ include-rebol-bulk: [
 
 	:include-prot-whois
 	:include-prot-mysql
+	:include-prot-daytime
 
 	:include-dialecting  ;`delect`
 	:include-native-oid  ;`form-oid`

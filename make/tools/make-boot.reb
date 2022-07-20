@@ -959,7 +959,7 @@ foreach file first mezz-files [
 	either all [
 		;- if protocol exports some function, import must be used so
 		;- the functions are available in user's context
-		select hdr 'exports
+		;select hdr 'exports
 		select hdr 'name
 		'module  = select hdr 'type
 	][
