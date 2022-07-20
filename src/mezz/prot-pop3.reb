@@ -2,15 +2,16 @@ Rebol [
 	Name:    pop3
 	Type:    module
 	Options: [delay]
-	Version: 0.1.0
-	Date:    16-Jul-2022
+	Version: 0.1.1
+	Date:    20-Jul-2022
 	File:    %prot-pop3.reb
 	Title:   "POP3 protocol scheme"
 	Author:  @Oldes
 	Rights:  "Copyright (C) 2022 Oldes. All rights reserved."
 	License: MIT
 	History: [
-		0.1.0 16-Jul-2022 "Oldes" "Initial version"
+		0.1.0 16-Jul-2022 @Oldes "Initial version"
+		0.1.1 20-Jul-2022 @Oldes "Bug fixing"
 	]
 	Notes: {
 		1. So far it is using  mix of sync and async behaviours.
@@ -19,7 +20,6 @@ Rebol [
         2. The protocol so far works only in plain unsecured POP3 or,
            with POP3 submission (encryption started using STLS command).
            There is some issue when using POP3s (over TLS directly)!
-        3. There is some issue when using  without output to console!
 	}
 	Usage: [
 		mbox: open user's pop3
@@ -56,11 +56,7 @@ Rebol [
 ]
 
 
-;@@ THERE IS SOME INTERNAL ISSUE CURRENTLY!
-;@@ When there is no console output (no log), the port is probably awaken
-;@@ too soon and so the required synced actions does not happen.
-;@@ Will have to find out why :-/
-system/options/log/pop3: 2
+system/options/log/pop3: 1
 
 
 net-log: func[data /C /S /E /local msg][
@@ -139,7 +135,7 @@ pop3-conn-awake: function [event][
 			if empty? response [return false]
 
 			if system/options/log/pop3 > 1 [
-				foreach line split-lines trim/tail response [
+				foreach line split-lines response [
 					sys/log/more 'POP3 ["Server:^[[32m" line]
 				]
 			]
@@ -184,7 +180,7 @@ pop3-conn-awake: function [event][
 								]
 							]
 							STAT [
-								stat: load response
+								stat: load ok-msg
 								sys/log/info 'POP3 ["Mailbox has" stat/1 "messages having" stat/2 "bytes."]
 							]
 							DELE [
@@ -200,8 +196,8 @@ pop3-conn-awake: function [event][
 					]
 
 					either all [
-						find [RETR LIST UIDL CAPA] ctx/command
-						none? end: find/match skip tail pop3/data -3 "^M^/."
+						find [RETR LIST UIDL CAPA TOP] ctx/command
+						none? end: find/match skip tail pop3/data -5 "^M^/.^M^/"
 					][
 						pop3/state: 'READING
 						sys/log/more 'POP3 "Data are not complete yet..."
@@ -244,7 +240,7 @@ pop3-conn-awake: function [event][
 						]
 						STLS [
 							sys/log/more 'POP3 "Upgrading client's connection to TLS port"
-							;; tls-port will be a new layer between existing smtp and client (tcp) connections
+							;; tls-port will be a new layer between existing pop3 and client (tcp) connections
 							tls-port: open compose [scheme: 'tls conn: (conn)]
 							tls-port/parent: pop3
 							conn/parent: tls-port
