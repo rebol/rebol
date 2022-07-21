@@ -780,8 +780,8 @@ bad_target:
 						return index;
 
 					case SYM_REJECT:
-						parse->result = -1;
-						return index;
+						parse->result = 0;
+						return NOT_FOUND;
 
 					case SYM_FAIL:
 						index = NOT_FOUND;

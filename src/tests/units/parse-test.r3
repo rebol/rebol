@@ -122,6 +122,18 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "REJECT"
+--test-- "reject"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2394
+	--assert not parse "aa" [some [#"a"] reject]
+	--assert     parse "aabb" [opt  [#"a" reject] to end]
+	--assert not parse "aabb" [some [#"a" reject] to end]
+	--assert not parse "aabb" [some  #"a" reject  to end]
+	--assert not parse "aabb" [[#"a" reject | "aabb"]]
+	--assert     parse "aabb" [[#"a" reject] | "aabb"]
+===end-group===
+
+
 ===start-group=== "CASE / NO-CASE"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1898
 --test-- "case/no-case 1"
