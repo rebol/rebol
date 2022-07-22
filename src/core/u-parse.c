@@ -48,7 +48,7 @@ typedef struct reb_parse {
 	REBCNT type;
 	REBCNT flags;
 	REBINT result;
-	REBVAL *retval;
+//	REBVAL *retval;
 	REB_PARSE_COLLECT *collect;
 } REBPARSE;
 
@@ -87,7 +87,8 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	REBVAL val;
 	Set_Series(type, &val, series);
 	VAL_INDEX(&val) = index;
-	Debug_Fmt(cb_cast("%r: %r"), rules, &val);
+	//TODO: use console line width?
+	Debug_Fmt_Limited(76, cb_cast("%r: %r"), rules, &val);
 }
 
 

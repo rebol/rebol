@@ -1543,7 +1543,7 @@ append:
 
 /***********************************************************************
 **
-*/	REBSER *Mold_Print_Value(REBVAL *value, REBCNT limit, REBFLG mold)
+*/	REBSER *Mold_Print_Value(REBVAL *value, REBCNT limit, REBFLG mold, REBOOL flat)
 /*
 **		Basis function for print.  Can do a form or a mold based
 **		on the mold flag setting.  Can limit string output to a
@@ -1554,6 +1554,7 @@ append:
 	REB_MOLD mo = {0};
 
 	Reset_Mold(&mo);
+	if(flat) SET_FLAG(mo.opts, MOPT_INDENT);
 	mo.limit = limit;
 
 	Mold_Value(&mo, value, mold);
