@@ -134,6 +134,17 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "RETURN"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2238
+--test-- "parse return"
+	--assert [1 2]  = parse ["a" 1 2][string! return to end]
+	--assert "done" = parse ["a" 1 2][string! return ("done")]
+	--assert "positive" = parse [ 2][set n integer! if (n > 0) return ("positive")]
+	--assert          not parse [-2][set n integer! if (n > 0) return ("positive")]
+
+===end-group===
+
+
 ===start-group=== "COLLECT/KEEP"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/2471
 --test-- "collect/keep block!"
