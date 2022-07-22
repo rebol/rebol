@@ -37,12 +37,19 @@ enum Parse_Flags {
 	PF_CASED = 4, // was set as initial option
 };
 
+typedef struct reb_parse_collect {
+	REBVAL *result;
+	REBSER *block;
+	REBINT  depth;
+} REB_PARSE_COLLECT;
+
 typedef struct reb_parse {
 	REBSER *series;
 	REBCNT type;
 	REBCNT flags;
 	REBINT result;
-	REBVAL retval;
+	REBVAL *retval;
+	REB_PARSE_COLLECT *collect;
 } REBPARSE;
 
 enum parse_flags {
@@ -58,6 +65,9 @@ enum parse_flags {
 	PF_RETURN,
 	PF_WHILE,
 	PF_ADVANCE, // used to report that although index was not changed, rule is suppose to advance
+	PF_COLLECT,
+	PF_KEEP,
+	PF_PICK,
 };
 
 #define MAX_PARSE_DEPTH 512
@@ -83,7 +93,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 
 /***********************************************************************
 **
-*/	static REBCNT Parse_Series(REBVAL *val, REBVAL *rules, REBCNT flags, REBCNT depth)
+*/	static REBCNT Parse_Series(REBVAL *val, REBVAL *rules, REBCNT flags, REBCNT depth, REB_PARSE_COLLECT *collect)
 /*
 ***********************************************************************/
 {
@@ -93,6 +103,8 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	parse.type = VAL_TYPE(val);
 	parse.flags = flags;
 	parse.result = 0;
+	//parse.retval = NULL;
+	parse.collect = collect;
 
 	return Parse_Rules_Loop(&parse, VAL_INDEX(val), rules, depth);
 }
@@ -657,6 +669,93 @@ bad_target:
 
 /***********************************************************************
 **
+*/	static REBSER *Parse_Collect_Block(REBPARSE *parse)
+/*
+***********************************************************************/
+{
+	REBVAL *val;
+	if (parse->collect->depth == 0) Trap0(RE_PARSE_NO_COLLECT);
+
+	if (!parse->collect->block) {
+		// there is no yet allocated block for collection
+		// but the parent is on top of the stack, so we can
+		// allocate a new block for the keep.
+		val = DS_TOP;
+		val = Append_Value(VAL_SERIES(val));
+		Set_Series(REB_BLOCK, val, Make_Block(2));
+		// and mark it for use
+		parse->collect->block = VAL_SERIES(val);
+	}
+	return parse->collect->block;
+}
+
+/***********************************************************************
+**
+*/	static void Parse_Keep(REBPARSE *parse, REBSER *series, REBCNT begin, REBCNT count, REBOOL pick)
+/*
+***********************************************************************/
+{
+	REBVAL *val;
+	REBINT i, e;
+	REBSER *block = Parse_Collect_Block(parse);
+
+	ASSERT1(block, RP_MISC); // should never happen
+
+	if (parse->collect->depth == 0) Trap0(RE_PARSE_NO_COLLECT);
+
+	//printf("Keep from %i count: %i to: %x\n", begin, count, block);
+
+	if (count > 1) {
+
+		if (IS_BLOCK_INPUT(parse)) {
+			if (pick) {
+				Insert_Series(block, AT_TAIL, SERIES_SKIP(series, begin), count);
+			}
+			else {
+				val = Append_Value(block);
+				Set_Block(val, Copy_Block_Len(series, begin, count));
+			}
+		}
+		else {
+			if (pick) {
+				e = begin + count;
+				if (parse->type == REB_BINARY) {
+					for (i = begin; i < e; i++) {
+						val = Append_Value(block);
+						SET_INTEGER(val, BIN_HEAD(series)[i]);
+					}
+				}
+				else {
+					for (i = begin; i < e; i++) {
+						val = Append_Value(block);
+						SET_CHAR(val, GET_ANY_CHAR(series, i));
+					}
+				}
+			}
+			else {
+				val = Append_Value(block);
+				VAL_SERIES(val) = Copy_String(series, begin, count);
+				VAL_INDEX(val) = 0;
+				VAL_SET(val, parse->type);
+			}
+		}
+	}
+	else if (count == 1) {
+		val = Append_Value(block);
+		if (IS_BLOCK_INPUT(parse)) {
+			*val = *BLK_SKIP(series, begin);
+		}
+		else if (parse->type == REB_BINARY) {
+			SET_INTEGER(val, BIN_HEAD(series)[begin]);
+		}
+		else {
+			SET_CHAR(val, GET_ANY_CHAR(series, begin));
+		}
+	}
+}
+
+/***********************************************************************
+**
 */	static REBCNT Parse_Rules_Loop(REBPARSE *parse, REBCNT index, REBVAL *rules, REBCNT depth)
 /*
 ***********************************************************************/
@@ -676,6 +775,7 @@ bad_target:
 	REBSER *ser;
 	REBFLG flags;
 	REBCNT cmd;
+	REBSER *blk;
 	//REBVAL *rule_head = rules;
 
 	CHECK_STACK(&flags);
@@ -764,6 +864,52 @@ bad_target:
 					
 					case SYM_CHANGE:
 						SET_FLAG(flags, PF_CHANGE);
+						continue;
+
+					case SYM_COLLECT:
+						if (IS_END(rules))
+							Trap1(RE_PARSE_END, rules - 1);
+						//printf("COLLECT start %i\n", parse->collect->depth);
+						// reserve a new value on stack
+						DS_PUSH_NONE;
+						if (parse->collect->block == NULL) {
+							// --- FIRST collect -------------------------
+							// allocate the resulting block on the stack, so it is GC safe
+							Set_Series(REB_BLOCK, DS_TOP, Make_Block(2));
+							parse->collect->result = DS_TOP;
+							parse->collect->block = VAL_SERIES(DS_TOP);
+						} else {
+							// --- SUBSEQUENT collect ---------------------
+							// store current block on stack
+							Set_Series(REB_BLOCK, DS_TOP, parse->collect->block);
+							// do not allocate a new one, until it is needed, else
+							// there could be unwanted empty blocks like in case:
+							// parse [1][collect some [collect keep integer!]]
+							parse->collect->block = NULL;
+						}
+						SET_FLAG(flags, PF_COLLECT);
+						parse->collect->depth++;
+						continue;
+
+					case SYM_KEEP:
+						if (IS_END(rules)) {
+							Trap1(RE_PARSE_END, rules - 1);
+						}
+						if (IS_WORD(rules) && VAL_SYM_CANON(rules) == SYM_PICK) {
+							SET_FLAG(flags, PF_PICK);
+							rules++;
+							if (IS_END(rules))
+								Trap1(RE_PARSE_END, rules - 2);
+						}
+						if (IS_PAREN(rules)) {
+							blk = Parse_Collect_Block(parse);
+							item = Do_Block_Value_Throw(rules); // might GC
+							Append_Val(blk, item);
+							rules++;
+							continue;
+						}
+						SET_FLAG(flags, PF_KEEP);
+
 						continue;
 
 					case SYM_RETURN:
@@ -939,7 +1085,7 @@ bad_target:
 					val = BLK_SKIP(series, index);
 					i = (
 						(ANY_BINSTR(val) || ANY_BLOCK(val))
-						&& (Parse_Series(val, VAL_BLK_DATA(item), parse->flags, depth+1) == VAL_TAIL(val))
+						&& (Parse_Series(val, VAL_BLK_DATA(item), parse->flags, depth+1, &parse->collect) == VAL_TAIL(val))
 					) ? index+1 : NOT_FOUND;
 					break;
 #ifdef USE_DO_PARSE_RULE
@@ -999,7 +1145,13 @@ bad_target:
 			}
 			//if (i >= series->tail) {     // OLD check: no more input
 			else {
-				if (count < mincount) index = NOT_FOUND; // was not enough
+				if (count < mincount) {
+					index = NOT_FOUND; // was not enough
+				// Uncomment bellow code, to have result:
+				// [? []] = parse ["a"][collect some [keep ('?) collect keep integer!]]
+				//	if (GET_FLAG(flags, PF_KEEP))
+				//		Parse_Collect_Block(parse);
+				} 
 				else if (i != NOT_FOUND) index = i;
 				// else keep index as is.
 				break;
@@ -1035,6 +1187,7 @@ post:
 			}
 			else {  // Success actions:
 				count = (begin > index) ? 0 : index - begin; // how much we advanced the input
+				ser = NULL;
 				if (GET_FLAG(flags, PF_COPY)) {
 					ser = (IS_BLOCK_INPUT(parse))
 						? Copy_Block_Len(series, begin, count)
@@ -1060,6 +1213,35 @@ post:
 						}
 					}
 				}
+				if (GET_FLAG(flags, PF_KEEP)) {
+					if (ser && GET_FLAG(flags, PF_COPY)) {
+						val = Append_Value(parse->collect->block);
+						if (IS_BLOCK_INPUT(parse)) {
+							Set_Block(val, ser);
+						}
+						else if (parse->type == REB_BINARY) {
+							Set_Binary(val, ser);
+						}
+						else {
+							VAL_SET(val, parse->type);
+							VAL_SERIES(val) = ser;
+							VAL_INDEX(val) = 0;
+							VAL_SERIES_SIDE(val) = 0;
+						}
+					}
+					else {
+						Parse_Keep(parse, series, begin, count, GET_FLAG(flags, PF_PICK));
+					}
+				}
+				if (GET_FLAG(flags, PF_COLLECT)) {
+					// COLLECT ends
+					// get the previous target block from the stack and use it
+					val = DS_POP;
+					parse->collect->block = VAL_SERIES(val);
+					parse->collect->depth--;
+					//printf("COLLECT done %i\n", parse->collect->depth);
+				}
+
 				if (GET_FLAG(flags, PF_RETURN)) {
 					ser = (IS_BLOCK_INPUT(parse))
 						? Copy_Block_Len(series, begin, count)
@@ -1309,6 +1491,7 @@ bad_end:
 #endif
 		REBCNT n;
 		REBOL_STATE state;
+		REB_PARSE_COLLECT collect;
 		// Let user RETURN and THROW out of the PARSE. All other errors should relay.
 		PUSH_STATE(state, Saved_State);
 		if (SET_JUMP(state)) {
@@ -1328,8 +1511,17 @@ bad_end:
 			Throw_Error(VAL_ERR_OBJECT(DS_RETURN));
 		}
 		SET_STATE(state, Saved_State);
-		n = Parse_Series(val, VAL_BLK_DATA(arg), (opts & PF_CASE) ? AM_FIND_CASE : 0, 0);
-		SET_LOGIC(DS_RETURN, n >= VAL_TAIL(val) && n != NOT_FOUND);
+		collect.depth = 0;
+		collect.result = NULL;
+		collect.block = NULL;
+
+		n = Parse_Series(val, VAL_BLK_DATA(arg), (opts & PF_CASE) ? AM_FIND_CASE : 0, 0, &collect);
+		if (collect.result) {
+			*D_RET = *collect.result;
+		}
+		else {
+			SET_LOGIC(DS_RETURN, n >= VAL_TAIL(val) && n != NOT_FOUND);
+		}
 		POP_STATE(state, Saved_State);
 #ifdef INCLUDE_PARSE_SERIES_SPLITTING
 	}

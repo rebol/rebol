@@ -134,6 +134,179 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "COLLECT/KEEP"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2471
+--test-- "collect/keep block!"
+	--assert     []  = parse []     [collect []]
+	--assert     []  = parse [1]    [collect []]
+	--assert     [1] = parse [1]    [collect [keep skip]]
+	--assert     [1] = parse [1 2]  [collect  keep integer! ]
+	--assert     [1] = parse [1 2]  [collect [keep integer!]]
+	--assert     [1] = parse [1 2]  [collect [[keep integer!]]]
+	--assert     [1] = parse [1]    [collect any [keep any integer! | skip]]
+	--assert     [1] = parse [1 %a] [collect any [keep any integer! | skip]]
+	--assert [[1 1]] = parse [1 1]  [collect any [keep any integer! | skip]]
+	--assert [[1 1]] = parse [1 1 %a] [collect any [keep any integer! | skip]]
+	--assert ["a"]   = parse [1 "a"][collect any [integer! | keep string!]]
+	--assert [1 2 3] = parse [1 2 3][collect  some [keep integer!]]
+	--assert [1 2 3] = parse [1 2 3][collect [some [keep integer!]]]
+
+	--assert [1]     = parse [    1][collect [opt [keep "A"] keep integer!]]
+	--assert ["A" 1] = parse ["A" 1][collect [opt [keep "A"] keep integer!]]
+
+	--assert [1 [2 3]] = parse [1 2 3]   [collect [keep integer! keep 2 integer!]]
+	--assert [[1 2] 3] = parse [1 2 3]   [collect [keep 2 integer! keep integer!]]
+	--assert [[b b b]] = parse [a b b b] [collect [skip keep some 'b]]
+	--assert [1 [2 2] 3] = parse [1 "a" 2 2 "b" 3] [collect any [keep some integer! | skip]]
+
+--test-- "block collect conditional"
+	--assert [2] = parse [1 2 3] [collect [some [keep [set v integer! if (even? v)] | skip]]]
+
+--test-- "block collect copy"
+	--assert all [ [[1] [2] [3]] = parse [1 2 3][collect some [keep copy _ integer!]] _ = [3]]
+
+--test-- "block collect keep pick"
+	--assert [[1 2]] = parse [1 2][collect some [keep 2 integer!]]
+	--assert [ 1 2 ] = parse [1 2][collect some [keep pick 2 integer!]]
+
+--test-- "block collect nested"
+	--assert [[1] [2] [3]] = parse [1 2 3][collect some [collect keep integer!]]
+	--assert [[1 2]] = parse [1 2] [collect [collect [keep integer! keep integer!]]]
+	--assert [[1] a [2] a] = parse [1 2][collect some [collect keep integer! keep ('a)]]
+
+--test-- "block collect bizzar"
+	--assert [[1 2] [3]] = parse [1 2 3] [collect [keep 2 integer!] collect [keep integer!]]
+	--assert [1 [[2 3]]] = parse [1 2 3] [collect [keep integer!] collect [keep 2 integer!]]
+	--assert [[1]] = parse [1] [opt [collect string!] collect keep integer!]
+
+--test-- "block collect keep paren"
+	--assert [3] = parse [1][collect [integer! keep (1 + 2)]]
+	--assert [3 "A"] = parse [1][collect [integer! keep (1 + 2) keep ("A")]]
+
+--test-- "block collect set (Red specific)"
+	;@@ Not yet implemented!
+	;- 	Sets a given word to a block of collected values.
+;	a: none --assert all [parse [] [collect set a []] a = []]
+;	a: none --assert all [parse [1] [collect set a [keep skip]] a = [1]]
+
+--test--  "block collect into"
+	;@@ Not yet implemented!
+	;-  Inserts collected values into a series referred by a word, resets series' index to the head.
+;	a: [] --assert all [parse [] [collect into a []] a = []]
+;	a: [] --assert all [parse [1] [collect into a [keep skip]] [1] = a [1] = head a]
+;	list: next [1 2 3]
+;	--assert all [
+;		parse [a 4 b 5 c] [collect into list [some [keep word! | skip]]]
+;		list = [a b c 2 3]
+;		[1 a b c 2 3] = head list
+;	]
+
+--test-- "block collect after"
+	;@@ Not yet implemented!
+	;- Inserts collected values into a series referred by a word, moves series' index past the insertion.
+;	a: [] --assert all [parse [1] [collect after a [keep skip]] [] = a [1] = head a]
+;	list: next [1 2 3]
+;	--assert all [
+;		parse [a 4 b 5 c] [collect after list [some [keep word! | skip]]]
+;		list = [2 3]
+;		[1 a b c 2 3] = head list
+;	]
+
+--test-- "string collect/keep"
+	--assert [] = parse "" [collect []]
+	--assert [] = parse "a" [collect []]
+	--assert [#"a"] = parse "a" [collect [keep skip]]
+	--assert [#"a" #"b" #"c"] = parse "abc" [collect any [keep skip]]
+	--assert ["ab" #"c"] = parse "abc" [collect any [keep 1 2 skip]]
+	--assert [%ab  #"c"] = parse %abc  [collect any [keep 1 2 skip]]
+	--assert [@ab  #"c"] = parse @abc  [collect any [keep 1 2 skip]]
+	--assert [#{0102} 3] = parse #{010203} [collect any [keep 1 2 skip]]
+	--assert ["aa" "bbb"] = parse "aabbb" [collect [keep some "a" keep some #"b"]]
+
+	digit: :system/catalog/bitsets/numeric
+	--assert [#"1" #"2" #"3"] = parse "123" [collect [some [keep digit]]]
+	--assert [#"2"] = parse "123" [collect [some [keep [copy v digit if (even? to integer! v)] | skip]]]
+	--assert [1 2 3] = parse "123" [collect [some [copy d digit keep (to integer! d)]]]
+	alpha: :system/catalog/bitsets/alpha
+	--assert ["abc" "def"] = parse "abc|def" [collect [any [keep some alpha | skip]]]
+
+--test-- "string collect copy"
+	--assert all [ ["a" "b"] = parse "ab" [collect some [keep copy _ skip]] _ = "b"]
+	--assert all [ [@a  @b ] = parse @ab  [collect some [keep copy _ skip]] _ = @b ]
+
+--test-- "binary collect copy"
+	--assert all [ [#{01} #{02}] = parse #{0102} [collect some [keep copy _ skip]] _ = #{02}]
+
+--test-- "string collect keep pick"
+	--assert ["ab"] = parse "ab" [collect [keep 2 skip]]
+	--assert [#"a" #"b"] = parse "ab" [collect [keep pick 2 skip]]
+	--assert [#"a" #"b"] = parse @ab  [collect [keep pick 2 skip]]
+
+--test-- "binary collect keep pick"
+	--assert [#{0102}] = parse #{0102} [collect [keep 2 skip]]
+	--assert [1 2] = parse #{0102} [collect [keep pick 2 skip]]
+
+--test-- "string collect set (Red specific)"
+	;@@ Not yet implemented!
+	;- 	Sets a given word to a block of collected values.
+;	a: none --assert all [parse "" [collect set a []] a = []]
+;	a: none --assert all [parse "1" [collect set a [keep skip]] a = [#"1"]]
+
+--test--  "string collect into"
+	;@@ Not yet implemented!
+	;-  Inserts collected values into a series referred by a word, resets series' index to the head.
+;	a: "" --assert all [parse "" [collect into a []] a = ""]
+;	a: "" --assert all [parse "1" [collect into a [keep skip]] "1" = a "1" = head a]
+;	a: [] --assert all [parse "1" [collect into a [keep skip]] [#"1"] = a [#"1"] = head a]
+;	list: next [1 2 3]
+;	--assert all [
+;		parse [a 4 b 5 c] [collect into list [some [keep word! | skip]]]
+;		list = [a b c 2 3]
+;		[1 a b c 2 3] = head list
+;	]
+
+--test-- "string collect after"
+	;@@ Not yet implemented!
+	;- Inserts collected values into a series referred by a word, moves series' index past the insertion.
+;	a: "" --assert all [parse "1" [collect after a [keep skip]] "" = a "1" = head a]
+;	a: [] --assert all [parse "1" [collect after a [keep skip]] [] = a [#"1"] = head a]
+
+--test-- "string collect complex"
+	; Taken from: https://www.red-lang.org/2013/11/041-introducing-parse.html
+	html: {
+		<html>
+			<head><title>Test</title></head>
+			<body><div><u>Hello</u> <b>World</b></div></body>
+		</html>
+	}
+	ws: :system/catalog/bitsets/whitespace
+	res: parse html tags: [
+		collect [any [
+			ws
+			| "</" thru ">" break
+			| "<" copy name to ">" skip keep (load name) opt tags
+			| keep to "<"
+		]]
+	]
+	--assert res = [html [head [title ["Test"]] body [div [u ["Hello"] b ["World"]]]]]
+
+--test-- "collect/keep expression"
+	--assert [1] = parse [][collect keep (1)]
+	--assert [1] = parse [][collect keep pick (1)]
+	--assert [[1]] = parse [][collect keep ([1])]
+	--assert [[1]] = parse [][collect keep pick ([1])] ;@@ no difference?
+
+--test-- "collect/keep errors"
+	--assert all [error? e: try [parse [1] [keep skip]   ] e/id = 'parse-no-collect]
+	--assert all [error? e: try [parse [1] [keep]        ] e/id = 'parse-end]
+	--assert all [error? e: try [parse [1] [collect keep]] e/id = 'parse-end]
+	--assert all [error? e: try [parse [1] [collect]     ] e/id = 'parse-end]
+	--assert all [error? e: try [parse [1] [collect integer! keep (1)]] e/id = 'parse-no-collect]
+	--assert all [error? e: try [collect [parse "abc" [any [keep 1 2 skip]]] e/id = 'parse-no-collect]] ;<--- requires parse's collect!
+
+===end-group===
+
+
 ===start-group=== "CASE / NO-CASE"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1898
 --test-- "case/no-case 1"

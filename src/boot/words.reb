@@ -153,6 +153,8 @@ if
 fail
 reject
 while
+collect
+keep
 return
 limit
 ??
