@@ -46,6 +46,9 @@ escape:    #"^["
 cr:        #"^M"
 lf:        newline
 crlf:      "^M^J"
+comma:     #","
+dot:       #"."
+dbl-quote: #"^""
 
 ;-- Bitset constants
 whitespace: #[bitset! #{0064000080}] ;= charset [#" " #"^-" #"^/" #"^M"]
