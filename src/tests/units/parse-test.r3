@@ -324,6 +324,19 @@ Rebol [
 	]
 	--assert res = [html [head [title ["Test"]] body [div [u ["Hello"] b ["World"]]]]]
 
+--test-- "string collect with fail"
+	alpha: system/catalog/bitsets/alpha
+	numer: system/catalog/bitsets/numeric
+	--assert all [
+		#[true] = parse "11ab2c33" [
+			collect set res: [
+				  keep (quote alpha:  ) collect [some [keep some alpha | skip] fail]
+				| keep (quote numeric:) collect [some [keep some numer | skip]]
+			]
+		]
+		res = [alpha: ["ab" #"c"] numeric: ["11" #"2" "33"]]
+	]
+
 --test-- "collect/keep expression"
 	--assert [1] = parse [][collect keep (1)]
 	--assert [1] = parse [][collect keep pick (1)]

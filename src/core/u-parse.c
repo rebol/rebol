@@ -1211,6 +1211,14 @@ post:
 					SKIP_TO_BAR(rules);
 					if (!IS_END(rules)) rules++;
 				}
+				if (GET_FLAG(flags, PF_COLLECT)) {
+					// COLLECT ends
+					// get the previous target block from the stack and use it
+					val = DS_POP;
+					collect->block = VAL_SERIES(val);
+					collect->depth--;
+					//printf("COLLECT done %i\n", collect->depth);
+				}
 			}
 			else {  // Success actions:
 				count = (begin > index) ? 0 : index - begin; // how much we advanced the input
@@ -1268,7 +1276,6 @@ post:
 					collect->depth--;
 					//printf("COLLECT done %i\n", collect->depth);
 				}
-
 				if (GET_FLAG(flags, PF_RETURN)) {
 					ser = (IS_BLOCK_INPUT(parse))
 						? Copy_Block_Len(series, begin, count)
