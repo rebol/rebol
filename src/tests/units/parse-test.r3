@@ -203,6 +203,14 @@ Rebol [
 		a = [1]
 	]
 	a: none --assert all [
+		[[1]] = parse [1] [collect [collect set a [keep skip]]]
+		a = [1]
+	]
+	a: none --assert all [
+		[[1]] = parse [1] [collect [collect [set a keep skip]]] ;set is not related to collect!
+		a = 1
+	]
+	a: none --assert all [
 		#[true] = parse [1] [collect set a [collect set a keep skip]]
 		a = [1]
 	]
@@ -276,6 +284,14 @@ Rebol [
 	a: none --assert all [
 		[[#"1"]] = parse "1" [collect [collect set a keep skip]]
 		a = [#"1"]
+	]
+	a: none --assert all [
+		[[#"1"]] = parse "1" [collect [collect set a [keep skip]]]
+		a = [#"1"]
+	]
+	a: none --assert all [
+		[[#"1"]] = parse "1" [collect [collect [set a keep skip]]] ;set is not related to collect!
+		a = #"1"
 	]
 	a: none --assert all [
 		#[true] = parse "1" [collect set a [collect set a keep skip]]
