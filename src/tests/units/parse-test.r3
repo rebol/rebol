@@ -194,11 +194,23 @@ Rebol [
 	--assert [3] = parse [1][collect [integer! keep (1 + 2)]]
 	--assert [3 "A"] = parse [1][collect [integer! keep (1 + 2) keep ("A")]]
 
---test-- "block collect set (Red specific)"
-	;@@ Not yet implemented!
-	;- 	Sets a given word to a block of collected values.
-;	a: none --assert all [parse [] [collect set a []] a = []]
-;	a: none --assert all [parse [1] [collect set a [keep skip]] a = [1]]
+--test-- "block collect set"
+	a: none --assert all [#[true]  = parse [ ]   [collect set a []] a = []]
+	a: none --assert all [#[true]  = parse [1]   [collect set a [keep skip]] a = [1]]
+	a: none --assert all [#[false] = parse [1 2] [collect set a [keep skip]] a = [1]]
+	a: none --assert all [
+		[[1]] = parse [1] [collect [collect set a keep skip]]
+		a = [1]
+	]
+	a: none --assert all [
+		#[true] = parse [1] [collect set a [collect set a keep skip]]
+		a = [1]
+	]
+	a: b: none --assert all [
+		#[true] = parse [1] [collect set a [collect set b keep skip]]
+		a = [[1]]
+		b = [1]
+	]
 
 --test--  "block collect into"
 	;@@ Not yet implemented!
@@ -257,12 +269,23 @@ Rebol [
 	--assert [#{0102}] = parse #{0102} [collect [keep 2 skip]]
 	--assert [1 2] = parse #{0102} [collect [keep pick 2 skip]]
 
---test-- "string collect set (Red specific)"
-	;@@ Not yet implemented!
-	;- 	Sets a given word to a block of collected values.
-;	a: none --assert all [parse "" [collect set a []] a = []]
-;	a: none --assert all [parse "1" [collect set a [keep skip]] a = [#"1"]]
-
+--test-- "string collect set"
+	a: none --assert all [#[true]  = parse ""   [collect set a []] a = []]
+	a: none --assert all [#[true]  = parse "1"  [collect set a [keep skip]] a = [#"1"]]
+	a: none --assert all [#[false] = parse "12" [collect set a [keep skip]] a = [#"1"]]
+	a: none --assert all [
+		[[#"1"]] = parse "1" [collect [collect set a keep skip]]
+		a = [#"1"]
+	]
+	a: none --assert all [
+		#[true] = parse "1" [collect set a [collect set a keep skip]]
+		a = [#"1"]
+	]
+	a: b: none --assert all [
+		#[true] = parse "1" [collect set a [collect set b keep skip]]
+		a = [[#"1"]]
+		b = [#"1"]
+	]
 --test--  "string collect into"
 	;@@ Not yet implemented!
 	;-  Inserts collected values into a series referred by a word, resets series' index to the head.

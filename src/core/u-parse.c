@@ -23,7 +23,7 @@
 **  Module:  u-parse.c
 **  Summary: parse dialect interpreter
 **  Section: utility
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Oldes
 **  Notes:
 **
 ***********************************************************************/
@@ -41,6 +41,7 @@ typedef struct reb_parse_collect {
 	REBVAL *result;
 	REBSER *block;
 	REBINT  depth;
+	REBFLG  flags;
 } REB_PARSE_COLLECT;
 
 typedef struct reb_parse {
@@ -68,6 +69,10 @@ enum parse_flags {
 	PF_COLLECT,
 	PF_KEEP,
 	PF_PICK,
+};
+
+enum collect_flags {
+	CF_ROOT_SET, // that the root collect block was SET to a word, so return parse's result (logic) instead
 };
 
 #define MAX_PARSE_DEPTH 512
@@ -777,6 +782,7 @@ bad_target:
 	REBFLG flags;
 	REBCNT cmd;
 	REBSER *blk;
+	REB_PARSE_COLLECT *collect = parse->collect;
 	//REBVAL *rule_head = rules;
 
 	CHECK_STACK(&flags);
@@ -870,26 +876,46 @@ bad_target:
 					case SYM_COLLECT:
 						if (IS_END(rules))
 							Trap1(RE_PARSE_END, rules - 1);
-						//printf("COLLECT start %i\n", parse->collect->depth);
+						//printf("COLLECT start %i\n", collect->depth);
 						// reserve a new value on stack
 						DS_PUSH_NONE;
-						if (parse->collect->block == NULL) {
+
+						if (collect->block == NULL) {
 							// --- FIRST collect -------------------------
 							// allocate the resulting block on the stack, so it is GC safe
 							Set_Series(REB_BLOCK, DS_TOP, Make_Block(2));
-							parse->collect->result = DS_TOP;
-							parse->collect->block = VAL_SERIES(DS_TOP);
+							collect->result = DS_TOP;
+							collect->block = VAL_SERIES(DS_TOP);
 						} else {
 							// --- SUBSEQUENT collect ---------------------
 							// store current block on stack
-							Set_Series(REB_BLOCK, DS_TOP, parse->collect->block);
+							Set_Series(REB_BLOCK, DS_TOP, collect->block);
 							// do not allocate a new one, until it is needed, else
 							// there could be unwanted empty blocks like in case:
 							// parse [1][collect some [collect keep integer!]]
-							parse->collect->block = NULL;
+							collect->block = NULL;
 						}
 						SET_FLAG(flags, PF_COLLECT);
-						parse->collect->depth++;
+						
+						if (IS_WORD(rules) && VAL_SYM_CANON(rules) == SYM_SET) {
+							rules++;
+							if (!(IS_WORD(rules) || IS_SET_WORD(rules)))
+								Trap1(RE_PARSE_VARIABLE, rules);
+							if (collect->block == NULL) {
+								// the block was not allocated yet, but we need it now!
+								val = Append_Value(VAL_SERIES(DS_TOP));
+								Set_Series(REB_BLOCK, val, Make_Block(2));
+								// and mark it for use
+								collect->block = VAL_SERIES(val);
+							}
+							if (collect->depth == 0) {
+								SET_FLAG(collect->flags, CF_ROOT_SET);
+							}
+
+							Set_Var_Series(rules, REB_BLOCK, collect->block, 0);
+							rules++;
+						}
+						collect->depth++;
 						continue;
 
 					case SYM_KEEP:
@@ -1086,7 +1112,7 @@ bad_target:
 					val = BLK_SKIP(series, index);
 					i = (
 						(ANY_BINSTR(val) || ANY_BLOCK(val))
-						&& (Parse_Series(val, VAL_BLK_DATA(item), parse->flags, depth+1, &parse->collect) == VAL_TAIL(val))
+						&& (Parse_Series(val, VAL_BLK_DATA(item), parse->flags, depth+1, &collect) == VAL_TAIL(val))
 					) ? index+1 : NOT_FOUND;
 					break;
 #ifdef USE_DO_PARSE_RULE
@@ -1216,7 +1242,7 @@ post:
 				}
 				if (GET_FLAG(flags, PF_KEEP)) {
 					if (ser && GET_FLAG(flags, PF_COPY)) {
-						val = Append_Value(parse->collect->block);
+						val = Append_Value(collect->block);
 						if (IS_BLOCK_INPUT(parse)) {
 							Set_Block(val, ser);
 						}
@@ -1238,9 +1264,9 @@ post:
 					// COLLECT ends
 					// get the previous target block from the stack and use it
 					val = DS_POP;
-					parse->collect->block = VAL_SERIES(val);
-					parse->collect->depth--;
-					//printf("COLLECT done %i\n", parse->collect->depth);
+					collect->block = VAL_SERIES(val);
+					collect->depth--;
+					//printf("COLLECT done %i\n", collect->depth);
 				}
 
 				if (GET_FLAG(flags, PF_RETURN)) {
@@ -1512,12 +1538,10 @@ bad_end:
 			Throw_Error(VAL_ERR_OBJECT(DS_RETURN));
 		}
 		SET_STATE(state, Saved_State);
-		collect.depth = 0;
-		collect.result = NULL;
-		collect.block = NULL;
+		CLEARS(&collect);
 
 		n = Parse_Series(val, VAL_BLK_DATA(arg), (opts & PF_CASE) ? AM_FIND_CASE : 0, 0, &collect);
-		if (collect.result) {
+		if (collect.result && !GET_FLAG(collect.flags, CF_ROOT_SET)) {
 			*D_RET = *collect.result;
 		}
 		else {
