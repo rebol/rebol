@@ -868,6 +868,14 @@ if not error? try [str: to string! #{A032}][
 --test-- "invalid rule error message"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1273
 	--assert all [error? e: try [parse "abc" [huh "b"]] e/id = 'parse-rule e/arg1 = 'huh]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2364
+	--assert all [
+		data: "aaabbb"
+		pos: head data
+		error? e: try [parse data [some "a" copy var :pos]]
+		e/id = 'parse-rule
+		e/arg1 = quote :pos
+	]
 
 ===end-group===
 
