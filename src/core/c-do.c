@@ -1047,8 +1047,8 @@ eval_func2:
 ***********************************************************************/
 {
 	REBVAL *tos = 0;
-#if (ALEVEL>1)
 	REBINT start = DSP;
+#if (ALEVEL>1)
 //	REBCNT gcd = GC_Disabled;
 #endif
 
@@ -1091,7 +1091,7 @@ eval_func2:
 	REBSER *series = VAL_SERIES(block);
 	REBCNT index = VAL_INDEX(block);
 	REBVAL *tos = 0;
-	REBINT start = DSP;
+	REBINT start = ++DSP;
 
 	while (index < BLK_LEN(series)) {
 		index = Do_Next(series, index, 0);
@@ -1107,7 +1107,7 @@ eval_func2:
 	}
 
 	if (start != DSP || tos != &DS_Base[start+1]) Trap0(RE_MISSING_ARG);
-
+	DS_DROP;
 	return tos;
 }
 
