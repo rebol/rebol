@@ -181,8 +181,18 @@ Rebol [
 	--assert [ 1 2 ] = parse [1 2][collect some [keep pick 2 integer!]]
 
 --test-- "block collect nested"
-	--assert [[1] [2] [3]] = parse [1 2 3][collect some [collect keep integer!]]
-	--assert [[1 2]] = parse [1 2] [collect [collect [keep integer! keep integer!]]]
+	--assert [[[]]] = parse [][collect [collect [collect []]]]
+	--assert [[     ]] = parse [   ][collect [collect [keep 2 skip]]]
+	--assert [[[1 2]]] = parse [1 2][collect [collect [keep 2 skip]]]
+	--assert [[ 1 2 ]] = parse [1 2][collect [collect [keep pick 2 skip]]]
+	--assert [[ 1 2 ]] = parse [1 2][collect [collect [keep integer! keep integer!]]]
+	--assert all [x: 0  [[] 1] = parse [1 2][collect [collect [] (x: x + 1) keep (x)]] ]
+	--assert all [x: 0  [[] 1] = parse [1 2][collect some [collect [] (x: x + 1) keep (x)]] ]
+	--assert all [x: 0  [[] 1 [] 2] = parse [1 2][collect 2 [collect [] (x: x + 1) keep (x)]] ]
+	
+--test-- "block collect nested (known issues)"
+	;; following tests produces empty block at tail :-/
+	--assert [[1] [2]] = parse [1 2][collect some [collect keep integer!]]
 	--assert [[1] a [2] a] = parse [1 2][collect some [collect keep integer! keep ('a)]]
 
 --test-- "block collect bizzar"
@@ -199,11 +209,11 @@ Rebol [
 	a: none --assert all [#[true]  = parse [1]   [collect set a [keep skip]] a = [1]]
 	a: none --assert all [#[false] = parse [1 2] [collect set a [keep skip]] a = [1]]
 	a: none --assert all [
-		[[1]] = parse [1] [collect [collect set a keep skip]]
+		[] = parse [1] [collect [collect set a keep skip]]
 		a = [1]
 	]
 	a: none --assert all [
-		[[1]] = parse [1] [collect [collect set a [keep skip]]]
+		[] = parse [1] [collect [collect set a [keep skip]]]
 		a = [1]
 	]
 	a: none --assert all [
@@ -216,32 +226,35 @@ Rebol [
 	]
 	a: b: none --assert all [
 		#[true] = parse [1] [collect set a [collect set b keep skip]]
-		a = [[1]]
+		a = []
 		b = [1]
 	]
 
 --test--  "block collect into"
-	;@@ Not yet implemented!
-	;-  Inserts collected values into a series referred by a word, resets series' index to the head.
-;	a: [] --assert all [parse [] [collect into a []] a = []]
-;	a: [] --assert all [parse [1] [collect into a [keep skip]] [1] = a [1] = head a]
-;	list: next [1 2 3]
-;	--assert all [
-;		parse [a 4 b 5 c] [collect into list [some [keep word! | skip]]]
-;		list = [a b c 2 3]
-;		[1 a b c 2 3] = head list
-;	]
+	;;  Inserts collected values into a series referred by a word, resets series' index to the head.
+	--assert all [a: [ ] parse [ ] [collect into a []] a = []]
+	--assert all [a: [ ] parse [1] [collect into a [keep skip]] [1  ] = a [1] = head a]
+	--assert all [a: [x] parse [1] [collect into a [keep skip]] [1 x] = a]
+	--assert all [a: tail [x] parse [1] [collect into a [keep skip]] [1] = a  [x 1] = head a]
+	--assert all [a: tail [x] parse [1 2] [collect into a [keep 2 skip]] [[1 2]] = a  [x [1 2]] = head a]
+	--assert all [a: tail [x] parse [1 2] [collect into a [keep pick 2 skip]] [1 2] = a  [x 1 2] = head a]
+	--assert all [
+		list: next [1 2 3]
+		parse [a 4 b 5 c] [collect into list [some [keep word! | skip]]]
+		list = [a b c 2 3]
+		[1 a b c 2 3] = head list
+	]
 
 --test-- "block collect after"
-	;@@ Not yet implemented!
-	;- Inserts collected values into a series referred by a word, moves series' index past the insertion.
-;	a: [] --assert all [parse [1] [collect after a [keep skip]] [] = a [1] = head a]
-;	list: next [1 2 3]
-;	--assert all [
-;		parse [a 4 b 5 c] [collect after list [some [keep word! | skip]]]
-;		list = [2 3]
-;		[1 a b c 2 3] = head list
-;	]
+	;; Inserts collected values into a series referred by a word, moves series' index past the insertion.
+	--assert all [a: [] parse [1] [collect after a [keep skip]] [] = a [1] = head a]
+	--assert all [a: [x] parse [1 2] [collect after a some [keep skip]] [x] = a [1 2 x] = head a]
+	--assert all [
+		list: next [1 2 3]
+		parse [a 4 b 5 c] [collect after list [some [keep word! | skip]]]
+		list = [2 3]
+		[1 a b c 2 3] = head list
+	]
 
 --test-- "string collect/keep"
 	--assert [] = parse "" [collect []]
@@ -282,11 +295,11 @@ Rebol [
 	a: none --assert all [#[true]  = parse "1"  [collect set a [keep skip]] a = [#"1"]]
 	a: none --assert all [#[false] = parse "12" [collect set a [keep skip]] a = [#"1"]]
 	a: none --assert all [
-		[[#"1"]] = parse "1" [collect [collect set a keep skip]]
+		[] = parse "1" [collect [collect set a keep skip]]
 		a = [#"1"]
 	]
 	a: none --assert all [
-		[[#"1"]] = parse "1" [collect [collect set a [keep skip]]]
+		[] = parse "1" [collect [collect set a [keep skip]]]
 		a = [#"1"]
 	]
 	a: none --assert all [
@@ -299,27 +312,57 @@ Rebol [
 	]
 	a: b: none --assert all [
 		#[true] = parse "1" [collect set a [collect set b keep skip]]
-		a = [[#"1"]]
+		a = []
 		b = [#"1"]
 	]
---test--  "string collect into"
-	;@@ Not yet implemented!
-	;-  Inserts collected values into a series referred by a word, resets series' index to the head.
-;	a: "" --assert all [parse "" [collect into a []] a = ""]
-;	a: "" --assert all [parse "1" [collect into a [keep skip]] "1" = a "1" = head a]
-;	a: [] --assert all [parse "1" [collect into a [keep skip]] [#"1"] = a [#"1"] = head a]
-;	list: next [1 2 3]
-;	--assert all [
-;		parse [a 4 b 5 c] [collect into list [some [keep word! | skip]]]
-;		list = [a b c 2 3]
-;		[1 a b c 2 3] = head list
-;	]
+--test-- "string collect into"
+	;;  Inserts collected values into a series referred by a word, resets series' index to the head.
+	--assert all [a: "" parse "" [collect into a []] a = ""]
+	--assert all [a: "" parse "1" [collect into a [keep skip]] "1" = a "1" = head a]
+	--assert all [a: "" parse "š" [collect into a [keep skip]] "š" = a "š" = head a]
+	--assert all [a: [] parse "1" [collect into a [keep skip]] [#"1"] = a [#"1"] = head a]
+	--assert all [a: [] parse "š" [collect into a [keep skip]] [#"š"] = a [#"š"] = head a]
+	--assert all [a: quote () parse #{01} [collect into a [keep skip]] a = quote (1)]
+	--assert all [
+		list: next [1 2 3]
+		parse [a 4 b 5 c] [collect into list [some [keep word! | skip]]]
+		list = [a b c 2 3]
+		[1 a b c 2 3] = head list
+	]
+	;; Inserting unicode to ascii (internal target widening)
+	--assert all [a: "" parse "š"  [collect into a keep skip] a = "š"]
+	--assert all [a: "" parse "šo" [collect into a keep to end] a = "šo"]
 
 --test-- "string collect after"
-	;@@ Not yet implemented!
-	;- Inserts collected values into a series referred by a word, moves series' index past the insertion.
-;	a: "" --assert all [parse "1" [collect after a [keep skip]] "" = a "1" = head a]
-;	a: [] --assert all [parse "1" [collect after a [keep skip]] [] = a [#"1"] = head a]
+	;; Inserts collected values into a series referred by a word, moves series' index past the insertion.
+	--assert all [a: "" parse "1" [collect after a [keep skip]]  "" = a    "1"  = head a]
+	--assert all [a: [] parse "1" [collect after a [keep skip]]  [] = a  [#"1"] = head a]
+	--assert all [
+		a: next "11"
+		b: next "22"
+		[x] = parse "ab" [collect [keep ('x) collect into a keep skip collect after b keep to end]]
+		a = "a1"
+		b =  "2"
+		"1a1" = head a
+		"2b2" = head b
+	]
+
+--test-- "string collect into/after compatibility test"
+	;; any-string! to any-string!
+	--assert all [a:  "x" parse "1" [collect into a keep skip] a =  "1x"]
+	--assert all [a: %"x" parse "1" [collect into a keep skip] a = %"1x"]
+	--assert all [a:  <x> parse "1" [collect into a keep skip] a =  <1x>]
+	--assert all [a:  @x  parse "1" [collect into a keep skip] a =  @1x ] ;ref
+	--assert all [a: x@x  parse "1" [collect into a keep skip] a =  1x@x] ;email
+	--assert all [a:  "x" parse <1> [collect into a keep skip] a =  "1x"]
+	;; binary to binary is allowed..
+	--assert all [a: #{}  parse #{01} [collect into a keep skip] a = #{01}]
+	;; these will throw an error:
+	--assert all [error? e: try [a:  1  parse "1"   [collect into a keep skip]] e/id = 'parse-into-type]
+	--assert all [error? e: try [a: #{} parse "1"   [collect into a keep skip]] e/id = 'parse-into-type]
+	--assert all [error? e: try [a: "1" parse #{01} [collect into a keep skip]] e/id = 'parse-into-type]
+	--assert all [error? e: try [a: "1" parse []    [collect into a keep skip]] e/id = 'parse-into-type]
+
 
 --test-- "string collect complex"
 	; Taken from: https://www.red-lang.org/2013/11/041-introducing-parse.html
@@ -341,11 +384,11 @@ Rebol [
 	--assert res = [html [head [title ["Test"]] body [div [u ["Hello"] b ["World"]]]]]
 
 --test-- "string collect with fail"
-	alpha: system/catalog/bitsets/alpha
-	numer: system/catalog/bitsets/numeric
 	--assert all [
+		alpha: system/catalog/bitsets/alpha
+		numer: system/catalog/bitsets/numeric
 		#[true] = parse "11ab2c33" [
-			collect set res: [
+			collect set res [
 				  keep (quote alpha:  ) collect [some [keep some alpha | skip] fail]
 				| keep (quote numeric:) collect [some [keep some numer | skip]]
 			]
@@ -358,6 +401,9 @@ Rebol [
 	--assert [1] = parse [][collect keep pick (1)]
 	--assert [[1]] = parse [][collect keep ([1])]
 	--assert [[1]] = parse [][collect keep pick ([1])] ;@@ no difference?
+
+--test-- "collect/keep set expression"
+	--assert [1] = parse [][collect keep (1)]
 
 --test-- "collect/keep errors"
 	--assert all [error? e: try [parse [1] [keep skip]   ] e/id = 'parse-no-collect]
@@ -550,6 +596,47 @@ Rebol [
 	--assert error? err: try [parse [1 + 1] [set result do integer!]]
 	--assert err/id = 'parse-rule
 
+===end-group===
+
+===start-group=== "Parse complex tests"
+--test-- "brain-fuck"
+	; Taken from: https://www.red-lang.org/2013/11/041-introducing-parse.html
+	bf: function [prog [string!]][
+		size: 3000
+		cells:  make string! size
+		output: make string! 20
+		append/dup cells null size
+		all [
+			parse prog [
+				some [
+					  ">" (cells: next cells)
+					| "<" (cells: back cells)
+					| "+" (cells/1: cells/1 + 1)
+					| "-" (cells/1: cells/1 - 1)
+					| "." (append output cells/1)
+					| "," (cells/1: first input "")
+					| "[" [if (cells/1 = null) thru "]" | none]
+					| "]" [
+					   pos: if (cells/1 <> null)
+					   (pos: find/reverse pos #"[") :pos
+					   | none
+					  ]
+					| skip
+				]
+			]
+			probe length? cells
+			head output
+		]
+	]
+	--assert all [
+		not error? res: try [
+			bf {
+				++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.
+				>++.<<+++++++++++++++.>.+++.------.--------.>+.>.
+			}
+		]
+		res = "Hello World!^/"
+	]
 ===end-group===
 
 
