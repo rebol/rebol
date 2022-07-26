@@ -306,13 +306,13 @@ chkDecimal:
 		return !CT_Object(s, t, 1); // equality used
 
 	case REB_NATIVE:
-		return &VAL_FUNC_CODE(s) - &VAL_FUNC_CODE(t);
+		return THE_SIGN(&VAL_FUNC_CODE(s) - &VAL_FUNC_CODE(t));
 
 	case REB_ACTION:
 	case REB_COMMAND:
 	case REB_OP:
 	case REB_FUNCTION:
-		return VAL_FUNC_BODY(s) - VAL_FUNC_BODY(t);
+		return THE_SIGN(VAL_FUNC_BODY(s) - VAL_FUNC_BODY(t));
 
 	case REB_STRUCT:
 		return Cmp_Struct(s, t);

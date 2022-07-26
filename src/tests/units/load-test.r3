@@ -159,6 +159,17 @@ Rebol [
 		--assert s = "script: #{5245424F4C205B5D0A2231220A}"
 		--assert #{5245424F4C205B5D0A2231220A} = save/header #{}  "1" []
 
+	--test-- "save/header unicode"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1953
+		--assert all [
+			try [
+				save/header %issue-1065.reb [][Jazyk: "čeština"]
+				s: load/header %issue-1065.reb
+			]
+			s/1/Jazyk == "čeština"
+		]
+		delete %issue-1065.reb
+
 ===end-group===
 
 

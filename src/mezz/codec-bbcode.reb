@@ -3,7 +3,7 @@ REBOL [
 	Type:    module
 	Options: [delay]
 	Version: 0.3.0
-	Title:   "BBcode codec"
+	Title:   "Codec: BBcode"
 	Purpose: {Basic BBCode implementation. For more info about BBCode check http://en.wikipedia.org/wiki/BBCode}
 	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-bbcode.reb
 	Date:    24-Apr-2020
@@ -87,7 +87,7 @@ form-attribute: func[name /default value][
 
 encode-value: func[value [any-string!] /local out tmp][
 	out: copy ""
-	parse/all value [
+	parse value [
 		any [
 			;pos: ;(probe pos)
 			[ 

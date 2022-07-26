@@ -1,5 +1,5 @@
 REBOL [
-	title:  "REBOL 3 codec for image file formats"
+	title:  "Codec: image file formats"
 	name:   'codec-image
 	author: "Oldes"
 	version: 0.2.0

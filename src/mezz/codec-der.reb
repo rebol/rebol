@@ -1,5 +1,5 @@
 REBOL [
-	title: "REBOL3 codec for DER/BER structures"
+	title: "Codec: DER/BER structures"
 	name: 'codec-der
 	author: "Oldes"
 	version: 0.2.0
@@ -234,7 +234,7 @@ register-codec [
 		/full "Returns name with group name as a string"
 		/local main name warn
 	][
-		parse/all oid [
+		parse oid [
 			#{2B0E0302} (main: "Oddball OIW OID") [
 				;http://oid-info.com/get/1.3.14.3.2
 				  #"^(01)" (name: 'rsa)

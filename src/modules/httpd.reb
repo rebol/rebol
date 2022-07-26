@@ -36,6 +36,8 @@ Rebol [
 	]
 ]
 
+import 'mime-types
+
 append system/options/log [httpd: 1]
 
 ;------------------------------------------------------------------------
@@ -54,7 +56,7 @@ decode-target: wrap [
 		
 		result: object [file: none values: make block! 8 fragment: none original: target]
 		unless target [return result]
-		parse/all to binary! target [
+		parse to binary! target [
 			opt [
 				copy val any chars (result/file: val) [
 					  #"?" 
@@ -461,39 +463,6 @@ sys/make-scheme [
 		;511 "Network Authentication Required"
 	]
 
-	MIME-Types: make map! [
-		%.txt   "text/plain"
-		%.html  "text/html"
-		%.htm   "text/html"
-		%.js    "text/javascript"
-		%.css   "text/css"
-		%.csv   "text/csv"
-		%.ics   "text/calendar"
-		%.gif   "image/gif"
-		%.png   "image/png"
-		%.jpg   "image/jpeg"
-		%.jpeg  "image/jpeg"
-		%.ico   "image/x-icon"
-		%.svg   "image/svg+xml"
-		%.json  "application/json"
-		%.pdf   "application/pdf"
-		%.swf   "application/x-shockwave-flash"
-		%.wasm  "application/wasm"
-		%.xls   "application/vnd.ms-excel"
-		%.xlsx  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-		%.zip   "application/zip"
-		%.7z    "application/x-7z-compressed"
-		%.doc   "application/msword"
-		%.wav   "audio/wav"
-		%.mid   "audio/midi"
-		%.midi  "audio/x-midi"
-		%.otf   "font/otf"
-		%.ttf   "font/ttf"
-		%.woff  "font/woff"
-		%.woff2 "font/woff2"
-		%.xhtml "application/xhtml+xml"
-	]
-
 	Respond: function [port [port!]][
 		ctx: port/extra
 		out: ctx/out
@@ -504,7 +473,7 @@ sys/make-scheme [
 
 		unless out/header/Content-Type [
 			if out/target [
-				out/header/Content-Type: pick MIME-Types suffix? out/target
+				out/header/Content-Type: mime-type? out/target
 			]
 			if all [
 				none? out/header/Content-Type ; no mime found above

@@ -1,38 +1,13 @@
 Rebol [
-	Title: "Test SQLite extension"
-	Date: 10-Nov-2021
-	Author: "Oldes"
-	File: %test-extension-sqlite.r3
-	Version: 1.0.0
+	Title:   "Test SQLite extension"
+	File:    %test-extension-sqlite.r3
+	Author:  "Oldes"
+	Date:    15-Jun-2022
+	Version: 1.1.0
 ]
 
-unless find system/modules 'sqlite [
-	unless exists? %sqlite.rebx [
-		;@@ this part should be part of the built-in system!
-		use [url bin compressed?][
-			;-- download extension for correct platform...      
-			url: rejoin [
-				https://github.com/Siskin-framework/Rebol-SQLite/releases/latest/download/
-				%sqlite- system/build/os #"-" system/build/arch %.rebx
-			]
-			if system/build/os <> 'windows [
-				append url %.gz
-				compressed?: true
-			]
+sqlite: import 'sqlite
 
-			print [as-green "Downloading:" as-yellow url]
-			;if "true" = get-env "CI" [
-			;	;enhancing verbosity to try locate source of occasional read errors in CI
-			;	system/schemes/tls/set-verbose 4
-			;	codecs/der/verbose: 4
-			;]
-			bin: read url
-			if compressed? [ bin: decode 'GZIP bin ]
-			write %sqlite.rebx bin
-		]
-	]
-	sqlite: import %sqlite.rebx
-]
 ? sqlite
 
 print sqlite/info

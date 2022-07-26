@@ -1,5 +1,5 @@
 REBOL [
-	Title:   "REBOL 3 codec: PuTTY Private Key"
+	Title:   "Codec: PuTTY Private Key"
 	Author:  "Oldes"
 	Rights:  "Copyright (C) 2020 Oldes. All rights reserved."
 	License: "BSD-3"

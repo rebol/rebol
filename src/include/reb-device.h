@@ -67,6 +67,8 @@ enum {
 	RDC_DELETE,		// delete unit target
 	RDC_RENAME,
 	RDC_LOOKUP,
+
+	RDC_FLUSH,
 	RDC_MAX,
 
 	RDC_CUSTOM=32	// start of custom commands

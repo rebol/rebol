@@ -331,7 +331,62 @@ if system/platform = 'Windows [
 			port? close p
 			not error? try [delete %file-552]
 		]
-		
+
+	--test-- "read/part"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2505
+		--assert all [
+			file? write %12345 "12345"
+			port? p: open/read/seek %12345
+			#{31}   == read/part p 1 ; advances!
+			#{3233} == read/part p 2
+			#{3132} == read/part head p 2
+			#{}     == read/part tail p 2
+			#{35}   == read/part tail p -1 ;- no crash!
+			#{3435} == read/part tail p -2
+			all [error? e: try [read/part p -20]  e/id = 'out-of-range]
+			port? close p
+			not error? try [delete %12345]
+		]
+	--test-- "skip/at on file port"
+		write %12345 "12345"
+		p: open/read/seek %12345
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2506
+		--assert all [
+			1 = index? head p
+			3 = index? skip p 2
+			5 = index? skip p 2
+			6 = index? tail p
+			6 = index? skip p 20
+			1 = index? skip head p -10
+			1 = index? back head p  
+			1 = index? back back head p
+		]
+		--assert all [
+			6 = index? tail p
+			6 = index? at p 20
+			2 = index? at p 2
+			2 = index? at p 2
+			1 = index? at p 0
+			1 = index? at p -10
+		]
+		--assert all [
+			6 = index? tail p
+			6 = index? atz p 20
+			3 = index? atz p 2
+			3 = index? atz p 2
+			1 = index? atz p 0
+			1 = index? atz p -10
+		]
+		--assert all [
+			5 = indexz? tail p
+			5 = indexz? atz p 20
+			2 = indexz? atz p 2
+			2 = indexz? atz p 2
+			0 = indexz? atz p 0
+			0 = indexz? atz p -10
+		]
+		close p
+		delete %12345
 
 	--test-- "CLEAR file port"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/812
@@ -472,34 +527,7 @@ if system/platform = 'Windows [
 	===end-group===
 ]
 
-===start-group=== "HTTP scheme"
-	--test-- "read HTTP"
-		--assert  string? try [read http://google.com]
-	--test-- "read HTTPS"
-		--assert  string? try [read https://www.google.com]
-	--test-- "exists? url"
-		;@@ https://github.com/Oldes/Rebol3/issues/14
-		;@@ https://github.com/Oldes/Rebol-issues/issues/1613
-		--assert 'url = exists? http://httpbin.org/  ;@@ https://github.com/Oldes/Rebol-issues/issues/612
-		--assert not exists? http://httpbin.org/not-exists
-	--test-- "read/part"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/2434
-		--assert "<!DOCTYPE" = read/part http://httpbin.org/ 9
-		--assert #{89504E47} = read/binary/part http://avatars-04.gitter.im/gh/uv/4/oldes 4
-	--test-- "read not existing url"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/470
-		--assert all [
-			error? e: try [read http://www.r]
-			e/id = 'no-connect
-		]
-		;@@ https://github.com/Oldes/Rebol-issues/issues/2441
-		--assert string? try [read http://www.rebol.com]
-	--test-- "query url"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/467
-		--assert error? try [query https://www]
-		--assert object? query https://www.google.com
-
-===end-group===
+;- "HTTP scheme" moved to %port-http-test.r3
 
 
 ===start-group=== "WHOIS scheme"
@@ -509,6 +537,18 @@ if system/platform = 'Windows [
 		--assert string? try [write whois://whois.nic.cz "seznam.cz"]
 ===end-group===
 
+
+import 'daytime
+if find system/schemes 'daytime [
+===start-group=== "DAYTIME scheme"
+	--test-- "read DAYTIME"
+		--assert  all [
+			block? res: try [read daytime://]
+			res/2/date = now/date
+		]
+
+===end-group===
+]
 
 if all [
 	"true" <> get-env "CONTINUOUS_INTEGRATION"
@@ -552,6 +592,25 @@ if all [
 	--test-- "query dns://"
 	;@@ https://github.com/Oldes/rebol-issues/issues/1826
 		--assert all [error? e: try [query dns://]  e/id = 'no-port-action]
+===end-group===
+
+
+===start-group=== "TCP"
+	--test-- "query net info"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1712
+		port: open tcp://8.8.8.8:80
+		--assert [local-ip local-port remote-ip remote-port] = query/mode port none
+		--assert 0.0.0.0 = query/mode port 'local-ip
+		--assert       0 = query/mode port 'local-port
+		--assert 0.0.0.0 = query/mode port 'remote-ip
+		--assert      80 = query/mode port 'remote-port
+		--assert all [
+			port? wait [port 1] ;= wait for lookup, so remote-ip is resolved
+			8.8.8.8 = query/mode port 'remote-ip
+			[80 8.8.8.8] = query/mode port [remote-port remote-ip]
+			[local-ip: 0.0.0.0 local-port: 0] = query/mode port [local-ip: local-port:]
+		]
+		try [close port]
 ===end-group===
 
 

@@ -593,7 +593,9 @@ new_line:
 
 		// Accept ^X encoded char:
 		else if (c == '^') {
-			if (src+1 == end) return 0; // nothing follows ^
+			// checks also if not used in file like: %a^b which must be invalid!
+			if (src+1 == end || (invalid && strchr(cs_cast(invalid), c)))
+				return 0; // nothing follows ^ or used in unquoted file
 			c = Scan_Char(&src);
 			if (!term && IS_WHITE(c)) break;
 			src--;

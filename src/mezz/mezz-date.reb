@@ -49,30 +49,25 @@ to-idate: func [
 	]
 ]
 
-to-date: wrap [
-	digit: charset [#"0" - #"9"]
-	alpha: charset [#"a" - #"z" #"A" - #"Z"]
-	function [
-		"Converts to date! value."
-		value [any-type!] "May be also a standard Internet date string/binary"
-		/utc "Returns the date with UTC zone"
-	][
-		if all [
-			any [string? value binary? value]
-			parse value [
-				5 skip
-				copy day:   1 2 digit space
-				copy month:   3 alpha space
-				copy year:  1 4 digit space
-				copy time: to space space
-				copy zone: to end
-			]
-		][
-			if zone = "GMT" [zone: "+0"]
-			value: to string! rejoin [day "-" month "-" year "/" time zone]
+to-date: function/with [
+	"Converts to date! value."
+	value [any-type!] "May be also a standard Internet date string/binary"
+	/utc "Returns the date with UTC zone"
+][
+	if all [
+		any [string? value binary? value]
+		parse value [
+			5 skip
+			 copy day:   1 2 numeric sp
+			 copy month:   3 alpha   sp
+			 copy year:  1 4 numeric sp
+			 copy time: to sp sp
+			[copy zone: [plus-minus 4 numeric] | no-case "GMT" (zone: "+0")]
+			to end ; ignore the rest (like comments in mime fields)!
 		]
-		
-		if all [value: to date! value  utc] [ value/timezone: 0 ]
-		value
+	][
+		value: to string! rejoin [day "-" month "-" year "/" time any [zone ""]]
 	]
-]
+	if all [value: to date! value  utc] [ value/timezone: 0 ]
+	value
+] system/catalog/bitsets

@@ -1,5 +1,5 @@
 REBOL [
-	title: "REBOL 3 codec for ZIP files"
+	title: "Codec: ZIP"
 	name: 'codec-zip
 	author: rights: "Oldes"
 	version: 0.0.4

@@ -204,17 +204,18 @@ static REBVAL *Func_Word(REBINT dsf)
 	return R_UNSET;
 }
 
-static REBINT Init_Depth(void)
+static REBINT Init_Depth(REBINT plus)
 {
 	// Check the trace depth is ok:
-	int depth = Eval_Depth() - Trace_Depth;
+	int depth = Eval_Depth() - Trace_Depth + plus;
 	if (depth < 0 || depth >= Trace_Level) return -1;
 	if (depth > 10) depth = 10;
-	Debug_Space(4 * depth);
+	Debug_Space(3 * depth);
 	return depth;
 }
 
-#define CHECK_DEPTH(d) if ((d = Init_Depth()) < 0) return;\
+#define CHECK_DEPTH(d) if ((d = Init_Depth(0)) < 0) return;
+#define CHECK_DEPTH_RET(d) if ((d = Init_Depth(1)) < 0) return;
 
 void Trace_Line(REBSER *block, REBINT index, REBVAL *value)
 {
@@ -258,7 +259,7 @@ void Trace_Func(REBVAL *word, REBVAL *value)
 void Trace_Return(REBVAL *word, REBVAL *value)
 {
 	int depth;
-	CHECK_DEPTH(depth);
+	CHECK_DEPTH_RET(depth);
 	Debug_Fmt_(BOOT_STR(RS_TRACE,6), Get_Word_Name(word));
 	Debug_Values(value, 1, 50);
 }
@@ -878,9 +879,13 @@ reval:
 	case ET_WORD:
 		value = Get_Var(word = value);
 		if (IS_UNSET(value)) Trap1(RE_NO_VALUE, word);
-		if (VAL_TYPE(value) >= REB_NATIVE && VAL_TYPE(value) <= REB_FUNCTION) goto reval; // || IS_LIT_PATH(value)
+		if (ANY_FUNC(value)) goto reval;
 		DS_PUSH(value);
-		if (IS_LIT_WORD(value)) VAL_SET(DS_TOP, REB_WORD);
+		
+		// Following line was added by Atronix, but I don't know why.
+		//if (IS_LIT_WORD(value)) VAL_SET(DS_TOP, REB_WORD);
+		// `b: quote 'a  b` would return just `a` in console, while in R2 and Red it is `'a`
+
 		if (IS_FRAME(value)) Init_Obj_Value(DS_TOP, VAL_WORD_FRAME(word));
 		index++;
 		break;
@@ -1042,8 +1047,8 @@ eval_func2:
 ***********************************************************************/
 {
 	REBVAL *tos = 0;
-#if (ALEVEL>1)
 	REBINT start = DSP;
+#if (ALEVEL>1)
 //	REBCNT gcd = GC_Disabled;
 #endif
 
@@ -1086,7 +1091,7 @@ eval_func2:
 	REBSER *series = VAL_SERIES(block);
 	REBCNT index = VAL_INDEX(block);
 	REBVAL *tos = 0;
-	REBINT start = DSP;
+	REBINT start = ++DSP;
 
 	while (index < BLK_LEN(series)) {
 		index = Do_Next(series, index, 0);
@@ -1102,7 +1107,7 @@ eval_func2:
 	}
 
 	if (start != DSP || tos != &DS_Base[start+1]) Trap0(RE_MISSING_ARG);
-
+	DS_DROP;
 	return tos;
 }
 

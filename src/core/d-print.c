@@ -412,7 +412,7 @@ static REBREQ *Req_SIO;
 		Debug_Space(1);
 		if (n > 0 && VAL_TYPE(value) <= REB_NONE) Debug_Chars('.', 1);
 		else {
-			out = Mold_Print_Value(value, limit, TRUE); // shared mold buffer
+			out = Mold_Print_Value(value, limit, TRUE, TRUE); // shared mold buffer
 			for (i1 = i2 = 0; i1 < out->tail; i1++) {
 				uc = GET_ANY_CHAR(out, i1);
 				if (uc < ' ') uc = ' ';
@@ -429,7 +429,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	void Debug_Buf(const REBYTE *fmt, va_list args)
+*/	void Debug_Buf(REBCNT limit, const REBYTE *fmt, va_list args)
 /*
 **		Lower level formatted print for debugging purposes.
 **
@@ -457,8 +457,12 @@ static REBREQ *Req_SIO;
 
 	RESET_SERIES(buf);
 
+	if (limit > SERIES_REST(buf) - 1) {
+		limit = SERIES_REST(buf) - 1;
+	}
+
 	// Limits output to size of buffer, will not expand it:
-	bp = Form_Var_Args(STR_HEAD(buf), SERIES_REST(buf)-1, fmt, args);
+	bp = Form_Var_Args(STR_HEAD(buf), limit, fmt, args);
 	tail = bp - STR_HEAD(buf);
 
 	for (n = 0; n < tail; n += len) {
@@ -473,10 +477,10 @@ static REBREQ *Req_SIO;
 **
 */	void Debug_Fmt_(const REBYTE *fmt, ...)
 /*
-**		Print using a format string and variable number
+**		Print using a formatted string and variable number
 **		of arguments.  All args must be long word aligned
 **		(no short or char sized values unless recast to long).
-**		Output will be held in series print buffer and
+**		Output will be held in a series print buffer and
 **		will not exceed its max size.  No line termination
 **		is supplied after the print.
 **
@@ -484,7 +488,7 @@ static REBREQ *Req_SIO;
 {
 	va_list args;
 	va_start(args, fmt);
-	Debug_Buf(fmt, args);
+	Debug_Buf(NO_LIMIT, fmt, args);
 	va_end(args);
 }
 
@@ -504,7 +508,21 @@ static REBREQ *Req_SIO;
 {
 	va_list args;
 	va_start(args, fmt);
-	Debug_Buf(fmt, args);
+	Debug_Buf(NO_LIMIT, fmt, args);
+	Debug_Line();
+	va_end(args);
+}
+/***********************************************************************
+**
+*/	void Debug_Fmt_Limited(REBCNT limit, const REBYTE *fmt, ...)
+/*
+**		Same like Debug_Fmt, but limits length of the output.
+**
+***********************************************************************/
+{
+	va_list args;
+	va_start(args, fmt);
+	Debug_Buf(limit, fmt, args);
 	Debug_Line();
 	va_end(args);
 }
@@ -749,7 +767,7 @@ pick:
 			vp = va_arg(args, REBVAL *);
 mold_value:
 			// Form the REBOL value into a reused buffer:
-			ser = Mold_Print_Value(vp, 0, desc != 'v');
+			ser = Mold_Print_Value(vp, max, desc != 'v', TRUE);
 
 			l = Length_As_UTF8(UNI_HEAD(ser), SERIES_TAIL(ser), TRUE, OS_CRLF);
 			if (pad != 1 && l > pad) l = pad;
@@ -809,7 +827,7 @@ mold_value:
 **
 ***********************************************************************/
 {
-	REBSER *out = Mold_Print_Value(value, limit, mold);
+	REBSER *out = Mold_Print_Value(value, limit, mold, FALSE);
 	Prin_OS_String(out->data, out->tail, TRUE, err);
 }
 

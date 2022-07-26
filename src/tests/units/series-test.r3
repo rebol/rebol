@@ -288,6 +288,32 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "REDUCE"
+	--test-- "reduce block!"
+		--assert [2 6] == reduce [1 + 1 3 + 3]
+		--assert all [
+			[x] == reduce/into [1 + 1 3 + 3] b: [x]
+			b = [2 6 x]
+		]
+		--assert all [
+			tail? reduce/into ['a 1 + 1 3 + 3] p: make path! 3
+			p = 'a/2/6
+		]
+	--test-- "reduce paren!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2060
+		--assert 2 = reduce (1 + 1)
+		--assert quote (2 6) == reduce quote (1 + 1 3 + 3)
+		--assert all [
+			[x] == reduce/into quote (1 + 1 3 + 3) b: [x]
+			b = [2 6 x]
+		]
+		--assert all [
+			tail? reduce/into quote ('a 1 + 1 3 + 3) p: make path! 3
+			p = 'a/2/6
+		]
+===end-group===
+
+
 ===start-group=== "TRIM"
 	--test-- "trim string!"
 		str1: " a b c "
@@ -615,6 +641,19 @@ Rebol [
 	--assert #{0506} = take/part s 10
 
 ===end-group===
+
+
+===start-group=== "EXTEND"
+	--test-- "extend object!"
+		--assert all [1 == extend  o: object[] 'a 1  o = #[object! [a: 1]]]
+	--test-- "extend block!"
+		--assert all [1 == extend  b: [] 'a 1  b = [a: 1]]
+	--test-- "extend paren!"
+		--assert all [1 == extend  b: quote () 'a 1  b = quote (a: 1)]
+	--test-- "extend map!"
+		--assert all [1 == extend  m: #() 'a 1  m = #(a: 1)]
+===end-group===
+
 
 ===start-group=== "MOVE"
 	--test-- "move/skip"
@@ -1690,6 +1729,10 @@ Rebol [
 	--assert "++"   = dehex "%2b%2b"
 	--assert 127 = to-integer first dehex "%7F"
 
+	--assert "áaá" = dehex "áa%C3%A1"
+	--assert "aá"  = dehex next "áa%C3%A1"
+	--assert "aa"  = dehex next "áaa"
+
 --test-- "ENHEX"
 	;@@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent
 	--assert "%C2%A3"   = enhex "£"
@@ -1704,6 +1747,7 @@ Rebol [
 	--assert http://a?b=%25C5%25A1 = enhex http://a?b=š
 	--assert "%C5%A1ik"  = to-string enhex %šik
 	--assert       "šik" = to-string dehex enhex to-binary "šik"
+	--assert       "šik" = dehex enhex "šik"
 	--assert       "%7F" = enhex to-string #{7F}
 	--assert "%EF%BF%BD" = enhex to-string #{80} ; #{80} is not valid UTF-8!
 	--assert "%EF%BF%BD" = enhex to-string #{81}
@@ -1720,6 +1764,28 @@ Rebol [
 	--assert "12%20%61%62" = enhex/except "12 ab" charset "12"
 	--assert "12 %61%62"   = enhex/except "12 ab" charset "12 "
 
+--test-- "ENHEX/uri"
+	--assert "a%20b%2B" = enhex "a b+"
+	--assert "a+b%2B" = enhex/uri "a b+"
+	--assert "a%20%C3%A1%2B" = enhex "a á+"
+	--assert "a+%C3%A1%2B" = enhex/uri "a á+"
+	; quoted-printable:
+	--assert "a=20b_" = enhex/escape "a b_" #"="
+	--assert "a_b=5F" = enhex/uri/escape "a b_" #"="
+	--assert "a=20=C3=A1_" = enhex/escape "a á_" #"="
+	--assert "a_=C3=A1=5F" = enhex/escape/uri "a á_" #"="
+
+--test-- "DEHEX/uri"
+	--assert "a+b+" = dehex "a+b%2B"
+	--assert "a b+" = dehex/uri "a+b%2B"
+	; quoted-printable:
+	--assert "a_b_" = dehex/escape"a_b=5F" #"="
+	--assert "a b_" = dehex/uri/escape"a_b=5F" #"="
+	; to get propper UTF8 results, we must use binary input (for now?)
+	--assert "a á+" = dehex "a%20%C3%A1%2B"
+	--assert "a á+" = dehex/uri "a+%C3%A1%2B"
+	--assert "a á_" = dehex/escape "a=20=C3=A1_" #"="
+	--assert "a á_" = dehex/escape/uri "a_=C3=A1=5F" #"="
 
 ===end-group===
 
@@ -2214,6 +2280,10 @@ Rebol [
 	--assert not new-line? next foo
 	new-line next foo true
 	--assert new-line? next foo
+--test-- "new-line with negative skip"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/737
+	--assert all [error? e: try [new-line/skip [1 2] true  0] e/id = 'out-of-range]
+	--assert all [error? e: try [new-line/skip [1 2] true -2] e/id = 'out-of-range]
 
 ===end-group===
 
@@ -2237,6 +2307,8 @@ Rebol [
 
 	--assert (reword/escape "ba" [a 1 b 2] none)
 		== "21"  ; /escape none like /escape ""
+	--assert (reword/escape to file! "ba" [a 1 b 2] none)
+		== %21   ; /escape none like /escape ""
 
 	--assert (reword "$a$A$a" [a 1 A 2])
 		== "222"  ; case-insensitive, last value wins
@@ -2272,8 +2344,8 @@ Rebol [
 		== "1"  ; It should be easy to explicitly reduce the same spec
 	--assert (reword "$a" reduce ['a 1])
 		== "1"  ; ... like this, so we should special-case lit-words
-	--assert (reword/escape "a :a /a #a" [a 1 :a 2 /a 3 #a 4] none)
-		== "1 2 3 4"  ; But otherwise let word types be distinct
+;	--assert (reword/escape "a :a /a #a" [a 1 :a 2 /a 3 #a 4] none)
+;		== "1 2 3 4"  ; But otherwise let word types be distinct
 
 	--assert (reword to-binary "$a$A$a" [a 1 A 2])
 		== #{010201}  ; binaries supported, note the case-sensitivity, same key rules, values inserted by binary rules
@@ -2287,6 +2359,52 @@ Rebol [
 		== "b121c"  ; Binary templates can insert into strings, using string insert rules, still case-sensitive
 
 ===end-group===
+
+
+===start-group=== "COMBINE"
+;@@ https://github.com/Oldes/Rebol-wishes/issues/19
+--test-- "combine to string"
+	--assert "abc" = combine [a b c]
+	--assert "abc" = combine [a #[none] b () c #[unset!]]
+	--assert "a|b|c" = combine/with [a #[none] b () c #[unset!]] #"|"
+	--assert "abcghi" = combine [{abc} (if false {def}) {ghi}]
+	--assert "abcghi" = combine reduce [{abc} if false {def} {ghi}]
+	--assert "a, b, c" = combine/with [a b c] ", "
+	--assert "x, a, b, c" = combine/with/into [a b c] ", " "x"
+
+--test-- "combine to block"
+	--assert [a c]  = combine/into [a (if/only false [b]) c] []
+	--assert [a b c] = combine/into [a (if/only true [b]) c] []
+	--assert [x a b c] = combine/into [a b c] [x]
+	--assert [x -- a -- b -- c] = combine/into/with [a [b c]] [x] '--
+
+--test-- "combine to file"
+	--assert %a/1/c = combine/into/with [#"a" 1 "c"] %"" #"/"
+
+--test-- "combine to path"
+	--assert 'a/b/c = combine/into [a b #[none] c] make path! 3
+
+--test-- "combine to tag"
+	url: http://rebol.com
+	--assert <a href=http://rebol.com> = combine/into [{a href=} :url] make tag! 10
+
+--test-- "combine/only"
+	--assert [1 [a b] 2] = combine/only/into [1 [a b] 2] []
+	--assert "1, [a b], 2" = combine/only/with [1 [a b] 2] ", "
+
+--test-- "combine/ignore"
+	--assert "ab" = combine/ignore [1 a b 1.0] number!
+	--assert [a b] = combine/ignore/into [1 a b 1.0] number! []
+
+--test-- "combine with get-word"
+	--assert "<span>one</span>^/<span>1 < 2</span>" = combine [
+		<span> "one" </span> :LF
+		(if/only 1 < 2 [<span> "1 < 2" </span>])
+		(if/only 1 > 2 [<span> "1 > 2" </span>])
+	]
+
+===end-group===
+
 
 ===start-group=== "COLLECT"
 --test-- "collect unset"

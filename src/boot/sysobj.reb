@@ -23,7 +23,51 @@ product:  'core
 platform: none
 version:  0.0.0
 build:    object [os: arch: vendor: sys: abi: compiler: target: date: git: none]
-license: none
+
+user: construct [
+	name: none
+	data: #()
+]
+
+options: object [  ; Options supplied to REBOL during startup
+	boot:           ; The path to the executable
+	path:           ; Where script was started or the startup dir
+	home:           ; Path of home directory
+		none
+
+	flags:          ; Boot flag bits (see system/catalog/boot-flags)
+	script:         ; Filename of script to evaluate
+	args:           ; Command line arguments passed to script
+	do-arg:         ; Set to a block if --do was specified
+	import:         ; imported modules
+	debug:          ; debug flags
+	secure:         ; security policy
+	version:        ; script version needed
+	boot-level:     ; how far to boot up
+		none
+
+	quiet: false    ; do not show startup info (compatibility)
+
+	binary-base: 16    ; Default base for FORMed binary values (64, 16, 2)
+	decimal-digits: 15 ; Max number of decimal digits to print.
+	probe-limit: 16000 ; Max probed output size
+	module-paths: [%./]
+	default-suffix: %.reb ; Used by IMPORT if no suffix is provided
+	file-types: []
+	mime-types: none
+	result-types: none
+
+	; verbosity of logs per service (codecs, schemes)
+	; 0 = nothing; 1 = info; 2 = more; 3 = debug
+	log: #[map! [
+		rebol: 1
+		http: 1
+		tls:  1
+		zip:  1
+		tar:  1
+	]]
+	domain-name: none ; Specifies system's domain name (used in SMTP scheme so far)
+]
 
 catalog: object [
 	; Static (non-changing) values, blocks, objects
@@ -50,14 +94,17 @@ catalog: object [
 	]
 	bitsets: object [
 		crlf:          #[bitset! #{0024}]                             ;charset "^/^M"
+		space:         #[bitset! #{0040000080}]                       ;charset " ^-"
 		whitespace:    #[bitset! #{0064000080}]                       ;charset "^/^M^- "
 		numeric:       #[bitset! #{000000000000FFC0}]                 ;0-9
 		alpha:         #[bitset! #{00000000000000007FFFFFE07FFFFFE0}] ;A-Z a-z
 		alpha-numeric: #[bitset! #{000000000000FFC07FFFFFE07FFFFFE0}] ;A-Z a-z 0-9
 		hex-digits:    #[bitset! #{000000000000FFC07E0000007E}]       ;A-F a-f 0-9
+		plus-minus:    #[bitset! #{000000000014}]                     ;charset "+-"
 		; chars which does not have to be url-encoded:
 		uri:           #[bitset! #{000000005BFFFFF5FFFFFFE17FFFFFE2}] ;A-Z a-z 0-9 !#$&'()*+,-./:;=?@_~
 		uri-component: #[bitset! #{0000000041E6FFC07FFFFFE17FFFFFE2}] ;A-Z a-z 0-9 !'()*-._~
+		quoted-printable: #[bitset! #{FFFFFFFFFFFFFFFBFFFFFFFFFFFFFFFF}]
 	]
 	checksums: [adler32 crc24 crc32 tcp md4 md5 sha1 sha224 sha256 sha384 sha512 ripemd160]
 	compressions: [gzip deflate zlib lzma crush]
@@ -97,7 +144,33 @@ state: object [
 	last-result: none ; used to store last console result
 ]
 
-modules: object []
+modules: object [
+	help:    none
+	;; external native extensions
+	blend2d:       https://github.com/Siskin-framework/Rebol-Blend2D/releases/download/0.0.18.1/
+	sqlite:        https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.38.5.0/
+	triangulate:   https://github.com/Siskin-framework/Rebol-Triangulate/releases/download/1.6.0.0/
+	;; optional modules, protocol and codecs
+	httpd:            https://src.rebol.tech/modules/httpd.reb
+	prebol:           https://src.rebol.tech/modules/prebol.reb
+	daytime:          https://src.rebol.tech/mezz/prot-daytime.reb
+	mail:             https://src.rebol.tech/mezz/prot-mail.reb
+	mysql:            https://src.rebol.tech/mezz/prot-mysql.reb
+	csv:              https://src.rebol.tech/mezz/codec-csv.reb
+	ico:              https://src.rebol.tech/mezz/codec-ico.reb
+	pdf:              https://src.rebol.tech/mezz/codec-pdf.reb
+	swf:              https://src.rebol.tech/mezz/codec-swf.reb
+	xml:              https://src.rebol.tech/mezz/codec-xml.reb
+	json:             https://src.rebol.tech/mezz/codec-json.reb
+	plist:            https://src.rebol.tech/mezz/codec-plist.reb
+	bbcode:           https://src.rebol.tech/mezz/codec-bbcode.reb
+	html-entities:    https://src.rebol.tech/mezz/codec-html-entities.reb
+	mime-field:       https://src.rebol.tech/mezz/codec-mime-field.reb
+	mime-types:       https://src.rebol.tech/mezz/codec-mime-types.reb
+	quoted-printable: https://src.rebol.tech/mezz/codec-quoted-printable.reb
+	;; and..
+	window: none ;- internal extension for gui (on Windows so far!)
+]
 
 codecs: object []
 
@@ -116,6 +189,7 @@ ports: object [
 	input:          ; Port for user input.
 	output:         ; Port for user output
 	echo:           ; Port for echoing output
+	mail:           ; Port for sending and receiving emails
 	system:         ; Port for system events
 	callback: none	; Port for callback events
 ;	serial: none	; serial device name block
@@ -133,44 +207,6 @@ locale: object [
 	days: [
 		"Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday"
 	]
-]
-
-options: object [  ; Options supplied to REBOL during startup
-	boot:           ; The path to the executable
-	path:           ; Where script was started or the startup dir
-	home:           ; Path of home directory
-		none
-
-	flags:          ; Boot flag bits (see system/catalog/boot-flags)
-	script:         ; Filename of script to evaluate
-	args:           ; Command line arguments passed to script
-	do-arg:         ; Set to a block if --do was specified
-	import:         ; imported modules
-	debug:          ; debug flags
-	secure:         ; security policy
-	version:        ; script version needed
-	boot-level:     ; how far to boot up
-		none
-
-	quiet: false    ; do not show startup info (compatibility)
-
-	binary-base: 16    ; Default base for FORMed binary values (64, 16, 2)
-	decimal-digits: 15 ; Max number of decimal digits to print.
-	probe-limit: 16000 ; Max probed output size
-	module-paths: [%./]
-	default-suffix: %.reb ; Used by IMPORT if no suffix is provided
-	file-types: []
-	result-types: none
-
-	; verbosity of logs per service (codecs, schemes)
-	; 0 = nothing; 1 = info; 2 = more; 3 = debug
-	log: #[map! [
-		rebol: 1
-		http: 1
-		tls:  1
-		zip:  1
-		tar:  1
-	]]
 ]
 
 script: construct [
@@ -476,6 +512,8 @@ view: object [
 		f12
 	]
 ]
+
+license: none
 
 ;;stats: none
 

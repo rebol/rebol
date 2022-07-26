@@ -387,8 +387,10 @@ fail:
 	size_low = GetFileSize(file->handle, &size_high);
 	if (size_low == 0xffffffff) {
 		result = GetLastError();
-		file->error = -RFE_BAD_WRITE;
-		return DR_ERROR;
+		if (result != NO_ERROR) {
+			file->error = -RFE_BAD_WRITE;
+			return DR_ERROR;
+		}
 	}
 
 	file->file.size = ((i64)size_high << 32) + (i64)size_low;

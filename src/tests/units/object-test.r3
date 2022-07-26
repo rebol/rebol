@@ -39,7 +39,29 @@ Rebol [
 
 ===end-group===
 
+
+
 ===start-group=== "EXTEND object"
+	--test-- "put object"
+		obj: object []
+		--assert 1 = put obj 'a 1 ; extends with a new key/value
+		--assert 1 = obj/a
+		--assert 2 = put obj 'a 2 ; overwrites existing
+		--assert 2 = obj/a
+		--assert 3 = put obj 'b 3
+		--assert 3 = obj/b
+		--assert unset? put obj 'b #[unset!]
+		--assert unset? obj/b
+		
+	--test-- "compare extended objects"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2507
+		--assert equal? #[object! [a: 1]] #[object! [a: 1]]
+		--assert equal? #[object! [a: 1]] make object! [a: 1]
+		put obj: #[object! []] 'a 1
+		--assert equal? obj #[object! [a: 1]]
+		append obj: #[object! []] [a 1]
+		--assert equal? obj #[object! [a: 1]]
+
 	--test-- "extend object"
 		obj: object []
 		--assert 1 = extend obj 'a 1
@@ -49,6 +71,13 @@ Rebol [
 		--assert 2 = obj/b
 		--assert object? insert obj [c 3]
 		--assert 3 = obj/c
+	--test-- "append with duplicates"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1979
+		--assert all [
+			object? append obj: object [] [b: 2 b: 3 b: 4]
+			[b] = words-of obj
+			obj/b == 4
+		]
 	--test-- "extend object with hidden value"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1140
 		obj: object [a: 1 protect/hide 'a]
@@ -60,6 +89,33 @@ Rebol [
 			error? e: try [append obj [a: 2]]
 			e/id = 'hidden
 		]
+	--test-- "append/part object!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1754
+		--assert []          == body-of append/part make object! [] [a 1 b 2 c 3] 1
+		--assert [a: 1]      == body-of append/part make object! [] [a 1 b 2 c 3] 2
+		--assert [a: 1]      == body-of append/part make object! [] [a 1 b 2 c 3] 3
+		--assert [a: 1 b: 2] == body-of append/part make object! [] [a 1 b 2 c 3] 4
+		--assert [a: 1 b: 2] == body-of append/part make object! [] b: [a 1 b 2 c 3] find b 'c
+		--assert [a: 1 b: 2] == body-of append/part make object! [a: 10] [a 1 b 2 c 3] 4
+		--assert [b: 2 c: 3] == body-of append/part make object! [] tail [a 1 b 2 c 3] -4
+	--test-- "append/dup object!"
+		--assert []     == body-of append/dup make object! [] [a 1] 0
+		--assert [a: 1] == body-of append/dup make object! [] [a 1] 1
+		--assert [a: 1] == body-of append/dup make object! [] [a 1] 10
+
+	--test-- "bind to object"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/890
+		o: make object! [a: 0]
+		--assert all [error? e: try [bind 's o] e/id = 'not-in-context]
+		--assert all [
+			's = bind/new 's o
+			[a s] = keys-of o
+			unset? :o/s
+		]
+	--test-- "bind to error"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/894
+		err: make error! "foo"
+		--assert all [error? e: try [bind 'id err] e/id = 'expect-arg]
 ===end-group===
 
 
@@ -202,6 +258,7 @@ Rebol [
 
 	--test-- "construct/only"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/687
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2176
 		--assert word? get in construct/only [a: true] 'a
 		--assert word? get in construct/only [a: false] 'a
 		--assert word? get in construct/only [a: on] 'a
@@ -221,6 +278,9 @@ Rebol [
 		--assert ["1"] = values-of construct to-binary "a: 1"
 		--assert ["1" "yes"] = values-of construct "a: 1^/b: yes"
 		--assert ["1 b: yes"] = values-of construct "a: 1 b: yes" ; there is not the newline!
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2499
+		--assert ["a b c"] = values-of construct "f: a b^M^/ c"
+		--assert ["a b c"] = values-of construct "f: a b^M^/    c"
 
 	--test-- "red-issue-4765"
 		a4765: make object! [ x: 1 show: does [x] ]
@@ -292,8 +352,10 @@ Rebol [
 		o: object []
 		append o 'x
 		--assert unset? o/x
-		append o [y]
-		--assert unset? o/y
+		append o [y] ; does nothing now!
+		--assert [x] = keys-of o
+		append o [y 100]
+		--assert o/y = 100
 		--assert object? append o [x: 1 y: 2]
 		--assert o/x = 1
 		--assert o/y = 2

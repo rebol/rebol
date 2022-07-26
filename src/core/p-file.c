@@ -267,7 +267,7 @@ REBINT Mode_Syms[] = {
 
 /***********************************************************************
 **
-*/	static void Read_File_Port(REBSER *port, REBREQ *file, REBVAL *path, REBCNT args, REBCNT len)
+*/	static void Read_File_Port(REBREQ *file, REBVAL *path, REBCNT args, REBCNT len)
 /*
 **		Read from a file port.
 **
@@ -283,7 +283,11 @@ REBINT Mode_Syms[] = {
 	// Do the read, check for errors:
 	file->data = BIN_HEAD(ser);
 	file->length = len;
-	if (OS_DO_DEVICE(file, RDC_READ) < 0) Trap_Port(RE_READ_ERROR, port, file->error);
+	if (OS_DO_DEVICE(file, RDC_READ) < 0) return; // Trap_Port(RE_READ_ERROR, port, file->error);
+	// Not throwing the error from here!
+	// We may want to close the port before error reporting.
+	// It is passed above in the file->error
+
 	SERIES_TAIL(ser) = file->actual;
 	STR_TERM(ser);
 
@@ -351,7 +355,9 @@ REBINT Mode_Syms[] = {
 		//Trap1(PE_BAD_ARGUMENT, data);
 	}
 	file->length = len;
-	OS_DO_DEVICE(file, RDC_WRITE);
+	OS_DO_DEVICE(file, RDC_WRITE); // don't report error here!
+	// We may want to close the port before error reporting.
+	// It is passed above in the file->error
 	
 	if(n > 0) {
 		// remove the temporary added newline from the series
@@ -364,7 +370,7 @@ REBINT Mode_Syms[] = {
 
 /***********************************************************************
 **
-*/	static REBCNT Set_Length(const REBVAL *ds, const REBREQ *file, const REBCNT arg)
+*/	static REBCNT Set_Length(const REBVAL *ds, REBREQ *file, const REBCNT arg)
 /*
 **		Computes the length of data based on the argument number
 **		provided for the ARG_*_PART stack value (which, when there,
@@ -389,6 +395,16 @@ REBINT Mode_Syms[] = {
 
 	// Limit size of requested read:
 	cnt = VAL_INT64(D_ARG(arg+1));
+	if (cnt < 0) {
+		cnt = -cnt;
+		if (cnt > file->file.index) {
+			Trap1(RE_OUT_OF_RANGE, D_ARG(arg + 1));
+			//cnt = file->file.index;
+		}
+		file->file.index -= cnt;
+		len += cnt;
+		SET_FLAG(file->modes, RFM_RESEEK);
+	}
 	if (cnt > len) return (REBCNT)len;
 	return (REBCNT)cnt;
 }
@@ -427,7 +443,7 @@ REBINT Mode_Syms[] = {
 	REBREQ *file = 0;
 	REBCNT args = 0;
 	REBCNT len;
-	REBINT result;
+	REBINT result, error;
 	REBOOL opened = FALSE;	// had to be opened (shortcut case)
 
 	//Print("FILE ACTION: %r", Get_Action_Word(action));
@@ -464,14 +480,15 @@ REBINT Mode_Syms[] = {
 
 		if (args & AM_READ_SEEK) Set_Seek(file, D_ARG(ARG_READ_INDEX));
 		len = Set_Length(ds, file, ARG_READ_PART);
-		Read_File_Port(port, file, path, args, len);
+		Read_File_Port(file, path, args, len);
 
+		error = (REBINT)file->error; // store error value, before closing the file!
 		if (opened) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
 			Cleanup_File(file);
 		}
 
-		if (file->error) Trap_Port(RE_READ_ERROR, port, file->error);
+		if (error) Trap_Port(RE_READ_ERROR, port, error);
 		break;
 
 	case A_APPEND:
@@ -522,12 +539,14 @@ REBINT Mode_Syms[] = {
 		Write_File_Port(file, spec, len, args);
 
 		file->file.index += file->actual;
+
+		error = (REBINT)file->error; // store error value, before closing the file!
 		if (opened) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
 			Cleanup_File(file);
 		}
 
-		if (file->error) Trap1(RE_WRITE_ERROR, path);
+		if (error) Trap_Port(RE_WRITE_ERROR, port, error);
 		*D_RET = *path;
 		break;
 
@@ -542,7 +561,7 @@ REBINT Mode_Syms[] = {
 	case A_COPY:
 		if (!IS_OPEN(file)) Trap1(RE_NOT_OPEN, path); //!!!! wrong msg
 		len = Set_Length(ds, file, 2);
-		Read_File_Port(port, file, path, args, len);
+		Read_File_Port(file, path, args, len);
 		break;
 
 	case A_OPENQ:
@@ -617,6 +636,9 @@ REBINT Mode_Syms[] = {
 	case A_INDEXQ:
 		SET_INTEGER(D_RET, file->file.index + 1);
 		break;
+	case A_INDEXZQ:
+		SET_INTEGER(D_RET, file->file.index);
+		break;
 
 	case A_LENGTHQ:
 		SET_INTEGER(D_RET, file->file.size - file->file.index); // !clip at zero
@@ -635,11 +657,18 @@ REBINT Mode_Syms[] = {
 		goto seeked;
 
 	case A_BACK:
-		if (file->file.index > 0) file->file.index--;
+		file->file.index--;
 		goto seeked;
 
 	case A_SKIP:
 		file->file.index += Get_Num_Arg(D_ARG(2));
+		goto seeked;
+
+	case A_AT:
+		file->file.index = Get_Num_Arg(D_ARG(2)) - 1;
+		goto seeked;
+	case A_ATZ:
+		file->file.index = Get_Num_Arg(D_ARG(2));
 		goto seeked;
 
     case A_HEADQ:
@@ -661,7 +690,6 @@ REBINT Mode_Syms[] = {
 		break;
 
 	/* Not yet implemented:
-		A_AT,					// 38
 		A_PICK,					// 41
 		A_PATH,					// 42
 		A_PATH_SET,				// 43
@@ -682,6 +710,12 @@ REBINT Mode_Syms[] = {
 	return R_RET;
 
 seeked:
+	// fit index in available range...
+	if (file->file.index < 0)
+		file->file.index = 0;
+	else if (file->file.index > file->file.size)
+		file->file.index = file->file.size;
+
 	SET_FLAG(file->modes, RFM_RESEEK);
 	return R_ARG1;
 

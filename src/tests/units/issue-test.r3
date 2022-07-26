@@ -47,6 +47,16 @@ Rebol [
 	--test-- "to-money issue!" ; not supported by design!
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1017
 		--assert error? try [to money! #000000000000000000000001]
+
+	--test-- "unicode issue"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/640
+		--assert "#Àlain" == mold to issue! "Àlain"
+
+	--test-- "bad chars in issue"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1199
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1201
+		--assert all [error? e: try [make issue! "a a"] e/id = 'invalid-chars]
+		--assert all [error? e: try [make issue! "^(01)a"] e/id = 'invalid-chars]
 		
 
 ===end-group===

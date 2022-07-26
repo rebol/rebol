@@ -240,22 +240,22 @@ make-scheme: func [
 	def: make with def
 	;print ["Scheme:" def/name]
 	unless def/name [cause-error 'access 'no-scheme-name def]
+	unless def/title [def/title: uppercase/part form def/name 1]
 	set-scheme def
 
 	; If actor is block build a non-contextual actor object:
 	if block? :def/actor [
 		actor: make object! (length? :def/actor) / 4
 		parse :def/actor [any [
-			set name set-word! [
+			copy name some set-word! [
 				set func* any-function!
-				(append actor reduce [name :func*])
 				|
-				'func set args block! set body block!
-				(append actor reduce [name func args body])
+				'func set args block! set body block! (func*: func args body)
 				|
-				'function set args block! set body block!
-				(append actor reduce [name function args body])
-			]
+				'function set args block! set body block! (func*: function args body)
+			] (
+				forall name [put actor name/1 :func*]
+			)
 			| end
 			| pos: (
 				cause-error 'script 'invalid-arg pos
@@ -266,6 +266,7 @@ make-scheme: func [
 	]
 
 	append system/schemes reduce [def/name def]
+	def
 ]
 
 init-schemes: func [

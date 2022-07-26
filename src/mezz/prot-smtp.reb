@@ -4,8 +4,8 @@ Rebol [
 	type:    module
 	author:  ["Graham" "Oldes"]
 	rights:  BSD
-	version: 1.0.0
-	date:    10-May-2022
+	version: 1.1.0
+	date:    14-Jul-2022
 	file:    %prot-smtp.reb
 	notes: {
 		0.0.1 original tested in 2010
@@ -14,21 +14,19 @@ Rebol [
 		0.0.4 Added LOGIN, PLAIN and CRAM-MD5 authentication.  Tested against CommunigatePro
 		0.0.5 Changed to move credentials to the url or port specification
 		0.0.6 Fixed some bugs in transferring email greater than the buffer size.
-        1.0.0 Oldes: Updated to work with my Rebol3 fork; including TLS.
+		1.0.0 Oldes: Updated to work with my Rebol3 fork; including TLS.
+		1.0.1 Oldes: Using extenal IP in the EHLO message, when domain-name is not available
+		1.1.0 Oldes: Recipient's address validation and possibility to have more than one
 
-        Note that if your password does not work for gmail then you need to 
-        generate an app password.  See https://support.google.com/accounts/answer/185833
+		Note that if your password does not work for gmail then you need to 
+		generate an app password.  See https://support.google.com/accounts/answer/185833
 		
 		synchronous mode
 		write smtp://user:password@smtp.clear.net.nz [ 
 			from:
-			name:
 			to: 
-			subject:
 			message: 
 		]
-
-		name, and subject are not currently used and may be removed
 		
 		eg: write smtp://user:password@smtp.yourisp.com compose [
 			from: me@somewhere.com
@@ -49,10 +47,10 @@ where's my kibble?}]
 			host: "smtp.yourisp.com"
 			user: "joe"
 			pass: "password"
-            ehlo: "FQDN" ; if you don't have one, then substitute your IP address
+			ehlo: "local.domain.name" ; optional, if not available, external IP will be used
 		] compose [
 			from: me@somewhere.com
-			to: recipient@other.com
+			to:   recipient@other.com
 			message: (message)
 		]
 		
@@ -68,13 +66,11 @@ where's my kibble?}]
 
 system/options/log/smtp: 2
 
-bufsize: 32000 ;-- use a write buffer of 32k for sending large attachments
+bufsize: 16384 ;-- use a write buffer of 16KiB (maximum TLS record size!) for sending large attachments
 
 mail-obj: make object! [ 
 	from: 
 	to:
-	name: 
-	subject:
 	message: none
 ]
 
@@ -154,7 +150,7 @@ sync-smtp-handler: function [event][
 			parse response [copy code: 3 digit to end (code: to integer! code)]
 
 			if system/options/log/smtp > 1 [
-				foreach line split trim/tail response CRLF [
+				foreach line split-lines trim/tail response [
 					sys/log/more 'SMTP ["Server:^[[32m" line]
 				]
 			]
@@ -176,8 +172,8 @@ sync-smtp-handler: function [event][
 								return false
 							)
 							|
-							thru "AUTH" [#" " | #"="] copy auth-methods: to CRLF to end (
-								auth-methods: split auth-methods #" "
+							thru "AUTH" [SP | #"="] copy auth-methods: to CRLF to end (
+								auth-methods: split auth-methods SP
 								foreach auth auth-methods [
 									try [auth: to word! auth]
 									switch auth [
@@ -195,7 +191,7 @@ sync-smtp-handler: function [event][
 											smtp-port/state: 'PLAIN
 											write client to binary! ajoin [
 												"AUTH PLAIN "
-												enbase ajoin [spec/user #"^@" spec/user #"^@" spec/pass] 64
+												enbase/flat ajoin [spec/user #"^@" spec/user #"^@" spec/pass] 64
 												CRLF
 											]
 											return false
@@ -231,12 +227,12 @@ sync-smtp-handler: function [event][
 						find/part response "334 VXNlcm5hbWU6" 16 [ ;enbased "Username:"
 							; username being requested
 							sys/log/more 'SMTP "Client: ***user-name***"
-							write client to binary! ajoin [enbase spec/user 64 CRLF]
+							write client to binary! ajoin [enbase/flat spec/user 64 CRLF]
 						]
 						find/part response "334 UGFzc3dvcmQ6" 16 [ ;enbased "Password:"
-                            ; pass being requested
-                            sys/log/more 'SMTP "Client: ***user-pass***"
-							write client to binary! ajoin [enbase spec/pass 64 CRLF]
+							; pass being requested
+							sys/log/more 'SMTP "Client: ***user-pass***"
+							write client to binary! ajoin [enbase/flat spec/pass 64 CRLF]
 							smtp-port/state: 'PASSWORD
 						]
 						true [
@@ -251,39 +247,54 @@ sync-smtp-handler: function [event][
 						; compute challenge response
 						auth-key: checksum/with auth-key 'md5 spec/pass
 						sys/log/more 'SMTP "Client: ***auth-key***"
-						write client to binary! ajoin [enbase ajoin [spec/user #" " lowercase enbase auth-key 16] 64 CRLF]
+						write client to binary! ajoin [enbase/flat ajoin [spec/user SP lowercase enbase auth-key 16] 64 CRLF]
 						smtp-port/state: 'PASSWORD
 						false
 					][
 						throw-smtp-error smtp-port join "Unknown response in AUTH CRAM-MD5 " response						
 					]
 				]
+				PLAIN
 				PASSWORD [
 					either code = 235 [
+						write client to binary! net-log/C ajoin ["MAIL FROM: " mold as tag! smtp-ctx/mail/from CRLF]
 						smtp-port/state: 'FROM
-						write client to binary! net-log/C ajoin ["MAIL FROM: <" smtp-ctx/mail/from ">" CRLF	]
+						smtp-ctx/recipients: 0
 						false
 					][
 						throw-smtp-error smtp-port "Failed authentication"
 					]
 				]
-				FROM [
-					either code = 250 [
-						write client to binary! net-log/C ajoin ["RCPT TO: <" smtp-ctx/mail/to ">" crlf]
-						smtp-port/state: 'TO
-						false
-					] [
-						throw-smtp-error smtp-port "Rejected by server"
+				FROM
+				RCPT [
+					if code <> 250 [
+						either state == 'FROM [
+							throw-smtp-error smtp-port "FROM address rejected by server"
+							return true ; awake.. no more job to do.
+						][
+							sys/log/error 'SMTP ["Server rejects TO address:" as-red smtp-ctx/rcpt]
+							smtp-ctx/rcpt: none
+							smtp-ctx/recipients: smtp-ctx/recipients - 1
+						]
 					]
-				]
-				TO [
-					either code = 250 [
-						smtp-port/state: 'DATA
+					either empty? smtp-ctx/mail/to [
+						;; no more recipients, check if at least one was accepted...
+						;sys/log/debug 'SMTP ["Number of accepted recipients:" smtp-ctx/recipients]
+						if smtp-ctx/recipients == 0 [
+							throw-smtp-error smtp-port "There were no accepted recipients!"
+							return true
+						]
+						;; if so, request the DATA start...
 						write client to binary! net-log/C join "DATA" CRLF
-						false
-					] [
-						throw-smtp-error smtp-port "Server rejects TO address"
+						smtp-port/state: 'DATA
+					][
+						;; register another recipient...
+						smtp-ctx/rcpt: take smtp-ctx/mail/to
+						smtp-ctx/recipients: smtp-ctx/recipients + 1
+						write client to binary! net-log/C ajoin ["RCPT TO: " mold as tag! smtp-ctx/rcpt crlf]
+						smtp-port/state: 'RCPT
 					]
+					false
 				]
 				DATA [
 					either code = 354 [
@@ -318,7 +329,7 @@ sync-smtp-handler: function [event][
 			switch/default state [
 				SENDING [
 					either not empty? ptr: smtp-ctx/mail/message [
-						sys/log/debug 'SMTP ["Sending "  min bufsize length? ptr " bytes of " length? ptr ]
+						sys/log/more 'SMTP ["Sending"  min bufsize length? ptr "bytes of" length? ptr ]
 						write client to binary! take/part ptr bufsize
 					][
 						sys/log/debug 'SMTP "Sending ends."
@@ -345,9 +356,28 @@ sync-smtp-handler: function [event][
 sync-write: func [
 	port [port!]
 	body [block!]
-	/local ctx result
+	/local ctx result rcpt error
 ][
 	sys/log/debug 'SMTP ["sync-write state:" port/state]
+
+	;; there may be multiple recipients...
+	;; do validation before actually opening the connection.
+	rcpt: select body 'to
+	case/all [
+		block? :rcpt [
+			;; only emails are valid here, so remove everything else...
+			rcpt: copy rcpt
+			remove-each m rcpt [not email? m]
+		]
+		email? :rcpt [
+			rcpt: to block! rcpt
+		]
+		any [not block? :rcpt empty? :rcpt] [
+			throw-smtp-error port "There must be at least one recipient!"
+			return true
+		]
+	]
+
 	unless ctx: port/extra [
 		open port
 		ctx: port/extra
@@ -355,6 +385,7 @@ sync-write: func [
 	]
 	; construct the email object from the specs 
 	ctx/mail: construct/with body mail-obj
+	ctx/mail/to: :rcpt
 
 	ctx/connection/awake: :sync-smtp-handler
 
@@ -372,6 +403,10 @@ sync-write: func [
 	]
 	if port/state = 'CLOSE [
 		close port
+	]
+	;print "sync-write DONE"
+	if all [port port/extra error? port/extra/error][
+		do port/extra/error
 	]
 	true
 ]
@@ -400,26 +435,35 @@ sys/make-scheme [
 				connection:
 				mail:
 				error:
+				rcpt:       ;= used to store the last requested RCPT address
+				recipients: ;= number of accepted recipients (must be at least one to proceed data sending)
 			]
 			spec: port/spec
 			; create the tcp port and set it to port/state/connection
-			; unless system/user/identity/fqdn [throw-smtp-error "Need to provide a value for the system/user/identity/fqdn"]
+
+			unless spec/ehlo [
+				unless spec/ehlo: select system/options 'domain-name [
+					try [
+						;; resolve external IP and use it as domain name
+						spec/ehlo: read http://ifconfig.me/ip
+						;; and store it for later use
+						put system/options 'domain-name :spec/ehlo
+					]
+				]
+			]
 			conn: context [
 				scheme: none
 				host:   spec/host
 				port:   spec/port
 				ref:    none
 			]
-            conn/scheme: either 465 = spec/port ['tls]['tcp]
-            conn/ref: as url! ajoin [conn/scheme "://" spec/host #":" spec/port]
+			conn/scheme: either 465 = spec/port ['tls]['tcp]
+			conn/ref: as url! ajoin [conn/scheme "://" spec/host #":" spec/port]
 
-            port/state: 'INIT
-            port/extra/connection: conn: make port! conn
-            if block? spec/ref [
-            	spec/ref: rejoin [smtp:// enhex spec/user #"@" spec/host #":" spec/port]
-            ]
-            
-            conn/parent: port
+			port/state: 'INIT
+			port/extra/connection: conn: make port! conn
+			
+			conn/parent: port
 			open conn ;-- open the actual tcp port
 			
 			; return the newly created and open port
@@ -456,16 +500,15 @@ sys/make-scheme [
 			sync-write port body
 		]
 	]
-	awake: func[event /local port type error][
+	awake: func[event /local port type][
 		port: event/port
 		type: event/type
 		sys/log/debug 'SMTP ["SMTP-Awake event:" type]
 		switch/default type [
 			error [
-				error: all [port/extra port/extra/error]
-				close port
-				wait [port 0.1]
-				do error
+				port/state: 'ERROR
+				try [ close port/extra/connection ]
+				true
 			]
 			close [
 				port/state: 'CLOSE

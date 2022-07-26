@@ -79,6 +79,13 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/863
 		--assert all [error? e: try [load {#[path! [0]]}] e/id = 'malconstruct]
 
+	--test-- "Invalid file"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1415
+		--assert all [error? e: try [load {%^^}] e/id = 'invalid]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1442
+		--assert all [error? e: try [load {%a^^b}] e/id = 'invalid]
+		--assert all [error? e: try [load {%a^^ }] e/id = 'invalid]
+
 ===end-group===
 
 ===start-group=== "Special % word"

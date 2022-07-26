@@ -91,6 +91,9 @@ immediate!: make typeset! [
 	; Does not include internal datatypes
 	none! logic! scalar! date! any-word! datatype! typeset! event!
 ]
+copyable!: make typeset! [
+	series! port! map! object! bitset! any-function! error!
+]
 
 system/options/result-types: make typeset! [
 	immediate! series! bitset! image! object! map! gob! handle! struct! ;module!

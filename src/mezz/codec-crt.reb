@@ -1,5 +1,6 @@
 REBOL [
-	title: "REBOL 3 codec for X.509 Public Key Infrastructure Certificate"
+	title:   "Codec: CRT"
+	Purpose: "Codec for X.509 Public Key Infrastructure Certificate"
 	name: 'codec-crt
 	author: rights: "Oldes"
 	version: 0.0.1

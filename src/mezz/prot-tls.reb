@@ -610,11 +610,11 @@ TLS-init-cipher-suite: func [
 	]
 ]
 
-cause-TLS-error: function [
-	id [integer!]
+cause-TLS-error: func [
+	name [word!]
+	/local message
 ][
-	message: to string! any [*Alert/name id  "unknown"]
-	replace/all message #"_" #" "
+	message: replace/all form name #"_" #" "
 
 	log-error join "ERROR: " message
 
@@ -642,7 +642,7 @@ assert-prev-state: function [
 ][
 	if not find legal-states ctx/state-prev [
 		log-error ["State" ctx/state "is not expected after" ctx/state-prev]
-		cause-TLS-error *Alert/Internal_error
+		cause-TLS-error 'Internal_error
 	]
 ]
 
@@ -1156,7 +1156,7 @@ decrypt-msg: function [
 				log-debug "Failed to validate MAC after decryption!"
 				log-debug ["Expected:" mac]
 				log-debug ["Counted: " tag]
-				critical-error: *Alert/Bad_record_MAC
+				critical-error: 'Bad_record_MAC
 			]
 		][
 			if block-size [
@@ -1187,7 +1187,7 @@ decrypt-msg: function [
 				;?? mac
 				;?? mac-check
 
-				if mac <> mac-check [ critical-error: *Alert/Bad_record_MAC ]
+				if mac <> mac-check [ critical-error: 'Bad_record_MAC ]
 				
 				unset 'remote-IV ;-- avoid reuse in TLS 1.1 and above
 			]
@@ -1195,7 +1195,7 @@ decrypt-msg: function [
 		binary/init  bin 0 ;clear the temp bin buffer
 	]
 	unless data [
-	;	critical-error: *Alert/Bad_record_MAC
+	;	critical-error: 'Bad_record_MAC
 	]
 	;? data
 	data
@@ -1461,7 +1461,7 @@ TLS-read-data: function [
 
 		if ctx/version <> server-version [
 			log-error ["Version mismatch:^[[22m" ctx/version "<>" server-version]
-			ctx/critical-error: *Alert/Internal_error
+			ctx/critical-error: 'Internal_error
 			return false
 		]
 
@@ -1556,18 +1556,17 @@ TLS-read-data: function [
 				id:    data/2
 
 				level: any [*Alert-level/name level  join "Alert-" level ]
-				description: any [*Alert/name id  "Unknown"]
-				description: replace/all form description #"_" #" "
+				name:  any [*Alert/name id  'Unknown]
 				
 				;@@ do some actions here....
-				ctx/critical-error: either level = 'WARNING [false][id]
+				ctx/critical-error: either level = 'WARNING [false][name]
 				either id = 0 [
 					; server done
 					ctx/reading?: false
 					ctx/protocol: 'APPLICATION
 					log-info "Server done"
 				][
-					log-more ["ALERT:" level "-" description]
+					log-more ["ALERT:" level "-" replace/all form name #"_" #" "]
 				]
 			]
 		]
@@ -1577,7 +1576,7 @@ TLS-read-data: function [
 
 		if end <> index? inp/buffer [
 			log-error ["Record end mismatch:^[[22m" end "<>" index? inp/buffer]
-			ctx/critical-error: *Alert/Record_overflow
+			ctx/critical-error: 'Record_overflow
 			return false
 		]
 
@@ -1643,12 +1642,12 @@ TLS-parse-handshake-message: function [
 			; now we should have initialized cipher suites, return error, if not
 			unless ctx/crypt-method [
 				log-error "No supported cipher-suite!"
-				return *Alert/Handshake_failure
+				return 'Handshake_failure
 			]
 
 			if #{00} <> compressions [
 				log-error ["Client requests compression:" compressions]
-				return *Alert/Unexpected_message
+				return 'Unexpected_message
 			]
 			;? extensions
 			extensions: decode-extensions :extensions
@@ -1661,7 +1660,7 @@ TLS-parse-handshake-message: function [
 			;NOTE: `len` should be now >= 38 for TLS and 41 for DTLS
 			assert-prev-state ctx [CLIENT_HELLO]
 
-			if ctx/critical-error: with ctx [
+			with ctx [
 				if any [
 					error? try [
 						binary/read msg [
@@ -1677,7 +1676,7 @@ TLS-parse-handshake-message: function [
 					32 < length? session-id  ;@@ limit session-id size; TLSe has it max 32 bytes
 				][
 					log-error "Failed to read server hello."
-					return *Alert/Handshake_failure
+					return 'Handshake_failure
 				]
 
 				log-more ["R[" seq-read "] Version:" *Protocol-version/name server-version "len:" len "cipher-suite:" *Cipher-suite/name cipher-suite]
@@ -1692,7 +1691,7 @@ TLS-parse-handshake-message: function [
 					
 					; protocol downgrade (to v1.1) is not allowed now, would have to find out, how to make it
 					if server-version <> version [
-						return *Alert/Protocol_version
+						return 'Protocol_version
 					]
 
 					version: server-version
@@ -1701,20 +1700,17 @@ TLS-parse-handshake-message: function [
 				unless empty? compressions [
 					log-more ["R[" seq-read "] Compressions:^[[1m" compressions ]
 					log-error "COMPRESSION NOT SUPPORTED"
-					return *Alert/Decompression_failure
+					return 'Decompression_failure
 				]
 
 				unless TLS-init-cipher-suite ctx [
 					log-error "Unsupported cipher suite!"
-					return *Alert/Handshake_failure
+					return 'Handshake_failure
 				]
 
 				;-- extensions handling
 				extensions: decode-extensions :extensions
 				false ;= no error
-			][; ctx
-				; WITH block catches RETURNs so just throw it again
-				return ctx/critical-error
 			]
 		]
 		;----------------------------------------------------------
@@ -1723,7 +1719,7 @@ TLS-parse-handshake-message: function [
 			tmp: binary/read msg [UI24 INDEX]
 			if ends <> (tmp/1 + tmp/2) [
 				log-error ["Improper certificate list end?" ends "<>" (tmp/1 + tmp/2)]
-				return *Alert/Handshake_failure
+				return 'Handshake_failure
 			]
 			;i: 0
 			while [ends > index? msg/buffer][
@@ -1752,7 +1748,7 @@ TLS-parse-handshake-message: function [
 				]
 			][
 				log-error "Missing public key in certifiate"
-				return *Alert/Bad_certificate
+				return 'Bad_certificate
 			]
 			;@@TODO: certificate validation
 		]
@@ -1775,7 +1771,7 @@ TLS-parse-handshake-message: function [
 						]
 					][
 						log-error "Error reading elyptic curve"
-						return *Alert/User_cancelled
+						return 'User_cancelled
 					]
 
 					if any [
@@ -1784,7 +1780,7 @@ TLS-parse-handshake-message: function [
 						none? curve: *EllipticCurves/name ECCurve
 					][
 						log-error ["Unsupported ECurve type:" ECCurveType ECCurve ]
-						return *Alert/User_cancelled
+						return 'User_cancelled
 					]
 					log-more ["R[" ctx/seq-read "] Elyptic curve type:" ECCurve "=>" curve]
 					log-more ["R[" ctx/seq-read "] Elyptic curve data:" mold pub_key]
@@ -1818,7 +1814,7 @@ TLS-parse-handshake-message: function [
 			if hash-algorithm = 'md5_sha1 [
 				;__private_rsa_verify_hash_md5sha1
 				log-error "legacy __private_rsa_verify_hash_md5sha1 not implemented yet!"
-				return *Alert/Decode_error
+				return 'Decode_error
 			]
 			binary/read msg [signature: UI16BYTES]
 			;?? signature
@@ -1847,14 +1843,14 @@ TLS-parse-handshake-message: function [
 			][
 				log-error "Failed to validate signature"
 				if error? valid? [print valid?]
-				return *Alert/Decode_error
+				return 'Decode_error
 			]
 			log-more "Signature valid!"
 			if ends > pos: index? msg/buffer [
 				len: ends - pos
 				binary/read msg [extra: BYTES :len]
 				log-error ["Extra" len "bytes at the end of message:" ellipsize form extra 40]
-				return *Alert/Decode_error
+				return 'Decode_error
 			]
 
 			if dh_p [
@@ -1880,7 +1876,7 @@ TLS-parse-handshake-message: function [
 		CLIENT_KEY_EXCHANGE [
 			unless ctx/server? [
 				log-error "This message is expected on server!"
-				return *Alert/Decode_error
+				return 'Decode_error
 			]
 			switch ctx/key-method [
 				ECDHE_RSA
@@ -1917,7 +1913,7 @@ TLS-parse-handshake-message: function [
 			if ends <> index? msg/buffer [
 				log-error ["Positions:" ends  index? msg/buffer]
 				log-error  "Looks we should read also something else!"
-				return *Alert/Decode_error
+				return 'Decode_error
 			]
 		]
 		;----------------------------------------------------------
@@ -1931,18 +1927,18 @@ TLS-parse-handshake-message: function [
 			result: prf :ctx/sha-port/spec/method either ctx/server? ["client finished"]["server finished"] seed ctx/master-secret  12
 			;? verify-data ? result
 			if result <> verify-data [
-				return *Alert/Handshake_failure
+				return 'Handshake_failure
 			]
 		]
 	][
 		log-error ["Unknown state: " ctx/state "-" type]
-		return *Alert/Unexpected_message
+		return 'Unexpected_message
 	]
 
 	if ends <> i: index? msg/buffer [
 		log-error ["Wrong fragment message tail!" ends "<>" i]
 		log-error ["in/buffer starts:" copy/part msg/buffer 20]
-		return *Alert/Record_overflow
+		return 'Record_overflow
 	]
 	log-more ["R[" ctx/seq-read "] DONE: handshake^[[1m" ctx/state] log-----
 	false ;= no error
@@ -1973,7 +1969,7 @@ TLS-server-client-awake: function [event [event!]][
 		read [
 			error: try [
 				complete?: TLS-read-data ctx TCP-port/data
-				if error-id: ctx/critical-error [ cause-TLS-error error-id ]
+				if ctx/critical-error [ cause-TLS-error ctx/critical-error ]
 				log-debug ["Read complete?" complete?]
 				either complete? [
 					switch ctx/state [
@@ -2101,7 +2097,7 @@ TLS-client-awake: function [event [event!]][
 				;@@ This part deserves a serious review!                         
 				complete?: TLS-read-data ctx TCP-port/data
 				;? port
-				if error-id: ctx/critical-error [ cause-TLS-error error-id ]
+				if ctx/critical-error [ cause-TLS-error ctx/critical-error ]
 				log-debug ["Read complete?" complete?]
 				unless complete? [
 					read TCP-port
@@ -2149,10 +2145,23 @@ TLS-client-awake: function [event [event!]][
 			return true
 		]
 		error [
-			if all [ctx ctx/state = 'lookup][
-				ctx/error: make error! [
-					code: 500 type: 'access id: 'cannot-open
-					arg1: TCP-port/spec/ref
+			unless ctx/error [
+				ctx/error: case [
+					ctx/state = 'lookup [
+						make error! [
+							code: 500 type: 'access id: 'cannot-open
+							arg1: TCP-port/spec/ref
+						]
+					]
+					'else [
+						;@@ needs better error (unknown reason)
+						; So far this error is used, when we try to write
+						; application data larger than 16KiB!
+						make error! [
+							code: 500 type: 'access id: 'protocol
+							arg1: TCP-port/spec/ref
+						]
+					]
 				]
 			]
 			send-event 'error TLS-port
@@ -2288,7 +2297,8 @@ do-TLS-write: func[port [port!] value [any-type!] /local ctx][
 	log-debug "WRITE"
 	ctx: port/extra
 	if ctx/protocol = 'APPLICATION [
-
+		;@@ FIXME: size limit for application data is 16KiB,
+		;@@ else server closes connection, which is not detected!
 		binary/init ctx/out none ;resets the output buffer
 		application-data ctx :value
 
@@ -2301,6 +2311,7 @@ do-TCP-write: func[ctx][
 	log-debug ["Writing bytes:" length? ctx/out/buffer]
 	;?? ctx/out/buffer
 	;ctx/out/buffer: head ctx/out/buffer
+	clear ctx/port-data
 	write ctx/tcp-port ctx/out/buffer
 
 	ctx/reading?: true

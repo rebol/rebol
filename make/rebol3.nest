@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.8.0
+version: 3.9.0
 
 target-windows: [
 	os:       windows
@@ -600,6 +600,7 @@ include-cryptography: [
 	:include-codec-pkix
 	:include-codec-ppk
 	:include-codec-ssh-key
+	:include-codec-safe
 ]
 
 include-cryptography-bulk: [
@@ -707,6 +708,7 @@ include-codec-der:           [mezz-lib-files:  %mezz/codec-der.reb          ]
 include-codec-pkix:          [mezz-lib-files:  %mezz/codec-pkix.reb         ]
 include-codec-ppk:           [mezz-lib-files:  %mezz/codec-ppk.reb          ]
 include-codec-ssh-key:       [mezz-lib-files:  %mezz/codec-ssh-key.reb      ]
+include-codec-safe:          [mezz-lib-files:  %mezz/codec-safe.reb         ]
 ; compression codecs:
 include-codec-gzip:          [mezz-lib-files:  %mezz/codec-gzip.reb         ]
 include-codec-zip:           [mezz-lib-files:  %mezz/codec-zip.reb          ]
@@ -735,7 +737,7 @@ include-mezz-colors:         [mezz-lib-files:  %mezz/mezz-colors.reb        ]
 ; protocols:
 include-prot-whois:          [mezz-prot-files: %mezz/prot-whois.reb         ]
 include-prot-mysql:          [mezz-prot-files: %mezz/prot-mysql.reb         ]
-include-prot-smtp:           [mezz-prot-files: %mezz/prot-smtp.reb :include-prot-tls]
+include-prot-daytime:        [mezz-prot-files: %mezz/prot-daytime.reb       ]
 include-prot-https:          [mezz-prot-files: %mezz/prot-http.reb :include-prot-tls]
 include-prot-tls: [
 	:include-bincode
@@ -744,6 +746,16 @@ include-prot-tls: [
 	mezz-lib-files:  %mezz/codec-der.reb
 	mezz-lib-files:  %mezz/codec-crt.reb
 	mezz-prot-files: %mezz/prot-tls.reb
+]
+
+include-mail: [
+	:include-prot-tls
+	mezz-prot-files: %mezz/prot-smtp.reb
+	mezz-prot-files: %mezz/prot-pop3.reb
+	mezz-lib-files:  %mezz/prot-mail.reb
+	mezz-lib-files:  %mezz/codec-mime-field.reb
+	mezz-lib-files:  %mezz/codec-mime-types.reb
+	mezz-lib-files:  %mezz/codec-quoted-printable.reb
 ]
 
 
@@ -760,8 +772,8 @@ include-rebol-core: [
 	:include-cryptography
 	:include-bincode
 	:include-iconv
+	:include-mail
 	:include-prot-https
-	:include-prot-smtp
 
 	:include-codec-unixtime
 	:include-codec-ar
@@ -812,6 +824,7 @@ include-rebol-bulk: [
 
 	:include-prot-whois
 	:include-prot-mysql
+	:include-prot-daytime
 
 	:include-dialecting  ;`delect`
 	:include-native-oid  ;`form-oid`

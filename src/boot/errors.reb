@@ -120,6 +120,9 @@ Script: [
 	parse-variable:     [{PARSE - expected a variable, not:} :arg1]
 	parse-command:      [{PARSE - command cannot be used as variable:} :arg1]
 	parse-series:       [{PARSE - input must be a series:} :arg1]
+	parse-no-collect:    {PARSE - KEEP is used without a wrapping COLLECT}
+	parse-into-bad:		 {PARSE - COLLECT INTO/AFTER expects a series! argument}
+	parse-into-type:     {PARSE - COLLECT INTO/AFTER expects a series! of compatible datatype}
 
 ;   bad-prompt:         [{Error executing prompt block}]
 ;   bad-port-action:    [{Cannot use} :arg1 {on this type port}]
@@ -148,6 +151,7 @@ Access: [
 ;   already-closed:     [{port} :arg1 {already closed}]
 	no-connect:         [{cannot connect:} :arg1 {reason:} :arg2]
 	not-connected:      [{port is not connected:} :arg1]
+	not-ready:          [{port is not ready:} :arg1]
 ;   socket-open:        [{error opening socket:} :arg1]
 	no-script:          [{script not found:} :arg1]
 

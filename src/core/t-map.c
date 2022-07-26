@@ -336,7 +336,8 @@
 	REBCNT n;
 
 	val = VAL_BLK_DATA(arg);
-	for (n = 0; n < len && NOT_END(val) && NOT_END(val+1); val += 2, n += 2) {
+	len >>= 1; // part must be number of key/value pairs
+	for (n = 0; n < len && NOT_END(val) && NOT_END(val+1); val += 2, n++) {
 		Find_Entry(ser, val, val+1, TRUE);
 	}
 }

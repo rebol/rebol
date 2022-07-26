@@ -1,5 +1,5 @@
 REBOL [
-	Title:   "REBOL 3 codec: Secure Shell Key"
+	Title:   "Codec: Secure Shell Key"
 	Author:  "Oldes"
 	Rights:  "Copyright (C) 2020 Oldes. All rights reserved."
 	License: "BSD-3"

@@ -200,6 +200,7 @@ protect-system-object: func [
 		system/standard
 		system/license
 		system/contexts
+		system/user
 	]
 
 	unprotect/values [

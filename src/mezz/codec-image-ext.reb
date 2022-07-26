@@ -12,7 +12,7 @@ REBOL [
 ]
 
 if find codecs 'png [
-	extend codecs/png 'size? func ["Return PNG image size or none" bin [binary!]][
+	put codecs/png 'size? func ["Return PNG image size or none" bin [binary!]][
 		if all [
 			parse bin [
 				#{89504E470D0A1A0A} ;- PNG magic number
@@ -25,7 +25,7 @@ if find codecs 'png [
 		]
 	]
 	
-	extend codecs/png 'chunks function [
+	put codecs/png 'chunks function [
 		"Decode PNG into block of chunks (or encode back to binary from a block)"
 		data [binary! file! url! block!] "Input data"
 		/only tags [block!]
@@ -116,7 +116,7 @@ if find codecs 'png [
 ]
 
 if find codecs 'jpeg [
-	extend codecs/jpeg 'size? function ["Return JPEG image size or none" img [file! url! binary!]][
+	put codecs/jpeg 'size? function ["Return JPEG image size or none" img [file! url! binary!]][
 		unless binary? img [img: read/binary img]
 		unless img: find/tail img #{FFD8} [return none]
 		while [2 <= length? img][
@@ -149,7 +149,7 @@ if find codecs 'jpeg [
 
 
 if find codecs 'gif [
-	extend codecs/gif 'size? function ["Return GIF image size or none" img [file! url! binary!]][
+	put codecs/gif 'size? function ["Return GIF image size or none" img [file! url! binary!]][
 		unless binary? img [img: read/binary/part img 16]
 		parse img [
 			["GIF87a" | "GIF89a"] img: (
@@ -161,7 +161,7 @@ if find codecs 'gif [
 ]
 
 if find codecs 'bmp [
-	extend codecs/bmp 'size? function ["Return BMP image size or none" img [file! url! binary!]][
+	put codecs/bmp 'size? function ["Return BMP image size or none" img [file! url! binary!]][
 		unless binary? img [img: read/binary/part img 32]
 		unless find/match img #{424D} [return none]
 		try [return to pair! binary/read img [SKIP 18 UI32LE UI32LE]]
@@ -170,7 +170,7 @@ if find codecs 'bmp [
 ]
 
 if find codecs 'dds [
-	extend codecs/dds 'size? function ["Return DDS image size or none" img [file! url! binary!]][
+	put codecs/dds 'size? function ["Return DDS image size or none" img [file! url! binary!]][
 		unless binary? img [img: read/binary/part img 32]
 		unless find/match img #{444453207C000000} [return none]
 		try [return to pair! reverse binary/read img [SKIP 12 UI32LE UI32LE]]
@@ -179,7 +179,7 @@ if find codecs 'dds [
 ]
 
 if find codecs 'qoi [
-	extend codecs/qoi 'size? function ["Return QOI image size or none" img [file! url! binary!]][
+	put codecs/qoi 'size? function ["Return QOI image size or none" img [file! url! binary!]][
 		unless binary? img [img: read/binary/part img 32]
 		unless find/match img #{716F6966} [return none]
 		try [return to pair! binary/read img [SKIP 4 UI32BE UI32BE]]

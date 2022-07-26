@@ -139,7 +139,7 @@ emit-file: func [
 	]
 
 	emit "#ifdef INCLUDE_EXT_DATA^/"
-	data: append trim/head mold/only/flat source newline
+	data: append trim/head mold/only source newline
 	append data to-char 0 ; null terminator may be required
 	emit ["const unsigned char RX_" name "[] = {^/" to-cstr data "^/};^/^/"]
 	emit "#endif^/"

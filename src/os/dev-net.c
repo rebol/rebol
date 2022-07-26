@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,6 +60,9 @@ DEVICE_CMD Listen_Socket(REBREQ *sock);
 #ifdef TO_WINDOWS
 typedef int socklen_t;
 extern HWND Event_Handle; // For WSAAsync API
+#ifndef in_addr_t
+#define in_addr_t ULONG
+#endif
 #endif
 
 
@@ -68,7 +72,7 @@ extern HWND Event_Handle; // For WSAAsync API
 **
 ***********************************************************************/
 
-static void Set_Addr(SOCKAI *sa, long ip, int port)
+static void Set_Addr(SOCKAI *sa, in_addr_t ip, int port)
 {
 	// Set the IP address and port number in a socket_addr struct.
 	memset(sa, 0, sizeof(*sa));
@@ -82,7 +86,7 @@ static void Get_Local_IP(REBREQ *sock)
 	// Get the local IP address and port number.
 	// This code should be fast and never fail.
 	SOCKAI sa;
-	int len = sizeof(sa);
+	unsigned int len = sizeof(sa);
 
 	getsockname(sock->socket, (struct sockaddr *)&sa, &len);
 	sock->net.local_ip = sa.sin_addr.s_addr; //htonl(ip); NOTE: REBOL stays in network byte order
@@ -324,7 +328,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	OS_Free(host);
 #else
 	// Use old-style blocking DNS (mainly for testing purposes):
-	host = gethostbyname(sock->data);
+	host = gethostbyname((const char*)sock->data);
 	sock->net.host_info = 0; // no allocated data
 
 	if (host) {
@@ -442,7 +446,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 **
 ***********************************************************************/
 {
-	int result;
+	long result;
 	long len;
 	SOCKAI remote_addr;
 	socklen_t addr_len = sizeof(remote_addr);
@@ -498,7 +502,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 				sock->net.remote_ip = remote_addr.sin_addr.s_addr;
 				sock->net.remote_port = ntohs(remote_addr.sin_port);
 			}
-			sock->actual = result;
+			sock->actual = (u32)result;
 			Signal_Device(sock, EVT_READ);
 			return DR_DONE;
 		}
@@ -520,7 +524,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	}
 	WATCH4("ERROR: recv(%d %x) len: %d error: %d\n", sock->socket, sock->data, len, result);
 	// A nasty error happened:
-	sock->error = result;
+	sock->error = (u32)result;
 	Signal_Device(sock, EVT_ERROR);
 	return DR_ERROR;
 }
@@ -596,7 +600,7 @@ lserr:
 {
 	SOCKAI sa;
 	REBREQ *news;
-	int len = sizeof(sa);
+	unsigned int len = sizeof(sa);
 	int result;
 	extern void Attach_Request(REBREQ **prior, REBREQ *req);
 

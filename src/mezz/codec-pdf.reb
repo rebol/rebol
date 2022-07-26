@@ -3,7 +3,7 @@ REBOL [
 	type:    module
 	options: [delay]
 	version: 0.1.0
-	title:  "PDF file codec"
+	title:  "Codec: PDF"
 	file:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-pdf.reb
 	author: "Oldes"
 	history: [16-Sep-2021 "Oldes" {Initial version - raw PDF data de/encode}]
@@ -425,7 +425,7 @@ get-xref-count: function[xrefs n][
 
 emit-stream: func[obj [object!] /local data][
 	unless find obj 'spec [
-		extend obj 'spec #(Length: 0)
+		put obj 'spec #(Length: 0)
 	]
 	data: any [obj/data #{}]
 	unless any [           ; don't use compression 
@@ -643,7 +643,7 @@ register-codec [
 		]
 		trailer: select pdf 'trailer
 		unless trailer [
-			extend pdf 'trailer trailer: #(Info: #[none] Root: #[none])
+			put pdf 'trailer trailer: #(Info: #[none] Root: #[none])
 		]
 		unless root: trailer/Root [
 			sys/log/debug 'PDF "Trying to locate `Catalog` in PDF objects."

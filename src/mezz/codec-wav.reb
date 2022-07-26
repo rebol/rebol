@@ -1,5 +1,5 @@
 REBOL [
-	title:  "REBOL 3 codec for WAV file format"
+	title:  "Codec: WAV"
 	name:   'codec-WAV
 	author: "Oldes"
 	version: 0.2.0

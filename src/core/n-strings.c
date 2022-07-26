@@ -476,19 +476,19 @@ static struct digest {
 **
 ***********************************************************************/
 {
+	REBVAL *arg = D_ARG(1);
 	REBINT base = VAL_INT32(D_ARG(2));
+	REBVAL *part = D_ARG(5);
 	REBSER *ser;
 	REBCNT index;
 	REBCNT len = 0;
 
 	if (D_REF(4)) {
-		if (VAL_INT64(D_ARG(5)) > (i64)MAX_I32) {
-			len = MAX_I32;
-		} else if (VAL_INT64(D_ARG(5)) <= 0) {
+		len = Partial(arg, 0, part, 0); // Can modify value index.
+		if (len == 0) {
 			Set_Binary(D_RET, Make_Binary(0));
 			return R_RET;
-		} else
-			len = VAL_INT32(D_ARG(5));
+		}
 	}
 
 	ser = Prep_Bin_Str(D_ARG(1), &index, &len); // result may be a SHARED BUFFER!
@@ -514,15 +514,15 @@ static struct digest {
 	REBVAL *arg = D_ARG(1);
 	REBINT base = VAL_INT32(D_ARG(2));
 	REBCNT limit = NO_LIMIT;
+	REBVAL *part = D_ARG(5);
+	REBOOL brk = !D_REF(6);
 
 	if (D_REF(4)) {
-		if (VAL_INT64(D_ARG(5)) > (i64)MAX_I32) {
-			limit = MAX_I32;
-		} else if (VAL_INT64(D_ARG(5)) <= 0) {
+		limit = Partial(arg, 0, part, 0); // Can modify value index.
+		if (limit == 0) {
 			Set_String(D_RET, Make_Binary(0));
 			return R_RET;
-		} else
-			limit = VAL_INT32(D_ARG(5));
+		}
 	}
 
 	Set_Binary(arg, Prep_Bin_Str(arg, &index, (limit == NO_LIMIT) ? 0 : &limit)); // may be SHARED buffer
@@ -530,13 +530,13 @@ static struct digest {
 
 	switch (base) {
 	case 64:
-		ser = Encode_Base64(arg, 0, limit, FALSE, D_REF(3));
+		ser = Encode_Base64(arg, 0, limit, brk, D_REF(3));
 		break;
 	case 16:
-		ser = Encode_Base16(arg, 0, limit, FALSE);
+		ser = Encode_Base16(arg, 0, limit, brk);
 		break;
 	case 2:
-		ser = Encode_Base2(arg, 0, limit, FALSE);
+		ser = Encode_Base2(arg, 0, limit, brk);
 		break;
 	case 85:
 #ifdef INCLUDE_BASE85
@@ -613,46 +613,47 @@ static struct digest {
 	REBVAL *arg        = D_ARG(1);
 //	REBOOL  ref_escape = D_REF(2);
 //	REBVAL *val_escape = D_ARG(3);
-	REBOOL as_url      = D_REF(4);
+	REBOOL as_uri      = D_REF(4);
 	REBINT len = (REBINT)VAL_LEN(arg); // due to len -= 2 below
 	REBUNI n;
 	REBSER *ser;
+	REBYTE *bp, *dp;
 
 	const REBCHR escape_char = D_REF(2) ? VAL_CHAR(D_ARG(3)) : '%';
+	const REBCHR space_char = escape_char == '=' ? '_' : '+';
 
 	if (VAL_BYTE_SIZE(arg)) {
-		REBYTE *bp = VAL_BIN_DATA(arg);
-		REBYTE *dp = Reset_Buffer(BUF_FORM, len);
-
-		for (; len > 0; len--) {
-			if (*bp == escape_char && len > 2 && Scan_Hex2(bp+1, &n, FALSE)) {
-				*dp++ = (REBYTE)n;
-				bp += 3;
-				len -= 2;
-			} else {
-				*dp++ = *bp++;
-			}
-		}
-
-		*dp = 0;
-		ser = Copy_String(BUF_FORM, 0, dp - BIN_HEAD(BUF_FORM));
+		bp = VAL_BIN_DATA(arg);
 	}
 	else {
-		REBUNI *up = VAL_UNI_DATA(arg);
-		REBUNI *dp = (REBUNI*)Reset_Buffer(BUF_MOLD, len);
+		// if the input is an unicode string, convert it to UTF8
+		ser = Encode_UTF8_String(VAL_UNI_DATA(arg), len, TRUE, 0);
+		len = BIN_LEN(ser); // because the lengh may be changed!
+		bp = BIN_HEAD(ser);
+	}
 
-		for (; len > 0; len--) {
-			if (*up == escape_char && len > 2 && Scan_Hex2((REBYTE*)(up+1), &n, TRUE)) {
-				*dp++ = (REBUNI)n;
-				up += 3;
-				len -= 2;
-			} else {
-				*dp++ = *up++;
-			}
+	dp = Reset_Buffer(BUF_FORM, len+1); // count also the terminating null byte
+
+	for (; len > 0; len--) {
+		if (*bp == escape_char && len > 2 && Scan_Hex2(bp+1, &n, FALSE)) {
+			*dp++ = (REBYTE)n;
+			bp  += 3;
+			len -= 2;
 		}
+		else if (*bp == space_char && as_uri) {
+			*dp++ = ' ';
+			bp++;
+		}
+		else {
+			*dp++ = *bp++;
+		}
+	}
 
-		*dp = 0;
-		ser = Copy_String(BUF_MOLD, 0, dp - UNI_HEAD(BUF_MOLD));
+	*dp = 0;
+	if (IS_BINARY(arg)) {
+		ser = Copy_String(BUF_FORM, 0, dp - BIN_HEAD(BUF_FORM));
+	} else {
+		ser = Decode_UTF_String(VAL_BIN_DATA(TASK_BUF_FORM), dp - BIN_HEAD(BUF_FORM), -1, FALSE, FALSE);
 	}
 
 	Set_Series(VAL_TYPE(arg), D_RET, ser);
@@ -680,10 +681,12 @@ static struct digest {
 //	REBVAL *val_escape = D_ARG(3);
 	REBOOL  ref_bitset = D_REF(4);
 	REBVAL *val_bitset = D_ARG(5);
+	REBOOL  no_space   = D_REF(6);
 	REBYTE encoded[4];
 	REBCNT n, encoded_size;
 	REBSER *ser;
 	const REBCHR escape_char = D_REF(2) ? VAL_CHAR(D_ARG(3)) : '%';
+	const REBCHR space_char = escape_char == '=' ? '_' : '+';
 
 	if (!ref_bitset) {
 		// use bitset value from system/catalog/bitsets
@@ -710,10 +713,18 @@ static struct digest {
 		while (bp < ep) {
 			REBYTE c = bp[0];
 			bp++;
+			if (no_space) {
+				if (c == ' ') {
+					*dp++ = space_char;
+					continue;
+				}
+				if (c == space_char) goto escaped_ascii;
+			}
 			if (Check_Bit_Cased(VAL_SERIES(val_bitset), c)) {
 				*dp++ = c;
 				continue;
 			}
+		escaped_ascii:
 			*dp++ = escape_char;
 			*dp++ = Hex_Digits[(c & 0xf0) >> 4];
 			*dp++ = Hex_Digits[ c & 0xf];
@@ -726,7 +737,16 @@ static struct digest {
 		while (up < ep) {
 			REBUNI c = up[0];
 			up++;
-
+			if (no_space) {
+				if (c == ' ') {
+					*dp++ = space_char;
+					continue;
+				}
+				if (c == space_char) {
+					encoded_size = Encode_UTF8_Char(encoded, c);
+					goto escaped_uni;
+				}
+			}
 			if (c >= 0x80) {// all non-ASCII characters *must* be percent encoded
 				encoded_size = Encode_UTF8_Char(encoded, c);
 			} else {
@@ -737,6 +757,7 @@ static struct digest {
 				encoded[0] = cast(REBYTE, c);
 				encoded_size = 1;
 			}
+		escaped_uni:
 			for (n = 0; n < encoded_size; ++n) {
 				*dp++ = escape_char;
 				*dp++ = Hex_Digits[(encoded[n] & 0xf0) >> 4];

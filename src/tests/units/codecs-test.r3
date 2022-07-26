@@ -462,6 +462,15 @@ if find codecs 'PNG [
 			img/rgb = #{C800000000C800C800FFFFFF}
 		]
 		try [delete %new.png]
+
+	--test-- "encode/decode PNG"
+		--assert all [
+			binary? try [b: encode 'png make image! 1x1] 
+			image?  try [i: decode 'png b]
+			i/rgb == #{FFFFFF}
+		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2503
+		--assert error? try [decode 'png #{}]
 	===end-group===
 ]
 
@@ -476,6 +485,14 @@ if find codecs 'QOI [
 	--test-- "qoi/size?"
 		--assert 256x256 = codecs/qoi/size? %test.qoi
 		try [delete %test.qoi]
+	--test-- "encode/decode QOI"
+		--assert all [
+			binary? try [b: encode 'qoi make image! 1x1] 
+			image?  try [i: decode 'qoi b]
+			i/rgb == #{FFFFFF}
+		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2503
+		--assert error? try [decode 'qoi #{}]
 	===end-group===
 ]
 
@@ -491,6 +508,15 @@ if find codecs 'JPEG [
 		--assert 256x256 = codecs/jpeg/size? %units/files/flower-from-photoshop.jpg
 		--assert 256x256 = codecs/jpeg/size? %units/files/flower-tiny.jpg
 		--assert none?     codecs/jpeg/size? %units/files/test.aar
+
+	--test-- "encode/decode JPEG"
+		--assert all [
+			binary? try [b: encode 'jpeg make image! 1x1] 
+			image?  try [i: decode 'jpeg b]
+			i/rgb == #{FFFFFF}
+		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2503
+		--assert error? try [decode 'jpeg #{}]
 	===end-group===
 ]
 
@@ -499,6 +525,15 @@ if find codecs 'GIF [
 	--test-- "gif/size?"
 		--assert 256x256 = codecs/gif/size? %units/files/flower.gif
 		--assert none?     codecs/gif/size? %units/files/test.aar
+
+	--test-- "encode/decode GIF"
+		--assert all [
+			binary? try [b: encode 'gif make image! 1x1] 
+			image?  try [i: decode 'gif b]
+			i/rgb == #{FFFFFF}
+		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2503
+		--assert error? try [decode 'gif #{}]
 
 	--test-- "gif rgb image"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2495
@@ -522,6 +557,15 @@ if find codecs 'BMP [
 	--test-- "bmp/size?"
 		--assert 256x256 = codecs/bmp/size? %units/files/flower.bmp
 		--assert none?     codecs/bmp/size? %units/files/test.aar
+	--test-- "encode/decode BMP"
+		--assert all [
+			binary? try [b: encode 'bmp make image! 1x1] 
+			image?  try [i: decode 'bmp b]
+			i/rgb == #{FFFFFF}
+		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2503
+		--assert error? try [decode 'bmp #{}]
+
 	===end-group===
 ]
 
@@ -577,6 +621,60 @@ if find codecs 'html-entities [
 	===end-group===
 ]
 
+try [import 'quoted-printable]
+if find codecs 'quoted-printable [
+	was-length: :codecs/quoted-printable/max-line-length
+	qp-encode: :codecs/quoted-printable/encode
+	qp-decode: :codecs/quoted-printable/decode
+	===start-group=== "Quoted-Printable codec"
+	--test-- "encode Quoted-Printable"
+		--assert (encode 'quoted-printable "Holčička") == "Hol=C4=8Di=C4=8Dka"
+		--assert (encode 'quoted-printable @Holčička ) == @Hol=C4=8Di=C4=8Dka
+		--assert (encode 'quoted-printable %Holčička ) == %Hol=C4=8Di=C4=8Dka
+		--assert (encode 'quoted-printable #{486F6CC48D69C48D6B61}) == #{486F6C3D43343D3844693D43343D38446B61}
+	--test-- "decode Quoted-Printable"
+		--assert (decode 'quoted-printable "Hol=C4=8Di=C4=8Dka") == "Holčička"
+		--assert (decode 'quoted-printable @Hol=C4=8Di=C4=8Dka ) == @Holčička
+		--assert (decode 'quoted-printable %Hol=C4=8Di=C4=8Dka ) == %Holčička
+		--assert (decode 'quoted-printable #{486F6C3D43343D3844693D43343D38446B61}) == #{486F6CC48D69C48D6B61}
+
+	--test-- "multiline Quoted-Printable"
+		codecs/quoted-printable/max-line-length: 76
+		text-encoded: {J'interdis aux marchands de vanter trop leurs marchandises. Car ils se font=^M
+ vite p=C3=A9dagogues et t'enseignent comme but ce qui n'est par essence qu=^M
+'un moyen, et te trompant ainsi sur la route =C3=A0 suivre les voil=C3=^M
+=A0 bient=C3=B4t qui te d=C3=A9gradent, car si leur musique est vulgaire il=^M
+s te fabriquent pour te la vendre une =C3=A2me vulgaire.^M
+   =E2=80=94=E2=80=89Antoine de Saint-Exup=C3=A9ry, Citadelle (1948)}
+   		text-expected: {J'interdis aux marchands de vanter trop leurs marchandises. Car ils se font vite pédagogues et t'enseignent comme but ce qui n'est par essence qu'un moyen, et te trompant ainsi sur la route à suivre les voilà bientôt qui te dégradent, car si leur musique est vulgaire ils te fabriquent pour te la vendre une âme vulgaire.^M
+   — Antoine de Saint-Exupéry, Citadelle (1948)}
+
+		--assert text-expected == qp-decode text-encoded  
+		--assert text-expected == qp-decode qp-encode text-expected
+
+	--test-- "encode with line length limit"
+		codecs/quoted-printable/max-line-length: 4
+		--assert "a" = qp-encode "a"
+		--assert "ab" = qp-encode "ab"
+		--assert "abc" = qp-encode "abc"
+		--assert "abcd" = qp-encode "abcd"
+		--assert "abc=^M^/de" = qp-encode "abcde"
+		--assert "abc=^M^/def" = qp-encode "abcdef"
+		--assert "abc=^M^/defg" = qp-encode "abcdefg"
+
+	--test-- "quoted-encode with spaces"
+		--assert "a b" = qp-encode "a b"
+		--assert "a_b" = qp-encode/no-space "a b"
+		--assert "a_b" = qp-decode "a_b"
+		--assert "a b" = qp-decode/space "a_b"
+
+	===end-group===
+	codecs/quoted-printable/max-line-length: :was-length
+	unset 'qp-encode
+	unset 'qp-decode
+]
+
+
 try [import 'plist]
 if find codecs 'plist [
 	===start-group=== "PLIST codec"		
@@ -596,6 +694,72 @@ if find codecs 'plist [
 			]
 	===end-group===
 ]
+
+try [import 'mime-field]
+if find codecs 'mime-field [
+	===start-group=== "MIME-field codec"		
+		--test-- "decode/encode mime-field"
+foreach str [
+	"Labels: =?UTF-8?Q?Doru=C4=8Den=C3=A9,Nep=C5=99e=C4=8Dten=C3=A9?="
+	"=?UTF-8?B?d2ViIHBybyDFvmFyb8WhaWNl?="
+	"=?ISO-8859-1?Q?Patrik_F=E4ltstr=F6m?= <paf@nada.kth.se>"
+	"From: =?US-ASCII?Q?Keith_Moore?= <moore@cs.utk.edu>"
+	"=?ISO-8859-1?B?SWYgeW91IGNhbiByZWFkIHRoaXMgeW8=?==?ISO-8859-2?B?dSB1bmRlcnN0YW5kIHRoZSBleGFtcGxlLg==?="
+	{Subject: =?UTF-8?B?W0plIHZ5xb5hZG92w6FuYSBha2NlXSBVcGdyYWR1anRlLCBhYnlzdGUgbW9obGkgemHEjQ==?=
+	=?UTF-8?B?w610IHBvdcW+w612YXQgc2x1xb5idSBHb29nbGUgV29ya3NwYWNl?=}
+	{Subject: =?UTF-8?B?8J+OgiBLYXRlxZlpbmEgUnVzxYg=?=
+ =?UTF-8?B?w6Frb3bDoSwgQ2FzYSBCZWw=?=
+ =?UTF-8?B?bGEgRmF1eCBGaW5pc2hl?=
+ =?UTF-8?B?cyBhIEdhYnJpZWxhIEty?=
+ =?UTF-8?B?YXNvdsOhIFBldHJvdmnEhyA=?=
+ =?UTF-8?B?bWFqw60gZG5lc2thIG5hcg==?=
+ =?UTF-8?B?b3plbmlueQ==?=}
+	{X-Gmail-Labels: =?UTF-8?Q?Archivov=C3=A1no,Kategorie:_Soci=C3=A1?=
+ =?UTF-8?Q?ln=C3=AD_s=C3=ADt=C4=9B,Nep=C5=99e=C4=8Dten=C3=A9,Facebook?=}
+	{Subject: =?UTF-8?Q?=C4=8D_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?=
+	=?UTF-8?Q?xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?=
+	=?UTF-8?Q?xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?=}
+	{Subject: Fwd: Cron <root@forum> test -x /usr/sbin/anacron || ( cd / &&
+  run-parts --report /etc/cron.weekly )}
+  {xxxxx^M^/ =?utf-8?Q?yyyy?=}
+  {xxxxx^M^/ yyyy}
+	"(=?ISO-8859-1?Q?a?= =?ISO-8859-1?Q?b?=)" ;"(ab)"
+	"(=?ISO-8859-1?Q?a?=  =?ISO-8859-1?Q?b?=)" ;<== should be "(ab)"
+	"(=?ISO-8859-1?Q?a?=^M^/ =?ISO-8859-1?Q?b?=)" ;"(ab)"
+	"(=?ISO-8859-1?Q?a_b?=)" ;<= "(a b)"
+	"(=?ISO-8859-1?Q?a?= =?ISO-8859-2?Q?_b?=)" ; "(a b)"
+	"(=?ISO-8859-1?Q?a?= b)" ;"(a b)"
+	{Subject: =?UTF-8?Q?Fwd=3A_objedn=C3=A1vka?=}
+	"Subject: Hello Mail"
+][
+	x: decode 'mime-field :str
+	y: encode 'mime-field :x
+	z: decode 'mime-field :y
+	--assert z = x
+]
+	===end-group===
+]
+
+
+if find codecs 'safe [
+	;- using environmental variable to avoid interactive password input using `ask`
+	temp: get-env "REBOL_SAFE_PASS"
+	set-env "REBOL_SAFE_PASS" "my-pass"
+	===start-group=== "SAFE codec"		
+		--test-- "Save/Load SAFE file"
+			foreach data [
+				#(key: "Hello")
+				43
+				#{DEADBEEF}
+				[key: "aaa" value: 12]
+			][
+				--assert equal? data load save %temp.safe data
+				delete %temp.safe
+			]
+	===end-group===
+	set-env "REBOL_SAFE_PASS" :temp
+]
+
 
 ;@@ PDF codec test is in: codecs-test-pdf.r3
 

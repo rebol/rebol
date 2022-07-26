@@ -891,7 +891,7 @@ err:
 	}
 	*p = 0;
 
-	if (*(p-1) != LF && len > 9 && brk) *p++ = LF;
+	//if (*(p-1) != LF && len > 9 && brk) *p++ = LF; // adds LF before closing bracket
 
 	SERIES_TAIL(series) = DIFF_PTRS(p, series->data);
 	return series;
@@ -923,7 +923,7 @@ err:
 		if (brk && ((count % 32) == 0)) *bp++ = LF;
 	}
 
-	if ((len >= 32) && brk && *(bp-1) != LF) *bp++ = LF;
+	//if ((len >= 32) && brk && *(bp-1) != LF) *bp++ = LF; // adds LF before closing bracket
 	*bp = 0;
 	
 	SERIES_TAIL(series) = DIFF_PTRS(bp, series->data);
@@ -980,7 +980,7 @@ err:
 		p++;
 	}
 
-	if (*(p-1) != LF && x > 49 && brk) *p++ = LF;
+	//if (*(p-1) != LF && x > 49 && brk) *p++ = LF; // adds LF before closing bracket
 	*p = 0;
 
 	SERIES_TAIL(series) = DIFF_PTRS(p, series->data); /* 4 * (int) (len % 3 ? (len / 3) + 1 : len / 3); */

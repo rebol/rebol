@@ -162,6 +162,66 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "do word!"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1882
+	--test-- "do-word-1"
+		a: does ["OK"] b: 23
+		--assert "OK" == do 'a
+		--assert  23  == do 'b
+
+	--test-- "do-word-2"
+		o: make object! [a: does ["OK"] b: 23]
+		--assert "OK" == do in o 'a
+		--assert  23  == do in o 'b
+
+	--test-- "do-word-3"
+		b: [print "OK"]
+		--assert block? do 'b
+
+	--test-- "do set-word!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1883
+		--assert all [error? e: try [do quote a:] e/id = 'invalid-arg]
+
+===end-group===
+
+===start-group=== "do path!"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1881
+	--test-- "do-path-1"
+		o: make object! [a: does ["OK"] b: 23]
+		--assert "OK" == do 'o/a
+		--assert  23  == do 'o/b
+		--assert all [error? e: try [do 'o/x] e/id = 'invalid-path]
+		
+	--test-- "do-path-2"
+		b: [["OK"]]
+		--assert ["OK"] == do first [b/1]
+
+	--test-- "do-path-3"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1434
+		a: [[1 + 2]] b: [a a/1]
+		--assert [[1 + 2]] = do first b
+		--assert  [1 + 2]  = do second b
+		b: ['a 'a/1]
+		--assert word? do first b
+		--assert path? do second b
+
+	--test-- "do set-path!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1883
+		--assert all [error? e: try [do quote a/1:] e/id = 'invalid-arg]
+
+===end-group===
+
+
+===start-group=== "with"
+	--test-- "with"
+		o: object [a: 1]
+		--assert 2 = with o [2 * a]
+		; test that return is not catched by `with`
+		f: does [with o [return a] 2]
+		--assert 1 = f
+===end-group===
+
+
 ===start-group=== "attempt"
 	--test-- "issue-41"
 		--assert none? attempt [2 / 0] ;@@ https://github.com/Oldes/Rebol-issues/issues/41
@@ -683,6 +743,25 @@ Rebol [
 			e/id = 'overflow
 			num = 1
 		]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1994
+		num: 0
+		--assert all [
+			error? e: try [
+				for i 9223372036854775807 9223372036854775807 9223372036854775807 [
+				    num: num + 1
+				    if num <> 1 [break/return false]
+				    true
+				]
+			]
+			e/id = 'overflow
+			num == 1 ;- note that num was incremented!
+		]
+		--assert all [
+			nnum: 0
+			for i 1 1 1 [num: num + 1]
+			num == 1 ;- also incremented
+		]
+		
 	--test-- "FOR with series! start and number! end"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1601
 		out: copy ""

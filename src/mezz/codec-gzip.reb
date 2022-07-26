@@ -1,5 +1,6 @@
 REBOL [
-	title: "REBOL 3 coded lossless compressed data format compatible with GZIP utility."
+	title: "Codec: Gzip"
+	purpose: "Lossless compressed data format compatible with GZIP utility"
 	name: 'codec-gzip
 	author: rights: "Oldes"
 	version: 0.0.1

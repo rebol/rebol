@@ -46,7 +46,7 @@ write-c-file: func [
 	;print "writing C code..."
 	emit-head "Host custom init code" c-file
 
-	data: mold/flat/only/all code
+	data: mold/only/all code
 
 	append data newline ; BUG? why does MOLD not provide it?
 

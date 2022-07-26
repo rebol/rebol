@@ -167,8 +167,8 @@ static REBSER *make_string(REBVAL *arg, REBOOL make)
 		ser = Copy_String(VAL_SERIES(arg), VAL_INDEX(arg), VAL_LEN(arg));
 	}
 	// MAKE/TO <type> <any-word>
-	else if (ANY_WORD(arg)) {
-		ser = Copy_Mold_Value(arg, TRUE);
+	else if (ANY_WORD(arg) || ANY_PATH(arg)) {
+		ser = Copy_Form_Value(arg, TRUE);
 		//ser = Append_UTF8(0, Get_Word_Name(arg), -1);
 	}
 	// MAKE/TO <type> #"A"

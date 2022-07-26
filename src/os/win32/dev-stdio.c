@@ -783,6 +783,21 @@ static void Close_StdIO_Local(void)
 	return DR_DONE;
 }
 
+/***********************************************************************
+**
+*/	DEVICE_CMD Flush_IO(REBREQ *req)
+/*
+**		Flushes output buffers.
+**
+***********************************************************************/
+{
+	fflush(NULL); // NULL means all output buffers
+	if (Std_Echo) {
+		FlushFileBuffers(Std_Echo);
+	}
+	return DR_DONE;
+}
+
 
 /***********************************************************************
 **
@@ -803,6 +818,10 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 	Query_IO,
 	Modify_IO,	// modify
 	Open_Echo,	// CREATE used for opening echo file
+	0, // delete
+	0, // rename
+	0, // lookup
+	Flush_IO
 };
 
 DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);

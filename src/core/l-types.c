@@ -334,7 +334,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	REBINT num = (REBINT)len;
 	REBYTE buf[MAX_NUM_LEN+4];
 	REBYTE *bp;
-	REBI64 n;
+	REBI64 n = 0;
 	REBOOL neg = FALSE;
 
 	// Super-fast conversion of zero and one (most common cases):
@@ -365,16 +365,17 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	}
 	*bp = 0;
 
-	// Too many digits?
+	// Count number of digits
 	len = (REBCNT)(bp - &buf[0]);
 	if (neg) len--;
-	if (len > 19) return 0;
-
-	// Convert, check, and return:
-	errno = 0;
-	n = CHR_TO_INT(buf);
-	if (errno != 0) return 0; //overflow
-	if ((n > 0 && neg) || (n < 0 && !neg)) return 0;
+	if (len > 0) {
+		if (len > 19) return 0; // Too many digits
+		// Convert, check, and return:
+		errno = 0;
+		n = CHR_TO_INT(buf);
+		if (errno != 0) return 0; //overflow
+		if ((n > 0 && neg) || (n < 0 && !neg)) return 0;
+	}
 	SET_INTEGER(value, n);
 	return cp;
 }
@@ -647,7 +648,7 @@ end_date:
 ***********************************************************************/
 {
 	REBUNI term = 0;
-	const REBYTE *invalid = cb_cast(":;()[]\"");
+	const REBYTE *invalid = cb_cast(":;()[]\"^");
 
 	if (*cp == '%') cp++, len--;
 	if (*cp == '"') {
@@ -1196,6 +1197,7 @@ end_date:
 			if (*cp == LF) cp++;
 			if (IS_LEX_SPACE(*cp)) {
 				while (IS_LEX_SPACE(*cp)) cp++;
+				len++;
 				while (NOT_NEWLINE(*cp)) len++, cp++;
 			}
 			else break;
@@ -1213,6 +1215,7 @@ end_date:
 			if (*cp == LF) cp++;
 			if (IS_LEX_SPACE(*cp)) {
 				while (IS_LEX_SPACE(*cp)) cp++;
+				*str++ = ' ';
 				while (NOT_NEWLINE(*cp)) *str++ = *cp++;
 			}
 			else break;

@@ -42,7 +42,7 @@ clean-path: func [
 	out: make file length? file ; same datatype
 	cnt: 0 ; back dir counter
 
-	parse/all reverse file [
+	parse reverse file [
 		some [
 			;pp: (?? pp)
 			"../" (++ cnt)

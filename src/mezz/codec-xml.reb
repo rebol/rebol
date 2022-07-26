@@ -8,7 +8,7 @@ REBOL [
 	Type:  module
 	Options: [delay]
 	Version: 0.8.1
-	Title: "A more XML 1.0 compliant set of XML parsing tools."
+	Title: "Codec: XML"
 	File:  https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-xml.reb
 	Date:  24-Apr-2020
 	Author: ["Gavin F. McKenzie" "Oldes"]
@@ -1024,7 +1024,7 @@ register-codec [
 			; Parse the document and capture the return code from the REBOL
 			; parse.
 			;
-			parse-result: parse/case/all xml-string xmlDocument
+			parse-result: parse/case xml-string xmlDocument
 			;
 			; If the handler doesn't return a specific parse result, then  
 			; return the parse-result we obtained from the REBOL parse.

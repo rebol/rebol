@@ -288,15 +288,23 @@ enum {
 #define FREE(m, s)  free(m)
 #define ALIGN(s, a) (((s) + (a)-1) & ~((a)-1))
 
+#ifndef ALEVEL
 #define ALEVEL 2
+#endif
 
 #define ASSERT(c,m) if (!(c)) Crash(m);		// (breakpoint in Crash() to see why)
 #if (ALEVEL>0)
-#define ASSERT1(c,m) if (!(c)) Crash(m);	// Not in beta releases
-#if (ALEVEL>1)
-#define ASSERT2(c,m) if (!(c)) Crash(m);	// Not in any releases
+#	define ASSERT1(c,m) if (!(c)) Crash(m);	// Not in beta releases
+#	if (ALEVEL>1)
+#		define ASSERT2(c,m) if (!(c)) Crash(m);	// Not in any releases
+#	else
+#		define ASSERT2
+#	endif
+#else
+#	define ASSERT1
+#	define ASSERT2
 #endif
-#endif
+
 #define MEM_CARE 5				// Lower number for more frequent checks
 
 

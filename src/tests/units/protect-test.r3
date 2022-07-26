@@ -104,7 +104,7 @@ Rebol [
 		--assert not error? try [protect/deep 'o/b]
 		--assert not error? try [protect/deep/words [o/b]]
 		--assert is-locked-error? [o/b/c: 4]
-		--assert is-locked-error? [clear o/b/c]
+		--assert is-protected-error? [clear o/b/c]
 
 	--test-- "protect/hide inside an object"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1139
@@ -129,6 +129,21 @@ Rebol [
 		--assert all [error? e: try [obj/a: 99] e/id = 'locked-word]
 		--assert all [error? e: try [set in obj 'a 99] e/id = 'locked-word]
 		--assert all [error? e: try [set obj [99]] e/id = 'locked-word]
+
+	--test-- "EXTEND object!"
+		obj: object [a: 1] protect/deep 'obj
+		--assert all [error? e: try [obj/a: 2]  e/id = 'locked-word] 
+		--assert all [error? e: try [put obj 'a 2]  e/id = 'protected] ; cannot modify the value
+		--assert all [error? e: try [append obj [b: 2]]  e/id = 'protected]
+		--assert all [error? e: try [put obj 'b 2]  e/id = 'protected]
+		unprotect obj
+		--assert object? append obj [b: 2]
+		--assert all [22 = put obj 'a 22  22 == obj/a]
+		unprotect 'obj
+
+	--test-- "protect recursion"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1764
+		--assert is-locked-error? [new-block: reduce [1 2 protect/deep 'new-block 3 4]]
 
 
 ===end-group===

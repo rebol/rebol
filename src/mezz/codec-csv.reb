@@ -4,7 +4,7 @@ REBOL [
 	Options: [delay]
 	Exports: [to-csv load-csv]
 	Version: 1.2.0
-	Title:   "CSV Codec"
+	Title:   "Codec: CSV"
 	Purpose: "Loads and formats CSV data, for enterprise or mezzanine use."
 	Author: ["Brian Hawley" "Oldes"]
 	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-csv.reb

@@ -85,6 +85,17 @@ supplement system/options/module-paths join what-dir %units/files/
 		--assert 1 = select m 'a
 		--assert none? select m 'b
 
+	--test-- "path notation access"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1007
+		m: module [] [a: 1 2]
+		--assert 1 = m/a
+		unset 'a
+		m: module [exports: [a]] [a: 1 2]
+		--assert 1 = m/a
+		--assert unset? :a
+		import m
+		--assert 1 = :a
+		unset 'a
 
 ===end-group===
 

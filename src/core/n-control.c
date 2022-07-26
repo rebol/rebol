@@ -569,7 +569,7 @@ got_err:
 ***********************************************************************/
 {
 	REBVAL *value = D_ARG(1);
-	REBINT ret;
+	REBINT ret = R_RET;
 
 	switch (VAL_TYPE(value)) {
 
@@ -599,24 +599,28 @@ got_err:
 		ret = R_ARG1;
 		break;
 
-//	case REB_PATH:  ? is it used?
+	case REB_PATH:
+		Do_Path(&value, 0);
+		value = DS_POP; // volatile stack reference
+		if (ANY_FUNC(value)) VAL_SET_OPT(value, OPTS_REVAL);
+		*D_RET = *value;
+		break;
 
 	case REB_WORD:
 	case REB_GET_WORD:
 		*D_RET = *Get_Var(value);
-		ret = R_RET;
+		if (ANY_FUNC(D_RET)) VAL_SET_OPT(D_RET, OPTS_REVAL);
 		break;
 
 	case REB_LIT_WORD:
 		*D_RET = *value;
 		SET_TYPE(D_RET, REB_WORD);
-		ret = R_RET;
 		break;
 
 	case REB_LIT_PATH:
 		*D_RET = *value;
 		SET_TYPE(D_RET, REB_PATH);
-		return R_RET;
+		break;
 
 	case REB_ERROR:
 		if (IS_THROW(value)) return R_ARG1;
@@ -738,7 +742,7 @@ got_err:
 	REBVAL *val = D_ARG(1);
 	REBVAL *into = D_REF(5) ? D_ARG(6) : 0;
 
-	if (IS_BLOCK(val)) {
+	if (IS_BLOCK(val) || IS_PAREN(val)) {
 		REBSER *ser = VAL_SERIES(val);
 		REBCNT index = VAL_INDEX(val);
 
@@ -748,6 +752,10 @@ got_err:
 			Reduce_Only(ser, index, D_ARG(4), into);
 		else
 			Reduce_Block(ser, index, into);
+
+		if(!into)
+			SET_TYPE(DS_TOP, VAL_TYPE(val));
+
 		return R_TOS;
 	}
 	else if (into != 0) {

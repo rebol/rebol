@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +23,7 @@
 **  Module:  t-integer.c
 **  Summary: integer datatype
 **  Section: datatypes
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Ladislav Mecir, Oldes
 **  Notes:
 **
 ***********************************************************************/
@@ -31,6 +32,9 @@
 #include "sys-deci-funcs.h"
 #include "sys-int-funcs.h"
 
+#ifdef _MSC_VER
+#pragma warning(disable: 4146) // unary minus operator applied to unsigned type, result still unsigned
+#endif
 
 /***********************************************************************
 **
@@ -81,8 +85,8 @@
 	REBI64 arg = 0;
 	REBINT n;
 
-	REBU64 p; // for overflow detection
-	REBI64 anum;
+	REBU64 a1, a0, b1, b0;
+	REBFLG sgn;
 
 	num = VAL_INT64(val);
 
@@ -134,23 +138,66 @@
 	switch (action) {
 
 	case A_ADD:
-		if (REB_I64_ADD_OF(num, arg, &anum)) Trap0(RE_OVERFLOW);
-		num = anum;
+		if(num >= 0) {
+			if(arg > MAX_I64 - num)
+				Trap0(RE_OVERFLOW);
+		} else {
+			if(arg < MIN_I64 - num)
+				Trap0(RE_OVERFLOW);
+		}
+		num += arg;
 		break;
 
 	case A_SUBTRACT:
-		if (REB_I64_SUB_OF(num, arg, &anum)) Trap0(RE_OVERFLOW);
-		num = anum;
+		if(arg >= 0) {
+			if(num < MIN_I64 + arg)
+				Trap0(RE_OVERFLOW);
+		} else {
+			if(num > MAX_I64 + arg)
+				Trap0(RE_OVERFLOW);
+		}
+		num -= arg;
 		break;
 
 	case A_MULTIPLY:
-		if (REB_I64_MUL_OF(num, arg, (REBI64*)&p)) Trap0(RE_OVERFLOW);
-		num = p;
+		// handle signs
+		sgn = num < 0;
+		if(sgn)
+			num = -(REBU64) num;
+		if(arg < 0) {
+			sgn = !sgn;
+			arg = -(REBU64) arg;
+		}
+		// subdivide the factors
+		a1 = (REBU64) num >> 32;
+		b1 = (REBU64) arg >> 32;
+		a0 = (REBU64) num & 0xFFFFFFFFu;
+		b0 = (REBU64) arg & 0xFFFFFFFFu;
+		// multiply the parts
+		if(!a1)
+			num = b1 * a0;
+		else if(!b1)
+			num = a1 * b0;
+		else
+			Trap0(RE_OVERFLOW);
+		if((REBU64) num > (REBU64) MIN_I64 >> 32)
+			Trap0(RE_OVERFLOW);
+		num = ((REBU64) num << 32) + a0 * b0;
+		if(sgn) {
+			if((REBU64) num > (REBU64) MIN_I64)
+				Trap0(RE_OVERFLOW);
+			num = -(REBU64) num;
+		} else if((REBU64) num > (REBU64) MAX_I64)
+			Trap0(RE_OVERFLOW);
 		break;
 
 	case A_DIVIDE:
 		if (arg == 0) Trap0(RE_ZERO_DIVIDE);
-		if (num == MIN_I64 && arg == -1) Trap0(RE_OVERFLOW);
+		if(arg == -1) {
+			if(num < - MAX_I64) Trap0(RE_OVERFLOW);
+			num = - num;
+			break;
+		}
 		if (num % arg == 0) {
 			num = num / arg;
 			break;
@@ -172,15 +219,18 @@
 	case A_XOR: num ^= arg; break;
 
 	case A_NEGATE:
-		if (num == MIN_I64) Trap0(RE_OVERFLOW);
+		if (num < - MAX_I64) Trap0(RE_OVERFLOW);
 		num = -num;
 		break;
 
 	case A_COMPLEMENT: num = ~num; break;
 
-	case A_ABSOLUTE: 
-		if (num == MIN_I64) Trap0(RE_OVERFLOW);
-		if (num < 0) num = -num;
+	case A_ABSOLUTE:
+		if(num < 0) {
+			if (num < - MAX_I64)
+				Trap0(RE_OVERFLOW);
+			num = -num;
+		}
 		break;
 
 	case A_EVENQ: num = ~num;

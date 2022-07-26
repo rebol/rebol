@@ -1,5 +1,5 @@
 REBOL [
-	Title:   "Rebol 3 PKIX codec for public-Key Infrastructure (X.509)"
+	Title:   "Codec: PKIX codec for public-Key Infrastructure (X.509)"
 	Author:  "Oldes"
 	Rights:  "Copyright (C) 2018 Oldes. All rights reserved."
 	License: "BSD-3"
@@ -37,7 +37,7 @@ wrap [
 				some ch_pretext rl_label
 			]
 
-			unless parse/all input [
+			unless parse input [
 				s: rl_label ( pre-text: copy/part s e )
 				any [
 					copy tag some ch_tag #":"
@@ -83,7 +83,7 @@ wrap [
 				|
 				some ch_pretext rl_label
 			]
-			parse/all data [rl_label to end]
+			parse data [rl_label to end]
     	]
     ]
 ]

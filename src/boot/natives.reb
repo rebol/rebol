@@ -307,7 +307,7 @@ trace: native [
 
 try: native [
 	{Tries to DO a block and returns its value or an error.}
-	block [block!]
+	block [block! paren!]
 	/except "On exception, evaluate this code block"
 	code [block! any-function!]
 ]
@@ -358,7 +358,7 @@ as: native [
 bind: native [
 	{Binds words to the specified context.}
 	word [block! any-word!] {A word or block (modified) (returned)}
-	context [any-word! any-object!] {A reference to the target context}
+	context [any-word! object! module! port!] {A reference to the target context}
 	/copy {Bind and return a deep copy of a block, don't modify original}
 	/only {Bind only first block (not deep)}
 	/new {Add to context any new words found}
@@ -396,16 +396,17 @@ debase: native [
 	base  [integer!] {Binary base to use: 85, 64, 36, 16, or 2}
 	/url  {Base 64 Decoding with URL and Filename Safe Alphabet}
 	/part {Limit the length of the input}
-	limit [integer!]
+	limit [integer! binary! any-string!]
 ]
 
 enbase: native [
 	{Encodes a string into a binary-coded string.}
-	value [binary! string!] {If string, will be UTF8 encoded}
+	value [binary! any-string!] {If string, will be UTF8 encoded}
 	base  [integer!] {Binary base to use: 85, 64, 36, 16, or 2}
 	/url  {Base 64 Encoding with URL and Filename Safe Alphabet}
 	/part {Limit the length of the input}
-	limit [integer!]
+	limit [integer! binary! any-string!]
+	/flat {No line breaks}
 ]
 
 decloak: native [
@@ -511,7 +512,7 @@ dehex: native [
 	{Converts URL-style hex encoded (%xx) strings. If input is UTF-8 encode, you should first convert it to binary!}
 	value [any-string! binary!] {The string to dehex}
 	/escape char [char!] {Can be used to change the default escape char #"%"}
-	/url {Decode + as a space}
+	/uri {Decode space from a special char (#"+" by default or #"_" when escape char is #"=")}
 ]
 
 enhex: native [
@@ -521,6 +522,7 @@ enhex: native [
 	 char [char!] 
 	/except {Can be used to specify, which chars can be left unescaped}
 	 unescaped [bitset!] {By default it is URI bitset when value is file or url, else URI-Component}
+	/uri {Encode space using a special char (#"+" by default or #"_" when escape char is #"=")}
 ]
 
 get: native [
@@ -538,8 +540,8 @@ in: native [
 parse: native [
 	{Parses a string or block series according to grammar rules.}
 	input [series!] {Input series to parse}
-	rules [block! string! char! none!] {Rules to parse by (none = ",;")}
-	/all {For simple rules (not blocks) parse all chars including whitespace}
+	rules [block!] {Rules to parse}
+	;/all {For simple rules (not blocks) parse all chars including whitespace}
 	/case {Uses case-sensitive comparison}
 ]
 

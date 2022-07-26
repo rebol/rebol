@@ -1,5 +1,5 @@
 REBOL [
-	title: "REBOL 3 codec for TAR files"
+	title: "Codec: TAR"
 	name: 'codec-tar
 	author: rights: "Oldes"
 	version: 0.0.1
