@@ -54,6 +54,23 @@ Rebol [
 	--assert parse "a<a>" [thru [<b> | <a>]]
 	--assert all [parse "11<b>xx</b>22" [thru <b> copy x to </b> to end] x = "xx"]
 
+--test-- "TO/THRU with integer!"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1964
+	--assert all [
+		parse "abcd" [to 1 "abcd"]
+		parse "abcd" [to 2  "bcd"]
+		parse "abcd" [to 3   "cd"]
+		parse "abcd" [to 4    "d"]
+	]
+	--assert all [
+		parse "abcd" [thru 0 "abcd"]
+		parse "abcd" [thru 1  "bcd"]
+		parse "abcd" [thru 2   "cd"]
+		parse "abcd" [thru 3    "d"]
+		parse "abcd" [thru 4    end]
+	]
+	--assert parse "abcd" ["ab" to 1 "abcd"]
+
 --test-- "TO/THRU datatype"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1282
 	--assert parse [1 2 a] [thru word!]
