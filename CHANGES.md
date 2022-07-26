@@ -2,6 +2,167 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+## 2022 July
+
+### Features:
+
+* [`843fcc`](https://github.com/Oldes/Rebol3/commit/843fcc6c515c871d6dc20d09864468e038a1be5e) Implemented `collect into` and `collect after` parse's command
+* [`fe5df3`](https://github.com/Oldes/Rebol3/commit/fe5df3c42199eed6787e0ba35d56248d809695b8) Allow lowering assertions level using `ALEVEL` define
+* [`9d919b`](https://github.com/Oldes/Rebol3/commit/9d919b606c7825a7b252876c5d666834fa7cb20e) Implemented `collect set` parse's command
+* [`4c14cd`](https://github.com/Oldes/Rebol3/commit/4c14cde521e18279d71474df8a7c18baa52ad777) Initial implementation of parse's `collect` and `keep` commands.
+* [`1a46e3`](https://github.com/Oldes/Rebol3/commit/1a46e32eae9998a3a525ad162d4dc2b7fc324ad4) Cherry picked Ladislav Mecir's modifications
+* [`e2c232`](https://github.com/Oldes/Rebol3/commit/e2c23202ac56363565bc2257af1d078dc6cdbb2c) `daytime` scheme: initial version of the Daytime Protocol (RFC-867)
+* [`01ee80`](https://github.com/Oldes/Rebol3/commit/01ee80d9e730cc5b640bad68183a56c6cae15b88) Using `mime-types` module in `httpd` scheme for more complete list of mime types
+* [`099275`](https://github.com/Oldes/Rebol3/commit/0992755a463ef071939e2869c0ab2bceef360f61) Implemented `query/mode` on network ports
+* [`d7e55e`](https://github.com/Oldes/Rebol3/commit/d7e55e1445ab72067fa11afd3fb614cec4e5947c) New `flush` action for flushing console output stream buffers
+* [`2005a7`](https://github.com/Oldes/Rebol3/commit/2005a79d0238342b7846fc7868923d0fc55848e1) Implemented `read/all` and `write/all` on `url!`, which returns also status code and headers and not just content. It also don't throws an error!
+* [`74f3df`](https://github.com/Oldes/Rebol3/commit/74f3df0327ccacbe97e17eea8f84372999dfbc97) Implemented `read/seek` on `url!`
+* [`a92ab7`](https://github.com/Oldes/Rebol3/commit/a92ab75fc4d8845dc91c9ba66d50704c08c22d2f) `pop3` scheme: initial version of the Post Office Protocol (v3)
+* [`5dab0c`](https://github.com/Oldes/Rebol3/commit/5dab0cde5a77ea2f70ad4cd6f5c2ab61e7b9b66c) Including first version of higher level `mail` scheme for sending emails
+  So far it is possible to use Rebol2 like `send` function:
+  ```rebol
+  import 'mail
+  
+  ; sending just a plain message:
+  send you@example.com "Hello^/ this is just simple message"
+  
+  ; sending single file:
+  send you@example.com %path/to/file
+  
+  ; sending more files:
+  send you@example.com [%path/to/file1 %path/to/file2]
+  
+  ; sending more complete message:
+  send friends [
+      subject: "Invitation"
+      message: "Hi friends, check the invitation!"
+      attach:  %path/to/invitation
+  ]
+  ```
+  It is also possible to use the scheme directly, like:
+  ```rebol
+  write mail:// [
+      From:   ["Oldes" oldes@example.com]
+      To:     ["Bob" bob@example.com "Eva" eva@example.com]
+      subject: "Invitation"
+      message: "Hi friends, check the invitation!"
+      attach:  %path/to/invitation
+  ]
+  
+  ```
+  In all cases above is expected, that `system/user` is configured and that there is available `smtp` specification (host/user/password) under `system/users/data`!
+  
+  This is still just the initial version. So far it works only in sync mode, but the idea is, to be able use it in async mode as well (for example from a server instance).
+* [`d906bf`](https://github.com/Oldes/Rebol3/commit/d906bf5dc11e58f91643680173096f637858492f) `smtp` scheme: recipient's address validation and possibility to have more than one; Better error handling.
+* [`b6108e`](https://github.com/Oldes/Rebol3/commit/b6108ec66c000a4b2d5b368e499988ce223939cb) Allow `email!` as system user's name
+* [`ab0c6a`](https://github.com/Oldes/Rebol3/commit/ab0c6af94cfb528d44de649e38ea8212fd11410b) Using `safe` scheme to handle persistent encrypted system user's data
+* [`c0ff57`](https://github.com/Oldes/Rebol3/commit/c0ff574a9917aa9fc532cac0a8ea9d127aa9a3e4) Included `safe` scheme as a persistent encrypted key/value data storage
+* [`7329f5`](https://github.com/Oldes/Rebol3/commit/7329f550593b322dd18cee00f87944e24466037e) Using `put` action in the `extend` mezzanine (no need of `reduce` call)
+* [`a04226`](https://github.com/Oldes/Rebol3/commit/a042264f97fc0050f9191fd2132e2529c2196626) Implemented `put` action on `object!` (extending)
+* [`8e00cc`](https://github.com/Oldes/Rebol3/commit/8e00cc92f60e1a3100cfebff9d3158463bdc6ba8) Allow definition of one function to multiple actions in scheme's actor dialect
+* [`fcdf59`](https://github.com/Oldes/Rebol3/commit/fcdf59b7e41e22819353159360f329d42e5d8929) Allow `put` action on `port!`
+* [`f20211`](https://github.com/Oldes/Rebol3/commit/f2021109c068108b7fb94fec47b5837967dea777) Included `safe` codec (for a simple data storage in encrypted files)
+* [`d84882`](https://github.com/Oldes/Rebol3/commit/d84882b9c9cdad15855319dec51cc18f4f71ed38) Allow making a scheme without specifying its title
+* [`68cb9d`](https://github.com/Oldes/Rebol3/commit/68cb9d0fbfad43c647a3da22834c79cd55f581a7) Implemented `indexz?`, `at` and `atz` actions on file port
+* [`f0ecd1`](https://github.com/Oldes/Rebol3/commit/f0ecd1154e2d6ff7fa313a22c456cd9cd0e041b5) Handle negative part values when reading from a file port
+* [`3822b5`](https://github.com/Oldes/Rebol3/commit/3822b56317d7b2902a6f7ce9abb502c01ddd4f38) Less strict `to-date` conversion
+* [`00008a`](https://github.com/Oldes/Rebol3/commit/00008ad22698d390b9b0c36d1dad24c3d4700715) Including `mime-field` codec
+* [`592c36`](https://github.com/Oldes/Rebol3/commit/592c36329b96c4c34b405265e6985381649c30aa) Including `system/catalog/bitsets/space` bitset (TAB+SP)
+* [`cbc7b8`](https://github.com/Oldes/Rebol3/commit/cbc7b88b634f75222c0e3b7a3e1eeafe51ac8646) `reduce paren!` evaluate and generate `paren!`
+* [`b5fc6f`](https://github.com/Oldes/Rebol3/commit/b5fc6f204f006f90b62cdff171dbdcf358f04cab) Implemented `case` and `no-case` PARSE keywords
+* [`6b47c2`](https://github.com/Oldes/Rebol3/commit/6b47c24ea8059c4fbf58677c3def695883c6ab3f) Implemented `odd?` and `even?` on `pair!`
+* [`e4459c`](https://github.com/Oldes/Rebol3/commit/e4459c59ac62835ad83de52c744200d09d4a4eeb) Replaced mezzanine `with` with a lightweight and faster native version
+
+### Changes:
+
+* [`c214c2`](https://github.com/Oldes/Rebol3/commit/c214c22bb56aeb064fbafad17e89104cf448cc5a) Including `comma`, `dot` and `dbl-quote` char constants
+* [`f84268`](https://github.com/Oldes/Rebol3/commit/f84268258c37081f0c2b5f64f57d5fe2996fc3a4) Using shorter url for links to Rebol module's sources
+* [`46bc61`](https://github.com/Oldes/Rebol3/commit/46bc615d8a7b97b2c8f77adc42675c567fd6a19a) `enbase` using line breaks by default; new `enbase/flat` for old behavior.
+* [`7644be`](https://github.com/Oldes/Rebol3/commit/7644beec16f409f38075e62627364fd3f6bdc72f) Always using construction syntax when molding bitsets
+* [`98ead9`](https://github.com/Oldes/Rebol3/commit/98ead99a87f54fd3b025edf84bad6c0a459b0a89) Removed limit on `kye` value types in `put` action
+* [`b4787d`](https://github.com/Oldes/Rebol3/commit/b4787deb702485011dfbb6be147089d2be16df9a) `system` object reordered + included `user`
+* [`901728`](https://github.com/Oldes/Rebol3/commit/901728e72639c02906224b5cc6eb71e31c2417eb) `sys/make-scheme` returns the created scheme's spec instead of `system/schemes`
+* [`1a9db6`](https://github.com/Oldes/Rebol3/commit/1a9db606fa6b049803952d08d73ebe7176563e9e) Removed `/all` refine from `parse`
+* [`0ee3b5`](https://github.com/Oldes/Rebol3/commit/0ee3b5ffab075fdc5ab3be22e04a1cc3e8879456) Removed series-splitting functionality from `parse`
+* [`b7d6db`](https://github.com/Oldes/Rebol3/commit/b7d6dbe4ec7eafff60519eb699014d6904389e25) Decoration removed by `form` and `to-string` from (lit/set/get)-words and (lit/set/get)-paths
+* [`4dff72`](https://github.com/Oldes/Rebol3/commit/4dff72357cfda27df12454c97c878f607905e282) `do word!` behavior made compatible with Rebol2 and Red
+* [`2d91e5`](https://github.com/Oldes/Rebol3/commit/2d91e515d3d88c19d912a5d8e7a1636029012875) `do path!` behavior made compatible with Rebol2 and Red
+
+### Fixes:
+
+* [`6eff98`](https://github.com/Oldes/Rebol3/commit/6eff98d9ba2b81427659caf4e2884b1aecfedb7d) Crash in nested `collect` with an expression
+* [`0ae1ba`](https://github.com/Oldes/Rebol3/commit/0ae1baa157f133e5a0aac07ced319e56c676eaff) Missing new `collect` related errors
+* [`29e86d`](https://github.com/Oldes/Rebol3/commit/29e86d5e35af21bcd93d544bfec1ddd328f53b1a) `fail` parse's command must close `collect` if used
+* [`8d3e13`](https://github.com/Oldes/Rebol3/commit/8d3e1323278f85f04753e234351d3fa0d40559fb) Improved output of the `??` parse command (limited and flattened)
+* [`8549ca`](https://github.com/Oldes/Rebol3/commit/8549cab40e249311584a2afee26a2bbc17c1d2b1) Parse's `reject` working incorrectly
+* [`c1ce59`](https://github.com/Oldes/Rebol3/commit/c1ce59f6d74324d0f1d3713527ec6189a250275d) Resolved issue when used `POP3` scheme without console output
+* [`5f2b6a`](https://github.com/Oldes/Rebol3/commit/5f2b6a57b67fe190b4ee6295c740b38369cece35) Including network mode words
+* [`da4f11`](https://github.com/Oldes/Rebol3/commit/da4f1140324f6b8fd3d19145fb1bda0ade8246c5) Improved `UDP` scheme server/client test scripts
+* [`b4d35e`](https://github.com/Oldes/Rebol3/commit/b4d35ebda2b633226afefe7216a6d3a1da1c6ea3) Output buffer tail extension must be done only for UDP
+* [`c5e159`](https://github.com/Oldes/Rebol3/commit/c5e159b930a6b509fa9bac2fc69e6cf7790303d2) Missing messages in `UDP` server
+* [`40632b`](https://github.com/Oldes/Rebol3/commit/40632bcc52843abe147360858c1f09b056764366) Moving the new `RDC_FLUSH` device command to the tail (so it does not breaks unsupported devices)
+* [`90b975`](https://github.com/Oldes/Rebol3/commit/90b97564c64d60bd8391f3d69754e184517ebf33) Invalid data with the _partial_ http response regression
+* [`1171af`](https://github.com/Oldes/Rebol3/commit/1171af8cfdfbee2298038a4e487ae8faeb8943d1) There is no `in_addr_t` defined on Windows
+* [`fa9920`](https://github.com/Oldes/Rebol3/commit/fa99208f0790e639c682b649679fc4f5e04cd429) Resolved warnings
+* [`e6527b`](https://github.com/Oldes/Rebol3/commit/e6527be2ff772228acd1a84501792d7581f998d1) Writing data to `smtp` scheme must use chunks not higher than 16KiB (TLS limitation)
+* [`d044c2`](https://github.com/Oldes/Rebol3/commit/d044c26657bfa05f3cb4d03247da7199d304f6d5) Better doc-string for `enbase/flat`
+* [`043512`](https://github.com/Oldes/Rebol3/commit/0435129a54caf23c54d348da1e77e07c239d6f26) Used external IP in the SMTP's EHLO message, when domain name is not available
+* [`ec9959`](https://github.com/Oldes/Rebol3/commit/ec995952315fb5ffb96ca8ccf8cc90e2671bdda6) Make sure, that values from _safe_ scheme are always copied, if possible
+* [`0bf389`](https://github.com/Oldes/Rebol3/commit/0bf389290fcfc23d8a960b4742f1e0fb74ace095) Protect `system/user` value
+* [`17b485`](https://github.com/Oldes/Rebol3/commit/17b485504a6c2941700c87ab5083d6d7a66e573f) Using `split-lines` native (until `split` will not be native as well)
+* [`5de5f2`](https://github.com/Oldes/Rebol3/commit/5de5f28fa294d5bbf514b640b14fb46bc7cc8914) Regression in `reword` with `none` as an escape value
+* [`0bad6f`](https://github.com/Oldes/Rebol3/commit/0bad6fb37a02620ca0edc0993eeebcb89d91c8a0) Equality of extended objects
+* [`5bd5af`](https://github.com/Oldes/Rebol3/commit/5bd5af612f70840c73fe0c0b067175b0b51b6aaf) Simplified code using the new `no-case` parse's keyword
+* [`9a592d`](https://github.com/Oldes/Rebol3/commit/9a592dc370402ae489697edcd0ee6f390127e102) Removed now unused `parse/all` refine
+* [`37b539`](https://github.com/Oldes/Rebol3/commit/37b539ff2f63aac0521f54368767614fb73aab8d) Use of escape char `^` must not be allowed in unquoted file notation
+* [`eef408`](https://github.com/Oldes/Rebol3/commit/eef40859aafa4604efa7185c79653b0d20e6710c) Removed series-splitting functionality from `parse`
+* [`30569d`](https://github.com/Oldes/Rebol3/commit/30569dbc9063ebaa42d06f3aa521250614776fdf) Don't allow `error!` and `task!` to be a `bind`'s context
+* [`01a1f2`](https://github.com/Oldes/Rebol3/commit/01a1f23fdb4311a5816ec1561b1ee5f7f04f9154) Some TLS code optimizations
+* [`9e7aa5`](https://github.com/Oldes/Rebol3/commit/9e7aa5b94ca44829425546b98073302db4ef9ffa) Make `trace` output better aligned
+* [`1093ae`](https://github.com/Oldes/Rebol3/commit/1093ae165a1f626521cd410a059c1ec055cb54a0) Tinny code optimization
+* [`e3a200`](https://github.com/Oldes/Rebol3/commit/e3a200adfcf131d2c6188e62aa092b4bafab349b) `to integer! "00"` failing on MacOS
+* [`446a1e`](https://github.com/Oldes/Rebol3/commit/446a1e769831c2680bcfe28a6371660cfe6a7a4d) Crash when decoding image from invalid data on MacOS
+* [`0b50d9`](https://github.com/Oldes/Rebol3/commit/0b50d9c37201c2de95bc6fb9a251744fa37c7e87) Better handling odd part values when using `append/part` on `object!` and `map!`
+* [`1ca9df`](https://github.com/Oldes/Rebol3/commit/1ca9df5ea664c610901ab730cb483b9288566344) Implemented `append/part` and `append/dup`
+* [`4bde88`](https://github.com/Oldes/Rebol3/commit/4bde88a3c6cfb212ea9f18b69ee312e7898d9211) Write file fails were silently ignored; closing port on read errors before throwing
+* [`3c43f4`](https://github.com/Oldes/Rebol3/commit/3c43f44838769e1b72c040cd1d9598f230691d1b) Error writing files of exact size 0xffffffff on Windows
+* [`d61afe`](https://github.com/Oldes/Rebol3/commit/d61afeb53abf942eea6cc2a274f94c1959ab6e18) Code cleanup
+* [`8c92c8`](https://github.com/Oldes/Rebol3/commit/8c92c8c8ae22820ec9c4cd323c67a9df42413eac) Resolved implicit conversion warning
+
+## 2022 June
+
+### Features:
+
+* [`32dd19`](https://github.com/Oldes/Rebol3/commit/32dd199de5bbf590b1cb2dbf14379e05d7637765) New `combine` function as alternative to `rejoin`
+* [`9ea810`](https://github.com/Oldes/Rebol3/commit/9ea8105ed2b0565e0e276b4c0710f871ce6c1e9f) Allow `try` to accept code as a `paren!`
+* [`435e29`](https://github.com/Oldes/Rebol3/commit/435e298e2321503df3354b78428bf0592869b4f7) `debase` and `enbase` having `/part` handling compatible with `copy/part`
+* [`3fd5b6`](https://github.com/Oldes/Rebol3/commit/3fd5b60da40082a13292590aa047b8101fe4d86a) Automatically handle unicode non-binary `dehex` input
+* [`c6bbba`](https://github.com/Oldes/Rebol3/commit/c6bbbaee702a0111130c67cf1a19863ef5fdded0) `quoted-printable` codec with special space/no-space options
+* [`b24107`](https://github.com/Oldes/Rebol3/commit/b2410769fc426c7831efbad60c76bc36b95efa33) `enhex/uri` and `dehex/uri` for a special short variant of space encoding
+* [`394370`](https://github.com/Oldes/Rebol3/commit/394370872993e75e463b04d19fd91b931878104b) Added date/time formatting
+* [`53e3db`](https://github.com/Oldes/Rebol3/commit/53e3db0ae5841013d7d66c8767a1d672a11228da) Including `quoted-printable` codec
+* [`4b7d14`](https://github.com/Oldes/Rebol3/commit/4b7d14837f3a86561ac717c13f73453db2fb9c82) Updated link to Rebol/Blend2D extension version 0.0.18.1
+* [`05a616`](https://github.com/Oldes/Rebol3/commit/05a6160435b4ee4c205725b615f8f7e9d1ab1fca) Including link to Rebol/Triangulate extension
+* [`53108a`](https://github.com/Oldes/Rebol3/commit/53108a4f9227a5d27e3fddff6fe088bc03496bcd) Including links to sources of optional modules
+* [`33d32b`](https://github.com/Oldes/Rebol3/commit/33d32b088ca0ef2fc06128fda49cd5efc944da1b) Automatic download of the well known extension modules
+* [`4a0d81`](https://github.com/Oldes/Rebol3/commit/4a0d814a0dac2b03302d01f9e5ab44eb36c09d3b) Counting an hourly money rate using division of time! with money!
+* [`821962`](https://github.com/Oldes/Rebol3/commit/8219628e4183064aebd674cfa8c14de8b2fa2577) Allow multiplication between time! and money! values
+
+### Changes:
+
+* [`1a80f5`](https://github.com/Oldes/Rebol3/commit/1a80f518ad67c54668deefb2ad63d3fb3d86754b) `quoted-printable` codec is delayed (required `import 'quoted-printable` before use)
+
+### Fixes:
+
+* [`6ac01e`](https://github.com/Oldes/Rebol3/commit/6ac01e3a6ec6470b919dbc50f2e65952c766dfea) Not using flattened source code
+* [`6005b1`](https://github.com/Oldes/Rebol3/commit/6005b104ca254a7b506250ef6dd02a6da1fa033b) `construct` multiline unfolding missing space
+* [`66bf62`](https://github.com/Oldes/Rebol3/commit/66bf6261f9b121c6ba5f6df604ef63570786c1eb) `enhex/uri` and `dehex/uri` with an unicode input
+* [`24bb10`](https://github.com/Oldes/Rebol3/commit/24bb10abb2c80e76595f29d1e15d098a64667032) Handle PLAIN SMTP authentication response
+* [`dc02d7`](https://github.com/Oldes/Rebol3/commit/dc02d7081c485a377d3a80a4f4eed2415fe9eedd) Correctly handle failed extension downloads
+* [`8e0606`](https://github.com/Oldes/Rebol3/commit/8e0606295e7cc8686b2ec1267fb0cae925541348) Using `query` on URL sometimes reports `date: none`
+* [`19f638`](https://github.com/Oldes/Rebol3/commit/19f638ea816f25d7fdc603ba4aa0321d5a3c19e5) Loaded/saved image data have reversed RGB colour order on macOS
+
+
 ## 2022 May
 
 ### Features:
@@ -26,6 +187,7 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`dd3f3e`](https://github.com/Oldes/Rebol3/commit/dd3f3e0debebab2a21e4d377a41d3ea3fe030ece) Host is not using os provided crypt device
 * [`3f38fc`](https://github.com/Oldes/Rebol3/commit/3f38fcfe9e5096d3692a940bd73bccdc0ce2380b) Unreferenced local variable warning
 * [`22794e`](https://github.com/Oldes/Rebol3/commit/22794e48de0dd89a49170ed2788cc65dd65279c4) Assignment from incompatible pointer type warning
 * [`dd9300`](https://github.com/Oldes/Rebol3/commit/dd93003da2c7ff00cddc292d2e47fc778a30ecff) Incompatible pointer types warning
