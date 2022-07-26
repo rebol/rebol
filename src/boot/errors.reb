@@ -121,6 +121,8 @@ Script: [
 	parse-command:      [{PARSE - command cannot be used as variable:} :arg1]
 	parse-series:       [{PARSE - input must be a series:} :arg1]
 	parse-no-collect:    {PARSE - KEEP is used without a wrapping COLLECT}
+	parse-into-bad:		 {PARSE - COLLECT INTO/AFTER expects a series! argument}
+	parse-into-type:     {PARSE - COLLECT INTO/AFTER expects a series! of compatible datatype}
 
 ;   bad-prompt:         [{Error executing prompt block}]
 ;   bad-port-action:    [{Cannot use} :arg1 {on this type port}]
