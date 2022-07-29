@@ -36,18 +36,18 @@
 
 ===start-group=== "make bitset!"
 	--test-- "basic make"
-		--assert "#[bitset! #{}]"   = mold make bitset! 0
-		--assert "#[bitset! #{}]"   = mold charset ""
-		--assert "#[bitset! #{}]"   = mold charset []
-		--assert "#[bitset! #{00}]" = mold make bitset! 1
-		--assert "#[bitset! #{80}]" = mold charset #"^(00)"
-		--assert "#[bitset! #{40}]" = mold charset #"^(01)"
-		--assert "#[bitset! #{000000000000FFC0}]" = mold charset "0123456789"
-		--assert "#[bitset! #{F0}]" = mold charset [0 1 2 3]
+		--assert "make bitset! #{}"   = mold make bitset! 0
+		--assert "make bitset! #{}"   = mold charset ""
+		--assert "make bitset! #{}"   = mold charset []
+		--assert "make bitset! #{00}" = mold make bitset! 1
+		--assert "make bitset! #{80}" = mold charset #"^(00)"
+		--assert "make bitset! #{40}" = mold charset #"^(01)"
+		--assert "make bitset! #{000000000000FFC0}" = mold charset "0123456789"
+		--assert "make bitset! #{F0}" = mold charset [0 1 2 3]
 		--assert error? try [make bitset! [-1]]
 
 	--test-- "make with ranges"	
-		--assert "#[bitset! #{FF800000FFFF8000048900007FFFFFE0}]"
+		--assert "make bitset! #{FF800000FFFF8000048900007FFFFFE0}"
 			 = mold charset [#"a" - #"z" 0 - 8 32 - 48 "HELLO"]
 
 	--test-- "make bitset! from bitset!"
@@ -210,40 +210,40 @@
 		bs: make bitset! 8
 		--assert 8 = length? bs
 		append bs ["hello" #"x" - #"z"]
-		--assert "#[bitset! #{000000000000000000000000048900E0}]" = mold bs
+		--assert "make bitset! #{000000000000000000000000048900E0}" = mold bs
 
 	--test-- "insert-1"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/789
 		bs: make bitset! 8
 		--assert 8 = length? bs
 		insert bs ["hello" #"x" - #"z"]
-		--assert "#[bitset! #{000000000000000000000000048900E0}]" = mold bs
+		--assert "make bitset! #{000000000000000000000000048900E0}" = mold bs
 
 	--test-- "clear-1"
 		clear bs
-		--assert "#[bitset! #{}]" = mold bs
+		--assert "make bitset! #{}" = mold bs
 
 	--test-- "clear-2"
 		bs: charset "^(00)^(01)^(02)^(03)^(04)^(05)^(06)^(07)"
 		--assert 8 = length? bs
-		--assert "#[bitset! #{FF}]" = mold bs
+		--assert "make bitset! #{FF}" = mold bs
 		clear bs
-		--assert "#[bitset! #{}]" = mold bs
+		--assert "make bitset! #{}" = mold bs
 
 	--test-- "remove/key"
 		;@@ https://github.com/Oldes/Rebol-wishes/issues/20
 		bs: charset "012345789"
 		--assert 64 = length? bs
-		--assert "#[bitset! #{000000000000FDC0}]" = mold bs
-		--assert "#[bitset! #{0000000000007DC0}]" = mold remove/key bs #"0"
-		--assert "#[bitset! #{0000000000003DC0}]" = mold remove/key bs 49
-		--assert "#[bitset! #{0000000000000000}]" = mold remove/key bs [#"2" - #"7" "8" #"9"]
+		--assert "make bitset! #{000000000000FDC0}" = mold bs
+		--assert "make bitset! #{0000000000007DC0}" = mold remove/key bs #"0"
+		--assert "make bitset! #{0000000000003DC0}" = mold remove/key bs 49
+		--assert "make bitset! #{0000000000000000}" = mold remove/key bs [#"2" - #"7" "8" #"9"]
 	--test-- "remove/part"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/933
 		bs: charset "012345789"
-		--assert "#[bitset! #{0000000000007DC0}]" = mold remove/part bs  #"0"
-		--assert "#[bitset! #{0000000000003DC0}]" = mold remove/part bs   "1"
-		--assert "#[bitset! #{0000000000000000}]" = mold remove/part bs [#"2" - #"7" "8" #"9"]
+		--assert "make bitset! #{0000000000007DC0}" = mold remove/part bs  #"0"
+		--assert "make bitset! #{0000000000003DC0}" = mold remove/part bs   "1"
+		--assert "make bitset! #{0000000000000000}" = mold remove/part bs [#"2" - #"7" "8" #"9"]
 		--assert all [ error? e: try [remove/part bs 1] e/id = 'invalid-arg]
 		--assert all [ error? e: try [remove/part/key bs "01" ""] e/id = 'bad-refines]
 
@@ -251,8 +251,8 @@
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1355
 		--assert pick charset [not "a"] #"b"
 		--assert not pick charset [not "a"] #"a"
-		--assert "#[bitset! #{00000000000000000000000060}]" = mold poke charset "a" #"b" true
-		--assert {#[bitset! [not bits #{00000000000000000000000040}]]} = mold poke charset [not "a"] #"b" true
+		--assert "make bitset! #{00000000000000000000000060}" = mold poke charset "a" #"b" true
+		--assert {make bitset! [not bits #{00000000000000000000000040}]} = mold poke charset [not "a"] #"b" true
 
 	--test-- "issue-933"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/933
@@ -308,26 +308,26 @@
 
 ===start-group=== "complemented"
 	
-	--test-- "comp-1"	--assert "#[bitset! [not bits #{}]]"   = mold charset [not]
-	--test-- "comp-2"	--assert "#[bitset! [not bits #{80}]]" = mold charset [not #"^(00)"]
-	--test-- "comp-3"	--assert "#[bitset! [not bits #{40}]]" = mold charset [not #"^(01)"]
-	--test-- "comp-4"	--assert "#[bitset! [not bits #{000000000000FFC0}]]" = mold charset [not "0123456789"]
-	--test-- "comp-5"	--assert "#[bitset! [not bits #{F0}]]" = mold charset [not 0 1 2 3]
+	--test-- "comp-1"	--assert "make bitset! [not bits #{}]"   = mold charset [not]
+	--test-- "comp-2"	--assert "make bitset! [not bits #{80}]" = mold charset [not #"^(00)"]
+	--test-- "comp-3"	--assert "make bitset! [not bits #{40}]" = mold charset [not #"^(01)"]
+	--test-- "comp-4"	--assert "make bitset! [not bits #{000000000000FFC0}]" = mold charset [not "0123456789"]
+	--test-- "comp-5"	--assert "make bitset! [not bits #{F0}]" = mold charset [not 0 1 2 3]
 
 	--test-- "comp-6"
 		bs: make bitset! 1
 		--assert false = complement? bs
-		--assert "#[bitset! #{00}]" = mold bs
+		--assert "make bitset! #{00}" = mold bs
 		--assert 8 = length? bs
 		bs: complement bs
 		--assert true = complement? bs
 		--assert 8 = length? bs
-		--assert "#[bitset! [not bits #{00}]]" = mold bs
+		--assert "make bitset! [not bits #{00}]" = mold bs
 
 	--test-- "comp-7"
 		bs: charset [not "hello123" #"a" - #"z"]
 		--assert 128 = length? bs
-		--assert "#[bitset! [not bits #{0000000000007000000000007FFFFFE0}]]" = mold bs
+		--assert "make bitset! [not bits #{0000000000007000000000007FFFFFE0}]" = mold bs
 
 	--test-- "comp-8"
 		bs: complement charset " "
@@ -340,22 +340,22 @@
 	--test-- "comp-9"
 		bs/32: true
 		--assert bs/32 = true
-		--assert "#[bitset! [not bits #{0000000000}]]" = mold bs
+		--assert "make bitset! [not bits #{0000000000}]" = mold bs
 
 	--test-- "comp-10"
 		poke bs #" " none
 		--assert bs/32 = false
-		--assert "#[bitset! [not bits #{0000000080}]]" = mold bs
+		--assert "make bitset! [not bits #{0000000080}]" = mold bs
 
 	--test-- "comp-11"
 		clear bs
-		--assert "#[bitset! [not bits #{}]]" = mold bs
+		--assert "make bitset! [not bits #{}]" = mold bs
 
 	--test-- "comp-12"
 		poke bs [32 - 40] none
-		--assert "#[bitset! [not bits #{00000000FF80}]]" = mold bs
+		--assert "make bitset! [not bits #{00000000FF80}]" = mold bs
 		poke bs [32 - 40] true
-		--assert "#[bitset! [not bits #{000000000000}]]" = mold bs
+		--assert "make bitset! [not bits #{000000000000}]" = mold bs
 
 	--test-- "issue-1541"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1541
@@ -387,7 +387,7 @@
 			idx: idx + 1
 			idx > n
 		]
-		--assert "#[bitset! #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}]" = mold bs
+		--assert "make bitset! #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}" = mold bs
 
 
 	--test-- "issue Red#3950"

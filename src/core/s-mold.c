@@ -1248,10 +1248,16 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 //		break;
 
 	case REB_BITSET:
-		// uses always construction syntax
-		Emit(mold, "#[T ", value);
+		// // uses always construction syntax
+		// Emit(mold, "#[T ", value);
+		// Mold_Bitset(value, mold);
+		// Append_Byte(mold->series, ']');
+		// break;
+		// Above code makes some problem when preprocessing Rebol source!
+		// So reverting back to the old result...
+		Pre_Mold(value, mold); // #[bitset! or make bitset!
 		Mold_Bitset(value, mold);
-		Append_Byte(mold->series, ']');
+		End_Mold(mold);
 		break;
 
 	case REB_IMAGE:

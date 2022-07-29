@@ -638,7 +638,7 @@ Rebol [
 		--assert "FF"         = try [make string! quote #FF        ] ; issue!
 		--assert "0 0"        = try [make string! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
 		--assert "a: 1"       = try [make string! quote #[object! [a: 1]] ] ; object!
-		--assert "#[bitset! #{FF}]"  = try [make string! quote #[bitset! #{FF}] ] ; bitset!
+		--assert "make bitset! #{FF}"  = try [make string! quote #[bitset! #{FF}] ] ; bitset!
 		--assert "make image! [1x1 #{FFFFFF}]"  = try [make string! quote #[image! 1x1 #{FFFFFF}] ] ; image!
 		--assert "integer! percent!"  = try [make string! quote #[typeset! [integer! percent!]] ] ; typeset!
 	--test-- "to string! ..."
@@ -679,7 +679,7 @@ Rebol [
 		--assert "FF"         = try [to string! quote #FF        ] ; issue!
 		--assert "0 0"        = try [to string! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
 		--assert "a: 1"       = try [to string! quote #[object! [a: 1]] ] ; object!
-		--assert "#[bitset! #{FF}]"  = try [to string! quote #[bitset! #{FF}] ] ; bitset!
+		--assert "make bitset! #{FF}"  = try [to string! quote #[bitset! #{FF}] ] ; bitset!
 		--assert "make image! [1x1 #{FFFFFF}]"  = try [to string! quote #[image! 1x1 #{FFFFFF}] ] ; image!
 		--assert "integer! percent!"  = try [to string! quote #[typeset! [#[datatype! integer! ]#[datatype! percent! ]]] ] ; typeset!
 ===end-group===
@@ -718,7 +718,7 @@ Rebol [
 		--assert <a/b>  = try [make tag! quote 'a/b ] ; lit-path!
 		--assert <ref>  = try [make tag! quote /ref ] ; refinement!
 		--assert <FF>   = try [make tag! quote #FF ] ; issue!
-		--assert <#[bitset! #{FF}]>  = try [make tag! quote #[bitset! #{FF}] ] ; bitset!
+		--assert <make bitset! #{FF}>  = try [make tag! quote #[bitset! #{FF}] ] ; bitset!
 		--assert <make image! [1x1 #{FFFFFF}]>  = try [make tag! quote #[image! 1x1 #{FFFFFF}] ] ; image!
 		--assert <0 0>  = try [make tag! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
 		--assert <a: 1>  = try [make tag! quote #[object! [a: 1]] ] ; object!
@@ -755,7 +755,7 @@ Rebol [
 		--assert <a/b>  = try [to tag! quote 'a/b ] ; lit-path!
 		--assert <ref>  = try [to tag! quote /ref ] ; refinement!
 		--assert <FF>   = try [to tag! quote #FF ] ; issue!
-		--assert <#[bitset! #{FF}]>  = try [to tag! quote #[bitset! #{FF}] ] ; bitset!
+		--assert <make bitset! #{FF}>  = try [to tag! quote #[bitset! #{FF}] ] ; bitset!
 		--assert <make image! [1x1 #{FFFFFF}]>  = try [to tag! quote #[image! 1x1 #{FFFFFF}] ] ; image!
 		--assert <0 0>  = try [to tag! quote #[vector! integer! 32 2 [0 0]] ] ; vector!
 		--assert <a: 1>  = try [to tag! quote #[object! [a: 1]] ] ; object!
