@@ -174,7 +174,7 @@ context [
 			exit
 		]
 
-		parse/all data [
+		parse data [
 			any [
 				thru "/******" to newline
 				[
@@ -183,7 +183,7 @@ context [
 			]
 		]
 		;collect all SYM_* uses
-		parse/all/case data [
+		parse/case data [
 			any [
 				to sym-check p: [
 					  "/*" thru "*/"
@@ -203,7 +203,7 @@ context [
 			any [
 				;Search only in /*...*/ comments
 				thru "/*" copy comm to "*/" (
-					parse/all comm [any [
+					parse comm [any [
 						thru {^/**} [
 							any [#" " | #"^-"]
 							"Base-code:"
@@ -332,7 +332,7 @@ context [
 
 	data: read/string root-dir/src/core/a-constants.c
 
-	parse/all data [
+	parse data [
 		some [
 			to "^/const"
 			copy d to "="
