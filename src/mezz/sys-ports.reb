@@ -30,7 +30,7 @@ make-port*: func [
 				dir?/check spec [spec: dirize spec 'dir]
 				true            ['file]
 			]
-			spec: join [ref:] spec
+			spec: compose [ref: (spec)]
 		]
 		url? spec [
 			spec: repend decode-url spec [to set-word! 'ref spec]
@@ -65,6 +65,9 @@ make-port*: func [
 
 	; Create the port with the correct scheme spec:
 	port: make system/standard/port []
+;	prin "spec: " probe spec
+;	prin "scheme/spec: " probe scheme/spec
+;	prin "system/standard/port-spec-head: " probe system/standard/port-spec-head
 	port/spec: make any [scheme/spec system/standard/port-spec-head] spec
 	port/spec/scheme: name
 	port/scheme: scheme
@@ -92,6 +95,8 @@ url-parser: make object! [
 
 	out: make block! 14
 	value: none
+
+	probe system/catalog/bitsets
 
 	;-- Basic Character Sets
 	digit:       system/catalog/bitsets/numeric
