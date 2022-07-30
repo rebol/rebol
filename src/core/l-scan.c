@@ -1691,9 +1691,6 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 			block = Scan_Full_Block(scan_state, ']');
 			value = BLK_TAIL(emitbuf);
 			emitbuf->tail++; // Protect the block from GC
-//			if (!Construct_Simple(value, block)) {
-			Bind_Block(Lib_Context, BLK_HEAD(block), BIND_ALL|BIND_DEEP);
-			//Bind_Global_Block(BLK_HEAD(block));
 			if (!Construct_Value(value, block)) {
 				if (IS_END(value)) Set_Block(value, block);
 				Trap1(RE_MALCONSTRUCT, value);
