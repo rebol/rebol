@@ -313,7 +313,7 @@ Rebol [
 	f: func [v [any-type!]] [type? get/any 'v]
 	--assert unset! = f make unset! none
 	f: func [v [unset!]] [type? get/any 'v]
-	--assert unset! = f #[unset!]
+	--assert unset! = f #[unset]
 
 --test-- "issue-196"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/196

@@ -910,7 +910,7 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1815
 		--assert all [
 			b: [1 2 3] 
-			not error? try [poke b 2 #[unset!]]
+			not error? try [poke b 2 #[unset]]
 			unset? pick b 2
 			unset? b/2
 		]
@@ -1300,11 +1300,11 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1766
 	--assert error? try [sort/compare [1 2 3]  func [/local loc-1 loc-2][local < loc-1] ]
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1516
-	--assert error? try [sort/compare [1 2 #[unset!]] :>]
+	--assert error? try [sort/compare [1 2 #[unset]] :>]
 
 --test-- "SORT with unset!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1124
-	--assert [#[unset!] 2 3] = sort reduce [2 #[unset!] 3 ]
+	--assert [#[unset] 2 3] = sort reduce [2 #[unset] 3 ]
 
 --test-- "SORT/reverse"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/128
@@ -2153,7 +2153,7 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/400
 	--assert "123" = union "12" "13"
 --test-- "union with none and unset"
-	--assert [#[none!] #[unset!]] = union [#[none!]] [#[unset!]]
+	--assert [#[none] #[unset]] = union [#[none]] [#[unset]]
 
 --test-- "union/skip with negative skip"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/736
@@ -2195,21 +2195,21 @@ Rebol [
 --test-- "unique with unset and none"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1124
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1592
-	--assert [#[unset!] #[none!]] = unique reduce [unset 'a unset 'a none none]
+	--assert [#[unset] #[none]] = unique reduce [unset 'a unset 'a none none]
 
 ===end-group===
 
 ===start-group=== "INTERSECT"
 --test-- "intersect"
-	--assert [#[none] 1 #[unset!]] = intersect [#[none] 1 #[unset!]] [#[none] #[unset!] 1]
-	--assert [] = intersect [#[none]] [1 #[unset!]]
+	--assert [#[none] 1 #[unset]] = intersect [#[none] 1 #[unset]] [#[none] #[unset] 1]
+	--assert [] = intersect [#[none]] [1 #[unset]]
 
 ===end-group===
 
 ===start-group=== "EXTRACT"
 --test-- "extract with unset"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1540
-	--assert [5 1 #[unset!]] = extract [5 3 1 #[unset!] #[unset!] #[unset!]] 2
+	--assert [5 1 #[unset]] = extract [5 3 1 #[unset] #[unset] #[unset]] 2
 
 ===end-group===
 
@@ -2365,8 +2365,8 @@ Rebol [
 ;@@ https://github.com/Oldes/Rebol-wishes/issues/19
 --test-- "combine to string"
 	--assert "abc" = combine [a b c]
-	--assert "abc" = combine [a #[none] b () c #[unset!]]
-	--assert "a|b|c" = combine/with [a #[none] b () c #[unset!]] #"|"
+	--assert "abc" = combine [a #[none] b () c #[unset]]
+	--assert "a|b|c" = combine/with [a #[none] b () c #[unset]] #"|"
 	--assert "abcghi" = combine [{abc} (if false {def}) {ghi}]
 	--assert "abcghi" = combine reduce [{abc} if false {def} {ghi}]
 	--assert "a, b, c" = combine/with [a b c] ", "
@@ -2409,8 +2409,8 @@ Rebol [
 ===start-group=== "COLLECT"
 --test-- "collect unset"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/880
-	--assert unset? first collect [keep #[unset!]]
-	--assert unset? first head insert copy [] #[unset!]
+	--assert unset? first collect [keep #[unset]]
+	--assert unset? first head insert copy [] #[unset]
 
 ===end-group===
 

@@ -1299,7 +1299,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		if (!molded)
 			Emit(mold, "N", VAL_DATATYPE(value) + 1);
 		else
-			Emit(mold, "+DN", SYM_DATATYPE_TYPE, VAL_DATATYPE(value) + 1);
+			Emit(mold, "+N", VAL_DATATYPE(value) + 1);
 		break;
 
 	case REB_TYPESET:
@@ -1417,11 +1417,12 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		else Emit(mold, "+T", value);
 		break;
 
-	case REB_END:
 	case REB_UNSET:
-		if (molded) Emit(mold, "+T", value);
+		if(molded) Append_Bytes(ser,"#[unset]");
 		break;
-
+	case REB_END:
+		if(molded) Append_Bytes(ser,"#[end]");
+		break;
 	default:
 		Crash(RP_DATATYPE+5, VAL_TYPE(value));
 	}

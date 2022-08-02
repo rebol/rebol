@@ -480,9 +480,12 @@ Rebol [
 
 ===start-group=== "mold unset!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/567
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2508
 	--test-- "mold unset!"
-		--assert   "unset!"  = mold ()
-		--assert "#[unset!]" = mold/all ()
+		--assert "#[unset]" = mold ()
+		--assert "#[unset]" = mold/all ()
+		--assert   "unset!" = mold type? () 
+		--assert "#[unset!]" = mold/all type? () 
 	--test-- "form unset!"
 		--assert "" = form ()
 
@@ -503,7 +506,7 @@ Rebol [
 ===start-group=== "mold/all"
 	--test-- "mold/all datatype!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/219
-		--assert "#[datatype! integer!]" = mold/all integer!
+		--assert "#[integer!]" = mold/all integer!
 
 	--test-- "mold/all decimal!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1633

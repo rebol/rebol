@@ -320,8 +320,8 @@ Rebol [
 
 	--test-- "reduce/only"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/359
-		--assert [1 #[unset!] 2] = reduce/only [1 no-such-word 2] []
-		--assert [1 #[unset!] 2] = reduce/only [1 no-such-word 2] none
+		--assert [1 #[unset] 2] = reduce/only [1 no-such-word 2] []
+		--assert [1 #[unset] 2] = reduce/only [1 no-such-word 2] none
 		--assert [1 some-word 2] = reduce/only [1 some-word 2] [some-word]
 		--assert native? second reduce/only [1 now 2] none
 		--assert word?   second reduce/only [1 now 2] [now]
@@ -487,7 +487,7 @@ Rebol [
 
 	--test-- "to-value"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2003
-		--assert none? to-value #[unset!]
+		--assert none? to-value #[unset]
 		--assert integer? to-value 1
 
 	--test-- "unset unbind 'x"

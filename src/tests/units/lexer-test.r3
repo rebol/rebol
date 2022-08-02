@@ -407,6 +407,70 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1114
 		--assert function? first transcode to binary! {#[function! [[a [series!]][print a]]]}
 
+	--test-- {datatype!}
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2508
+		--assert datatype? first transcode/only to binary! {#[unset!]}
+		--assert datatype? first transcode/only to binary! {#[none!]}
+		--assert datatype? first transcode/only to binary! {#[logic!]}
+		--assert datatype? first transcode/only to binary! {#[integer!]}
+		--assert datatype? first transcode/only to binary! {#[decimal!]}
+		--assert datatype? first transcode/only to binary! {#[percent!]}
+		--assert datatype? first transcode/only to binary! {#[money!]}
+		--assert datatype? first transcode/only to binary! {#[char!]}
+		--assert datatype? first transcode/only to binary! {#[pair!]}
+		--assert datatype? first transcode/only to binary! {#[tuple!]}
+		--assert datatype? first transcode/only to binary! {#[time!]}
+		--assert datatype? first transcode/only to binary! {#[date!]}
+		--assert datatype? first transcode/only to binary! {#[binary!]}
+		--assert datatype? first transcode/only to binary! {#[string!]}
+		--assert datatype? first transcode/only to binary! {#[file!]}
+		--assert datatype? first transcode/only to binary! {#[email!]}
+		--assert datatype? first transcode/only to binary! {#[ref!]}
+		--assert datatype? first transcode/only to binary! {#[url!]}
+		--assert datatype? first transcode/only to binary! {#[tag!]}
+		--assert datatype? first transcode/only to binary! {#[bitset!]}
+		--assert datatype? first transcode/only to binary! {#[image!]}
+		--assert datatype? first transcode/only to binary! {#[vector!]}
+		--assert datatype? first transcode/only to binary! {#[block!]}
+		--assert datatype? first transcode/only to binary! {#[paren!]}
+		--assert datatype? first transcode/only to binary! {#[path!]}
+		--assert datatype? first transcode/only to binary! {#[set-path!]}
+		--assert datatype? first transcode/only to binary! {#[get-path!]}
+		--assert datatype? first transcode/only to binary! {#[lit-path!]}
+		--assert datatype? first transcode/only to binary! {#[map!]}
+		--assert datatype? first transcode/only to binary! {#[datatype!]}
+		--assert datatype? first transcode/only to binary! {#[typeset!]}
+		--assert datatype? first transcode/only to binary! {#[word!]}
+		--assert datatype? first transcode/only to binary! {#[set-word!]}
+		--assert datatype? first transcode/only to binary! {#[get-word!]}
+		--assert datatype? first transcode/only to binary! {#[lit-word!]}
+		--assert datatype? first transcode/only to binary! {#[refinement!]}
+		--assert datatype? first transcode/only to binary! {#[issue!]}
+		--assert datatype? first transcode/only to binary! {#[native!]}
+		--assert datatype? first transcode/only to binary! {#[action!]}
+		--assert datatype? first transcode/only to binary! {#[rebcode!]}
+		--assert datatype? first transcode/only to binary! {#[command!]}
+		--assert datatype? first transcode/only to binary! {#[op!]}
+		--assert datatype? first transcode/only to binary! {#[closure!]}
+		--assert datatype? first transcode/only to binary! {#[function!]}
+		--assert datatype? first transcode/only to binary! {#[frame!]}
+		--assert datatype? first transcode/only to binary! {#[object!]}
+		--assert datatype? first transcode/only to binary! {#[module!]}
+		--assert datatype? first transcode/only to binary! {#[error!]}
+		--assert datatype? first transcode/only to binary! {#[task!]}
+		--assert datatype? first transcode/only to binary! {#[port!]}
+		--assert datatype? first transcode/only to binary! {#[gob!]}
+		--assert datatype? first transcode/only to binary! {#[event!]}
+		--assert datatype? first transcode/only to binary! {#[handle!]}
+		--assert datatype? first transcode/only to binary! {#[struct!]}
+		--assert datatype? first transcode/only to binary! {#[library!]}
+		--assert datatype? first transcode/only to binary! {#[utype!]}
+ 	--test-- {direct values}
+ 		--assert logic? first transcode/only to binary! {#[true]}
+ 		--assert logic? first transcode/only to binary! {#[false]}
+ 		--assert none?  first transcode/only to binary! {#[none]}
+ 		--assert unset? first transcode/only to binary! {#[unset]}
+
 ===end-group===
 
 ===start-group=== "BINARY"

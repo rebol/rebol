@@ -24,9 +24,11 @@ Rebol [
 
 	--test-- "find datatype!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/256
+		--assert not none? find [#[string!] #[binary!]] #[binary!]
 		--assert not none? find [#[datatype! string!] #[datatype! binary!]] #[datatype! binary!]
 		--assert not none? find reduce [string! binary!] binary!
-		--assert not none? find [#[datatype! string!] #[datatype! binary!]] #[datatype! binary!]
+		--assert not none? find [#[string!] #[binary!]] binary!
+		--assert not none? find [#[datatype! string!] #[datatype! binary!]] binary!
 		--assert not none? find ["test"] string!
 		--assert not none? find ["test"] series!
 		--assert  none? find reduce [integer! binary!] series!
