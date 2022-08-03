@@ -21,7 +21,12 @@ Rebol [
 			code = [1 + 1 ""]
 			"1 + 1" = head last code
 		]
-
+	--test-- "transcode/next"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/535
+		--assert [1 " + 1"]      = transcode/next "1 + 1"
+		--assert [1 #{202B2031}] = transcode/next to binary! "1 + 1"
+		--assert [[1 + 1] ""]    = transcode/next "[1 + 1]"
+		--assert [[1 + 1] #{}]   = transcode/next to binary! "[1 + 1]"
 
 ===end-group===
 
