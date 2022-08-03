@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -1889,10 +1890,25 @@ exit_block:
 **
 ***********************************************************************/
 {
+	SCAN_STATE scan_state;
+	REBVAL *src = D_ARG(1);
 	REBSER *blk;
-    SCAN_STATE scan_state;
+	REBSER *ser;
+	REBYTE *bin;
+	REBCNT  len;
+	
+	if (VAL_BYTE_SIZE(src)) {
+		bin = VAL_BIN_DATA(src);
+		len = VAL_LEN(src);
+	} else {
+		// unicode string must be converted to UTF-8 first
+		// the result is temporary stored in the shared buffer (BUF_FORM)
+		ser = Encode_UTF8_String(VAL_UNI_DATA(src), VAL_LEN(src), TRUE, 0);
+		bin = BIN_HEAD(ser);
+		len = BIN_LEN(ser);
+	}
 
-    Init_Scan_State(&scan_state, VAL_BIN_DATA(D_ARG(1)), VAL_LEN(D_ARG(1)));
+    Init_Scan_State(&scan_state, bin, len);
 
 	if (D_REF(2)) SET_FLAG(scan_state.opts, SCAN_NEXT);
 	if (D_REF(3)) SET_FLAG(scan_state.opts, SCAN_ONLY);
@@ -1902,9 +1918,19 @@ exit_block:
 	DS_RELOAD(ds); // in case stack moved
 	Set_Block(D_RET, blk);
 
-	VAL_INDEX(D_ARG(1)) = scan_state.end - VAL_BIN(D_ARG(1));
-	Append_Val(blk, D_ARG(1));
-
+	if (VAL_BYTE_SIZE(src)) {
+		VAL_INDEX(src) = scan_state.end - VAL_BIN(src);
+	} else {
+		// the scan state used the shared buffer, to get how many codepoints
+		// we advanced, we must first mark end...
+		len = scan_state.end - bin;
+		bin[len+1] = 0;
+		// ... and count the real length advanced
+		len = Length_As_UTF8_Code_Points(bin);
+		//printf("%i\n", len);
+		VAL_INDEX(src) = len;
+	}
+	Append_Val(blk, src);
 	return R_RET;
 }
 
