@@ -883,7 +883,7 @@ STOID Mold_Typeset(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	// Convert bits to types (we can make this more efficient !!)
 	for (n = 0; n < REB_MAX; n++) {
 		if (TYPE_CHECK(value, n)) {
-			Emit(mold, "+DN ", SYM_DATATYPE_TYPE, n + 1);
+			Emit(mold, "N ", n + 1);
 		}
 	}
 	Trim_Tail(mold->series, ' ');

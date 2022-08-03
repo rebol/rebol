@@ -513,6 +513,11 @@ Rebol [
 		--assert "0.10000000000000001" = mold/all 0.1
 		--assert "0.29999999999999999" = mold/all 0.3
 
+	--test-- "mold/all typeset!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2510
+		--assert "make typeset! [integer! decimal! percent!]" = mold number!
+		--assert "#[typeset! [integer! decimal! percent!]]" = mold/all number!
+
 ===end-group===
 
 ===start-group=== "form error!"
