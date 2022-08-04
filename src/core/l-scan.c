@@ -1930,7 +1930,8 @@ exit_block:
 		//printf("%i\n", len);
 		VAL_INDEX(src) = len;
 	}
-	Append_Val(blk, src);
+	if (scan_state.opts)
+		Append_Val(blk, src);
 	return R_RET;
 }
 

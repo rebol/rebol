@@ -11,16 +11,10 @@ Rebol [
 ===start-group=== "TRANSCODE"
 	--test-- "transcode basic"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/688
-		--assert all [
-			block? code: transcode to binary! "1 + 1"
-			code = [1 + 1 #{}]
-			#{31202B2031} = head last code
-		]
-		--assert all [
-			block? code: transcode "1 + 1"
-			code = [1 + 1 ""]
-			"1 + 1" = head last code
-		]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1329
+		--assert [1 + 1] = transcode to binary! "1 + 1"
+		--assert [1 + 1] = transcode "1 + 1"
+
 	--test-- "transcode/next"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/535
 		--assert [1 " + 1"]      = transcode/next "1 + 1"
