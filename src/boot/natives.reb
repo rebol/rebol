@@ -655,6 +655,7 @@ transcode: native [
 	{Translates UTF-8 binary source to values. Returns one or several values in a block.}
 	source [binary! string!] "UTF-8 input buffer; string argument will be UTF-8 encoded"
 	/next "Translate next complete value (blocks as single value)"
+	/one  "Translate next complete value (returns the value only)"
 	/only "Translate only a single value (blocks dissected)"
 	/error "Do not cause errors - return error object as value in place"
 ]

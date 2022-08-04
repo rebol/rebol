@@ -1891,7 +1891,11 @@ exit_block:
 ***********************************************************************/
 {
 	SCAN_STATE scan_state;
-	REBVAL *src = D_ARG(1);
+	REBVAL *src  = D_ARG(1);
+	REBOOL next  = D_REF(2);
+	REBOOL one   = D_REF(3);
+	REBOOL only  = D_REF(4);
+	REBOOL error = D_REF(5);
 	REBSER *blk;
 	REBSER *ser;
 	REBYTE *bin;
@@ -1910,12 +1914,17 @@ exit_block:
 
     Init_Scan_State(&scan_state, bin, len);
 
-	if (D_REF(2)) SET_FLAG(scan_state.opts, SCAN_NEXT);
-	if (D_REF(3)) SET_FLAG(scan_state.opts, SCAN_ONLY);
-	if (D_REF(4)) SET_FLAG(scan_state.opts, SCAN_RELAX);
+	if (next || one) SET_FLAG(scan_state.opts, SCAN_NEXT);
+	if (only)  SET_FLAG(scan_state.opts, SCAN_ONLY);
+	if (error) SET_FLAG(scan_state.opts, SCAN_RELAX);
 
 	blk = Scan_Code(&scan_state, 0);
 	DS_RELOAD(ds); // in case stack moved
+	
+	if (one) {
+		*D_RET = *BLK_SKIP(blk, 0);
+		return IS_END(D_RET) ? R_UNSET : R_RET;
+	}
 	Set_Block(D_RET, blk);
 
 	if (scan_state.opts) {
