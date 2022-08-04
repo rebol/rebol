@@ -1918,20 +1918,23 @@ exit_block:
 	DS_RELOAD(ds); // in case stack moved
 	Set_Block(D_RET, blk);
 
-	if (VAL_BYTE_SIZE(src)) {
-		VAL_INDEX(src) = scan_state.end - VAL_BIN(src);
-	} else {
-		// the scan state used the shared buffer, to get how many codepoints
-		// we advanced, we must first mark end...
-		len = scan_state.end - bin;
-		bin[len+1] = 0;
-		// ... and count the real length advanced
-		len = Length_As_UTF8_Code_Points(bin);
-		//printf("%i\n", len);
-		VAL_INDEX(src) = len;
-	}
-	if (scan_state.opts)
+	if (scan_state.opts) {
+		// when used transcode with refinements /next, /only and /error
+		// the input series position must be updated
+		if (VAL_BYTE_SIZE(src)) {
+			VAL_INDEX(src) = scan_state.end - VAL_BIN(src);
+		} else {
+			// the scan state used the shared buffer, to get how many codepoints
+			// we advanced, we must first mark end...
+			len = scan_state.end - bin;
+			bin[len+1] = 0;
+			// ... and count the real length advanced
+			len = Length_As_UTF8_Code_Points(bin);
+			//printf("%i\n", len);
+			VAL_INDEX(src) = len;
+		}
 		Append_Val(blk, src);
+	}
 	return R_RET;
 }
 
