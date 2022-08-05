@@ -14,6 +14,7 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1329
 		--assert [1 + 1] = transcode to binary! "1 + 1"
 		--assert [1 + 1] = transcode "1 + 1"
+		--assert []      = transcode ""
 
 	--test-- "transcode/next"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/535
@@ -21,10 +22,16 @@ Rebol [
 		--assert [1 #{202B2031}] = transcode/next to binary! "1 + 1"
 		--assert [[1 + 1] ""]    = transcode/next "[1 + 1]"
 		--assert [[1 + 1] #{}]   = transcode/next to binary! "[1 + 1]"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2511
+		--assert all [error? e: try[transcode/next ""] e/id = 'past-end]
+		--assert all [error? e: transcode/next/error "" e/id = 'past-end]
 
 	--test-- "transcode/one"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1329
-		--assert unset?  transcode/one ""
+		--assert all [error? e: try[transcode/one ""] e/id = 'past-end]
+		--assert all [error? e: transcode/one/error "" e/id = 'past-end]
+		--assert unset?  transcode/one "#[unset]"
+		--assert []    = transcode/one "[]"
 		--assert 1     = transcode/one "1 2"
 		--assert [1 2] = transcode/one "[1 2]"
 

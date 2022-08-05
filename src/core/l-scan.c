@@ -1895,7 +1895,7 @@ exit_block:
 	REBOOL next  = D_REF(2);
 	REBOOL one   = D_REF(3);
 	REBOOL only  = D_REF(4);
-	REBOOL error = D_REF(5);
+	REBOOL relax = D_REF(5);
 	REBSER *blk;
 	REBSER *ser;
 	REBYTE *bin;
@@ -1916,18 +1916,32 @@ exit_block:
 
 	if (next || one) SET_FLAG(scan_state.opts, SCAN_NEXT);
 	if (only)  SET_FLAG(scan_state.opts, SCAN_ONLY);
-	if (error) SET_FLAG(scan_state.opts, SCAN_RELAX);
+	if (relax) SET_FLAG(scan_state.opts, SCAN_RELAX);
+	
+	// Scan_Code clears the next flag!
+	// Decide if result should contain also modified input position.
+	// (with refinements /next, /only and /error)
+	next = scan_state.opts > 0;
 
 	blk = Scan_Code(&scan_state, 0);
 	DS_RELOAD(ds); // in case stack moved
 	
+	if (IS_END((REBVAL*)BLK_SKIP(blk, 0))) {
+		if (relax) {
+			ser = Make_Error(RE_PAST_END, src, 0, 0);
+			SET_ERROR(D_RET, RE_PAST_END, ser);
+			return R_RET;
+		}
+		Trap0(RE_PAST_END);
+	}
 	if (one) {
 		*D_RET = *BLK_SKIP(blk, 0);
-		return IS_END(D_RET) ? R_UNSET : R_RET;
+		return R_RET;
 	}
+	
 	Set_Block(D_RET, blk);
 
-	if (scan_state.opts) {
+	if (next) {
 		// when used transcode with refinements /next, /only and /error
 		// the input series position must be updated
 		if (VAL_BYTE_SIZE(src)) {
