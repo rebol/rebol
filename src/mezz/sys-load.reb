@@ -128,8 +128,8 @@ load-header: function/with [
 		not data: script? tmp [ ; no script header found
 			return either required ['no-header] [reduce [none tmp tail tmp]]
 		]
-		set/any [key: rest:] transcode/only data none ; get 'rebol keyword
-		set/any [hdr: rest:] transcode/next/error rest none ; get header block
+		set/any [key: rest: line:] transcode/only/line data 1           none ; get 'rebol keyword
+		set/any [hdr: rest: line:] transcode/next/error/line rest :line none ; get header block
 		not block? :hdr [return 'no-header] ; header block is incomplete
 		not attempt [hdr: construct/with :hdr system/standard/header][return 'bad-header]
 		word? :hdr/options [hdr/options: to block! :hdr/options]
@@ -138,10 +138,10 @@ load-header: function/with [
 		not tuple? :hdr/version [hdr/version: none]
 		find hdr/options 'content [repend hdr ['content data]] ; as of start of header
 		13 = rest/1 [rest: next rest] ; skip CR
-		10 = rest/1 [rest: next rest] ; skip LF
+		10 = rest/1 [rest: next rest ++ line] ; skip LF
 		integer? tmp: select hdr 'length [end: skip rest tmp]
 		not end [end: tail data]
-		only [return reduce [hdr rest end]] ; decompress and checksum not done
+		only [return reduce [hdr rest end line]] ; decompress and checksum not done
 		sum: hdr/checksum  none ;[print sum] ; none saved to simplify later code
 		:key = 'rebol [ ; regular script, binary or script encoded compression supported
 			case [
@@ -172,7 +172,7 @@ load-header: function/with [
 	]
 	;assert/type [hdr object! rest [binary! block!] end binary!]
 	;assert/type [hdr/checksum [binary! none!] hdr/options [block! none!]]
-	reduce [hdr rest end]
+	reduce [hdr rest end line]
 ][
 	non-ws: make bitset! [not 1 - 32]
 ]
@@ -270,7 +270,7 @@ read-decode: function [
 		; Try to load it (will fail if source is a url)
 		data: load-extension source ; returns an object or throws an error
 	][
-		data: read source ; can be string, binary, block
+		data: read/binary source ; can be string, binary, block
 		if find system/options/file-types type [data: decode type :data] ; e.g. not 'unbound
 	]
 	data
@@ -312,29 +312,32 @@ load: function [
 		any [file? source url? source] [
 			stype: file-type? source
 			type: case [
-				lib/all ['unbound = as 'extension = stype] [stype]
+				lib/all ['unbound = type 'extension = stype] [stype]
 				as      [type]
 				'else   [stype]
 			]
 			data: read-decode source type
+			if not find [0 extension unbound] any [type 0] [return data]
 		]
 		none? data [data: source]
 
 		;-- Is it not source code? Then return it now:
 		any [block? data not find [0 extension unbound] any [type 0]][ ; due to make-boot issue with #[none]
-			return data ; directory, image, txt, markup, etc.
+			unless type	[return data]
+			try [return decode type to binary! data]
+			cause-error 'access 'no-codec type
 		]
 
 		;-- Try to load the header, handle error:
 		not all [
-			set [hdr: data: end:] either object? data [load-ext-module data] [load-header data]
+			set [hdr: data: end: line:] either object? data [load-ext-module data] [load-header data]
 			if word? hdr [cause-error 'syntax hdr source]
 			unless tail? end [data: copy/part data end] 
 		]
 		; data is binary or block now, hdr is object or none
 
 		;-- Convert code to block, insert header if requested:
-		not block? data [data: make block! data]
+		not block? data [data: transcode/line data any [line 1]]
 		header [insert data hdr]
 
 		;-- Bind code to user context:
