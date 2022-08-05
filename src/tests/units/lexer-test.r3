@@ -35,6 +35,19 @@ Rebol [
 		--assert 1     = transcode/one "1 2"
 		--assert [1 2] = transcode/one "[1 2]"
 
+	--test-- "transcode/line"
+		--assert all [error? e: try [transcode "1 1d"] e/near = "(line 1) 1 1d"]
+		--assert all [error? e: try [transcode "1^/1d"] e/near = "(line 2) 1d"]
+		--assert all [error? e: try [transcode/line "1 1d" 10] e/near = "(line 10) 1 1d"]
+		--assert all [error? e: try [transcode/line "1^/1d" 10] e/near = "(line 11) 1d"]
+		--assert all [
+			code: "1^/2" line: 1
+			set [value code line] transcode/next/line :code :line
+			value = 1 line = 1
+			set [value code line] transcode/next/line :code :line
+			value = 2 line = 2
+		]
+
 ===end-group===
 
 ===start-group=== "Invalid construction"

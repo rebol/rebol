@@ -658,6 +658,8 @@ transcode: native [
 	/one  "Translate next complete value (returns the value only)"
 	/only "Translate only a single value (blocks dissected)"
 	/error "Do not cause errors - return error object as value in place"
+	/line  "Return also information about number of lines scaned"
+	 count [integer!] "Initial line number"
 ]
 
 echo: native [

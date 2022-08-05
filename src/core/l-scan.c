@@ -1896,6 +1896,8 @@ exit_block:
 	REBOOL one   = D_REF(3);
 	REBOOL only  = D_REF(4);
 	REBOOL relax = D_REF(5);
+	REBOOL line  = D_REF(6);
+	REBVAL *count = D_ARG(7);
 	REBSER *blk;
 	REBSER *ser;
 	REBYTE *bin;
@@ -1917,7 +1919,10 @@ exit_block:
 	if (next || one) SET_FLAG(scan_state.opts, SCAN_NEXT);
 	if (only)  SET_FLAG(scan_state.opts, SCAN_ONLY);
 	if (relax) SET_FLAG(scan_state.opts, SCAN_RELAX);
-	
+	if (line) {
+		if (0 >= VAL_INT64(count)) Trap1(RE_OUT_OF_RANGE, count);
+		scan_state.line_count = VAL_UNT32(count);
+	}
 	// Scan_Code clears the next flag!
 	// Decide if result should contain also modified input position.
 	// (with refinements /next, /only and /error)
@@ -1957,6 +1962,10 @@ exit_block:
 			VAL_INDEX(src) = len;
 		}
 		Append_Val(blk, src);
+		if (line) {
+			SET_INTEGER(count, scan_state.line_count);
+			Append_Val(blk, count);
+		}
 	}
 	return R_RET;
 }
