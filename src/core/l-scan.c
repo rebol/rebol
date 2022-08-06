@@ -1931,7 +1931,7 @@ exit_block:
 	blk = Scan_Code(&scan_state, 0);
 	DS_RELOAD(ds); // in case stack moved
 	
-	if (IS_END((REBVAL*)BLK_SKIP(blk, 0))) {
+	if (next && IS_END((REBVAL*)BLK_SKIP(blk, 0))) {
 		if (relax) {
 			ser = Make_Error(RE_PAST_END, src, 0, 0);
 			SET_ERROR(D_RET, RE_PAST_END, ser);
