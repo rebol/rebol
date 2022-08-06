@@ -36,6 +36,7 @@ Rebol [
 		--assert [1 2] = transcode/one "[1 2]"
 
 	--test-- "transcode/line"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2302
 		--assert all [error? e: try [transcode "1 1d"] e/near = "(line 1) 1 1d"]
 		--assert all [error? e: try [transcode "1^/1d"] e/near = "(line 2) 1d"]
 		--assert all [error? e: try [transcode/line "1 1d" 10] e/near = "(line 10) 1 1d"]
