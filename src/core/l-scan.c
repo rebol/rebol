@@ -1661,12 +1661,20 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 		case TOKEN_CONSTRUCT:
 			block = Scan_Full_Block(scan_state, ']');
 			value = BLK_TAIL(emitbuf);
-			emitbuf->tail++; // Protect the block from GC
-			if (!Construct_Value(value, block)) {
-				if (IS_END(value)) Set_Block(value, block);
-				Trap1(RE_MALCONSTRUCT, value);
+			// make sure that there was not an error... transcode "#["
+			if (!IS_ERROR(value)){
+				emitbuf->tail++; // Protect the block from GC
+				if (!Construct_Value(value, block)) {
+					if (IS_END(value)) Set_Block(value, block);
+					if (GET_FLAG(scan_state->opts, SCAN_RELAX)) {
+						block = Make_Error(RE_MALCONSTRUCT, value, 0, 0);
+						SET_ERROR(value, RE_PAST_END, block);
+					} else {
+						Trap1(RE_MALCONSTRUCT, value);
+					}
+				}
+				emitbuf->tail--; // Unprotect
 			}
-			emitbuf->tail--; // Unprotect
 			break;
 
 		case TOKEN_MAP:
@@ -1720,6 +1728,7 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 				goto exit_block;
 			}
 		}
+		
 
 		// Check for end of path:
 		if (mode_char == '/') {

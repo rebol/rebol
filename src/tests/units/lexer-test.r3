@@ -49,6 +49,29 @@ Rebol [
 			value = 2 line = 2
 		]
 
+	--test-- "transcode/error"
+		--assert all [
+			block? blk: transcode/error "1 2d"
+			blk/1 = 1
+			error? blk/2
+			blk/2/id = 'invalid
+		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1857
+		--assert all [
+			error? e: transcode/one/error "#[block! 1]"
+			e/id = 'malconstruct
+		]
+		--assert all [
+			error? e: transcode/one/error "#[block! [1d]"
+			e/id = 'malconstruct
+		]
+		--assert all [
+			error? e: transcode/one/error "#["
+			e/id = 'missing
+			e/arg1 = 'end-of-script
+		]
+
+
 ===end-group===
 
 ===start-group=== "Invalid construction"
