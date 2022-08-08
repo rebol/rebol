@@ -1367,36 +1367,6 @@ scan_arrow_word:
 	}
 }
 
-#ifdef not_used
-//!!!
-/***********************************************************************
-**
-	REBOOL Construct_Simple(REBVAL *value, REBSER *spec)
-/*
-**		Handle special #[type] constructs. These are used to
-**		boot REBOL, so must not require binding.
-**
-***********************************************************************/
-{
-	REBVAL *blk = BLK_HEAD(spec);
-	if (!IS_WORD(blk)) return FALSE;
-	switch (VAL_WORD_SYM(blk)-1) {
-	case SYM_NONE:
-		SET_NONE(value);
-		break;
-	case SYM_FALSE:
-		SET_LOGIC(value, FALSE);
-		break;
-	case SYM_TRUE:
-		SET_LOGIC(value, TRUE);
-		break;
-	default:
-		return FALSE;
-	}
-	return TRUE;
-}
-#endif
-
 extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 
 /***********************************************************************

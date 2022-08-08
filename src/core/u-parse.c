@@ -885,7 +885,6 @@ bad_target:
 	REBSER *ser;
 	REBFLG flags;
 	REBCNT cmd, wrd;
-	REBSER *blk;
 	REB_PARSE_COLLECT *collect = parse->collect;
 	//REBVAL *rule_head = rules;
 
