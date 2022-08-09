@@ -683,6 +683,51 @@ size_spec:
 }
 
 
+static void reverse_vector(REBVAL *value, REBCNT len)
+{
+	REBCNT n;
+	REBCNT m;
+	REBINT width = VAL_VEC_WIDTH(value);
+
+	if (width == 1) {
+		REBYTE *bp = VAL_BIN_DATA(value);
+		REBYTE c1;
+		for (n = 0, m = len-1; n < len / 2; n++, m--) {
+			c1 = bp[n];
+			bp[n] = bp[m];
+			bp[m] = c1;
+		}
+	}
+	else if (width == 2) {
+		REBUNI *up = VAL_UNI_DATA(value);
+		REBUNI c2;
+		for (n = 0, m = len-1; n < len / 2; n++, m--) {
+			c2 = up[n];
+			up[n] = up[m];
+			up[m] = c2;
+		}
+	}
+	else if (width == 4) {
+		REBCNT *i4 = (REBCNT*)VAL_BIN_DATA(value);
+		REBCNT c4;
+		for (n = 0, m = len-1; n < len / 2; n++, m--) {
+			c4 = i4[n];
+			i4[n] = i4[m];
+			i4[m] = c4;
+		}
+	}
+	else if (width == 8) {
+		REBU64 *i8 = (REBU64*)VAL_BIN_DATA(value);
+		REBU64 c8;
+		for (n = 0, m = len-1; n < len / 2; n++, m--) {
+			c8 = i8[n];
+			i8[n] = i8[m];
+			i8[m] = c8;
+		}
+	}
+}
+
+
 /***********************************************************************
 **
 */	REBTYPE(Vector)
@@ -763,6 +808,11 @@ size_spec:
 		SET_VECTOR(value, ser);
 		break;
 
+	case A_REVERSE:
+		len = Partial(value, 0, D_ARG(3), 0);
+		if (len > 0) reverse_vector(value, len);
+		break;
+			
 	case A_RANDOM:
 		if (D_REF(2) || D_REF(4)) Trap0(RE_BAD_REFINES); // /seed /only
 		Shuffle_Vector(value, D_REF(3));
