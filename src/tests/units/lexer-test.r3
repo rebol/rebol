@@ -68,7 +68,7 @@ Rebol [
 		--assert all [
 			error? e: transcode/one/error "#["
 			e/id = 'missing
-			e/arg1 = 'end-of-script
+			e/arg1 = "end-of-script"
 		]
 
 
