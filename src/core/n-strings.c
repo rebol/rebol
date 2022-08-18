@@ -203,7 +203,7 @@ static struct digest {
 		data = VAL_BIN_DATA(arg);
 	}
 
-	if (sym > SYM_CRC32 && sym <= SYM_SHA512) {
+	if (sym > SYM_CRC32 && sym <= SYM_RIPEMD160) {
 		// O: could be optimized using index computed from `sym`
 		// find matching digest:
 		for (i = 0; i < sizeof(digests) / sizeof(digests[0]); i++) {
