@@ -311,6 +311,13 @@ Rebol [
 			tail? reduce/into quote ('a 1 + 1 3 + 3) p: make path! 3
 			p = 'a/2/6
 		]
+	--test-- "reduce/only"
+		words: [a b] set words [1 2]
+		not-words: [a]
+		--assert [1 2] = reduce words
+		--assert [a 2] = reduce/only words not-words
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1771
+		--assert all [error? e: try [reduce/only [a no-such-word] []] e/id = 'no-value]
 ===end-group===
 
 
