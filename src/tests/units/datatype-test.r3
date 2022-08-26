@@ -38,6 +38,9 @@ Rebol [
 		--assert ["aha"] = find reduce [integer! "aha"] series!
 		--assert not none? find any-string! ref!
 
+		--assert 1 = index? find [#{00}  #[string!] #[binary!]] #[binary!]
+		--assert 3 = index? find/only [#{00}  #[string!] #[binary!]] #[binary!]
+
 		--assert 2 = index? find/only reduce ["" string! any-string! binary!] string!
 		--assert 3 = index? find/only reduce ["" string! any-string! binary!] any-string!
 		--assert 1 = index? find reduce ["" string! any-string! binary!] any-string!

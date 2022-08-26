@@ -155,8 +155,11 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 			for (; index >= start && index < end; index += skip) {
 				value = BLK_SKIP(series, index);
 				if (VAL_TYPE(value) == VAL_TYPE(target)) {
-					if (IS_DATATYPE(target) && VAL_DATATYPE(value) == VAL_DATATYPE(target)) return index;
-					else if EQUAL_TYPESET(value, target)
+					if (IS_DATATYPE(target)) {
+						if (VAL_DATATYPE(value) == VAL_DATATYPE(target))
+							return index;
+					}
+					else if (EQUAL_TYPESET(value, target))
 						return index;
 				}
 				if (flags & AM_FIND_MATCH) break;
