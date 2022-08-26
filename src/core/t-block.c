@@ -150,19 +150,29 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 	}
 	// Find a datatype in block:
 	else if (IS_DATATYPE(target) || IS_TYPESET(target)) {
-		for (; index >= start && index < end; index += skip) {
-			value = BLK_SKIP(series, index);
-			// Used if's so we can trace it...
-			if (IS_DATATYPE(target)) {
-				if ((REBINT)VAL_TYPE(value) == VAL_DATATYPE(target)) return index;
-				if (IS_DATATYPE(value) && VAL_DATATYPE(value) == VAL_DATATYPE(target)) return index;
+		if (flags & AM_FIND_ONLY) {
+			// not checking value types, only if value and target are really same
+			for (; index >= start && index < end; index += skip) {
+				value = BLK_SKIP(series, index);
+				if (VAL_TYPE(value) == VAL_TYPE(target)) {
+					if (IS_DATATYPE(target) && VAL_DATATYPE(value) == VAL_DATATYPE(target)) return index;
+					else if EQUAL_TYPESET(value, target)
+						return index;
+				}
+				if (flags & AM_FIND_MATCH) break;
 			}
-			if (IS_TYPESET(target)) {
-				if (TYPE_CHECK(target, VAL_TYPE(value))) return index;
-				//if (IS_DATATYPE(value) && TYPE_CHECK(target, VAL_DATATYPE(value))) return index; //@@ issues/256
-				if (IS_TYPESET(value) && EQUAL_TYPESET(value, target)) return index;
+		} else {
+			for (; index >= start && index < end; index += skip) {
+				value = BLK_SKIP(series, index);
+				// Used if's so we can trace it...
+				if (IS_DATATYPE(target)) {
+					if ((REBINT)VAL_TYPE(value) == VAL_DATATYPE(target))
+						return index;
+				}
+				else if (TYPE_CHECK(target, VAL_TYPE(value)))
+						return index;
+				if (flags & AM_FIND_MATCH) break;
 			}
-			if (flags & AM_FIND_MATCH) break;
 		}
 		return NOT_FOUND;
 	}
