@@ -672,6 +672,11 @@ Rebol [
 		]
 		append out foo
 		--assert "HelloReturning" = out
+	--test-- "switch/case"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1773
+		--assert 'upper = switch "a" ["A" ['upper] "a" ['lower]]
+		--assert 'lower = switch/case "a" ["A" ['upper] "a" ['lower]]
+		--assert 'upper = switch/case "A" ["A" ['upper] "a" ['lower]]
 ===end-group===
 
 

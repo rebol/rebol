@@ -286,8 +286,9 @@ switch: native [
 	"Selects a choice and evaluates the block that follows it."
 	value "Target value"
 	cases [block!] "Block of cases to check"
-	/default case "Default case if no others found"
+	/default  def "Default case if no others found"
 	/all "Evaluate all matches (not just first one)"
+	/case "Perform a case-sensitive comparison"
 ]
 
 throw: native [

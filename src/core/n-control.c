@@ -809,11 +809,12 @@ got_err:
 	REBVAL *blk = VAL_BLK_DATA(D_ARG(2));
 	REBVAL *result;
 	REBOOL all = D_REF(5);
+	REBOOL is_case = D_REF(6);
 	REBOOL found = FALSE;
 
 	// Find value in case block...
 	for (; NOT_END(blk); blk++) {
-		if (!IS_BLOCK(blk) && 0 == Cmp_Value(DS_ARG(1), blk, FALSE)) { // avoid stack move
+		if (!IS_BLOCK(blk) && 0 == Cmp_Value(DS_ARG(1), blk, is_case)) { // avoid stack move
 			// Skip forward to block...
 			for (; !IS_BLOCK(blk) && NOT_END(blk); blk++);
 			if (IS_END(blk)) break;
