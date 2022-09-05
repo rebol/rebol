@@ -67,7 +67,6 @@ Rebol [
 		]
 	--test-- "construct image invalid"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1034
-		--assert error? try [load {#[image!]}]
 		--assert error? try [load {#[image! x]}]
 		--assert error? try [load {#[image! 1x-1]}]
 		--assert error? try [load {#[image! 1x1 x]}]
@@ -77,7 +76,8 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1037
 		--assert all [error? e: try [make image! [3x2 #{000000000000000000000000000000000000} 1x0]] e/id = 'malconstruct]
 		--assert all [error? e: try [load {#[image! 3x2 #{000000000000000000000000000000000000} 1x0]}] e/id = 'malconstruct]
-
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2508
+		--assert datatype? try [load {#[image!]}]
 
 ===end-group===
 
