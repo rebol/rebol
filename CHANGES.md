@@ -2,10 +2,41 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+## 2022 August
+
+### Features:
+
+* [`b96911`](https://github.com/Oldes/Rebol3/commit/b96911198472de2af414c9e26caace768eacde64) Added `switch/case` option to make it use case-sensitive comparisons
+* [`24faca`](https://github.com/Oldes/Rebol3/commit/24faca96ffe7882a0c6ab82354035f646e4aaa4e) Implemented `reverse` on a `vector!` value
+* [`8951d9`](https://github.com/Oldes/Rebol3/commit/8951d94b98c8e1b07a86820e590291365ed904ac) Using Knuth's multiplicative hash for color tuples
+* [`5e9b14`](https://github.com/Oldes/Rebol3/commit/5e9b14a94b1502efc598b3f4705ec04e39f6e0bf) Implemented `transcode/line` for getting information about number of lines scanned
+* [`fe4495`](https://github.com/Oldes/Rebol3/commit/fe449585a3a2395e7223313fc60bcd386270246c) Implemented `transcode/one` for translating just one value
+* [`2e55f6`](https://github.com/Oldes/Rebol3/commit/2e55f6a3757602b7ad838715c41752c06cbe3ff2) Allow string input to `transcode`
+
+### Changes:
+
+* [`fd8188`](https://github.com/Oldes/Rebol3/commit/fd8188d422a1da11bbf1122039baabe704e6c0b8) `transcode` used without any refinement returns only scanned data
+* [`e9990a`](https://github.com/Oldes/Rebol3/commit/e9990a08c7e93c88e86eadc6f6332230dabe8c9d) Better construction syntax for typesets
+* [`ed5e1e`](https://github.com/Oldes/Rebol3/commit/ed5e1e89a38628b8d82946ef10f08e552c39a437) Better construction syntax for datatypes (compatible with Red language)
+
+### Fixes:
+
+* [`687167`](https://github.com/Oldes/Rebol3/commit/6871674edd1f790190bd9a618335132dc4ad5d9d) Correcting datatype value detection logic
+* [`8fb93e`](https://github.com/Oldes/Rebol3/commit/8fb93e8abbcaf3c2b9d5787a805efccce4286a54) Required `find/only` when searching for a datatype value
+* [`7c8549`](https://github.com/Oldes/Rebol3/commit/7c8549343663913012eb75921b6e7cdc6bc936ef) `reduce/only` emits `#[unset]` for undefined word instead of an error
+* [`67dfe1`](https://github.com/Oldes/Rebol3/commit/67dfe18ca485e380017e84396d113cc8faa5ed6e) Enable `ripemd160` checksum
+* [`f229de`](https://github.com/Oldes/Rebol3/commit/f229de601f27c8fd78eadd69b3804b8e9dd7e9e4) `transcode/error` of an invalid serialized constructor triggers the error it should insert
+* [`97496e`](https://github.com/Oldes/Rebol3/commit/97496e71165e06dc5547079faca653a16a695fca) Error throwing an error on empty input must be only when used `/next` or `/one` refinements
+* [`9ea5fc`](https://github.com/Oldes/Rebol3/commit/9ea5fc1a3de5a11759a36df50145ec36a3c21aaa) Line numbering for error messages doesn't account for header
+* [`047f03`](https://github.com/Oldes/Rebol3/commit/047f0328b5aee74143eb30dd1068ca5d248014a9) Throwing an error when used `transcode/next` or `transcode/one` with an empty input
+* [`769b5e`](https://github.com/Oldes/Rebol3/commit/769b5e5215a81158300a5a890fcec27ed19945e0) Update `transcode` input position only when needed
+
+
 ## 2022 July
 
 ### Features:
 
+* [`1c0004`](https://github.com/Oldes/Rebol3/commit/1c000489c198fca3bd2a15fd5432b278cc5331e8) Using `compose` instead of slower `join`
 * [`843fcc`](https://github.com/Oldes/Rebol3/commit/843fcc6c515c871d6dc20d09864468e038a1be5e) Implemented `collect into` and `collect after` parse's command
 * [`fe5df3`](https://github.com/Oldes/Rebol3/commit/fe5df3c42199eed6787e0ba35d56248d809695b8) Allow lowering assertions level using `ALEVEL` define
 * [`9d919b`](https://github.com/Oldes/Rebol3/commit/9d919b606c7825a7b252876c5d666834fa7cb20e) Implemented `collect set` parse's command
