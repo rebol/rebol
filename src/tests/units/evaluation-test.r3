@@ -854,6 +854,9 @@ Rebol [
 		--assert :a =? 1
 		a: 1 loop 1 [a: compose [(break)]]
 		--assert :a =? 1
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2060
+		a: 1 loop 1 [a: reduce quote (break)]
+		--assert :a =? 1
 
 ===end-group===
 
