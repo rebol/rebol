@@ -27,10 +27,10 @@ Rebol [
 
 	--test-- "invalid construction"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1167
-	--assert all [error? e: try [to-word "a,"]  e/id = 'bad-char]
-	--assert all [error? e: try [to-word "a;"]  e/id = 'bad-char]
-	--assert all [error? e: try [to-word "a["]  e/id = 'bad-char]
-	--assert all [error? e: try [to-word "a[]"] e/id = 'bad-char]
+	--assert all [error? e: try [to-word "a,"]  e/id = 'invalid-chars]
+	--assert all [error? e: try [to-word "a;"]  e/id = 'invalid-chars]
+	--assert all [error? e: try [to-word "a["]  e/id = 'invalid-chars]
+	--assert all [error? e: try [to-word "a[]"] e/id = 'invalid-chars]
 	;@@ https://github.com/Oldes/Rebol-issues/issues/330
 	--assert all [error? e: try [to-word "a b"] e/id = 'invalid-chars]
 
