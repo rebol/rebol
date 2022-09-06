@@ -2,6 +2,20 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+## 2022 September
+
+### Changes:
+
+* [`646cb4`](https://github.com/Oldes/Rebol3/commit/646cb49d4ece9230523f78245a213da1a779a9d3) Using same error type for `to-issue "a a"` and `to-issue "a^Aa"`
+
+### Fixes:
+
+* [`664904`](https://github.com/Oldes/Rebol3/commit/6649047f5cd78aaeb3de1c2e0e3b58f93e5bcc85) Loading unnamed modules was causing failing test
+* [`aacacc`](https://github.com/Oldes/Rebol3/commit/aacacc9190f61999e05a1eb91b940addfcecfec7) Incorrectly dealing with vector item's width
+* [`22f793`](https://github.com/Oldes/Rebol3/commit/22f79314dcb1fd9c1da584eb1fda8536a445d83e) Reverted leaked unwanted modification in the previous commit
+* [`115099`](https://github.com/Oldes/Rebol3/commit/115099497f70cd392f9f8e52f8590833da4a0a0f) Fixed regression with `break` in a `reduce` block
+
+
 ## 2022 August
 
 ### Features:
