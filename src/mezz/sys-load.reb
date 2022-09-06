@@ -504,14 +504,31 @@ load-module: function [
 				'else [cause-error 'access 'no-script source] ; needs better error
 			]
 		]
-		module? source [ ; see if the same module is already in the list
+		module? source [ 
 			mod: source
-			foreach [n m] system/modules [
-				if source = m [
-					if as [cause-error 'script 'bad-refine /as] ; already imported
-					set mod: m
-					hdr: spec-of mod
-					return reduce [hdr/name mod]
+			hdr: spec-of mod
+			; see if the same module is already in the list
+			if all [
+				hdr/name
+				module? tmp: select system/modules hdr/name
+			][
+				if as [cause-error 'script 'bad-refine /as] ; already imported
+				;; the original code:
+				;; https://github.com/rebol/rebol/blob/25033f897b2bd466068d7663563cd3ff64740b94/src/mezz/sys-load.r#L488-L490
+				;; system/modules was a block with [name module modsum ...]
+				
+				;; For now I will return existing module when there was not used /version and /check
+				;; but it must be revisited and handled correctly! So far there is not good support
+				;; for modules with same name but different versions:-/
+
+				;; Main purpose of this code is to reuse existing module in cases like
+				;; running: `do "rebol [type: module name: n]..."` multiple times
+				if all [
+					not version
+					not check
+					equal? mod tmp
+				][
+					return reduce [hdr/name tmp]
 				]
 			]
 		]

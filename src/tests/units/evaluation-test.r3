@@ -62,8 +62,8 @@ Rebol [
 
 	--test-- "issue-662"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/662
-		--assert not error? probe try [do "rebol [type: module] 1 + 1"]
-		--assert not error? probe try [do "rebol [type: module] print 'hello"]
+		--assert not error? try [do "rebol [type: module] 1 + 1"]
+		--assert not error? try [do "rebol [type: module] print {Hello issues/662}"]
 
 	--test-- "issue-121"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/121
