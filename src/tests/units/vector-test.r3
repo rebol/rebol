@@ -68,6 +68,16 @@ Rebol [
 
 --test-- "to-binary vector!"
 	--assert #{01000200} = to binary! #[u16! [1 2]]
+	--assert #{0100000002000000} = to binary! #[i32! [1 2]]
+	--assert #{0000803F00000040} = to binary! #[f32! [1 2]]
+	--assert #{01000000000000000200000000000000} = to binary! #[i64! [1 2]]
+	--assert #{000000000000F03F0000000000000040} = to binary! #[f64! [1 2]]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2518
+	--assert #{0200} = to binary! next #[u16! [1 2]]
+	--assert #{02000000} = to binary! next #[i32! [1 2]]
+	--assert #{00000040} = to binary! next #[f32! [1 2]]
+	--assert #{0200000000000000} = to binary! next #[i64! [1 2]]
+	--assert #{0000000000000040} = to binary! next #[f64! [1 2]]
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2458
 	--assert #{01000200} = to binary! protect #[u16! [1 2]]
 

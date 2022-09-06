@@ -708,7 +708,7 @@ static void reverse_vector(REBVAL *value, REBCNT len)
 		}
 	}
 	else if (width == 4) {
-		REBCNT *i4 = (REBCNT*)VAL_BIN_DATA(value);
+		REBCNT *i4 = (REBCNT*)VAL_DATA(value);
 		REBCNT c4;
 		for (n = 0, m = len-1; n < len / 2; n++, m--) {
 			c4 = i4[n];
@@ -717,7 +717,7 @@ static void reverse_vector(REBVAL *value, REBCNT len)
 		}
 	}
 	else if (width == 8) {
-		REBU64 *i8 = (REBU64*)VAL_BIN_DATA(value);
+		REBU64 *i8 = (REBU64*)VAL_DATA(value);
 		REBU64 c8;
 		for (n = 0, m = len-1; n < len / 2; n++, m--) {
 			c8 = i8[n];
