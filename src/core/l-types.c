@@ -1096,6 +1096,10 @@ end_date:
 			SET_TRUE(value);
 			return TRUE;
 
+		case SYM_UNSET:
+			SET_UNSET(value);
+			return TRUE;
+				
 		default:
 			if (type >= SYM_I8X && type < SYM_DATATYPES) {
 				if (MT_Vector(value, val, REB_VECTOR)) return TRUE;
@@ -1105,18 +1109,13 @@ end_date:
 	}
 	type--;	// The global word for datatype x is at word x+1.
 
-	// Check for trivial types:
-	if (type == REB_UNSET) {
-		SET_UNSET(value);
-		return TRUE;
-	}
-	if (type == REB_NONE) {
-		SET_NONE(value);
-		return TRUE;
-	}
-
 	val++;
-	if (IS_END(val)) return FALSE;
+	if (IS_END(val)) {
+		VAL_SET(value, REB_DATATYPE);
+		VAL_DATATYPE(value) = type;
+		VAL_TYPE_SPEC(value) = 0;
+		return TRUE;
+	}
 
 	// Dispatch maker:
 	if (NZ(func = Make_Dispatch[type])) {

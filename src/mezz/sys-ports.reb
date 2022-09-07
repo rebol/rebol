@@ -30,7 +30,7 @@ make-port*: func [
 				dir?/check spec [spec: dirize spec 'dir]
 				true            ['file]
 			]
-			spec: join [ref:] spec
+			spec: compose [ref: (spec)]
 		]
 		url? spec [
 			spec: repend decode-url spec [to set-word! 'ref spec]

@@ -171,8 +171,8 @@ Rebol [
 		switch sb15-i [
 			1 			[sb15-j: "Earl"]
 			integer!	[sb15-j: "Peter"]
-			#[datatype! integer!]	[sb15-j: "Red"]
-			#[datatype! char!]	[sb15-j: "Blue"]
+			#[integer!]	[sb15-j: "Red"]
+			#[char!]	[sb15-j: "Blue"]
 		]
         --assert sb15-j = "Red"
 

@@ -68,6 +68,16 @@ Rebol [
 
 --test-- "to-binary vector!"
 	--assert #{01000200} = to binary! #[u16! [1 2]]
+	--assert #{0100000002000000} = to binary! #[i32! [1 2]]
+	--assert #{0000803F00000040} = to binary! #[f32! [1 2]]
+	--assert #{01000000000000000200000000000000} = to binary! #[i64! [1 2]]
+	--assert #{000000000000F03F0000000000000040} = to binary! #[f64! [1 2]]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2518
+	--assert #{0200} = to binary! next #[u16! [1 2]]
+	--assert #{02000000} = to binary! next #[i32! [1 2]]
+	--assert #{00000040} = to binary! next #[f32! [1 2]]
+	--assert #{0200000000000000} = to binary! next #[i64! [1 2]]
+	--assert #{0000000000000040} = to binary! next #[f64! [1 2]]
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2458
 	--assert #{01000200} = to binary! protect #[u16! [1 2]]
 
@@ -175,6 +185,41 @@ Rebol [
 	--assert  2 = v/length
 	--assert 'integer! = v/type
 	--assert false     = v/signed
+
+--test-- "REVERSE on vector"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2515
+	--assert #[u8!  [3 2 1]] = reverse #[u8!  [1 2 3]]
+	--assert #[u16! [3 2 1]] = reverse #[u16! [1 2 3]]
+	--assert #[u32! [3 2 1]] = reverse #[u32! [1 2 3]]
+	--assert #[u64! [3 2 1]] = reverse #[u64! [1 2 3]]
+	--assert #[i8!  [3 2 1]] = reverse #[i8!  [1 2 3]]
+	--assert #[i16! [3 2 1]] = reverse #[i16! [1 2 3]]
+	--assert #[i32! [3 2 1]] = reverse #[i32! [1 2 3]]
+	--assert #[i64! [3 2 1]] = reverse #[i64! [1 2 3]]
+	--assert #[f32! [3.0 2.0 1.0]] = reverse #[f32! [1 2 3]]
+	--assert #[f64! [3.0 2.0 1.0]] = reverse #[f64! [1 2 3]]
+
+	--assert #[u8!  [2 1 3]] = reverse/part #[u8!  [1 2 3]] 2
+	--assert #[u16! [2 1 3]] = reverse/part #[u16! [1 2 3]] 2
+	--assert #[u32! [2 1 3]] = reverse/part #[u32! [1 2 3]] 2
+	--assert #[u64! [2 1 3]] = reverse/part #[u64! [1 2 3]] 2
+	--assert #[i8!  [2 1 3]] = reverse/part #[i8!  [1 2 3]] 2
+	--assert #[i16! [2 1 3]] = reverse/part #[i16! [1 2 3]] 2
+	--assert #[i32! [2 1 3]] = reverse/part #[i32! [1 2 3]] 2
+	--assert #[i64! [2 1 3]] = reverse/part #[i64! [1 2 3]] 2
+	--assert #[f32! [2.0 1.0 3.0]] = reverse/part #[f32! [1 2 3]] 2
+	--assert #[f64! [2.0 1.0 3.0]] = reverse/part #[f64! [1 2 3]] 2
+
+	--assert #[u8!  [1 3 2]] = head reverse next #[u8!  [1 2 3]]
+	--assert #[u16! [1 3 2]] = head reverse next #[u16! [1 2 3]]
+	--assert #[u32! [1 3 2]] = head reverse next #[u32! [1 2 3]]
+	--assert #[u64! [1 3 2]] = head reverse next #[u64! [1 2 3]]
+	--assert #[i8!  [1 3 2]] = head reverse next #[i8!  [1 2 3]]
+	--assert #[i16! [1 3 2]] = head reverse next #[i16! [1 2 3]]
+	--assert #[i32! [1 3 2]] = head reverse next #[i32! [1 2 3]]
+	--assert #[i64! [1 3 2]] = head reverse next #[i64! [1 2 3]]
+	--assert #[f32! [1.0 3.0 2.0]] = head reverse next #[f32! [1 2 3]]
+	--assert #[f64! [1.0 3.0 2.0]] = head reverse next #[f64! [1 2 3]]
 ===end-group===
 
 ===start-group=== "VECTOR compact construction"

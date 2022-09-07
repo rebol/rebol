@@ -1009,10 +1009,11 @@ failed:
 
 /***********************************************************************
 **
-*/	static int Crypt_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int Crypt_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 ***********************************************************************/
 {
+	REBSER *port;
 	REBVAL *state;
 	REBVAL *arg1;
 	REBVAL *arg2;
@@ -1021,7 +1022,7 @@ failed:
 	REBCNT  len;
 	CRYPT_CTX *ctx = NULL;
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 	
 	state = BLK_SKIP(port, STD_PORT_STATE);
 	if (IS_HANDLE(state)) {

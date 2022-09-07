@@ -234,7 +234,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	// MAKE/TO BINARY! <vector!>
 	case REB_VECTOR:
 		// result is in little-endian!
-		ser = Copy_Bytes(VAL_BIN_DATA(arg), VAL_LEN(arg) * VAL_VEC_WIDTH(arg));
+		ser = Copy_Bytes(VAL_DATA(arg), VAL_LEN(arg) * VAL_VEC_WIDTH(arg));
 		break;
 
 	case REB_BLOCK:

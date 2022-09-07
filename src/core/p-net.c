@@ -171,10 +171,11 @@ enum Transport_Types {
 
 /***********************************************************************
 **
-*/	static int Transport_Actor(REBVAL *ds, REBSER *port, REBCNT action, enum Transport_Types proto)
+*/	static int Transport_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action, enum Transport_Types proto)
 /*
 ***********************************************************************/
 {
+	REBSER *port;
 	REBREQ *sock;	// IO request
 	REBVAL *spec;	// port spec
 	REBVAL *arg;	// action argument value
@@ -184,7 +185,7 @@ enum Transport_Types {
 	REBCNT len;		// generic length
 	REBSER *ser;	// simplifier
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 
 	*D_RET = *D_ARG(1);
 	arg = D_ARG(2);
@@ -394,20 +395,20 @@ enum Transport_Types {
 
 /***********************************************************************
 **
-*/	static int TCP_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int TCP_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 ***********************************************************************/
 {
-	return Transport_Actor(ds, port, action, TRANSPORT_TCP);
+	return Transport_Actor(ds, port_value, action, TRANSPORT_TCP);
 }
 
 /***********************************************************************
 **
-*/	static int UDP_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int UDP_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 ***********************************************************************/
 {
-	return Transport_Actor(ds, port, action, TRANSPORT_UDP);
+	return Transport_Actor(ds, port_value, action, TRANSPORT_UDP);
 }
 
 /***********************************************************************

@@ -33,10 +33,11 @@
 
 /***********************************************************************
 **
-*/	static int Clipboard_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int Clipboard_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 ***********************************************************************/
 {
+	REBSER *port;
 	REBREQ *req;
 	REBINT result;
 	REBVAL *arg;
@@ -44,7 +45,7 @@
 	REBINT len;
 	REBSER *ser;
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 
 	arg = D_ARG(2);
 

@@ -286,8 +286,9 @@ switch: native [
 	"Selects a choice and evaluates the block that follows it."
 	value "Target value"
 	cases [block!] "Block of cases to check"
-	/default case "Default case if no others found"
+	/default  def "Default case if no others found"
 	/all "Evaluate all matches (not just first one)"
+	/case "Perform a case-sensitive comparison"
 ]
 
 throw: native [
@@ -652,11 +653,14 @@ to-rebol-file: native [
 ]
 
 transcode: native [
-	{Translates UTF-8 binary source to values. Returns [value binary].}
-	source [binary!] "Must be Unicode UTF-8 encoded"
+	{Translates UTF-8 binary source to values. Returns one or several values in a block.}
+	source [binary! string!] "UTF-8 input buffer; string argument will be UTF-8 encoded"
 	/next "Translate next complete value (blocks as single value)"
+	/one  "Translate next complete value (returns the value only)"
 	/only "Translate only a single value (blocks dissected)"
 	/error "Do not cause errors - return error object as value in place"
+	/line  "Return also information about number of lines scaned"
+	 count [integer!] "Initial line number"
 ]
 
 echo: native [

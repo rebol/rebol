@@ -155,12 +155,13 @@
 
 /***********************************************************************
 **
-*/	static int Dir_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int Dir_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 **		Internal port handler for file directories.
 **
 ***********************************************************************/
 {
+	REBSER *port;
 	REBVAL *spec;
 	REBVAL *path;
 	REBVAL *state;
@@ -170,7 +171,7 @@
 	REBCNT len;
 	//REBYTE *flags;
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 
 	*D_RET = *D_ARG(1);
 	CLEARS(&dir);

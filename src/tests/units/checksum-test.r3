@@ -172,7 +172,27 @@ D2079D59D6984814DAC71CDEB38097DB52F77810391FD7B6F92FFBD64EA93DF8
 		--assert port? update port
 		--assert sum1 = port/data
 		close port
-
+if find system/catalog/checksums 'ripemd160 [
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2516
+	--test-- "checksum-port-ripemd160"
+		port: open checksum:ripemd160
+		sum1: checksum bin 'ripemd160
+		sum2: checksum join bin bin 'ripemd160
+		--assert #{595FEC4966B173C6CD00ECCAF1A007F3C6C5B938} = sum1
+		--assert port? port
+		--assert open? port
+		--assert 'ripemd160 = port/spec/method
+		--assert port? write port bin
+		--assert sum1 = read port
+		--assert port? write port bin
+		--assert sum2 = read port
+		--assert sum2 = read port
+		--assert not open? close port
+		--assert port? write open port bin
+		--assert port? update port
+		--assert sum1 = port/data
+		close port
+]
 	--test-- "checksum-write-refinements"
 		port: open checksum://
 		write/part port bin 1

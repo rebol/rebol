@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -242,7 +242,20 @@ static REBCNT *CRC32_Table = 0;
 		break;
 
 	case REB_TUPLE:
-		ret = Hash_String(VAL_TUPLE(val), VAL_TUPLE_LEN(val));
+		if (VAL_TUPLE_LEN(val) <= 4) {
+			// For colors (tuple of size 4) there may be used Knuth's multiplicative hash.
+			// Knuth's multiplication constant is 2654435761L, but it may be different as long
+			// as it is:
+			// 1. Odd number (Otherwise we may lose the highest bit.)
+			// 2. Has no long streaks of ones or zeros.
+			ret = ((REBCNT)VAL_INT32(val) * 2654435761L) >> 26;
+			// The higher bits contain more mixture from the multiplication,
+			// so the shift is not 32, but just 26.
+
+			// In Brotli compressor the constant is 506832829L and the shift is 18.
+		} else {
+			ret = Hash_String(VAL_TUPLE(val), VAL_TUPLE_LEN(val));
+		}
 		break;
 
 	case REB_PAIR:

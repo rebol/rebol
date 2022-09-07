@@ -63,6 +63,7 @@ Rebol [
 	--test-- "issue-662"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/662
 		--assert not error? try [do "rebol [type: module] 1 + 1"]
+		--assert not error? try [do "rebol [type: module] print {Hello issues/662}"]
 
 	--test-- "issue-121"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/121
@@ -320,11 +321,16 @@ Rebol [
 
 	--test-- "reduce/only"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/359
-		--assert [1 #[unset!] 2] = reduce/only [1 no-such-word 2] []
-		--assert [1 #[unset!] 2] = reduce/only [1 no-such-word 2] none
-		--assert [1 some-word 2] = reduce/only [1 some-word 2] [some-word]
+		--assert [1 2] = reduce/only [1 2] []
+		--assert [1 2] = reduce/only [1 2] none
 		--assert native? second reduce/only [1 now 2] none
 		--assert word?   second reduce/only [1 now 2] [now]
+		; it is not allowed to have unset reduced using reduce/only anymore!
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1771
+		--assert all [error? e: try [ reduce/only [1 no-such-word 2] []   ] e/id = 'no-value]
+		--assert all [error? e: try [ reduce/only [1 no-such-word 2] none ] e/id = 'no-value]
+		; if the word is listed in the /only value, than it is ok:
+		--assert [1 no-such-word 2] = reduce/only [1 no-such-word 2] [no-such-word]
 
 	--test-- "reduce/into"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/506
@@ -487,7 +493,7 @@ Rebol [
 
 	--test-- "to-value"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2003
-		--assert none? to-value #[unset!]
+		--assert none? to-value #[unset]
 		--assert integer? to-value 1
 
 	--test-- "unset unbind 'x"
@@ -672,6 +678,11 @@ Rebol [
 		]
 		append out foo
 		--assert "HelloReturning" = out
+	--test-- "switch/case"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1773
+		--assert 'upper = switch "a" ["A" ['upper] "a" ['lower]]
+		--assert 'lower = switch/case "a" ["A" ['upper] "a" ['lower]]
+		--assert 'upper = switch/case "A" ["A" ['upper] "a" ['lower]]
 ===end-group===
 
 
@@ -843,6 +854,9 @@ Rebol [
 		a: 1 loop 1 [a: reduce [break]]
 		--assert :a =? 1
 		a: 1 loop 1 [a: compose [(break)]]
+		--assert :a =? 1
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2060
+		a: 1 loop 1 [a: reduce quote (break)]
 		--assert :a =? 1
 
 ===end-group===

@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.9.0
+version: 3.10.0
 
 target-windows: [
 	os:       windows
@@ -1174,6 +1174,17 @@ eggs: [
 			:target-macos
 			:include-rebol-bulk
 			:make-x64-exe
+		]
+		"Rebol/Base macos-arm64" [
+			name:   %rebol3-base-macos-arm64
+			:target-macos
+			:make-arm64-exe
+		]
+		"Rebol/Core macos-arm64" [
+			name:   %rebol3-core-macos-arm64
+			:target-macos
+			:include-rebol-core
+			:make-arm64-exe
 		]
 		"Rebol/Bulk macos-arm64" [
 			name:   %rebol3-bulk-macos-arm64

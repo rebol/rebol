@@ -741,8 +741,9 @@ got_err:
 {
 	REBVAL *val = D_ARG(1);
 	REBVAL *into = D_REF(5) ? D_ARG(6) : 0;
+	REBCNT type = VAL_TYPE(val);
 
-	if (IS_BLOCK(val) || IS_PAREN(val)) {
+	if (type == REB_BLOCK || type == REB_PAREN) {
 		REBSER *ser = VAL_SERIES(val);
 		REBCNT index = VAL_INDEX(val);
 
@@ -753,9 +754,12 @@ got_err:
 		else
 			Reduce_Block(ser, index, into);
 
-		if(!into)
-			SET_TYPE(DS_TOP, VAL_TYPE(val));
-
+		if (type == REB_PAREN)
+			// there must be also test, if the result is a block,
+			// because it can be also THROWN! see issue-1760
+			if (!into && IS_BLOCK(DS_TOP))
+				SET_TYPE(DS_TOP, REB_PAREN);
+		
 		return R_TOS;
 	}
 	else if (into != 0) {
@@ -809,11 +813,12 @@ got_err:
 	REBVAL *blk = VAL_BLK_DATA(D_ARG(2));
 	REBVAL *result;
 	REBOOL all = D_REF(5);
+	REBOOL is_case = D_REF(6);
 	REBOOL found = FALSE;
 
 	// Find value in case block...
 	for (; NOT_END(blk); blk++) {
-		if (!IS_BLOCK(blk) && 0 == Cmp_Value(DS_ARG(1), blk, FALSE)) { // avoid stack move
+		if (!IS_BLOCK(blk) && 0 == Cmp_Value(DS_ARG(1), blk, is_case)) { // avoid stack move
 			// Skip forward to block...
 			for (; !IS_BLOCK(blk) && NOT_END(blk); blk++);
 			if (IS_END(blk)) break;

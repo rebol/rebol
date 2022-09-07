@@ -29,7 +29,7 @@ if find codecs 'CSV [
 		--assert {"hello world","from","Red"} = to-csv ["hello world" from Red]
 		--assert {"hello,world","hello","world"} = to-csv ["hello,world" hello world]
 		--assert {1,"^/",3} = to-csv [1 "^/" 3]
-		--assert {1,2022-05-02 10:06:32,3,"a",""""} = [1 2-May-2022/10:06:32 $3 #"a" #"^""]
+		--assert {1,2022-05-02 10:06:32,3,"a",""""} = to-csv [1 2-May-2022/10:06:32 $3 #"a" #"^""]
 	--test-- "to-csv-2-multi-line"
 		--assert "1,2,3^/4,5,6^/" = to-csv [[1 2 3][4 5 6]]
 		--assert "1,2,3^/4,5,6^/7,8,9^/" = to-csv [[1 2 3][4 5 6][7 8 9]]

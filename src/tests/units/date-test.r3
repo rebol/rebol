@@ -66,7 +66,7 @@ Rebol [
 
 ===start-group=== "#[date! ...]"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1034
-	--test-- "#[date!] valid"
+	--test-- "#[date! ...] valid"
 		--assert 1-Feb-0003 = #[date! 1 2 3]
 		--assert 1-Feb-0003/4:00 = #[date! 1 2 3 4:0]
 		--assert 1-Feb-0003/4:00+5:00 = #[date! 1 2 3 4:0 5:0]
@@ -77,13 +77,14 @@ Rebol [
 		--assert 1-Jan-2000/10:00+2:00 = #[date! 1-1-2000 10:0 2:0]
 		--assert 5-Jan-2000/4:00 = #[date! 1-1-2000 100:0]
 
-	--test-- "#[date!] invalid"
-		--assert error? try [load {#[date!]}]
+	--test-- "#[date! ...] invalid"
 		--assert error? try [load {#[date! 1]}]
 		--assert error? try [load {#[date! 1 2]}]
 		--assert error? try [load {#[date! 1 2 3 x]}]
 		--assert error? try [load {#[date! 1 2 3 4:0 x]}]
 		--assert error? try [load {#[date! 1 2 3 4:0 5:0 3]}]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2508
+		--assert datatype? try [load {#[date!]}] 
 
 ===end-group===
 

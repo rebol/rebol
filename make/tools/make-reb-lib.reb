@@ -163,7 +163,7 @@ func-header: [
 
 process: func [file] [
 	data: read-file file
-	parse/all data [ any func-header ]
+	parse data [ any func-header ]
 ]
 
 ;-----------------------------------------------------------------------------

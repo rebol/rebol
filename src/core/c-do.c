@@ -1203,6 +1203,7 @@ eval_func2:
 				continue;
 			}
 			v = Get_Var(val);
+			if (IS_UNSET(v)) Trap1(RE_NO_VALUE, val);
 			DS_PUSH(v);
 		}
 		else if (IS_PATH(val)) {

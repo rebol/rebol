@@ -98,7 +98,7 @@ func-header: [
 
 process: func [file] [
 	data: read-file file
-	parse/all data [
+	parse data [
 		any func-header
 	]
 ]

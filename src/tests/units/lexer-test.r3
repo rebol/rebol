@@ -8,6 +8,72 @@ Rebol [
 
 ~~~start-file~~~ "Lexer"
 
+===start-group=== "TRANSCODE"
+	--test-- "transcode basic"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/688
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1329
+		--assert [1 + 1] = transcode to binary! "1 + 1"
+		--assert [1 + 1] = transcode "1 + 1"
+		--assert []      = transcode ""
+
+	--test-- "transcode/next"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/535
+		--assert [1 " + 1"]      = transcode/next "1 + 1"
+		--assert [1 #{202B2031}] = transcode/next to binary! "1 + 1"
+		--assert [[1 + 1] ""]    = transcode/next "[1 + 1]"
+		--assert [[1 + 1] #{}]   = transcode/next to binary! "[1 + 1]"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2511
+		--assert all [error? e: try[transcode/next ""] e/id = 'past-end]
+		--assert all [error? e: transcode/next/error "" e/id = 'past-end]
+
+	--test-- "transcode/one"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1329
+		--assert all [error? e: try[transcode/one ""] e/id = 'past-end]
+		--assert all [error? e: transcode/one/error "" e/id = 'past-end]
+		--assert unset?  transcode/one "#[unset]"
+		--assert []    = transcode/one "[]"
+		--assert 1     = transcode/one "1 2"
+		--assert [1 2] = transcode/one "[1 2]"
+
+	--test-- "transcode/line"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2302
+		--assert all [error? e: try [transcode "1 1d"] e/near = "(line 1) 1 1d"]
+		--assert all [error? e: try [transcode "1^/1d"] e/near = "(line 2) 1d"]
+		--assert all [error? e: try [transcode/line "1 1d" 10] e/near = "(line 10) 1 1d"]
+		--assert all [error? e: try [transcode/line "1^/1d" 10] e/near = "(line 11) 1d"]
+		--assert all [
+			code: "1^/2" line: 1
+			set [value code line] transcode/next/line :code :line
+			value = 1 line = 1
+			set [value code line] transcode/next/line :code :line
+			value = 2 line = 2
+		]
+
+	--test-- "transcode/error"
+		--assert all [
+			block? blk: transcode/error "1 2d"
+			blk/1 = 1
+			error? blk/2
+			blk/2/id = 'invalid
+		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1857
+		--assert all [
+			error? e: transcode/one/error "#[block! 1]"
+			e/id = 'malconstruct
+		]
+		--assert all [
+			error? e: transcode/one/error "#[block! [1d]"
+			e/id = 'malconstruct
+		]
+		--assert all [
+			error? e: transcode/one/error "#["
+			e/id = 'missing
+			e/arg1 = "end-of-script"
+		]
+
+
+===end-group===
+
 ===start-group=== "Invalid construction"
 	--test-- "Invalid MAP"
 		--assert error? err: try [load {#(x)}]
@@ -401,35 +467,104 @@ Rebol [
 		--assert error? try [load {#[file! "ab" 2 x]}]
 	--test-- {object!}
 		;@@ https://github.com/Oldes/Rebol-issues/issues/864
-		--assert block? try [transcode      to-binary "#[object! [a: 1 b: 2]]"]
-		--assert block? try [transcode/only to-binary "#[object! [a: 1 b: 2]]"]
+		--assert block?  try [transcode      "#[object! [a: 1 b: 2]]"]
+		--assert block?  try [transcode/only "#[object! [a: 1 b: 2]]"]
+		--assert object? try [transcode/one  "#[object! [a: 1 b: 2]]"]
 	--test-- {function!}
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1114
-		--assert function? first transcode to binary! {#[function! [[a [series!]][print a]]]}
+		--assert function? transcode/one {#[function! [[a [series!]][print a]]]}
+
+	--test-- {datatype!}
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2508
+		--assert datatype? transcode/one {#[unset!]}
+		--assert datatype? transcode/one {#[none!]}
+		--assert datatype? transcode/one {#[logic!]}
+		--assert datatype? transcode/one {#[integer!]}
+		--assert datatype? transcode/one {#[decimal!]}
+		--assert datatype? transcode/one {#[percent!]}
+		--assert datatype? transcode/one {#[money!]}
+		--assert datatype? transcode/one {#[char!]}
+		--assert datatype? transcode/one {#[pair!]}
+		--assert datatype? transcode/one {#[tuple!]}
+		--assert datatype? transcode/one {#[time!]}
+		--assert datatype? transcode/one {#[date!]}
+		--assert datatype? transcode/one {#[binary!]}
+		--assert datatype? transcode/one {#[string!]}
+		--assert datatype? transcode/one {#[file!]}
+		--assert datatype? transcode/one {#[email!]}
+		--assert datatype? transcode/one {#[ref!]}
+		--assert datatype? transcode/one {#[url!]}
+		--assert datatype? transcode/one {#[tag!]}
+		--assert datatype? transcode/one {#[bitset!]}
+		--assert datatype? transcode/one {#[image!]}
+		--assert datatype? transcode/one {#[vector!]}
+		--assert datatype? transcode/one {#[block!]}
+		--assert datatype? transcode/one {#[paren!]}
+		--assert datatype? transcode/one {#[path!]}
+		--assert datatype? transcode/one {#[set-path!]}
+		--assert datatype? transcode/one {#[get-path!]}
+		--assert datatype? transcode/one {#[lit-path!]}
+		--assert datatype? transcode/one {#[map!]}
+		--assert datatype? transcode/one {#[datatype!]}
+		--assert datatype? transcode/one {#[typeset!]}
+		--assert datatype? transcode/one {#[word!]}
+		--assert datatype? transcode/one {#[set-word!]}
+		--assert datatype? transcode/one {#[get-word!]}
+		--assert datatype? transcode/one {#[lit-word!]}
+		--assert datatype? transcode/one {#[refinement!]}
+		--assert datatype? transcode/one {#[issue!]}
+		--assert datatype? transcode/one {#[native!]}
+		--assert datatype? transcode/one {#[action!]}
+		--assert datatype? transcode/one {#[rebcode!]}
+		--assert datatype? transcode/one {#[command!]}
+		--assert datatype? transcode/one {#[op!]}
+		--assert datatype? transcode/one {#[closure!]}
+		--assert datatype? transcode/one {#[function!]}
+		--assert datatype? transcode/one {#[frame!]}
+		--assert datatype? transcode/one {#[object!]}
+		--assert datatype? transcode/one {#[module!]}
+		--assert datatype? transcode/one {#[error!]}
+		--assert datatype? transcode/one {#[task!]}
+		--assert datatype? transcode/one {#[port!]}
+		--assert datatype? transcode/one {#[gob!]}
+		--assert datatype? transcode/one {#[event!]}
+		--assert datatype? transcode/one {#[handle!]}
+		--assert datatype? transcode/one {#[struct!]}
+		--assert datatype? transcode/one {#[library!]}
+		--assert datatype? transcode/one {#[utype!]}
+ 	--test-- {direct values}
+ 		--assert logic? transcode/one {#[true]}
+ 		--assert logic? transcode/one {#[false]}
+ 		--assert none?  transcode/one {#[none]}
+ 		--assert unset? transcode/one {#[unset]}
 
 ===end-group===
 
 ===start-group=== "BINARY"
 	--test-- {binary! with spaces}
-		--assert #{00}   = first transcode/only to binary! " #{0 0}"
-		--assert #{00}   = first transcode/only to binary! "2#{0000 00 00}"
-		--assert #{00}   = first transcode/only to binary! "2#{0000^/0000}"
-		--assert #{00}   = first transcode/only to binary! "2#{0000^M0000}"
-		--assert #{01}   = first transcode/only to binary! "2#{0000^-0001}"
-		--assert #{02}   = first transcode/only to binary! "2#{0000^ 0010}"
-		--assert #{0001} = first transcode/only to binary! "16#{00 01}"
-		--assert #{0001} = first transcode/only to binary! "64#{AA E=}"
+		--assert #{00}   = transcode/one " #{0 0}"
+		--assert #{00}   = transcode/one "2#{0000 00 00}"
+		--assert #{00}   = transcode/one "2#{0000^/0000}"
+		--assert #{00}   = transcode/one "2#{0000^M0000}"
+		--assert #{01}   = transcode/one "2#{0000^-0001}"
+		--assert #{02}   = transcode/one "2#{0000^ 0010}"
+		--assert #{0001} = transcode/one "16#{00 01}"
+		--assert #{0001} = transcode/one "64#{AA E=}"
 
 	--test-- {binary! with comments inside}
 	;@@ https://github.com/Oldes/Rebol-wishes/issues/23
-		--assert #{00}   = first transcode/only/error to binary! "#{;XXX^/00}"
-		--assert #{00}   = first transcode/only/error to binary! "#{00;XXX^/}"
-		--assert #{0002} = first transcode/only/error to binary! "#{00;XXX^/02}"
-		--assert #{0002} = first transcode/only/error to binary! "#{00;XXX^M02}" ;CR is also comment stopper
+		--assert #{00}   = transcode/one/error "#{;XXX^/00}"
+		--assert #{00}   = transcode/one/error "#{00;XXX^/}"
+		--assert #{0002} = transcode/one/error "#{00;XXX^/02}"
+		--assert #{0002} = transcode/one/error "#{00;XXX^M02}" ;CR is also comment stopper
+
+		--assert error? transcode/one/error "#{0}"
+
 	--test-- {binary! with other valid escapes}
-		--assert #{0003} = first transcode/only/error to binary! "#{^(30)^(30)03}"
+		--assert #{0003} = transcode/one/error "#{^(30)^(30)03}"
 	--test-- {binary! with unicode char} ; is handled early
-		--assert error? first transcode/only/error to binary! "#{0č}"
+		--assert error? first transcode/only/error "#{0č}"
+		--assert error? transcode/one/error "#{0č}"
 	--test-- "Invalid binary"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1431
 		--assert all [error? e: try [load {000016#{FF}}] e/id = 'invalid e/arg1 = "integer"]

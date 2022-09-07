@@ -50,7 +50,7 @@ Rebol [
 		--assert 2 = obj/a
 		--assert 3 = put obj 'b 3
 		--assert 3 = obj/b
-		--assert unset? put obj 'b #[unset!]
+		--assert unset? put obj 'b #[unset]
 		--assert unset? obj/b
 		
 	--test-- "compare extended objects"

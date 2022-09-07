@@ -883,7 +883,7 @@ STOID Mold_Typeset(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	// Convert bits to types (we can make this more efficient !!)
 	for (n = 0; n < REB_MAX; n++) {
 		if (TYPE_CHECK(value, n)) {
-			Emit(mold, "+DN ", SYM_DATATYPE_TYPE, n + 1);
+			Emit(mold, "N ", n + 1);
 		}
 	}
 	Trim_Tail(mold->series, ' ');
@@ -1248,10 +1248,16 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 //		break;
 
 	case REB_BITSET:
-		// uses always construction syntax
-		Emit(mold, "#[T ", value);
+		// // uses always construction syntax
+		// Emit(mold, "#[T ", value);
+		// Mold_Bitset(value, mold);
+		// Append_Byte(mold->series, ']');
+		// break;
+		// Above code makes some problem when preprocessing Rebol source!
+		// So reverting back to the old result...
+		Pre_Mold(value, mold); // #[bitset! or make bitset!
 		Mold_Bitset(value, mold);
-		Append_Byte(mold->series, ']');
+		End_Mold(mold);
 		break;
 
 	case REB_IMAGE:
@@ -1293,7 +1299,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		if (!molded)
 			Emit(mold, "N", VAL_DATATYPE(value) + 1);
 		else
-			Emit(mold, "+DN", SYM_DATATYPE_TYPE, VAL_DATATYPE(value) + 1);
+			Emit(mold, "+N", VAL_DATATYPE(value) + 1);
 		break;
 
 	case REB_TYPESET:
@@ -1411,11 +1417,12 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		else Emit(mold, "+T", value);
 		break;
 
-	case REB_END:
 	case REB_UNSET:
-		if (molded) Emit(mold, "+T", value);
+		if(molded) Append_Bytes(ser,"#[unset]");
 		break;
-
+	case REB_END:
+		if(molded) Append_Bytes(ser,"#[end]");
+		break;
 	default:
 		Crash(RP_DATATYPE+5, VAL_TYPE(value));
 	}

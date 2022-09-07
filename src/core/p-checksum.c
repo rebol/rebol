@@ -197,10 +197,11 @@
 
 /***********************************************************************
 **
-*/	static int Checksum_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int Checksum_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 ***********************************************************************/
 {
+	REBSER *port;
 	REBVAL *spec;
 	REBVAL *method;
 	REBREQ *req;
@@ -209,7 +210,7 @@
 	REBVAL *data;
 	REBVAL *ctx;
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 
 	spec = BLK_SKIP(port, STD_PORT_SPEC);
 	if (!IS_OBJECT(spec)) Trap1(RE_INVALID_SPEC, spec);
@@ -218,8 +219,6 @@
         Trap1(RE_INVALID_SPEC, spec);
         return 0; //just to make xcode analyze happy
     }
-
-	*D_RET = *D_ARG(1);
 
 	req = Use_Port_State(port, RDI_CHECKSUM, sizeof(REBREQ));
 
@@ -230,6 +229,8 @@
 	Init_sizes(method, &blk_size, &ctx_size);
 
 	if(ctx_size == 0) Trap1(RE_INVALID_SPEC, method);
+
+	*D_RET = *port_value;
 
 	switch (action) {
 	case A_WRITE:
@@ -374,7 +375,7 @@
 #endif
 		}
 		if(action == A_READ) *D_RET = *data;
-		return R_RET;
+		break;
 
 	case A_OPEN:
 		if (Checksum_Open(port, method, ctx_size)) {

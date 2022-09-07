@@ -88,6 +88,12 @@ Rebol [
 			error? e: try [load #{789DE3}] ;- no crash!
 			e/id = 'invalid-chars
 		]
+	--test-- "issue-2302"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2302
+		--assert all [
+			error? e: try [load %units/files/invalid-decimal.r]
+			e/near = "(line 4) 4line"
+		]
 
 ===end-group===
 

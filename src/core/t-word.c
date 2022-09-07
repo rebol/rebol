@@ -105,7 +105,7 @@
 				bp = Qualify_String(arg, 255, &len, TRUE);
 				if (type == REB_ISSUE) sym = Scan_Issue(bp, len);
 				else sym = Scan_Word(bp, len);
-				if (!sym) Trap1(RE_BAD_CHAR, arg);
+				if (!sym) Trap0(RE_INVALID_CHARS);
 			}
 			else if (IS_CHAR(arg)) {
 				REBYTE buf[8] = {0};

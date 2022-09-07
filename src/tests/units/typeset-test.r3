@@ -61,7 +61,7 @@ Rebol [
 
 	--test-- "issue-985"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/985
-		--assert [#[datatype! end!]] = difference system/catalog/datatypes to-block any-type!
+		--assert [#[end!]] = difference system/catalog/datatypes to-block any-type!
 		--assert (last to-block any-type!) == (last system/catalog/datatypes)
 		--assert #[typeset! [end!]] = difference make typeset! system/catalog/datatypes any-type!
 

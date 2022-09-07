@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -1366,36 +1367,6 @@ scan_arrow_word:
 	}
 }
 
-#ifdef not_used
-//!!!
-/***********************************************************************
-**
-	REBOOL Construct_Simple(REBVAL *value, REBSER *spec)
-/*
-**		Handle special #[type] constructs. These are used to
-**		boot REBOL, so must not require binding.
-**
-***********************************************************************/
-{
-	REBVAL *blk = BLK_HEAD(spec);
-	if (!IS_WORD(blk)) return FALSE;
-	switch (VAL_WORD_SYM(blk)-1) {
-	case SYM_NONE:
-		SET_NONE(value);
-		break;
-	case SYM_FALSE:
-		SET_LOGIC(value, FALSE);
-		break;
-	case SYM_TRUE:
-		SET_LOGIC(value, TRUE);
-		break;
-	default:
-		return FALSE;
-	}
-	return TRUE;
-}
-#endif
-
 extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 
 /***********************************************************************
@@ -1690,15 +1661,20 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 		case TOKEN_CONSTRUCT:
 			block = Scan_Full_Block(scan_state, ']');
 			value = BLK_TAIL(emitbuf);
-			emitbuf->tail++; // Protect the block from GC
-//			if (!Construct_Simple(value, block)) {
-			Bind_Block(Lib_Context, BLK_HEAD(block), BIND_ALL|BIND_DEEP);
-			//Bind_Global_Block(BLK_HEAD(block));
-			if (!Construct_Value(value, block)) {
-				if (IS_END(value)) Set_Block(value, block);
-				Trap1(RE_MALCONSTRUCT, value);
+			// make sure that there was not an error... transcode "#["
+			if (!IS_ERROR(value)){
+				emitbuf->tail++; // Protect the block from GC
+				if (!Construct_Value(value, block)) {
+					if (IS_END(value)) Set_Block(value, block);
+					if (GET_FLAG(scan_state->opts, SCAN_RELAX)) {
+						block = Make_Error(RE_MALCONSTRUCT, value, 0, 0);
+						SET_ERROR(value, RE_PAST_END, block);
+					} else {
+						Trap1(RE_MALCONSTRUCT, value);
+					}
+				}
+				emitbuf->tail--; // Unprotect
 			}
-			emitbuf->tail--; // Unprotect
 			break;
 
 		case TOKEN_MAP:
@@ -1752,6 +1728,7 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 				goto exit_block;
 			}
 		}
+		
 
 		// Check for end of path:
 		if (mode_char == '/') {
@@ -1892,22 +1869,83 @@ exit_block:
 **
 ***********************************************************************/
 {
+	SCAN_STATE scan_state;
+	REBVAL *src  = D_ARG(1);
+	REBOOL next  = D_REF(2);
+	REBOOL one   = D_REF(3);
+	REBOOL only  = D_REF(4);
+	REBOOL relax = D_REF(5);
+	REBOOL line  = D_REF(6);
+	REBVAL *count = D_ARG(7);
 	REBSER *blk;
-    SCAN_STATE scan_state;
+	REBSER *ser;
+	REBYTE *bin;
+	REBCNT  len;
+	
+	if (VAL_BYTE_SIZE(src)) {
+		bin = VAL_BIN_DATA(src);
+		len = VAL_LEN(src);
+	} else {
+		// unicode string must be converted to UTF-8 first
+		// the result is temporary stored in the shared buffer (BUF_FORM)
+		ser = Encode_UTF8_String(VAL_UNI_DATA(src), VAL_LEN(src), TRUE, 0);
+		bin = BIN_HEAD(ser);
+		len = BIN_LEN(ser);
+	}
 
-    Init_Scan_State(&scan_state, VAL_BIN_DATA(D_ARG(1)), VAL_LEN(D_ARG(1)));
+    Init_Scan_State(&scan_state, bin, len);
 
-	if (D_REF(2)) SET_FLAG(scan_state.opts, SCAN_NEXT);
-	if (D_REF(3)) SET_FLAG(scan_state.opts, SCAN_ONLY);
-	if (D_REF(4)) SET_FLAG(scan_state.opts, SCAN_RELAX);
+	if (next || one) SET_FLAG(scan_state.opts, SCAN_NEXT);
+	if (only)  SET_FLAG(scan_state.opts, SCAN_ONLY);
+	if (relax) SET_FLAG(scan_state.opts, SCAN_RELAX);
+	if (line) {
+		if (0 >= VAL_INT64(count)) Trap1(RE_OUT_OF_RANGE, count);
+		scan_state.line_count = VAL_UNT32(count);
+	}
+	// Scan_Code clears the next flag!
+	// Decide if result should contain also modified input position.
+	// (with refinements /next, /only and /error)
+	next = scan_state.opts > 0;
 
 	blk = Scan_Code(&scan_state, 0);
 	DS_RELOAD(ds); // in case stack moved
+	
+	if (next && IS_END((REBVAL*)BLK_SKIP(blk, 0))) {
+		if (relax) {
+			ser = Make_Error(RE_PAST_END, src, 0, 0);
+			SET_ERROR(D_RET, RE_PAST_END, ser);
+			return R_RET;
+		}
+		Trap0(RE_PAST_END);
+	}
+	if (one) {
+		*D_RET = *BLK_SKIP(blk, 0);
+		return R_RET;
+	}
+	
 	Set_Block(D_RET, blk);
 
-	VAL_INDEX(D_ARG(1)) = scan_state.end - VAL_BIN(D_ARG(1));
-	Append_Val(blk, D_ARG(1));
-
+	if (next) {
+		// when used transcode with refinements /next, /only and /error
+		// the input series position must be updated
+		if (VAL_BYTE_SIZE(src)) {
+			VAL_INDEX(src) = scan_state.end - VAL_BIN(src);
+		} else {
+			// the scan state used the shared buffer, to get how many codepoints
+			// we advanced, we must first mark end...
+			len = scan_state.end - bin;
+			bin[len+1] = 0;
+			// ... and count the real length advanced
+			len = Length_As_UTF8_Code_Points(bin);
+			//printf("%i\n", len);
+			VAL_INDEX(src) = len;
+		}
+		Append_Val(blk, src);
+		if (line) {
+			SET_INTEGER(count, scan_state.line_count);
+			Append_Val(blk, count);
+		}
+	}
 	return R_RET;
 }
 

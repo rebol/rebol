@@ -178,12 +178,18 @@ Rebol [
 	loop 10 [--assert not error? try [close p open p]] ;- no crash
 	--assert not error? try [close p]
 
---test-- "issue-589"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/589
-	--assert all [
-		error? e: try [system/schemes/tcp/actor] ;- no crash
-		e/id = 'invalid-port
+;@@ https://github.com/Oldes/Rebol-issues/issues/589
+	invalid-port: open %./
+	invalid-port/spec: none
+; trying with all available native actors...
+foreach [n s] system/schemes [
+	if native? :s/actor [
+		--test-- ajoin ["issue-589 " n]
+		--assert all [ error? e: try [s/actor] e/id = 'no-arg] ;- no crash
+		--assert all [ error? e: try [s/actor 'nonsense] e/id = 'expect-arg] ;- no crash
+		--assert all [ error? e: try [s/actor invalid-port] e/id = 'expect-arg] ;- no crash
 	]
+]
 
 --test-- "issue-1295"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1295
