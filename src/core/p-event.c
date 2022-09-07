@@ -139,19 +139,20 @@ REBREQ *req;		//!!! move this global
 
 /***********************************************************************
 **
-*/	static int Event_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int Event_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 **		Internal port handler for events.
 **
 ***********************************************************************/
 {
+	REBSER *port;
 	REBVAL *spec;
 	REBVAL *state;
 	REBCNT result;
 	REBVAL *arg;
 	REBVAL save_port;
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 
 	arg = D_ARG(2);
 	*D_RET = *D_ARG(1);

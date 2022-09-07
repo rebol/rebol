@@ -33,10 +33,11 @@
 
 /***********************************************************************
 **
-*/	static int Audio_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int Audio_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 ***********************************************************************/
 {
+	REBSER *port;
 	REBVAL *spec;
 	REBREQ *req;
 	REBINT result;
@@ -45,10 +46,9 @@
 	REBOOL sync = FALSE; // act synchronously
 	REBVAL tmp;
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 
 	arg = D_ARG(2);
-	*D_RET = *D_ARG(1);
 
 	req = Use_Port_State(port, RDI_AUDIO, sizeof(REBREQ));
 
@@ -94,7 +94,7 @@
 	puts("not supported command");
 		Trap_Action(REB_PORT, action);
 	}
-	return R_RET;
+	return R_ARG1; //= port
 }
 
 

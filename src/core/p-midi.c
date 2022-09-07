@@ -53,10 +53,11 @@
 
 /***********************************************************************
 **
-*/	static int MIDI_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int MIDI_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 ***********************************************************************/
 {
+	REBSER *port;
 	REBREQ *req;
 	REBINT result;
 	REBVAL *arg;
@@ -66,7 +67,7 @@
 
 	//printf("MIDI_Actor action: %i\n", action);
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 
 	req = Use_Port_State(port, RDI_MIDI, sizeof(REBREQ));
 

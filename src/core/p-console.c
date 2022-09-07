@@ -42,10 +42,11 @@
 
 /***********************************************************************
 **
-*/	static int Console_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int Console_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 ***********************************************************************/
 {
+	REBSER *port;
 	REBREQ *req;
 	REBINT result;
     REBVAL *arg;
@@ -53,10 +54,9 @@
 	REBCNT args = 0;
 	REBVAL *spec;
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 
 	arg = D_ARG(2);
-	*D_RET = *D_ARG(1);
 
 	//O: known limitation: works only with default system's imput port (not for custom console ports) 
 	req = Host_Lib->std_io;
@@ -101,7 +101,7 @@
 		} else {
 			Set_Binary(ds, Copy_Bytes(req->data, req->actual));
 		}
-		break;
+		return R_RET;
 
 	case A_UPDATE:
 		// do nothing here, no wake-up, events should be handled by user defined port's awake function
@@ -154,7 +154,7 @@
 		}
 
 		Ret_Query_Console(req, D_RET, D_ARG(ARG_QUERY_FIELD), spec);
-		break;
+		return R_RET;
 
 	case A_FLUSH:
 		OS_DO_DEVICE(req, RDC_FLUSH);
@@ -164,7 +164,7 @@
 		Trap1(RE_NO_PORT_ACTION, Get_Action_Word(action));
 	}
 
-	return R_RET;
+	return R_ARG1; //= port
 }
 
 /***********************************************************************

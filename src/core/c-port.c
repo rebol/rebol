@@ -388,7 +388,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 
 /***********************************************************************
 **
-*/	int Do_Port_Action(REBSER *port, REBCNT action)
+*/	int Do_Port_Action(REBVAL *port_value, REBCNT action)
 /*
 **		Call a PORT actor (action) value. Search PORT actor
 **		first. If not found, search the PORT scheme actor.
@@ -398,21 +398,13 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 **
 ***********************************************************************/
 {
+	REBSER *port;
 	REBVAL *actor;
 	REBCNT n = 0;
 
 	ASSERT2(action < A_MAX_ACTION, RP_BAD_PORT_ACTION);
 
-	// Verify valid port (all of these must be false):
-	if (
-		// Must be = or larger than std port:
-		(SERIES_TAIL(port) < STD_PORT_MAX) ||
-		// Must be an object series:
-		!IS_FRAME(BLK_HEAD(port)) ||
-		// Must have a spec object:
-		!IS_OBJECT(BLK_SKIP(port, STD_PORT_SPEC))
-	)
-		Trap0(RE_INVALID_PORT);
+	port = Validate_Port_Value(port_value);
 
 	// Get actor for port, if it has one:
 	actor = BLK_SKIP(port, STD_PORT_ACTOR);
@@ -421,7 +413,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 
 	// If actor is a native function:
 	if (IS_NATIVE(actor))
-		return ((REBPAF)VAL_FUNC_CODE(actor))(DS_RETURN, port, action);
+		return ((REBPAF)VAL_FUNC_CODE(actor))(DS_RETURN, port_value, action);
 
 	// actor must be an object:
 	if (!IS_OBJECT(actor)) Trap0(RE_INVALID_ACTOR);
@@ -476,21 +468,24 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 
 /***********************************************************************
 **
-*/	void Validate_Port(REBSER *port, REBCNT action)
+*/	REBSER *Validate_Port_Value(REBVAL *value)
 /*
 **		Because port actors are exposed to the user level, we must
 **		prevent them from being called with invalid values.
 **
 ***********************************************************************/
 {
+	REBSER *port = VAL_PORT(value);
 	if (
-		action >= A_MAX_ACTION
-		|| port->tail > 50
-		|| SERIES_WIDE(port) != sizeof(REBVAL)
-		|| !IS_FRAME(BLK_HEAD(port))
-		|| !IS_OBJECT(BLK_SKIP(port, STD_PORT_SPEC))
-	)
+		VAL_TYPE(value) != REB_PORT
+		|| SERIES_TAIL(port) > STD_PORT_MAX
+//		|| SERIES_WIDE(port) != sizeof(REBVAL)
+//		|| !IS_FRAME(BLK_HEAD(port))
+		|| !IS_OBJECT(OFV(port, STD_PORT_SPEC))
+		)
 		Trap0(RE_INVALID_PORT);
+	// else..
+	return port;
 }
 
 /***********************************************************************
@@ -578,9 +573,11 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	if (Scheme_Actions[n].fun) {
 		//Make_Native(actor, Make_Block(0), (REBFUN)(Scheme_Actions[n].fun), REB_NATIVE);
 		// Hand build a native function that will be used to reach native scheme actors.
-		REBSER *ser = Make_Block(1);
-		act = Append_Value(ser);
-		Init_Word(act, REB_PORT+1); // any word will do
+		REBSER *ser = Make_Block(2);
+		// for some reason argument words are one based
+		act = Append_Value(ser); // having none in the spec
+		act = Append_Value(ser); // internal argument word
+		Init_Word(act, SYM_INTERNAL);
 		VAL_TYPESET(act) = TYPESET(REB_END); // don't let it get called normally
 		VAL_FUNC_SPEC(actor) = ser;
 		VAL_FUNC_ARGS(actor) = ser;

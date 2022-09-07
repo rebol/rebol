@@ -987,7 +987,7 @@ typedef struct rebol_compositor_ctx REBCMP; // Rebol compositor context
 typedef int  (*REBFUN)(REBVAL *ds);				// Native function
 typedef int  (*REBACT)(REBVAL *ds, REBCNT a);	// Action function
 typedef void (*REBDOF)(REBVAL *ds);				// DO evaltype dispatch function
-typedef int  (*REBPAF)(REBVAL *ds, REBSER *p, REBCNT a); // Port action func
+typedef int  (*REBPAF)(REBVAL *ds, REBVAL *p, REBCNT a); // Port action func
 
 typedef int     (*REB_HANDLE_FREE_FUNC)(void *hnd);
 typedef REBSER* (*REB_HANDLE_MOLD_FUNC)(REBSER *mold, void *hnd); //TODO: not used yet!

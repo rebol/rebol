@@ -432,12 +432,13 @@ REBINT Mode_Syms[] = {
 
 /***********************************************************************
 **
-*/	static int File_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int File_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 **		Internal port handler for files.
 **
 ***********************************************************************/
 {
+	REBSER *port;
 	REBVAL *spec;
 	REBVAL *path;
 	REBREQ *file = 0;
@@ -448,7 +449,7 @@ REBINT Mode_Syms[] = {
 
 	//Print("FILE ACTION: %r", Get_Action_Word(action));
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 
 	*D_RET = *D_ARG(1);
 
