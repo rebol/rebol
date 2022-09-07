@@ -1175,6 +1175,17 @@ eggs: [
 			:include-rebol-bulk
 			:make-x64-exe
 		]
+		"Rebol/Base macos-arm64" [
+			name:   %rebol3-base-macos-arm64
+			:target-macos
+			:make-arm64-exe
+		]
+		"Rebol/Core macos-arm64" [
+			name:   %rebol3-core-macos-arm64
+			:target-macos
+			:include-rebol-core
+			:make-arm64-exe
+		]
 		"Rebol/Bulk macos-arm64" [
 			name:   %rebol3-bulk-macos-arm64
 			:target-macos

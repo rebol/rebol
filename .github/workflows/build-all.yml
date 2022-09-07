@@ -193,7 +193,7 @@ jobs:
 
 
   macos:
-    runs-on: macos-10.15
+    runs-on: macos-12
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -202,11 +202,34 @@ jobs:
         uses: oldes/install-siskin@v0.7.1
 
       - name: Build 64bit Rebol/Base using clang
-        run: ./siskin make/rebol3.nest %rebol3-base-macos-x64
+        run: |
+          ./siskin make/rebol3.nest %rebol3-base-macos-x64
+          file ./build/rebol3-base-macos-x64
+
       - name: Build 64bit Rebol/Core using clang
-        run: ./siskin make/rebol3.nest %rebol3-core-macos-x64
+        run: |
+          ./siskin make/rebol3.nest %rebol3-core-macos-x64
+          file ./build/rebol3-core-macos-x64
+
       - name: Build 64bit Rebol/Bulk using clang
-        run: ./siskin make/rebol3.nest %rebol3-bulk-macos-x64
+        run: |
+          ./siskin make/rebol3.nest %rebol3-bulk-macos-x64
+          file ./build/rebol3-bulk-macos-x64
+
+      - name: Build ARM64 Rebol/Base using clang
+        run: |
+          ./siskin make/rebol3.nest %rebol3-base-macos-arm64
+          file ./build/rebol3-base-macos-arm64
+
+      - name: Build ARM64 Rebol/Core using clang
+        run: |
+          ./siskin make/rebol3.nest %rebol3-core-macos-arm64
+          file ./build/rebol3-core-macos-x64
+
+      - name: Build ARM64 Rebol/Bulk using clang
+        run: |
+          ./siskin make/rebol3.nest %rebol3-bulk-macos-arm64
+          file ./build/rebol3-bulk-macos-arm64
 
 #      - name: Build 64bit Rebol/Core as a shared library
 #        run: ./siskin make/rebol3.nest %lib-rebol3-core-macos-x64
@@ -246,6 +269,9 @@ jobs:
           /usr/bin/codesign --force -s $MACOS_IDENTITY_ID ./build/rebol3-base-macos-x64 -v
           /usr/bin/codesign --force -s $MACOS_IDENTITY_ID ./build/rebol3-core-macos-x64 -v
           /usr/bin/codesign --force -s $MACOS_IDENTITY_ID ./build/rebol3-bulk-macos-x64 -v
+          /usr/bin/codesign --force -s $MACOS_IDENTITY_ID ./build/rebol3-base-macos-arm64 -v
+          /usr/bin/codesign --force -s $MACOS_IDENTITY_ID ./build/rebol3-core-macos-arm64 -v
+          /usr/bin/codesign --force -s $MACOS_IDENTITY_ID ./build/rebol3-bulk-macos-arm64 -v
           
           
       - name: Prepare 64bit Rebol/Base for upload
@@ -261,6 +287,19 @@ jobs:
           mv ./build/rebol3-bulk-macos-x64 ./rebol3-bulk-macos-x64
           gzip -9 ./rebol3-bulk-macos-x64
 
+      - name: Prepare ARM64 Rebol/Base for upload
+        run: |
+          mv ./build/rebol3-base-macos-arm64 ./rebol3-base-macos-arm64
+          gzip -9 ./rebol3-base-macos-arm64
+      - name: Prepare ARM64 Rebol/Core for upload
+        run: |
+          mv ./build/rebol3-core-macos-arm64 ./rebol3-core-macos-arm64
+          gzip -9 ./rebol3-core-macos-arm64
+      - name: Prepare ARM64 Rebol/Bulk for upload
+        run: |
+          mv ./build/rebol3-bulk-macos-arm64 ./rebol3-bulk-macos-arm64
+          gzip -9 ./rebol3-bulk-macos-arm64
+
 #      - name: Prepare 64bit Rebol/Core as a shared library for upload
 #        run: |
 #          mv ./build/lib-rebol3-core-macos-x64 ./lib-rebol3-core-macos-x64
@@ -272,5 +311,10 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Rebol-64bit-macOS-${{github.run_id}}
-          path: ./*.gz
+          name: Rebol-64bit-macOS-intel-${{github.run_id}}
+          path: ./*-x64.gz
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Rebol-64bit-macOS-arm-${{github.run_id}}
+          path: ./*-arm64.gz
