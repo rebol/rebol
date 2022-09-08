@@ -5,8 +5,11 @@ task:
   install_script:
     - date
     - uname -a
-    - pkg install -y wget
-    - wget -nv https://github.com/Siskin-framework/Builder/releases/download/0.7.2/Siskin-x64-freebsd.gz
+  # WGET is not working on Cirrus FreeBSD VM anymore :-/
+  #  - pkg install -y wget
+  #  - wget -nv https://github.com/Siskin-framework/Builder/releases/download/0.7.2/Siskin-x64-freebsd.gz
+  # Trying to do the same with CURL (if it exists there)
+    - curl -L -S https://github.com/Siskin-framework/Builder/releases/download/0.7.2/Siskin-x64-freebsd.gz --output Siskin-x64-freebsd.gz
     - gunzip ./Siskin-x64-freebsd.gz
     - mv ./Siskin-x64-freebsd ./Siskin
     - chmod u+x ./Siskin
