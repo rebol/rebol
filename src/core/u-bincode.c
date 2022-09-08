@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2018 Rebol Open Source Developers
+**  Copyright 2012-2022 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -1639,6 +1639,14 @@ static REBCNT EncodedU32_Size(u32 value) {
 							                         + mst->time.minute * 60
 							                         + mst->time.hour * 3600);
 							break;
+						case SYM_CROP:
+							n = 0;
+							if (IS_PROTECT_SERIES(bin)) Trap0(RE_PROTECTED);
+							Remove_Series(VAL_SERIES(buffer_read), 0, VAL_INDEX(buffer_read));
+							cp = VAL_BIN_HEAD(buffer_read);
+							VAL_INDEX(buffer_write) = MAX(0, (REBI64)VAL_INDEX(buffer_write) - VAL_INDEX(buffer_read));
+							VAL_INDEX(buffer_read) = 0;
+							continue;
 						default:
 							Trap1(RE_INVALID_SPEC, value);
 					}

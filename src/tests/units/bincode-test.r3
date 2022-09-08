@@ -484,6 +484,35 @@ is-protected-error?: func[code][
 
 ===end-group===
 
+===start-group=== "BinCode special read/write functions"
 
+	--test-- "BinCode - CROP"
+	;; CROP shrinks buffers from the left side at the position of the read buffer
+		b: binary #{010203}
+		--assert [1] = binary/read b [UI8 CROP]
+		--assert all [
+			#{0203} = b/buffer
+			#{0203} = b/buffer-write
+		]
+		--assert b = binary/write b [UI8 4]
+		--assert all [
+			#{0403} = b/buffer
+			  #{03} = b/buffer-write
+		]
+		--assert [4] = binary/read b [UI8 CROP]
+		--assert all [
+			  #{03} = b/buffer
+			  #{03} = b/buffer-write
+		]
+		--assert b = binary/write b [AT 2 UI8 5]
+		--assert all [
+			#{0305} = b/buffer
+			    #{} = b/buffer-write
+		]
+		--assert [3 5] = binary/read b [UI8 UI8 CROP]
+		--assert all [
+			empty? head b/buffer
+			empty? head b/buffer-write
+		]
 
 ~~~end-file~~~
