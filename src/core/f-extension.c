@@ -113,6 +113,7 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 		arg.series = VAL_SERIES(val);
 		arg.width  = VAL_IMAGE_WIDE(val);
 		arg.height = VAL_IMAGE_HIGH(val);
+		arg.index  = VAL_INDEX(val);
 		break;
 	case RXE_TUPLE:
 		arg.tuple_len = VAL_TUPLE_LEN(val);
@@ -165,6 +166,7 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 		VAL_SERIES(val) = arg.series;
 		VAL_IMAGE_WIDE(val) = arg.width;
 		VAL_IMAGE_HIGH(val) = arg.height;
+		VAL_INDEX(val) = arg.index;
 		break;
 	case RXE_TUPLE:
 		VAL_TUPLE_LEN(val) = arg.tuple_len;
