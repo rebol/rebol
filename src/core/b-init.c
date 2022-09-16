@@ -261,8 +261,11 @@ extern const REBYTE Str_Banner[];
 		Make_Native(value, Copy_Block(spec, 0), (REBFUN)A_TYPE, REB_ACTION);
 	}
 
-	value = Append_Frame(Lib_Context, 0, SYM_DATATYPES);
-	*value = Boot_Block->types;
+	// In Rebol2 there was a global `datatypes` value holding block with all datatypes names
+	// In Rebol3 there is system/catalog/datatypes with block of all datatypes, so the old
+	// global value is not needed anymore. I hope. Oldes.
+	//value = Append_Frame(Lib_Context, 0, SYM_DATATYPES);
+	//*value = Boot_Block->types;
 }
 
 
