@@ -71,7 +71,7 @@ options: object [  ; Options supplied to REBOL during startup
 
 catalog: object [
 	; Static (non-changing) values, blocks, objects
-	datatypes: []
+	datatypes: none
 	actions: none
 	natives: none
 	handles: none
