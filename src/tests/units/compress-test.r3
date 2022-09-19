@@ -160,6 +160,44 @@ text: {Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempo
 	]
 ===end-group===
 
+===start-group=== "LZW compression / decompression"
+	--test-- "LZW compress/decompress"
+	either error? e: try [compress "test" 'lzw][
+		;-- LZW compression is not available in current build
+		--assert  'feature-na = e/id
+	][	
+		--assert  data = to string! decompress compress data 'lzw 'lzw
+
+		--test-- "LZW compress/decompress while specifing level of compression"
+			--assert (compress/level "" 'lzw 0) =
+			#{00FF01}
+			--assert (compress/level data 'lzw 0) =
+			#{5D00400000003A194ACE1CFB1CD99000000E000000}
+			--assert  text = to string! decompress compress/level text 'lzw 0 'lzw
+			--assert  text = to string! decompress compress/level text 'lzw 1 'lzw
+			--assert  text = to string! decompress compress/level text 'lzw 2 'lzw
+			--assert  text = to string! decompress compress/level text 'lzw 3 'lzw
+			--assert  text = to string! decompress compress/level text 'lzw 4 'lzw
+			--assert  text = to string! decompress compress/level text 'lzw 5 'lzw
+			--assert  text = to string! decompress compress/level text 'lzw 6 'lzw
+			--assert  text = to string! decompress compress/level text 'lzw 7 'lzw
+			--assert  text = to string! decompress compress/level text 'lzw 8 'lzw
+			--assert  text = to string! decompress compress/level text 'lzw 9 'lzw
+
+		--test-- "LZW decompression with specified uncompressed size"
+			bin: compress data 'lzw
+			--assert  #{74657374} = decompress/size bin 'lzw 4
+
+		--test-- "LZW compression when input is limited"
+			--assert  #{74657374} = decompress compress/part      data   'lzw  4 'lzw
+			--assert  #{74657374} = decompress compress/part skip data 5 'lzw  4 'lzw
+			--assert  #{74657374} = decompress compress/part tail data   'lzw -4 'lzw
+
+		--test-- "LZW decompress when not at head"
+			--assert data = to string! decompress next join #{00} compress data 'lzw 'lzw
+	]
+===end-group===
+
 ===start-group=== "CRUSH compression / decompression"
 	--test-- "CRUSH compress/decompress"
 	either error? e: try [compress "test" 'crush][

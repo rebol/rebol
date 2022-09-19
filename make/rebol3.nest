@@ -656,6 +656,11 @@ include-lzma-compression: [
 	core-files: %core/u-lzma.c
 ]
 
+include-lzw-compression: [
+	config: INCLUDE_LZW
+	core-files: %core/u-lzw.c
+]
+
 include-crush-compression: [
 	config: INCLUDE_CRUSH
 	core-files: %core/u-crush.c
@@ -792,6 +797,7 @@ include-rebol-bulk: [
 	:include-optional-checksums
 	:include-image-natives
 	:include-lzma-compression
+	:include-lzw-compression
 	:include-crush-compression
 	:include-base36-encoding
 	:include-base85-encoding
