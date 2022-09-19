@@ -172,7 +172,7 @@ text: {Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempo
 			--assert (compress/level "" 'lzw 0) =
 			#{00FF01}
 			--assert (compress/level data 'lzw 0) =
-			#{5D00400000003A194ACE1CFB1CD99000000E000000}
+			#{007465737420FDFAFBE347F71F}
 			--assert  text = to string! decompress compress/level text 'lzw 0 'lzw
 			--assert  text = to string! decompress compress/level text 'lzw 1 'lzw
 			--assert  text = to string! decompress compress/level text 'lzw 2 'lzw
