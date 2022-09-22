@@ -2168,6 +2168,9 @@ Rebol [
 		error? e: try [union/skip [2 1][2 1] -2]
 		e/id = 'out-of-range
 	]
+--test-- "union - first-wins"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1984
+	--assert 1 = get first union reduce [in construct [a: 1] 'a] reduce [in construct [a: 2] 'a]
 
 ===end-group===
 
