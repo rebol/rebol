@@ -974,6 +974,8 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 **
 */	void Init_Year(void)
 /*
+**		Used when scaning dates with short year.. like: 1/2/98
+**
 ***********************************************************************/
 {
 	REBOL_DAT dat;
