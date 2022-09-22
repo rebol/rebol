@@ -2179,6 +2179,12 @@ Rebol [
 	--assert (union/skip [x x 1 2 1 2] [1 4] 2 ) = [x x 1 2] ; like in R2 and Red
 	--assert (union/skip [1 2 1 3] [2 4] 2     ) = [1 2 2 4] ; like in R2 and Red
 
+--test-- "unique/skip 3"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/726
+	--assert (unique/skip [1 2 3 4 5 6 1 2 3 4]     2) == [1 2 3 4 5 6] ; like in R2 and Red
+	--assert (unique/skip [1 2 3 4 5 6 1 2 3 4 5 6] 2) == [1 2 3 4 5 6] ; like in R2 and Red
+	--assert (unique/skip [1 2 3 4 5 6 1 2 3 4 5 6] 3) == [1 2 3 4 5 6] ; like in R2 and Red
+
 --test-- "union/skip with negative skip"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/736
 	--assert all [
