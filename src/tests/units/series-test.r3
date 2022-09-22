@@ -2162,6 +2162,15 @@ Rebol [
 --test-- "union with none and unset"
 	--assert [#[none] #[unset]] = union [#[none]] [#[unset]]
 
+--test-- "union/skip"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2520
+	--assert (union      [a 1 b 2] [a 1 b 2]          ) == [a 1 b 2]
+	--assert (union/skip [b 1 b 2] [b 1 b 2] 2        ) == [b 1]
+	--assert (union/skip [b 1 b 2] [b 2 b 2] 2        ) == [b 1]
+	--assert (union/skip [b 2 b 2] [b 2 b 2] 2        ) == [b 2]
+	--assert (union/skip [a 1 b 2] [a 1 b 2] 2        ) == [a 1 b 2]
+	--assert (union/skip ["a" 1 "b" 2] ["a" 1 "b" 2] 2) == ["a" 1 "b" 2]
+
 --test-- "union/skip with negative skip"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/736
 	--assert all [
