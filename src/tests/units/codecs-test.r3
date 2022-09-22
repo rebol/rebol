@@ -550,8 +550,9 @@ if find codecs 'GIF [
 		]
 		try [delete %new.gif]
 
+if native? :image [
 	--test-- "animated gif"
-		--assert try [all [
+		--assert true == try [all [
 			i1: image/load/frame %units/files/animation.gif 1
 			i2: image/load/frame %units/files/animation.gif 2
 			i3: image/load/frame %units/files/animation.gif 3
@@ -559,6 +560,7 @@ if find codecs 'GIF [
 			#{878BACEFB949C6435702F87D5B62F9FA} == checksum i2/rgba 'md5
 			#{1414A649C4CF2E2D9DE3A8502A4425AA} == checksum i3/rgba 'md5
 		]]
+]
 	===end-group===
 ]
 
