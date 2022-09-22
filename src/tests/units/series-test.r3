@@ -2171,6 +2171,14 @@ Rebol [
 	--assert (union/skip [a 1 b 2] [a 1 b 2] 2        ) == [a 1 b 2]
 	--assert (union/skip ["a" 1 "b" 2] ["a" 1 "b" 2] 2) == ["a" 1 "b" 2]
 
+--test-- "union/skip 2"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1963
+	--assert (union [x x 1 2 1 3] [1 4]) == [x 1 2 3 4]
+	--assert (union [1 2 1 3] [1 4]    ) == [1 2 3 4]
+	--assert (union/skip [x x 1 2 1 3] [1 4] 2 ) = [x x 1 2] ; like in R2 and Red
+	--assert (union/skip [x x 1 2 1 2] [1 4] 2 ) = [x x 1 2] ; like in R2 and Red
+	--assert (union/skip [1 2 1 3] [2 4] 2     ) = [1 2 2 4] ; like in R2 and Red
+
 --test-- "union/skip with negative skip"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/736
 	--assert all [
