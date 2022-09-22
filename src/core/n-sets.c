@@ -80,6 +80,9 @@ enum {
 
 	switch (VAL_TYPE(val1)) {
 
+	case REB_MAP:
+		skip = 2; // key/value
+		// fall thru...
 	case REB_BLOCK:
 		i = VAL_LEN(val1);
 		// Setup result block:
@@ -93,11 +96,13 @@ enum {
 		// and extending Find_Key to do a FIND on the value itself w/o the hash.
 
 		do {
-			// Check what is in series1 but not in series2:
-			if (GET_FLAG(flags, SOP_CHECK))
-				hser = Hash_Block(val2, cased);
-
-			// Iterate over first series:
+			// Check what is in first series/map but not in second series/map:
+			if (GET_FLAG(flags, SOP_CHECK)) {
+				hser = IS_MAP(val1)
+					? VAL_SERIES(val2)->series // use existing map's hash table
+					: Hash_Block(val2, cased);
+			}
+			// Iterate over first series/map:
 			ser = VAL_SERIES(val1);
 			i = VAL_INDEX(val1);
 			FOR_SER(ser, val, i, skip) {
@@ -108,7 +113,7 @@ enum {
 				if (h) Find_Key(retser, hret, val, skip, cased, 2);
 			}
 
-			// Iterate over second series?
+			// Iterate over second series/map?
 			if (NZ(i = GET_FLAG(flags, SOP_BOTH))) {
 				val = val1;
 				val1 = val2;
@@ -117,9 +122,15 @@ enum {
 			}
 		} while (i);
 
-		Set_Block(D_RET, Copy_Series(retser));
+		if IS_MAP(val1) {
+			Set_Series(REB_MAP, D_RET, Copy_Block(retser, 0));
+			VAL_SERIES(D_RET)->series = hret;
+		}
+		else {
+			Set_Block(D_RET, Copy_Series(retser));
+		}
+		
 		RESET_TAIL(retser); // required - allow reuse
-
 		break;
 
 	case REB_BINARY:

@@ -354,4 +354,60 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "set operations with map!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1984
+	m1: #(a: 1 A: 2 "b" 3 "B" 4)
+	m2: #(a: 2 c: 5 "b" 6 "D" 7)
+	--test-- "difference with map"
+		--assert (mold/flat difference m1 m1) = {#()}
+		--assert (mold/flat difference m1 m2) = {#(c: 5 "D" 7)}
+		--assert (mold/flat difference m2 m1) = {#(c: 5 "D" 7)}
+		--assert (mold/flat difference m2 m2) = {#()}
+
+		--assert (mold/flat difference/case m1 m1) = {#()}
+		--assert (mold/flat difference/case m1 m2) = {#(A: 2 "B" 4 c: 5 "D" 7)}
+		--assert (mold/flat difference/case m2 m1) = {#(c: 5 "D" 7 A: 2 "B" 4)}
+		--assert (mold/flat difference/case m2 m2) = {#()}
+
+	--test-- "exclude with map"
+		--assert (mold/flat exclude m1 m1) = {#()}
+		--assert (mold/flat exclude m1 m2) = {#()}
+		--assert (mold/flat exclude m2 m1) = {#(c: 5 "D" 7)}
+		--assert (mold/flat exclude m2 m2) = {#()}
+
+		--assert (mold/flat exclude/case m1 m1) = {#()}
+		--assert (mold/flat exclude/case m1 m2) = {#(A: 2 "B" 4)}
+		--assert (mold/flat exclude/case m2 m1) = {#(c: 5 "D" 7)}
+		--assert (mold/flat exclude/case m2 m2) = {#()}
+
+	--test-- "intersect with map"
+		--assert (mold/flat intersect m1 m1) = {#(a: 1 "b" 3)}
+		--assert (mold/flat intersect m1 m2) = {#(a: 1 "b" 3)}
+		--assert (mold/flat intersect m2 m1) = {#(a: 2 "b" 6)}
+		--assert (mold/flat intersect m2 m2) = {#(a: 2 c: 5 "b" 6 "D" 7)}
+
+		--assert (mold/flat intersect/case m1 m1) = {#(a: 1 A: 2 "b" 3 "B" 4)}
+		--assert (mold/flat intersect/case m1 m2) = {#(a: 1 "b" 3)}
+		--assert (mold/flat intersect/case m2 m1) = {#(a: 2 "b" 6)}
+		--assert (mold/flat intersect/case m2 m2) = {#(a: 2 c: 5 "b" 6 "D" 7)}
+
+	--test-- "union with map"
+		--assert (mold/flat union m1 m1) = {#(a: 1 "b" 3)}
+		--assert (mold/flat union m1 m2) = {#(a: 1 "b" 3 c: 5 "D" 7)}
+		--assert (mold/flat union m2 m1) = {#(a: 2 c: 5 "b" 6 "D" 7)}
+		--assert (mold/flat union m2 m2) = {#(a: 2 c: 5 "b" 6 "D" 7)}
+
+		--assert (mold/flat union/case m1 m1) = {#(a: 1 A: 2 "b" 3 "B" 4)}
+		--assert (mold/flat union/case m1 m2) = {#(a: 1 A: 2 "b" 3 "B" 4 c: 5 "D" 7)}
+		--assert (mold/flat union/case m2 m1) = {#(a: 2 c: 5 "b" 6 "D" 7 A: 2 "B" 4)}
+		--assert (mold/flat union/case m2 m2) = {#(a: 2 c: 5 "b" 6 "D" 7)}
+
+	--test-- "unique with map"
+		--assert (mold/flat unique m1) = {#(a: 1 "b" 3)}
+		--assert (mold/flat unique/case m1) = {#(a: 1 A: 2 "b" 3 "B" 4)}
+
+
+===end-group===
+
 ~~~end-file~~~
