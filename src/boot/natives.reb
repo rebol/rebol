@@ -453,8 +453,8 @@ entab: native [
 
 difference: native [
 	{Returns the special difference of two values.}
-	set1 [block! string! binary! bitset! date! typeset! map!] "First data set"
-	set2 [block! string! binary! bitset! date! typeset! map!] "Second data set"
+	set1 [block! string! bitset! date! typeset! map!] "First data set"
+	set2 [block! string! bitset! date! typeset! map!] "Second data set"
 	/case {Uses case-sensitive comparison}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
@@ -462,8 +462,8 @@ difference: native [
 
 exclude: native [
 	{Returns the first data set less the second data set.}
-	set1 [block! string! binary! bitset! typeset! map!] "First data set"
-	set2 [block! string! binary! bitset! typeset! map!] "Second data set"
+	set1 [block! string! bitset! typeset! map!] "First data set"
+	set2 [block! string! bitset! typeset! map!] "Second data set"
 	/case {Uses case-sensitive comparison}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
@@ -471,8 +471,8 @@ exclude: native [
 
 intersect: native [
 	{Returns the intersection of two data sets.}
-	set1 [block! string! binary! bitset! typeset! map!] "first set"
-	set2 [block! string! binary! bitset! typeset! map!] "second set"
+	set1 [block! string! bitset! typeset! map!] "first set"
+	set2 [block! string! bitset! typeset! map!] "second set"
 	/case {Uses case-sensitive comparison}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
@@ -480,8 +480,8 @@ intersect: native [
 
 union: native [
 	{Returns the union of two data sets.}
-	set1 [block! string! binary! bitset! typeset! map!] "first set"
-	set2 [block! string! binary! bitset! typeset! map!] "second set"
+	set1 [block! string! bitset! typeset! map!] "first set"
+	set2 [block! string! bitset! typeset! map!] "second set"
 	/case {Use case-sensitive comparison}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
@@ -489,7 +489,7 @@ union: native [
 
 unique: native [
 	{Returns the data set with duplicates removed.}
-	set1 [block! string! binary! bitset! typeset! map!]
+	set1 [block! string! bitset! typeset! map!]
 	/case  {Use case-sensitive comparison (except bitsets)}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]

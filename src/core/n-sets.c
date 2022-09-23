@@ -133,9 +133,11 @@ enum {
 		RESET_TAIL(retser); // required - allow reuse
 		break;
 
-	case REB_BINARY:
-		cased = TRUE;
-		SET_TYPE(D_RET, REB_BINARY);
+	//case REB_BINARY:
+	//!! Binary  input is broken, so better to turn it of for now! !!//
+	//!! https://github.com/Oldes/Rebol-issues/issues/1978         !!//
+	//	cased = TRUE;
+	//	SET_TYPE(D_RET, REB_BINARY);
 	case REB_STRING:
 		i = VAL_LEN(val1);
 		// Setup result block:
