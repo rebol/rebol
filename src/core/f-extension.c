@@ -113,7 +113,8 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 		arg.series = VAL_SERIES(val);
 		arg.width  = VAL_IMAGE_WIDE(val);
 		arg.height = VAL_IMAGE_HIGH(val);
-		arg.index  = VAL_INDEX(val);
+		// There is no way how to pass index information in one RXIARG value!
+		//arg.index  = VAL_INDEX(val); // Don't do this! index is shared with the size and would overwrite it!
 		break;
 	case RXE_TUPLE:
 		arg.tuple_len = VAL_TUPLE_LEN(val);
@@ -166,7 +167,9 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 		VAL_SERIES(val) = arg.series;
 		VAL_IMAGE_WIDE(val) = arg.width;
 		VAL_IMAGE_HIGH(val) = arg.height;
-		VAL_INDEX(val) = arg.index;
+		// There can be only index or image size in the RXIARG, so the index is
+		// unfortunatelly lost when image is passed to extension and back!
+		VAL_INDEX(val) = 0;
 		break;
 	case RXE_TUPLE:
 		VAL_TUPLE_LEN(val) = arg.tuple_len;
