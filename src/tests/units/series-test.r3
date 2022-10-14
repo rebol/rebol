@@ -94,6 +94,24 @@ Rebol [
 	--assert "bcd"   = find/any/reverse tail "abcdabcd" "?c"
 	--assert "d"     = find/any/reverse/tail tail "abcdabcd" "?c"
 	--assert "d"     = find/any/reverse/tail tail "abcdabcd" "bc"
+	--assert %abcabc  = find/any %abcabc %*bc
+	--assert %abxabc  = find/any %abxabc %*bc
+	--assert %abcabc  = find/any %abcabc %ab*
+	--assert %cxbc    = find/any %abcxbc %c*bc
+	--assert %cxbc    = find/any %abcxbc %c?bc
+	--assert none?      find/any %abxabc %c*bc
+	--assert none?      find/any %abcxxbc %c?bc
+	--assert %cxxbc   = find/any %abcxxbc %c??bc
+	--assert %cxxbcx  = find/any %abcxxbcx %c??bc
+	--assert %x       = find/any/tail %abcxxbcx %c??bc
+	--assert %abc     = find/any/tail %abcabc %*bc
+	--assert %""      = find/any/tail %abxabc %*bc
+	--assert "abxcd"  = find/any "abxcd" "ab*cd"
+	--assert "abxxcd" = find/any "abxxcd" "ab*cd"
+	--assert none?      find/any "abxcx" "ab*cd"
+	--assert "abxcx"  = find/any "abxcx" "ab*c?"
+	--assert "abxcxe" = find/any "abxcxe" "ab*c?e"
+
 
 --test-- "FIND/ANY on string (unicode)"
 	--assert "ažcd"  = find/any "ažcd" "ažc"
