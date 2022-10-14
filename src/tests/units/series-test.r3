@@ -2261,15 +2261,17 @@ Rebol [
 
 --test-- "set ops on binary"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/837
+	;-- not allowed anymore!
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1978
 	bin1: #{010203}
 	bin2: #{010203010203}
-	--assert bin1 = unique bin2
-	--assert bin1 = union  bin1 bin2 
+	--assert all [error? e: try [bin1 = unique bin2] e/id = 'expect-arg]
+	--assert all [error? e: try [bin1 = union  bin1 bin2 ] e/id = 'expect-arg]
 	append bin2 bin3: #{0405}
-	--assert bin1 = intersect  bin2 bin1
-	--assert bin3 = difference bin1 bin2
-	--assert bin3 = exclude bin2 bin1
-	--assert empty? exclude bin1 bin2
+	--assert all [error? e: try [bin1 = intersect  bin2 bin1] e/id = 'expect-arg]
+	--assert all [error? e: try [bin3 = difference bin1 bin2] e/id = 'expect-arg]
+	--assert all [error? e: try [bin3 = exclude bin2 bin1] e/id = 'expect-arg]
+	--assert all [error? e: try [empty? exclude bin1 bin2] e/id = 'expect-arg]
 
 ===end-group===
 
