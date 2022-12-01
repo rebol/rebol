@@ -84,8 +84,10 @@ char *RX_Spec =
 	"hob1:   command [{creates XTEST handle}]"
 	"hob2:   command [{prints XTEST handle's data} hndl [handle!]]"
 	"str0:   command [{return a constructed string}]"
+	"echo:   command [{return the input value} value]"
 
 	"a: b: c: h: x: none\n"
+	"i: make image! 2x2\n"
 	"xtest: does [\n"
 		"foreach blk [\n"
 			"[x: hob1]"
@@ -115,7 +117,12 @@ char *RX_Spec =
 			"[vec0 make vector! [integer! 16 [1 2 3]]]\n"
 			"[vec1 object [v: make vector! [integer! 16 [1 2 3]]]]\n"
 			"[blk1 [read %img /at 1]]\n"
-			"[str0]"
+			"[str0]\n"
+
+			// https://github.com/Oldes/Rebol-issues/issues/1809
+			"[echo i]\n"
+			"[probe i probe echo i]\n"
+			"[loop 1 [probe echo i]]\n"
 		"][\n"
 			"print [{^/^[[7mtest:^[[0m^[[1;32m} mold blk {^[[0m}]\n"
 			//"replace {x} {x} {y}\n"
@@ -343,13 +350,15 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			REBSER* str = RL_MAKE_STRING(32, FALSE); // 32 bytes, latin1 (must be large enough!)
 			REBYTE ver[8];
 			RL_VERSION(ver);
-			sprintf_s(SERIES_DATA(str), SERIES_REST(str), "Version: %i.%i.%i", ver[1], ver[2], ver[3]);
+			snprintf(SERIES_DATA(str), SERIES_REST(str), "Version: %i.%i.%i", ver[1], ver[2], ver[3]);
 			SERIES_TAIL(str) = strlen(SERIES_DATA(str));
 			RXA_SERIES(frm, 1) = str;
 			RXA_TYPE  (frm, 1) = RXT_STRING;
 			RXA_INDEX (frm, 1) = 0;
 		}
 		break;
+	case 19: //command [{return the input value} value]
+		return RXR_VALUE;
 
 	default:
 		return RXR_NO_COMMAND;

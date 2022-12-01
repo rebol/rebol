@@ -170,7 +170,7 @@
 
 	// Append new value the target series:
 	if (mode > 1) {
-		hashes[hash] = SERIES_TAIL(series)+1;
+		hashes[hash] = (SERIES_TAIL(series) / wide) +1;
 		//Debug_Num("hash:", hashes[hash]);
 		Append_Series(series, (REBYTE*)key, wide);
 		//Dump_Series(series, "hash");

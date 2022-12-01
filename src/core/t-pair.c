@@ -146,6 +146,11 @@
 	if (IS_WORD(sel = pvs->select)) {
 		if (VAL_WORD_CANON(sel) == SYM_X) n = 1;
 		else if (VAL_WORD_CANON(sel) == SYM_Y) n = 2;
+		else if (VAL_WORD_CANON(sel) == SYM_AREA) {
+			if (pvs->setval) return PE_BAD_SET;
+			SET_DECIMAL(pvs->store, llabs(VAL_PAIR_X(pvs->value) * VAL_PAIR_Y(pvs->value)));
+			return PE_USE;
+		}
 		else return PE_BAD_SELECT;
 	}
 	else if (IS_INTEGER(sel) || IS_DECIMAL(sel)) {

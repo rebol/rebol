@@ -217,8 +217,7 @@
 	// If word symbol part of word table is full, expand it:
 	if (SERIES_FULL(PG_Word_Table.series)) {
 		Extend_Series(PG_Word_Table.series, 256);
-	}
-	if (SERIES_FULL(Bind_Table)) {
+		// Bind_Table size must be same like PG_Word_Table.series, so we must extend it as well.
 		Extend_Series(Bind_Table, 256);
 		CLEAR_SERIES(Bind_Table);
 	}

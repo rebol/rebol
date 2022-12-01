@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.10.0
+version: 3.10.1
 
 target-windows: [
 	os:       windows
@@ -656,6 +656,11 @@ include-lzma-compression: [
 	core-files: %core/u-lzma.c
 ]
 
+include-lzw-compression: [
+	config: INCLUDE_LZW
+	core-files: %core/u-lzw.c
+]
+
 include-crush-compression: [
 	config: INCLUDE_CRUSH
 	core-files: %core/u-crush.c
@@ -792,6 +797,7 @@ include-rebol-bulk: [
 	:include-optional-checksums
 	:include-image-natives
 	:include-lzma-compression
+	:include-lzw-compression
 	:include-crush-compression
 	:include-base36-encoding
 	:include-base85-encoding
@@ -867,7 +873,8 @@ common: [
 		defines: ENDIAN_LITTLE
 		defines: USE_OLD_PIPE
 		cflags:  -Wno-pointer-sign
-		flag:    -mmacosx-version-min=10.9 
+		flag:    -mmacosx-version-min=10.9
+		entitlements: %make/Entitlements.plist
 	]
 	#if (any [Linux? OpenBSD? FreeBSD?]) [
 		library: %m
@@ -992,7 +999,7 @@ make-dll: [
 	flags:   [-O2 shared]
 	upx: off
 	#if Posix? [ flag: fPIC upx: off ]
-	#if macOS? [ flag: fno-common strip: off]
+	#if macOS? [ flag: fno-common strip: off lflag: "compatibility_version 3.0"]
 	do %make/pre-make.r3 "$NEST_SPEC"
 ]
 ; for testing host app using shared library
@@ -1007,6 +1014,9 @@ make-x86-dll:  [:arch-x86 :make-dll  ]
 make-x64-dll:  [:arch-x64 :make-dll  ]
 make-x86-host: [:arch-x86 :make-host ]
 make-x64-host: [:arch-x64 :make-host ]
+
+make-arm64-dll:  [:arch-arm64 :make-dll  ]
+make-arm64-host: [:arch-arm64 :make-host ]
 
 make-ext-test: [
 	files: only %tests/extension/test.c
@@ -1195,6 +1205,7 @@ eggs: [
 
 		"Rebol/Core macos-x64 shared library" [
 			name:   %lib-rebol3-core-macos-x64
+			flag:   "-Wl,-install_name,'/usr/local/lib/librebol-core.3.dylib'"
 			:target-macos
 			:include-rebol-core
 			:make-x64-dll
@@ -1205,6 +1216,50 @@ eggs: [
 			:target-macos
 			:include-rebol-core
 			:make-x64-host
+		]
+		"Rebol/Bulk macos-x64 shared library" [
+			name:   %lib-rebol3-bulk-macos-x64
+			flag:   "-Wl,-install_name,'/usr/local/lib/librebol.3.dylib'"
+			:target-macos
+			:include-rebol-bulk
+			:make-x64-dll
+		]
+		"Rebol/Bulk macos-x64 host application" [
+			name:   %host-bulk-macos-x64
+			shared: %lib-rebol3-bulk-macos-x64
+			:target-macos
+			:include-rebol-core
+			:make-x64-host
+		]
+
+		"Rebol/Core macos-arm64 shared library" [
+			name:   %lib-rebol3-core-macos-arm64
+			flag:   "-Wl,-install_name,'/usr/local/lib/librebol-core.3.dylib'"
+			:target-macos
+			:include-rebol-core
+			:make-arm64-dll
+		]
+		"Rebol/Core macos-arm64 host application" [
+			name:   %host-core-macos-arm64
+			shared: %lib-rebol3-core-macos-arm64
+			:target-macos
+			:include-rebol-core
+			:make-arm64-host
+		]
+
+		"Rebol/Bulk macos-arm64 shared library" [
+			name:   %lib-rebol3-bulk-macos-arm64
+			lflag:   "-Wl,-install_name,'/usr/local/lib/librebol.3.dylib'"
+			:target-macos
+			:include-rebol-bulk
+			:make-arm64-dll
+		]
+		"Rebol/Bulk macos-arm64 host application" [
+			name:   %host-bulk-macos-arm64
+			shared: %lib-rebol3-bulk-macos-arm64
+			:target-macos
+			:include-rebol-bulk
+			:make-arm64-host
 		]
 	]
 	#if OpenBSD? [

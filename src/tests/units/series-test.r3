@@ -94,6 +94,24 @@ Rebol [
 	--assert "bcd"   = find/any/reverse tail "abcdabcd" "?c"
 	--assert "d"     = find/any/reverse/tail tail "abcdabcd" "?c"
 	--assert "d"     = find/any/reverse/tail tail "abcdabcd" "bc"
+	--assert %abcabc  = find/any %abcabc %*bc
+	--assert %abxabc  = find/any %abxabc %*bc
+	--assert %abcabc  = find/any %abcabc %ab*
+	--assert %cxbc    = find/any %abcxbc %c*bc
+	--assert %cxbc    = find/any %abcxbc %c?bc
+	--assert none?      find/any %abxabc %c*bc
+	--assert none?      find/any %abcxxbc %c?bc
+	--assert %cxxbc   = find/any %abcxxbc %c??bc
+	--assert %cxxbcx  = find/any %abcxxbcx %c??bc
+	--assert %x       = find/any/tail %abcxxbcx %c??bc
+	--assert %abc     = find/any/tail %abcabc %*bc
+	--assert %""      = find/any/tail %abxabc %*bc
+	--assert "abxcd"  = find/any "abxcd" "ab*cd"
+	--assert "abxxcd" = find/any "abxxcd" "ab*cd"
+	--assert none?      find/any "abxcx" "ab*cd"
+	--assert "abxcx"  = find/any "abxcx" "ab*c?"
+	--assert "abxcxe" = find/any "abxcxe" "ab*c?e"
+
 
 --test-- "FIND/ANY on string (unicode)"
 	--assert "ažcd"  = find/any "ažcd" "ažc"
@@ -2162,12 +2180,38 @@ Rebol [
 --test-- "union with none and unset"
 	--assert [#[none] #[unset]] = union [#[none]] [#[unset]]
 
+--test-- "union/skip"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2520
+	--assert (union      [a 1 b 2] [a 1 b 2]          ) == [a 1 b 2]
+	--assert (union/skip [b 1 b 2] [b 1 b 2] 2        ) == [b 1]
+	--assert (union/skip [b 1 b 2] [b 2 b 2] 2        ) == [b 1]
+	--assert (union/skip [b 2 b 2] [b 2 b 2] 2        ) == [b 2]
+	--assert (union/skip [a 1 b 2] [a 1 b 2] 2        ) == [a 1 b 2]
+	--assert (union/skip ["a" 1 "b" 2] ["a" 1 "b" 2] 2) == ["a" 1 "b" 2]
+
+--test-- "union/skip 2"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1963
+	--assert (union [x x 1 2 1 3] [1 4]) == [x 1 2 3 4]
+	--assert (union [1 2 1 3] [1 4]    ) == [1 2 3 4]
+	--assert (union/skip [x x 1 2 1 3] [1 4] 2 ) = [x x 1 2] ; like in R2 and Red
+	--assert (union/skip [x x 1 2 1 2] [1 4] 2 ) = [x x 1 2] ; like in R2 and Red
+	--assert (union/skip [1 2 1 3] [2 4] 2     ) = [1 2 2 4] ; like in R2 and Red
+
+--test-- "unique/skip 3"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/726
+	--assert (unique/skip [1 2 3 4 5 6 1 2 3 4]     2) == [1 2 3 4 5 6] ; like in R2 and Red
+	--assert (unique/skip [1 2 3 4 5 6 1 2 3 4 5 6] 2) == [1 2 3 4 5 6] ; like in R2 and Red
+	--assert (unique/skip [1 2 3 4 5 6 1 2 3 4 5 6] 3) == [1 2 3 4 5 6] ; like in R2 and Red
+
 --test-- "union/skip with negative skip"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/736
 	--assert all [
 		error? e: try [union/skip [2 1][2 1] -2]
 		e/id = 'out-of-range
 	]
+--test-- "union - first-wins"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1984
+	--assert 1 = get first union reduce [in construct [a: 1] 'a] reduce [in construct [a: 2] 'a]
 
 ===end-group===
 
@@ -2235,15 +2279,17 @@ Rebol [
 
 --test-- "set ops on binary"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/837
+	;-- not allowed anymore!
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1978
 	bin1: #{010203}
 	bin2: #{010203010203}
-	--assert bin1 = unique bin2
-	--assert bin1 = union  bin1 bin2 
+	--assert all [error? e: try [bin1 = unique bin2] e/id = 'expect-arg]
+	--assert all [error? e: try [bin1 = union  bin1 bin2 ] e/id = 'expect-arg]
 	append bin2 bin3: #{0405}
-	--assert bin1 = intersect  bin2 bin1
-	--assert bin3 = difference bin1 bin2
-	--assert bin3 = exclude bin2 bin1
-	--assert empty? exclude bin1 bin2
+	--assert all [error? e: try [bin1 = intersect  bin2 bin1] e/id = 'expect-arg]
+	--assert all [error? e: try [bin3 = difference bin1 bin2] e/id = 'expect-arg]
+	--assert all [error? e: try [bin3 = exclude bin2 bin1] e/id = 'expect-arg]
+	--assert all [error? e: try [empty? exclude bin1 bin2] e/id = 'expect-arg]
 
 ===end-group===
 

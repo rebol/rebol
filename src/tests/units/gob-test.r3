@@ -129,6 +129,34 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1490
 		--assert not equal? (make gob! []) (make gob! []) ; not equal by design
 
+	--test-- "take gob"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1797
+		g: make gob! []
+		a: make gob! [text: "A"]
+		b: make gob! [text: "B"]
+		c: make gob! [text: "C"]
+		clear g repend g [a b c]
+		--assert all [
+			1 = index? g
+			b = take next g
+			1 = index? g
+			2 = length? g
+		]
+		--assert all [
+			c = first take/part next g 1
+			1 = index? g
+			1 = length? g
+		]
+		--assert none? take tail g
+
+		clear g repend g [a b c]
+		--assert all [
+			(reduce [b c]) = take/part next g 10
+			1 = index? g
+			1 = length? g
+		]
+		
+
 ===end-group===
 
 ~~~end-file~~~

@@ -73,7 +73,7 @@ int DecodeImageFromFile(const char *uri, unsigned int frame, REBCDI *codi)
 			binSrc = CFDataCreateWithBytesNoCopy(NULL, codi->data, codi->len, NULL);
 			imgSrc = CGImageSourceCreateWithData(binSrc, 0);
 		}
-		img = CGImageSourceCreateImageAtIndex(imgSrc, 0, 0);
+		img = CGImageSourceCreateImageAtIndex(imgSrc, frame, 0);
 		ASSERT_NOT_NULL(img, 3, "create an image");
 		w = CGImageGetWidth(img);
 		h = CGImageGetHeight(img);

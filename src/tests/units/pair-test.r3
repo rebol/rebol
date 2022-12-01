@@ -278,4 +278,11 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "pair area accessor"
+	--test-- "pair/area"
+		p:  10x20  --assert 200.0 = try [p/area]
+		p: -10x20  --assert 200.0 = try [p/area]
+		--assert all [error? e: try [p/area: 100] e/id = 'bad-path-set]
+===end-group===
+
 ~~~end-file~~~

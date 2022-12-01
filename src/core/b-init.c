@@ -265,8 +265,11 @@ extern const REBYTE Str_Banner[];
 		Make_Native(value, Copy_Block(spec, 0), (REBFUN)A_TYPE, REB_ACTION);
 	}
 
-	value = Append_Frame(Lib_Context, 0, SYM_DATATYPES);
-	*value = Boot_Block->types;
+	// In Rebol2 there was a global `datatypes` value holding block with all datatypes names
+	// In Rebol3 there is system/catalog/datatypes with block of all datatypes, so the old
+	// global value is not needed anymore. I hope. Oldes.
+	//value = Append_Frame(Lib_Context, 0, SYM_DATATYPES);
+	//*value = Boot_Block->types;
 }
 
 
@@ -613,18 +616,15 @@ extern const REBYTE Str_Banner[];
 	SET_OBJECT(value, frame);
 	SET_OBJECT(ROOT_SYSTEM, frame);
 
-	// Create system/datatypes block:
-//	value = Get_System(SYS_DATATYPES, 0);
+	// Create system/catalog/datatypes block:
 	value = Get_System(SYS_CATALOG, CAT_DATATYPES);
-	frame = VAL_SERIES(value);
-	Extend_Series(frame, REB_MAX-1);
+	frame = Make_Block(REB_MAX - 1);
+	Set_Block(value, frame);
+	// expects, that first values in the Lib_Context are the datatypes!
+	// not using &Boot_Block->types, because it contains only words!
 	for (n = 1; n <= REB_MAX; n++) {
 		Append_Val(frame, FRM_VALUES(Lib_Context) + n);
 	}
-
-	// Create system/catalog/datatypes block:
-//	value = Get_System(SYS_CATALOG, CAT_DATATYPES);
-//	Set_Block(value, Copy_Blk(VAL_SERIES(&Boot_Block->types)));
 
 	// Create system/catalog/actions block:
 	value = Get_System(SYS_CATALOG, CAT_ACTIONS);
@@ -767,6 +767,9 @@ extern const REBYTE Str_Banner[];
 #endif
 #ifdef INCLUDE_WAV_CODEC
 	Init_WAV_Codec();
+#endif
+#ifdef INCLUDE_REBIN_CODEC
+	Init_REBIN_Codec();
 #endif
 }
 
@@ -975,6 +978,8 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 **
 */	void Init_Year(void)
 /*
+**		Used when scaning dates with short year.. like: 1/2/98
+**
 ***********************************************************************/
 {
 	REBOL_DAT dat;

@@ -351,6 +351,13 @@ static struct digest {
 		Trap0(RE_FEATURE_NA);
 #endif
 		break;
+	case SYM_LZW:
+#ifdef INCLUDE_LZW
+		Set_Binary(D_RET, CompressLzw(ser, index, (REBINT)len, ref_level ? VAL_INT32(level) : -1));
+#else
+		Trap0(RE_FEATURE_NA);
+#endif
+		break;
 	case SYM_CRUSH:
 #ifdef INCLUDE_CRUSH
 		Set_Binary(D_RET, CompressCrush(ser, index, (REBINT)len, ref_level ? VAL_INT32(level) : 2));
@@ -413,6 +420,13 @@ static struct digest {
 	case SYM_LZMA:
 #ifdef INCLUDE_LZMA
 		Set_Binary(D_RET, DecompressLzma(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit));
+#else
+		Trap0(RE_FEATURE_NA);
+#endif
+		break;
+	case SYM_LZW:
+#ifdef INCLUDE_LZW
+		Set_Binary(D_RET, DecompressLzw(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit));
 #else
 		Trap0(RE_FEATURE_NA);
 #endif

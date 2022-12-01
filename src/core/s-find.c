@@ -482,11 +482,12 @@
 
 	for (; index >= head && index < tail; index += skip) {
 		n = 1;
-		start = pos = index;
+		pos = index;
 		if (c2 == c_some) {
 			n = 0;
 			goto some_loop;
 		}
+		start = pos;
 		if (c2 == c_one) {
 			c1 = c2;
 		} else {
@@ -515,10 +516,12 @@
 					while (1) {
 						if (pos < head || pos >= tail) return NOT_FOUND;
 						c1 = GET_ANY_CHAR(ser1, pos);
+						// printf("? %c == %c\n", c1, c3);
 						if (c1 == c3) break;
 						if (uncase && c1 < UNICODE_CASES && c3 < UNICODE_CASES) {
 							if (LO_CASE(c1) == LO_CASE(c3)) break;
 						}
+						index++;
 						pos++;
 					}
 				} else if (c3 == c_one) {
