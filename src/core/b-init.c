@@ -29,6 +29,9 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#ifdef SHOW_SIZEOFS
+#include <stdio.h>
+#endif
 
 #define EVAL_DOSE 10000
 
@@ -95,6 +98,7 @@ extern const REBYTE Str_Banner[];
 	printf("%u %s\n", (REBCNT)sizeof(REBUDT), "utype");
 	printf("%u %s\n", (REBCNT)sizeof(REBDCI), "deci");
 	printf("%u %s\n", (REBCNT)sizeof(REBHAN), "handle");
+	printf("%u %s\n", (REBCNT)sizeof(REBHOB), "hob");
 	printf("%u %s\n", (REBCNT)sizeof(REBALL), "all");
 #endif
 
