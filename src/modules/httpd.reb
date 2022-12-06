@@ -34,9 +34,8 @@ Rebol [
 		10-May-2020 "Oldes" {Implemented directory listing, logging and multipart POST processing}
 		02-Jul-2020 "Oldes" {Added possibility to stop server and return data from client (useful for OAuth2)}
 	]
+	needs: [mime-types]
 ]
-
-import 'mime-types
 
 append system/options/log [httpd: 1]
 
@@ -343,6 +342,21 @@ sys/make-scheme [
 			]
 		]
 
+		On-Read-Websocket: func[
+			"Process READ action on client's port using websocket"
+			ctx [object!]
+			final? [logic!]   "Indicates that this is the final fragment in a message."
+			opcode [integer!] "Defines the interpretation of the 'Payload data'."
+		][
+			;@@ this is just a placeholder!
+		]
+		On-Close-Websocket: func[
+			"Process READ action on client's port using websocket"
+			ctx [object!] code [integer!]
+		][
+			;@@ this is just a placeholder!
+		]
+
 		On-List-Dir: func[
 			ctx [object!] target [object!]
 			/local path dir out size date files dirs
@@ -399,10 +413,25 @@ sys/make-scheme [
 			sys/log/more 'HTTPD ["Target not found:^[[1m" mold target/file]
 			ctx/out/status: 404
 		]
+
+		WS-handshake: func[ctx /local key][
+			if all [
+				"websocket" = select ctx/inp/header 'Upgrade
+				key: select ctx/inp/header 'Sec-WebSocket-Key
+			][
+				ctx/out/status: 101
+				ctx/out/header/Upgrade: "websocket"
+				ctx/out/header/Connection: "Upgrade"
+				ctx/out/header/Sec-WebSocket-Accept: enbase checksum join key "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" 'sha1 64
+				;?  ctx/out/header
+				;ctx/out/content: ""
+			]
+		]
 	]
 
 	Status-Codes: make map! [
 		100 "Continue"
+		101 "Switching Protocols"
 		200 "OK"
 		201 "Created"
 		202 "Accepted"
@@ -471,38 +500,44 @@ sys/make-scheme [
 		buffer: make binary! 1024
 		append buffer ajoin ["HTTP/" ctx/inp/version #" " out/status #" " status-codes/(out/status) CRLF]
 
-		unless out/header/Content-Type [
-			if out/target [
-				out/header/Content-Type: mime-type? out/target
-			]
-			if all [
-				none? out/header/Content-Type ; no mime found above
-				string? out/content
-			][
-				out/header/Content-Type: "text/html; charset=UTF-8"
-			]
-		]		
-
-		out/header/Content-Length: either out/content [
-			if string? out/content [
-				; must be converted to binary to have proper length if not ascii
-				out/content: to binary! out/content
-			]
-			length? out/content
+		either "websocket" = out/header/upgrade [
+			ctx/inp/method: "websocket"
+			try [ctx/inp/version: to integer! ctx/inp/header/Sec-WebSocket-Version]
+			port/awake: :Awake-Websocket
 		][
-			0
-		]
+			unless out/header/Content-Type [
+				if out/target [
+					out/header/Content-Type: mime-type? out/target
+				]
+				if all [
+					none? out/header/Content-Type ; no mime found above
+					string? out/content
+				][
+					out/header/Content-Type: "text/html; charset=UTF-8"
+				]
+			]		
 
-		if keep-alive: ctx/config/keep-alive [
-			if logic? keep-alive  [
-				; using defaults
-				ctx/config/keep-alive:
-				keep-alive: [15 100] ; [timeout max-requests]
+			out/header/Content-Length: either out/content [
+				if string? out/content [
+					; must be converted to binary to have proper length if not ascii
+					out/content: to binary! out/content
+				]
+				length? out/content
+			][
+				0
 			]
-			ctx/out/header/Connection: "keep-alive"
-			ctx/out/header/Keep-Alive: ajoin ["timeout=" keep-alive/1 ", max=" keep-alive/2]
+
+			if keep-alive: ctx/config/keep-alive [
+				if logic? keep-alive  [
+					; using defaults
+					ctx/config/keep-alive:
+					keep-alive: [15 100] ; [timeout max-requests]
+				]
+				ctx/out/header/Connection: "keep-alive"
+				ctx/out/header/Keep-Alive: ajoin ["timeout=" keep-alive/1 ", max=" keep-alive/2]
+			]
+			out/header/Server: ctx/config/server-name
 		]
-		out/header/Server: ctx/config/server-name
 		
 		;probe out/header
 		foreach [name value] out/header [
@@ -680,6 +715,111 @@ sys/make-scheme [
 		true
 	]
 
+	Awake-Websocket: function [
+		event [event!]
+	][
+		port: event/port
+		ctx: port/extra
+
+		sys/log/more 'HTTPD ["Awake Websocket:^[[1m" ctx/remote "^[[22m" event/type]
+
+		ctx/timeout: now + 0:0:30
+
+		switch event/type [
+			READ [
+				ready?: false
+				data: head port/data
+				sys/log/more 'HTTPD ["bytes:^[[1m" length? data]
+				try/except [
+					while [2 < length? data][
+						final?: data/1 & 128 = 128
+						opcode: data/1 & 15
+						mask?:  data/2 & 128 = 128
+						len:    data/2 & 127
+						data: skip data 2
+						;? final? ? opcode ? len
+						case [
+							len = 126 [
+								if 2 >= length? data [break]
+								len: binary/read data 'UI16
+								data: skip data 2
+							]
+							len = 127 [
+								if 8 >= length? data [break]
+								len: binary/read data 'UI64
+								data: skip data 8
+							]
+						]
+						if (4 + length? data) < len [break]
+						remove/part head data data
+						data: head data
+						either mask? [
+							request-data: make binary! len
+							masks:   take/part data 4
+							payload: take/part data len
+							while [not tail? payload][
+								append request-data masks xor take/part payload 4
+							]
+						][
+							request-data: take/part data len
+						]
+						ready?: true						
+						clear skip request-data len
+						ctx/inp/content: request-data
+						if opcode = 8 [
+							sys/log/more 'HTTPD "WS Connection Close Frame!"
+							code: 0
+							if all [
+								2 <= len
+								2 <= length? request-data
+							][
+								code: to integer! take/part request-data 2
+								sys/log/more 'HTTPD ["WS Close reason:" as-red code]
+							]
+							actor/On-Close-Websocket ctx code
+							event/type: 'CLOSE
+							Awake-Websocket event
+							exit
+						]
+						actor/On-Read-Websocket ctx final? opcode
+					]
+				][
+					print system/state/last-error
+				]
+				either ready? [
+					;; there was complete input...
+					write port either all [
+						series? content: ctx/out/content
+						not empty? content
+					][
+						content: to binary! content
+						clear ctx/out/content
+						len: length? content
+						;print len
+						;prin "out: " ? content
+						bin: binary len
+						binary/write bin case [
+							len < 127                     [ [UI8 129 UI8          :len :content] ]
+							all [ len > 126 len <= 65535 ][ [UI8 129 UI8 126 UI16 :len :content] ]
+							len > 65535                   [ [UI8 129 UI8 127 UI64 :len :content] ]	  
+						]
+						head bin/buffer
+					][	"" ]
+				][
+					;; needs more data!
+					read port
+				]
+			]
+			WROTE [
+				read port
+			]
+			CLOSE [
+				sys/log/info 'HTTPD ["Closing:^[[22m" ctx/remote]
+				if pos: find ctx/parent/extra/clients port [ remove pos ]
+				close port
+			]
+		]
+	]
 
 
 	New-Client: func[port [port!] /local client info err][

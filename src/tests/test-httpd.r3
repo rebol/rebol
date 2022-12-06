@@ -16,7 +16,7 @@ Rebol [
 secure [%../modules/ allow]
 do %../modules/httpd.reb
 
-system/options/log/httpd: 3 ; for verbose output
+system/options/log/httpd: 4 ; for verbose output
 system/options/quiet: false
 
 ; make sure that there is the directory for logs
@@ -32,12 +32,24 @@ humans.txt: {
   \____________/~~~> http://github.com/oldes/
 }
 
+WS-handshake: func[ctx /local key][
+	if all [
+		"websocket" = select ctx/inp/header 'Upgrade
+		key: select ctx/inp/header 'Sec-WebSocket-Key
+	][
+		ctx/out/status: 101
+		ctx/out/header/Upgrade: "websocket"
+		ctx/out/header/Connection: "Upgrade"
+		ctx/out/header/Sec-WebSocket-Accept: enbase checksum join key "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" 'sha1 64
+	]
+]
+
 http-server/config/actor 8081 [
 	;- Main server configuration
 	
 	root: %httpd-root/
 	server-name: "nginx"  ;= it's possible to hide real server name
-	keep-alive: [15 100] ;= [timeout max-requests] or FALSE to turn it off
+	keep-alive: [30 100] ;= [timeout max-requests] or FALSE to turn it off
 	log-access: %httpd-root/logs/test-access.log
 	log-errors: %httpd-root/logs/test-errors.log
 	list-dir?:  #[true]
@@ -50,27 +62,26 @@ http-server/config/actor 8081 [
 		; TRUE = accepted, FALSE = refuse
 		find [ 127.0.0.1 ] info/remote-ip 
 	]
-	On-Header: func [ctx [object!] /local path][
+	On-Header: func [ctx [object!] /local path key][
 		path: ctx/inp/target/file
 		;- detect some of common hacking attempts...
-		if parse path [
+		unless parse path [
 			some [
-				; common scripts, which we don't use
+				;; common scripts, which we don't use
 				  #"." [
 				  	  %php
 				  	| %aspx
 				  	| %cgi
-				][end | #"?" | #"#"] break
+				][end | #"?" | #"#"] reject
 				; common hacking attempts to root folders...
 				| #"/" [
 					  %ecp/      ; we are not an exchange server
 					| %mifs/     ; either not MobileIron (https://stackoverflow.com/questions/67901776/what-does-the-line-mifs-services-logservice-mean)
 					| %GponForm/ ; nor Gpon router (https://www.vpnmentor.com/blog/critical-vulnerability-gpon-router/)
 					| %.env end  ; https://stackoverflow.com/questions/64109005/do-these-env-get-requests-from-localhost-indicate-an-attack
-				] break
-				| end reject ; nothing above was detected so return false
+				] reject
 				| 1 skip
-			] to end
+			]
 		][
 			ctx/out/status: 418 ;= I'm a teapot
 			ctx/out/header/Content-Type: "text/plain; charset=UTF-8"
@@ -117,6 +128,11 @@ http-server/config/actor 8081 [
 					"Request input:" mold ctx/inp
 				]
 			]
+			%/echo [
+				;@@ Consider checking the ctx/out/header/Origin value
+				;@@ before accepting websocket connection upgrade!   
+				WS-handshake ctx
+			]
 		]
 	]
 	On-Post-Received: func [ctx [object!]][
@@ -126,4 +142,37 @@ http-server/config/actor 8081 [
 			"</code> data:<pre>" mold ctx/inp/content </pre>
 		]
 	]
+
+	On-Read-Websocket: func[ctx final? opcode][
+		print ["WS opcode:" opcode "final frame:" final?]
+		either opcode = 1 [
+			probe ctx/out/content: to string! ctx/inp/content
+		][
+			? ctx/inp/content
+		]
+	]
+	On-Close-Websocket: func[ctx code /local reason][
+		reason: any [
+			select [
+				1000 "the purpose for which the connection was established has been fulfilled."
+				1001 "a browser navigated away from a page."
+				1002 "a protocol error."
+				1003 "it has received a type of data it cannot accept."
+				1007 "it has received data within a message that was not consistent with the type of the message."
+				1008 "it has received a message that violates its policy."
+				1009 "it has received a message that is too big for it to process."
+				1010 "it has expected the server to negotiate one or more extension, but the server didn't return them in the response message of the WebSocket handshake."
+				1011 "it encountered an unexpected condition that prevented it from fulfilling the request."
+			] code
+			ajoin ["an unknown reason (" code ")"]
+		]
+		print ["WS connection is closing because" reason]
+		unless empty? reason: ctx/inp/content [
+			;; optional client's reason
+			print ["Client's reason:" as-red to string! reason]
+		]
+	]
+
 ]
+
+
