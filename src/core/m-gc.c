@@ -81,6 +81,7 @@
 
 #include "sys-core.h"
 #include "reb-evtypes.h"
+//#include "stdio.h"
 
 #ifdef REB_API
 extern REBOL_HOST_LIB *Host_Lib;
@@ -284,6 +285,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	REBCNT len;
 	REBSER *ser;
 	REBVAL *val;
+	REBHOB *hob;
 
 	ASSERT(series != 0, RP_NULL_MARK_SERIES);
 
@@ -318,8 +320,13 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 			break;
 		case REB_HANDLE:
 			if (IS_CONTEXT_HANDLE(val)) {
-				//printf("marked hob: %p %p\n", VAL_HANDLE_CTX(val), val);
+				hob = VAL_HANDLE_CTX(val);
+				//printf("marked hob: %p %p\n", hob, val);
 				MARK_HANDLE_CONTEXT(val);
+				if (hob->series) {
+					//puts("marked hob's series");
+					MARK_SERIES(hob->series);
+				}
 			}	
 			else if (IS_SERIES_HANDLE(val) && !HANDLE_GET_FLAG(val, HANDLE_RELEASABLE)) {
 				//printf("markserhandle %0xh val: %0xh %s \n", (void*)val, VAL_HANDLE(val), VAL_HANDLE_NAME(val));

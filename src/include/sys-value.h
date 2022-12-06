@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -1091,10 +1091,11 @@ typedef struct Reb_Handle_Spec {
 } REBHSP;
 
 typedef struct Reb_Handle_Context {
-	REBYTE *data;
+	REBYTE *data;     // Pointer to raw data
 	REBCNT  sym;      // Index of the word's symbol. Used as a handle's type!
 	REBFLG  flags:16; // Handle_Flags (HANDLE_CONTEXT_MARKED and HANDLE_CONTEXT_USED)
 	REBCNT  index:16; // Index into Reb_Handle_Spec value
+	REBSER *series;   // Optional pointer to Rebol series, which may be marked by GC
 } REBHOB;
 
 typedef struct Reb_Handle {
