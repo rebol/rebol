@@ -106,6 +106,13 @@ typedef void *REBNOD;			// Just used for linking free nodes
 #define	MEM_MIN_SIZE sizeof(REBVAL)
 #define MEM_BIG_SIZE 1024
 
+#ifdef __LP64__
+// on 64bit system the value 32 would result in size 1024 bytes, which is already first BIG pool
+#define LAST_SMALL_SIZE 30
+#else
+#define LAST_SMALL_SIZE 32
+#endif
+
 #define MEM_BALLAST 3000000
 
 // Disable GC - Only necessary if DO_NEXT with non-referenced series.
