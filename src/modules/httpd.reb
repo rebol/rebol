@@ -1,11 +1,11 @@
 Rebol [
 	Title: "HTTPD Scheme"
-	Date: 02-Jul-2020
+	Date: 6-Dec-2022
 	Author: ["Andreas Bolka" "Christopher Ross-Gill" "Oldes"]
 	File: %httpd.reb
 	Name: 'httpd
 	Type: 'module
-	Version: 0.6.0
+	Version: 0.7.0
 	Exports: [http-server decode-target to-CLF-idate]
 	Rights: http://opensource.org/licenses/Apache-2.0
 	Purpose: {
@@ -33,6 +33,7 @@ Rebol [
 		01-Apr-2019 "Oldes" {Rewritten to be usable in real life situations.}
 		10-May-2020 "Oldes" {Implemented directory listing, logging and multipart POST processing}
 		02-Jul-2020 "Oldes" {Added possibility to stop server and return data from client (useful for OAuth2)}
+		06-Dec-2022 "Oldes" {Added minimal support for WebSocket connections}
 	]
 	needs: [3.10.1 mime-types]
 ]
@@ -881,7 +882,7 @@ sys/make-scheme [
 			ctx/out/Header: make map! 12
 			ctx/state: none
 			; set new timeout
-			ctx/timeout: now + ctx/config/keep-alive/1 
+			ctx/timeout: now + to time! ctx/config/keep-alive/1 
 			read port
 		][
 			; close client connection
