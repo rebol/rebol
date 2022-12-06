@@ -753,7 +753,6 @@ sys/make-scheme [
 						if (4 + length? data) < len [break]
 						data: truncate data ;; removes already processed bytes from the head
 						either mask? [
-							request-data: make binary! len
 							masks:   take/part data 4
 							request-data: masks xor take/part data len
 						][
