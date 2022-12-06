@@ -1023,6 +1023,36 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 }
 
 
+/***********************************************************************
+**
+*/	REBNATIVE(truncate)
+/*
+//	truncate: native [
+//		"Removes all bytes/values from series' head to its current index position"
+//		series [series!] "Series to be truncated"
+//      /part   "Also shorten resulted series to a length or end position"
+//       range  [number! series!]
+//	]
+***********************************************************************/
+{
+	REBVAL *arg = D_ARG(1);
+	REBINT index = VAL_INDEX(arg);
+	REBINT len = -1;
+	
+	if (D_REF(2)) {
+		len = Partial(arg, 0, D_ARG(3), 0);
+	}
+	if (index > 0) {
+		Remove_Series(VAL_SERIES(arg), 0, index);
+		VAL_INDEX(arg) = 0;
+	}
+	if (len >= 0) {
+		VAL_TAIL(arg) = len;
+	}
+	return R_ARG1;
+}
+
+
 #ifdef not_fast_enough
 /***********************************************************************
 **

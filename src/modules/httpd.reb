@@ -736,6 +736,8 @@ sys/make-scheme [
 						len:    data/2 & 127
 						data: skip data 2
 						;? final? ? opcode ? len
+
+						;@@ Not removing bytes until we make sure, that there is enough data!
 						case [
 							len = 126 [
 								if 2 >= length? data [break]
@@ -749,8 +751,7 @@ sys/make-scheme [
 							]
 						]
 						if (4 + length? data) < len [break]
-						remove/part head data data
-						data: head data
+						data: truncate data ;; removes already processed bytes from the head
 						either mask? [
 							request-data: make binary! len
 							masks:   take/part data 4
@@ -761,9 +762,8 @@ sys/make-scheme [
 						][
 							request-data: take/part data len
 						]
-						ready?: true						
-						clear skip request-data len
-						ctx/inp/content: request-data
+						ready?: true
+						ctx/inp/content: truncate/part request-data len
 						if opcode = 8 [
 							sys/log/more 'HTTPD "WS Connection Close Frame!"
 							code: 0

@@ -392,6 +392,19 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "TRUNCATE"
+--test-- "TRUNCATE"
+	--assert "23"  = truncate next "123"
+	--assert [2 3] = truncate next [1 2 3]
+	--assert "2"   = truncate/part next "123" 1
+	--assert [2]   = truncate/part next [1 2 3] 1
+	--assert "23"  = head truncate next "123"
+	--assert [2 3] = head truncate next [1 2 3]
+	--assert "2"   = head truncate/part next "123" 1
+	--assert [2]   = head truncate/part next [1 2 3] 1
+===end-group===
+
+
 
 ===start-group=== "REPLACE string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/54
