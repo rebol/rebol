@@ -16,7 +16,7 @@ Rebol [
 secure [%../modules/ allow]
 do %../modules/httpd.reb
 
-system/options/log/httpd: 4 ; for verbose output
+system/options/log/httpd: 1 ; for verbose output
 system/options/quiet: false
 
 ; make sure that there is the directory for logs
@@ -31,18 +31,6 @@ humans.txt: {
   /____________\
   \____________/~~~> http://github.com/oldes/
 }
-
-WS-handshake: func[ctx /local key][
-	if all [
-		"websocket" = select ctx/inp/header 'Upgrade
-		key: select ctx/inp/header 'Sec-WebSocket-Key
-	][
-		ctx/out/status: 101
-		ctx/out/header/Upgrade: "websocket"
-		ctx/out/header/Connection: "Upgrade"
-		ctx/out/header/Sec-WebSocket-Accept: enbase checksum join key "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" 'sha1 64
-	]
-]
 
 http-server/config/actor 8081 [
 	;- Main server configuration
@@ -131,7 +119,7 @@ http-server/config/actor 8081 [
 			%/echo [
 				;@@ Consider checking the ctx/out/header/Origin value
 				;@@ before accepting websocket connection upgrade!   
-				WS-handshake ctx
+				system/schemes/httpd/actor/WS-handshake ctx
 			]
 		]
 	]

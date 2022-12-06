@@ -423,8 +423,6 @@ sys/make-scheme [
 				ctx/out/header/Upgrade: "websocket"
 				ctx/out/header/Connection: "Upgrade"
 				ctx/out/header/Sec-WebSocket-Accept: enbase checksum join key "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" 'sha1 64
-				;?  ctx/out/header
-				;ctx/out/content: ""
 			]
 		]
 	]
