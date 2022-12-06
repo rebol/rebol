@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -740,7 +741,7 @@ set_bits:
 	case A_XOR:
 		if (!IS_BITSET(arg) && !IS_BINARY(arg))
 			Trap_Math_Args(VAL_TYPE(arg), action);
-		VAL_SERIES(value) = ser = Xandor_Binary(action, value, arg);
+		VAL_SERIES(value) = ser = Xandor_Bitset(action, value, arg);
 		Trim_Tail_Zeros(ser);
 		break;
 

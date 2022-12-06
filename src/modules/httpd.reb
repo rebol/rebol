@@ -34,7 +34,7 @@ Rebol [
 		10-May-2020 "Oldes" {Implemented directory listing, logging and multipart POST processing}
 		02-Jul-2020 "Oldes" {Added possibility to stop server and return data from client (useful for OAuth2)}
 	]
-	needs: [mime-types]
+	needs: [3.10.1 mime-types]
 ]
 
 append system/options/log [httpd: 1]
@@ -755,10 +755,7 @@ sys/make-scheme [
 						either mask? [
 							request-data: make binary! len
 							masks:   take/part data 4
-							payload: take/part data len
-							while [not tail? payload][
-								append request-data masks xor take/part payload 4
-							]
+							request-data: masks xor take/part data len
 						][
 							request-data: take/part data len
 						]

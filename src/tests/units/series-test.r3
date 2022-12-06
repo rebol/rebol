@@ -2306,6 +2306,23 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "Bitwise operations on binary"	
+	bin1: #{DEADBEAFF00D}
+	bin2: #{BEAF}
+	--test-- "AND on binary"
+	--assert (bin1 AND bin2) == #{9EADBEAFB00D}
+	--assert (bin2 AND bin1) == #{9EADBEAFB00D}
+	--test-- "OR on binary"
+	--assert (bin1 OR bin2)  == #{FEAFBEAFFEAF}
+	--assert (bin2 OR bin1)  == #{FEAFBEAFFEAF}
+	--test-- "XOR on binary"
+	--assert (bin1 XOR bin2) == #{600200004EA2}
+	--assert (bin2 XOR bin1) == #{600200004EA2}
+	--assert (#{600200004EA2} XOR bin2) == bin1
+===end-group===
+
+
 ===start-group=== "TO-*"
 
 --test-- "to-path"

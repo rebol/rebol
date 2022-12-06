@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -199,7 +200,7 @@ enum {
 			i = 0; // special case
 			break;
 		}
-		ser = Xandor_Binary(i, val1, val2);
+		ser = Xandor_Bitset(i, val1, val2);
 		Set_Series(REB_BITSET, D_RET, ser);
 		break;
 
