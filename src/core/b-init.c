@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,9 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#ifdef SHOW_SIZEOFS
+#include <stdio.h>
+#endif
 
 #define EVAL_DOSE 10000
 
@@ -95,6 +98,7 @@ extern const REBYTE Str_Banner[];
 	printf("%u %s\n", (REBCNT)sizeof(REBUDT), "utype");
 	printf("%u %s\n", (REBCNT)sizeof(REBDCI), "deci");
 	printf("%u %s\n", (REBCNT)sizeof(REBHAN), "handle");
+	printf("%u %s\n", (REBCNT)sizeof(REBHOB), "hob");
 	printf("%u %s\n", (REBCNT)sizeof(REBALL), "all");
 #endif
 
