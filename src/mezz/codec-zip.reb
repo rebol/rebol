@@ -23,7 +23,7 @@ register-codec [
 	name:  'zip
 	type:  'compression
 	title: "ZIP File Format"
-	suffixes: [%.zip %.aar %.jar %.apk %.zipx %.appx %.epub]
+	suffixes: [%.zip %.aar %.jar %.apk %.zipx %.appx %.epub %.docx]
 
 	decode: function [
 		{Decompress all content of the ZIP file}
