@@ -789,7 +789,7 @@ include-rebol-core: [
 	:include-codec-zip
 	:include-codec-tar
 
-	:include-codec-rebin
+	;:include-codec-rebin ;not yet ready!
 	
 	config: INCLUDE_SHA224
 	config: INCLUDE_SHA384
