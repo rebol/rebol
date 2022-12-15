@@ -306,7 +306,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			REBSER *blk = RXA_SERIES(frm, 1);
 			REBCNT n, type;
 			RXIARG val;
-			printf("\nBlock with %llu values:\n", RL_SERIES(blk, RXI_SER_TAIL));
+			printf("\nBlock with %lu values:\n", RL_SERIES(blk, RXI_SER_TAIL));
 			for(n = 0; (type = RL_GET_VALUE(blk, n, &val)); n++) {
 				if(type == RXT_END) break;
 				printf("\t%i -> %i\n", n, type);
