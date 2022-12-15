@@ -212,6 +212,7 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 {
 #ifndef INCLUDE_RC4
 	Trap0(RE_FEATURE_NA);
+	return R_UNSET; // just to silent a warning
 #else
     REBOOL  ref_key       = D_REF(1);
     REBVAL *val_crypt_key = D_ARG(2); 
