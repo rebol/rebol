@@ -377,7 +377,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 
 
 void* releaseXTestContext(void* ctx) {
-	XTEST* data = (REBHOB*)ctx;
+	XTEST* data = (XTEST*)ctx;
 	printf("Relasing XTest context handle: %p\n", data);
 	// do some final cleaning off the context's content
 	printf("data=> id: %u num: %i\n", data->id, data->num);
