@@ -204,7 +204,7 @@ int lzw_compress (void (*dst)(int,void*), void *dstctx, int (*src)(void*), void 
     total_codes = 1 << maxbits;
 
 	mem = Make_Binary((total_codes * sizeof(encoder_entry_t)) - 1); // using -1, because Make_Binary adds 1!
-	dictionary = BIN_HEAD(mem);
+	dictionary = (encoder_entry_t *)BIN_HEAD(mem);
     max_available_entries = total_codes - FIRST_STRING - 1;
     max_available_code = total_codes - 2;
 
@@ -400,7 +400,7 @@ int lzw_decompress (void (*dst)(int,void*), void *dstctx, int (*src)(void*), voi
 
 	mem = Make_Binary((total_codes * sizeof(decoder_entry_t)) + (total_codes - 256) + (total_codes / 8) - 1);
 
-    dictionary = BIN_HEAD(mem);
+    dictionary = (decoder_entry_t *)BIN_HEAD(mem);
     reverse_buffer = BIN_SKIP(mem, (total_codes * sizeof(decoder_entry_t)));
     referenced = BIN_SKIP(mem, (total_codes * sizeof(decoder_entry_t)) + (total_codes - 256));  // bitfield indicating code is referenced at least once
 
