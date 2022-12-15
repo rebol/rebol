@@ -364,7 +364,7 @@ typedef struct REBCLR {
 */	REBNATIVE(image)
 /*
 //  image: native [
-//		"Interface to basic image encoding/decoding (only on Windows so far!)"
+//		"Interface to basic image encoding/decoding (only on Windows and macOS so far!)"
 //		/load      "Image file to load or binary to decode"
 //		 src-file  [file! binary!]
 //		/save      "Encodes image to file or binary"

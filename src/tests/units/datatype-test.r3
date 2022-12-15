@@ -9,6 +9,11 @@ Rebol [
 ~~~start-file~~~ "datatype"
 
 ===start-group=== "datatype!"
+	--test-- "system/catalog/datatypes"
+		--assert block? system/catalog/datatypes
+		--assert datatype? first system/catalog/datatypes
+		--assert #[end!] = first system/catalog/datatypes
+
 	--test-- "reflect datatype!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1534
 		--assert object? sp: reflect integer! 'spec

@@ -268,7 +268,7 @@ const REBCNT Gob_Flag_Words[] = {
 	ser = Make_Block(len);
 	ser->tail = len;
 	val = BLK_HEAD(ser);
-	gp = GOB_HEAD(gob);
+	gp = GOB_SKIP(gob, index);
 	for (; len > 0; len--, val++, gp++) {
 		SET_GOB(val, *gp);
 	}

@@ -23,7 +23,7 @@ register-codec [
 	name:  'zip
 	type:  'compression
 	title: "ZIP File Format"
-	suffixes: [%.zip %.aar %.jar %.apk %.zipx %.appx %.epub]
+	suffixes: [%.zip %.aar %.jar %.apk %.zipx %.appx %.epub %.docx]
 
 	decode: function [
 		{Decompress all content of the ZIP file}
@@ -189,7 +189,7 @@ register-codec [
 		]
 
 		add-data: func[file spec /local no-compress? extra extra-length comm comm-length][
-			sys/log/info 'ZIP ["Adding:" as-green file]
+			if verbose [sys/log/info 'ZIP ["Adding:" as-green file]]
 
 			any [file? file cause-error 'user 'message reduce [reform ["found" type? file "where file! expected"]]]
 			data: date: none

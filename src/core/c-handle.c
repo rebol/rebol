@@ -92,7 +92,7 @@
 	hob = (REBHOB*)Make_Node(HOB_POOL);
 	hob->data = MAKE_MEM(size);
 	hob->index = idx;
-	hob->flags = 0;
+	hob->flags = HANDLE_CONTEXT;
 	hob->sym = sym;
 	CLEAR(hob->data, size);
 	USE_HOB(hob);

@@ -1,5 +1,5 @@
 Rebol [
-	title:  "Rebol3 SMTP protocol scheme"
+	title:  "SMTP protocol scheme"
 	name:    smtp
 	type:    module
 	author:  ["Graham" "Oldes"]
@@ -189,6 +189,7 @@ sync-smtp-handler: function [event][
 										]
 										PLAIN [
 											smtp-port/state: 'PLAIN
+											net-log/C "AUTH PLAIN ***"
 											write client to binary! ajoin [
 												"AUTH PLAIN "
 												enbase/flat ajoin [spec/user #"^@" spec/user #"^@" spec/pass] 64

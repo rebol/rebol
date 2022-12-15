@@ -75,9 +75,9 @@
 ***********************************************************************/
 const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 {
-	{8, 256},			// 0-8 Small string pool
+	{8, 512},			// 0-8 Small string pool
 
-	MOD_POOL( 1, 256),	// 9-16 (when REBVAL is 16)
+	MOD_POOL( 1, 1024),	// 9-16 (when REBVAL is 16)
 	MOD_POOL( 2, 512),	// 17-32 - Small series (x 16)
 	MOD_POOL( 3, 1024),	// 33-64
 	MOD_POOL( 4, 512),
@@ -96,12 +96,12 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	MOD_POOL(20,  32),	// 321 - Mid-size series (x 64)
 	MOD_POOL(24,  16),	// 385
 	MOD_POOL(28,  16),	// 449
-	MOD_POOL(32,   8),	// 513
+	MOD_POOL(LAST_SMALL_SIZE,  16),	// 513
 
-	DEF_POOL(MEM_BIG_SIZE,  16),	// 1K - Large series (x 1024)
-	DEF_POOL(MEM_BIG_SIZE*2, 8),	// 2K
-	DEF_POOL(MEM_BIG_SIZE*3, 4),	// 3K
-	DEF_POOL(MEM_BIG_SIZE*4, 4),	// 4K
+	DEF_POOL(MEM_BIG_SIZE,   16),	// 1K - Large series (x 1024)
+	DEF_POOL(MEM_BIG_SIZE*2, 16),	// 2K
+	DEF_POOL(MEM_BIG_SIZE*3,  4),	// 3K
+	DEF_POOL(MEM_BIG_SIZE*4,  8),	// 4K
 
 	DEF_POOL(sizeof(REBSER), 4096),	// Series headers
 	DEF_POOL(sizeof(REBGOB), 128),	// Gobs
@@ -168,7 +168,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	PG_Pool_Map = Make_Mem((4 * MEM_BIG_SIZE) + 4); // extra
 	n = 9;  // sizes 0 - 8 are pool 0
 	for (; n <= 16 * MEM_MIN_SIZE; n++) PG_Pool_Map[n] = MEM_TINY_POOL     + ((n-1) / MEM_MIN_SIZE);
-	for (; n <= 32 * MEM_MIN_SIZE; n++) PG_Pool_Map[n] = MEM_SMALL_POOLS-4 + ((n-1) / (MEM_MIN_SIZE * 4));
+	for (; n <= LAST_SMALL_SIZE * MEM_MIN_SIZE; n++) PG_Pool_Map[n] = MEM_SMALL_POOLS-4 + ((n-1) / (MEM_MIN_SIZE * 4));
 	for (; n <=  4 * MEM_BIG_SIZE; n++) PG_Pool_Map[n] = MEM_MID_POOLS     + ((n-1) / MEM_BIG_SIZE);
 }
 

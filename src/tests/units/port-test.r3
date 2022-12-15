@@ -39,6 +39,19 @@ Rebol [
 		]
 		delete %dir-606/
 
+	--test-- "create dir"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2525
+		--assert all [
+			not error? try [create %issue-2525/]
+			exists? %issue-2525/
+			delete  %issue-2525/
+		]
+		--assert all [
+			not error? try [create %issue-2525-ěšč/]
+			exists? %issue-2525-ěšč/
+			delete  %issue-2525-ěšč/
+		]
+
 	--test-- "make-dir/delete/exists? with path without a slash"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/499
 		--assert %dir-606/ = make-dir %dir-606
