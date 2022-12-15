@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.10.2
+version: 3.10.3
 
 target-windows: [
 	os:       windows
@@ -367,6 +367,9 @@ include-native-png-codec: [config: INCLUDE_PNG_CODEC core-files: %core/u-png.c]
 include-native-qoi-codec: [config: INCLUDE_QOI_CODEC core-files: %core/u-qoi.c]
 include-native-jpg-codec: [config: INCLUDE_JPG_CODEC core-files: %core/u-jpg.c]
 include-native-gif-codec: [config: INCLUDE_GIF_CODEC core-files: %core/u-gif.c]
+
+include-codec-rebin: [config: INCLUDE_REBIN_CODEC core-files: %core/u-rebin.c]
+
 
 ;@@ on Windows it's better to use system image codec (ability to use more types)
 include-image-os-codec: [
@@ -785,6 +788,8 @@ include-rebol-core: [
 	:include-codec-gzip
 	:include-codec-zip
 	:include-codec-tar
+
+	:include-codec-rebin
 	
 	config: INCLUDE_SHA224
 	config: INCLUDE_SHA384
@@ -838,7 +843,7 @@ include-rebol-bulk: [
 	config: INCLUDE_PNG_FILTER ; includes `filter` and `unfilter` natives
 
 	;- for tests:
-	;:include-test-extension
+	:include-test-extension
 	;- not recommanded:
 	;:include-native-wav-codec
 
