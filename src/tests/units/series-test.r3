@@ -392,6 +392,19 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "TRUNCATE"
+--test-- "TRUNCATE"
+	--assert "23"  = truncate next "123"
+	--assert [2 3] = truncate next [1 2 3]
+	--assert "2"   = truncate/part next "123" 1
+	--assert [2]   = truncate/part next [1 2 3] 1
+	--assert "23"  = head truncate next "123"
+	--assert [2 3] = head truncate next [1 2 3]
+	--assert "2"   = head truncate/part next "123" 1
+	--assert [2]   = head truncate/part next [1 2 3] 1
+===end-group===
+
+
 
 ===start-group=== "REPLACE string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/54
@@ -2292,6 +2305,23 @@ Rebol [
 	--assert all [error? e: try [empty? exclude bin1 bin2] e/id = 'expect-arg]
 
 ===end-group===
+
+
+===start-group=== "Bitwise operations on binary"	
+	bin1: #{DEADBEAFF00D}
+	bin2: #{BEAF}
+	--test-- "AND on binary"
+	--assert (bin1 AND bin2) == #{9EADBEAFB00D}
+	--assert (bin2 AND bin1) == #{9EADBEAFB00D}
+	--test-- "OR on binary"
+	--assert (bin1 OR bin2)  == #{FEAFBEAFFEAF}
+	--assert (bin2 OR bin1)  == #{FEAFBEAFFEAF}
+	--test-- "XOR on binary"
+	--assert (bin1 XOR bin2) == #{600200004EA2}
+	--assert (bin2 XOR bin1) == #{600200004EA2}
+	--assert (#{600200004EA2} XOR bin2) == bin1
+===end-group===
+
 
 ===start-group=== "TO-*"
 

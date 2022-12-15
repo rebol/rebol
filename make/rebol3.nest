@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.10.1
+version: 3.10.2
 
 target-windows: [
 	os:       windows
@@ -691,7 +691,7 @@ include-view: [
 ;- native tests:                                                                
 include-test-extension: [
 	host-files: %os/host-ext-test.c
-	config:     TEST_EXTENSIONS ;@@TODO: rename!
+	define:     TEST_EXTENSIONS ;@@TODO: rename!
 ]
 
 ;- native experimantal code:                                                    

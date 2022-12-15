@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +23,7 @@
 **  Module:  s-ops.c
 **  Summary: string handling utilities
 **  Section: strings
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Oldes
 **  Notes:
 **
 ***********************************************************************/
@@ -188,9 +189,9 @@
 
 /***********************************************************************
 **
-*/  REBSER *Xandor_Binary(REBCNT action, REBVAL *value, REBVAL *arg)
+*/  REBSER *Xandor_Bitset(REBCNT action, REBVAL *value, REBVAL *arg)
 /*
-**		Only valid for BINARY data.
+**		Only valid for Bitsets data.
 **
 ***********************************************************************/
 {
@@ -205,10 +206,6 @@
 		t1 = VAL_LEN(arg);
 
 		mt = MIN(t0, t1); // smaller array size
-		// For AND - result is size of shortest input:
-//		if (action == A_AND || (action == 0 && t1 >= t0))
-//			t2 = mt;
-//		else
 		t2 = MAX(t0, t1);
 
 		series = Make_Binary(t2);
@@ -238,6 +235,59 @@
 		return series;
 }
 
+/***********************************************************************
+**
+*/  REBSER *Xandor_Binary(REBCNT action, REBVAL *value, REBVAL *arg)
+/*
+**		Only valid for BINARY data.
+**
+***********************************************************************/
+{
+	REBSER *series;
+	REBYTE *p0, *p1, *p2;
+	REBCNT i, j, mt, t1, t0, t2;
+
+	t0 = VAL_LEN(value);
+	t1 = VAL_LEN(arg);
+
+	if (t0 >= t1) {
+		mt = t1;
+		t2 = t0;
+		p0 = VAL_BIN_DATA(value);
+		p1 = VAL_BIN_DATA(arg);
+	}
+	else {
+		mt = t0;
+		t2 = t1;
+		p1 = VAL_BIN_DATA(value);
+		p0 = VAL_BIN_DATA(arg);
+	}
+	series = Make_Binary(t2);
+	SERIES_TAIL(series) = t2;
+	p2 = BIN_HEAD(series);
+
+	switch (action) {
+	case A_AND:
+		for (i = 0, j = 0; j <= t2; i++, j++) {
+			if (i == mt) i = 0;
+			p2[j] = p0[j] & p1[i];
+		}
+		break;
+	case A_OR:
+		for (i = 0, j = 0; j <= t2; i++, j++) {
+			if (i == mt) i = 0;
+			p2[j] = p0[j] | p1[i];
+		}
+		break;
+	case A_XOR:
+		for (i = 0, j = 0; j <= t2; i++, j++) {
+			if (i == mt) i = 0;
+			p2[j] = p0[j] ^ p1[i];
+		}
+		break;
+	}
+	return series;
+}
 
 /***********************************************************************
 **

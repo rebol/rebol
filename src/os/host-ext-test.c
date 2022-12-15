@@ -81,7 +81,7 @@ char *RX_Spec =
 	"vec0:   command [{return vector size in bytes} v [vector!]]\n"
 	"vec1:   command [{return vector size in bytes (from object)} o [object!]]\n"
 	"blk1:   command [{print type ids of all values in a block} b [block!]]\n"
-	"hob1:   command [{creates XTEST handle}]"
+	"hob1:   command [{creates XTEST handle} bin [binary!]]"
 	"hob2:   command [{prints XTEST handle's data} hndl [handle!]]"
 	"str0:   command [{return a constructed string}]"
 	"echo:   command [{return the input value} value]"
@@ -90,7 +90,7 @@ char *RX_Spec =
 	"i: make image! 2x2\n"
 	"xtest: does [\n"
 		"foreach blk [\n"
-			"[x: hob1]"
+			"[x: hob1 #{0102}]"
 			"[hob2 x]"
 			"[h: hndl1]\n"
 			"[hndl2 h]\n"
@@ -266,7 +266,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 	case 11: //command [{creates a handle}]"
 		{
 			RXA_HANDLE(frm, 1) = (void*)42;
-			RXA_HANDLE_TYPE(frm, 1) = AS_WORD("xtest");
+			RXA_HANDLE_TYPE(frm, 1) = AS_WORD("xtest_plain");
 			RXA_TYPE(frm, 1) = RXT_HANDLE;
 		}
 		break;
@@ -315,13 +315,20 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			return RXR_UNSET;
 		}
 		break;
-	case 16: //command [{creates XTEST handle}]"
+	case 16: //command [{creates XTEST handle} bin [binary!]]"
 		{
 			REBHOB *hob = RL_MAKE_HANDLE_CONTEXT(Handle_XTest);
+			REBSER *bin = RXA_SERIES(frm, 1);
 			XTEST* data = (XTEST*)hob->data;
+
+			if (SERIES_REST(bin) < 1) {
+				RL_EXPAND_SERIES(bin, SERIES_TAIL(bin), 1);
+			}
+			hob->series = bin;
+
 			printf("data=> id: %u num: %i\n", data->id, data->num);
 			data->id = 1;
-			data->num = -42;
+			data->num = SERIES_TAIL(bin);
 			printf("data=> id: %u num: %i\n", data->id, data->num);
 
 			RXA_HANDLE(frm, 1) = hob;
@@ -335,7 +342,9 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			REBHOB* hob = RXA_HANDLE(frm, 1);
 			if (hob->sym == Handle_XTest) {
 				XTEST* data = (XTEST*)hob->data;
-				printf("data=> id: %u num: %i\n", data->id, data->num);
+				REBSER *bin = hob->series;
+				SERIES_DATA(bin)[0] = SERIES_DATA(bin)[0] + 1;
+				printf("data=> id: %u num: %i b: %i\n", data->id, data->num, (u8)SERIES_DATA(bin)[0]);
 				RXA_INT64(frm, 1) = data->num;
 				RXA_TYPE(frm, 1) = RXT_INTEGER;
 			}
@@ -374,6 +383,7 @@ void* releaseXTestContext(void* ctx) {
 	printf("data=> id: %u num: %i\n", data->id, data->num);
 	CLEARS(data);
 	printf("data=> id: %u num: %i\n", data->id, data->num);
+	return NULL;
 }
 
 void Init_Ext_Test(void)

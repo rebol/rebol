@@ -2,14 +2,67 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
-## 2022 September
+
+## 2022 December
+
+### Features:
+
+* [`1b758a`](https://github.com/Oldes/Rebol3/commit/1b758a2652d516e4de233a78920dbe466ae43143) Register `.docx` file suffix with ZIP codec
+* [`9c128d`](https://github.com/Oldes/Rebol3/commit/9c128dc365eb941291210ebdc01d7efd2c3fc74e) Added possibility to keep a track of a Rebol series in a handle's context (guarding this series from GC as long as the handle is referenced)
+* [`36828a`](https://github.com/Oldes/Rebol3/commit/36828a25be19a5fd9f9e943607121667c4127abb) Fine tune memory pool sizes
+* [`783309`](https://github.com/Oldes/Rebol3/commit/783309eed90523d69f6a978843ef4512927811ed) New `truncate` native for shortening a series
+* [`c51876`](https://github.com/Oldes/Rebol3/commit/c51876865cef9106aff51094708021e2a854bbc9) Using built in WebSocket handshake function in the test server
+* [`bae6cf`](https://github.com/Oldes/Rebol3/commit/bae6cffe97e662ec9a727a01cdcc1fdd61455ea6) Minimalistic WebSocket support in the `httpd` scheme
 
 ### Changes:
 
+* [`f94ebb`](https://github.com/Oldes/Rebol3/commit/f94ebb9e846785248c97afbf3b5d3724e817b8eb) Bitwise operation on binary: the shorter argument is used repeatedly
+
+### Fixes:
+
+* [`4d3dd3`](https://github.com/Oldes/Rebol3/commit/4d3dd34059f45b5d099b7d4b9d4b3114530d762d) Creating a directory with a name containing Unicode chars on Posix platforms
+* [`931ddf`](https://github.com/Oldes/Rebol3/commit/931ddfb954fd832b37d5a8788981f397713c1526) Missing include when used `SHOW_SIZEOFS` define
+* [`fb8a03`](https://github.com/Oldes/Rebol3/commit/fb8a03a9b93958d88097dffa8d5fcd090f015850) `httpd` scheme: correct timeout; updated header
+* [`269032`](https://github.com/Oldes/Rebol3/commit/269032dbb7d721c4279f678cc1feaa83a940ae07) Unnecessary series initialization
+* [`31e72e`](https://github.com/Oldes/Rebol3/commit/31e72ec44b8ec2bdac7e86db80a617ea485caa38) Block-like series must be terminated with the END value
+
+## 2022 October
+
+### Features:
+
+* [`0695bf`](https://github.com/Oldes/Rebol3/commit/0695bfc84a86fe02cad9e47da79abce4499d77fc) Pair's `area` accessor
+
+### Fixes:
+
+* [`34df08`](https://github.com/Oldes/Rebol3/commit/34df085081f4e162ccea2f0d6feed12c9ab2afe3) `find/any` returning incorrect result
+* [`9a63e8`](https://github.com/Oldes/Rebol3/commit/9a63e8899d3f84f337af9c9fab86fb18cde9f909) Not available image size when passed in to an extension (regression)
+
+## 2022 September
+
+### Features:
+
+* [`bcaa10`](https://github.com/Oldes/Rebol3/commit/bcaa10870fafceab35abf3f50c5035db317c765e) Implemented set operations on `map!`
+* [`603035`](https://github.com/Oldes/Rebol3/commit/603035402c14d8f3eef07f804b0ea99b1f382011) Optional LZW compression method
+* [`f8f551`](https://github.com/Oldes/Rebol3/commit/f8f551001069cff83493ed7e70ca6f9bfe61e004) Enable loading exact frame from an image on macOS
+* [`381337`](https://github.com/Oldes/Rebol3/commit/381337cd3729250d1e94bf2cbbbd7f9c47f8f987) Cleaned `system/catalog/datatypes` initialization
+* [`dc48b3`](https://github.com/Oldes/Rebol3/commit/dc48b33e1b37da706e739527c92c52ec8e440dea) Small code optimization (removing unnecessary SERIES_FULL check)
+* [`469ba7`](https://github.com/Oldes/Rebol3/commit/469ba799d59283ff275343b4f35579d5f7c82c0a) New Bincode dialect `CROP` command for shrinking buffers from the left side at the read buffer index position
+
+### Changes:
+
+* [`2b5318`](https://github.com/Oldes/Rebol3/commit/2b5318964c80f98c37b9546afcca24286366834b) Don't allow binary input for set operations (does not work anyway)
+* [`421b2f`](https://github.com/Oldes/Rebol3/commit/421b2fed59bcca81940c187bf675434fea7828fa) Updated ZLIB code to version 1.2.12
+* [`972dcc`](https://github.com/Oldes/Rebol3/commit/972dcc003fc57480e2b4cd9864234ea65bc28c82) Not setting `datatypes` value in the library context
+* [`587c22`](https://github.com/Oldes/Rebol3/commit/587c22362d1b981c2048b83877fc72bcff8998bd) Shorter SMTP title and added one more log message
 * [`646cb4`](https://github.com/Oldes/Rebol3/commit/646cb49d4ece9230523f78245a213da1a779a9d3) Using same error type for `to-issue "a a"` and `to-issue "a^Aa"`
 
 ### Fixes:
 
+* [`07e09a`](https://github.com/Oldes/Rebol3/commit/07e09a248dedb760e1724c740a5d6147ab8cc6ae) `union/skip` not working correctly in some cases
+* [`00f44f`](https://github.com/Oldes/Rebol3/commit/00f44fa2b3a99f0c8987371a09f6a664a01091e9) Codecs/zip/verbose ignored by encode
+* [`2f601f`](https://github.com/Oldes/Rebol3/commit/2f601ff2f9068560171898cee41808b3277484a2) TAKE/part of offset gob! returning contents from head of gob!
+* [`22b822`](https://github.com/Oldes/Rebol3/commit/22b8224e58b2c1ef4c7a2c878fc321772fd4c727) Lost index information when passing image value between core and extension
+* [`d915c0`](https://github.com/Oldes/Rebol3/commit/d915c0aa0c44fbf4292a764782ce734cc1b96bc2) Better port validation when dealing with native port actors
 * [`664904`](https://github.com/Oldes/Rebol3/commit/6649047f5cd78aaeb3de1c2e0e3b58f93e5bcc85) Loading unnamed modules was causing failing test
 * [`aacacc`](https://github.com/Oldes/Rebol3/commit/aacacc9190f61999e05a1eb91b940addfcecfec7) Incorrectly dealing with vector item's width
 * [`22f793`](https://github.com/Oldes/Rebol3/commit/22f79314dcb1fd9c1da584eb1fda8536a445d83e) Reverted leaked unwanted modification in the previous commit

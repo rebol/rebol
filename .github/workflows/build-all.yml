@@ -25,31 +25,37 @@ jobs:
       run: |
         ./siskin.exe make/rebol3.nest --msvc %rebol3-base-windows-x64
         MOVE ./msvc/Release-x64/rebol3-base-windows-x64.exe ./
+        ./rebol3-base-windows-x64.exe -v
 
     - name: Build 64bit Rebol/Core using MSVC
       run: |
         ./siskin.exe make/rebol3.nest --msvc %rebol3-core-windows-x64
         MOVE ./msvc/Release-x64/rebol3-core-windows-x64.exe ./
+        ./rebol3-core-windows-x64.exe -v
 
     - name: Build 64bit Rebol/Bulk using MSVC
       run: |
         ./siskin.exe make/rebol3.nest --msvc %rebol3-bulk-windows-x64
         MOVE ./msvc/Release-x64/rebol3-bulk-windows-x64.exe ./
+        ./rebol3-bulk-windows-x64.exe -v
 
     - name: Build 32bit Rebol/Base using MSVC
       run: |
         ./siskin.exe make/rebol3.nest --msvc %rebol3-base-windows-x86
         MOVE ./msvc/Release-Win32/rebol3-base-windows-x86.exe ./
+        ./rebol3-base-windows-x86.exe -v
 
     - name: Build 32bit Rebol/Core using MSVC
       run: |
         ./siskin.exe make/rebol3.nest --msvc %rebol3-core-windows-x86
         MOVE ./msvc/Release-Win32/rebol3-core-windows-x86.exe ./
+        ./rebol3-core-windows-x86.exe -v
 
     - name: Build 32bit Rebol/Bulk using MSVC
       run: |
         ./siskin.exe make/rebol3.nest --msvc %rebol3-bulk-windows-x86
         MOVE ./msvc/Release-Win32/rebol3-bulk-windows-x86.exe ./
+        ./rebol3-bulk-windows-x86.exe -v
 
     ###############################################################################
     # Building Rebol as a shared library...
@@ -117,7 +123,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-20.04]
         #os: [ubuntu-20.04, ubuntu-18.04]
 
     runs-on: ${{ matrix.os }}
@@ -151,6 +157,30 @@ jobs:
 #      - name: Build 64bit Rebol/Bulk using clang
 #        run: ./siskin make/rebol3.nest %rebol3-bulk-x64-libc-clang
 
+      - name: Test 64bit linux versions
+        run: |
+          ./build/rebol3-base-linux-x64 -v
+          ./build/rebol3-core-linux-x64 -v
+          ./build/rebol3-bulk-linux-x64 -v
+
+      - name: Prepare 32bit Rebol/Base for upload
+        run: |
+          mv ./build/rebol3-base-linux-x86 ./
+          gzip -9 ./rebol3-base-linux-x86
+      - name: Prepare 32bit Rebol/Core for upload
+        run: |
+          mv ./build/rebol3-core-linux-x86 ./
+          gzip -9 ./rebol3-core-linux-x86
+      - name: Prepare 32bit Rebol/Bulk for upload
+        run: |
+          mv ./build/rebol3-bulk-linux-x86 ./
+          gzip -9 ./rebol3-bulk-linux-x86
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Rebol-32bit-Linux-${{github.run_id}}
+          path: ./rebol3-*-x86.gz
+
       - name: Prepare 64bit Rebol/Base for upload
         run: |
           mv ./build/rebol3-base-linux-x64 ./rebol3-base-linux-x64
@@ -167,7 +197,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: Rebol-64bit-Linux-${{github.run_id}}
-          path: ./rebol3-*.gz
+          path: ./rebol3-*-x64.gz
 
       # musl versions...
       ##################
@@ -273,31 +303,36 @@ jobs:
           /usr/bin/codesign --force -s $MACOS_IDENTITY_ID ./build/rebol3-core-macos-arm64 -v
           /usr/bin/codesign --force -s $MACOS_IDENTITY_ID ./build/rebol3-bulk-macos-arm64 -v
           
-          
+      - name: Test x64 macOS versions
+        run: |
+          ./build/rebol3-base-macos-x64 -v
+          ./build/rebol3-core-macos-x64 -v
+          ./build/rebol3-bulk-macos-x64 -v
+
       - name: Prepare 64bit Rebol/Base for upload
         run: |
-          mv ./build/rebol3-base-macos-x64 ./rebol3-base-macos-x64
+          mv ./build/rebol3-base-macos-x64 ./
           gzip -9 ./rebol3-base-macos-x64
       - name: Prepare 64bit Rebol/Core for upload
         run: |
-          mv ./build/rebol3-core-macos-x64 ./rebol3-core-macos-x64
+          mv ./build/rebol3-core-macos-x64 ./
           gzip -9 ./rebol3-core-macos-x64
       - name: Prepare 64bit Rebol/Bulk for upload
         run: |
-          mv ./build/rebol3-bulk-macos-x64 ./rebol3-bulk-macos-x64
+          mv ./build/rebol3-bulk-macos-x64 ./
           gzip -9 ./rebol3-bulk-macos-x64
 
       - name: Prepare ARM64 Rebol/Base for upload
         run: |
-          mv ./build/rebol3-base-macos-arm64 ./rebol3-base-macos-arm64
+          mv ./build/rebol3-base-macos-arm64 ./
           gzip -9 ./rebol3-base-macos-arm64
       - name: Prepare ARM64 Rebol/Core for upload
         run: |
-          mv ./build/rebol3-core-macos-arm64 ./rebol3-core-macos-arm64
+          mv ./build/rebol3-core-macos-arm64 ./
           gzip -9 ./rebol3-core-macos-arm64
       - name: Prepare ARM64 Rebol/Bulk for upload
         run: |
-          mv ./build/rebol3-bulk-macos-arm64 ./rebol3-bulk-macos-arm64
+          mv ./build/rebol3-bulk-macos-arm64 ./
           gzip -9 ./rebol3-bulk-macos-arm64
 
 #      - name: Prepare 64bit Rebol/Core as a shared library for upload

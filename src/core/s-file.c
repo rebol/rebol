@@ -273,7 +273,7 @@ term_out:
 	// Posix needs UTF8 conversion:
 	n = Length_As_UTF8(UNI_HEAD(ser), SERIES_TAIL(ser), TRUE, OS_CRLF);
 	bin = Make_Binary(n + FN_PAD);
-	Encode_UTF8(BIN_HEAD(bin), n+FN_PAD, UNI_HEAD(ser), &n, TRUE, OS_CRLF);
+	Encode_UTF8(BIN_HEAD(bin), n, UNI_HEAD(ser), &n, TRUE, OS_CRLF);
 	SERIES_TAIL(bin) = n;
 	TERM_SERIES(bin);
 	ser = bin;
