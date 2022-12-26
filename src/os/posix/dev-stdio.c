@@ -364,7 +364,7 @@ static void Close_StdIO_Local(void)
 **
 ***********************************************************************/
 {
-	fflush(Std_Out);
+	fflush(Std_Out == STDOUT_FILENO ? stdout : stderr);
 	if (Std_Echo) {
 		fflush(Std_Echo);
 	}

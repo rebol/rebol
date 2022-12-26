@@ -15,6 +15,9 @@ const char *init_block =
     "addi2: command [i1 [integer!] i2 [integer!]]\n" // this one is not exported
     "bad-args: command [{generic error}]\n"
     "error: command [{throws an error with text}]\n"
+    // https://github.com/Oldes/Rebol-issues/issues/1809
+    "export test-ctx: context [ a: 1 ]\n" 
+    "export echo-value: command [{returns the input value} value]\n"
 ;
 
 RXIEXT const char *RX_Init(int opts, RL_LIB *lib) {
@@ -42,6 +45,8 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
         case 3:
             RXA_SERIES(frm,1) = "test error!";
             return RXR_ERROR;
+        case 4:
+            return RXR_VALUE;
 
     }
     return RXR_VALUE;

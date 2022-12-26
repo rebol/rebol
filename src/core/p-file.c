@@ -398,7 +398,7 @@ REBINT Mode_Syms[] = {
 	if (cnt < 0) {
 		cnt = -cnt;
 		if (cnt > file->file.index) {
-			Trap1(RE_OUT_OF_RANGE, D_ARG(arg + 1));
+			Trap1(RE_OUT_OF_RANGE, (REBVAL*)D_ARG(arg + 1));
 			//cnt = file->file.index;
 		}
 		file->file.index -= cnt;

@@ -306,7 +306,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			REBSER *blk = RXA_SERIES(frm, 1);
 			REBCNT n, type;
 			RXIARG val;
-			printf("\nBlock with %llu values:\n", RL_SERIES(blk, RXI_SER_TAIL));
+			printf("\nBlock with %lu values:\n", RL_SERIES(blk, RXI_SER_TAIL));
 			for(n = 0; (type = RL_GET_VALUE(blk, n, &val)); n++) {
 				if(type == RXT_END) break;
 				printf("\t%i -> %i\n", n, type);
@@ -377,7 +377,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 
 
 void* releaseXTestContext(void* ctx) {
-	XTEST* data = (REBHOB*)ctx;
+	XTEST* data = (XTEST*)ctx;
 	printf("Relasing XTest context handle: %p\n", data);
 	// do some final cleaning off the context's content
 	printf("data=> id: %u num: %i\n", data->id, data->num);

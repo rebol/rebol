@@ -283,6 +283,8 @@ Rebol [
 		p:  10x20  --assert 200.0 = try [p/area]
 		p: -10x20  --assert 200.0 = try [p/area]
 		--assert all [error? e: try [p/area: 100] e/id = 'bad-path-set]
+		p: 1.5x3   --assert   4.5 = try [p/area]
+		p: 1.5x-3  --assert   4.5 = try [p/area]
 ===end-group===
 
 ~~~end-file~~~

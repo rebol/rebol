@@ -298,11 +298,11 @@ enum {
 #	if (ALEVEL>1)
 #		define ASSERT2(c,m) if (!(c)) Crash(m);	// Not in any releases
 #	else
-#		define ASSERT2
+#		define ASSERT2(c,m)
 #	endif
 #else
-#	define ASSERT1
-#	define ASSERT2
+#	define ASSERT1(c,m)
+#	define ASSERT2(c,m)
 #endif
 
 #define MEM_CARE 5				// Lower number for more frequent checks
