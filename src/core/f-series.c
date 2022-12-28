@@ -406,8 +406,8 @@ chkDecimal:
 
 	switch(width) {
 		case 2: {
-			uint16_t *bp = (uint16_t *)bin;
-			uint16_t  num;
+			u16 *bp = (u16 *)bin;
+			u16  num;
 			len >>= 1;
 			for (i = 0; i < len; i++) {
 				num = bp[i];
@@ -417,8 +417,8 @@ chkDecimal:
 			break;
 		}
 		case 4: {
-			uint32_t *bp = (uint32_t *)bin;
-			uint32_t  num;
+			u32 *bp = (u32 *)bin;
+			u32  num;
 			len >>= 2;
 			for (i = 0; i < len; i++) {
 				num = bp[i];
@@ -430,8 +430,8 @@ chkDecimal:
 			break;
 		}
 		case 8: {
-			uint64_t *bp = (uint64_t *)bin;
-			uint64_t  num;
+			u64 *bp = (u64 *)bin;
+			u64  num;
 			len >>= 3;
 			for (i = 0; i < len; i++) {
 				num = bp[i];
