@@ -29,6 +29,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include "stdio.h"
 
 #define THE_SIGN(v) ((v < 0) ? -1 : (v > 0) ? 1 : 0)
 
@@ -380,4 +381,72 @@ chkDecimal:
 	if (VAL_INT64(D_ARG(2)) >= 0) VAL_INT64(D_ARG(2)) += 1;
 	Do_Act(D_RET, VAL_TYPE(D_ARG(1)), A_POKE);
 	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(swap_endian)
+/*
+//	swap-endian: native [
+//		{Swaps byte order (endianess)}
+//		value [binary!] "At position (modified)"
+//		/width bytes [integer!] "2, 4 or 8 (default is 2)"
+//		/part "Limits to a given length or position"
+//		 range [number! series!]
+]
+***********************************************************************/
+{
+	REBCNT i;
+	REBCNT width = 2;
+	REBVAL *val = D_ARG(1);
+	REBYTE *bin = VAL_BIN_DATA(D_ARG(1));
+	if (D_REF(2)) width = VAL_INT32(D_ARG(3));
+
+	REBCNT len = D_REF(4) ? Partial(val, 0, D_ARG(5), 0) : VAL_LEN(val);
+	if (len <= 0) return R_ARG1;
+
+	switch(width) {
+		case 2: {
+			uint16_t *bp = (uint16_t *)bin;
+			uint16_t  num;
+			len >>= 1;
+			for (i = 0; i < len; i++) {
+				num = bp[i];
+				bp[i] = (((num & 0x00FF) << 8) |
+				         ((num & 0xFF00) >> 8));
+			}
+			break;
+		}
+		case 4: {
+			uint32_t *bp = (uint32_t *)bin;
+			uint32_t  num;
+			len >>= 2;
+			for (i = 0; i < len; i++) {
+				num = bp[i];
+				bp[i] = (((num & 0x000000FF) << 24) |
+				         ((num & 0x0000FF00) <<  8) |
+				         ((num & 0x00FF0000) >>  8) |
+				         ((num & 0xFF000000) >> 24));
+			}
+			break;
+		}
+		case 8: {
+			uint64_t *bp = (uint64_t *)bin;
+			uint64_t  num;
+			len >>= 3;
+			for (i = 0; i < len; i++) {
+				num = bp[i];
+				num =  ((num <<  8) & 0xFF00FF00FF00FF00ULL) |
+				       ((num >>  8) & 0x00FF00FF00FF00FFULL);
+				num =  ((num << 16) & 0xFFFF0000FFFF0000ULL) |
+				       ((num >> 16) & 0x0000FFFF0000FFFFULL);
+    			bp[i] = (num << 32) | (num >> 32);
+			}
+			break;
+		}
+		default:
+			Trap1(RE_INVALID_ARG, D_ARG(3));
+	}
+
+	return R_ARG1;
 }

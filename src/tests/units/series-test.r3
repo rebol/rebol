@@ -2504,6 +2504,25 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "SWAP-ENDIAN"
+--test-- "swap-endian/width 2"
+	--assert #{FF00FF00FF00} = swap-endian #{00FF00FF00FF}  
+	--assert #{FF00FF00AA}   = swap-endian #{00FF00FFAA} ; the last not padded byte is ignored
+--test-- "swap-endian/width 4"
+	--assert #{4433221188776655} = swap-endian/width #{1122334455667788} 4  
+	--assert #{44332211AAAA}     = swap-endian/width #{11223344AAAA} 4
+--test-- "swap-endian/width 8"
+	--assert #{7766554433221100FFEEDDCCBBAA9988} = swap-endian/width #{00112233445566778899AABBCCDDEEFF} 8 
+	--assert #{7766554433221100AAAA}             = swap-endian/width #{0011223344556677AAAA} 8
+--test-- "swap-endian/part"
+	--assert #{FF00FF001122} = swap-endian/part #{00FF00FF1122} 4
+	--assert #{FF00FF001122} = swap-endian/part #{00FF00FF1122} 5
+	--assert #{FF00FF002211} = swap-endian/part #{00FF00FF1122} 6
+	--assert #{4433221155667788} = swap-endian/width/part #{1122334455667788} 4 4
+	--assert #{77665544332211008899AABBCCDDEEFF} = swap-endian/width/part #{00112233445566778899AABBCCDDEEFF} 8 8
+===end-group===
+
 ;-- VECTOR related tests moved to %vector-test.r3
 
 ~~~end-file~~~
