@@ -387,7 +387,7 @@ chkDecimal:
 */	REBNATIVE(swap_endian)
 /*
 //	swap-endian: native [
-//		{Swaps byte order (endianess)}
+//		{Swaps byte order (endianness)}
 //		value [binary!] "At position (modified)"
 //		/width bytes [integer!] "2, 4 or 8 (default is 2)"
 //		/part "Limits to a given length or position"
