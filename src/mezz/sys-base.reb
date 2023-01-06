@@ -227,7 +227,7 @@ assert-utf8: function [
 
 log: func [
 	"Prints out debug message"
-	id [word!] "Source of the log message"
+	'id [any-word!] "Source of the log message"
 	msg        "Output message"
 	/info
 	/more
