@@ -111,6 +111,15 @@ Rebol [
 	--assert none?      find/any "abxcx" "ab*cd"
 	--assert "abxcx"  = find/any "abxcx" "ab*c?"
 	--assert "abxcxe" = find/any "abxcxe" "ab*c?e"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2522
+	--assert %A.csv   = find/any %A.csv %A*.csv
+	--assert %A..csv  = find/any %A..csv %A*.csv
+	--assert %A..csv  = find/any %xA..csv %A*.csv
+	--assert none?      find/any/match %xA..csv %A*.csv
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2528
+	--assert %AA.BB.csv = find/any %AA.BB.csv %A*.csv
+	--assert %BB.csv    = find/any %AA.BB.csv %B*.csv
+	--assert %AA.BB.csv = find/any %AA.BB.csv %A*.*.csv
 
 
 --test-- "FIND/ANY on string (unicode)"
@@ -403,8 +412,6 @@ Rebol [
 	--assert "2"   = head truncate/part next "123" 1
 	--assert [2]   = head truncate/part next [1 2 3] 1
 ===end-group===
-
-
 
 ===start-group=== "REPLACE string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/54
