@@ -21,7 +21,7 @@ register-codec [
 	name:  'der
 	type:  'cryptography
 	title: "Distinguished Encoding Rules"
-	suffixes: [%.p12 %.pfx %.cer %.der %.jks]
+	suffixes: [%.p12 %.pfx %.cer %.der %.jks %.p7s]
 	decode: function[data [binary!]][
 		if verbose > 0 [
 			print ["^/^[[1;32mDecode DER data^[[m (^[[1m" length? data "^[[mbytes )"]
