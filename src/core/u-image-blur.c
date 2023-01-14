@@ -181,7 +181,7 @@ void fast_gauss_blur(REBYTE*scl, REBYTE*tcl, REBINT w, REBINT h, REBINT r, REBIN
 	}
 }
 
-void BlurImage(REBSER *image, REBINT radius)
+void BlurImage(REBSER *image, REBCNT radius)
 {
 	REBSER *temp_image;
 
@@ -189,7 +189,7 @@ void BlurImage(REBSER *image, REBINT radius)
 	if ( image == NULL
 		|| (IMG_WIDE(image) == 0UL)
 		|| (IMG_HIGH(image) == 0UL)
-		|| radius <= 0
+		|| radius == 0
 	) return;
 
 	radius = MIN(radius, IMG_WIDE(image) / 2);

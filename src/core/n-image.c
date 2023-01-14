@@ -354,8 +354,7 @@ typedef struct REBCLR {
 	REBVAL* val_img = D_ARG(1);
 	REBVAL* val_rad = D_ARG(2);
 	REBINT radius = IS_INTEGER(val_rad) ? VAL_INT32(val_rad) : (REBINT)round(VAL_DECIMAL(val_rad));
-
-	BlurImage(VAL_SERIES(val_img), radius);
+	if (radius > 0) BlurImage(VAL_SERIES(val_img), (REBCNT)radius);
 	return R_ARG1;
 }
 
