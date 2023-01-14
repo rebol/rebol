@@ -497,7 +497,7 @@ chk_neg:
 	}
 	// Try to call realpath on posix or _fullpath on Windows
 	// Returned string must be released once done!
-	tmp = OS_REAL_PATH(SERIES_DATA(ser));
+	tmp = OS_REAL_PATH((REBCHR*)SERIES_DATA(ser));
 	if (!tmp) return R_NONE;
 
 	// Convert OS native wide string back to Rebol file type
