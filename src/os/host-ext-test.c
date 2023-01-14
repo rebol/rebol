@@ -48,7 +48,7 @@
 #include "host-lib.h"
 #include "sys-value.h"
 
-RL_LIB *RL; // Link back to reb-lib from embedded extensions
+extern RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
 static REBCNT Handle_XTest;
 typedef struct XTest_Context {
