@@ -112,6 +112,7 @@ static void *Task_Ready;
 	if (spot) {
 		// Save rest of cmd line (such as end quote, -flags, etc.)
 		COPY_STR(hold, spot+2, HOLD_SIZE);
+		hold[HOLD_SIZE] = 0;
 
 		// Terminate at the arg location:
 		spot[0] = 0;
@@ -454,6 +455,7 @@ static void *Task_Ready;
 	if (!ok) COPY_STR(str, TEXT("unknown error"), len);
 	else {
 		COPY_STR(str, lpMsgBuf, len);
+		str[len] = 0;
 		len = (int)LEN_STR(str);
 		if (str[len-2] == '\r' && str[len-1] == '\n') str[len-2] = 0; // trim CRLF
 		LocalFree(lpMsgBuf);
@@ -556,7 +558,7 @@ static void *Task_Ready;
 	REBCHR *str;
 
 	str = env;
-	while (n = (REBCNT)LEN_STR(str)) {
+	while ((n = (REBCNT)LEN_STR(str))) {
 		len += n + 1;
 		str = env + len; // next
 	}
