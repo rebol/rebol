@@ -390,7 +390,7 @@ extern const REBYTE Str_Banner[];
 		val = Append_Frame(Lib_Context, word, 0);
 		// Find the related function:
 		func = Find_Word_Value(Lib_Context, VAL_WORD_SYM(word+1));
-		if (!func) Crash(9912);
+		if (!func) { Crash(9912); return; }
 		*val = *func;
 		VAL_SET(val, REB_OP);
 		VAL_SET_EXT(val, VAL_TYPE(func));

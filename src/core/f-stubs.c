@@ -777,8 +777,10 @@
 			val = aval;
 		else if (bval && VAL_TYPE(bval) == VAL_TYPE(lval) && VAL_SERIES(bval) == VAL_SERIES(lval))
 			val = bval;
-		else
+		else {
 			Trap1(RE_INVALID_PART, lval);
+			return 0; // silent compiler's warning
+		}
 
 		len = (REBINT)VAL_INDEX(lval) - (REBINT)VAL_INDEX(val);
 	}
