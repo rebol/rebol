@@ -126,7 +126,7 @@ static REBOOL Windows8_And_Newer = FALSE;
 
 static u32* window_ext_words;
 
-RL_LIB *RL; // Link back to reb-lib from embedded extensions
+extern RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
 //***** Globals *****//
 
