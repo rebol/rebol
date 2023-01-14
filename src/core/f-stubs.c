@@ -218,9 +218,9 @@
 	REBI64 n;
 
 	if (IS_DECIMAL(val)) {
-		if (VAL_DECIMAL(val) > MAX_I64 || VAL_DECIMAL(val) < MIN_I64)
-			Trap_Range(val);
 		n = (REBI64)VAL_DECIMAL(val);
+		if (n > MAX_I64 || n < MIN_I64)
+			Trap_Range(val);
 	} else {
 		n = VAL_INT64(val);
 	}
