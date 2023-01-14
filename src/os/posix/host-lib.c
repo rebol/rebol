@@ -84,6 +84,8 @@ static void *Task_Ready;
 int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" warning
 #endif
 
+RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host-window, host-ext-test..)
+
 /***********************************************************************
 **
 */	static int Get_Timezone(struct tm *local_tm)
