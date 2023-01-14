@@ -488,6 +488,7 @@ void Paint_Window(HWND window);
 	);
 	if (!window) {
 		Host_Crash("CreateWindow failed");
+		return NULL; // silent compiler's warnings
 	}
 
 	Gob_Windows[windex].win = window;
