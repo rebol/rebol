@@ -260,12 +260,14 @@ typedef void(*CFUNC)(void *);
 #define CLR_FLAG(v,f)       ((v) &= ~(1<<(f)))
 #define CLR_FLAGS(v,f,g)    ((v) &= ~((1<<(f)) | (1<<(g))))
 
+#ifndef MIN
 #ifdef min
 #define MIN(a,b) min(a,b)
 #define MAX(a,b) max(a,b)
 #else
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
+#endif
 #endif
 
 // Memory related functions:
