@@ -838,6 +838,7 @@ static void *Task_Ready;
 	HANDLE hErrorWrite = 0, hErrorRead = 0;
 	REBCHR *cmd = NULL;
 	char *oem_input = NULL;
+	void *tmp;
 
 	SECURITY_ATTRIBUTES sa;
 
@@ -1121,8 +1122,9 @@ static void *Task_Ready;
 						*output_len += n;
 						if (*output_len >= output_size) {
 							output_size += BUF_SIZE_CHUNK;
-							*output = realloc(*output, output_size);
-							if (*output == NULL) goto kill;
+							tmp = realloc(*output, output_size);
+							if (tmp == NULL) goto kill;
+							*output = tmp;
 						}
 					}
 				} else if (handles[i] == hErrorRead) {
@@ -1135,8 +1137,9 @@ static void *Task_Ready;
 						*err_len += n;
 						if (*err_len >= err_size) {
 							err_size += BUF_SIZE_CHUNK;
-							*err = realloc(*err, err_size);
-							if (*err == NULL) goto kill;
+							tmp = realloc(*err, err_size);
+							if (tmp == NULL) goto kill;
+							*err = tmp;
 						}
 					}
 				} else {
