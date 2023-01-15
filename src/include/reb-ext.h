@@ -30,6 +30,11 @@
 #include "ext-types.h"
 #include "sys-value.h"
 
+
+#ifndef REBARGS
+#define REBARGS void
+#endif
+
 /* Prefix naming conventions:
 
   RL:  REBOL library API function (or function access macro)
@@ -91,7 +96,7 @@ typedef union rxi_arg_val {
 
 // Command function call frame:
 typedef struct rxi_cmd_frame {
-	RXIARG args[8];	// arg values (64 bits each)
+	RXIARG args[8];	// arg values (128 bits each)
 } RXIFRM;
 
 typedef struct rxi_cmd_context {
