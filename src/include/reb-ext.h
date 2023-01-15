@@ -31,10 +31,6 @@
 #include "sys-value.h"
 
 
-#ifndef REBARGS
-#define REBARGS void
-#endif
-
 /* Prefix naming conventions:
 
   RL:  REBOL library API function (or function access macro)

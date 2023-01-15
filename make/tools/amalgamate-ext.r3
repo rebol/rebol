@@ -95,6 +95,7 @@ context [
 	write    %../../build/rebol-extension.h amalgamate [
 		%reb-c.h
 		%reb-ext.h
+		%reb-args.h
 		%reb-device.h
 		%reb-file.h
 		%reb-filereq.h
