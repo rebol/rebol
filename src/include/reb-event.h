@@ -32,9 +32,13 @@
 // Note: size must be 12 bytes on 32-bit or 16 on 64-bit!
 
 // Forward references:
+#ifndef VALUE_H
+typedef struct Reb_Series   REBSER;
+#endif
+#ifndef DEVICE_H
 typedef struct rebol_device REBDEV;
 typedef struct rebol_devreq REBREQ;
-typedef struct Reb_Series   REBSER;
+#endif
 
 #pragma pack(4)
 typedef struct rebol_event {
