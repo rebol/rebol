@@ -31,7 +31,7 @@ context [
 {////////////////////////////////////////////////////////////////////////
 // File: rebol-extension.h
 // Home: https://github.com/Oldes/Rebol3/
-// Date: } now/date {
+// Date: } now/utc {
 // Note: This file is amalgamated from these sources:
 //}]
 		foreach file files [

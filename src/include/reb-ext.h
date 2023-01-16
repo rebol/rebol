@@ -30,6 +30,15 @@
 #include "ext-types.h"
 #include "sys-value.h"
 
+#ifndef API_EXPORT
+# define RL_API API_EXPORT
+# ifdef TO_WINDOWS
+#  define API_EXPORT __declspec(dllexport)
+# else
+#  define API_EXPORT __attribute__((visibility("default")))
+# endif
+#endif
+
 
 /* Prefix naming conventions:
 
