@@ -73,7 +73,10 @@ typedef union rxi_arg_val {
 		int height:16;
 	};
 	struct {
-		void  *ptr;
+		union {
+			void  *ptr;
+			REBHOB *hob;    // Handle's context object
+		};
 		REBCNT type;      // Handle's name (symbol)
 		REBFLG flags:16;  // Handle_Flags
 		REBCNT index:16;  // Index into Reb_Handle_Spec value
@@ -127,6 +130,7 @@ typedef int (*RXICAL)(int cmd, RXIFRM *args, REBCEC *ctx);
 #define RXA_OBJECT(f,n)	(RXA_ARG(f,n).addr)
 #define RXA_MODULE(f,n)	(RXA_ARG(f,n).addr)
 #define RXA_HANDLE(f,n)	(RXA_ARG(f,n).handle.ptr)
+#define RXA_HANDLE_CONTEXT(f,n) (RXA_ARG(f,n).handle.hob)
 #define RXA_HANDLE_TYPE(f,n)  (RXA_ARG(f,n).handle.type)
 #define RXA_HANDLE_FLAGS(f,n)  (RXA_ARG(f,n).handle.flags)
 #define RXA_HANDLE_INDEX(f,n)  (RXA_ARG(f,n).handle.index)
