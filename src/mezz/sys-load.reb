@@ -713,7 +713,7 @@ download-extension: function[
 
 import: function [
 	"Imports a module; locate, load, make, and setup its bindings."
-	module [word! file! url! string! binary! module! block!]
+	'module [word! file! url! string! binary! module! block!]
 	/version ver [tuple!] "Module must be this version or greater"
 	/check sum [binary!] "Match checksum (must be set in header)"
 	/no-share "Force module to use its own non-shared global namespace"
