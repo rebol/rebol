@@ -933,16 +933,18 @@ foreach section [boot-base boot-sys boot-mezz] [
 					)
 				]
 			][
-				compose/deep/only [
-					import module [
-						Title:   (select hdr 'title)
-						Name:    (select hdr 'name)
-						Version: (select hdr 'version)
-						Date:    (select hdr 'date)
-						Author:  (select hdr 'author)
-						Exports: (select hdr 'exports)
-						Needs:   (select hdr 'needs)
-					] ( code )
+				reduce [
+					'import to paren! compose/deep/only [
+						module [
+							Title:   (select hdr 'title)
+							Name:    (select hdr 'name)
+							Version: (select hdr 'version)
+							Date:    (select hdr 'date)
+							Author:  (select hdr 'author)
+							Exports: (select hdr 'exports)
+							Needs:   (select hdr 'needs)
+						] ( code )
+					]
 				]
 			]
 		][	code ]
@@ -984,16 +986,18 @@ foreach file first mezz-files [
 				)
 			]
 		][ 
-			compose/deep/only [
-				import module [
-					Title:   (select hdr 'title)
-					Name:    (select hdr 'name)
-					Version: (select hdr 'version)
-					Date:    (select hdr 'date)
-					Author:  (select hdr 'author)
-					Exports: (select hdr 'exports)
-					Needs:   (select hdr 'needs)
-				] ( code )
+			reduce [
+				'import to paren! compose/deep/only [
+					module [
+						Title:   (select hdr 'title)
+						Name:    (select hdr 'name)
+						Version: (select hdr 'version)
+						Date:    (select hdr 'date)
+						Author:  (select hdr 'author)
+						Exports: (select hdr 'exports)
+						Needs:   (select hdr 'needs)
+					] ( code )
+				]
 			]
 		]
 	][

@@ -12,7 +12,7 @@ REBOL [
 	}
 ]
 
-import module [
+import (module [
 	Title:  "Help related functions"
 	Name:    help
 	Version: 3.0.0
@@ -550,7 +550,7 @@ import module [
 		]
 		exit
 	]
-]
+])
 
 ;-- old alpha functions:
 ;pending: does [

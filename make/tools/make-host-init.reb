@@ -95,14 +95,15 @@ load-files: func [
 		header: file/1
 		remove file
 		if header/type = 'module [
-			file: compose/deep [
-				import module
-				[
-					title:   (header/title)
-					version: (header/version)
-					name:    (header/name)
-				][
-					(file)
+			file: reduce [
+				'import to paren! compose/deep[
+					module [
+						title:   (header/title)
+						version: (header/version)
+						name:    (header/name)
+					][
+						(file)
+					]
 				]
 			]
 			;probe file/2

@@ -200,7 +200,7 @@ start: func [
 	;if :lib/secure [protect-system-object]
 
 	; Import module?
-	if import [lib/import import]
+	if import [lib/import :import]
 
 	;-- Evaluate: --do "some code" if found
 	if do-arg [
