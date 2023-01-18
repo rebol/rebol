@@ -254,7 +254,7 @@ jobs:
       - name: Build ARM64 Rebol/Core using clang
         run: |
           ./siskin make/rebol3.nest %rebol3-core-macos-arm64
-          file ./build/rebol3-core-macos-x64
+          file ./build/rebol3-core-macos-arm64
 
       - name: Build ARM64 Rebol/Bulk using clang
         run: |
