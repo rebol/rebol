@@ -35,6 +35,13 @@ It is possible to extend Rebol functionality using external modules (native and 
 * [Rebol/SQLite](https://github.com/Siskin-framework/Rebol-SQLite) - SQL database engine
 * [Rebol/Triangulate](https://github.com/Siskin-framework/Rebol-Triangulate) - Two-Dimensional Quality Mesh Generator and Delaunay Triangulator
 
+It should be noted that on macOS it may be required to resign _downloaded native extensions_ using command like:
+```
+codesign --sign "5D94...EED5" -f -o runtime /path/to/extension.rebx
+```
+To find a signing identity, use: `security find-identity`
+
+
 ### Building Rebol
 
 Rebol itself is not a compiler (like [Red language](https://www.red-lang.org/)) but just an interpreter. You must have some compiler of your choice to compile Rebol. For Windows you may want to use any of these:
