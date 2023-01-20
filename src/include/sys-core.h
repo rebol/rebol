@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Developers
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -313,13 +313,13 @@ enum {
 #define	FOR_BLK(b, v, t) for (v = VAL_BLK_DATA(b), t = VAL_BLK_TAIL(b); v != t; v++)
 #define	FOR_SER(b, v, i, s) for (; v = BLK_SKIP(b, i), i < SERIES_TAIL(b); i += skip)
 
-#ifdef _DEBUG
-#define UP_CASE(c) _To_Upper_Case(c)
-#define LO_CASE(c) _To_Lower_Case(c)
-#else
+//#ifdef _DEBUG
+//#define UP_CASE(c) _To_Upper_Case(c)
+//#define LO_CASE(c) _To_Lower_Case(c)
+//#else
 #define UP_CASE(c) Upper_Cases[c]
 #define LO_CASE(c) Lower_Cases[c]
-#endif
+//#endif
 
 #define IS_WHITE(c) ((c) <= 32 && (White_Chars[c]&1) != 0)
 #define IS_SPACE(c) ((c) <= 32 && (White_Chars[c]&2) != 0)
