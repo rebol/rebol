@@ -175,8 +175,9 @@ REBCNT Test_Async_Callback(REBSER *obj, REBCNT word)
 	// These cannot be on the stack, because they are used
 	// when the callback happens later.
 	cbi = MAKE_NEW(*cbi);
-	CLEAR(cbi, sizeof(cbi));
 	args = MAKE_MEM(sizeof(RXIARG) * 4);
+	if (!cbi || !args) return 0; // silent compiler's warnings
+	CLEAR(cbi, sizeof(cbi));
 	CLEAR(args, sizeof(RXIARG) * 4);
 	cbi->obj = obj;
 	cbi->word = word;
@@ -195,7 +196,7 @@ REBCNT Test_Async_Callback(REBSER *obj, REBCNT word)
 }
 
 RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
-	REBYTE *str;
+	REBYTE *str = NULL;
 
 	//printf("Context ptr: %p\n", ctx);
 
@@ -306,7 +307,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			REBSER *blk = RXA_SERIES(frm, 1);
 			REBCNT n, type;
 			RXIARG val;
-			printf("\nBlock with %lu values:\n", RL_SERIES(blk, RXI_SER_TAIL));
+			printf("\nBlock with %i values:\n", RL_SERIES(blk, RXI_SER_TAIL));
 			for(n = 0; (type = RL_GET_VALUE(blk, n, &val)); n++) {
 				if(type == RXT_END) break;
 				printf("\t%i -> %i\n", n, type);

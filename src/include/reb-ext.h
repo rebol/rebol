@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -118,35 +119,35 @@ typedef int (*RXICAL)(int cmd, RXIFRM *args, REBCEC *ctx);
 #pragma pack()
 
 // Access macros (indirect access via RXIFRM pointer):
-#define RXA_ARG(f,n)	((f)->args[n])
-#define RXA_COUNT(f)	(RXA_ARG(f,0).bytes[0]) // number of args
-#define RXA_TYPE(f,n)	(RXA_ARG(f,0).bytes[n]) // types (of first 7 args)
-#define RXA_REF(f,n)	(RXA_ARG(f,n).int32a)
+#define RXA_ARG(f,n)            ((f)->args[n])
+#define RXA_COUNT(f)            (RXA_ARG(f,0).bytes[0]) // number of args
+#define RXA_TYPE(f,n)           (RXA_ARG(f,0).bytes[n]) // types (of first 7 args)
+#define RXA_REF(f,n)            (RXA_ARG(f,n).int32a)
 
-#define RXA_INT64(f,n)	(RXA_ARG(f,n).int64)
-#define RXA_INT32(f,n)	(i32)(RXA_ARG(f,n).int64)
-#define RXA_DEC64(f,n)	(RXA_ARG(f,n).dec64)
-#define RXA_LOGIC(f,n)	(RXA_ARG(f,n).int32a)
-#define RXA_CHAR(f,n)	(RXA_ARG(f,n).int32a)
-#define RXA_TIME(f,n)	(RXA_ARG(f,n).int64)
-#define RXA_DATE(f,n)	(RXA_ARG(f,n).int32a)
-#define RXA_WORD(f,n)	(RXA_ARG(f,n).int32a)
-#define RXA_PAIR(f,n)	(RXA_ARG(f,n).pair)
-#define RXA_TUPLE(f,n)	(RXA_ARG(f,n).tuple_bytes)
-#define RXA_TUPLE_LEN(f,n)	(RXA_ARG(f,n).tuple_len)
-#define RXA_SERIES(f,n)	(RXA_ARG(f,n).series)
-#define RXA_INDEX(f,n)	(RXA_ARG(f,n).index)
-#define RXA_OBJECT(f,n)	(RXA_ARG(f,n).addr)
-#define RXA_MODULE(f,n)	(RXA_ARG(f,n).addr)
-#define RXA_HANDLE(f,n)	(RXA_ARG(f,n).handle.ptr)
+#define RXA_INT64(f,n)          (RXA_ARG(f,n).int64)
+#define RXA_INT32(f,n)          (i32)(RXA_ARG(f,n).int64)
+#define RXA_DEC64(f,n)          (RXA_ARG(f,n).dec64)
+#define RXA_LOGIC(f,n)          (RXA_ARG(f,n).int32a)
+#define RXA_CHAR(f,n)           (RXA_ARG(f,n).int32a)
+#define RXA_TIME(f,n)           (RXA_ARG(f,n).int64)
+#define RXA_DATE(f,n)           (RXA_ARG(f,n).int32a)
+#define RXA_WORD(f,n)           (RXA_ARG(f,n).int32a)
+#define RXA_PAIR(f,n)           (RXA_ARG(f,n).pair)
+#define RXA_TUPLE(f,n)          (RXA_ARG(f,n).tuple_bytes)
+#define RXA_TUPLE_LEN(f,n)      (RXA_ARG(f,n).tuple_len)
+#define RXA_SERIES(f,n)         (RXA_ARG(f,n).series)
+#define RXA_INDEX(f,n)          (RXA_ARG(f,n).index)
+#define RXA_OBJECT(f,n)         (RXA_ARG(f,n).addr)
+#define RXA_MODULE(f,n)         (RXA_ARG(f,n).addr)
+#define RXA_HANDLE(f,n)         (RXA_ARG(f,n).handle.ptr)
 #define RXA_HANDLE_CONTEXT(f,n) (RXA_ARG(f,n).handle.hob)
-#define RXA_HANDLE_TYPE(f,n)  (RXA_ARG(f,n).handle.type)
-#define RXA_HANDLE_FLAGS(f,n)  (RXA_ARG(f,n).handle.flags)
-#define RXA_HANDLE_INDEX(f,n)  (RXA_ARG(f,n).handle.index)
-#define RXA_IMAGE(f,n)	      (RXA_ARG(f,n).image)
-#define RXA_IMAGE_BITS(f,n)	  ((REBYTE *)RL_SERIES((RXA_ARG(f,n).image), RXI_SER_DATA))
-#define RXA_IMAGE_WIDTH(f,n)  (RXA_ARG(f,n).width)
-#define RXA_IMAGE_HEIGHT(f,n) (RXA_ARG(f,n).height)
+#define RXA_HANDLE_TYPE(f,n)    (RXA_ARG(f,n).handle.type)
+#define RXA_HANDLE_FLAGS(f,n)   (RXA_ARG(f,n).handle.flags)
+#define RXA_HANDLE_INDEX(f,n)   (RXA_ARG(f,n).handle.index)
+#define RXA_IMAGE(f,n)          (RXA_ARG(f,n).image)
+#define RXA_IMAGE_BITS(f,n)     ((REBYTE *)RL_SERIES((RXA_ARG(f,n).image), RXI_SER_DATA))
+#define RXA_IMAGE_WIDTH(f,n)    (RXA_ARG(f,n).width)
+#define RXA_IMAGE_HEIGHT(f,n)   (RXA_ARG(f,n).height)
 
 // Command function return values:
 enum rxi_return {
