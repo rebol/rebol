@@ -54,7 +54,11 @@
 
 #define POOL_MAP
 
+#ifdef __LLP64__
+#define	BAD_MEM_PTR ((REBYTE *)0xBAD1BAD1BAD1BAD1)
+#else
 #define	BAD_MEM_PTR ((REBYTE *)0xBAD1BAD1)
+#endif
 
 //#define GC_TRIGGER (GC_Active && (GC_Ballast <= 0 || (GC_Pending && !GC_Disabled)))
 
