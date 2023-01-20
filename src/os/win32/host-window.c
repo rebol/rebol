@@ -497,20 +497,23 @@ void Paint_Window(HWND window);
 	if (!Default_Font) {
 		LOGFONTW font;
 		HTHEME *hTheme = NULL;
-		HRESULT res = -1;
+		HRESULT err = E_FAIL;
 		if (IsThemeActive()) {
 			hTheme = OpenThemeData(window, L"Window");
 			if (hTheme) {
-				res = GetThemeSysFont(hTheme, TMT_MSGBOXFONT, &font);
+				err = GetThemeSysFont(hTheme, TMT_MSGBOXFONT, &font);
 			}
-		} else {
+		}
+		if (err != S_OK) {
 			NONCLIENTMETRICS metrics;
 			ZeroMemory(&metrics, sizeof(metrics));
 			metrics.cbSize = sizeof(metrics);
-			res = SystemParametersInfo(SPI_GETNONCLIENTMETRICS, metrics.cbSize, &metrics, 0);
-			if (res) font = metrics.lfMessageFont;
+			if (SystemParametersInfo(SPI_GETNONCLIENTMETRICS, metrics.cbSize, &metrics, 0)) {
+				font = metrics.lfMessageFont;
+				err = S_OK;
+			}
 		}
-		if ( res >= 0 ) {
+		if (err == S_OK) {
 			Default_Font = CreateFontIndirect(&font);
 		}
 
