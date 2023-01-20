@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Additional code modifications and improvements Copyright 2012 Saphirion AG
@@ -265,7 +266,7 @@ static void onModalBlock(
 	// resizing is a modal loop and prevents it being a problem.
 	static LPARAM last_xy = 0;
 	static REBINT mode = 0;
-	SCROLLINFO si;
+	//SCROLLINFO si;
 
 	gob = GOB_FROM_HWND(hwnd);
 
