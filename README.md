@@ -32,6 +32,7 @@ It is possible to extend Rebol functionality using external modules (native and 
 * [Rebol/HTTPd](https://github.com/Oldes/Rebol-HTTPd) - Webserver scheme
 * [Rebol/IRC](https://github.com/Oldes/Rebol-IRC) - Internet Relay Chat scheme
 * [Rebol/Names](https://github.com/Oldes/Rebol-Names) - Random names generator scheme
+* [Rebol/OpenCV](https://github.com/Oldes/OpenCV) - Computer Vision Library
 * [Rebol/SQLite](https://github.com/Siskin-framework/Rebol-SQLite) - SQL database engine
 * [Rebol/Triangulate](https://github.com/Siskin-framework/Rebol-Triangulate) - Two-Dimensional Quality Mesh Generator and Delaunay Triangulator
 
