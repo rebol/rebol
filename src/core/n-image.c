@@ -35,12 +35,10 @@
 #include "reb-codec.h"
 #include "sys-magick.h" // used for `resize` native
 #include "sys-blur.h" // used for `blur` native
-#if defined(TO_WINDOWS) && defined(INCLUDE_IMAGE_OS_CODEC)
-#include "winerror.h" // used for WINCODEC_ERR_COMPONENTNOTFOUND
-#endif
-
-#ifndef WINCODEC_ERR_COMPONENTNOTFOUND
-#define WINCODEC_ERR_COMPONENTNOTFOUND   0x88982F50L
+#if defined(TO_WINDOWS)
+# ifndef WINCODEC_ERR_COMPONENTNOTFOUND
+# define WINCODEC_ERR_COMPONENTNOTFOUND   0x88982F50L
+# endif
 #endif
 
 
