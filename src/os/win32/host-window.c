@@ -454,7 +454,7 @@ void Paint_Window(HWND window);
 	//}
 
 	if (GOB_ALPHA(gob) < 255) {
-		puts("semi-transparent window");
+		//puts("semi-transparent window");
 		ws_flags |= WS_EX_LAYERED;
 	}
 
