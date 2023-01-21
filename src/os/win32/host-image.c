@@ -2,7 +2,7 @@
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
-**	Copyright 2019 Oldes
+**	Copyright 2019-2023 Oldes
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@
 **
 ***********************************************************************/
 {
-	DecodeImageFromFile(uri, frame, codi);
+	DecodeImageFromFile((PCWSTR*)uri, frame, codi);
 }
 
 /***********************************************************************
@@ -53,7 +53,7 @@
 **
 ***********************************************************************/
 {
-	EncodeImageToFile(uri, codi);
+	EncodeImageToFile((PCWSTR*)uri, codi);
 }
 
 /***********************************************************************
