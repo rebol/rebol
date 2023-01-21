@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -100,7 +101,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	static void Prin_OS_String(const REBYTE *bp, REBINT len, REBOOL uni, REBOOL err)
+*/	static void Prin_OS_String(const REBYTE *bp, REBLEN len, REBOOL uni, REBOOL err)
 /*
 **		Print a string, but no line terminator or space.
 **
@@ -118,7 +119,7 @@ static REBREQ *Req_SIO;
 	if (!bp) Crash(RP_NO_PRINT_PTR);
 
 	// Determine length if not provided:
-	if (len == UNKNOWN) len = (REBINT)(uni ? wcslen((const wchar_t*)up) : LEN_BYTES(bp));
+	if (len == UNKNOWN) len = (uni ? (REBLEN)wcslen((const wchar_t*)up) : LEN_BYTES(bp));
 
 	SET_FLAG(Req_SIO->flags, RRF_FLUSH);
 	if (err)

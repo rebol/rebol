@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -505,9 +506,9 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	case RXR_BAD_ARGS:
 	case RXR_ERROR:
 		{
-			const char* errmsg = frm.args[1].series;
+			const REBYTE* errmsg = frm.args[1].series;
 			if(errmsg != NULL) {
-				int len = strlen(errmsg);
+				REBLEN len = LEN_BYTES(errmsg);
 				VAL_SET(val, REB_STRING);		
 				VAL_SERIES(val) = Make_Binary(len);
 				VAL_INDEX(val) = 0;

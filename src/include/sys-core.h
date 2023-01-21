@@ -236,8 +236,8 @@ enum {
 };
 
 // General constants:
-#define NOT_FOUND ((REBCNT)-1)
-#define UNKNOWN   ((REBCNT)-1)
+#define NOT_FOUND ((REBLEN)-1)
+#define UNKNOWN   ((REBLEN)-1)
 #define LF 10
 #define CR 13
 #define TAB '\t'

@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Developers
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -503,9 +503,9 @@ static struct {
 		}
 	}
 	else if (ANY_BINSTR(val)) {
-		i = VAL_INDEX(val);
-		if (i >= VAL_TAIL(val)) return PE_BAD_SET;
-		c = GET_ANY_CHAR(VAL_SERIES(val), i);
+		// for example: s: "abc" s/2: "xyz" s == "axc"
+		if (VAL_INDEX(val) >= VAL_TAIL(val)) return PE_BAD_SET;
+		c = GET_ANY_CHAR(VAL_SERIES(val), VAL_INDEX(val));
 	}
 	else
 		return PE_BAD_SELECT;

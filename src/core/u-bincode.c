@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Developers
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -263,7 +263,8 @@ static REBCNT EncodedU32_Size(u32 value) {
 	REBDEC dbl;
 	REBD32 d32;
 	REBCNT cmd;
-	i32 i, len;
+	REBLEN i, len;
+	REBINT j;
 	u64 u;
 	i64 si;
 	u32 ulong;
@@ -312,7 +313,9 @@ static REBCNT EncodedU32_Size(u32 value) {
 					break;
 				case REB_INTEGER:
 					//printf("resize from %i, needs %i\n", SERIES_REST(bin), VAL_INT32(val_spec));
-					if(VAL_INT32(val_spec) > SERIES_REST(bin)){
+					if (VAL_INT64(val_spec) <= 0 || VAL_UNT64(val_spec) >= MAX_U32)
+						Trap1(RE_INVALID_ARG, val_spec);
+					if (VAL_UNT32(val_spec) > SERIES_REST(bin)){
 						Expand_Series(bin, AT_TAIL, VAL_INT32(val_spec) - SERIES_TAIL(bin) - 1 );
 					}
 					//printf("resiz? new: %i\n", SERIES_REST(bin));
@@ -499,17 +502,18 @@ static REBCNT EncodedU32_Size(u32 value) {
 					case SYM_ATZ:
 						if (IS_INTEGER(next)) {
 							if (count > tail) tail = count;
-							i = (cmd == SYM_AT ? 1 : 0);
+							j = (cmd == SYM_AT ? 1 : 0);
 							// AT is using ABSOLUTE positioning, so it cannot be < 1 (one-indexed) or < 0 (zero-based)
-							if(VAL_INT32(next) < i) Trap1(RE_OUT_OF_RANGE, next);
-							count = VAL_INT32(next) - i;
+							if(VAL_INT32(next) < j) Trap1(RE_OUT_OF_RANGE, next);
+							count = VAL_INT32(next) - j;
 							continue;
 						}
 						goto error;
 					case SYM_PAD:
 						if (IS_INTEGER(next)) {
+							if (VAL_INT32(next) < 0) Trap1(RE_INVALID_ARG, next);
 							i = count % VAL_INT32(next);
-							count += (i > 0) ? VAL_INT32(next) - i : 0;
+							count += (i > 0) ? VAL_UNT32(next) - i : 0;
 							continue;
 						}
 						goto error;
@@ -1237,25 +1241,25 @@ static REBCNT EncodedU32_Size(u32 value) {
 								goto setEnU32Result;
 							}
 							ASSERT_READ_SIZE(value, cp, ep, 2);
-							u = (u & 0x0000007f) | cp[1] << 7;
+							u = (u & 0x0000007f) | (u64)cp[1] << 7;
 							if (!(u & 0x00004000)) {
 								n = 2;
 								goto setEnU32Result;
 							}
 							ASSERT_READ_SIZE(value, cp, ep, 3);
-							u = (u & 0x00003fff) | cp[2] << 14;
+							u = (u & 0x00003fff) | (u64)cp[2] << 14;
 							if (!(u & 0x00200000)) {
 								n = 3;
 								goto setEnU32Result;
 							}
 							ASSERT_READ_SIZE(value, cp, ep, 4);
-							u = (u & 0x001fffff) | cp[3] << 21;
+							u = (u & 0x001fffff) | (u64)cp[3] << 21;
 							if (!(u & 0x10000000)) {
 								n = 4;
 								goto setEnU32Result;
 							}
 							ASSERT_READ_SIZE(value, cp, ep, 5);
-							u = (u & 0x0fffffff) | cp[4] << 28;
+							u = (u & 0x0fffffff) | (u64)cp[4] << 28;
 							n = 5;
 						setEnU32Result:
 							VAL_SET(temp, REB_INTEGER);

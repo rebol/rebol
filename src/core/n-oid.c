@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Contributors
+**  Copyright 2012-2023 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -83,7 +83,7 @@
 			/* Last byte */
 			ret = snprintf(p, n, ".%u", value);
 			if (ret >= n) {
-				Extend_Series(out, ret - n + 1); // may reallocate p!
+				Extend_Series(out, (REBLEN)(ret - n + 1)); // may reallocate p!
 				p = SERIES_DATA(out) + SERIES_TAIL(out);
 				n = SERIES_AVAIL(out);
 				ret = snprintf(p, n, ".%u", value);

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -307,7 +308,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			REBSER *blk = RXA_SERIES(frm, 1);
 			REBCNT n, type;
 			RXIARG val;
-			printf("\nBlock with %i values:\n", RL_SERIES(blk, RXI_SER_TAIL));
+			printf("\nBlock with %u values:\n", (REBLEN)RL_SERIES(blk, RXI_SER_TAIL));
 			for(n = 0; (type = RL_GET_VALUE(blk, n, &val)); n++) {
 				if(type == RXT_END) break;
 				printf("\t%i -> %i\n", n, type);
@@ -361,7 +362,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			REBYTE ver[8];
 			RL_VERSION(ver);
 			snprintf(SERIES_DATA(str), SERIES_REST(str), "Version: %i.%i.%i", ver[1], ver[2], ver[3]);
-			SERIES_TAIL(str) = strlen(SERIES_DATA(str));
+			SERIES_TAIL(str) = LEN_BYTES(SERIES_DATA(str));
 			RXA_SERIES(frm, 1) = str;
 			RXA_TYPE  (frm, 1) = RXT_STRING;
 			RXA_INDEX (frm, 1) = 0;

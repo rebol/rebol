@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Contributors
+**  Copyright 2012-2023 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -370,7 +370,7 @@ extern const REBYTE Str_Banner[];
 ***********************************************************************/
 {
 	const REBYTE*version = BOOT_STR(RS_VERSION, 0);
-	Set_String(ds, Copy_Bytes(version, strlen(cs_cast(version))));
+	Set_String(ds, Copy_Bytes(version, LEN_BYTES(version)));
 	return R_RET;
 }
 
