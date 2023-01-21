@@ -313,7 +313,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 					break;
 				case REB_INTEGER:
 					//printf("resize from %i, needs %i\n", SERIES_REST(bin), VAL_INT32(val_spec));
-					if (VAL_INT64(val_spec) <= 0 || VAL_UNT64(val_spec) >= MAX_U32)
+					if (VAL_INT64(val_spec) < 0 || VAL_UNT64(val_spec) >= MAX_U32)
 						Trap1(RE_INVALID_ARG, val_spec);
 					if (VAL_UNT32(val_spec) > SERIES_REST(bin)){
 						Expand_Series(bin, AT_TAIL, VAL_INT32(val_spec) - SERIES_TAIL(bin) - 1 );
