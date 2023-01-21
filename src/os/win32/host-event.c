@@ -204,7 +204,7 @@ static void onModalBlock(
   UINT_PTR Arg3,
   DWORD Arg4
 ) {
-	puts("o");
+	//puts("o");
 	//Add_Event_XY(gob, EVT_RESIZE, xy, 0);
 }
 

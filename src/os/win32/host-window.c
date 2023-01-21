@@ -7,7 +7,7 @@
 **
 **  Additional code modifications and improvements:
 **	Copyright 2012-2018 Saphirion AG & Atronix
-**	Copyright 2019 Oldes
+**	Copyright 2019-2023 Oldes
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
@@ -343,11 +343,11 @@ void Paint_Window(HWND window);
 
 	wc.lpfnWndProc = REBOL_OpenGL_Proc;
 	wc.lpszClassName = TXT("RebOpenGL");
-	if (!RegisterClassEx(&wc)) puts("Failed to register OpenGL class");
+	if (!RegisterClassEx(&wc)) RL_Print("Failed to register OpenGL class\n");
 
 	wc.lpfnWndProc = REBOL_Base_Proc;
 	wc.lpszClassName = TXT("RebBase");
-	if (!RegisterClassEx(&wc)) puts("Failed to register Base class");
+	if (!RegisterClassEx(&wc)) RL_Print("Failed to register Base class\n");
 
 	//Make_Subclass(Class_Name_Button, TEXT("BUTTON"), NULL, TRUE);
 

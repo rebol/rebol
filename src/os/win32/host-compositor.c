@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Additional code modifications and improvements:
@@ -584,7 +585,7 @@ static REBXYF Zero_Pair = {0, 0};
 	if (!AlphaBlend(hdc, left, top,
 		src_siz_x, src_siz_y,
 		hdcbmp, 0, 0, src_siz_x, src_siz_y, bf)) {
-		puts("alphaBlend failed!");
+		RL_Print("alphaBlend failed!\n");
 	}
 	
 	// do cleanup 
