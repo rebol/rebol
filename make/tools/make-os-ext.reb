@@ -73,6 +73,7 @@ func-header: [
 			p2u: uppercase copy p2
 			p2l: lowercase copy p2
 			demit [tab p2 ","]
+			parse p1 ["REB_NORETURN " p1: to end]
 			remit [tab p1 "(*" p2l ")" p3 ";"]
 			args: count p3 #","
 			m: tail mlib
