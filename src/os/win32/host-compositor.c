@@ -517,8 +517,8 @@ static REBXYF Zero_Pair = {0, 0};
 
 	REBSER     *img = (REBSER*)GOB_CONTENT(gob);
 	HDC         hdc = ctx->back_DC;
-	BITMAPINFO  BitmapInfo = ctx->bmpInfo;
-	REBINT      mode;
+//	BITMAPINFO  BitmapInfo = ctx->bmpInfo;
+//	REBINT      mode;
 	REBINT      src_siz_x = IMG_WIDE(img); // real image size
 	REBINT      src_siz_y = IMG_HIGH(img);
 

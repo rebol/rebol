@@ -181,12 +181,12 @@ HRESULT AddBoolProperty(IPropertyBag2 *pPropertybag, LPOLESTR name, VARIANT_BOOL
 CODECS_API int EncodeImageToFile(PCWSTR *uri, REBCDI *codi)
 {
 	HRESULT hr = S_OK;
-	UINT  w, h;
+//	UINT  w, h;
 	UINT  size;
 	BYTE *data = NULL;
 	WICRect wrect;
 
-	ULONG bytes;
+//	ULONG bytes;
 
 	IWICBitmap         *pWICBitmap     = NULL;
 	IWICBitmapLock     *pWICBitmapLock = NULL;

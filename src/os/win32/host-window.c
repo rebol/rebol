@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Additional code modifications and improvements:
@@ -666,7 +667,7 @@ void Paint_Window(HWND window);
 **
 ***********************************************************************/
 {
-	REBCMP* compositor;
+	//REBCMP* compositor;
 	if (!wingob) {
 		wingob = gob;
 		while (GOB_PARENT(wingob) && GOB_PARENT(wingob) != Gob_Root
