@@ -1,45 +1,29 @@
+////////////////////////////////////////////////////////////////////////
+// File: u-zlib.c
+// Home: https://github.com/Siskin-framework/Rebol-Zlib
+// Date: 25-Jan-2023
+// Note: This file is amalgamated from these sources:
 //
-// Extraction of ZLIB compression and decompression routines
-// for REBOL [R3] Language Interpreter and Run-time Environment
-// This is a code-generated file.
+//       crc32.c
+//       crc32.h
+//       adler32.c
+//       deflate.c
+//       zutil.c
+//       compress.c
+//       uncompr.c
+//       trees.c
+//       trees.h
+//       inftrees.h
+//       inftrees.c
+//       inffast.h
+//       inflate.h
+//       inffast.c
+//       inflate.c
+//       inffixed.h
 //
-// ZLIB Copyright notice:
-//
-//   (C) 1995-2022 Jean-loup Gailly and Mark Adler
-//
-//   This software is provided 'as-is', without any express or implied
-//   warranty.  In no event will the authors be held liable for any damages
-//   arising from the use of this software.
-//
-//   Permission is granted to anyone to use this software for any purpose,
-//   including commercial applications, and to alter it and redistribute it
-//   freely, subject to the following restrictions:
-//
-//   1. The origin of this software must not be misrepresented; you must not
-//      claim that you wrote the original software. If you use this software
-//      in a product, an acknowledgment in the product documentation would be
-//      appreciated but is not required.
-//   2. Altered source versions must be plainly marked as such, and must not be
-//      misrepresented as being the original software.
-//   3. This notice may not be removed or altered from any source distribution.
-//
-//       Jean-loup Gailly        Mark Adler
-//       jloup@gzip.org          madler@alumni.caltech.edu
-//
-// REBOL is a trademark of REBOL Technologies
-// Licensed under the Apache License, Version 2.0
-//
-// **********************************************************************
-//
-// Title: ZLIB aggregated source
-// Date:  20-Sep-2022
-// File:  u-zlib.c
-//
-// AUTO-GENERATED FILE - Do not modify. (From: make-zlib.r)
-//
+////////////////////////////////////////////////////////////////////////
 
-#include "sys-zlib.h"  /* REBOL: see make-zlib.r */
-#define local static
+#include "sys-zlib.h"
 
 /* crc32.c -- compute the CRC-32 of a data stream
  * Copyright (C) 1995-2022 Mark Adler
@@ -64,13 +48,13 @@
  */
 
 #ifdef MAKECRCH
-// #  include <stdio.h> /* REBOL: see make-zlib.r */
+#  include <stdio.h>
 #  ifndef DYNAMIC_CRC_TABLE
 #    define DYNAMIC_CRC_TABLE
 #  endif /* !DYNAMIC_CRC_TABLE */
 #endif /* MAKECRCH */
 
-// #include "zutil.h"      /* for Z_U4, Z_U8, z_crc_t, and FAR definitions */ /* REBOL: see make-zlib.r */
+//REBOL: #include "zutil.h"      /* for Z_U4, Z_U8, z_crc_t, and FAR definitions */
 
  /*
   A CRC of a message is computed on N braids of words in the message, where
@@ -141,13 +125,22 @@
 #  endif
 #endif
 
+/* If available, use the ARM processor CRC32 instruction. */
+#if defined(__aarch64__) && defined(__ARM_FEATURE_CRC32) && W == 8
+#  define ARMCRC32
+#endif
+
 /* Local functions. */
 local z_crc_t multmodp OF((z_crc_t a, z_crc_t b));
 local z_crc_t x2nmodp OF((z_off64_t n, unsigned k));
 
-/* If available, use the ARM processor CRC32 instruction. */
-#if defined(__aarch64__) && defined(__ARM_FEATURE_CRC32) && W == 8
-#  define ARMCRC32
+#if defined(W) && (!defined(ARMCRC32) || defined(DYNAMIC_CRC_TABLE))
+    local z_word_t byte_swap OF((z_word_t word));
+#endif
+
+#if defined(W) && !defined(ARMCRC32)
+    local z_crc_t crc_word OF((z_word_t data));
+    local z_word_t crc_word_big OF((z_word_t data));
 #endif
 
 #if defined(W) && (!defined(ARMCRC32) || defined(DYNAMIC_CRC_TABLE))
@@ -570,6 +563,7 @@ local void braid(ltl, big, n, w)
  * Tables for byte-wise and braided CRC-32 calculations, and a table of powers
  * of x for combining CRC-32s, all made by make_crc_table().
  */
+//REBOL: #include "crc32.h"
 /* crc32.h -- tables for rapid CRC calculation
  * Generated automatically by crc32.c
  */
@@ -10016,6 +10010,7 @@ local const z_crc_t FAR x2n_table[] = {
     0x9fec022a, 0x6c8dedc4, 0x15d6874d, 0x5fde7a4e, 0xbad90e37,
     0x2e4e5eef, 0x4eaba214, 0xa8a472c0, 0x429a969e, 0x148d302a,
     0xc40ba6d0, 0xc4e22c3c};
+
 #endif /* DYNAMIC_CRC_TABLE */
 
 /* ========================================================================
@@ -10118,7 +10113,7 @@ unsigned long ZEXPORT crc32_z(crc, buf, len)
 #endif /* DYNAMIC_CRC_TABLE */
 
     /* Pre-condition the CRC */
-    crc ^= 0xffffffff;
+    crc = (~crc) & 0xffffffff;
 
     /* Compute the CRC up to a word boundary. */
     while (len && ((z_size_t)buf & 7) != 0) {
@@ -10133,8 +10128,8 @@ unsigned long ZEXPORT crc32_z(crc, buf, len)
     len &= 7;
 
     /* Do three interleaved CRCs to realize the throughput of one crc32x
-       instruction per cycle. Each CRC is calcuated on Z_BATCH words. The three
-       CRCs are combined into a single CRC after each set of batches. */
+       instruction per cycle. Each CRC is calculated on Z_BATCH words. The
+       three CRCs are combined into a single CRC after each set of batches. */
     while (num >= 3 * Z_BATCH) {
         crc1 = 0;
         crc2 = 0;
@@ -10237,7 +10232,7 @@ unsigned long ZEXPORT crc32_z(crc, buf, len)
 #endif /* DYNAMIC_CRC_TABLE */
 
     /* Pre-condition the CRC */
-    crc ^= 0xffffffff;
+    crc = (~crc) & 0xffffffff;
 
 #ifdef W
 
@@ -10565,7 +10560,7 @@ uLong ZEXPORT crc32_combine64(crc1, crc2, len2)
 #ifdef DYNAMIC_CRC_TABLE
     once(&made, make_crc_table);
 #endif /* DYNAMIC_CRC_TABLE */
-    return multmodp(x2nmodp(len2, 3), crc1) ^ crc2;
+    return multmodp(x2nmodp(len2, 3), crc1) ^ (crc2 & 0xffffffff);
 }
 
 /* ========================================================================= */
@@ -10574,7 +10569,7 @@ uLong ZEXPORT crc32_combine(crc1, crc2, len2)
     uLong crc2;
     z_off_t len2;
 {
-    return crc32_combine64(crc1, crc2, len2);
+    return crc32_combine64(crc1, crc2, (z_off64_t)len2);
 }
 
 /* ========================================================================= */
@@ -10591,19 +10586,17 @@ uLong ZEXPORT crc32_combine_gen64(len2)
 uLong ZEXPORT crc32_combine_gen(len2)
     z_off_t len2;
 {
-    return crc32_combine_gen64(len2);
+    return crc32_combine_gen64((z_off64_t)len2);
 }
 
 /* ========================================================================= */
-uLong crc32_combine_op(crc1, crc2, op)
+uLong ZEXPORT crc32_combine_op(crc1, crc2, op)
     uLong crc1;
     uLong crc2;
     uLong op;
 {
-    return multmodp(op, crc1) ^ crc2;
+    return multmodp(op, crc1) ^ (crc2 & 0xffffffff);
 }
-#undef DO1  /* REBOL: see make-zlib.r */
-#undef DO8  /* REBOL: see make-zlib.r */
 /* adler32.c -- compute the Adler-32 checksum of a data stream
  * Copyright (C) 1995-2011, 2016 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -10611,7 +10604,7 @@ uLong crc32_combine_op(crc1, crc2, op)
 
 /* @(#) $Id$ */
 
-// #include "zutil.h" /* REBOL: see make-zlib.r */
+//REBOL: #include "zutil.h"
 
 local uLong adler32_combine_ OF((uLong adler1, uLong adler2, z_off64_t len2));
 
@@ -10841,10 +10834,10 @@ uLong ZEXPORT adler32_combine64(adler1, adler2, len2)
 
 /* @(#) $Id$ */
 
-// #include "deflate.h" /* REBOL: see make-zlib.r */
+//REBOL: #include "deflate.h"
 
 const char deflate_copyright[] =
-   " deflate 1.2.12 Copyright 1995-2022 Jean-loup Gailly and Mark Adler ";
+   " deflate 1.2.13 Copyright 1995-2022 Jean-loup Gailly and Mark Adler ";
 /*
   If you use the zlib library in a product, an acknowledgment is welcome
   in the documentation of your product. If for some reason you cannot
@@ -10879,13 +10872,7 @@ local void lm_init        OF((deflate_state *s));
 local void putShortMSB    OF((deflate_state *s, uInt b));
 local void flush_pending  OF((z_streamp strm));
 local unsigned read_buf   OF((z_streamp strm, Bytef *buf, unsigned size));
-#ifdef ASMV
-#  pragma message("Assembler code may have bugs -- use at your own risk")
-      void match_init OF((void)); /* asm code initialization */
-      uInt longest_match  OF((deflate_state *s, IPos cur_match));
-#else
 local uInt longest_match  OF((deflate_state *s, IPos cur_match));
-#endif
 
 #ifdef ZLIB_DEBUG
 local  void check_match OF((deflate_state *s, IPos start, IPos match,
@@ -10952,7 +10939,7 @@ local const config configuration_table[10] = {
  *    characters, so that a running hash key can be computed from the previous
  *    key instead of complete recalculation each time.
  */
-#define UPDATE_HASH(s,h,c) (h = (((h)<<s->hash_shift) ^ (c)) & s->hash_mask)
+#define UPDATE_HASH(s,h,c) (h = (((h) << s->hash_shift) ^ (c)) & s->hash_mask)
 
 
 /* ===========================================================================
@@ -10983,9 +10970,9 @@ local const config configuration_table[10] = {
  */
 #define CLEAR_HASH(s) \
     do { \
-        s->head[s->hash_size-1] = NIL; \
+        s->head[s->hash_size - 1] = NIL; \
         zmemzero((Bytef *)s->head, \
-                 (unsigned)(s->hash_size-1)*sizeof(*s->head)); \
+                 (unsigned)(s->hash_size - 1)*sizeof(*s->head)); \
     } while (0)
 
 /* ===========================================================================
@@ -11077,6 +11064,8 @@ int ZEXPORT deflateInit2_(strm, level, method, windowBits, memLevel, strategy,
 
     if (windowBits < 0) { /* suppress zlib wrapper */
         wrap = 0;
+        if (windowBits < -15)
+            return Z_STREAM_ERROR;
         windowBits = -windowBits;
     }
 #ifdef GZIP
@@ -11106,7 +11095,7 @@ int ZEXPORT deflateInit2_(strm, level, method, windowBits, memLevel, strategy,
     s->hash_bits = (uInt)memLevel + 7;
     s->hash_size = 1 << s->hash_bits;
     s->hash_mask = s->hash_size - 1;
-    s->hash_shift =  ((s->hash_bits+MIN_MATCH-1)/MIN_MATCH);
+    s->hash_shift =  ((s->hash_bits + MIN_MATCH-1) / MIN_MATCH);
 
     s->window = (Bytef *) ZALLOC(strm, s->w_size, 2*sizeof(Byte));
     s->prev   = (Posf *)  ZALLOC(strm, s->w_size, sizeof(Pos));
@@ -11132,11 +11121,11 @@ int ZEXPORT deflateInit2_(strm, level, method, windowBits, memLevel, strategy,
      * sym_buf value to read moves forward three bytes. From that symbol, up to
      * 31 bits are written to pending_buf. The closest the written pending_buf
      * bits gets to the next sym_buf symbol to read is just before the last
-     * code is written. At that time, 31*(n-2) bits have been written, just
-     * after 24*(n-2) bits have been consumed from sym_buf. sym_buf starts at
-     * 8*n bits into pending_buf. (Note that the symbol buffer fills when n-1
+     * code is written. At that time, 31*(n - 2) bits have been written, just
+     * after 24*(n - 2) bits have been consumed from sym_buf. sym_buf starts at
+     * 8*n bits into pending_buf. (Note that the symbol buffer fills when n - 1
      * symbols are written.) The closest the writing gets to what is unread is
-     * then n+14 bits. Here n is lit_bufsize, which is 16384 by default, and
+     * then n + 14 bits. Here n is lit_bufsize, which is 16384 by default, and
      * can range from 128 to 32768.
      *
      * Therefore, at a minimum, there are 142 bits of space between what is
@@ -11182,7 +11171,7 @@ int ZEXPORT deflateInit2_(strm, level, method, windowBits, memLevel, strategy,
 /* =========================================================================
  * Check for a valid deflate stream state. Return 0 if ok, 1 if not.
  */
-local int deflateStateCheck (strm)
+local int deflateStateCheck(strm)
     z_streamp strm;
 {
     deflate_state *s;
@@ -11205,7 +11194,7 @@ local int deflateStateCheck (strm)
 }
 
 /* ========================================================================= */
-int ZEXPORT deflateSetDictionary (strm, dictionary, dictLength)
+int ZEXPORT deflateSetDictionary(strm, dictionary, dictLength)
     z_streamp strm;
     const Bytef *dictionary;
     uInt  dictLength;
@@ -11274,7 +11263,7 @@ int ZEXPORT deflateSetDictionary (strm, dictionary, dictLength)
 }
 
 /* ========================================================================= */
-int ZEXPORT deflateGetDictionary (strm, dictionary, dictLength)
+int ZEXPORT deflateGetDictionary(strm, dictionary, dictLength)
     z_streamp strm;
     Bytef *dictionary;
     uInt  *dictLength;
@@ -11296,7 +11285,7 @@ int ZEXPORT deflateGetDictionary (strm, dictionary, dictLength)
 }
 
 /* ========================================================================= */
-int ZEXPORT deflateResetKeep (strm)
+int ZEXPORT deflateResetKeep(strm)
     z_streamp strm;
 {
     deflate_state *s;
@@ -11334,7 +11323,7 @@ int ZEXPORT deflateResetKeep (strm)
 }
 
 /* ========================================================================= */
-int ZEXPORT deflateReset (strm)
+int ZEXPORT deflateReset(strm)
     z_streamp strm;
 {
     int ret;
@@ -11346,7 +11335,7 @@ int ZEXPORT deflateReset (strm)
 }
 
 /* ========================================================================= */
-int ZEXPORT deflateSetHeader (strm, head)
+int ZEXPORT deflateSetHeader(strm, head)
     z_streamp strm;
     gz_headerp head;
 {
@@ -11357,7 +11346,7 @@ int ZEXPORT deflateSetHeader (strm, head)
 }
 
 /* ========================================================================= */
-int ZEXPORT deflatePending (strm, pending, bits)
+int ZEXPORT deflatePending(strm, pending, bits)
     unsigned *pending;
     int *bits;
     z_streamp strm;
@@ -11371,7 +11360,7 @@ int ZEXPORT deflatePending (strm, pending, bits)
 }
 
 /* ========================================================================= */
-int ZEXPORT deflatePrime (strm, bits, value)
+int ZEXPORT deflatePrime(strm, bits, value)
     z_streamp strm;
     int bits;
     int value;
@@ -11466,36 +11455,50 @@ int ZEXPORT deflateTune(strm, good_length, max_lazy, nice_length, max_chain)
 }
 
 /* =========================================================================
- * For the default windowBits of 15 and memLevel of 8, this function returns
- * a close to exact, as well as small, upper bound on the compressed size.
- * They are coded as constants here for a reason--if the #define's are
- * changed, then this function needs to be changed as well.  The return
- * value for 15 and 8 only works for those exact settings.
+ * For the default windowBits of 15 and memLevel of 8, this function returns a
+ * close to exact, as well as small, upper bound on the compressed size. This
+ * is an expansion of ~0.03%, plus a small constant.
  *
- * For any setting other than those defaults for windowBits and memLevel,
- * the value returned is a conservative worst case for the maximum expansion
- * resulting from using fixed blocks instead of stored blocks, which deflate
- * can emit on compressed data for some combinations of the parameters.
+ * For any setting other than those defaults for windowBits and memLevel, one
+ * of two worst case bounds is returned. This is at most an expansion of ~4% or
+ * ~13%, plus a small constant.
  *
- * This function could be more sophisticated to provide closer upper bounds for
- * every combination of windowBits and memLevel.  But even the conservative
- * upper bound of about 14% expansion does not seem onerous for output buffer
- * allocation.
+ * Both the 0.03% and 4% derive from the overhead of stored blocks. The first
+ * one is for stored blocks of 16383 bytes (memLevel == 8), whereas the second
+ * is for stored blocks of 127 bytes (the worst case memLevel == 1). The
+ * expansion results from five bytes of header for each stored block.
+ *
+ * The larger expansion of 13% results from a window size less than or equal to
+ * the symbols buffer size (windowBits <= memLevel + 7). In that case some of
+ * the data being compressed may have slid out of the sliding window, impeding
+ * a stored block from being emitted. Then the only choice is a fixed or
+ * dynamic block, where a fixed block limits the maximum expansion to 9 bits
+ * per 8-bit byte, plus 10 bits for every block. The smallest block size for
+ * which this can occur is 255 (memLevel == 2).
+ *
+ * Shifts are used to approximate divisions, for speed.
  */
 uLong ZEXPORT deflateBound(strm, sourceLen)
     z_streamp strm;
     uLong sourceLen;
 {
     deflate_state *s;
-    uLong complen, wraplen;
+    uLong fixedlen, storelen, wraplen;
 
-    /* conservative upper bound for compressed data */
-    complen = sourceLen +
-              ((sourceLen + 7) >> 3) + ((sourceLen + 63) >> 6) + 5;
+    /* upper bound for fixed blocks with 9-bit literals and length 255
+       (memLevel == 2, which is the lowest that may not use stored blocks) --
+       ~13% overhead plus a small constant */
+    fixedlen = sourceLen + (sourceLen >> 3) + (sourceLen >> 8) +
+               (sourceLen >> 9) + 4;
 
-    /* if can't get parameters, return conservative bound plus zlib wrapper */
+    /* upper bound for stored blocks with length 127 (memLevel == 1) --
+       ~4% overhead plus a small constant */
+    storelen = sourceLen + (sourceLen >> 5) + (sourceLen >> 7) +
+               (sourceLen >> 11) + 7;
+
+    /* if can't get parameters, return larger bound plus a zlib wrapper */
     if (deflateStateCheck(strm))
-        return complen + 6;
+        return (fixedlen > storelen ? fixedlen : storelen) + 6;
 
     /* compute wrapper length */
     s = strm->state;
@@ -11532,11 +11535,12 @@ uLong ZEXPORT deflateBound(strm, sourceLen)
         wraplen = 6;
     }
 
-    /* if not default parameters, return conservative bound */
+    /* if not default parameters, return one of the conservative bounds */
     if (s->w_bits != 15 || s->hash_bits != 8 + 7)
-        return complen + wraplen;
+        return (s->w_bits <= s->hash_bits ? fixedlen : storelen) + wraplen;
 
-    /* default settings: return tight bound for that case */
+    /* default settings: return tight bound for that case -- ~0.03% overhead
+       plus a small constant */
     return sourceLen + (sourceLen >> 12) + (sourceLen >> 14) +
            (sourceLen >> 25) + 13 - 6 + wraplen;
 }
@@ -11546,7 +11550,7 @@ uLong ZEXPORT deflateBound(strm, sourceLen)
  * IN assertion: the stream state is correct and there is enough room in
  * pending_buf.
  */
-local void putShortMSB (s, b)
+local void putShortMSB(s, b)
     deflate_state *s;
     uInt b;
 {
@@ -11593,7 +11597,7 @@ local void flush_pending(strm)
     } while (0)
 
 /* ========================================================================= */
-int ZEXPORT deflate (strm, flush)
+int ZEXPORT deflate(strm, flush)
     z_streamp strm;
     int flush;
 {
@@ -11648,7 +11652,7 @@ int ZEXPORT deflate (strm, flush)
         s->status = BUSY_STATE;
     if (s->status == INIT_STATE) {
         /* zlib header */
-        uInt header = (Z_DEFLATED + ((s->w_bits-8)<<4)) << 8;
+        uInt header = (Z_DEFLATED + ((s->w_bits - 8) << 4)) << 8;
         uInt level_flags;
 
         if (s->strategy >= Z_HUFFMAN_ONLY || s->level < 2)
@@ -11908,7 +11912,7 @@ int ZEXPORT deflate (strm, flush)
 }
 
 /* ========================================================================= */
-int ZEXPORT deflateEnd (strm)
+int ZEXPORT deflateEnd(strm)
     z_streamp strm;
 {
     int status;
@@ -11934,7 +11938,7 @@ int ZEXPORT deflateEnd (strm)
  * To simplify the source, this is not supported for 16-bit MSDOS (which
  * doesn't have enough memory anyway to duplicate compression states).
  */
-int ZEXPORT deflateCopy (dest, source)
+int ZEXPORT deflateCopy(dest, source)
     z_streamp dest;
     z_streamp source;
 {
@@ -12023,7 +12027,7 @@ local unsigned read_buf(strm, buf, size)
 /* ===========================================================================
  * Initialize the "longest match" routines for a new zlib stream
  */
-local void lm_init (s)
+local void lm_init(s)
     deflate_state *s;
 {
     s->window_size = (ulg)2L*s->w_size;
@@ -12044,11 +12048,6 @@ local void lm_init (s)
     s->match_length = s->prev_length = MIN_MATCH-1;
     s->match_available = 0;
     s->ins_h = 0;
-#ifndef FASTEST
-#ifdef ASMV
-    match_init(); /* initialize the asm code */
-#endif
-#endif
 }
 
 #ifndef FASTEST
@@ -12060,10 +12059,6 @@ local void lm_init (s)
  * IN assertions: cur_match is the head of the hash chain for the current
  *   string (strstart) and its distance is <= MAX_DIST, and prev_length >= 1
  * OUT assertion: the match length is not greater than s->lookahead.
- */
-#ifndef ASMV
-/* For 80x86 and 680x0, an optimized version will be provided in match.asm or
- * match.S. The code will be functionally equivalent.
  */
 local uInt longest_match(s, cur_match)
     deflate_state *s;
@@ -12089,10 +12084,10 @@ local uInt longest_match(s, cur_match)
      */
     register Bytef *strend = s->window + s->strstart + MAX_MATCH - 1;
     register ush scan_start = *(ushf*)scan;
-    register ush scan_end   = *(ushf*)(scan+best_len-1);
+    register ush scan_end   = *(ushf*)(scan + best_len - 1);
 #else
     register Bytef *strend = s->window + s->strstart + MAX_MATCH;
-    register Byte scan_end1  = scan[best_len-1];
+    register Byte scan_end1  = scan[best_len - 1];
     register Byte scan_end   = scan[best_len];
 #endif
 
@@ -12110,7 +12105,8 @@ local uInt longest_match(s, cur_match)
      */
     if ((uInt)nice_match > s->lookahead) nice_match = (int)s->lookahead;
 
-    Assert((ulg)s->strstart <= s->window_size-MIN_LOOKAHEAD, "need lookahead");
+    Assert((ulg)s->strstart <= s->window_size - MIN_LOOKAHEAD,
+           "need lookahead");
 
     do {
         Assert(cur_match < s->strstart, "no future");
@@ -12128,43 +12124,44 @@ local uInt longest_match(s, cur_match)
         /* This code assumes sizeof(unsigned short) == 2. Do not use
          * UNALIGNED_OK if your compiler uses a different size.
          */
-        if (*(ushf*)(match+best_len-1) != scan_end ||
+        if (*(ushf*)(match + best_len - 1) != scan_end ||
             *(ushf*)match != scan_start) continue;
 
         /* It is not necessary to compare scan[2] and match[2] since they are
          * always equal when the other bytes match, given that the hash keys
          * are equal and that HASH_BITS >= 8. Compare 2 bytes at a time at
-         * strstart+3, +5, ... up to strstart+257. We check for insufficient
+         * strstart + 3, + 5, up to strstart + 257. We check for insufficient
          * lookahead only every 4th comparison; the 128th check will be made
-         * at strstart+257. If MAX_MATCH-2 is not a multiple of 8, it is
+         * at strstart + 257. If MAX_MATCH-2 is not a multiple of 8, it is
          * necessary to put more guard bytes at the end of the window, or
          * to check more often for insufficient lookahead.
          */
         Assert(scan[2] == match[2], "scan[2]?");
         scan++, match++;
         do {
-        } while (*(ushf*)(scan+=2) == *(ushf*)(match+=2) &&
-                 *(ushf*)(scan+=2) == *(ushf*)(match+=2) &&
-                 *(ushf*)(scan+=2) == *(ushf*)(match+=2) &&
-                 *(ushf*)(scan+=2) == *(ushf*)(match+=2) &&
+        } while (*(ushf*)(scan += 2) == *(ushf*)(match += 2) &&
+                 *(ushf*)(scan += 2) == *(ushf*)(match += 2) &&
+                 *(ushf*)(scan += 2) == *(ushf*)(match += 2) &&
+                 *(ushf*)(scan += 2) == *(ushf*)(match += 2) &&
                  scan < strend);
         /* The funny "do {}" generates better code on most compilers */
 
-        /* Here, scan <= window+strstart+257 */
-        Assert(scan <= s->window+(unsigned)(s->window_size-1), "wild scan");
+        /* Here, scan <= window + strstart + 257 */
+        Assert(scan <= s->window + (unsigned)(s->window_size - 1),
+               "wild scan");
         if (*scan == *match) scan++;
 
-        len = (MAX_MATCH - 1) - (int)(strend-scan);
+        len = (MAX_MATCH - 1) - (int)(strend - scan);
         scan = strend - (MAX_MATCH-1);
 
 #else /* UNALIGNED_OK */
 
-        if (match[best_len]   != scan_end  ||
-            match[best_len-1] != scan_end1 ||
-            *match            != *scan     ||
-            *++match          != scan[1])      continue;
+        if (match[best_len]     != scan_end  ||
+            match[best_len - 1] != scan_end1 ||
+            *match              != *scan     ||
+            *++match            != scan[1])      continue;
 
-        /* The check at best_len-1 can be removed because it will be made
+        /* The check at best_len - 1 can be removed because it will be made
          * again later. (This heuristic is not always a win.)
          * It is not necessary to compare scan[2] and match[2] since they
          * are always equal when the other bytes match, given that
@@ -12174,7 +12171,7 @@ local uInt longest_match(s, cur_match)
         Assert(*scan == *match, "match[2]?");
 
         /* We check for insufficient lookahead only every 8th comparison;
-         * the 256th check will be made at strstart+258.
+         * the 256th check will be made at strstart + 258.
          */
         do {
         } while (*++scan == *++match && *++scan == *++match &&
@@ -12183,7 +12180,8 @@ local uInt longest_match(s, cur_match)
                  *++scan == *++match && *++scan == *++match &&
                  scan < strend);
 
-        Assert(scan <= s->window+(unsigned)(s->window_size-1), "wild scan");
+        Assert(scan <= s->window + (unsigned)(s->window_size - 1),
+               "wild scan");
 
         len = MAX_MATCH - (int)(strend - scan);
         scan = strend - MAX_MATCH;
@@ -12195,9 +12193,9 @@ local uInt longest_match(s, cur_match)
             best_len = len;
             if (len >= nice_match) break;
 #ifdef UNALIGNED_OK
-            scan_end = *(ushf*)(scan+best_len-1);
+            scan_end = *(ushf*)(scan + best_len - 1);
 #else
-            scan_end1  = scan[best_len-1];
+            scan_end1  = scan[best_len - 1];
             scan_end   = scan[best_len];
 #endif
         }
@@ -12207,7 +12205,6 @@ local uInt longest_match(s, cur_match)
     if ((uInt)best_len <= s->lookahead) return (uInt)best_len;
     return s->lookahead;
 }
-#endif /* ASMV */
 
 #else /* FASTEST */
 
@@ -12228,7 +12225,8 @@ local uInt longest_match(s, cur_match)
      */
     Assert(s->hash_bits >= 8 && MAX_MATCH == 258, "Code too clever");
 
-    Assert((ulg)s->strstart <= s->window_size-MIN_LOOKAHEAD, "need lookahead");
+    Assert((ulg)s->strstart <= s->window_size - MIN_LOOKAHEAD,
+           "need lookahead");
 
     Assert(cur_match < s->strstart, "no future");
 
@@ -12238,7 +12236,7 @@ local uInt longest_match(s, cur_match)
      */
     if (match[0] != scan[0] || match[1] != scan[1]) return MIN_MATCH-1;
 
-    /* The check at best_len-1 can be removed because it will be made
+    /* The check at best_len - 1 can be removed because it will be made
      * again later. (This heuristic is not always a win.)
      * It is not necessary to compare scan[2] and match[2] since they
      * are always equal when the other bytes match, given that
@@ -12248,7 +12246,7 @@ local uInt longest_match(s, cur_match)
     Assert(*scan == *match, "match[2]?");
 
     /* We check for insufficient lookahead only every 8th comparison;
-     * the 256th check will be made at strstart+258.
+     * the 256th check will be made at strstart + 258.
      */
     do {
     } while (*++scan == *++match && *++scan == *++match &&
@@ -12257,7 +12255,7 @@ local uInt longest_match(s, cur_match)
              *++scan == *++match && *++scan == *++match &&
              scan < strend);
 
-    Assert(scan <= s->window+(unsigned)(s->window_size-1), "wild scan");
+    Assert(scan <= s->window + (unsigned)(s->window_size - 1), "wild scan");
 
     len = MAX_MATCH - (int)(strend - scan);
 
@@ -12293,7 +12291,7 @@ local void check_match(s, start, match, length)
         z_error("invalid match");
     }
     if (z_verbose > 1) {
-        fprintf(stderr,"\\[%d,%d]", start-match, length);
+        fprintf(stderr,"\\[%d,%d]", start - match, length);
         do { putc(s->window[start++], stderr); } while (--length != 0);
     }
 }
@@ -12339,9 +12337,9 @@ local void fill_window(s)
         /* If the window is almost full and there is insufficient lookahead,
          * move the upper half to the lower one to make room in the upper half.
          */
-        if (s->strstart >= wsize+MAX_DIST(s)) {
+        if (s->strstart >= wsize + MAX_DIST(s)) {
 
-            zmemcpy(s->window, s->window+wsize, (unsigned)wsize - more);
+            zmemcpy(s->window, s->window + wsize, (unsigned)wsize - more);
             s->match_start -= wsize;
             s->strstart    -= wsize; /* we now have strstart >= MAX_DIST */
             s->block_start -= (long) wsize;
@@ -12472,7 +12470,7 @@ local void fill_window(s)
  *
  * deflate_stored() is written to minimize the number of times an input byte is
  * copied. It is most efficient with large input and output buffers, which
- * maximizes the opportunites to have a single copy from next_in to next_out.
+ * maximizes the opportunities to have a single copy from next_in to next_out.
  */
 local block_state deflate_stored(s, flush)
     deflate_state *s;
@@ -12682,7 +12680,7 @@ local block_state deflate_fast(s, flush)
             if (s->lookahead == 0) break; /* flush the current block */
         }
 
-        /* Insert the string window[strstart .. strstart+2] in the
+        /* Insert the string window[strstart .. strstart + 2] in the
          * dictionary, and set hash_head to the head of the hash chain:
          */
         hash_head = NIL;
@@ -12730,7 +12728,7 @@ local block_state deflate_fast(s, flush)
                 s->strstart += s->match_length;
                 s->match_length = 0;
                 s->ins_h = s->window[s->strstart];
-                UPDATE_HASH(s, s->ins_h, s->window[s->strstart+1]);
+                UPDATE_HASH(s, s->ins_h, s->window[s->strstart + 1]);
 #if MIN_MATCH != 3
                 Call UPDATE_HASH() MIN_MATCH-3 more times
 #endif
@@ -12741,7 +12739,7 @@ local block_state deflate_fast(s, flush)
         } else {
             /* No match, output a literal byte */
             Tracevv((stderr,"%c", s->window[s->strstart]));
-            _tr_tally_lit (s, s->window[s->strstart], bflush);
+            _tr_tally_lit(s, s->window[s->strstart], bflush);
             s->lookahead--;
             s->strstart++;
         }
@@ -12785,7 +12783,7 @@ local block_state deflate_slow(s, flush)
             if (s->lookahead == 0) break; /* flush the current block */
         }
 
-        /* Insert the string window[strstart .. strstart+2] in the
+        /* Insert the string window[strstart .. strstart + 2] in the
          * dictionary, and set hash_head to the head of the hash chain:
          */
         hash_head = NIL;
@@ -12827,17 +12825,17 @@ local block_state deflate_slow(s, flush)
             uInt max_insert = s->strstart + s->lookahead - MIN_MATCH;
             /* Do not insert strings in hash table beyond this. */
 
-            check_match(s, s->strstart-1, s->prev_match, s->prev_length);
+            check_match(s, s->strstart - 1, s->prev_match, s->prev_length);
 
-            _tr_tally_dist(s, s->strstart -1 - s->prev_match,
+            _tr_tally_dist(s, s->strstart - 1 - s->prev_match,
                            s->prev_length - MIN_MATCH, bflush);
 
             /* Insert in hash table all strings up to the end of the match.
-             * strstart-1 and strstart are already inserted. If there is not
+             * strstart - 1 and strstart are already inserted. If there is not
              * enough lookahead, the last two strings are not inserted in
              * the hash table.
              */
-            s->lookahead -= s->prev_length-1;
+            s->lookahead -= s->prev_length - 1;
             s->prev_length -= 2;
             do {
                 if (++s->strstart <= max_insert) {
@@ -12855,8 +12853,8 @@ local block_state deflate_slow(s, flush)
              * single literal. If there was a match but the current match
              * is longer, truncate the previous match to a single literal.
              */
-            Tracevv((stderr,"%c", s->window[s->strstart-1]));
-            _tr_tally_lit(s, s->window[s->strstart-1], bflush);
+            Tracevv((stderr,"%c", s->window[s->strstart - 1]));
+            _tr_tally_lit(s, s->window[s->strstart - 1], bflush);
             if (bflush) {
                 FLUSH_BLOCK_ONLY(s, 0);
             }
@@ -12874,8 +12872,8 @@ local block_state deflate_slow(s, flush)
     }
     Assert (flush != Z_NO_FLUSH, "no flush?");
     if (s->match_available) {
-        Tracevv((stderr,"%c", s->window[s->strstart-1]));
-        _tr_tally_lit(s, s->window[s->strstart-1], bflush);
+        Tracevv((stderr,"%c", s->window[s->strstart - 1]));
+        _tr_tally_lit(s, s->window[s->strstart - 1], bflush);
         s->match_available = 0;
     }
     s->insert = s->strstart < MIN_MATCH-1 ? s->strstart : MIN_MATCH-1;
@@ -12932,7 +12930,8 @@ local block_state deflate_rle(s, flush)
                 if (s->match_length > s->lookahead)
                     s->match_length = s->lookahead;
             }
-            Assert(scan <= s->window+(uInt)(s->window_size-1), "wild scan");
+            Assert(scan <= s->window + (uInt)(s->window_size - 1),
+                   "wild scan");
         }
 
         /* Emit match if have run of MIN_MATCH or longer, else emit literal */
@@ -12947,7 +12946,7 @@ local block_state deflate_rle(s, flush)
         } else {
             /* No match, output a literal byte */
             Tracevv((stderr,"%c", s->window[s->strstart]));
-            _tr_tally_lit (s, s->window[s->strstart], bflush);
+            _tr_tally_lit(s, s->window[s->strstart], bflush);
             s->lookahead--;
             s->strstart++;
         }
@@ -12987,7 +12986,7 @@ local block_state deflate_huff(s, flush)
         /* Output a literal byte */
         s->match_length = 0;
         Tracevv((stderr,"%c", s->window[s->strstart]));
-        _tr_tally_lit (s, s->window[s->strstart], bflush);
+        _tr_tally_lit(s, s->window[s->strstart], bflush);
         s->lookahead--;
         s->strstart++;
         if (bflush) FLUSH_BLOCK(s, 0);
@@ -13008,9 +13007,9 @@ local block_state deflate_huff(s, flush)
 
 /* @(#) $Id$ */
 
-// #include "zutil.h" /* REBOL: see make-zlib.r */
+//REBOL: #include "zutil.h"
 #ifndef Z_SOLO
-// #  include "gzguts.h" /* REBOL: see make-zlib.r */
+//REBOL: #  include "gzguts.h"
 #endif
 
 z_const char * const z_errmsg[10] = {
@@ -13064,9 +13063,11 @@ uLong ZEXPORT zlibCompileFlags()
 #ifdef ZLIB_DEBUG
     flags += 1 << 8;
 #endif
+    /*
 #if defined(ASMV) || defined(ASMINF)
     flags += 1 << 9;
 #endif
+     */
 #ifdef ZLIB_WINAPI
     flags += 1 << 10;
 #endif
@@ -13122,7 +13123,7 @@ uLong ZEXPORT zlibCompileFlags()
 #  endif
 int ZLIB_INTERNAL z_verbose = verbose;
 
-void ZLIB_INTERNAL z_error (m)
+void ZLIB_INTERNAL z_error(m)
     char *m;
 {
     fprintf(stderr, "%s\n", m);
@@ -13217,7 +13218,7 @@ local ptr_table table[MAX_PTR];
  * a protected system like OS/2. Use Microsoft C instead.
  */
 
-voidpf ZLIB_INTERNAL zcalloc (voidpf opaque, unsigned items, unsigned size)
+voidpf ZLIB_INTERNAL zcalloc(voidpf opaque, unsigned items, unsigned size)
 {
     voidpf buf;
     ulg bsize = (ulg)items*size;
@@ -13243,7 +13244,7 @@ voidpf ZLIB_INTERNAL zcalloc (voidpf opaque, unsigned items, unsigned size)
     return buf;
 }
 
-void ZLIB_INTERNAL zcfree (voidpf opaque, voidpf ptr)
+void ZLIB_INTERNAL zcfree(voidpf opaque, voidpf ptr)
 {
     int n;
 
@@ -13280,13 +13281,13 @@ void ZLIB_INTERNAL zcfree (voidpf opaque, voidpf ptr)
 #  define _hfree   hfree
 #endif
 
-voidpf ZLIB_INTERNAL zcalloc (voidpf opaque, uInt items, uInt size)
+voidpf ZLIB_INTERNAL zcalloc(voidpf opaque, uInt items, uInt size)
 {
     (void)opaque;
     return _halloc((long)items, size);
 }
 
-void ZLIB_INTERNAL zcfree (voidpf opaque, voidpf ptr)
+void ZLIB_INTERNAL zcfree(voidpf opaque, voidpf ptr)
 {
     (void)opaque;
     _hfree(ptr);
@@ -13305,7 +13306,7 @@ extern voidp  calloc OF((uInt items, uInt size));
 extern void   free   OF((voidpf ptr));
 #endif
 
-voidpf ZLIB_INTERNAL zcalloc (opaque, items, size)
+voidpf ZLIB_INTERNAL zcalloc(opaque, items, size)
     voidpf opaque;
     unsigned items;
     unsigned size;
@@ -13315,7 +13316,7 @@ voidpf ZLIB_INTERNAL zcalloc (opaque, items, size)
                               (voidpf)calloc(items, size);
 }
 
-void ZLIB_INTERNAL zcfree (opaque, ptr)
+void ZLIB_INTERNAL zcfree(opaque, ptr)
     voidpf opaque;
     voidpf ptr;
 {
@@ -13334,7 +13335,7 @@ void ZLIB_INTERNAL zcfree (opaque, ptr)
 /* @(#) $Id$ */
 
 #define ZLIB_INTERNAL
-// #include "zlib.h" /* REBOL: see make-zlib.r */
+//REBOL: #include "zlib.h"
 
 /* ===========================================================================
      Compresses the source buffer into the destination buffer. The level
@@ -13347,7 +13348,7 @@ void ZLIB_INTERNAL zcfree (opaque, ptr)
    memory, Z_BUF_ERROR if there was not enough room in the output buffer,
    Z_STREAM_ERROR if the level parameter is invalid.
 */
-int ZEXPORT compress2 (dest, destLen, source, sourceLen, level)
+int ZEXPORT compress2(dest, destLen, source, sourceLen, level)
     Bytef *dest;
     uLongf *destLen;
     const Bytef *source;
@@ -13393,7 +13394,7 @@ int ZEXPORT compress2 (dest, destLen, source, sourceLen, level)
 
 /* ===========================================================================
  */
-int ZEXPORT compress (dest, destLen, source, sourceLen)
+int ZEXPORT compress(dest, destLen, source, sourceLen)
     Bytef *dest;
     uLongf *destLen;
     const Bytef *source;
@@ -13406,7 +13407,7 @@ int ZEXPORT compress (dest, destLen, source, sourceLen)
      If the default memLevel or windowBits for deflateInit() is changed, then
    this function needs to be updated.
  */
-uLong ZEXPORT compressBound (sourceLen)
+uLong ZEXPORT compressBound(sourceLen)
     uLong sourceLen;
 {
     return sourceLen + (sourceLen >> 12) + (sourceLen >> 14) +
@@ -13420,7 +13421,7 @@ uLong ZEXPORT compressBound (sourceLen)
 /* @(#) $Id$ */
 
 #define ZLIB_INTERNAL
-// #include "zlib.h" /* REBOL: see make-zlib.r */
+//REBOL: #include "zlib.h"
 
 /* ===========================================================================
      Decompresses the source buffer into the destination buffer.  *sourceLen is
@@ -13438,7 +13439,7 @@ uLong ZEXPORT compressBound (sourceLen)
    Z_DATA_ERROR if the input data was corrupted, including if the input data is
    an incomplete zlib stream.
 */
-int ZEXPORT uncompress2 (dest, destLen, source, sourceLen)
+int ZEXPORT uncompress2(dest, destLen, source, sourceLen)
     Bytef *dest;
     uLongf *destLen;
     const Bytef *source;
@@ -13497,7 +13498,7 @@ int ZEXPORT uncompress2 (dest, destLen, source, sourceLen)
            err;
 }
 
-int ZEXPORT uncompress (dest, destLen, source, sourceLen)
+int ZEXPORT uncompress(dest, destLen, source, sourceLen)
     Bytef *dest;
     uLongf *destLen;
     const Bytef *source;
@@ -13541,7 +13542,7 @@ int ZEXPORT uncompress (dest, destLen, source, sourceLen)
 
 /* #define GEN_TREES_H */
 
-// #include "deflate.h" /* REBOL: see make-zlib.r */
+//REBOL: #include "deflate.h"
 
 #ifdef ZLIB_DEBUG
 #  include <ctype.h>
@@ -13618,6 +13619,7 @@ local int base_dist[D_CODES];
 /* First normalized distance for each code (0 = distance of 1) */
 
 #else
+//REBOL: #  include "trees.h"
 /* header created automatically with -DGEN_TREES_H */
 
 local const ct_data static_ltree[L_CODES+2] = {
@@ -13746,6 +13748,7 @@ local const int base_dist[D_CODES] = {
  1024,  1536,  2048,  3072,  4096,  6144,  8192, 12288, 16384, 24576
 };
 
+
 #endif /* GEN_TREES_H */
 
 struct static_tree_desc_s {
@@ -13827,7 +13830,7 @@ local void send_bits(s, value, length)
     s->bits_sent += (ulg)length;
 
     /* If not enough room in bi_buf, use (valid) bits from bi_buf and
-     * (16 - bi_valid) bits from value, leaving (width - (16-bi_valid))
+     * (16 - bi_valid) bits from value, leaving (width - (16 - bi_valid))
      * unused bits in value.
      */
     if (s->bi_valid > (int)Buf_size - length) {
@@ -13890,7 +13893,7 @@ local void tr_static_init()
     length = 0;
     for (code = 0; code < LENGTH_CODES-1; code++) {
         base_length[code] = length;
-        for (n = 0; n < (1<<extra_lbits[code]); n++) {
+        for (n = 0; n < (1 << extra_lbits[code]); n++) {
             _length_code[length++] = (uch)code;
         }
     }
@@ -13899,13 +13902,13 @@ local void tr_static_init()
      * in two different ways: code 284 + 5 bits or code 285, so we
      * overwrite length_code[255] to use the best encoding:
      */
-    _length_code[length-1] = (uch)code;
+    _length_code[length - 1] = (uch)code;
 
     /* Initialize the mapping dist (0..32K) -> dist code (0..29) */
     dist = 0;
     for (code = 0 ; code < 16; code++) {
         base_dist[code] = dist;
-        for (n = 0; n < (1<<extra_dbits[code]); n++) {
+        for (n = 0; n < (1 << extra_dbits[code]); n++) {
             _dist_code[dist++] = (uch)code;
         }
     }
@@ -13913,11 +13916,11 @@ local void tr_static_init()
     dist >>= 7; /* from now on, all distances are divided by 128 */
     for ( ; code < D_CODES; code++) {
         base_dist[code] = dist << 7;
-        for (n = 0; n < (1<<(extra_dbits[code]-7)); n++) {
+        for (n = 0; n < (1 << (extra_dbits[code] - 7)); n++) {
             _dist_code[256 + dist++] = (uch)code;
         }
     }
-    Assert (dist == 256, "tr_static_init: 256+dist != 512");
+    Assert (dist == 256, "tr_static_init: 256 + dist != 512");
 
     /* Construct the codes of the static literal tree */
     for (bits = 0; bits <= MAX_BITS; bits++) bl_count[bits] = 0;
@@ -13946,16 +13949,16 @@ local void tr_static_init()
 }
 
 /* ===========================================================================
- * Genererate the file trees.h describing the static trees.
+ * Generate the file trees.h describing the static trees.
  */
 #ifdef GEN_TREES_H
 #  ifndef ZLIB_DEBUG
-// #    include <stdio.h> /* REBOL: see make-zlib.r */
+#    include <stdio.h>
 #  endif
 
 #  define SEPARATOR(i, last, width) \
       ((i) == (last)? "\n};\n\n" :    \
-       ((i) % (width) == (width)-1 ? ",\n" : ", "))
+       ((i) % (width) == (width) - 1 ? ",\n" : ", "))
 
 void gen_trees_header()
 {
@@ -14092,7 +14095,7 @@ local void pqdownheap(s, tree, k)
     while (j <= s->heap_len) {
         /* Set j to the smallest of the two sons: */
         if (j < s->heap_len &&
-            smaller(tree, s->heap[j+1], s->heap[j], s->depth)) {
+            smaller(tree, s->heap[j + 1], s->heap[j], s->depth)) {
             j++;
         }
         /* Exit if v is smaller than both sons */
@@ -14141,7 +14144,7 @@ local void gen_bitlen(s, desc)
      */
     tree[s->heap[s->heap_max]].Len = 0; /* root of the heap */
 
-    for (h = s->heap_max+1; h < HEAP_SIZE; h++) {
+    for (h = s->heap_max + 1; h < HEAP_SIZE; h++) {
         n = s->heap[h];
         bits = tree[tree[n].Dad].Len + 1;
         if (bits > max_length) bits = max_length, overflow++;
@@ -14152,7 +14155,7 @@ local void gen_bitlen(s, desc)
 
         s->bl_count[bits]++;
         xbits = 0;
-        if (n >= base) xbits = extra[n-base];
+        if (n >= base) xbits = extra[n - base];
         f = tree[n].Freq;
         s->opt_len += (ulg)f * (unsigned)(bits + xbits);
         if (stree) s->static_len += (ulg)f * (unsigned)(stree[n].Len + xbits);
@@ -14164,10 +14167,10 @@ local void gen_bitlen(s, desc)
 
     /* Find the first bit length which could increase: */
     do {
-        bits = max_length-1;
+        bits = max_length - 1;
         while (s->bl_count[bits] == 0) bits--;
-        s->bl_count[bits]--;      /* move one leaf down the tree */
-        s->bl_count[bits+1] += 2; /* move one overflow item as its brother */
+        s->bl_count[bits]--;        /* move one leaf down the tree */
+        s->bl_count[bits + 1] += 2; /* move one overflow item as its brother */
         s->bl_count[max_length]--;
         /* The brother of the overflow item also moves one step up,
          * but this does not affect bl_count[max_length]
@@ -14203,7 +14206,7 @@ local void gen_bitlen(s, desc)
  * OUT assertion: the field code is set for all tree elements of non
  *     zero code length.
  */
-local void gen_codes (tree, max_code, bl_count)
+local void gen_codes(tree, max_code, bl_count)
     ct_data *tree;             /* the tree to decorate */
     int max_code;              /* largest code with non zero frequency */
     ushf *bl_count;            /* number of codes at each bit length */
@@ -14217,13 +14220,13 @@ local void gen_codes (tree, max_code, bl_count)
      * without bit reversal.
      */
     for (bits = 1; bits <= MAX_BITS; bits++) {
-        code = (code + bl_count[bits-1]) << 1;
+        code = (code + bl_count[bits - 1]) << 1;
         next_code[bits] = (ush)code;
     }
     /* Check that the bit counts in bl_count are consistent. The last code
      * must be all ones.
      */
-    Assert (code + bl_count[MAX_BITS]-1 == (1<<MAX_BITS)-1,
+    Assert (code + bl_count[MAX_BITS] - 1 == (1 << MAX_BITS) - 1,
             "inconsistent bit counts");
     Tracev((stderr,"\ngen_codes: max_code %d ", max_code));
 
@@ -14234,7 +14237,7 @@ local void gen_codes (tree, max_code, bl_count)
         tree[n].Code = (ush)bi_reverse(next_code[len]++, len);
 
         Tracecv(tree != static_ltree, (stderr,"\nn %3d %c l %2d c %4x (%x) ",
-             n, (isgraph(n) ? n : ' '), len, tree[n].Code, next_code[len]-1));
+            n, (isgraph(n) ? n : ' '), len, tree[n].Code, next_code[len] - 1));
     }
 }
 
@@ -14258,7 +14261,7 @@ local void build_tree(s, desc)
     int node;          /* new node being created */
 
     /* Construct the initial heap, with least frequent element in
-     * heap[SMALLEST]. The sons of heap[n] are heap[2*n] and heap[2*n+1].
+     * heap[SMALLEST]. The sons of heap[n] are heap[2*n] and heap[2*n + 1].
      * heap[0] is not used.
      */
     s->heap_len = 0, s->heap_max = HEAP_SIZE;
@@ -14286,7 +14289,7 @@ local void build_tree(s, desc)
     }
     desc->max_code = max_code;
 
-    /* The elements heap[heap_len/2+1 .. heap_len] are leaves of the tree,
+    /* The elements heap[heap_len/2 + 1 .. heap_len] are leaves of the tree,
      * establish sub-heaps of increasing lengths:
      */
     for (n = s->heap_len/2; n >= 1; n--) pqdownheap(s, tree, n);
@@ -14334,7 +14337,7 @@ local void build_tree(s, desc)
  * Scan a literal or distance tree to determine the frequencies of the codes
  * in the bit length tree.
  */
-local void scan_tree (s, tree, max_code)
+local void scan_tree(s, tree, max_code)
     deflate_state *s;
     ct_data *tree;   /* the tree to be scanned */
     int max_code;    /* and its largest code of non zero frequency */
@@ -14348,10 +14351,10 @@ local void scan_tree (s, tree, max_code)
     int min_count = 4;         /* min repeat count */
 
     if (nextlen == 0) max_count = 138, min_count = 3;
-    tree[max_code+1].Len = (ush)0xffff; /* guard */
+    tree[max_code + 1].Len = (ush)0xffff; /* guard */
 
     for (n = 0; n <= max_code; n++) {
-        curlen = nextlen; nextlen = tree[n+1].Len;
+        curlen = nextlen; nextlen = tree[n + 1].Len;
         if (++count < max_count && curlen == nextlen) {
             continue;
         } else if (count < min_count) {
@@ -14379,7 +14382,7 @@ local void scan_tree (s, tree, max_code)
  * Send a literal or distance tree in compressed form, using the codes in
  * bl_tree.
  */
-local void send_tree (s, tree, max_code)
+local void send_tree(s, tree, max_code)
     deflate_state *s;
     ct_data *tree; /* the tree to be scanned */
     int max_code;       /* and its largest code of non zero frequency */
@@ -14392,11 +14395,11 @@ local void send_tree (s, tree, max_code)
     int max_count = 7;         /* max repeat count */
     int min_count = 4;         /* min repeat count */
 
-    /* tree[max_code+1].Len = -1; */  /* guard already set */
+    /* tree[max_code + 1].Len = -1; */  /* guard already set */
     if (nextlen == 0) max_count = 138, min_count = 3;
 
     for (n = 0; n <= max_code; n++) {
-        curlen = nextlen; nextlen = tree[n+1].Len;
+        curlen = nextlen; nextlen = tree[n + 1].Len;
         if (++count < max_count && curlen == nextlen) {
             continue;
         } else if (count < min_count) {
@@ -14407,13 +14410,13 @@ local void send_tree (s, tree, max_code)
                 send_code(s, curlen, s->bl_tree); count--;
             }
             Assert(count >= 3 && count <= 6, " 3_6?");
-            send_code(s, REP_3_6, s->bl_tree); send_bits(s, count-3, 2);
+            send_code(s, REP_3_6, s->bl_tree); send_bits(s, count - 3, 2);
 
         } else if (count <= 10) {
-            send_code(s, REPZ_3_10, s->bl_tree); send_bits(s, count-3, 3);
+            send_code(s, REPZ_3_10, s->bl_tree); send_bits(s, count - 3, 3);
 
         } else {
-            send_code(s, REPZ_11_138, s->bl_tree); send_bits(s, count-11, 7);
+            send_code(s, REPZ_11_138, s->bl_tree); send_bits(s, count - 11, 7);
         }
         count = 0; prevlen = curlen;
         if (nextlen == 0) {
@@ -14441,8 +14444,8 @@ local int build_bl_tree(s)
 
     /* Build the bit length tree: */
     build_tree(s, (tree_desc *)(&(s->bl_desc)));
-    /* opt_len now includes the length of the tree representations, except
-     * the lengths of the bit lengths codes and the 5+5+4 bits for the counts.
+    /* opt_len now includes the length of the tree representations, except the
+     * lengths of the bit lengths codes and the 5 + 5 + 4 bits for the counts.
      */
 
     /* Determine the number of bit length codes to send. The pkzip format
@@ -14453,7 +14456,7 @@ local int build_bl_tree(s)
         if (s->bl_tree[bl_order[max_blindex]].Len != 0) break;
     }
     /* Update opt_len to include the bit length tree and counts */
-    s->opt_len += 3*((ulg)max_blindex+1) + 5+5+4;
+    s->opt_len += 3*((ulg)max_blindex + 1) + 5 + 5 + 4;
     Tracev((stderr, "\ndyn trees: dyn %ld, stat %ld",
             s->opt_len, s->static_len));
 
@@ -14475,19 +14478,19 @@ local void send_all_trees(s, lcodes, dcodes, blcodes)
     Assert (lcodes <= L_CODES && dcodes <= D_CODES && blcodes <= BL_CODES,
             "too many codes");
     Tracev((stderr, "\nbl counts: "));
-    send_bits(s, lcodes-257, 5); /* not +255 as stated in appnote.txt */
-    send_bits(s, dcodes-1,   5);
-    send_bits(s, blcodes-4,  4); /* not -3 as stated in appnote.txt */
+    send_bits(s, lcodes - 257, 5);  /* not +255 as stated in appnote.txt */
+    send_bits(s, dcodes - 1,   5);
+    send_bits(s, blcodes - 4,  4);  /* not -3 as stated in appnote.txt */
     for (rank = 0; rank < blcodes; rank++) {
         Tracev((stderr, "\nbl code %2d ", bl_order[rank]));
         send_bits(s, s->bl_tree[bl_order[rank]].Len, 3);
     }
     Tracev((stderr, "\nbl tree: sent %ld", s->bits_sent));
 
-    send_tree(s, (ct_data *)s->dyn_ltree, lcodes-1); /* literal tree */
+    send_tree(s, (ct_data *)s->dyn_ltree, lcodes - 1);  /* literal tree */
     Tracev((stderr, "\nlit tree: sent %ld", s->bits_sent));
 
-    send_tree(s, (ct_data *)s->dyn_dtree, dcodes-1); /* distance tree */
+    send_tree(s, (ct_data *)s->dyn_dtree, dcodes - 1);  /* distance tree */
     Tracev((stderr, "\ndist tree: sent %ld", s->bits_sent));
 }
 
@@ -14500,7 +14503,7 @@ void ZLIB_INTERNAL _tr_stored_block(s, buf, stored_len, last)
     ulg stored_len;   /* length of input block */
     int last;         /* one if this is the last block for a file */
 {
-    send_bits(s, (STORED_BLOCK<<1)+last, 3);    /* send block type */
+    send_bits(s, (STORED_BLOCK<<1) + last, 3);  /* send block type */
     bi_windup(s);        /* align on byte boundary */
     put_short(s, (ush)stored_len);
     put_short(s, (ush)~stored_len);
@@ -14511,7 +14514,7 @@ void ZLIB_INTERNAL _tr_stored_block(s, buf, stored_len, last)
     s->compressed_len = (s->compressed_len + 3 + 7) & (ulg)~7L;
     s->compressed_len += (stored_len + 4) << 3;
     s->bits_sent += 2*16;
-    s->bits_sent += stored_len<<3;
+    s->bits_sent += stored_len << 3;
 #endif
 }
 
@@ -14577,14 +14580,17 @@ void ZLIB_INTERNAL _tr_flush_block(s, buf, stored_len, last)
         max_blindex = build_bl_tree(s);
 
         /* Determine the best encoding. Compute the block lengths in bytes. */
-        opt_lenb = (s->opt_len+3+7)>>3;
-        static_lenb = (s->static_len+3+7)>>3;
+        opt_lenb = (s->opt_len + 3 + 7) >> 3;
+        static_lenb = (s->static_len + 3 + 7) >> 3;
 
         Tracev((stderr, "\nopt %lu(%lu) stat %lu(%lu) stored %lu lit %u ",
                 opt_lenb, s->opt_len, static_lenb, s->static_len, stored_len,
                 s->sym_next / 3));
 
-        if (static_lenb <= opt_lenb) opt_lenb = static_lenb;
+#ifndef FORCE_STATIC
+        if (static_lenb <= opt_lenb || s->strategy == Z_FIXED)
+#endif
+            opt_lenb = static_lenb;
 
     } else {
         Assert(buf != (char*)0, "lost buf");
@@ -14594,7 +14600,7 @@ void ZLIB_INTERNAL _tr_flush_block(s, buf, stored_len, last)
 #ifdef FORCE_STORED
     if (buf != (char*)0) { /* force stored block */
 #else
-    if (stored_len+4 <= opt_lenb && buf != (char*)0) {
+    if (stored_len + 4 <= opt_lenb && buf != (char*)0) {
                        /* 4: two words for the lengths */
 #endif
         /* The test buf != NULL is only necessary if LIT_BUFSIZE > WSIZE.
@@ -14605,21 +14611,17 @@ void ZLIB_INTERNAL _tr_flush_block(s, buf, stored_len, last)
          */
         _tr_stored_block(s, buf, stored_len, last);
 
-#ifdef FORCE_STATIC
-    } else if (static_lenb >= 0) { /* force static trees */
-#else
-    } else if (s->strategy == Z_FIXED || static_lenb == opt_lenb) {
-#endif
-        send_bits(s, (STATIC_TREES<<1)+last, 3);
+    } else if (static_lenb == opt_lenb) {
+        send_bits(s, (STATIC_TREES<<1) + last, 3);
         compress_block(s, (const ct_data *)static_ltree,
                        (const ct_data *)static_dtree);
 #ifdef ZLIB_DEBUG
         s->compressed_len += 3 + s->static_len;
 #endif
     } else {
-        send_bits(s, (DYN_TREES<<1)+last, 3);
-        send_all_trees(s, s->l_desc.max_code+1, s->d_desc.max_code+1,
-                       max_blindex+1);
+        send_bits(s, (DYN_TREES<<1) + last, 3);
+        send_all_trees(s, s->l_desc.max_code + 1, s->d_desc.max_code + 1,
+                       max_blindex + 1);
         compress_block(s, (const ct_data *)s->dyn_ltree,
                        (const ct_data *)s->dyn_dtree);
 #ifdef ZLIB_DEBUG
@@ -14638,22 +14640,22 @@ void ZLIB_INTERNAL _tr_flush_block(s, buf, stored_len, last)
         s->compressed_len += 7;  /* align on byte boundary */
 #endif
     }
-    Tracev((stderr,"\ncomprlen %lu(%lu) ", s->compressed_len>>3,
-           s->compressed_len-7*last));
+    Tracev((stderr,"\ncomprlen %lu(%lu) ", s->compressed_len >> 3,
+           s->compressed_len - 7*last));
 }
 
 /* ===========================================================================
  * Save the match info and tally the frequency counts. Return true if
  * the current block must be flushed.
  */
-int ZLIB_INTERNAL _tr_tally (s, dist, lc)
+int ZLIB_INTERNAL _tr_tally(s, dist, lc)
     deflate_state *s;
     unsigned dist;  /* distance of matched string */
-    unsigned lc;    /* match length-MIN_MATCH or unmatched char (if dist==0) */
+    unsigned lc;    /* match length - MIN_MATCH or unmatched char (dist==0) */
 {
-    s->sym_buf[s->sym_next++] = dist;
-    s->sym_buf[s->sym_next++] = dist >> 8;
-    s->sym_buf[s->sym_next++] = lc;
+    s->sym_buf[s->sym_next++] = (uch)dist;
+    s->sym_buf[s->sym_next++] = (uch)(dist >> 8);
+    s->sym_buf[s->sym_next++] = (uch)lc;
     if (dist == 0) {
         /* lc is the unmatched char */
         s->dyn_ltree[lc].Freq++;
@@ -14665,7 +14667,7 @@ int ZLIB_INTERNAL _tr_tally (s, dist, lc)
                (ush)lc <= (ush)(MAX_MATCH-MIN_MATCH) &&
                (ush)d_code(dist) < (ush)D_CODES,  "_tr_tally: bad match");
 
-        s->dyn_ltree[_length_code[lc]+LITERALS+1].Freq++;
+        s->dyn_ltree[_length_code[lc] + LITERALS + 1].Freq++;
         s->dyn_dtree[d_code(dist)].Freq++;
     }
     return (s->sym_next == s->sym_end);
@@ -14695,7 +14697,7 @@ local void compress_block(s, ltree, dtree)
         } else {
             /* Here, lc is the match length - MIN_MATCH */
             code = _length_code[lc];
-            send_code(s, code+LITERALS+1, ltree); /* send the length code */
+            send_code(s, code + LITERALS + 1, ltree);   /* send length code */
             extra = extra_lbits[code];
             if (extra != 0) {
                 lc -= base_length[code];
@@ -14811,7 +14813,7 @@ local void bi_windup(s)
     s->bi_buf = 0;
     s->bi_valid = 0;
 #ifdef ZLIB_DEBUG
-    s->bits_sent = (s->bits_sent+7) & ~7;
+    s->bits_sent = (s->bits_sent + 7) & ~7;
 #endif
 }
 /* inftrees.h -- header to use inftrees.c
@@ -14854,7 +14856,7 @@ typedef struct {
 /* Maximum size of the dynamic table.  The maximum number of code structures is
    1444, which is the sum of 852 for literal/length codes and 592 for distance
    codes.  These values were found by exhaustive searches using the program
-   examples/enough.c found in the zlib distribtution.  The arguments to that
+   examples/enough.c found in the zlib distribution.  The arguments to that
    program are the number of symbols, the initial root table size, and the
    maximum bit length of a code.  "enough 286 9 15" for literal/length codes
    returns returns 852, and "enough 30 6 15" for distance codes returns 592.
@@ -14881,13 +14883,13 @@ int ZLIB_INTERNAL inflate_table OF((codetype type, unsigned short FAR *lens,
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-// #include "zutil.h" /* REBOL: see make-zlib.r */
-// #include "inftrees.h" /* REBOL: see make-zlib.r */
+//REBOL: #include "zutil.h"
+//REBOL: #include "inftrees.h"
 
 #define MAXBITS 15
 
 const char inflate_copyright[] =
-   " inflate 1.2.12 Copyright 1995-2022 Mark Adler ";
+   " inflate 1.2.13 Copyright 1995-2022 Mark Adler ";
 /*
   If you use the zlib library in a product, an acknowledgment is welcome
   in the documentation of your product. If for some reason you cannot
@@ -14940,7 +14942,7 @@ unsigned short FAR *work;
         35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258, 0, 0};
     static const unsigned short lext[31] = { /* Length codes 257..285 extra */
         16, 16, 16, 16, 16, 16, 16, 16, 17, 17, 17, 17, 18, 18, 18, 18,
-        19, 19, 19, 19, 20, 20, 20, 20, 21, 21, 21, 21, 16, 199, 202};
+        19, 19, 19, 19, 20, 20, 20, 20, 21, 21, 21, 21, 16, 194, 65};
     static const unsigned short dbase[32] = { /* Distance codes 0..29 base */
         1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193,
         257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,
@@ -15322,10 +15324,10 @@ struct inflate_state {
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-// #include "zutil.h" /* REBOL: see make-zlib.r */
-// #include "inftrees.h" /* REBOL: see make-zlib.r */
-// #include "inflate.h" /* REBOL: see make-zlib.r */
-// #include "inffast.h" /* REBOL: see make-zlib.r */
+//REBOL: #include "zutil.h"
+//REBOL: #include "inftrees.h"
+//REBOL: #include "inflate.h"
+//REBOL: #include "inffast.h"
 
 #ifdef ASMINF
 #  pragma message("Assembler code may have bugs -- use at your own risk")
@@ -15722,10 +15724,10 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
  * The history for versions after 1.2.0 are in ChangeLog in zlib distribution.
  */
 
-// #include "zutil.h" /* REBOL: see make-zlib.r */
-// #include "inftrees.h" /* REBOL: see make-zlib.r */
-// #include "inflate.h" /* REBOL: see make-zlib.r */
-// #include "inffast.h" /* REBOL: see make-zlib.r */
+//REBOL: #include "zutil.h"
+//REBOL: #include "inftrees.h"
+//REBOL: #include "inflate.h"
+//REBOL: #include "inffast.h"
 
 #ifdef MAKEFIXED
 #  ifndef BUILDFIXED
@@ -15810,6 +15812,8 @@ int windowBits;
 
     /* extract wrap request from windowBits parameter */
     if (windowBits < 0) {
+        if (windowBits < -15)
+            return Z_STREAM_ERROR;
         wrap = 0;
         windowBits = -windowBits;
     }
@@ -15953,6 +15957,7 @@ struct inflate_state FAR *state;
         virgin = 0;
     }
 #else /* !BUILDFIXED */
+//REBOL: #   include "inffixed.h"
     /* inffixed.h -- table for decoding fixed codes
      * Generated automatically by makefixed().
      */
@@ -16047,6 +16052,7 @@ struct inflate_state FAR *state;
         {16,5,4},{24,5,769},{20,5,49},{28,5,12289},{18,5,13},{26,5,3073},
         {22,5,193},{64,5,0}
     };
+
 #endif /* BUILDFIXED */
     state->lencode = lenfix;
     state->lenbits = 9;
@@ -16055,7 +16061,7 @@ struct inflate_state FAR *state;
 }
 
 #ifdef MAKEFIXED
-// #include <stdio.h> /* REBOL: see make-zlib.r */
+#include <stdio.h>
 
 /*
    Write out the inffixed.h that is #include'd above.  Defining MAKEFIXED also
@@ -16499,8 +16505,9 @@ int flush;
                 if (copy > have) copy = have;
                 if (copy) {
                     if (state->head != Z_NULL &&
-                        state->head->extra != Z_NULL) {
-                        len = state->head->extra_len - state->length;
+                        state->head->extra != Z_NULL &&
+                        (len = state->head->extra_len - state->length) <
+                            state->head->extra_max) {
                         zmemcpy(state->head->extra + len, next,
                                 len + copy > state->head->extra_max ?
                                 state->head->extra_max - len : copy);
