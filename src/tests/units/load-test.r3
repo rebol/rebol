@@ -20,6 +20,14 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Load/as"
+	--test-- "load/as markup"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1985
+		--assert [<a> "b" </c>] == load/as "<a>b</c>" 'markup
+		--assert [<a> "b" </c>] == load/as #{3C613E623C2F633E} 'markup
+
+===end-group===
+
 ===start-group=== "Load/header"
 	--test-- "issue-663"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/663
