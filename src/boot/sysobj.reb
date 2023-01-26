@@ -3,7 +3,7 @@ REBOL [
 	Title: "System object"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2021 Rebol Open Source Contributors
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -148,7 +148,8 @@ modules: object [
 	help:    none
 	;; external native extensions
 	blend2d:       https://github.com/Siskin-framework/Rebol-Blend2D/releases/download/0.0.18.1/
-	sqlite:        https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.38.5.0/
+	easing:        https://github.com/Siskin-framework/Rebol-Easing/releases/download/1.0.0/
+	sqlite:        https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.40.1.0/
 	triangulate:   https://github.com/Siskin-framework/Rebol-Triangulate/releases/download/1.6.0.0/
 	;; optional modules, protocol and codecs
 	httpd:            https://src.rebol.tech/modules/httpd.reb
