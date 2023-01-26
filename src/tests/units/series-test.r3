@@ -1524,6 +1524,21 @@ Rebol [
 	--assert 3 = foreach [ref: k v] m [if ref = m [x: x + v]]
 	--assert 6 = foreach [ref: k] m [if ref = m [x: x + m/:k]]
 	--assert ref = 'foo
+
+--test-- "FOREACH [ref:] series!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2530
+	code: [if 2 = index? ref [break/return ref]]
+	foreach [result values][
+		[2]   [1 2]
+		(2)   (1 2)
+		b/c   a/b/c
+		"bc"  "abc"
+		%bc   %abc
+		#{02} #{0102}
+	][
+		--assert result == foreach [ref:] :values :code
+	]
+
 ===end-group===
 
 ===start-group=== "MAP-EACH"

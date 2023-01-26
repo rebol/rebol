@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -443,7 +444,7 @@ enum loop_each_mode {
 				if (ANY_OBJECT(value) || IS_MAP(value)) {
 					*vars = *value;
 				} else {
-					VAL_SET(vars, REB_BLOCK);
+					VAL_SET(vars, VAL_TYPE(value));
 					VAL_SERIES(vars) = series;
 					VAL_INDEX(vars) = index;
 				}
