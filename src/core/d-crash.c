@@ -121,6 +121,8 @@ enum Crash_Msg_Nums {
 #else
 	OS_CRASH(Crash_Msgs[CM_ERROR], buf);
 #endif
+	// will not reach here, but...
+	abort(); // just to silent the function declared 'noreturn' should not return warning
 }
 
 /***********************************************************************
