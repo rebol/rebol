@@ -1526,6 +1526,7 @@ Rebol [
 	--assert ref = 'foo
 
 --test-- "FOREACH [ref:] series!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1751
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2530
 	code: [if 2 = index? ref [break/return ref]]
 	foreach [result values][
