@@ -380,6 +380,10 @@ Rebol [
 		--assert object? o: context? use [x] ['x]
 		--assert object? append o 'self
 
+	--test-- "issue-2531"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2531
+		--assert none? foreach x [1] [context? 'x]
+
 ===end-group===
 
 ===start-group=== "PROTECT object!"

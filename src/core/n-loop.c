@@ -64,6 +64,10 @@ enum loop_each_mode {
 	SET_SELFLESS(frame);
 	SERIES_TAIL(frame) = len+1;
 	SERIES_TAIL(FRM_WORD_SERIES(frame)) = len+1;
+	
+	// Mark the frame as internal series so it is not accessible!
+	// See: https://github.com/Oldes/Rebol-issues/issues/2531
+	INT_SERIES(frame);
 
 	// Setup for loop:
 	word = FRM_WORD(frame, 1); // skip SELF
