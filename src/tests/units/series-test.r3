@@ -120,6 +120,13 @@ Rebol [
 	--assert %AA.BB.csv = find/any %AA.BB.csv %A*.csv
 	--assert %BB.csv    = find/any %AA.BB.csv %B*.csv
 	--assert %AA.BB.csv = find/any %AA.BB.csv %A*.*.csv
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2529
+	--assert %ab        = find/any %ab %*b
+	--assert %ab        = find/any/match %ab %*b
+	--assert %a1a2      = find/any %a1a2 %*a2
+	--assert %a1a2      = find/any/match %a1a2 %*a2
+	--assert %x         = find/any/tail %abx %*b
+	--assert %x         = find/any/tail %a1a2x %*a2
 
 
 --test-- "FIND/ANY on string (unicode)"
