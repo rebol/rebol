@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Developers
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -719,8 +719,7 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 		if(SERIES_WIDE(dest) == 2) {
 			// in case source was already UTF-16
 			// change series width to 1 (for binary result)
-			dest->info &=  0xFFFFFF00;
-			dest->info |=  0x00000001;
+			dest->sizes &= 0xFFFFFF01; // keeps bias and reserved unused bits unchanged 
 			dest->tail *= 2;
 		}
 		if (
