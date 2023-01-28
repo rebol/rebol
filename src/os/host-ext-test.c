@@ -285,7 +285,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 		{
 			REBSER *vec = RXA_SERIES(frm, 1);
 			RXA_TYPE(frm, 1) = RXT_INTEGER;
-			RXA_INT64(frm, 1) = vec->info * vec->tail;
+			RXA_INT64(frm, 1) = (vec->sizes & 0xFF) * vec->tail; //TODO: review!
 		}
 		break;
 	case 14: //command [{return vector size in values (from object)} o [object!]]

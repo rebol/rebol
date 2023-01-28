@@ -1055,7 +1055,7 @@ eval_func2:
 
 	CHECK_MEMORY(4); // Be sure we don't go far with a problem.
 
-	ASSERT1(block->info, RP_GC_OF_BLOCK);
+	ASSERT1(SERIES_SIZES(block), RP_GC_OF_BLOCK);
 
 	while (index < BLK_LEN(block)) {
 		index = Do_Next(block, index, 0);

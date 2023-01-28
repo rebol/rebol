@@ -447,7 +447,8 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	series->tail = series->size = 0;
 	SERIES_REST(series) = length / wide; //FIXME: This is based on the assumption that length is multiple of wide
 	series->data = (REBYTE *)node;
-	series->info = wide; // also clears flags
+	series->sizes = wide; // also clears bias
+	SERIES_FLAGS(series) = 0;
 	LABEL_SERIES(series, "make");
 
 	if ((GC_Ballast -= length) <= 0) SET_SIGNAL(SIG_RECYCLE);
@@ -533,7 +534,8 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 clear_header:
 	if (protect) {
 		series->data = BAD_MEM_PTR; // force bad references to trap
-		series->info = 0;  // indicates series deallocated (wide = 0)
+		series->sizes = 0;  // indicates series deallocated (wide = 0)
+		series->flags = 0;
 	}
 }
 
@@ -563,7 +565,8 @@ clear_header:
 	if (!IS_EXT_SERIES(series)) {
 		Free_Series_Data(series, TRUE);
 	}
-	series->info = 0; // includes width
+	series->sizes = 0; // includes bias and width
+	series->flags = 0;
 	//series->data = BAD_MEM_PTR;
 	//series->tail = 0xBAD2BAD2;
 	//series->size = 0xBAD3BAD3;
@@ -633,7 +636,8 @@ clear_header:
 **
 ***********************************************************************/
 {
-	newser->info = oldser->info;
+	newser->sizes = oldser->sizes;
+	newser->flags = oldser->flags;
 	newser->all = oldser->all;
 #ifdef SERIES_LABELS
 	newser->label = oldser->label;
