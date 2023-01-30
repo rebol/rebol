@@ -801,10 +801,12 @@ err:
 	ser_size = SERIES_AVAIL(ser);
 	bp = STR_HEAD(ser);
 
-	for (i = 8; i > 0; --i) {
+	i = 7;
+	do {
 		bp[i] = (REBYTE)(c & 0xFF);
 		c >>= 8;
-	}
+	} while (i-- > 0);
+
 	ser->tail = 8;
 	return ser;
 
