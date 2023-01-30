@@ -2036,11 +2036,11 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1013
 	--assert #{0102} and #{00FF} == #{0002}
 	--assert #{0102} and #{0300} == #{0100}
-	--assert #{0102} and #{03}   == #{0100}
+	--assert #{0101} and #{03}   == #{0101} ; the shorter arg is now used repeatadly!
 --test-- "binary OR binary"
 	--assert #{0102}  or #{00FF} == #{01FF}
 	--assert #{0102}  or #{0300} == #{0302}
-	--assert #{0102}  or #{03}   == #{0302}
+	--assert #{0101}  or #{03}   == #{0303} ; the shorter arg is now used repeatadly!
 
 ===end-group===
 
@@ -2336,7 +2336,8 @@ Rebol [
 ===end-group===
 
 
-===start-group=== "Bitwise operations on binary"	
+===start-group=== "Bitwise operations on binary"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1013
 	bin1: #{DEADBEAFF00D}
 	bin2: #{BEAF}
 	--test-- "AND on binary"
