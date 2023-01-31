@@ -176,14 +176,17 @@ start: func [
 
 	;-- Evaluate rebol.reb script:
 	;@@ https://github.com/Oldes/Rebol-issues/issues/706
-	tmp: first split-path boot
-	sys/log/info 'REBOL ["Checking for rebol.reb file in" tmp]
-	
-	if all [
-		#"/" = first tmp ; only if we know absolute path
-		exists? tmp/rebol.reb
-	][
-		try/except [do tmp/rebol.reb][sys/log/error 'REBOL system/state/last-error]
+	;; boot (path to the exe) may be none if not resolved!
+	if boot [
+		tmp: first split-path boot
+		sys/log/info 'REBOL ["Checking for rebol.reb file in" tmp]
+		
+		if all [
+			#"/" = first tmp ; only if we know absolute path
+			exists? tmp/rebol.reb
+		][
+			try/except [do tmp/rebol.reb][sys/log/error 'REBOL system/state/last-error]
+		]
 	]
 
 	;-- Make the user's global context:

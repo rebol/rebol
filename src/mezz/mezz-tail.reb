@@ -27,7 +27,10 @@ func: funco [
 codecs: :system/codecs 
 keys-of: :words-of ; as it sounds better when used with some objects
 
-system/options/boot: clean-path system/options/boot
+;; boot (path to the exe) may be none if not resolved!
+if system/options/boot [
+   system/options/boot: clean-path system/options/boot
+]
 
 ;protect system/standard
 protect-system-object
