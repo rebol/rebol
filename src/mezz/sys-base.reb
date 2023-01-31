@@ -89,7 +89,7 @@ do*: func [
 			; Eval the block or make the module, returned
 			either mod? [ ; Import the module and set the var
 				spec: reduce [hdr data do-needs/no-user hdr]
-				also import catch/quit [make module! spec]
+				also import (catch/quit [make module! spec])
 					if var [set var tail data]
 			][
 				do-needs hdr  ; Load the script requirements
