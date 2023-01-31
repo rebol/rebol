@@ -429,19 +429,26 @@ if value? 'blur [
 
 
 ===start-group=== "Save/load image"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2534
 	if find codecs 'png [
 		--test-- "save/load PNG"
-			img1: make image! [2x2 255.0.0.10]
+			img1: make image! [2x2 255.0.0.210]
 			save %units/files/test.png img1
 			img2: load %units/files/test.png
-			--assert #{FF00000AFF00000AFF00000AFF00000A} = to binary! img2
+			--assert find [
+				#{FF00000AFF00000AFF00000AFF00000A}
+				#{D20000D2D20000D2D20000D2D20000D2} ;; premultiplied on macOS :/
+			] to binary! img2
 	]
 	if find codecs 'bmp [
 		--test-- "save/load BMP"
 			img1: make image! [2x2 255.0.0.10]
 			save %units/files/test.bmp img1
 			img2: load %units/files/test.bmp
-			--assert #{FF00000AFF00000AFF00000AFF00000A} = to binary! img2
+			--assert find [
+				#{FF00000AFF00000AFF00000AFF00000A}
+				#{D20000D2D20000D2D20000D2D20000D2} ;; premultiplied on macOS :/
+			] to binary! img2
 	]
 ===end-group===
 

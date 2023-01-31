@@ -57,7 +57,7 @@ int DecodeImageFromFile(const char *uri, unsigned int frame, REBCDI *codi)
 	CGContextRef ctx;
 	CFDataRef binSrc;
 	
-	NSUInteger w, h;
+	NSUInteger w, h, bytes;
 	NSUInteger bytesPerPixel = 4;
 	NSUInteger bitsPerComponent = 8;
 	
@@ -77,8 +77,10 @@ int DecodeImageFromFile(const char *uri, unsigned int frame, REBCDI *codi)
 		ASSERT_NOT_NULL(img, 3, "create an image");
 		w = CGImageGetWidth(img);
 		h = CGImageGetHeight(img);
-		pixels = (UInt32*)malloc(w * h * 4); // Rebol's library side must free it!
+		bytes = w * h * bytesPerPixel;
+		pixels = (UInt32*)malloc(bytes); // Rebol's library side must free it!
 		ASSERT_NOT_NULL(pixels, 4, "allocate pixels buffer");
+		memset(pixels, 0, bytes);
 		space = CGColorSpaceCreateDeviceRGB();
 		ctx = CGBitmapContextCreate(pixels, w, h, bitsPerComponent, bytesPerPixel * w, space, kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
 		ASSERT_NOT_NULL(ctx, 5, "create a bitmap context");
@@ -88,7 +90,7 @@ int DecodeImageFromFile(const char *uri, unsigned int frame, REBCDI *codi)
 		
 		codi->w = (UInt32)w;
 		codi->h = (UInt32)h;
-		codi->len = w * h * 4;
+		codi->len = (UInt32)bytes;
 		codi->data = (unsigned char*)pixels;
 	} while(FALSE);
 	SAFE_CF_RELEASE(url);
