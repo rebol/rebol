@@ -186,7 +186,7 @@ static inline int get_penalty(int a, int b) {
 		offset = CRUSH_W_SIZE;
 
 		const int max_match = MIN(CRUSH_MAX_MATCH, size - p);
-		const int limit = MAX(p - CRUSH_W_SIZE, 0);
+		const int limit = (p <= CRUSH_W_SIZE) ? 0 : p - CRUSH_W_SIZE;
 
 		if (head[h1] >= limit)
 		{
