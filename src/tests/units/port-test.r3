@@ -10,6 +10,7 @@ Rebol [
 
 
 ===start-group=== "directory port"
+
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2320
 	--test-- "port-issue-2320"
 		--assert  %port-issue-2320/ = make-dir %port-issue-2320/
@@ -45,11 +46,13 @@ Rebol [
 			not error? try [create %issue-2525/]
 			exists? %issue-2525/
 			delete  %issue-2525/
+			true
 		]
 		--assert all [
 			not error? try [create %issue-2525-ěšč/]
 			exists? %issue-2525-ěšč/
 			delete  %issue-2525-ěšč/
+			true
 		]
 
 	--test-- "make-dir/delete/exists? with path without a slash"
