@@ -618,7 +618,7 @@ if all [
 		--assert [local-ip local-port remote-ip remote-port] = query/mode port none
 		--assert 0.0.0.0 = query/mode port 'local-ip
 		--assert       0 = query/mode port 'local-port
-		--assert not none? find [0.0.0.0 8.8.8.8] = query/mode port 'remote-ip ;; on posix there is sync lookup and so it reports 8.8.8.8 even without wait
+		--assert not none? find [0.0.0.0 8.8.8.8] query/mode port 'remote-ip ;; on posix there is sync lookup and so it reports 8.8.8.8 even without wait
 		--assert      80 = query/mode port 'remote-port
 		--assert all [
 			port? wait [port 1] ;= wait for lookup, so remote-ip is resolved
