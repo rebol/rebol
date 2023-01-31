@@ -27,6 +27,8 @@ supplement system/options/module-paths join what-dir %units/files/
 		]
 
 	--test-- "export"
+	;-- Note: using tests against user's context, because the unit tests are called using `wrap` which
+	;--       callects and binds all set-words used in modules code bellow and so values are not imported.
 	;@@ https://github.com/Oldes/Rebol-issues/issues/689
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1446
 		unset in system/contexts/user 'a
@@ -89,13 +91,13 @@ supplement system/options/module-paths join what-dir %units/files/
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1007
 		m: module [] [a: 1 2]
 		--assert 1 = m/a
-		unset 'a
+		unset in system/contexts/user 'a
 		m: module [exports: [a]] [a: 1 2]
 		--assert 1 = m/a
-		--assert unset? :a
+		--assert unset? :system/contexts/user/a
 		import (m)
-		--assert 1 = :a
-		unset 'a
+		--assert 1 = :system/contexts/user/a
+		unset in system/contexts/user 'a
 
 ===end-group===
 
