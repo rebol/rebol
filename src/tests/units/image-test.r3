@@ -435,7 +435,7 @@ if value? 'blur [
 			img1: make image! [2x2 255.0.0.210]
 			save %units/files/test.png img1
 			img2: load %units/files/test.png
-			--assert find [
+			--assert not none? find [
 				#{FF00000AFF00000AFF00000AFF00000A}
 				#{D20000D2D20000D2D20000D2D20000D2} ;; premultiplied on macOS :/
 			] to binary! img2
@@ -445,7 +445,7 @@ if value? 'blur [
 			img1: make image! [2x2 255.0.0.10]
 			save %units/files/test.bmp img1
 			img2: load %units/files/test.bmp
-			--assert find [
+			--assert not none? find [
 				#{FF00000AFF00000AFF00000AFF00000A}
 				#{D20000D2D20000D2D20000D2D20000D2} ;; premultiplied on macOS :/
 			] to binary! img2
