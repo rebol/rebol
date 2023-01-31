@@ -101,7 +101,7 @@ rebol-cmd: func[cmd][
 		--assert 0:0:1 > delta-time [do %units/files/launch.r3] ;; should not wait
 	--test-- "do launch/wait"
 		--assert 0:0:2 < delta-time [do %units/files/launch-wait.r3] ;; should wait
-		--assert 8 = try [length? read/lines %units/files/launched.txt] ;; 8 because 3x launched!
+		--assert 6 = try [length? read/lines %units/files/launched.txt] ;; 6 because 3x launched!
 
 	try [delete %units/files/launched.txt]
 ===end-group===
