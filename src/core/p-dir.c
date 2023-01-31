@@ -205,7 +205,7 @@
 			///OS_FREE(dir.file.path);
 			
 			// don't throw an error if the original path contains wildcard chars * or ?
-			if (result < 0 && !(dir.error == (REBCNT)-RFE_OPEN_FAIL && WILD_PATH(path)) ) {
+			if (result < 0 && !(result == (REBCNT)-RFE_OPEN_FAIL && WILD_PATH(path)) ) {
 				Trap_Port(RE_CANNOT_OPEN, port, dir.error);
 			}
 
