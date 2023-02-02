@@ -719,7 +719,8 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 		if(SERIES_WIDE(dest) == 2) {
 			// in case source was already UTF-16
 			// change series width to 1 (for binary result)
-			dest->sizes &= 0xFFFFFF01; // keeps bias and reserved unused bits unchanged 
+			dest->sizes &= 0xFFFFFF00; // keeps bias and reserved unused bits unchanged
+			dest->sizes |= 0x00000001; // sets width to 1
 			dest->tail *= 2;
 		}
 		if (
