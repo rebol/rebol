@@ -97,6 +97,11 @@ typedef union rxi_arg_val {
 		REBYTE tuple_len;
 		REBYTE tuple_bytes[MAX_TUPLE];
 	};
+	struct {
+		REBSER *data;
+		REBSER *fields;
+	} structure;
+
 } RXIARG;
 
 // For direct access to arg array:

@@ -89,6 +89,7 @@ char *RX_Spec =
 
 	"a: b: c: h: x: none\n"
 	"i: make image! 2x2\n"
+	"s: #[struct! [r [uint8!]]]\n"
 	"xtest: does [\n"
 		"foreach blk [\n"
 			"[x: hob1 #{0102}]"
@@ -124,6 +125,9 @@ char *RX_Spec =
 			"[echo i]\n"
 			"[probe i probe echo i]\n"
 			"[loop 1 [probe echo i]]\n"
+			
+			// https://github.com/Oldes/Rebol-issues/issues/2536
+			"[same? s probe echo s]\n"
 		"][\n"
 			"print [{^/^[[7mtest:^[[0m^[[1;32m} mold blk {^[[0m}]\n"
 			//"replace {x} {x} {y}\n"

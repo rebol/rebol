@@ -47,6 +47,7 @@ enum {
 	RXE_DATE,	// from upper section
 	RXE_OBJECT, // any object
 	RXE_TUPLE,  // 3-12 bytes tuple value
+	RXE_STRUCT,	// structure data and fields spec series
 	RXE_MAX
 };
 
@@ -121,6 +122,10 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 		arg.tuple_len = VAL_TUPLE_LEN(val);
 		COPY_MEM(arg.tuple_bytes, VAL_TUPLE(val), MAX_TUPLE);
 		break;
+	case RXE_STRUCT:
+		arg.structure.data = VAL_STRUCT_DATA(val);
+		arg.structure.fields = VAL_STRUCT_FIELDS(val);
+		break;
 	case RXE_NULL:
 	default:
 		arg.int64 = 0;
@@ -175,6 +180,12 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 	case RXE_TUPLE:
 		VAL_TUPLE_LEN(val) = arg.tuple_len;
 		COPY_MEM(VAL_TUPLE(val), arg.tuple_bytes, MAX_TUPLE);
+		break;
+	case RXE_STRUCT:
+		//TODO: review!
+		// There is no room in RXIARG to pass the spec part of the struct!
+		VAL_STRUCT_DATA(val) = arg.structure.data;
+		VAL_STRUCT_FIELDS(val) = arg.structure.fields;
 		break;
 	case RXE_NULL:
 		VAL_INT64(val) = 0;
