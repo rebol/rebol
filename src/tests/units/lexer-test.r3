@@ -10,6 +10,7 @@ Rebol [
 
 ===start-group=== "TRANSCODE"
 	--test-- "transcode basic"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/536
 	;@@ https://github.com/Oldes/Rebol-issues/issues/688
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1329
 		--assert [1 + 1] = transcode to binary! "1 + 1"
