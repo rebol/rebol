@@ -16,7 +16,8 @@ dt: delta-time: function [
 	{Delta-time - returns the time it takes to evaluate the block.}
 	block [block!]
 ][
-	recycle ; force GC, so there is less chance that it is fired in `do block`
+	; force GC, so there is less chance that it is fired in `do block`
+	recycle recycle ; 2x => first mark, second sweep
 	start: stats/timer
 	do block
 	stats/timer - start
