@@ -220,7 +220,7 @@ try/except [
 ][	git-commit: none]
 
 str-version: reform [
-	"Rebol" ; probably always same
+	"Rebol"  ; probably always same
 	product  ; like Core, View, etc...
 	version  ; triple value product version
 	platform ; Linux, Windows, macOS, Android...
@@ -235,6 +235,13 @@ str-version: reform [
 	git-commit
 	get-libc-version ;; musl, glibc_2.28,... or just none
 ]
+
+
+short-str-version: next ajoin [{
+Rebol/} product SP version SP format-date-time now/utc "(yyyy-MM-dd hh:mm:ss UTC)" {
+Copyright (c) 2012 REBOL Technologies
+Copyright (c) 2012-} now/year { Rebol Open Source Contributors
+Source:       https://github.com/Oldes/Rebol3}]
 
 ver3: version ver3/4: none ; trimmed version to just 3 parts
 lib-version: version/1

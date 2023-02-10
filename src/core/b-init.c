@@ -122,6 +122,7 @@ extern const REBYTE Str_Banner[];
 {
 	if (rargs->options & RO_VERS) {
 		Out_Str(cb_cast(REBOL_VERSION), 0, FALSE);
+		Out_Str(cb_cast("\n"), 0, FALSE);
 		OS_EXIT(0);
 	}
 }
@@ -366,10 +367,16 @@ extern const REBYTE Str_Banner[];
 /*
 //	version: native [
 //		"Return Rebol version string"
+//		/data "loadable version"
 //	]
 ***********************************************************************/
 {
-	const REBYTE*version = BOOT_STR(RS_VERSION, 0);
+	const REBYTE*version;
+	if (D_REF(1)) {
+		version = BOOT_STR(RS_VERSION, 0);
+	} else {
+		version = cb_cast(REBOL_VERSION);
+	}
 	Set_String(ds, Copy_Bytes(version, LEN_BYTES(version)));
 	return R_RET;
 }

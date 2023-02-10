@@ -113,6 +113,16 @@ binary-to-c: func [comp-data /local out data] [
 	head out
 ]
 
+string-to-c: func[str /local out][
+	out: copy ""
+	foreach line split str lf [
+		replace/all line #"^"" {\"}
+		append out ajoin [{^/^-"} line {\n"\}] 
+	]
+	take/last out ;; removes the last slash
+	out
+]
+
 get-libc-version: function[][
 	tmp: copy ""
 	num: system/catalog/bitsets/numeric
