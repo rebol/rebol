@@ -159,7 +159,7 @@ os:  any [
 		OpenBSD:   openbsd
 	) platform	
 ]
-sys: any [
+syst: any [
 	; none, linux, win32, darwin, cuda, etc.
 	spec/sys
 	spec/kernel
@@ -199,7 +199,7 @@ unless target [
 	target: clear ""
 	if arch   [append append target arch   #"-"]
 	if vendor [append append target vendor #"-"]
-	if sys    [append append target sys    #"-"]
+	if syst   [append append target syst   #"-"]
 	if abi    [append append target abi    #"-"]
 	take/last target
 ]
@@ -227,7 +227,7 @@ str-version: reform [
 	os
 	arch
 	vendor
-	sys
+	syst
 	abi
 	any [all [word? spec/compiler spec/compiler]] ; gcc, clang, msvc...
 	target
@@ -236,9 +236,11 @@ str-version: reform [
 	get-libc-version ;; musl, glibc_2.28,... or just none
 ]
 
+;;format-date-time may not be available in older Builder tools!
+;;format-date-time now/utc "(yyyy-MM-dd hh:mm:ss UTC)"
 
 short-str-version: next ajoin [{
-Rebol/} product SP version SP format-date-time now/utc "(yyyy-MM-dd hh:mm:ss UTC)" {
+Rebol/} product SP version " (" build-date { UTC)
 Copyright (c) 2012 REBOL Technologies
 Copyright (c) 2012-} now/year { Rebol Open Source Contributors
 Source:       https://github.com/Oldes/Rebol3}]
