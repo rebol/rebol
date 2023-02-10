@@ -349,7 +349,9 @@ static int Poll_Default(REBDEV *dev)
 	else if (result < 0) {
 		result = req->error;
 		// make sure that we are consistent and error is always negative...
-		if (result > 0) result = -result;
+		if (result > 0) {
+			req->error = result = -result;
+		}
 	}
 
 	return result;

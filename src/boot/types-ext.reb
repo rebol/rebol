@@ -61,3 +61,5 @@ gob			47	ser
 object		48	object
 module		*	object
 
+struct		54  struct
+

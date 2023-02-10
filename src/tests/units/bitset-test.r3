@@ -177,6 +177,13 @@
 ===end-group===
 
 ===start-group=== "modify"
+	--test-- "alter"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/422
+		bs: #[bitset! #{00}]
+		--assert true  = alter bs 1
+		--assert #{40} = to binary! bs
+		--assert false = alter bs 1
+		--assert #{00} = to binary! bs
 	
 	--test-- "poke-1"
 		bs: make bitset! [0 1 2 3]

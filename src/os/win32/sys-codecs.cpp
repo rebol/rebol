@@ -2,7 +2,7 @@
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
-**	Copyright 2019 Oldes
+**	Copyright 2019-2023 Oldes
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
@@ -105,8 +105,8 @@ CODECS_API int DecodeImageFromFile(PCWSTR *uri, UINT frame, REBCDI *codi)
 
 			// WIC JPEG decoder needs the stream to seek to head manually!
 			// https://stackoverflow.com/a/12928336/494472
-			pStream->Seek(zero, STREAM_SEEK_SET, NULL); 
-			
+			pStream->Seek(zero, STREAM_SEEK_SET, NULL);
+
 			hr = pIWICFactory->CreateDecoderFromStream(
 				pStream
 				, NULL
@@ -143,12 +143,13 @@ CODECS_API int DecodeImageFromFile(PCWSTR *uri, UINT frame, REBCDI *codi)
 		codi->w = w;
 		codi->h = h;
 		codi->len = w * h * 4;
-		
-		data = (unsigned char*)malloc(codi->len);
-		wrect = {0,0,(INT)w,(INT)h};
-		hr = pConverter->CopyPixels(&wrect, w*4, codi->len, data);
-		ASSERT_HR("CopyPixels");
 
+		data = (unsigned char *)malloc(codi->len);
+		if (data) {
+			wrect = { 0,0,(INT)w,(INT)h };
+			hr = pConverter->CopyPixels(&wrect, w * 4, codi->len, data);
+			ASSERT_HR("CopyPixels");
+		}
 	} while(FALSE);
 
 	codi->error = hr;
@@ -180,12 +181,12 @@ HRESULT AddBoolProperty(IPropertyBag2 *pPropertybag, LPOLESTR name, VARIANT_BOOL
 CODECS_API int EncodeImageToFile(PCWSTR *uri, REBCDI *codi)
 {
 	HRESULT hr = S_OK;
-	UINT  w, h;
+//	UINT  w, h;
 	UINT  size;
 	BYTE *data = NULL;
 	WICRect wrect;
 
-	ULONG bytes;
+//	ULONG bytes;
 
 	IWICBitmap         *pWICBitmap     = NULL;
 	IWICBitmapLock     *pWICBitmapLock = NULL;

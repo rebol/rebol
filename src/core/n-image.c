@@ -35,12 +35,10 @@
 #include "reb-codec.h"
 #include "sys-magick.h" // used for `resize` native
 #include "sys-blur.h" // used for `blur` native
-#if defined(TO_WINDOWS) && defined(INCLUDE_IMAGE_OS_CODEC)
-#include "winerror.h" // used for WINCODEC_ERR_COMPONENTNOTFOUND
-#endif
-
-#ifndef WINCODEC_ERR_COMPONENTNOTFOUND
-#define WINCODEC_ERR_COMPONENTNOTFOUND   0x88982F50L
+#if defined(TO_WINDOWS)
+# ifndef WINCODEC_ERR_COMPONENTNOTFOUND
+# define WINCODEC_ERR_COMPONENTNOTFOUND   0x88982F50L
+# endif
 #endif
 
 
@@ -354,8 +352,7 @@ typedef struct REBCLR {
 	REBVAL* val_img = D_ARG(1);
 	REBVAL* val_rad = D_ARG(2);
 	REBINT radius = IS_INTEGER(val_rad) ? VAL_INT32(val_rad) : (REBINT)round(VAL_DECIMAL(val_rad));
-
-	BlurImage(VAL_SERIES(val_img), radius);
+	if (radius > 0) BlurImage(VAL_SERIES(val_img), (REBCNT)radius);
 	return R_ARG1;
 }
 
@@ -434,7 +431,7 @@ typedef struct REBCLR {
 			codi.len  = VAL_LEN(val_src_file);
 		}
 		
-		OS_LOAD_IMAGE(ser ? SERIES_DATA(ser) : NULL, frm, &codi);
+		OS_LOAD_IMAGE(ser ? (REBCHR*)SERIES_DATA(ser) : NULL, frm, &codi);
 
 		if(codi.error) {
 			switch (codi.error) {
@@ -500,7 +497,7 @@ typedef struct REBCLR {
 		//	}
 		//}
 		
-		OS_SAVE_IMAGE(IS_FILE(val_dest) ? SERIES_DATA(ser) : NULL, &codi);
+		OS_SAVE_IMAGE(IS_FILE(val_dest) ? (REBCHR *)SERIES_DATA(ser) : NULL, &codi);
 
 		if(codi.error) {
 			switch (codi.error) {

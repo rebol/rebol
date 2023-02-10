@@ -84,7 +84,10 @@ static void Extend_Obj(REBSER *obj, REBVAL *key, REBVAL *value)
 		if (index) {
 			if (!value) return;
 			val = FRM_VALUE(obj, index);
-			if (VAL_PROTECTED(val)) Trap1(RE_LOCKED_WORD, val);
+			if (GET_FLAGS(VAL_OPTS(FRM_WORD(obj, index)), OPTS_HIDE, OPTS_LOCK)) {
+				if (VAL_PROTECTED(val)) Trap1(RE_LOCKED_WORD, val);
+				Trap0(RE_HIDDEN);
+			}
 		} else {
 			Expand_Frame(obj, 1, 1); // copy word table also
 			val = Append_Frame(obj, 0, VAL_WORD_SYM(key));

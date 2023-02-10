@@ -57,33 +57,6 @@ Rebol [
 ;-----------------------------------------------------------
 ;-- Generic support funcs
 
-BOM: [
-	UTF-8		#{EFBBBF}
-	UTF-16-BE	#{FEFF}
-	UTF-16-LE	#{FFFE}
-	UTF-32-BE	#{0000FEFF}
-	UTF-32-LE	#{FFFE0000}
-]
-
-BOM-UTF-16?: func [data [string! binary!]][
-	any [find/match/tail data BOM/UTF-16-BE  find/match/tail data BOM/UTF-16-LE]
-]
-
-BOM-UTF-32?: func [data [string! binary!]][
-	any [find/match/tail data BOM/UTF-32-BE  find/match/tail data BOM/UTF-32-LE]
-]
-
-
-; MOLD adds quotes string!, but not all any-string! values.
-enquote: func [str [string!] "(modified)"][append insert str {"} {"}]
-
-high-surrogate?: func [codepoint [integer!]][
-	all [codepoint >= 55296  codepoint <= 56319] ;D800h DBFFh 
-]
-
-low-surrogate?: func [codepoint [integer!]][
-	all [codepoint >= 56320  codepoint <= 57343] ;DC00h DFFFh
-]
 
 translit: func [
 	"Transliterate sub-strings in a string"
@@ -106,8 +79,8 @@ translit: func [
 
 ;TBD: I think this can be improved. --Gregg
 	
-json-to-red-escape-table: [
-;   JSON Red
+json-to-rebol-escape-table: [
+;   JSON Rebol
 	{\"} "^""
 	{\\} "\"
 	{\/} "/"
@@ -117,46 +90,46 @@ json-to-red-escape-table: [
 	{\r} "^M"
 	{\t} "^-"
 ]
-red-to-json-escape-table: reverse copy json-to-red-escape-table
+rebol-to-json-escape-table: reverse copy json-to-rebol-escape-table
 
-json-esc-ch: charset {"t\/nrbf}             ; Backslash escaped JSON chars
-json-escaped: [#"\" json-esc-ch]			; Backslash escape rule
-red-esc-ch: charset {^"^-\/^/^M^H^L}        ; Red chars requiring JSON backslash escapes
+rebol-esc-ch: charset {^"^-\/^/^M^H^L} ; Rebol chars requiring JSON backslash escapes
+json-esc-ch:  charset {"t\/nrbf}       ; Backslash escaped JSON chars
+json-escaped: [#"\" json-esc-ch]       ; Backslash escape rule
 
 decode-backslash-escapes: func [string [string!] "(modified)"][
-	translit string json-escaped json-to-red-escape-table
+	translit string json-escaped json-to-rebol-escape-table
 ]
 
 encode-backslash-escapes: func [string [string!] "(modified)"][
-	translit string red-esc-ch red-to-json-escape-table
+	translit string rebol-esc-ch rebol-to-json-escape-table
 ]
 
-ctrl-char: charset [#"^@" - #"^_"]			; Control chars 0-31
 ;-----------------------------------------------------------
-;-- JSON decoder
+;-- JSON decoder                                            
 ;-----------------------------------------------------------
 
 ;# Basic rules
-ws:  charset " ^-^/^M"						; Whitespace
+hex-char: system/catalog/bitsets/hex-digits
+digit:    system/catalog/bitsets/numeric
+ws:       system/catalog/bitsets/whitespace
 ws*: [any ws]
 ws+: [some ws]
-sep: [ws* #"," ws*]							; JSON value separator
-digit: charset "0123456789"
-non-zero-digit: charset "123456789"
-hex-char:  charset "0123456789ABCDEFabcdef"
-chars: charset [not {\"} #"^@" - #"^_"]		; Unescaped chars (NOT creates a virtual bitset)
+sep: [ws* #"," ws*]							   ; JSON value separator
+non-zero-digit: #[bitset! #{0000000000007FC0}] ;= charset "123456789"
+; Unescaped chars (NOT creates a virtual bitset)
+chars: #[bitset! [not bits #{FFFFFFFF2000000000000008}]] ;=charset [not {\"} #"^@"-#"^_"]
 
-; chars allowed in Red word! values - note that we don't allow < and > at all even though they are somewhat valid in word!
+; chars allowed in Rebol word! values - note that we don't allow < and > at all even though they are somewhat valid in word!
 not-word-char: charset {/\^^,[](){}"#%$@:;^/^(00A0) ^-^M<>}
-word-1st: complement append union not-word-char digit #"'"
+word-1st:  complement append union not-word-char digit #"'"
 word-char: complement not-word-char
 
 ;-----------------------------------------------------------
-;-- JSON value rules
+;-- JSON value rules                                        
 ;-----------------------------------------------------------
 
 ;-----------------------------------------------------------
-;-- Number
+;-- Number  
 sign: [#"-"]
 ; Integers can't have leading zeros, but zero by itself is valid.
 int:  [[non-zero-digit any digit] | digit]
@@ -166,12 +139,12 @@ number: [opt sign  int  opt frac  opt exp]
 numeric-literal: :number
 
 ;-----------------------------------------------------------
-;-- String
+;-- String  
 string-literal: [
 	#"^"" copy _str [
 		any [some chars | #"\" [#"u" 4 hex-char | json-esc-ch]]
 	] #"^"" (
-		if not empty? _str: any [_str copy ""] [
+		if not empty? _str: any [_str copy ""][
 			;!! If we reverse the decode-backslash-escapes and replace-unicode-escapes
 			;!! calls, the string gets munged (extra U+ chars). Need to investigate.
 			decode-backslash-escapes _str			; _str is modified
@@ -186,7 +159,7 @@ decode-unicode-char: func [
 	ch [string!] "4 hex digits"
 ][
 	buf: {#"^^(0000)"}								; Don't COPY buffer, reuse it
-	if not parse ch [4 hex-char] [return none]		; Validate input data
+	if not parse ch [4 hex-char][return none]		; Validate input data
 	attempt [load head change at buf 5 ch]			; Replace 0000 section in buf
 ]
 
@@ -209,7 +182,7 @@ replace-unicode-escapes: func [
 ;mod-str: json-ctx/replace-unicode-escapes decode-backslash-escapes copy str
 
 ;-----------------------------------------------------------
-;-- Object		
+;-- Object  
 json-object: [
 	; Emit a new block to our output target, and push it on our
 	; working stack, to handle nested structures. Emit returns
@@ -244,7 +217,7 @@ property: [
 json-name: [ws* string-literal ws* #":"]
 
 ;-----------------------------------------------------------
-;-- List
+;-- List  
 array-list: [json-value any [sep json-value]]
 json-array: [
 	; Emit a new block to our output target, and push it on our
@@ -258,7 +231,7 @@ json-array: [
 ]
 
 ;-----------------------------------------------------------
-;-- Any JSON Value (top level JSON parse rule)
+;-- Any JSON Value (top level JSON parse rule)  
 json-value: [
 	ws*
 	[
@@ -275,7 +248,7 @@ json-value: [
 ]
 
 ;-----------------------------------------------------------
-;-- Decoder data structures
+;-- Decoder data structures  
 
 ; The stack is used to handle nested structures (objects and lists)
 stack: copy []
@@ -294,24 +267,21 @@ mark: none	; Current parse position
 emit: func [value][_res: insert/only _res value]
 
 ;-----------------------------------------------------------
-;-- Main decoder func
+;-- Main decoder func  
 
 load-json: func [
-	"Convert a JSON string to Red data"
+	"Convert a JSON string to Rebol data"
 	input [string!] "The JSON string"
-] [
+][
 	_out: _res: copy []		; These point to the same position to start with
 	mark: input
-	either parse/case input json-value [pick _out 1] [
+	either parse/case input json-value [pick _out 1][
 		make error! form reduce [
-			"Invalid json string. Near:"
-			either tail? mark ["<end of input>"] [mold copy/part mark 40]
+			"Invalid JSON string. Near:"
+			either tail? mark ["<end of input>"][mold copy/part mark 40]
 		]
 	]
 ]
-
-
-
 
 
 ;----------------------------------------------------------------
@@ -330,40 +300,43 @@ escapes: #[map! [
 	#"^-" "\t"
 ]]
 
-init-state: func [ind ascii?] [
+init-state: func [ind ascii?][
 	indent: ind
 	indent-level: 0
 	; 34 is double quote "
 	; 92 is backslash \
 	normal-chars: either ascii? [
-		charset [32 33 35 - 91 93 - 127]
-	] [
-		complement charset [0 - 31 34 92]
+		#[bitset! #{00000000DFFFFFFFFFFFFFF7FFFFFFFF}]
+		;= charset [32 33 35 - 91 93 - 127]
+	][
+		#[bitset! [not bits #{FFFFFFFF2000000000000008}]]
+		;= complement charset [0 - 31 34 92]
 	]
 ]
 
-emit-indent: func [output level] [
+emit-indent: func [output level][
 	indent-level: indent-level + level
 	append/dup output indent indent-level
 ]
 
-emit-key-value: function [output sep map key] [
+emit-key-value: function [output sep map key][
 	value: select/case map :key
-	if any-word? :key [key: form key]
+	if any-word?   :key [key: form key]
 	unless string? :key [key: mold :key]
-	red-to-json-value output key
-	append output sep
-	red-to-json-value output :value
+	rebol-to-json-value output :key
+	append output :sep
+	rebol-to-json-value output :value
 ]
 
-red-to-json-value: function [output value] [
+rebol-to-json-value: function [output value][
 	special-char: none
 	switch/default type?/word :value [
-		none!           [append output "null"]
-		logic!          [append output pick ["true" "false"] value]
-		integer! decimal! [append output value]
-		percent!        [append output to decimal! value]
-		string! [
+		none!    [append output "null"]
+		logic!   [append output pick ["true" "false"] value]
+		integer!
+		decimal! [append output value]
+		percent! [append output to decimal! value]
+		string!  [
 			append output #"^""
 			parse value [
 				any [
@@ -372,7 +345,7 @@ red-to-json-value: function [output value] [
 					set special-char skip (
 						either escape: select escapes special-char [
 							append output escape
-						] [
+						][
 							insert insert tail output "\u" to-hex/size to integer! special-char 4
 						]
 					)
@@ -383,36 +356,37 @@ red-to-json-value: function [output value] [
 		block! [
 			either empty? value [
 				append output "[]"
-			] [
+			][
 				either indent [
 					append output "[^/"
 					emit-indent output +1
-					red-to-json-value output first value
+					rebol-to-json-value output first value
 					foreach v next value [
 						append output ",^/"
 						append/dup output indent indent-level
-						red-to-json-value output :v
+						rebol-to-json-value output :v
 					]
 					append output #"^/"
 					emit-indent output -1
-				] [
+				][
 					append output #"["
-					red-to-json-value output first value
+					rebol-to-json-value output first value
 					foreach v next value [
 						append output #","
-						red-to-json-value output :v
+						rebol-to-json-value output :v
 					]
 				]
 				append output #"]"
 			]
 		]
-		map! object! [
+		map!
+		object! [
 			keys: words-of value
 			either empty? keys [
 				append output "{}"
-			] [
+			][
 				either indent [
-					append output "{^/" ; }
+					append output "{^/"
 					emit-indent output +1
 					emit-key-value output ": " value first keys
 					foreach k next keys [
@@ -422,8 +396,8 @@ red-to-json-value: function [output value] [
 					]
 					append output #"^/"
 					emit-indent output -1
-				] [
-					append output #"{" ; }
+				][
+					append output #"{"
 					emit-key-value output #":" value first keys
 					foreach k next keys [
 						append output #","
@@ -433,25 +407,25 @@ red-to-json-value: function [output value] [
 				append output #"}"
 			]
 		]
-	] [
-		red-to-json-value output either any-block? :value [
+	][
+		rebol-to-json-value output either any-block? :value [
 			to block! :value
-		] [
-			either any-string? :value [form value] [mold :value]
+		][
+			either any-string? :value [form value][mold :value]
 		]
 	]
 	output
 ]
 
 to-json: function [
-	"Convert Red data to a JSON string"
+	"Convert Rebol data to a JSON string"
 	data
 	/pretty indent [string!] "Pretty format the output, using given indentation"
 	/ascii "Force ASCII output (instead of UTF-8)"
-] [
+][
 	result: make string! 4000
 	init-state indent ascii
-	red-to-json-value result data
+	rebol-to-json-value result data
 ]
 
 
@@ -462,11 +436,11 @@ register-codec [
 	title: "JavaScript Object Notation"
 	suffixes: [%.json]
 
-	encode: func [data [any-type!]] [
+	encode: func [data [any-type!]][
 		to-json data
 	]
-	decode: func [text [string! binary! file!]] [
-		if file? text [text: read text]
+	decode: func [text [string! binary! file!]][
+		if file?   text [text: read text]
 		if binary? text [text: to string! text]
 		load-json text
 	]

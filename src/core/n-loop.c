@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,6 +64,10 @@ enum loop_each_mode {
 	SET_SELFLESS(frame);
 	SERIES_TAIL(frame) = len+1;
 	SERIES_TAIL(FRM_WORD_SERIES(frame)) = len+1;
+	
+	// Mark the frame as internal series so it is not accessible!
+	// See: https://github.com/Oldes/Rebol-issues/issues/2531
+	INT_SERIES(frame);
 
 	// Setup for loop:
 	word = FRM_WORD(frame, 1); // skip SELF
@@ -443,7 +448,7 @@ enum loop_each_mode {
 				if (ANY_OBJECT(value) || IS_MAP(value)) {
 					*vars = *value;
 				} else {
-					VAL_SET(vars, REB_BLOCK);
+					VAL_SET(vars, VAL_TYPE(value));
 					VAL_SERIES(vars) = series;
 					VAL_INDEX(vars) = index;
 				}

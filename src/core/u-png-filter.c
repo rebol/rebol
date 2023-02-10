@@ -97,13 +97,13 @@ static REBYTE get_png_filter_type(REBVAL* val) {
 	REBYTE *bin = VAL_BIN_DATA(val_data);
 	REBYTE *scan, *prev, *temp, *out;
 	REBCNT r, c, rows, bytes;
-	REBINT width = AS_INT32(val_width);
+	REBCNT width = (REBCNT)AS_INT32(val_width);
 	REBYTE filter = get_png_filter_type(val_type);
 	REBCNT bpp = ref_skip ? VAL_INT32(val_bpp) : 1;
 
 	bytes = VAL_LEN(val_data);
 
-	if (width <= 1 || width > bytes)
+	if ((REBINT)width <= 1 || width > bytes)
 		Trap1(RE_INVALID_ARG, val_width);
 	if (bpp < 1 || bpp > width)
 		Trap1(RE_INVALID_ARG, val_bpp);
@@ -180,7 +180,7 @@ static REBYTE get_png_filter_type(REBVAL* val) {
 
 	REBSER *ser;
 	REBYTE *bin = VAL_BIN_DATA(val_data);
-	REBINT width = AS_INT32(val_width);
+	REBCNT width = (REBCNT)AS_INT32(val_width);
 	REBCNT r, c, rows;
 	REBYTE *scan, *prev, *temp, *out;
 	REBYTE filter = 0;
@@ -188,7 +188,7 @@ static REBYTE get_png_filter_type(REBVAL* val) {
 	REBCNT bpp = ref_skip ? VAL_INT32(val_bpp) : 1;
 
 	if (!ref_as) width++;
-	if (width <= 1 || width > bytes)
+	if ((REBINT)width <= 1 || width > bytes)
 		Trap1(RE_INVALID_ARG, val_width);
 	if (bpp < 1 || bpp > width)
 		Trap1(RE_INVALID_ARG, val_bpp);

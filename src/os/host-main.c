@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2021-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -125,12 +126,12 @@ void Host_Repl(void) {
 	REBYTE cont_stack[MAX_CONT_LEVEL] = { 0 };
 
 	REBCNT input_max = 32768;
-	int input_len = 0;
+	REBLEN input_len = 0;
 	REBYTE *input = OS_Make(input_max);
 
 	REBYTE *tmp;
 	REBYTE *line;
-	int line_len;
+	REBLEN line_len;
 
 	REBYTE *utf8byte;
 	BOOL inside_short_str = FALSE;

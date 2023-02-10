@@ -10,6 +10,7 @@ Rebol [
 
 
 ===start-group=== "directory port"
+
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2320
 	--test-- "port-issue-2320"
 		--assert  %port-issue-2320/ = make-dir %port-issue-2320/
@@ -45,11 +46,13 @@ Rebol [
 			not error? try [create %issue-2525/]
 			exists? %issue-2525/
 			delete  %issue-2525/
+			true
 		]
 		--assert all [
 			not error? try [create %issue-2525-ěšč/]
 			exists? %issue-2525-ěšč/
 			delete  %issue-2525-ěšč/
+			true
 		]
 
 	--test-- "make-dir/delete/exists? with path without a slash"
@@ -615,7 +618,7 @@ if all [
 		--assert [local-ip local-port remote-ip remote-port] = query/mode port none
 		--assert 0.0.0.0 = query/mode port 'local-ip
 		--assert       0 = query/mode port 'local-port
-		--assert 0.0.0.0 = query/mode port 'remote-ip
+		--assert not none? find [0.0.0.0 8.8.8.8] query/mode port 'remote-ip ;; on posix there is sync lookup and so it reports 8.8.8.8 even without wait
 		--assert      80 = query/mode port 'remote-port
 		--assert all [
 			port? wait [port 1] ;= wait for lookup, so remote-ip is resolved

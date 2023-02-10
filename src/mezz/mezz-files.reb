@@ -140,7 +140,7 @@ dir-tree: func [
 		value prefix changeprefix directory depth
 		; --
 		newprefix addprefix formed
-		filtered contents str
+		contents str
 ][
 	unless value [
 		directory: dirize switch type?/word :path [
@@ -198,12 +198,19 @@ dir-tree: func [
 		"^[[31;1m    "
 	]
 
-	if d [ ; are we considering directories only?
-		filtered: make block! length? value
-		forall value [
-			if dir? value/1 [append filtered value/1]
+	sort/compare value func[a b][
+		;; custom sort, where directories are before files
+		case [
+			dir? a [ either dir? b [a < b][ true ]]
+			dir? b [ false ]
+			a < b
 		]
-		value: :filtered
+	]
+
+	if d [ ; are we considering directories only?
+		forall value [
+			unless dir? value/1 [clear value]
+		]
 	]						
 	forall value [
 		either 1 = length? value [							; if this is last element

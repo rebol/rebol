@@ -111,6 +111,22 @@ Rebol [
 	--assert none?      find/any "abxcx" "ab*cd"
 	--assert "abxcx"  = find/any "abxcx" "ab*c?"
 	--assert "abxcxe" = find/any "abxcxe" "ab*c?e"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2522
+	--assert %A.csv   = find/any %A.csv %A*.csv
+	--assert %A..csv  = find/any %A..csv %A*.csv
+	--assert %A..csv  = find/any %xA..csv %A*.csv
+	--assert none?      find/any/match %xA..csv %A*.csv
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2528
+	--assert %AA.BB.csv = find/any %AA.BB.csv %A*.csv
+	--assert %BB.csv    = find/any %AA.BB.csv %B*.csv
+	--assert %AA.BB.csv = find/any %AA.BB.csv %A*.*.csv
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2529
+	--assert %ab        = find/any %ab %*b
+	--assert %ab        = find/any/match %ab %*b
+	--assert %a1a2      = find/any %a1a2 %*a2
+	--assert %a1a2      = find/any/match %a1a2 %*a2
+	--assert %x         = find/any/tail %abx %*b
+	--assert %x         = find/any/tail %a1a2x %*a2
 
 
 --test-- "FIND/ANY on string (unicode)"
@@ -403,8 +419,6 @@ Rebol [
 	--assert "2"   = head truncate/part next "123" 1
 	--assert [2]   = head truncate/part next [1 2 3] 1
 ===end-group===
-
-
 
 ===start-group=== "REPLACE string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/54
@@ -1510,6 +1524,22 @@ Rebol [
 	--assert 3 = foreach [ref: k v] m [if ref = m [x: x + v]]
 	--assert 6 = foreach [ref: k] m [if ref = m [x: x + m/:k]]
 	--assert ref = 'foo
+
+--test-- "FOREACH [ref:] series!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1751
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2530
+	code: [if 2 = index? ref [break/return ref]]
+	foreach [result values][
+		[2]   [1 2]
+		(2)   (1 2)
+		b/c   a/b/c
+		"bc"  "abc"
+		%bc   %abc
+		#{02} #{0102}
+	][
+		--assert result == foreach [ref:] :values :code
+	]
+
 ===end-group===
 
 ===start-group=== "MAP-EACH"
@@ -2007,11 +2037,11 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1013
 	--assert #{0102} and #{00FF} == #{0002}
 	--assert #{0102} and #{0300} == #{0100}
-	--assert #{0102} and #{03}   == #{0100}
+	--assert #{0101} and #{03}   == #{0101} ; the shorter arg is now used repeatadly!
 --test-- "binary OR binary"
 	--assert #{0102}  or #{00FF} == #{01FF}
 	--assert #{0102}  or #{0300} == #{0302}
-	--assert #{0102}  or #{03}   == #{0302}
+	--assert #{0101}  or #{03}   == #{0303} ; the shorter arg is now used repeatadly!
 
 ===end-group===
 
@@ -2307,7 +2337,8 @@ Rebol [
 ===end-group===
 
 
-===start-group=== "Bitwise operations on binary"	
+===start-group=== "Bitwise operations on binary"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1013
 	bin1: #{DEADBEAFF00D}
 	bin2: #{BEAF}
 	--test-- "AND on binary"
@@ -2502,6 +2533,25 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/740
 	--assert all [error? e: try [move/skip [1 2 3] 2 0] e/id = 'out-of-range]
 
+===end-group===
+
+
+===start-group=== "SWAP-ENDIAN"
+--test-- "swap-endian/width 2"
+	--assert #{FF00FF00FF00} = swap-endian #{00FF00FF00FF}  
+	--assert #{FF00FF00AA}   = swap-endian #{00FF00FFAA} ; the last not padded byte is ignored
+--test-- "swap-endian/width 4"
+	--assert #{4433221188776655} = swap-endian/width #{1122334455667788} 4  
+	--assert #{44332211AAAA}     = swap-endian/width #{11223344AAAA} 4
+--test-- "swap-endian/width 8"
+	--assert #{7766554433221100FFEEDDCCBBAA9988} = swap-endian/width #{00112233445566778899AABBCCDDEEFF} 8 
+	--assert #{7766554433221100AAAA}             = swap-endian/width #{0011223344556677AAAA} 8
+--test-- "swap-endian/part"
+	--assert #{FF00FF001122} = swap-endian/part #{00FF00FF1122} 4
+	--assert #{FF00FF001122} = swap-endian/part #{00FF00FF1122} 5
+	--assert #{FF00FF002211} = swap-endian/part #{00FF00FF1122} 6
+	--assert #{4433221155667788} = swap-endian/width/part #{1122334455667788} 4 4
+	--assert #{77665544332211008899AABBCCDDEEFF} = swap-endian/width/part #{00112233445566778899AABBCCDDEEFF} 8 8
 ===end-group===
 
 ;-- VECTOR related tests moved to %vector-test.r3

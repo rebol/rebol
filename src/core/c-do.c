@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -1054,7 +1055,7 @@ eval_func2:
 
 	CHECK_MEMORY(4); // Be sure we don't go far with a problem.
 
-	ASSERT1(block->info, RP_GC_OF_BLOCK);
+	ASSERT1(SERIES_SIZES(block), RP_GC_OF_BLOCK);
 
 	while (index < BLK_LEN(block)) {
 		index = Do_Next(block, index, 0);
@@ -1388,8 +1389,8 @@ eval_func2:
 	REBCNT dsf;
 
 	REBSER *words;
-	REBINT len;
-	REBINT n;
+	REBLEN len;
+	REBLEN n;
 	REBINT start;
 	REBVAL *val;
 
@@ -1442,7 +1443,7 @@ reapply:  // Go back here to start over with a new func
 		}
 		// Copy block contents to stack:
 		if (len < n) n = len;
-		if (start + n + 100 > SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN);
+		if (n + start + 100 > SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN);
 		memcpy(&DS_Base[start], BLK_SKIP(block, index), n * sizeof(REBVAL));
 		DSP = start + n - 1;
 	}

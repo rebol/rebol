@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2023 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -185,7 +185,7 @@ static struct digest {
 	REBVAL *spec = D_ARG(ARG_CHECKSUM_SPEC);
 	REBINT sum;
 	REBINT i = 0;
-	REBINT j;
+	REBCNT j;
 	REBSER *digest, *ser;
 	REBCNT len, keylen;
 	REBYTE *data;
@@ -231,7 +231,7 @@ static struct digest {
 					REBYTE ipad[128],opad[128];	// Size must be max of all digest[].hmacblock;
 					void *ctx = Make_Mem(digests[i].ctxsize());
 
-					int blocklen = digests[i].hmacblock;
+					REBCNT blocklen = digests[i].hmacblock;
 
 					if (keylen > blocklen) {
 						digests[i].digest(keycp,keylen,tmpdigest);
@@ -921,7 +921,7 @@ static struct digest {
 ***********************************************************************/
 {
 	REBVAL *arg = D_ARG(1);
-	REBINT len;
+	REBCNT len;
 //	REBSER *series;
 	REBYTE buffer[MAX_TUPLE*2+4];  // largest value possible
 	REBYTE *buf;
@@ -942,19 +942,22 @@ static struct digest {
 
 	buf = &buffer[0];
 
-	len = -1;
 	if (D_REF(2)) {	// /size
 		//@@ https://github.com/Oldes/Rebol-issues/issues/127
-		len = (REBINT) VAL_INT64(D_ARG(3));
-		if (len <= 0) Trap_Arg(D_ARG(3));
+		if (VAL_INT64(D_ARG(3)) <= 0 || VAL_UNT64(D_ARG(3)) > MAX_U32)
+			Trap_Arg(D_ARG(3));
+		len = VAL_UNT32(D_ARG(3));
+	}
+	else {
+		len = NO_LIMIT;
 	}
 	if (IS_INTEGER(arg)) { // || IS_DECIMAL(arg)) {
-		if (len < 0 || len > MAX_HEX_LEN) len = MAX_HEX_LEN;
+		if (len == NO_LIMIT || len > MAX_HEX_LEN) len = MAX_HEX_LEN;
 		Form_Hex_Pad(buf, VAL_INT64(arg), len);
 	}
 	else if (IS_TUPLE(arg)) {
-		REBINT n;
-		if (len < 0 || len > 2 * MAX_TUPLE || len > 2 * VAL_TUPLE_LEN(arg))
+		REBCNT n;
+		if (len == NO_LIMIT || len > 2 * MAX_TUPLE || len > 2 * VAL_TUPLE_LEN(arg))
 			len = 2 * VAL_TUPLE_LEN(arg);
 		for (n = 0; n < VAL_TUPLE_LEN(arg); n++)
 			buf = Form_Hex2(buf, VAL_TUPLE(arg)[n]);

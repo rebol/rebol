@@ -3,11 +3,12 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Additional code modifications and improvements:
 **	Copyright 2012-2018 Saphirion AG & Atronix
-**	Copyright 2019 Oldes
+**	Copyright 2019-2023 Oldes
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
@@ -126,7 +127,7 @@ static REBOOL Windows8_And_Newer = FALSE;
 
 static u32* window_ext_words;
 
-RL_LIB *RL; // Link back to reb-lib from embedded extensions
+extern RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
 //***** Globals *****//
 
@@ -343,11 +344,11 @@ void Paint_Window(HWND window);
 
 	wc.lpfnWndProc = REBOL_OpenGL_Proc;
 	wc.lpszClassName = TXT("RebOpenGL");
-	if (!RegisterClassEx(&wc)) puts("Failed to register OpenGL class");
+	if (!RegisterClassEx(&wc)) RL_Print("Failed to register OpenGL class\n");
 
 	wc.lpfnWndProc = REBOL_Base_Proc;
 	wc.lpszClassName = TXT("RebBase");
-	if (!RegisterClassEx(&wc)) puts("Failed to register Base class");
+	if (!RegisterClassEx(&wc)) RL_Print("Failed to register Base class\n");
 
 	//Make_Subclass(Class_Name_Button, TEXT("BUTTON"), NULL, TRUE);
 
@@ -454,7 +455,7 @@ void Paint_Window(HWND window);
 	//}
 
 	if (GOB_ALPHA(gob) < 255) {
-		puts("semi-transparent window");
+		//puts("semi-transparent window");
 		ws_flags |= WS_EX_LAYERED;
 	}
 
@@ -488,6 +489,7 @@ void Paint_Window(HWND window);
 	);
 	if (!window) {
 		Host_Crash("CreateWindow failed");
+		return NULL; // silent compiler's warnings
 	}
 
 	Gob_Windows[windex].win = window;
@@ -496,20 +498,23 @@ void Paint_Window(HWND window);
 	if (!Default_Font) {
 		LOGFONTW font;
 		HTHEME *hTheme = NULL;
-		HRESULT res = -1;
+		HRESULT err = E_FAIL;
 		if (IsThemeActive()) {
 			hTheme = OpenThemeData(window, L"Window");
 			if (hTheme) {
-				res = GetThemeSysFont(hTheme, TMT_MSGBOXFONT, &font);
+				err = GetThemeSysFont(hTheme, TMT_MSGBOXFONT, &font);
 			}
-		} else {
+		}
+		if (err != S_OK) {
 			NONCLIENTMETRICS metrics;
 			ZeroMemory(&metrics, sizeof(metrics));
 			metrics.cbSize = sizeof(metrics);
-			res = SystemParametersInfo(SPI_GETNONCLIENTMETRICS, metrics.cbSize, &metrics, 0);
-			if (res) font = metrics.lfMessageFont;
+			if (SystemParametersInfo(SPI_GETNONCLIENTMETRICS, metrics.cbSize, &metrics, 0)) {
+				font = metrics.lfMessageFont;
+				err = S_OK;
+			}
 		}
-		if ( res >= 0 ) {
+		if (err == S_OK) {
 			Default_Font = CreateFontIndirect(&font);
 		}
 
@@ -662,7 +667,7 @@ void Paint_Window(HWND window);
 **
 ***********************************************************************/
 {
-	REBCMP* compositor;
+	//REBCMP* compositor;
 	if (!wingob) {
 		wingob = gob;
 		while (GOB_PARENT(wingob) && GOB_PARENT(wingob) != Gob_Root

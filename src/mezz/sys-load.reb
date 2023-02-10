@@ -713,7 +713,7 @@ download-extension: function[
 
 import: function [
 	"Imports a module; locate, load, make, and setup its bindings."
-	module [word! file! url! string! binary! module! block!]
+	'module [any-word! file! url! string! binary! module! block!]
 	/version ver [tuple!] "Module must be this version or greater"
 	/check sum [binary!] "Match checksum (must be set in header)"
 	/no-share "Force module to use its own non-shared global namespace"
@@ -727,6 +727,8 @@ import: function [
 		return apply :do-needs [module no-share no-lib no-user /block]
 	]
 	; Note: IMPORT block! returns a block of all the modules imported.
+
+	if any-word? module [module: to word! module]
 
 	; Try to load and check the module.
 	set [name: mod:] apply :load-module [module version ver check sum no-share no-lib /import]

@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2023 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -103,7 +103,7 @@ typedef void *REBNOD;			// Just used for linking free nodes
 #define DEF_POOL(size, count) {size, count}
 #define MOD_POOL(size, count) {size * MEM_MIN_SIZE, count}
 
-#define	MEM_MIN_SIZE sizeof(REBVAL)
+#define	MEM_MIN_SIZE (REBLEN)sizeof(REBVAL)
 #define MEM_BIG_SIZE 1024
 
 #ifdef __LP64__

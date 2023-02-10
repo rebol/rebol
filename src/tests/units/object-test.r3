@@ -80,15 +80,19 @@ Rebol [
 		]
 	--test-- "extend object with hidden value"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1140
-		obj: object [a: 1 protect/hide 'a]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2532
+		obj: object [a: 1 protect/hide 'a test: does [a]]
 		--assert all [
 			error? e: try [extend obj 'a 2]
 			e/id = 'hidden
+			obj/test == 1
 		]
 		--assert all [
 			error? e: try [append obj [a: 2]]
 			e/id = 'hidden
+			obj/test == 1
 		]
+
 	--test-- "append/part object!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1754
 		--assert []          == body-of append/part make object! [] [a 1 b 2 c 3] 1
@@ -379,6 +383,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2076
 		--assert object? o: context? use [x] ['x]
 		--assert object? append o 'self
+
+	--test-- "issue-2531"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2531
+		--assert none? foreach x [1] [context? 'x]
 
 ===end-group===
 

@@ -27,6 +27,9 @@
 **
 ***********************************************************************/
 
+#ifndef DEVICE_H
+#define DEVICE_H
+
 // REBOL Device Identifiers:
 // Critical: Must be in same order as Device table in host-device.c
 enum {
@@ -118,8 +121,10 @@ enum {
 #pragma pack(4)
 
 // Forward references:
+#ifndef REB_EVENT_H
 typedef struct rebol_device REBDEV;
 typedef struct rebol_devreq REBREQ;
+#endif
 
 // Commands:
 typedef i32 (*DEVICE_CMD_FUNC)(REBREQ *req);
@@ -208,3 +213,5 @@ struct rebol_devreq {
 #define SET_OPEN(r)		SET_FLAG(((REBREQ*)(r))->flags, RRF_OPEN)
 #define SET_CLOSED(r)	CLR_FLAG(((REBREQ*)(r))->flags, RRF_OPEN)
 #define IS_OPEN(r)		GET_FLAG(((REBREQ*)(r))->flags, RRF_OPEN)
+
+#endif //DEVICE_H

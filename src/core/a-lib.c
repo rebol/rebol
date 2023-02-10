@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -1149,7 +1150,7 @@ RL_API REBSER* RL_Decode_UTF_String(REBYTE *src, REBCNT len, REBINT utf, REBFLG 
 	REBCNT idx;
 
 	// Convert C-string to Rebol word
-	len = strlen(cs_cast(name));
+	len = LEN_BYTES(name);
 	sym = Scan_Word(name, len);
 	if (!sym) return NOT_FOUND; //TODO: use different value if word is invalid?
 	idx = Register_Handle(sym, size, (REB_HANDLE_FREE_FUNC)free_func);

@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Contributors
+**  Copyright 2012-2023 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,7 +53,7 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 {
 	REBVAL *blk;
 	REBVAL  tmp;
-	REBCNT  sym;
+//	REBCNT  sym;
 
 	mbedtls_ctr_drbg_init(&ctr_drbg);
 	mbedtls_entropy_init(&entropy);
@@ -422,7 +422,7 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 	}
 
 	//allocate new binary!
-	outBytes = mbedtls_rsa_get_len(rsa);
+	outBytes = (REBLEN)mbedtls_rsa_get_len(rsa);
 	data = Make_Binary(outBytes-1);
 	outBinary = BIN_DATA(data);
 
@@ -435,7 +435,7 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 	else {
 		size_t olen = 0;
 		err = mbedtls_rsa_rsaes_pkcs1_v15_decrypt(rsa, mbedtls_ctr_drbg_random, &ctr_drbg, &olen, inBinary, outBinary, outBytes);
-		outBytes = olen;
+		outBytes = (REBLEN)olen;
 	}
 	if (err) goto error;
 
@@ -534,7 +534,8 @@ error:
 	REBSER  *out = NULL;
 	REBINT   err;
 	DHM_CTX *dhm;
-	size_t   gx_len, gy_len, olen = 0;
+	REBLEN   gx_len, gy_len;
+	size_t   olen = 0;
 
 	if (refPublic && refSecret) {
 		// only one can be used
@@ -547,7 +548,7 @@ error:
 	dhm = (DHM_CTX *)VAL_HANDLE_CONTEXT_DATA(key);
 
 	if (refPublic) {
-		gx_len = mbedtls_mpi_size(&dhm->MBEDTLS_PRIVATE(GX));
+		gx_len = (REBLEN)mbedtls_mpi_size(&dhm->MBEDTLS_PRIVATE(GX));
 		if (gx_len <= 0) goto error;
 		out = Make_Binary(gx_len-1);
 		mbedtls_mpi_write_binary(&dhm->MBEDTLS_PRIVATE(GX), BIN_DATA(out), gx_len);
@@ -562,7 +563,7 @@ error:
 		// and derive the shared secret of these 2 public parts
 		err = mbedtls_dhm_calc_secret(dhm, BIN_DATA(out), gy_len, &olen, mbedtls_ctr_drbg_random, &ctr_drbg);
 		if (err) goto error;
-		BIN_LEN(out) = olen;
+		BIN_LEN(out) = (REBLEN)olen;
 	}
 	SET_BINARY(D_RET, out);
 	return R_RET;
@@ -661,7 +662,7 @@ error:
 		);
 		if (err) goto error;
 		SET_BINARY(D_RET, bin);
-		BIN_LEN(bin) = olen;
+		BIN_LEN(bin) = (REBLEN)olen;
 	}
 	if (ref_secret) {
 		mbed = &ctx->MBEDTLS_PRIVATE(ctx).MBEDTLS_PRIVATE(mbed_ecdh);
@@ -677,7 +678,7 @@ error:
 		if (err) goto error;
 		
 		SET_BINARY(D_RET, bin);
-		BIN_LEN(bin) = olen;
+		BIN_LEN(bin) = (REBLEN)olen;
 	}
 	return R_RET;
 
@@ -725,9 +726,9 @@ error:
 	}
 	else {
 		SET_BINARY(D_RET, bin);
-		BIN_LEN(bin) = len;
+		BIN_LEN(bin) = (REBLEN)len;
 	}
-exit:
+//exit:
 	mbedtls_ecdsa_free(&ctx);
 	return (err) ? R_NONE : R_RET;
 }
@@ -822,7 +823,7 @@ exit:
 			goto done;
 		}
 		SET_BINARY(D_RET, bin);
-		BIN_LEN(bin) = len;
+		BIN_LEN(bin) = (REBLEN)len;
 	}
 	if (ref_verify) {
 		mbed = &ctx_ecdh->MBEDTLS_PRIVATE(ctx).private_mbed_ecdh;
