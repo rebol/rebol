@@ -22,7 +22,7 @@ product:  'core
 ; Next four fields are updated during build:
 platform: none
 version:  0.0.0
-build:    object [os: arch: vendor: sys: abi: compiler: target: date: git: none]
+build:    object [os: abi: sys: arch: libc: vendor: target: compiler: date: git: none]
 
 user: construct [
 	name: none

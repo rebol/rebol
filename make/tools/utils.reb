@@ -112,3 +112,21 @@ binary-to-c: func [comp-data /local out data] [
 	]
 	head out
 ]
+
+get-libc-version: function[][
+	tmp: copy ""
+	num: system/catalog/bitsets/numeric
+	try [
+		;; we may not be sure, if the output will be in the stdout or stderr
+		call/output/error/shell/wait "ldd --version" :tmp :tmp
+		parse tmp [
+			"musl " to end (ver: 'musl)
+			|
+			thru "GLIBC" some SP copy ver: [some num #"." some num] to end (
+				ver: to word! ajoin ["glibc_" ver]
+			)
+		]
+	]
+	ver
+]
+

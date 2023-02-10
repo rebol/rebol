@@ -233,6 +233,7 @@ str-version: reform [
 	target
 	build-date
 	git-commit
+	get-libc-version ;; musl, glibc_2.28,... or just none
 ]
 
 ver3: version ver3/4: none ; trimmed version to just 3 parts
