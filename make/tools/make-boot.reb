@@ -3,6 +3,7 @@ REBOL [
 	Title: "Make primary boot files"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -548,8 +549,9 @@ emit [{
 #define REBOL_UPD } any [version/3 0] {
 #define REBOL_SYS } any [version/4 0] {
 #define REBOL_VAR } any [version/5 0] {
-#define REBOL_VERSION "} str-version {"
-}]
+// Version visible when used -v argument on start-up (before initialization)
+#define REBOL_VERSION \} string-to-c short-str-version
+]
 
 ;-- Generate Lower-Level String Table ----------------------------------------
 

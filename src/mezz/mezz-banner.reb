@@ -3,7 +3,7 @@ REBOL [
 	Title: "REBOL 3 Mezzanine: Startup Banner"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2022 Rebol Open Source Developers
+		Copyright 2012-2023 Rebol Open Source Developers
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -55,7 +55,7 @@ sys/boot-banner: make-banner [
 	["REBOL/" system/product #" " system/version " (Oldes branch)"]
 	-
 	= Copyright: "2012 REBOL Technologies"
-	= "" "2012-2022 Rebol Open Source Contributors"
+	= "" "2012-2023 Rebol Open Source Contributors"
 	= "" "Apache 2.0 License, see LICENSE."
 	= Website:  "https://github.com/Oldes/Rebol3"
 	-

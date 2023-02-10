@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Boot Sys: Startup"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -33,7 +34,7 @@ start: func [
 	start: 'done ; only once
 	init-schemes ; only once
 
-	ver: load/as lib/version 'unbound
+	ver: load/as lib/version/data 'unbound
 	system/product:        ver/2
 	system/version:        ver/3
 	system/platform:       ver/4
@@ -46,6 +47,7 @@ start: func [
 	system/build/target:   ver/11
 	system/build/date:     ver/12
 	system/build/git:      ver/13
+	system/build/libc:     ver/14
 
 	if flags/verbose [system/options/log/rebol: 3] ;maximum log output for system messages
 
@@ -55,8 +57,7 @@ start: func [
 		any [flags/verbose flags/usage flags/help]
 	][
 		; basic boot banner only
-		prin "^/  "
-		print boot-banner: form ver
+		print boot-banner: lib/version
 	]
 	if any [do-arg script] [quiet: true]
 
