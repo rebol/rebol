@@ -141,24 +141,48 @@ get-libc-version: function[][
 ]
 
 get-os-info: function[
-	"Tries to collect information about hosting Linux operating system"
+	"Tries to collect information about hosting operating system"
 	;@@ Based on this research: https://www.tecmint.com/check-linux-os-version/
 ][
 	tmp: copy  ""
+	err: copy  ""
 	out: copy #()
 	key: charset [#"A"-#"Z" #"_"]
 	enl: system/catalog/bitsets/crlf
 	whs: system/catalog/bitsets/whitespace
-	try [
-		call/output/shell/wait "cat /etc/*-release" :tmp
-		parse probe tmp [
-			any [
-				copy k: some key #"=" copy v: to enl some whs (
-					try [v: transcode/one v]
-					try [parse v ["http" to end (v: as url! v)]]
-					put out to word! k v
+	num: system/catalog/bitsets/numeric
+	any [
+		;- macOS    
+		all [
+			system/platform = 'macOS
+			0 = call/shell/wait/output/error "sw_vers -productVersion" :tmp :err
+			out/ID: 'macos
+			out/VERSION_ID: attempt [transcode/one tmp]
+		]
+		;- Windows  
+		all [
+			system/platform = 'Windows
+			0 = call/shell/wait/output/error "ver" :tmp :err
+			parse tmp [
+				to num copy v: [some num #"." some num] to end (
+					out/ID: 'windows
+					out/VERSION_ID: to decimal! v
 				)
-				|  thru enl
+			]
+		]
+		;- Linux, OpenBSD, FreeBSD (but not tested on BSD yet)
+		all [
+			0 = call/shell/wait/output/error "cat /etc/*-release" :tmp :err
+			parse tmp [
+				any [
+					copy k: some key #"=" copy v: to enl some whs (
+						try [v: transcode/one v]
+						try [parse v ["http" to end (v: as url! v)]]
+						put out to word! k v
+					)
+					|  thru enl
+				]
+				to end
 			]
 		]
 	]
