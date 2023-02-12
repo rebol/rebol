@@ -684,7 +684,7 @@ download-extension: function[
 	url  [url!]
 ][
 	either dir? url [
-		file: repend to file! name [#"-" system/build/os #"-" system/build/arch %.rebx]
+		file: lowercase repend to file! name [#"-" system/platform #"-" system/build/arch %.rebx]
 		url:  append copy url file
 		if system/platform <> 'Windows [append url %.gz]
 	][

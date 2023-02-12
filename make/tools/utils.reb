@@ -142,6 +142,7 @@ get-libc-version: function[][
 
 get-os-info: function[
 	"Tries to collect information about hosting Linux operating system"
+	;@@ Based on this research: https://www.tecmint.com/check-linux-os-version/
 ][
 	tmp: copy  ""
 	out: copy #()
@@ -150,7 +151,7 @@ get-os-info: function[
 	whs: system/catalog/bitsets/whitespace
 	try [
 		call/output/shell/wait "cat /etc/*-release" :tmp
-		parse tmp [
+		parse probe tmp [
 			any [
 				copy k: some key #"=" copy v: to enl some whs (
 					try [v: transcode/one v]
