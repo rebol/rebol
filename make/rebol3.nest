@@ -945,7 +945,8 @@ arch-x86: [
 arch-arm64: [
 	:arch-x64
 	arch: arm64
-	flags: ["-arch arm64"]
+	#if macOS? [ flag: "-arch arm64" ]
+	#if linux? [ flag: "-march=native" ] ;; expects, that the host system is arm64!
 	;define: __arm64__
 ]
 
