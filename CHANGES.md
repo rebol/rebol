@@ -2,11 +2,99 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+## 2023 February
+
+### Features:
+
+* [`8a44ea`](https://github.com/Oldes/Rebol3/commit/8a44eaeea79a7a8879af2b011a2f9f6cbcb7b159) Implemented passing a struct value to an extension
+
+### Changes:
+
+* [`6e7fa5`](https://github.com/Oldes/Rebol3/commit/6e7fa57c93b1510e230dbaa5bff7830dc3e3952f) Including `system/build/os-version` information (if known)
+* [`1dbefc`](https://github.com/Oldes/Rebol3/commit/1dbefcdf4b3730e9737bf04bc71ad57cae477a38) Using `system/platform` instead of `system/build/os` to get an extension url
+* [`0d5d91`](https://github.com/Oldes/Rebol3/commit/0d5d91ec4a6955a3d89cd66a9ce209efa84750ab) Better information in `system/build/os` about build on Linux
+* [`759609`](https://github.com/Oldes/Rebol3/commit/759609ad00f30a6c512fedb8196af85a1c4a26bf) Modified version info
+* [`937c97`](https://github.com/Oldes/Rebol3/commit/937c972c9deb0433597fc48fe06af234501f6bdf) Included `system/build/libc` info on systems where available
+* [`555f89`](https://github.com/Oldes/Rebol3/commit/555f89ef710bc36e31782ea63c65898c1be25ae1) Display directories before files in the `list-dir` output
+* [`f5016c`](https://github.com/Oldes/Rebol3/commit/f5016c11e91a9c7e082d7380524b0b3f1451c0a5) JSON codec code cleanup
+* [`3faac7`](https://github.com/Oldes/Rebol3/commit/3faac7d016b1d45dc77d7f5ee032c3e77adb826a) Including download link to Rebol/MathPresso extension
+* [`5f4f43`](https://github.com/Oldes/Rebol3/commit/5f4f43414f50daedc5d3247c1b473a6e78eddb69) Replaced crash report url
+
+### Fixes:
+
+* [`1bc5cd`](https://github.com/Oldes/Rebol3/commit/1bc5cdba7dc16fbd86f5a8fe7162fafe9641bc04) Avoid overwriting `sys`
+* [`417992`](https://github.com/Oldes/Rebol3/commit/417992081c5608cc55c07df3a98f858bc67e750c) Make `delta-time` a little bit more precise
+* [`29ada6`](https://github.com/Oldes/Rebol3/commit/29ada63f27d702b0f4c707e4ca173df3c122fc50) Regression related to the recent series changes
+
+## 2023 January
+
+### Features:
+
+* [`5b6e84`](https://github.com/Oldes/Rebol3/commit/5b6e8404d019b898fff296a1fdc49dd0c877037b) Including API_EXPORT define for the external extension use
+* [`43c02f`](https://github.com/Oldes/Rebol3/commit/43c02f95d29485feb470181de718bb0aea454023) Handle's context accessible from an external extension
+* [`e6c778`](https://github.com/Oldes/Rebol3/commit/e6c778cf07823804548ede0213d100561a268d40) New script which amalgamate Rebol extension related include files into a single one
+
+### Changes:
+
+* [`4ef198`](https://github.com/Oldes/Rebol3/commit/4ef1980812fe921c233f409cfe6d3cf5b7833494) Enhanced number of possible series flags from 8 to 32 (could be lowered in the future and use some of these bits for something else)
+* [`a27822`](https://github.com/Oldes/Rebol3/commit/a27822c3b0a6f13ff55f2f6f086d75ebc981c912) Including download link to Rebol/Easing extension and updated Rebol/SQLite
+* [`e34c37`](https://github.com/Oldes/Rebol3/commit/e34c3749439605b3a4993a103875e400ace7f4ea) Updated ZLIB code to version 1.2.13
+* [`71e7aa`](https://github.com/Oldes/Rebol3/commit/71e7aa976f5ef82727c0abbb94420dd2b0f9f87b) Not using _To_Upper_Case and _To_Lower_Case functions in debug buids
+* [`053f84`](https://github.com/Oldes/Rebol3/commit/053f84ef387313772f195582a639bee092a6d719) Necessary changes related to having `import`'s module argument not evaluated
+* [`bd09ce`](https://github.com/Oldes/Rebol3/commit/bd09ce0ed5ab3a4b4aa9ce6312b6406d5e096599) Using lit-word as a `module` argument of the `import` function, so one can just use `import module-name` (no need to use lit-word for the module's name)
+* [`79c3e6`](https://github.com/Oldes/Rebol3/commit/79c3e6c32ac56624d09918ea8c2d61a8ce7cfb5c) Associate `p7s` file suffix with the `DER` codec
+* [`7680e4`](https://github.com/Oldes/Rebol3/commit/7680e4c335cb7a7545b3e6e0b2637568b0822ff7) Allow plain words as a log `id` argument
+
+### Fixes:
+
+* [`4bac74`](https://github.com/Oldes/Rebol3/commit/4bac74eed0c33b5ae343a58988d4b6df69bfccd0) Removed unnecessary casting
+* [`ee9b2a`](https://github.com/Oldes/Rebol3/commit/ee9b2a5e177fb993793c08c0d2c7fb44e2408d98) Using `read` with a wildcard path without any result was throwing an error on macOS instead of an empty block
+* [`8f9e3b`](https://github.com/Oldes/Rebol3/commit/8f9e3bfbecf319c24dc8a5e975b8ec9d94186f9a) Regression in `crush` compression
+* [`db3818`](https://github.com/Oldes/Rebol3/commit/db38189cfca5228823402140d5691414d02ac97b) Invalid data in loaded images with an alpha channel on macOS
+* [`ff5e13`](https://github.com/Oldes/Rebol3/commit/ff5e131f6b376bc51edecc65ae520893315aff98) Safely handle a case when path to the exe is not resolved
+* [`0cdee8`](https://github.com/Oldes/Rebol3/commit/0cdee8cbb26ad1143a99611a090822314ef4f6a5) Regression in importing an unnamed module
+* [`3725ef`](https://github.com/Oldes/Rebol3/commit/3725ef700f30c850da283dec7684d261974249de) It was possible to modify a hidden value using `extend`
+* [`78f683`](https://github.com/Oldes/Rebol3/commit/78f683bf542313def17d1c008e2aabb042de39ab) Regression in debase 36
+* [`eae5e6`](https://github.com/Oldes/Rebol3/commit/eae5e64dbc667cb47c4c66e5815ce47bca98d670) The `info` struct member is now called `sizes`
+* [`6fb6e0`](https://github.com/Oldes/Rebol3/commit/6fb6e0f6bee975c7d8009409fbb41c42a617300b) Disallowed loop variable context access
+* [`8503e0`](https://github.com/Oldes/Rebol3/commit/8503e07d58a8a1f91cb06806d047a0b26ceed233) Clang warning: function declared 'noreturn' should not return
+* [`7af6eb`](https://github.com/Oldes/Rebol3/commit/7af6ebe5009f83afca6e299f44d9a0f965c0730a) Crash when using `foreach` with a set-word and values not in a block
+* [`87e010`](https://github.com/Oldes/Rebol3/commit/87e010b9adca5be997836fe1b34786620e4f6131) Not using `REB_NORETURN` define inside a struct
+* [`13e361`](https://github.com/Oldes/Rebol3/commit/13e361a4a37ba571d7813b66241e6422e496a7a3) Mark OS_Exit and OS_Crash functions as `noreturn`
+* [`0a0757`](https://github.com/Oldes/Rebol3/commit/0a0757e359a1e6667c18d99e4314ef1931edaa3e) Warning: unreferenced local variable
+* [`f7a9e9`](https://github.com/Oldes/Rebol3/commit/f7a9e94c92da9f6b107b9846633f6ae80e880e60) Warning: 'puts' undefined; assuming extern returning
+* [`a14b4b`](https://github.com/Oldes/Rebol3/commit/a14b4b70c9cfee2dcc6a47861ee4dd36ae2b140f) Allow bincode/init size value to be zero
+* [`dc9401`](https://github.com/Oldes/Rebol3/commit/dc9401a5e5c86b2fb19fac05533897d2247e491d) Warning: 'puts' undefined; assuming extern returning
+* [`149789`](https://github.com/Oldes/Rebol3/commit/149789c4d99fb344617ef83f6fbd3bcba3c70b44) Many unsigned/signed variable conflict warnings
+* [`1742fa`](https://github.com/Oldes/Rebol3/commit/1742fa869c16d6066f2c37eeb3de9dc288765f7d) Warning: differs in levels of indirection
+* [`6e8f18`](https://github.com/Oldes/Rebol3/commit/6e8f18d18c1a5eb3337c99fe0854b2fcfd0eae77) Warning: unreferenced local variable
+* [`e28909`](https://github.com/Oldes/Rebol3/commit/e2890977bba7d3e28e9c967c85a590cbcdd6d732) Not including winerror.h as it redefines IS_ERROR
+* [`52cf02`](https://github.com/Oldes/Rebol3/commit/52cf025514e9e7fe474ce670ec76bfbca515f735) Warning: unreferenced local variable
+* [`e86310`](https://github.com/Oldes/Rebol3/commit/e863106991b85f2e6f240130e07a40f6a3195a32) Msvc warning: conversion to a greater size
+* [`6d914c`](https://github.com/Oldes/Rebol3/commit/6d914c970ab82cb97b551242e15bd142af21ff0e) Possible use of uninitialized variable
+* [`cacaf5`](https://github.com/Oldes/Rebol3/commit/cacaf51bac24dff074f7202a9016e9b6a9984b34) Avoid redefinition of typedef warnings when using amalgamated extension includes with `-std=c99` compilation flag
+* [`e7273e`](https://github.com/Oldes/Rebol3/commit/e7273ea4df84184ffa40b55a24eb4b0023046d11) Have reb-args.h included also in external Rebol extensions
+* [`4ebb17`](https://github.com/Oldes/Rebol3/commit/4ebb17a5820cb8bf1e0c1a303a42f3b04235b90a) Make sure that there is REBARGS define as a part of extension include
+* [`b5179c`](https://github.com/Oldes/Rebol3/commit/b5179c9cbb3359796e0a4da7f52f64e755fb3fc5) RL defined in host-lib.c file, in all embedded extensions it must be used as extern
+* [`47b542`](https://github.com/Oldes/Rebol3/commit/47b542729b9b03f4bc1663fb0d71b49b91048f07) RL defined in host-lib.c file, in all embedded extensions it must be used as extern
+* [`16a4ea`](https://github.com/Oldes/Rebol3/commit/16a4ea8b15cadc4f995cc5fc4a69b37e174ac537) Silent compiler's warnings
+* [`6d7fa4`](https://github.com/Oldes/Rebol3/commit/6d7fa43060032d45dbcda7340f6c0387685664f4) Warning: incompatible pointer types passing
+* [`a12dd9`](https://github.com/Oldes/Rebol3/commit/a12dd92f3a8813ad45a11ec0d4619b73ead14320) Warning C4018: signed/unsigned mismatch
+* [`982a42`](https://github.com/Oldes/Rebol3/commit/982a420727a7364064c2e68ecb4c585cf04a97b1) Warning: incompatible pointer types passing
+* [`41a828`](https://github.com/Oldes/Rebol3/commit/41a8288d03b1ef9b94403bb92e52f10ee790c36a) Don't redefine MIN/MAX
+* [`5eb72e`](https://github.com/Oldes/Rebol3/commit/5eb72eda0ea243be01af982343445aca0778c44d) Silent dereferencing NULL pointer warnings
+* [`287398`](https://github.com/Oldes/Rebol3/commit/287398beb052bbaf5dafefe32df972c107407f19) Clang warning: implicit conversion from 'long long' to 'double' changes value from 9223372036854775807 to 9223372036854775808
+* [`e347ad`](https://github.com/Oldes/Rebol3/commit/e347ad088d37ecf4afd80d152ce1bff04bab8ad5) Using extern link to RL_LIB in the test extension (GCC was failing without it)
+* [`c337fe`](https://github.com/Oldes/Rebol3/commit/c337fe1c4cd8aadadd0b2986d551a46df1b5ddb7) Warning C4003 (not enough arguments for function-like macro invocation)
+* [`b95505`](https://github.com/Oldes/Rebol3/commit/b95505310a209125cd82e92ab4f9800aaf324a96) Warning C6308 (possible memory leak)
+* [`361b4d`](https://github.com/Oldes/Rebol3/commit/361b4d6037417503a576c29158a54ce2500d1f6c) Silent "The prior call to 'wcsncpy' might not zero-terminate string" warnings
+* [`3f3bea`](https://github.com/Oldes/Rebol3/commit/3f3bea809c32c9175d7a60495abdb7d66f100bd6) `find/any` failing in some cases
 
 ## 2022 December
 
 ### Features:
 
+* [`5337c8`](https://github.com/Oldes/Rebol3/commit/5337c81d6f92a301a73eda059f31c5e0c1dbdd9b) New `swap-endian` native function for swapping binary byte order
 * [`1b758a`](https://github.com/Oldes/Rebol3/commit/1b758a2652d516e4de233a78920dbe466ae43143) Register `.docx` file suffix with ZIP codec
 * [`9c128d`](https://github.com/Oldes/Rebol3/commit/9c128dc365eb941291210ebdc01d7efd2c3fc74e) Added possibility to keep a track of a Rebol series in a handle's context (guarding this series from GC as long as the handle is referenced)
 * [`36828a`](https://github.com/Oldes/Rebol3/commit/36828a25be19a5fd9f9e943607121667c4127abb) Fine tune memory pool sizes
@@ -20,6 +108,17 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`76cb96`](https://github.com/Oldes/Rebol3/commit/76cb968402698902698713529397064ea84f039f) Visual Studio compiler not knowing `uint*_t` types
+* [`de9a63`](https://github.com/Oldes/Rebol3/commit/de9a63cfccb9bfc43f18c9e7c0263de679b3d5d4) Warning: incompatible pointer types initializing
+* [`e8a0f7`](https://github.com/Oldes/Rebol3/commit/e8a0f78f38418c6d2039eff930592bde516b2736) Warning: format specifies type
+* [`bda36a`](https://github.com/Oldes/Rebol3/commit/bda36af8f39ab0c2f47c84422f04efdde633512b) Warning: incompatible pointer types assigning
+* [`be4656`](https://github.com/Oldes/Rebol3/commit/be4656bfa7b0b2c8284aff5c224cd2343ea7c090) Warning: non-void function does not return a value
+* [`05f7f9`](https://github.com/Oldes/Rebol3/commit/05f7f97fff2aeb53817dd45e701afcc0ea8ff01e) Warning: incompatible integer to pointer conversion
+* [`aeeb6a`](https://github.com/Oldes/Rebol3/commit/aeeb6a3c1f68d014dfdd8b011a516a2a369b50f0) Pair's `area` was not correctly computed for decimal values
+* [`93b62c`](https://github.com/Oldes/Rebol3/commit/93b62c07eac9ace4a5304c50c52787a24e0253ee) Warning: incompatible-pointer-types-discards-qualifiers
+* [`a1f8e8`](https://github.com/Oldes/Rebol3/commit/a1f8e85cc93089d5db138659023bca82005c2c98) Warning: for loop has empty body
+* [`235ade`](https://github.com/Oldes/Rebol3/commit/235adec2c3b9446ee8e3be79a88d2fb8f67aa383) Warning: expression result unused (in unused asserts)
+* [`dba08b`](https://github.com/Oldes/Rebol3/commit/dba08b444c606554a869c1a70710e9338cbf85fd) Regression: failed boot of BASE build versions. Added tests to the Github workflow.
 * [`4d3dd3`](https://github.com/Oldes/Rebol3/commit/4d3dd34059f45b5d099b7d4b9d4b3114530d762d) Creating a directory with a name containing Unicode chars on Posix platforms
 * [`931ddf`](https://github.com/Oldes/Rebol3/commit/931ddfb954fd832b37d5a8788981f397713c1526) Missing include when used `SHOW_SIZEOFS` define
 * [`fb8a03`](https://github.com/Oldes/Rebol3/commit/fb8a03a9b93958d88097dffa8d5fcd090f015850) `httpd` scheme: correct timeout; updated header
