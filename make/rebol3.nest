@@ -1158,6 +1158,24 @@ eggs: [
 			:make-x64-exe
 		]
 
+		"Rebol/Base linux-arm64" [
+			name:     %rebol3-base-linux-arm64
+			:target-linux
+			:make-arm64-exe
+		]
+		"Rebol/Core linux-arm64" [
+			name:     %rebol3-core-linux-arm64
+			:target-linux
+			:include-rebol-core
+			:make-arm64-exe
+		]
+		"Rebol/Bulk linux-arm64" [
+			name:     %rebol3-bulk-linux-arm64
+			:target-linux
+			:include-rebol-bulk
+			:make-arm64-exe
+		]
+
 		"Rebol/Core linux-x64 shared library" [
 			name:     %lib-rebol3-core-linux-x64
 			:target-linux
