@@ -150,7 +150,9 @@ arch: any [
 	all [word? spec/arch          spec/arch       ]
 	all [word? spec/target-arch   spec/target-arch]
 ]
+os-info: get-os-info
 os:  any [
+	select os-info 'ID
 	all [word? spec/os spec/os]
 	select #(
 		Macintosh: macos
@@ -182,9 +184,9 @@ abi: any [
 		reactos: pe
 		beos:    pe
 		linux:   elf
-		alpine:  musl
-	) os
-]    
+		;alpine:  musl
+	) spec/os
+]
 
 product:  any [spec/product 'Core]
 configs:  unique any [spec/config copy []]
@@ -234,6 +236,7 @@ str-version: reform [
 	build-date
 	git-commit
 	get-libc-version ;; musl, glibc_2.28,... or just none
+	select os-info 'VERSION_ID
 ]
 
 ;;format-date-time may not be available in older Builder tools!

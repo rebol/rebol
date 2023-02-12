@@ -48,6 +48,7 @@ start: func [
 	system/build/date:     ver/12
 	system/build/git:      ver/13
 	system/build/libc:     ver/14
+	system/build/os-version: ver/15
 
 	if flags/verbose [system/options/log/rebol: 3] ;maximum log output for system messages
 
