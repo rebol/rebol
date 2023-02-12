@@ -151,6 +151,7 @@ arch: any [
 	all [word? spec/target-arch   spec/target-arch]
 ]
 os:  any [
+	select get-os-info 'ID
 	all [word? spec/os spec/os]
 	select #(
 		Macintosh: macos
@@ -182,9 +183,9 @@ abi: any [
 		reactos: pe
 		beos:    pe
 		linux:   elf
-		alpine:  musl
-	) os
-]    
+		;alpine:  musl
+	) spec/os
+]
 
 product:  any [spec/product 'Core]
 configs:  unique any [spec/config copy []]

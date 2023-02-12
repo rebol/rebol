@@ -140,3 +140,27 @@ get-libc-version: function[][
 	ver
 ]
 
+get-os-info: function[
+	"Tries to collect information about hosting Linux operating system"
+][
+	tmp: copy  ""
+	out: copy #()
+	key: charset [#"A"-#"Z" #"_"]
+	enl: system/catalog/bitsets/crlf
+	whs: system/catalog/bitsets/whitespace
+	try [
+		call/output/shell/wait "cat /etc/*-release" :tmp
+		parse tmp [
+			any [
+				copy k: some key #"=" copy v: to enl some whs (
+					try [v: transcode/one v]
+					try [parse v ["http" to end (v: as url! v)]]
+					put out to word! k v
+				)
+				|  thru enl
+			]
+		]
+	]
+	out
+]
+
