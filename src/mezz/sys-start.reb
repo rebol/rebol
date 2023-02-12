@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Boot Sys: Startup"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -33,7 +34,7 @@ start: func [
 	start: 'done ; only once
 	init-schemes ; only once
 
-	ver: load/as lib/version 'unbound
+	ver: load/as lib/version/data 'unbound
 	system/product:        ver/2
 	system/version:        ver/3
 	system/platform:       ver/4
@@ -46,6 +47,8 @@ start: func [
 	system/build/target:   ver/11
 	system/build/date:     ver/12
 	system/build/git:      ver/13
+	system/build/libc:     ver/14
+	system/build/os-version: ver/15
 
 	if flags/verbose [system/options/log/rebol: 3] ;maximum log output for system messages
 
@@ -55,8 +58,7 @@ start: func [
 		any [flags/verbose flags/usage flags/help]
 	][
 		; basic boot banner only
-		prin "^/  "
-		print boot-banner: form ver
+		print boot-banner: lib/version
 	]
 	if any [do-arg script] [quiet: true]
 
@@ -176,14 +178,17 @@ start: func [
 
 	;-- Evaluate rebol.reb script:
 	;@@ https://github.com/Oldes/Rebol-issues/issues/706
-	tmp: first split-path boot
-	sys/log/info 'REBOL ["Checking for rebol.reb file in" tmp]
-	
-	if all [
-		#"/" = first tmp ; only if we know absolute path
-		exists? tmp/rebol.reb
-	][
-		try/except [do tmp/rebol.reb][sys/log/error 'REBOL system/state/last-error]
+	;; boot (path to the exe) may be none if not resolved!
+	if boot [
+		tmp: first split-path boot
+		sys/log/info 'REBOL ["Checking for rebol.reb file in" tmp]
+		
+		if all [
+			#"/" = first tmp ; only if we know absolute path
+			exists? tmp/rebol.reb
+		][
+			try/except [do tmp/rebol.reb][sys/log/error 'REBOL system/state/last-error]
+		]
 	]
 
 	;-- Make the user's global context:
@@ -200,7 +205,7 @@ start: func [
 	;if :lib/secure [protect-system-object]
 
 	; Import module?
-	if import [lib/import import]
+	if import [lib/import :import]
 
 	;-- Evaluate: --do "some code" if found
 	if do-arg [

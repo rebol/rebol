@@ -1,48 +1,20 @@
+////////////////////////////////////////////////////////////////////////
+// File: sys-zlib.h
+// Home: https://github.com/Siskin-framework/Rebol-Zlib
+// Date: 25-Jan-2023
+// Note: This file is amalgamated from these sources:
 //
-// Extraction of ZLIB compression and decompression routines
-// for REBOL [R3] Language Interpreter and Run-time Environment
-// This is a code-generated file.
+//       zconf.h
+//       zutil.h
+//       zlib.h
+//       deflate.h
 //
-// ZLIB Copyright notice:
-//
-//   (C) 1995-2022 Jean-loup Gailly and Mark Adler
-//
-//   This software is provided 'as-is', without any express or implied
-//   warranty.  In no event will the authors be held liable for any damages
-//   arising from the use of this software.
-//
-//   Permission is granted to anyone to use this software for any purpose,
-//   including commercial applications, and to alter it and redistribute it
-//   freely, subject to the following restrictions:
-//
-//   1. The origin of this software must not be misrepresented; you must not
-//      claim that you wrote the original software. If you use this software
-//      in a product, an acknowledgment in the product documentation would be
-//      appreciated but is not required.
-//   2. Altered source versions must be plainly marked as such, and must not be
-//      misrepresented as being the original software.
-//   3. This notice may not be removed or altered from any source distribution.
-//
-//       Jean-loup Gailly        Mark Adler
-//       jloup@gzip.org          madler@alumni.caltech.edu
-//
-// REBOL is a trademark of REBOL Technologies
-// Licensed under the Apache License, Version 2.0
-//
-// **********************************************************************
-//
-// Title: ZLIB aggregated header
-// Date:  20-Sep-2022
-// File:  sys-zlib.h
-//
-// AUTO-GENERATED FILE - Do not modify. (From: make-zlib.r)
-//
-
-// Rebol
+////////////////////////////////////////////////////////////////////////
+// Rebol options:
 #define NO_DUMMY_DECL 1
 #define Z_PREFIX 1
 #define ZLIB_CONST
-// **********************************************************************
+////////////////////////////////////////////////////////////////////////
 
 /* zconf.h -- configuration of the zlib compression library
  * Copyright (C) 1995-2016 Jean-loup Gailly, Mark Adler
@@ -84,6 +56,9 @@
 #  define crc32                 z_crc32
 #  define crc32_combine         z_crc32_combine
 #  define crc32_combine64       z_crc32_combine64
+#  define crc32_combine_gen     z_crc32_combine_gen
+#  define crc32_combine_gen64   z_crc32_combine_gen64
+#  define crc32_combine_op      z_crc32_combine_op
 #  define crc32_z               z_crc32_z
 #  define deflate               z_deflate
 #  define deflateBound          z_deflateBound
@@ -395,6 +370,9 @@
 #    ifdef FAR
 #      undef FAR
 #    endif
+#    ifndef WIN32_LEAN_AND_MEAN
+#      define WIN32_LEAN_AND_MEAN
+#    endif
 #    include <windows.h>
      /* No need for _export, use ZLIB.DEF instead. */
      /* For complete Windows compatibility, use WINAPI, not __stdcall. */
@@ -513,11 +491,18 @@ typedef uLong FAR uLongf;
 #  undef _LARGEFILE64_SOURCE
 #endif
 
-#if defined(__WATCOMC__) && !defined(Z_HAVE_UNISTD_H)
-#  define Z_HAVE_UNISTD_H
+#ifndef Z_HAVE_UNISTD_H
+#  ifdef __WATCOMC__
+#    define Z_HAVE_UNISTD_H
+#  endif
+#endif
+#ifndef Z_HAVE_UNISTD_H
+#  if defined(_LARGEFILE64_SOURCE) && !defined(_WIN32)
+#    define Z_HAVE_UNISTD_H
+#  endif
 #endif
 #ifndef Z_SOLO
-#  if defined(Z_HAVE_UNISTD_H) || defined(_LARGEFILE64_SOURCE)
+#  if defined(Z_HAVE_UNISTD_H)
 #    include <unistd.h>         /* for SEEK_*, off_t, and _LFS64_LARGEFILE */
 #    ifdef VMS
 #      include <unixio.h>       /* for off_t */
@@ -599,7 +584,7 @@ typedef uLong FAR uLongf;
 #  define ZLIB_INTERNAL
 #endif
 
-// #include "zlib.h" /* REBOL: see make-zlib.r */
+//REBOL: #include "zlib.h"
 
 #if defined(STDC) && !defined(Z_SOLO)
 #  if !(defined(_WIN32_WCE) && defined(_MSC_VER))
@@ -773,6 +758,7 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
     (!defined(_LARGEFILE64_SOURCE) || _LFS64_LARGEFILE-0 == 0)
     ZEXTERN uLong ZEXPORT adler32_combine64 OF((uLong, uLong, z_off_t));
     ZEXTERN uLong ZEXPORT crc32_combine64 OF((uLong, uLong, z_off_t));
+    ZEXTERN uLong ZEXPORT crc32_combine_gen64 OF((z_off_t));
 #endif
 
         /* common defaults */
@@ -853,7 +839,7 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 
 #endif /* ZUTIL_H */
 /* zlib.h -- interface of the 'zlib' general purpose compression library
-  version 1.2.12, March 11th, 2022
+  version 1.2.13, October 13th, 2022
 
   Copyright (C) 1995-2022 Jean-loup Gailly and Mark Adler
 
@@ -885,17 +871,17 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #ifndef ZLIB_H
 #define ZLIB_H
 
-// #include "zconf.h" /* REBOL: see make-zlib.r */
+//REBOL: #include "zconf.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define ZLIB_VERSION "1.2.12"
-#define ZLIB_VERNUM 0x12c0
+#define ZLIB_VERSION "1.2.13"
+#define ZLIB_VERNUM 0x12d0
 #define ZLIB_VER_MAJOR 1
 #define ZLIB_VER_MINOR 2
-#define ZLIB_VER_REVISION 12
+#define ZLIB_VER_REVISION 13
 #define ZLIB_VER_SUBREVISION 0
 
 /*
@@ -1130,7 +1116,7 @@ ZEXTERN int ZEXPORT deflate OF((z_streamp strm, int flush));
   == 0), or after each call of deflate().  If deflate returns Z_OK and with
   zero avail_out, it must be called again after making room in the output
   buffer because there might be more output pending. See deflatePending(),
-  which can be used if desired to determine whether or not there is more ouput
+  which can be used if desired to determine whether or not there is more output
   in that case.
 
     Normally the parameter flush is set to Z_NO_FLUSH, which allows deflate to
@@ -1514,7 +1500,7 @@ ZEXTERN int ZEXPORT deflateGetDictionary OF((z_streamp strm,
    to dictionary.  dictionary must have enough space, where 32768 bytes is
    always enough.  If deflateGetDictionary() is called with dictionary equal to
    Z_NULL, then only the dictionary length is returned, and nothing is copied.
-   Similary, if dictLength is Z_NULL, then it is not set.
+   Similarly, if dictLength is Z_NULL, then it is not set.
 
      deflateGetDictionary() may return a length less than the window size, even
    when more than the window size in input has been provided. It may return up
@@ -1769,7 +1755,7 @@ ZEXTERN int ZEXPORT inflateGetDictionary OF((z_streamp strm,
    to dictionary.  dictionary must have enough space, where 32768 bytes is
    always enough.  If inflateGetDictionary() is called with dictionary equal to
    Z_NULL, then only the dictionary length is returned, and nothing is copied.
-   Similary, if dictLength is Z_NULL, then it is not set.
+   Similarly, if dictLength is Z_NULL, then it is not set.
 
      inflateGetDictionary returns Z_OK on success, or Z_STREAM_ERROR if the
    stream state is inconsistent.
@@ -2291,12 +2277,12 @@ ZEXTERN z_size_t ZEXPORT gzfread OF((voidp buf, z_size_t size, z_size_t nitems,
 
      In the event that the end of file is reached and only a partial item is
    available at the end, i.e. the remaining uncompressed data length is not a
-   multiple of size, then the final partial item is nevetheless read into buf
+   multiple of size, then the final partial item is nevertheless read into buf
    and the end-of-file flag is set.  The length of the partial item read is not
    provided, but could be inferred from the result of gztell().  This behavior
    is the same as the behavior of fread() implementations in common libraries,
    but it prevents the direct use of gzfread() to read a concurrently written
-   file, reseting and retrying on end-of-file, when size is not 1.
+   file, resetting and retrying on end-of-file, when size is not 1.
 */
 
 ZEXTERN int ZEXPORT gzwrite OF((gzFile file, voidpc buf, unsigned len));
@@ -2767,7 +2753,7 @@ ZEXTERN int            ZEXPORT inflateSyncPoint OF((z_streamp));
 ZEXTERN const z_crc_t FAR * ZEXPORT get_crc_table    OF((void));
 ZEXTERN int            ZEXPORT inflateUndermine OF((z_streamp, int));
 ZEXTERN int            ZEXPORT inflateValidate OF((z_streamp, int));
-ZEXTERN unsigned long  ZEXPORT inflateCodesUsed OF ((z_streamp));
+ZEXTERN unsigned long  ZEXPORT inflateCodesUsed OF((z_streamp));
 ZEXTERN int            ZEXPORT inflateResetKeep OF((z_streamp));
 ZEXTERN int            ZEXPORT deflateResetKeep OF((z_streamp));
 #if defined(_WIN32) && !defined(Z_SOLO)
@@ -2802,7 +2788,7 @@ ZEXTERN int            ZEXPORTVA gzvprintf Z_ARG((gzFile file,
 #ifndef DEFLATE_H
 #define DEFLATE_H
 
-// #include "zutil.h" /* REBOL: see make-zlib.r */
+//REBOL: #include "zutil.h"
 
 /* define NO_GZIP when compiling if you want to disable gzip header and
    trailer creation by deflate().  NO_GZIP would be used to avoid linking in
@@ -3118,8 +3104,8 @@ void ZLIB_INTERNAL _tr_stored_block OF((deflate_state *s, charf *buf,
 # define _tr_tally_dist(s, distance, length, flush) \
   { uch len = (uch)(length); \
     ush dist = (ush)(distance); \
-    s->sym_buf[s->sym_next++] = dist; \
-    s->sym_buf[s->sym_next++] = dist >> 8; \
+    s->sym_buf[s->sym_next++] = (uch)dist; \
+    s->sym_buf[s->sym_next++] = (uch)(dist >> 8); \
     s->sym_buf[s->sym_next++] = len; \
     dist--; \
     s->dyn_ltree[_length_code[len]+LITERALS+1].Freq++; \

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -771,7 +772,8 @@ err:
 	REBCNT ser_size;
 	REBINT pad = 0;
 	REBU64 c = 0;
-	REBINT i, d = 0;
+	REBINT d = 0;
+	REBCNT i;
 
 	cp = *src;
 
@@ -799,10 +801,12 @@ err:
 	ser_size = SERIES_AVAIL(ser);
 	bp = STR_HEAD(ser);
 
-	for (i = 7; i >= 0; i--) {
+	i = 7;
+	do {
 		bp[i] = (REBYTE)(c & 0xFF);
 		c >>= 8;
-	}
+	} while (i-- > 0);
+
 	ser->tail = 8;
 	return ser;
 
@@ -1001,7 +1005,7 @@ err:
 	REBYTE *bp;
 	REBYTE *src;
 	REBCNT x=0;
-	REBINT loop;
+	REBCNT loop;
 	REBCNT i, chunk;
 
 	if(len > VAL_LEN(value)) len = VAL_LEN(value);
@@ -1012,8 +1016,8 @@ err:
 	// (Note: tail not properly set yet)
 
 	//if (len >= 32 && brk) *bp++ = LF;
-	loop = (len / 4) - 1;
-	if(loop >= 0) {
+	if(len >= 4) {
+		loop = (len / 4) - 1;
 		for (x = 0; x <= 4 * loop;) {
 			chunk  = ((REBCNT)src[x++]) << 24u;
 			chunk |= ((REBCNT)src[x++]) << 16u;

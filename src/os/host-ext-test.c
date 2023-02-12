@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,7 +49,7 @@
 #include "host-lib.h"
 #include "sys-value.h"
 
-RL_LIB *RL; // Link back to reb-lib from embedded extensions
+extern RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
 static REBCNT Handle_XTest;
 typedef struct XTest_Context {
@@ -88,6 +89,7 @@ char *RX_Spec =
 
 	"a: b: c: h: x: none\n"
 	"i: make image! 2x2\n"
+	"s: #[struct! [r [uint8!]]]\n"
 	"xtest: does [\n"
 		"foreach blk [\n"
 			"[x: hob1 #{0102}]"
@@ -123,6 +125,9 @@ char *RX_Spec =
 			"[echo i]\n"
 			"[probe i probe echo i]\n"
 			"[loop 1 [probe echo i]]\n"
+			
+			// https://github.com/Oldes/Rebol-issues/issues/2536
+			"[same? s probe echo s]\n"
 		"][\n"
 			"print [{^/^[[7mtest:^[[0m^[[1;32m} mold blk {^[[0m}]\n"
 			//"replace {x} {x} {y}\n"
@@ -175,8 +180,9 @@ REBCNT Test_Async_Callback(REBSER *obj, REBCNT word)
 	// These cannot be on the stack, because they are used
 	// when the callback happens later.
 	cbi = MAKE_NEW(*cbi);
-	CLEAR(cbi, sizeof(cbi));
 	args = MAKE_MEM(sizeof(RXIARG) * 4);
+	if (!cbi || !args) return 0; // silent compiler's warnings
+	CLEAR(cbi, sizeof(cbi));
 	CLEAR(args, sizeof(RXIARG) * 4);
 	cbi->obj = obj;
 	cbi->word = word;
@@ -195,7 +201,7 @@ REBCNT Test_Async_Callback(REBSER *obj, REBCNT word)
 }
 
 RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
-	REBYTE *str;
+	REBYTE *str = NULL;
 
 	//printf("Context ptr: %p\n", ctx);
 
@@ -283,7 +289,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 		{
 			REBSER *vec = RXA_SERIES(frm, 1);
 			RXA_TYPE(frm, 1) = RXT_INTEGER;
-			RXA_INT64(frm, 1) = vec->info * vec->tail;
+			RXA_INT64(frm, 1) = (vec->sizes & 0xFF) * vec->tail; //TODO: review!
 		}
 		break;
 	case 14: //command [{return vector size in values (from object)} o [object!]]
@@ -306,7 +312,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			REBSER *blk = RXA_SERIES(frm, 1);
 			REBCNT n, type;
 			RXIARG val;
-			printf("\nBlock with %llu values:\n", RL_SERIES(blk, RXI_SER_TAIL));
+			printf("\nBlock with %u values:\n", (REBLEN)RL_SERIES(blk, RXI_SER_TAIL));
 			for(n = 0; (type = RL_GET_VALUE(blk, n, &val)); n++) {
 				if(type == RXT_END) break;
 				printf("\t%i -> %i\n", n, type);
@@ -360,7 +366,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			REBYTE ver[8];
 			RL_VERSION(ver);
 			snprintf(SERIES_DATA(str), SERIES_REST(str), "Version: %i.%i.%i", ver[1], ver[2], ver[3]);
-			SERIES_TAIL(str) = strlen(SERIES_DATA(str));
+			SERIES_TAIL(str) = LEN_BYTES(SERIES_DATA(str));
 			RXA_SERIES(frm, 1) = str;
 			RXA_TYPE  (frm, 1) = RXT_STRING;
 			RXA_INDEX (frm, 1) = 0;
@@ -377,7 +383,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 
 
 void* releaseXTestContext(void* ctx) {
-	XTEST* data = (REBHOB*)ctx;
+	XTEST* data = (XTEST*)ctx;
 	printf("Relasing XTest context handle: %p\n", data);
 	// do some final cleaning off the context's content
 	printf("data=> id: %u num: %i\n", data->id, data->num);

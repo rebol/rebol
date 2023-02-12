@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2014 Atronix Engineering, Inc.
-**  Copyright 2021 Rebol Open Source Contributors
+**  Copyright 2021-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -400,7 +400,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 				} else {// set only one element
 					if (!IS_INTEGER(elem)
 						|| VAL_INT32(elem) <= 0
-						|| VAL_INT32(elem) > field->dimension) {
+						|| VAL_UNT32(elem) > field->dimension) {
 						return FALSE;
 					}
 					return assign_scalar(stu, field, VAL_INT32(elem) - 1, val);
@@ -960,7 +960,7 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 	for (blk = VAL_BLK_DATA(spec); NOT_END(blk); blk += 2) {
 		struct Struct_Field *fld = NULL;
 		REBSER *fields = VAL_STRUCT_FIELDS(ret);
-		int i = 0;
+		REBCNT i = 0;
 		REBVAL *word = blk;
 		REBVAL *fld_val = blk + 1;
 

@@ -22,6 +22,33 @@ There are available precompiled binaries for each [release](https://github.com/O
 
 And there is also the Host exe and the DLL - the Rebol library is separated and used from the host application. That is from times before open sourcing Rebol completely. Only host part was open and the library was still closed. In theory you can have one library and many tiny host applications. I'm building just the Core on Windows so far to see, if it is still working.
 
+For macOS users on 10.15+, downloaded precompiled applications (and or extensions bellow) may not work properly unless the quarantine setting is removed:
+```
+xattr -d -r com.apple.quarantine /path/to/file
+```
+
+### Rebol extensions
+
+It is possible to extend Rebol functionality using external modules (native and or written in Rebol itself). Here are links to some of them:
+* [Rebol/BCM2835](https://github.com/Oldes/Rebol-BCM2835) - Broadcom BCM 2835 chip extension (for GPIO on RaspberryPI)
+* [Rebol/Blend2D](https://github.com/Siskin-framework/Rebol-Blend2D) - Drawing dialect using [Blend2D](https://blend2d.com) as a high performance 2D vector graphics engine
+* [Rebol/Easing](https://github.com/Oldes/Rebol-Easing) - Collection of easing functions
+* [Rebol/Godot](https://github.com/Oldes/Rebol-Godot) - Extractor of Godot's `.pck` files
+* [Rebol/HTTPd](https://github.com/Oldes/Rebol-HTTPd) - Webserver scheme
+* [Rebol/IRC](https://github.com/Oldes/Rebol-IRC) - Internet Relay Chat scheme
+* [Rebol/MathPresso](https://github.com/Siskin-framework/Rebol-MathPresso) - Mathematical Expression Parser And JIT Compiler
+* [Rebol/Names](https://github.com/Oldes/Rebol-Names) - Random names generator scheme
+* [Rebol/OpenCV](https://github.com/Oldes/Rebol-OpenCV) - Computer Vision Library
+* [Rebol/SQLite](https://github.com/Siskin-framework/Rebol-SQLite) - SQL database engine
+* [Rebol/Triangulate](https://github.com/Siskin-framework/Rebol-Triangulate) - Two-Dimensional Quality Mesh Generator and Delaunay Triangulator
+
+It should be noted that on macOS it may be required to resign _downloaded native extensions_ using command like:
+```
+codesign --sign "5D94...EED5" -f -o runtime /path/to/extension.rebx
+```
+To find a signing identity, use: `security find-identity`
+
+
 ### Building Rebol
 
 Rebol itself is not a compiler (like [Red language](https://www.red-lang.org/)) but just an interpreter. You must have some compiler of your choice to compile Rebol. For Windows you may want to use any of these:

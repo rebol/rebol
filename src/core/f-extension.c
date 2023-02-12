@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,6 +47,7 @@ enum {
 	RXE_DATE,	// from upper section
 	RXE_OBJECT, // any object
 	RXE_TUPLE,  // 3-12 bytes tuple value
+	RXE_STRUCT,	// structure data and fields spec series
 	RXE_MAX
 };
 
@@ -120,6 +122,10 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 		arg.tuple_len = VAL_TUPLE_LEN(val);
 		COPY_MEM(arg.tuple_bytes, VAL_TUPLE(val), MAX_TUPLE);
 		break;
+	case RXE_STRUCT:
+		arg.structure.data = VAL_STRUCT_DATA(val);
+		arg.structure.fields = VAL_STRUCT_FIELDS(val);
+		break;
 	case RXE_NULL:
 	default:
 		arg.int64 = 0;
@@ -174,6 +180,12 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 	case RXE_TUPLE:
 		VAL_TUPLE_LEN(val) = arg.tuple_len;
 		COPY_MEM(VAL_TUPLE(val), arg.tuple_bytes, MAX_TUPLE);
+		break;
+	case RXE_STRUCT:
+		//TODO: review!
+		// There is no room in RXIARG to pass the spec part of the struct!
+		VAL_STRUCT_DATA(val) = arg.structure.data;
+		VAL_STRUCT_FIELDS(val) = arg.structure.fields;
 		break;
 	case RXE_NULL:
 		VAL_INT64(val) = 0;
@@ -347,7 +359,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		path = Value_To_OS_Path(val, FALSE);
 
 		// Try to load the DLL file:
-		if (!(dll = OS_OPEN_LIBRARY(SERIES_DATA(path), &error))) {
+		if (!(dll = OS_OPEN_LIBRARY((REBCHR*)SERIES_DATA(path), &error))) {
 			//printf("error: %i\n", error);
 			Trap1(RE_NO_EXTENSION, val);
 		}
@@ -505,9 +517,9 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	case RXR_BAD_ARGS:
 	case RXR_ERROR:
 		{
-			const char* errmsg = frm.args[1].series;
+			const REBYTE* errmsg = frm.args[1].series;
 			if(errmsg != NULL) {
-				int len = strlen(errmsg);
+				REBLEN len = LEN_BYTES(errmsg);
 				VAL_SET(val, REB_STRING);		
 				VAL_SERIES(val) = Make_Binary(len);
 				VAL_INDEX(val) = 0;

@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Developers
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -609,8 +609,8 @@ static struct {
 	REBVAL  *arg = D_ARG(2);
 	REBVAL  *arg2;
 	REBSER  *ser;
-	REBINT	index;
-	REBINT	tail;
+	REBCNT	index;
+	REBLEN	tail;
 	REBINT	len;
 	REBVAL  val;
 	REBCNT	args;
@@ -632,8 +632,8 @@ static struct {
 		return R_RET;
 	}
 
-	index = (REBINT)VAL_INDEX(value);
-	tail  = (REBINT)VAL_TAIL(value);
+	index = VAL_INDEX(value);
+	tail  = VAL_TAIL(value);
 	ser   = VAL_SERIES(value);
 
 	// Check must be in this order (to avoid checking a non-series value);
@@ -711,7 +711,7 @@ zero_blk:
 		index = VAL_INDEX(value); // /part can change index
 		// take/last:
 		if (D_REF(ARG_TAKE_LAST)) index = tail - len;
-		if (index < 0 || index >= tail) {
+		if (index >= tail) {
 			if (!D_REF(ARG_TAKE_PART)) goto is_none;
 			goto zero_blk;
 		}

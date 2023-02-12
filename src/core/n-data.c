@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Developers
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -352,6 +352,9 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 		// case like: ` f: func[a][context? 'a]  f 1 `
 		*D_RET = frame[3]; 
 	} else {
+		if (IS_INT_SERIES(VAL_WORD_FRAME(word)))
+			// in case like: ` foreach x [1] [context? 'x] ` 
+			return R_NONE;
 		SET_OBJECT(D_RET, VAL_WORD_FRAME(word));
 	}
 	return R_RET;

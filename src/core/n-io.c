@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -136,21 +137,24 @@ static REBSER *Read_All_File(char *fname)
 {
 	REBVAL *val = D_ARG(1);
 	REB_MOLD mo = {0};
-	REBINT  len = NO_LIMIT;
+	REBCNT  len;
 
 	if (D_REF(3)) SET_FLAG(mo.opts, MOPT_MOLD_ALL);
 	if (D_REF(4)) SET_FLAG(mo.opts, MOPT_INDENT);
 	if (D_REF(5)) {
-		if (VAL_INT64(D_ARG(6)) > (i64)MAX_I32)
-			len = MAX_I32;
+		if (VAL_INT64(D_ARG(6)) > (i64)MAX_U32)
+			len = MAX_U32;
 		else if (VAL_INT64(D_ARG(6)) <= 0)
 			len = 0;
 		else
-			len = VAL_INT32(D_ARG(6));
+			len = VAL_UNT32(D_ARG(6));
+	}
+	else {
+		len = NO_LIMIT;
 	}
 
 	Reset_Mold(&mo);
-	mo.limit = (REBINT)len;
+	mo.limit = len;
 
 	if (D_REF(2) && IS_BLOCK(val)) SET_FLAG(mo.opts, MOPT_ONLY);
 
@@ -497,7 +501,7 @@ chk_neg:
 	}
 	// Try to call realpath on posix or _fullpath on Windows
 	// Returned string must be released once done!
-	tmp = OS_REAL_PATH(SERIES_DATA(ser));
+	tmp = OS_REAL_PATH((REBCHR*)SERIES_DATA(ser));
 	if (!tmp) return R_NONE;
 
 	// Convert OS native wide string back to Rebol file type

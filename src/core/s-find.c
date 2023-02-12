@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -468,6 +469,7 @@
 	REBUNI c2;
 	REBUNI c3 = 0;
 	REBCNT n = 0, start = 0, pos = 0;
+	REBCNT sn = 0;
 	REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
 	REBUNI c_some = '*';
 	REBUNI c_one  = '?';
@@ -494,9 +496,9 @@
 			c1 = GET_ANY_CHAR(ser1, index);
 			if (uncase && c1 < UNICODE_CASES) c1 = LO_CASE(c1);
 		}
-		if (c1 == c2) {
+		if (c1 == c2) { // found first needle's char
 			pos++;
-			while (n < len) {
+			while (n < len && pos < tail) {
 				c1 = GET_ANY_CHAR(ser1, pos);
 				c3 = GET_ANY_CHAR(ser2, index2 + n);
 				if (c3 == c_some) {
@@ -512,14 +514,15 @@
 						pos = (skip > 0) ? tail: start;
 						goto found;
 					}
+					sn = n; // store a new needle's start (thru the last found *)
 					// skip in 'hay' all chars until found next needle's char
 					while (1) {
 						if (pos < head || pos >= tail) return NOT_FOUND;
 						c1 = GET_ANY_CHAR(ser1, pos);
 						// printf("? %c == %c\n", c1, c3);
-						if (c1 == c3) break;
+						if (c1 == c3) goto next_char;
 						if (uncase && c1 < UNICODE_CASES && c3 < UNICODE_CASES) {
-							if (LO_CASE(c1) == LO_CASE(c3)) break;
+							if (LO_CASE(c1) == LO_CASE(c3)) goto next_char;
 						}
 						index++;
 						pos++;
@@ -528,10 +531,19 @@
 					goto next_char;
 				}
 				if (uncase && c1 < UNICODE_CASES && c3 < UNICODE_CASES) {
-					if (LO_CASE(c1) != LO_CASE(c3)) break;
+					if (LO_CASE(c1) != LO_CASE(c3)) {
+						if (sn) {
+							n = sn; // reset needles position to the last know * char
+							goto next_char;
+						}
+						else break;
+					}
 				}
 				else {
-					if (c1 != c3) break;
+					if (c1 != c3) {
+						if (sn) { n = sn; goto next_char; }
+						else break;
+					}
 				}
 			next_char:
 				pos++;

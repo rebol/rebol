@@ -534,7 +534,7 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 {
 	REBINT n;
 
-	for (n = 0; n < MAX_SCHEMES && Scheme_Actions[n].sym; n++);
+	for (n = 0; n < MAX_SCHEMES && Scheme_Actions[n].sym; n++){};
 	ASSERT2(n < MAX_SCHEMES, RP_MAX_SCHEMES);
 
 	Scheme_Actions[n].sym = sym;

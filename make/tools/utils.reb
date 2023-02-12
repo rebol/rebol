@@ -112,3 +112,80 @@ binary-to-c: func [comp-data /local out data] [
 	]
 	head out
 ]
+
+string-to-c: func[str /local out][
+	out: copy ""
+	foreach line split str lf [
+		replace/all line #"^"" {\"}
+		append out ajoin [{^/^-"} line {\n"\}] 
+	]
+	take/last out ;; removes the last slash
+	out
+]
+
+get-libc-version: function[][
+	tmp: copy ""
+	num: system/catalog/bitsets/numeric
+	try [
+		;; we may not be sure, if the output will be in the stdout or stderr
+		call/output/error/shell/wait "ldd --version" :tmp :tmp
+		parse tmp [
+			"musl " to end (ver: 'musl)
+			|
+			thru "GLIBC" some SP copy ver: [some num #"." some num] to end (
+				ver: to word! ajoin ["glibc_" ver]
+			)
+		]
+	]
+	ver
+]
+
+get-os-info: function[
+	"Tries to collect information about hosting operating system"
+	;@@ Based on this research: https://www.tecmint.com/check-linux-os-version/
+][
+	tmp: copy  ""
+	err: copy  ""
+	out: copy #()
+	key: charset [#"A"-#"Z" #"_"]
+	enl: system/catalog/bitsets/crlf
+	whs: system/catalog/bitsets/whitespace
+	num: system/catalog/bitsets/numeric
+	any [
+		;- macOS    
+		all [
+			system/platform = 'macOS
+			0 = call/shell/wait/output/error "sw_vers -productVersion" :tmp :err
+			out/ID: 'macos
+			out/VERSION_ID: attempt [transcode/one tmp]
+		]
+		;- Windows  
+		all [
+			system/platform = 'Windows
+			0 = call/shell/wait/output/error "ver" :tmp :err
+			parse tmp [
+				to num copy v: [some num #"." some num] to end (
+					out/ID: 'windows
+					out/VERSION_ID: to decimal! v
+				)
+			]
+		]
+		;- Linux, OpenBSD, FreeBSD (but not tested on BSD yet)
+		all [
+			0 = call/shell/wait/output/error "cat /etc/*-release" :tmp :err
+			parse tmp [
+				any [
+					copy k: some key #"=" copy v: to enl some whs (
+						try [v: transcode/one v]
+						try [parse v ["http" to end (v: as url! v)]]
+						put out to word! k v
+					)
+					|  thru enl
+				]
+				to end
+			]
+		]
+	]
+	out
+]
+

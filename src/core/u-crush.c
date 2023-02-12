@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2023 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -152,7 +152,8 @@ static inline int get_penalty(int a, int b) {
 	REBSER *ser;
 	REBYTE *buf = BIN_SKIP(input, index);
 	REBCNT tail = 0;
-	REBINT p, len, offset, chain_len, s, i;
+	REBCNT p;
+	REBINT len, offset, chain_len, s, i;
 	REBINT h1 = 0, h2 = 0;
 
 	static int head[CRUSH_HASH1_SIZE + CRUSH_HASH2_SIZE];
@@ -185,7 +186,7 @@ static inline int get_penalty(int a, int b) {
 		offset = CRUSH_W_SIZE;
 
 		const int max_match = MIN(CRUSH_MAX_MATCH, size - p);
-		const int limit = MAX(p - CRUSH_W_SIZE, 0);
+		const int limit = (p <= CRUSH_W_SIZE) ? 0 : p - CRUSH_W_SIZE;
 
 		if (head[h1] >= limit)
 		{
@@ -346,8 +347,8 @@ static inline int get_penalty(int a, int b) {
 {
 	REBYTE *buf;
 	REBSER *ser;
-	REBCNT size;
-	REBINT p, len, s;
+	REBCNT size, p;
+	REBINT len, s;
 	CRUSH  ctx;
 
 	if(length < 4) Trap1(RE_BAD_PRESS, DS_ARG(2));

@@ -218,9 +218,9 @@
 	REBI64 n;
 
 	if (IS_DECIMAL(val)) {
-		if (VAL_DECIMAL(val) > MAX_I64 || VAL_DECIMAL(val) < MIN_I64)
-			Trap_Range(val);
 		n = (REBI64)VAL_DECIMAL(val);
+		if (n > MAX_I64 || n < MIN_I64)
+			Trap_Range(val);
 	} else {
 		n = VAL_INT64(val);
 	}
@@ -777,8 +777,10 @@
 			val = aval;
 		else if (bval && VAL_TYPE(bval) == VAL_TYPE(lval) && VAL_SERIES(bval) == VAL_SERIES(lval))
 			val = bval;
-		else
+		else {
 			Trap1(RE_INVALID_PART, lval);
+			return 0; // silent compiler's warning
+		}
 
 		len = (REBINT)VAL_INDEX(lval) - (REBINT)VAL_INDEX(val);
 	}

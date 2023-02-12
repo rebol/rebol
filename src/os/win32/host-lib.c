@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -67,6 +68,8 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
+RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host-window, host-ext-test..)
+
 // Semaphore lock to sync sub-task launch:
 static void *Task_Ready;
 
@@ -112,6 +115,7 @@ static void *Task_Ready;
 	if (spot) {
 		// Save rest of cmd line (such as end quote, -flags, etc.)
 		COPY_STR(hold, spot+2, HOLD_SIZE);
+		hold[HOLD_SIZE] = 0;
 
 		// Terminate at the arg location:
 		spot[0] = 0;
@@ -368,7 +372,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void OS_Exit(int code)
+*/	REB_NORETURN void OS_Exit(int code)
 /*
 **		Called in all cases when REBOL quits
 **
@@ -394,7 +398,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void OS_Crash(const REBYTE *title, const REBYTE *content)
+*/	REB_NORETURN void OS_Crash(const REBYTE *title, const REBYTE *content)
 /*
 **		Tell user that REBOL has crashed. This function must use
 **		the most obvious and reliable method of displaying the
@@ -454,6 +458,7 @@ static void *Task_Ready;
 	if (!ok) COPY_STR(str, TEXT("unknown error"), len);
 	else {
 		COPY_STR(str, lpMsgBuf, len);
+		str[len] = 0;
 		len = (int)LEN_STR(str);
 		if (str[len-2] == '\r' && str[len-1] == '\n') str[len-2] = 0; // trim CRLF
 		LocalFree(lpMsgBuf);
@@ -556,7 +561,7 @@ static void *Task_Ready;
 	REBCHR *str;
 
 	str = env;
-	while (n = (REBCNT)LEN_STR(str)) {
+	while ((n = (REBCNT)LEN_STR(str))) {
 		len += n + 1;
 		str = env + len; // next
 	}
@@ -836,6 +841,7 @@ static void *Task_Ready;
 	HANDLE hErrorWrite = 0, hErrorRead = 0;
 	REBCHR *cmd = NULL;
 	char *oem_input = NULL;
+	void *tmp;
 
 	SECURITY_ATTRIBUTES sa;
 
@@ -1119,8 +1125,9 @@ static void *Task_Ready;
 						*output_len += n;
 						if (*output_len >= output_size) {
 							output_size += BUF_SIZE_CHUNK;
-							*output = realloc(*output, output_size);
-							if (*output == NULL) goto kill;
+							tmp = realloc(*output, output_size);
+							if (tmp == NULL) goto kill;
+							*output = tmp;
 						}
 					}
 				} else if (handles[i] == hErrorRead) {
@@ -1133,8 +1140,9 @@ static void *Task_Ready;
 						*err_len += n;
 						if (*err_len >= err_size) {
 							err_size += BUF_SIZE_CHUNK;
-							*err = realloc(*err, err_size);
-							if (*err == NULL) goto kill;
+							tmp = realloc(*err, err_size);
+							if (tmp == NULL) goto kill;
+							*err = tmp;
 						}
 					}
 				} else {

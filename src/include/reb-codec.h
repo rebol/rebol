@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2021-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +29,8 @@
 #ifndef CODI_DEFINED
 #define CODI_DEFINED
 
+#include "reb-c.h"
+
 // Codec image interface:
 //
 // If your codec routine returns CODI_IMAGE, it is expected that the
@@ -49,7 +52,7 @@ struct reb_codec_image {
 	int action;
 	int w;
 	int h;
-	int len;
+	u32 len;
 	union {
 		int alpha;
 		int type;  // used to provide info about prefered image type (codec)

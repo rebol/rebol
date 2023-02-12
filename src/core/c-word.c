@@ -119,7 +119,8 @@
 
 	oser = *ser;
 	*ser = *nser;
-	ser->info = oser.info;
+	ser->sizes = oser.sizes;
+	ser->flags = oser.flags;
 	*nser = oser;
 
 	Clear_Series(ser);

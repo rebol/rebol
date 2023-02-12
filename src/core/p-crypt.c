@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Contributors
+**  Copyright 2012-2023 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -547,7 +547,7 @@ failed:
 #endif
 	{
 		size_t out_bytes = 0;
-		size_t plaintext_len = len - ctx->aad_len;
+		REBLEN plaintext_len = len - ctx->aad_len;
 		mbedtls_ccm_context* ccm = (mbedtls_ccm_context*)ctx->cipher_ctx;
 
 		if (ctx->operation == MBEDTLS_DECRYPT) {
@@ -565,7 +565,7 @@ failed:
 		}
 		err = mbedtls_ccm_update(ccm, input, plaintext_len, BIN_TAIL(bin), len, &out_bytes);
 		if (err) return err;
-		SERIES_TAIL(bin) += out_bytes;
+		SERIES_TAIL(bin) += (REBLEN)out_bytes;
 		ctx->state = CRYPT_PORT_HAS_DATA;
 		input += out_bytes;
 
@@ -623,7 +623,7 @@ failed:
 		}
 		err = mbedtls_gcm_update((mbedtls_gcm_context *)ctx->cipher_ctx, input, len, BIN_TAIL(bin), len, &out_bytes);
 		if (err) return err;
-		SERIES_TAIL(bin) += out_bytes;
+		SERIES_TAIL(bin) += (REBLEN)out_bytes;
 		ctx->state = CRYPT_PORT_HAS_DATA;
 		input += out_bytes;
 		break;

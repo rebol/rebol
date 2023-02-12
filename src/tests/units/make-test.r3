@@ -97,8 +97,6 @@ Rebol [
 		--assert 9223372036854775807 = to integer! "9223372036854775807"
 		--assert 9223372036854775807 = to integer! "9'223'372'036'854'775'807"
 		--assert all [error? e: try [to integer! "9'223'372'036'854'775'808"] e/id = 'bad-make-arg]
-		;@@ https://github.com/Oldes/Rebol-issues/issues/2099
-	 	--assert 302961000000 = to integer! "3.02961E+11" ;-> KNOWN ISSUE!
 	 	;@@ https://github.com/Oldes/Rebol-issues/issues/2504
 	 	--assert 0 = to integer! "0"
 	 	--assert 0 = to integer! "00"
@@ -110,6 +108,10 @@ Rebol [
 	 	--assert 0 = to integer! "+00"
 	 	--assert 0 = to integer! "+00000000000"
 	 	--assert 0 = to integer! "000'000'000"
+
+	 --test-- "make/to integer! string! (known issue)"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2099
+	 	--assert 302961000000 = to integer! "3.02961E+11"
 
 ===end-group===
 

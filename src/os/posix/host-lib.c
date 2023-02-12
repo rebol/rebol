@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -83,6 +84,8 @@ static void *Task_Ready;
 #ifndef USE_OLD_PIPE
 int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" warning
 #endif
+
+RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host-window, host-ext-test..)
 
 /***********************************************************************
 **
@@ -367,7 +370,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 /***********************************************************************
 **
-*/	void OS_Exit(int code)
+*/	REB_NORETURN void OS_Exit(int code)
 /*
 **		Called in all cases when REBOL quits
 **
@@ -385,7 +388,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 /***********************************************************************
 **
-*/	void OS_Crash(const REBYTE *title, const REBYTE *content)
+*/	REB_NORETURN void OS_Crash(const REBYTE *title, const REBYTE *content)
 /*
 **		Tell user that REBOL has crashed. This function must use
 **		the most obvious and reliable method of displaying the

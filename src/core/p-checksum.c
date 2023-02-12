@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Contributors
+**  Copyright 2012-2023 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,7 +53,7 @@
 
 /***********************************************************************
 **
-*/	static void Init_sizes(REBVAL *method, int *blk, int *ctx)
+*/	static void Init_sizes(REBVAL *method, REBLEN *blk, REBLEN *ctx)
 /*
 ***********************************************************************/
 {
@@ -224,7 +224,7 @@
 
 	data = BLK_SKIP(port, STD_PORT_DATA); //will hold result
 	ctx  = BLK_SKIP(port, STD_PORT_EXTRA);
-	int ctx_size = 0, blk_size = 0;
+	REBLEN ctx_size = 0, blk_size = 0;
 
 	Init_sizes(method, &blk_size, &ctx_size);
 

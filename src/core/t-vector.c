@@ -160,7 +160,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 			set_vect(bits, ser->data, n++, (REBI64)(data[idx]), f);
 		}
 #else
-		REBCNT bytes = ser->tail * ser->info;
+		REBCNT bytes = ser->tail * SERIES_WIDE(ser); //TODO: review! Wide is max 256 bytes!!!
 		if (len > bytes) len = bytes;
 		COPY_MEM(ser->data, VAL_BIN_DATA(blk), len);
 #endif

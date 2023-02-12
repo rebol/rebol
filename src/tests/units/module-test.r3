@@ -27,6 +27,8 @@ supplement system/options/module-paths join what-dir %units/files/
 		]
 
 	--test-- "export"
+	;-- Note: using tests against user's context, because the unit tests are called using `wrap` which
+	;--       callects and binds all set-words used in modules code bellow and so values are not imported.
 	;@@ https://github.com/Oldes/Rebol-issues/issues/689
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1446
 		unset in system/contexts/user 'a
@@ -40,7 +42,7 @@ supplement system/options/module-paths join what-dir %units/files/
 			unset? :system/contexts/user/a
 			unset? :system/contexts/user/b
 			unset? :system/contexts/user/c
-			module? import m
+			module? import (m)
 			system/contexts/user/a = 1
 			unset? :system/contexts/user/b
 			system/contexts/user/c = 3
@@ -57,7 +59,7 @@ supplement system/options/module-paths join what-dir %units/files/
 			unset? :system/contexts/user/a
 			unset? :system/contexts/user/b
 			unset? :system/contexts/user/c
-			module? import m
+			module? import (m)
 			system/contexts/user/a = 1
 			unset? :system/contexts/user/b
 			system/contexts/user/c = 3
@@ -74,7 +76,7 @@ supplement system/options/module-paths join what-dir %units/files/
 			unset? :system/contexts/user/a
 			unset? :system/contexts/user/b
 			unset? :system/contexts/user/c
-			module? import m
+			module? import (m)
 			none? system/contexts/user/a
 			unset? :system/contexts/user/b
 			none? system/contexts/user/c
@@ -89,13 +91,13 @@ supplement system/options/module-paths join what-dir %units/files/
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1007
 		m: module [] [a: 1 2]
 		--assert 1 = m/a
-		unset 'a
+		unset in system/contexts/user 'a
 		m: module [exports: [a]] [a: 1 2]
 		--assert 1 = m/a
-		--assert unset? :a
-		import m
-		--assert 1 = :a
-		unset 'a
+		--assert unset? :system/contexts/user/a
+		import (m)
+		--assert 1 = :system/contexts/user/a
+		unset in system/contexts/user 'a
 
 ===end-group===
 
@@ -222,7 +224,7 @@ myfunc: func [arg [string!]][reverse arg]
 REBOL []
 c: true ; should not be rewritten
 m: module [][export a: 1 b: 2 export c: 3]
-import m
+import (m)
 ;-assert-1
 probe a = 1     ; exported
 ;-assert-2
@@ -232,7 +234,7 @@ probe logic? :c ; not rewritten
 
 ;-assert-4
 unset [a b c]   ; reset all
-import/no-user m
+import/no-user (m)
 probe all [unset? :a unset? :b unset? :c]
 }
 	o: copy ""
@@ -251,7 +253,7 @@ probe all [
 ]
 
 m1: module [name: no-lib-test-a][export a: 1]
-import m1
+import (m1)
 
 ;-assert-2 = check existence of imported values
 probe all [
@@ -265,7 +267,7 @@ probe 1 = system/contexts/lib/a ; still available in lib
 
 ;-assert-4 = import using /no-lib
 m2: module [name: no-lib-test-b][export b: 2]
-import/no-lib m2
+import/no-lib (m2)
 probe all [
 	2 = b                      ; imported to user context
 	none? get in system/contexts/lib 'b ; but not to lib
@@ -315,10 +317,10 @@ probe all [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1687
 		m-1687: module [version: 1.0.0 name: 'm-1687][a: 1]
 		--assert all [
-			error? e: try [import/version m-1687 2.2.2]
+			error? e: try [import/version (m-1687) 2.2.2]
 			e/id = 'needs
 		]
-		--assert module? m: try [import/version m-1687 1.0.0]
+		--assert module? m: try [import/version (m-1687) 1.0.0]
 		--assert all [
 			;@@ https://github.com/Oldes/Rebol-wishes/issues/13
 			object? m/lib-local
@@ -333,12 +335,12 @@ probe all [
 		--assert block? m: sys/load-module/check s c
 		--assert module? m/2
 		--assert 22 = m/2/f 22
-		--assert module? m: import/check s c
+		--assert module? m: import/check (s) c
 		--assert 33 = m/f 33
 		; corrupt the source:
 		change find s to-binary "f:" "g"
 		--assert all [
-			error? e: try [import/check s c]
+			error? e: try [import/check (s) c]
 			e/id = 'bad-checksum
 		]
 

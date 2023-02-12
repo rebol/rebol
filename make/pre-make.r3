@@ -150,7 +150,9 @@ arch: any [
 	all [word? spec/arch          spec/arch       ]
 	all [word? spec/target-arch   spec/target-arch]
 ]
+os-info: get-os-info
 os:  any [
+	select os-info 'ID
 	all [word? spec/os spec/os]
 	select #(
 		Macintosh: macos
@@ -159,7 +161,7 @@ os:  any [
 		OpenBSD:   openbsd
 	) platform	
 ]
-sys: any [
+syst: any [
 	; none, linux, win32, darwin, cuda, etc.
 	spec/sys
 	spec/kernel
@@ -182,9 +184,9 @@ abi: any [
 		reactos: pe
 		beos:    pe
 		linux:   elf
-		alpine:  musl
-	) os
-]    
+		;alpine:  musl
+	) spec/os
+]
 
 product:  any [spec/product 'Core]
 configs:  unique any [spec/config copy []]
@@ -199,7 +201,7 @@ unless target [
 	target: clear ""
 	if arch   [append append target arch   #"-"]
 	if vendor [append append target vendor #"-"]
-	if sys    [append append target sys    #"-"]
+	if syst   [append append target syst   #"-"]
 	if abi    [append append target abi    #"-"]
 	take/last target
 ]
@@ -220,20 +222,31 @@ try/except [
 ][	git-commit: none]
 
 str-version: reform [
-	"Rebol" ; probably always same
+	"Rebol"  ; probably always same
 	product  ; like Core, View, etc...
 	version  ; triple value product version
 	platform ; Linux, Windows, macOS, Android...
 	os
 	arch
 	vendor
-	sys
+	syst
 	abi
 	any [all [word? spec/compiler spec/compiler]] ; gcc, clang, msvc...
 	target
 	build-date
 	git-commit
+	get-libc-version ;; musl, glibc_2.28,... or just none
+	select os-info 'VERSION_ID
 ]
+
+;;format-date-time may not be available in older Builder tools!
+;;format-date-time now/utc "(yyyy-MM-dd hh:mm:ss UTC)"
+
+short-str-version: next ajoin [{
+Rebol/} product SP version " (" build-date { UTC)
+Copyright (c) 2012 REBOL Technologies
+Copyright (c) 2012-} now/year { Rebol Open Source Contributors
+Source:       https://github.com/Oldes/Rebol3}]
 
 ver3: version ver3/4: none ; trimmed version to just 3 parts
 lib-version: version/1

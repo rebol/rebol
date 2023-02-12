@@ -89,7 +89,7 @@ do*: func [
 			; Eval the block or make the module, returned
 			either mod? [ ; Import the module and set the var
 				spec: reduce [hdr data do-needs/no-user hdr]
-				also import catch/quit [make module! spec]
+				also import (catch/quit [make module! spec])
 					if var [set var tail data]
 			][
 				do-needs hdr  ; Load the script requirements
@@ -227,7 +227,7 @@ assert-utf8: function [
 
 log: func [
 	"Prints out debug message"
-	id [word!] "Source of the log message"
+	'id [any-word!] "Source of the log message"
 	msg        "Output message"
 	/info
 	/more

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +50,7 @@ const REBYTE * const Crash_Msgs[] = {
 	BP"assertion failed",
 	BP"invalid datatype %d",
 	BP"unspecific",
-	BP"\n\nProgram terminated abnormally.\nThis should never happen.\nPlease contact www.REBOL.com with details."
+	BP"\n\nProgram terminated abnormally.\nThis should never happen.\nPlease contact www.github.com/Oldes/Rebol3 with details."
 };
 
 const REBYTE * const Str_Dump[] = {

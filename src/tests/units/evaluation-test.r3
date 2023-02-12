@@ -768,7 +768,7 @@ Rebol [
 			num == 1 ;- note that num was incremented!
 		]
 		--assert all [
-			nnum: 0
+			num: 0
 			for i 1 1 1 [num: num + 1]
 			num == 1 ;- also incremented
 		]

@@ -16,7 +16,7 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Install Siskin Builder
       uses: oldes/install-siskin@v0.7.1
@@ -82,39 +82,39 @@ jobs:
 
     ###############################################################################
     # Collecting 32bit build artifacts...
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: Rebol-32bit-Windows-${{github.run_id}}
         path: ./rebol3-*-x86.exe
     # and lib/host variant...
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: Rebol-32bit-Windows-lib-${{github.run_id}}
         path: ./lib-*-x86.dll
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: Rebol-32bit-Windows-lib-${{github.run_id}}
         path: ./lib-*-x86.lib
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: Rebol-32bit-Windows-lib-${{github.run_id}}
         path: ./host-*-x86.exe
 
     # Collecting 64bit build artifacts...
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: Rebol-64bit-Windows-${{github.run_id}}
         path: ./rebol3-*-x64.exe
     # and lib/host variant...
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: Rebol-64bit-Windows-lib-${{github.run_id}}
         path: ./lib-*-x64.dll
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: Rebol-64bit-Windows-lib-${{github.run_id}}
         path: ./lib-*-x64.lib
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: Rebol-64bit-Windows-lib-${{github.run_id}}
         path: ./host-*-x64.exe
@@ -129,7 +129,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Siskin Builder
         uses: oldes/install-siskin@v0.7.1
@@ -176,7 +176,7 @@ jobs:
           mv ./build/rebol3-bulk-linux-x86 ./
           gzip -9 ./rebol3-bulk-linux-x86
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: Rebol-32bit-Linux-${{github.run_id}}
           path: ./rebol3-*-x86.gz
@@ -194,7 +194,7 @@ jobs:
           mv ./build/rebol3-bulk-linux-x64 ./rebol3-bulk-linux-x64
           gzip -9 ./rebol3-bulk-linux-x64
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: Rebol-64bit-Linux-${{github.run_id}}
           path: ./rebol3-*-x64.gz
@@ -216,7 +216,7 @@ jobs:
           chmod +x ./build-all-alpine.sh
           docker run -v $PWD:/out/ oldes/rebol-dev:alpine /out/build-all-alpine.sh
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: Rebol-64bit-Linux-musl-${{github.run_id}}
           path: .github/workflows/alpine/*.gz
@@ -226,7 +226,7 @@ jobs:
     runs-on: macos-12
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Siskin Builder
         uses: oldes/install-siskin@v0.7.1
@@ -254,7 +254,7 @@ jobs:
       - name: Build ARM64 Rebol/Core using clang
         run: |
           ./siskin make/rebol3.nest %rebol3-core-macos-arm64
-          file ./build/rebol3-core-macos-x64
+          file ./build/rebol3-core-macos-arm64
 
       - name: Build ARM64 Rebol/Bulk using clang
         run: |
@@ -344,12 +344,12 @@ jobs:
 #          mv ./build/host-core-macos-x64 ./host-core-macos-x64
 #          gzip -9 ./host-core-macos-x64
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: Rebol-64bit-macOS-intel-${{github.run_id}}
           path: ./*-x64.gz
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: Rebol-64bit-macOS-arm-${{github.run_id}}
           path: ./*-arm64.gz
