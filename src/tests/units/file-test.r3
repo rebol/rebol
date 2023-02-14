@@ -66,6 +66,7 @@ if find [Linux macOS] system/platform [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2538
 	cd (mkdir %issue-2538)
 	call/shell/wait "touch a:0:0"
+	--assert %a%3A0%3A0 == to-rebol-file "a:0:0" 
 	--assert %a%3A0%3A0 == f: first read %.
 	--assert %a%3A0%3A0 == second split-path query/mode f 'name
 	delete f
