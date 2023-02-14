@@ -942,10 +942,16 @@ arch-x86: [
 		defines: TO_FREEBSD
 	]
 ]
+arch-arm32: [
+	:arch-x86
+	arch: arm32
+	#if linux? [ flag: "-march=native" ] ;; expects, that the host system is arm32!
+]
 arch-arm64: [
 	:arch-x64
 	arch: arm64
-	flags: ["-arch arm64"]
+	#if macOS? [ flag: "-arch arm64" ]
+	#if linux? [ flag: "-march=native" ] ;; expects, that the host system is arm64!
 	;define: __arm64__
 ]
 
@@ -994,6 +1000,7 @@ make-exe: [
 ]
 make-x86-exe:   [:arch-x86   :make-exe ]
 make-x64-exe:   [:arch-x64   :make-exe ]
+make-arm32-exe: [:arch-arm32 :make-exe ]
 make-arm64-exe: [:arch-arm64 :make-exe ]
 
 ; for making Rebol as a shared library
@@ -1156,6 +1163,42 @@ eggs: [
 			:target-linux
 			:include-rebol-bulk
 			:make-x64-exe
+		]
+
+		"Rebol/Base linux-arm32" [
+			name:     %rebol3-base-linux-arm32
+			:target-linux
+			:make-arm32-exe
+		]
+		"Rebol/Core linux-arm32" [
+			name:     %rebol3-core-linux-arm32
+			:target-linux
+			:include-rebol-core
+			:make-arm32-exe
+		]
+		"Rebol/Bulk linux-arm32" [
+			name:     %rebol3-bulk-linux-arm32
+			:target-linux
+			:include-rebol-bulk
+			:make-arm32-exe
+		]
+
+		"Rebol/Base linux-arm64" [
+			name:     %rebol3-base-linux-arm64
+			:target-linux
+			:make-arm64-exe
+		]
+		"Rebol/Core linux-arm64" [
+			name:     %rebol3-core-linux-arm64
+			:target-linux
+			:include-rebol-core
+			:make-arm64-exe
+		]
+		"Rebol/Bulk linux-arm64" [
+			name:     %rebol3-bulk-linux-arm64
+			:target-linux
+			:include-rebol-bulk
+			:make-arm64-exe
 		]
 
 		"Rebol/Core linux-x64 shared library" [

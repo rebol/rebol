@@ -67,6 +67,7 @@
 	for (i = 0; i < len;) {
 		c = uni ? ((REBUNI*)bp)[i] : ((REBYTE*)bp)[i];
 		i++;
+#ifdef TO_WINDOWS
 		if (c == ':') {
 			// Handle the vol:dir/file format:
 			if (colon || slash) return 0; // no prior : or / allowed
@@ -77,7 +78,9 @@
 			}
 			c = '/'; // replace : with a /
 		}
-		else if (c == '\\' || c== '/') {
+		else
+#endif
+		if (c == '\\' || c== '/') {
 			if (slash > 0) continue;
 			c = '/';
 			slash = 1;
