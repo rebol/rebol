@@ -70,6 +70,7 @@ if find [Linux macOS] system/platform [
 	--assert %a%3A0%3A0 == second split-path query/mode f 'name
 	delete f
 	cd ..
+	delete %issue-2538
 ]
 
 ===end-group===
