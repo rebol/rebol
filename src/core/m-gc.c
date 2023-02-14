@@ -294,7 +294,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	MARK_SERIES(series);
 
 	// If not a block, go no further
-	if (SERIES_WIDE(series) != sizeof(REBVAL)) return;
+	if (SERIES_WIDE(series) != sizeof(REBVAL) || IS_BARE_SERIES(series)) return;
 
 	ASSERT2(RP_SERIES_OVERFLOW, SERIES_TAIL(series) < SERIES_REST(series));
 
