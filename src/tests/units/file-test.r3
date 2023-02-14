@@ -61,6 +61,17 @@ secure [%/ allow]
 	--assert %/rodan/shareddocs    = to-rebol-file "\\rodan\shareddocs"
 	--assert %/rodan/shareddocs/   = to-rebol-file "\\rodan\shareddocs\"
 
+if find [Linux macOS] system/platform [
+--test-- "issue-2538"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2538
+	cd (mkdir %issue-2538)
+	call/shell/wait "touch a:0:0"
+	--assert %a%3A0%3A0 == f: first read %.
+	--assert %a%3A0%3A0 == second split-path query/mode f 'name
+	delete f
+	cd ..
+]
+
 ===end-group===
 
 ===start-group=== "suffix?"
