@@ -1203,6 +1203,7 @@ eggs: [
 
 		"Rebol/Core linux-x64 shared library" [
 			name:     %lib-rebol3-core-linux-x64
+			lflag:    "-Wl,-install_name,'/usr/local/lib/librebol-core.3.so'"
 			:target-linux
 			:include-rebol-core
 			:make-x64-dll
@@ -1253,7 +1254,7 @@ eggs: [
 
 		"Rebol/Core macos-x64 shared library" [
 			name:   %lib-rebol3-core-macos-x64
-			flag:   "-Wl,-install_name,'/usr/local/lib/librebol-core.3.dylib'"
+			lflag:  "-Wl,-install_name,'/usr/local/lib/librebol-core.3.dylib'"
 			:target-macos
 			:include-rebol-core
 			:make-x64-dll
@@ -1267,7 +1268,7 @@ eggs: [
 		]
 		"Rebol/Bulk macos-x64 shared library" [
 			name:   %lib-rebol3-bulk-macos-x64
-			flag:   "-Wl,-install_name,'/usr/local/lib/librebol.3.dylib'"
+			lflag:  "-Wl,-install_name,'/usr/local/lib/librebol.3.dylib'"
 			:target-macos
 			:include-rebol-bulk
 			:make-x64-dll
@@ -1282,7 +1283,7 @@ eggs: [
 
 		"Rebol/Core macos-arm64 shared library" [
 			name:   %lib-rebol3-core-macos-arm64
-			flag:   "-Wl,-install_name,'/usr/local/lib/librebol-core.3.dylib'"
+			lflag:  "-Wl,-install_name,'/usr/local/lib/librebol-core.3.dylib'"
 			:target-macos
 			:include-rebol-core
 			:make-arm64-dll
@@ -1297,7 +1298,7 @@ eggs: [
 
 		"Rebol/Bulk macos-arm64 shared library" [
 			name:   %lib-rebol3-bulk-macos-arm64
-			lflag:   "-Wl,-install_name,'/usr/local/lib/librebol.3.dylib'"
+			lflag:  "-Wl,-install_name,'/usr/local/lib/librebol.3.dylib'"
 			:target-macos
 			:include-rebol-bulk
 			:make-arm64-dll
@@ -1349,6 +1350,7 @@ eggs: [
 
 		"Rebol/Core openbsd-x64 shared library" [
 			name:   %lib-rebol3-core-openbsd-x64
+			lflag:  "-Wl,-install_name,'/usr/local/lib/librebol-core.3.so'"
 			:target-openbsd
 			:include-rebol-core
 			:make-x64-dll
@@ -1382,6 +1384,7 @@ eggs: [
 
 		"Rebol/Core freebsd-x64 shared library" [
 			name:   %lib-rebol3-core-freebsd-x64
+			lflag:  "-Wl,-install_name,'/usr/local/lib/librebol-core.3.so'"
 			:target-freebsd
 			:include-rebol-core
 			:make-x64-dll
