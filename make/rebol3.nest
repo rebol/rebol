@@ -954,6 +954,10 @@ arch-arm64: [
 	#if linux? [ flag: "-march=native" ] ;; expects, that the host system is arm64!
 	;define: __arm64__
 ]
+arch-mips64le: [
+	:arch-x64
+	arch: mips64le
+]
 
 
 ;-------------------------------------------------------------------------------
@@ -1002,6 +1006,7 @@ make-x86-exe:   [:arch-x86   :make-exe ]
 make-x64-exe:   [:arch-x64   :make-exe ]
 make-arm32-exe: [:arch-arm32 :make-exe ]
 make-arm64-exe: [:arch-arm64 :make-exe ]
+make-mips64le-exe: [:arch-mips64le :make-exe ]
 
 ; for making Rebol as a shared library
 make-dll: [
@@ -1199,6 +1204,24 @@ eggs: [
 			:target-linux
 			:include-rebol-bulk
 			:make-arm64-exe
+		]
+
+		"Rebol/Base linux-mips64le" [
+			name:     %rebol3-base-linux-mips64le
+			:target-linux
+			:make-mips64le-exe
+		]
+		"Rebol/Core linux-mips64le" [
+			name:     %rebol3-core-linux-mips64le
+			:target-linux
+			:include-rebol-core
+			:make-mips64le-exe
+		]
+		"Rebol/Bulk linux-mips64le" [
+			name:     %rebol3-bulk-linux-mips64le
+			:target-linux
+			:include-rebol-bulk
+			:make-mips64le-exe
 		]
 
 		"Rebol/Core linux-x64 shared library" [
