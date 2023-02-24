@@ -4,7 +4,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2019 Rebol Open Source Developers
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@
 
 #include "sys-poly1305.h"
 
-#if (defined(__LP64__) || defined(TO_WIN32_X64))
+#if (defined(__LP64__) || defined(__LLP64__))
 #include "poly1305/poly1305-donna-64.h"
 #else
 #include "poly1305/poly1305-donna-32.h"

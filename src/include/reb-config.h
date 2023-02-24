@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Developers
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +34,7 @@
 
 The primary target system is defined by:
 
-	TO_target		- for example TO_WIN32 or TO_LINUX
+	TO_target		- for example TO_WINDOWS or TO_LINUX
 
 The default config builds an R3 HOST executable program.
 
@@ -98,13 +98,6 @@ These are now obsolete (as of A107) and should be removed:
 
 //* MS Windows *********************************************************
 
-#ifdef TO_WIN32	
-#define TO_WINDOWS
-#endif
-#ifdef TO_WIN32_X64
-#define TO_WINDOWS
-#endif
-
 #ifdef TO_WINDOWS				// Win32/Intel
 
 #define	WIN32_LEAN_AND_MEAN		// trim down the Win32 headers
@@ -166,8 +159,7 @@ These are now obsolete (as of A107) and should be removed:
 #define AGG_FREETYPE            //use freetype2 library for fonts by default
 #define INLINE
 
-#ifdef TO_OSX_X64
-#define TO_OSX
+#ifdef TO_MACOS
 #define FINITE isfinite
 #else
 #define FINITE finite
@@ -184,24 +176,13 @@ These are now obsolete (as of A107) and should be removed:
 #define API_IMPORT
 #endif
 
+
 #ifdef TO_LINUX
-#define TO_ANY_LINUX
-#endif
-
-#ifdef TO_LINUX_X64
-#define TO_ANY_LINUX
-#endif
-
-#ifdef TO_LINUX_MIPS
-#define TO_ANY_LINUX
-#endif
-
-#ifdef TO_LINUX_ARM
-#define TO_ANY_LINUX
-#endif
-
-#ifdef TO_ANY_LINUX
 #undef INCLUDE_MIDI_DEVICE      // Not implemented!
+#define USE_SETENV 
+#endif
+
+#ifdef TO_MACOS					// macOS
 #define USE_SETENV 
 #endif
 
