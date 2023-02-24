@@ -18,7 +18,13 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.10.3
+version: 3.10.4
+
+#if Linux?   [ defines: TO_LINUX   ]
+#if macOS?   [ defines: TO_MACOS   ]
+#if Windows? [ defines: TO_WINDOWS ]
+#if OpenBSD? [ defines: TO_OPENBSD ]
+#if FreeBSD? [ defines: TO_FREEBSD ]
 
 target-windows: [
 	os:       windows
@@ -906,48 +912,34 @@ arch-x64: [
 	define: _FILE_OFFSET_BITS=64
 	#if Linux? [
 		library: %dl
-		defines: TO_LINUX_X64
 		defines: __LP64__ ; has long (integer) 64 bits
 	]
 	#if Windows? [
-		defines: TO_WIN32_X64
 		defines: _WIN32
 		defines: __LLP64__ ; 64-bit, long (integer) has 32 bits and 'void *' is sizeof(long long)
 	]
 	#if macOS? [
-		defines: TO_OSX_X64
 		defines: __LP64__ ; same like LLP64, but long (integer) has 64 bits instead of 32
 	] 
-	#if OpenBSD? [
-		defines: TO_OPENBSD
-	]
-	#if FreeBSD? [
-		defines: TO_FREEBSD
-	]
 ]
 arch-x86: [
 	arch: x86
-	#if Linux? [
+	#if Windows? [ resource-options: "--target=pe-i386" ]
+]
+arch-armv6: [
+	arch: armv6
+	#if linux? [
+		flag: "-marm"
+		flag: "-march=native" ;; expects, that the host system is arm32!
 		library: %dl
-		defines: TO_LINUX_X86
-	]
-	#if Windows? [
-		resource-options: "--target=pe-i386"
-		defines: TO_WIN32
-	]
-	#if OpenBSD? [
-		defines: TO_OPENBSD
-	]
-	#if FreeBSD? [
-		defines: TO_FREEBSD
 	]
 ]
-arch-arm32: [
-	:arch-x86
-	arch: arm32
-	#if linux? [ flag: "-march=native" ] ;; expects, that the host system is arm32!
+arch-armv7: [
+	:arch-armv6
+	arch: armv7
 ]
-arch-arm64: [
+
+arch-arm64: [ ;= armv8
 	:arch-x64
 	arch: arm64
 	#if macOS? [ flag: "-arch arm64" ]
@@ -1004,7 +996,8 @@ make-exe: [
 ]
 make-x86-exe:   [:arch-x86   :make-exe ]
 make-x64-exe:   [:arch-x64   :make-exe ]
-make-arm32-exe: [:arch-arm32 :make-exe ]
+make-armv6-exe: [:arch-armv6 :make-exe ]
+make-armv7-exe: [:arch-armv7 :make-exe ]
 make-arm64-exe: [:arch-arm64 :make-exe ]
 make-mips64le-exe: [:arch-mips64le :make-exe ]
 
@@ -1170,22 +1163,40 @@ eggs: [
 			:make-x64-exe
 		]
 
-		"Rebol/Base linux-arm32" [
-			name:     %rebol3-base-linux-arm32
+		"Rebol/Base linux-armv6" [
+			name:     %rebol3-base-linux-armv6
 			:target-linux
-			:make-arm32-exe
+			:make-armv6-exe
 		]
-		"Rebol/Core linux-arm32" [
-			name:     %rebol3-core-linux-arm32
+		"Rebol/Core linux-armv6" [
+			name:     %rebol3-core-linux-armv6
 			:target-linux
 			:include-rebol-core
-			:make-arm32-exe
+			:make-armv6-exe
 		]
-		"Rebol/Bulk linux-arm32" [
-			name:     %rebol3-bulk-linux-arm32
+		"Rebol/Bulk linux-armv6" [
+			name:     %rebol3-bulk-linux-armv6
 			:target-linux
 			:include-rebol-bulk
-			:make-arm32-exe
+			:make-armv6-exe
+		]
+
+		"Rebol/Base linux-armv7" [
+			name:     %rebol3-base-linux-armv7
+			:target-linux
+			:make-armv7-exe
+		]
+		"Rebol/Core linux-armv7" [
+			name:     %rebol3-core-linux-armv7
+			:target-linux
+			:include-rebol-core
+			:make-armv7-exe
+		]
+		"Rebol/Bulk linux-armv7" [
+			name:     %rebol3-bulk-linux-armv7
+			:target-linux
+			:include-rebol-bulk
+			:make-armv7-exe
 		]
 
 		"Rebol/Base linux-arm64" [

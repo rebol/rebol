@@ -10,6 +10,7 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Changes:
 
+* [`9a327d`](https://github.com/Oldes/Rebol3/commit/9a327d3aea2106e9b4584965baf26134402d3e58) Simplified use of TO_<os> defines and included Linux armv6 targets (and using armv7 instead of arm32 now)
 * [`6e7fa5`](https://github.com/Oldes/Rebol3/commit/6e7fa57c93b1510e230dbaa5bff7830dc3e3952f) Including `system/build/os-version` information (if known)
 * [`1dbefc`](https://github.com/Oldes/Rebol3/commit/1dbefcdf4b3730e9737bf04bc71ad57cae477a38) Using `system/platform` instead of `system/build/os` to get an extension url
 * [`0d5d91`](https://github.com/Oldes/Rebol3/commit/0d5d91ec4a6955a3d89cd66a9ce209efa84750ab) Better information in `system/build/os` about build on Linux
@@ -22,6 +23,9 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`4070cf`](https://github.com/Oldes/Rebol3/commit/4070cfc30c71fb90aa54a39a82c2fa21a935654e) Missing define from the previous change
+* [`b99a78`](https://github.com/Oldes/Rebol3/commit/b99a783349c4c6113299346344da1942e5d2ce95) 32bit builds crashes when struct is being recycled
+* [`de73f7`](https://github.com/Oldes/Rebol3/commit/de73f73bfb1f7375190589c7a66411c9e84c5cfd) Crash when resolving file name containing a colon char on Posix systems
 * [`1bc5cd`](https://github.com/Oldes/Rebol3/commit/1bc5cdba7dc16fbd86f5a8fe7162fafe9641bc04) Avoid overwriting `sys`
 * [`417992`](https://github.com/Oldes/Rebol3/commit/417992081c5608cc55c07df3a98f858bc67e750c) Make `delta-time` a little bit more precise
 * [`29ada6`](https://github.com/Oldes/Rebol3/commit/29ada63f27d702b0f4c707e4ca173df3c122fc50) Regression related to the recent series changes

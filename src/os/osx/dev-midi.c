@@ -3,7 +3,7 @@
  **  REBOL [R3] Language Interpreter and Run-time Environment
  **
  **  Copyright 2012 REBOL Technologies
- **  Copyright 2012-2021 Rebol Open Source Developers
+ **  Copyright 2012-2023 Rebol Open Source Developers
  **  REBOL is a trademark of REBOL Technologies
  **
  **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,7 +47,7 @@
 
 #ifdef INCLUDE_MIDI_DEVICE
 
-#if defined(TO_OSX) || defined(TO_OSX_X64) || defined(TO_OSXI) //!!! could be made better! 
+#ifdef TO_MACOS
 
 // NOTE: this will be useful for higher level launchpad schemes:
 // https://github.com/FMMT666/launchpad.py/blob/master/launchpad_py/launchpad.py
@@ -489,5 +489,5 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 
 DEFINE_DEV(Dev_MIDI, "MIDI", 1, Dev_Cmds, RDC_MAX, 0);
 
-#endif //defined(TO_OSX) || defined(TO_OSX_X64)
+#endif //TO_MACOS
 #endif //INCLUDE_MIDI_DEVICE

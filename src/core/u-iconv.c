@@ -37,7 +37,7 @@
 **
 ***********************************************************************/
 
-#if defined(TO_WIN32) || defined(TO_WIN32_X64)
+#ifdef TO_WINDOWS
 #include <windows.h>
 #undef IS_ERROR
 #else

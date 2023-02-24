@@ -442,7 +442,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 **
 ***********************************************************************/
 {
-#ifdef TO_OSX
+#ifdef TO_MACOS
 	REBCNT size = 0;
 	REBINT rv;
 	REBCHR *buf;
@@ -1350,7 +1350,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 ***********************************************************************/
 {
 	if (
-#if defined(TO_OSX) || defined(TO_OSXI) || defined(TO_OSX_X64)
+#ifdef TO_MACOS
 		Try_Browser("/usr/bin/open", url)
 #else
 		Try_Browser("xdg-open", url)

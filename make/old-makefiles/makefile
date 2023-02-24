@@ -39,7 +39,7 @@ R= $S/core
 INCL ?= .
 I= -I$(INCL) -I$S/include/
 
-TO_OS?= TO_WIN32_X64
+TO_OS?= TO_WINDOWS
 OS_ID?= 0.3.40
 BIN_SUFFIX= .exe
 LIB_SUFFIX= .dll

@@ -41,7 +41,7 @@
 #include <time.h>
 #include <stdlib.h>
 
-#if defined(TO_OSX_X64) || defined(TO_OSXI) || defined(TO_OSX)
+#ifdef TO_MACOS
 	#include <sys/malloc.h>
 #elif defined(TO_OPENBSD)
 	/* malloc(3) is inside stdlib.h */
