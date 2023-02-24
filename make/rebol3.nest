@@ -21,6 +21,7 @@ optimize:   2
 version: 3.10.3
 
 #if Linux?   [ defines: TO_LINUX   ]
+#if macOS?   [ defines: TO_MACOS   ]
 #if Windows? [ defines: TO_WINDOWS ]
 #if OpenBSD? [ defines: TO_OPENBSD ]
 #if FreeBSD? [ defines: TO_FREEBSD ]
