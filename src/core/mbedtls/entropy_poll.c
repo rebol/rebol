@@ -35,9 +35,7 @@
 #if defined(MBEDTLS_TIMING_C)
 #include "mbedtls/timing.h"
 #endif
-#if defined(MBEDTLS_ENTROPY_NV_SEED)
 #include "mbedtls/platform.h"
-#endif
 
 #if !defined(MBEDTLS_NO_PLATFORM_ENTROPY)
 
@@ -194,6 +192,9 @@ int mbedtls_platform_entropy_poll( void *data,
     file = fopen( "/dev/urandom", "rb" );
     if( file == NULL )
         return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
+
+    /* Ensure no stdio buffering of secrets, as such buffers cannot be wiped. */
+    mbedtls_setbuf( file, NULL );
 
     read_len = fread( output, 1, len, file );
     if( read_len != len )

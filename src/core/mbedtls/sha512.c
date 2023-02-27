@@ -38,23 +38,125 @@
 
 #include <string.h>
 
-#if defined(MBEDTLS_SELF_TEST)
-#if defined(MBEDTLS_PLATFORM_C)
 #include "mbedtls/platform.h"
-#else
-#include <stdio.h>
-#include <stdlib.h>
-#define mbedtls_printf printf
-#define mbedtls_calloc    calloc
-#define mbedtls_free       free
-#endif /* MBEDTLS_PLATFORM_C */
-#endif /* MBEDTLS_SELF_TEST */
 
-#define SHA512_VALIDATE_RET(cond)                           \
-    MBEDTLS_INTERNAL_VALIDATE_RET( cond, MBEDTLS_ERR_SHA512_BAD_INPUT_DATA )
-#define SHA512_VALIDATE(cond)  MBEDTLS_INTERNAL_VALIDATE( cond )
+#if defined(__aarch64__)
+#  if defined(MBEDTLS_SHA512_USE_A64_CRYPTO_IF_PRESENT) || \
+      defined(MBEDTLS_SHA512_USE_A64_CRYPTO_ONLY)
+#    include <arm_neon.h>
+#  endif
+#  if defined(MBEDTLS_SHA512_USE_A64_CRYPTO_IF_PRESENT)
+#    if defined(__unix__)
+#      if defined(__linux__)
+         /* Our preferred method of detection is getauxval() */
+#        include <sys/auxv.h>
+#      endif
+       /* Use SIGILL on Unix, and fall back to it on Linux */
+#      include <signal.h>
+#    endif
+#  endif
+#elif defined(_M_ARM64)
+#  if defined(MBEDTLS_SHA512_USE_A64_CRYPTO_IF_PRESENT) || \
+      defined(MBEDTLS_SHA512_USE_A64_CRYPTO_ONLY)
+#    include <arm64_neon.h>
+#  endif
+#else
+#  undef MBEDTLS_SHA512_USE_A64_CRYPTO_ONLY
+#  undef MBEDTLS_SHA512_USE_A64_CRYPTO_IF_PRESENT
+#endif
+
+#if defined(MBEDTLS_SHA512_USE_A64_CRYPTO_IF_PRESENT)
+/*
+ * Capability detection code comes early, so we can disable
+ * MBEDTLS_SHA512_USE_A64_CRYPTO_IF_PRESENT if no detection mechanism found
+ */
+#if defined(HWCAP_SHA512)
+static int mbedtls_a64_crypto_sha512_determine_support( void )
+{
+    return( ( getauxval( AT_HWCAP ) & HWCAP_SHA512 ) ? 1 : 0 );
+}
+#elif defined(__APPLE__)
+#include <sys/types.h>
+#include <sys/sysctl.h>
+
+static int mbedtls_a64_crypto_sha512_determine_support( void )
+{
+    int value = 0;
+    size_t value_len = sizeof(value);
+
+    int ret = sysctlbyname( "hw.optional.armv8_2_sha512", &value, &value_len,
+                            NULL, 0 );
+    return( ret == 0 && value != 0 );
+}
+#elif defined(_M_ARM64)
+/*
+ * As of March 2022, there don't appear to be any PF_ARM_V8_* flags
+ * available to pass to IsProcessorFeaturePresent() to check for
+ * SHA-512 support. So we fall back to the C code only.
+ */
+#if defined(_MSC_VER)
+#pragma message "No mechanism to detect A64_CRYPTO found, using C code only"
+#else
+#warning "No mechanism to detect A64_CRYPTO found, using C code only"
+#endif
+#elif defined(__unix__) && defined(SIG_SETMASK)
+/* Detection with SIGILL, setjmp() and longjmp() */
+#include <signal.h>
+#include <setjmp.h>
+
+#ifndef asm
+#define asm __asm__
+#endif
+
+static jmp_buf return_from_sigill;
+
+/*
+ * A64 SHA512 support detection via SIGILL
+ */
+static void sigill_handler( int signal )
+{
+    (void) signal;
+    longjmp( return_from_sigill, 1 );
+}
+
+static int mbedtls_a64_crypto_sha512_determine_support( void )
+{
+    struct sigaction old_action, new_action;
+
+    sigset_t old_mask;
+    if( sigprocmask( 0, NULL, &old_mask ) )
+        return( 0 );
+
+    sigemptyset( &new_action.sa_mask );
+    new_action.sa_flags = 0;
+    new_action.sa_handler = sigill_handler;
+
+    sigaction( SIGILL, &new_action, &old_action );
+
+    static int ret = 0;
+
+    if( setjmp( return_from_sigill ) == 0 )        /* First return only */
+    {
+        /* If this traps, we will return a second time from setjmp() with 1 */
+        asm( "sha512h q0, q0, v0.2d" : : : "v0" );
+        ret = 1;
+    }
+
+    sigaction( SIGILL, &old_action, NULL );
+    sigprocmask( SIG_SETMASK, &old_mask, NULL );
+
+    return( ret );
+}
+#else
+#warning "No mechanism to detect A64_CRYPTO found, using C code only"
+#undef MBEDTLS_SHA512_USE_A64_CRYPTO_IF_PRESENT
+#endif  /* HWCAP_SHA512, __APPLE__, __unix__ && SIG_SETMASK */
+
+#endif  /* MBEDTLS_SHA512_USE_A64_CRYPTO_IF_PRESENT */
 
 #if !defined(MBEDTLS_SHA512_ALT)
+
+#define SHA512_BLOCK_SIZE 128
 
 #if defined(MBEDTLS_SHA512_SMALLER)
 static void sha512_put_uint64_be( uint64_t n, unsigned char *b, uint8_t i )
@@ -67,8 +169,6 @@ static void sha512_put_uint64_be( uint64_t n, unsigned char *b, uint8_t i )
 
 void mbedtls_sha512_init( mbedtls_sha512_context *ctx )
 {
-    SHA512_VALIDATE( ctx != NULL );
-
     memset( ctx, 0, sizeof( mbedtls_sha512_context ) );
 }
 
@@ -83,9 +183,6 @@ void mbedtls_sha512_free( mbedtls_sha512_context *ctx )
 void mbedtls_sha512_clone( mbedtls_sha512_context *dst,
                            const mbedtls_sha512_context *src )
 {
-    SHA512_VALIDATE( dst != NULL );
-    SHA512_VALIDATE( src != NULL );
-
     *dst = *src;
 }
 
@@ -94,11 +191,12 @@ void mbedtls_sha512_clone( mbedtls_sha512_context *dst,
  */
 int mbedtls_sha512_starts( mbedtls_sha512_context *ctx, int is384 )
 {
-    SHA512_VALIDATE_RET( ctx != NULL );
 #if defined(MBEDTLS_SHA384_C)
-    SHA512_VALIDATE_RET( is384 == 0 || is384 == 1 );
+    if( is384 != 0 && is384 != 1 )
+        return MBEDTLS_ERR_SHA512_BAD_INPUT_DATA;
 #else
-    SHA512_VALIDATE_RET( is384 == 0 );
+    if( is384 != 0 )
+        return MBEDTLS_ERR_SHA512_BAD_INPUT_DATA;
 #endif
 
     ctx->total[0] = 0;
@@ -188,9 +286,263 @@ static const uint64_t K[80] =
     UL64(0x4CC5D4BECB3E42B6),  UL64(0x597F299CFC657E2A),
     UL64(0x5FCB6FAB3AD6FAEC),  UL64(0x6C44198C4A475817)
 };
+#endif
 
-int mbedtls_internal_sha512_process( mbedtls_sha512_context *ctx,
-                                     const unsigned char data[128] )
+#if defined(MBEDTLS_SHA512_USE_A64_CRYPTO_IF_PRESENT) || \
+    defined(MBEDTLS_SHA512_USE_A64_CRYPTO_ONLY)
+
+#if defined(MBEDTLS_SHA512_USE_A64_CRYPTO_ONLY)
+#  define mbedtls_internal_sha512_process_many_a64_crypto mbedtls_internal_sha512_process_many
+#  define mbedtls_internal_sha512_process_a64_crypto      mbedtls_internal_sha512_process
+#endif
+
+#ifndef asm
+#define asm __asm__
+#endif
+
+/* Accelerated SHA-512 implementation originally written by Simon Tatham for PuTTY,
+ * under the MIT licence; dual-licensed as Apache 2 with his kind permission.
+ */
+
+#if defined(__clang__) && \
+           (__clang_major__ < 13 || \
+           (__clang_major__ == 13 && __clang_minor__ == 0 && __clang_patchlevel__ == 0))
+static inline uint64x2_t vsha512su0q_u64(uint64x2_t x, uint64x2_t y)
+{
+    asm( "sha512su0 %0.2D,%1.2D" : "+w" (x) : "w" (y) );
+    return( x );
+}
+static inline uint64x2_t vsha512su1q_u64(uint64x2_t x, uint64x2_t y, uint64x2_t z)
+{
+    asm( "sha512su1 %0.2D,%1.2D,%2.2D" : "+w" (x) : "w" (y), "w" (z) );
+    return( x );
+}
+static inline uint64x2_t vsha512hq_u64(uint64x2_t x, uint64x2_t y, uint64x2_t z)
+{
+    asm( "sha512h %0,%1,%2.2D" : "+w" (x) : "w" (y), "w" (z) );
+    return( x );
+}
+static inline uint64x2_t vsha512h2q_u64(uint64x2_t x, uint64x2_t y, uint64x2_t z)
+{
+    asm( "sha512h2 %0,%1,%2.2D" : "+w" (x) : "w" (y), "w" (z) );
+    return( x );
+}
+#endif  /* __clang__ etc */
+
+static size_t mbedtls_internal_sha512_process_many_a64_crypto(
+                  mbedtls_sha512_context *ctx, const uint8_t *msg, size_t len )
+{
+    uint64x2_t ab = vld1q_u64( &ctx->state[0] );
+    uint64x2_t cd = vld1q_u64( &ctx->state[2] );
+    uint64x2_t ef = vld1q_u64( &ctx->state[4] );
+    uint64x2_t gh = vld1q_u64( &ctx->state[6] );
+
+    size_t processed = 0;
+
+    for ( ;
+          len >= SHA512_BLOCK_SIZE;
+          processed += SHA512_BLOCK_SIZE,
+                msg += SHA512_BLOCK_SIZE,
+                len -= SHA512_BLOCK_SIZE )
+    {
+        uint64x2_t initial_sum, sum, intermed;
+
+        uint64x2_t ab_orig = ab;
+        uint64x2_t cd_orig = cd;
+        uint64x2_t ef_orig = ef;
+        uint64x2_t gh_orig = gh;
+
+        uint64x2_t s0 = (uint64x2_t) vld1q_u8( msg + 16 * 0 );
+        uint64x2_t s1 = (uint64x2_t) vld1q_u8( msg + 16 * 1 );
+        uint64x2_t s2 = (uint64x2_t) vld1q_u8( msg + 16 * 2 );
+        uint64x2_t s3 = (uint64x2_t) vld1q_u8( msg + 16 * 3 );
+        uint64x2_t s4 = (uint64x2_t) vld1q_u8( msg + 16 * 4 );
+        uint64x2_t s5 = (uint64x2_t) vld1q_u8( msg + 16 * 5 );
+        uint64x2_t s6 = (uint64x2_t) vld1q_u8( msg + 16 * 6 );
+        uint64x2_t s7 = (uint64x2_t) vld1q_u8( msg + 16 * 7 );
+
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__  /* assume LE if these not defined; untested on BE */
+        s0 = vreinterpretq_u64_u8( vrev64q_u8( vreinterpretq_u8_u64( s0 ) ) );
+        s1 = vreinterpretq_u64_u8( vrev64q_u8( vreinterpretq_u8_u64( s1 ) ) );
+        s2 = vreinterpretq_u64_u8( vrev64q_u8( vreinterpretq_u8_u64( s2 ) ) );
+        s3 = vreinterpretq_u64_u8( vrev64q_u8( vreinterpretq_u8_u64( s3 ) ) );
+        s4 = vreinterpretq_u64_u8( vrev64q_u8( vreinterpretq_u8_u64( s4 ) ) );
+        s5 = vreinterpretq_u64_u8( vrev64q_u8( vreinterpretq_u8_u64( s5 ) ) );
+        s6 = vreinterpretq_u64_u8( vrev64q_u8( vreinterpretq_u8_u64( s6 ) ) );
+        s7 = vreinterpretq_u64_u8( vrev64q_u8( vreinterpretq_u8_u64( s7 ) ) );
+#endif
+
+        /* Rounds 0 and 1 */
+        initial_sum = vaddq_u64( s0, vld1q_u64( &K[0] ) );
+        sum = vaddq_u64( vextq_u64( initial_sum, initial_sum, 1 ), gh );
+        intermed = vsha512hq_u64( sum, vextq_u64( ef, gh, 1 ), vextq_u64( cd, ef, 1 ) );
+        gh = vsha512h2q_u64( intermed, cd, ab );
+        cd = vaddq_u64( cd, intermed );
+
+        /* Rounds 2 and 3 */
+        initial_sum = vaddq_u64( s1, vld1q_u64( &K[2] ) );
+        sum = vaddq_u64( vextq_u64( initial_sum, initial_sum, 1 ), ef );
+        intermed = vsha512hq_u64( sum, vextq_u64( cd, ef, 1 ), vextq_u64( ab, cd, 1 ) );
+        ef = vsha512h2q_u64( intermed, ab, gh );
+        ab = vaddq_u64( ab, intermed );
+
+        /* Rounds 4 and 5 */
+        initial_sum = vaddq_u64( s2, vld1q_u64( &K[4] ) );
+        sum = vaddq_u64( vextq_u64( initial_sum, initial_sum, 1 ), cd );
+        intermed = vsha512hq_u64( sum, vextq_u64( ab, cd, 1 ), vextq_u64( gh, ab, 1 ) );
+        cd = vsha512h2q_u64( intermed, gh, ef );
+        gh = vaddq_u64( gh, intermed );
+
+        /* Rounds 6 and 7 */
+        initial_sum = vaddq_u64( s3, vld1q_u64( &K[6] ) );
+        sum = vaddq_u64( vextq_u64( initial_sum, initial_sum, 1 ), ab );
+        intermed = vsha512hq_u64( sum, vextq_u64( gh, ab, 1 ), vextq_u64( ef, gh, 1 ) );
+        ab = vsha512h2q_u64( intermed, ef, cd );
+        ef = vaddq_u64( ef, intermed );
+
+        /* Rounds 8 and 9 */
+        initial_sum = vaddq_u64( s4, vld1q_u64( &K[8] ) );
+        sum = vaddq_u64( vextq_u64( initial_sum, initial_sum, 1 ), gh );
+        intermed = vsha512hq_u64( sum, vextq_u64( ef, gh, 1 ), vextq_u64( cd, ef, 1 ) );
+        gh = vsha512h2q_u64( intermed, cd, ab );
+        cd = vaddq_u64( cd, intermed );
+
+        /* Rounds 10 and 11 */
+        initial_sum = vaddq_u64( s5, vld1q_u64( &K[10] ) );
+        sum = vaddq_u64( vextq_u64( initial_sum, initial_sum, 1 ), ef );
+        intermed = vsha512hq_u64( sum, vextq_u64( cd, ef, 1 ), vextq_u64( ab, cd, 1 ) );
+        ef = vsha512h2q_u64( intermed, ab, gh );
+        ab = vaddq_u64( ab, intermed );
+
+        /* Rounds 12 and 13 */
+        initial_sum = vaddq_u64( s6, vld1q_u64( &K[12] ) );
+        sum = vaddq_u64( vextq_u64( initial_sum, initial_sum, 1 ), cd );
+        intermed = vsha512hq_u64( sum, vextq_u64( ab, cd, 1 ), vextq_u64( gh, ab, 1 ) );
+        cd = vsha512h2q_u64( intermed, gh, ef );
+        gh = vaddq_u64( gh, intermed );
+
+        /* Rounds 14 and 15 */
+        initial_sum = vaddq_u64( s7, vld1q_u64( &K[14] ) );
+        sum = vaddq_u64( vextq_u64( initial_sum, initial_sum, 1 ), ab );
+        intermed = vsha512hq_u64( sum, vextq_u64( gh, ab, 1 ), vextq_u64( ef, gh, 1 ) );
+        ab = vsha512h2q_u64( intermed, ef, cd );
+        ef = vaddq_u64( ef, intermed );
+
+        for ( unsigned int t = 16; t < 80; t += 16 )
+        {
+            /* Rounds t and t + 1 */
+            s0 = vsha512su1q_u64( vsha512su0q_u64( s0, s1 ), s7, vextq_u64( s4, s5, 1 ) );
+            initial_sum = vaddq_u64( s0, vld1q_u64( &K[t] ) );
+            sum = vaddq_u64( vextq_u64( initial_sum, initial_sum, 1 ), gh );
+            intermed = vsha512hq_u64( sum, vextq_u64( ef, gh, 1 ), vextq_u64( cd, ef, 1 ) );
+            gh = vsha512h2q_u64( intermed, cd, ab );
+            cd = vaddq_u64( cd, intermed );
+
+            /* Rounds t + 2 and t + 3 */
+            s1 = vsha512su1q_u64( vsha512su0q_u64( s1, s2 ), s0, vextq_u64( s5, s6, 1 ) );
+            initial_sum = vaddq_u64( s1, vld1q_u64( &K[t + 2] ) );
+            sum = vaddq_u64( vextq_u64( initial_sum, initial_sum, 1 ), ef );
+            intermed = vsha512hq_u64( sum, vextq_u64( cd, ef, 1 ), vextq_u64( ab, cd, 1 ) );
+            ef = vsha512h2q_u64( intermed, ab, gh );
+            ab = vaddq_u64( ab, intermed );
+
+            /* Rounds t + 4 and t + 5 */
+            s2 = vsha512su1q_u64( vsha512su0q_u64( s2, s3 ), s1, vextq_u64( s6, s7, 1 ) );
+            initial_sum = vaddq_u64( s2, vld1q_u64( &K[t + 4] ) );
+            sum = vaddq_u64( vextq_u64( initial_sum, initial_sum, 1 ), cd );
+            intermed = vsha512hq_u64( sum, vextq_u64( ab, cd, 1 ), vextq_u64( gh, ab, 1 ) );
+            cd = vsha512h2q_u64( intermed, gh, ef );
+            gh = vaddq_u64( gh, intermed );
+
+            /* Rounds t + 6 and t + 7 */
+            s3 = vsha512su1q_u64( vsha512su0q_u64( s3, s4 ), s2, vextq_u64( s7, s0, 1 ) );
+            initial_sum = vaddq_u64( s3, vld1q_u64( &K[t + 6] ) );
+            sum = vaddq_u64( vextq_u64( initial_sum, initial_sum, 1 ), ab );
+            intermed = vsha512hq_u64( sum, vextq_u64( gh, ab, 1 ), vextq_u64( ef, gh, 1 ) );
+            ab = vsha512h2q_u64( intermed, ef, cd );
+            ef = vaddq_u64( ef, intermed );
+
+            /* Rounds t + 8 and t + 9 */
+            s4 = vsha512su1q_u64( vsha512su0q_u64( s4, s5 ), s3, vextq_u64( s0, s1, 1 ) );
+            initial_sum = vaddq_u64( s4, vld1q_u64( &K[t + 8] ) );
+            sum = vaddq_u64( vextq_u64( initial_sum, initial_sum, 1 ), gh );
+            intermed = vsha512hq_u64( sum, vextq_u64( ef, gh, 1 ), vextq_u64( cd, ef, 1 ) );
+            gh = vsha512h2q_u64( intermed, cd, ab );
+            cd = vaddq_u64( cd, intermed );
+
+            /* Rounds t + 10 and t + 11 */
+            s5 = vsha512su1q_u64( vsha512su0q_u64( s5, s6 ), s4, vextq_u64( s1, s2, 1 ) );
+            initial_sum = vaddq_u64( s5, vld1q_u64( &K[t + 10] ) );
+            sum = vaddq_u64( vextq_u64( initial_sum, initial_sum, 1 ), ef );
+            intermed = vsha512hq_u64( sum, vextq_u64( cd, ef, 1 ), vextq_u64( ab, cd, 1 ) );
+            ef = vsha512h2q_u64( intermed, ab, gh );
+            ab = vaddq_u64( ab, intermed );
+
+            /* Rounds t + 12 and t + 13 */
+            s6 = vsha512su1q_u64( vsha512su0q_u64( s6, s7 ), s5, vextq_u64( s2, s3, 1 ) );
+            initial_sum = vaddq_u64( s6, vld1q_u64( &K[t + 12] ) );
+            sum = vaddq_u64( vextq_u64( initial_sum, initial_sum, 1 ), cd );
+            intermed = vsha512hq_u64( sum, vextq_u64( ab, cd, 1 ), vextq_u64( gh, ab, 1 ) );
+            cd = vsha512h2q_u64( intermed, gh, ef );
+            gh = vaddq_u64( gh, intermed );
+
+            /* Rounds t + 14 and t + 15 */
+            s7 = vsha512su1q_u64( vsha512su0q_u64( s7, s0 ), s6, vextq_u64( s3, s4, 1 ) );
+            initial_sum = vaddq_u64( s7, vld1q_u64( &K[t + 14] ) );
+            sum = vaddq_u64( vextq_u64( initial_sum, initial_sum, 1 ), ab );
+            intermed = vsha512hq_u64( sum, vextq_u64( gh, ab, 1 ), vextq_u64( ef, gh, 1 ) );
+            ab = vsha512h2q_u64( intermed, ef, cd );
+            ef = vaddq_u64( ef, intermed );
+        }
+
+        ab = vaddq_u64( ab, ab_orig );
+        cd = vaddq_u64( cd, cd_orig );
+        ef = vaddq_u64( ef, ef_orig );
+        gh = vaddq_u64( gh, gh_orig );
+    }
+
+    vst1q_u64( &ctx->state[0], ab );
+    vst1q_u64( &ctx->state[2], cd );
+    vst1q_u64( &ctx->state[4], ef );
+    vst1q_u64( &ctx->state[6], gh );
+
+    return( processed );
+}
+
+#if defined(MBEDTLS_SHA512_USE_A64_CRYPTO_IF_PRESENT)
+/*
+ * This function is for internal use only if we are building both C and A64
+ * versions, otherwise it is renamed to be the public mbedtls_internal_sha512_process()
+ */
+static
+#endif
+int mbedtls_internal_sha512_process_a64_crypto( mbedtls_sha512_context *ctx,
+                              const unsigned char data[SHA512_BLOCK_SIZE] )
+{
+    return( mbedtls_internal_sha512_process_many_a64_crypto( ctx, data,
+                SHA512_BLOCK_SIZE ) == SHA512_BLOCK_SIZE ) ? 0 : -1;
+}
+
+#endif /* MBEDTLS_SHA512_USE_A64_CRYPTO_IF_PRESENT || MBEDTLS_SHA512_USE_A64_CRYPTO_ONLY */
+
+
+#if !defined(MBEDTLS_SHA512_USE_A64_CRYPTO_IF_PRESENT)
+#define mbedtls_internal_sha512_process_many_c mbedtls_internal_sha512_process_many
+#define mbedtls_internal_sha512_process_c      mbedtls_internal_sha512_process
+#endif
+
+
+#if !defined(MBEDTLS_SHA512_PROCESS_ALT) && !defined(MBEDTLS_SHA512_USE_A64_CRYPTO_ONLY)
+
+#if defined(MBEDTLS_SHA512_USE_A64_CRYPTO_IF_PRESENT)
+/*
+ * This function is for internal use only if we are building both C and A64
+ * versions, otherwise it is renamed to be the public mbedtls_internal_sha512_process()
+ */
+static
+#endif
+int mbedtls_internal_sha512_process_c( mbedtls_sha512_context *ctx,
+                                       const unsigned char data[SHA512_BLOCK_SIZE] )
 {
     int i;
     struct
@@ -198,9 +550,6 @@ int mbedtls_internal_sha512_process( mbedtls_sha512_context *ctx,
         uint64_t temp1, temp2, W[80];
         uint64_t A[8];
     } local;
-
-    SHA512_VALIDATE_RET( ctx != NULL );
-    SHA512_VALIDATE_RET( (const unsigned char *)data != NULL );
 
 #define  SHR(x,n) ((x) >> (n))
 #define ROTR(x,n) (SHR((x),(n)) | ((x) << (64 - (n))))
@@ -291,7 +640,68 @@ int mbedtls_internal_sha512_process( mbedtls_sha512_context *ctx,
     return( 0 );
 }
 
-#endif /* !MBEDTLS_SHA512_PROCESS_ALT */
+#endif /* !MBEDTLS_SHA512_PROCESS_ALT && !MBEDTLS_SHA512_USE_A64_CRYPTO_ONLY */
+
+
+#if !defined(MBEDTLS_SHA512_USE_A64_CRYPTO_ONLY)
+
+static size_t mbedtls_internal_sha512_process_many_c(
+                  mbedtls_sha512_context *ctx, const uint8_t *data, size_t len)
+{
+    size_t processed = 0;
+
+    while( len >= SHA512_BLOCK_SIZE )
+    {
+        if( mbedtls_internal_sha512_process_c( ctx, data ) != 0)
+            return( 0 );
+
+        data += SHA512_BLOCK_SIZE;
+        len  -= SHA512_BLOCK_SIZE;
+
+        processed += SHA512_BLOCK_SIZE;
+    }
+
+    return( processed );
+}
+
+#endif /* !MBEDTLS_SHA512_USE_A64_CRYPTO_ONLY */
+
+
+#if defined(MBEDTLS_SHA512_USE_A64_CRYPTO_IF_PRESENT)
+
+static int mbedtls_a64_crypto_sha512_has_support( void )
+{
+    static int done = 0;
+    static int supported = 0;
+
+    if( !done )
+    {
+        supported = mbedtls_a64_crypto_sha512_determine_support();
+        done = 1;
+    }
+
+    return( supported );
+}
+
+static size_t mbedtls_internal_sha512_process_many( mbedtls_sha512_context *ctx,
+                  const uint8_t *msg, size_t len )
+{
+    if( mbedtls_a64_crypto_sha512_has_support() )
+        return( mbedtls_internal_sha512_process_many_a64_crypto( ctx, msg, len ) );
+    else
+        return( mbedtls_internal_sha512_process_many_c( ctx, msg, len ) );
+}
+
+int mbedtls_internal_sha512_process( mbedtls_sha512_context *ctx,
+        const unsigned char data[SHA512_BLOCK_SIZE] )
+{
+    if( mbedtls_a64_crypto_sha512_has_support() )
+        return( mbedtls_internal_sha512_process_a64_crypto( ctx, data ) );
+    else
+        return( mbedtls_internal_sha512_process_c( ctx, data ) );
+}
+
+#endif /* MBEDTLS_SHA512_USE_A64_CRYPTO_IF_PRESENT */
 
 /*
  * SHA-512 process buffer
@@ -304,14 +714,11 @@ int mbedtls_sha512_update( mbedtls_sha512_context *ctx,
     size_t fill;
     unsigned int left;
 
-    SHA512_VALIDATE_RET( ctx != NULL );
-    SHA512_VALIDATE_RET( ilen == 0 || input != NULL );
-
     if( ilen == 0 )
         return( 0 );
 
     left = (unsigned int) (ctx->total[0] & 0x7F);
-    fill = 128 - left;
+    fill = SHA512_BLOCK_SIZE - left;
 
     ctx->total[0] += (uint64_t) ilen;
 
@@ -330,13 +737,15 @@ int mbedtls_sha512_update( mbedtls_sha512_context *ctx,
         left = 0;
     }
 
-    while( ilen >= 128 )
+    while( ilen >= SHA512_BLOCK_SIZE )
     {
-        if( ( ret = mbedtls_internal_sha512_process( ctx, input ) ) != 0 )
-            return( ret );
+        size_t processed =
+            mbedtls_internal_sha512_process_many( ctx, input, ilen );
+        if( processed < SHA512_BLOCK_SIZE )
+            return( MBEDTLS_ERR_ERROR_GENERIC_ERROR );
 
-        input += 128;
-        ilen  -= 128;
+        input += processed;
+        ilen  -= processed;
     }
 
     if( ilen > 0 )
@@ -355,9 +764,6 @@ int mbedtls_sha512_finish( mbedtls_sha512_context *ctx,
     unsigned used;
     uint64_t high, low;
 
-    SHA512_VALIDATE_RET( ctx != NULL );
-    SHA512_VALIDATE_RET( (unsigned char *)output != NULL );
-
     /*
      * Add padding: 0x80 then 0x00 until 16 bytes remain for the length
      */
@@ -373,7 +779,7 @@ int mbedtls_sha512_finish( mbedtls_sha512_context *ctx,
     else
     {
         /* We'll need an extra block */
-        memset( ctx->buffer + used, 0, 128 - used );
+        memset( ctx->buffer + used, 0, SHA512_BLOCK_SIZE - used );
 
         if( ( ret = mbedtls_internal_sha512_process( ctx, ctx->buffer ) ) != 0 )
             return( ret );
@@ -404,9 +810,11 @@ int mbedtls_sha512_finish( mbedtls_sha512_context *ctx,
     sha512_put_uint64_be( ctx->state[4], output, 32 );
     sha512_put_uint64_be( ctx->state[5], output, 40 );
 
+    int truncated = 0;
 #if defined(MBEDTLS_SHA384_C)
-    if( ctx->is384 == 0 )
+    truncated = ctx->is384;
 #endif
+    if( !truncated )
     {
         sha512_put_uint64_be( ctx->state[6], output, 48 );
         sha512_put_uint64_be( ctx->state[7], output, 56 );
@@ -429,12 +837,12 @@ int mbedtls_sha512( const unsigned char *input,
     mbedtls_sha512_context ctx;
 
 #if defined(MBEDTLS_SHA384_C)
-    SHA512_VALIDATE_RET( is384 == 0 || is384 == 1 );
+    if( is384 != 0 && is384 != 1 )
+        return MBEDTLS_ERR_SHA512_BAD_INPUT_DATA;
 #else
-    SHA512_VALIDATE_RET( is384 == 0 );
+    if( is384 != 0 )
+        return MBEDTLS_ERR_SHA512_BAD_INPUT_DATA;
 #endif
-    SHA512_VALIDATE_RET( ilen == 0 || input != NULL );
-    SHA512_VALIDATE_RET( (unsigned char *)output != NULL );
 
     mbedtls_sha512_init( &ctx );
 

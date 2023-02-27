@@ -138,6 +138,19 @@ const mbedtls_md_info_t *mbedtls_md_info_from_string( const char *md_name );
 const mbedtls_md_info_t *mbedtls_md_info_from_type( mbedtls_md_type_t md_type );
 
 /**
+ * \brief           This function returns the message-digest information
+ *                  from the given context.
+ *
+ * \param ctx       The context from which to extract the information.
+ *                  This must be initialized (or \c NULL).
+ *
+ * \return          The message-digest information associated with \p ctx.
+ * \return          \c NULL if \p ctx is \c NULL.
+ */
+const mbedtls_md_info_t *mbedtls_md_info_from_ctx(
+                                        const mbedtls_md_context_t *ctx );
+
+/**
  * \brief           This function initializes a message-digest context without
  *                  binding it to a particular message-digest algorithm.
  *
@@ -186,7 +199,7 @@ MBEDTLS_CHECK_RETURN_TYPICAL
 int mbedtls_md_setup( mbedtls_md_context_t *ctx, const mbedtls_md_info_t *md_info, int hmac );
 
 /**
- * \brief           This function clones the state of an message-digest
+ * \brief           This function clones the state of a message-digest
  *                  context.
  *
  * \note            You must call mbedtls_md_setup() on \c dst before calling

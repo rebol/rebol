@@ -74,7 +74,7 @@
 
 /*
  * The above constants may be used even if the RSA module is compile out,
- * eg for alternative (PKCS#11) RSA implemenations in the PK layers.
+ * eg for alternative (PKCS#11) RSA implementations in the PK layers.
  */
 
 #ifdef __cplusplus
@@ -239,7 +239,7 @@ int mbedtls_rsa_import( mbedtls_rsa_context *ctx,
  * \param N        The RSA modulus. This may be \c NULL.
  * \param N_len    The Byte length of \p N; it is ignored if \p N == NULL.
  * \param P        The first prime factor of \p N. This may be \c NULL.
- * \param P_len    The Byte length of \p P; it ns ignored if \p P == NULL.
+ * \param P_len    The Byte length of \p P; it is ignored if \p P == NULL.
  * \param Q        The second prime factor of \p N. This may be \c NULL.
  * \param Q_len    The Byte length of \p Q; it is ignored if \p Q == NULL.
  * \param D        The private exponent. This may be \c NULL.
@@ -479,7 +479,7 @@ int mbedtls_rsa_check_pubkey( const mbedtls_rsa_context *ctx );
  *             the current function does not have access to them,
  *             and therefore cannot check them. See mbedtls_rsa_complete().
  *             If you want to check the consistency of the entire
- *             content of an PKCS1-encoded RSA private key, for example, you
+ *             content of a PKCS1-encoded RSA private key, for example, you
  *             should use mbedtls_rsa_validate_params() before setting
  *             up the RSA context.
  *             Additionally, if the implementation performs empirical checks,
@@ -540,7 +540,7 @@ int mbedtls_rsa_public( mbedtls_rsa_context *ctx,
  *
  * \note           Blinding is used if and only if a PRNG is provided.
  *
- * \note           If blinding is used, both the base of exponentation
+ * \note           If blinding is used, both the base of exponentiation
  *                 and the exponent are blinded, providing protection
  *                 against some side-channel attacks.
  *
@@ -634,7 +634,7 @@ int mbedtls_rsa_rsaes_pkcs1_v15_encrypt( mbedtls_rsa_context *ctx,
  * \note             The output buffer must be as large as the size
  *                   of ctx->N. For example, 128 Bytes if RSA-1024 is used.
  *
- * \param ctx        The initnialized RSA context to use.
+ * \param ctx        The initialized RSA context to use.
  * \param f_rng      The RNG function to use. This is needed for padding
  *                   generation and is mandatory.
  * \param p_rng      The RNG context to be passed to \p f_rng. This may

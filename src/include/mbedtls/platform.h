@@ -11,6 +11,13 @@
  *        implementations of these functions, or implementations specific to
  *        their platform, which can be statically linked to the library or
  *        dynamically configured at runtime.
+ *
+ *        When all compilation options related to platform abstraction are
+ *        disabled, this header just defines `mbedtls_xxx` function names
+ *        as aliases to the standard `xxx` function.
+ *
+ *        Most modules in the library and example programs are expected to
+ *        include this header.
  */
 /*
  *  Copyright The Mbed TLS Contributors
@@ -62,7 +69,9 @@ extern "C" {
 #if !defined(MBEDTLS_PLATFORM_NO_STD_FUNCTIONS)
 #include <stdio.h>
 #include <stdlib.h>
+#if defined(MBEDTLS_HAVE_TIME)
 #include <time.h>
+#endif
 #if !defined(MBEDTLS_PLATFORM_STD_SNPRINTF)
 #if defined(MBEDTLS_PLATFORM_HAS_NON_CONFORMING_SNPRINTF)
 #define MBEDTLS_PLATFORM_STD_SNPRINTF   mbedtls_platform_win32_snprintf /**< The default \c snprintf function to use.  */
@@ -88,6 +97,9 @@ extern "C" {
 #endif
 #if !defined(MBEDTLS_PLATFORM_STD_FREE)
 #define MBEDTLS_PLATFORM_STD_FREE       free /**< The default \c free function to use. */
+#endif
+#if !defined(MBEDTLS_PLATFORM_STD_SETBUF)
+#define MBEDTLS_PLATFORM_STD_SETBUF   setbuf /**< The default \c setbuf function to use. */
 #endif
 #if !defined(MBEDTLS_PLATFORM_STD_EXIT)
 #define MBEDTLS_PLATFORM_STD_EXIT      exit /**< The default \c exit function to use. */
@@ -119,7 +131,7 @@ extern "C" {
 #endif /* MBEDTLS_PLATFORM_NO_STD_FUNCTIONS */
 
 
-/* \} name SECTION: Module settings */
+/** \} name SECTION: Module settings */
 
 /*
  * The function pointers for calloc and free.
@@ -273,6 +285,56 @@ int mbedtls_platform_set_vsnprintf( int (*vsnprintf_func)( char * s, size_t n,
 #define mbedtls_vsnprintf   vsnprintf
 #endif /* MBEDTLS_PLATFORM_VSNPRINTF_MACRO */
 #endif /* MBEDTLS_PLATFORM_VSNPRINTF_ALT */
+
+/*
+ * The function pointers for setbuf
+ */
+#if defined(MBEDTLS_PLATFORM_SETBUF_ALT)
+#include <stdio.h>
+/**
+ * \brief                  Function pointer to call for `setbuf()` functionality
+ *                         (changing the internal buffering on stdio calls).
+ *
+ * \note                   The library calls this function to disable
+ *                         buffering when reading or writing sensitive data,
+ *                         to avoid having extra copies of sensitive data
+ *                         remaining in stdio buffers after the file is
+ *                         closed. If this is not a concern, for example if
+ *                         your platform's stdio doesn't have any buffering,
+ *                         you can set mbedtls_setbuf to a function that
+ *                         does nothing.
+ *
+ *                         The library always calls this function with
+ *                         `buf` equal to `NULL`.
+ */
+extern void (*mbedtls_setbuf)( FILE *stream, char *buf );
+
+/**
+ * \brief                  Dynamically configure the function that is called
+ *                         when the mbedtls_setbuf() function is called by the
+ *                         library.
+ *
+ * \param   setbuf_func   The \c setbuf function implementation
+ *
+ * \return                 \c 0
+ */
+int mbedtls_platform_set_setbuf( void (*setbuf_func)(
+                                     FILE *stream, char *buf ) );
+#elif defined(MBEDTLS_PLATFORM_SETBUF_MACRO)
+/**
+ * \brief                  Macro defining the function for the library to
+ *                         call for `setbuf` functionality (changing the
+ *                         internal buffering on stdio calls).
+ *
+ * \note                   See extra comments on the mbedtls_setbuf() function
+ *                         pointer above.
+ *
+ * \return                 \c 0 on success, negative on error.
+ */
+#define mbedtls_setbuf    MBEDTLS_PLATFORM_SETBUF_MACRO
+#else
+#define mbedtls_setbuf    setbuf
+#endif /* MBEDTLS_PLATFORM_SETBUF_ALT / MBEDTLS_PLATFORM_SETBUF_MACRO */
 
 /*
  * The function pointers for exit

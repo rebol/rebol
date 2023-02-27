@@ -587,6 +587,7 @@ include-cryptography: [
 		%core/mbedtls/md.c
 		%core/mbedtls/oid.c
 		%core/mbedtls/bignum.c
+		%core/mbedtls/bignum_core.c
 		
 		%core/mbedtls/constant_time.c
 		%core/mbedtls/ctr_drbg.c
@@ -596,6 +597,7 @@ include-cryptography: [
 		%core/mbedtls/ecdsa.c
 		%core/mbedtls/ecp.c
 		%core/mbedtls/ecp_curves.c
+		%core/mbedtls/hash_info.c
 	]
 
 	:include-curves-sec1
