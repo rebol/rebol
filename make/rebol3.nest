@@ -20,11 +20,9 @@ optimize:   2
 
 version: 3.10.4
 
-#do [Haiku?: does [system/platform = 'haiku]]
-
 #if Linux?   [ defines: TO_LINUX   ]
 #if macOS?   [ defines: TO_MACOS   ]
-#if Haiku?   [ defines: TO_HAIKU   ]
+#if (system/platform = 'haiku)   [ defines: TO_HAIKU   ]
 #if Windows? [ defines: TO_WINDOWS ]
 #if OpenBSD? [ defines: TO_OPENBSD ]
 #if FreeBSD? [ defines: TO_FREEBSD ]
@@ -71,7 +69,6 @@ target-haiku: [
 	platform: Haiku
 	vendor:   pc
 	compiler: clang
-
 ]
 
 core-files: [
@@ -901,8 +898,9 @@ common: [
 		library: %m
 		defines: ENDIAN_LITTLE
 	]
-	#if Haiku? [
+	#if (system/platform = 'haiku) [
 		library: %network
+		library: %iconv
 		defines: ENDIAN_LITTLE
 		defines: USE_OLD_PIPE
 	]
@@ -917,7 +915,7 @@ common-host: [
 		resource: %make/r3.rc
 	]
 	;#if Posix []
-	#if (any [Linux? OpenBSD? FreeBSD?]) [
+	#if (any [Linux? OpenBSD? FreeBSD? (system/platform = 'haiku)]) [
 		flag: -fPIC ; position independent (used for libs)
 	]
 ]
@@ -936,7 +934,7 @@ arch-x64: [
 	#if macOS? [
 		defines: __LP64__ ; same like LLP64, but long (integer) has 64 bits instead of 32
 	]
-	#if Haiku? [
+	#if (system/platform = 'haiku) [
 		defines: __LP64__
 	]  
 ]
@@ -1449,7 +1447,7 @@ eggs: [
 			:make-x64-host
 		]
 	]
-	#if Haiku? [
+	#if (system/platform = 'haiku) [
 		"Rebol/Core haiku-x86" [
 			name:     %rebol3-core-haiku-x86
 			:target-haiku
