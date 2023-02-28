@@ -20,8 +20,11 @@ optimize:   2
 
 version: 3.10.4
 
+#do [Haiku?: does [system/platform = 'haiku]]
+
 #if Linux?   [ defines: TO_LINUX   ]
 #if macOS?   [ defines: TO_MACOS   ]
+#if Haiku?   [ defines: TO_HAIKU   ]
 #if Windows? [ defines: TO_WINDOWS ]
 #if OpenBSD? [ defines: TO_OPENBSD ]
 #if FreeBSD? [ defines: TO_FREEBSD ]
@@ -55,13 +58,20 @@ target-openbsd: [
 	vendor:   pc
 	compiler: clang
 ]
-
 target-freebsd: [
 	os:       freebsd
 	sys:      freebsd
 	platform: FreeBSD
 	vendor:   pc
 	compiler: clang
+]
+target-haiku: [
+	os:       haiku
+	sys:      haiku
+	platform: Haiku
+	vendor:   pc
+	compiler: clang
+
 ]
 
 core-files: [
@@ -891,6 +901,11 @@ common: [
 		library: %m
 		defines: ENDIAN_LITTLE
 	]
+	#if Haiku? [
+		library: %network
+		defines: ENDIAN_LITTLE
+		defines: USE_OLD_PIPE
+	]
 ]
 
 common-host: [
@@ -920,7 +935,10 @@ arch-x64: [
 	]
 	#if macOS? [
 		defines: __LP64__ ; same like LLP64, but long (integer) has 64 bits instead of 32
-	] 
+	]
+	#if Haiku? [
+		defines: __LP64__
+	]  
 ]
 arch-x86: [
 	arch: x86
@@ -1429,6 +1447,20 @@ eggs: [
 			:target-freebsd
 			:include-rebol-core
 			:make-x64-host
+		]
+	]
+	#if Haiku? [
+		"Rebol/Core haiku-x86" [
+			name:     %rebol3-core-haiku-x86
+			:target-haiku
+			:include-rebol-core
+			:make-x86-exe
+		]
+		"Rebol/Core haiku-x64" [
+			name:     %rebol3-core-haiku-x64
+			:target-haiku
+			:include-rebol-core
+			:make-x64-exe
 		]
 	]
 	"Test extension 32bit" [
