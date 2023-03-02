@@ -473,10 +473,18 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 #endif
 		//i64 tm = OS_Delta_Time(0, 0);
 
-		Set_Addr(&remote_addr, sock->net.remote_ip, sock->net.remote_port);
 		//WATCH1("sendto data: %x\n", sock->data);
-		result = sendto(sock->socket, sock->data, len, flags,
-						(struct sockaddr*)&remote_addr, addr_len);
+		if (GET_FLAG(sock->modes, RST_UDP)) {
+			Set_Addr(&remote_addr, sock->net.remote_ip, sock->net.remote_port);
+			result = sendto(sock->socket, sock->data, len, flags,
+				(struct sockaddr*)&remote_addr, addr_len);
+		}
+		else {
+			// Expects that the socket is already connected and
+			// there is no need to specify the remote address again
+			result = send(sock->socket, sock->data, len, flags);
+		}
+
 		//printf("sento time: %d\n", OS_Delta_Time(tm,  0));
 		//WATCH2("send() len: %d actual: %d\n", len, result);
 
