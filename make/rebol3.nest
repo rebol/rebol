@@ -1448,6 +1448,18 @@ eggs: [
 		]
 	]
 	#if (system/platform = 'haiku) [
+		"Rebol/Base haiku-x86" [
+			name:     %rebol3-base-haiku-x86
+			:target-haiku
+			:include-rebol-base
+			:make-x86-exe
+		]
+		"Rebol/Base haiku-x64" [
+			name:     %rebol3-base-haiku-x64
+			:target-haiku
+			:include-rebol-base
+			:make-x64-exe
+		]
 		"Rebol/Core haiku-x86" [
 			name:     %rebol3-core-haiku-x86
 			:target-haiku
@@ -1458,6 +1470,18 @@ eggs: [
 			name:     %rebol3-core-haiku-x64
 			:target-haiku
 			:include-rebol-core
+			:make-x64-exe
+		]
+		"Rebol/Bulk haiku-x86" [
+			name:     %rebol3-bulk-haiku-x86
+			:target-haiku
+			:include-rebol-bulk
+			:make-x86-exe
+		]
+		"Rebol/Bulk haiku-x64" [
+			name:     %rebol3-bulk-haiku-x64
+			:target-haiku
+			:include-rebol-bulk
 			:make-x64-exe
 		]
 	]
