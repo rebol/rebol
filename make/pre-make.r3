@@ -221,6 +221,11 @@ try/except [
 	git-commit: mold debase read/string join %../.git/ git-header 16
 ][	git-commit: none]
 
+if string? select os-info 'VERSION_ID [
+	;; make sure that it will be loadable
+	os-info/VERSION_ID: mold os-info/VERSION_ID
+]
+
 str-version: reform [
 	"Rebol"  ; probably always same
 	product  ; like Core, View, etc...

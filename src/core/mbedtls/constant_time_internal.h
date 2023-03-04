@@ -46,7 +46,7 @@
  */
 unsigned mbedtls_ct_uint_mask( unsigned value );
 
-#if defined(MBEDTLS_SSL_SOME_SUITES_USE_TLS_CBC)
+#if defined(MBEDTLS_SSL_SOME_SUITES_USE_MAC)
 
 /** Turn a value into a mask:
  * - if \p value == 0, return the all-bits 0 mask, aka 0
@@ -61,7 +61,7 @@ unsigned mbedtls_ct_uint_mask( unsigned value );
  */
 size_t mbedtls_ct_size_mask( size_t value );
 
-#endif /* MBEDTLS_SSL_SOME_SUITES_USE_TLS_CBC */
+#endif /* MBEDTLS_SSL_SOME_SUITES_USE_MAC */
 
 #if defined(MBEDTLS_BIGNUM_C)
 
@@ -129,6 +129,24 @@ unsigned mbedtls_ct_size_bool_eq( size_t x,
 unsigned mbedtls_ct_mpi_uint_lt( const mbedtls_mpi_uint x,
                                  const mbedtls_mpi_uint y );
 
+/**
+ * \brief          Check if one unsigned MPI is less than another in constant
+ *                 time.
+ *
+ * \param A        The left-hand MPI. This must point to an array of limbs
+ *                 with the same allocated length as \p B.
+ * \param B        The right-hand MPI. This must point to an array of limbs
+ *                 with the same allocated length as \p A.
+ * \param limbs    The number of limbs in \p A and \p B.
+ *                 This must not be 0.
+ *
+ * \return         The result of the comparison:
+ *                 \c 1 if \p A is less than \p B.
+ *                 \c 0 if \p A is greater than or equal to \p B.
+ */
+unsigned mbedtls_mpi_core_lt_ct( const mbedtls_mpi_uint *A,
+                                 const mbedtls_mpi_uint *B,
+                                 size_t limbs);
 #endif /* MBEDTLS_BIGNUM_C */
 
 /** Choose between two integer values without branches.
@@ -196,7 +214,7 @@ signed char mbedtls_ct_base64_dec_value( unsigned char c );
 
 #endif /* MBEDTLS_BASE64_C */
 
-#if defined(MBEDTLS_SSL_SOME_SUITES_USE_TLS_CBC)
+#if defined(MBEDTLS_SSL_SOME_SUITES_USE_MAC)
 
 /** Conditional memcpy without branches.
  *
@@ -220,6 +238,13 @@ void mbedtls_ct_memcpy_if_eq( unsigned char *dest,
  * dst, with a code flow and memory access pattern that does not depend on \p
  * offset_secret, but only on \p offset_min, \p offset_max and \p len.
  * Functionally equivalent to `memcpy(dst, src + offset_secret, len)`.
+ *
+ * \note                This function reads from \p dest, but the value that
+ *                      is read does not influence the result and this
+ *                      function's behavior is well-defined regardless of the
+ *                      contents of the buffers. This may result in false
+ *                      positives from static or dynamic analyzers, especially
+ *                      if \p dest is not initialized.
  *
  * \param dest          The destination buffer. This must point to a writable
  *                      buffer of at least \p len bytes.
@@ -276,6 +301,17 @@ void mbedtls_ct_memcpy_offset( unsigned char *dest,
  * \retval #MBEDTLS_ERR_PLATFORM_HW_ACCEL_FAILED
  *         The hardware accelerator failed.
  */
+#if defined(MBEDTLS_USE_PSA_CRYPTO)
+int mbedtls_ct_hmac( mbedtls_svc_key_id_t key,
+                     psa_algorithm_t alg,
+                     const unsigned char *add_data,
+                     size_t add_data_len,
+                     const unsigned char *data,
+                     size_t data_len_secret,
+                     size_t min_data_len,
+                     size_t max_data_len,
+                     unsigned char *output );
+#else
 int mbedtls_ct_hmac( mbedtls_md_context_t *ctx,
                      const unsigned char *add_data,
                      size_t add_data_len,
@@ -284,8 +320,9 @@ int mbedtls_ct_hmac( mbedtls_md_context_t *ctx,
                      size_t min_data_len,
                      size_t max_data_len,
                      unsigned char *output );
+#endif /* MBEDTLS_USE_PSA_CRYPTO */
 
-#endif /* MBEDTLS_SSL_SOME_SUITES_USE_TLS_CBC */
+#endif /* MBEDTLS_SSL_SOME_SUITES_USE_MAC */
 
 #if defined(MBEDTLS_PKCS1_V15) && defined(MBEDTLS_RSA_C) && !defined(MBEDTLS_RSA_ALT)
 

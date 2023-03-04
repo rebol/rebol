@@ -36,13 +36,7 @@
 #include "mbedtls/sha256.h"
 #include "mbedtls/sha512.h"
 
-#if defined(MBEDTLS_PLATFORM_C)
 #include "mbedtls/platform.h"
-#else
-#include <stdlib.h>
-#define mbedtls_calloc    calloc
-#define mbedtls_free       free
-#endif
 
 #include <string.h>
 
@@ -225,6 +219,15 @@ const mbedtls_md_info_t *mbedtls_md_info_from_type( mbedtls_md_type_t md_type )
         default:
             return( NULL );
     }
+}
+
+const mbedtls_md_info_t *mbedtls_md_info_from_ctx(
+                                            const mbedtls_md_context_t *ctx )
+{
+    if( ctx == NULL )
+        return NULL;
+
+    return( ctx->MBEDTLS_PRIVATE(md_info) );
 }
 
 void mbedtls_md_init( mbedtls_md_context_t *ctx )
@@ -595,6 +598,9 @@ int mbedtls_md_file( const mbedtls_md_info_t *md_info, const char *path, unsigne
 
     if( ( f = fopen( path, "rb" ) ) == NULL )
         return( MBEDTLS_ERR_MD_FILE_IO_ERROR );
+
+    /* Ensure no stdio buffering of secrets, as such buffers cannot be wiped. */
+    mbedtls_setbuf( f, NULL );
 
     mbedtls_md_init( &ctx );
 
