@@ -22,6 +22,7 @@ version: 3.10.5
 
 #if Linux?   [ defines: TO_LINUX   ]
 #if macOS?   [ defines: TO_MACOS   ]
+#if (system/platform = 'haiku)   [ defines: TO_HAIKU   ]
 #if Windows? [ defines: TO_WINDOWS ]
 #if OpenBSD? [ defines: TO_OPENBSD ]
 #if FreeBSD? [ defines: TO_FREEBSD ]
@@ -55,11 +56,17 @@ target-openbsd: [
 	vendor:   pc
 	compiler: clang
 ]
-
 target-freebsd: [
 	os:       freebsd
 	sys:      freebsd
 	platform: FreeBSD
+	vendor:   pc
+	compiler: clang
+]
+target-haiku: [
+	os:       haiku
+	sys:      haiku
+	platform: Haiku
 	vendor:   pc
 	compiler: clang
 ]
@@ -893,6 +900,12 @@ common: [
 		library: %m
 		defines: ENDIAN_LITTLE
 	]
+	#if (system/platform = 'haiku) [
+		library: %network
+		library: %iconv
+		defines: ENDIAN_LITTLE
+		defines: USE_OLD_PIPE
+	]
 ]
 
 common-host: [
@@ -904,7 +917,7 @@ common-host: [
 		resource: %make/r3.rc
 	]
 	;#if Posix []
-	#if (any [Linux? OpenBSD? FreeBSD?]) [
+	#if (any [Linux? OpenBSD? FreeBSD? (system/platform = 'haiku)]) [
 		flag: -fPIC ; position independent (used for libs)
 	]
 ]
@@ -922,7 +935,10 @@ arch-x64: [
 	]
 	#if macOS? [
 		defines: __LP64__ ; same like LLP64, but long (integer) has 64 bits instead of 32
-	] 
+	]
+	#if (system/platform = 'haiku) [
+		defines: __LP64__
+	]  
 ]
 arch-x86: [
 	arch: x86
@@ -947,6 +963,10 @@ arch-arm64: [ ;= armv8
 	#if macOS? [ flag: "-arch arm64" ]
 	#if linux? [ flag: "-march=native" ] ;; expects, that the host system is arm64!
 	;define: __arm64__
+]
+arch-mips64le: [
+	:arch-x64
+	arch: mips64le
 ]
 
 
@@ -997,6 +1017,7 @@ make-x64-exe:   [:arch-x64   :make-exe ]
 make-armv6-exe: [:arch-armv6 :make-exe ]
 make-armv7-exe: [:arch-armv7 :make-exe ]
 make-arm64-exe: [:arch-arm64 :make-exe ]
+make-mips64le-exe: [:arch-mips64le :make-exe ]
 
 ; for making Rebol as a shared library
 make-dll: [
@@ -1214,8 +1235,27 @@ eggs: [
 			:make-arm64-exe
 		]
 
+		"Rebol/Base linux-mips64le" [
+			name:     %rebol3-base-linux-mips64le
+			:target-linux
+			:make-mips64le-exe
+		]
+		"Rebol/Core linux-mips64le" [
+			name:     %rebol3-core-linux-mips64le
+			:target-linux
+			:include-rebol-core
+			:make-mips64le-exe
+		]
+		"Rebol/Bulk linux-mips64le" [
+			name:     %rebol3-bulk-linux-mips64le
+			:target-linux
+			:include-rebol-bulk
+			:make-mips64le-exe
+		]
+
 		"Rebol/Core linux-x64 shared library" [
 			name:     %lib-rebol3-core-linux-x64
+			lflag:    "-Wl,-install_name,'/usr/local/lib/librebol-core.3.so'"
 			:target-linux
 			:include-rebol-core
 			:make-x64-dll
@@ -1266,7 +1306,7 @@ eggs: [
 
 		"Rebol/Core macos-x64 shared library" [
 			name:   %lib-rebol3-core-macos-x64
-			flag:   "-Wl,-install_name,'/usr/local/lib/librebol-core.3.dylib'"
+			lflag:  "-Wl,-install_name,'/usr/local/lib/librebol-core.3.dylib'"
 			:target-macos
 			:include-rebol-core
 			:make-x64-dll
@@ -1280,7 +1320,7 @@ eggs: [
 		]
 		"Rebol/Bulk macos-x64 shared library" [
 			name:   %lib-rebol3-bulk-macos-x64
-			flag:   "-Wl,-install_name,'/usr/local/lib/librebol.3.dylib'"
+			lflag:  "-Wl,-install_name,'/usr/local/lib/librebol.3.dylib'"
 			:target-macos
 			:include-rebol-bulk
 			:make-x64-dll
@@ -1295,7 +1335,7 @@ eggs: [
 
 		"Rebol/Core macos-arm64 shared library" [
 			name:   %lib-rebol3-core-macos-arm64
-			flag:   "-Wl,-install_name,'/usr/local/lib/librebol-core.3.dylib'"
+			lflag:  "-Wl,-install_name,'/usr/local/lib/librebol-core.3.dylib'"
 			:target-macos
 			:include-rebol-core
 			:make-arm64-dll
@@ -1310,7 +1350,7 @@ eggs: [
 
 		"Rebol/Bulk macos-arm64 shared library" [
 			name:   %lib-rebol3-bulk-macos-arm64
-			lflag:   "-Wl,-install_name,'/usr/local/lib/librebol.3.dylib'"
+			lflag:  "-Wl,-install_name,'/usr/local/lib/librebol.3.dylib'"
 			:target-macos
 			:include-rebol-bulk
 			:make-arm64-dll
@@ -1362,6 +1402,7 @@ eggs: [
 
 		"Rebol/Core openbsd-x64 shared library" [
 			name:   %lib-rebol3-core-openbsd-x64
+			lflag:  "-Wl,-install_name,'/usr/local/lib/librebol-core.3.so'"
 			:target-openbsd
 			:include-rebol-core
 			:make-x64-dll
@@ -1395,6 +1436,7 @@ eggs: [
 
 		"Rebol/Core freebsd-x64 shared library" [
 			name:   %lib-rebol3-core-freebsd-x64
+			lflag:  "-Wl,-install_name,'/usr/local/lib/librebol-core.3.so'"
 			:target-freebsd
 			:include-rebol-core
 			:make-x64-dll
@@ -1405,6 +1447,44 @@ eggs: [
 			:target-freebsd
 			:include-rebol-core
 			:make-x64-host
+		]
+	]
+	#if (system/platform = 'haiku) [
+		"Rebol/Base haiku-x86" [
+			name:     %rebol3-base-haiku-x86
+			:target-haiku
+			:include-rebol-base
+			:make-x86-exe
+		]
+		"Rebol/Base haiku-x64" [
+			name:     %rebol3-base-haiku-x64
+			:target-haiku
+			:include-rebol-base
+			:make-x64-exe
+		]
+		"Rebol/Core haiku-x86" [
+			name:     %rebol3-core-haiku-x86
+			:target-haiku
+			:include-rebol-core
+			:make-x86-exe
+		]
+		"Rebol/Core haiku-x64" [
+			name:     %rebol3-core-haiku-x64
+			:target-haiku
+			:include-rebol-core
+			:make-x64-exe
+		]
+		"Rebol/Bulk haiku-x86" [
+			name:     %rebol3-bulk-haiku-x86
+			:target-haiku
+			:include-rebol-bulk
+			:make-x86-exe
+		]
+		"Rebol/Bulk haiku-x64" [
+			name:     %rebol3-bulk-haiku-x64
+			:target-haiku
+			:include-rebol-bulk
+			:make-x64-exe
 		]
 	]
 	"Test extension 32bit" [
