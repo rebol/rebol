@@ -82,6 +82,13 @@ target-haiku: [
 		:target-haiku
 		:make-x86-exe
 	]
+	cross-haiku-x64: [
+		compiler: %/tools/cross-tools-x86_64/bin/x86_64-unknown-haiku-gcc
+		library:  %/system/lib/
+		flag: "--sysroot=/tools/cross-tools-x86_64/sysroot"
+		:target-haiku
+		:make-x64-exe
+	]
 ]
 
 core-files: [
@@ -1276,10 +1283,11 @@ eggs: [
 		]
 
 
-		;--- Haiku cross-compilation from a Docker image..
+		;-- Haiku cross-compilation from a Docker image..     
+		;@@ https://hub.docker.com/r/haiku/cross-compiler/tags
+		;@@ docker.io/oldes/rebol-dev:haiku-x86
 		"Cross-compile Rebol/Base for Haiku x86" [
 			name:     %rebol-base-haiku-x86
-			:include-rebol-base
 			:cross-haiku-x86
 		]
 		"Cross-compile Rebol/Core for Haiku x86" [
@@ -1291,6 +1299,21 @@ eggs: [
 			name:     %rebol-bulk-haiku-x86
 			:include-rebol-bulk
 			:cross-haiku-x86
+		]
+		;@@ docker.io/oldes/rebol-dev:haiku-x64
+		"Cross-compile Rebol/Base for Haiku x64" [
+			name:     %rebol-base-haiku-x64
+			:cross-haiku-x64
+		]
+		"Cross-compile Rebol/Core for Haiku x64" [
+			name:     %rebol-core-haiku-x64
+			:include-rebol-core
+			:cross-haiku-x64
+		]
+		"Cross-compile Rebol/Bulk for Haiku x64" [
+			name:     %rebol-bulk-haiku-x64
+			:include-rebol-bulk
+			:cross-haiku-x64
 		]
 
 	]
