@@ -48,6 +48,8 @@ target-linux: [
 	platform: Linux
 	vendor:   pc
 	compiler: gcc
+
+	library: %dl
 ]
 target-openbsd: [
 	os:       openbsd
@@ -939,20 +941,16 @@ common-host: [
 arch-x64: [
 	arch: x64
 	define: _FILE_OFFSET_BITS=64
-	#if Linux? [
-		library: %dl
-		defines: __LP64__ ; has long (integer) 64 bits
-	]
+
 	#if Windows? [
 		defines: _WIN32
 		defines: __LLP64__ ; 64-bit, long (integer) has 32 bits and 'void *' is sizeof(long long)
 	]
-	#if macOS? [
+
+	#if (find [Linux OpenBSD FreeBSD macOS Haiku] system/platform) [
+		;has long (integer) 64 bits
 		defines: __LP64__ ; same like LLP64, but long (integer) has 64 bits instead of 32
 	]
-	#if (system/platform = 'haiku) [
-		defines: __LP64__
-	]  
 ]
 arch-x86: [
 	arch: x86
