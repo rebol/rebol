@@ -69,6 +69,19 @@ target-haiku: [
 	platform: Haiku
 	vendor:   pc
 	compiler: clang
+
+	library: [%network %iconv]
+	defines: [ENDIAN_LITTLE USE_OLD_PIPE]
+]
+
+#if Linux? [
+	cross-haiku-x86: [
+		compiler: %/tools/cross-tools-x86/bin/i586-pc-haiku-gcc
+		library:  %/system/lib/
+		flag: "--sysroot=/tools/cross-tools-x86/sysroot"
+		:target-haiku
+		:make-x86-exe
+	]
 ]
 
 core-files: [
@@ -900,12 +913,6 @@ common: [
 		library: %m
 		defines: ENDIAN_LITTLE
 	]
-	#if (system/platform = 'haiku) [
-		library: %network
-		library: %iconv
-		defines: ENDIAN_LITTLE
-		defines: USE_OLD_PIPE
-	]
 ]
 
 common-host: [
@@ -1267,6 +1274,25 @@ eggs: [
 			:include-rebol-core
 			:make-x64-host
 		]
+
+
+		;--- Haiku cross-compilation from a Docker image..
+		"Cross-compile Rebol/Base for Haiku x86" [
+			name:     %rebol-base-haiku-x86
+			:include-rebol-base
+			:cross-haiku-x86
+		]
+		"Cross-compile Rebol/Core for Haiku x86" [
+			name:     %rebol-core-haiku-x86
+			:include-rebol-core
+			:cross-haiku-x86
+		]
+		"Cross-compile Rebol/Bulk for Haiku x86" [
+			name:     %rebol-bulk-haiku-x86
+			:include-rebol-bulk
+			:cross-haiku-x86
+		]
+
 	]
 	#if macOS? [
 		"Rebol/Base macos-x64" [
