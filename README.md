@@ -33,6 +33,7 @@ xattr -d -r com.apple.quarantine /path/to/file
 It is possible to extend Rebol functionality using external modules (native and or written in Rebol itself). Here are links to some of them:
 * [Rebol/BCM2835](https://github.com/Oldes/Rebol-BCM2835) - Broadcom BCM 2835 chip extension (for GPIO on RaspberryPI)
 * [Rebol/Blend2D](https://github.com/Siskin-framework/Rebol-Blend2D) - Drawing dialect using [Blend2D](https://blend2d.com) as a high performance 2D vector graphics engine
+* [Rebol/BlurHash](https://github.com/Siskin-framework/Rebol-BlurHash) - Compact representation of a placeholder for an image
 * [Rebol/Easing](https://github.com/Oldes/Rebol-Easing) - Collection of easing functions
 * [Rebol/Godot](https://github.com/Oldes/Rebol-Godot) - Extractor of Godot's `.pck` files
 * [Rebol/HTTPd](https://github.com/Oldes/Rebol-HTTPd) - Webserver scheme
