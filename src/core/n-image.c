@@ -186,6 +186,36 @@ typedef struct REBCLR {
 
 /***********************************************************************
 **
+*/	REBNATIVE(color_distance)
+/*
+**	It's by design providing only the weighted version! The simple distance
+**  could be provided in more generic `distance` function.
+**
+**	https://www.compuphase.com/cmetric.htm
+**  https://observablehq.com/@luciyer/euclidian-distance-in-rgb-color-space
+**
+//	color-distance: native [
+//		"Human perception weighted Euclidean distance between two RGB colors"
+//		a [tuple!]
+//		b [tuple!]
+//	]
+***********************************************************************/
+{
+	REBCLR *val1 = (REBCLR*)VAL_TUPLE(D_ARG(1));
+	REBCLR *val2 = (REBCLR*)VAL_TUPLE(D_ARG(2));
+
+	long r = (long)val1->r - (long)val2->r;
+	long g = (long)val1->g - (long)val2->g;
+	long b = (long)val1->b - (long)val2->b;
+
+	long rmean = ((long)val1->r  + (long)val2->r ) / 2;
+	SET_DECIMAL(D_RET, sqrt((((512+rmean)*r*r)>>8) + 4*g*g + (((767-rmean)*b*b)>>8)));
+	return R_RET;
+}
+
+
+/***********************************************************************
+**
 */	REBNATIVE(tint)
 /*
 //	tint: native [

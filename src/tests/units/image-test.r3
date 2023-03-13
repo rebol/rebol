@@ -363,6 +363,15 @@ FFFFFFDC1616212121212121
 
 ===end-group===
 
+===start-group=== "RGB color distance"
+--test-- "color-distance"
+	--assert 764.83 = round/to color-distance 0.0.0 255.255.255 0.01
+	--assert 569.97 = round/to color-distance 0.0.255 255.0.0 0.01
+	--assert 42.04  = round/to color-distance 200.105.200 225.105.200 0.01
+	--assert 41.3   = round/to color-distance 175.200.100 200.200.100 0.01
+	--assert 0.0    = round/to color-distance 200.200.100 200.200.100 0.01
+===end-group===
+
 
 ===start-group=== "Tint color"
 
