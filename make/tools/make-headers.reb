@@ -128,6 +128,7 @@ context [
 		newline
 		[
 			"/*" ; must be in func header section, not file banner
+			any ["^/**" to newline] ; allow comments in this section
 			[
 				thru newline s:
 				opt  ["**" | " *" | "//"]
