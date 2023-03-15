@@ -372,6 +372,34 @@ FFFFFFDC1616212121212121
 	--assert 0.0    = round/to color-distance 200.200.100 200.200.100 0.01
 ===end-group===
 
+===start-group=== "Image difference"
+--test-- "image-diff (same sizes)"
+	i1: load %units/files/flower.png
+	i2: load %units/files/flower.bmp
+	i3: load %units/files/flower.jpg
+	--assert 0.00% =          image-diff i1 i2
+	--assert 1.21% = round/to image-diff i1 i3 0.01%
+--test-- "image-diff (different sizes)"
+	i3: copy/part i3 10x10
+	--assert 2.31% = round/to image-diff i1 i3p 0.01%
+	--assert 2.31% = round/to image-diff i3p i1 0.01%
+--test-- "image-diff (min/max difference)"
+	i1: make image! [2x2 0.0.0]
+	i2: make image! [2x2 255.255.255]
+	--assert   0% = image-diff i1 i1
+	--assert 100% = image-diff i1 i2
+--test-- "image-diff/part"
+	i1/1: 255.255.255
+	i1/2: 255.255.255
+	--assert   0% = round/to image-diff/part i1 i2 0x0 1x1 1%
+	--assert   0% = round/to image-diff/part i1 i2 0x0 1x3 1%
+	--assert  50% = round/to image-diff/part i1 i2 0x0 1x2 1%
+	--assert  50% = round/to image-diff/part i1 i2 1x0 1x2 1%
+	--assert  50% = round/to image-diff/part i1 i2 2x2 -1x-2 1%
+	--assert error? try [image-diff/part i1 i2 0x0 0x2] ;; size cannot have zero width or height
+	--assert error? try [image-diff/part i1 i2 3x0 1x2] ;; offset out of range
+	--assert error? try [image-diff/part i1 i2 0x2 1x2] 
+===end-group===
 
 ===start-group=== "Tint color"
 

@@ -183,7 +183,23 @@ typedef struct REBCLR {
 	return R_ARG1;
 }
 
+double rgb_color_distance(long r1, long g1, long b1, long r2, long g2, long b2)
+{
+	long r = r1 - r2;
+	long g = g1 - g2;
+	long b = b1 - b2;
 
+	return sqrt((r*r) + (g*g) + (b*b));
+}
+double weighted_rgb_color_distance(long r1, long g1, long b1, long r2, long g2, long b2)
+{
+	long r = r1 - r2;
+	long g = g1 - g2;
+	long b = b1 - b2;
+
+	long rmean = (r1  + r2 ) / 2;
+	return sqrt((((512+rmean)*r*r)>>8) + 4*g*g + (((767-rmean)*b*b)>>8));
+}
 /***********************************************************************
 **
 */	REBNATIVE(color_distance)
@@ -204,15 +220,112 @@ typedef struct REBCLR {
 	REBCLR *val1 = (REBCLR*)VAL_TUPLE(D_ARG(1));
 	REBCLR *val2 = (REBCLR*)VAL_TUPLE(D_ARG(2));
 
-	long r = (long)val1->r - (long)val2->r;
-	long g = (long)val1->g - (long)val2->g;
-	long b = (long)val1->b - (long)val2->b;
-
-	long rmean = ((long)val1->r  + (long)val2->r ) / 2;
-	SET_DECIMAL(D_RET, sqrt((((512+rmean)*r*r)>>8) + 4*g*g + (((767-rmean)*b*b)>>8)));
+	SET_DECIMAL(D_RET, weighted_rgb_color_distance(
+		(long)val1->r, (long)val1->g, (long)val1->b,
+		(long)val2->r, (long)val2->g, (long)val2->b
+	));
 	return R_RET;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(image_diff)
+/*
+**	Note that input image indexes are ignored!
+**
+//	image-diff: native [
+//		"Count difference (using weighted RGB distance) of two images of the same size. Returns 0% if images are same and 100% if completely different."
+//		a [image!]      "If sizes of the input images are not same..."
+//		b [image!]      "... then only the smaller part is compared!"
+//		/part           "Limit computation only to a part of the image"
+//		 offset [pair!] "Zero based top-left corner"
+//		 size   [pair!] "Size of the sub-image to use"
+//	]
+***********************************************************************/
+{
+	REBVAL *img1 = D_ARG(1);
+	REBVAL *img2 = D_ARG(2);
+	REBOOL  part = D_REF(3);
+
+	REBYTE *rgba1 = VAL_IMAGE_HEAD(img1);
+	REBYTE *rgba2 = VAL_IMAGE_HEAD(img2);
+	REBINT ofsx, ofsy, wide, high, maxx, maxy;
+	REBCNT pixels;
+	REBDEC dist = 0;
+
+	if ( part
+	  || VAL_IMAGE_WIDE(img1) != VAL_IMAGE_WIDE(img2)
+	  || VAL_IMAGE_HIGH(img1) != VAL_IMAGE_HIGH(img2)
+	) {
+		maxx = MAX(VAL_IMAGE_WIDE(img1), VAL_IMAGE_WIDE(img2));
+		maxy = MAX(VAL_IMAGE_HIGH(img1), VAL_IMAGE_HIGH(img2));
+
+		if (part) {
+			ofsx = VAL_PAIR_X_INT(D_ARG(4));
+			ofsy = VAL_PAIR_Y_INT(D_ARG(4));
+			wide = VAL_PAIR_X_INT(D_ARG(5));
+			high = VAL_PAIR_Y_INT(D_ARG(5));
+
+			if (wide < 0) {ofsx += wide; wide = -wide;}
+			if (high < 0) {ofsy += high; high = -high;}
+			if (ofsx < 0) {wide += ofsx; ofsx = 0;}
+			if (ofsy < 0) {high += ofsy; ofsy = 0;}
+
+			if ((ofsx + wide) > maxx) wide = maxx - ofsx - wide;
+			if ((ofsy + high) > maxy) high = maxy - ofsy - high;
+			
+			if (wide == 0 || high == 0)
+				Trap1(RE_INVALID_DATA, D_ARG(5));
+			if (ofsx >= maxx || ofsy >= maxy)
+				Trap1(RE_INVALID_DATA, D_ARG(4));
+		} else {
+			// input images have different sizes, so compare just the smaller part
+			ofsx = 0;
+			ofsy = 0;
+			wide = MIN(VAL_IMAGE_WIDE(img1), VAL_IMAGE_WIDE(img2));
+			high = MIN(VAL_IMAGE_HIGH(img1), VAL_IMAGE_HIGH(img2));
+		}
+
+		pixels = wide * high;
+
+		if (ofsy > 0) {
+			rgba1 += 4*VAL_IMAGE_WIDE(img1)*ofsy;
+			rgba2 += 4*VAL_IMAGE_WIDE(img2)*ofsy;
+		}
+
+		for(int row=0; row<high; row++) {
+			rgba1 += 4*ofsx;
+			rgba2 += 4*ofsx;
+			for(int col=0; col<wide; col++) {
+				dist += weighted_rgb_color_distance(
+					rgba1[C_R], rgba1[C_G], rgba1[C_B],
+					rgba2[C_R], rgba2[C_G], rgba2[C_B]
+				);
+				rgba1 += 4;
+				rgba2 += 4;
+			}
+			// skip also ignored pixels on the right side of the region
+			rgba1 += 4*(VAL_IMAGE_WIDE(img1)-ofsx-wide);
+			rgba2 += 4*(VAL_IMAGE_WIDE(img2)-ofsx-wide);
+		}
+
+	} else {
+		pixels = VAL_IMAGE_WIDE(img1) * VAL_IMAGE_HIGH(img1);
+
+		for (int i = 0; i < pixels; i++, rgba1 += 4, rgba2 += 4) {
+			dist += weighted_rgb_color_distance(
+				rgba1[C_R], rgba1[C_G], rgba1[C_B],
+				rgba2[C_R], rgba2[C_G], rgba2[C_B]
+			);
+		}
+	}
+	// used rounding to have nice 100% when completely different
+	// 441.672955930064 max not weighted distance
+	// 764.833315173967 max weighted distance
+	dist = round(dist / pixels * 1000000000000);
+	SET_PERCENT(D_RET, dist /  764833315173967);
+	return R_RET;
+}
 
 /***********************************************************************
 **
