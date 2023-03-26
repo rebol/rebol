@@ -121,6 +121,11 @@ void Host_Repl(void) {
 //	REBOOL why_alert = TRUE;
 
 #define MAX_CONT_LEVEL 1024
+#define INPUT_NO_STRING 0
+#define INPUT_SINGLE_LINE_STRING 1
+#define INPUT_MULTI_LINE_STRING 2
+#define INPUT_RAW_STRING 3
+
 	REBYTE cont_str[] = CONTIN_STR;
 	REBCNT cont_level = 0;
 	REBYTE cont_stack[MAX_CONT_LEVEL] = { 0 };
@@ -134,8 +139,10 @@ void Host_Repl(void) {
 	REBLEN line_len;
 
 	REBYTE *utf8byte;
-	BOOL inside_short_str = FALSE;
+	int raw_str_level = 0;
 	int long_str_level = 0;
+	int n = 0;
+	int state = INPUT_NO_STRING;
 
 	while (TRUE) {
 		if (cont_level > 0) {
@@ -154,6 +161,7 @@ void Host_Repl(void) {
 				cont_level = 0;
 				input_len = 0;
 				input[0] = 0;
+				raw_str_level = 0;
 				continue;
 			}
 			RESET_COLOR;
@@ -163,45 +171,87 @@ void Host_Repl(void) {
 		line_len = 0;
 		for (utf8byte = line; *utf8byte; utf8byte++) {
 			line_len++;
-			switch (*utf8byte) {
-			case '^':
-				if (*(utf8byte + 1) != 0) {
+			if (state == INPUT_NO_STRING)
+			{
+				switch (*utf8byte) {
+				case '"':
+					state = INPUT_SINGLE_LINE_STRING;
+					break;
+				case '[':
+				case '(':
+					if (cont_level < MAX_CONT_LEVEL) cont_stack[cont_level] = *utf8byte;
+					cont_level++;
+					break;
+				case ']':
+				case ')':
+					if (cont_level > 0) cont_level--;
+					break;
+				case '{':
+					if (cont_level < MAX_CONT_LEVEL) cont_stack[cont_level] = *utf8byte;
+					cont_level++;
+					long_str_level++;
+					state = INPUT_MULTI_LINE_STRING;
+					break;
+				case '%':
+					n = 1;
+					while (utf8byte[n] == '%') n++;
+					if (utf8byte[n] == '{') {
+						raw_str_level = n;
+						if (cont_level < MAX_CONT_LEVEL) cont_stack[cont_level] = '{';
+						cont_level++;
+						state = INPUT_RAW_STRING;
+					}
+					line_len += n;
+					utf8byte += n;
+					break;
+				}
+			}
+
+			else if (state == INPUT_SINGLE_LINE_STRING)
+			{
+				if (*utf8byte == '^' && utf8byte[1]) {
 					line_len++;
 					utf8byte++;
 				}
-				break;
-			case '"':
-				if (long_str_level == 0) inside_short_str = !inside_short_str;
-				break;
-			case '[':
-			case '(':
-				if (!inside_short_str && long_str_level == 0) {
-					if (cont_level < MAX_CONT_LEVEL) cont_stack[cont_level] = *utf8byte;
-					cont_level++;
+				else if (*utf8byte == '"') {
+					state = INPUT_NO_STRING;
 				}
-				break;
-			case ']':
-			case ')':
-				if (!inside_short_str && long_str_level == 0) {
-					cont_level--;
+			}
+
+			else if (state == INPUT_MULTI_LINE_STRING)
+			{
+				if (*utf8byte == '^' && utf8byte[1]) {
+					line_len++;
+					utf8byte++;
 				}
-				break;
-			case '{':
-				if (!inside_short_str) {
+				else if (*utf8byte == '{') {
 					if (cont_level < MAX_CONT_LEVEL) cont_stack[cont_level] = *utf8byte;
 					cont_level++;
 					long_str_level++;
 				}
-				break;
-			case '}':
-				if (!inside_short_str) {
+				else if (*utf8byte == '}') {
 					cont_level--;
-					if (long_str_level > 0) long_str_level--;
+					long_str_level--;
+					if (long_str_level == 0) state = INPUT_NO_STRING;
 				}
-				break;
+			}
+
+			else if (state == INPUT_RAW_STRING)
+			{
+				if (*utf8byte == '}' && utf8byte[1] == '%') {
+					n = 1;
+					while (utf8byte[n] == '%') n++;
+					if (raw_str_level < n) {
+						raw_str_level = 0;
+						line_len += n;
+						utf8byte += n;
+						cont_level--;
+						state = INPUT_NO_STRING;
+					}
+				}
 			}
 		}
-		inside_short_str = FALSE;
+		if (state == INPUT_SINGLE_LINE_STRING) state = INPUT_NO_STRING;
 
 		if (input_len + line_len > input_max) {
 			// limit maximum input size to 2GB (it should be more than enough)
@@ -230,6 +280,7 @@ void Host_Repl(void) {
 
 		input_len = 0;
 		cont_level = 0;
+		raw_str_level = 0;
 
 		RESET_COLOR;
 
