@@ -26,6 +26,7 @@ version: 3.10.5
 #if Windows? [ defines: TO_WINDOWS ]
 #if OpenBSD? [ defines: TO_OPENBSD ]
 #if FreeBSD? [ defines: TO_FREEBSD ]
+#if (system/platform = 'NetBSD)  [ defines: TO_NETBSD  ]
 
 target-windows: [
 	os:       windows
@@ -64,6 +65,13 @@ target-freebsd: [
 	platform: FreeBSD
 	vendor:   pc
 	compiler: clang
+]
+target-netbsd: [
+	os:       netbsd
+	sys:      netbsd
+	platform: NetBSD
+	vendor:   pc
+	compiler: gcc
 ]
 target-haiku: [
 	os:       haiku
@@ -430,7 +438,7 @@ include-image-codecs: [
 	#if MacOS? [
 		:include-image-os-codec
 	]
-	#if (any [Linux? OpenBSD? FreeBSD?]) [
+	#if (find [Linux OpenBSD FreeBSD NetBSD] system/platform) [
 		:include-native-bmp-codec
 		:include-native-png-codec
 		:include-native-jpg-codec
@@ -918,7 +926,7 @@ common: [
 		flag:    -mmacosx-version-min=10.9
 		entitlements: %make/Entitlements.plist
 	]
-	#if (any [Linux? OpenBSD? FreeBSD?]) [
+	#if (find [Linux OpenBSD FreeBSD NetBSD] system/platform) [
 		library: %m
 		defines: ENDIAN_LITTLE
 	]
@@ -933,7 +941,7 @@ common-host: [
 		resource: %make/r3.rc
 	]
 	;#if Posix []
-	#if (any [Linux? OpenBSD? FreeBSD? (system/platform = 'haiku)]) [
+	#if (find [Linux OpenBSD FreeBSD NetBSD Haiku] system/platform) [
 		flag: -fPIC ; position independent (used for libs)
 	]
 ]
@@ -1082,6 +1090,10 @@ make-ext-test: [
 	#if FreeBSD? [
 		flag: -fPIC
 		:target-freebsd
+	]
+	#if ('NetBSD = system/platform) [
+		flag: -fPIC
+		:target-netbsd
 	]
 ]
 
@@ -1497,6 +1509,25 @@ eggs: [
 			:target-freebsd
 			:include-rebol-core
 			:make-x64-host
+		]
+	]
+	#if (system/platform = 'haiku) [
+		"Rebol/Base netbsd-x64" [
+			name:   %rebol3-base-netbsd-x64
+			:target-netbsd
+			:make-x64-exe
+		]
+		"Rebol/Core netbsd-x64" [
+			name:   %rebol3-core-netbsd-x64
+			:target-netbsd
+			:include-rebol-core
+			:make-x64-exe
+		]
+		"Rebol/Bulk netbsd-x64" [
+			name:   %rebol3-bulk-netbsd-x64
+			:target-freebsd
+			:include-rebol-bulk
+			:make-x64-exe
 		]
 	]
 	#if (system/platform = 'haiku) [
