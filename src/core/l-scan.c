@@ -555,6 +555,53 @@ new_line:
 
 /***********************************************************************
 **
+*/  const REBYTE *Scan_Raw_String(const REBYTE *src, SCAN_STATE *scan_state, int num)
+/*
+**      Scan a raw string (without any modifications).
+**		Eliminates need of double escaping and allowes unmatched braces.
+**
+**		The result will be put into the temporary MOLD_BUF unistring.
+**
+***********************************************************************/
+{
+	REBCNT lines = 0;
+	REBSER *buf = BUF_MOLD;
+	REBYTE *bp = src;
+	REBLEN n;
+	REBINT chr;
+
+	RESET_TAIL(buf);
+
+	while (*bp) {
+
+		//if (*bp == CR && bp[1] == LF) bp++; // replace CRLF with LF
+
+		chr = *bp;
+		if (chr == LF) lines++;
+		else if (chr == '}' && bp[1] == '%') {
+			n = 1;
+			while (bp[n] == '%') n++; n--;
+			if (num == n) {
+				// success
+				if (scan_state) scan_state->line_count += lines;
+				UNI_TERM(buf);
+				return bp + 1 + n; // Skip ending %
+			}
+			if (n > num) return 0;
+		}
+		bp++;
+		if (SERIES_FULL(buf))
+			Extend_Series(buf, 1);
+
+		*UNI_SKIP(buf, buf->tail) = chr;
+		buf->tail++;
+	}
+	return 0; // end of source intput without closing
+}
+
+
+/***********************************************************************
+**
 */  const REBYTE *Scan_Item(const REBYTE *src, const REBYTE *end, REBUNI term, const REBYTE *invalid)
 /*
 **      Scan as UTF8 an item like a file or URL.
@@ -933,13 +980,24 @@ new_line:
             return TOKEN_REF;
 
         case LEX_SPECIAL_PERCENT:
-			if (IS_LEX_DELIMIT(cp[1]) && cp[1] != '"' && cp[1] != '/') {
+			if (IS_LEX_DELIMIT(cp[1]) && cp[1] != '"' && cp[1] != '/' && cp[1] != '{') {
 				return TOKEN_WORD; // special case for having % as a word (reminder op!)
 			} else if (cp[1] == ':' && IS_LEX_DELIMIT(cp[2])) {
 				return TOKEN_SET;
 			}
-			/* %filename */
-            cp = scan_state->end;
+			int n = 1;
+			while (*cp) {
+				if (cp[n] == '{') {
+					cp = Scan_Raw_String(cp+n+1, scan_state, n);  // stores result string in BUF_MOLD
+					if (!cp) return -TOKEN_STRING;
+					scan_state->end = cp;
+					return TOKEN_STRING;
+				}
+				if (cp[n] != '%') break;
+				n++;
+			}
+			cp = scan_state->end;
+			/* %"file name" or %filename */
             if (*cp == '"') {
 				cp = Scan_Quote(cp, scan_state);  // stores result string in BUF_MOLD
 				if (!cp) return -TOKEN_FILE;

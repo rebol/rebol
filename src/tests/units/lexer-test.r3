@@ -155,6 +155,22 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "Raw string"
+	--test-- "rawstring %{}%"
+		--assert ""     == transcode/one "%{}%"
+		--assert ""     == transcode/one "%%{}%%"
+		--assert "a^^b" == transcode/one "%{a^^b}%"
+		--assert "}"    == transcode/one "%{}}%"
+		--assert "{"    == transcode/one "%{{}%"
+		--assert " %{^}% "  == transcode/one "%%{ %{^}% }%%"
+	--test-- "rawstring %{}% multiline"
+		--assert "^/"   == transcode/one rejoin ["%{" LF "}%"]
+		--assert "^M^/" == transcode/one rejoin ["%{" CR LF "}%"]
+
+===end-group===
+
+
 ===start-group=== "Special % word"
 	--test-- "valid % word cases"
 		--assert word? try [load {%}]
