@@ -1511,7 +1511,7 @@ eggs: [
 			:make-x64-host
 		]
 	]
-	#if (system/platform = 'haiku) [
+	#if (system/platform = 'netbsd) [
 		"Rebol/Base netbsd-x64" [
 			name:   %rebol3-base-netbsd-x64
 			:target-netbsd
