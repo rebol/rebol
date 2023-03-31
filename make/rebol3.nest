@@ -1525,7 +1525,7 @@ eggs: [
 		]
 		"Rebol/Bulk netbsd-x64" [
 			name:   %rebol3-bulk-netbsd-x64
-			:target-freebsd
+			:target-netbsd
 			:include-rebol-bulk
 			:make-x64-exe
 		]
