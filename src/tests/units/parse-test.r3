@@ -551,6 +551,32 @@ Rebol [
 	--assert parse v: [#L 1 "a" #L 2 "b"][some [string! | lr]]
 	--assert v = ["a" "b"]
 
+--test-- "remove using series' index"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2541
+	--assert all [
+		parse s: "abcd" [skip p: 2 skip remove p skip]
+		s == "ad"
+	]
+	--assert all  [
+		parse s: "abcd" [skip (p: tail s) remove p]
+		s == "a"
+	]
+	--assert all [
+		parse s: [a b c d] [skip p: 2 skip remove p skip]
+		s == [a d]
+	]
+	--assert all  [
+		parse s: [a b c d] [skip (p: tail s) remove p]
+		s == [a]
+	]
+	;; here the word `p` is used, but not as an index, but as a value
+	--assert all  [
+		p: "bc" parse s: "abcd" [skip remove p skip]
+		s == "ad"
+	]
+	p: "xx"
+	--assert not parse s: "abcd" [skip remove p skip]
+
 --test-- "while .. remove"
 	remove-any-y: [while [remove #"y" | #"x"]] 
 	--assert parse v: "" remove-any-y

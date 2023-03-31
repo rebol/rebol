@@ -966,6 +966,23 @@ bad_target:
 
 					case SYM_REMOVE:
 						SET_FLAG(flags, PF_REMOVE);
+						if (IS_WORD(rules)) {
+							// optionally using stored index as a counter
+							// https://github.com/Oldes/Rebol-issues/issues/2541
+							item = Get_Var(rules);
+							if (VAL_SERIES(item) == parse->series) {
+								rules++;
+								if (VAL_INDEX(item) < index) {
+									begin = VAL_INDEX(item);
+									count = index - VAL_INDEX(item);
+								}
+								else {
+									begin = index;
+									count = VAL_INDEX(item) - index;
+								}
+								goto do_remove;
+							}
+						}
 						continue;
 					
 					case SYM_INSERT:
@@ -1407,6 +1424,7 @@ post:
 					Throw_Return_Series(parse->type, ser);
 				}
 				if (GET_FLAG(flags, PF_REMOVE)) {
+do_remove:
 					if (count) {
 						if (IS_PROTECT_SERIES(series)) Trap0(RE_PROTECTED);
 						Remove_Series(series, begin, count);
