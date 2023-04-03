@@ -159,7 +159,7 @@ core-files: [
 	%core/p-file.c
 	%core/p-net.c
 ;	%core/p-midi.c          ;optional, use: include-midi
-;	%core/p-serial.c        ;not implemented
+;	%core/p-serial.c        ;optional, use: include-serial
 ;	%core/p-timer.c         ;not implemented
 	%core/s-cases.c
 	%core/s-crc.c
@@ -483,6 +483,18 @@ include-midi: [
 	]
 	#if OpenBSD? [
 		; there is no support yet
+	]
+]
+include-serial: [
+	#if (find [windows linux] system/platform) [
+		core-files: %core/p-serial.c
+		config:     INCLUDE_SERIAL_DEVICE
+	]
+	#if Windows? [
+		host-files: %os/win32/dev-serial.c
+	]
+	#if Linux? [
+		host-files: %os/posix/dev-serial.c
 	]
 ]
 
@@ -853,6 +865,7 @@ include-rebol-bulk: [
 	:include-base85-encoding
 	:include-view
 	:include-midi
+	:include-serial
 
 	; Extended crypto features
 	:include-cryptography-bulk

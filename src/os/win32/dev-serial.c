@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2013 REBOL Technologies
+**  Copyright 2013-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +21,7 @@
 ************************************************************************
 **
 **  Title: Device: Serial port access for Windows
-**  Author: Carl Sassenrath, Joshua Shireman
+**  Author: Carl Sassenrath, Joshua Shireman, Shixin Zeng
 **
 ************************************************************************
 **

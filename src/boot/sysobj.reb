@@ -331,6 +331,14 @@ standard: object [
 		device-out: none
 	]
 
+	port-spec-serial: make port-spec-head [
+		speed: 115200
+		data-size: 8
+		parity: none
+		stop-bits: 1
+		flow-control: none ;not supported on all systems
+	]
+
 	file-info: construct [
 		name:
 		size:

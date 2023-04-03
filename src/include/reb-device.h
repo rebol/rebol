@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2013-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,6 +45,7 @@ enum {
 	RDI_CLIPBOARD,
 	RDI_MIDI,
 	RDI_CRYPT,
+	RDI_SERIAL,
 	RDI_MAX,
 	RDI_LIMIT = 32
 };
@@ -117,6 +119,21 @@ enum {
 	RDM_NULL,		// Null device
 	RDM_READ_LINE,
 };
+
+// Serial Parity
+enum {
+	SERIAL_PARITY_NONE,
+	SERIAL_PARITY_ODD,
+	SERIAL_PARITY_EVEN
+};
+
+// Serial Flow Control
+enum {
+	SERIAL_FLOW_CONTROL_NONE,
+	SERIAL_FLOW_CONTROL_HARDWARE,
+	SERIAL_FLOW_CONTROL_SOFTWARE
+};
+
 
 #pragma pack(4)
 
@@ -205,6 +222,17 @@ struct rebol_devreq {
 			u32 mode;
 			u32 value;
 		} modify;
+
+		struct {
+			REBCHR *path;			// device path string (in OS local format)
+			void *prior_attr;		// termios: retain previous settings to revert on close
+			i32 baud;				// baud rate of serial port
+			u8	data_bits;			// 5, 6, 7 or 8
+			u8	parity;				// odd, even, mark or space
+			u8	stop_bits;			// 1 or 2
+			u8	flow_control;		// hardware or software
+		} serial;
+
 	};
 };
 #pragma pack()

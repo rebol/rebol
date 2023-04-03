@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2013 REBOL Technologies
+**  Copyright 2013-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +23,7 @@
 **  Module:  p-serial.c
 **  Summary: serial port interface
 **  Section: ports
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Joshua Shireman, Shixin Zeng, Oldes
 **  Notes:
 **
 ***********************************************************************/
@@ -35,7 +36,7 @@
 
 /***********************************************************************
 **
-*/	static int Serial_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int Serial_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 ***********************************************************************/
 {
@@ -48,8 +49,9 @@
 	REBCNT len;		// generic length
 	REBSER *ser;	// simplifier
 	REBVAL *path;
+	REBSER *port;
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 
 	*D_RET = *D_ARG(1);
 
@@ -69,7 +71,7 @@
 		switch (action) {
 
 		case A_OPEN:
-			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_PATH);  //Should Obj_Value really return a char* ?
+			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_REF);  //Should Obj_Value really return a char* ?
 			if (! (IS_FILE(arg) || IS_STRING(arg) || IS_BINARY(arg))) {
 				Trap1(RE_INVALID_PORT_ARG, arg);
 			}
