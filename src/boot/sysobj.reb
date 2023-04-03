@@ -332,6 +332,7 @@ standard: object [
 	]
 
 	port-spec-serial: make port-spec-head [
+		path: none
 		speed: 115200
 		data-size: 8
 		parity: none

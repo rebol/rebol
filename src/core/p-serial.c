@@ -71,7 +71,7 @@
 		switch (action) {
 
 		case A_OPEN:
-			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_REF);  //Should Obj_Value really return a char* ?
+			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_PATH);  //Should Obj_Value really return a char* ?
 			if (! (IS_FILE(arg) || IS_STRING(arg) || IS_BINARY(arg))) {
 				Trap1(RE_INVALID_PORT_ARG, arg);
 			}
