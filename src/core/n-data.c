@@ -894,6 +894,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	action = Value_Dispatch[VAL_TYPE(val)];
 	if (ANY_SERIES(val)) {
 		t = VAL_TAIL(val);
+		if (VAL_INDEX(val) >= t) return R_NONE;
 		VAL_INDEX(val) = 0;
 	}
 	else if (IS_TUPLE(val)) t = VAL_TUPLE_LEN(val);

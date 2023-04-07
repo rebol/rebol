@@ -599,6 +599,31 @@ Rebol [
 	--assert "34" = take/part skip s 2 -5 ;@@ https://github.com/Oldes/Rebol-issues/issues/373
 	--assert "56" = take/part s 10
 
+	--test-- "take/part string! with negative part"
+	;@@ https://github.com/red/red/issues/4078
+	s: "123" --assert ""    == take/part      s    -1
+	s: "123" --assert "1"   == take/part skip s 1  -1
+	s: "123" --assert "2"   == take/part skip s 2  -1
+	s: "123" --assert "3"   == take/part skip s 3  -1
+	s: "123" --assert "1"   == take/part skip s 1  -2
+	s: "123" --assert "12"  == take/part skip s 2  -2
+	s: "123" --assert "23"  == take/part skip s 3  -2
+	s: "123" --assert "1"   == take/part skip s 1  -3
+	s: "123" --assert "12"  == take/part skip s 2  -3
+	s: "123" --assert "123" == take/part skip s 3  -3
+	s: "123" --assert "1"   == take/part      s    skip s 1
+	s: "123" --assert "1"   == take/part skip s 1       s
+	s: "123" --assert "2"   == take/part skip s 1  skip s 2
+	s: "123" --assert "2"   == take/part skip s 2  skip s 1
+	s: "123" --assert "3"   == take/part skip s 2  skip s 3
+	s: "123" --assert "3"   == take/part skip s 3  skip s 2
+	s: "123" --assert "12"  == take/part      s    skip s 2
+	s: "123" --assert "12"  == take/part skip s 2       s
+	s: "123" --assert "23"  == take/part skip s 1  skip s 3
+	s: "123" --assert "23"  == take/part skip s 3  skip s 1
+	s: "123" --assert "123" == take/part      s    skip s 3
+	s: "123" --assert "123" == take/part skip s 3       s
+
 	--test-- "take/part any-block!"
 		--assert [1 2] = take/part [1 2 3 4] 2
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2174
@@ -608,12 +633,44 @@ Rebol [
 		--assert ":a/b"  = mold take/part quote :a/b/c 2
 		--assert "a/b:"  = mold take/part quote a/b/c: 2
 
+	--test-- "take/part block! with negative part"
+	;@@ https://github.com/red/red/issues/4078
+	s: [1 2 3] --assert [ ]     == take/part      s    -1
+	s: [1 2 3] --assert [1]     == take/part skip s 1  -1
+	s: [1 2 3] --assert [2]     == take/part skip s 2  -1
+	s: [1 2 3] --assert [3]     == take/part skip s 3  -1
+	s: [1 2 3] --assert [1]     == take/part skip s 1  -2
+	s: [1 2 3] --assert [1 2]   == take/part skip s 2  -2
+	s: [1 2 3] --assert [2 3]   == take/part skip s 3  -2
+	s: [1 2 3] --assert [1]     == take/part skip s 1  -3
+	s: [1 2 3] --assert [1 2]   == take/part skip s 2  -3
+	s: [1 2 3] --assert [1 2 3] == take/part skip s 3  -3
+	s: [1 2 3] --assert [1]     == take/part      s    skip s 1
+	s: [1 2 3] --assert [1]     == take/part skip s 1       s
+	s: [1 2 3] --assert [2]     == take/part skip s 1  skip s 2
+	s: [1 2 3] --assert [2]     == take/part skip s 2  skip s 1
+	s: [1 2 3] --assert [3]     == take/part skip s 2  skip s 3
+	s: [1 2 3] --assert [3]     == take/part skip s 3  skip s 2
+	s: [1 2 3] --assert [1 2]   == take/part      s    skip s 2
+	s: [1 2 3] --assert [1 2]   == take/part skip s 2       s
+	s: [1 2 3] --assert [2 3]   == take/part skip s 1  skip s 3
+	s: [1 2 3] --assert [2 3]   == take/part skip s 3  skip s 1
+	s: [1 2 3] --assert [1 2 3] == take/part      s    skip s 3
+	s: [1 2 3] --assert [1 2 3] == take/part skip s 3       s
+
 	--test-- "take/last"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/177
 	--assert #"c" = take/last str: "abc"
 	--assert "ab" = str
 	--assert 3    = take/last blk: [1 2 3]
 	--assert [1 2] = blk
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2542
+	--assert none? take/last tail "123"
+	--assert none? take/last tail [1 2 3]
+	--assert "123"   = take/last/part tail "123" -3
+	--assert ""      = take/last/part tail "123"  3
+	--assert [1 2 3] = take/last/part tail [1 2 3] -3
+	--assert []      = take/last/part tail [1 2 3]  3
 
 	;@@ https://github.com/Oldes/Rebol-issues/issues/171
 	--test-- "take/deep block!"
@@ -1242,6 +1299,66 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "Series with index past its tail"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2543
+--test-- "any-string"
+	src: %ABC
+	dir: tail src
+	--assert 4 = index? dir
+	--assert %ABC = copy/part dir -3
+	--assert empty? clear src
+	--assert 4 = index? dir
+	--assert %"" = copy/part dir -3
+--test-- "any-block"
+	src: [A B C]
+	dir: tail src
+	--assert 4 = index? dir
+	--assert [A B C] = copy/part dir -3
+	--assert empty? clear src
+	--assert 4 = index? dir
+	--assert [] = copy/part dir -3
+
+--test-- "Red's test (strings)"
+;@@ https://github.com/red/red/issues/3369
+	test: does [a: copy "12345678" b: skip a 2 c: skip a 6 remove/part a 4]
+	test
+	--assert all [a = "5678" b = "78" c = ""]
+	test change c 1
+	--assert all [a = "56781" b = "781" c = ""]
+	test clear c
+	--assert all [a = "5678" b = "78" c = ""]
+	test remove c
+	--assert all [a = "5678" b = "78" c = ""]
+	test change/part c 99 -1
+	--assert all [a = "56799" b = "799" c = ""]
+	test insert c 1
+	--assert all [a = "56781" b = "781" c = ""]
+	test
+	--assert none? last c
+	--assert none? take/last c
+--test-- "Red's test (blocks)"
+;@@ https://github.com/red/red/issues/3369
+	test: does [a: copy [1 2 3 4 5 6 7 8] b: skip a 2 c: skip a 6 remove/part a 4]
+	test
+	--assert all [a = [5 6 7 8] b = [7 8] c = []]
+	test change c 1
+	--assert all [a = [5 6 7 8 1] b = [7 8 1] c = []]
+	test clear c
+	--assert all [a = [5 6 7 8] b = [7 8] c = []]
+	test remove c
+	--assert all [a = [5 6 7 8] b = [7 8] c = []]
+	test change/part c 99 -1
+	--assert all [a = [5 6 7 99] b = [7 99] c = []]
+	test insert c 1
+	--assert all [a = [5 6 7 8 1] b = [7 8 1] c = []]
+	test
+	--assert none? last c
+	--assert none? take/last c
+
+===end-group===
+
+
 ===start-group=== "ANY-OF & ALL-OF"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/637
 --test-- "any-of"
@@ -1279,7 +1396,7 @@ Rebol [
 		--assert not past? b
 ===end-group===
 
-===start-group=== "SNGLE?"
+===start-group=== "SINGLE?"
 	--test-- "single? block"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/875
 		--assert single? [a]

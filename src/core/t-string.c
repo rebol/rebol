@@ -584,6 +584,8 @@ static struct {
 	if (action != A_MAKE && action != A_TO) {
 		index = (REBINT)VAL_INDEX(value);
 		tail  = (REBINT)VAL_TAIL(value);
+		if (index > tail)
+			VAL_INDEX(value) = index = tail;
 	}
 
 	// Check must be in this order (to avoid checking a non-series value);
@@ -717,6 +719,7 @@ zero_str:
 		index = VAL_INDEX(value); // /part can change index
 
 		// take/last:
+		if (tail <= index) goto is_none;
 		if (D_REF(5)) index = tail - len;
 		if (index < 0 || index >= tail) {
 			if (!D_REF(2)) goto is_none;
