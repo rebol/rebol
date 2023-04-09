@@ -559,4 +559,14 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "mold percent!"
+	--test-- "1.#INF and 1.#NaN percents"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2544
+		--assert  "1.#INF" == mold to percent!  1.#INF
+		--assert "-1.#INF" == mold to percent! -1.#INF
+		--assert  "1.#NaN" == mold to percent!  1.#NaN
+		--assert  "1.#NaN" == mold to percent! -1.#NaN
+===end-group===
+
 ~~~end-file~~~
