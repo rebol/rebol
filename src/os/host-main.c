@@ -108,7 +108,7 @@ extern void Init_Ext_Test(void);	// see: host-ext-test.c
 #endif
 
 // Host bare-bones stdio functs:
-extern REBREQ *Open_StdIO(void);
+extern REBREQ *Open_StdIO(REBOOL cgi);
 extern void Close_StdIO(void);
 extern void Put_Str(REBYTE *buf);
 extern REBYTE *Get_Str(void);
@@ -343,12 +343,15 @@ int main(int argc, char **argv) {
 	REBYTE vers[8];
 	REBINT n;
 	REBREQ *std_io;
+	REBOOL cgi;
 
 	Parse_Args(argc, (REBCHR **)argv, &Main_Args);
 
+	cgi = Main_Args.options & RO_CGI;
+
 	// Must be done before an console I/O can occur. Does not use reb-lib,
 	// so this device should open even if there are other problems.
-	std_io = Open_StdIO((Main_Args.options & RO_CGI));  // also sets up interrupt handler
+	std_io = Open_StdIO(cgi);  // also sets up interrupt handler
 
 	Host_Lib = &Host_Lib_Init;
 
@@ -390,7 +393,7 @@ int main(int argc, char **argv) {
 #endif
 
 	if (
-		!(Main_Args.options & RO_CGI)
+		!cgi
 		&& (
 			!Main_Args.script // no script was provided
 			|| n  < 0         // script halted or had error
