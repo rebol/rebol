@@ -344,13 +344,13 @@ int main(int argc, char **argv) {
 	REBINT n;
 	REBREQ *std_io;
 
+	Parse_Args(argc, (REBCHR **)argv, &Main_Args);
+
 	// Must be done before an console I/O can occur. Does not use reb-lib,
 	// so this device should open even if there are other problems.
-	std_io = Open_StdIO();  // also sets up interrupt handler
+	std_io = Open_StdIO((Main_Args.options & RO_CGI));  // also sets up interrupt handler
 
 	Host_Lib = &Host_Lib_Init;
-
-	Parse_Args(argc, (REBCHR **)argv, &Main_Args);
 
 	vers[0] = 5; // len
 	RL_Version(&vers[0]);
