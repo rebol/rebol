@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Developers
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -512,7 +512,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 **
 ***********************************************************************/
 
-#define MAX_SCHEMES 13		// max native schemes
+#define MAX_SCHEMES 14		// max native schemes
 
 typedef struct rebol_scheme_actions {
 	REBCNT sym;
@@ -638,6 +638,9 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 #endif
 #ifdef INCLUDE_CRYPTOGRAPHY
 	Init_Crypt_Scheme();
+#endif
+#ifdef INCLUDE_SERIAL_DEVICE
+	Init_Serial_Scheme();
 #endif
 }
 

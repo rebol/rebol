@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Boot Sys: Port and Scheme Functions"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -503,6 +504,28 @@ init-schemes: func [
 			true
 		]
 	]
+
+	make-scheme [
+		title: "Serial Port"
+		name: 'serial
+		spec: system/standard/port-spec-serial
+		init: func [port /local path speed] [
+			if url? port/spec/ref [
+				parse port/spec/ref [
+					thru #":" 0 2 slash
+					copy path [to slash | end] skip
+					copy speed to end
+				]
+				try/except [port/spec/path: to file! path][
+					cause-error 'access 'invalid-spec :path
+				]
+				try/except [port/spec/speed: to integer! speed][
+					cause-error 'access 'invalid-spec :speed
+				]
+			]
+		]
+	]
+
 
 	system/ports/system:   open [scheme: 'system]
 	system/ports/input:

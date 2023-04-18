@@ -635,6 +635,8 @@ static struct {
 	index = VAL_INDEX(value);
 	tail  = VAL_TAIL(value);
 	ser   = VAL_SERIES(value);
+	if (index > tail)
+		VAL_INDEX(value) = index = tail;
 
 	// Check must be in this order (to avoid checking a non-series value);
 	if (action >= A_TAKE && action <= A_SORT && IS_PROTECT_SERIES(ser))
@@ -710,6 +712,7 @@ zero_blk:
 
 		index = VAL_INDEX(value); // /part can change index
 		// take/last:
+		if (tail <= index) goto is_none;
 		if (D_REF(ARG_TAKE_LAST)) index = tail - len;
 		if (index >= tail) {
 			if (!D_REF(ARG_TAKE_PART)) goto is_none;

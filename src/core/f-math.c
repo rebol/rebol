@@ -274,6 +274,14 @@
 		cp += digits_obtained - 1;
 	} else if (e > 0) {
 		if (e <= digits_obtained) {
+			/* handle 1.INF and 1.#NaN cases (issue #2544) */
+			if (sig[1] == '#') {
+				*cp++ = *sig++;
+				*cp++ = point;
+				memcpy(cp, sig, 4);
+				cp += 4;
+				goto end;
+			}
 			/* insert digits preceding point */
 			memcpy (cp, sig, e);
 			cp += e;
@@ -321,6 +329,7 @@
 	}
 
  	if (trim == DEC_MOLD_PERCENT) *cp++ = '%';
+end:
 	*cp = 0;
 	return cp - start;
 }

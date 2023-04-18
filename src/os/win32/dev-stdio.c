@@ -287,7 +287,6 @@ static void Close_StdIO_Local(void)
 		if (GET_FLAG(dev->flags, SF_DEV_NULL))
 			SET_FLAG(req->modes, RDM_NULL);
 		SET_FLAG(req->flags, RRF_OPEN);
-		SET_FLAG(req->modes, RDM_READ_LINE);
 		return DR_DONE; // Do not do it again
 	}
 
@@ -387,7 +386,6 @@ static void Close_StdIO_Local(void)
 
 	SET_FLAG(req->flags, RRF_OPEN);
 	SET_FLAG(dev->flags, RDF_OPEN);
-	SET_FLAG(req->modes, RDM_READ_LINE);
 
 	return DR_DONE;
 }

@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Developers
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -92,6 +92,13 @@ extern REBDEV Dev_Crypt;
 #define DEVICE_PTR_CRYPT 0
 #endif
 
+#ifdef INCLUDE_SERIAL_DEVICE
+extern REBDEV Dev_Serial;
+#define DEVICE_PTR_SERIAL &Dev_Serial
+#else
+#define DEVICE_PTR_SERIAL 0
+#endif
+
 REBDEV *Devices[RDI_LIMIT] =
 {
 	0,
@@ -104,7 +111,8 @@ REBDEV *Devices[RDI_LIMIT] =
 	0,//&Dev_Checksum,
 	DEVICE_PTR_CLIPBOARD,
 	DEVICE_PTR_MIDI,
-	0 //DEVICE_PTR_CRYPT
+	0, //DEVICE_PTR_CRYPT
+	DEVICE_PTR_SERIAL,
 };
 
 

@@ -86,11 +86,13 @@
 
 		if (req->actual == 1 && req->data[0] == '\x1B') return R_NONE; // CTRL-C
 
+		if (GET_FLAG(req->modes, RDM_READ_LINE)) {
 #ifdef TO_WINDOWS
-		if (req->actual > 1 && GET_FLAG(req->modes, RDM_READ_LINE)) req->actual -= 2; // remove CRLF from tail
+			if (req->actual > 1) req->actual -= 2; // remove CRLF from tail
 #else
-		if (req->actual > 0) req->actual -= 1; // remove LF from tail
+			if (req->actual > 0) req->actual -= 1; // remove LF from tail
 #endif
+		}
 
 		// Convert to string or block of strings.
 		args = Find_Refines(ds, ALL_READ_REFS);

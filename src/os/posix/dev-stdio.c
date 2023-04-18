@@ -325,6 +325,14 @@ static void Close_StdIO_Local(void)
 				}
 			}
 			break;
+		case MODE_CONSOLE_LINE:
+			if (req->modify.value) {
+				SET_FLAG(req->modes, RDM_READ_LINE);
+			}
+			else {
+				CLR_FLAG(req->modes, RDM_READ_LINE);
+			}
+			break;
 		case MODE_CONSOLE_ERROR:
 			Std_Out = req->modify.value ? STDERR_FILENO : STDOUT_FILENO;
 			break;

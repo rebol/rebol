@@ -108,7 +108,7 @@ static int Fetch_Buf()
 
 /***********************************************************************
 **
-*/	REBREQ *Open_StdIO(void)
+*/	REBREQ *Open_StdIO(REBOOL cgi)
 /*
 **		Open REBOL's standard IO device. This same device is used
 **		by both the host code and the R3 DLL itself.
@@ -128,6 +128,8 @@ static int Fetch_Buf()
 
 	inbuf = OS_Make(inbuf_len);
 	inbuf[0] = 0;
+	if (!cgi)
+		SET_FLAG(Std_IO_Req.modes, RDM_READ_LINE);
 	return &Std_IO_Req;
 }
 
