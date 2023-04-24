@@ -1353,18 +1353,18 @@ eggs: [
 		;-- RaspberryPi cross-compilation                     
 		;@@ sudo apt-get install gcc-arm-linux-gnueabihf
 		"Cross-compile Rebol/Base for RaspberryPi armhf" [
-			name:     %rebol-base-rpi-armhf
+			name:     %rebol3-base-rpi-armhf
 			:cross-rpi-armhf
 			:make-exe
 		]
 		"Cross-compile Rebol/Core for RaspberryPi armhf" [
-			name:     %rebol-core-rpi-armhf
+			name:     %rebol3-core-rpi-armhf
 			:include-rebol-core
 			:cross-rpi-armhf
 			:make-exe
 		]
 		"Cross-compile Rebol/Bulk for RaspberryPi armhf" [
-			name:     %rebol-bulk-rpi-armhf
+			name:     %rebol3-bulk-rpi-armhf
 			:include-rebol-bulk
 			:cross-rpi-armhf
 			:make-exe
