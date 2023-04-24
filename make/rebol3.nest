@@ -99,7 +99,7 @@ target-haiku: [
 		:target-haiku
 		:make-x64-exe
 	]
-	cross-rpi-armhf: [
+	cross-linux-armhf: [
 		;- requires: sudo apt-get install gcc-arm-linux-gnueabihf
 		compiler: %/usr/bin/arm-linux-gnueabihf-gcc
 		library:  %/usr/arm-linux-gnueabihf/lib/
@@ -1353,20 +1353,20 @@ eggs: [
 		;-- RaspberryPi cross-compilation                     
 		;@@ sudo apt-get install gcc-arm-linux-gnueabihf
 		"Cross-compile Rebol/Base for RaspberryPi armhf" [
-			name:     %rebol3-base-rpi-armhf
-			:cross-rpi-armhf
+			name:     %rebol3-base-linux-armhf
+			:cross-linux-armhf
 			:make-exe
 		]
 		"Cross-compile Rebol/Core for RaspberryPi armhf" [
-			name:     %rebol3-core-rpi-armhf
+			name:     %rebol3-core-linux-armhf
 			:include-rebol-core
-			:cross-rpi-armhf
+			:cross-linux-armhf
 			:make-exe
 		]
 		"Cross-compile Rebol/Bulk for RaspberryPi armhf" [
-			name:     %rebol3-bulk-rpi-armhf
+			name:     %rebol3-bulk-linux-armhf
 			:include-rebol-bulk
-			:cross-rpi-armhf
+			:cross-linux-armhf
 			:make-exe
 		]
 	]
