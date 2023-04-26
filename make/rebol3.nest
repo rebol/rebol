@@ -1368,54 +1368,54 @@ eggs: [
 		;-- RaspberryPi cross-compilation                     
 		;@@ sudo apt-get install gcc-arm-linux-gnueabi
 		"Cross-compile Rebol/Base for RaspberryPi armv6 (gnueabi)" [
-			name:     %rebol3-base-linux-armv6
+			name:     %rebol3-base-linux-gnueabi
 			:cross-linux-gnueabi
 			:make-exe
 		]
 		"Cross-compile Rebol/Core for RaspberryPi armv6 (gnueabi)" [
-			name:     %rebol3-core-linux-armv6
+			name:     %rebol3-core-linux-gnueabi
 			:include-rebol-core
 			:cross-linux-gnueabi
 			:make-exe
 		]
 		"Cross-compile Rebol/Bulk for RaspberryPi armv6 (gnueabi)" [
-			name:     %rebol3-bulk-linux-armv6
+			name:     %rebol3-bulk-linux-gnueabi
 			:include-rebol-bulk
 			:cross-linux-gnueabi
 			:make-exe
 		]
 		;@@ sudo apt-get install gcc-arm-linux-gnueabihf
 		"Cross-compile Rebol/Base for RaspberryPi armv7 (gnueabihf)" [
-			name:     %rebol3-base-linux-armv7
+			name:     %rebol3-base-linux-gnueabihf
 			:cross-linux-gnueabihf
 			:make-exe
 		]
 		"Cross-compile Rebol/Core for RaspberryPi armv7 (gnueabihf)" [
-			name:     %rebol3-core-linux-armv7
+			name:     %rebol3-core-linux-gnueabihf
 			:include-rebol-core
 			:cross-linux-gnueabihf
 			:make-exe
 		]
 		"Cross-compile Rebol/Bulk for RaspberryPi armv7 (gnueabihf)" [
-			name:     %rebol3-bulk-linux-armv7
+			name:     %rebol3-bulk-linux-gnueabihf
 			:include-rebol-bulk
 			:cross-linux-gnueabihf
 			:make-exe
 		]
 		;@@ sudo apt-get install gcc-aarch64-linux-gnu
 		"Cross-compile Rebol/Base for RaspberryPi arm64 (aarch64)" [
-			name:     %rebol3-base-linux-arm64
+			name:     %rebol3-base-linux-aarch64
 			:cross-linux-aarch64
 			:make-exe
 		]
 		"Cross-compile Rebol/Core for RaspberryPi arm64 (aarch64)" [
-			name:     %rebol3-core-linux-arm64
+			name:     %rebol3-core-linux-aarch64
 			:include-rebol-core
 			:cross-linux-aarch64
 			:make-exe
 		]
 		"Cross-compile Rebol/Bulk for RaspberryPi arm64 (aarch64)" [
-			name:     %rebol3-bulk-linux-arm64
+			name:     %rebol3-bulk-linux-aarch64
 			:include-rebol-bulk
 			:cross-linux-aarch64
 			:make-exe
