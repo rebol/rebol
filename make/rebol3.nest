@@ -99,14 +99,21 @@ target-haiku: [
 		:target-haiku
 		:make-x64-exe
 	]
-	cross-linux-armhf: [
+	cross-linux-gnueabi: [
+		;- requires: sudo apt-get install gcc-arm-linux-gnueabi
+		compiler: %/usr/bin/arm-linux-gnueabi-gcc
+		library:  %/usr/arm-linux-gnueabi/lib/
+		:target-linux
+		arch: armv6
+	]
+	cross-linux-gnueabihf: [
 		;- requires: sudo apt-get install gcc-arm-linux-gnueabihf
 		compiler: %/usr/bin/arm-linux-gnueabihf-gcc
 		library:  %/usr/arm-linux-gnueabihf/lib/
 		:target-linux
-		arch: armhf
+		arch: armv7
 	]
-	cross-linux-arm64: [
+	cross-linux-aarch64: [
 		;- requires: sudo apt-get install gcc-aarch64-linux-gnu
 		compiler: %/usr/bin/aarch64-linux-gnu-gcc
 		library:  %/usr/aarch64-linux-gnu/lib/
@@ -1359,40 +1366,58 @@ eggs: [
 
 
 		;-- RaspberryPi cross-compilation                     
-		;@@ sudo apt-get install gcc-arm-linux-gnueabihf
-		"Cross-compile Rebol/Base for RaspberryPi armhf" [
-			name:     %rebol3-base-linux-armhf
-			:cross-linux-armhf
+		;@@ sudo apt-get install gcc-arm-linux-gnueabi
+		"Cross-compile Rebol/Base for RaspberryPi armv6 (gnueabi)" [
+			name:     %rebol3-base-linux-armv6
+			:cross-linux-gnueabi
 			:make-exe
 		]
-		"Cross-compile Rebol/Core for RaspberryPi armhf" [
-			name:     %rebol3-core-linux-armhf
+		"Cross-compile Rebol/Core for RaspberryPi armv6 (gnueabi)" [
+			name:     %rebol3-core-linux-armv6
 			:include-rebol-core
-			:cross-linux-armhf
+			:cross-linux-gnueabi
 			:make-exe
 		]
-		"Cross-compile Rebol/Bulk for RaspberryPi armhf" [
-			name:     %rebol3-bulk-linux-armhf
+		"Cross-compile Rebol/Bulk for RaspberryPi armv6 (gnueabi)" [
+			name:     %rebol3-bulk-linux-armv6
 			:include-rebol-bulk
-			:cross-linux-armhf
+			:cross-linux-gnueabi
+			:make-exe
+		]
+		;@@ sudo apt-get install gcc-arm-linux-gnueabihf
+		"Cross-compile Rebol/Base for RaspberryPi armv7 (gnueabihf)" [
+			name:     %rebol3-base-linux-armv7
+			:cross-linux-gnueabihf
+			:make-exe
+		]
+		"Cross-compile Rebol/Core for RaspberryPi armv7 (gnueabihf)" [
+			name:     %rebol3-core-linux-armv7
+			:include-rebol-core
+			:cross-linux-gnueabihf
+			:make-exe
+		]
+		"Cross-compile Rebol/Bulk for RaspberryPi armv7 (gnueabihf)" [
+			name:     %rebol3-bulk-linux-armv7
+			:include-rebol-bulk
+			:cross-linux-gnueabihf
 			:make-exe
 		]
 		;@@ sudo apt-get install gcc-aarch64-linux-gnu
-		"Cross-compile Rebol/Base for RaspberryPi arm64" [
+		"Cross-compile Rebol/Base for RaspberryPi arm64 (aarch64)" [
 			name:     %rebol3-base-linux-arm64
-			:cross-linux-arm64
+			:cross-linux-aarch64
 			:make-exe
 		]
-		"Cross-compile Rebol/Core for RaspberryPi arm64" [
+		"Cross-compile Rebol/Core for RaspberryPi arm64 (aarch64)" [
 			name:     %rebol3-core-linux-arm64
 			:include-rebol-core
-			:cross-linux-arm64
+			:cross-linux-aarch64
 			:make-exe
 		]
-		"Cross-compile Rebol/Bulk for RaspberryPi arm64" [
+		"Cross-compile Rebol/Bulk for RaspberryPi arm64 (aarch64)" [
 			name:     %rebol3-bulk-linux-arm64
 			:include-rebol-bulk
-			:cross-linux-arm64
+			:cross-linux-aarch64
 			:make-exe
 		]
 	]
