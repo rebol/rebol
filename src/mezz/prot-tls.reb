@@ -2293,15 +2293,16 @@ do-TLS-read: func [port [port!]][
 	read port/extra/tcp-port
 	port
 ]
-do-TLS-write: func[port [port!] value [any-type!] /local ctx][
+do-TLS-write: func[port [port!] value [any-string! binary!] /local ctx][
 	log-debug "WRITE"
 	ctx: port/extra
 	if ctx/protocol = 'APPLICATION [
-		;@@ FIXME: size limit for application data is 16KiB,
-		;@@ else server closes connection, which is not detected!
 		binary/init ctx/out none ;resets the output buffer
-		application-data ctx :value
-
+		;@@ There is a size limit for application data 16KiB!
+		while [not tail? value][
+			application-data ctx copy/part :value 16000
+			value: skip value 16000
+		]
 		do-TCP-write ctx
 		return port
 	]
