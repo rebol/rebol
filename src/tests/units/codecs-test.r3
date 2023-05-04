@@ -409,6 +409,10 @@ if find codecs 'JSON [
 		--assert data = decode 'JSON str
 		; Github is using "+1" and "-1" keys in the `reactions` data now
 		--assert ["+1" 1] = to block! decode 'JSON {{"+1": 1}}
+	--test-- "Decode unicode escaped char"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2546
+		--assert [test: "a"] = to block! decode 'json {{"test": "\u0061"}}
+
 	===end-group===
 ]
 
