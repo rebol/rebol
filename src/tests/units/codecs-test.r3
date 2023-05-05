@@ -780,6 +780,13 @@ if find codecs 'safe [
 			--assert not error? try [set-user/n/p temp-user "passw"]
 			--assert system/user/name = @temp-user
 			--assert 'file = exists? try [system/user/data/spec/ref]
+			--assert put system/user/data 'key "hello"  ;; store some data...
+			--assert "hello" = user's key               ;; resolve the data
+			--assert not error? try [su]                ;; release user
+			--assert none? system/user/name
+			--assert not error? try [set-user/p temp-user "passw"]
+			--assert "hello" = user's key               ;; resolve the data
+
 			try [delete system/user/data/spec/ref]
 
 	===end-group===

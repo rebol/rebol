@@ -70,7 +70,12 @@ su: set-user: func[
 	/local su
 ][
 	su: system/user
-	if unset? :name [su/name: none su/data: make map! 1 exit]
+	if unset? :name [
+		try [update su/data] ;; save changes if there are any
+		su/name: none
+		su/data: make map! 1
+		exit
+	]
 
 	sys/log/info 'REBOL ["Initialize user:" as-green :name]
 
