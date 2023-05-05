@@ -761,6 +761,7 @@ if find codecs 'safe [
 	;- using environmental variable to avoid interactive password input using `ask`
 	temp: get-env "REBOL_SAFE_PASS"
 	set-env "REBOL_SAFE_PASS" "my-pass"
+	user: system/user ;; store existing user
 	===start-group=== "SAFE codec"		
 		--test-- "Save/Load SAFE file"
 			foreach data [
@@ -772,8 +773,18 @@ if find codecs 'safe [
 				--assert equal? data load save %temp.safe data
 				delete %temp.safe
 			]
+		--test-- "Set-user which does not exists"
+			;@@ https://github.com/Oldes/Rebol-issues/issues/2547
+			--assert not error? try [set-user not-existing-user]
+		--test-- "Initialise new user"
+			--assert not error? try [set-user/n/p temp-user "passw"]
+			--assert system/user/name = @temp-user
+			--assert 'file = exists? try [system/user/data/spec/ref]
+			try [delete system/user/data/spec/ref]
+
 	===end-group===
 	set-env "REBOL_SAFE_PASS" :temp
+	system/user: :user
 ]
 
 

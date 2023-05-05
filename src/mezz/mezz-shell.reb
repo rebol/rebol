@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Mezzanine: Shell-like Command Functions"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -72,7 +73,11 @@ su: set-user: func[
 	if unset? :name [su/name: none su/data: make map! 1 exit]
 
 	sys/log/info 'REBOL ["Initialize user:" as-green :name]
-	file: to-real-file any [file rejoin [system/options/home #"." :name %.safe]]
+
+	file: any [
+		all [file to-real-file file] ;@@ could to-real-file accept none?
+		rejoin [system/options/home #"." :name %.safe]
+	]
 	sys/log/more 'REBOL ["Checking if exists: " as-green file]
 	unless exists? file [
 		unless n [
