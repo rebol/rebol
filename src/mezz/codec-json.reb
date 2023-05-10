@@ -1,7 +1,6 @@
 Rebol [
 	Name:    json
 	Type:    module
-	Options: [delay]
 	Exports: [to-json load-json]
 	Version: 0.1.2
 	Title:   "Codec: JSON"
