@@ -946,7 +946,7 @@ err:
 {
 	REBYTE *p;
 	REBYTE *src;
-	REBINT x, loop;
+	REBINT x, loop, pad;
 
 	if(len > VAL_LEN(value)) len = VAL_LEN(value);
 	src = VAL_BIN_DATA(value);
@@ -971,26 +971,16 @@ err:
 		if ((x+3) % 48 == 0 && brk)
 			*p++ = LF;
 	}
-
-	if ((len % 3) != 0) {
-		if (urlSafe) {
-			// no padding
-			*p++ = table[src[x] >> 2];
-			if ((len - x) >= 1)
-				*p++ = table[((src[x] & 0x3) << 4) + ((len - x) == 1 ? 0 : src[x + 1] >> 4)];
-			if ((len - x) == 2)
-				*p++ = table[(src[x + 1] & 0xF) << 2];
-		}
-		else {
-			p[2] = p[3] = '=';
-			*p++ = table[src[x] >> 2];
-			if ((len - x) >= 1)
-				*p++ = table[((src[x] & 0x3) << 4) + ((len - x) == 1 ? 0 : src[x + 1] >> 4)];
-			else p++;
-			if ((len - x) == 2)
-				*p++ = table[(src[x + 1] & 0xF) << 2];
-			else p++;
-			p++;
+	pad = len % 3;
+	if (pad != 0) {
+		*p++ = table[src[x] >> 2];
+		if (pad >= 1)
+			*p++ = table[((src[x] & 0x3) << 4) + (pad == 1 ? 0 : src[x + 1] >> 4)];
+		if (pad == 2)
+			*p++ = table[(src[x + 1] & 0xF) << 2];
+		if (!urlSafe) {
+			// add padding
+			while (pad++ < 3) { *p = '='; p++; }
 		}
 	}
 
