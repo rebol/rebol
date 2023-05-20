@@ -973,15 +973,25 @@ err:
 	}
 
 	if ((len % 3) != 0) {
-		p[2] = p[3] = '=';
-		*p++ = table[src[x] >> 2];
-		if ((len - x) >= 1)
-			*p++ = table[((src[x] & 0x3) << 4) + ((len - x) == 1 ? 0 : src[x + 1] >> 4)];
-		else p++;
-		if ((len - x) == 2)
-			*p++ = table[(src[x + 1] & 0xF) << 2];
-		else p++;
-		p++;
+		if (urlSafe) {
+			// no padding
+			*p++ = table[src[x] >> 2];
+			if ((len - x) >= 1)
+				*p++ = table[((src[x] & 0x3) << 4) + ((len - x) == 1 ? 0 : src[x + 1] >> 4)];
+			if ((len - x) == 2)
+				*p++ = table[(src[x + 1] & 0xF) << 2];
+		}
+		else {
+			p[2] = p[3] = '=';
+			*p++ = table[src[x] >> 2];
+			if ((len - x) >= 1)
+				*p++ = table[((src[x] & 0x3) << 4) + ((len - x) == 1 ? 0 : src[x + 1] >> 4)];
+			else p++;
+			if ((len - x) == 2)
+				*p++ = table[(src[x + 1] & 0xF) << 2];
+			else p++;
+			p++;
+		}
 	}
 
 	//if (*(p-1) != LF && x > 49 && brk) *p++ = LF; // adds LF before closing bracket
