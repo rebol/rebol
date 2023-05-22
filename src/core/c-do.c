@@ -822,7 +822,7 @@ more_path:
 	// Check for recycle signal:
 	if (GET_FLAG(sigs, SIG_RECYCLE)) {
 		CLR_SIGNAL(SIG_RECYCLE);
-		Recycle();
+		Recycle(FALSE);
 	}
 
 #ifdef NOT_USED_INVESTIGATE
@@ -2333,6 +2333,6 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 
 	// Cleanup stack and memory:
 	DS_RESET;
-	Recycle();
+	Recycle(FALSE);
 	return 0; //result;
 }

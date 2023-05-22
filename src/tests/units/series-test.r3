@@ -2673,4 +2673,17 @@ Rebol [
 
 ;-- VECTOR related tests moved to %vector-test.r3
 
+===start-group=== "RECYCLE"
+--test-- "recycle"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1128
+	recycle              ;; force GC
+	count: stats         ;; store current memory usage
+	make string! 5000000 ;; create large unreferenced series
+	--assert all [
+		stats >= (count + 5000000) ;; check that memory usage increased
+		recycle                    ;; force GC
+		stats = count              ;; check if memory usage decreased
+	]
+===end-group===
+
 ~~~end-file~~~

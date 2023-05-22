@@ -96,7 +96,7 @@
 		SET_INT32(TASK_BALLAST, 0);
 	}
 
-	count = Recycle();
+	count = Recycle(TRUE);
 
 	DS_Ret_Int(count);
 	return R_RET;

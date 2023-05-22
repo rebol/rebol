@@ -17,7 +17,7 @@ dt: delta-time: function [
 	block [block!]
 ][
 	; force GC, so there is less chance that it is fired in `do block`
-	recycle recycle ; 2x => first mark, second sweep
+	recycle
 	start: stats/timer
 	do block
 	stats/timer - start
@@ -29,7 +29,7 @@ dp: delta-profile: func [
 	/local start end adjust
 ][
 	; first force GC
-	recycle recycle
+	recycle
 	; than count adjustments for empty code
 	adjust: copy end: stats/profile 
 	do [] 
