@@ -443,7 +443,9 @@ Rebol [
 		--assert [#[bitset! #{FF}]]         = try [to block! quote #[bitset! #{FF}]        ] ; bitset!
 		--assert [#[image! 1x1 #{FFFFFF}]]  = try [to block! quote #[image! 1x1 #{FFFFFF}] ] ; image!
 		--assert [#[integer!] #[percent!]]   = try [to block! #[typeset! [integer! percent!]] ] ; typeset!
-
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2090
+		--assert [a %b/c] = to block! 'a/%b/c
+		--assert [a %b c] = to block! 'a/%"b"/c
 ===end-group===
 
 ===start-group=== "make/to path"
