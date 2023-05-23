@@ -2686,4 +2686,21 @@ Rebol [
 	]
 ===end-group===
 
+
+===start-group=== "ALTER"
+--test-- "alter/case"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/408
+	b: copy []
+	--assert all [
+		    alter b "a"
+		not alter b "A"
+		empty? b
+	]
+	--assert all [
+		alter/case b "a"
+		alter/case b "A"
+		b == ["a" "A"]
+	]
+===end-group===
+
 ~~~end-file~~~
