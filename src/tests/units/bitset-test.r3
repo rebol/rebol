@@ -36,6 +36,7 @@
 
 ===start-group=== "make bitset!"
 	--test-- "basic make"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2097
 		--assert "make bitset! #{}"   = mold make bitset! 0
 		--assert "make bitset! #{}"   = mold charset ""
 		--assert "make bitset! #{}"   = mold charset []
