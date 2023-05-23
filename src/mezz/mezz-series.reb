@@ -296,7 +296,7 @@ reword: func [
 
 move: func [
 	"Move a value or span of values in a series."
-	source [series!] "Source series (modified)"
+	source [series! gob!] "Source series (modified)"
 	offset [integer!] "Offset to move by, or index to move to"
 	/part "Move part of a series"
 	length [integer!] "The length of the part to move"
