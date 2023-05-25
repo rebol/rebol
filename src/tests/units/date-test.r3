@@ -310,6 +310,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "Internet date"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1511
 	--test-- "TO-ITIME (Normalized time as used in TO-IDATE"
 		--assert "09:04:05" = to-itime 9:4:5
 		--assert "13:24:05" = to-itime 13:24:5.21
