@@ -441,6 +441,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "Integer (bit/octal/decimal/hexadecimal)"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1781
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2197
 	--test-- "base2"
 		--assert  1 = transcode/one "2#01"
