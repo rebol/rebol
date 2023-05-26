@@ -52,6 +52,7 @@ scan: ; Used by scanner. Keep in sync with Value_Types in scan.h file!
 	"path"
 	"refine"
 	"construct"
+	"map"
 
 info:
 	"Booting..."
