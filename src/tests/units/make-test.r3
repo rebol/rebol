@@ -646,6 +646,7 @@ Rebol [
 		--assert "make image! [1x1 #{FFFFFF}]"  = try [make string! quote #[image! 1x1 #{FFFFFF}] ] ; image!
 		--assert "integer! percent!"  = try [make string! quote #[typeset! [integer! percent!]] ] ; typeset!
 	--test-- "to string! ..."
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1404
 		--assert ""           = try [to string! quote #[unset]   ] ; unset!
 		--assert error?         try [to string! quote #[none]    ] ; none!
 		--assert "true"       = try [to string! quote #[true]    ] ; logic!
