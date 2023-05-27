@@ -783,7 +783,7 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 
 /***********************************************************************
 **
-*/	REBCNT Encode_UTF8(REBYTE *dst, REBINT max, void *src, REBCNT *len, REBFLG uni, REBFLG ccr)
+*/	REBCNT Encode_UTF8(REBYTE *dst, REBINT max, void *src, REBLEN *len, REBFLG uni, REBFLG ccr)
 /*
 **		Encode the unicode into UTF8 byte string.
 **
@@ -801,11 +801,17 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 	REBYTE *bs = dst; // save start
 	REBYTE *bp = (REBYTE*)src;
 	REBUNI *up = (REBUNI*)src;
-	REBCNT cnt;
+	REBLEN cnt;
 
 	if (len) cnt = *len;
 	else {
-		cnt = (REBCNT)(uni ? wcslen((const wchar_t*)bp) : LEN_BYTES((REBYTE*)bp));
+		if (uni) {
+			// not using wcslen, because on some systems wchar_t has 4 bytes!
+			cnt = 0;
+			while (*up++ != 0 && cnt < max) cnt++;
+			up = (REBUNI*)src;
+		} else
+			cnt = LEN_BYTES(bp);
 	}
 
 	for (; max > 0 && cnt > 0; cnt--) {
@@ -833,7 +839,6 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 	}
 
 	if (len) *len = dst - bs;
-
 	return uni ? up - (REBUNI*)src : bp - (REBYTE*)src;
 }
 
