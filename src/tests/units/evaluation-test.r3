@@ -106,6 +106,7 @@ Rebol [
 		--assert dir = what-dir
 
 	--test-- "script with quit"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1734
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2250
 		--assert unset? do %units/files/quit.r3
 		--assert 42 = do %units/files/quit-return.r3
@@ -734,6 +735,16 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1742
 		a: 0 catch/quit [++ a halt ++ a]
 		--assert a == 1
+
+	--test-- "catch/quit [quit]"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1734
+		a: 0  
+		--assert unset? catch/quit [++ a quit ++ a]
+		--assert a == 1;
+		--assert 100 = catch/quit [++ a quit/return 100 ++ a]
+		--assert a == 2;
+		--assert   0 = call/shell/wait join system/options/boot { --do "quit"}
+		--assert 100 = call/shell/wait join system/options/boot { --do "quit/return 100"}
 
 ===end-group===
 
