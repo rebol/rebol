@@ -726,8 +726,17 @@ Rebol [
 		--assert string? try/except [1 / 0] :mold
 		--assert system/state/last-error/id = 'zero-divide
 
+===end-group===
+
+
+===start-group=== "CATCH"
+	--test-- "catch/quit [halt]"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1742
+		a: 0 catch/quit [++ a halt ++ a]
+		--assert a == 1
 
 ===end-group===
+
 
 ===start-group=== "FOR"
 	--test-- "FOR boundary tests fail"
