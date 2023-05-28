@@ -421,7 +421,8 @@ enum {
 			if (VAL_ERR_NUM(ret) == RE_QUIT)
 				ret = VAL_ERR_VALUE(ret);
 			else if (VAL_ERR_NUM(ret) == RE_HALT)
-				Halt_Code(RE_HALT, 0);
+				VAL_SET(ret, REB_UNSET);
+				//Halt_Code(RE_HALT, 0); // Don't use this if we want to be able catch all!
 			else
 				Crash(RP_NO_CATCH);
 			*DS_RETURN = *ret;
