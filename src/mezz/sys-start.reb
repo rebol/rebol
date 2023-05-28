@@ -139,7 +139,7 @@ start: func [
 		;-- User is requesting usage info:
 		if flags/help [
 			lib/usage
-			unless flags/halt [quit/now]
+			unless flags/halt [quit]
 			quiet: true
 		]
 
@@ -210,7 +210,7 @@ start: func [
 	;-- Evaluate: --do "some code" if found
 	if do-arg [
 		do intern load/all do-arg
-		unless script [quit/now]
+		unless script [quit]
 	]
 
 	;-- Evaluate script argument?
