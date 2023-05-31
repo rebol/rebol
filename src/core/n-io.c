@@ -1234,13 +1234,13 @@ chk_neg:
 **
 */	REBNATIVE(access_os)
 /*
-**	access-os: native [
-**		{Access to various operating system functions (getuid, setuid, getpid, kill, etc.)}
-**		field [word!] "Valid words: uid, euid, gid, egid, pid"
-**		/set          "To set or kill pid (sig 15)"
-**		value [integer! block!] "Argument, such as uid, gid, or pid (in which case, it could be a block with the signal no)"
-**	]
-**	
+//	access-os: native [
+//		{Access to various operating system functions (getuid, setuid, getpid, kill, etc.)}
+//		field [word!] "Valid words: uid, euid, gid, egid, pid"
+//		/set          "To set or kill pid (sig 15)"
+//		value [integer! block!] "Argument, such as uid, gid, or pid (in which case, it could be a block with the signal no)"
+//	]
+//	
 ***********************************************************************/
 {
 	REBVAL *field = D_ARG(1);
