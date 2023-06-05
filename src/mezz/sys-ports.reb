@@ -491,8 +491,8 @@ init-schemes: func [
 				parse spec/ref [
 					thru #":" 0 2 slash
 					opt "device:"
-					copy inp *parse-url/digits
-					opt [#"/" copy out *parse-url/digits]
+					copy inp url-parser/digit
+					opt [#"/" copy out url-parser/digit]
 					end
 				]
 				if inp [ spec/device-in:  to integer! inp]

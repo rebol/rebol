@@ -46,6 +46,7 @@
 #endif
 
 #ifdef INCLUDE_MIDI_DEVICE
+//#define DEBUG_MIDI
 
 // NOTE: this will be useful for higher level launchpad schemes:
 // https://github.com/FMMT666/launchpad.py/blob/master/launchpad_py/launchpad.py
