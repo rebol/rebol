@@ -45,22 +45,18 @@ process-midi: function [data [binary!]][
 			channel: UB 4
 			byte-1:  SI8
 			byte-2:  SI8
-			byte-3:  SI8
+			byte-3:  SI8 ;???
 			time:    UI32LE
 		]
-		either all [
-			byte-3 = 0
+		op: *MIDI_message_short/name status 
+		prin  ajoin [time #" " op " ch=" channel #" "]
+		print ajoin switch/default op [
+			Par     [["c=" byte-1 " v=" byte-2]]
+			Pb ChPr [reduce ["v=" byte-1 + (byte-2 << 7)]]
+			PrCh    [["p=" byte-1]]
 		][
-			op: *MIDI_message_short/name status 
-			prin  ajoin [time #" " op " ch=" channel #" "]
-			print ajoin switch/default op [
-				Par     [["c=" byte-1 " v=" byte-2]]
-				Pb ChPr [reduce ["v=" byte-1 + (byte-2 << 7)]]
-				PrCh    [["p=" byte-1]]
-			][
-				["n=" byte-1 " v=" byte-2]
-			]
-		][ print "should not happen!" ]
+			["n=" byte-1 " v=" byte-2]
+		]
 	]
 ]
 
@@ -83,6 +79,9 @@ midi-inp/awake: function [event [event!]][
 	true
 ]
 
+wait 10
+close-midi
+halt
 ;; Play some random modern piano music ;-)
 ;; MIDI input should be printed in the console.
 loop 50 [
