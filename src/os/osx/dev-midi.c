@@ -46,6 +46,7 @@
 #endif
 
 #ifdef INCLUDE_MIDI_DEVICE
+//#define DEBUG_MIDI
 
 #ifdef TO_MACOS
 
@@ -121,6 +122,15 @@ static REBSER *CFString_To_REBSER(CFStringRef source)
     return ser;
 }
 
+static void Send_Event(REBMID *midi_port, REBINT type) {
+    REBEVT evt;
+    CLEARS(&evt);
+    evt.model = EVM_MIDI;
+    evt.type = type;
+    evt.port = midi_port->port;
+    RL_Update_Event(&evt);
+}
+
 /***********************************************************************
  **
  */ static int Midi_Push_Buffer(REBSER* buffer, u32 data)
@@ -165,6 +175,17 @@ static void MidiInProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 {
     REBMID midi_port;
     REBU64 id = (REBU64)refCon;
+    uint64_t  elapsed;
+    uint64_t  elapsedMs;
+    static mach_timebase_info_data_t    sTimebaseInfo;
+
+    // If this is the first time we've run, get the timebase.
+    // We can use denom == 0 to indicate that sTimebaseInfo is 
+    // uninitialised because it makes no sense to have a zero 
+    // denominator is a fraction.
+    if ( sTimebaseInfo.denom == 0 ) {
+        (void) mach_timebase_info(&sTimebaseInfo);
+    }
     
     if (id >= Midi_Ports_Pool.count) return;
     
@@ -176,10 +197,13 @@ static void MidiInProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
         if (packet->data[0] >= 0x80 && packet->data[0] < 0xF0) {
             Midi_Push_Buffer(midi_port.inp_buffer, ((u32*)packet->data)[0]);
             // report timestamp in miliseconds like on Windows
-            Midi_Push_Buffer(midi_port.inp_buffer, (u32)((packet->timeStamp - midi_port.started) / 1000000UL));
+            elapsed = packet->timeStamp - midi_port.started;
+            elapsedMs = elapsed * sTimebaseInfo.numer / sTimebaseInfo.denom / 1e6;
+            Midi_Push_Buffer(midi_port.inp_buffer, (u32)elapsedMs);
         }
         packet = MIDIPacketNext(packet);
     }
+    Send_Event(&midi_port, EVT_READ);
 }
 
 
@@ -301,6 +325,9 @@ static void PrintMidiDevices()
     }
     req->handle = (void*)midi_port;
     SET_OPEN(req);
+
+    Send_Event(midi_port, EVT_OPEN);
+
     return DR_DONE;
 }
 
@@ -327,7 +354,7 @@ static void PrintMidiDevices()
         midi_port->started = 0;
         midi_port->out_device = 0;
     }
-    
+    Send_Event(midi_port, EVT_CLOSE);
     midi_port->port = NULL;
     req->handle = NULL;
     SET_CLOSED(req);
