@@ -165,6 +165,22 @@ static void Send_Event(REBMID *midi_port, REBINT type) {
     return 0;
 }
 
+// MIDI notify callback function
+void MIDINotifyCallback(const MIDINotification* message, void* refCon) {
+#ifdef DEBUG_MIDI
+    printf("MIDINotifyCallback messageID: %u - ", message->messageID);
+    switch(message->messageID) {
+    case kMIDIMsgSetupChanged:           puts("kMIDIMsgSetupChanged");           break;
+    case kMIDIMsgObjectAdded:            puts("kMIDIMsgObjectAdded");            break;
+    case kMIDIMsgObjectRemoved:          puts("kMIDIMsgObjectRemoved");          break;
+    case kMIDIMsgPropertyChanged:        puts("kMIDIMsgPropertyChanged");        break;
+    case kMIDIMsgThruConnectionsChanged: puts("kMIDIMsgThruConnectionsChanged"); break;
+    case kMIDIMsgSerialPortOwnerChanged: puts("kMIDIMsgSerialPortOwnerChanged"); break;
+    case kMIDIMsgIOError:                puts("kMIDIMsgIOError");                break;
+    }
+#endif
+}
+
 /***********************************************************************
  **
  **    MidiIn callback procedure.
@@ -245,7 +261,7 @@ static void PrintMidiDevices()
 #endif
     if (gClient) return DR_DONE;
     
-    MIDIClientCreate(CFSTR("Rebol3 MIDI"), NULL, NULL, &gClient);
+    MIDIClientCreate(CFSTR("Rebol3 MIDI"), MIDINotifyCallback, NULL, &gClient);
     MIDIInputPortCreate(gClient, CFSTR("Input port"), MidiInProc, NULL, &gInPort);
     MIDIOutputPortCreate(gClient, CFSTR("Output port"), &gOutPort);
 #ifdef DEBUG_MIDI   
@@ -460,6 +476,10 @@ static void PrintMidiDevices()
     CFStringRef pname;
     
     if (!gClient && (DR_DONE != Init_MIDI(req))) return DR_ERROR;
+
+    // We need to run Core foundation loop to receive MIDI notify callbacks
+    // Without it the output may be incorrect.
+    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, true);
     
 #ifdef DEBUG_MIDI
     printf("Query_MIDI sources: %i dests: %i\n", MIDIGetNumberOfSources(), MIDIGetNumberOfDestinations());
