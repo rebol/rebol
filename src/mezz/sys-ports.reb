@@ -487,7 +487,7 @@ init-schemes: func [
 		spec: system/standard/port-spec-midi
 		init: func [port /local spec inp out] [
 			spec: port/spec
-			if url? spec/ref [
+			either url? spec/ref [
 				parse spec/ref [
 					thru #":" 0 2 slash
 					opt "device:"
@@ -497,12 +497,30 @@ init-schemes: func [
 				]
 				if inp [ spec/device-in:  to integer! inp]
 				if out [ spec/device-out: to integer! out]
+			][
+				;; Lookup device IDs using full names (or wildcards)
+				all [
+					any-string? inp: select spec 'device-in
+					spec/device-in: find inp query/mode midi:// 'devices-in
+				]
+				all [
+					any-string? out: select spec 'device-out
+					spec/device-out: find out query/mode midi:// 'devices-out
+				]
 			]
 			; make port/spec to be only with midi related keys
 			set port/spec: copy system/standard/port-spec-midi spec
 			;protect/words port/spec ; protect spec object keys of modification
 			true
 		]
+		find: func[device [any-string!] devices [block!]][
+			forall devices [
+				if lib/find/match/any devices/1 device [
+					return index? devices
+				]
+			]
+			none
+		] 
 	]
 
 	make-scheme [

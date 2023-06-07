@@ -66,10 +66,32 @@ close-midi: does [
 	wait 0
 ]
 
-midi-inp: open midi:1
-midi-out: open [scheme: 'midi device-out: 1]
+either port? midi-out: try [
+	open [
+		scheme: 'midi
+		device-out: "Microsoft GS Wavetable" ;; note that the name is not complete, but still accepted
+	]
+][
+	;; Play some random modern piano music ;-)
+	loop 50 [
+		write midi-out rejoin [
+			;;    NOTE            VOLUME
+			#{90} random 127 50 + random 77 0
+			#{90} random 127 50 + random 77 0
+			#{90} random 127 50 + random 77 0
+		]
+		;; Random time between notes :)
+		wait 0.5 + random 0.5
+	]
+	try [close midi-out]
+	wait 0
+][
+	;; No SW synth...
+	print as-purple "Not playing the great piano music, because no SW synth found!"
+]
 
-midi-out/awake:
+print as-yellow "You have 10 seconds to try your (first) MIDI device input!"
+midi-inp: open midi:1
 midi-inp/awake: function [event [event!]][
 	switch event/type [
 		read  [ process-midi read event/port    ]
@@ -78,21 +100,8 @@ midi-inp/awake: function [event [event!]][
 	]
 	true
 ]
-
 wait 10
 close-midi
-halt
-;; Play some random modern piano music ;-)
-;; MIDI input should be printed in the console.
-loop 50 [
-	write midi-out rejoin [
-		#{90} random 127 50 + random 77 0
-		#{90} random 127 50 + random 77 0
-		#{90} random 127 50 + random 77 0
-	]
-	wait 0.5 + random 0.5
-]
 
-close-midi
 
 if system/options/script [ask "DONE"]
