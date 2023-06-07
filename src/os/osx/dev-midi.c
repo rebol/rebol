@@ -48,6 +48,12 @@
 #ifdef INCLUDE_MIDI_DEVICE
 //#define DEBUG_MIDI
 
+#ifdef DEBUG_MIDI
+#define LOG(...) do { printf(__VA_ARGS__); } while (0)
+#else
+#define LOG(...)
+#endif
+
 #ifdef TO_MACOS
 
 // NOTE: this will be useful for higher level launchpad schemes:
@@ -209,7 +215,7 @@ static void MidiInProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
     
     MIDIPacket *packet = (MIDIPacket *)pktlist->packet; // remove const (!)
     for (unsigned int j = 0; j < pktlist->numPackets; ++j) {
-        //printf("packet length: %u time: %llu\n", packet->length, packet->timeStamp);
+        //LOG("packet length: %u time: %llu\n", packet->length, packet->timeStamp);
         if (packet->data[0] >= 0x80 && packet->data[0] < 0xF0) {
             Midi_Push_Buffer(midi_port.inp_buffer, ((u32*)packet->data)[0]);
             // report timestamp in miliseconds like on Windows
@@ -256,17 +262,16 @@ static void PrintMidiDevices()
 /*
  ***********************************************************************/
 {
-#ifdef DEBUG_MIDI
-    printf("Init_MIDI: sizeof(Midi_Ports_Pool): %lu sizeof(REBMID): %lu\n", sizeof(Midi_Ports_Pool), sizeof(REBMID));
-#endif
+    LOG("Init_MIDI: sizeof(Midi_Ports_Pool): %lu sizeof(REBMID): %lu\n", sizeof(Midi_Ports_Pool), sizeof(REBMID));
+
     if (gClient) return DR_DONE;
     
     MIDIClientCreate(CFSTR("Rebol3 MIDI"), MIDINotifyCallback, NULL, &gClient);
     MIDIInputPortCreate(gClient, CFSTR("Input port"), MidiInProc, NULL, &gInPort);
     MIDIOutputPortCreate(gClient, CFSTR("Output port"), &gOutPort);
-#ifdef DEBUG_MIDI   
-    printf("in %u out %u\n", gInPort, gOutPort);
-#endif   
+ 
+    LOG("in %u out %u\n", gInPort, gOutPort);
+ 
     Midi_Ports_Pool.count = MIDI_PORTS_ALLOC;
     Midi_Ports_Pool.ports = MAKE_MEM(MIDI_PORTS_ALLOC * sizeof(REBMID));
     CLEAR(Midi_Ports_Pool.ports, MIDI_PORTS_ALLOC * sizeof(REBMID));
@@ -285,10 +290,17 @@ static void PrintMidiDevices()
     REBCNT device_out = req->midi.device_out;
     REBINT port_num;
     REBMID *midi_port = NULL;
+
+    if(!device_in && !device_out) {
+        LOG("No devices!\n");
+        req->error = 1;
+        return DR_ERROR;
+    }
     
     port_num = Get_New_Midi_Port(&midi_port);
     if (port_num < 0) {
-        puts("Failed to get new empty MIDI port!");
+        LOG("Failed to get new empty MIDI port!\n");
+        req->error = 2;
         return DR_ERROR;
     }
     
@@ -302,7 +314,9 @@ static void PrintMidiDevices()
         (device_in  && device_in  > MIDIGetNumberOfSources())
         || (device_out && device_out > MIDIGetNumberOfDestinations())
         ) {
-        puts("Some of the requested MIDI device IDs are out of range!");
+
+        LOG("Some of the requested MIDI device IDs are out of range!\n");
+        req->error = 3;
         return DR_ERROR;
     }
     
@@ -311,7 +325,8 @@ static void PrintMidiDevices()
         midi_port->inp_id = device_in;
         midi_port->inp_device = MIDIGetSource(device_in-1);
         if (midi_port->inp_device == 0) {
-            printf("MIDI failed to open input device %i\n", device_in);
+            LOG("MIDI failed to open input device %i\n", device_in);
+            req->error = 4;
             return DR_ERROR;
         }
         MIDIPortConnectSource(gInPort, midi_port->inp_device, (void*)(REBU64)port_num);
@@ -322,7 +337,7 @@ static void PrintMidiDevices()
         //printf("opening %u => %0X\n", device_out, midi_port->out_device);
         midi_port->out_device = MIDIGetDestination(device_out-1);
         if (midi_port->out_device == 0) {
-            printf("MIDI failed to open output device %i\n", device_out);
+            LOG("MIDI failed to open output device %i\n", device_out);
             if (midi_port->inp_device) {
                 // closing already opened input device if any
                 //midiInStop(midi_port->inp_device);
@@ -330,6 +345,7 @@ static void PrintMidiDevices()
                 MIDIPortDisconnectSource(gInPort, midi_port->inp_device);
                 midi_port->inp_device = 0;
             }
+            req->error = 5;
             return DR_ERROR;
         }
     }
@@ -356,9 +372,7 @@ static void PrintMidiDevices()
 {
     REBMID *midi_port= (REBMID *)req->handle;
     
-#ifdef DEBUG_MIDI
-    printf("Closing MIDI port: %0llX %0llX\n", (REBU64)req->port, (REBU64)midi_port);
-#endif
+    LOG("Closing MIDI port: %0llX %0llX\n", (REBU64)req->port, (REBU64)midi_port);
 
     if (midi_port->inp_device) {
         //midiInStop(midi_port->inp_device);
@@ -431,7 +445,8 @@ static void PrintMidiDevices()
         u8 type = data_out[0] & 0xF0;
         //printf("writing... %u\n", type);
         if (type == 0xF0) {
-            puts("sysex not yet supported!");
+            LOG("sysex not yet supported!\n");
+            req->error = 10;
             return DR_ERROR;
         } else if (type >= 0x80) {
             packet.timeStamp = mach_absolute_time();
@@ -459,7 +474,7 @@ static void PrintMidiDevices()
 /*
  ***********************************************************************/
 {
-    puts("Poll_MIDI");
+    LOG("Poll_MIDI");
     return DR_DONE;
 }
 
@@ -482,7 +497,7 @@ static void PrintMidiDevices()
     CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, true);
     
 #ifdef DEBUG_MIDI
-    printf("Query_MIDI sources: %i dests: %i\n", MIDIGetNumberOfSources(), MIDIGetNumberOfDestinations());
+    printf("Query_MIDI sources: %lu dests: %lu\n", MIDIGetNumberOfSources(), MIDIGetNumberOfDestinations());
     PrintMidiDevices();
 #endif
 
