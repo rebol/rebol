@@ -566,7 +566,7 @@ new_line:
 {
 	REBCNT lines = 0;
 	REBSER *buf = BUF_MOLD;
-	REBYTE *bp = src;
+	const REBYTE *bp = src;
 	REBLEN n;
 	REBINT chr;
 
