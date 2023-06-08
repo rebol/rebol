@@ -89,7 +89,7 @@ view: func [
 		]
 		; Set up default handler...
 		if all [
-			empty? system/view/event-port/extra/handlers  ; ...if there is no other handler
+			empty? system/ports/event/extra/handlers  ; ...if there is no other handler
 			not opts/handler                              ; ...and user did not provide one
 		][
 			handle-events [
@@ -189,7 +189,7 @@ handle-events: func [
 	/local sys-hand
 ][
 	handler: make base-handler handler
-	sys-hand: system/view/event-port/extra/handlers
+	sys-hand: system/ports/event/extra/handlers
 	; First check if there is not any handler with such a name...
 	forall sys-hand [
 		if handler/name = sys-hand/1/name [
@@ -214,7 +214,7 @@ unhandle-events: func [
 	"Removes a handler from the view event system."
 	handler [object!]
 ][
-	remove find system/view/event-port/extra/handlers handler
+	remove find system/ports/event/extra/handlers handler
 	exit
 ]
 
@@ -222,7 +222,7 @@ handled-events?: func [
 	"Returns event handler object matching a given name."
 	name
 ][
-	foreach hand system/view/event-port/extra/handlers [
+	foreach hand system/ports/event/extra/handlers [
 		if hand/name = name [return hand]
 	]
 	none
@@ -231,7 +231,7 @@ handled-events?: func [
 do-events: func [
 	"Waits for window events. Returns when all windows are closed."
 ][
-	wait system/view/event-port
+	wait system/ports/event
 ]
 
 init-view-system: func [
@@ -246,28 +246,28 @@ init-view-system: func [
 		set in system/view/metrics w gui-metric w
 	]
 
-	; Already initialized?
-	if system/view/event-port [exit]
+	ep: system/ports/event
 
-	; Open the event port:
-	ep: open [scheme: 'event]
-	system/view/event-port: ep
+	unless ep/extra [
+		; Create block of event handlers:
+		ep/extra: object [handlers: copy []]
 
-	; Create block of event handlers:
-	ep/extra: object [handlers: copy []]
-
-	; Global event handler for view system:
-	ep/awake: func [event /local h] [
-		h: event/port/extra/handlers
-		while [ ; (no binding needed)
-			all [event not tail? h]
-		][
-			; Handlers should return event in order to continue.
-			event: h/1/handler event
-			h: next h
+		; Global event handler for view system:
+		ep/awake: func [event /local h] [
+			h: event/port/extra/handlers
+			while [ ; (no binding needed)
+				all [event not tail? h]
+			][
+				; Handlers should return event in order to continue.
+				event: h/1/handler event
+				h: next h
+			]
+			tail? system/view/screen-gob
 		]
-		tail? system/view/screen-gob
 	]
+
+	init-top-window:
+	init-view-system: 'done
 ]
 
 init-view-system

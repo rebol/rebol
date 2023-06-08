@@ -189,11 +189,12 @@ schemes: object []
 
 ports: object [
 	wait-list: []	; List of ports to add to 'wait
+	system:         ; Port for system events
+	event:          ; Port for GUI
 	input:          ; Port for user input.
 	output:         ; Port for user output
 	echo:           ; Port for echoing output
 	mail:           ; Port for sending and receiving emails
-	system:         ; Port for system events
 	callback: none	; Port for callback events
 ;	serial: none	; serial device name block
 ]
@@ -433,7 +434,6 @@ standard: object [
 view: object [
 	screen-gob: none
 	handler: none
-	event-port: none
 	metrics: construct [
 		screen-size:
 		border-size:

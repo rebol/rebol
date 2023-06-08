@@ -74,7 +74,7 @@ enum {
 	EVM_DEVICE,		// I/O request holds the port pointer
 	EVM_PORT,		// event holds port pointer
 	EVM_OBJECT,		// event holds object frame pointer
-	EVM_GUI,		// GUI event uses system/view/event/port
+	EVM_GUI,		// GUI event uses system/ports/event
 	EVM_CALLBACK,	// Callback event uses system/ports/callback port
 	EVM_MIDI,		// event holds midi port pointer
 	EVM_CONSOLE,    // native console events

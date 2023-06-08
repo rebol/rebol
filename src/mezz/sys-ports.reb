@@ -546,6 +546,7 @@ init-schemes: func [
 
 
 	system/ports/system:   open [scheme: 'system]
+	system/ports/event:    open [scheme: 'event]
 	system/ports/input:
 	system/ports/output:   open [scheme: 'console]
 	system/ports/callback: open [scheme: 'callback]
