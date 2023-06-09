@@ -92,6 +92,12 @@ Rebol [
 		--assert 1632142002 =   to integer! 20-Sep-2021/12:46:41.7
 		--assert 1632135512 = make integer! 20-Sep-2021/12:58:32+2:00
 		--assert 1632135512 =   to integer! 20-Sep-2021/12:58:32+2:00
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2550
+		--assert 1685750400 == to integer! 3-Jun-2023
+		--assert 1685750400 == to integer! 3-Jun-2023/0:00
+		--assert 1685750400 == make integer! 3-Jun-2023
+		--assert 1685750400 == make integer! 3-Jun-2023/0:00
+
 	--test-- "make/to integer! string!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2164
 		--assert 9223372036854775807 = to integer! "9223372036854775807"

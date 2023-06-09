@@ -321,7 +321,9 @@ static const REBI64 DAYS_OF_JAN_1ST_1970 = 719468; // number of days for 1st Jan
 {
 	REBDAT d = VAL_DATE(date);
 	REBI64 epoch = (Days_Of_Date(d.date.day, d.date.month, d.date.year) - DAYS_OF_JAN_1ST_1970) * SECS_IN_DAY;
-	return epoch + ((VAL_TIME(date) + 500000000) / SEC_SEC);
+	REBI64 time = VAL_TIME(date);
+	if (time == NO_TIME) time = 0;
+	return epoch + ((time + 500000000) / SEC_SEC);
 }
 
 /***********************************************************************
