@@ -328,7 +328,10 @@ Rebol [
 		--assert 4-Apr-2019/19:41:46 = to-date "Thu, 04 Apr 2019 19:41:46 GMT"
 		--assert 1-Apr-2019/21:50:04 = to-date "Mon, 1 Apr 2019 21:50:04 GMT"
 		--assert 30-Jul-2013/2:17:58-7:00 = to-date "Tue, 30 Jul 2013 02:17:58 -0700 (PDT)"
-
+	--test-- "TO-DATE {1-1-2000 00:00:00}"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1362
+		--assert 1-Jan-2000/0:00 == to-date "1-1-2000 00:00:00"
+		--assert 1-Jan-2000/0:00 == to-date "1-1-2000 00:00"
 
 ===end-group===
 
