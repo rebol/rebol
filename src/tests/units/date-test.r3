@@ -335,6 +335,18 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Julian date"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2551
+	--test-- "Julian accessor"
+		date: 10-Jun-2023/20:47:53+2:00
+		--assert date/julian = to decimal! date
+		--assert 2460106.28325231 = date/julian
+		--assert 2460106.28325231 = pick date 'julian
+	--test-- "Julian date setter"
+		--assert 2415020.5 = date/julian: 2415020.5
+		--assert date = 1-Jan-1900/0:00
+
+===end-group===
 
 ===start-group=== "QUERY date"
 	date: 8-Apr-2020/12:04:32+2:00
@@ -348,11 +360,11 @@ Rebol [
 		--assert date/time = query/mode date 'time
 		--assert [2020 4] = query/mode date [year month]
 		--assert [month: 4 year: 2020] = query/mode date [month: year:]
-		--assert equal? query/mode date all-date-words [2020 4 8 12:04:32 8-Apr-2020 2:00 12 4 32 3 99 2:00 8-Apr-2020/10:04:32 99]
+		--assert equal? query/mode date all-date-words [2020 4 8 12:04:32 8-Apr-2020 2:00 12 4 32 3 99 2:00 8-Apr-2020/10:04:32 2458947.91981481]
 	
 	--test-- "query/mode date"
 		date: 8-Apr-2020 ; no time!
-		--assert equal? query/mode date all-date-words [2020 4 8 #[none] 2020-04-08 #[none] #[none] #[none] #[none] 3 99 #[none] 2020-04-08 99]
+		--assert equal? query/mode date all-date-words [2020 4 8 #[none] 2020-04-08 #[none] #[none] #[none] #[none] 3 99 #[none] 2020-04-08 2458948.0]
 
 ===end-group===
 

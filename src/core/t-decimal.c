@@ -407,6 +407,16 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 				d1 = VAL_DECIMAL(D_RET);
 				break;
 
+			case REB_DATE:
+			{
+				REB_TIMEF time = {12,0,0,0};
+				if (VAL_TIME(val) != NO_TIME) {
+					Split_Time(VAL_TIME(val), &time);
+				}
+				d1 = Gregorian_To_Julian_Date(VAL_DATE(val), time);
+				break;
+			}
+
 #ifdef removed
 //			case REB_ISSUE:
 			{
