@@ -63,24 +63,26 @@ Rebol [
 		--assert 20-Sep-2021/10:58:32 =   to date! 1632135512
 	--test-- "make/to date! decimal!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2551
-		--assert 01-Jan-1900/00:00:00 = make date! 2415020.5
-		--assert 01-Jan-1900/00:00:00 =   to date! 2415020.5
-		--assert 02-May-2003/12:00:00 = make date! 2452762.0
-		--assert 02-May-2003/12:00:00 =   to date! 2452762.0
-		--assert 10-Jun-2023/01:30:00 = make date! 2460105.5625
-		--assert 10-Jun-2023/01:30:00 =   to date! 2460105.5625
-		--assert 10-Jun-2023/19:30:00 = make date! 2460106.3125
-		--assert 10-Jun-2023/19:30:00 =   to date! 2460106.3125
-		--assert 01-Jan-2023/12:00:00 = make date! 2459946.0
-		--assert 01-Jan-2023/12:00:00 =   to date! 2459946.0
-		--assert 01-Jan-2023/19:30:00 = make date! 2459946.3125
-		--assert 01-Jan-2023/19:30:00 =   to date! 2459946.3125
-		--assert 01-Jan-2023/01:00:00 = make date! 2459945.54166667
-		--assert 01-Jan-2023/01:00:00 =   to date! 2459945.54166667
-		--assert 31-Aug-2132/00:00:00 = make date! 2499999.5
-		--assert 31-Aug-2132/00:00:00 =   to date! 2499999.5
-		--assert 01-Sep-2132/00:00:00 = make date! 2500000.5
-		--assert 01-Sep-2132/00:00:00 =   to date! 2500000.5
+		--assert 17-Nov-1858/00:00:00 = make date! 0.0
+		--assert 17-Nov-1858/00:00:00 =   to date! 0.0
+		--assert 01-Jan-1900/00:00:00 = make date! 15020.0
+		--assert 01-Jan-1900/00:00:00 =   to date! 15020.0
+		--assert 02-May-2003/12:00:00 = make date! 52761.5
+		--assert 02-May-2003/12:00:00 =   to date! 52761.5
+		--assert 10-Jun-2023/01:30:00 = make date! 60105.0625
+		--assert 10-Jun-2023/01:30:00 =   to date! 60105.0625
+		--assert 10-Jun-2023/19:30:00 = make date! 60105.8125
+		--assert 10-Jun-2023/19:30:00 =   to date! 60105.8125
+		--assert 01-Jan-2023/12:00:00 = make date! 59945.5
+		--assert 01-Jan-2023/12:00:00 =   to date! 59945.5
+		--assert 01-Jan-2023/19:30:00 = make date! 59945.8125
+		--assert 01-Jan-2023/19:30:00 =   to date! 59945.8125
+		--assert 01-Jan-2023/01:30:00 = make date! 59945.0625
+		--assert 01-Jan-2023/01:30:00 =   to date! 59945.0625
+		--assert 31-Aug-2132/00:00:00 = make date! 99999.0
+		--assert 31-Aug-2132/00:00:00 =   to date! 99999.0
+		--assert 01-Sep-2132/00:00:00 = make date! 100000.0
+		--assert 01-Sep-2132/00:00:00 =   to date! 100000.0
 ===end-group===
 
 ===start-group=== "make/to integer"
@@ -164,24 +166,26 @@ Rebol [
 	
 	--test-- "make/to decimal! date!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2551
-		--assert 2415020.5         = make decimal! 01-Jan-1900/00:00:00
-		--assert 2415020.5         =   to decimal! 01-Jan-1900/00:00:00
-		--assert 2452762.0         = make decimal! 02-May-2003/12:00:00
-		--assert 2452762.0         =   to decimal! 02-May-2003/12:00:00
-		--assert 2460105.5625      = make decimal! 10-Jun-2023/01:30:00
-		--assert 2460105.5625      =   to decimal! 10-Jun-2023/01:30:00
-		--assert 2460106.3125      = make decimal! 10-Jun-2023/19:30:00
-		--assert 2460106.3125      =   to decimal! 10-Jun-2023/19:30:00
-		--assert 2459946.0         = make decimal! 01-Jan-2023/12:00:00
-		--assert 2459946.0         =   to decimal! 01-Jan-2023/12:00:00
-		--assert 2459946.3125      = make decimal! 01-Jan-2023/19:30:00
-		--assert 2459946.3125      =   to decimal! 01-Jan-2023/19:30:00
-		--assert 2459945.54166667  = make decimal! 01-Jan-2023/01:00:00
-		--assert 2459945.54166667  =   to decimal! 01-Jan-2023/01:00:00
-		--assert 2499999.5         = make decimal! 31-Aug-2132/00:00:00
-		--assert 2499999.5         =   to decimal! 31-Aug-2132/00:00:00
-		--assert 2500000.5         = make decimal! 01-Sep-2132/00:00:00
-		--assert 2500000.5         =   to decimal! 01-Sep-2132/00:00:00
+		--assert 0.0            = make decimal! 17-Nov-1858/00:00:00
+		--assert 0.0            =   to decimal! 17-Nov-1858/00:00:00
+		--assert 15020.0        = make decimal! 01-Jan-1900/00:00:00
+		--assert 15020.0        =   to decimal! 01-Jan-1900/00:00:00
+		--assert 52761.5        = make decimal! 02-May-2003/12:00:00
+		--assert 52761.5        =   to decimal! 02-May-2003/12:00:00
+		--assert 60105.0625     = make decimal! 10-Jun-2023/01:30:00
+		--assert 60105.0625     =   to decimal! 10-Jun-2023/01:30:00
+		--assert 60105.8125     = make decimal! 10-Jun-2023/19:30:00
+		--assert 60105.8125     =   to decimal! 10-Jun-2023/19:30:00
+		--assert 59945.5        = make decimal! 01-Jan-2023/12:00:00
+		--assert 59945.5        =   to decimal! 01-Jan-2023/12:00:00
+		--assert 59945.8125     = make decimal! 01-Jan-2023/19:30:00
+		--assert 59945.8125     =   to decimal! 01-Jan-2023/19:30:00
+		--assert 59945.0625     = make decimal! 01-Jan-2023/01:30:00
+		--assert 59945.0625     =   to decimal! 01-Jan-2023/01:30:00
+		--assert 99999.0        = make decimal! 31-Aug-2132/00:00:00
+		--assert 99999.0        =   to decimal! 31-Aug-2132/00:00:00
+		--assert 100000.0       = make decimal! 01-Sep-2132/00:00:00
+		--assert 100000.0       =   to decimal! 01-Sep-2132/00:00:00
 ===end-group===
 
 

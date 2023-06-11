@@ -413,7 +413,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 				if (VAL_TIME(val) != NO_TIME) {
 					Split_Time(VAL_TIME(val), &time);
 				}
-				d1 = Gregorian_To_Julian_Date(VAL_DATE(val), time);
+				d1 = Gregorian_To_Julian_Date(VAL_DATE(val), time) - 2400000.5;
 				break;
 			}
 

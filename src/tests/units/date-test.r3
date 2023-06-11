@@ -339,7 +339,7 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2551
 	--test-- "Julian accessor"
 		date: 10-Jun-2023/20:47:53+2:00
-		--assert date/julian = to decimal! date
+		--assert date/julian = (2400000.5 + to decimal! date) ;; conversion using TO counts with Modified Julian Date
 		--assert 2460106.28325231 = date/julian
 		--assert 2460106.28325231 = pick date 'julian
 	--test-- "Julian date setter"

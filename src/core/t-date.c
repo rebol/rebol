@@ -1015,7 +1015,7 @@ setDate:
 				return R_RET;
 			}
 			else if (IS_DECIMAL(arg)) {
-				Julian_To_Gregorian_Date(VAL_DECIMAL(arg), &day, &month, &year, &secs);
+				Julian_To_Gregorian_Date(VAL_DECIMAL(arg) + 2400000.5, &day, &month, &year, &secs);
 				day--; month--; // The date/time normalization expects 0-based day and month
 				goto fixTime;
 			}
