@@ -448,6 +448,29 @@ Rebol [
 	--assert     parse to binary! "aaaAB" [thru #"A" #"B"]
 	--assert     parse to binary! "aaaAB" [thru #"A" no-case #"b"]
 	--assert not parse to binary! "aaaAB" [thru #"A" #"b"]
+
+;@@ https://github.com/Oldes/Rebol-issues/issues/2552
+--test-- "parse/case word"
+	--assert     parse [a]['a]
+	--assert     parse [a]['A]
+	--assert     parse/case [a]['a]
+	--assert not parse/case [a]['A]
+--test-- "parse/case quoted word"
+	--assert     parse [a][quote a]
+	--assert     parse [a][quote A]
+	--assert     parse/case [a][quote a]
+	--assert not parse/case [a][quote A]
+--test-- "parse/case path"
+	--assert     parse [p/a]['p/a]
+	--assert     parse [p/a]['p/A]
+	--assert     parse/case [p/a]['p/a]
+	--assert not parse/case [p/a]['p/A]
+--test-- "parse/case quoted word"
+	--assert     parse [p/a][quote p/a]
+	--assert     parse [p/a][quote p/A]
+	--assert     parse/case [p/a][quote p/a]
+	--assert not parse/case [p/a][quote p/A]
+
 ===end-group===
 
 
@@ -919,6 +942,10 @@ if not error? try [str: to string! #{A032}][
 		e/id = 'parse-rule
 		e/arg1 = quote :pos
 	]
+
+--test-- "empty string rule"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1880
+	--assert not parse "ab" ["" to end] ;-- not like in Red!
 
 ===end-group===
 
