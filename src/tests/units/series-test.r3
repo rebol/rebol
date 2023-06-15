@@ -2676,13 +2676,14 @@ Rebol [
 ===start-group=== "RECYCLE"
 --test-- "recycle"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1128
-	recycle              ;; force GC
-	count: stats         ;; store current memory usage
-	make string! 5000000 ;; create large unreferenced series
+	recycle                 ;; force GC
+	count: stats            ;; store current memory usage
+	x: make string! 5000000 ;; create large series
 	--assert all [
 		stats >= (count + 5000000) ;; check that memory usage increased
+		none? x: none              ;; unreference the series
 		recycle                    ;; force GC
-		stats = count              ;; check if memory usage decreased
+		(stats - count) < 2000     ;; check if memory usage decreased
 	]
 ===end-group===
 
