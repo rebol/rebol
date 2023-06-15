@@ -117,7 +117,7 @@ AAACAAIAAAMDCCGTADs=}
 
 
 ===start-group=== "enbase 64 - safe URL variant"
-	--test "enbase/url"
+	--test-- "enbase/url"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2548
 	--assert "YQ==" == enbase "a" 64
 	--assert "YWE=" == enbase "aa" 64
