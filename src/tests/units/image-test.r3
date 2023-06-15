@@ -378,11 +378,11 @@ FFFFFFDC1616212121212121
 	i2: load %units/files/flower.bmp
 	i3: load %units/files/flower.jpg
 	--assert 0.00% =          image-diff i1 i2
-	--assert 1.21% = round/to image-diff i1 i3 0.01%
+	--assert 1.19% = round/to image-diff i1 i3 0.01%
 --test-- "image-diff (different sizes)"
-	i3: copy/part i3 10x10
-	--assert 2.31% = round/to image-diff i1 i3p 0.01%
-	--assert 2.31% = round/to image-diff i3p i1 0.01%
+	i4: copy/part i3 10x10
+	--assert 2.29% = round/to image-diff i1 i4 0.01%
+	--assert 2.29% = round/to image-diff i4 i1 0.01%
 --test-- "image-diff (min/max difference)"
 	i1: make image! [2x2 0.0.0]
 	i2: make image! [2x2 255.255.255]
