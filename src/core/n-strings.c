@@ -171,7 +171,7 @@ static struct digest {
 /*
 //	checksum: native [
 //		{Computes a checksum, CRC, hash, or HMAC.}
-//		data [binary! string!] {If string, it will be UTF8 encoded}
+//		data [binary! string! file!] {If string, it will be UTF8 encoded}
 //		method [word!] {One of `system/catalog/checksums` and HASH}
 //		/with {Extra value for HMAC key or hash table size; not compatible with TCP/CRC24/CRC32/ADLER32 methods.}
 //		 spec [any-string! binary! integer!] {String or binary for MD5/SHA* HMAC key, integer for hash table size.}
@@ -180,29 +180,50 @@ static struct digest {
 //	]
 ***********************************************************************/
 {
-	REBVAL *arg  = D_ARG(ARG_CHECKSUM_DATA);
-	REBINT sym   = VAL_WORD_CANON(D_ARG(ARG_CHECKSUM_METHOD));
-	REBVAL *spec = D_ARG(ARG_CHECKSUM_SPEC);
+	REBVAL *data   = D_ARG(ARG_CHECKSUM_DATA);
+	REBVAL *method = D_ARG(ARG_CHECKSUM_METHOD);
+	REBVAL *spec   = D_ARG(ARG_CHECKSUM_SPEC);
+	REBINT sym;
 	REBINT sum;
 	REBINT i = 0;
 	REBCNT j;
 	REBSER *digest, *ser;
 	REBCNT len, keylen;
-	REBYTE *data;
+	REBYTE *bin;
 	REBYTE *keycp;
 
 
-	len = Partial1(arg, D_ARG(ARG_CHECKSUM_LENGTH));
+	len = Partial1(data, D_ARG(ARG_CHECKSUM_LENGTH));
+	sym = VAL_WORD_CANON(method);
 
-	if (IS_STRING(arg)) {
-		ser = Encode_UTF8_Value(arg, len, 0);
-		data = SERIES_DATA(ser);
+	if (IS_BINARY(data)) {
+		bin = VAL_BIN_DATA(data);
+	}
+	else if (IS_STRING(data)) {
+		ser = Encode_UTF8_Value(data, len, 0);
+		bin = SERIES_DATA(ser);
 		len = SERIES_LEN(ser) - 1;
 	}
 	else {
-		data = VAL_BIN_DATA(arg);
+		// Dispatch file to file-checksum function...
+		REBVAL *func = Find_Word_Value(Lib_Context, SYM_FILE_CHECKSUM);
+		if (func && IS_FUNCTION(func) && sym > SYM_CRC32 && sym <= SYM_RIPEMD160) {
+			// Build block to evaluate: [file-checksum data method]
+			// Where method must be converted to lit-word first...
+			VAL_TYPE(method) = REB_LIT_WORD;
+			REBSER *code = Make_Block(3);
+			BLK_HEAD(code)[0] = *func;
+			BLK_HEAD(code)[1] = *data;
+			BLK_HEAD(code)[2] = *method;
+			SERIES_TAIL(code) = 3; // It is important to mark the tail of the block!
+			Do_Next(code, 0, 0);
+			*DS_RETURN = *DS_TOP;
+			return R_RET;
+		}
+		// in case that file-checksum is not a function or is used not yet implemented method...
+		Trap0(RE_FEATURE_NA);
 	}
-
+	
 	if (sym > SYM_CRC32 && sym <= SYM_RIPEMD160) {
 		// O: could be optimized using index computed from `sym`
 		// find matching digest:
@@ -251,7 +272,7 @@ static struct digest {
 
 					digests[i].init(ctx);
 					digests[i].update(ctx,ipad,blocklen);
-					digests[i].update(ctx, data, len);
+					digests[i].update(ctx, bin, len);
 					digests[i].final(ctx, tmpdigest);
 					digests[i].init(ctx);
 					digests[i].update(ctx,opad,blocklen);
@@ -261,7 +282,7 @@ static struct digest {
 					Free_Mem(ctx, digests[i].ctxsize());
 
 				} else {
-					digests[i].digest(data, len, BIN_HEAD(digest));
+					digests[i].digest(bin, len, BIN_HEAD(digest));
 				}
 
 				SERIES_TAIL(digest) = digests[i].len;
@@ -278,20 +299,20 @@ static struct digest {
 		Trap0(RE_BAD_REFINES);
 
 	if (sym == SYM_CRC32 || sym == SYM_ADLER32) {
-		i = (sym == SYM_CRC32) ? CRC32(data, len) : z_adler32_z(0x00000001L, data, len);
+		i = (sym == SYM_CRC32) ? CRC32(bin, len) : z_adler32_z(0x00000001L, bin, len);
 	}
 	else if (sym == SYM_HASH) {  // /hash
 		if(!D_REF(ARG_CHECKSUM_WITH)) Trap0(RE_MISSING_ARG);
 		if (!IS_INTEGER(spec)) Trap1(RE_BAD_REFINE, D_ARG(ARG_CHECKSUM_SPEC));
 		sum = VAL_INT32(spec); // size of the hash table
 		if (sum <= 1) sum = 1;
-		i = Hash_String(data, len) % sum;
+		i = Hash_String(bin, len) % sum;
 	}
 	else if (sym == SYM_CRC24) {
-		i = Compute_CRC24(data, len);
+		i = Compute_CRC24(bin, len);
 	}
 	else if (sym == SYM_TCP) {
-		i = Compute_IPC(data, len);
+		i = Compute_IPC(bin, len);
 	}
 	else {
 		Trap_Arg(D_ARG(ARG_CHECKSUM_METHOD));

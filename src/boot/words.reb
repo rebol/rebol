@@ -360,3 +360,5 @@ chacha20-poly1305
 
 tag-length
 aad-length
+
+file-checksum

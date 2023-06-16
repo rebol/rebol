@@ -266,6 +266,13 @@ AF45D2E376484031617F78D2B58A6B1B9C7EF464F5A01B47E42EC3736322445E
 	--assert (file-checksum %units/files/pdf-maker-doc.pdf 'sha256) == #{FA24645FE45C06DEB31DEC0B4478718A3ABE3F8C923A3B720B5564DAA2C9FC0F}
 	--test-- "file-checksum with bigger file"
 	--assert binary? file-checksum system/options/boot 'md5 ;; not testing result, because the binary changes.
+
+	--test-- "checksum file!"
+	;; when file argument is used with the `checksum` native, then above `file-checksum` function is used
+	--assert (checksum %units/files/pdf-maker-doc.pdf 'md5)    == #{6F782354D64B0B09CF103A9A129E1137}
+	--assert (checksum %units/files/pdf-maker-doc.pdf 'sha1)   == #{A598B252C045ABF94EE5F034798B384056C57086}
+	--assert (checksum %units/files/pdf-maker-doc.pdf 'sha256) == #{FA24645FE45C06DEB31DEC0B4478718A3ABE3F8C923A3B720B5564DAA2C9FC0F}
+
 ===end-group===
 
 
