@@ -171,7 +171,7 @@ static struct digest {
 /*
 //	checksum: native [
 //		{Computes a checksum, CRC, hash, or HMAC.}
-//		data [binary! string! file!] {If string, it will be UTF8 encoded}
+//		data [binary! string! file!] {If string, it will be UTF8 encoded. File is dispatched to file-checksum function.}
 //		method [word!] {One of `system/catalog/checksums` and HASH}
 //		/with {Extra value for HMAC key or hash table size; not compatible with TCP/CRC24/CRC32/ADLER32 methods.}
 //		 spec [any-string! binary! integer!] {String or binary for MD5/SHA* HMAC key, integer for hash table size.}
@@ -208,6 +208,9 @@ static struct digest {
 		// Dispatch file to file-checksum function...
 		REBVAL *func = Find_Word_Value(Lib_Context, SYM_FILE_CHECKSUM);
 		if (func && IS_FUNCTION(func) && sym > SYM_CRC32 && sym <= SYM_RIPEMD160) {
+			if (D_REF(ARG_CHECKSUM_WITH) || D_REF(ARG_CHECKSUM_PART))
+				Trap0(RE_BAD_REFINES);
+
 			// Build block to evaluate: [file-checksum data method]
 			// Where method must be converted to lit-word first...
 			VAL_TYPE(method) = REB_LIT_WORD;
