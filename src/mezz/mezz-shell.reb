@@ -108,3 +108,24 @@ su: set-user: func[
 		target: file/2
 	]
 ]
+
+file-checksum: function [
+	"Computes a checksum of a given file's content"
+	file   [file!] "Using 256kB chunks"
+	method [word!] "One of system/catalog/checksums"
+][
+	;; it is ok to throw an error on invalid input args
+	port: open join checksum:// method 
+	file: open/read/seek file
+	;; but catch an error when computing the sum,
+	;; so we could close the file later
+	try [
+		while [not empty? bin: read/part file 262144][ write port bin ]
+	]
+	;; not using try to get none as a result in case of errors
+	attempt [
+		close file
+		read port
+	]
+]
+
