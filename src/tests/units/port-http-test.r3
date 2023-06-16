@@ -22,7 +22,7 @@ Rebol [
 	--test-- "read/part"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2434
 		--assert "<!DOCTYPE" = read/part http://httpbin.org/ 9
-		--assert #{89504E47} = read/binary/part http://avatars-04.gitter.im/gh/uv/4/oldes 4
+		--assert #{47494638} = read/binary/part http://www.rebol.com/graphics/reb-logo.gif 4
 	--test-- "read not existing url"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/470
 		--assert all [
