@@ -61,7 +61,7 @@ user's: func[
 
 su: set-user: func[
 	"Initialize user's persistent data under system/user"
-	'name [word! ref! string! email! unset!] "User's name"
+	'name [word! ref! string! email! unset! none!] "User's name"
 	/p "Password used to encrypt the data"
 	 password [string! binary!]
 	/f "Use custom persistent data file location"
@@ -70,7 +70,7 @@ su: set-user: func[
 	/local su
 ][
 	su: system/user
-	if unset? :name [
+	if any [none? :name unset? :name] [
 		try [update su/data] ;; save changes if there are any
 		su/name: none
 		su/data: make map! 1
