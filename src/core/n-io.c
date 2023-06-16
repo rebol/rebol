@@ -1146,6 +1146,30 @@ chk_neg:
 
 /***********************************************************************
 **
+*/	REBNATIVE(request_password)
+/*
+***********************************************************************/
+{
+	REBREQ  req = {0};
+	REBSER *str;
+
+	OS_REQUEST_PASSWORD(&req);
+
+	if (req.file.path == NULL) return R_NONE;
+
+#ifdef TO_WINDOWS
+	str = Decode_UTF_String(req.file.path, req.file.size, 16, 0, 0);
+#else	
+	str = Decode_UTF_String(req.file.path, req.file.size, 8, 0, 0);
+#endif
+	FREE_MEM(req.file.path);
+	SET_STRING(D_RET, str);
+	return R_RET;
+}
+
+
+/***********************************************************************
+**
 */	REBNATIVE(get_env)
 /*
 ***********************************************************************/

@@ -942,6 +942,10 @@ request-dir: native [
 	/keep  "Keep previous directory path"
 ]
 
+request-password: native [
+	{Asks user for input without echoing, and the entered password is not stored in the command history.}
+]
+
 ascii?: native [
 	{Returns TRUE if value or string is in ASCII character range (below 128).}
 	value [any-string! char! integer!]
