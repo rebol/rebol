@@ -62,7 +62,6 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>  //for kill
-#include <unistd.h>  //for request-password
 
 #ifndef timeval // for older systems
 #include <sys/time.h>
