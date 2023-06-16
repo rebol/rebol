@@ -225,6 +225,7 @@ static struct digest {
 		}
 		// in case that file-checksum is not a function or is used not yet implemented method...
 		Trap0(RE_FEATURE_NA);
+		return R_NONE; // some compilers don't understand, that we stop evaluation here:/
 	}
 	
 	if (sym > SYM_CRC32 && sym <= SYM_RIPEMD160) {
