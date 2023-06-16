@@ -240,6 +240,7 @@
 		}
 		args = Find_Refines(ds, ALL_WRITE_REFS);
 		arg = D_ARG(2);
+		if (!ANY_BINSTR(arg)) Trap_Arg(arg);
 		REBI64  pos = (REBI64)VAL_INDEX(arg);
 		if (args & AM_WRITE_SEEK) {
 			pos += Int64(D_ARG(ARG_WRITE_INDEX));

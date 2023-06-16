@@ -208,6 +208,10 @@ if find system/catalog/checksums 'ripemd160 [
 		;opening already opened port restarts computation
 		--assert sum1 = read write/seek/part open port #{cafe0bad} 2 2
 		--assert sum1 = read write/seek/part open port tail #{cafe0bad} -2 2
+
+	--test-- "checksum port with invalid argument"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2553
+		--assert all [error? e: try [write checksum:md5 1]  e/id = 'invalid-arg]
 ===end-group===
 
 ===start-group=== "Checksum HMAC SHA"
