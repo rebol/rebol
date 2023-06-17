@@ -868,6 +868,8 @@ include-rebol-core: [
 	:include-codec-zip
 	:include-codec-tar
 
+	:include-mezz-date
+
 	;:include-codec-rebin ;not yet ready!
 	
 	config: INCLUDE_SHA224
@@ -908,7 +910,6 @@ include-rebol-bulk: [
 
 	:include-image-codecs ; use other optional image codecs before this include!
 
-	:include-mezz-date
 	:include-mezz-colors
 
 	:include-prebol
