@@ -1445,28 +1445,28 @@ static INT CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 {
 	REBCNT size = 64;
 	REBCNT  pos = 0;
-	REBUNI *str = (REBUNI*)malloc(size * sizeof(REBUNI));
-	REBUNI  c;
+	REBCHR *str = (REBUNI*)malloc(size * sizeof(REBCHR));
+	REBCHR  c;
 
-	req->file.path = NULL;
+	req->data = NULL;
 
 	while ((c = _getwch()) != '\r') {
 		if (c ==  27) { // ESC
 			free(str);
 			return; 
 		}
-		if (c == 127) { // backspace
+		if (c == '\b') { // backspace
 			if (pos > 0) pos--;
 			continue;
 		}
 		str[pos++] = c;
 		if (pos+1 == size) {
 			size += 64;
-			str = (REBUNI*)realloc(str, size * sizeof(REBUNI));
+			str = (REBCHR *)realloc(str, size * sizeof(REBCHR));
 		}
 	}
-	req->file.path = (REBYTE*)str;
-	req->file.size = pos * sizeof(REBUNI);
+	req->data = (REBYTE*)str;
+	req->actual = pos;
 	str[pos++] = 0;
 }
 

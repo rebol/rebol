@@ -1382,7 +1382,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 	REBYTE *str = malloc(size);
 	REBYTE  c;
 
-	req->file.path = NULL;
+	req->data = NULL;
 
 	while (read(STDIN_FILENO, &c, 1) && c != '\r') {
 		if (c ==  27) { // ESC
@@ -1400,8 +1400,8 @@ static int Try_Browser(char *browser, REBCHR *url)
 			str = realloc(str, size);
 		}
 	}
-	req->file.path = str;
-	req->file.size = pos;
+	req->data = str;
+	req->actual = pos;
 	str[pos++] = 0; // null terminate the tail.. just in case
 }
 

@@ -1155,14 +1155,11 @@ chk_neg:
 
 	OS_REQUEST_PASSWORD(&req);
 
-	if (req.file.path == NULL) return R_NONE;
+	if (req.data == NULL) return R_NONE;
 
-#ifdef TO_WINDOWS
-	str = Decode_UTF_String(req.file.path, req.file.size, 16, 0, 0);
-#else	
-	str = Decode_UTF_String(req.file.path, req.file.size, 8, 0, 0);
-#endif
-	FREE_MEM(req.file.path);
+	str = Copy_OS_Str(req.data, req.actual);
+
+	FREE_MEM(req.data);
 	SET_STRING(D_RET, str);
 	return R_RET;
 }
