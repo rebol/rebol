@@ -867,6 +867,7 @@ include-rebol-core: [
 	:include-codec-gzip
 	:include-codec-zip
 	:include-codec-tar
+	:include-codec-json
 
 	:include-mezz-date
 
@@ -902,7 +903,6 @@ include-rebol-bulk: [
 	:include-codec-bbcode
 	:include-codec-html-entities
 	:include-codec-csv
-	:include-codec-json
 	:include-codec-xml
 	:include-codec-wav
 	:include-codec-ico
