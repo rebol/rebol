@@ -554,17 +554,19 @@ if system/platform = 'Windows [
 ===end-group===
 
 
-import 'daytime
-if find system/schemes 'daytime [
-===start-group=== "DAYTIME scheme"
-	--test-- "read DAYTIME"
-		--assert  all [
-			block? res: try [read daytime://]
-			res/2/date = now/date
-		]
-
-===end-group===
-]
+;- not using this test, because the serives limits number of requests from the IP
+;- and on CI it may return "Access denied -- too many requests"
+;import 'daytime
+;if find system/schemes 'daytime [
+;===start-group=== "DAYTIME scheme"
+;	--test-- "read DAYTIME"
+;		--assert  all [
+;			block? res: try [read daytime://]
+;			res/2/date = now/date
+;		]
+;
+;===end-group===
+;]
 
 if all [
 	"true" <> get-env "CONTINUOUS_INTEGRATION"
