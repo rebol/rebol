@@ -47,7 +47,7 @@ secure [%/ allow]
 	--assert (format <hh:mm:ss.ss> :value) == "00:00:00.00"
 	--assert (format <hh:mm:ss.sss> :value) == "00:00:00.000"
 	--assert (format <hh:mm:ss.sssssss> :value) == "00:00:00.0000000"
-	--assert (format <unixepoch> :value) == "1020776956"
+	--assert (format <unixepoch> :value) == "1654214400"
 --test-- "FORMAT time"
 	value: 1:23:45.1234
 	; would use current date for date parts if used.. excluded from testing!
