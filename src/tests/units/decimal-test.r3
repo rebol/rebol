@@ -189,10 +189,16 @@ Rebol [
 
 	--test-- "issue-241"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/241
-		--assert  0.0 == to decimal! #{0000000000000000}
-		--assert  0.0 == to decimal! #{8000000000000000}
-		--assert  1.#INF = to decimal! #{7FF0000000000000}
-		--assert -1.#INF = to decimal! #{FFF0000000000000}
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1134
+		--assert    0.0   = to decimal! #{0000000000000000}
+		--assert    0.0  == to decimal! #{0000000000000000}
+		--assert   -0.0   = to decimal! #{8000000000000000}
+		--assert   -0.0  == to decimal! #{8000000000000000}
+		--assert    0.0 !== to decimal! #{8000000000000000}
+		--assert ! -0.0  != to decimal! #{8000000000000000}
+		--assert  1.#INF  = to decimal! #{7FF0000000000000}
+		--assert -1.#INF  = to decimal! #{FFF0000000000000}
+		--assert not number? to decimal! #{7FFFFFFFFFFFFFFF}
 		--assert "1.#NaN" = mold to decimal! #{7FFFFFFFFFFFFFFF}
 		
 	--test-- "issue-267"
