@@ -786,6 +786,8 @@ if find codecs 'safe [
 			--assert none? system/user/name
 			--assert not error? try [set-user/p temp-user "passw"]
 			--assert "hello" = user's key               ;; resolve the data
+			--assert not error? try [su #[none]]        ;; release user using none value
+			--assert none? system/user/name
 
 			try [delete system/user/data/spec/ref]
 
