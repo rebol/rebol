@@ -8,6 +8,9 @@ Rebol [
 
 ~~~start-file~~~ "port-http"
 
+;; it looks that httpbin.org has long response times:/
+;; so let's give it more time...
+system/schemes/http/spec/timeout: 30
 
 ===start-group=== "HTTP scheme"
 	--test-- "read HTTP"
