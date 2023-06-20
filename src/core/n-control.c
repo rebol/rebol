@@ -413,12 +413,12 @@ enum {
 	REBVAL *val;
 	REBVAL *ret;
 	REBCNT sym;
-	REBVAL recover = *D_ARG(AM_CATCH_RECOVER);
+	REBVAL recover = *D_ARG(ARG_CATCH_RECOVER);
 	REBVAL *last_result = Get_System(SYS_STATE, STATE_LAST_RESULT);
 	REBOOL quit;
 
-	if (D_REF(AM_CATCH_QUIT)) {	//QUIT
-		quit = Try_Block_Halt(VAL_SERIES(D_ARG(AM_CATCH_BLOCK)), VAL_INDEX(D_ARG(AM_CATCH_BLOCK)));
+	if (D_REF(ARG_CATCH_QUIT)) {	//QUIT
+		quit = Try_Block_Halt(VAL_SERIES(D_ARG(ARG_CATCH_BLOCK)), VAL_INDEX(D_ARG(ARG_CATCH_BLOCK)));
 		ret = DS_NEXT;
 		if (quit) {
 			// We are here because of a QUIT or HALT condition.
@@ -437,20 +437,20 @@ enum {
 			*DS_RETURN = *ret;
 			return R_RET;
 		}
-		if (!D_REF(AM_CATCH_NAME)) return R_TOS1;
+		if (!D_REF(ARG_CATCH_NAME)) return R_TOS1;
 	} else {
 		// Evaluate the block:
-		ret = DO_BLK(D_ARG(AM_CATCH_BLOCK));
+		ret = DO_BLK(D_ARG(ARG_CATCH_BLOCK));
 	}	
 
 	// If it is a throw, process it:
 	if (IS_ERROR(ret) && VAL_ERR_NUM(ret) == RE_THROW) {
 
 		// If a named throw, then check it:
-		if (D_REF(AM_CATCH_NAME)) { // /name
+		if (D_REF(ARG_CATCH_NAME)) { // /name
 
 			sym = VAL_ERR_SYM(ret);
-			val = D_ARG(AM_CATCH_WORD); // name symbol
+			val = D_ARG(ARG_CATCH_WORD); // name symbol
 
 			// If name is the same word:
 			if (IS_WORD(val) && sym == VAL_WORD_CANON(val)) goto got_err;
