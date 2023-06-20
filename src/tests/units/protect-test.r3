@@ -166,6 +166,14 @@ Rebol [
 		a: "123"
 		--assert all [error? e: try [protect/hide :a] e/id = 'bad-refines]
 
+	--test-- "compare objects with hidden values"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1778
+		--assert equal? context [a: 1 protect/hide 'a] context [a: 2 protect/hide 'a]
+		--assert equal? context [a: 1 protect/hide 'a] context [a: 1 protect/hide 'a]
+		--assert equal? context [a: 1 protect/hide 'a] context [b: 1 protect/hide 'b]
+		--assert not equal? context [a: 1 protect/hide 'a] context [a: 1]
+		--assert not equal? context [a: 1] context [a: 1 protect/hide 'a]
+		--assert not equal? context [a: 1 protect/hide 'a] context []
 
 ===end-group===
 
