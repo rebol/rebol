@@ -19,7 +19,8 @@ Throw: [
 	type: "throw error"
 	break:              {no loop to break}
 	return:             {return or exit not in function}
-	throw:              [{no catch for throw:} :arg1]
+	unnamed-throw:      [{no catch for unnamed throw with value:} :arg1]
+	throw:              [{no catch for throw:} :arg2 "with value:" :arg1]
 	continue:           {no loop to continue}
 	halt:               [{halted by user or script}]
 	quit:               [{user script quit}]
