@@ -43,7 +43,7 @@ rebol-cmd: func[cmd][
 	--test-- "script args 2"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2227
 		--assert 0 = rebol-cmd {-v}
-		--assert not none? find/match out-buffer {Rebol }
+		--assert not none? find/match out-buffer {Rebol/}
 		--assert 0 = rebol-cmd {units/files/print-args.r3 -v}
 		--assert out-buffer = {["-v"]^/["-v"]^/}
 		--assert 0 = rebol-cmd {units/files/print-args.r3 -x}
