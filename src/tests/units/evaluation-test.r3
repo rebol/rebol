@@ -780,7 +780,11 @@ Rebol [
 	--test-- "catch/quit/name"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2549
 		--assert all [
-			'foo = catch/quit/name [a: 1 throw/name 'foo 'name a: 2] 'name
+			unset? catch/quit/name [a: 1 quit a: 2] 'name
+			a = 1
+		]
+		--assert all [
+			0 = catch/quit/name [a: 1  throw/name 0 'name  a: 2] 'name
 			a = 1
 		]
 
