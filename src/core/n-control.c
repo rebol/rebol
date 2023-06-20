@@ -413,11 +413,11 @@ enum {
 	REBVAL *val;
 	REBVAL *ret;
 	REBCNT sym;
-	REBVAL recover = *D_ARG(ARG_CATCH_RECOVER);
+	REBVAL recover = *D_ARG(ARG_CATCH_CODE);
 	REBVAL *last_result = Get_System(SYS_STATE, STATE_LAST_RESULT);
 	REBOOL quit;
 
-	if (D_REF(ARG_CATCH_QUIT)) {	//QUIT
+	if (D_REF(ARG_CATCH_QUIT)) {
 		quit = Try_Block_Halt(VAL_SERIES(D_ARG(ARG_CATCH_BLOCK)), VAL_INDEX(D_ARG(ARG_CATCH_BLOCK)));
 		ret = DS_NEXT;
 		if (quit) {
@@ -445,32 +445,41 @@ enum {
 
 	// If it is a throw, process it:
 	if (IS_ERROR(ret) && VAL_ERR_NUM(ret) == RE_THROW) {
+		// Get optional thrown name
+		sym = VAL_ERR_SYM(ret);
 
-		// If a named throw, then check it:
-		if (D_REF(ARG_CATCH_NAME)) { // /name
+		if (D_REF(ARG_CATCH_ALL)) goto caught;
 
-			sym = VAL_ERR_SYM(ret);
-			val = D_ARG(ARG_CATCH_WORD); // name symbol
+		// If a named catch, then check it:
+		if (D_REF(ARG_CATCH_NAME)) {
+			val = D_ARG(ARG_CATCH_WORD); // catch/name value
 
 			// If name is the same word:
-			if (IS_WORD(val) && sym == VAL_WORD_CANON(val)) goto got_err;
+			if (IS_WORD(val) && sym == VAL_WORD_CANON(val)) goto caught;
 
 			// If it is a block of words:
 			else if (IS_BLOCK(val)) {
 				for (val = VAL_BLK_DATA(val); NOT_END(val); val++) {
-					if (IS_WORD(val) && sym == VAL_WORD_CANON(val)) goto got_err;
+					if (IS_WORD(val) && sym == VAL_WORD_CANON(val)) goto caught;
 				}
 			}
+			//else if (IS_LOGIC(val) && VAL_LOGIC(val)) goto caught; // used CATCH/name [] true
 		} else {
-got_err:
+			// Used catch without name. If there was thrown a name, then let it pass thru.
+			if (sym != 0) {
+				*DS_RETURN = *ret;
+				return R_RET;
+			}
+caught:     // Thrown is being caught.
+			// Store thrown value as the last result.
 			*ds = *(VAL_ERR_VALUE(ret));
 			*last_result = *ds;
+			// If there is a recovery code, then evaluate it.
 			if (IS_BLOCK(&recover)) {
 				DS_NEXT;
 				DO_BLK(&recover);
 				DS_POP;
-			}	
-
+			}
 			return R_RET;
 		}
 	}

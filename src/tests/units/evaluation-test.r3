@@ -784,6 +784,20 @@ Rebol [
 			a = 1
 		]
 
+	--test-- "nested catch"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1518
+		--assert 1 = catch/name [a: 0 catch [++ a throw/name 1 'foo] a: a * 10] 'foo
+		--assert 1 = a
+		--assert 1 = catch/name [a: 0 catch/name [++ a throw/name 1 'foo] 'bar a: a * 10] 'foo
+		--assert 1 = a
+	--test-- "catch/all"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1520
+		--assert 1 = catch/all [a: 0 throw/name 1 'foo a: a * 10]
+		--assert 0 = a
+		--assert 1 = catch/all [a: 0 catch [++ a throw/name 1 'foo] a: a * 10]
+		--assert 1 = a
+		--assert 1 = catch/all [a: 0 catch/name [++ a throw/name 1 'foo] 'bar a: a * 10]
+		--assert 1 = a
 
 ===end-group===
 
