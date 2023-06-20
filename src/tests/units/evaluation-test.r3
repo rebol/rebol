@@ -777,6 +777,13 @@ Rebol [
 		--assert 3 = catch/recover [a: 1 throw 3 a: 2][a: system/state/last-result a: a * 10]  
 		--assert a = 30
 
+	--test-- "catch/quit/name"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2549
+		--assert all [
+			'foo = catch/quit/name [a: 1 throw/name 'foo 'name a: 2] 'name
+			a = 1
+		]
+
 
 ===end-group===
 

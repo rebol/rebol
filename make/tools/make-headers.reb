@@ -319,6 +319,7 @@ context [
 		checksum
 		request-file
 		request-dir
+		catch
 	] [make-arg-enums word]
 
 ;?? output
