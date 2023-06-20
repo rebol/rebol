@@ -76,6 +76,7 @@ catch: native [
 	/name {Catches a named throw}
 	word [word! block!] {One or more names}
 	/quit {Special catch for QUIT native}
+	/recover code [block!] "Code to be evaluated on a catch"
 ]
 
 ;cause: native [

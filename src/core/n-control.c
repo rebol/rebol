@@ -413,10 +413,12 @@ enum {
 	REBVAL *val;
 	REBVAL *ret;
 	REBCNT sym;
+	REBVAL recover = *D_ARG(6);
+	REBVAL *last_result = Get_System(SYS_STATE, STATE_LAST_RESULT);
 
 	if (D_REF(4)) {	//QUIT
 		if (Try_Block_Halt(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
-			// We are here because of a QUIT/HALT condition.
+			// We are here because of a QUIT or HALT condition.
 			ret = DS_NEXT;
 			if (VAL_ERR_NUM(ret) == RE_QUIT)
 				ret = VAL_ERR_VALUE(ret);
@@ -425,6 +427,11 @@ enum {
 				//Halt_Code(RE_HALT, 0); // Don't use this if we want to be able catch all!
 			else
 				Crash(RP_NO_CATCH);
+
+			if (IS_BLOCK(&recover)) {
+				DO_BLK(&recover);
+			}
+
 			*DS_RETURN = *ret;
 			return R_RET;
 		}
@@ -455,10 +462,17 @@ enum {
 		} else {
 got_err:
 			*ds = *(VAL_ERR_VALUE(ret));
+			*last_result = *ds;
+			if (IS_BLOCK(&recover)) {
+				DS_NEXT;
+				DO_BLK(&recover);
+				DS_POP;
+			}	
+
 			return R_RET;
 		}
 	}
-
+	// No throw, or a throw with unhandled name... return just result of the block evaluation
 	return R_TOS1;
 }
 

@@ -731,6 +731,10 @@ Rebol [
 
 
 ===start-group=== "CATCH"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1518
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1520
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1734
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1742
 	--test-- "catch/quit [halt]"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1742
 		a: 0 catch/quit [++ a halt ++ a]
@@ -740,11 +744,39 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1734
 		a: 0  
 		--assert unset? catch/quit [++ a quit ++ a]
-		--assert a == 1;
+		--assert a == 1
 		--assert 100 = catch/quit [++ a quit/return 100 ++ a]
-		--assert a == 2;
+		--assert a == 2
 		--assert   0 = call/shell/wait join system/options/boot { --do "quit"}
 		--assert 100 = call/shell/wait join system/options/boot { --do "quit/return 100"}
+	--test-- "nested catch"
+		a: 0
+		--assert 'x = catch [++ a catch/quit [++ a quit a: 0] a: a * 2 throw 'x a: a * 100]
+		--assert a == 4
+		a: 0
+		--assert 'x = catch [++ a catch/quit [++ a throw 'x a: 0] a: a * 2 quit 'x a: a * 100]
+		--assert a == 2
+		a: 0
+		--assert unset? catch/quit [++ a a: a + catch [++ a throw 100 a: 0] a: a * 2 quit a: a * 100]
+		--assert a == 202
+		a: 0
+		--assert unset? catch/quit [++ a a: a + catch [++ a quit a: 0] a: a * 2 throw 100 a: a * 100]
+		--assert a == 2
+
+	--test-- "catch/recover"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1521
+		--assert unset? catch/quit/recover [a: 1 quit a: 2][a: a * 10]
+		--assert a = 10
+
+		--assert 2 = catch/quit/recover [a: 2][a: a * 10]
+		--assert a = 2
+
+		--assert 'x = catch/recover [a: 1 throw 'x a: 2][a: a * 10]
+		--assert a = 10
+
+		--assert 3 = catch/recover [a: 1 throw 3 a: 2][a: system/state/last-result a: a * 10]  
+		--assert a = 30
+
 
 ===end-group===
 
