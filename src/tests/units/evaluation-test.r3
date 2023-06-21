@@ -804,6 +804,14 @@ Rebol [
 		--assert error? catch [make error! [type: 'Access arg1: 10 + 20 id: 'Protocol]]
 		--assert 30 = catch [make error! [type: 'Access arg1: throw 10 + 20 id: 'Protocol]]
 
+	--test-- "throw from path evaluation"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2243
+		foo: object [bar: 1]
+		--assert "ok" = catch [foo/(throw "ok" 'bar)]
+		--assert "ok" = catch [foo/(throw "ok" 'bar): 3]
+		--assert "ok" = catch [foo/(throw "ok" 'bar)/xx]
+		--assert "ok" = catch [foo/(throw "ok" 'bar)/xx: 3]
+
 ===end-group===
 
 
