@@ -799,6 +799,11 @@ Rebol [
 		--assert 1 = catch/all [a: 0 catch/name [++ a throw/name 1 'foo] 'bar a: a * 10]
 		--assert 1 = a
 
+	--test-- "throw from make error!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2244
+		--assert error? catch [make error! [type: 'Access arg1: 10 + 20 id: 'Protocol]]
+		--assert 30 = catch [make error! [type: 'Access arg1: throw 10 + 20 id: 'Protocol]]
+
 ===end-group===
 
 

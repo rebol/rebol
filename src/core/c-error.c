@@ -356,6 +356,7 @@ invalid_id:
 	REBSER *err;		// Error object
 	ERROR_OBJ *error;	// Error object values
 	REBINT code = 0;
+	REBVAL *tmp;
 
 	// Create a new error object from another object, including any non-standard fields:
 	if (IS_ERROR(arg) || IS_OBJECT(arg)) {
@@ -380,8 +381,14 @@ invalid_id:
 	// If user set error code, use it to setup type and id fields.
 	if (IS_BLOCK(arg)) {
 		DISABLE_GC;
-		Do_Bind_Block(err, arg); // GC-OK (disabled)
+		tmp = Do_Bind_Block(err, arg); // GC-OK (disabled)
 		ENABLE_GC;
+		if (THROWN(tmp)) { 
+			*value = *tmp;
+			return; 
+		}
+		
+		
 		//It was possible to set error using code, but that's now ignored!
 		//@@ https://github.com/Oldes/Rebol-issues/issues/1593
 		//if (IS_INTEGER(&error->code) && VAL_INT64(&error->code)) {
