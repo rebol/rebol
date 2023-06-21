@@ -763,19 +763,66 @@ Rebol [
 		--assert unset? catch/quit [++ a a: a + catch [++ a quit a: 0] a: a * 2 throw 100 a: a * 100]
 		--assert a == 2
 
-	--test-- "catch/recover"
+	--test-- "catch/recover block!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1521
-		--assert unset? catch/quit/recover [a: 1 quit a: 2][a: a * 10]
-		--assert a = 10
+		--assert 10 = catch/quit/recover [a: 1 quit a: 2][a: a * 10]
+		--assert  a = 10
+
+		--assert 40 = catch/quit/recover [a: 1 quit/return 4 a: 2][system/state/last-result * 10]
+		--assert  a = 1
 
 		--assert 2 = catch/quit/recover [a: 2][a: a * 10]
 		--assert a = 2
 
-		--assert 'x = catch/recover [a: 1 throw 'x a: 2][a: a * 10]
+		--assert 10 = catch/recover [a: 1 throw 'x a: 2][a: a * 10]
 		--assert a = 10
 
-		--assert 3 = catch/recover [a: 1 throw 3 a: 2][a: system/state/last-result a: a * 10]  
-		--assert a = 30
+		--assert 30 = catch/recover [a: 1 throw 3 a: 2][system/state/last-result * 10]  
+		--assert a = 1
+
+		--assert all [
+			2 == catch/recover [throw 1][2 * system/state/last-result]
+			2 == system/state/last-result
+		]
+	--test-- "catch/recover function!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1521
+		on-catch: func[value name][
+			if :name = 'foo    [return join "b" :value]
+			if unset?   :value [return true]
+			if integer? :value [return value * 10]
+			mold value
+		]
+
+		--assert all [
+			#[true] == catch/quit/recover [a: 1 quit a: 2] :on-catch
+			a = 1
+		]
+
+		--assert all [
+			40 = catch/quit/recover [a: 1 quit/return 4 a: 2] :on-catch
+			a = 1
+		]
+
+		--assert all [
+			2 = catch/quit/recover [a: 2] :on-catch
+			a = 2
+		]
+
+		--assert all [
+			"x" = catch/recover [a: 1 throw 'x a: 2] :on-catch
+			'x  = system/state/last-result ;; or "x" ???
+			a = 1
+		]
+
+		--assert all [
+			30 = catch/recover [a: 1 throw 3 a: 2] :on-catch
+			a = 1
+		]
+
+		--assert all [
+			"b3" = catch/all/recover [a: 1 throw/name 3 'foo a: 2] :on-catch 
+			a = 1
+		]
 
 	--test-- "catch/quit/name"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2549

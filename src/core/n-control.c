@@ -423,19 +423,14 @@ enum {
 		if (quit) {
 			// We are here because of a QUIT or HALT condition.
 			if (VAL_ERR_NUM(ret) == RE_QUIT)
-				ret = VAL_ERR_VALUE(ret);
+				*DS_RETURN = *(VAL_ERR_VALUE(ret));
 			else if (VAL_ERR_NUM(ret) == RE_HALT)
-				VAL_SET(ret, REB_UNSET);
+				VAL_SET(DS_RETURN, REB_UNSET);
 				//Halt_Code(RE_HALT, 0); // Don't use this if we want to be able catch all!
 			else
 				Crash(RP_NO_CATCH);
 
-			if (IS_BLOCK(&recover)) {
-				DO_BLK(&recover);
-			}
-
-			*DS_RETURN = *ret;
-			return R_RET;
+			goto recover;
 		}
 		if (!D_REF(ARG_CATCH_NAME)) return R_TOS1;
 	} else {
@@ -471,19 +466,39 @@ enum {
 				return R_RET;
 			}
 caught:     // Thrown is being caught.
-			// Store thrown value as the last result.
-			*ds = *(VAL_ERR_VALUE(ret));
-			*last_result = *ds;
+			// Store the thrown value as the return value...
+			*DS_RETURN = *(VAL_ERR_VALUE(ret));
+recover:	// ...and the last result.
+			*last_result = *DS_RETURN;
 			// If there is a recovery code, then evaluate it.
-			if (IS_BLOCK(&recover)) {
-				DS_NEXT;
-				DO_BLK(&recover);
-				DS_POP;
+			if (IS_FUNCTION(&recover)) {
+				// catch [throw 1] func[value name][value]
+				// Return result of the recovery function
+				REBVAL name = *DS_NEXT;
+				if(sym) {
+					Set_Word(&name, sym, 0, 0);
+					VAL_SET(&name, REB_WORD);
+				} else {
+					SET_NONE(&name);
+				}
+				Apply_Func(0, &recover, last_result, &name, 0);
 			}
-			return R_RET;
+			else if (IS_BLOCK(&recover)) {
+				// (catch/recover [throw 1][2]) == 2
+				// Return result of the recovery block evaluation.
+				*last_result = *DO_BLK(&recover);
+			}
+			else {
+				// (catch [throw 1]) == 1
+				// Return the thrown value.
+				return R_RET; 
+			}
+			// Return the result of the recovery code evaluation.
+			return R_TOS1;
 		}
 	}
-	// No throw, or a throw with unhandled name... return just result of the block evaluation
+	// No throw (return just the result of the block evaluation),
+	// or an unhandled throw (return the thrown error value, so it may be catched later)
 	return R_TOS1;
 }
 
