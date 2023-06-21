@@ -858,6 +858,8 @@ Rebol [
 	--test-- "SELF inside a FOR block"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1529
 		--assert same? 'self for i 1 1 1 ['self]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1552
+		--assert none? for self 1 1 1 [context? 'self]
 
 ===end-group===
 
@@ -873,6 +875,8 @@ Rebol [
 	--test-- "SELF inside a FOR block"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1529
 		--assert same? 'self repeat n 1 ['self]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1552
+		--assert none? repeat self 1 [context? 'self]
 
 ===end-group===
 
