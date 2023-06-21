@@ -855,6 +855,10 @@ Rebol [
 		for x "abcde" tail "ab" 1 [append out x]
 		--assert "abcdebcdecde" == out
 
+	--test-- "SELF inside a FOR block"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1529
+		--assert same? 'self for i 1 1 1 ['self]
+
 ===end-group===
 
 
@@ -865,6 +869,10 @@ Rebol [
 		repeat x 2x2 [append b x]
 		--assert b = [1x1 2x1 1x2 2x2]
 		--assert b = collect [repeat x 2x2 [keep x]]
+
+	--test-- "SELF inside a FOR block"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1529
+		--assert same? 'self repeat n 1 ['self]
 
 ===end-group===
 
