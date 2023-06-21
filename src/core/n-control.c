@@ -412,7 +412,7 @@ enum {
 {
 	REBVAL *val;
 	REBVAL *ret;
-	REBCNT sym;
+	REBCNT sym = 0;
 	REBVAL recover = *D_ARG(ARG_CATCH_CODE);
 	REBVAL *last_result = Get_System(SYS_STATE, STATE_LAST_RESULT);
 	REBOOL quit;
