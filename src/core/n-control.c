@@ -413,7 +413,7 @@ enum {
 	REBVAL *val;
 	REBVAL *ret;
 	REBCNT sym = 0;
-	REBVAL recover = *D_ARG(ARG_CATCH_CODE);
+	REBVAL callback = *D_ARG(ARG_CATCH_CALLBACK);
 	REBVAL *last_result = Get_System(SYS_STATE, STATE_LAST_RESULT);
 	REBOOL quit;
 
@@ -430,7 +430,7 @@ enum {
 			else
 				Crash(RP_NO_CATCH);
 
-			goto recover;
+			goto callback;
 		}
 		if (!D_REF(ARG_CATCH_NAME)) return R_TOS1;
 	} else {
@@ -468,12 +468,12 @@ enum {
 caught:     // Thrown is being caught.
 			// Store the thrown value as the return value...
 			*DS_RETURN = *(VAL_ERR_VALUE(ret));
-recover:	// ...and the last result.
+callback:	// ...and the last result.
 			*last_result = *DS_RETURN;
-			// If there is a recovery code, then evaluate it.
-			if (IS_FUNCTION(&recover)) {
+			// If there is a callback code, then evaluate it.
+			if (IS_FUNCTION(&callback)) {
 				// catch [throw 1] func[value name][value]
-				// Return result of the recovery function
+				// Return result of the callback function
 				REBVAL name = *DS_NEXT;
 				if(sym) {
 					Set_Word(&name, sym, 0, 0);
@@ -481,19 +481,19 @@ recover:	// ...and the last result.
 				} else {
 					SET_NONE(&name);
 				}
-				Apply_Func(0, &recover, last_result, &name, 0);
+				Apply_Func(0, &callback, last_result, &name, 0);
 			}
-			else if (IS_BLOCK(&recover)) {
-				// (catch/recover [throw 1][2]) == 2
-				// Return result of the recovery block evaluation.
-				*last_result = *DO_BLK(&recover);
+			else if (IS_BLOCK(&callback)) {
+				// (catch/with [throw 1][2]) == 2
+				// Return result of the callback block evaluation.
+				*last_result = *DO_BLK(&callback);
 			}
 			else {
 				// (catch [throw 1]) == 1
 				// Return the thrown value.
 				return R_RET; 
 			}
-			// Return the result of the recovery code evaluation.
+			// Return the result of the callback code evaluation.
 			return R_TOS1;
 		}
 	}
