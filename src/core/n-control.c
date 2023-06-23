@@ -886,40 +886,45 @@ callback:	// ...and the last result.
 /*
 ***********************************************************************/
 {
-	REBFLG   with = D_REF(2);
+	REBFLG   with = D_REF(ARG_TRY_WITH);
 	REBVAL   handler;
-	REBVAL  *last_error = Get_System(SYS_STATE, STATE_LAST_ERROR);
-	SET_NONE(last_error);
+	REBVAL  *error = Get_System(SYS_STATE, STATE_LAST_ERROR);
+	SET_NONE(error); // reset the last error
+
 
 	// If not used the new /with refine, try to use the deprecated /except
 	if (with) {
-		handler = *D_ARG(3);
+		handler = *D_ARG(ARG_TRY_HANDLER);
 	} else {
-		with    =  D_REF(4);
-		handler = *D_ARG(5);
+		with    =  D_REF(ARG_TRY_EXCEPT);
+		handler = *D_ARG(ARG_TRY_CODE);
 	}
 	// TRY exception will trim the stack
-	if (Try_Block(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
+	if (Try_Block(VAL_SERIES(D_ARG(ARG_TRY_BLOCK)), VAL_INDEX(D_ARG(ARG_TRY_BLOCK)))) {
 		// save the error as a system/state/last-error value
-		*last_error = *DS_NEXT;
+	on_error:
+		*error = *DS_NEXT;
 
 		if (with) {
 			if (IS_BLOCK(&handler)) {
 				DO_BLK(&handler);
 			}
 			else { // do func[err] error
-				REBVAL error = *DS_NEXT; // will get overwritten
 				REBVAL *args = BLK_SKIP(VAL_FUNC_ARGS(&handler), 1);
-				if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(&error))) {
+				if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(error))) {
 					// TODO: This results in an error message such as "action!
 					// does not allow error! for its value1 argument". A better
 					// message would be more like "except handler does not
 					// allow error! for its value1 argument."
-					Trap3(RE_EXPECT_ARG, Of_Type(&handler), args, Of_Type(&error));
+					Trap3(RE_EXPECT_ARG, Of_Type(&handler), args, Of_Type(error));
 				}
-				Apply_Func(0, &handler, &error, 0);
+				Apply_Func(0, &handler, error, 0);
 			}
 		}
+	}
+	else if (D_REF(ARG_TRY_ALL) && THROWN(DS_NEXT)) {
+		Disarm_Throw_Error(DS_NEXT);
+		goto on_error;
 	}
 
 	return R_TOS1;

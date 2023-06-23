@@ -443,6 +443,9 @@ invalid_id:
 	// Make a copy of the error object template:
 	err = CLONE_OBJECT(VAL_OBJ_FRAME(ROOT_ERROBJ));
 	error = ERR_VALUES(err);
+	
+	if (code >= THROWN_DISARM_OFFSET)
+		code -= THROWN_DISARM_OFFSET;
 
 	// Set error number:
 	SET_INTEGER(&error->code, (REBINT)code);
@@ -462,6 +465,40 @@ invalid_id:
 	}
 
 	return err;
+}
+
+
+/***********************************************************************
+**
+*/	REBSER *Disarm_Throw_Error(REBVAL *err)
+/*
+**		Creates real error object from an internal thrown one
+**
+***********************************************************************/
+{
+	REBINT code;
+	REBCNT sym;
+	REBSER *obj;
+	REBVAL *arg1 = NULL;
+	REBVAL word = {0};
+
+	code = VAL_ERR_NUM(err);
+	if (code > RE_THROW_MAX) return VAL_ERR_OBJECT(err);
+
+	sym  = VAL_ERR_SYM(err);
+	arg1 = VAL_ERR_VALUE(err);
+	
+	if (sym) {
+		Set_Word(&word, sym, 0, 0);
+		VAL_SET(&word, REB_WORD);
+		VAL_ERR_SYM(err) = 0;
+	}
+
+	code += THROWN_DISARM_OFFSET;
+	
+	obj = Make_Error(code, arg1, sym ? &word : 0, 0);
+	VAL_ERR_OBJECT(err) = obj;
+	VAL_ERR_NUM(err) = code;
 }
 
 

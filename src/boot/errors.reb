@@ -19,7 +19,6 @@ Throw: [
 	type: "throw error"
 	break:              {no loop to break}
 	return:             {return or exit not in function}
-	unnamed-throw:      [{no catch for unnamed throw with value:} :arg1]
 	throw:              [{no catch for throw:} :arg2 "with value:" :arg1]
 	continue:           {no loop to continue}
 	halt:               [{halted by user or script}]
@@ -247,3 +246,4 @@ Internal: [
 	not-done:           {reserved for future use (or not yet implemented)}
 	invalid-error:      {error object or fields were not valid}
 ]
+

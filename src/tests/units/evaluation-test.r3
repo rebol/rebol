@@ -728,6 +728,47 @@ Rebol [
 		--assert string? try/with [1 / 0] :mold
 		--assert system/state/last-error/id = 'zero-divide
 
+	--test-- "try/all"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1506
+		--assert error? try/all [break]
+		--assert error? try/all [continue]
+		--assert error? try/all [exit]
+		--assert error? try/all [return 1]
+		--assert error? try/all [throw 1]
+
+	--test-- "try/all/with block handler"
+		handler: [system/state/last-error/id]
+		--assert 'break    = try/all/with [break   ] :handler
+		--assert 'continue = try/all/with [continue] :handler
+		--assert 'return   = try/all/with [exit    ] :handler
+		--assert 'return   = try/all/with [return 1] :handler
+		--assert 'throw    = try/all/with [throw 1 ] :handler
+
+	--test-- "try/all/with function handler"
+		--assert 'break = try/all/with [break] func[e][e/id]
+
+		--assert all [
+			string? try/all/with [break] :mold
+			system/state/last-error/id = 'break
+			system/state/last-error/arg1 = none
+		]
+		--assert all [
+			string? try/all/with [exit] :mold
+			system/state/last-error/id = 'return
+			system/state/last-error/arg1 = none
+		]
+		--assert all [
+			string? try/all/with [throw 1] :mold
+			system/state/last-error/id = 'throw
+			system/state/last-error/arg1 = 1
+		]
+		--assert all [
+			string? try/all/with [throw/name 1 'foo] :mold
+			system/state/last-error/id = 'throw
+			system/state/last-error/arg1 = 1
+			system/state/last-error/arg2 = 'foo
+		]
+
 ===end-group===
 
 

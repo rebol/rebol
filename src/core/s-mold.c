@@ -1051,35 +1051,15 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	// Protect against recursion. !!!!
 
+	if (VAL_ERR_NUM(value) < RE_THROW_MAX) {
+		Disarm_Throw_Error(value);
+	}
+
 	if (molded) {
-		if (VAL_OBJ_FRAME(value) && VAL_ERR_NUM(value) >= RE_NOTE && VAL_ERR_OBJECT(value))
-			Mold_Object(value, mold);
-		else {
-			// Happens if throw or return is molded.
-			// make error! 0-3
-			Pre_Mold(value, mold);
-			Append_Int(mold->series, VAL_ERR_NUM(value));
-			End_Mold(mold);
-		}
+		Mold_Object(value, mold);
 		return;
 	}
 
-	// If it is an unprocessed THROW:
-	if (VAL_ERR_NUM(value) == RE_THROW) {
-		sym = VAL_ERR_SYM(value);
-		if (!sym) {
-			VAL_ERR_OBJECT(value) = Make_Error(RE_UNNAMED_THROW, VAL_ERR_VALUE(value), 0, 0);
-		}
-		else {
-			Set_Word(&word, sym, 0, 0);
-			VAL_SET(&word, REB_WORD);
-			VAL_ERR_OBJECT(value) = Make_Error(VAL_ERR_NUM(value), VAL_ERR_VALUE(value), &word, 0);
-		}
-	}
-	// If it is an unprocessed BREAK, CONTINUE, RETURN:
-	else if (VAL_ERR_NUM(value) < RE_NOTE || !VAL_ERR_OBJECT(value)) {
-		VAL_ERR_OBJECT(value) = Make_Error(VAL_ERR_NUM(value), VAL_ERR_VALUE(value), 0, 0); // spoofs field
-	}
 	err = VAL_ERR_VALUES(value);
 
 	// Form: ** <type> Error:
