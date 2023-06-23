@@ -226,6 +226,22 @@
 			SET_CLOSED(req);
 		}
 		break;
+	case A_MODIFY:
+		arg = D_ARG(2);
+		if (IS_WORD(arg)) {
+			switch (VAL_WORD_CANON(arg)) {
+			case SYM_BRK:  req->modify.mode = 1; break;
+			case SYM_RTS:  req->modify.mode = 2; break;
+			case SYM_DTR:  req->modify.mode = 3; break;
+			default: Trap1(RE_BAD_FILE_MODE, arg);
+			}
+			spec = D_ARG(3);
+			if (!IS_LOGIC(spec)) Trap2(RE_INVALID_VALUE_FOR, spec, arg);
+			req->modify.value = VAL_LOGIC(spec);
+			OS_DO_DEVICE(req, RDC_MODIFY);
+		}
+		else Trap1(RE_BAD_FILE_MODE, arg);
+		return R_ARG3;
 
 	default:
 		Trap_Action(REB_PORT, action);

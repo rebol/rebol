@@ -129,7 +129,7 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 		return DR_ERROR;
 	}
 
-	JOIN_STR(fullpath,req->serial.path,MAX_SERIAL_DEV_PATH);
+	JOIN_STR(fullpath,req->serial.path,MAX_SERIAL_DEV_PATH-5); // 5 because of "\\.\" and terminating byte
 
 	h = CreateFile(fullpath, GENERIC_READ|GENERIC_WRITE, 0, NULL,OPEN_EXISTING, 0, NULL );
 	if (h == INVALID_HANDLE_VALUE) {
@@ -232,7 +232,7 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 	}
 
 #ifdef DEBUG_SERIAL
-	printf("write %d ret: %d\n", req->length, req->actual);
+	printf("write %d wrote: %lu ret: %d\n", req->length, result,  req->actual);
 #endif
 
 	if (result < 0) {
@@ -241,7 +241,7 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 		return DR_ERROR;
 	}
 	req->actual += result;
-	req->data += result;
+	//req->data += result;
 	if (req->actual >= req->length) {
 		Signal_Device(req, EVT_WROTE);
 		return DR_DONE;
@@ -270,6 +270,21 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 	return DR_DONE;
 }
 
+/***********************************************************************
+**
+*/	DEVICE_CMD Modify_Serial(REBREQ *req)
+/*
+***********************************************************************/
+{
+	boolean value = req->modify.value;
+	switch (req->modify.mode) {
+	case 1:	EscapeCommFunction(req->handle, value ? SETBREAK : CLRBREAK); break;
+	case 2:	EscapeCommFunction(req->handle, value ? SETRTS : CLRRTS); break; // (request-to-send) signal
+	case 3:	EscapeCommFunction(req->handle, value ? SETDTR : CLRDTR); break; // (data-terminal-ready) signal
+	}
+	return DR_DONE;
+}
+
 
 /***********************************************************************
 **
@@ -287,7 +302,7 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] = {
 	0,  // poll
 	0,	// connect
 	Query_Serial,
-	0,	// modify
+	Modify_Serial,
 	0,	// create
 	0,	// delete
 	0	// rename
