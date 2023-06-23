@@ -1146,6 +1146,27 @@ chk_neg:
 
 /***********************************************************************
 **
+*/	REBNATIVE(request_password)
+/*
+***********************************************************************/
+{
+	REBREQ  req = {0};
+	REBSER *str;
+
+	OS_REQUEST_PASSWORD(&req);
+
+	if (req.data == NULL) return R_NONE;
+
+	str = Copy_OS_Str(req.data, req.actual);
+
+	FREE_MEM(req.data);
+	SET_STRING(D_RET, str);
+	return R_RET;
+}
+
+
+/***********************************************************************
+**
 */	REBNATIVE(get_env)
 /*
 ***********************************************************************/
@@ -1234,13 +1255,13 @@ chk_neg:
 **
 */	REBNATIVE(access_os)
 /*
-**	access-os: native [
-**		{Access to various operating system functions (getuid, setuid, getpid, kill, etc.)}
-**		field [word!] "Valid words: uid, euid, gid, egid, pid"
-**		/set          "To set or kill pid (sig 15)"
-**		value [integer! block!] "Argument, such as uid, gid, or pid (in which case, it could be a block with the signal no)"
-**	]
-**	
+//	access-os: native [
+//		{Access to various operating system functions (getuid, setuid, getpid, kill, etc.)}
+//		field [word!] "Valid words: uid, euid, gid, egid, pid"
+//		/set          "To set or kill pid (sig 15)"
+//		value [integer! block!] "Argument, such as uid, gid, or pid (in which case, it could be a block with the signal no)"
+//	]
+//	
 ***********************************************************************/
 {
 	REBVAL *field = D_ARG(1);

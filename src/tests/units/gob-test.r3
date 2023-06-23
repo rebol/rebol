@@ -26,6 +26,23 @@ Rebol [
 		--assert 1   = indexz? atz g 1
 ===end-group===
 
+
+===start-group=== "MOVE gob!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1796
+	g: make gob! [] 
+	append g make gob! 1x1
+	append g make gob! 2x2
+	append g make gob! 3x3
+	--test-- "move gob!"
+		move g 1 
+		--assert {[make gob! [offset: 0x0 size: 2x2] make gob! [offset: 0x0 size: 1x1] make gob! [offset: 0x0 size: 3x3]]} = mold/flat g/pane
+		move g -1
+		--assert {[make gob! [offset: 0x0 size: 1x1] make gob! [offset: 0x0 size: 3x3] make gob! [offset: 0x0 size: 2x2]]} = mold/flat g/pane
+		move g 2
+		--assert {[make gob! [offset: 0x0 size: 3x3] make gob! [offset: 0x0 size: 2x2] make gob! [offset: 0x0 size: 1x1]]} = mold/flat g/pane
+===end-group===
+
+
 ===start-group=== "gob issues"
 	--test-- "issue-185"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/185

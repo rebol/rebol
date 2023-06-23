@@ -89,6 +89,8 @@ append sys/boot-banner
   * Sandbox and security are not fully available.
   * Direct access to TCP HTTP required (no proxies).
   * Use at your own risk.
+  * ^[[1;32mTry/except^[[1;31m is deprecated and will be removed!^[[0m Use ^[[1;32mtry/with^[[0m instead.
+
 
 ^[[1;33mSpecial functions^[[0m:
 

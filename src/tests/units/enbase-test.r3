@@ -107,13 +107,24 @@ AAACAAIAAAMDCCGTADs=}
 		} 64]
 	--test-- "debase 64 url 3"
 		key1: "qL8R4QIcQ_ZsRqOAbeRfcZhilN_MksRtDaErMA=="
-		bin: try [debase/url key1 64]
-		--assert true? all [binary? bin key1 = enbase/url bin 64]
-		;debase is working also when input is missing the padding
 		key2: "qL8R4QIcQ_ZsRqOAbeRfcZhilN_MksRtDaErMA"
+		bin: try [debase/url key1 64]
+		--assert true? all [binary? bin key2 = enbase/url bin 64]
+		;debase is working also when input is missing the padding
 		--assert bin = try [debase/url key2 64]
 
 ===end-group===
+
+
+===start-group=== "enbase 64 - safe URL variant"
+	--test-- "enbase/url"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2548
+	--assert "YQ==" == enbase "a" 64
+	--assert "YWE=" == enbase "aa" 64
+	--assert "YQ"   == enbase/url "a" 64
+	--assert "YWE"  == enbase/url "aa" 64
+===end-group===
+
 
 ===start-group=== "debase 16"
 

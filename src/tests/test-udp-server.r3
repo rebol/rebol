@@ -2,11 +2,12 @@ Rebol [
 	Title: "Test UDP server"
 	File: %test-udp-server.r3
 	Note: https://github.com/Oldes/Rebol-issues/issues/1803
+	Needs: 3.11.0 ;; using try/with instead of deprecated try/except
 ]
 
 print [as-red "Opening UDP server listening on port" as-yellow 1189]
 
-udp-server: try/except [open udp://:1189][
+udp-server: try/with [open udp://:1189][
 	print as-purple "Failed to listen on UDP port 1189!"
 	quit
 ]

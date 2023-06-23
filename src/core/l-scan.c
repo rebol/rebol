@@ -566,7 +566,7 @@ new_line:
 {
 	REBCNT lines = 0;
 	REBSER *buf = BUF_MOLD;
-	REBYTE *bp = src;
+	const REBYTE *bp = src;
 	REBLEN n;
 	REBINT chr;
 
@@ -749,6 +749,58 @@ new_line:
 		return 0;
 	}
 	return cp;
+}
+
+/***********************************************************************
+**
+*/  static const REBYTE* Prescan_Spec_Integer(const REBYTE *cp, REBINT base)
+/*
+**	Validate special integer notation:
+**		bit:          2#0101
+**		octal:        8#777
+**		decimal:     10#123
+**		hexadecimal: 16#FF or just 0#FF
+**
+***********************************************************************/
+{
+	REBCNT n, m;
+	REBYTE lex;
+	REBINT val;
+	if (base == 16) {
+		n = m = 16;
+		while (n > 0) {
+			lex = Lex_Map[*cp];
+			if (lex < LEX_WORD || (!(lex & LEX_VALUE) && lex < LEX_NUMBER))
+				break;
+			cp++;
+			n--;
+		}
+	}
+	else if (base == 2) {
+		n = m = 64; // max 64 bits
+		while (n > 0 && (*cp == '0' || *cp == '1')) {
+			cp++; n--;
+		}
+	}
+	else if (base == 8) {
+		n = m = 22; // max length 22 bytes
+		while (n > 0) {
+			val = *cp - '0';
+			if (val < 0 || val > 7)
+				break;
+			cp++; n--;
+		}
+	}
+	else if (base == 10) {
+		n = m = 18; // max length 18 digits
+		while (n > 0) {
+			if (!IS_LEX_NUMBER(*cp))
+				break;
+			cp++; n--;
+		}
+	}
+
+	return (n < m && IS_LEX_DELIMIT(*cp)) ? cp : 0;
 }
 
 
@@ -1169,6 +1221,7 @@ new_line:
 				}
 			}
 			if (*cp == '{') { /* BINARY #{12343132023902902302938290382} */
+		scan_binary:
 				scan_state->end = scan_state->begin;  /* save start */
 				scan_state->begin = cp;
 				// Originally there was used Scan_Quote collecting into BUF_MOLD, but this was not used later.
@@ -1212,12 +1265,42 @@ new_line:
 		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) return TOKEN_EMAIL;
 		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_POUND)) {
 			if (cp == scan_state->begin) { // no +2 +16 +64 allowed
+				REBINT base = 0;
+				REBYTE c0 = cp[0];
 				if (
-					   (cp[0] == '6' && cp[1] == '4' && cp[2] == '#' && cp[3] == '{')
-					|| (cp[0] == '1' && cp[1] == '6' && cp[2] == '#' && cp[3] == '{') // rare
-				) {cp += 2; goto pound;}
-				if (cp[0] == '2' && cp[1] == '#' && cp[2] == '{')
-					{cp++; goto pound;} // very rare
+					   (c0 == '6' && cp[1] == '4' && cp[2] == '#')
+					|| (c0 == '1' && cp[1] == '6' && cp[2] == '#') // rare
+				) {
+					cp += 3;
+					if (cp[0] == '{') goto scan_binary;
+					if (c0 == '1') base = 16;
+				}
+				else if (cp[1] == '#') {
+					cp += 2;
+					if (c0 == '2') {
+						if (cp[0] == '{') goto scan_binary;   // very rare
+						base = 2;
+					}
+					else if (c0 == '0') {
+						base = 16;
+					}
+					else if (c0 == '8') {
+						base = 8;
+					}
+				}
+				else if (c0 == '1' && cp[1] == '0' && cp[2] == '#') // ultra rare
+				{
+					cp += 3;
+					base = 10;
+				}
+				
+				if (base) {
+					np = Prescan_Spec_Integer(cp, base);
+					if (np) {
+						scan_state->end = np;
+						return TOKEN_INTEGER_SPEC;
+					}
+				}
 			}
 
 #ifndef USE_NO_INFINITY
@@ -1742,6 +1825,10 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 			value = BLK_TAIL(emitbuf);
 			Set_Block(value, block);
 			if(!MT_Map(value, value, 0)) Trap1(RE_INVALID_ARG, value);
+			break;
+
+		case TOKEN_INTEGER_SPEC:
+			Scan_Spec_Integer(bp, len, value);
 			break;
 
 		case TOKEN_EOF: continue;

@@ -81,7 +81,7 @@ wrap [
 			]
 			if "4,ENCRYPTED" = select pkix/header "Proc-Type" [
 				sysl/log/info 'REBOL "ENCRYPTED key!"
-				try/except [
+				try/with [
 					dek-info: select pkix/header "DEK-Info"
 					sysl/log/info 'REBOL ["Using:" dek-info]
 					parse dek-info [
@@ -102,7 +102,7 @@ wrap [
 				]
 			]
 			; decode DER structure from decoded PKIX binary
-			try/except [
+			try/with [
 				data: codecs/der/decode pkix/binary
 			][
 				sys/log/error 'REBOL "Failed to decode DER day for RSA key!"
@@ -130,6 +130,11 @@ wrap [
 						]
 						switch/default oid [
 							#{2A864886F70D010101} [ ;= rsaEncryption
+								return either pkix/label = "PUBLIC KEY" [
+									init-rsa-public-key  data
+								][  init-rsa-private-key data ]
+							]
+							#{2A8648CE3D0201} [ ;= ecPublicKey
 								return either pkix/label = "PUBLIC KEY" [
 									init-rsa-public-key  data
 								][  init-rsa-private-key data ]

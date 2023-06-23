@@ -352,7 +352,7 @@ enum {
 ***********************************************************************/
 {
 	Try_Block(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
-	if (IS_ERROR(DS_NEXT) && !IS_THROW(DS_NEXT)) return R_NONE;
+	if (IS_ERROR(DS_NEXT) && (D_REF(2) || !IS_THROW(DS_NEXT))) return R_NONE;
 	return R_TOS1;
 }
 
@@ -412,52 +412,93 @@ enum {
 {
 	REBVAL *val;
 	REBVAL *ret;
-	REBCNT sym;
+	REBCNT sym = 0;
+	REBVAL callback = *D_ARG(ARG_CATCH_CALLBACK);
+	REBVAL *last_result = Get_System(SYS_STATE, STATE_LAST_RESULT);
+	REBOOL quit;
 
-	if (D_REF(4)) {	//QUIT
-		if (Try_Block_Halt(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
-			// We are here because of a QUIT/HALT condition.
-			ret = DS_NEXT;
+	if (D_REF(ARG_CATCH_QUIT)) {
+		quit = Try_Block_Halt(VAL_SERIES(D_ARG(ARG_CATCH_BLOCK)), VAL_INDEX(D_ARG(ARG_CATCH_BLOCK)));
+		ret = DS_NEXT;
+		if (quit) {
+			// We are here because of a QUIT or HALT condition.
 			if (VAL_ERR_NUM(ret) == RE_QUIT)
-				ret = VAL_ERR_VALUE(ret);
+				*DS_RETURN = *(VAL_ERR_VALUE(ret));
 			else if (VAL_ERR_NUM(ret) == RE_HALT)
-				Halt_Code(RE_HALT, 0);
+				VAL_SET(DS_RETURN, REB_UNSET);
+				//Halt_Code(RE_HALT, 0); // Don't use this if we want to be able catch all!
 			else
 				Crash(RP_NO_CATCH);
-			*DS_RETURN = *ret;
-			return R_RET;
-		}
-		return R_TOS1;
-	}
 
-	// Evaluate the block:
-	ret = DO_BLK(D_ARG(1));
+			goto callback;
+		}
+		if (!D_REF(ARG_CATCH_NAME)) return R_TOS1;
+	} else {
+		// Evaluate the block:
+		ret = DO_BLK(D_ARG(ARG_CATCH_BLOCK));
+	}	
 
 	// If it is a throw, process it:
 	if (IS_ERROR(ret) && VAL_ERR_NUM(ret) == RE_THROW) {
+		// Get optional thrown name
+		sym = VAL_ERR_SYM(ret);
 
-		// If a named throw, then check it:
-		if (D_REF(2)) { // /name
+		if (D_REF(ARG_CATCH_ALL)) goto caught;
 
-			sym = VAL_ERR_SYM(ret);
-			val = D_ARG(3); // name symbol
+		// If a named catch, then check it:
+		if (D_REF(ARG_CATCH_NAME)) {
+			val = D_ARG(ARG_CATCH_WORD); // catch/name value
 
 			// If name is the same word:
-			if (IS_WORD(val) && sym == VAL_WORD_CANON(val)) goto got_err;
+			if (IS_WORD(val) && sym == VAL_WORD_CANON(val)) goto caught;
 
 			// If it is a block of words:
 			else if (IS_BLOCK(val)) {
 				for (val = VAL_BLK_DATA(val); NOT_END(val); val++) {
-					if (IS_WORD(val) && sym == VAL_WORD_CANON(val)) goto got_err;
+					if (IS_WORD(val) && sym == VAL_WORD_CANON(val)) goto caught;
 				}
 			}
+			//else if (IS_LOGIC(val) && VAL_LOGIC(val)) goto caught; // used CATCH/name [] true
 		} else {
-got_err:
-			*ds = *(VAL_ERR_VALUE(ret));
-			return R_RET;
+			// Used catch without name. If there was thrown a name, then let it pass thru.
+			if (sym != 0) {
+				*DS_RETURN = *ret;
+				return R_RET;
+			}
+caught:     // Thrown is being caught.
+			// Store the thrown value as the return value...
+			*DS_RETURN = *(VAL_ERR_VALUE(ret));
+callback:	// ...and the last result.
+			*last_result = *DS_RETURN;
+			// If there is a callback code, then evaluate it.
+			if (IS_FUNCTION(&callback)) {
+				// catch [throw 1] func[value name][value]
+				// Return result of the callback function
+				REBVAL name = *DS_NEXT;
+				if(sym) {
+					Set_Word(&name, sym, 0, 0);
+					VAL_SET(&name, REB_WORD);
+				} else {
+					SET_NONE(&name);
+				}
+				Apply_Func(0, &callback, last_result, &name, 0);
+			}
+			else if (IS_BLOCK(&callback)) {
+				// (catch/with [throw 1][2]) == 2
+				// Return result of the callback block evaluation.
+				*last_result = *DO_BLK(&callback);
+			}
+			else {
+				// (catch [throw 1]) == 1
+				// Return the thrown value.
+				return R_RET; 
+			}
+			// Return the result of the callback code evaluation.
+			return R_TOS1;
 		}
 	}
-
+	// No throw (return just the result of the block evaluation),
+	// or an unhandled throw (return the thrown error value, so it may be catched later)
 	return R_TOS1;
 }
 
@@ -845,31 +886,45 @@ got_err:
 /*
 ***********************************************************************/
 {
-	REBFLG except = D_REF(2);
-	REBVAL handler = *D_ARG(3); // TRY exception will trim the stack
-	REBVAL *last_error = Get_System(SYS_STATE, STATE_LAST_ERROR);
-	SET_NONE(last_error);
+	REBFLG   with = D_REF(ARG_TRY_WITH);
+	REBVAL   handler;
+	REBVAL  *error = Get_System(SYS_STATE, STATE_LAST_ERROR);
+	SET_NONE(error); // reset the last error
 
-	if (Try_Block(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
+
+	// If not used the new /with refine, try to use the deprecated /except
+	if (with) {
+		handler = *D_ARG(ARG_TRY_HANDLER);
+	} else {
+		with    =  D_REF(ARG_TRY_EXCEPT);
+		handler = *D_ARG(ARG_TRY_CODE);
+	}
+	// TRY exception will trim the stack
+	if (Try_Block(VAL_SERIES(D_ARG(ARG_TRY_BLOCK)), VAL_INDEX(D_ARG(ARG_TRY_BLOCK)))) {
 		// save the error as a system/state/last-error value
-		*last_error = *DS_NEXT;
-		if (except) {
+	on_error:
+		*error = *DS_NEXT;
+
+		if (with) {
 			if (IS_BLOCK(&handler)) {
 				DO_BLK(&handler);
 			}
 			else { // do func[err] error
-				REBVAL error = *DS_NEXT; // will get overwritten
 				REBVAL *args = BLK_SKIP(VAL_FUNC_ARGS(&handler), 1);
-				if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(&error))) {
+				if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(error))) {
 					// TODO: This results in an error message such as "action!
 					// does not allow error! for its value1 argument". A better
 					// message would be more like "except handler does not
 					// allow error! for its value1 argument."
-					Trap3(RE_EXPECT_ARG, Of_Type(&handler), args, Of_Type(&error));
+					Trap3(RE_EXPECT_ARG, Of_Type(&handler), args, Of_Type(error));
 				}
-				Apply_Func(0, &handler, &error, 0);
+				Apply_Func(0, &handler, error, 0);
 			}
 		}
+	}
+	else if (D_REF(ARG_TRY_ALL) && THROWN(DS_NEXT)) {
+		Disarm_Throw_Error(DS_NEXT);
+		goto on_error;
 	}
 
 	return R_TOS1;

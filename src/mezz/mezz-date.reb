@@ -64,6 +64,12 @@ to-date: function/with [
 			 copy time: to sp sp
 			[copy zone: [plus-minus 4 numeric] | no-case "GMT" (zone: "+0")]
 			to end ; ignore the rest (like comments in mime fields)!
+			|
+			 copy day:   1 2 numeric #"-"
+			 copy month: 1 2 numeric #"-"
+			 copy year:  1 4 numeric sp
+			 copy time: [1 2 numeric #":" 1 2 numeric opt [#":" 1 2 numeric]]
+			 to end
 		]
 	][
 		value: to string! rejoin [day "-" month "-" year "/" time any [zone ""]]

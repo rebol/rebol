@@ -1046,26 +1046,20 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 {
 	ERROR_OBJ *err;
 	REBVAL *msg;  // Error message block
+	REBCNT sym;
+	REBVAL word;
 
 	// Protect against recursion. !!!!
 
+	if (VAL_ERR_NUM(value) < RE_THROW_MAX) {
+		Disarm_Throw_Error(value);
+	}
+
 	if (molded) {
-		if (VAL_OBJ_FRAME(value) && VAL_ERR_NUM(value) >= RE_NOTE && VAL_ERR_OBJECT(value))
-			Mold_Object(value, mold);
-		else {
-			// Happens if throw or return is molded.
-			// make error! 0-3
-			Pre_Mold(value, mold);
-			Append_Int(mold->series, VAL_ERR_NUM(value));
-			End_Mold(mold);
-		}
+		Mold_Object(value, mold);
 		return;
 	}
 
-	// If it is an unprocessed BREAK, THROW, CONTINUE, RETURN:
-	if (VAL_ERR_NUM(value) < RE_NOTE || !VAL_ERR_OBJECT(value)) {
-		VAL_ERR_OBJECT(value) = Make_Error(VAL_ERR_NUM(value), value, 0, 0); // spoofs field
-	}
 	err = VAL_ERR_VALUES(value);
 
 	// Form: ** <type> Error:

@@ -28,3 +28,10 @@ REBOL [
 	line
 	error
 ]
+
+*serial-modes* [
+	brk ;break
+	dtr ;data-terminal-ready
+	rts ;request-to-send
+]
+

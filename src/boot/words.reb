@@ -257,6 +257,7 @@ owner
 
 *port-modes*     ;@@ modes are defined in modes.r file and these
 *console-modes*  ;@@ placeholders are replaced here by make-boot.r script
+*serial-modes*
 
 local-ip
 local-port
@@ -360,3 +361,5 @@ chacha20-poly1305
 
 tag-length
 aad-length
+
+file-checksum

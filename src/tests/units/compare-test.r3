@@ -111,6 +111,15 @@ Rebol [
 	--test-- "decimal! invalid compare"
 		--assert all [error? e: try [90.0 < "a" ] e/id = 'invalid-compare]
 		--assert all [error? e: try [90.0 < 1x1 ] e/id = 'invalid-compare]
+
+	--test-- "decimal! equal?/equiv?/same?"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1134
+		--assert     equal? to decimal! #{3FD3333333333333} to decimal! #{3FD3333333333333}
+		--assert     equiv? to decimal! #{3FD3333333333333} to decimal! #{3FD3333333333333}
+		--assert      same? to decimal! #{3FD3333333333333} to decimal! #{3FD3333333333333}
+		--assert     equal? to decimal! #{3FD3333333333333} to decimal! #{3FD3333333333334}
+		--assert not equiv? to decimal! #{3FD3333333333333} to decimal! #{3FD3333333333334}
+		--assert not  same? to decimal! #{3FD3333333333333} to decimal! #{3FD3333333333334}
 ===end-group===
 
 

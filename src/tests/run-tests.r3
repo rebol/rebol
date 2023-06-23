@@ -56,7 +56,7 @@ dt [ ;- delta time
 		%units/parse-test.r3
 		%units/percent-test.r3
 		%units/port-test.r3
-		%units/port-http-test.r3
+	;@@	%units/port-http-test.r3 ;; temporary disabled, because httpbin.org server has serious connection issues!
 		%units/power-test.r3
 		%units/protect-test.r3
 		%units/series-test.r3

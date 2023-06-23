@@ -124,7 +124,7 @@ Rebol [
 
 --test-- "issue-1514"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1514
-	--assert error? try [try/except [1 / 0] :add] ;- no crash
+	--assert error? try [try/with [1 / 0] :add] ;- no crash
 
 --test-- {enline "^/"}
 	--assert string? enline "^/"  ;- no crash

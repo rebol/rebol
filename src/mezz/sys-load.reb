@@ -691,7 +691,7 @@ download-extension: function[
 		file: select decode-url url 'target
 	]
 	opt: system/options/log
-	try/except [
+	try/with [
 		if exists? file [
 			; we don't want to overwrite existing files!
 			log/error 'REBOL ["File already exists:^[[m" file]

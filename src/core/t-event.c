@@ -218,7 +218,7 @@
 	case SYM_PORT:
 		// Most events are for the GUI:
 		if (IS_EVENT_MODEL(value, EVM_GUI)) {
-			*val = *Get_System(SYS_VIEW, VIEW_EVENT_PORT);
+			*val = *Get_System(SYS_PORTS, PORTS_EVENT);
 		}
 		// Event holds a port:
 		else if (IS_EVENT_MODEL(value, EVM_PORT) || IS_EVENT_MODEL(value, EVM_MIDI)) {
@@ -443,7 +443,7 @@ pick_it:
 		case EF_PORT:
 			// Most events are for the GUI:
 			if (GET_FLAG(VAL_EVENT_FLAGS(value), EVF_NO_REQ))
-				*D_RET = *Get_System(SYS_VIEW, VIEW_EVENT_PORT);
+				*D_RET = *Get_System(SYS_PORTS, PORTS_EVENT);
 			else {
 				req = VAL_EVENT_REQ(value);
 				if (!req || !req->port) goto is_none;

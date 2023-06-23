@@ -268,7 +268,7 @@ Rebol [
 	--test-- "numerical accessors"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1292
 		d: now repeat i 15 [try [d/:i: i]]
-		--assert "14-Jan-0001/13:08:09+12:00" = mold d
+		--assert "11-Jan-0001/13:08:09+12:00" = mold d
 
 ===end-group===
 
@@ -310,6 +310,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "Internet date"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1511
 	--test-- "TO-ITIME (Normalized time as used in TO-IDATE"
 		--assert "09:04:05" = to-itime 9:4:5
 		--assert "13:24:05" = to-itime 13:24:5.21
@@ -327,10 +328,25 @@ Rebol [
 		--assert 4-Apr-2019/19:41:46 = to-date "Thu, 04 Apr 2019 19:41:46 GMT"
 		--assert 1-Apr-2019/21:50:04 = to-date "Mon, 1 Apr 2019 21:50:04 GMT"
 		--assert 30-Jul-2013/2:17:58-7:00 = to-date "Tue, 30 Jul 2013 02:17:58 -0700 (PDT)"
-
+	--test-- "TO-DATE {1-1-2000 00:00:00}"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1362
+		--assert 1-Jan-2000/0:00 == to-date "1-1-2000 00:00:00"
+		--assert 1-Jan-2000/0:00 == to-date "1-1-2000 00:00"
 
 ===end-group===
 
+===start-group=== "Julian date"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2551
+	--test-- "Julian accessor"
+		date: 10-Jun-2023/20:47:53+2:00
+		--assert date/julian = (2400000.5 + to decimal! date) ;; conversion using TO counts with Modified Julian Date
+		--assert 2460106.28325231 = date/julian
+		--assert 2460106.28325231 = pick date 'julian
+	--test-- "Julian date setter"
+		--assert 2415020.5 = date/julian: 2415020.5
+		--assert date = 1-Jan-1900/0:00
+
+===end-group===
 
 ===start-group=== "QUERY date"
 	date: 8-Apr-2020/12:04:32+2:00
@@ -344,11 +360,11 @@ Rebol [
 		--assert date/time = query/mode date 'time
 		--assert [2020 4] = query/mode date [year month]
 		--assert [month: 4 year: 2020] = query/mode date [month: year:]
-		--assert equal? query/mode date all-date-words [2020 4 8 12:04:32 8-Apr-2020 2:00 12 4 32 3 99 2:00 8-Apr-2020/10:04:32 99]
+		--assert equal? query/mode date all-date-words [2020 4 8 12:04:32 8-Apr-2020 2:00 12 4 32 3 99 2:00 8-Apr-2020/10:04:32 2458947.91981481]
 	
 	--test-- "query/mode date"
 		date: 8-Apr-2020 ; no time!
-		--assert equal? query/mode date all-date-words [2020 4 8 #[none] 2020-04-08 #[none] #[none] #[none] #[none] 3 99 #[none] 2020-04-08 99]
+		--assert equal? query/mode date all-date-words [2020 4 8 #[none] 2020-04-08 #[none] #[none] #[none] #[none] 3 99 #[none] 2020-04-08 2458948.0]
 
 ===end-group===
 

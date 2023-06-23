@@ -63,13 +63,13 @@ Rebol [
 		e/type = 'custom
 		e/code = 1
 	]
-	if system/view/event-port [
+	if system/ports/event [
 		; using port in the custom event
 		--assert all [
-			event? e: try [make event! [type: 'custom code: 2 port: system/view/event-port]]
+			event? e: try [make event! [type: 'custom code: 2 port: system/ports/event]]
 			e/type = 'custom
 			e/code = 2
-			e/port = system/view/event-port
+			e/port = system/ports/event
 		]
 	]
 

@@ -61,6 +61,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <conio.h>   // used for OS_Request_Password
 #include <windows.h>
 #include <process.h>
 #include <ShlObj.h>  // used for OS_Request_Dir
@@ -1434,3 +1435,38 @@ static INT CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 	SHGetPathFromIDList(lpItem, fr->files);
 	return TRUE;
 }
+
+
+/***********************************************************************
+**
+*/	void OS_Request_Password(REBREQ *req)
+/*
+***********************************************************************/
+{
+	REBCNT size = 64;
+	REBCNT  pos = 0;
+	REBCHR *str = (REBUNI*)malloc(size * sizeof(REBCHR));
+	REBCHR  c;
+
+	req->data = NULL;
+
+	while ((c = _getwch()) != '\r') {
+		if (c ==  27) { // ESC
+			free(str);
+			return; 
+		}
+		if (c == '\b') { // backspace
+			if (pos > 0) pos--;
+			continue;
+		}
+		str[pos++] = c;
+		if (pos+1 == size) {
+			size += 64;
+			str = (REBCHR *)realloc(str, size * sizeof(REBCHR));
+		}
+	}
+	req->data = (REBYTE*)str;
+	req->actual = pos;
+	str[pos++] = 0;
+}
+

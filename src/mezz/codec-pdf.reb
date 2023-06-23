@@ -137,7 +137,7 @@ rl_reference: [
 *stack: copy []
 
 rl_value: [
-	  rl_name ;(try/except [value: to word! value][insert value #"/"])
+	  rl_name ;(try/with [value: to word! value][insert value #"/"])
 	| rl_reference ;must be before number!
 	| rl_number
 	| rl_boolean
@@ -322,7 +322,7 @@ decompress-obj: func[obj [object!] /local p][
 
 import-objstm: function[obj [object!]][
 	decompress-obj obj
-	try/except [
+	try/with [
 		offsets: load to-string copy/part obj/data obj/spec/First
 		;probe to-string obj/data
 		obj-id: 0x0

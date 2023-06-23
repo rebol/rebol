@@ -376,13 +376,14 @@ FFFFFFDC1616212121212121
 --test-- "image-diff (same sizes)"
 	i1: load %units/files/flower.png
 	i2: load %units/files/flower.bmp
-	i3: load %units/files/flower.jpg
+	;i3: load %units/files/flower.jpg ;; it looks that on macOS the raw image is different then on Windows
+	i3: tint copy i2 128.128.128 50%  ;; so better use another difference
 	--assert 0.00% =          image-diff i1 i2
-	--assert 1.21% = round/to image-diff i1 i3 0.01%
+	--assert 11.6% = round/to image-diff i1 i3 0.01%
 --test-- "image-diff (different sizes)"
-	i3: copy/part i3 10x10
-	--assert 2.31% = round/to image-diff i1 i3p 0.01%
-	--assert 2.31% = round/to image-diff i3p i1 0.01%
+	i4: copy/part i3 10x10
+	--assert 11.13% = round/to image-diff i1 i4 0.01%
+	--assert 11.13% = round/to image-diff i4 i1 0.01%
 --test-- "image-diff (min/max difference)"
 	i1: make image! [2x2 0.0.0]
 	i2: make image! [2x2 255.255.255]

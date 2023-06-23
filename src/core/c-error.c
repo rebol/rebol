@@ -356,6 +356,7 @@ invalid_id:
 	REBSER *err;		// Error object
 	ERROR_OBJ *error;	// Error object values
 	REBINT code = 0;
+	REBVAL *tmp;
 
 	// Create a new error object from another object, including any non-standard fields:
 	if (IS_ERROR(arg) || IS_OBJECT(arg)) {
@@ -380,8 +381,14 @@ invalid_id:
 	// If user set error code, use it to setup type and id fields.
 	if (IS_BLOCK(arg)) {
 		DISABLE_GC;
-		Do_Bind_Block(err, arg); // GC-OK (disabled)
+		tmp = Do_Bind_Block(err, arg); // GC-OK (disabled)
 		ENABLE_GC;
+		if (THROWN(tmp)) { 
+			*value = *tmp;
+			return; 
+		}
+		
+		
 		//It was possible to set error using code, but that's now ignored!
 		//@@ https://github.com/Oldes/Rebol-issues/issues/1593
 		//if (IS_INTEGER(&error->code) && VAL_INT64(&error->code)) {
@@ -436,6 +443,9 @@ invalid_id:
 	// Make a copy of the error object template:
 	err = CLONE_OBJECT(VAL_OBJ_FRAME(ROOT_ERROBJ));
 	error = ERR_VALUES(err);
+	
+	if (code >= THROWN_DISARM_OFFSET)
+		code -= THROWN_DISARM_OFFSET;
 
 	// Set error number:
 	SET_INTEGER(&error->code, (REBINT)code);
@@ -455,6 +465,40 @@ invalid_id:
 	}
 
 	return err;
+}
+
+
+/***********************************************************************
+**
+*/	REBSER *Disarm_Throw_Error(REBVAL *err)
+/*
+**		Creates real error object from an internal thrown one
+**
+***********************************************************************/
+{
+	REBINT code;
+	REBCNT sym;
+	REBSER *obj;
+	REBVAL *arg1 = NULL;
+	REBVAL word = {0};
+
+	code = VAL_ERR_NUM(err);
+	if (code > RE_THROW_MAX) return VAL_ERR_OBJECT(err);
+
+	sym  = VAL_ERR_SYM(err);
+	arg1 = VAL_ERR_VALUE(err);
+	
+	if (sym) {
+		Set_Word(&word, sym, 0, 0);
+		VAL_SET(&word, REB_WORD);
+		VAL_ERR_SYM(err) = 0;
+	}
+
+	code += THROWN_DISARM_OFFSET;
+	
+	obj = Make_Error(code, arg1, sym ? &word : 0, 0);
+	VAL_ERR_OBJECT(err) = obj;
+	VAL_ERR_NUM(err) = code;
 }
 
 

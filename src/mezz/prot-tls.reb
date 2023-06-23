@@ -1731,7 +1731,7 @@ TLS-parse-handshake-message: function [
 			]
 			log-more ["Received" length? ctx/server-certs "server certificates."]
 			;? ctx/server-certs
-			try/except [
+			try/with [
 				;?? ctx/server-certs/1/public-key
 				;?? ctx/server-certs/1
 				key: ctx/server-certs/1/public-key
@@ -1761,7 +1761,7 @@ TLS-parse-handshake-message: function [
 				ECDHE_RSA
 				ECDHE_ECDSA [
 					;? msg/buffer
-					try/except [
+					try/with [
 						binary/read msg [
 						  s: INDEX
 							ECCurveType: UI8  
@@ -2231,7 +2231,7 @@ do-TLS-open: func [
 			unless block? certs [certs: to block! certs]
 			bin: binary 4000
 			foreach file certs [
-				try/except [
+				try/with [
 					der: select decode 'pkix read file 'binary
 					binary/write bin [UI24BYTES :der]
 				][
@@ -2293,15 +2293,16 @@ do-TLS-read: func [port [port!]][
 	read port/extra/tcp-port
 	port
 ]
-do-TLS-write: func[port [port!] value [any-type!] /local ctx][
+do-TLS-write: func[port [port!] value [any-string! binary!] /local ctx][
 	log-debug "WRITE"
 	ctx: port/extra
 	if ctx/protocol = 'APPLICATION [
-		;@@ FIXME: size limit for application data is 16KiB,
-		;@@ else server closes connection, which is not detected!
 		binary/init ctx/out none ;resets the output buffer
-		application-data ctx :value
-
+		;@@ There is a size limit for application data 16KiB!
+		while [not tail? value][
+			application-data ctx copy/part :value 16000
+			value: skip value 16000
+		]
 		do-TCP-write ctx
 		return port
 	]

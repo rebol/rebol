@@ -12,8 +12,8 @@ REBOL [
 		Licensed under the Apache License, Version 2.0
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-	Version: 0.5.0
-	Date: 18-Jul-2022
+	Version: 0.5.1
+	Date: 12-Jun-2023
 	File: %prot-http.r
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -38,6 +38,7 @@ REBOL [
 		0.4.0 04-Feb-2022 "Oldes" "FIX: situation when server does not provide Content-Length and just closes connection"
 		0.4.1 13-Jun-2022 "Oldes" "FIX: Using `query` on URL sometimes reports `date: none`"
 		0.5.0 18-Jul-2022 "Oldes" "FEAT: `read/seek` and `read/all` implementation"
+		0.5.1 12-Jun-2023 "Oldes" "FEAT: anonymize authentication tokens in log"
 	]
 ]
 
@@ -287,7 +288,7 @@ make-http-request: func [
 			"Content-Length: " length? content CRLF
 		]
 	]
-	sys/log/info 'HTTP ["Request:^[[22m" mold request]
+	sys/log/info 'HTTP ["Request:^[[22m" anonymize mold request]
 
 	append request CRLF
 	request: to binary! request
@@ -673,7 +674,7 @@ decode-result: func[
 ][
 	if encoding: select result/2 'Content-Encoding [
 		either find ["gzip" "deflate"] encoding [
-			try/except [
+			try/with [
 				result/3: switch encoding [
 					"gzip"    [ decompress result/3 'gzip]
 					"deflate" [ decompress result/3 'deflate]
@@ -708,6 +709,22 @@ decode-result: func[
 	]
 	result
 ]
+
+anonymize: func[
+	;; remove identifying information from data
+	data [string!]
+] bind [
+	parse probe data [
+		any [
+			thru LF [
+				  "Authorization:" some SP some uri
+				| ["X-Token:" | "X-Auth-Token:"]
+			] some SP 0 4 uri change to LF "****"
+			| skip
+		]
+	]
+	data
+] system/catalog/bitsets
 
 hex-digits: system/catalog/bitsets/hex-digits
     digits: system/catalog/bitsets/numeric

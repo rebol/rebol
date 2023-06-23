@@ -910,6 +910,67 @@ end_date:
 	return ep;
 }
 
+/***********************************************************************
+**
+*/	const REBYTE *Scan_Spec_Integer(const REBYTE *cp, REBINT len, REBVAL *value)
+/*
+**		Scan and convert bit, octal, decimal or hexadecimal integer.
+**
+**		The input is expected to be pre-validated from l-scan!
+**
+***********************************************************************/
+{
+	REBU64 accum = 0;
+
+	if (*cp == '0') {
+		// base16: 0#beaf
+		cp  += 2;
+		len -= 2;
+base16:
+		while (len-- > 0) {
+			accum = (accum << 4) + (Lex_Map[*cp] & LEX_VALUE); // char num encoded into lex
+			cp++;
+		}
+	}
+	else if (*cp == '2') {
+		// base2: 2#0101
+		cp += 2;
+		len -= 2;
+		while (len-- > 0) {
+			accum *= 2;
+			if (*cp == '1') accum += 1;
+			cp++;
+		}
+	}
+	else if (*cp == '8') {
+		// base8: 8#140
+		cp += 2;
+		len -= 2;
+		while (len-- > 0) {
+			accum = (accum * 8) + (*cp - '0');
+			cp++;
+		}
+	}
+	else if (cp[1] == '6') {
+		// base16: 16#beaf
+		cp  += 3;
+		len -= 3;
+		goto base16;
+	}
+	else if (cp[1] == '0') {
+		// base10: 10#123
+		cp += 3;
+		len -= 3;
+		while (len-- > 0) {
+			accum = (accum * 10) + (*cp - '0');
+			cp++;
+		}
+	}
+	VAL_UNT64(value) = accum;
+	VAL_SET(value, REB_INTEGER);
+	return cp;
+}
+
 
 /***********************************************************************
 **

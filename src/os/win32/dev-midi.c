@@ -46,6 +46,13 @@
 #endif
 
 #ifdef INCLUDE_MIDI_DEVICE
+//#define DEBUG_MIDI
+
+#ifdef DEBUG_MIDI
+#define LOG(...) do { printf(__VA_ARGS__); } while (0)
+#else
+#define LOG(...)
+#endif
 
 // NOTE: this will be useful for higher level launchpad schemes:
 // https://github.com/FMMT666/launchpad.py/blob/master/launchpad_py/launchpad.py
@@ -154,9 +161,8 @@ static void CALLBACK MidiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD dwInstance, DW
 	evt.model = EVM_MIDI;
 	evt.port = midi_port.port;
 
-#ifdef DEBUG_MIDI
-	printf("MidiInProc... port: %0X\n", midi_port.port);
-#endif
+	LOG("MidiInProc... port: %0X\n", midi_port.port);
+
 	switch (wMsg) {
 	case MIM_DATA:
 		status = (0xF0 & dwParam1);
@@ -241,8 +247,8 @@ static void CALLBACK MidiOutProc(HMIDIOUT hMidiOut, UINT wMsg, DWORD dwInstance,
 	case MM_MOM_CLOSE:
 		return; // don't report these
 	default:
-		printf("MidiOutProc... port: %0p\n", midi_port.port);
-		printf("dwInstance=%u dwParam1=%08x, dwParam2=%08x wMsg=%08x\n", dwInstance, dwParam1, dwParam2, wMsg);
+		LOG("MidiOutProc... port: %0p\n", midi_port.port);
+		LOG("dwInstance=%u dwParam1=%08x, dwParam2=%08x wMsg=%08x\n", dwInstance, dwParam1, dwParam2, wMsg);
 	}
 	return;
 }
@@ -324,9 +330,16 @@ static void PrintMidiDevices()
 	UINT nMidiDeviceNum;
 #endif
 
+	if(!device_in && !device_out) {
+		LOG("No devices!\n");
+        req->error = 1;
+        return DR_ERROR;
+    }
+
 	port_num = Get_New_Midi_Port(&midi_port);
 	if (port_num < 0) {
-		puts("Failed to get new empty MIDI port!");
+		LOG("Failed to get new empty MIDI port!\n");
+		req->error = 2;
 		return DR_ERROR;
 	}
 
@@ -340,7 +353,8 @@ static void PrintMidiDevices()
 		   (device_in  && device_in  > midiInGetNumDevs())
 		|| (device_out && device_out > midiOutGetNumDevs())
 	) {
-		puts("Some of the requested MIDI device IDs are out of range!");
+		LOG("Some of the requested MIDI device IDs are out of range!\n");
+		req->error = 3;
 		return DR_ERROR;
 	}
 
@@ -350,7 +364,8 @@ static void PrintMidiDevices()
 		midi_port->inp_id = device_in;
 		rv = midiInOpen(&midi_port->inp_device, device_in - 1, (DWORD_PTR)MidiInProc, (DWORD_PTR)port_num, CALLBACK_FUNCTION);
 		if (rv != MMSYSERR_NOERROR) {
-			printf("midiInOpen() failed...rv=%d\n", rv);
+			LOG("midiInOpen() failed...rv=%d\n", rv);
+			req->error = 4;
 			return DR_ERROR;
 		}
 		midiInStart(midi_port->inp_device);
@@ -366,13 +381,14 @@ static void PrintMidiDevices()
 			CALLBACK_FUNCTION);
 
 		if (rv != MMSYSERR_NOERROR) {
-			printf("midiOutOpen() failed...rv=%d\n", rv);
+			LOG("midiOutOpen() failed...rv=%d\n", rv);
 			if (midi_port->inp_device) {
 				// closing already opened input device if any 
 				midiInStop(midi_port->inp_device);
 				midiInClose(midi_port->inp_device);
 				midi_port->inp_device = NULL;
 			}
+			req->error = 5;
 			return DR_ERROR;
 		}
 	}
@@ -458,7 +474,8 @@ static void PrintMidiDevices()
 	while (data_out < tail) {
 		u8 type = data_out[0] & 0xF0;
 		if (type == 0xF0) {
-			puts("sysex not yet supported!");
+			LOG("sysex not yet supported!\n");
+			req->error = 10;
 			return DR_ERROR;
 		} else  if (type >= 0x80) {
 			rv = midiOutShortMsg(midi_port->out_device, ((DWORD*)data_out)[0]);
@@ -480,7 +497,7 @@ static void PrintMidiDevices()
 /*
 ***********************************************************************/
 {
-	puts("Poll_MIDI");
+	LOG("Poll_MIDI\n");
 	return DR_DONE;
 }
 
@@ -526,7 +543,7 @@ static void PrintMidiDevices()
 /*
 ***********************************************************************/
 {
-	//printf("Quit_MIDI\n");
+	//LOG("Quit_MIDI\n");
 	for (REBCNT n = 0; n < Midi_Ports_Pool.count; n++) {
 		if (Midi_Ports_Pool.ports[n].port != NULL) {
 			req->handle = &Midi_Ports_Pool.ports[n];

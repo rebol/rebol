@@ -312,12 +312,12 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	// 'word
 	case REB_LIT_WORD:
 		index++;
-		if (IS_WORD(blk) && (VAL_WORD_CANON(blk) == VAL_WORD_CANON(item))) break;
+		if (IS_WORD(blk) && !Compare_Word(blk, item, HAS_CASE(parse))) break;
 		goto no_result;
 
 	case REB_LIT_PATH:
 		index++;
-		if (IS_PATH(blk) && !Cmp_Block(blk, item, 0)) break;
+		if (IS_PATH(blk) && !Cmp_Block(blk, item, HAS_CASE(parse))) break;
 		goto no_result;
 
 	case REB_NONE:

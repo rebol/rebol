@@ -139,7 +139,7 @@ start: func [
 		;-- User is requesting usage info:
 		if flags/help [
 			lib/usage
-			unless flags/halt [quit/now]
+			unless flags/halt [quit]
 			quiet: true
 		]
 
@@ -187,7 +187,7 @@ start: func [
 			#"/" = first tmp ; only if we know absolute path
 			exists? tmp/rebol.reb
 		][
-			try/except [do tmp/rebol.reb][sys/log/error 'REBOL system/state/last-error]
+			try/with [do tmp/rebol.reb][sys/log/error 'REBOL system/state/last-error]
 		]
 	]
 
@@ -198,7 +198,7 @@ start: func [
 
 	sys/log/info 'REBOL ["Checking for user.reb file in" home]
 	if exists? home/user.reb [
-		try/except [do home/user.reb][sys/log/error 'REBOL system/state/last-error]
+		try/with [do home/user.reb][sys/log/error 'REBOL system/state/last-error]
 	]
 
 
@@ -210,7 +210,7 @@ start: func [
 	;-- Evaluate: --do "some code" if found
 	if do-arg [
 		do intern load/all do-arg
-		unless script [quit/now]
+		unless script [quit]
 	]
 
 	;-- Evaluate script argument?

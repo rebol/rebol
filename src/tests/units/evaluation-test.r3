@@ -106,6 +106,7 @@ Rebol [
 		--assert dir = what-dir
 
 	--test-- "script with quit"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1734
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2250
 		--assert unset? do %units/files/quit.r3
 		--assert 42 = do %units/files/quit-return.r3
@@ -222,12 +223,6 @@ Rebol [
 		--assert 1 = f
 ===end-group===
 
-
-===start-group=== "attempt"
-	--test-- "issue-41"
-		--assert none? attempt [2 / 0] ;@@ https://github.com/Oldes/Rebol-issues/issues/41
-
-===end-group===
 
 ===start-group=== "reduce"
 
@@ -707,27 +702,228 @@ Rebol [
 		--assert error? try [catch/quit [1] do make error! "Hello"]
 		--assert error? try [try [catch/quit []] 1 / 0]
 
-	--test-- "try/except [1 / 0] block!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/822
+	--test-- "try/with [1 / 0] block!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2419
 		system/state/last-error: none
-		try/except [1 / 0][
+		try/with [1 / 0][
 			--assert error? system/state/last-error
 			--assert system/state/last-error/id = 'zero-divide
 		]
 		; any TRY call resets system/state/last-error to none:
 		--assert not error? try [1 + 1]
 		--assert none? system/state/last-error
-		; the last-error is stored also when /except is not used:
+		; the last-error is stored also when /with is not used:
 		--assert error? try [this-is-error]
 		--assert error? system/state/last-error
 
-	--test-- "try/except [1 / 0] function!"
+	--test-- "try/with [1 / 0] function!"
 		system/state/last-error: none
-		--assert string? try/except [1 / 0] :mold
+		--assert string? try/with [1 / 0] :mold
 		--assert system/state/last-error/id = 'zero-divide
 
+	--test-- "try/all"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1506
+		--assert error? try/all [break]
+		--assert error? try/all [continue]
+		--assert error? try/all [exit]
+		--assert error? try/all [return 1]
+		--assert error? try/all [throw 1]
+
+	--test-- "try/all/with block handler"
+		handler: [system/state/last-error/id]
+		--assert 'break    = try/all/with [break   ] :handler
+		--assert 'continue = try/all/with [continue] :handler
+		--assert 'return   = try/all/with [exit    ] :handler
+		--assert 'return   = try/all/with [return 1] :handler
+		--assert 'throw    = try/all/with [throw 1 ] :handler
+
+	--test-- "try/all/with function handler"
+		--assert 'break = try/all/with [break] func[e][e/id]
+
+		--assert all [
+			string? try/all/with [break] :mold
+			system/state/last-error/id = 'break
+			system/state/last-error/arg1 = none
+		]
+		--assert all [
+			string? try/all/with [exit] :mold
+			system/state/last-error/id = 'return
+			system/state/last-error/arg1 = none
+		]
+		--assert all [
+			string? try/all/with [throw 1] :mold
+			system/state/last-error/id = 'throw
+			system/state/last-error/arg1 = 1
+		]
+		--assert all [
+			string? try/all/with [throw/name 1 'foo] :mold
+			system/state/last-error/id = 'throw
+			system/state/last-error/arg1 = 1
+			system/state/last-error/arg2 = 'foo
+		]
 
 ===end-group===
+
+
+===start-group=== "attempt"
+	--test-- "issue-41"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/41
+		--assert none? attempt [2 / 0]
+
+	--test-- "attempt/safer"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/583
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1506
+		--assert none? attempt/safer [break    'not-reached]
+		--assert none? attempt/safer [continue 'not-reached]
+		--assert none? attempt/safer [exit     'not-reached]
+		--assert none? attempt/safer [return 1 'not-reached]
+		--assert none? attempt/safer [throw 1  'not-reached]
+	--test-- "try/all [attempt]"
+		--assert error? try/all [attempt [break    'not-reached]]
+		--assert error? try/all [attempt [continue 'not-reached]]
+		--assert error? try/all [attempt [exit     'not-reached]]
+		--assert error? try/all [attempt [return 1 'not-reached]]
+		--assert error? try/all [attempt [throw 1  'not-reached]]
+
+===end-group===
+
+
+===start-group=== "CATCH"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1518
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1520
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1734
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1742
+	--test-- "catch/quit [halt]"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1742
+		a: 0 catch/quit [++ a halt ++ a]
+		--assert a == 1
+
+	--test-- "catch/quit [quit]"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1734
+		a: 0  
+		--assert unset? catch/quit [++ a quit ++ a]
+		--assert a == 1
+		--assert 100 = catch/quit [++ a quit/return 100 ++ a]
+		--assert a == 2
+		--assert   0 = call/shell/wait join system/options/boot { --do "quit"}
+		--assert 100 = call/shell/wait join system/options/boot { --do "quit/return 100"}
+	--test-- "nested catch"
+		a: 0
+		--assert 'x = catch [++ a catch/quit [++ a quit a: 0] a: a * 2 throw 'x a: a * 100]
+		--assert a == 4
+		a: 0
+		--assert 'x = catch [++ a catch/quit [++ a throw 'x a: 0] a: a * 2 quit 'x a: a * 100]
+		--assert a == 2
+		a: 0
+		--assert unset? catch/quit [++ a a: a + catch [++ a throw 100 a: 0] a: a * 2 quit a: a * 100]
+		--assert a == 202
+		a: 0
+		--assert unset? catch/quit [++ a a: a + catch [++ a quit a: 0] a: a * 2 throw 100 a: a * 100]
+		--assert a == 2
+
+	--test-- "catch/with block!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1521
+		--assert 10 = catch/quit/with [a: 1 quit a: 2][a: a * 10]
+		--assert  a = 10
+
+		--assert 40 = catch/quit/with [a: 1 quit/return 4 a: 2][system/state/last-result * 10]
+		--assert  a = 1
+
+		--assert 2 = catch/quit/with [a: 2][a: a * 10]
+		--assert a = 2
+
+		--assert 10 = catch/with [a: 1 throw 'x a: 2][a: a * 10]
+		--assert a = 10
+
+		--assert 30 = catch/with [a: 1 throw 3 a: 2][system/state/last-result * 10]  
+		--assert a = 1
+
+		--assert all [
+			2 == catch/with [throw 1][2 * system/state/last-result]
+			2 == system/state/last-result
+		]
+	--test-- "catch/with function!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1521
+		on-catch: func[value name][
+			if :name = 'foo    [return join "b" :value]
+			if unset?   :value [return true]
+			if integer? :value [return value * 10]
+			mold value
+		]
+
+		--assert all [
+			#[true] == catch/quit/with [a: 1 quit a: 2] :on-catch
+			a = 1
+		]
+
+		--assert all [
+			40 = catch/quit/with [a: 1 quit/return 4 a: 2] :on-catch
+			a = 1
+		]
+
+		--assert all [
+			2 = catch/quit/with [a: 2] :on-catch
+			a = 2
+		]
+
+		--assert all [
+			"x" = catch/with [a: 1 throw 'x a: 2] :on-catch
+			'x  = system/state/last-result ;; or "x" ???
+			a = 1
+		]
+
+		--assert all [
+			30 = catch/with [a: 1 throw 3 a: 2] :on-catch
+			a = 1
+		]
+
+		--assert all [
+			"b3" = catch/all/with [a: 1 throw/name 3 'foo a: 2] :on-catch 
+			a = 1
+		]
+
+	--test-- "catch/quit/name"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2549
+		--assert all [
+			unset? catch/quit/name [a: 1 quit a: 2] 'name
+			a = 1
+		]
+		--assert all [
+			0 = catch/quit/name [a: 1  throw/name 0 'name  a: 2] 'name
+			a = 1
+		]
+
+	--test-- "nested catch"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1518
+		--assert 1 = catch/name [a: 0 catch [++ a throw/name 1 'foo] a: a * 10] 'foo
+		--assert 1 = a
+		--assert 1 = catch/name [a: 0 catch/name [++ a throw/name 1 'foo] 'bar a: a * 10] 'foo
+		--assert 1 = a
+	--test-- "catch/all"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1520
+		--assert 1 = catch/all [a: 0 throw/name 1 'foo a: a * 10]
+		--assert 0 = a
+		--assert 1 = catch/all [a: 0 catch [++ a throw/name 1 'foo] a: a * 10]
+		--assert 1 = a
+		--assert 1 = catch/all [a: 0 catch/name [++ a throw/name 1 'foo] 'bar a: a * 10]
+		--assert 1 = a
+
+	--test-- "throw from make error!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2244
+		--assert error? catch [make error! [type: 'Access arg1: 10 + 20 id: 'Protocol]]
+		--assert 30 = catch [make error! [type: 'Access arg1: throw 10 + 20 id: 'Protocol]]
+
+	--test-- "throw from path evaluation"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2243
+		foo: object [bar: 1]
+		--assert "ok" = catch [foo/(throw "ok" 'bar)]
+		--assert "ok" = catch [foo/(throw "ok" 'bar): 3]
+		--assert "ok" = catch [foo/(throw "ok" 'bar)/xx]
+		--assert "ok" = catch [foo/(throw "ok" 'bar)/xx: 3]
+
+===end-group===
+
 
 ===start-group=== "FOR"
 	--test-- "FOR boundary tests fail"
@@ -782,6 +978,12 @@ Rebol [
 		for x "abcde" tail "ab" 1 [append out x]
 		--assert "abcdebcdecde" == out
 
+	--test-- "SELF inside a FOR block"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1529
+		--assert same? 'self for i 1 1 1 ['self]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1552
+		--assert none? for self 1 1 1 [context? 'self]
+
 ===end-group===
 
 
@@ -792,6 +994,12 @@ Rebol [
 		repeat x 2x2 [append b x]
 		--assert b = [1x1 2x1 1x2 2x2]
 		--assert b = collect [repeat x 2x2 [keep x]]
+
+	--test-- "SELF inside a FOR block"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1529
+		--assert same? 'self repeat n 1 ['self]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1552
+		--assert none? repeat self 1 [context? 'self]
 
 ===end-group===
 

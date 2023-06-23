@@ -70,7 +70,7 @@ if find codecs 'png [
 		bin: binary data
 		out: make block! 12
 		; in cloud builds the console width is not resolved!
-		num: try/except [-40 + query/mode console:// 'window-cols][40]
+		num: try/with [-40 + query/mode console:// 'window-cols][40]
 		while [8 < length? bin/buffer][
 			len: binary/read bin 'ui32be
 			tag: copy/part bin/buffer 4

@@ -178,8 +178,11 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 ***********************************************************************/
 {
 	if (mode >= 0) {
-		if (mode <= 1) return almost_equal(VAL_DECIMAL(a), VAL_DECIMAL(b), 21); //O: there was 10, but 21 is the minimum to have: (100% // 3% = 1%) == true
-		if (mode == 2) return almost_equal(VAL_DECIMAL(a), VAL_DECIMAL(b), 0);
+		if (mode == 0) return almost_equal(VAL_DECIMAL(a), VAL_DECIMAL(b), 21); //O: there was 10, but 21 is the minimum to have: (100% // 3% = 1%) == true
+		if (mode == 1) return almost_equal(VAL_DECIMAL(a), VAL_DECIMAL(b), 0);
+#ifndef USE_NO_INFINITY
+		if (isnan(VAL_DECIMAL(a)) && isnan(VAL_DECIMAL(b))) return mode != 2;
+#endif
 		return VAL_INT64(a) == VAL_INT64(b); // bits are identical
 	}
 	if (mode == -1) return VAL_DECIMAL(a) >= VAL_DECIMAL(b);
@@ -406,6 +409,16 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 				Binary_To_Decimal(val, D_RET);
 				d1 = VAL_DECIMAL(D_RET);
 				break;
+
+			case REB_DATE:
+			{
+				REB_TIMEF time = {12,0,0,0};
+				if (VAL_TIME(val) != NO_TIME) {
+					Split_Time(VAL_TIME(val), &time);
+				}
+				d1 = Gregorian_To_Julian_Date(VAL_DATE(val), time) - 2400000.5;
+				break;
+			}
 
 #ifdef removed
 //			case REB_ISSUE:

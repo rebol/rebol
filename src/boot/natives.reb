@@ -56,6 +56,7 @@ assert: native [
 attempt: native [
 	"Tries to evaluate a block and returns result or NONE on error."
 	block [block!]
+	/safer "Capture all possible errors and exceptions"
 ]
 
 break: native [
@@ -75,7 +76,9 @@ catch: native [
 	block [block!] {Block to evaluate}
 	/name {Catches a named throw}
 	word [word! block!] {One or more names}
+	/all  {Catches all throws, named and unnamed}
 	/quit {Special catch for QUIT native}
+	/with callback [block! function!] "Code to be evaluated on a catch"
 ]
 
 ;cause: native [
@@ -307,9 +310,12 @@ trace: native [
 ]
 
 try: native [
-	{Tries to DO a block and returns its value or an error.}
+	{Tries to DO a block and returns its value or an error!.}
 	block [block! paren!]
-	/except "On exception, evaluate this code block"
+	/all    "Catch also BREAK, CONTINUE, RETURN, EXIT and THROW exceptions."
+	/with   "On error, evaluate the handler and return its result"
+	handler [block! any-function!]
+	/except "** DEPRERCATED **"
 	code [block! any-function!]
 ]
 
@@ -940,6 +946,10 @@ request-dir: native [
 	/dir   "Set starting directory" 
 	 name  [file!]
 	/keep  "Keep previous directory path"
+]
+
+request-password: native [
+	{Asks user for input without echoing, and the entered password is not stored in the command history.}
 ]
 
 ascii?: native [

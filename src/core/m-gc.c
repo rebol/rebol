@@ -637,9 +637,11 @@ mark_obj:
 
 /***********************************************************************
 **
-*/	REBCNT Recycle(void)
+*/	REBCNT Recycle(REBOOL all)
 /*
 **		Recycle memory no longer needed.
+**
+**      When all is TRUE, then infant series are not protected!
 **
 ***********************************************************************/
 {
@@ -689,12 +691,15 @@ mark_obj:
 	// Mark the last MAX_SAFE "infant" series that were created.
 	// We must assume that infant blocks are valid - that they contain
 	// no partially valid datatypes (that are under construction).
-	for (n = 0; n < MAX_SAFE_SERIES; n++) {
-		REBSER *ser;
-		if (NZ(ser = GC_Infants[n])) {
-			//Dump_Series(ser, "Safe Series");
-			Mark_Series(ser, 0);
-		} else break;
+	if (!all) {
+		for (n = 0; n < MAX_SAFE_SERIES; n++) {
+			REBSER *ser;
+			if (NZ(ser = GC_Infants[n])) {
+				//Dump_Series(ser, "Safe Series");
+				Mark_Series(ser, 0);
+			}
+			else break;
+		}
 	}
 
 	// Mark all root series:

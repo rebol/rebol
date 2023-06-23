@@ -1,13 +1,13 @@
 Rebol [
-	Title: "HTTPD Scheme"
-	Date: 6-Dec-2022
+	Title:  "HTTPD Scheme"
+	Type:    module
+	Name:    httpd
+	Date:    23-Jun-2023
+	Version: 0.8.2
 	Author: ["Andreas Bolka" "Christopher Ross-Gill" "Oldes"]
-	File: %httpd.reb
-	Name: 'httpd
-	Type: 'module
-	Version: 0.7.0
 	Exports: [http-server decode-target to-CLF-idate]
-	Rights: http://opensource.org/licenses/Apache-2.0
+	Home:    https://github.com/Oldes/Rebol-HTTPd
+	Rights:  http://opensource.org/licenses/Apache-2.0
 	Purpose: {
 		A Tiny Webserver Scheme for Rebol 3 (Oldes' branch)
 		Features:
@@ -16,15 +16,14 @@ Rebol [
 		* using _actors_ for main actions which may be customized
 		* implemented `keep-alive` behaviour
 		* sends `Not modified` response if file was not modified in given time
-		* client can stop server
+		* client can stop the server
 	}
 	TODO: {
 		* support for multidomain serving using `Host` header field
 		* add support for other methods - PUT, DELETE, TRACE, CONNECT, OPTIONS?
 		* better error handling
-		* test in real life
 	}
-	Usage: {Check %tests/test-httpd.r3 script how to start a simple server}
+	Usage: {Check %server-test.r3 script how to start a simple server}
 	History: [
 		04-Nov-2009 "Andreas Bolka" {A Tiny HTTP Server
 		https://github.com/earl/rebol3/blob/master/scripts/shttpd.r}
@@ -32,10 +31,12 @@ Rebol [
 		https://gist.github.com/rgchris/73510e7d643eb0a6b9fa69b849cd9880}
 		01-Apr-2019 "Oldes" {Rewritten to be usable in real life situations.}
 		10-May-2020 "Oldes" {Implemented directory listing, logging and multipart POST processing}
-		02-Jul-2020 "Oldes" {Added possibility to stop server and return data from client (useful for OAuth2)}
+		02-Jul-2020 "Oldes" {Added possibility to stop the server from a client and return data to it (useful for OAuth2)}
 		06-Dec-2022 "Oldes" {Added minimal support for WebSocket connections}
+		09-Jan-2023 "Oldes" {New home: https://github.com/Oldes/Rebol-HTTPd}
+		09-May-2023 "Oldes" {Root-less configuration possibility (default)}
 	]
-	needs: [3.10.1 mime-types]
+	Needs: [3.11.0 mime-types]
 ]
 
 append system/options/log [httpd: 1]
@@ -196,7 +197,7 @@ to-CLF-idate: func [
 ;------------------------------------------------------------------------
 sys/make-scheme [
 	Title: "HTTP Server"
-	Name: 'httpd
+	Name:  'httpd
 
 	Actor: [
 		Open: func [port [port!] /local spec][
@@ -215,10 +216,11 @@ sys/make-scheme [
 				]
 				subport/extra/config:
 				config: make object! [
-					root: system/options/home
+					root:  none
 					index: [%index.html %index.htm]
 					keep-alive: true
-					server-name: "Rebol3-HTTPD"
+					list-dir?:  true
+					server-name: "Rebol3-HTTPd"
 				]
 			]
 			port/state: port/extra/subport/extra/clients
@@ -239,7 +241,7 @@ sys/make-scheme [
 			/local target path info index modified If-Modified-Since
 		][
 			target: ctx/inp/target
-			target/file: path: join dirize ctx/config/root next clean-path/only target/file
+			target/file: path: join ctx/config/root next clean-path/only target/file
 			ctx/out/header/Date: to-idate/gmt now
 			ctx/out/status: 200
 			either exists? path [
@@ -370,7 +372,7 @@ sys/make-scheme [
 			dir: target/file
 			path: join "/" find/match/tail dir ctx/config/root
 		
-			try/except [
+			try/with [
 				out: make string! 2000
 				append out ajoin [
 					{<html><head><title>Index of } path
@@ -552,7 +554,7 @@ sys/make-scheme [
 			out/content: none
 		]
 
-		try/except [
+		try/with [
 			write port buffer
 		][
 			;@@TODO: handle it without `print`; using on-error?
@@ -563,7 +565,7 @@ sys/make-scheme [
 	]
 
 	Do-log: function [ctx][
-		try/except [
+		try/with [
 			msg: ajoin [
 				ctx/remote-ip
 				{ - - [} to-CLF-idate now {] "}
@@ -612,7 +614,7 @@ sys/make-scheme [
 				READ [
 					sys/log/more 'HTTPD ["bytes:^[[1m" length? port/data]
 					either header-end: find/tail port/data CRLF2BIN [
-						try/except [
+						try/with [
 							if none? ctx/state [
 								with inp [
 									parse copy/part port/data header-end [
@@ -670,7 +672,7 @@ sys/make-scheme [
 									close out/content ; closing source port
 									End-Client port
 								][
-									try/except [
+									try/with [
 										write port buffer
 									][
 										print "** Write failed (2)!"
@@ -729,7 +731,7 @@ sys/make-scheme [
 				ready?: false
 				data: head port/data
 				sys/log/more 'HTTPD ["bytes:^[[1m" length? data]
-				try/except [
+				try/with [
 					while [2 < length? data][
 						final?: data/1 & 128 = 128
 						opcode: data/1 & 15
@@ -856,7 +858,7 @@ sys/make-scheme [
 		append port/extra/clients client
 
 		sys/log/info 'HTTPD ["New client:^[[1;31m" client/extra/remote]
-		try/except [read client][
+		try/with [read client][
 			print ["** Failed to read new client:" client/extra/remote]
 			print system/state/last-error
 		]
@@ -931,16 +933,18 @@ http-server: function [
 	server: open join httpd://: port
 	if config [
 		if object? spec [ spec: body-of spec ]
-		case [
-			file? spec/root [spec/root: dirize clean-path spec/root]
-			none? spec/root [spec/root: what-dir]
+		if root: select spec 'root [
+			spec/root: case [
+				file? :root [attempt [dirize to-real-file clean-path root]]
+				'current-dir = :root [what-dir]
+			]
 		]
 		append server/extra/config spec
 	]
-	
-	unless system/options/quiet [
-		? server/extra/config
-	]
+
+	sys/log/info 'HTTPD ["Root directory: " as-green server/extra/config/root]
+
+	;unless system/options/quiet [? server/extra/config]
 
 	if actor [
 		append server/actor either block? actions [

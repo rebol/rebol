@@ -1370,5 +1370,38 @@ static int Try_Browser(char *browser, REBCHR *url)
 	return FALSE;
 }
 
+/***********************************************************************
+**
+*/	void OS_Request_Password(REBREQ *req)
+/*
+***********************************************************************/
+{
+	REBCNT size = 64;
+	REBCNT  pos = 0;
+	REBYTE *str = malloc(size);
+	REBYTE  c;
+
+	req->data = NULL;
+
+	while (read(STDIN_FILENO, &c, 1) && c != '\r') {
+		if (c ==  27) { // ESC
+			free(str);
+			return; 
+		}
+		if (c == 127) { // backspace
+			// UTF-8 aware skip back one char
+			while (pos != 0 && (str[--pos] & 0xC0) == 0x80) {}
+			continue;
+		}
+		str[pos++] = c;
+		if (pos+1 == size) {
+			size += 64;
+			str = realloc(str, size);
+		}
+	}
+	req->data = str;
+	req->actual = pos;
+	str[pos++] = 0; // null terminate the tail.. just in case
+}
 
 

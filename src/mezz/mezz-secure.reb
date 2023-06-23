@@ -70,7 +70,7 @@ secure: function/with [
 	; Check if SECURE is secured:
 	if pol-obj/secure <> 0.0.0 [
 		if pol-obj/secure == 'throw [cause-error 'access 'security :policy]
-		quit/now/return 101 ; an arbitrary code
+		quit/return 101 ; an arbitrary code
 	]
 
 	; Bulk-set all policies:
@@ -83,7 +83,7 @@ secure: function/with [
 
 	; Set each policy target separately:
 	foreach [target pol] policy [
-		try/except [
+		try/with [
 			assert/type [target [word! file! url!] pol [block! word! integer!]]
 		][	cause-error 'access 'security-error reduce [target pol] ]
 		set-policy target make-policy target pol pol-obj

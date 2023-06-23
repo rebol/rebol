@@ -88,10 +88,14 @@ input: func [
 	][
 		system/ports/input: port: open [scheme: 'console]
 	]
-	if hide [ modify port 'echo false ]
-	if line: read port [ line: to string! line ]
-	if hide [ modify port 'echo true ]
-	line
+	either hide [
+		request-password
+	][
+		all [
+			line: read port
+			to string! line
+		]
+	]
 ]
 
 ask: func [
@@ -150,7 +154,7 @@ dir-tree: func [
 			word! path! [to-file path]
 		]
 		if #"/" <> first directory [insert directory what-dir]
-		value: contents: try/except [read directory][
+		value: contents: try/with [read directory][
 			print ["Not found:" :directory]
 			exit
 		]

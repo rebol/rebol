@@ -952,6 +952,8 @@ typedef struct Reb_Error {
 #define	IS_CONTINUE(v)		(VAL_ERR_NUM(v) == RE_CONTINUE)
 #define THROWN(v)			(IS_ERROR(v) && IS_THROW(v))
 
+#define THROWN_DISARM_OFFSET 100000 // used to disarm thrown errors (converted to complete error object)
+
 #define	SET_ERROR(v,n,a)	VAL_SET(v, REB_ERROR), VAL_ERR_NUM(v)=n, VAL_ERR_OBJECT(v)=a, VAL_ERR_SYM(v)=0
 #define	SET_THROW(v,n,a)	VAL_SET(v, REB_ERROR), VAL_ERR_NUM(v)=n, VAL_ERR_VALUE(v)=a, VAL_ERR_SYM(v)=0
 

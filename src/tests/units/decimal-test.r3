@@ -189,10 +189,16 @@ Rebol [
 
 	--test-- "issue-241"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/241
-		--assert  0.0 == to decimal! #{0000000000000000}
-		--assert  0.0 == to decimal! #{8000000000000000}
-		--assert  1.#INF = to decimal! #{7FF0000000000000}
-		--assert -1.#INF = to decimal! #{FFF0000000000000}
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1134
+		--assert    0.0   = to decimal! #{0000000000000000}
+		--assert    0.0  == to decimal! #{0000000000000000}
+		--assert   -0.0   = to decimal! #{8000000000000000}
+		--assert   -0.0  == to decimal! #{8000000000000000}
+		--assert    0.0 !== to decimal! #{8000000000000000}
+		--assert ! -0.0  != to decimal! #{8000000000000000}
+		--assert  1.#INF  = to decimal! #{7FF0000000000000}
+		--assert -1.#INF  = to decimal! #{FFF0000000000000}
+		--assert not number? to decimal! #{7FFFFFFFFFFFFFFF}
 		--assert "1.#NaN" = mold to decimal! #{7FFFFFFFFFFFFFFF}
 		
 	--test-- "issue-267"
@@ -258,14 +264,25 @@ Rebol [
 		--assert not (0.0 == 0)
 
 	--test-- "NaN equality"
-	;@@  https://github.com/Oldes/Rebol-issues/issues/2494
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1134
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2494
 		--assert 1.#NaN = 1.#NaN
 		--assert not 1.#NaN != 1.#NaN
 		--assert not 1.#NaN == 1.#NaN
 		--assert 1.#NaN !== 1.#NaN
 		--assert same? 1.#NaN 1.#NaN
 		--assert equal? 1.#NaN 1.#NaN
+		--assert not equiv? 1.#NaN 1.#NaN
 		--assert not strict-equal? 1.#NaN 1.#NaN
+	--test-- "Equality between NaN and normal decimal"
+		--assert not 1.#NaN  = 1.0
+		--assert not 1.#NaN == 1.0
+		--assert     1.#NaN != 1.0
+		--assert     1.#NaN !== 1.0
+		--assert not same?  1.#NaN 1.0
+		--assert not equal? 1.#NaN 1.0
+		--assert not equiv? 1.#NaN 1.0
+		--assert not strict-equal? 1.#NaN 1.0
 
 ===end-group===
 

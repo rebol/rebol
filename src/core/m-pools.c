@@ -326,7 +326,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	REBPOL *pool;
 	REBCNT pool_num;
 
-//	if (GC_TRIGGER) Recycle();
+//	if (GC_TRIGGER) Recycle(FALSE);
 
 	length *= SERIES_WIDE(series);
 	pool_num = FIND_POOL(length);
@@ -395,7 +395,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	ASSERT(wide != 0, RP_BAD_SERIES);
 
-//	if (GC_TRIGGER) Recycle();
+//	if (GC_TRIGGER) Recycle(FALSE);
 
 	series = (REBSER *)Make_Node(SERIES_POOL);
 	length *= wide;

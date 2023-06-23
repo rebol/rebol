@@ -409,6 +409,10 @@ if find codecs 'JSON [
 		--assert data = decode 'JSON str
 		; Github is using "+1" and "-1" keys in the `reactions` data now
 		--assert ["+1" 1] = to block! decode 'JSON {{"+1": 1}}
+	--test-- "Decode unicode escaped char"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2546
+		--assert [test: "a"] = to block! decode 'json {{"test": "\u0061"}}
+
 	===end-group===
 ]
 
@@ -757,6 +761,7 @@ if find codecs 'safe [
 	;- using environmental variable to avoid interactive password input using `ask`
 	temp: get-env "REBOL_SAFE_PASS"
 	set-env "REBOL_SAFE_PASS" "my-pass"
+	user: system/user/name ;; store existing user
 	===start-group=== "SAFE codec"		
 		--test-- "Save/Load SAFE file"
 			foreach data [
@@ -768,8 +773,27 @@ if find codecs 'safe [
 				--assert equal? data load save %temp.safe data
 				delete %temp.safe
 			]
+		--test-- "Set-user which does not exists"
+			;@@ https://github.com/Oldes/Rebol-issues/issues/2547
+			--assert not error? try [set-user not-existing-user]
+		--test-- "Initialise new user"
+			--assert not error? try [set-user/n/p temp-user "passw"]
+			--assert system/user/name = @temp-user
+			--assert 'file = exists? try [system/user/data/spec/ref]
+			--assert "hello" = put system/user/data 'key "hello"  ;; store some data...
+			--assert "hello" = user's key               ;; resolve the data
+			--assert not error? try [su]                ;; release user
+			--assert none? system/user/name
+			--assert not error? try [set-user/p temp-user "passw"]
+			--assert "hello" = user's key               ;; resolve the data
+			--assert not error? try [su #[none]]        ;; release user using none value
+			--assert none? system/user/name
+
+			try [delete system/user/data/spec/ref]
+
 	===end-group===
 	set-env "REBOL_SAFE_PASS" :temp
+	set-user :user
 ]
 
 

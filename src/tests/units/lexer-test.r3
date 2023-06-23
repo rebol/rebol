@@ -440,6 +440,53 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Integer (bit/octal/decimal/hexadecimal)"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1781
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2197
+	--test-- "base2"
+		--assert  1 = transcode/one "2#01"
+		--assert  1 = transcode/one "2#01[]"
+		--assert  1 = transcode/one "2#01{}"
+		--assert  3 = transcode/one "2#11"
+		--assert  3 = transcode/one "2#011"
+		--assert  3 = transcode/one "2#000011"
+		--assert -1 = transcode/one "2#1111111111111111111111111111111111111111111111111111111111111111"
+		--assert error? transcode/one/error "2#12"
+		--assert error? transcode/one/error "2#11111111111111111111111111111111111111111111111111111111111111111"
+		--assert error? transcode/one/error "-2#11"
+	--test-- "base8"
+		--assert 666 = transcode/one "8#1232"
+		--assert 502 = transcode/one "8#766"
+		--assert  -1 = transcode/one "8#7777777777777777777777"
+		--assert error? transcode/one/error "8#88"
+		--assert error? transcode/one/error "8#77777777777777777777777"
+		--assert error? transcode/one/error "-8#123"
+	--test-- "base10"
+		--assert 123 = transcode/one "10#123"
+		--assert 999999999999999999 = transcode/one "10#999999999999999999"
+		--assert error? transcode/one/error "10#9999999999999999999"
+		--assert error? transcode/one/error "10#1A2"
+		--assert error? transcode/one/error "-10#123"
+	--test-- "base16"
+		--assert  15 = transcode/one "0#F"
+		--assert  15 = transcode/one "0#0F"
+		--assert 255 = transcode/one "0#FF"
+		--assert  -1 = transcode/one "0#FFFFFFFFFFFFFFFF"
+		--assert error? transcode/one/error "0#XA"
+		--assert error? transcode/one/error "0#FFFFFFFFFFFFFFFFF"
+		--assert error? transcode/one/error "-0#FF"
+		--assert  15 = transcode/one "16#F"
+		--assert  15 = transcode/one "16#0F"
+		--assert 255 = transcode/one "16#FF"
+		--assert  -1 = transcode/one "16#FFFFFFFFFFFFFFFF"
+		--assert error? transcode/one/error "16#XA"
+		--assert error? transcode/one/error "16#FFFFFFFFFFFFFFFFF"
+		--assert error? transcode/one/error "-16#FF"
+
+
+
+===end-group===
+
 
 ===start-group=== "Char"
 	--test-- {#"^(1)"}

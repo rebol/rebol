@@ -1,9 +1,8 @@
 Rebol [
 	Name:    json
 	Type:    module
-	Options: [delay]
 	Exports: [to-json load-json]
-	Version: 0.1.1
+	Version: 0.1.2
 	Title:   "Codec: JSON"
 	Purpose: "Convert Rebol value into JSON format and back."
 	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-json.reb
@@ -28,9 +27,13 @@ Rebol [
 		0.0.4  9-Oct-2018 "Gabriele" "Back to an easier to read recursive version"
 		0.1.0 13-Feb-2020 "Oldes"    "Ported Red's version back to Rebol"
 		0.1.1 22-Dec-2021 "Oldes"    "Handle '+1' and/or '-1' JSON keys"
+		0.1.2  4-May-2023 "Oldes"    "Fixed decode-unicode-char"
 	]
 
-	Rights:  "Copyright (C) 2019 Red Foundation. All rights reserved."
+	Rights:  {
+		Copyright (C) 2019 Red Foundation. All rights reserved.
+		Copyright 2020-2023 Rebol Open Source Contributors
+	}
 	License: {
 		Distributed under the Boost Software License, Version 1.0.
 		See https://github.com/red/red/blob/master/BSL-License.txt
@@ -158,9 +161,7 @@ decode-unicode-char: func [
 	"Convert \uxxxx format (NOT simple JSON backslash escapes) to a Unicode char"
 	ch [string!] "4 hex digits"
 ][
-	buf: {#"^^(0000)"}								; Don't COPY buffer, reuse it
-	if not parse ch [4 hex-char][return none]		; Validate input data
-	attempt [load head change at buf 5 ch]			; Replace 0000 section in buf
+	try/with [to char! to integer! debase ch 16][ none ]
 ]
 
 replace-unicode-escapes: func [

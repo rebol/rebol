@@ -487,22 +487,40 @@ init-schemes: func [
 		spec: system/standard/port-spec-midi
 		init: func [port /local spec inp out] [
 			spec: port/spec
-			if url? spec/ref [
+			either url? spec/ref [
 				parse spec/ref [
 					thru #":" 0 2 slash
 					opt "device:"
-					copy inp *parse-url/digits
-					opt [#"/" copy out *parse-url/digits]
+					copy inp url-parser/digit
+					opt [#"/" copy out url-parser/digit]
 					end
 				]
 				if inp [ spec/device-in:  to integer! inp]
 				if out [ spec/device-out: to integer! out]
+			][
+				;; Lookup device IDs using full names (or wildcards)
+				all [
+					any-string? inp: select spec 'device-in
+					spec/device-in: find inp query/mode midi:// 'devices-in
+				]
+				all [
+					any-string? out: select spec 'device-out
+					spec/device-out: find out query/mode midi:// 'devices-out
+				]
 			]
 			; make port/spec to be only with midi related keys
 			set port/spec: copy system/standard/port-spec-midi spec
 			;protect/words port/spec ; protect spec object keys of modification
 			true
 		]
+		find: func[device [any-string!] devices [block!]][
+			forall devices [
+				if lib/find/match/any devices/1 device [
+					return index? devices
+				]
+			]
+			none
+		] 
 	]
 
 	make-scheme [
@@ -516,10 +534,10 @@ init-schemes: func [
 					copy path [to slash | end] skip
 					copy speed to end
 				]
-				try/except [port/spec/path: to file! path][
+				try/with [port/spec/path: to file! path][
 					cause-error 'access 'invalid-spec :path
 				]
-				try/except [port/spec/speed: to integer! speed][
+				try/with [port/spec/speed: to integer! speed][
 					cause-error 'access 'invalid-spec :speed
 				]
 			]
@@ -528,6 +546,7 @@ init-schemes: func [
 
 
 	system/ports/system:   open [scheme: 'system]
+	system/ports/event:    open [scheme: 'event]
 	system/ports/input:
 	system/ports/output:   open [scheme: 'console]
 	system/ports/callback: open [scheme: 'callback]

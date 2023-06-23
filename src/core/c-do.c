@@ -433,6 +433,10 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 		pvs->value = pvs->store;
 		break;
 	case PE_BAD_SELECT:
+		if (THROWN(pvs->select)) {
+			pvs->value = pvs->select;
+			return;
+		}
 		Trap2(RE_INVALID_PATH, pvs->orig, pvs->path);
 	case PE_BAD_SET:
 		Trap2(RE_BAD_PATH_SET, pvs->orig, pvs->path);
@@ -491,15 +495,19 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 		Next_Path(&pvs);
 		// Check for errors:
 		if (NOT_END(pvs.path+1) && !ANY_FUNC(pvs.value)) {
+			if (THROWN(pvs.value)) goto thrown;
 			// Only function refinements should get by this line:
 			Trap2(RE_INVALID_PATH, pvs.orig, pvs.path);
 		}
 	}
-	else if (NOT_END(pvs.path+1) && !ANY_FUNC(pvs.value))
+	else if (NOT_END(pvs.path+1) && !ANY_FUNC(pvs.value)) {
+		if (THROWN(pvs.value)) goto thrown;
 		Trap2(RE_BAD_PATH_TYPE, pvs.orig, Of_Type(pvs.value));
+	}
 
 	// If SET then we can drop result storage created above.
 	if (val) {
+		if (THROWN(pvs.value)) goto thrown;
 		DS_DROP; // on SET, we do not care about returned value
 		return 0;
 	} else {
@@ -511,6 +519,10 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 		*path_val = pvs.path; // return new path (for func refinements)
 		return pvs.value; // only used for functions
 	}
+thrown:
+	if (val) DS_DROP;
+	*DS_TOP = *pvs.value;
+	return 0;
 }
 
 
@@ -822,7 +834,7 @@ more_path:
 	// Check for recycle signal:
 	if (GET_FLAG(sigs, SIG_RECYCLE)) {
 		CLR_SIGNAL(SIG_RECYCLE);
-		Recycle();
+		Recycle(FALSE);
 	}
 
 #ifdef NOT_USED_INVESTIGATE
@@ -2333,6 +2345,6 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 
 	// Cleanup stack and memory:
 	DS_RESET;
-	Recycle();
+	Recycle(FALSE);
 	return 0; //result;
 }

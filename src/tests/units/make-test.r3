@@ -61,7 +61,28 @@ Rebol [
 		--assert 20-Sep-2021/12:46:42 =   to date! 1632142002
 		--assert 20-Sep-2021/10:58:32 = make date! 1632135512
 		--assert 20-Sep-2021/10:58:32 =   to date! 1632135512
-
+	--test-- "make/to date! decimal!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2551
+		--assert 17-Nov-1858/00:00:00 = make date! 0.0
+		--assert 17-Nov-1858/00:00:00 =   to date! 0.0
+		--assert 01-Jan-1900/00:00:00 = make date! 15020.0
+		--assert 01-Jan-1900/00:00:00 =   to date! 15020.0
+		--assert 02-May-2003/12:00:00 = make date! 52761.5
+		--assert 02-May-2003/12:00:00 =   to date! 52761.5
+		--assert 10-Jun-2023/01:30:00 = make date! 60105.0625
+		--assert 10-Jun-2023/01:30:00 =   to date! 60105.0625
+		--assert 10-Jun-2023/19:30:00 = make date! 60105.8125
+		--assert 10-Jun-2023/19:30:00 =   to date! 60105.8125
+		--assert 01-Jan-2023/12:00:00 = make date! 59945.5
+		--assert 01-Jan-2023/12:00:00 =   to date! 59945.5
+		--assert 01-Jan-2023/19:30:00 = make date! 59945.8125
+		--assert 01-Jan-2023/19:30:00 =   to date! 59945.8125
+		--assert 01-Jan-2023/01:30:00 = make date! 59945.0625
+		--assert 01-Jan-2023/01:30:00 =   to date! 59945.0625
+		--assert 31-Aug-2132/00:00:00 = make date! 99999.0
+		--assert 31-Aug-2132/00:00:00 =   to date! 99999.0
+		--assert 01-Sep-2132/00:00:00 = make date! 100000.0
+		--assert 01-Sep-2132/00:00:00 =   to date! 100000.0
 ===end-group===
 
 ===start-group=== "make/to integer"
@@ -92,6 +113,12 @@ Rebol [
 		--assert 1632142002 =   to integer! 20-Sep-2021/12:46:41.7
 		--assert 1632135512 = make integer! 20-Sep-2021/12:58:32+2:00
 		--assert 1632135512 =   to integer! 20-Sep-2021/12:58:32+2:00
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2550
+		--assert 1685750400 == to integer! 3-Jun-2023
+		--assert 1685750400 == to integer! 3-Jun-2023/0:00
+		--assert 1685750400 == make integer! 3-Jun-2023
+		--assert 1685750400 == make integer! 3-Jun-2023/0:00
+
 	--test-- "make/to integer! string!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2164
 		--assert 9223372036854775807 = to integer! "9223372036854775807"
@@ -136,6 +163,29 @@ Rebol [
 		repeat x 255 [unless error? try [to-decimal join "1" to-char x] [append ch to-char x]]
 		--assert ch = "^- ',.0123456789Ee"
 
+	
+	--test-- "make/to decimal! date!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2551
+		--assert 0.0            = make decimal! 17-Nov-1858/00:00:00
+		--assert 0.0            =   to decimal! 17-Nov-1858/00:00:00
+		--assert 15020.0        = make decimal! 01-Jan-1900/00:00:00
+		--assert 15020.0        =   to decimal! 01-Jan-1900/00:00:00
+		--assert 52761.5        = make decimal! 02-May-2003/12:00:00
+		--assert 52761.5        =   to decimal! 02-May-2003/12:00:00
+		--assert 60105.0625     = make decimal! 10-Jun-2023/01:30:00
+		--assert 60105.0625     =   to decimal! 10-Jun-2023/01:30:00
+		--assert 60105.8125     = make decimal! 10-Jun-2023/19:30:00
+		--assert 60105.8125     =   to decimal! 10-Jun-2023/19:30:00
+		--assert 59945.5        = make decimal! 01-Jan-2023/12:00:00
+		--assert 59945.5        =   to decimal! 01-Jan-2023/12:00:00
+		--assert 59945.8125     = make decimal! 01-Jan-2023/19:30:00
+		--assert 59945.8125     =   to decimal! 01-Jan-2023/19:30:00
+		--assert 59945.0625     = make decimal! 01-Jan-2023/01:30:00
+		--assert 59945.0625     =   to decimal! 01-Jan-2023/01:30:00
+		--assert 99999.0        = make decimal! 31-Aug-2132/00:00:00
+		--assert 99999.0        =   to decimal! 31-Aug-2132/00:00:00
+		--assert 100000.0       = make decimal! 01-Sep-2132/00:00:00
+		--assert 100000.0       =   to decimal! 01-Sep-2132/00:00:00
 ===end-group===
 
 
@@ -443,7 +493,9 @@ Rebol [
 		--assert [#[bitset! #{FF}]]         = try [to block! quote #[bitset! #{FF}]        ] ; bitset!
 		--assert [#[image! 1x1 #{FFFFFF}]]  = try [to block! quote #[image! 1x1 #{FFFFFF}] ] ; image!
 		--assert [#[integer!] #[percent!]]   = try [to block! #[typeset! [integer! percent!]] ] ; typeset!
-
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2090
+		--assert [a %b/c] = to block! 'a/%b/c
+		--assert [a %b c] = to block! 'a/%"b"/c
 ===end-group===
 
 ===start-group=== "make/to path"
@@ -644,6 +696,7 @@ Rebol [
 		--assert "make image! [1x1 #{FFFFFF}]"  = try [make string! quote #[image! 1x1 #{FFFFFF}] ] ; image!
 		--assert "integer! percent!"  = try [make string! quote #[typeset! [integer! percent!]] ] ; typeset!
 	--test-- "to string! ..."
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1404
 		--assert ""           = try [to string! quote #[unset]   ] ; unset!
 		--assert error?         try [to string! quote #[none]    ] ; none!
 		--assert "true"       = try [to string! quote #[true]    ] ; logic!

@@ -321,7 +321,9 @@ static const REBI64 DAYS_OF_JAN_1ST_1970 = 719468; // number of days for 1st Jan
 {
 	REBDAT d = VAL_DATE(date);
 	REBI64 epoch = (Days_Of_Date(d.date.day, d.date.month, d.date.year) - DAYS_OF_JAN_1ST_1970) * SECS_IN_DAY;
-	return epoch + ((VAL_TIME(date) + 500000000) / SEC_SEC);
+	REBI64 time = VAL_TIME(date);
+	if (time == NO_TIME) time = 0;
+	return epoch + ((time + 500000000) / SEC_SEC);
 }
 
 /***********************************************************************
@@ -454,6 +456,86 @@ static const REBI64 DAYS_OF_JAN_1ST_1970 = 719468; // number of days for 1st Jan
 	VAL_DATE(d) = Normalize_Date(n, VAL_MONTH(d)-1, VAL_YEAR(d), VAL_ZONE(d));
 }
 
+
+/***********************************************************************
+**
+*/	REBDEC Gregorian_To_Julian_Date(REBDAT date, REB_TIMEF time)
+/*
+**		Given a Gregorian date and time, return Julian date
+**		https://www.typecalendar.com/julian-date
+**		https://pdc.ro.nu/jd-code.html
+**
+***********************************************************************/
+{
+	long jd;
+	long d = date.date.day-1;
+	long m = date.date.month-1;
+	long y = date.date.year;
+
+	//printf("%li-%li-%li %i:%i:%i\n", d, m, y, time.h, time.m, time.s);
+	if (time.h <= 12) {
+		d--;
+		time.h += 12;
+	} else {
+		time.h -= 12;
+	}
+		date = Normalize_Date(d,m,y,0);
+		d = date.date.day-1;
+		m = date.date.month;
+		y = date.date.year;
+	//printf("%li-%li-%li %i:%i:%i\n", d, m, y, time.h, time.m, time.s);
+
+	y += 8000;
+	if (m < 3) { y--; m += 12; }
+	jd  = (y*365) +(y/4) -(y/100) +(y/400) -1200820;
+	jd += (m*153+3)/5-92;
+    jd += d ;
+
+    return (REBDEC)jd + ((double)time.h / 24.0 + (double)time.m / 1440.0 + (double)time.s / 86400.0);
+}
+
+/***********************************************************************
+**
+*/	void Julian_To_Gregorian_Date(REBDEC julian, REBINT *day, REBINT *month, REBINT *year, REBI64 *secs)
+/*
+**		Converts a Julian date to a Gregorian date and time.
+**		https://www.typecalendar.com/julian-date
+**		NOTE: month and day are 1-based!
+**
+***********************************************************************/
+{
+	REBINT z, w, x, a, b, c, d, e, f;
+	double fp, ip;
+	REBI64 h, m, s; 
+
+	fp = modf(julian, &ip);           // The fractional part
+
+	z = (REBINT)ip;                   // The integral part of the Julian day
+	w = (z - 1867216.25) / 36524.25;  // The value used in the calculation to determine the leap years. It represents the number of leap years since 4713 BC
+	x = w / 4;                        // The number of 4-year cycles (leap year groups) that have passed since the year 4713 BC.
+	a = z + 1 + w - x;                // The adjusted Julian day number, taking into account leap years.
+	b = a + 1524;                     // The Julian day number shifted by 122.1 to provide a suitable starting point for subsequent calculations.
+	c = (b - 122.1) / 365.25;         // The estimated year of the Gregorian calendar.
+	d = 365.25 * c;                   // The number of days that have passed in the year, excluding the current month.
+	e = (b - d) / 30.6001;            // The month number.
+	f = 30.6001 * e;                  // The number of days that have passed in the current month, excluding the current day.
+
+	*day = b - d - f + fp;
+	*month = (e < 14) ? e - 1 : e - 13;
+	*year = (*month > 2) ? c - 4716 : c - 4715;
+
+
+	fp *= 24;
+	h = (REBI64)fp;
+	fp = (fp - h) * 60;
+	m = (REBI64)fp;
+	fp = (fp - m) * 60;
+	s = (REBI64)round(fp);
+
+	//printf("--- %i-%i-%i %lli:%lli:%lli\n", *day, *month, *year, h, m, s);
+
+	*secs = (h+12) * HR_SEC + m * MIN_SEC + s * SEC_SEC;
+}
 
 /***********************************************************************
 **
@@ -677,9 +759,17 @@ set_time:
 			num = Week_Day(date);
 			break;
 		case SYM_YEARDAY:
-		case SYM_JULIAN:
 			num = (REBINT)Julian_Date(date);
 			break;
+		case SYM_JULIAN:
+			if (secs == NO_TIME) {
+				time.h = 12; // Julian date is counted from noon
+			} else {
+				// Julian date result is in universal time!
+				Split_Time(secs - ((i64)tz) * ((i64)ZONE_SECS * SEC_SEC), &time);
+			}
+			SET_DECIMAL(val, Gregorian_To_Julian_Date(date, time));
+			return PE_USE;
 		case SYM_UTC:
 			*val = *data;
 			VAL_ZONE(val) = 0;
@@ -786,12 +876,17 @@ set_time:
 			VAL_ZONE(data) = 0;
 			return PE_USE;
 		case SYM_YEARDAY:
-		case SYM_JULIAN:
 			if (!IS_INTEGER(val)) return PE_BAD_SET_TYPE;
 			Date_Of_Days( Days_Of_Jan_1st(year) + n - 1, &date);
 			day   = date.date.day - 1;
 			month = date.date.month - 1;
 			year  = date.date.year;
+			break;
+		case SYM_JULIAN:
+			if (!IS_DECIMAL(val)) return PE_BAD_SET_TYPE;
+			Julian_To_Gregorian_Date(VAL_DECIMAL(val), &day, &month, &year, &secs);
+			day--; month--; // The date/time normalization expects 0-based day and month
+			tz = 0; // no timezone
 			break;
 
 		default:
@@ -918,6 +1013,11 @@ setDate:
 			else if (IS_INTEGER(arg)) {
 				Timestamp_To_Date(D_RET, VAL_INT64(arg));
 				return R_RET;
+			}
+			else if (IS_DECIMAL(arg)) {
+				Julian_To_Gregorian_Date(VAL_DECIMAL(arg) + 2400000.5, &day, &month, &year, &secs);
+				day--; month--; // The date/time normalization expects 0-based day and month
+				goto fixTime;
 			}
 //			else if (IS_NONE(arg)) {
 //				secs = nsec = day = month = year = tz = 0;

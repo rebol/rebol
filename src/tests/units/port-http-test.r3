@@ -8,6 +8,9 @@ Rebol [
 
 ~~~start-file~~~ "port-http"
 
+;; it looks that httpbin.org has long response times:/
+;; so let's give it more time...
+system/schemes/http/spec/timeout: 30
 
 ===start-group=== "HTTP scheme"
 	--test-- "read HTTP"
@@ -22,7 +25,7 @@ Rebol [
 	--test-- "read/part"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2434
 		--assert "<!DOCTYPE" = read/part http://httpbin.org/ 9
-		--assert #{89504E47} = read/binary/part http://avatars-04.gitter.im/gh/uv/4/oldes 4
+		--assert #{47494638} = read/binary/part http://www.rebol.com/graphics/reb-logo.gif 4
 	--test-- "read not existing url"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/470
 		--assert all [

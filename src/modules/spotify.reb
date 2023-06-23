@@ -13,6 +13,7 @@ Rebol [
 		https://developer.spotify.com/documentation/general/guides/authorization-guide/
 		https://aaronparecki.com/oauth-2-simplified/
 	}
+	Needs: 3.11.0 ;; using try/with instead of deprecated try/except
 ]
 unless system/modules/httpd [
 	print "Importing HTTPD module"
@@ -126,7 +127,7 @@ authorize: function [
 
 	;-- 2. Have your application request refresh and access tokens; Spotify returns access and refresh tokens
 
-	try/except [
+	try/with [
 		time: now
 		ctx/token: load-json write https://accounts.spotify.com/api/token probe compose [
 			POST [
@@ -179,7 +180,7 @@ request: func [
 	data   [any-type!]
 	/local header
 ][
-	try/except [
+	try/with [
 		if now >= ctx/token/expires_in [ refresh ctx ]
 		header: compose [
 			Authorization: (join "Bearer " ctx/token/access_token)
