@@ -2,12 +2,120 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+## 2023 June
+
+### Features:
+
+* [`311223`](https://github.com/Oldes/Rebol3/commit/311223c9487d8af88e4de2993644231610a6373a) Added possibility to set/clear BREAK, DATA-TERMINAL-READY and REQUEST-TO-SEND serial signals (on Windows so far)
+* [`083c0d`](https://github.com/Oldes/Rebol3/commit/083c0dec04d31461510ede291a4f2e6a9a8b8f0c) Implemented `attempt/safer` to catch also thrown exceptions
+* [`6edaaa`](https://github.com/Oldes/Rebol3/commit/6edaaa08d5dccf0e2801665291e367472c8d29c2) Implemented `try/all` to catch also thrown exceptions
+* [`059643`](https://github.com/Oldes/Rebol3/commit/059643d3e79f2b207f4f46c0566632dbbfee5ab1) Allowed function for a recovery of a caught throw
+* [`e3c224`](https://github.com/Oldes/Rebol3/commit/e3c224773bc9b19639756e4b6f9f0f4fd2495f9b) Implemented `catch/all` which may be used to catch all throws (named and unnamed)
+* [`b91715`](https://github.com/Oldes/Rebol3/commit/b917152bccfd7828e8d29114b5a7ae1a34478210) New `/recover` option of the `catch` function
+* [`808276`](https://github.com/Oldes/Rebol3/commit/80827617f6a508bd9af37b1d34e7505a51ce7a29) New `request-password` native which reads line with hidden input and avoids command history
+* [`2494ff`](https://github.com/Oldes/Rebol3/commit/2494ff1d9b2b8be7d9d0c9127170a230b6201338) Dispatch file argument to `checksum` native to `file-checksum` function
+* [`b91f64`](https://github.com/Oldes/Rebol3/commit/b91f6456dfd03ddfe4e17c97e1c71457d3326826) Included function `file-checksum` returning checksum of a given file's content
+* [`b522a2`](https://github.com/Oldes/Rebol3/commit/b522a22e3bbe194bb53867de129538c2e990655d) Anonymize authentication tokens in log
+* [`b6aedc`](https://github.com/Oldes/Rebol3/commit/b6aedca279a1c211d1cddb29316a98828d442b36) Direct conversion between date and decimal now uses Modified Julian Date
+* [`483db9`](https://github.com/Oldes/Rebol3/commit/483db913fae92fe1033bb81d6bea307a215d1387) Conversion from date to decimal now returns Julian date as well as `/julian` date accessor
+* [`b18dc5`](https://github.com/Oldes/Rebol3/commit/b18dc57d726d58642e78b077ba6c7ecbe2fce7a9) `to-date` mezzanine function accepting input in format like: `1-1-2000 00:00:00`
+* [`0401ce`](https://github.com/Oldes/Rebol3/commit/0401ce5c4be3fbd3ef13b47e03622978c6a5afed) Allowed specifying MIDI devices using its names
+
+### Changes:
+
+* [`6ed8da`](https://github.com/Oldes/Rebol3/commit/6ed8da9122686fb88cf1c371ee265f0c79c40f59) Deprecated `try/except`. Using `try/with` instead.
+* [`519fd4`](https://github.com/Oldes/Rebol3/commit/519fd4df4844cae73c437adccbfa141b9223c81e) Using `catch/with` instead of `catch/recover`
+* [`0cb8bd`](https://github.com/Oldes/Rebol3/commit/0cb8bda3f920612d0eac35f9584b1de33054e235) Include JSON codec in Core builds
+* [`a2ac18`](https://github.com/Oldes/Rebol3/commit/a2ac189e13778010e52d1fc982b8272b3ddac80d) Include date mezzanine functions in Core builds
+* [`58b604`](https://github.com/Oldes/Rebol3/commit/58b60433493bb0c3466b6db933c9f7daf7e9d54e) Not using HostileFork's CPP casting macros
+* [`8cfcc7`](https://github.com/Oldes/Rebol3/commit/8cfcc7ab0fdfe063ab453e10e71d018e0a3a3ac5) Moved the event port location from `system/view/event-port` to `system/ports/event`
+
+### Fixes:
+
+* [`8d4fed`](https://github.com/Oldes/Rebol3/commit/8d4fed3980f2c04c70e78d9643df190c1ded39b0) Variable used without being initialized
+* [`4dc5b4`](https://github.com/Oldes/Rebol3/commit/4dc5b417ea8b9344aef824b1f8abc69687efbc98) Path evaluation does not process THROWN values as THROWN
+* [`842939`](https://github.com/Oldes/Rebol3/commit/84293975eced8a2815707e6702913b215a4c662e) MAKE ERROR! does not process THROWN values as THROWN
+* [`7e2585`](https://github.com/Oldes/Rebol3/commit/7e258561b2c7273639a17c99918b24731bd2f085) Better error messages for not caught throws
+* [`6e0011`](https://github.com/Oldes/Rebol3/commit/6e00115ccab18b81406e76fdf1d682a297b79b9c) Using wrong constants
+* [`2bbd3e`](https://github.com/Oldes/Rebol3/commit/2bbd3ebd511dd98d5cbb056a998c4db7eb5113a3) `catch/quit/name` catches only quit or halt, but not any named throw
+* [`0605fd`](https://github.com/Oldes/Rebol3/commit/0605fd57a8ded92fce095071b3d16a427748d05e) Equality of objects with hidden values
+* [`dc85ac`](https://github.com/Oldes/Rebol3/commit/dc85ac5f0bbf9b7c2621b9ce543ebeeef62d7019) Regression in `1.#NaN` comparison
+* [`8bb611`](https://github.com/Oldes/Rebol3/commit/8bb6115bcbe2b0faf5bc9e8826d73e1682a49668) Proper handling wide Unicode characters in console input on Posix systems
+* [`e5219e`](https://github.com/Oldes/Rebol3/commit/e5219e8f8637240a0f8259e03542db71a6dce95d) Code cleanup
+* [`bbbabb`](https://github.com/Oldes/Rebol3/commit/bbbabb0dc803a862d9838f041fdcc96f921a4aed) Simplified `request-password` native code and fixed Win32 version
+* [`ce2711`](https://github.com/Oldes/Rebol3/commit/ce2711a77a6798c487ca1b4fd908ca013f722d3d) Allow releasing a system user with `none` value
+* [`7c96ba`](https://github.com/Oldes/Rebol3/commit/7c96ba54fa4c53d537b9b37d71cef26d9c94d46e) Potentially uninitialized local pointer variable
+* [`8d4879`](https://github.com/Oldes/Rebol3/commit/8d4879f2527bf7267045a100fd7f9d21b4a22855) Throw an error when `checksum` is used with refines on a file argument
+* [`b62428`](https://github.com/Oldes/Rebol3/commit/b6242808cfc44c3cfbad8666a9ba2e21b031b2c6) Checksum port crashes when input is not a series value
+* [`91f574`](https://github.com/Oldes/Rebol3/commit/91f574ba4757cb4ef2ba388d74703af055c94527) `parse/case` parsing words and paths
+* [`44e7f8`](https://github.com/Oldes/Rebol3/commit/44e7f80cd9e21ae6a10541e5e8b15470098d7675) Invalid output when converting date to integer without a time value
+* [`a5c247`](https://github.com/Oldes/Rebol3/commit/a5c247982ec5cb36b5cef06c75bd3bc0e36fa5da) Incompatible-pointer-types-discards-qualifiers warning
+* [`828473`](https://github.com/Oldes/Rebol3/commit/828473fb3a7e790b12be34029baeef1587dc63d2) Provide error numbers instead of hard-coded traces from the MIDI device
+* [`cae3ef`](https://github.com/Oldes/Rebol3/commit/cae3efe160d4731630caa54b16f8ad344ba0e476) Changes of the MIDI setup not recognized on macOS
+* [`9dbc8e`](https://github.com/Oldes/Rebol3/commit/9dbc8e9cc8e7801e9701c8ac2ec1f91d043a8f28) MIDI implementation for macOS so it works same like on Windows
+* [`952d76`](https://github.com/Oldes/Rebol3/commit/952d76f8c239d469222523b4abaab8ae075f6622) Ignore the 3rd MIDI message byte in the MIDI test (it can have value on macOS)
+* [`67e519`](https://github.com/Oldes/Rebol3/commit/67e519ad82a2d7578ab2f423b6d6a79cb06204ea) MIDI port using old path (test script included)
+
+## 2023 May
+
+### Features:
+
+* [`8319d5`](https://github.com/Oldes/Rebol3/commit/8319d5cc77f4930e1a44112c6f1b680e7c821e0e) Special integer notation (bit, octal, decimal and hexadecimal)
+* [`eeb381`](https://github.com/Oldes/Rebol3/commit/eeb381ec3910d471b5e7dd0323ee098e6db24129) Allow `gob!` to be used as a source for `move` function
+* [`df0907`](https://github.com/Oldes/Rebol3/commit/df09076d1cd1b8597c5d9f36554396e297ece8ad) Simplified enbase-64 padding code
+* [`422ac0`](https://github.com/Oldes/Rebol3/commit/422ac0f6618d11c59ee843016b7050bc72988f47) Store user's persistent data before releasing existing user
+
+### Changes:
+
+* [`11fc8b`](https://github.com/Oldes/Rebol3/commit/11fc8b250adb629eefdf39f520b5528ce9e83936) Make `halt` catchable
+* [`7bce10`](https://github.com/Oldes/Rebol3/commit/7bce104413f263059f1327099ea3a2ba1538cc8d) Removed the `quit/now` option
+* [`476a74`](https://github.com/Oldes/Rebol3/commit/476a74bc52481766d861bc1dcba4f2eb4e5793cd) More aggressive `recycle` native
+* [`8657fb`](https://github.com/Oldes/Rebol3/commit/8657fb981b80a00c4e8f42a1e5c17095d24189bc) Do not delay JSON codec module as it is used in HTTP protocol
+
+### Fixes:
+
+* [`fd780c`](https://github.com/Oldes/Rebol3/commit/fd780c541ebb45a7968e69667bfcfa96bac9f7f3) `access-os` function was missing because of the old native definition used
+* [`d063af`](https://github.com/Oldes/Rebol3/commit/d063af761e1c7617ae788456954a986d91dde600) Corrupted output from `trace` on Posix systems
+* [`0c4fad`](https://github.com/Oldes/Rebol3/commit/0c4fadfd06f93104b6e201d1c57ac2ec758c79d2) Missing string definition for `map`
+* [`de59c1`](https://github.com/Oldes/Rebol3/commit/de59c1f7c704a62a343bdd4937d70f6e36094785) Finer decimal `equiv?` comparison than `equal?`
+* [`ddcedf`](https://github.com/Oldes/Rebol3/commit/ddcedfe4c0c78e90a97c68f841409ce14ec2aaed) Do not pad output when used `enbase/url`
+* [`cbd626`](https://github.com/Oldes/Rebol3/commit/cbd6262772335cd8b1b82c1f3290b4c12e60e111) Correct decoding escaped Unicode chars in the JSON codec"
+* [`c77e99`](https://github.com/Oldes/Rebol3/commit/c77e99513cded993810b3880833fff8723daefdf) Correct decoding escaped Unicode chars in the JSON codec
+* [`e92f1f`](https://github.com/Oldes/Rebol3/commit/e92f1f52c54519e446a1b58adc5aad80be1f20d7) Correctly handle not existing `user` argument for the `set-user` function
+* [`107df0`](https://github.com/Oldes/Rebol3/commit/107df095f5343a091b7dd4766fe101c1054abd50) Handle decoding escaped Unicode chars in the JSON codec
+
+## 2023 April
+
+### Features:
+
+* [`4d9318`](https://github.com/Oldes/Rebol3/commit/4d93180f5ef862229e9f2e88ecede95ba0db8881) Including optional support for serial device as was used in the Atronix's branch
+
+### Fixes:
+
+* [`a65ef4`](https://github.com/Oldes/Rebol3/commit/a65ef43c71ac53c847c90c2ac84caceef0317e1c) Posting large data over TLS
+* [`6c458f`](https://github.com/Oldes/Rebol3/commit/6c458fda398beeef644056e47aef97afbd4387c5) Typo in previous commits
+* [`b0412a`](https://github.com/Oldes/Rebol3/commit/b0412a6ce746f01bab0afcab2012b593114e7102) Posix error: too many arguments to function ‘Open_StdIO’
+* [`d87348`](https://github.com/Oldes/Rebol3/commit/d87348290c788be185383d17a88f9618ccd1fec5) Don't set `READ_LINE` mode when started with `--cgi` option
+* [`358b73`](https://github.com/Oldes/Rebol3/commit/358b734dc8a8abdda70a94b799624faff1e8b1b1) Removing trailing LF from console's input tail on Posix only when in READ_LINE mode
+* [`96eb7d`](https://github.com/Oldes/Rebol3/commit/96eb7da28db4bcf5c1ae8a2d5da973f02f0b718d) Handle 1.INF and 1.#NaN cases of its percent type
+* [`be1edd`](https://github.com/Oldes/Rebol3/commit/be1edd25db0b959f7ddaa234adcabd629f893280) Dealing with index past tail scenarios
+* [`b47bbd`](https://github.com/Oldes/Rebol3/commit/b47bbdee7e18e12679a16513819cb5d9386ba87a) Missing path value in serial port's specification
+* [`122d3d`](https://github.com/Oldes/Rebol3/commit/122d3df5293fd32d352114ae1851042a4f55e188) Including serial port related files taken from Atronix's branch
+
 ## 2023 March
+
+### Features:
+
+* [`3761b7`](https://github.com/Oldes/Rebol3/commit/3761b7d3a88c9e212fe4bdb0a9bbd856128f465e) Allow use of series index in parse's `remove` command
+* [`7f46bc`](https://github.com/Oldes/Rebol3/commit/7f46bc6c1b92341c58a9b374a939853aae5abff4) Implemented a raw string syntax in a form `%{...}%`
+* [`9fa0f5`](https://github.com/Oldes/Rebol3/commit/9fa0f546117d6c38d77365063296fdf55a5115da) Native for computation of a difference between two images
+* [`dd1807`](https://github.com/Oldes/Rebol3/commit/dd1807dc3979dceef4e0aaeaa3800d713c030be9) Native for human perception weighted Euclidean distance between two RGB colors
+* [`dbdb4d`](https://github.com/Oldes/Rebol3/commit/dbdb4d39502ad32855b154c2999feeef66f7b841) Allow comments in automatically collected REBNATIVE code specifications
+* [`d7d85c`](https://github.com/Oldes/Rebol3/commit/d7d85cef7fc2119e9f2a6e3899a29fb52b5c4fbc) Included link to Rebol/BlurHash extension version 1.0.0
 
 ### Fixes:
 
 * [`73a481`](https://github.com/Oldes/Rebol3/commit/73a481eef14f5eb109144ecad17252218ab0cea0) TCP connection not working on Haiku OS
-
 
 ## 2023 February
 
