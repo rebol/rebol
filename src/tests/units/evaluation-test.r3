@@ -224,12 +224,6 @@ Rebol [
 ===end-group===
 
 
-===start-group=== "attempt"
-	--test-- "issue-41"
-		--assert none? attempt [2 / 0] ;@@ https://github.com/Oldes/Rebol-issues/issues/41
-
-===end-group===
-
 ===start-group=== "reduce"
 
 	--test-- "reduce-1"
@@ -768,6 +762,29 @@ Rebol [
 			system/state/last-error/arg1 = 1
 			system/state/last-error/arg2 = 'foo
 		]
+
+===end-group===
+
+
+===start-group=== "attempt"
+	--test-- "issue-41"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/41
+		--assert none? attempt [2 / 0]
+
+	--test-- "attempt/safer"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/583
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1506
+		--assert none? attempt/safer [break    'not-reached]
+		--assert none? attempt/safer [continue 'not-reached]
+		--assert none? attempt/safer [exit     'not-reached]
+		--assert none? attempt/safer [return 1 'not-reached]
+		--assert none? attempt/safer [throw 1  'not-reached]
+	--test-- "try/all [attempt]"
+		--assert error? try/all [attempt [break    'not-reached]]
+		--assert error? try/all [attempt [continue 'not-reached]]
+		--assert error? try/all [attempt [exit     'not-reached]]
+		--assert error? try/all [attempt [return 1 'not-reached]]
+		--assert error? try/all [attempt [throw 1  'not-reached]]
 
 ===end-group===
 

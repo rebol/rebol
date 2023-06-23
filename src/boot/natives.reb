@@ -56,6 +56,7 @@ assert: native [
 attempt: native [
 	"Tries to evaluate a block and returns result or NONE on error."
 	block [block!]
+	/safer "Capture all possible errors and exceptions"
 ]
 
 break: native [
