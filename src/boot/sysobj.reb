@@ -151,7 +151,7 @@ modules: object [
 	blurhash:      https://github.com/Siskin-framework/Rebol-BlurHash/releases/download/1.0.0/
 	easing:        https://github.com/Siskin-framework/Rebol-Easing/releases/download/1.0.0/
 	mathpresso:    https://github.com/Siskin-framework/Rebol-MathPresso/releases/download/0.1.0/
-	sqlite:        https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.40.1.0/
+	sqlite:        https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.42.0.0/
 	triangulate:   https://github.com/Siskin-framework/Rebol-Triangulate/releases/download/1.6.0.0/
 	;; optional modules, protocol and codecs
 	httpd:            https://src.rebol.tech/modules/httpd.reb
