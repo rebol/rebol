@@ -154,7 +154,7 @@ dir-tree: func [
 			word! path! [to-file path]
 		]
 		if #"/" <> first directory [insert directory what-dir]
-		value: contents: try/except [read directory][
+		value: contents: try/with [read directory][
 			print ["Not found:" :directory]
 			exit
 		]

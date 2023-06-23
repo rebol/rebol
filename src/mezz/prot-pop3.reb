@@ -76,7 +76,7 @@ do-cmd: func[ctx cmd /with arg /local pop3][
 	ctx/argument: arg
 	pop3: ctx/connection/parent
 	clear pop3/data
-	try/except [
+	try/with [
 		write ctx/connection to binary! net-log/C ajoin either/only arg [cmd SP arg CRLF][cmd CRLF]
 		if pop3/state <> 'INIT [ pop3/state: 'WRITING ]
 	][
@@ -88,7 +88,7 @@ do-cmd-hide: func[ctx cmd arg msg /local pop3][
 	ctx/argument: arg
 	pop3: ctx/connection/parent
 	clear pop3/data
-	try/except [
+	try/with [
 		net-log/C ajoin [cmd SP msg]
 		write ctx/connection to binary! ajoin either/only arg [cmd SP arg CRLF][cmd CRLF]
 		if pop3/state <> 'INIT [ pop3/state: 'WRITING ]

@@ -708,23 +708,24 @@ Rebol [
 		--assert error? try [catch/quit [1] do make error! "Hello"]
 		--assert error? try [try [catch/quit []] 1 / 0]
 
-	--test-- "try/except [1 / 0] block!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/822
+	--test-- "try/with [1 / 0] block!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2419
 		system/state/last-error: none
-		try/except [1 / 0][
+		try/with [1 / 0][
 			--assert error? system/state/last-error
 			--assert system/state/last-error/id = 'zero-divide
 		]
 		; any TRY call resets system/state/last-error to none:
 		--assert not error? try [1 + 1]
 		--assert none? system/state/last-error
-		; the last-error is stored also when /except is not used:
+		; the last-error is stored also when /with is not used:
 		--assert error? try [this-is-error]
 		--assert error? system/state/last-error
 
-	--test-- "try/except [1 / 0] function!"
+	--test-- "try/with [1 / 0] function!"
 		system/state/last-error: none
-		--assert string? try/except [1 / 0] :mold
+		--assert string? try/with [1 / 0] :mold
 		--assert system/state/last-error/id = 'zero-divide
 
 ===end-group===

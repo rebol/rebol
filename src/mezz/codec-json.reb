@@ -161,7 +161,7 @@ decode-unicode-char: func [
 	"Convert \uxxxx format (NOT simple JSON backslash escapes) to a Unicode char"
 	ch [string!] "4 hex digits"
 ][
-	try/except [to char! to integer! debase ch 16][ return none ]
+	try/with [to char! to integer! debase ch 16][ none ]
 ]
 
 replace-unicode-escapes: func [

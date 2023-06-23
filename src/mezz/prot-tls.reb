@@ -1731,7 +1731,7 @@ TLS-parse-handshake-message: function [
 			]
 			log-more ["Received" length? ctx/server-certs "server certificates."]
 			;? ctx/server-certs
-			try/except [
+			try/with [
 				;?? ctx/server-certs/1/public-key
 				;?? ctx/server-certs/1
 				key: ctx/server-certs/1/public-key
@@ -1761,7 +1761,7 @@ TLS-parse-handshake-message: function [
 				ECDHE_RSA
 				ECDHE_ECDSA [
 					;? msg/buffer
-					try/except [
+					try/with [
 						binary/read msg [
 						  s: INDEX
 							ECCurveType: UI8  
@@ -2231,7 +2231,7 @@ do-TLS-open: func [
 			unless block? certs [certs: to block! certs]
 			bin: binary 4000
 			foreach file certs [
-				try/except [
+				try/with [
 					der: select decode 'pkix read file 'binary
 					binary/write bin [UI24BYTES :der]
 				][

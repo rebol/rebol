@@ -534,10 +534,10 @@ init-schemes: func [
 					copy path [to slash | end] skip
 					copy speed to end
 				]
-				try/except [port/spec/path: to file! path][
+				try/with [port/spec/path: to file! path][
 					cause-error 'access 'invalid-spec :path
 				]
-				try/except [port/spec/speed: to integer! speed][
+				try/with [port/spec/speed: to integer! speed][
 					cause-error 'access 'invalid-spec :speed
 				]
 			]

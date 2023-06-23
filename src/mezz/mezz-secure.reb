@@ -83,7 +83,7 @@ secure: function/with [
 
 	; Set each policy target separately:
 	foreach [target pol] policy [
-		try/except [
+		try/with [
 			assert/type [target [word! file! url!] pol [block! word! integer!]]
 		][	cause-error 'access 'security-error reduce [target pol] ]
 		set-policy target make-policy target pol pol-obj

@@ -886,15 +886,24 @@ callback:	// ...and the last result.
 /*
 ***********************************************************************/
 {
-	REBFLG except = D_REF(2);
-	REBVAL handler = *D_ARG(3); // TRY exception will trim the stack
-	REBVAL *last_error = Get_System(SYS_STATE, STATE_LAST_ERROR);
+	REBFLG   with = D_REF(2);
+	REBVAL   handler;
+	REBVAL  *last_error = Get_System(SYS_STATE, STATE_LAST_ERROR);
 	SET_NONE(last_error);
 
+	// If not used the new /with refine, try to use the deprecated /except
+	if (with) {
+		handler = *D_ARG(3);
+	} else {
+		with    =  D_REF(4);
+		handler = *D_ARG(5);
+	}
+	// TRY exception will trim the stack
 	if (Try_Block(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
 		// save the error as a system/state/last-error value
 		*last_error = *DS_NEXT;
-		if (except) {
+
+		if (with) {
 			if (IS_BLOCK(&handler)) {
 				DO_BLK(&handler);
 			}

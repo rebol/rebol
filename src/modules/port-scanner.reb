@@ -10,6 +10,7 @@ Rebol [
 		If you use anything other than `localhost` you had better have permission
 		for the host name you do use, or you will suddenly be an *internet bad guy*.
 		Don't.}
+	Needs: 3.11.0 ;; using try/with instead of deprecated try/except
 ]
 
 ; result:
@@ -51,7 +52,7 @@ scan-ports: function [
 
 	total: 1 + to - from
 
-	try/except [
+	try/with [
 		ip: either tuple? name [ name ][
 			read join dns:// any [name 'localhost]
 		]

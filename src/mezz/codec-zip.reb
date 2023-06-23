@@ -163,7 +163,7 @@ register-codec [
 		compressed-size: size: crc: entries: filename-length: offset: 0
 
 		add-file: func[file [file!] /local dir spec][
-			try/except [
+			try/with [
 				spec: query/mode file [type: date:]
 				either spec [
 					file-name: find/tail file root

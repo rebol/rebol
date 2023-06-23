@@ -46,7 +46,7 @@ register-codec [
 			real: none
 			forall info [
 				; it may be an empty string in Windows' lib file!
-				try/except [info/1: to integer! info/1][info/1: 0]
+				info/1: try/with [to integer! info/1][0]
 			]
 			; convert timestamp to Rebol value (it may be -1 in *.lib files)
 			info/1: either info/1 <= 0 [none][to date! info/1]

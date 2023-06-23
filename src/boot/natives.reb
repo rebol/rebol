@@ -309,9 +309,11 @@ trace: native [
 ]
 
 try: native [
-	{Tries to DO a block and returns its value or an error.}
+	{Tries to DO a block and returns its value or an error!.}
 	block [block! paren!]
-	/except "On exception, evaluate this code block"
+	/with   "On error, evaluate the handler and return its result"
+	handler [block! any-function!]
+	/except "** DEPRERCATED **"
 	code [block! any-function!]
 ]
 

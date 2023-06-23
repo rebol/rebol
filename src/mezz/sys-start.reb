@@ -187,7 +187,7 @@ start: func [
 			#"/" = first tmp ; only if we know absolute path
 			exists? tmp/rebol.reb
 		][
-			try/except [do tmp/rebol.reb][sys/log/error 'REBOL system/state/last-error]
+			try/with [do tmp/rebol.reb][sys/log/error 'REBOL system/state/last-error]
 		]
 	]
 
@@ -198,7 +198,7 @@ start: func [
 
 	sys/log/info 'REBOL ["Checking for user.reb file in" home]
 	if exists? home/user.reb [
-		try/except [do home/user.reb][sys/log/error 'REBOL system/state/last-error]
+		try/with [do home/user.reb][sys/log/error 'REBOL system/state/last-error]
 	]
 
 

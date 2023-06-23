@@ -674,7 +674,7 @@ decode-result: func[
 ][
 	if encoding: select result/2 'Content-Encoding [
 		either find ["gzip" "deflate"] encoding [
-			try/except [
+			try/with [
 				result/3: switch encoding [
 					"gzip"    [ decompress result/3 'gzip]
 					"deflate" [ decompress result/3 'deflate]

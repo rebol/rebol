@@ -27,7 +27,7 @@ register-codec [
 		 sp:   charset " ^-^/^M"
 		!sp:   complement sp
 		!crlf: complement charset "^M^/"
-		try/except [
+		try/with [
 			parse data [
 				"PuTTY-User-Key-File-" ["1:" (vers: 1) | "2:" (vers: 2)]
 					any sp copy type some !sp some sp
@@ -63,7 +63,7 @@ register-codec [
 			pri: debase pri 64
 
 			if encr = "aes256-cbc" [
-				try/except [
+				try/with [
 					pass: either password [copy pass][
 						ask/hide ajoin ["Key password for " mold comm ": "]
 					]
