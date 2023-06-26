@@ -470,7 +470,7 @@ invalid_id:
 
 /***********************************************************************
 **
-*/	REBSER *Disarm_Throw_Error(REBVAL *err)
+*/	void Disarm_Throw_Error(REBVAL *err)
 /*
 **		Creates real error object from an internal thrown one
 **
@@ -483,7 +483,7 @@ invalid_id:
 	REBVAL word = {0};
 
 	code = VAL_ERR_NUM(err);
-	if (code > RE_THROW_MAX) return VAL_ERR_OBJECT(err);
+	if (code > RE_THROW_MAX) return;
 
 	sym  = VAL_ERR_SYM(err);
 	arg1 = VAL_ERR_VALUE(err);
