@@ -982,8 +982,7 @@ common-host: [
 	]
 ]
 
-arch-x64: [
-	arch: x64
+common-64bit: [
 	define: _FILE_OFFSET_BITS=64
 
 	#if Windows? [
@@ -995,9 +994,12 @@ arch-x64: [
 		;has long (integer) 64 bits
 		defines: __LP64__ ; same like LLP64, but long (integer) has 64 bits instead of 32
 	]
-	#if macOS? [
-		flag: "-arch x86_64"
-	]
+]
+
+arch-x64: [
+	:common-64bit
+	arch: x64
+	#if macOS? [ flag: "-arch x86_64" ]
 ]
 arch-x86: [
 	arch: x86
@@ -1017,14 +1019,14 @@ arch-armv7: [
 ]
 
 arch-arm64: [ ;= armv8
-	:arch-x64
+	:common-64bit
 	arch: arm64
 	#if macOS? [ flag: "-arch arm64" ]
 	#if linux? [ flag: "-march=native" ] ;; expects, that the host system is arm64!
 	;define: __arm64__
 ]
 arch-mips64le: [
-	:arch-x64
+	:common-64bit
 	arch: mips64le
 ]
 
