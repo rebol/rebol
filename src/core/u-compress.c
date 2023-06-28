@@ -379,7 +379,7 @@ void BrotliDefaultFreeFunc(void* opaque, void* address) {
 	REBYTE *inp;
 
 	if (level < 0)
-		level = 9;
+		level = 6;
 	else if (level > 11)
 		level = 11;
 
