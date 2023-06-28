@@ -334,7 +334,7 @@ static struct digest {
 //	compress: native [
 //		{Compresses data.}
 //		data [binary! string!] {If string, it will be UTF8 encoded}
-//		method [word!] "zlib deflate gzip lzma"
+//		method [word!] {One of `system/catalog/compressions`}
 //		/part length {Length of source data}
 //		/level lvl [integer!] {Compression level 0-9}
 //	]
@@ -413,7 +413,7 @@ static struct digest {
 //	decompress: native [
 //		{Decompresses data.}
 //		data [binary!] {Source data to decompress}
-//		method [word!] "zlib deflate gzip lzma" 
+//		method [word!] {One of `system/catalog/compressions`}
 //		/part "Limits source data to a given length or position"
 //			length [number! series!] {Length of compressed data (must match end marker)}
 //		/size

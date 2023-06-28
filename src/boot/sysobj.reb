@@ -107,7 +107,7 @@ catalog: object [
 		quoted-printable: #[bitset! #{FFFFFFFFFFFFFFFBFFFFFFFFFFFFFFFF}]
 	]
 	checksums: [adler32 crc24 crc32 tcp md4 md5 sha1 sha224 sha256 sha384 sha512 ripemd160]
-	compressions: [gzip deflate zlib lzma crush]
+	compressions: [gzip deflate zlib lzma crush brotli]
 	elliptic-curves: [
 		; will be filled on boot from `Init_Crypt` in `n-crypt.c`
 	]
