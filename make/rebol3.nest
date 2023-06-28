@@ -748,6 +748,43 @@ include-crush-compression: [
 	core-files: %core/u-crush.c
 ]
 
+include-brotli-compression: [
+	config: INCLUDE_BROTLI
+	include: %src/include/brotli/
+	core-files: [
+		%core/brotli/common/constants.c
+		%core/brotli/common/context.c
+		%core/brotli/common/transform.c
+		%core/brotli/common/dictionary.c
+		%core/brotli/common/shared_dictionary.c
+		%core/brotli/dec/state.c
+		%core/brotli/dec/huffman.c
+		%core/brotli/dec/decode.c
+		%core/brotli/dec/bit_reader.c
+		%core/brotli/enc/backward_references.c
+		%core/brotli/enc/backward_references_hq.c
+		%core/brotli/enc/bit_cost.c
+		%core/brotli/enc/block_splitter.c
+		%core/brotli/enc/brotli_bit_stream.c
+		%core/brotli/enc/cluster.c
+		%core/brotli/enc/command.c
+		%core/brotli/enc/compound_dictionary.c
+		%core/brotli/enc/compress_fragment.c
+		%core/brotli/enc/compress_fragment_two_pass.c
+		%core/brotli/enc/dictionary_hash.c
+		%core/brotli/enc/encode.c
+		%core/brotli/enc/encoder_dict.c
+		%core/brotli/enc/entropy_encode.c
+		%core/brotli/enc/fast_log.c
+		%core/brotli/enc/histogram.c
+		%core/brotli/enc/literal_cost.c
+		%core/brotli/enc/memory.c
+		%core/brotli/enc/metablock.c
+		%core/brotli/enc/static_dict.c
+		%core/brotli/enc/utf8_util.c
+	]
+]
+
 include-png-filter-native: [
 	config: INCLUDE_PNG_FILTER
 	core-files: %core/u-png-filter.c
@@ -885,6 +922,7 @@ include-rebol-bulk: [
 	:include-image-natives
 	:include-lzma-compression
 	:include-lzw-compression
+	:include-brotli-compression
 	:include-crush-compression
 	:include-base36-encoding
 	:include-base85-encoding

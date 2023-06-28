@@ -344,3 +344,149 @@ static const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 
 #endif //INCLUDE_LZMA
 
+
+#ifdef INCLUDE_BROTLI
+#include "brotli/encode.h"
+#include "brotli/decode.h"
+#include "brotli/types.h"
+
+/* Default brotli_alloc_func */
+void* BrotliDefaultAllocFunc(void* opaque, size_t size) {
+  return malloc(size);
+}
+
+/* Default brotli_free_func */
+void BrotliDefaultFreeFunc(void* opaque, void* address) {
+  free(address);
+}
+
+/***********************************************************************
+**
+*/  REBSER *CompressBrotli(REBSER *input, REBINT index, REBCNT in_len, REBINT level)
+/*
+**      Compress a binary (only) using Brotli compression.
+**		data
+**		/part
+**		length
+**
+***********************************************************************/
+{
+	size_t  availableIn = (size_t)in_len;
+	size_t  availableOut = 0;
+	size_t  totalOut = 0;
+	REBSER *output;
+	REBYTE *out;
+	REBYTE *inp;
+
+	if (level < 0)
+		level = 9;
+	else if (level > 11)
+		level = 11;
+
+	BrotliEncoderState *BrotliEncoder = BrotliEncoderCreateInstance(NULL, NULL, NULL);
+	if (!BrotliEncoder) {
+		Trap0(RE_NO_MEMORY);
+		return 0;  // Failed to create the Brotli encoder
+	}
+
+	availableOut = BrotliEncoderMaxCompressedSize(availableIn);
+	output = Make_Binary(availableOut);
+
+	inp = BIN_HEAD(input) + index;
+	out = BIN_HEAD(output);
+
+	BrotliEncoderSetParameter(BrotliEncoder, BROTLI_PARAM_QUALITY, level); // Set compression quality (0-11)
+
+	if (!BrotliEncoderCompressStream(BrotliEncoder, BROTLI_OPERATION_FINISH, &availableIn, &inp, &availableOut, &out, &totalOut)) {
+		BrotliEncoderDestroyInstance(BrotliEncoder);
+		SET_INTEGER(DS_RETURN, 0);
+		Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
+		return NULL; // not reached!
+	}
+
+	BrotliEncoderDestroyInstance(BrotliEncoder);
+
+	SERIES_TAIL(output) = totalOut;
+	if (SERIES_AVAIL(output) > (1<<14)) // Is there wasted space?
+		output = Copy_Series(output); // Trim it down if too big. !!! Revisit this based on mem alloc alg.
+	return output;
+}
+
+// Using global decoder state, because Rebol may throw an error from Expand_Series
+// and so left the state unreleased...
+static BrotliDecoderState *BrotliDecoder = NULL;
+/***********************************************************************
+**
+*/  REBSER *DecompressBrotli(REBSER *input, REBCNT index, REBINT in_len, REBCNT limit)
+/*
+**      Decompress a binary (only). Not thread safe!
+**
+***********************************************************************/
+{
+	REBU64 size;
+	REBU64 out_len;
+	REBSER *output;
+	REBINT err;
+	REBYTE *dest;
+	REBYTE *src = BIN_HEAD(input) + index;
+	BrotliDecoderResult res;
+
+	if (BrotliDecoder)
+		BrotliDecoderDestroyInstance(BrotliDecoder); // in case that there was a Rebol error in previous call
+
+	BrotliDecoder = BrotliDecoderCreateInstance(NULL, NULL, NULL);
+    if (!BrotliDecoder) {
+		// Failed to create the Brotli decoder
+		Trap0(RE_NO_MEMORY);
+        return 0;
+    }
+
+	if (in_len < 0 || (index + in_len > BIN_LEN(input))) in_len = BIN_LEN(input) - index;
+
+	out_len = (limit > 0) ? limit : in_len * 2;
+
+	output = Make_Binary(out_len);
+
+
+	size_t availableIn = in_len;
+    size_t availableOut = SERIES_AVAIL(output);
+    size_t totalOut = 0;
+    uint8_t* nextIn  = BIN_HEAD(input) + index;
+    uint8_t* nextOut = BIN_HEAD(output);
+
+    while (1) {
+		res = BrotliDecoderDecompressStream(BrotliDecoder, &availableIn, &nextIn, &availableOut, &nextOut, &totalOut);
+		if (res == BROTLI_DECODER_RESULT_ERROR || res == BROTLI_DECODER_RESULT_NEEDS_MORE_INPUT) goto error;
+
+        if (BrotliDecoderIsFinished(BrotliDecoder) || (limit > 0 && totalOut > limit)) {
+            break;  // Decompression finished
+        }
+
+        // If the output buffer is full, resize it
+        if (availableOut == 0 && (limit == 0 || limit < totalOut)) {
+			SERIES_TAIL(output) = totalOut;
+			Expand_Series(output, AT_TAIL, out_len); //@@ May throw an error and so the decoder would not be released!
+			SERIES_TAIL(output) = totalOut;
+            nextOut = BIN_HEAD(output) + totalOut;  // Move the output pointer to the correct position
+            availableOut = SERIES_AVAIL(output);
+        }
+    }
+
+    BrotliDecoderDestroyInstance(BrotliDecoder);
+	BrotliDecoder = NULL;
+
+	if (limit > 0 && totalOut > limit) totalOut = limit;
+
+	SET_STR_END(output, totalOut);
+	SERIES_TAIL(output) = totalOut;
+	return output;
+
+error:
+	SET_INTEGER(DS_RETURN, BrotliDecoderGetErrorCode(BrotliDecoder));
+	BrotliDecoderDestroyInstance(BrotliDecoder);
+	BrotliDecoder = NULL;
+	Trap1(RE_BAD_PRESS, DS_RETURN);
+	return 0;  // Failed to decompress the input buffer
+}
+
+#endif //INCLUDE_BROTLI

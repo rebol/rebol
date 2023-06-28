@@ -46,6 +46,9 @@ Credits for Non-REBOL orginated C files and modules
   Copyright (c) 2016-2020 David Bryant
   BSD - https://github.com/dbry/lzw-ab
 
+* Brotli (optional):
+  Copyright (c) 2013 Google Inc. All Rights Reserved.
+  MIT - https://github.com/google/brotli
 
 * CRUSH (optional):
   Copyright (C) 2013, Ilya Muravyov
