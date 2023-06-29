@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Mezzanine: Series Helpers"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -71,7 +72,7 @@ remold: func [
 	/part {Limit the length of the result}
 	limit [integer!]
 ][
-	apply :mold [reduce :value only all flat part limit]
+	mold/:only/:all/:flat/:part reduce :value limit
 ]
 
 charset: func [
@@ -361,7 +362,7 @@ deduplicate: func [
     /skip "Treat the series as records of fixed size"
     size [integer!]
 ] [
-    head insert set also apply :unique [set case skip size] clear set
+    head insert set also unique/:case/:skip :set :size clear set
 ]
 
 alter: func [
@@ -407,7 +408,7 @@ collect: func [
 ][
 	unless output [output: make block! 16]
 	do func [keep] body func [value [any-type!] /only] [
-		output: apply :insert [output :value none none only]
+		output: insert/:only output :value
 		:value
 	]
 	either into [output] [head output]

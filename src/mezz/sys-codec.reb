@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Boot Sys: Encoder and Decoder"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -75,9 +76,7 @@ encode: function [
 			do-codec cod/entry 'encode data
 		][
 			either function? try [:cod/encode][
-				either as [
-					apply :cod/encode [data 'as options]
-				][	cod/encode data ]
+				cod/encode/:as :options
 			][
 				cause-error 'internal 'not-done type
 			]

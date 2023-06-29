@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Mezzanine: File Related"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -105,7 +106,7 @@ ask: func [
 	/char "Waits only on single key press and returns char as a result"
 ][
 	prin question
-	also apply :input [hide] prin LF
+	also input/:hide prin LF
 ]
 
 confirm: func [
