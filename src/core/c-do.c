@@ -777,7 +777,7 @@ more_path:
 				if (SAME_SYM(path, args)) {
 					value = Get_Var(path);
 					useArgs = IS_TRUE(value);
-					SET_LOGIC(DS_VALUE(ds), useArgs);
+					if (useArgs) SET_TRUE(DS_VALUE(ds));
 					path++;				// remove processed refinement
 					continue;
 				}
@@ -789,7 +789,7 @@ more_get_path:
 					if (IS_REFINEMENT(args) && VAL_WORD_CANON(args) == VAL_WORD_CANON(path)) {
 						value = Get_Var(path);
 						useArgs = IS_TRUE(value);
-						SET_LOGIC(DS_VALUE(ds), useArgs);
+						if (useArgs) SET_TRUE(DS_VALUE(ds));
 						path++;				// remove processed refinement
 						break;
 					}

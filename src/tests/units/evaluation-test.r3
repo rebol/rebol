@@ -1161,7 +1161,7 @@ Rebol [
 	--test-- "dyn-ref-8"
 		ref: no
 		--assert (dyn-ref-fun/:ref 10 * 9 "hello" 789)
-			== [90 "hello" #[false] #[none] #[none] #[none] #[none] #[none]]
+			== [90 "hello" #[none] #[none] #[none] #[none] #[none] #[none]]
 
 	--test-- "dyn-ref-9"
 		ref: ref2: yes
@@ -1171,12 +1171,12 @@ Rebol [
 	--test-- "dyn-ref-10"
 		ref: no ref2: yes
 		--assert (dyn-ref-fun/:ref/:ref2 10 * 9 "hello" 789)
-			== [90 "hello" #[false] #[none] #[true] #[none] #[none] #[none]]
+			== [90 "hello" #[none] #[none] #[true] #[none] #[none] #[none]]
 
 	--test-- "dyn-ref-11"
 		ref: no ref2: ref3: yes
 		--assert (dyn-ref-fun/:ref/:ref2/:ref3 10 * 9 "hello" 789 6 7)
-			== [90 "hello" #[false] #[none] #[true] #[true] 6 7]
+			== [90 "hello" #[none] #[none] #[true] #[true] 6 7]
 	
 	--test-- "dyn-ref-12"		
 		dyn-ref-12-obj: context [
@@ -1186,7 +1186,7 @@ Rebol [
 		    bar: func [/local ref][
 		        ref: no
 				--assert (foo/:ref 10 * 9 "hello" 789)
-				== [90 "hello" #[false] #[none] #[none] #[none] #[none] #[none]]
+				== [90 "hello" #[none] #[none] #[none] #[none] #[none] #[none]]
 
 		        ref: yes
 				--assert (foo/:ref 10 * 9 "hello" 789)
