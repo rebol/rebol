@@ -289,7 +289,7 @@ reword: func [
 		if wtype <> type? char [char: to wtype char]
 		[a: any [to char b: char [escape | none]] to end fout]
 	]
-	either case [parse/case source rule] [parse source rule]
+	parse/:case source rule
 	; Return end of output with /into, head otherwise
 	either into [output] [head output]
 ]
@@ -378,9 +378,7 @@ alter: func [
 			append series :value true
 		]
 	]
-	to logic! unless remove (
-		either case [find/case series :value] [find series :value]
-	) [append series :value]
+	to logic! unless remove (find/:case series :value) [append series :value]
 ]
 
 supplement: func [
@@ -392,9 +390,7 @@ supplement: func [
 ][
 	result: series ; to return series at same position if value is found
 	any[
-		either case [
-			find/case series :value
-		][  find      series :value ]
+		find/:case series :value
 		append series :value
 	]
 	result
