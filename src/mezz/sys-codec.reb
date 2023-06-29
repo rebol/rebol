@@ -76,7 +76,10 @@ encode: function [
 			do-codec cod/entry 'encode data
 		][
 			either function? try [:cod/encode][
-				cod/encode/:as :options
+				;@@ cannot use dynamic refinement, because some codecs don't have /as
+				either as [
+					cod/encode/as :data :options
+				][	cod/encode :data ]
 			][
 				cause-error 'internal 'not-done type
 			]
