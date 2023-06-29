@@ -8,6 +8,44 @@ Rebol [
 
 ~~~start-file~~~ "Function"
 
+===start-group=== "Function refinements"
+	fce: func[a [string!] /ref1 b [integer!] /ref2 :c 'd][
+		reduce [a ref1 b ref2 c d]
+	]
+	--test-- "no refinements"
+	--assert all [error? e: try [fce  ] e/id = 'no-arg]
+	--assert all [error? e: try [fce 1] e/id = 'expect-arg]
+	--assert (fce "a") == ["a" #[none] #[none] #[none] #[none] #[none]]
+
+	--test-- "simple refinements"
+	--assert all [error? e: try [fce/ref1 "a"   ] e/id = 'no-arg]
+	--assert all [error? e: try [fce/ref1 "a" ""] e/id = 'expect-arg]
+	--assert (fce/ref1 "a" 1)     == ["a" #[true] 1 #[none] #[none] #[none]]
+	--assert (fce/ref1 "a" 1 + 1) == ["a" #[true] 2 #[none] #[none] #[none]]
+	--assert (fce/ref1/ref2 "a" 1 x y)     == ["a" #[true] 1 #[true] x y]
+	--assert (fce/ref2/ref1 "a" x y 1 + 1) == ["a" #[true] 2 #[true] x y]
+
+	--test-- "dynamic refinements"
+	ref1: yes --assert all [error? e: try [fce/:ref1 "a"   ] e/id = 'no-arg]
+	ref1: off --assert all [error? e: try [fce/:ref1 "a"   ] e/id = 'no-arg]
+	ref1: yes --assert all [error? e: try [fce/:ref1 "a" ""] e/id = 'expect-arg]
+	ref1: off --assert (fce/:ref1 "a" "")    == ["a" #[false] #[none] #[none] #[none] #[none]]
+	ref1: yes --assert (fce/:ref1 "a" 1)     == ["a" #[true]  1       #[none] #[none] #[none]]
+	ref1: off --assert (fce/:ref1 "a" 1)     == ["a" #[false] #[none] #[none] #[none] #[none]]
+	ref1: yes --assert all [(fce/:ref1 "a" x: 1 + 1) == ["a" #[true]  2       #[none] #[none] #[none]] x == 2]
+	ref1: off --assert all [(fce/:ref1 "a" x: 1 + 1) == ["a" #[false] #[none] #[none] #[none] #[none]] x == 2]
+	ref1: yes ref2: yes --assert (fce/:ref1/:ref2 "a" 1 + 1 x y) == ["a" #[true] 2 #[true] x y]
+	ref1: yes ref2: yes --assert (fce/:ref2/:ref1 "a" x y 1 + 1) == ["a" #[true] 2 #[true] x y]
+	ref1: yes ref2: off --assert (fce/:ref1/:ref2 "a" 1 + 1 x y) == ["a" #[true] 2 #[false] #[none] #[none]]
+	ref1: yes ref2: off --assert (fce/:ref2/:ref1 "a" x y 1 + 1) == ["a" #[true] 2 #[false] #[none] #[none]]
+	ref1: off ref2: yes --assert (fce/:ref1/:ref2 "a" 1 + 1 x y) == ["a" #[false] #[none] #[true] x y]
+	ref1: off ref2: yes --assert (fce/:ref2/:ref1 "a" x y 1 + 1) == ["a" #[false] #[none] #[true] x y]
+	ref1: off ref2: off --assert (fce/:ref1/:ref2 "a" 1 + 1 x y) == ["a" #[false] #[none] #[false] #[none] #[none]]
+	ref1: off ref2: off --assert (fce/:ref2/:ref1 "a" x y 1 + 1) == ["a" #[false] #[none] #[false] #[none] #[none]]
+
+===end-group===
+
+
 ===start-group=== "Apply"
 
 --test-- "apply :do [:func]"

@@ -668,6 +668,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 	REBINT dsf = dsp - DSF_BIAS;
 	REBVAL *tos;
 	REBVAL *func;
+	REBOOL useArgs = TRUE;  // can be used by get-word function refinements to ignore values
 
 	if ((dsp + 100) > (REBINT)SERIES_REST(DS_Series)) {
 		Expand_Stack(STACK_MIN);
@@ -716,7 +717,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 			index = Do_Next(block, index, IS_OP(func));
 			// THROWN is handled after the switch.
 			if (index == END_FLAG) Trap2(RE_NO_ARG, Func_Word(dsf), args);
-			DS_Base[ds] = *DS_POP;
+			if (useArgs) DS_Base[ds] = *DS_POP; else DS_DROP;
 			break;
 
 		case REB_LIT_WORD:	// 'WORD - Just get next value
@@ -725,11 +726,11 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 				if (IS_PAREN(value) || IS_GET_WORD(value) || IS_GET_PATH(value)) {
 					index = Do_Next(block, index, IS_OP(func));
 					// THROWN is handled after the switch.
-					DS_Base[ds] = *DS_POP;
+					if (useArgs) DS_Base[ds] = *DS_POP; else DS_DROP;
 				}
 				else {
 					index++;
-					DS_Base[ds] = *value;
+					if (useArgs) DS_Base[ds] = *value;
 				}
 			} else
 				SET_UNSET(&DS_Base[ds]); // allowed to be none
@@ -737,22 +738,18 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 
 		case REB_GET_WORD:	// :WORD - Get value
 			if (index < BLK_LEN(block)) {
-				DS_Base[ds] = *BLK_SKIP(block, index);
+				if (useArgs) DS_Base[ds] = *BLK_SKIP(block, index);
 				index++;
 			} else
 				SET_UNSET(&DS_Base[ds]); // allowed to be none
 			break;
-/*
-				value = BLK_SKIP(block, index);
-				index++;
-				if (IS_WORD(value) && VAL_WORD_FRAME(value)) value = Get_Var(value);
-				DS_Base[ds] = *value;
-*/
+
 		case REB_REFINEMENT: // /WORD - Function refinement
 			if (!path || IS_END(path)) return index;
 			if (IS_WORD(path)) {
 				// Optimize, if the refinement is the next arg:
 				if (SAME_SYM(path, args)) {
+					useArgs = TRUE;
 					SET_TRUE(DS_VALUE(ds)); // set refinement stack value true
 					path++;				// remove processed refinement
 					continue;
@@ -763,7 +760,36 @@ more_path:
 				args = BLK_SKIP(words, 1);
 				for (; NOT_END(args); args++, ds++) {
 					if (IS_REFINEMENT(args) && VAL_WORD_CANON(args) == VAL_WORD_CANON(path)) {
+						useArgs = TRUE;
 						SET_TRUE(DS_VALUE(ds)); // set refinement stack value true
+						path++;				// remove processed refinement
+						break;
+					}
+				}
+				// Was refinement found? If not, error:
+				if (IS_END(args)) Trap2(RE_NO_REFINE, Func_Word(dsf), path);
+				continue;
+			}
+			else if (IS_GET_WORD(path)) {
+				// This branch is almost same like the above one, but better to have it
+				// separated not to slow down regular refinements.
+				// Optimize, if the refinement is the next arg:
+				if (SAME_SYM(path, args)) {
+					value = Get_Var(path);
+					useArgs = IS_TRUE(value);
+					SET_LOGIC(DS_VALUE(ds), useArgs);
+					path++;				// remove processed refinement
+					continue;
+				}
+				// Refinement out of sequence, resequence arg order:
+more_get_path:
+				ds = dsp;
+				args = BLK_SKIP(words, 1);
+				for (; NOT_END(args); args++, ds++) {
+					if (IS_REFINEMENT(args) && VAL_WORD_CANON(args) == VAL_WORD_CANON(path)) {
+						value = Get_Var(path);
+						useArgs = IS_TRUE(value);
+						SET_LOGIC(DS_VALUE(ds), useArgs);
 						path++;				// remove processed refinement
 						break;
 					}
@@ -789,14 +815,15 @@ more_path:
 		}
 
 		// If word is typed, verify correct argument datatype:
-		if (!TYPE_CHECK(args, VAL_TYPE(DS_VALUE(ds))))
+		if (!TYPE_CHECK(args, VAL_TYPE(DS_VALUE(ds))) && useArgs)
 			Trap3(RE_EXPECT_ARG, Func_Word(dsf), args, Of_Type(DS_VALUE(ds)));
 	}
 
 	// Hack to process remaining path:
 	if (path && NOT_END(path)) {
-		if (!IS_WORD(path)) Trap1(RE_BAD_REFINE, path);
-		goto more_path;
+		if (IS_WORD(path)) goto more_path; 
+		if (IS_GET_WORD(path)) goto more_get_path;
+		Trap1(RE_BAD_REFINE, path);
 	}
 
 	return index;
