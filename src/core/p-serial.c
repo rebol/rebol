@@ -43,7 +43,6 @@
 	REBREQ *req;	// IO request
 	REBVAL *spec;	// port spec
 	REBVAL *arg;	// action argument value
-	REBVAL *val;	// e.g. port number value
 	REBINT result;	// IO result
 	REBCNT refs;	// refinement argument flags
 	REBCNT len;		// generic length

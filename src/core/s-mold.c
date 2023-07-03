@@ -1046,8 +1046,6 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 {
 	ERROR_OBJ *err;
 	REBVAL *msg;  // Error message block
-	REBCNT sym;
-	REBVAL word;
 
 	// Protect against recursion. !!!!
 

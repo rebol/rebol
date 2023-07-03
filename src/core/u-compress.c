@@ -423,11 +423,8 @@ static BrotliDecoderState *BrotliDecoder = NULL;
 **
 ***********************************************************************/
 {
-	REBU64 size;
 	REBU64 out_len;
 	REBSER *output;
-	REBINT err;
-	REBYTE *dest;
 	REBYTE *src = BIN_HEAD(input) + index;
 	BrotliDecoderResult res;
 
