@@ -362,7 +362,7 @@ void BrotliDefaultFreeFunc(void* opaque, void* address) {
 
 /***********************************************************************
 **
-*/  REBSER *CompressBrotli(REBSER *input, REBINT index, REBCNT in_len, REBINT level)
+*/  REBSER *CompressBrotli(REBSER *input, REBINT index, REBLEN in_len, REBINT level)
 /*
 **      Compress a binary (only) using Brotli compression.
 **		data
@@ -390,7 +390,7 @@ void BrotliDefaultFreeFunc(void* opaque, void* address) {
 	}
 
 	availableOut = BrotliEncoderMaxCompressedSize(availableIn);
-	output = Make_Binary(availableOut);
+	output = Make_Binary((REBLEN)availableOut);
 
 	inp = BIN_HEAD(input) + index;
 	out = BIN_HEAD(output);
@@ -406,7 +406,7 @@ void BrotliDefaultFreeFunc(void* opaque, void* address) {
 
 	BrotliEncoderDestroyInstance(BrotliEncoder);
 
-	SERIES_TAIL(output) = totalOut;
+	SERIES_TAIL(output) = (REBLEN)totalOut;
 	if (SERIES_AVAIL(output) > (1<<14)) // Is there wasted space?
 		output = Copy_Series(output); // Trim it down if too big. !!! Revisit this based on mem alloc alg.
 	return output;
@@ -461,9 +461,9 @@ static BrotliDecoderState *BrotliDecoder = NULL;
 
         // If the output buffer is full, resize it
         if (availableOut == 0 && (limit == 0 || limit < totalOut)) {
-			SERIES_TAIL(output) = totalOut;
+			SERIES_TAIL(output) = (REBLEN)totalOut;
 			Expand_Series(output, AT_TAIL, out_len); //@@ May throw an error and so the decoder would not be released!
-			SERIES_TAIL(output) = totalOut;
+			SERIES_TAIL(output) = (REBLEN)totalOut;
             nextOut = BIN_HEAD(output) + totalOut;  // Move the output pointer to the correct position
             availableOut = SERIES_AVAIL(output);
         }
@@ -475,7 +475,7 @@ static BrotliDecoderState *BrotliDecoder = NULL;
 	if (limit > 0 && totalOut > limit) totalOut = limit;
 
 	SET_STR_END(output, totalOut);
-	SERIES_TAIL(output) = totalOut;
+	SERIES_TAIL(output) = (REBLEN)totalOut;
 	return output;
 
 error:
