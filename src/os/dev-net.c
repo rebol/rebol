@@ -627,6 +627,7 @@ lserr:
 	// the new values for IP and ports and links this request to the
 	// original via the sock->data.
 	news = MAKE_NEW(*news);	// Be sure to deallocate it
+	if (!news) return DR_ERROR;
 	CLEARS(news);
 //	*news = *sock;
 	news->device = sock->device;
