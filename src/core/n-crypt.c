@@ -837,10 +837,10 @@ error:
 			(err = mbedtls_asn1_get_mpi(&p, end, &s)) != 0) {
 			goto done;
 		}
-		err = ecdsa_verify_restartable(
+		err = mbedtls_ecdsa_verify(
 			&mbed->MBEDTLS_PRIVATE(grp),
 			VAL_BIN_AT(val_hash), VAL_LEN(val_hash),
-			&mbed->MBEDTLS_PRIVATE(Q), &r, &s, NULL);
+			&mbed->MBEDTLS_PRIVATE(Q), &r, &s);
 		if (err) goto done;
 		SET_TRUE(D_RET);
 	}

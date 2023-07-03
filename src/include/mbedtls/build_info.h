@@ -6,22 +6,22 @@
  *  Include this file if you need to depend on the
  *  configuration options defined in mbedtls_config.h or MBEDTLS_CONFIG_FILE
  */
- /*
-  *  Copyright The Mbed TLS Contributors
-  *  SPDX-License-Identifier: Apache-2.0
-  *
-  *  Licensed under the Apache License, Version 2.0 (the "License"); you may
-  *  not use this file except in compliance with the License.
-  *  You may obtain a copy of the License at
-  *
-  *  http://www.apache.org/licenses/LICENSE-2.0
-  *
-  *  Unless required by applicable law or agreed to in writing, software
-  *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-  *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  See the License for the specific language governing permissions and
-  *  limitations under the License.
-  */
+/*
+ *  Copyright The Mbed TLS Contributors
+ *  SPDX-License-Identifier: Apache-2.0
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *  not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 
 #ifndef MBEDTLS_BUILD_INFO_H
 #define MBEDTLS_BUILD_INFO_H
@@ -37,7 +37,7 @@
  * Major, Minor, Patchlevel
  */
 #define MBEDTLS_VERSION_MAJOR  3
-#define MBEDTLS_VERSION_MINOR  3
+#define MBEDTLS_VERSION_MINOR  4
 #define MBEDTLS_VERSION_PATCH  0
 
 /**
@@ -45,16 +45,16 @@
  *    MMNNPP00
  *    Major version | Minor version | Patch version
  */
-#define MBEDTLS_VERSION_NUMBER         0x03030000
-#define MBEDTLS_VERSION_STRING         "3.3.0"
-#define MBEDTLS_VERSION_STRING_FULL    "mbed TLS 3.3.0"
+#define MBEDTLS_VERSION_NUMBER         0x03040000
+#define MBEDTLS_VERSION_STRING         "3.4.0"
+#define MBEDTLS_VERSION_STRING_FULL    "mbed TLS 3.4.0"
 
 #if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_DEPRECATE)
 #define _CRT_SECURE_NO_DEPRECATE 1
 #endif
 
 /* Define `inline` on some non-C99-compliant compilers. */
-#if ( defined(__ARMCC_VERSION) || defined(_MSC_VER) ) && \
+#if (defined(__ARMCC_VERSION) || defined(_MSC_VER)) && \
     !defined(inline) && !defined(__cplusplus)
 #define inline __inline
 #endif
@@ -67,7 +67,7 @@
 
 #if defined(MBEDTLS_CONFIG_VERSION) && ( \
     MBEDTLS_CONFIG_VERSION < 0x03000000 || \
-    MBEDTLS_CONFIG_VERSION > MBEDTLS_VERSION_NUMBER )
+                             MBEDTLS_CONFIG_VERSION > MBEDTLS_VERSION_NUMBER)
 #error "Invalid config version, defined value of MBEDTLS_CONFIG_VERSION is unsupported"
 #endif
 
@@ -80,24 +80,34 @@
 #include MBEDTLS_USER_CONFIG_FILE
 #endif
 
+/* Auto-enable MBEDTLS_MD_LIGHT based on MBEDTLS_MD_C.
+ * This allows checking for MD_LIGHT rather than MD_LIGHT || MD_C.
+ */
+#if defined(MBEDTLS_MD_C)
+#define MBEDTLS_MD_LIGHT
+#endif
+
+/* Auto-enable MBEDTLS_MD_LIGHT if some module needs it.
+ */
+#if defined(MBEDTLS_PEM_PARSE_C) || \
+    defined(MBEDTLS_RSA_C)
+#define MBEDTLS_MD_LIGHT
+#endif
+
+/* If MBEDTLS_PSA_CRYPTO_C is defined, make sure MBEDTLS_PSA_CRYPTO_CLIENT
+ * is defined as well to include all PSA code.
+ */
+#if defined(MBEDTLS_PSA_CRYPTO_C)
+#define MBEDTLS_PSA_CRYPTO_CLIENT
+#endif /* MBEDTLS_PSA_CRYPTO_C */
+
 /* The PK wrappers need pk_write functions to format RSA key objects
  * when they are dispatching to the PSA API. This happens under USE_PSA_CRYPTO,
- * and also even without USE_PSA_CRYPTO for mbedtls_pk_sign_ext().
- * PSA crypto also needs pk_write to export RSA keys (otherwise the build
- * goes through but psa_export_key() and psa_export_public_key() fail on
- * RSA keys), and pk_parse to work with RSA keys in almost any way.
- */
+ * and also even without USE_PSA_CRYPTO for mbedtls_pk_sign_ext(). */
 #if defined(MBEDTLS_PSA_CRYPTO_C) && defined(MBEDTLS_RSA_C)
 #define MBEDTLS_PK_C
 #define MBEDTLS_PK_WRITE_C
 #define MBEDTLS_PK_PARSE_C
-#endif
-
-/* Under MBEDTLS_USE_PSA_CRYPTO, the pk module needs pk_write functions
- * to pass ECC keys to PSA. */
-#if defined(MBEDTLS_PK_C) &&                                    \
-    defined(MBEDTLS_USE_PSA_CRYPTO) && defined(MBEDTLS_ECP_C)
-#define MBEDTLS_PK_WRITE_C
 #endif
 
 #if !defined(MBEDTLS_SSL_PROTO_TLS1_2)

@@ -147,12 +147,14 @@ extern "C" {
 #endif
 
 #if defined(PSA_WANT_ALG_JPAKE)
+#if !defined(MBEDTLS_PSA_ACCEL_ALG_JPAKE)
 #define MBEDTLS_PSA_BUILTIN_PAKE 1
 #define MBEDTLS_PSA_BUILTIN_ALG_JPAKE 1
 #define MBEDTLS_ECP_DP_SECP256R1_ENABLED
 #define MBEDTLS_BIGNUM_C
 #define MBEDTLS_ECP_C
 #define MBEDTLS_ECJPAKE_C
+#endif /* MBEDTLS_PSA_ACCEL_ALG_JPAKE */
 #endif /* PSA_WANT_ALG_JPAKE */
 
 #if defined(PSA_WANT_ALG_RIPEMD160) && !defined(MBEDTLS_PSA_ACCEL_ALG_RIPEMD160)
@@ -296,9 +298,9 @@ extern "C" {
     (defined(PSA_WANT_ALG_OFB) && !defined(MBEDTLS_PSA_ACCEL_ALG_OFB)) || \
     defined(PSA_WANT_ALG_ECB_NO_PADDING) || \
     (defined(PSA_WANT_ALG_CBC_NO_PADDING) && \
-     !defined(MBEDTLS_PSA_ACCEL_ALG_CBC_NO_PADDING)) || \
+    !defined(MBEDTLS_PSA_ACCEL_ALG_CBC_NO_PADDING)) || \
     (defined(PSA_WANT_ALG_CBC_PKCS7) && \
-     !defined(MBEDTLS_PSA_ACCEL_ALG_CBC_PKCS7)) || \
+    !defined(MBEDTLS_PSA_ACCEL_ALG_CBC_PKCS7)) || \
     (defined(PSA_WANT_ALG_CMAC) && !defined(MBEDTLS_PSA_ACCEL_ALG_CMAC))
 #define PSA_HAVE_SOFT_BLOCK_MODE 1
 #endif
@@ -841,8 +843,20 @@ extern "C" {
 
 #endif /* MBEDTLS_PSA_CRYPTO_CONFIG */
 
+#if defined(PSA_WANT_ALG_ECDSA) && defined(PSA_WANT_KEY_TYPE_ECC_KEY_PAIR) && \
+    defined(PSA_WANT_KEY_TYPE_ECC_PUBLIC_KEY)
+#define PSA_HAVE_FULL_ECDSA 1
+#endif
+
+#if defined(PSA_WANT_ALG_JPAKE) && defined(PSA_WANT_KEY_TYPE_ECC_KEY_PAIR) && \
+    defined(PSA_WANT_KEY_TYPE_ECC_PUBLIC_KEY)
+#define PSA_HAVE_FULL_JPAKE 1
+#endif
+
 /* These features are always enabled. */
 #define PSA_WANT_KEY_TYPE_DERIVE 1
+#define PSA_WANT_KEY_TYPE_PASSWORD 1
+#define PSA_WANT_KEY_TYPE_PASSWORD_HASH 1
 #define PSA_WANT_KEY_TYPE_RAW_DATA 1
 
 #ifdef __cplusplus
