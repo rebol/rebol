@@ -48,8 +48,6 @@
 extern DEVICE_CMD Init_Net(REBREQ *); // Share same init
 extern DEVICE_CMD Quit_Net(REBREQ *);
 
-extern void Signal_Device(REBREQ *req, REBINT type);
-
 #ifdef HAS_ASYNC_DNS
 // Async DNS requires a window handle to signal completion (WSAASync)
 extern HWND Event_Handle;
@@ -164,7 +162,7 @@ error:
 	sock->net.host_info = 0;
 
 	sock->error = GET_ERROR;
-	//Signal_Device(sock, EVT_ERROR);
+	//OS_Signal_Device(sock, EVT_ERROR);
 	return DR_ERROR; // Remove it from pending list
 }
 
@@ -201,10 +199,10 @@ error:
 					req->data = (REBYTE*)host->h_name;
 				else
 					COPY_MEM((char*)&(req->net.remote_ip), (char *)(*host->h_addr_list), 4); //he->h_length);
-				Signal_Device(req, EVT_READ);
+				OS_Signal_Device(req, EVT_READ);
 			}
 			else
-				Signal_Device(req, EVT_ERROR);
+				OS_Signal_Device(req, EVT_ERROR);
 			change = TRUE;
 		}
 		else prior = &req->next;

@@ -248,7 +248,7 @@ static int Poll_Default(REBDEV *dev)
 
 /***********************************************************************
 **
-*/	void Signal_Device(REBREQ *req, REBINT type)
+*/	void OS_Signal_Device(REBREQ *req, REBINT type)
 /*
 **		Generate a device event to awake a port on REBOL.
 **
@@ -351,7 +351,7 @@ static int Poll_Default(REBDEV *dev)
 	else if (dev->pending) {
 		Detach_Request(&dev->pending, req); // often a no-op
 		if (result == DR_ERROR && GET_FLAG(req->flags, RRF_ALLOC)) { // not on stack
-			Signal_Device(req, EVT_ERROR);
+			OS_Signal_Device(req, EVT_ERROR);
 		}
 	}
 	else if (result < 0) {

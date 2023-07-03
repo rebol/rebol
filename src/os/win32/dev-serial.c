@@ -191,7 +191,7 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 	//RL_Print("reading %d bytes\n", req->length);
 	if (!ReadFile(req->handle, req->data, req->length, &result, 0) || result < 0) {
 		req->error = -RFE_BAD_READ;
-		Signal_Device(req, EVT_ERROR);
+		OS_Signal_Device(req, EVT_ERROR);
 		return DR_ERROR;
 	} else {
 		if (result == 0) {
@@ -199,7 +199,7 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 		} else if (result > 0){
 			//RL_Print("read %d bytes\n", req->actual);
 			req->actual = result;
-			Signal_Device(req, EVT_READ);
+			OS_Signal_Device(req, EVT_READ);
 		}
 	}
 
@@ -237,13 +237,13 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 
 	if (result < 0) {
 		req->error = -RFE_BAD_WRITE;
-		Signal_Device(req, EVT_ERROR);
+		OS_Signal_Device(req, EVT_ERROR);
 		return DR_ERROR;
 	}
 	req->actual += result;
 	//req->data += result;
 	if (req->actual >= req->length) {
-		Signal_Device(req, EVT_WROTE);
+		OS_Signal_Device(req, EVT_WROTE);
 		return DR_DONE;
 	} else {
 		SET_FLAG(req->flags, RRF_ACTIVE); /* notify OS_WAIT of activity */

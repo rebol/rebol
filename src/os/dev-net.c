@@ -54,7 +54,6 @@
 #define WATCH4(s,a,b,c,d)
 #endif
 
-void Signal_Device(REBREQ *req, REBINT type);
 DEVICE_CMD Listen_Socket(REBREQ *sock);
 
 #ifdef TO_WINDOWS
@@ -214,7 +213,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	// Failed, get error code (os local):
 	if (result == BAD_SOCKET) {
 		sock->error = GET_ERROR;
-		Signal_Device(sock, EVT_ERROR);
+		OS_Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
 
@@ -225,7 +224,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	if (!Nonblocking_Mode(sock->socket)) {
 		sock->error = GET_ERROR;
 		CLOSE_SOCKET(sock->socket);
-		Signal_Device(sock, EVT_ERROR);
+		OS_Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
 
@@ -270,7 +269,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 
 		if (CLOSE_SOCKET(sock->socket)) {
 			sock->error = GET_ERROR;
-			Signal_Device(sock, EVT_ERROR);
+			OS_Signal_Device(sock, EVT_ERROR);
 			return DR_ERROR;
 		}
 	}
@@ -306,10 +305,10 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 		if (!sock->error) { // Success!
 			host = (HOSTENT*)sock->net.host_info;
 			COPY_MEM((char*)&(sock->net.remote_ip), (char *)(*host->h_addr_list), 4); //he->h_length);
-			Signal_Device(sock, EVT_LOOKUP);
+			OS_Signal_Device(sock, EVT_LOOKUP);
 		}
 		else
-			Signal_Device(sock, EVT_ERROR);
+			OS_Signal_Device(sock, EVT_ERROR);
 		OS_Free(host);	// free what we allocated earlier
 		sock->socket = sock->length; // Restore TCP socket saved below
 		sock->net.host_info = 0;
@@ -334,13 +333,13 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	if (host) {
 		COPY_MEM((char*)&(sock->net.remote_ip), (char *)(*host->h_addr_list), 4); //he->h_length);
 		CLR_FLAG(sock->flags, RRF_DONE);
-		Signal_Device(sock, EVT_LOOKUP);
+		OS_Signal_Device(sock, EVT_LOOKUP);
 		return DR_DONE;
 	}
 #endif
 
 	sock->error = GET_ERROR;
-	Signal_Device(sock, EVT_ERROR);
+	OS_Signal_Device(sock, EVT_ERROR);
 	return DR_DONE; // Using DONE instead of ERROR -> https://github.com/Oldes/Rebol-issues/issues/2441
 }
 
@@ -378,7 +377,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 		CLR_FLAG(sock->state, RSM_ATTEMPT);
 		SET_FLAG(sock->state, RSM_CONNECT);
 		Get_Local_IP(sock);
-		Signal_Device(sock, EVT_CONNECT);
+		OS_Signal_Device(sock, EVT_CONNECT);
 		return DR_DONE; // done
 	}
 
@@ -397,7 +396,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 		CLR_FLAG(sock->state, RSM_ATTEMPT);
 		SET_FLAG(sock->state, RSM_CONNECT);
 		Get_Local_IP(sock);
-		Signal_Device(sock, EVT_CONNECT);
+		OS_Signal_Device(sock, EVT_CONNECT);
 		return DR_DONE; // done
 
 #ifdef TO_WINDOWS
@@ -414,7 +413,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 		// An error happened:
 		CLR_FLAG(sock->state, RSM_ATTEMPT);
 		sock->error = result;
-		Signal_Device(sock, EVT_ERROR);
+		OS_Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
 }
@@ -455,7 +454,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	if (!GET_FLAG(sock->state, RSM_CONNECT)
 			&& !GET_FLAG(sock->modes, RST_UDP)) {
 		sock->error = -18;
-		Signal_Device(sock, EVT_ERROR);
+		OS_Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
 
@@ -492,7 +491,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 			sock->data += result;
 			sock->actual += result;
 			if (sock->actual >= sock->length) {
-				Signal_Device(sock, EVT_WROTE);
+				OS_Signal_Device(sock, EVT_WROTE);
 				return DR_DONE;
 			}
 			SET_FLAG(sock->flags, RRF_ACTIVE); /* notify OS_WAIT of activity */
@@ -511,13 +510,13 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 				sock->net.remote_port = ntohs(remote_addr.sin_port);
 			}
 			sock->actual = (u32)result;
-			Signal_Device(sock, EVT_READ);
+			OS_Signal_Device(sock, EVT_READ);
 			return DR_DONE;
 		}
 		if (result == 0) {		// The socket gracefully closed.
 			sock->actual = 0;
 			CLR_FLAG(sock->state, RSM_CONNECT); // But, keep RRF_OPEN true
-			Signal_Device(sock, EVT_CLOSE);
+			OS_Signal_Device(sock, EVT_CLOSE);
 			return DR_DONE;
 		}
 		// if (result < 0) ...
@@ -533,7 +532,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	WATCH4("ERROR: recv(%d %x) len: %d error: %d\n", sock->socket, sock->data, len, result);
 	// A nasty error happened:
 	sock->error = (u32)result;
-	Signal_Device(sock, EVT_ERROR);
+	OS_Signal_Device(sock, EVT_ERROR);
 	return DR_ERROR;
 }
 
@@ -564,7 +563,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	if (result) {
 lserr:
 		sock->error = GET_ERROR;
-		Signal_Device(sock, EVT_ERROR);
+		OS_Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
 
@@ -619,7 +618,7 @@ lserr:
 		result = GET_ERROR;
 		if (result == NE_WOULDBLOCK) return DR_PEND;
 		sock->error = result;
-		Signal_Device(sock, EVT_ERROR);
+		OS_Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
 
@@ -644,7 +643,7 @@ lserr:
 	Nonblocking_Mode(news->socket);
 
 	Attach_Request((REBREQ**)&sock->data, news);
-	Signal_Device(sock, EVT_ACCEPT);
+	OS_Signal_Device(sock, EVT_ACCEPT);
 
 	// Even though we signalled, we keep the listen pending to
 	// accept additional connections.
