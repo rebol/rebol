@@ -555,7 +555,7 @@ new_line:
 
 /***********************************************************************
 **
-*/  const REBYTE *Scan_Raw_String(const REBYTE *src, SCAN_STATE *scan_state, int num)
+*/  const REBYTE *Scan_Raw_String(const REBYTE *src, SCAN_STATE *scan_state, REBLEN num)
 /*
 **      Scan a raw string (without any modifications).
 **		Eliminates need of double escaping and allowes unmatched braces.

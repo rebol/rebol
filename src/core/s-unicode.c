@@ -808,7 +808,7 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 		if (uni) {
 			// not using wcslen, because on some systems wchar_t has 4 bytes!
 			cnt = 0;
-			while (*up++ != 0 && cnt < max) cnt++;
+			while (*up++ != 0 && cnt < (REBLEN)max) cnt++;
 			up = (REBUNI*)src;
 		} else
 			cnt = LEN_BYTES(bp);

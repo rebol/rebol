@@ -312,7 +312,7 @@ double weighted_rgb_color_distance(long r1, long g1, long b1, long r2, long g2, 
 	} else {
 		pixels = VAL_IMAGE_WIDE(img1) * VAL_IMAGE_HIGH(img1);
 
-		for (int i = 0; i < pixels; i++, rgba1 += 4, rgba2 += 4) {
+		for (REBCNT i = 0; i < pixels; i++, rgba1 += 4, rgba2 += 4) {
 			dist += weighted_rgb_color_distance(
 				rgba1[C_R], rgba1[C_G], rgba1[C_B],
 				rgba2[C_R], rgba2[C_G], rgba2[C_B]
