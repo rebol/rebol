@@ -107,6 +107,7 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 	}
 
 	PurgeComm(h,PURGE_RXCLEAR|PURGE_TXCLEAR);  //make sure buffers are clean
+	return 0;
 }
 
 /***********************************************************************
