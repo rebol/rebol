@@ -1227,6 +1227,7 @@ void Paint_Window(HWND window);
 	BitmapInfo.bmiHeader.biClrImportant = 0;
 
 	hSourceBitmap = CreateDIBSection(hDC, &BitmapInfo, DIB_RGB_COLORS, (void**)&ppvBits, NULL, 0);
+	if (!hSourceBitmap) return NULL;
 
 	//Release the system display DC
     ReleaseDC(NULL, hDC);

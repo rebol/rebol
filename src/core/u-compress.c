@@ -376,7 +376,7 @@ void BrotliDefaultFreeFunc(void* opaque, void* address) {
 	size_t  totalOut = 0;
 	REBSER *output;
 	REBYTE *out;
-	REBYTE *inp;
+	const uint8_t *inp;
 
 	if (level < 0)
 		level = 6;
@@ -392,7 +392,7 @@ void BrotliDefaultFreeFunc(void* opaque, void* address) {
 	availableOut = BrotliEncoderMaxCompressedSize(availableIn);
 	output = Make_Binary((REBLEN)availableOut);
 
-	inp = BIN_HEAD(input) + index;
+	inp = (const uint8_t*)(BIN_HEAD(input) + index);
 	out = BIN_HEAD(output);
 
 	BrotliEncoderSetParameter(BrotliEncoder, BROTLI_PARAM_QUALITY, level); // Set compression quality (0-11)
@@ -452,7 +452,7 @@ static BrotliDecoderState *BrotliDecoder = NULL;
     uint8_t* nextOut = BIN_HEAD(output);
 
     while (1) {
-		res = BrotliDecoderDecompressStream(BrotliDecoder, &availableIn, &nextIn, &availableOut, &nextOut, &totalOut);
+		res = BrotliDecoderDecompressStream(BrotliDecoder, &availableIn, (const uint8_t **)&nextIn, &availableOut, &nextOut, &totalOut);
 		if (res == BROTLI_DECODER_RESULT_ERROR || res == BROTLI_DECODER_RESULT_NEEDS_MORE_INPUT) goto error;
 
         if (BrotliDecoderIsFinished(BrotliDecoder) || (limit > 0 && totalOut > limit)) {
