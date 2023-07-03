@@ -1197,7 +1197,6 @@ new_line:
             goto scanword;
 
         case LEX_SPECIAL_POUND:
-        pound:
             cp++;
 /*        hex:
           if (HAS_LEX_FLAGS(flags, ~(LEX_FLAG(LEX_SPECIAL_POUND) | LEX_FLAG(LEX_SPECIAL_PERIOD)
