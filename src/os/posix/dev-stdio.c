@@ -44,6 +44,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 #include <sys/ioctl.h>
 
 #include "reb-host.h"
@@ -140,6 +141,8 @@ static void Close_StdIO_Local(void)
 		return DR_DONE; // Do not do it again
 	}
 
+	setlocale(LC_ALL, ""); // Enable wide character support
+	
 	Init_Signals();
 
 	if (!GET_FLAG(req->modes, RDM_NULL)) {
