@@ -257,6 +257,7 @@ list-dir: closure/with [
 		max-depth [integer!] 
 ][
 	if f [r: l: false]
+	if path = '~ [path: :~]
 	recursive?: any [r max-depth]
 	files-only?: f
 	apply :dir-tree [
