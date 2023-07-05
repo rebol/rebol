@@ -185,7 +185,7 @@ dialects: construct [
 	rebcode:
 ]
 
-schemes: object []
+schemes: make block! 20 ; Block only before init-scheme! Than it is an object.
 
 ports: object [
 	wait-list: []	; List of ports to add to 'wait
@@ -339,6 +339,16 @@ standard: object [
 		parity: none
 		stop-bits: 1
 		flow-control: none ;not supported on all systems
+	]
+	
+	port-spec-audio: make port-spec-head [
+		scheme: 'audio
+		source: none
+		channels: 2
+		rate: 44100
+		bits: 16
+		sample-type: 1
+		loop-count: 0
 	]
 
 	file-info: construct [

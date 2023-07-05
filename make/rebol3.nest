@@ -171,7 +171,7 @@ core-files: [
 	%core/n-sets.c
 	%core/n-strings.c
 	%core/n-system.c
-;	%core/p-audio.c        ;not implemented
+;	%core/p-audio.c        ;optional, use: include-audio
 	%core/p-checksum.c
 ;	%core/p-clipboard.c    ;optional, use: include-clipboard (windows only!)
 	%core/p-console.c
@@ -490,12 +490,14 @@ include-midi: [
 	#if Windows? [
 		core-files: %core/p-midi.c
 		host-files: %os/win32/dev-midi.c
+		mezz-sys-files: %mezz/sys-ports-midi.reb
 		config:     INCLUDE_MIDI_DEVICE
 		library:    %winmm
 	]
 	#if macOS? [
 		core-files: %core/p-midi.c
 		host-files: %os/osx/dev-midi.c
+		mezz-sys-files: %mezz/sys-ports-midi.reb
 		config:     INCLUDE_MIDI_DEVICE
 		frameworks: [CoreServices CoreMIDI]
 
@@ -517,6 +519,14 @@ include-serial: [
 	]
 	#if Linux? [
 		host-files: %os/posix/dev-serial.c
+	]
+]
+include-audio: [
+	#if Windows? [
+		core-files: %core/p-audio.c
+		host-files: %os/win32/dev-audio.c
+		mezz-sys-files: %mezz/sys-ports-audio.reb
+		config:     INCLUDE_AUDIO_DEVICE
 	]
 ]
 
@@ -927,6 +937,7 @@ include-rebol-bulk: [
 	:include-base36-encoding
 	:include-base85-encoding
 	:include-view
+	:include-audio
 	:include-midi
 	:include-serial
 

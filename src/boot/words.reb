@@ -258,6 +258,7 @@ owner
 *port-modes*     ;@@ modes are defined in modes.r file and these
 *console-modes*  ;@@ placeholders are replaced here by make-boot.r script
 *serial-modes*
+*audio-modes*
 
 local-ip
 local-port
@@ -363,3 +364,5 @@ tag-length
 aad-length
 
 file-checksum
+
+xaudio-voice

@@ -35,3 +35,7 @@ REBOL [
 	rts ;request-to-send
 ]
 
+*audio-modes* [
+	play  ; used to pass play/pause commands into audio device
+]
+

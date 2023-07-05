@@ -333,8 +333,9 @@ int main(int argc, char **argv) {
 	argv = (char**)CommandLineToArgvW(GetCommandLineW(), &argc);
 	// Use title string as defined in resources file (.rc) with hardcoded ID 101
 	LoadStringW(App_Instance, 101, App_Title, MAX_TITLE_LENGTH);
-#ifdef INCLUDE_IMAGE_OS_CODEC 
-	CoInitialize(0);
+#if defined(INCLUDE_IMAGE_OS_CODEC) || defined(INCLUDE_AUDIO_DEVICE) 
+	//CoInitialize(0);
+	HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
 #endif
 
 #else //non Windows platforms

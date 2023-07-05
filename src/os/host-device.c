@@ -99,6 +99,14 @@ extern REBDEV Dev_Serial;
 #define DEVICE_PTR_SERIAL 0
 #endif
 
+#ifdef INCLUDE_AUDIO_DEVICE
+extern REBDEV Dev_Audio;
+#define DEVICE_PTR_AUDIO &Dev_Audio
+#else
+#define DEVICE_PTR_AUDIO 0
+#endif
+
+
 REBDEV *Devices[RDI_LIMIT] =
 {
 	0,
@@ -113,6 +121,7 @@ REBDEV *Devices[RDI_LIMIT] =
 	DEVICE_PTR_MIDI,
 	0, //DEVICE_PTR_CRYPT
 	DEVICE_PTR_SERIAL,
+	DEVICE_PTR_AUDIO,
 };
 
 
