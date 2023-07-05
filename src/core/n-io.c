@@ -578,7 +578,12 @@ chk_neg:
 	REBINT len;
 
 	len = OS_GET_CURRENT_DIR(&lpath);
+#ifdef TO_WINDOWS
 	ser = To_REBOL_Path(lpath, len, OS_WIDE, TRUE); // allocates extra for end /
+#else
+	ser = Decode_UTF_String(lpath, len, 8, 0, TRUE);
+	ser = To_REBOL_Path(BIN_HEAD(ser), SERIES_TAIL(ser), TRUE, TRUE);
+#endif
 	ASSERT1(ser, RP_MISC); // should never happen
 	OS_FREE(lpath);
 	Set_Series(REB_FILE, D_RET, ser);
@@ -609,7 +614,14 @@ chk_neg:
 
 	// convert the full OS path back to Rebol format
 	// used in error or as a result
+#ifdef TO_WINDOWS
 	ser = Value_To_REBOL_Path(&val, TRUE);
+#else
+	ser = Decode_UTF_String(VAL_BIN(&val), VAL_LEN(&val), 8, 0, TRUE);
+	ser = To_REBOL_Path(BIN_HEAD(ser), SERIES_TAIL(ser), TRUE, TRUE);
+#endif
+
+	
 	SET_FILE(arg, ser);
 
 	if (NZ(n)) {
