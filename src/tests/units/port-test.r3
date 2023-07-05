@@ -215,14 +215,16 @@ if system/platform = 'Windows [
 	--test-- "unicode directory"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2555
 		dir: what-dir
+		subdir: %obrázky/
+		full: dir/:subdir
 		--assert try [
-			make-dir   %obrázky
-			change-dir %obrázky
-			parse probe what-dir [dir %obrázky/]
+			full == make-dir subdir
+			full == change-dir subdir
+			full == what-dir
 		]
 		--assert dir = change-dir dir
 		--assert not error? try [delete %obrázky/]
-		
+
 ===end-group===
 
 ===start-group=== "file port"
