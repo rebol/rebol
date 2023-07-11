@@ -714,7 +714,7 @@ anonymize: func[
 	;; remove identifying information from data
 	data [string!]
 ] bind [
-	parse probe data [
+	parse data [
 		any [
 			thru LF [
 				  "Authorization:" some SP some uri
