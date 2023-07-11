@@ -90,7 +90,7 @@ input: func [
 		system/ports/input: port: open [scheme: 'console]
 	]
 	either hide [
-		request-password
+		also request-password prin LF
 	][
 		all [
 			line: read port
@@ -106,7 +106,7 @@ ask: func [
 	/char "Waits only on single key press and returns char as a result"
 ][
 	prin question
-	also input/:hide prin LF
+	input/:hide
 ]
 
 confirm: func [
