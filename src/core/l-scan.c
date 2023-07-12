@@ -1147,7 +1147,7 @@ new_line:
 			return -TOKEN_WORD;
 			
 		case LEX_SPECIAL_LESSER:
-			if (IS_LEX_ANY_SPACE(cp[1]) || cp[1] == ']' || cp[1] == 0) return TOKEN_WORD;	// CES.9121 Was LEX_DELIMIT - changed for </tag>
+			if (IS_LEX_ANY_SPACE(cp[1]) || cp[1] == ']' || cp[1] == ')' || cp[1] == 0) return TOKEN_WORD;	// CES.9121 Was LEX_DELIMIT - changed for </tag>
 
 			if (IS_LEX_DELIMIT(cp[2]) && (cp[1] == '>' || cp[1] == '=' || cp[1] == '<')) {
 				return TOKEN_WORD; // common cases: <> <= <<
