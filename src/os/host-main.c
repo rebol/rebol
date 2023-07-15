@@ -193,6 +193,7 @@ void Host_Repl(void) {
 					state = INPUT_MULTI_LINE_STRING;
 					break;
 				case '%':
+					if (utf8byte[1] == '"') continue;
 					n = 1;
 					while (utf8byte[n] == '%') n++;
 					if (utf8byte[n] == '{') {
