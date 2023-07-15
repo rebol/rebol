@@ -20,8 +20,10 @@ REBOL [
 ;-- Control Natives - nat_control.c
 
 ajoin: native [
-	{Reduces and joins a block of values into a new string.}
+	{Reduces and joins a block of values into a new string. Ignores none and unset values.}
 	block [block!]
+	/with delimiter [any-type!]
+	/all "Do not ignore none and unset values"
 ]
 
 also: native [

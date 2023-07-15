@@ -129,11 +129,20 @@ static struct digest {
 ***********************************************************************/
 {
 	REBSER *str;
+	REBCNT type = VAL_TYPE(VAL_BLK_DATA(D_ARG(1)));
+	REBVAL *delimiter = D_REF(2) ? D_ARG(3) : NULL;
 
-	str = Form_Reduce(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
+	str = Form_Reduce(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)), delimiter, D_REF(4));
 	if (!str) return R_TOS;
 
-	Set_String(DS_RETURN, str); // not D_RET (stack modified)
+	// Use result string-like type based on first value, except tag!
+	if (type < REB_STRING || type >= REB_TAG) type = REB_STRING;
+
+	//  Using DS_RETURN not D_RET (stack modified)
+	VAL_SET(DS_RETURN, type);
+	VAL_SERIES(DS_RETURN) = str;
+	VAL_INDEX(DS_RETURN) = 0;
+	VAL_SERIES_SIDE(DS_RETURN) = 0;
 
 	return R_RET;
 }

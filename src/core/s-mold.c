@@ -1462,7 +1462,7 @@ append:
 
 /***********************************************************************
 **
-*/	REBSER *Form_Reduce(REBSER *block, REBCNT index)
+*/	REBSER *Form_Reduce(REBSER *block, REBCNT index, REBVAL *delimiter, REBOOL all)
 /*
 **		Reduce a block and then form each value into a string. Return the
 **		string or NULL if an unwind triggered while reducing.
@@ -1472,13 +1472,31 @@ append:
 	REBINT start = DSP + 1;
 	REBINT n;
 	REB_MOLD mo = {0};
-
-	while (index < BLK_LEN(block)) {
-		index = Do_Next(block, index, 0);
-		if (THROWN(DS_TOP)) {
-			*DS_VALUE(start) = *DS_TOP;
-			DSP = start;
-			return NULL;
+	if (delimiter) {
+		while (index < BLK_LEN(block)) {
+			index = Do_Next(block, index, 0);
+			if (VAL_TYPE(DS_TOP) <= REB_NONE && !all) {
+				DS_DROP;
+				continue;
+			}
+			if (THROWN(DS_TOP)) {
+				*DS_VALUE(start) = *DS_TOP;
+				DSP = start;
+				return NULL;
+			}
+			DS_PUSH(delimiter);
+		}
+		if (DSP >= start) DS_DROP;
+	}
+	else {
+		while (index < BLK_LEN(block)) {
+			index = Do_Next(block, index, 0);
+			if (VAL_TYPE(DS_TOP) <= REB_NONE && !all) DS_DROP;
+			else if (THROWN(DS_TOP)) {
+				*DS_VALUE(start) = *DS_TOP;
+				DSP = start;
+				return NULL;
+			}
 		}
 	}
 
