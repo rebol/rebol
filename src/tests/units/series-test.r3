@@ -88,6 +88,21 @@ Rebol [
 	--assert %a//3      == ajoin/all/with [ %a  #[unset] 3] #"/"
 	--assert "a//3"     == ajoin/all/with [#"a" #[unset] 3] #"/"
 
+--test-- "FORM"
+	--assert "a b 3"    == form [ 'a  'b       3]
+	--assert "a b 3"    == form [ "a" "b"      3]
+	--assert "a b 3"    == form [ %a  "b"      3]
+	--assert "a b 3"    == form [#"a" "b"      3]
+	--assert "<a> b 3"  == form [ <a> "b"      3]
+	--assert "a none 3" == form [ "a" #[none]  3]
+	--assert "a none 3" == form [ %a  #[none]  3]
+	--assert "a none 3" == form [#"a" #[none]  3]
+	--assert "a  3"     == form [ "a" #[unset] 3]
+	--assert "a  3"     == form [ %a  #[unset] 3]
+	--assert "a  3"     == form [#"a" #[unset] 3]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2560
+	--assert "  1  2"   == form ["" "" 1 "" 2]
+	--assert "  1  2"   == form [#[unset] #[unset] 1 #[unset] 2]
 ===end-group===
 
 
