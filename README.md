@@ -41,6 +41,7 @@ It is possible to extend Rebol functionality using external modules (native and 
 * [Rebol/IRC](https://github.com/Oldes/Rebol-IRC) - Internet Relay Chat scheme
 * [Rebol/MathPresso](https://github.com/Siskin-framework/Rebol-MathPresso) - Mathematical Expression Parser And JIT Compiler
 * [Rebol/Names](https://github.com/Oldes/Rebol-Names) - Random names generator scheme
+* [Rebol/Spotify](https://github.com/Oldes/Rebol-Spotify) - Spotify Web API
 * [Rebol/OpenCV](https://github.com/Oldes/Rebol-OpenCV) - Computer Vision Library
 * [Rebol/SQLite](https://github.com/Siskin-framework/Rebol-SQLite) - SQL database engine
 * [Rebol/Triangulate](https://github.com/Siskin-framework/Rebol-Triangulate) - Two-Dimensional Quality Mesh Generator and Delaunay Triangulator
