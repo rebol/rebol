@@ -1,7 +1,7 @@
 Rebol [
 	Title:   "Spotify"
 	Purpose: "Spotify Web API access"
-	Version: 0.2.0
+	Version: 0.2.1
 	Author:  @Oldes
 	Date:    20-Jul-2023
 	File:    %spotify.reb
@@ -267,13 +267,16 @@ refresh: function[
 		])
 	]
 	data: attempt [load-json result/3]
-	either result/1 >= 400 [
+	if result/1 >= 400 [
 		sys/log/error 'SPOTIFY "Failed to refresh access token!"
 		if data/error_description [	sys/log/error 'SPOTIFY data/error_description ]
-		none
-	][
-		ctx/token: data
+		return none
 	]
+	try/with [
+		data/expires_in: now + (to time! data/expires_in)
+		ctx/token: data
+		store-config ctx
+	] :print
 ]
 
 request: func [
