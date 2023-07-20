@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.11.2
+version: 3.12.0
 
 #if Linux?   [ defines: TO_LINUX   ]
 #if macOS?   [ defines: TO_MACOS   ]
@@ -48,7 +48,7 @@ target-linux: [
 	sys:      linux
 	platform: Linux
 	vendor:   pc
-	compiler: gcc
+	compiler: clang
 
 	library: %dl
 ]
@@ -641,6 +641,10 @@ include-curves-x: [
 include-cryptography: [
 	; so far cca 183kB uncompressed (basic AES, all ellyptic curves, rsa, rc4, bignum, entropy )
 	config: INCLUDE_CRYPTOGRAPHY
+
+	#if Windows? [
+		library: %Advapi32 ;; used by mbedtls_platform_entropy_poll
+	]
 
 	define: MBEDTLS_ASN1_PARSE_C ; The generic ASN1 parser.
 	define: MBEDTLS_ASN1_WRITE_C ; The generic ASN1 writer.
@@ -1368,15 +1372,15 @@ eggs: [
 		]
 
 		"Rebol/Core linux-x64 shared library" [
-			name:     %lib-rebol3-core-linux-x64
-			lflag:    "-Wl,-install_name,'/usr/local/lib/librebol-core.3.so'"
+			name:     %librebol3-core-linux-x64
+			;lflag:    "-Wl,-install_name,'/usr/local/lib/librebol-core.3.so'"
 			:target-linux
 			:include-rebol-core
 			:make-x64-dll
 		]
 		"Rebol/Core linux-x64 host application" [
 			name:     %host-core-linux-x64
-			shared:   %lib-rebol3-core-linux-x64
+			shared:   %librebol3-core-linux-x64
 			:target-linux
 			:include-rebol-core
 			:make-x64-host
