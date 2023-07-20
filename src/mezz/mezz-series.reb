@@ -58,9 +58,7 @@ rejoin: func [
 	;/with "separator"
 ][
 	if empty? block: reduce block [return block]
-	append either series? first block [copy first block][
-		form first block
-	] next block
+	append either series? block/1 [copy block/1][form block/1] next block
 ]
 
 remold: func [
