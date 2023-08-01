@@ -220,6 +220,15 @@ Rebol [
 ===end-group=== 
 
 
+===start-group=== "mold char!"
+	--test-- "mold invisible chars"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2562
+		for i 127 160 1 [
+			--assert all [8 = length? v: mold to char! i  v/4 = #"("]
+		]
+===end-group=== 
+
+
 ===start-group=== "mold-all"
 	
 	--test-- "mold-true" --assert "true" = mold true
