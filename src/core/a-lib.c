@@ -1112,6 +1112,20 @@ RL_API REBSER* RL_Encode_UTF8_String(void *src, REBCNT len, REBFLG uni, REBFLG o
 	return Encode_UTF8_String(src, len, uni, opts);
 }
 
+RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
+/*
+**	Converts a single UTF8 code-point (to 32 bit).
+**
+**	Returns:
+**		32 bit character code
+**	Arguments:
+**		src  - UTF8 encoded data
+**		len  - number of source bytes consumed.
+*/
+{
+	return  Decode_UTF8_Char(&str, len);
+}
+
 RL_API REBSER* RL_Decode_UTF_String(REBYTE *src, REBCNT len, REBINT utf, REBFLG ccr, REBFLG uni)
 /*
 **	Decode the UTF8 encoded data into Rebol series.
