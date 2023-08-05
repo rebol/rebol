@@ -72,31 +72,37 @@ extern HWND      Focused_Window;
 
 //***** Constants *****
 
-// Virtual key conversion table, sorted by first column.
-const REBCNT Key_To_Event[] = {
-		VK_PRIOR,	EVK_PAGE_UP,
-		VK_NEXT,	EVK_PAGE_DOWN,
-		VK_END,		EVK_END,
-		VK_HOME,	EVK_HOME,
-		VK_LEFT,	EVK_LEFT,
-		VK_UP,		EVK_UP,
-		VK_RIGHT,	EVK_RIGHT,
-		VK_DOWN,	EVK_DOWN,
-		VK_INSERT,	EVK_INSERT,
-		VK_DELETE,	EVK_DELETE,
-		VK_F1,		EVK_F1,
-		VK_F2,		EVK_F2,
-		VK_F3,		EVK_F3,
-		VK_F4,		EVK_F4,
-		VK_F5,		EVK_F5,
-		VK_F6,		EVK_F6,
-		VK_F7,		EVK_F7,
-		VK_F8,		EVK_F8,
-		VK_F9,		EVK_F9,
-		VK_F10,		EVK_F10,
-		VK_F11,		EVK_F11,
-		VK_F12,		EVK_F12,
-		0x7fffffff,	0
+// Virtual key conversion table. Sorted by first column!
+const WORD Key_To_Event[] = {
+	VK_SHIFT,   EVK_SHIFT,
+	VK_CONTROL, EVK_CONTROL,
+	VK_MENU,    EVK_ALT,
+	VK_PAUSE,   EVK_PAUSE,
+	VK_CAPITAL, EVK_CAPITAL,
+	VK_ESCAPE,  EVK_ESCAPE,
+	VK_PRIOR,   EVK_PAGE_UP,
+	VK_NEXT,    EVK_PAGE_DOWN,
+	VK_END,     EVK_END,
+	VK_HOME,    EVK_HOME,
+	VK_LEFT,    EVK_LEFT,
+	VK_UP,      EVK_UP,
+	VK_RIGHT,   EVK_RIGHT,
+	VK_DOWN,    EVK_DOWN,
+	VK_INSERT,  EVK_INSERT,
+	VK_DELETE,  EVK_DELETE,
+	VK_F1,      EVK_F1,
+	VK_F2,      EVK_F2,
+	VK_F3,      EVK_F3,
+	VK_F4,      EVK_F4,
+	VK_F5,      EVK_F5,
+	VK_F6,      EVK_F6,
+	VK_F7,      EVK_F7,
+	VK_F8,      EVK_F8,
+	VK_F9,      EVK_F9,
+	VK_F10,     EVK_F10,
+	VK_F11,     EVK_F11,
+	VK_F12,     EVK_F12,
+	0, 0
 };
 
 //***** Externs *****
@@ -470,7 +476,7 @@ static void onModalBlock(
 			flags = Check_Modifiers(flags);
 			for (i = 0; Key_To_Event[i] && wParam > Key_To_Event[i]; i += 2);
 			if (wParam == Key_To_Event[i])
-				Add_Event_Key(gob, (msg==WM_KEYDOWN) ? EVT_KEY : EVT_KEY_UP, Key_To_Event[i+1] << 16, flags);
+				Add_Event_Key(gob, (msg==WM_KEYDOWN) ? EVT_CONTROL : EVT_CONTROL_UP, Key_To_Event[i+1], flags);
 			break;
 
 		case WM_CHAR:

@@ -508,7 +508,8 @@ view: object [
 		unfocus
 		scroll
 
-		control ;; used to pass control key events to a console port
+		control    ;; used to pass control key events to a console port
+		control-up ;; only on Windows?
 	]
 	event-keys: [
 		; Event types. Order dependent for C and REBOL.
@@ -538,6 +539,11 @@ view: object [
 		paste-start  ;; Bracketed paste turned on - https://cirw.in/blog/bracketed-paste
 		paste-end    ;; Bracketed paste turned off
 		escape       ;; Escape key
+		shift
+		control
+		alt
+		pause
+		capital	
 	]
 ]
 

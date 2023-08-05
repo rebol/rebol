@@ -266,35 +266,18 @@
 
 	case SYM_KEY:
 		n = VAL_EVENT_DATA(value);
-		if (VAL_EVENT_TYPE(value) == EVT_CONTROL) {
+		if (VAL_EVENT_TYPE(value) == EVT_KEY || VAL_EVENT_TYPE(value) == EVT_KEY_UP) {
+			SET_CHAR(val, n);
+			break;
+		}
+		else if (VAL_EVENT_TYPE(value) == EVT_CONTROL || VAL_EVENT_TYPE(value) == EVT_CONTROL_UP) {
 			arg = Get_System(SYS_VIEW, VIEW_EVENT_KEYS);
 			if (IS_BLOCK(arg) && n <= (REBINT)VAL_TAIL(arg)) {
 				*val = *VAL_BLK_SKIP(arg, n-1);
 				break;
 			}
-			goto is_none;
-			SET_CHAR(val, VAL_EVENT_DATA(value));
-			break;
 		}
-		if (VAL_EVENT_TYPE(value) != EVT_KEY && VAL_EVENT_TYPE(value) != EVT_KEY_UP)
-			goto is_none;
-		#ifdef TO_WINDOWS
-		n = VAL_EVENT_DATA(value); // key-words in top 16, chars in lower 16
-		if (n & 0xffff0000) {
-			arg = Get_System(SYS_VIEW, VIEW_EVENT_KEYS);
-			n = (n >> 16) - 1;
-			if (IS_BLOCK(arg) && n < (REBINT)VAL_TAIL(arg)) {
-				*val = *VAL_BLK_SKIP(arg, n);
-				break;
-			}
-			goto is_none;
-		}
-		#else
-		n = VAL_EVENT_DATA(value);
-		//n = Decode_UTF8_Char((REBYTE*)n, 0);
-		#endif
-		SET_CHAR(val, n);
-		break;
+		goto is_none;
 
 	case SYM_FLAGS:
 		if (VAL_EVENT_FLAGS(value) & (1<<EVF_DOUBLE | 1<<EVF_CONTROL | 1<<EVF_SHIFT)) {
