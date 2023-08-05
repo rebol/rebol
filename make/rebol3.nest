@@ -48,7 +48,7 @@ target-linux: [
 	sys:      linux
 	platform: Linux
 	vendor:   pc
-	compiler: clang
+	compiler: gcc
 
 	library: %dl
 ]
