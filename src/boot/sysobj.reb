@@ -234,6 +234,7 @@ state: object [
 	]
 	last-error:  none ; used by WHY?
 	last-result: none ; used to store last console result
+	wait-list: []     ; List of ports to add to 'wait
 ]
 
 modules: object [
@@ -281,7 +282,6 @@ dialects: construct [
 schemes: make block! 20 ; Block only before init-scheme! Than it is an object.
 
 ports: object [
-	wait-list: []	; List of ports to add to 'wait
 	system:         ; Port for system events
 	event:          ; Port for GUI
 	input:          ; Port for user input.
