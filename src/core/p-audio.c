@@ -46,7 +46,6 @@
 	REBCNT refs = 0;	// refinement argument flags
 	REBCNT len;
 	//REBOOL sync = FALSE; // act synchronously
-	REBVAL tmp;
 
 	port = Validate_Port_Value(port_value);
 

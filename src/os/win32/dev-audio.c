@@ -67,13 +67,13 @@ static void Send_Audio_Event(void *pBufferContext, u8 eventType, u32 data) {
 	evt.data = data;
 	RL_Event(&evt);
 }
-static void OnBufferEnd(IXAudio2VoiceCallback *This, void *ctx) { Send_Audio_Event(ctx, EVT_WROTE, 0); }
-static void OnStreamEnd(IXAudio2VoiceCallback *This) {  }
-static void OnVoiceProcessingPassEnd(IXAudio2VoiceCallback *This) { }//puts("OnVoiceProcessingPassEnd"); }
-static void OnVoiceProcessingPassStart(IXAudio2VoiceCallback *This, UINT32 SamplesRequired) { }//puts("OnVoiceProcessingPassStart"); }
-static void OnBufferStart(IXAudio2VoiceCallback *This, void *ctx) { }//puts("OnBufferStart"); }
-static void OnLoopEnd(IXAudio2VoiceCallback *This, void *ctx) { Send_Audio_Event(ctx, EVT_TIME, 0); }
-static void OnVoiceError(IXAudio2VoiceCallback *This, void *ctx, HRESULT err) { Send_Audio_Event(ctx, EVT_ERROR, err); }
+static void __stdcall OnBufferEnd(IXAudio2VoiceCallback *This, void *ctx) { Send_Audio_Event(ctx, EVT_WROTE, 0); }
+static void __stdcall OnStreamEnd(IXAudio2VoiceCallback *This) {  }
+static void __stdcall OnVoiceProcessingPassEnd(IXAudio2VoiceCallback *This) { }//puts("OnVoiceProcessingPassEnd"); }
+static void __stdcall OnVoiceProcessingPassStart(IXAudio2VoiceCallback *This, UINT32 SamplesRequired) { }//puts("OnVoiceProcessingPassStart"); }
+static void __stdcall OnBufferStart(IXAudio2VoiceCallback *This, void *ctx) { }//puts("OnBufferStart"); }
+static void __stdcall OnLoopEnd(IXAudio2VoiceCallback *This, void *ctx) { Send_Audio_Event(ctx, EVT_TIME, 0); }
+static void __stdcall OnVoiceError(IXAudio2VoiceCallback *This, void *ctx, HRESULT err) { Send_Audio_Event(ctx, EVT_ERROR, err); }
 
 IXAudio2VoiceCallback xAudioCallbacks = {
 	.lpVtbl = &(IXAudio2VoiceCallbackVtbl) {

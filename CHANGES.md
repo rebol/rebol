@@ -20,6 +20,11 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`511a4e`](https://github.com/Oldes/Rebol3/commit/511a4eab39a4f6d3f16619130c648482c89f751b) Unspecified calling convention fails in 32 bit build
+* [`2cde09`](https://github.com/Oldes/Rebol3/commit/2cde09b0d160011b54c53712a7b75233d6e30e6f) Not all control paths return a value warning
+* [`90fabd`](https://github.com/Oldes/Rebol3/commit/90fabdac2efdeaa2db663d8b0632cd4c48ca777d) Signed/unsigned mismatch
+* [`227f8d`](https://github.com/Oldes/Rebol3/commit/227f8d5ec92ae28e65a01bbcd7cded4cc3900042) Unreferenced local variable
+* [`f57e4f`](https://github.com/Oldes/Rebol3/commit/f57e4f23acda7f509f64a2c4fb0ab4676ab78243) Swapped location of the virtual key conversion table (host-event.c is not used in Base builds)
 * [`d22923`](https://github.com/Oldes/Rebol3/commit/d22923343da7d85f7d1cbf62e3186044aa0d938e) Moving the newly introduced host lib function to the tail (to keep compatibility with old extensions)
 * [`65a33d`](https://github.com/Oldes/Rebol3/commit/65a33ded795e8fef44aff457470de7038a5494af) Hide `X-goog-api-key` header field from HTTP logs
 * [`bd91b5`](https://github.com/Oldes/Rebol3/commit/bd91b598d88fdfcc86cfba55312189895437d222) `mold` emitting invisible chars in some cases
