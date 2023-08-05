@@ -2,10 +2,71 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+## 2023 August
+
+### Features:
+
+* [`4bcc98`](https://github.com/Oldes/Rebol3/commit/4bcc98d23b65223ceb215e815940e572b68161db) Simple `wait-for-key` function test file
+* [`e1c7da`](https://github.com/Oldes/Rebol3/commit/e1c7da7f86ba72806381ae98c98772ac74e0e57c) Using `poll` instead of `select` to query events on Posix
+* [`37145b`](https://github.com/Oldes/Rebol3/commit/37145b00d9729a6ed7bfe2b1a13571d54ceb60c0) Code reduction
+* [`84ae96`](https://github.com/Oldes/Rebol3/commit/84ae9604c0d98eba0e21e912f872b573897c6d82) Key presses with unprintable chars are now reported as `control` and `control-up` events on Windows (on console with turned off line mode and from GUI as well)
+* [`3f57b5`](https://github.com/Oldes/Rebol3/commit/3f57b5c619292d724d92dcce2afe45da7c300061) Preliminary support for char based input on Posix
+* [`37971d`](https://github.com/Oldes/Rebol3/commit/37971d0e5582b7426772c09e8659e41cb8b44b78) Access to `Decode_UTF8_Char` core function from host's sources
+
+### Changes:
+
+* [`ea3cd4`](https://github.com/Oldes/Rebol3/commit/ea3cd49398f22f40d080acd56274964457672410) Moved `wait-list` from `system/ports` to `system/state`
+* [`efbfa4`](https://github.com/Oldes/Rebol3/commit/efbfa4e3c1d5447d7d0a278810862b68983b0bff) Moved `event-keys` and `event-types` from `system/view` to `system/catalog`, because these are used not only in GUI
+
+### Fixes:
+
+* [`d22923`](https://github.com/Oldes/Rebol3/commit/d22923343da7d85f7d1cbf62e3186044aa0d938e) Moving the newly introduced host lib function to the tail (to keep compatibility with old extensions)
+* [`65a33d`](https://github.com/Oldes/Rebol3/commit/65a33ded795e8fef44aff457470de7038a5494af) Hide `X-goog-api-key` header field from HTTP logs
+* [`bd91b5`](https://github.com/Oldes/Rebol3/commit/bd91b598d88fdfcc86cfba55312189895437d222) `mold` emitting invisible chars in some cases
+
+## 2023 July
+
+### Features:
+
+* [`d423e9`](https://github.com/Oldes/Rebol3/commit/d423e91d6407e0f4e8d1e2508a20f324ddbd93e1) Support for optional Brotli encoding in HTTP scheme
+* [`7d24ad`](https://github.com/Oldes/Rebol3/commit/7d24ad85e992b45208322e532401682fcc4e2393) Updated Spotify module to version 0.2.1 (test file moved to the test folder)
+* [`1b74d4`](https://github.com/Oldes/Rebol3/commit/1b74d4d58c969d413f9ef971af02d3c0523df888) Updated Spotify module to version 0.2.0
+* [`05b700`](https://github.com/Oldes/Rebol3/commit/05b700462061d9af2506d2b0bcef4e86928507be) Shortened code of `rejoin` function
+* [`82682e`](https://github.com/Oldes/Rebol3/commit/82682e192e21724acc02ff684554b305aa62c09b) Enhanced `ajoin` native function for merging values into a string types
+* [`fd5656`](https://github.com/Oldes/Rebol3/commit/fd5656dd19f1f0f1fcaa8e188f8e834a760b46df) Initial audio device prototype for Windows (using XAudio2)
+
+### Changes:
+
+* [`8eb643`](https://github.com/Oldes/Rebol3/commit/8eb64355ad3092dd3fcde5f4302db0f167d787f1) Modified verbosity of the `gzip` codec
+* [`f49d96`](https://github.com/Oldes/Rebol3/commit/f49d969e28610014d5fb1fb0bbffb088373385b7) Renamed `Signal_Device` to `OS_Signal_Device`
+* [`473bb0`](https://github.com/Oldes/Rebol3/commit/473bb097e0ef3810d38f13a6669a3b7ba1564f45) Updated Mbed-TLS sources to version 3.4.0
+
+### Fixes:
+
+* [`a7c2cc`](https://github.com/Oldes/Rebol3/commit/a7c2ccde3419376517ed6cd3c32388571c73260b) Include only included optional compressions in `system/catalog/compressions`
+* [`786e33`](https://github.com/Oldes/Rebol3/commit/786e3334d9b0e66bb4527027ec9eb5a8d17d5b3f) `form` ignores leading empty strings and unset values
+* [`8115be`](https://github.com/Oldes/Rebol3/commit/8115be79e5ea7b4b1342dc8e3a636e9e210badf9) Invalid console input
+* [`03a2cd`](https://github.com/Oldes/Rebol3/commit/03a2cd0f4c8fc8c6cd1a34e19416460357b598a0) `)` not allowed as a first character in tag
+* [`1a1706`](https://github.com/Oldes/Rebol3/commit/1a1706839b25f53b0a26faf237f25d0f01fc471a) Not able to use `list-dir` without any argument
+* [`1712f2`](https://github.com/Oldes/Rebol3/commit/1712f28bb51710dd21488af62fe870f0ab72af7a) Removed forgotten probe
+* [`8e5e1b`](https://github.com/Oldes/Rebol3/commit/8e5e1b3af89ddbb3b5f5d2dbe49168aa1fdce5cc) Removed unwanted line break after `ask` function call
+* [`4e8d95`](https://github.com/Oldes/Rebol3/commit/4e8d95a621c670ce6611c2a8ef3afd16f75d3d5b) Enable wide character support on Posix
+* [`8d7a6f`](https://github.com/Oldes/Rebol3/commit/8d7a6fe6b6ab264c783136491522f79fc44373b1) `~` folder name expansion does not work in all cases
+* [`290720`](https://github.com/Oldes/Rebol3/commit/2907201e23d60b5a42a13c7a09e8862ea21e199b) Wrong directory names when diacritics is used
+* [`dc1bcd`](https://github.com/Oldes/Rebol3/commit/dc1bcd05e23b6e1803c509bd7286dec366e34d3a) Suppress compiler warnings
+* [`6af517`](https://github.com/Oldes/Rebol3/commit/6af517e4f5b7f2ff99de66c3dcc8ce0f68fb0e83) Not all control paths return a value warning
+* [`908362`](https://github.com/Oldes/Rebol3/commit/90836286d180ee16dbae06ac8f6d6e9542b59bbc) Suppress compiler warnings
+* [`2c23ea`](https://github.com/Oldes/Rebol3/commit/2c23ea097ff4cd6be9c5b959da037e5be1f376e9) Possible loss of data warnings
+* [`ad1f2a`](https://github.com/Oldes/Rebol3/commit/ad1f2a0a2c628895a73fa5e3b81e8e58b1c4dc3f) Signed/unsigned mismatch warning
+* [`23b8c8`](https://github.com/Oldes/Rebol3/commit/23b8c810323af9d2b3300fa9347a9ee36bc430a1) Unreferenced label
+* [`5d036f`](https://github.com/Oldes/Rebol3/commit/5d036ff62879a84b55f0d015766f57998a58717a) Unreferenced local variables
+
 ## 2023 June
 
 ### Features:
 
+* [`5d9af5`](https://github.com/Oldes/Rebol3/commit/5d9af51c244900b6187d3c3e408b069deb19368a) Dynamic function refinements
+* [`869708`](https://github.com/Oldes/Rebol3/commit/869708abb961ba6872b5dc7103323aae14ce3df9) Optional support for Brotli de/compression
 * [`311223`](https://github.com/Oldes/Rebol3/commit/311223c9487d8af88e4de2993644231610a6373a) Added possibility to set/clear BREAK, DATA-TERMINAL-READY and REQUEST-TO-SEND serial signals (on Windows so far)
 * [`083c0d`](https://github.com/Oldes/Rebol3/commit/083c0dec04d31461510ede291a4f2e6a9a8b8f0c) Implemented `attempt/safer` to catch also thrown exceptions
 * [`6edaaa`](https://github.com/Oldes/Rebol3/commit/6edaaa08d5dccf0e2801665291e367472c8d29c2) Implemented `try/all` to catch also thrown exceptions
@@ -23,6 +84,11 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Changes:
 
+* [`467ae8`](https://github.com/Oldes/Rebol3/commit/467ae8d5e587a020d819b2d2612214e8e6d6ab51) Using more lightweight dynamic function refinements instead of `either` where possible
+* [`a14bf5`](https://github.com/Oldes/Rebol3/commit/a14bf53047e09e7588dd4bd37c2127da429a1c8b) Using more lightweight dynamic function refinements instead of `apply` where possible
+* [`fbbb20`](https://github.com/Oldes/Rebol3/commit/fbbb200dbb86975173b1b0d66b2ff6c5ab73418a) Value of false dynamic function refinement is `none`, not `false` (as native code expects `none`, which is cheaper to compare)
+* [`3fa4a0`](https://github.com/Oldes/Rebol3/commit/3fa4a0b63c21e739e0ac2a7e4ed41a03e744acbf) List Brotli compression in `system/catalog/compressions`
+* [`3d23ed`](https://github.com/Oldes/Rebol3/commit/3d23ed3b26247109ac8a9763d9ac92f01f45e274) Using lower default compression level for Brotli compression
 * [`6ed8da`](https://github.com/Oldes/Rebol3/commit/6ed8da9122686fb88cf1c371ee265f0c79c40f59) Deprecated `try/except`. Using `try/with` instead.
 * [`519fd4`](https://github.com/Oldes/Rebol3/commit/519fd4df4844cae73c437adccbfa141b9223c81e) Using `catch/with` instead of `catch/recover`
 * [`0cb8bd`](https://github.com/Oldes/Rebol3/commit/0cb8bda3f920612d0eac35f9584b1de33054e235) Include JSON codec in Core builds
@@ -32,6 +98,8 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`5fdac4`](https://github.com/Oldes/Rebol3/commit/5fdac4c9c4216a5bb4dc7970471037ccea4cbef7) Regression (code reduced too much)
+* [`777da7`](https://github.com/Oldes/Rebol3/commit/777da715bb39ddbe30cf9bce560019c9b00c4f37) Non-void function does not return a value in all control paths
 * [`8d4fed`](https://github.com/Oldes/Rebol3/commit/8d4fed3980f2c04c70e78d9643df190c1ded39b0) Variable used without being initialized
 * [`4dc5b4`](https://github.com/Oldes/Rebol3/commit/4dc5b417ea8b9344aef824b1f8abc69687efbc98) Path evaluation does not process THROWN values as THROWN
 * [`842939`](https://github.com/Oldes/Rebol3/commit/84293975eced8a2815707e6702913b215a4c662e) MAKE ERROR! does not process THROWN values as THROWN
