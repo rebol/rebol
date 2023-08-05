@@ -42,6 +42,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <errno.h>
+#include <poll.h>
 
 #include "reb-host.h"
 #include "host-lib.h"
@@ -54,7 +55,7 @@ extern REBINT exit_loop;
 REBINT exit_loop = 0;
 #endif
 
-
+extern struct pollfd poller; // currently in dev-stdio.c
 
 void Done_Device(int handle, int error);
 
@@ -110,17 +111,14 @@ void Done_Device(int handle, int error);
 **
 ***********************************************************************/
 {
-	struct timeval tv;
-	int result;
+	poll(&poller, 1, req->length);
 
-	tv.tv_sec = 0;
-	tv.tv_usec = req->length * (exit_loop == 0 ? 1000 : 200); // don't wait so much when gui is used
-	//printf("usec %d\n", tv.tv_usec);
+//	struct timeval tv;
 
-#ifdef REB_VIEW
-	int max_priority;
-	GPollFD poll_fds[10];
-	gint timeout = tv.tv_usec;
+//#ifdef REB_VIEW
+	//int max_priority;
+	//GPollFD poll_fds[10];
+	//gint timeout = tv.tv_usec;
 
 	//if (g_main_context_acquire(GTKCtx)) {
 	//	if (g_main_context_prepare(GTKCtx, &max_priority)) {
@@ -130,22 +128,22 @@ void Done_Device(int handle, int error);
 	//	g_main_context_release(GTKCtx);
 	//	if (result >= 0) return DR_DONE;
 	//}
-#endif	
+//#endif	
 
-	result = select(0, 0, 0, 0, &tv);
-	if (result < 0) {
-		//
-		// !!! In R3-Alpha this had a TBD that said "set error code" and had a
-		// printf that said "ERROR!!!!".  However this can happen when a
-		// Ctrl-C interrupts a timer on a WAIT.  As a patch this is tolerant
-		// of EINTR, but still returns the error code.  :-/
-		//
-		if (errno == EINTR)
-			return DR_ERROR;
-
-		printf("select() returned -1 in dev-event.c (I/O error!)\n");
-		return DR_ERROR;
-	}
+//	int result = select(STDIN_FILENO+1, &readfds, 0, 0, &tv);
+//	if (result < 0) {
+//		//
+//		// !!! In R3-Alpha this had a TBD that said "set error code" and had a
+//		// printf that said "ERROR!!!!".  However this can happen when a
+//		// Ctrl-C interrupts a timer on a WAIT.  As a patch this is tolerant
+//		// of EINTR, but still returns the error code.  :-/
+//		//
+//		if (errno == EINTR)
+//			return DR_ERROR;
+//
+//		printf("select() returned -1 in dev-event.c (I/O error!)\n");
+//		return DR_ERROR;
+//	}
 
 	return DR_DONE;
 }
