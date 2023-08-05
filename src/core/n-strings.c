@@ -129,11 +129,20 @@ static struct digest {
 ***********************************************************************/
 {
 	REBSER *str;
+	REBCNT type = VAL_TYPE(VAL_BLK_DATA(D_ARG(1)));
+	REBVAL *delimiter = D_REF(2) ? D_ARG(3) : NULL;
 
-	str = Form_Reduce(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
+	str = Form_Reduce(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)), delimiter, D_REF(4));
 	if (!str) return R_TOS;
 
-	Set_String(DS_RETURN, str); // not D_RET (stack modified)
+	// Use result string-like type based on first value, except tag!
+	if (type < REB_STRING || type >= REB_TAG) type = REB_STRING;
+
+	//  Using DS_RETURN not D_RET (stack modified)
+	VAL_SET(DS_RETURN, type);
+	VAL_SERIES(DS_RETURN) = str;
+	VAL_INDEX(DS_RETURN) = 0;
+	VAL_SERIES_SIDE(DS_RETURN) = 0;
 
 	return R_RET;
 }
@@ -334,7 +343,7 @@ static struct digest {
 //	compress: native [
 //		{Compresses data.}
 //		data [binary! string!] {If string, it will be UTF8 encoded}
-//		method [word!] "zlib deflate gzip lzma"
+//		method [word!] {One of `system/catalog/compressions`}
 //		/part length {Length of source data}
 //		/level lvl [integer!] {Compression level 0-9}
 //	]
@@ -368,6 +377,14 @@ static struct digest {
 	case SYM_GZIP:
 		windowBits |= 16;
 		goto zlib_compress;
+	
+	case SYM_BROTLI:
+#ifdef INCLUDE_BROTLI
+		Set_Binary(D_RET, CompressBrotli(ser, index, (REBINT)len, ref_level ? VAL_INT32(level) : -1));
+#else
+		Trap0(RE_FEATURE_NA);
+#endif
+		break;
 
 	case SYM_LZMA:
 #ifdef INCLUDE_LZMA
@@ -405,7 +422,7 @@ static struct digest {
 //	decompress: native [
 //		{Decompresses data.}
 //		data [binary!] {Source data to decompress}
-//		method [word!] "zlib deflate gzip lzma" 
+//		method [word!] {One of `system/catalog/compressions`}
 //		/part "Limits source data to a given length or position"
 //			length [number! series!] {Length of compressed data (must match end marker)}
 //		/size
@@ -441,6 +458,14 @@ static struct digest {
 	case SYM_GZIP:
 		windowBits |= 16;
 		goto zlib_decompress;
+
+	case SYM_BROTLI:
+#ifdef INCLUDE_BROTLI
+		Set_Binary(D_RET, DecompressBrotli(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit));
+#else
+		Trap0(RE_FEATURE_NA);
+#endif
+		break;
 
 	case SYM_LZMA:
 #ifdef INCLUDE_LZMA

@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Boot Sys: Load, Import, Modules"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -305,7 +306,7 @@ load: function [
 
 		;-- Load multiple sources?
 		block? source [
-			return map-each item source [apply :load [:item header all as type]]
+			return map-each item source [load/:header/:all/:as :item type]
 		]
 
 		;-- What type of file? Decode it too:

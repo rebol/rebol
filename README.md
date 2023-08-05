@@ -36,10 +36,12 @@ It is possible to extend Rebol functionality using external modules (native and 
 * [Rebol/BlurHash](https://github.com/Siskin-framework/Rebol-BlurHash) - Compact representation of a placeholder for an image
 * [Rebol/Easing](https://github.com/Oldes/Rebol-Easing) - Collection of easing functions
 * [Rebol/Godot](https://github.com/Oldes/Rebol-Godot) - Extractor of Godot's `.pck` files
+* [Rebol/Google](https://github.com/Oldes/Rebol-Google) - Google Web API
 * [Rebol/HTTPd](https://github.com/Oldes/Rebol-HTTPd) - Webserver scheme
 * [Rebol/IRC](https://github.com/Oldes/Rebol-IRC) - Internet Relay Chat scheme
 * [Rebol/MathPresso](https://github.com/Siskin-framework/Rebol-MathPresso) - Mathematical Expression Parser And JIT Compiler
 * [Rebol/Names](https://github.com/Oldes/Rebol-Names) - Random names generator scheme
+* [Rebol/Spotify](https://github.com/Oldes/Rebol-Spotify) - Spotify Web API
 * [Rebol/OpenCV](https://github.com/Oldes/Rebol-OpenCV) - Computer Vision Library
 * [Rebol/SQLite](https://github.com/Siskin-framework/Rebol-SQLite) - SQL database engine
 * [Rebol/Triangulate](https://github.com/Siskin-framework/Rebol-Triangulate) - Two-Dimensional Quality Mesh Generator and Delaunay Triangulator

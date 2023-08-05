@@ -46,6 +46,7 @@ enum {
 	RDI_MIDI,
 	RDI_CRYPT,
 	RDI_SERIAL,
+	RDI_AUDIO,
 	RDI_MAX,
 	RDI_LIMIT = 32
 };
@@ -218,6 +219,13 @@ struct rebol_devreq {
 			u32 device_in;  // requested device ID (1-based; 0 = none)
 			u32 device_out;
 		} midi;
+		struct {
+			u8  type;
+			u8  channels;
+			u16 bits;
+			u32 rate;
+			u32 loop_count;
+		} audio;
 		struct {
 			u32 mode;
 			u32 value;

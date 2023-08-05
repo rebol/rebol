@@ -429,7 +429,15 @@ Rebol [
 			b/1 = <a<b b>
 			b/2 = '>
 		]
-
+	--test-- "issue-1317"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1317
+		--assert '<  = transcode/one/error "<]>"
+		--assert '<  = transcode/one/error "<)>"
+		--assert <a> = transcode/one/error "<a>"
+		--assert [<] = transcode/one/error "[<]"
+		--assert block? try [load "[(<)]"]
+		--assert error? try [load "<)>"]
+		--assert error? try [load "<]>"]
 
 ===end-group===
 
@@ -646,7 +654,7 @@ Rebol [
 	--test-- "NULLs inside loaded string"
 	;@@ https://github.com/Oldes/Rebol3/commit/6f59240d7d4379a50fec29c4e74290ad61ba73ba
 		out: ""
-		--assert try/except [
+		--assert try/with [
 		;- using CALL as it could be reproduced only when the internal buffer is being extended durring load
 			data: make string! 40000
 			insert/dup data "ABCD" 10000

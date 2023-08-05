@@ -272,12 +272,17 @@ make-scheme: func [
 
 init-schemes: func [
 	"INIT: Init system native schemes and ports."
+	/local schemes
 ][
 	log/debug 'REBOL "Init schemes"
 
 	sys/decode-url: lib/decode-url: :sys/url-parser/parse-url
 
-	system/schemes: make object! 11
+	; optional schemes are collected into a block
+	; and will be initialized after common schemes
+	schemes: system/schemes
+	; schemes are finally stored in the object
+	system/schemes: make object! 20
 
 	make-scheme [
 		title: "System Port"
@@ -482,48 +487,6 @@ init-schemes: func [
 	]
 
 	make-scheme [
-		title: "MIDI"
-		name: 'midi
-		spec: system/standard/port-spec-midi
-		init: func [port /local spec inp out] [
-			spec: port/spec
-			either url? spec/ref [
-				parse spec/ref [
-					thru #":" 0 2 slash
-					opt "device:"
-					copy inp url-parser/digit
-					opt [#"/" copy out url-parser/digit]
-					end
-				]
-				if inp [ spec/device-in:  to integer! inp]
-				if out [ spec/device-out: to integer! out]
-			][
-				;; Lookup device IDs using full names (or wildcards)
-				all [
-					any-string? inp: select spec 'device-in
-					spec/device-in: find inp query/mode midi:// 'devices-in
-				]
-				all [
-					any-string? out: select spec 'device-out
-					spec/device-out: find out query/mode midi:// 'devices-out
-				]
-			]
-			; make port/spec to be only with midi related keys
-			set port/spec: copy system/standard/port-spec-midi spec
-			;protect/words port/spec ; protect spec object keys of modification
-			true
-		]
-		find: func[device [any-string!] devices [block!]][
-			forall devices [
-				if lib/find/match/any devices/1 device [
-					return index? devices
-				]
-			]
-			none
-		] 
-	]
-
-	make-scheme [
 		title: "Serial Port"
 		name: 'serial
 		spec: system/standard/port-spec-serial
@@ -543,6 +506,9 @@ init-schemes: func [
 			]
 		]
 	]
+
+	;- init optional schemes (from own source files)...
+	forall schemes [make-scheme schemes/1]
 
 
 	system/ports/system:   open [scheme: 'system]

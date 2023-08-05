@@ -555,7 +555,7 @@ new_line:
 
 /***********************************************************************
 **
-*/  const REBYTE *Scan_Raw_String(const REBYTE *src, SCAN_STATE *scan_state, int num)
+*/  const REBYTE *Scan_Raw_String(const REBYTE *src, SCAN_STATE *scan_state, REBLEN num)
 /*
 **      Scan a raw string (without any modifications).
 **		Eliminates need of double escaping and allowes unmatched braces.
@@ -1147,7 +1147,7 @@ new_line:
 			return -TOKEN_WORD;
 			
 		case LEX_SPECIAL_LESSER:
-			if (IS_LEX_ANY_SPACE(cp[1]) || cp[1] == ']' || cp[1] == 0) return TOKEN_WORD;	// CES.9121 Was LEX_DELIMIT - changed for </tag>
+			if (IS_LEX_ANY_SPACE(cp[1]) || cp[1] == ']' || cp[1] == ')' || cp[1] == 0) return TOKEN_WORD;	// CES.9121 Was LEX_DELIMIT - changed for </tag>
 
 			if (IS_LEX_DELIMIT(cp[2]) && (cp[1] == '>' || cp[1] == '=' || cp[1] == '<')) {
 				return TOKEN_WORD; // common cases: <> <= <<
@@ -1197,7 +1197,6 @@ new_line:
             goto scanword;
 
         case LEX_SPECIAL_POUND:
-        pound:
             cp++;
 /*        hex:
           if (HAS_LEX_FLAGS(flags, ~(LEX_FLAG(LEX_SPECIAL_POUND) | LEX_FLAG(LEX_SPECIAL_PERIOD)

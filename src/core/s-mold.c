@@ -326,7 +326,7 @@ STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 static REBUNI *Emit_Uni_Char(REBUNI *up, REBUNI chr, REBOOL parened)
 {
 	if (chr >= 0x7f || chr == 0x1e) {  // non ASCII or ^ must be (00) escaped
-		if (parened || chr == 0x1e) { // do not AND with above
+		if (parened || chr <= 0xA0 || chr == 0x1e) { // do not AND with above
 			*up++ = '^';
 			*up++ = '(';
 			up = Form_Uni_Hex(up, chr);
@@ -837,8 +837,8 @@ STOID Form_Block_Series(REBSER *blk, REBCNT index, REB_MOLD *mold, REBSER *frame
 		}
 		else {
 			// Add a space if needed:
-			if (n < len && mold->series->tail
-				&& *UNI_LAST(mold->series) != LF
+			if (n < len 
+				&& (!mold->series->tail || *UNI_LAST(mold->series) != LF)
 				&& !GET_MOPT(mold, MOPT_TIGHT)
 			)
 				Append_Byte(mold->series, ' ');
@@ -1046,8 +1046,6 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 {
 	ERROR_OBJ *err;
 	REBVAL *msg;  // Error message block
-	REBCNT sym;
-	REBVAL word;
 
 	// Protect against recursion. !!!!
 
@@ -1464,7 +1462,7 @@ append:
 
 /***********************************************************************
 **
-*/	REBSER *Form_Reduce(REBSER *block, REBCNT index)
+*/	REBSER *Form_Reduce(REBSER *block, REBCNT index, REBVAL *delimiter, REBOOL all)
 /*
 **		Reduce a block and then form each value into a string. Return the
 **		string or NULL if an unwind triggered while reducing.
@@ -1474,13 +1472,31 @@ append:
 	REBINT start = DSP + 1;
 	REBINT n;
 	REB_MOLD mo = {0};
-
-	while (index < BLK_LEN(block)) {
-		index = Do_Next(block, index, 0);
-		if (THROWN(DS_TOP)) {
-			*DS_VALUE(start) = *DS_TOP;
-			DSP = start;
-			return NULL;
+	if (delimiter) {
+		while (index < BLK_LEN(block)) {
+			index = Do_Next(block, index, 0);
+			if (VAL_TYPE(DS_TOP) <= REB_NONE && !all) {
+				DS_DROP;
+				continue;
+			}
+			if (THROWN(DS_TOP)) {
+				*DS_VALUE(start) = *DS_TOP;
+				DSP = start;
+				return NULL;
+			}
+			DS_PUSH(delimiter);
+		}
+		if (DSP >= start) DS_DROP;
+	}
+	else {
+		while (index < BLK_LEN(block)) {
+			index = Do_Next(block, index, 0);
+			if (VAL_TYPE(DS_TOP) <= REB_NONE && !all) DS_DROP;
+			else if (THROWN(DS_TOP)) {
+				*DS_VALUE(start) = *DS_TOP;
+				DSP = start;
+				return NULL;
+			}
 		}
 	}
 

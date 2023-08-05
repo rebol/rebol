@@ -212,6 +212,18 @@ if system/platform = 'Windows [
 			--assert date? info/date
 		]
 		
+	--test-- "unicode directory"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2555
+		dir: what-dir
+		subdir: %obrázky/
+		full: dir/:subdir
+		--assert try [
+			full == make-dir subdir
+			full == change-dir subdir
+			full == what-dir
+		]
+		--assert dir = change-dir dir
+		--assert not error? try [delete %obrázky/]
 
 ===end-group===
 

@@ -512,7 +512,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 **
 ***********************************************************************/
 
-#define MAX_SCHEMES 14		// max native schemes
+#define MAX_SCHEMES 15		// max native schemes
 
 typedef struct rebol_scheme_actions {
 	REBCNT sym;
@@ -632,6 +632,9 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	Init_Checksum_Scheme();
 #ifdef INCLUDE_CLIPBOARD
 	Init_Clipboard_Scheme();
+#endif
+#ifdef INCLUDE_AUDIO_DEVICE
+	Init_Audio_Scheme();
 #endif
 #ifdef INCLUDE_MIDI_DEVICE
 	Init_MIDI_Scheme();

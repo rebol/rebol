@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Boot Base: Series Functions"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -26,7 +27,7 @@ repend: func [
 	/dup {Duplicates the insert a specified number of times}
 	count [number! pair!]
 ][
-	apply :append [series reduce :value part length only dup count]
+	append/:part/:only/:dup :series reduce :value :length :count
 ]
 
 join: func [

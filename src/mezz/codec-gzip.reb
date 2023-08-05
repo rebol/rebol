@@ -3,7 +3,7 @@ REBOL [
 	purpose: "Lossless compressed data format compatible with GZIP utility"
 	name: 'codec-gzip
 	author: rights: "Oldes"
-	version: 0.0.1
+	version: 0.0.2
 	specification: https://tools.ietf.org/html/rfc1952
 ]
 
@@ -13,7 +13,10 @@ register-codec [
 	title: "Lossless compressed data format compatible with GZIP utility."
 	suffixes: [%.gz]
 	decode: function[data [binary!]] [
-		if verbose > 0 [ identify data ]
+		if verbose > 0 [
+			print ["^[[1;32mDecode GZIP data^[[m (^[[1m" length? data "^[[mbytes )"]
+			identify data
+		]
 		decompress data 'gzip
 	]
 
@@ -23,9 +26,6 @@ register-codec [
 
 	identify: function [data [binary!]][
 		if 10 > length? data [return none]
-		if verbose > 0 [
-			print ["^[[1;32mDecode GZIP data^[[m (^[[1m" length? data "^[[mbytes )"]
-		]
 		bin: binary data
 		binary/read bin [
 			id:    UI16   ; Magick: #{1F8B}
@@ -56,7 +56,7 @@ register-codec [
 			;checksum/part bin/buffer-write 'CRC32 index? bin/buffer
 			crc16: binary/read bin 'UI16LE
 		]
-		if verbose > 0 [	
+		if verbose > 1 [	
 			print ["^[[32mModified:         ^[[0;1m" mtime "^[[m"]
 			print ["^[[32mExtra flags:      ^[[0;1m" xfl "^[[m"]
 			print ["^[[32mOperating system: ^[[0;1m" os "^[[m"]

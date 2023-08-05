@@ -1128,4 +1128,73 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "Dynamic refinements"
+	;@@ https://github.com/red/red/blob/c69d4763173/tests/source/units/evaluation-test.red#L1210
+	dyn-ref-fun: func [i [integer!] b /ref c1 /ref2 /ref3 c3 c4][
+	    reduce [i b ref c1 ref2 ref3 c3 c4]
+	]
+
+	--test-- "dyn-ref-1"
+		only: yes
+		repend/:only s: [] [1 + 2 3 * 4]
+		--assert s == [[3 12]]
+	
+	--test-- "dyn-ref-2"
+		only: no
+		repend/:only s: [] [4 + 5 6 * 7]
+		--assert s == [9 42]
+	
+	--test-- "dyn-ref-3"
+		part: no length: 10 
+		--assert "def" == find/:part "abcdef" "d" length
+		
+	--test-- "dyn-ref-4"
+		part: yes length: 2
+		--assert none? find/:part "abcdef" "d" length
+
+	--test-- "dyn-ref-7"
+		ref: yes
+		--assert (dyn-ref-fun/:ref 10 * 9 "hello" 789)
+			== [90 "hello" #[true] 789 #[none] #[none] #[none] #[none]]
+		
+	--test-- "dyn-ref-8"
+		ref: no
+		--assert (dyn-ref-fun/:ref 10 * 9 "hello" 789)
+			== [90 "hello" #[none] #[none] #[none] #[none] #[none] #[none]]
+
+	--test-- "dyn-ref-9"
+		ref: ref2: yes
+		--assert (dyn-ref-fun/:ref/:ref2 10 * 9 "hello" 789)
+			== [90 "hello" #[true] 789 #[true] #[none] #[none] #[none]]		
+
+	--test-- "dyn-ref-10"
+		ref: no ref2: yes
+		--assert (dyn-ref-fun/:ref/:ref2 10 * 9 "hello" 789)
+			== [90 "hello" #[none] #[none] #[true] #[none] #[none] #[none]]
+
+	--test-- "dyn-ref-11"
+		ref: no ref2: ref3: yes
+		--assert (dyn-ref-fun/:ref/:ref2/:ref3 10 * 9 "hello" 789 6 7)
+			== [90 "hello" #[none] #[none] #[true] #[true] 6 7]
+	
+	--test-- "dyn-ref-12"		
+		dyn-ref-12-obj: context [
+		    foo: func [i [integer!] b /ref c1 /ref2 /ref3 c3 c4][
+		    	reduce [i b ref c1 ref2 ref3 c3 c4]
+		    ]
+		    bar: func [/local ref][
+		        ref: no
+				--assert (foo/:ref 10 * 9 "hello" 789)
+				== [90 "hello" #[none] #[none] #[none] #[none] #[none] #[none]]
+
+		        ref: yes
+				--assert (foo/:ref 10 * 9 "hello" 789)
+				== [90 "hello" #[true] 789 #[none] #[none] #[none] #[none]]
+
+		    ]
+		]
+		dyn-ref-12-obj/bar
+===end-group===
+
 ~~~end-file~~~

@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Mezzanine: File Related"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -89,7 +90,7 @@ input: func [
 		system/ports/input: port: open [scheme: 'console]
 	]
 	either hide [
-		request-password
+		also request-password prin LF
 	][
 		all [
 			line: read port
@@ -105,7 +106,7 @@ ask: func [
 	/char "Waits only on single key press and returns char as a result"
 ][
 	prin question
-	also apply :input [hide] prin LF
+	input/:hide
 ]
 
 confirm: func [
@@ -256,6 +257,8 @@ list-dir: closure/with [
 		max-depth [integer!] 
 ][
 	if f [r: l: false]
+	if same? :path '~ [path: :~]
+
 	recursive?: any [r max-depth]
 	files-only?: f
 	apply :dir-tree [

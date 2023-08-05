@@ -74,6 +74,10 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 // Semaphore lock to sync sub-task launch:
 static void *Task_Ready;
 
+#ifdef REB_VIEW
+void Dispose_Windows(void);
+#endif
+
 
 /***********************************************************************
 **
@@ -422,7 +426,7 @@ static void *Task_Ready;
 	//	OS_Put_Str(title);
 	//	OS_Put_Str(":\n");
 		// Use ASCII only (in case we are on non-unicode win32):
-		MessageBoxA(NULL, content, title, MB_ICONHAND);
+		MessageBoxA(NULL, (LPCSTR)content, (LPCSTR)title, MB_ICONHAND);
 	}
 	//	OS_Put_Str(content);
 	exit(100);
@@ -615,7 +619,7 @@ static void *Task_Ready;
 	LARGE_INTEGER time;
 
 	if (!QueryPerformanceCounter(&time))
-		OS_Crash(cb_cast("Missing resource"), "High performance timer");
+		OS_Crash(cb_cast("Missing resource"), cb_cast("High performance timer"));
 
 	if (base == 0) return time.QuadPart; // counter (may not be time)
 
@@ -1297,8 +1301,8 @@ input_error:
 {
 	#define MAX_BRW_PATH 2044
 	long flag;
-	long len;
-	long type;
+	DWORD len;
+	DWORD type;
 	HKEY key;
 	REBCHR *path;
 	HWND hWnd = GetFocus();
@@ -1394,7 +1398,7 @@ static INT CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 		break;
 	}
 	if (lpData && set) {
-		SendMessage(hwnd, BFFM_SETSELECTION, lpLastBrowseFolder != lpData, lpData);
+		SendMessage(hwnd, BFFM_SETSELECTION, lpLastBrowseFolder != (LPITEMIDLIST)lpData, lpData);
 	}
 	return 0;
 }
@@ -1414,11 +1418,15 @@ static INT CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 	bInfo.lpszTitle = fr->title;      // Title of the dialog
 	bInfo.ulFlags = BIF_USENEWUI | BIF_RETURNONLYFSDIRS;
 	bInfo.lpfn = BrowseCallbackProc;
-	// start in dir location is used /dir
-	// else use last keeped result if used /keep
-	// else NULL if no /keep and /dir is there
-	bInfo.lParam = (dir) ? dir : (keep) ? lpLastBrowseFolder : NULL;
 	bInfo.iImage = -1;
+	// start in dir location is used /dir
+	if (dir) {
+		bInfo.lParam = (LPARAM)dir;
+	}
+	// else use last keeped result if used /keep
+	else if (keep) {
+		bInfo.lParam = (LPARAM)lpLastBrowseFolder;
+	}
 
 	LPITEMIDLIST lpItem = SHBrowseForFolder( &bInfo);
 	if(lpItem == NULL) {
@@ -1428,7 +1436,7 @@ static INT CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 	if (keep) {
 		// release last result if there was any
 		if(lpLastBrowseFolder)
-			CoTaskMemFree(lpLastBrowseFolder);
+			CoTaskMemFree((LPVOID)lpLastBrowseFolder);
 		// and store result for next request
 		lpLastBrowseFolder = lpItem;
 	}

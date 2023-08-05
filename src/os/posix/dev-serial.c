@@ -277,13 +277,13 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 #endif
 	if (result < 0) {
 		req->error = -RFE_BAD_READ;
-		Signal_Device(req, EVT_ERROR);
+		OS_Signal_Device(req, EVT_ERROR);
 		return DR_ERROR;
 	} else if (result == 0) {
 		return DR_PEND;
 	} else {
 		req->actual = result;
-		Signal_Device(req, EVT_READ);
+		OS_Signal_Device(req, EVT_READ);
 	}
 
 	return DR_DONE;
@@ -314,13 +314,13 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 			return DR_PEND;
 		}
 		req->error = -RFE_BAD_WRITE;
-		Signal_Device(req, EVT_ERROR);
+		OS_Signal_Device(req, EVT_ERROR);
 		return DR_ERROR;
 	}
 	req->actual += result;
 	req->data += result;
 	if (req->actual >= req->length) {
-		Signal_Device(req, EVT_WROTE);
+		OS_Signal_Device(req, EVT_WROTE);
 		return DR_DONE;
 	} else {
 		SET_FLAG(req->flags, RRF_ACTIVE); /* notify OS_WAIT of activity */

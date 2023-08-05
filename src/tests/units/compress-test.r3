@@ -122,6 +122,46 @@ text: {Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempo
 		
 ===end-group===
 
+===start-group=== "Brotli compression / decompression"
+	--test-- "Brotli compress/decompress"
+	either error? e: try [compress "test" 'brotli][
+		;-- Brotli compression is not available in current build
+		--assert  'feature-na = e/id
+	][	
+		--assert  data = to string! decompress compress data 'brotli 'brotli
+
+		--test-- "Brotli compress/decompress while specifing level of compression"
+			--assert (compress/level "" 'brotli 0) =
+			#{3B}
+			--assert (compress/level data 'brotli 0) =
+			#{8B0680746573742074657374207465737403}
+			--assert  text = to string! decompress compress/level text 'brotli 0 'brotli
+			--assert  text = to string! decompress compress/level text 'brotli 1 'brotli
+			--assert  text = to string! decompress compress/level text 'brotli 2 'brotli
+			--assert  text = to string! decompress compress/level text 'brotli 3 'brotli
+			--assert  text = to string! decompress compress/level text 'brotli 4 'brotli
+			--assert  text = to string! decompress compress/level text 'brotli 5 'brotli
+			--assert  text = to string! decompress compress/level text 'brotli 6 'brotli
+			--assert  text = to string! decompress compress/level text 'brotli 7 'brotli
+			--assert  text = to string! decompress compress/level text 'brotli 8 'brotli
+			--assert  text = to string! decompress compress/level text 'brotli 9 'brotli
+			--assert  text = to string! decompress compress/level text 'brotli 10 'brotli
+			--assert  text = to string! decompress compress/level text 'brotli 11 'brotli
+
+		--test-- "Brotli decompression with specified uncompressed size"
+			bin: compress data 'brotli
+			--assert  #{74657374} = decompress/size bin 'brotli 4
+
+		--test-- "Brotli compression when input is limited"
+			--assert  #{74657374} = decompress compress/part      data   'brotli  4 'brotli
+			--assert  #{74657374} = decompress compress/part skip data 5 'brotli  4 'brotli
+			--assert  #{74657374} = decompress compress/part tail data   'brotli -4 'brotli
+
+		--test-- "Brotli decompress when not at head"
+			--assert data = to string! decompress next join #{00} compress data 'brotli 'brotli
+	]
+===end-group===
+
 ===start-group=== "LZMA compression / decompression"
 	--test-- "LZMA compress/decompress"
 	either error? e: try [compress "test" 'lzma][

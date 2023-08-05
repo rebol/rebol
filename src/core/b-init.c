@@ -995,6 +995,33 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	Current_Year = dat.year;
 }
 
+/***********************************************************************
+**
+*/	void Init_Compression(void)
+/*
+**		Fill system/catalog/compressions with optional compressions
+**
+***********************************************************************/
+{
+	REBVAL *blk;
+	REBVAL  tmp;
+	#define add_compression(sym) Init_Word(&tmp, sym); VAL_SET_LINE(&tmp); Append_Val(VAL_SERIES(blk), &tmp);
+	blk = Get_System(SYS_CATALOG, CAT_COMPRESSIONS);
+	if (blk && IS_BLOCK(blk)) {
+		#ifdef INCLUDE_BROTLI
+		add_compression(SYM_BROTLI);
+		#endif
+		#ifdef INCLUDE_CRUSH
+		add_compression(SYM_CRUSH);
+		#endif
+		#ifdef INCLUDE_LZMA
+		add_compression(SYM_LZMA);
+		#endif
+	}
+}
+	
+
+
 
 /***********************************************************************
 **
@@ -1081,6 +1108,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	PG_Boot_Phase = BOOT_ERRORS;
 
 	Init_Year();
+	Init_Compression();
 
 	// Special pre-made error:
 	ser = Make_Error(RE_STACK_OVERFLOW, 0, 0, 0);

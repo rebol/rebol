@@ -44,7 +44,10 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
+#include <termios.h>
 #include <sys/ioctl.h>
+#include <poll.h>
 
 #include "reb-host.h"
 
@@ -77,11 +80,63 @@ extern int  Read_Line(STD_TERM*, char*, int);
 extern void Close_StdIO(void);
 
 
+static struct termios original_settings;
+struct pollfd poller;
+
+static int Get_Console_Size(int *cols, int *rows)
+{
+	#ifdef TIOCGWINSZ
+		struct winsize w;
+		if (ioctl(Std_Out, TIOCGWINSZ, &w) != 0) {
+			return errno;
+		}
+		*rows = w.ws_row;
+		*cols = w.ws_col;
+	#else
+	#ifdef WIOCGETD
+		struct uwdata w;
+		if (ioctl(Std_Out, WIOCGETD, &w) != 0) {
+			return errno;
+		}
+		*rows = w.uw_height / w.uw_vs;
+		*cols = w.uw_width / w.uw_hs;
+	#endif
+	#endif
+	return 0;
+}
+
 static void Handle_Signal(int sig)
 {
-	REBYTE buf[] = "\x1B[1;35;49m[escape]\x1B[0m\n";
-	Put_Str(buf);
+	//printf("sig: %i %i %i %i\n", sig, SIGINT, SIGHUP, SIGTERM);
+	//REBYTE buf[] = "\x1B[1;35;49m[escape]\x1B[0m\n";
+	//Put_Str(buf);
+
+//	REBEVT evt;
+//	evt.flags = 0;
+//	evt.model = EVM_CONSOLE;
+//	evt.type = EVT_INTERRUPT;
+//	evt.data = sig;
+//	SET_FLAG(evt.flags, EVF_HAS_CODE);
+//	RL_Event(&evt);
+
+	// Start escape sequence...
 	RL_Escape(0);
+}
+
+static void Handle_Resize(int sig)
+{
+	int cols, rows;
+
+	if(Get_Console_Size(&cols, &rows) != 0) return;
+	//printf("cols: %i rows: %i\n", cols, rows);
+
+	REBEVT evt;
+	evt.flags = 0;
+	evt.model = EVM_CONSOLE;
+	evt.type = EVT_RESIZE;
+	evt.data = (rows << 16) | (cols & 0xFFFF);
+	SET_FLAG(evt.flags, EVF_HAS_XY);
+	RL_Update_Event(&evt);
 }
 
 static void Init_Signals(void)
@@ -89,6 +144,9 @@ static void Init_Signals(void)
 	signal(SIGINT, Handle_Signal);
 	signal(SIGHUP, Handle_Signal);
 	signal(SIGTERM, Handle_Signal);
+
+	// Set up the signal handler for SIGWINCH (terminal window resize)
+    signal(SIGWINCH, Handle_Resize);
 }
 
 static void Close_StdIO_Local(void)
@@ -140,7 +198,12 @@ static void Close_StdIO_Local(void)
 		return DR_DONE; // Do not do it again
 	}
 
+	setlocale(LC_ALL, ""); // Enable wide character support
+	
 	Init_Signals();
+
+	poller.fd = STDIN_FILENO;
+    poller.events = POLLIN;
 
 	if (!GET_FLAG(req->modes, RDM_NULL)) {
 
@@ -152,6 +215,8 @@ static void Close_StdIO_Local(void)
 	}
 	else
 		SET_FLAG(dev->flags, SF_DEV_NULL);
+
+	tcgetattr(Std_Inp, &original_settings);
 
 	SET_FLAG(req->flags, RRF_OPEN);
 	SET_FLAG(dev->flags, RDF_OPEN);
@@ -198,17 +263,18 @@ static void Close_StdIO_Local(void)
 	output = GET_FLAG(req->flags, RRF_ERROR) ? STDERR_FILENO : Std_Out;
 
 	if (output >= 0) {
-
 		total = write(output, req->data, req->length);
-
 		if (total < 0) {
+			//O: returning error from here means crash (RP_IO_ERROR)!
+			//O: handle (errno == EAGAIN || errno == EWOULDBLOCK) ???
 			req->error = errno;
 			return DR_ERROR;
 		}
 
-		//if (GET_FLAG(req->flags, RRF_FLUSH)) {
-			//FLUSH();
-		//}
+		if (GET_FLAG(req->flags, RRF_FLUSH)) {
+			CLR_FLAG(req->flags, RRF_FLUSH);
+			fflush(Std_Out == STDOUT_FILENO ? stdout : stderr);
+		}
 
 		req->actual = (u32)total;
 	}
@@ -244,11 +310,13 @@ static void Close_StdIO_Local(void)
 
 	req->actual = 0;
 
+	//puts("Read_IO");
+
 	if (Std_Inp >= 0) {
 
 		// Perform a processed read or a raw read?
 #ifndef HAS_SMART_CONSOLE
-		if (Term_IO)
+		if (Term_IO && GET_FLAG(req->modes, RDM_READ_LINE)) 
 			total = Read_Line(Term_IO, req->data, len);
 		else
 #endif
@@ -265,6 +333,131 @@ static void Close_StdIO_Local(void)
 	return DR_DONE;
 }
 
+//static REBYTE read_char(){
+//	REBYTE c;
+//	if (poll(&poller, 1, 0) > 0 && read(Std_Inp, &c, 1)) {
+//		return c;
+//	}
+//	return (REBYTE)-1;
+//}
+/***********************************************************************
+**
+*/	DEVICE_CMD Poll_IO(REBREQ *req)
+/*
+**		Read console input and convert it to system events
+**
+***********************************************************************/
+{
+	REBEVT evt;
+	REBYTE c[4];
+	REBINT len;
+
+	evt.flags = 1 << EVF_HAS_CODE;
+	evt.model = EVM_CONSOLE;
+
+	while (poll(&poller, 1, 0) > 0) {
+		if ( read(Std_Inp, &c, 1) > 0 ) {
+			evt.type = EVT_KEY;
+			//printf("%u\n", c);
+			if (c[0] == '\e') {
+				evt.type = EVT_CONTROL;
+				// Escape sequences...
+				if (poll(&poller, 1, 0) <= 0) {
+					// no any other char
+					evt.data = EVK_ESCAPE;
+					goto throw_event;
+				}
+				read(Std_Inp, &c, 2);
+				//printf(" %s ", c);
+				if (c[0] == '[') {
+					switch(c[1]){
+					case 'A': evt.data = EVK_UP;    goto throw_event; //== "\e[A~"
+					case 'B': evt.data = EVK_DOWN;  goto throw_event;
+					case 'C': evt.data = EVK_RIGHT; goto throw_event;
+					case 'D': evt.data = EVK_LEFT;  goto throw_event;
+					case 'F': evt.data = EVK_END;   goto throw_event;
+					case 'H': evt.data = EVK_HOME;  goto throw_event;
+					}
+					if (c[1] == '1') {
+						read(Std_Inp, &c, 2);
+						//printf("%s ", c);
+						if(c[1] == '~') {
+							switch(c[0]){
+							case '1': evt.data = EVK_F1; goto throw_event; //== "\e[11~"
+							case '2': evt.data = EVK_F2; goto throw_event;
+							case '3': evt.data = EVK_F3; goto throw_event;
+							case '4': evt.data = EVK_F4; goto throw_event;
+							case '5': evt.data = EVK_F5; goto throw_event;
+							case '7': evt.data = EVK_F6; goto throw_event;
+							case '8': evt.data = EVK_F7; goto throw_event;
+							case '9': evt.data = EVK_F8; goto throw_event;
+							}
+						}
+					}
+					else if (c[1] == '2') {
+						read(Std_Inp, &c, 1);
+						if (c[0] == '~') {
+							evt.data = EVK_INSERT; goto throw_event; //== "\e[2~"
+						}
+						read(Std_Inp, &c[1], 1);
+						if (c[1] == '~') {
+							switch(c[0]){
+							case '0': evt.data = EVK_F9;  goto throw_event; //== "\e[20~"
+							case '1': evt.data = EVK_F10; goto throw_event;
+							case '3': evt.data = EVK_F11; goto throw_event;
+							case '4': evt.data = EVK_F12; goto throw_event;
+							}
+						}
+						else {
+							read(Std_Inp, &c[2], 1);
+							if (c[2] == '~' && c[0] == '0') {
+								switch(c[1]){
+								case '0': evt.data = EVK_PASTE_START; goto throw_event; //== "\e[200~"
+								case '1': evt.data = EVK_PASTE_END;   goto throw_event; //== "\e[201~"
+								}
+							}
+						}
+					}
+					else if (c[1] > '2' && c[1] <= '8') {
+						read(Std_Inp, &c[2], 1);
+						if (c[2] == '~') {
+							switch(c[1]){
+							case '3': evt.data = EVK_DELETE;    goto throw_event; //== "\e[3~"
+							case '5': evt.data = EVK_PAGE_UP;   goto throw_event;
+							case '6': evt.data = EVK_PAGE_DOWN; goto throw_event;
+							case '7': evt.data = EVK_HOME;      goto throw_event;
+							case '4':
+							case '8': evt.data = EVK_END;       goto throw_event;
+							}
+						}
+					}
+				}
+				else if (c[0] == 'O') {
+					switch(c[1]){
+					case 'P': evt.data = EVK_F1; goto throw_event;
+					case 'Q': evt.data = EVK_F2; goto throw_event;
+					case 'R': evt.data = EVK_F3; goto throw_event;
+					case 'S': evt.data = EVK_F4; goto throw_event;
+					}
+				}
+				// what to do with unrecognized sequencies?
+			}
+			else if ((c[0] & 0x80) == 0) evt.data = c[0];
+			else {
+				     if ((c[0] & 0xE0) == 0xC0) len = 1; // `len` as a number of missing bytes!
+				else if ((c[0] & 0xF0) == 0xE0) len = 2;
+				else if ((c[0] & 0xF8) == 0xF0) len = 3;
+				read(Std_Inp, &c[1], len);
+				evt.data = RL_Decode_UTF8_Char(c, &len);
+			}
+throw_event:
+			RL_Event(&evt); // returns 0 if queue is full
+		}
+	}
+
+	return DR_DONE;
+}
+
 /***********************************************************************
 **
 */	DEVICE_CMD Query_IO(REBREQ *req)
@@ -276,29 +469,16 @@ static void Close_StdIO_Local(void)
 **
 ***********************************************************************/
 {
-#ifdef TIOCGWINSZ
-	struct winsize w;
-	if (ioctl(Std_Out, TIOCGWINSZ, &w) != 0) {
+	int cols, rows, err;
+	err = Get_Console_Size(&cols, &rows);
+	if ( err ) {
 		req->error = errno;
 		return DR_ERROR;
 	}
 	req->console.window_rows =
-	req->console.buffer_rows = w.ws_row;
+	req->console.buffer_rows = rows;
 	req->console.window_cols =
-	req->console.buffer_cols = w.ws_col;
-#else
-#ifdef WIOCGETD
-	struct uwdata w;
-	if (ioctl(Std_Out, WIOCGETD, &w) != 0) {
-		req->error = errno;
-		return DR_ERROR;
-	}
-	req->console.window_rows =
-	req->console.buffer_rows = w.uw_height / w.uw_vs;
-	req->console.window_cols =
-	req->console.buffer_cols = w.uw_width / w.uw_hs;
-#endif
-#endif
+	req->console.buffer_cols = cols;
 	return DR_DONE;
 }
 
@@ -311,6 +491,12 @@ static void Close_StdIO_Local(void)
 ***********************************************************************/
 {
 	long total;
+	struct termios settings;
+	REBDEV *dev;
+	int flags;
+
+	dev = Devices[req->device];
+
 	switch (req->modify.mode) {
 		case MODE_CONSOLE_ECHO:
 			if (Std_Out >= 0) {
@@ -326,12 +512,37 @@ static void Close_StdIO_Local(void)
 			}
 			break;
 		case MODE_CONSOLE_LINE:
+    		//flags = fcntl(Std_Inp, F_GETFL, 0);
+    		//settings = original_settings;
 			if (req->modify.value) {
 				SET_FLAG(req->modes, RDM_READ_LINE);
+				CLR_FLAG(dev->flags, RDO_AUTO_POLL);
+				CLR_FLAG(req->flags, RRF_PENDING);
+				settings.c_lflag |= ICANON | ECHO;
+				//flags &= ~O_NONBLOCK;
+
+				tcsetattr(Std_Inp, TCSANOW, &original_settings);
+
+				// Turn off bracketed paste - https://cirw.in/blog/bracketed-paste
+				printf("\e[?2004l");
 			}
 			else {
+				//printf("char inp %s\n", dev->title);
+				settings = original_settings;
 				CLR_FLAG(req->modes, RDM_READ_LINE);
+				SET_FLAG(req->flags, RRF_PENDING);
+				SET_FLAG(dev->flags, RDO_AUTO_POLL);
+				settings.c_lflag &= ~(ICANON | ECHO);
+				// Set stdin to non-blocking mode
+  				//flags |= O_NONBLOCK;
+				tcsetattr(Std_Inp, TCSANOW, &settings);
+
+				// Turn on bracketed paste - https://cirw.in/blog/bracketed-paste
+				printf("\e[?2004h");
 			}
+			//fcntl(Std_Inp, F_SETFL, flags);
+
+			
 			break;
 		case MODE_CONSOLE_ERROR:
 			Std_Out = req->modify.value ? STDERR_FILENO : STDOUT_FILENO;
@@ -394,7 +605,7 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 	Close_IO,
 	Read_IO,
 	Write_IO,
-	0,	// poll
+	Poll_IO,
 	0,	// connect
 	Query_IO,
 	Modify_IO,	// modify

@@ -99,6 +99,14 @@ extern REBDEV Dev_Serial;
 #define DEVICE_PTR_SERIAL 0
 #endif
 
+#ifdef INCLUDE_AUDIO_DEVICE
+extern REBDEV Dev_Audio;
+#define DEVICE_PTR_AUDIO &Dev_Audio
+#else
+#define DEVICE_PTR_AUDIO 0
+#endif
+
+
 REBDEV *Devices[RDI_LIMIT] =
 {
 	0,
@@ -113,6 +121,7 @@ REBDEV *Devices[RDI_LIMIT] =
 	DEVICE_PTR_MIDI,
 	0, //DEVICE_PTR_CRYPT
 	DEVICE_PTR_SERIAL,
+	DEVICE_PTR_AUDIO,
 };
 
 
@@ -248,7 +257,7 @@ static int Poll_Default(REBDEV *dev)
 
 /***********************************************************************
 **
-*/	void Signal_Device(REBREQ *req, REBINT type)
+*/	void OS_Signal_Device(REBREQ *req, REBINT type)
 /*
 **		Generate a device event to awake a port on REBOL.
 **
@@ -351,7 +360,7 @@ static int Poll_Default(REBDEV *dev)
 	else if (dev->pending) {
 		Detach_Request(&dev->pending, req); // often a no-op
 		if (result == DR_ERROR && GET_FLAG(req->flags, RRF_ALLOC)) { // not on stack
-			Signal_Device(req, EVT_ERROR);
+			OS_Signal_Device(req, EVT_ERROR);
 		}
 	}
 	else if (result < 0) {

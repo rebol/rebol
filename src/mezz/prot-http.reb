@@ -12,9 +12,9 @@ REBOL [
 		Licensed under the Apache License, Version 2.0
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-	Version: 0.5.1
-	Date: 12-Jun-2023
-	File: %prot-http.r
+	Version: 0.5.2
+	Date: 22-Jul-2023
+	File: %prot-http.r3
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
 	}
@@ -39,6 +39,7 @@ REBOL [
 		0.4.1 13-Jun-2022 "Oldes" "FIX: Using `query` on URL sometimes reports `date: none`"
 		0.5.0 18-Jul-2022 "Oldes" "FEAT: `read/seek` and `read/all` implementation"
 		0.5.1 12-Jun-2023 "Oldes" "FEAT: anonymize authentication tokens in log"
+		0.5.2 22-Jul-2023 "Oldes" "FEAT: support for optional Brotli encoding"
 	]
 ]
 
@@ -673,12 +674,10 @@ decode-result: func[
 	/local body content-type code-page encoding
 ][
 	if encoding: select result/2 'Content-Encoding [
-		either find ["gzip" "deflate"] encoding [
+		either find ["gzip" "deflate" "br"] encoding [
+			if encoding == "br" [encoding: 'brotli]
 			try/with [
-				result/3: switch encoding [
-					"gzip"    [ decompress result/3 'gzip]
-					"deflate" [ decompress result/3 'deflate]
-				]
+				result/3: decompress result/3 to word! encoding
 			][
 				sys/log/info 'HTTP ["Failed to decode data using:^[[22m" encoding]
 				return result
@@ -714,11 +713,11 @@ anonymize: func[
 	;; remove identifying information from data
 	data [string!]
 ] bind [
-	parse probe data [
+	parse data [
 		any [
 			thru LF [
 				  "Authorization:" some SP some uri
-				| ["X-Token:" | "X-Auth-Token:"]
+				| ["X-Token:" | "X-Auth-Token:" | "X-goog-api-key:"]
 			] some SP 0 4 uri change to LF "****"
 			| skip
 		]
@@ -958,6 +957,9 @@ sys/make-scheme [
 		User-Agent: ajoin ["rebol/" system/version " (" system/platform "; " system/build/arch #")"]
 		;@@ One can set above value for example to: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
 		;@@ And so pretend that request is coming from Chrome on Windows10
+	]
+	if find system/catalog/compressions 'brotli [
+		append headers/Accept-Encoding ",br"
 	]
 ]
 

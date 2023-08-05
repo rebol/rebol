@@ -1186,6 +1186,20 @@ RL_API void RL_Free_Handle_Context(REBHOB *hob)
 }
 
 
+RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
+/*
+**	Converts a single UTF8 code-point (to 32 bit).
+**
+**	Returns:
+**		32 bit character code
+**	Arguments:
+**		src  - UTF8 encoded data
+**		len  - number of source bytes consumed.
+*/
+{
+	return  Decode_UTF8_Char(&str, len);
+}
+
 
 
 #include "reb-lib-lib.h"

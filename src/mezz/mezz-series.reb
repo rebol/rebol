@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Mezzanine: Series Helpers"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -57,9 +58,7 @@ rejoin: func [
 	;/with "separator"
 ][
 	if empty? block: reduce block [return block]
-	append either series? first block [copy first block][
-		form first block
-	] next block
+	append either series? block/1 [copy block/1][form block/1] next block
 ]
 
 remold: func [
@@ -71,7 +70,7 @@ remold: func [
 	/part {Limit the length of the result}
 	limit [integer!]
 ][
-	apply :mold [reduce :value only all flat part limit]
+	mold/:only/:all/:flat/:part reduce :value limit
 ]
 
 charset: func [
@@ -288,7 +287,7 @@ reword: func [
 		if wtype <> type? char [char: to wtype char]
 		[a: any [to char b: char [escape | none]] to end fout]
 	]
-	either case [parse/case source rule] [parse source rule]
+	parse/:case source rule
 	; Return end of output with /into, head otherwise
 	either into [output] [head output]
 ]
@@ -361,7 +360,7 @@ deduplicate: func [
     /skip "Treat the series as records of fixed size"
     size [integer!]
 ] [
-    head insert set also apply :unique [set case skip size] clear set
+    head insert set also unique/:case/:skip :set :size clear set
 ]
 
 alter: func [
@@ -377,9 +376,7 @@ alter: func [
 			append series :value true
 		]
 	]
-	to logic! unless remove (
-		either case [find/case series :value] [find series :value]
-	) [append series :value]
+	to logic! unless remove (find/:case series :value) [append series :value]
 ]
 
 supplement: func [
@@ -391,9 +388,7 @@ supplement: func [
 ][
 	result: series ; to return series at same position if value is found
 	any[
-		either case [
-			find/case series :value
-		][  find      series :value ]
+		find/:case series :value
 		append series :value
 	]
 	result
@@ -407,7 +402,7 @@ collect: func [
 ][
 	unless output [output: make block! 16]
 	do func [keep] body func [value [any-type!] /only] [
-		output: apply :insert [output :value none none only]
+		output: insert/:only output :value
 		:value
 	]
 	either into [output] [head output]

@@ -115,7 +115,7 @@ load-csv: function [
 		unless with [delimiter: #","]
 		foreach x source [
 			assert/type [x [file! url! string! binary!]]
-			output: apply :load-csv [x binary /with delimiter /into output]
+			output: load-csv/:binary/:with/:into x delimiter output
 		]
 		return either into [output] [head output]
 	]

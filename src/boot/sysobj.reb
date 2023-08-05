@@ -107,12 +107,104 @@ catalog: object [
 		quoted-printable: #[bitset! #{FFFFFFFFFFFFFFFBFFFFFFFFFFFFFFFF}]
 	]
 	checksums: [adler32 crc24 crc32 tcp md4 md5 sha1 sha224 sha256 sha384 sha512 ripemd160]
-	compressions: [gzip deflate zlib lzma crush]
+	compressions: [deflate zlib gzip] ;; these are always available
 	elliptic-curves: [
 		; will be filled on boot from `Init_Crypt` in `n-crypt.c`
 	]
 	ciphers: [
 		; will be filled on boot from `Init_Crypt` in `n-crypt.c`
+	]
+	event-types: [
+		; Event types. Order dependent for C and REBOL.
+		; Due to fixed C constants, this list cannot be reordered after release!
+		ignore			; ignore event (0)
+		interrupt		; user interrupt
+		device			; misc device request
+		callback		; callback event
+		custom			; custom events
+		error
+		init
+
+		open
+		close
+		connect
+		accept
+		read
+		write
+		wrote
+		lookup
+
+		ready
+		done
+		time
+
+		show
+		hide
+		offset
+		resize
+		active
+		inactive 
+		minimize
+		maximize
+		restore
+
+		move
+		down
+		up
+		alt-down 
+		alt-up 
+		aux-down 
+		aux-up 
+		key
+		key-up ; Move above when version changes!!!
+
+		scroll-line
+		scroll-page
+
+		drop-file
+
+		click
+		change
+		focus
+		unfocus
+		scroll
+
+		control    ;; used to pass control key events to a console port
+		control-up ;; only on Windows?
+	]
+	event-keys: [
+		; Event types. Order dependent for C and REBOL.
+		; Due to fixed C constants, this list cannot be reordered after release!
+		page-up
+		page-down
+		end
+		home
+		left
+		up
+		right
+		down
+		insert
+		delete
+		f1
+		f2
+		f3
+		f4
+		f5
+		f6
+		f7
+		f8
+		f9
+		f10
+		f11
+		f12
+		paste-start  ;; Bracketed paste turned on - https://cirw.in/blog/bracketed-paste
+		paste-end    ;; Bracketed paste turned off
+		escape       ;; Escape key
+		shift
+		control
+		alt
+		pause
+		capital	
 	]
 ]
 
@@ -142,6 +234,7 @@ state: object [
 	]
 	last-error:  none ; used by WHY?
 	last-result: none ; used to store last console result
+	wait-list: []     ; List of ports to add to 'wait
 ]
 
 modules: object [
@@ -156,6 +249,7 @@ modules: object [
 	;; optional modules, protocol and codecs
 	httpd:            https://src.rebol.tech/modules/httpd.reb
 	prebol:           https://src.rebol.tech/modules/prebol.reb
+	spotify:          https://src.rebol.tech/modules/spotify.reb
 	daytime:          https://src.rebol.tech/mezz/prot-daytime.reb
 	mail:             https://src.rebol.tech/mezz/prot-mail.reb
 	mysql:            https://src.rebol.tech/mezz/prot-mysql.reb
@@ -185,10 +279,9 @@ dialects: construct [
 	rebcode:
 ]
 
-schemes: object []
+schemes: make block! 20 ; Block only before init-scheme! Than it is an object.
 
 ports: object [
-	wait-list: []	; List of ports to add to 'wait
 	system:         ; Port for system events
 	event:          ; Port for GUI
 	input:          ; Port for user input.
@@ -340,6 +433,16 @@ standard: object [
 		stop-bits: 1
 		flow-control: none ;not supported on all systems
 	]
+	
+	port-spec-audio: make port-spec-head [
+		scheme: 'audio
+		source: none
+		channels: 2
+		rate: 44100
+		bits: 16
+		sample-type: 1
+		loop-count: 0
+	]
 
 	file-info: construct [
 		name:
@@ -441,87 +544,6 @@ view: object [
 		title-size:
 		work-origin:
 		work-size: 0x0
-	]
-	event-types: [
-		; Event types. Order dependent for C and REBOL.
-		; Due to fixed C constants, this list cannot be reordered after release!
-		ignore			; ignore event (0)
-		interrupt		; user interrupt
-		device			; misc device request
-		callback		; callback event
-		custom			; custom events
-		error
-		init
-
-		open
-		close
-		connect
-		accept
-		read
-		write
-		wrote
-		lookup
-
-		ready
-		done
-		time
-
-		show
-		hide
-		offset
-		resize
-		active
-		inactive 
-		minimize
-		maximize
-		restore
-
-		move
-		down
-		up
-		alt-down 
-		alt-up 
-		aux-down 
-		aux-up 
-		key
-		key-up ; Move above when version changes!!!
-
-		scroll-line
-		scroll-page
-
-		drop-file
-
-		click
-		change
-		focus
-		unfocus
-		scroll
-	]
-	event-keys: [
-		; Event types. Order dependent for C and REBOL.
-		; Due to fixed C constants, this list cannot be reordered after release!
-		page-up
-		page-down
-		end
-		home
-		left
-		up
-		right
-		down
-		insert
-		delete
-		f1
-		f2
-		f3
-		f4
-		f5
-		f6
-		f7
-		f8
-		f9
-		f10
-		f11
-		f12
 	]
 ]
 

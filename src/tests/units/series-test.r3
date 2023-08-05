@@ -8,6 +8,105 @@ Rebol [
 
 ~~~start-file~~~ "Series"
 
+===start-group=== "Merging series"
+--test-- "JOIN"
+	--assert "ab"     == join  'a  'b
+	--assert "ab"     == join  "a" "b"
+	--assert %ab      == join  %a  "b"
+	--assert "ab"     == join #"a" "b"
+	--assert <ab>     == join  <a> "b"
+	--assert "ab3"    == join  'a  ['b  3]
+	--assert "ab3"    == join  "a" ["b" 3]
+	--assert %ab3     == join  %a  ["b" 3]
+	--assert "ab3"    == join #"a" ["b" 3]
+	--assert <ab3>    == join  <a> ["b" 3]
+	--assert "anone"  == join  "a" none
+	--assert %anone   == join  %a  none
+	--assert "anone"  == join #"a" none
+	--assert error? try [join  "a" #[unset]]
+	--assert error? try [join  %a  #[unset]]
+	--assert error? try [join #"a" #[unset]]
+
+;@@ https://github.com/Oldes/Rebol-issues/issues/2558
+--test-- "AJOIN"
+	--assert "ab3"    == ajoin [ 'a  'b  3]
+	--assert "ab3"    == ajoin [ "a" "b" 3]
+	--assert %ab3     == ajoin [ %a  "b" 3]
+	--assert "ab3"    == ajoin [#"a" "b" 3]
+	--assert "<a>b3"  == ajoin [ <a> "b" 3] ;; by design not a tag!
+	--assert "a3"     == ajoin [ "a" #[none]  3]
+	--assert %a3      == ajoin [ %a  #[none]  3]
+	--assert "a3"     == ajoin [#"a" #[none]  3]
+	--assert "a3"     == ajoin [ "a" #[unset] 3]
+	--assert %a3      == ajoin [ %a  #[unset] 3]
+	--assert "a3"     == ajoin [#"a" #[unset] 3]
+	;; when first value is not a string, result is always string
+	--assert "a3"     == ajoin [#[none]  "a"  3]
+	--assert "a3"     == ajoin [#[none]  %a   3]
+	--assert "a3"     == ajoin [#[none] #"a"  3]
+	;; nested ajoin
+	--assert "1234"   == ajoin [1 2 ajoin [3 4]]
+
+--test-- "AJOIN/all"
+	--assert "ab3"     == ajoin/all [ 'a  'b   3]
+	--assert "ab3"     == ajoin/all [ "a" "b"  3]
+	--assert %ab3      == ajoin/all [ %a  "b"  3]
+	--assert "ab3"     == ajoin/all [#"a" "b"  3]
+	--assert "anone3"  == ajoin/all [ "a" #[none]  3]
+	--assert %anone3   == ajoin/all [ %a  #[none]  3]
+	--assert "anone3"  == ajoin/all [#"a" #[none]  3]
+	--assert "a3"      == ajoin/all [ "a" #[unset] 3]
+	--assert %a3       == ajoin/all [ %a  #[unset] 3]
+	--assert "a3"      == ajoin/all [#"a" #[unset] 3]
+	;; when first value is not a string, result is always string
+	--assert "nonea3"  == ajoin/all [#[none]  "a"  3]
+	--assert "nonea3"  == ajoin/all [#[none]  %a   3]
+	--assert "nonea3"  == ajoin/all [#[none] #"a"  3]
+
+--test-- "AJOIN/with"
+	--assert "a/b/3"   == ajoin/with [ 'a  'b       3] #"/"
+	--assert "a/b/3"   == ajoin/with [ "a" "b"      3] #"/"
+	--assert %a/b/3    == ajoin/with [ %a  "b"      3] #"/"
+	--assert "a/b/3"   == ajoin/with [#"a" "b"      3] #"/"
+	--assert "<a>/b/3" == ajoin/with [ <a> "b"      3] #"/" ;; by design not a tag!
+	--assert "a/3"     == ajoin/with [ "a" #[none]  3] #"/"
+	--assert %a/3      == ajoin/with [ %a  #[none]  3] #"/"
+	--assert "a/3"     == ajoin/with [#"a" #[none]  3] #"/"
+	--assert "a/3"     == ajoin/with [ "a" #[unset] 3] #"/"
+	--assert %a/3      == ajoin/with [ %a  #[unset] 3] #"/"
+	--assert "a/3"     == ajoin/with [#"a" #[unset] 3] #"/"
+
+--test-- "AJOIN/all/with"
+	--assert "a/b/3"    == ajoin/all/with [ 'a  'b       3] #"/"
+	--assert "a/b/3"    == ajoin/all/with [ "a" "b"      3] #"/"
+	--assert %a/b/3     == ajoin/all/with [ %a  "b"      3] #"/"
+	--assert "a/b/3"    == ajoin/all/with [#"a" "b"      3] #"/"
+	--assert "a/none/3" == ajoin/all/with [ "a" #[none]  3] #"/"
+	--assert %a/none/3  == ajoin/all/with [ %a  #[none]  3] #"/"
+	--assert "a/none/3" == ajoin/all/with [#"a" #[none]  3] #"/"
+	--assert "a//3"     == ajoin/all/with [ "a" #[unset] 3] #"/"
+	--assert %a//3      == ajoin/all/with [ %a  #[unset] 3] #"/"
+	--assert "a//3"     == ajoin/all/with [#"a" #[unset] 3] #"/"
+
+--test-- "FORM"
+	--assert "a b 3"    == form [ 'a  'b       3]
+	--assert "a b 3"    == form [ "a" "b"      3]
+	--assert "a b 3"    == form [ %a  "b"      3]
+	--assert "a b 3"    == form [#"a" "b"      3]
+	--assert "<a> b 3"  == form [ <a> "b"      3]
+	--assert "a none 3" == form [ "a" #[none]  3]
+	--assert "a none 3" == form [ %a  #[none]  3]
+	--assert "a none 3" == form [#"a" #[none]  3]
+	--assert "a  3"     == form [ "a" #[unset] 3]
+	--assert "a  3"     == form [ %a  #[unset] 3]
+	--assert "a  3"     == form [#"a" #[unset] 3]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2560
+	--assert "  1  2"   == form ["" "" 1 "" 2]
+	--assert "  1  2"   == form [#[unset] #[unset] 1 #[unset] 2]
+===end-group===
+
+
+
 ===start-group=== "FIND & SELECT"
 
 --test-- "SELECT or FIND NONE! anything == none - #473"
