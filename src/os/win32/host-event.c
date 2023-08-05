@@ -215,10 +215,8 @@ static void onModalBlock(
 		gob = GOB_FROM_HWND(hwnd);
 		//TODO: finish me!
 		break;
-
-
-
 	}
+	return 0;
 }
 
 /***********************************************************************
