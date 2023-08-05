@@ -82,13 +82,14 @@
 		if (!(oid[i] & 0x80)) {
 			/* Last byte */
 			ret = snprintf(p, n, ".%u", value);
-			if (ret >= n) {
+			if (ret < 0) return R_ARG1; // error!
+			if ((size_t)ret >= n) {
 				Extend_Series(out, (REBLEN)(ret - n + 1)); // may reallocate p!
 				p = SERIES_DATA(out) + SERIES_TAIL(out);
 				n = SERIES_AVAIL(out);
 				ret = snprintf(p, n, ".%u", value);
-			}
-			if (ret < 0) return R_ARG1; // error!
+				if (ret < 0) return R_ARG1; // error!
+			}			
 			SERIES_TAIL(out) += ret;
 			n -= (size_t)ret;
 			p += (size_t)ret;
