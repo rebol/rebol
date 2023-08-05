@@ -114,6 +114,98 @@ catalog: object [
 	ciphers: [
 		; will be filled on boot from `Init_Crypt` in `n-crypt.c`
 	]
+	event-types: [
+		; Event types. Order dependent for C and REBOL.
+		; Due to fixed C constants, this list cannot be reordered after release!
+		ignore			; ignore event (0)
+		interrupt		; user interrupt
+		device			; misc device request
+		callback		; callback event
+		custom			; custom events
+		error
+		init
+
+		open
+		close
+		connect
+		accept
+		read
+		write
+		wrote
+		lookup
+
+		ready
+		done
+		time
+
+		show
+		hide
+		offset
+		resize
+		active
+		inactive 
+		minimize
+		maximize
+		restore
+
+		move
+		down
+		up
+		alt-down 
+		alt-up 
+		aux-down 
+		aux-up 
+		key
+		key-up ; Move above when version changes!!!
+
+		scroll-line
+		scroll-page
+
+		drop-file
+
+		click
+		change
+		focus
+		unfocus
+		scroll
+
+		control    ;; used to pass control key events to a console port
+		control-up ;; only on Windows?
+	]
+	event-keys: [
+		; Event types. Order dependent for C and REBOL.
+		; Due to fixed C constants, this list cannot be reordered after release!
+		page-up
+		page-down
+		end
+		home
+		left
+		up
+		right
+		down
+		insert
+		delete
+		f1
+		f2
+		f3
+		f4
+		f5
+		f6
+		f7
+		f8
+		f9
+		f10
+		f11
+		f12
+		paste-start  ;; Bracketed paste turned on - https://cirw.in/blog/bracketed-paste
+		paste-end    ;; Bracketed paste turned off
+		escape       ;; Escape key
+		shift
+		control
+		alt
+		pause
+		capital	
+	]
 ]
 
 contexts: construct [
@@ -452,98 +544,6 @@ view: object [
 		title-size:
 		work-origin:
 		work-size: 0x0
-	]
-	event-types: [
-		; Event types. Order dependent for C and REBOL.
-		; Due to fixed C constants, this list cannot be reordered after release!
-		ignore			; ignore event (0)
-		interrupt		; user interrupt
-		device			; misc device request
-		callback		; callback event
-		custom			; custom events
-		error
-		init
-
-		open
-		close
-		connect
-		accept
-		read
-		write
-		wrote
-		lookup
-
-		ready
-		done
-		time
-
-		show
-		hide
-		offset
-		resize
-		active
-		inactive 
-		minimize
-		maximize
-		restore
-
-		move
-		down
-		up
-		alt-down 
-		alt-up 
-		aux-down 
-		aux-up 
-		key
-		key-up ; Move above when version changes!!!
-
-		scroll-line
-		scroll-page
-
-		drop-file
-
-		click
-		change
-		focus
-		unfocus
-		scroll
-
-		control    ;; used to pass control key events to a console port
-		control-up ;; only on Windows?
-	]
-	event-keys: [
-		; Event types. Order dependent for C and REBOL.
-		; Due to fixed C constants, this list cannot be reordered after release!
-		page-up
-		page-down
-		end
-		home
-		left
-		up
-		right
-		down
-		insert
-		delete
-		f1
-		f2
-		f3
-		f4
-		f5
-		f6
-		f7
-		f8
-		f9
-		f10
-		f11
-		f12
-		paste-start  ;; Bracketed paste turned on - https://cirw.in/blog/bracketed-paste
-		paste-end    ;; Bracketed paste turned off
-		escape       ;; Escape key
-		shift
-		control
-		alt
-		pause
-		capital	
 	]
 ]
 

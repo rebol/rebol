@@ -793,7 +793,7 @@ emit-head "Event Types" %reb-evtypes.h
 emit newline
 
 emit ["enum event_types {" newline]
-foreach field ob/view/event-types [
+foreach field ob/catalog/event-types [
 	emit-line "EVT_" field none
 ]
 emit [tab "EVT_MAX^/"]
@@ -801,7 +801,7 @@ emit "};^/^/"
 
 emit ["enum event_keys {" newline]
 emit-line "EVK_" "NONE" none
-foreach field ob/view/event-keys [
+foreach field ob/catalog/event-keys [
 	emit-line "EVK_" field none
 ]
 emit [tab "EVK_MAX^/"]

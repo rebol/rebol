@@ -81,7 +81,7 @@
 
 	case SYM_TYPE:
 		if (!IS_WORD(val) && !IS_LIT_WORD(val)) return FALSE;
-		arg = Get_System(SYS_VIEW, VIEW_EVENT_TYPES);
+		arg = Get_System(SYS_CATALOG, CAT_EVENT_TYPES);
 		if (IS_BLOCK(arg)) {
 			w = VAL_WORD_CANON(val);
 			for (n = 0, arg = VAL_BLK(arg); NOT_END(arg); arg++, n++) {
@@ -141,7 +141,7 @@
 			break;
 		}
 		else if (IS_LIT_WORD(val) || IS_WORD(val)) {
-			arg = Get_System(SYS_VIEW, VIEW_EVENT_KEYS);
+			arg = Get_System(SYS_CATALOG, CAT_EVENT_KEYS);
 			if (IS_BLOCK(arg)) {
 				arg = VAL_BLK_DATA(arg);
 				for (n = VAL_INDEX(arg); NOT_END(arg); n++, arg++) {
@@ -208,7 +208,7 @@
 
 	case SYM_TYPE:
 		if (VAL_EVENT_TYPE(value) == 0) goto is_none;
-		arg = Get_System(SYS_VIEW, VIEW_EVENT_TYPES);
+		arg = Get_System(SYS_CATALOG, CAT_EVENT_TYPES);
 		if (IS_BLOCK(arg) && VAL_TAIL(arg) >= EVT_MAX) {
 			*val = *VAL_BLK_SKIP(arg, VAL_EVENT_TYPE(value));
 			break;
@@ -271,7 +271,7 @@
 			break;
 		}
 		else if (VAL_EVENT_TYPE(value) == EVT_CONTROL || VAL_EVENT_TYPE(value) == EVT_CONTROL_UP) {
-			arg = Get_System(SYS_VIEW, VIEW_EVENT_KEYS);
+			arg = Get_System(SYS_CATALOG, CAT_EVENT_KEYS);
 			if (IS_BLOCK(arg) && n <= (REBINT)VAL_TAIL(arg)) {
 				*val = *VAL_BLK_SKIP(arg, n-1);
 				break;
