@@ -596,7 +596,7 @@ static void Close_StdIO_Local(void)
 	return DR_DONE;
 }
 
-
+extern const WORD Key_To_Event[]; // in host-event.c
 /***********************************************************************
 **
 */	DEVICE_CMD Poll_IO(REBREQ *req)
@@ -606,14 +606,14 @@ static void Close_StdIO_Local(void)
 ***********************************************************************/
 {
 	REBEVT evt;
-	DWORD  cNumRead, i, repeat; 
+	DWORD  cNumRead, i, k, repeat; 
 	INPUT_RECORD irInBuf[8]; 
 	if (ReadConsoleInput(Std_Inp, irInBuf, 8, &cNumRead)) {
 		//printf("cNumRead: %u\n", cNumRead);
 		for (i = 0; i < cNumRead; i++) 
 		{
 			//printf("peek: %u\n", irInBuf[i].EventType);
-			evt.flags = 0;
+			evt.flags = 1 << EVF_HAS_CODE; // allows accessing key code using: event/code
 			evt.model = EVM_CONSOLE;
 			switch (irInBuf[i].EventType) 
 			{ 
@@ -622,14 +622,23 @@ static void Close_StdIO_Local(void)
 					KEY_EVENT_RECORD ker = irInBuf[i].Event.KeyEvent;
 					//printf("key: %u %u %u %u %u\n", ker.uChar.UnicodeChar, ker.bKeyDown, ker.wRepeatCount, ker.wVirtualKeyCode, sizeof(REBEVT));
 					evt.data  = (u32)ker.uChar.UnicodeChar;
-					if (ker.bKeyDown) {
-						if (evt.data == VK_CANCEL) {
-							RL_Escape(0);
-							return DR_DONE; // so stop sending other events
+					if (GetKeyState(VK_SHIFT) < 0) evt.flags |= (1 << EVF_SHIFT);
+					if (GetKeyState(VK_CONTROL) < 0) evt.flags |= (1 << EVF_CONTROL);
+
+					if (evt.data == 0) {
+						evt.type = ker.bKeyDown ? EVT_CONTROL : EVT_CONTROL_UP;
+						// Map the virtual key code to a supported Rebol control key event code
+						for (k = 0; Key_To_Event[k] && ker.wVirtualKeyCode > Key_To_Event[k]; k += 2);
+						if (Key_To_Event[k] == ker.wVirtualKeyCode) {
+							evt.data = Key_To_Event[k + 1];
 						}
-						evt.type = EVT_KEY;
+						else continue; // ignore not supported keys
+					}
+					else if (evt.data == 3 || evt.data == 27) {
+						evt.type = EVT_CONTROL;
+						evt.data = EVK_ESCAPE;
 					} else {
-						evt.type = EVT_KEY_UP;
+						evt.type = ker.bKeyDown ? EVT_KEY : EVT_KEY_UP;
 					}
 					
 					repeat = ker.wRepeatCount;
