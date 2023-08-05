@@ -352,9 +352,8 @@ static void Close_StdIO_Local(void)
 	REBYTE c[4];
 	REBINT len;
 
-	evt.flags = 0;
+	evt.flags = 1 << EVF_HAS_CODE;
 	evt.model = EVM_CONSOLE;
-	SET_FLAG(evt.flags, EVF_HAS_CODE);
 
 	while (poll(&poller, 1, 0) > 0) {
 		if ( read(Std_Inp, &c, 1) > 0 ) {
