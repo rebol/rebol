@@ -57,6 +57,37 @@ typedef struct XTest_Context {
 	REBINT num;
 } XTEST;
 
+u32* x_arg_words;
+enum arg_word_names {
+	W_0,
+	W_ID,
+	W_DATA,
+	W_LENGTH,
+};
+enum test_cmd_words {
+	//CMD_0,
+	CMD_init,
+	CMD_xarg0,
+	CMD_xarg1,
+	CMD_xarg2,
+	CMD_xword0,
+	CMD_xword1,
+	CMD_xobj1,
+	CMD_calls,
+	CMD_calla,
+	CMD_img0,
+	CMD_cec0,
+	CMD_cec1,
+	CMD_hndl1,
+	CMD_hndl2,
+	CMD_vec0,
+	CMD_vec1,
+	CMD_blk1,
+	CMD_hob1,
+	CMD_hob2,
+	CMD_str0,
+	CMD_echo,
+};
 char *RX_Spec =
 	"REBOL [\n"
 		"Title: {Test of Embedded Extension}\n"
@@ -65,7 +96,7 @@ char *RX_Spec =
 		"Options: [boot extension]\n"
 		"Exports: [xtest]\n"
 	"]\n"
-
+	"init-words:   command [words [block!]]\n"
 	"xarg0:  command [{return zero}]\n"
 	"xarg1:  command [{return first arg} arg]\n"
 	"xarg2:  command [{return second arg} arg1 arg2]\n"
@@ -87,12 +118,16 @@ char *RX_Spec =
 	"str0:   command [{return a constructed string}]"
 	"echo:   command [{return the input value} value]"
 
+	"init-words [id data length] protect/hide 'init-words\n"
 	"a: b: c: h: x: none\n"
 	"i: make image! 2x2\n"
 	"s: #[struct! [r [uint8!]]]\n"
 	"xtest: does [\n"
 		"foreach blk [\n"
 			"[x: hob1 #{0102}]"
+			"[print [{x is} mold x {and has data:} mold x/data {with length:} x/length {and id:} x/id]]\n"
+			"[x/id: 2 print [{now the id is:} x/id]]\n"
+			"[print [{It is not possible to change its length:} error? try [x/length: 3]]]\n"
 			"[hob2 x]"
 			"[h: hndl1]\n"
 			"[hndl2 h]\n"
@@ -207,51 +242,51 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 
 	switch (cmd) {
 
-	case 0: //command [{return zero}]
+	case CMD_xarg0: //command [{return zero}]
 		RXA_INT64(frm, 1) = 0;
 		RXA_TYPE(frm, 1) = RXT_INTEGER;
 		break;
 
-	case 1: //command [{return first arg} arg]
+	case CMD_xarg1: //command [{return first arg} arg]
 		break; // same as arg
 
-	case 2: //command [{return second arg} arg1 arg2]
+	case CMD_xarg2: //command [{return second arg} arg1 arg2]
 		RXA_INT64(frm, 1) = RXA_INT64(frm, 2);
 		RXA_TYPE(frm, 1)  = RXA_TYPE(frm, 2);
 		break;
 
-	case 3: //command [{return system word from internal string}]
+	case CMD_xword0: //command [{return system word from internal string}]
 		RXA_WORD(frm, 1) = AS_WORD("system"); //?? is frame always long enough??
 		RXA_TYPE(frm, 1) = RXT_WORD;
 		break;
 
-	case 4: //command [{return word from string} str [string!]]
+	case CMD_xword1: //command [{return word from string} str [string!]]
 		RL_GET_STRING(RXA_SERIES(frm, 1), 0, (void*)(&str), FALSE); // latin-1 only for test
 		RXA_WORD(frm, 1) = RL_MAP_WORD(str);
 		RXA_TYPE(frm, 1) = RXT_WORD;
 		break;
 
-	case 5: //command [{return obj field value} obj [object!] field [word! lit-word!]]
+	case CMD_xobj1: //command [{return obj field value} obj [object!] field [word! lit-word!]]
 		RXA_TYPE(frm, 1) = RL_GET_FIELD(RXA_OBJECT(frm, 1), RXA_WORD(frm, 2), &RXA_ARG(frm, 1));
 		break;
 
-	case 6: //command [{test sync callback} context [object!] word [word!]]
+	case CMD_calls: //command [{test sync callback} context [object!] word [word!]]
 		RXA_TYPE(frm, 1) = Test_Sync_Callback(RXA_OBJECT(frm, 1), RXA_WORD(frm, 2), &RXA_ARG(frm, 1));
 		break;
 
-	case 7: //command [{test async callback} context [object!] word [word!]]
+	case CMD_calla: //command [{test async callback} context [object!] word [word!]]
 		RXA_LOGIC(frm, 1) = Test_Async_Callback(RXA_OBJECT(frm, 1), RXA_WORD(frm, 2));
 		RXA_TYPE(frm, 1) = RXT_LOGIC;
 		break;
 
-	case 8: //command [{return 2x3 image}]
+	case CMD_img0: //command [{return 2x3 image}]
 		RXA_TYPE(frm, 1) = RXT_IMAGE;
 		RXA_IMAGE(frm, 1) = RL_MAKE_IMAGE(2, 3);
 		RXA_IMAGE_WIDTH(frm, 1) = 2;
 		RXA_IMAGE_HEIGHT(frm, 1) = 3;
 		break;
 
-	case 9: //command [{test command context struct} blk [block!]]
+	case CMD_cec0: //command [{test command context struct} blk [block!]]
 		{
 			REBCEC cec;
 			cec.envr = 0;
@@ -261,7 +296,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 		}
 		return RXR_UNSET;
 
-	case 10: //command [{returns cec.index value or -1 if no cec}]
+	case CMD_cec1: //command [{returns cec.index value or -1 if no cec}]
 		{
 			REBCEC* cec = (REBCEC*)ctx;
 			RXA_INT64(frm, 1) = (i64)(cec ? cec->index : -1);
@@ -269,7 +304,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 		}
 		break;
 
-	case 11: //command [{creates a handle}]"
+	case CMD_hndl1: //command [{creates a handle}]"
 		{
 			RXA_HANDLE(frm, 1) = (void*)42;
 			RXA_HANDLE_TYPE(frm, 1) = AS_WORD("xtest_plain");
@@ -277,7 +312,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 		}
 		break;
 
-	case 12: //command [{return handle's internal value as integer} hnd [handle!]]
+	case CMD_hndl2: //command [{return handle's internal value as integer} hnd [handle!]]
 		{
 			i64 i = (i64)RXA_HANDLE(frm, 1);
 			RXA_INT64(frm, 1) = i;
@@ -285,14 +320,14 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 		}
 		break;
 
-	case 13: //command [{return vector size in bytes} v [vector!]]
+	case CMD_vec0: //command [{return vector size in bytes} v [vector!]]
 		{
 			REBSER *vec = RXA_SERIES(frm, 1);
 			RXA_TYPE(frm, 1) = RXT_INTEGER;
 			RXA_INT64(frm, 1) = (vec->sizes & 0xFF) * vec->tail; //TODO: review!
 		}
 		break;
-	case 14: //command [{return vector size in values (from object)} o [object!]]
+	case CMD_vec1: //command [{return vector size in values (from object)} o [object!]]
 		{
 			RXIARG vec;
 			REBCNT type = RL_GET_FIELD(RXA_OBJECT(frm, 1), AS_WORD("v"), &vec);
@@ -307,7 +342,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			}
 		}
 		break;
-	case 15: //command [{print type ids of all values in a block} b [block!]]
+	case CMD_blk1: //command [{print type ids of all values in a block} b [block!]]
 		{
 			REBSER *blk = RXA_SERIES(frm, 1);
 			REBCNT n, type;
@@ -321,7 +356,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			return RXR_UNSET;
 		}
 		break;
-	case 16: //command [{creates XTEST handle} bin [binary!]]"
+	case CMD_hob1: //command [{creates XTEST handle} bin [binary!]]"
 		{
 			REBHOB *hob = RL_MAKE_HANDLE_CONTEXT(Handle_XTest);
 			REBSER *bin = RXA_SERIES(frm, 1);
@@ -343,7 +378,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			RXA_TYPE(frm, 1) = RXT_HANDLE;
 		}
 		break;
-	case 17: //command [{prints XTEST handle's data} hndl [handle!]]"
+	case CMD_hob2: //command [{prints XTEST handle's data} hndl [handle!]]"
 		{
 			REBHOB* hob = RXA_HANDLE(frm, 1);
 			if (hob->sym == Handle_XTest) {
@@ -360,7 +395,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			}
 		}
 		break;
-	case 18: //command [{return a constructed string}]"
+	case CMD_str0: //command [{return a constructed string}]"
 		{
 			REBSER* str = RL_MAKE_STRING(32, FALSE); // 32 bytes, latin1 (must be large enough!)
 			REBYTE ver[8];
@@ -372,9 +407,12 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			RXA_INDEX (frm, 1) = 0;
 		}
 		break;
-	case 19: //command [{return the input value} value]
+	case CMD_echo: //command [{return the input value} value]
 		return RXR_VALUE;
 
+	case CMD_init: // init words
+		x_arg_words = RL_MAP_WORDS(RXA_SERIES(frm,1));
+		return RXR_TRUE;
 	default:
 		return RXR_NO_COMMAND;
 	}
@@ -382,19 +420,72 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 }
 
 
-void* releaseXTestContext(void* ctx) {
+int XTestContext_release(void* ctx) {
 	XTEST* data = (XTEST*)ctx;
 	printf("Relasing XTest context handle: %p\n", data);
 	// do some final cleaning off the context's content
 	printf("data=> id: %u num: %i\n", data->id, data->num);
 	CLEARS(data);
 	printf("data=> id: %u num: %i\n", data->id, data->num);
-	return NULL;
+	return 0;
 }
+
+int XTestContext_get_path(REBHOB *hob, REBCNT word, REBCNT *type, RXIARG *arg) {
+	XTEST* xtest = (XTEST*)hob->data;
+	word = RL_FIND_WORD(x_arg_words, word);
+	//printf("XTestContext_get_path word: %u\n", word);
+	switch (word) {
+	case W_ID:
+		*type = RXT_INTEGER;
+		arg->int64 = xtest->id;
+		break;
+	case W_DATA:
+		arg->series = hob->series;
+		arg->index = 0;
+		*type = RXT_BINARY;
+		break;
+	case W_LENGTH:
+		*type = RXT_INTEGER;
+		arg->int64 = xtest->num;
+		break;
+	default:
+		return PE_BAD_SELECT;	
+	}
+
+	return PE_USE;
+}
+
+int XTestContext_set_path(REBHOB *hob, REBCNT word, REBCNT *type, RXIARG *arg) {
+	XTEST* xtest = (XTEST*)hob->data;
+	word = RL_FIND_WORD(x_arg_words, word);
+	//printf("XTestContext_set_path word: %u\n", word);
+	switch (word) {
+	case W_ID:
+		if (*type != RXT_INTEGER) return PE_BAD_SET_TYPE;
+		xtest->id = arg->int64;
+		break;
+	case W_DATA:
+		if (*type != RXT_BINARY) return PE_BAD_SET_TYPE;
+		hob->series = arg->series;
+		xtest->num = SERIES_TAIL(hob->series);
+		break;
+	default:
+		return PE_BAD_SET;	
+	}
+	return PE_OK;
+}
+
+
 
 void Init_Ext_Test(void)
 {
+	REBHSP spec;
 	RL = RL_Extend(b_cast(&RX_Spec[0]), (RXICAL)&RX_Call);
-	Handle_XTest = RL_REGISTER_HANDLE("XTEST", sizeof(XTEST), releaseXTestContext);
+	spec.size      = sizeof(XTEST);
+	spec.flags     = 0;
+	spec.free      = XTestContext_release;
+	spec.get_path  = XTestContext_get_path;
+	spec.set_path  = XTestContext_set_path;
+	Handle_XTest = RL_REGISTER_HANDLE_SPEC("XTEST", &spec);
 }
 #endif //TEST_EXTENSIONS

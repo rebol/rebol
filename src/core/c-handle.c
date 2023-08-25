@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2023 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -72,6 +72,48 @@
 
 /***********************************************************************
 **
+*/	REBCNT Register_Handle_Spec(REBCNT sym, REBHSP *spec)
+/*
+**      Stores handle's specification (required data size and optional free callback.
+**		Returns table index for the word (whether found or new).
+**      Returns NOT_FOUND if handle with give ID is already registered.
+**
+***********************************************************************/
+{
+	REBCNT idx;
+	REBVAL *handles = Get_System(SYS_CATALOG, CAT_HANDLES);
+
+	if (!sym) return NOT_FOUND;
+
+	//printf("Register_Handle: %s with size %u\n", SYMBOL_TO_NAME(sym),  size);
+
+	idx = Find_Handle_Index(sym);
+	if (idx != NOT_FOUND) {
+		// Handle with this name already exists... what to do?
+		// So far at least check, if the size is same!
+		if (PG_Handles[idx].size != spec->size) {
+			Trap1(RE_HANDLE_EXISTS, VAL_BLK_SKIP(handles, idx));
+		}
+		return idx;
+	}
+	idx = VAL_TAIL(handles);
+	if (idx >= MAX_HANDLE_TYPES)
+		Crash(RP_MAX_HANDLES); //TODO: realloc PG_Handles instead!
+
+	REBVAL *val = Append_Value(VAL_SERIES(handles));
+	Set_Word(val, sym, 0, 0);
+
+	PG_Handles[idx].size     = spec->size;
+	PG_Handles[idx].flags    = spec->flags;  // reserved for future
+	PG_Handles[idx].free     = spec->free;
+	PG_Handles[idx].get_path = spec->get_path;
+	PG_Handles[idx].set_path = spec->set_path;
+	
+	return idx;
+}
+
+/***********************************************************************
+**
 */	REBHOB* Make_Handle_Context(REBCNT sym)
 /*
 **		Allocates memory large enough to hold given handle's id
@@ -90,10 +132,10 @@
 
 	//printf("Requested HOB for %s (%u) of size %u\n", SYMBOL_TO_NAME(sym), sym, size);
 	hob = (REBHOB*)Make_Node(HOB_POOL);
-	hob->data = MAKE_MEM(size);
+	hob->data  = MAKE_MEM(size);
 	hob->index = idx;
 	hob->flags = HANDLE_CONTEXT;
-	hob->sym = sym;
+	hob->sym   = sym;
 	CLEAR(hob->data, size);
 	USE_HOB(hob);
 	//printf("HOB made mem: %p\n", hob->data);
