@@ -1723,4 +1723,8 @@ eggs: [
 		:arch-x64
 		:make-ext-test
 	]
+
+	"Amalgamate extension include file" [
+		do %make/tools/amalgamate-ext.r3
+	]
 ]
