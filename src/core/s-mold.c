@@ -326,7 +326,7 @@ STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 static REBUNI *Emit_Uni_Char(REBUNI *up, REBUNI chr, REBOOL parened)
 {
 	if (chr >= 0x7f || chr == 0x1e) {  // non ASCII or ^ must be (00) escaped
-		if (parened || chr <= 0xA0 || chr == 0x1e) { // do not AND with above
+		if (parened || chr < 0xA0 || chr == 0x1e) { // do not AND with above
 			*up++ = '^';
 			*up++ = '(';
 			up = Form_Uni_Hex(up, chr);

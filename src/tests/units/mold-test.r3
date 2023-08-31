@@ -223,9 +223,11 @@ Rebol [
 ===start-group=== "mold char!"
 	--test-- "mold invisible chars"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2562
-		for i 127 160 1 [
+		for i 127 159 1 [
 			--assert all [8 = length? v: mold to char! i  v/4 = #"("]
 		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2564
+		--assert #{2322C2A022} == to binary! mold to char! 160
 ===end-group=== 
 
 
