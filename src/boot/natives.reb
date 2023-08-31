@@ -595,7 +595,7 @@ invalid-utf?: native [
 
 value?: native [
 	{Returns TRUE if the word has a value.}
-	value
+	value [word!]
 ]
 
 to-value: native [
