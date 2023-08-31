@@ -138,7 +138,7 @@
 	hob->sym   = sym;
 	CLEAR(hob->data, size);
 	USE_HOB(hob);
-	//printf("HOB made mem: %p\n", hob->data);
+	//printf("HOB %p made mem: %p\n", hob, hob->data);
 	return hob;
 }
 

@@ -54,7 +54,7 @@ extern RL_LIB *RL; // Link back to reb-lib from embedded extensions
 static REBCNT Handle_XTest;
 typedef struct XTest_Context {
 	REBCNT id;
-	REBINT num;
+	REBCNT flags;
 } XTEST;
 
 u32* x_arg_words;
@@ -113,13 +113,13 @@ char *RX_Spec =
 	"vec0:   command [{return vector size in bytes} v [vector!]]\n"
 	"vec1:   command [{return vector size in bytes (from object)} o [object!]]\n"
 	"blk1:   command [{print type ids of all values in a block} b [block!]]\n"
-	"hob1:   command [{creates XTEST handle} bin [binary!]]"
+	"hob1:   command [{creates XTEST handle} bin [binary!] /with hnd [handle!]]"
 	"hob2:   command [{prints XTEST handle's data} hndl [handle!]]"
 	"str0:   command [{return a constructed string}]"
 	"echo:   command [{return the input value} value]"
 
 	"init-words [id data length] protect/hide 'init-words\n"
-	"a: b: c: h: x: none\n"
+	"a: b: c: h: x: y: none\n"
 	"i: make image! 2x2\n"
 	"s: #[struct! [r [uint8!]]]\n"
 	"xtest: does [\n"
@@ -129,6 +129,10 @@ char *RX_Spec =
 			"[x/id: 2 print [{now the id is:} x/id]]\n"
 			"[print [{It is not possible to change its length:} error? try [x/length: 3]]]\n"
 			"[hob2 x]"
+
+			// Sometimes handle may depend on another handle.. this test simulates it.
+			"[y: hob1/with #{00} x  x: none  print [{The new handle keeps reference to the second handle:} mold y/data y/data/2/id]]\n"
+
 			"[h: hndl1]\n"
 			"[hndl2 h]\n"
 			"[xarg0]\n"
@@ -356,7 +360,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			return RXR_UNSET;
 		}
 		break;
-	case CMD_hob1: //command [{creates XTEST handle} bin [binary!]]"
+	case CMD_hob1: //command [{creates XTEST handle} bin [binary!] /with hnd [handle!]]"
 		{
 			REBHOB *hob = RL_MAKE_HANDLE_CONTEXT(Handle_XTest);
 			REBSER *bin = RXA_SERIES(frm, 1);
@@ -365,12 +369,20 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			if (SERIES_REST(bin) < 1) {
 				RL_EXPAND_SERIES(bin, SERIES_TAIL(bin), 1);
 			}
-			hob->series = bin;
 
-			printf("data=> id: %u num: %i\n", data->id, data->num);
+			if (RXA_REF(frm, 2)) {
+				hob->series = RL_MAKE_BLOCK(2);
+				data->flags = 1;
+				RL_SET_VALUE(hob->series, 0, RXA_ARG(frm, 1), RXT_BINARY);
+				RL_SET_VALUE(hob->series, 1, RXA_ARG(frm, 3), RXT_HANDLE);
+			} else {
+				hob->series = bin;
+				data->flags = 0;
+			}
+
+			printf("data=> id: %u flags: %i\n", data->id, data->flags);
 			data->id = 1;
-			data->num = SERIES_TAIL(bin);
-			printf("data=> id: %u num: %i\n", data->id, data->num);
+			printf("data=> id: %u flags: %i\n", data->id, data->flags);
 
 			RXA_HANDLE(frm, 1) = hob;
 			RXA_HANDLE_TYPE(frm, 1) = hob->sym;
@@ -383,10 +395,20 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			REBHOB* hob = RXA_HANDLE(frm, 1);
 			if (hob->sym == Handle_XTest) {
 				XTEST* data = (XTEST*)hob->data;
-				REBSER *bin = hob->series;
+				REBSER *bin, *ser;
+				REBCNT type;
+				if (data->flags == 1) {
+					type = RL_GET_VALUE(hob->series, 0, &RXA_ARG(frm, 2));
+					if (type != RXT_BINARY) return RXR_FALSE;
+					bin = RXA_SERIES(frm, 2);
+				} else {
+					bin = hob->series;
+				}
+
+				 
 				SERIES_DATA(bin)[0] = SERIES_DATA(bin)[0] + 1;
-				printf("data=> id: %u num: %i b: %i\n", data->id, data->num, (u8)SERIES_DATA(bin)[0]);
-				RXA_INT64(frm, 1) = data->num;
+				printf("data=> id: %u flags: %i b: %i\n", data->id, data->flags, (u8)SERIES_DATA(bin)[0]);
+				RXA_INT64(frm, 1) = SERIES_DATA(bin)[0];
 				RXA_TYPE(frm, 1) = RXT_INTEGER;
 			}
 			else {
@@ -424,9 +446,9 @@ int XTestContext_release(void* ctx) {
 	XTEST* data = (XTEST*)ctx;
 	printf("Relasing XTest context handle: %p\n", data);
 	// do some final cleaning off the context's content
-	printf("data=> id: %u num: %i\n", data->id, data->num);
+	printf("data=> id: %u num: %i\n", data->id, data->flags);
 	CLEARS(data);
-	printf("data=> id: %u num: %i\n", data->id, data->num);
+	printf("data=> id: %u num: %i\n", data->id, data->flags);
 	return 0;
 }
 
@@ -442,11 +464,11 @@ int XTestContext_get_path(REBHOB *hob, REBCNT word, REBCNT *type, RXIARG *arg) {
 	case W_DATA:
 		arg->series = hob->series;
 		arg->index = 0;
-		*type = RXT_BINARY;
+		*type = (xtest->flags == 1) ? RXT_BLOCK : RXT_BINARY;
 		break;
 	case W_LENGTH:
 		*type = RXT_INTEGER;
-		arg->int64 = xtest->num;
+		arg->int64 = SERIES_TAIL(hob->series);
 		break;
 	default:
 		return PE_BAD_SELECT;	
@@ -467,7 +489,7 @@ int XTestContext_set_path(REBHOB *hob, REBCNT word, REBCNT *type, RXIARG *arg) {
 	case W_DATA:
 		if (*type != RXT_BINARY) return PE_BAD_SET_TYPE;
 		hob->series = arg->series;
-		xtest->num = SERIES_TAIL(hob->series);
+		//xtest->num = SERIES_TAIL(hob->series);
 		break;
 	default:
 		return PE_BAD_SET;	
