@@ -34,30 +34,18 @@ probe: func [
 	{Debug print a word, path, or block of such, followed by its molded value.}
 	'name "Word, path or block to obtain values."
 ][
-	case [
-		any [
-			word? :name
-			path? :name
+	unless block? name [name: reduce [name]]
+	foreach word name [
+		either any [
+			word? :word
+			path? :word
 		][
-			prin ajoin ["^[[1;32m" mold :name "^[[0m: ^[[32m"] 
-    		prin either value? :name [mold/all get/any :name] ["#[unset!]"]
-    		print "^[[0m"
+			prin ajoin ["^[[1;32m" mold :word "^[[0m: ^[[32m"]
+			prin try/with [mold/all get/any :word][["^[[1;35mError:" system/state/last-error/id]] 
+			print "^[[0m"
+		][
+			print ajoin ["^[[1;32m" mold/all word "^[[0m"]
 		]
-		block? :name [
-			foreach word name [
-				either any [
-					word? :word
-					path? :word
-				][
-					prin ajoin ["^[[1;32m" mold :word "^[[0m: ^[[32m"] 
-					prin either value? :word [mold/all get/any :word]["#[unset!]"]
-					print "^[[0m"
-				][
-					print ajoin ["^[[1;32m" mold/all word "^[[0m"]
-				]
-			]
-		]
-		true [print ajoin ["^[[1;32m" mold/all :name "^[[0m"]]
 	]
 	exit
 ]
