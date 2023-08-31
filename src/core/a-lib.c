@@ -1204,15 +1204,20 @@ RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
 **
 */	RL_API REBCNT RL_Register_Handle_Spec(REBYTE *name, REBHSP *spec)
 /*
-**	Stores handle's specification (required data size and optional free callback.
+**	Stores handle's specification (required data size and optional callbacks).
+**  It's an extended version of old RL_Register_Handle function.
 **
 **	Returns:
 **		symbol id of the word (whether found or new)
 **		or NOT_FOUND if handle with give ID is already registered.
 **	Arguments:
 **		name      - handle's name as a c-string (length is being detected)
-**		size      - size of needed memory to handle
-**		free_func - custom function to be called when handle is released
+**		spec      - Handle's specification:
+**                  * size of needed memory to handle,
+**                  * reserved flags
+**                  * release function
+**                  * get path accessor
+**                  * set path accessor
 **
 ***********************************************************************/
 {
