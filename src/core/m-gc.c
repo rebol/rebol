@@ -814,6 +814,8 @@ mark_obj:
 {
 	REBCNT n;
 	GC_Disabled = 0;
+	// Dispose context handles first, because they may depend on other series!
+	Dispose_Hobs();
 	/* remove everything from GC_Infants (GC protection) */
 	for (n = 0; n < MAX_SAFE_SERIES; n++) {
 		GC_Infants[n] = NULL;

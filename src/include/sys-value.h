@@ -1091,9 +1091,13 @@ enum Handle_Flags {
 	HANDLE_CONTEXT_LOCKED = 1 << 5,  // so Rebol will not GC the handle if C side still depends on it
 };
 
+enum Handle_Spec_Flags {
+	HANDLE_REQUIRES_HOB_ON_FREE = 1 << 0
+}
+
 typedef struct Reb_Handle_Spec {
 	REBCNT size;
-	REBFLG flags; // reserved for future
+	REBFLG flags;
 	REB_HANDLE_FREE_FUNC free;
 	REB_HANDLE_EVAL_PATH get_path;
 	REB_HANDLE_EVAL_PATH set_path;
