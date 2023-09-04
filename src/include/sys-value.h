@@ -1093,7 +1093,7 @@ enum Handle_Flags {
 
 enum Handle_Spec_Flags {
 	HANDLE_REQUIRES_HOB_ON_FREE = 1 << 0
-}
+};
 
 typedef struct Reb_Handle_Spec {
 	REBCNT size;
