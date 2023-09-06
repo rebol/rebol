@@ -499,6 +499,21 @@ int XTestContext_set_path(REBHOB *hob, REBCNT word, REBCNT *type, RXIARG *arg) {
 	return PE_OK;
 }
 
+int XTestContext_mold(REBHOB *hob, REBSER *str) {
+	int len;
+	XTEST* xtest = (XTEST*)hob->data;
+
+	if (!str || !xtest) return 0;
+
+	len = snprintf(
+		SERIES_DATA(str),
+		SERIES_REST(str),
+		"0#%lx id: %u", (unsigned long)hob->data, xtest->id
+	);
+	if (len > 0) SERIES_TAIL(str) += len;
+	return len;
+}
+
 
 
 void Init_Ext_Test(void)
@@ -510,6 +525,7 @@ void Init_Ext_Test(void)
 	spec.free      = XTestContext_release;
 	spec.get_path  = XTestContext_get_path;
 	spec.set_path  = XTestContext_set_path;
+	spec.mold      = XTestContext_mold;
 	Handle_XTest = RL_REGISTER_HANDLE_SPEC("XTEST", &spec);
 }
 #endif //TEST_EXTENSIONS

@@ -558,6 +558,18 @@ STOID Mold_Handle(REBVAL *value, REB_MOLD *mold)
 		if (IS_CONTEXT_HANDLE(value)) {
 			if (!IS_USED_HOB(VAL_HANDLE_CTX(value)))
 				Append_Bytes(mold->series, " unset!");
+			else {
+				REBCNT idx = VAL_HANDLE_CTX(value)->index;
+				REBHSP spec = PG_Handles[idx];
+				REBINT len;
+				if (spec.mold) {
+					len = spec.mold(VAL_HANDLE_CTX(value), BUF_PRINT);
+					if (len > 0) {
+						Append_Byte(mold->series, ' ');
+						Append_Bytes_Len(mold->series, STR_HEAD(BUF_PRINT), len);
+					}
+				}
+			}
 		}
 		Append_Byte(mold->series, ']');
 	}
