@@ -114,7 +114,7 @@ extern void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type); // f-extension.c
 
 	sym = VAL_WORD_CANON(arg);
 
-	if (IS_CONTEXT_HANDLE(data)) {
+	if (IS_CONTEXT_HANDLE(data) && IS_USED_HOB(VAL_HANDLE_CTX(data))) {
 		RXIARG xarg;
 		REBCNT type;
 		REBCNT idx = VAL_HANDLE_CTX(data)->index;
