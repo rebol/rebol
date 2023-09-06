@@ -616,10 +616,10 @@ clear_header:
 	if( !IS_USED_HOB(hob) || hob->data == NULL ) return;
 
 	spec = PG_Handles[idx];
-	//printf("HOB %p free mem: %p\n", hob, hob->data);
+	//printf("HOB %p free mem: %p %i\n", hob, hob->data, spec.flags);
 
 	if (spec.free) {
-		spec.free(GET_FLAG(spec.flags, HANDLE_REQUIRES_HOB_ON_FREE) ? hob : hob->data);
+		spec.free(spec.flags & HANDLE_REQUIRES_HOB_ON_FREE ? hob : hob->data);
 	}
 	
 	CLEAR(hob->data, spec.size); 
