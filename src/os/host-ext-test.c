@@ -132,6 +132,8 @@ char *RX_Spec =
 
 			// Sometimes handle may depend on another handle.. this test simulates it.
 			"[y: hob1/with #{00} x  x: none  print [{The new handle keeps reference to the second handle:} mold y/data y/data/2/id]]\n"
+			// Manually releasing a handle...
+			"[print [{Relasing:} y]  release y  print [{Result:} y {should have no data:} y/data]]\n" 
 
 			"[h: hndl1]\n"
 			"[hndl2 h]\n"
@@ -186,7 +188,7 @@ REBCNT Test_Sync_Callback(REBSER *obj, REBCNT word, RXIARG *result)
 	RXIARG args[4];
 	REBCNT n;
 
-	printf("Test_Sync_Callback: ");
+	//printf("Test_Sync_Callback: ");
 
 	// These can be on the stack, because it's synchronous.
 	CLEAR(&cbi, sizeof(cbi));
@@ -214,7 +216,7 @@ REBCNT Test_Async_Callback(REBSER *obj, REBCNT word)
 	RXIARG *args;
 	REBCNT n;
 
-	printf("Test_Async_Callback: ");
+	//printf("Test_Async_Callback: ");
 
 	// These cannot be on the stack, because they are used
 	// when the callback happens later.

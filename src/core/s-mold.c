@@ -555,6 +555,10 @@ STOID Mold_Handle(REBVAL *value, REB_MOLD *mold)
 	if (name != NULL) {
 		Append_Bytes(mold->series, "#[handle! ");
 		Append_Bytes(mold->series, cs_cast(name));
+		if (IS_CONTEXT_HANDLE(value)) {
+			if (!IS_USED_HOB(VAL_HANDLE_CTX(value)))
+				Append_Bytes(mold->series, " unset!");
+		}
 		Append_Byte(mold->series, ']');
 	}
 	else {
