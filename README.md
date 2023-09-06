@@ -40,6 +40,7 @@ It is possible to extend Rebol functionality using external modules (native and 
 * [Rebol/HTTPd](https://github.com/Oldes/Rebol-HTTPd) - Webserver scheme
 * [Rebol/IRC](https://github.com/Oldes/Rebol-IRC) - Internet Relay Chat scheme
 * [Rebol/MathPresso](https://github.com/Siskin-framework/Rebol-MathPresso) - Mathematical Expression Parser And JIT Compiler
+* [Rebol/MiniAudio](https://github.com/Oldes/Rebol-MiniAudio) - An audio playback extension
 * [Rebol/Names](https://github.com/Oldes/Rebol-Names) - Random names generator scheme
 * [Rebol/Spotify](https://github.com/Oldes/Rebol-Spotify) - Spotify Web API
 * [Rebol/OpenCV](https://github.com/Oldes/Rebol-OpenCV) - Computer Vision Library
