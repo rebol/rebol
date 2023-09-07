@@ -616,10 +616,11 @@ clear_header:
 	if( !IS_USED_HOB(hob) || hob->data == NULL ) return;
 
 	spec = PG_Handles[idx];
-	//printf("HOB free mem: %p\n", hob->data);
+	//printf("HOB %p free mem: %p %i\n", hob, hob->data, spec.flags);
 
-	if (spec.free)
-		spec.free(hob->data);
+	if (spec.free) {
+		spec.free(spec.flags & HANDLE_REQUIRES_HOB_ON_FREE ? hob : hob->data);
+	}
 	
 	CLEAR(hob->data, spec.size); 
 	FREE_MEM(hob->data);
@@ -1008,6 +1009,31 @@ crash:
 
 /***********************************************************************
 **
+*/	void Dispose_Hobs(void)
+/*
+**		Free all HOB pool segments
+**
+***********************************************************************/
+{
+	REBSEG	*seg, *next;
+	REBHOB *hob;
+	REBCNT  n;
+
+	//puts("===== Dispose_Hobs ======");
+	// HOB at this moment does not use system series, so handle it separately
+	for (seg = Mem_Pools[HOB_POOL].segs; seg; seg = seg->next) {
+		hob = (REBHOB *) (seg + 1);
+		for (n = Mem_Pools[HOB_POOL].units; n > 0; n--) {
+			SKIP_WALL_TYPE(hob, REBHOB);
+			if (IS_USED_HOB(hob)) Free_Hob(hob);
+			hob++;
+			SKIP_WALL_TYPE(hob, REBHOB);
+		}
+	}
+}
+
+/***********************************************************************
+**
 */	void Dispose_Pools(void)
 /*
 **		Free memory pool array when application quits.
@@ -1020,19 +1046,9 @@ crash:
 
 	//Dump_Pools();
 	//Dump_Series_In_Pool(-1);
-	
-	// HOB at this moment does not use system series, so handle it separately
-	for (seg = Mem_Pools[HOB_POOL].segs; seg; seg = seg->next) {
-		hob = (REBHOB *) (seg + 1);
-		for (n = Mem_Pools[HOB_POOL].units; n > 0; n--) {
-			SKIP_WALL_TYPE(hob, REBHOB);
-			if (IS_USED_HOB(hob)) Free_Hob(hob);
-			hob++;
-			SKIP_WALL_TYPE(hob, REBHOB);
-		}
-	}
+	//puts("===== Dispose_Pools ======");
 
-	// than release all series from all system pools
+	// Release all series from all system pools
 	FOREACH(n, SYSTEM_POOL) {
 		//printf(cs_cast("*** Dispose_Pools[%u] Has: %u free: %u\n"), n, Mem_Pools[n].has, Mem_Pools[n].free);
 		if (Mem_Pools[n].has == Mem_Pools[n].free) {

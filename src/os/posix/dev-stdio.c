@@ -349,7 +349,7 @@ static void Close_StdIO_Local(void)
 ***********************************************************************/
 {
 	REBEVT evt;
-	REBYTE c[4];
+	REBYTE c[8];
 	REBINT len;
 
 	evt.flags = 1 << EVF_HAS_CODE;
@@ -361,7 +361,7 @@ static void Close_StdIO_Local(void)
 			//printf("%u\n", c);
 			if (c[0] == '\e') {
 				evt.type = EVT_CONTROL;
-				// Escape sequences...
+				// Escape sequences... is there really some system in it?!
 				if (poll(&poller, 1, 0) <= 0) {
 					// no any other char
 					evt.data = EVK_ESCAPE;
@@ -379,12 +379,12 @@ static void Close_StdIO_Local(void)
 					case 'H': evt.data = EVK_HOME;  goto throw_event;
 					}
 					if (c[1] == '1') {
-						read(Std_Inp, &c, 2);
+						read(Std_Inp, &c[2], 2);
 						//printf("%s ", c);
-						if(c[1] == '~') {
-							switch(c[0]){
+						if(c[3] == '~') {
+							switch(c[2]){
 							case '1': evt.data = EVK_F1; goto throw_event; //== "\e[11~"
-							case '2': evt.data = EVK_F2; goto throw_event;
+							case '2': evt.data = EVK_F2; goto throw_event; //== "\e[12~"
 							case '3': evt.data = EVK_F3; goto throw_event;
 							case '4': evt.data = EVK_F4; goto throw_event;
 							case '5': evt.data = EVK_F5; goto throw_event;
@@ -393,25 +393,42 @@ static void Close_StdIO_Local(void)
 							case '9': evt.data = EVK_F8; goto throw_event;
 							}
 						}
+						else if(c[2] == ';' && c[3] == '2') {
+							SET_FLAG(evt.flags, EVF_SHIFT);
+							read(Std_Inp, &c[4], 1);
+							switch(c[4]){
+							case 'C': evt.data = EVK_RIGHT; goto throw_event; //== "\e[1;2C"
+							case 'D': evt.data = EVK_LEFT;  goto throw_event; //== "\e[1;2D"
+							}
+						}
 					}
 					else if (c[1] == '2') {
-						read(Std_Inp, &c, 1);
-						if (c[0] == '~') {
+						read(Std_Inp, &c[2], 1);
+						//printf("%s ", c);
+						if (c[2] == '~') {
 							evt.data = EVK_INSERT; goto throw_event; //== "\e[2~"
 						}
-						read(Std_Inp, &c[1], 1);
-						if (c[1] == '~') {
-							switch(c[0]){
+						read(Std_Inp, &c[3], 1);
+						//printf("%s ", c);
+						if (c[3] == '~') {
+							switch(c[2]){
 							case '0': evt.data = EVK_F9;  goto throw_event; //== "\e[20~"
 							case '1': evt.data = EVK_F10; goto throw_event;
 							case '3': evt.data = EVK_F11; goto throw_event;
 							case '4': evt.data = EVK_F12; goto throw_event;
 							}
+							SET_FLAG(evt.flags, EVF_SHIFT);
+							switch(c[2]){
+							case '5': evt.data = EVK_F5;  goto throw_event; //== "\e[25~"
+							case '6': evt.data = EVK_F6;  goto throw_event;
+							case '8': evt.data = EVK_F7;  goto throw_event;
+							case '9': evt.data = EVK_F8;  goto throw_event;
+							}
 						}
 						else {
-							read(Std_Inp, &c[2], 1);
-							if (c[2] == '~' && c[0] == '0') {
-								switch(c[1]){
+							read(Std_Inp, &c[4], 1);
+							if (c[4] == '~' && c[2] == '0') {
+								switch(c[3]){
 								case '0': evt.data = EVK_PASTE_START; goto throw_event; //== "\e[200~"
 								case '1': evt.data = EVK_PASTE_END;   goto throw_event; //== "\e[201~"
 								}
@@ -420,6 +437,7 @@ static void Close_StdIO_Local(void)
 					}
 					else if (c[1] > '2' && c[1] <= '8') {
 						read(Std_Inp, &c[2], 1);
+						//printf("%s ", c);
 						if (c[2] == '~') {
 							switch(c[1]){
 							case '3': evt.data = EVK_DELETE;    goto throw_event; //== "\e[3~"
@@ -428,6 +446,19 @@ static void Close_StdIO_Local(void)
 							case '7': evt.data = EVK_HOME;      goto throw_event;
 							case '4':
 							case '8': evt.data = EVK_END;       goto throw_event;
+							}
+						}
+						else if (c[1] == '3') {
+							read(Std_Inp, &c[3], 1);
+							//printf("%s ", c);
+							if (c[3] == '~') {
+								SET_FLAG(evt.flags, EVF_SHIFT);
+								switch(c[2]){
+								case '1': evt.data = EVK_F9;    goto throw_event; //== "\e[31~"
+								case '2': evt.data = EVK_F10;   goto throw_event;
+								case '3': evt.data = EVK_F11;   goto throw_event;
+								case '4': evt.data = EVK_F12;   goto throw_event;
+								}
 							}
 						}
 					}
@@ -439,6 +470,11 @@ static void Close_StdIO_Local(void)
 					case 'R': evt.data = EVK_F3; goto throw_event;
 					case 'S': evt.data = EVK_F4; goto throw_event;
 					}
+				}
+				else if (c[0] == 'b' || c[0] == 'f') {
+					SET_FLAG(evt.flags, EVF_CONTROL);
+					evt.data = c[0] == 'b' ? EVK_LEFT : EVK_RIGHT;
+					goto throw_event;
 				}
 				// what to do with unrecognized sequencies?
 			}

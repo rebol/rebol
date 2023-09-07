@@ -1200,6 +1200,39 @@ RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
 	return  Decode_UTF8_Char(&str, len);
 }
 
+/***********************************************************************
+**
+*/	RL_API REBCNT RL_Register_Handle_Spec(REBYTE *name, REBHSP *spec)
+/*
+**	Stores handle's specification (required data size and optional callbacks).
+**  It's an extended version of old RL_Register_Handle function.
+**
+**	Returns:
+**		symbol id of the word (whether found or new)
+**		or NOT_FOUND if handle with give ID is already registered.
+**	Arguments:
+**		name      - handle's name as a c-string (length is being detected)
+**		spec      - Handle's specification:
+**                  * size of needed memory to handle,
+**                  * reserved flags
+**                  * release function
+**                  * get path accessor
+**                  * set path accessor
+**
+***********************************************************************/
+{
+	REBCNT sym;
+	REBCNT len;
+	REBCNT idx;
+
+	// Convert C-string to Rebol word
+	len = LEN_BYTES(name);
+	sym = Scan_Word(name, len);
+	if (!sym) return NOT_FOUND; //TODO: use different value if word is invalid?
+	idx = Register_Handle_Spec(sym, spec);
+	return (idx == NOT_FOUND) ? NOT_FOUND : sym;
+}
+
 
 
 #include "reb-lib-lib.h"

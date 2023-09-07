@@ -324,13 +324,12 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 				//printf("marked hob: %p %p\n", hob, val);
 				MARK_HANDLE_CONTEXT(val);
 				if (hob->series) {
-					//puts("marked hob's series");
-					MARK_SERIES(hob->series);
+					Mark_Series(hob->series, depth);
 				}
 			}	
 			else if (IS_SERIES_HANDLE(val) && !HANDLE_GET_FLAG(val, HANDLE_RELEASABLE)) {
 				//printf("markserhandle %0xh val: %0xh %s \n", (void*)val, VAL_HANDLE(val), VAL_HANDLE_NAME(val));
-				MARK_SERIES(VAL_HANDLE_DATA(val));
+				Mark_Series(VAL_HANDLE_DATA(val), depth);
 			}
 			break;
 
@@ -815,6 +814,8 @@ mark_obj:
 {
 	REBCNT n;
 	GC_Disabled = 0;
+	// Dispose context handles first, because they may depend on other series!
+	Dispose_Hobs();
 	/* remove everything from GC_Infants (GC protection) */
 	for (n = 0; n < MAX_SAFE_SERIES; n++) {
 		GC_Infants[n] = NULL;

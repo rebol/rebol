@@ -271,7 +271,7 @@ read-decode: function [
 		; Try to load it (will fail if source is a url)
 		data: load-extension source ; returns an object or throws an error
 	][
-		data: read/binary source ; can be string, binary, block
+		data: read source ; can be string, binary, block
 		if find system/options/file-types type [data: decode type :data] ; e.g. not 'unbound
 	]
 	data

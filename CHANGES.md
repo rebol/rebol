@@ -2,10 +2,26 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+## 2023 September
+
+### Features:
+
+* [`be97ce`](https://github.com/Oldes/Rebol3/commit/be97ceed342043230fe8b0a4f7fd6a3393103b0f) Included link to Rebol/MiniAudio extension version 1.0.0
+* [`d4878d`](https://github.com/Oldes/Rebol3/commit/d4878d9a45e50351670337d14506a68db8134fe4) Allow custom `mold` callback for context handles to provide additional handle's info, if wanted
+* [`a74b26`](https://github.com/Oldes/Rebol3/commit/a74b261bba1d22f55bd9500d99319c5bf3d6364d) Provide info, when molding a released handle, that it is already released
+* [`b048bd`](https://github.com/Oldes/Rebol3/commit/b048bd7e3e240e17fc55922a0697c23b0a225eaa) Allow to pass handle objects to external handle's free function and dispose handle objects before freeing any series
+
+### Fixes:
+
+* [`922ac0`](https://github.com/Oldes/Rebol3/commit/922ac0654ffa3a9b5ce139693a98c1b584094d90) Use handle's context path access only if the handle is still in use (not already released)
+* [`41a265`](https://github.com/Oldes/Rebol3/commit/41a26582c0a3fdf54462c292de4761fbc879d349) Correctly check for a handle's context flag on free
+
 ## 2023 August
 
 ### Features:
 
+* [`93e07d`](https://github.com/Oldes/Rebol3/commit/93e07d61304cbbe019dbb19e713811a7e2cc0602) Added possibility to register extension handles with custom setters/getters
+* [`3e53cf`](https://github.com/Oldes/Rebol3/commit/3e53cfde4efb308dffddb3a7bf638041309ed987) Handle SHIFT and CONTROL flags with arrow keys on Posix for char based terminal input
 * [`4bcc98`](https://github.com/Oldes/Rebol3/commit/4bcc98d23b65223ceb215e815940e572b68161db) Simple `wait-for-key` function test file
 * [`e1c7da`](https://github.com/Oldes/Rebol3/commit/e1c7da7f86ba72806381ae98c98772ac74e0e57c) Using `poll` instead of `select` to query events on Posix
 * [`37145b`](https://github.com/Oldes/Rebol3/commit/37145b00d9729a6ed7bfe2b1a13571d54ceb60c0) Code reduction
@@ -15,11 +31,18 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Changes:
 
+* [`2f7998`](https://github.com/Oldes/Rebol3/commit/2f799831f83d21066cbc5e85230bea825af5badf) Debug print function `??` not throwing an error on invalid paths
+
+  resolves: https://github.com/Oldes/Rebol-issues/issues/2565
+* [`f4dd93`](https://github.com/Oldes/Rebol3/commit/f4dd931060cf459eeb74df976c078c9f79560b9a) Restrict `value?` to word arguments only
 * [`ea3cd4`](https://github.com/Oldes/Rebol3/commit/ea3cd49398f22f40d080acd56274964457672410) Moved `wait-list` from `system/ports` to `system/state`
 * [`efbfa4`](https://github.com/Oldes/Rebol3/commit/efbfa4e3c1d5447d7d0a278810862b68983b0bff) Moved `event-keys` and `event-types` from `system/view` to `system/catalog`, because these are used not only in GUI
 
 ### Fixes:
 
+* [`ba824b`](https://github.com/Oldes/Rebol3/commit/ba824b1a789bab1a7a26f137fed4e0f99a873ed7) Allow extension context handles to reference other Rebol resources and so keep it safe from GC
+* [`ad9863`](https://github.com/Oldes/Rebol3/commit/ad986332f018a15e39329267c24c32e4e7d0f327) Incorrectly molded NBSP char
+* [`639ad7`](https://github.com/Oldes/Rebol3/commit/639ad74ad391668b156b9cb95c989510fb2f4edb) LOAD can't open JSON over HTTP
 * [`511a4e`](https://github.com/Oldes/Rebol3/commit/511a4eab39a4f6d3f16619130c648482c89f751b) Unspecified calling convention fails in 32 bit build
 * [`2cde09`](https://github.com/Oldes/Rebol3/commit/2cde09b0d160011b54c53712a7b75233d6e30e6f) Not all control paths return a value warning
 * [`90fabd`](https://github.com/Oldes/Rebol3/commit/90fabdac2efdeaa2db663d8b0632cd4c48ca777d) Signed/unsigned mismatch

@@ -326,7 +326,7 @@ STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 static REBUNI *Emit_Uni_Char(REBUNI *up, REBUNI chr, REBOOL parened)
 {
 	if (chr >= 0x7f || chr == 0x1e) {  // non ASCII or ^ must be (00) escaped
-		if (parened || chr <= 0xA0 || chr == 0x1e) { // do not AND with above
+		if (parened || chr < 0xA0 || chr == 0x1e) { // do not AND with above
 			*up++ = '^';
 			*up++ = '(';
 			up = Form_Uni_Hex(up, chr);
@@ -555,6 +555,22 @@ STOID Mold_Handle(REBVAL *value, REB_MOLD *mold)
 	if (name != NULL) {
 		Append_Bytes(mold->series, "#[handle! ");
 		Append_Bytes(mold->series, cs_cast(name));
+		if (IS_CONTEXT_HANDLE(value)) {
+			if (!IS_USED_HOB(VAL_HANDLE_CTX(value)))
+				Append_Bytes(mold->series, " unset!");
+			else {
+				REBCNT idx = VAL_HANDLE_CTX(value)->index;
+				REBHSP spec = PG_Handles[idx];
+				REBINT len;
+				if (spec.mold) {
+					len = spec.mold(VAL_HANDLE_CTX(value), BUF_PRINT);
+					if (len > 0) {
+						Append_Byte(mold->series, ' ');
+						Append_Bytes_Len(mold->series, STR_HEAD(BUF_PRINT), len);
+					}
+				}
+			}
+		}
 		Append_Byte(mold->series, ']');
 	}
 	else {

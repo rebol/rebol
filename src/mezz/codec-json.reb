@@ -123,7 +123,7 @@ non-zero-digit: #[bitset! #{0000000000007FC0}] ;= charset "123456789"
 chars: #[bitset! [not bits #{FFFFFFFF2000000000000008}]] ;=charset [not {\"} #"^@"-#"^_"]
 
 ; chars allowed in Rebol word! values - note that we don't allow < and > at all even though they are somewhat valid in word!
-not-word-char: charset {/\^^,[](){}"#%$@:;^/^(00A0) ^-^M<>}
+not-word-char: #[bitset! #{00640000BCC9003A8000001E000000140000000080}] ;=charset {/\^^,[](){}"#%$@:;^/^(00A0) ^-^M<>}
 word-1st:  complement append union not-word-char digit #"'"
 word-char: complement not-word-char
 
