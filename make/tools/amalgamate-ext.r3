@@ -45,7 +45,7 @@ context [
 			if find included file [continue]
 			append included probe file
 			append result ajoin ["^/// File: " file LF] 
-			try/except [
+			try/with [
 				data: read/string dir/:file
 			][
 				append result "^/// *** Failed to include! ***//^/" 
@@ -92,7 +92,7 @@ context [
 	]
 
 	make-dir %../../build/
-	write    %../../build/rebol-extension.h amalgamate [
+	probe to-real-file write    %../../build/rebol-extension.h amalgamate [
 		%reb-c.h
 		%reb-ext.h
 		%reb-args.h
