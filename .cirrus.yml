@@ -2,6 +2,9 @@ freebsd_instance:
   image_family: freebsd-13-0
 
 task:
+  env:
+    CIRRUS_CLONE_DEPTH: 1
+
   install_script:
     - date
     - uname -a
@@ -16,20 +19,24 @@ task:
     - ./Siskin --version
 
   matrix:
-  # - name: Rebol3/Base FreeBSD ARM64
-  #   script:
-  #     - ./Siskin make/rebol3.nest %rebol3-base-freebsd-x64
-  #     - ./build/rebol3-base-freebsd-x64 -v
-  #
-  # - name: Rebol3/Core FreeBSD ARM64
-  #   script:
-  #     - ./Siskin make/rebol3.nest %rebol3-core-freebsd-x64
-  #     - ./build/rebol3-core-freebsd-x64 -v
+   - name: Rebol3/Base FreeBSD ARM64
+     script:
+       - ./Siskin make/rebol3.nest %rebol3-base-freebsd-x64
+       - ./build/rebol3-base-freebsd-x64 -v
+       - gzip -9 ./build/rebol3-base-freebsd-x64
+  
+   - name: Rebol3/Core FreeBSD ARM64
+     script:
+       - ./Siskin make/rebol3.nest %rebol3-core-freebsd-x64
+       - ./build/rebol3-core-freebsd-x64 -v
+       - gzip -9 ./build/rebol3-core-freebsd-x64
 
     - name: Rebol3/Bulk FreeBSD ARM64
       script:
         - ./Siskin make/rebol3.nest %rebol3-bulk-freebsd-x64
         - ./build/rebol3-bulk-freebsd-x64 -v
         - ./build/rebol3-bulk-freebsd-x64 -s ./src/tests/run-tests.r3
+        - gzip -9 ./build/rebol3-bulk-freebsd-x64
+
   binaries_artifacts:
    path: "build/*"
