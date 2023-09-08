@@ -23,11 +23,13 @@ task:
       script:
         - ./Siskin make/rebol3.nest %rebol3-base-freebsd-x64
         - ./build/rebol3-base-freebsd-x64 -v
+        - gzip -9 ./build/rebol3-base-freebsd-x64
    
     - name: Rebol3/Core FreeBSD x64
       script:
         - ./Siskin make/rebol3.nest %rebol3-core-freebsd-x64
         - ./build/rebol3-core-freebsd-x64 -v
+        - gzip -9 ./build/rebol3-core-freebsd-x64
 
     - name: Rebol3/Bulk FreeBSD x64
       script:
