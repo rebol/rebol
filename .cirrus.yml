@@ -19,19 +19,17 @@ task:
     - ./Siskin --version
 
   matrix:
-   - name: Rebol3/Base FreeBSD ARM64
-     script:
-       - ./Siskin make/rebol3.nest %rebol3-base-freebsd-x64
-       - ./build/rebol3-base-freebsd-x64 -v
-       - gzip -9 ./build/rebol3-base-freebsd-x64
-  
-   - name: Rebol3/Core FreeBSD ARM64
-     script:
-       - ./Siskin make/rebol3.nest %rebol3-core-freebsd-x64
-       - ./build/rebol3-core-freebsd-x64 -v
-       - gzip -9 ./build/rebol3-core-freebsd-x64
+    - name: Rebol3/Base FreeBSD x64
+      script:
+        - ./Siskin make/rebol3.nest %rebol3-base-freebsd-x64
+        - ./build/rebol3-base-freebsd-x64 -v
+   
+    - name: Rebol3/Core FreeBSD x64
+      script:
+        - ./Siskin make/rebol3.nest %rebol3-core-freebsd-x64
+        - ./build/rebol3-core-freebsd-x64 -v
 
-    - name: Rebol3/Bulk FreeBSD ARM64
+    - name: Rebol3/Bulk FreeBSD x64
       script:
         - ./Siskin make/rebol3.nest %rebol3-bulk-freebsd-x64
         - ./build/rebol3-bulk-freebsd-x64 -v
