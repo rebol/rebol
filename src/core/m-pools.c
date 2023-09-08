@@ -619,7 +619,7 @@ clear_header:
 	//printf("HOB %p free mem: %p %i\n", hob, hob->data, spec.flags);
 
 	if (spec.free) {
-		spec.free(spec.flags & HANDLE_REQUIRES_HOB_ON_FREE ? hob : hob->data);
+		spec.free(spec.flags & HANDLE_REQUIRES_HOB_ON_FREE ? (void*)hob : (void*)hob->data);
 	}
 	
 	CLEAR(hob->data, spec.size); 
