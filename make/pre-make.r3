@@ -24,7 +24,7 @@ do %tools/utils.reb
 
 args: system/script/args
 
-spec-file: try/except [
+spec-file: try/with [
 	to-rebol-file either block? args [first args][args]
 ][ clean-path %spec-core.reb ]
 
@@ -216,7 +216,7 @@ build-date/time: build-time
 
 
 ;- resolving current git commit
-try/except [
+try/with [
 	parse read/string %../.git/HEAD [thru "ref: " copy git-header to lf]
 	git-commit: mold debase read/string join %../.git/ git-header 16
 ][	git-commit: none]

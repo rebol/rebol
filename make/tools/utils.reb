@@ -19,7 +19,7 @@ read-file: func[file [file!]][
 load-file: func[file [file!] /header][
 	the-file: find/tail file root-dir ; shortened version
 	print rejoin [" [pre-make.r3] ^[[0;36mProcessing: ^[[0;31m" the-file "^[[m"]
-	try/except [either header [load/header/all file][ load file ]][
+	try/with [either header [load/header/all file][ load file ]][
 		sys/log/error 'pre-make.r3 system/state/last-error
 		quit/return 3
 	]
