@@ -105,6 +105,10 @@
 		}
 		return R_RET;
 
+	case A_WRITE:
+		Prin_Value(arg, 0, FALSE, FALSE);
+		break;
+
 	case A_UPDATE:
 		// do nothing here, no wake-up, events should be handled by user defined port's awake function
 		// ==>> SYSTEM/PORTS/INPUT/SCHEME/AWAKE
