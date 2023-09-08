@@ -170,7 +170,7 @@ context [
 	symbols: make block! 256
 
 	process: func [file /local sym p comm spec commented?] [
-		try/with [data: read-file file][
+		try/except [data: read-file file][
 			print-info ["File not found:" file]
 			exit
 		]
