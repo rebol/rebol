@@ -17,23 +17,23 @@ foreach dev midi/devices-out [ print [tab mold dev] ]
 
 
 *MIDI_message: enum [
-	note-off:          2#{0000 1000}
-	note-on:           2#{0000 1001}
-	poly-aftertouch:   2#{0000 1010}
-	control-change:    2#{0000 1011}
-	program-change:    2#{0000 1100}
-	channel-preasure:  2#{0000 1101}
-	pitch_bend-change: 2#{0000 1110}
+	note-off:          2#1000
+	note-on:           2#1001
+	poly-aftertouch:   2#1010
+	control-change:    2#1011
+	program-change:    2#1100
+	channel-preasure:  2#1101
+	pitch_bend-change: 2#1110
 ] "MIDI Voice message"
 
 *MIDI_message_short: enum [
-	Off:   2#{0000 1000}
-	On:    2#{0000 1001}
-	PoPr:  2#{0000 1010}
-	Par:   2#{0000 1011}
-	PrCh:  2#{0000 1100}
-	ChPr:  2#{0000 1101}
-	Pb:    2#{0000 1110}
+	Off:   2#1000
+	On:    2#1001
+	PoPr:  2#1010
+	Par:   2#1011
+	PrCh:  2#1100
+	ChPr:  2#1101
+	Pb:    2#1110
 ] "MIDI Voice message (short variant)"
 
 
@@ -49,7 +49,7 @@ process-midi: function [data [binary!]][
 			time:    UI32LE
 		]
 		op: *MIDI_message_short/name status 
-		prin  ajoin [time #" " op " ch=" channel #" "]
+		prin  ajoin [time SP op " ch=" channel SP]
 		print ajoin switch/default op [
 			Par     [["c=" byte-1 " v=" byte-2]]
 			Pb ChPr [reduce ["v=" byte-1 + (byte-2 << 7)]]
