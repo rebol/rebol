@@ -184,7 +184,7 @@ start: func [
 					file throw
 					(path) [allow read]
 					(home) [allow read]
-					(data) [allow read write]
+					(data) allow
 					(first script-path) allow
 				]
 			]
