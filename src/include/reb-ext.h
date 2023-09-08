@@ -62,6 +62,7 @@
 typedef union rxi_arg_val {
 	void *addr;
 	i64    int64;
+	u64    uint64;
 	double dec64;
 	REBXYF pair;
 	REBYTE bytes[8];
