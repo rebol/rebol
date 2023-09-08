@@ -15,8 +15,6 @@ task:
     - chmod u+x ./Siskin
     - ./Siskin --version
 
-  binaries_artifacts:
-   path: "build/*"
   matrix:
   # - name: Rebol3/Base FreeBSD ARM64
   #   script:
@@ -33,3 +31,5 @@ task:
         - ./Siskin make/rebol3.nest %rebol3-bulk-freebsd-x64
         - ./build/rebol3-bulk-freebsd-x64 -v
         - ./build/rebol3-bulk-freebsd-x64 -s ./src/tests/run-tests.r3
+  binaries_artifacts:
+   path: "build/*"
