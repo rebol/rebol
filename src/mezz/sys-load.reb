@@ -670,11 +670,14 @@ load-module: function [
 ]
 
 locate-extension: function[name [word!]][
-	foreach path system/options/module-paths [
-		file: append to file! name %.rebx
-		if exists? path/:file [ return path/:file ]
-		file: repend to file! name [#"-" system/build/os #"-" system/build/arch %.rebx]
-		if exists? path/:file [ return path/:file ]
+	path: system/options/modules
+	foreach test [
+		[path name %.rebx]
+		[path name #"-" system/build/arch %.rebx]
+		[path name #"-" system/build/os #"-" system/build/arch %.rebx]
+	][
+		if exists? file: as file! ajoin test [return file]
+		sys/log/debug 'REBOL ["Not found extension file:" file]
 	]
 	none
 ]
@@ -739,10 +742,8 @@ import: function [
 		word? module [
 			; Module (as word!) is not loaded already, so let's try to find it.
 			file: append to file! module system/options/default-suffix
-			foreach path system/options/module-paths [
-				if set [name: mod:] apply :load-module [
-					path/:file version ver check sum no-share no-lib /import /as module
-				] [break]
+			set [name: mod:] apply :load-module [
+				system/options/modules/:file version ver check sum no-share no-lib /import /as module
 			]
 			unless name [
 				; try to locate as an extension...

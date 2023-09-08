@@ -33,6 +33,8 @@ options: object [  ; Options supplied to REBOL during startup
 	boot:           ; The path to the executable
 	path:           ; Where script was started or the startup dir
 	home:           ; Path of home directory
+	data:           ; Path of application data directory
+	modules:        ; Path of extension modules
 		none
 
 	flags:          ; Boot flag bits (see system/catalog/boot-flags)
@@ -51,7 +53,7 @@ options: object [  ; Options supplied to REBOL during startup
 	binary-base: 16    ; Default base for FORMed binary values (64, 16, 2)
 	decimal-digits: 15 ; Max number of decimal digits to print.
 	probe-limit: 16000 ; Max probed output size
-	module-paths: [%./]
+	module-paths: none ;@@ DEPRECATED!
 	default-suffix: %.reb ; Used by IMPORT if no suffix is provided
 	file-types: []
 	mime-types: none
