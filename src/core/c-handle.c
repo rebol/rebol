@@ -106,6 +106,7 @@
 	PG_Handles[idx].size     = spec->size;
 	PG_Handles[idx].flags    = spec->flags;  // reserved for future
 	PG_Handles[idx].free     = spec->free;
+	PG_Handles[idx].mold     = spec->mold;
 	PG_Handles[idx].get_path = spec->get_path;
 	PG_Handles[idx].set_path = spec->set_path;
 	
