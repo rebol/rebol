@@ -274,17 +274,20 @@ list-dir: closure/with [
 		/local info date time size
 	][
 		info: query/mode value [name size date]
+		unless info [
+			return ajoin [
+				"^[[1;35m *** Invalid symbolic link:  ^[[0;35m"
+				second split-path value
+				"^[[m"
+			]
+		]
 		if depth = 0 [
 			return ajoin ["^[[33;1mDIR: ^[[32;1m" to-local-file info/1 "^[[m"]
 		]
-		;@@ TODO: rewrite this date/time formating once it will be possible
-		;@@       with some better method!
+
 		date: info/3
 		date/zone: 0
-		time: date/time
-		time: format/pad [2 #":" 2 ] reduce [time/hour time/minute] #"0"
-		date: format/pad [-11] date/date #"0"
-		date: ajoin [" ^[[32m" date "  " time "^[[m "]
+		date: ajoin [" ^[[32m" format-date-time date "dd-mmm-yyyy  hh:mm" "^[[m "]
 
 		size: any [info/2 0]
 		if size >= 100'000'000 [size: join to integer! round (size / 1'000'000) "M"]
