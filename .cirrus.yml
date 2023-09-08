@@ -2,9 +2,9 @@ freebsd_instance:
   image_family: freebsd-13-0
 
 task:
-  binaries_artifacts:
-    path: "build/*"
-
+  install_script:
+    - date
+    - uname -a
   # WGET is not working on Cirrus FreeBSD VM anymore :-/
   #  - pkg install -y wget
   #  - wget -nv https://github.com/Siskin-framework/Builder/releases/download/0.7.2/Siskin-x64-freebsd.gz
@@ -14,6 +14,9 @@ task:
     - mv ./Siskin-x64-freebsd ./Siskin
     - chmod u+x ./Siskin
     - ./Siskin --version
+
+  binaries_artifacts:
+   path: "build/*"
   matrix:
   # - name: Rebol3/Base FreeBSD ARM64
   #   script:
