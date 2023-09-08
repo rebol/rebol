@@ -674,7 +674,10 @@ locate-extension: function[name [word!]][
 	foreach test [
 		[path name %.rebx]
 		[path name #"-" system/build/arch %.rebx]
+		;; not sure, if keep the folowing ones too.. it simplifies CI testing
+		;; they should be probably removed, when all used CI tests will be modified 
 		[path name #"-" system/build/os #"-" system/build/arch %.rebx]
+		[path name #"-" system/build/sys #"-" system/build/arch %.rebx]
 	][
 		if exists? file: as file! ajoin test [return file]
 		sys/log/debug 'REBOL ["Not found extension file:" file]
@@ -683,35 +686,39 @@ locate-extension: function[name [word!]][
 ]
 
 download-extension: function[
-	"Downloads extension from a given url and stores it in a current directory!"
+	"Downloads extension from a given url and stores it in the modules directory!"
 	name [word!]
 	url  [url!]
+	;; currently the used urls are like: https://github.com/Oldes/Rebol-MiniAudio/releases/download/1.0.0/
+	;; and the file is made according Rebol version, which needs the extension
 ][
-	either dir? url [
-		file: lowercase repend to file! name [#"-" system/platform #"-" system/build/arch %.rebx]
-		url:  append copy url file
+	if dir? url [
+		url: as url! ajoin [url name #"-" system/platform #"-" system/build/arch %.rebx]
 		if system/platform <> 'Windows [append url %.gz]
-	][
-		file: select decode-url url 'target
 	]
-	opt: system/options/log
+	so: system/options
+	opt: so/log
 	try/with [
+		;; save the file into the modules directory (using just name+arch)
+		file: as file! ajoin [so/modules name #"-" system/build/arch %.rebx]
 		if exists? file [
-			; we don't want to overwrite existing files!
-			log/error 'REBOL ["File already exists:^[[m" file]
+			; we don't want to overwrite any existing files!
+			log/info 'REBOL ["File already exists:^[[m" file]
 			return file
 		]
 		log/info 'REBOL ["Downloading:^[[m" url]
-		system/options/log: make map! [http: 0 tls: 0]
+		;; temporary turn off any logs
+		so/log: #[map! [http: 0 tls: 0]]
 		bin: read url
 		if %.gz = suffix? url [bin: decompress bin 'gzip]
+		log/info 'REBOL ["Saving file:^[[m" file]
 		write file bin
-		file: to-real-file file ; makes it absolute
 	][
-		log/error 'REBOL ["Failed to download:^[[m" file]
+		err: system/state/last-error
+		log/error 'REBOL ["Failed to download:^[[m" file ajoin ["^[[35m" err/type ": " err/id]]
 		file: none
 	]
-	system/options/log: opt
+	so/log: opt
 	file
 ]
 
