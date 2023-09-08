@@ -104,7 +104,7 @@ start: func [
 	][	append copy home %.rebol/]
 
 	;- 5. /modules - directory of extension module files
-	modules: append copy data %modules/
+	make-dir/deep modules: append copy data %modules/
 
 	;; for now keep the old `module-paths`, but let user know, that it's deprecated now!
 	module-paths: does [
