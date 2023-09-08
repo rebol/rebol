@@ -28,6 +28,8 @@ version: 3.13.1
 #if FreeBSD? [ defines: TO_FREEBSD ]
 #if (system/platform = 'NetBSD)  [ defines: TO_NETBSD  ]
 
+#if Posix? [ clfag: -Wno-pointer-sign ] ;@@ Review these warnings and fix them!
+
 target-windows: [
 	os:       windows
 	sys:      win32
