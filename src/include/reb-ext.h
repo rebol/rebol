@@ -111,7 +111,7 @@ typedef union rxi_arg_val {
 
 // Command function call frame:
 typedef struct rxi_cmd_frame {
-	RXIARG args[8];	// arg values (128 bits each)
+	RXIARG args[12];	// arg values (128 bits each)
 } RXIFRM;
 
 typedef struct rxi_cmd_context {
