@@ -32,8 +32,6 @@ This is just generated output from commits in [this repository](https://github.c
 ### Changes:
 
 * [`2f7998`](https://github.com/Oldes/Rebol3/commit/2f799831f83d21066cbc5e85230bea825af5badf) Debug print function `??` not throwing an error on invalid paths
-
-  resolves: https://github.com/Oldes/Rebol-issues/issues/2565
 * [`f4dd93`](https://github.com/Oldes/Rebol3/commit/f4dd931060cf459eeb74df976c078c9f79560b9a) Restrict `value?` to word arguments only
 * [`ea3cd4`](https://github.com/Oldes/Rebol3/commit/ea3cd49398f22f40d080acd56274964457672410) Moved `wait-list` from `system/ports` to `system/state`
 * [`efbfa4`](https://github.com/Oldes/Rebol3/commit/efbfa4e3c1d5447d7d0a278810862b68983b0bff) Moved `event-keys` and `event-types` from `system/view` to `system/catalog`, because these are used not only in GUI
