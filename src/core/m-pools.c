@@ -604,7 +604,7 @@ clear_header:
 
 /***********************************************************************
 **
-*/	void Free_Hob(REBHOB *hob)
+*/	int Free_Hob(REBHOB *hob)
 /*
 **		Free a hob, returning its memory for reuse.
 **
@@ -613,19 +613,28 @@ clear_header:
 	REBHSP spec;
 	REBCNT idx = hob->index;
 
-	if( !IS_USED_HOB(hob) || hob->data == NULL ) return;
+	if( !IS_USED_HOB(hob) || hob->data == NULL ) return 0;
 
 	spec = PG_Handles[idx];
 	//printf("HOB %p free mem: %p %i\n", hob, hob->data, spec.flags);
 
 	if (spec.free) {
-		spec.free(spec.flags & HANDLE_REQUIRES_HOB_ON_FREE ? (void*)hob : (void*)hob->data);
+		if (spec.flags & HANDLE_REQUIRES_HOB_ON_FREE) {
+			spec.free((void*)hob);
+			// Although there are no references, the extension may still need the handle.
+			// If extension marks the hob, do not free it now.
+			if (IS_MARK_HOB(hob)) return 0;
+		}
+		else {
+			spec.free(hob->data);
+		}
 	}
 	
 	CLEAR(hob->data, spec.size); 
 	FREE_MEM(hob->data);
 	UNUSE_HOB(hob);
 	Free_Node(HOB_POOL, (REBNOD *)hob);
+	return 1;
 }
 
 

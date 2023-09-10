@@ -621,8 +621,7 @@ mark_obj:
 				if (IS_MARK_HOB(hob))
 					UNMARK_HOB(hob);
 				else {
-					Free_Hob(hob);
-					count++;
+					count += Free_Hob(hob);
 				}
 			}
 			hob++;
