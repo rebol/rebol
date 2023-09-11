@@ -755,12 +755,15 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 				init = blk++;
 #endif
 				if (field->array) {
-					if (IS_INTEGER(init)) { /* interpreted as a C pointer */
-						void *ptr = (void *)VAL_INT64(init);
-
-						/* assuming it's an valid pointer and holding enough space */
-						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), (REBCNT)offset), ptr, field->size * field->dimension);
-					} else if (IS_BLOCK(init)) {
+// O: It is probably not a good idea to let access to C pointers!
+//    https://github.com/Oldes/Rebol-issues/issues/2567
+//					if (IS_INTEGER(init)) { /* interpreted as a C pointer */
+//						void *ptr = (void *)VAL_INT64(init);
+//
+//						/* assuming it's an valid pointer and holding enough space */
+//						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), (REBCNT)offset), ptr, field->size * field->dimension);
+//					} else 
+					if (IS_BLOCK(init)) {
 						REBCNT n = 0;
 
 						if (VAL_LEN(init) != field->dimension) {
