@@ -8,32 +8,27 @@ task:
   install_script:
     - date
     - uname -a
-  # WGET is not working on Cirrus FreeBSD VM anymore :-/
-  #  - pkg install -y wget
-  #  - wget -nv https://github.com/Siskin-framework/Builder/releases/download/0.7.2/Siskin-x64-freebsd.gz
-  # Trying to do the same with CURL (if it exists there)
-    - curl -L -S https://github.com/Siskin-framework/Builder/releases/download/0.7.2/Siskin-x64-freebsd.gz --output Siskin-x64-freebsd.gz
-    - gunzip ./Siskin-x64-freebsd.gz
-    - mv ./Siskin-x64-freebsd ./Siskin
-    - chmod u+x ./Siskin
-    - ./Siskin --version
+    - curl -L -S https://github.com/Siskin-framework/Builder/releases/download/0.13.0/siskin-freebsd-x86_64.gz --output siskin.gz
+    - gunzip ./siskin.gz
+    - chmod u+x ./siskin
+    - ./siskin --version
 
   matrix:
     - name: Rebol3/Base FreeBSD x64
       script:
-        - ./Siskin make/rebol3.nest %rebol3-base-freebsd-x64
+        - ./siskin make/rebol3.nest %rebol3-base-freebsd-x64
         - ./build/rebol3-base-freebsd-x64 -v
         - gzip -9 ./build/rebol3-base-freebsd-x64
    
     - name: Rebol3/Core FreeBSD x64
       script:
-        - ./Siskin make/rebol3.nest %rebol3-core-freebsd-x64
+        - ./siskin make/rebol3.nest %rebol3-core-freebsd-x64
         - ./build/rebol3-core-freebsd-x64 -v
         - gzip -9 ./build/rebol3-core-freebsd-x64
 
     - name: Rebol3/Bulk FreeBSD x64
       script:
-        - ./Siskin make/rebol3.nest %rebol3-bulk-freebsd-x64
+        - ./siskin make/rebol3.nest %rebol3-bulk-freebsd-x64
         - ./build/rebol3-bulk-freebsd-x64 -v
         - ./build/rebol3-bulk-freebsd-x64 -s ./src/tests/run-tests.r3
         - gzip -9 ./build/rebol3-bulk-freebsd-x64
