@@ -692,15 +692,16 @@ download-extension: function[
 	;; currently the used urls are like: https://github.com/Oldes/Rebol-MiniAudio/releases/download/1.0.0/
 	;; and the file is made according Rebol version, which needs the extension
 ][
-	if dir? url [
+	so: system/options
+	file: as file! ajoin either dir? url [
 		url: as url! ajoin [url name #"-" system/platform #"-" system/build/arch %.rebx]
 		if system/platform <> 'Windows [append url %.gz]
-	]
-	so: system/options
+		;; save the file into the modules directory (using just name+arch)
+		[so/modules name #"-" system/build/arch %.rebx]
+	][	[so/modules lowercase second split-path url ]]
+	
 	opt: so/log
 	try/with [
-		;; save the file into the modules directory (using just name+arch)
-		file: as file! ajoin [so/modules name #"-" system/build/arch %.rebx]
 		if exists? file [
 			; we don't want to overwrite any existing files!
 			log/info 'REBOL ["File already exists:^[[m" file]
