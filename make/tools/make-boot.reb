@@ -962,7 +962,6 @@ foreach section [boot-base boot-sys boot-mezz] [
 boot-protocols: make block! 20
 foreach file first mezz-files [
 	code: load-file/header file
-	? code
 	hdr: to block! take code
 	either all [
 		;- if protocol exports some function, import must be used so

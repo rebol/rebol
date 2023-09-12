@@ -154,6 +154,12 @@ Rebol [
 		error? e: try [make struct! [ a: [uint8!] probe random 100 ]]
 		e/id = 'invalid-type
 	]
+--test-- "Invalid array type initialisation"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2567
+	--assert all [
+		error? e: try [ make struct! [a: [int8! [2]] 1] ] ;- No crash!
+		e/id = 'expect-val
+	]
 ===end-group===
 
 

@@ -6,13 +6,35 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Features:
 
+* [`ca45cf`](https://github.com/Oldes/Rebol3/commit/ca45cf2ca598c61f5e3470cb406275f18bec8a13) Allow extension to mark handle's context on free call and so prevent it from releasing
+* [`a0ff1b`](https://github.com/Oldes/Rebol3/commit/a0ff1bb7e35b269ce0b0ad8488d34e463fef6923) Allow `write` action on the console port
 * [`be97ce`](https://github.com/Oldes/Rebol3/commit/be97ceed342043230fe8b0a4f7fd6a3393103b0f) Included link to Rebol/MiniAudio extension version 1.0.0
 * [`d4878d`](https://github.com/Oldes/Rebol3/commit/d4878d9a45e50351670337d14506a68db8134fe4) Allow custom `mold` callback for context handles to provide additional handle's info, if wanted
 * [`a74b26`](https://github.com/Oldes/Rebol3/commit/a74b261bba1d22f55bd9500d99319c5bf3d6364d) Provide info, when molding a released handle, that it is already released
 * [`b048bd`](https://github.com/Oldes/Rebol3/commit/b048bd7e3e240e17fc55922a0697c23b0a225eaa) Allow to pass handle objects to external handle's free function and dispose handle objects before freeing any series
 
+### Changes:
+
+* [`f5aaa5`](https://github.com/Oldes/Rebol3/commit/f5aaa582896ed192f0cd32ee2281ef331c88f019) Including RXA_UINT64 macro
+* [`aab9d4`](https://github.com/Oldes/Rebol3/commit/aab9d4b98beb052a6eb4c3a6c0a6d985cfee7a3d) Extended possible number of extension command arguments to 15
+* [`2c4565`](https://github.com/Oldes/Rebol3/commit/2c4565195e33d48d8437d238baa133234bf5f0c0) Extended possible number of extension command arguments from 7 to 11
+* [`928761`](https://github.com/Oldes/Rebol3/commit/928761be6d7704952b52249d51514d7bd1e3c0f7) Using lower MiniAudio extension version
+* [`b24999`](https://github.com/Oldes/Rebol3/commit/b2499948f88618a90fab055aa2f5c2452e83b4bb) Downloading extensions into `system/options/modules` directory instead of the current dir
+* [`3f7972`](https://github.com/Oldes/Rebol3/commit/3f7972a0c3eddc40e309ef69ff9defb15ef5dd4b) Including `uint64` in the RXIARG value union
+* [`c87321`](https://github.com/Oldes/Rebol3/commit/c87321e881b7e298fd3eb7fe46e7b497f7fe706e) Deprecated `system/options/module-paths` replaced with `system/options/modules`
+
 ### Fixes:
 
+* [`f29b6b`](https://github.com/Oldes/Rebol3/commit/f29b6ba37a0c62248cbadd5e784b5f66f4f54ed2) Using correct module name (not using arch and `.rebx` extension) in case, that url to module contains file name
+* [`c7d328`](https://github.com/Oldes/Rebol3/commit/c7d3281ca88865369012b6a8a1d32240f8783e9a) Crash when trying to initialise multi-dimension struct value
+* [`9fffc0`](https://github.com/Oldes/Rebol3/commit/9fffc0b4c32892b66a3a790f2ceb03404764b3f5) Invalid function name when used help on function using a path
+* [`54bb9d`](https://github.com/Oldes/Rebol3/commit/54bb9d9fd9f8dc233b31978c7976d861aa18e9e3) Properly implemented `List_Func_Types` function
+* [`158080`](https://github.com/Oldes/Rebol3/commit/158080a4627575033cad833ac3195b40376aad37) Make the modules directory, if does not exists
+* [`db8971`](https://github.com/Oldes/Rebol3/commit/db89718117f2e1cef0d74a6e58e930df34c87bd8) Lower security policy on the application data directory (when running a script)
+* [`56eac4`](https://github.com/Oldes/Rebol3/commit/56eac4ef36ca940d599ad58155c2be1100a16670) Missing optional extension handle `mold` callback registration
+* [`0837df`](https://github.com/Oldes/Rebol3/commit/0837df62d38f9b7dfbc729626c564e85c291c53f) Warning: pointer type mismatch
+* [`48e772`](https://github.com/Oldes/Rebol3/commit/48e7726b668270d5ea65e4b3121f618becd61e10) Using proper type for extension handle mold callback function argument
+* [`5413ff`](https://github.com/Oldes/Rebol3/commit/5413ff1b0b221626dcceb09848d08d6cb1ed69e8) `list-dir` stopping its output on symbolic link to not existing file
 * [`922ac0`](https://github.com/Oldes/Rebol3/commit/922ac0654ffa3a9b5ce139693a98c1b584094d90) Use handle's context path access only if the handle is still in use (not already released)
 * [`41a265`](https://github.com/Oldes/Rebol3/commit/41a26582c0a3fdf54462c292de4761fbc879d349) Correctly check for a handle's context flag on free
 
@@ -32,8 +54,6 @@ This is just generated output from commits in [this repository](https://github.c
 ### Changes:
 
 * [`2f7998`](https://github.com/Oldes/Rebol3/commit/2f799831f83d21066cbc5e85230bea825af5badf) Debug print function `??` not throwing an error on invalid paths
-
-  resolves: https://github.com/Oldes/Rebol-issues/issues/2565
 * [`f4dd93`](https://github.com/Oldes/Rebol3/commit/f4dd931060cf459eeb74df976c078c9f79560b9a) Restrict `value?` to word arguments only
 * [`ea3cd4`](https://github.com/Oldes/Rebol3/commit/ea3cd49398f22f40d080acd56274964457672410) Moved `wait-list` from `system/ports` to `system/state`
 * [`efbfa4`](https://github.com/Oldes/Rebol3/commit/efbfa4e3c1d5447d7d0a278810862b68983b0bff) Moved `event-keys` and `event-types` from `system/view` to `system/catalog`, because these are used not only in GUI

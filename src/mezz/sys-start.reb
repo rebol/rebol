@@ -98,6 +98,21 @@ start: func [
 		path                  ; Directory where we started (O: not sure with this one)
 	]
 
+	;- 4. /data - directory of any application data (modules, cache...)
+	data: either system/platform = 'Windows [
+		append dirize to-rebol-file any [get-env "APPDATA" home] %Rebol/
+	][	append copy home %.rebol/]
+
+	;- 5. /modules - directory of extension module files
+	make-dir/deep modules: append copy data %modules/
+
+	;; for now keep the old `module-paths`, but let user know, that it's deprecated now!
+	module-paths: does [
+		sys/log/error 'REBOL "`system/options/module-paths` is deprecated and will be removed!"
+		sys/log/error 'REBOL "Use `system/options/modules` as a path to the directory instead!"
+		self/module-paths: reduce [modules]
+	]
+
 	if file? script [ ; Get the path (needed for SECURE setup)
 		script: any [to-real-file script script]
 		script-path: split-path script
@@ -169,6 +184,7 @@ start: func [
 					file throw
 					(path) [allow read]
 					(home) [allow read]
+					(data) allow
 					(first script-path) allow
 				]
 			]

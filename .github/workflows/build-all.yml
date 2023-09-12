@@ -19,7 +19,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Install Siskin Builder
-      uses: oldes/install-siskin@v0.7.1
+      uses: oldes/install-siskin@v0.13.0
 
     - name: Build 64bit Rebol/Base using MSVC
       run: |
@@ -132,7 +132,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install Siskin Builder
-        uses: oldes/install-siskin@v0.7.1
+        uses: oldes/install-siskin@v0.13.0
 
       - name: Install GCC multilib
         run: sudo apt-get install gcc-multilib
@@ -229,7 +229,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install Siskin Builder
-        uses: oldes/install-siskin@v0.7.1
+        uses: oldes/install-siskin@v0.13.0
 
       - name: Build 64bit Rebol/Base using clang
         run: |

@@ -486,7 +486,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 	// Copy args to command frame (array of args):
 	RXA_COUNT(&frm) = argc = SERIES_TAIL(VAL_FUNC_ARGS(value))-1; // not self
-	if (argc > 7) Trap0(RE_BAD_COMMAND);
+	if (argc > MAX_RXI_ARGS) Trap0(RE_BAD_COMMAND);
 	val = DS_ARG(1);
 	for (n = 1; n <= argc; n++, val++) {
 		RXA_TYPE(&frm, n) = Reb_To_RXT[VAL_TYPE(val)];

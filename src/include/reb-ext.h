@@ -40,6 +40,9 @@
 # endif
 #endif
 
+// RXIARG has 16bytes and so there is room only for 15 args, because
+// the first RXIARG in the RXIFRM contains types of all used command args.
+#define MAX_RXI_ARGS 15
 
 /* Prefix naming conventions:
 
@@ -62,9 +65,10 @@
 typedef union rxi_arg_val {
 	void *addr;
 	i64    int64;
+	u64    uint64;
 	double dec64;
 	REBXYF pair;
-	REBYTE bytes[8];
+	REBYTE bytes[MAX_RXI_ARGS+1];
 	struct {
 		i32 int32a;
 		i32 int32b;
@@ -110,7 +114,7 @@ typedef union rxi_arg_val {
 
 // Command function call frame:
 typedef struct rxi_cmd_frame {
-	RXIARG args[8];	// arg values (128 bits each)
+	RXIARG args[MAX_RXI_ARGS+1];	// arg values (128 bits each)
 } RXIFRM;
 
 typedef struct rxi_cmd_context {
@@ -131,6 +135,7 @@ typedef int (*RXICAL)(int cmd, RXIFRM *args, REBCEC *ctx);
 
 #define RXA_INT64(f,n)          (RXA_ARG(f,n).int64)
 #define RXA_INT32(f,n)          (i32)(RXA_ARG(f,n).int64)
+#define RXA_UINT64(f,n)         (RXA_ARG(f,n).uint64)
 #define RXA_DEC64(f,n)          (RXA_ARG(f,n).dec64)
 #define RXA_LOGIC(f,n)          (RXA_ARG(f,n).int32a)
 #define RXA_CHAR(f,n)           (RXA_ARG(f,n).int32a)

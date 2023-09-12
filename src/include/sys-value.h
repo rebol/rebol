@@ -997,7 +997,7 @@ typedef void (*REBDOF)(REBVAL *ds);				// DO evaltype dispatch function
 typedef int  (*REBPAF)(REBVAL *ds, REBVAL *p, REBCNT a); // Port action func
 
 typedef int     (*REB_HANDLE_FREE_FUNC)(void *hnd);
-typedef int     (*REB_HANDLE_MOLD_FUNC)(void *hnd, REBSER *ser);
+typedef int     (*REB_HANDLE_MOLD_FUNC)(REBHOB *hob, REBSER *ser);
 typedef int     (*REB_HANDLE_EVAL_PATH)(REBHOB *hob, REBCNT word, REBCNT *type, RXIARG *arg);
 
 typedef void (*ANYFUNC)(void *);

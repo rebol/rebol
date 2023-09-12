@@ -49,23 +49,6 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 	return -1;
 }
 
-
-/***********************************************************************
-**
-*/	REBSER *As_Typesets(REBSER *types)
-/*
-***********************************************************************/
-{
-	REBVAL *val;
-
-	types = Copy_Block(types, 1);
-	for (val = BLK_HEAD(types); NOT_END(val); val++) {
-		SET_TYPE(val, REB_TYPESET);
-	}
-	return types;
-}
-
-
 /***********************************************************************
 **
 */	REBFLG MT_Function(REBVAL *out, REBVAL *data, REBCNT type)
@@ -145,7 +128,7 @@ of_type:
 			Unbind_Block(VAL_BLK(value), TRUE);
 			break;
 		case OF_TYPES:
-			Set_Block(value, As_Typesets(VAL_FUNC_ARGS(value)));
+			Set_Block(value, List_Func_Types(value));
 			break;
 		case OF_TITLE:
 			arg = BLK_HEAD(VAL_FUNC_SPEC(value));

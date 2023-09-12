@@ -670,45 +670,56 @@ load-module: function [
 ]
 
 locate-extension: function[name [word!]][
-	foreach path system/options/module-paths [
-		file: append to file! name %.rebx
-		if exists? path/:file [ return path/:file ]
-		file: repend to file! name [#"-" system/build/os #"-" system/build/arch %.rebx]
-		if exists? path/:file [ return path/:file ]
+	path: system/options/modules
+	foreach test [
+		[path name %.rebx]
+		[path name #"-" system/build/arch %.rebx]
+		;; not sure, if keep the folowing ones too.. it simplifies CI testing
+		;; they should be probably removed, when all used CI tests will be modified 
+		[path name #"-" system/build/os #"-" system/build/arch %.rebx]
+		[path name #"-" system/build/sys #"-" system/build/arch %.rebx]
+	][
+		if exists? file: as file! ajoin test [return file]
+		sys/log/debug 'REBOL ["Not found extension file:" file]
 	]
 	none
 ]
 
 download-extension: function[
-	"Downloads extension from a given url and stores it in a current directory!"
+	"Downloads extension from a given url and stores it in the modules directory!"
 	name [word!]
 	url  [url!]
+	;; currently the used urls are like: https://github.com/Oldes/Rebol-MiniAudio/releases/download/1.0.0/
+	;; and the file is made according Rebol version, which needs the extension
 ][
-	either dir? url [
-		file: lowercase repend to file! name [#"-" system/platform #"-" system/build/arch %.rebx]
-		url:  append copy url file
+	so: system/options
+	file: as file! ajoin either dir? url [
+		url: as url! ajoin [url name #"-" system/platform #"-" system/build/arch %.rebx]
 		if system/platform <> 'Windows [append url %.gz]
-	][
-		file: select decode-url url 'target
-	]
-	opt: system/options/log
+		;; save the file into the modules directory (using just name+arch)
+		[so/modules name #"-" system/build/arch %.rebx]
+	][	[so/modules lowercase second split-path url ]]
+	
+	opt: so/log
 	try/with [
 		if exists? file [
-			; we don't want to overwrite existing files!
-			log/error 'REBOL ["File already exists:^[[m" file]
+			; we don't want to overwrite any existing files!
+			log/info 'REBOL ["File already exists:^[[m" file]
 			return file
 		]
 		log/info 'REBOL ["Downloading:^[[m" url]
-		system/options/log: make map! [http: 0 tls: 0]
+		;; temporary turn off any logs
+		so/log: #[map! [http: 0 tls: 0]]
 		bin: read url
 		if %.gz = suffix? url [bin: decompress bin 'gzip]
+		log/info 'REBOL ["Saving file:^[[m" file]
 		write file bin
-		file: to-real-file file ; makes it absolute
 	][
-		log/error 'REBOL ["Failed to download:^[[m" file]
+		err: system/state/last-error
+		log/error 'REBOL ["Failed to download:^[[m" file ajoin ["^[[35m" err/type ": " err/id]]
 		file: none
 	]
-	system/options/log: opt
+	so/log: opt
 	file
 ]
 
@@ -739,10 +750,8 @@ import: function [
 		word? module [
 			; Module (as word!) is not loaded already, so let's try to find it.
 			file: append to file! module system/options/default-suffix
-			foreach path system/options/module-paths [
-				if set [name: mod:] apply :load-module [
-					path/:file version ver check sum no-share no-lib /import /as module
-				] [break]
+			set [name: mod:] apply :load-module [
+				system/options/modules/:file version ver check sum no-share no-lib /import /as module
 			]
 			unless name [
 				; try to locate as an extension...

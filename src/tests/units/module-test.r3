@@ -10,7 +10,8 @@ Rebol [
 
 ; extend module-paths with units/files/ directory
 ; so modules there can be located
-supplement system/options/module-paths join what-dir %units/files/
+orig-modules-dir: system/options/modules
+system/options/modules: join what-dir %units/files/
 
 
 ===start-group=== "module keywords"
@@ -408,4 +409,7 @@ probe all [
 ===end-group===
 
 ~~~end-file~~~
+
+;restore the original path
+system/options/modules: orig-modules-dir
 
