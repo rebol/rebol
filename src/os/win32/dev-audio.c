@@ -197,7 +197,6 @@ IXAudio2VoiceCallback xAudioCallbacks = {
 **
 ***********************************************************************/
 {
-	HRESULT hr;
 	IXAudio2SourceVoice *voice;
 	XAUDIO2_BUFFER xaudioBuffer = { 0 };
 	voice = req->handle;
