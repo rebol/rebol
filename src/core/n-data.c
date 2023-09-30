@@ -1052,7 +1052,9 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	}
 	if (len >= 0) {
 		VAL_TAIL(arg) = len;
-		if(!ANY_BINSTR(arg))
+		if (ANY_BINSTR(arg))
+			TERM_SERIES(VAL_SERIES(arg));
+		else
 			SET_END(BLK_SKIP(VAL_SERIES(arg), len));
 	}
 	return R_ARG1;
