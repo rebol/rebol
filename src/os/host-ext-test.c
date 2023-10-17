@@ -113,10 +113,11 @@ char *RX_Spec =
 	"vec0:   command [{return vector size in bytes} v [vector!]]\n"
 	"vec1:   command [{return vector size in bytes (from object)} o [object!]]\n"
 	"blk1:   command [{print type ids of all values in a block} b [block!]]\n"
-	"hob1:   command [{creates XTEST handle} bin [binary!] /with hnd [handle!]]"
-	"hob2:   command [{prints XTEST handle's data} hndl [handle!]]"
-	"str0:   command [{return a constructed string}]"
-	"echo:   command [{return the input value} value]"
+	"hob1:   command [{creates XTEST handle} bin [binary!] /with hnd [handle!]]\n"
+	"hob2:   command [{prints XTEST handle's data} hndl [handle!]]\n"
+	"str0:   command [{return a constructed string}]\n"
+	"echo:   command [{return the input value} value]\n"
+	"ref1:   command [/a [integer!]]\n"
 
 	"init-words [id data length] protect/hide 'init-words\n"
 	"a: b: c: h: x: y: none\n"
@@ -397,7 +398,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			REBHOB* hob = RXA_HANDLE(frm, 1);
 			if (hob->sym == Handle_XTest) {
 				XTEST* data = (XTEST*)hob->data;
-				REBSER *bin, *ser;
+				REBSER *bin;
 				REBCNT type;
 				if (data->flags == 1) {
 					type = RL_GET_VALUE(hob->series, 0, &RXA_ARG(frm, 2));

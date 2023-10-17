@@ -517,6 +517,13 @@ Rebol [
 	--assert [2 3] = head truncate next [1 2 3]
 	--assert "2"   = head truncate/part next "123" 1
 	--assert [2]   = head truncate/part next [1 2 3] 1
+--test-- "TRANSCODE truncate"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2571
+	bin: truncate/part to-binary "2x" 1  ;== #{32}
+	--assert all [
+		1 = length? bin
+		[2] = try [transcode bin]
+	]
 ===end-group===
 
 ===start-group=== "REPLACE string!"

@@ -1234,6 +1234,52 @@ RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
 }
 
 
+/***********************************************************************
+**
+*/	RL_API REBSER* RL_To_Local_Path(RXIARG *file, REBFLG full, REBFLG utf8)
+/*
+**	Convert REBOL filename to a local filename.
+**
+**	Returns:
+**		A new series with the converted path or 0 on error.
+**	Arguments:
+**		file - Rebol file as an extension argument (series + index)
+**		full - prepend current directory
+**		utf8 - convert to UTF-8 if needed
+**
+***********************************************************************/
+{
+	REBSER *ser   = file->series;
+	REBLEN  index = file->index;
+
+	if (!ser || index > SERIES_TAIL(ser)) return 0;
+
+	ser = To_Local_Path(SERIES_SKIP(ser, index), SERIES_TAIL(ser)-index, !BYTE_SIZE(ser), full);
+	// To_Local_Path always returns REBUNI series
+	if (ser && utf8) {
+		ser = Encode_UTF8_String(SERIES_DATA(ser), SERIES_TAIL(ser), 1, 0);
+	}
+	return ser;
+}
+
+/***********************************************************************
+**
+*/	RL_API REBSER* RL_To_Rebol_Path(void *src, REBCNT len, REBINT uni)
+/*
+**	Convert local filename to a REBOL filename.
+**
+**	Returns:
+**		A new series with the converted path or 0 on error.
+**	Arguments:
+**		ser - series as a REBYTE or REBUNI.
+**		len - number of source bytes consumed.
+**		uni - if series is REBYTE (0) or REBUNI (1)
+**
+***********************************************************************/
+{
+	return To_REBOL_Path(src, len, uni, 0);
+}
+
 
 #include "reb-lib-lib.h"
 

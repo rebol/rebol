@@ -316,8 +316,8 @@ static struct {
 	{437, "IBM437"}, /* OEM United States */
 	{500, "IBM500"}, /* IBM EBCDIC International */
 	{708, "ASMO-708"}, /* Arabic (ASMO 708) */
-	/* 709 		Arabic (ASMO-449+, BCON V4) */
-	/* 710 		Arabic - Transparent Arabic */
+	{709, "709"}, /* Arabic (ASMO-449+, BCON V4) */
+	{710, "710"}, /* Arabic - Transparent Arabic */
 	{720, "DOS-720"}, /* Arabic (Transparent ASMO); Arabic (DOS) */
 	{737, "IBM737"}, /* OEM Greek (formerly 437G); Greek (DOS) */
 	{775, "IBM775"}, /* OEM Baltic; Baltic (DOS) */
@@ -475,18 +475,18 @@ static struct {
 	{50225, "ISO-2022-KR"}, /* ISO 2022 Korean */
 	{50225, "ISO2022-KR"}, /* ISO 2022 Korean */
 	{50227, "x-cp50227"}, /* ISO 2022 Simplified Chinese; Chinese Simplified (ISO 2022) */
-	/* 50229 		ISO 2022 Traditional Chinese */
-	/* 50930 		EBCDIC Japanese (Katakana) Extended */
-	/* 50931 		EBCDIC US-Canada and Japanese */
-	/* 50933 		EBCDIC Korean Extended and Korean */
-	/* 50935 		EBCDIC Simplified Chinese Extended and Simplified Chinese */
-	/* 50936 		EBCDIC Simplified Chinese */
-	/* 50937 		EBCDIC US-Canada and Traditional Chinese */
-	/* 50939 		EBCDIC Japanese (Latin) Extended and Japanese */
+	{50229, "50229"}, /* ISO 2022 Traditional Chinese */
+	{50930, "50930"}, /* EBCDIC Japanese (Katakana) Extended */
+	{50931, "50931"}, /* EBCDIC US-Canada and Japanese */
+	{50933, "50933"}, /* EBCDIC Korean Extended and Korean */
+	{50935, "50935"}, /* EBCDIC Simplified Chinese Extended and Simplified Chinese */
+	{50936, "50936"}, /* EBCDIC Simplified Chinese */
+	{50937, "50937"}, /* EBCDIC US-Canada and Traditional Chinese */
+	{50939, "50939"}, /* EBCDIC Japanese (Latin) Extended and Japanese */
 	{51932, "EUC-JP"}, /* EUC Japanese */
 	{51936, "EUC-CN"}, /* EUC Simplified Chinese; Chinese Simplified (EUC) */
 	{51949, "EUC-KR"}, /* EUC Korean */
-	/* 51950 		EUC Traditional Chinese */
+	{51950, "51950"},  /* EUC Traditional Chinese */
 	{52936, "HZ-GB-2312"}, /* HZ-GB2312 Simplified Chinese; Chinese Simplified (HZ) */
 	{54936, "GB18030"}, /* Windows XP and later: GB18030 Simplified Chinese (4 byte); Chinese Simplified (GB18030) */
 	{57002, "x-iscii-de"}, /* ISCII Devanagari */
