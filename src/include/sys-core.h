@@ -211,8 +211,6 @@ enum REB_Mold_Opts {
 #define DEC_MOLD_PERCENT 1  // follow num with %
 #define DEC_MOLD_MINIMAL 2  // allow decimal to be integer
 
-// Temporary:
-#define MOPT_ANSI_ONLY	MOPT_MOLD_ALL	// Non ANSI chars are ^() escaped
 
 // Reflector words (words-of, body-of, etc.)
 enum Reb_Reflectors {

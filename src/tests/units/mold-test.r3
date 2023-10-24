@@ -176,6 +176,36 @@ Rebol [
 		--assert       "" = mold/part "abcd" -2
 		--assert {"abcd"} = mold/part "abcd" 10
 
+	--test-- "mold/form string with a special chars"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2574
+		s: "ab"
+		for i 127 159 1 [
+			s/1: to char! i
+			--assert all [
+				2 = length? s
+				i = to integer! s/1
+				s/2 = #"b"
+				8 = length? v: mold s
+				v/2 = #"^^"
+				v/3 = #"("
+			]
+			--assert all [
+				2 = length? v: form s
+				i = to integer! v/1
+				v/2 = #"b"
+			]
+			--assert all [
+				8 = length? v: mold/all s
+				v/2 = #"^^"
+				v/3 = #"("
+			]
+			--assert all [
+				s = try [load save %tmp2574 s] 
+			]
+		]
+		try [delete %tmp2574]
+
+
 ===end-group=== 
 
 ===start-group=== "mold url!"

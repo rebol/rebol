@@ -317,16 +317,16 @@ STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 			else if (IS_CHR_ESC(c)) sf->escape++;
 			else if (c >= 0x1000) sf->paren += 6; // ^(1234)
 			else if (c >= 0x100)  sf->paren += 5; // ^(123)
-			else if (c >= 0x80)   sf->paren += 4; // ^(12)
+			else if (c >= 0x7f)   sf->paren += 4; // ^(12)
 		}
 	}
 	if (sf->brace_in != sf->brace_out) sf->malign++;
 }
 
-static REBUNI *Emit_Uni_Char(REBUNI *up, REBUNI chr, REBOOL parened)
+static REBUNI *Emit_Uni_Char(REBUNI *up, REBUNI chr)
 {
 	if (chr >= 0x7f || chr == 0x1e) {  // non ASCII or ^ must be (00) escaped
-		if (parened || chr < 0xA0 || chr == 0x1e) { // do not AND with above
+		if (chr < 0xA0 || chr == 0x1e) { // do not AND with above
 			*up++ = '^';
 			*up++ = '(';
 			up = Form_Uni_Hex(up, chr);
@@ -344,7 +344,7 @@ static REBUNI *Emit_Uni_Char(REBUNI *up, REBUNI chr, REBOOL parened)
 	return up;
 }
 
-STOID Mold_Uni_Char(REBSER *dst, REBUNI chr, REBOOL molded, REBOOL parened)
+STOID Mold_Uni_Char(REBSER *dst, REBUNI chr, REBOOL molded)
 {
 	REBCNT tail = SERIES_TAIL(dst);
 	REBUNI *up;
@@ -358,7 +358,7 @@ STOID Mold_Uni_Char(REBSER *dst, REBUNI chr, REBOOL molded, REBOOL parened)
 		up = UNI_SKIP(dst, tail);
 		*up++ = '#';
 		*up++ = '"';
-		up = Emit_Uni_Char(up, chr, parened);
+		up = Emit_Uni_Char(up, chr);
 		*up++ = '"';
 		dst->tail = up - UNI_HEAD(dst);
 	}
@@ -387,7 +387,6 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 	CHECK_MOLD_LIMIT(mold, len);
 
 	Sniff_String(ser, idx, &sf);
-	if (!GET_MOPT(mold, MOPT_ANSI_ONLY)) sf.paren = 0;
 
 	// Source can be 8 or 16 bits:
 	if (uni) up = UNI_HEAD(ser);
@@ -402,7 +401,7 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 
 		for (n = idx; n < VAL_TAIL(value); n++) {
 			c = uni ? up[n] : (REBUNI)(bp[n]);
-			dp = Emit_Uni_Char(dp, c, (REBOOL)GET_MOPT(mold, MOPT_ANSI_ONLY)); // parened
+			dp = Emit_Uni_Char(dp, c);
 		}
 
 		*dp++ = '"';
@@ -433,7 +432,7 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 			*dp++ = c;
 			break;
 		default:
-			dp = Emit_Uni_Char(dp, c, (REBOOL)GET_MOPT(mold, MOPT_ANSI_ONLY)); // parened
+			dp = Emit_Uni_Char(dp, c);
 		}
 	}
 
@@ -1184,7 +1183,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		goto append;
 
 	case REB_CHAR:
-		Mold_Uni_Char(ser, VAL_CHAR(value), (REBOOL)molded, (REBOOL)GET_MOPT(mold, MOPT_MOLD_ALL));
+		Mold_Uni_Char(ser, VAL_CHAR(value), (REBOOL)molded);
 		break;
 
 	case REB_PAIR:
