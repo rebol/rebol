@@ -737,6 +737,11 @@ Rebol [
 		--assert "make bitset! #{FF}"  = try [to string! quote #[bitset! #{FF}] ] ; bitset!
 		--assert "make image! [1x1 #{FFFFFF}]"  = try [to string! quote #[image! 1x1 #{FFFFFF}] ] ; image!
 		--assert "integer! percent!"  = try [to string! quote #[typeset! [integer! percent!]] ] ; typeset!
+
+	--test-- "to string! with chars outside the BMP"
+		;; current Rebol is able to use only 16bit Unicode..
+		--assert #{EFBFBD} = to binary! to string! #{F09F989A}
+		--assert #{EFBFBD} = to binary! to string! #{F09F989C}
 ===end-group===
 
 ===start-group=== "make/to tag"

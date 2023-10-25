@@ -446,6 +446,7 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 	}
 	*str = src;
 	if (state != UTF8_ACCEPT) return 0; //UNI_REPLACEMENT_CHAR;
+	if (codepoint >= UNI_MAX_BMP) return UNI_REPLACEMENT_CHAR;
 	return codepoint;
 #else
 	const UTF8 *source = *str;
