@@ -204,6 +204,7 @@ Rebol [
 			]
 		]
 		try [delete %tmp2574]
+		--assert {"�"} = mold to string! #{F09F989C}
 
 
 ===end-group=== 

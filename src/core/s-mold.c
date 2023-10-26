@@ -315,9 +315,7 @@ STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 		default:
 			if (c == 0x1e) sf->chr1e += 4; // special case of ^(1e)
 			else if (IS_CHR_ESC(c)) sf->escape++;
-			else if (c >= 0x1000) sf->paren += 6; // ^(1234)
-			else if (c >= 0x100)  sf->paren += 5; // ^(123)
-			else if (c >= 0x7f)   sf->paren += 4; // ^(12)
+			else if (c >= 0x7f && c < 0xA0) sf->paren += 4; // ^(12)
 		}
 	}
 	if (sf->brace_in != sf->brace_out) sf->malign++;
