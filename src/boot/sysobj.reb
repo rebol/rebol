@@ -253,6 +253,7 @@ modules: object [
 	httpd:            https://src.rebol.tech/modules/httpd.reb
 	prebol:           https://src.rebol.tech/modules/prebol.reb
 	spotify:          https://src.rebol.tech/modules/spotify.reb
+	unicode-utils:    https://src.rebol.tech/modules/unicode-utils.reb
 	daytime:          https://src.rebol.tech/mezz/prot-daytime.reb
 	mail:             https://src.rebol.tech/mezz/prot-mail.reb
 	mysql:            https://src.rebol.tech/mezz/prot-mysql.reb
