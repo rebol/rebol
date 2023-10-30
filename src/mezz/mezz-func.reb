@@ -24,7 +24,7 @@ closure: func [
 	spec [block!] {Help string (opt) followed by arg words (and opt type and string)}
 	body [block!] {The body block of the function}
 	/with {Define or use a persistent object (self)}
-	object [object! block! map!] {The object or spec}
+	object [any-object! block! map!] {The object or spec}
 	/extern words [block!] {These words are not local}
 ][
 	; Copy the spec and add /local to the end if not found
@@ -37,7 +37,7 @@ closure: func [
 	; them to the spec. Don't include the words already in the spec or object.
 	insert find/tail spec /local collect-words/deep/set/ignore body either with [
 		; Make our own local object if a premade one is not provided
-		unless object? object [object: make object! object]
+		unless any-object? object [object: make object! object]
 		bind body object  ; Bind any object words found in the body
 		; Ignore the words in the spec and those in the object. The spec needs
 		; to be copied since the object words shouldn't be added to the locals.
