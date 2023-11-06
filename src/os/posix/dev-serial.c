@@ -51,28 +51,6 @@
 
 #define MAX_SERIAL_PATH 128
 
-/* BXXX constants are defined in termios.h */ 
-const int speeds[] = {
-	50, B50,
-	75, B75,
-	110, B110,
-	134, B134,
-	150, B150,
-	200, B200,
-	300, B300,
-	600, B600,
-	1200, B1200,
-	1800, B1800,
-	2400, B2400,
-	4800, B4800,
-	9600, B9600,
-	19200, B19200,
-	38400, B38400,
-	57600, B57600,
-	115200, B115200,
-	230400, B230400,
-	0
-};
 
 /***********************************************************************
 **
@@ -94,7 +72,7 @@ static struct termios *Get_Serial_Settings(int ttyfd)
 }
 
 
-static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
+static REBOOL Set_Serial_Settings(int ttyfd, REBREQ *req)
 {
 	REBINT n;
 	struct termios attr = {};
@@ -102,16 +80,9 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 #ifdef DEBUG_SERIAL
 	printf("setting attributes: speed %d\n", speed);
 #endif
-	for (n = 0; speeds[n]; n += 2) {
-		if (speed == speeds[n]) {
-			speed = speeds[n+1];
-			break;
-		}
-	}
-	if (speeds[n] == 0) speed = B115200; // invalid, use default
 
-	cfsetospeed (&attr, speed);
-	cfsetispeed (&attr, speed);
+	if (NZ(cfsetospeed (&attr, speed)) || NZ(cfsetispeed (&attr, speed)))
+		return FALSE;
 
 	// TTY has many attributes. Refer to "man tcgetattr" for descriptions.
 	// C-flags - control modes:
@@ -191,9 +162,9 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 	tcflush(ttyfd, TCIFLUSH);
 
 	// Set new attributes:
-	if (tcsetattr(ttyfd, TCSANOW, &attr)) return 2;
+	if (tcsetattr(ttyfd, TCSANOW, &attr)) return FALSE;
 
-	return 0;
+	return TRUE;
 }
 
 /***********************************************************************
@@ -232,7 +203,7 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 		return DR_ERROR;
 	}
 
-	if (Set_Serial_Settings(h, req)) {
+	if (!Set_Serial_Settings(h, req)) {
 		close(h);
 		req->error = -RFE_OPEN_FAIL;
 		return DR_ERROR;

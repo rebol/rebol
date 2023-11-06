@@ -43,24 +43,8 @@
 #include "host-lib.h"
 
 #define MAX_SERIAL_DEV_PATH 128
+//#define DEBUG_SERIAL
 
-const int speeds[] = {
-	110, CBR_110,
-	300, CBR_300,
-	600, CBR_600,
-	1200, CBR_1200,
-	2400, CBR_2400,
-	4800, CBR_4800,
-	9600, CBR_9600,
-	14400, CBR_14400,
-	19200, CBR_19200,
-	38400, CBR_38400,
-	57600, CBR_57600,
-	115200, CBR_115200,
-	128000, CBR_128000,
-	230400, CBR_256000,
-	0
-};
 
 
 /***********************************************************************
@@ -68,24 +52,17 @@ const int speeds[] = {
 **	Local Functions
 **
 ***********************************************************************/
-static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
+static REBOOL Set_Serial_Settings(HANDLE hComm, REBREQ *req)
 {
 	DCB dcbSerialParams = {0};
-	REBINT n;
-	int speed = req->serial.baud;
+	COMMTIMEOUTS timeouts = {0};
 
 	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-	if (GetCommState(h, &dcbSerialParams) == 0) return 1;
 
+	if (GetCommState(hComm, &dcbSerialParams) == 0)
+		return FALSE;
 
-	for (n = 0; speeds[n]; n += 2) {
-		if (speed == speeds[n]) {
-			dcbSerialParams.BaudRate = speeds[n+1];
-			break;
-		}
-	}
-	if (speeds[n] == 0) dcbSerialParams.BaudRate = CBR_115200; // invalid, use default
-
+	dcbSerialParams.BaudRate = req->serial.baud;
 	dcbSerialParams.ByteSize = req->serial.data_bits;
 	dcbSerialParams.StopBits = req->serial.stop_bits == 1? ONESTOPBIT : TWOSTOPBITS;
 	switch (req->serial.parity) {
@@ -101,13 +78,37 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 			break;
 	}
 
+	if(SetCommState(hComm, &dcbSerialParams) == 0)
+		return FALSE;
 
-	if(SetCommState(h, &dcbSerialParams) == 0) {
-		return 1;
-	}
+	// See: http://msdn.microsoft.com/en-us/library/windows/desktop/aa363190%28v=vs.85%29.aspx
+	timeouts.ReadIntervalTimeout = MAXDWORD;
+	timeouts.ReadTotalTimeoutMultiplier = 0;
+	timeouts.ReadTotalTimeoutConstant = 0;
+	timeouts.WriteTotalTimeoutMultiplier = 0;
+	timeouts.WriteTotalTimeoutConstant = 0;
+	if (SetCommTimeouts(hComm, &timeouts) == 0)
+		return FALSE;
 
-	PurgeComm(h,PURGE_RXCLEAR|PURGE_TXCLEAR);  //make sure buffers are clean
-	return 0;
+#ifdef DEBUG_SERIAL
+	GetCommState(hComm, &dcbSerialParams);
+	printf("BaudRate: %lu\n",  dcbSerialParams.BaudRate);
+	printf("ByteSize: %hhu\n", dcbSerialParams.ByteSize);
+	printf("StopBits: %hhu\n", dcbSerialParams.StopBits);
+	printf("Parity:   %hhu\n", dcbSerialParams.Parity);
+
+	puts("Timeouts:");
+	GetCommTimeouts(hComm, &timeouts);
+	printf("ReadIntervalTimeout: %lu\n", timeouts.ReadIntervalTimeout);
+	printf("ReadTotalTimeoutMultiplier: %lu\n", timeouts.ReadTotalTimeoutMultiplier);
+	printf("ReadTotalTimeoutConstant: %lu\n", timeouts.ReadTotalTimeoutConstant);
+	printf("WriteTotalTimeoutMultiplier: %lu\n", timeouts.WriteTotalTimeoutMultiplier);
+	printf("WriteTotalTimeoutConstant: %lu\n", timeouts.WriteTotalTimeoutConstant);
+#endif
+
+	PurgeComm(hComm,PURGE_RXCLEAR|PURGE_TXCLEAR);  //make sure buffers are clean
+	EscapeCommFunction(hComm, CLRRTS);
+	return TRUE;
 }
 
 /***********************************************************************
@@ -119,8 +120,7 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 **
 ***********************************************************************/
 {
-	HANDLE h;
-	COMMTIMEOUTS timeouts = {0}; //add in timeouts? Currently unused
+	HANDLE hComm;
 
 	// req->serial.path should be prefixed with "\\.\" to allow for higher com port numbers
 	REBCHR fullpath [MAX_SERIAL_DEV_PATH]=TXT("\\\\.\\");
@@ -132,32 +132,19 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 
 	JOIN_STR(fullpath,req->serial.path,MAX_SERIAL_DEV_PATH-5); // 5 because of "\\.\" and terminating byte
 
-	h = CreateFile(fullpath, GENERIC_READ|GENERIC_WRITE, 0, NULL,OPEN_EXISTING, 0, NULL );
-	if (h == INVALID_HANDLE_VALUE) {
+	hComm = CreateFile(fullpath, GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL );
+	if (hComm == INVALID_HANDLE_VALUE) {
 		req->error = -RFE_OPEN_FAIL;
 		return DR_ERROR;
 	}
 
-	if (Set_Serial_Settings(h, req)==0) {
-		CloseHandle(h);
+	if (!Set_Serial_Settings(hComm, req)) {
+		CloseHandle(hComm);
 		req->error = -RFE_OPEN_FAIL;
 		return DR_ERROR;
 	}
 
-	
-	// See: http://msdn.microsoft.com/en-us/library/windows/desktop/aa363190%28v=vs.85%29.aspx
-	timeouts.ReadIntervalTimeout = MAXDWORD;
-	timeouts.ReadTotalTimeoutMultiplier = 0;
-	timeouts.ReadTotalTimeoutConstant = 0;
-	timeouts.WriteTotalTimeoutMultiplier = 1;   // These two write lines may need to be set to 0.  
-	timeouts.WriteTotalTimeoutConstant = 1;
-	if (!SetCommTimeouts(h, &timeouts)) {
-		CloseHandle(h);
-		req->error = -RFE_OPEN_FAIL;
-		return DR_ERROR;
-	}
-
-	req->handle = h;
+	req->handle = hComm;
 	return DR_DONE;
 }
 
@@ -227,12 +214,14 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 
 	if (len <= 0) return DR_DONE;
 
+
 	if (!WriteFile(req->handle, req->data, len, &result, NULL)){
 		req->error = -RFE_BAD_WRITE;
 		return DR_ERROR;
 	}
 
 #ifdef DEBUG_SERIAL
+	printf("%p = %u %u %u %u\n", req->data, req->data[0], req->data[1], req->data[2], req->data[3]);
 	printf("write %d wrote: %lu ret: %d\n", req->length, result,  req->actual);
 #endif
 
