@@ -158,7 +158,7 @@
 		else if (IS_TUPLE(src_val)) {
 			src_ser = BUF_FORM;
 			src_len = VAL_TUPLE_LEN(src_val);
-			for (int i = 0; i < src_len; i++) {
+			for (uint i = 0; i < src_len; i++) {
 				SERIES_DATA(src_ser)[i] = VAL_TUPLE(src_val)[i];
 			}
 			SERIES_TAIL(src_ser) = src_len;
