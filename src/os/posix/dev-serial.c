@@ -81,7 +81,7 @@ static REBOOL Set_Serial_Settings(int ttyfd, REBREQ *req)
 	printf("setting attributes: speed %d\n", speed);
 #endif
 
-	if (NZ(cfsetospeed (&attr, speed)) || NZ(cfsetispeed (&attr, speed)))
+	if (cfsetospeed(&attr, speed)!=0 || cfsetispeed(&attr, speed)!=0)
 		return FALSE;
 
 	// TTY has many attributes. Refer to "man tcgetattr" for descriptions.
