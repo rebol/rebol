@@ -224,10 +224,10 @@ static REBFLG get_scalar(REBSTU *stu,
 		}
 
 		/* optional initialization */
+		val = Append_Value(ser);
 		if (field->dimension > 1) {
 			REBSER *dim = Make_Block(1);
 			REBCNT n = 0;
-			val = Append_Value(ser);
 			SET_TYPE(val, REB_BLOCK);
 			VAL_SERIES(val) = dim;
 			for (n = 0; n < field->dimension; n ++) {
@@ -235,7 +235,6 @@ static REBFLG get_scalar(REBSTU *stu,
 				get_scalar(stu, field, n, dv);
 			}
 		} else {
-			val = Append_Value(ser);
 			get_scalar(stu, field, 0, val);
 #ifdef ALLOW_CODE_EVALUATION_INSIDE_STRUCT_CONSTRUCTION_SPEC 
 			if (IS_WORD(val)) SET_TYPE(val, REB_LIT_WORD);
@@ -243,6 +242,51 @@ static REBFLG get_scalar(REBSTU *stu,
 		}
 	}
 	return ser;
+}
+
+static void Get_Struct_Words(REBVAL* ret, REBSTU* stu) {
+	REBVAL* val = NULL;
+	REBSER* out;
+	struct Struct_Field* field = (struct Struct_Field*)SERIES_DATA(stu->fields);
+	REBCNT i, cnt;
+
+	cnt = SERIES_TAIL(stu->fields);
+	out = Make_Block(cnt);
+	Set_Block(ret, out);
+
+	for (i = 0; i < cnt; i++, field++) {
+		val = Append_Value(out);
+		Init_Word(val, field->sym);
+		SET_TYPE(val, REB_WORD);
+	}
+}
+
+static void Get_Struct_Values(REBVAL* ret, REBSTU* stu) {
+	REBVAL *val = NULL;
+	REBVAL *type_blk = NULL;
+	REBSER *out, *dim;
+	struct Struct_Field* field = (struct Struct_Field*)SERIES_DATA(stu->fields);
+	REBCNT i, n, cnt;
+
+	cnt = SERIES_TAIL(stu->fields);
+	out = Make_Block(cnt);
+	Set_Block(ret, out);
+
+	for (i = 0; i < cnt; i++, field++) {
+		val = Append_Value(out);
+		if (field->dimension > 1) {
+			dim = Make_Block(field->dimension);
+			SET_TYPE(val, REB_BLOCK);
+			VAL_SERIES(val) = dim;
+			for (n = 0; n < field->dimension; n++) {
+				REBVAL* dv = Append_Value(dim);
+				get_scalar(stu, field, n, dv);
+			}
+		}
+		else {
+			get_scalar(stu, field, 0, val);
+		}
+	}
 }
 
 static REBOOL same_fields(REBSER *tgt, REBSER *src)
@@ -1088,12 +1132,17 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 			{
 				REBINT n = VAL_WORD_CANON(arg); // zero on error
 				switch (n) {
+					case SYM_WORDS:
+						Get_Struct_Words(ret, &VAL_STRUCT(val));
+						break;
 					case SYM_VALUES:
-						SET_BINARY(ret, Copy_Series_Part(VAL_STRUCT_DATA_BIN(val), VAL_STRUCT_OFFSET(val), VAL_STRUCT_LEN(val)));
+						//SET_BINARY(ret, Copy_Series_Part(VAL_STRUCT_DATA_BIN(val), VAL_STRUCT_OFFSET(val), VAL_STRUCT_LEN(val)));
+						Get_Struct_Values(ret, &VAL_STRUCT(val));
 						break;
 					case SYM_SPEC:
+					case SYM_BODY:
 						Set_Block(ret, Clone_Block(VAL_STRUCT_SPEC(val)));
-						Unbind_Block(VAL_BLK(val), TRUE);
+						//Unbind_Block(VAL_BLK(val), TRUE); //???
 						break;
 					case SYM_ADDR:
 						SET_INTEGER(ret, (REBUPT)SERIES_SKIP(VAL_STRUCT_DATA_BIN(val), VAL_STRUCT_OFFSET(val)));

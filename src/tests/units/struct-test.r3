@@ -134,6 +134,21 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "Struct reflection"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2577
+s: make struct! blk: [a: [uint16!] 1 b: [int32!] -1 c: [word!] foo d [uint8! [2]]]
+--test-- "body-of struct"
+	--assert blk = body-of s
+--test-- "spec-of struct"
+	--assert blk = spec-of s
+--test-- "words-of struct"
+	--assert [a b c d] = words-of s
+	--assert [a b c d] = keys-of s
+--test-- "values-of struct"
+	--assert [1 -1 foo [0 0]] = values-of s
+===end-group===
+
+
 ===start-group=== "Struct conversion"
 --test-- "to binary! struct!"
 	s: make struct! [a: [uint16!] 1 b: [int32!] -1]

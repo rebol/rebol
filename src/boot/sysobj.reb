@@ -81,8 +81,8 @@ catalog: object [
 	; Reflectors are used on boot to create *-of functions
 	reflectors: [
 		spec   [any-function! any-object! vector! datatype! struct!]
-		body   [any-function! any-object! map!]
-		words  [any-function! any-object! map! date! handle!]
+		body   [any-function! any-object! map! struct!]
+		words  [any-function! any-object! map! date! handle! struct!]
 		values [any-object! map! struct!]
 		types  [any-function!]
 		title  [any-function! datatype! module!]
