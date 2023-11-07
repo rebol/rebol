@@ -30,8 +30,6 @@
 
 #include "sys-core.h"
 
-#define STATIC_ASSERT(e) do {(void)sizeof(char[1 - 2*!(e)]);} while(0)
-
 #define IS_INTEGER_TYPE(t) ((t) < STRUCT_TYPE_INTEGER)
 #define IS_DECIMAL_TYPE(t) ((t) > STRUCT_TYPE_INTEGER && (t) < STRUCT_TYPE_DECIMAL)
 #define IS_NUMERIC_TYPE(t) (IS_INTEGER_TYPE(t) || IS_DECIMAL_TYPE(t))
