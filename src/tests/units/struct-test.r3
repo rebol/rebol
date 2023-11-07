@@ -136,11 +136,11 @@ Rebol [
 
 ===start-group=== "Struct reflection"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/2577
-s: make struct! blk: [a: [uint16!] 1 b: [int32!] -1 c: [word!] foo d [uint8! [2]]]
---test-- "body-of struct"
-	--assert blk = body-of s
+s: make struct! spec: [a: [uint16!] 1 b: [int32!] -1 c: [word!] foo d [uint8! [2]]]
 --test-- "spec-of struct"
-	--assert blk = spec-of s
+	--assert spec = spec-of s
+--test-- "body-of struct"
+	--assert [a: 1 b: -1 c: foo d: [0 0]] = body-of s
 --test-- "words-of struct"
 	--assert [a b c d] = words-of s
 	--assert [a b c d] = keys-of s

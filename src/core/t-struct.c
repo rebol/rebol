@@ -289,6 +289,38 @@ static void Get_Struct_Values(REBVAL* ret, REBSTU* stu) {
 	}
 }
 
+static void Get_Struct_Body(REBVAL* ret, REBSTU* stu) {
+	REBVAL* val = NULL;
+	REBVAL* type_blk = NULL;
+	REBSER* out, * dim;
+	struct Struct_Field* field = (struct Struct_Field*)SERIES_DATA(stu->fields);
+	REBCNT i, n, cnt;
+
+	cnt = SERIES_TAIL(stu->fields);
+	out = Make_Block(cnt*2);
+	Set_Block(ret, out);
+
+	for (i = 0; i < cnt; i++, field++) {
+		val = Append_Value(out);
+		Init_Word(val, field->sym);
+		SET_TYPE(val, REB_SET_WORD);
+
+		val = Append_Value(out);
+		if (field->dimension > 1) {
+			dim = Make_Block(field->dimension);
+			SET_TYPE(val, REB_BLOCK);
+			VAL_SERIES(val) = dim;
+			for (n = 0; n < field->dimension; n++) {
+				REBVAL* dv = Append_Value(dim);
+				get_scalar(stu, field, n, dv);
+			}
+		}
+		else {
+			get_scalar(stu, field, 0, val);
+		}
+	}
+}
+
 static REBOOL same_fields(REBSER *tgt, REBSER *src)
 {
 	struct Struct_Field *tgt_fields = (struct Struct_Field *) SERIES_DATA(tgt);
@@ -1140,9 +1172,10 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 						Get_Struct_Values(ret, &VAL_STRUCT(val));
 						break;
 					case SYM_SPEC:
-					case SYM_BODY:
 						Set_Block(ret, Clone_Block(VAL_STRUCT_SPEC(val)));
-						//Unbind_Block(VAL_BLK(val), TRUE); //???
+						break;
+					case SYM_BODY:
+						Get_Struct_Body(ret, &VAL_STRUCT(val));
 						break;
 					case SYM_ADDR:
 						SET_INTEGER(ret, (REBUPT)SERIES_SKIP(VAL_STRUCT_DATA_BIN(val), VAL_STRUCT_OFFSET(val)));
