@@ -696,191 +696,193 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 {
 	//RL_Print("%s\n", __func__);
 	REBINT max_fields = 16;
+	if (!IS_BLOCK(data)) return FALSE; // validate early!
+
 	VAL_STRUCT_FIELDS(out) = Make_Series(max_fields, sizeof(struct Struct_Field), FALSE);
 	BARE_SERIES(VAL_STRUCT_FIELDS(out));
-	if (IS_BLOCK(data)) {
-		//Reduce_Block_No_Set(VAL_SERIES(data), 0, NULL);
-		//data = DS_POP;
-		REBVAL *blk = VAL_BLK_DATA(data);
-		REBINT field_idx = 0; /* for field index */
-		u64 offset = 0; /* offset in data */
-//		REBCNT eval_idx = 0; /* for spec block evaluation */
-		REBVAL *init = NULL; /* for result to save in data */
-		REBOOL expect_init = FALSE;
-		REBINT raw_size = -1;
-		REBUPT raw_addr = 0;
-//		REBCNT alignment = 0;
 
-		VAL_STRUCT_SPEC(out) = Copy_Series(VAL_SERIES(data));
-		VAL_STRUCT_DATA(out) = Make_Series(1, sizeof(struct Struct_Data), FALSE);
-		EXPAND_SERIES_TAIL(VAL_STRUCT_DATA(out), 1);
-		BARE_SERIES(VAL_STRUCT_DATA(out));
+	//Reduce_Block_No_Set(VAL_SERIES(data), 0, NULL);
+	//data = DS_POP;
+	REBVAL *blk = VAL_BLK_DATA(data);
+	REBINT field_idx = 0; /* for field index */
+	u64 offset = 0; /* offset in data */
+//	REBCNT eval_idx = 0; /* for spec block evaluation */
+	REBVAL *init = NULL; /* for result to save in data */
+	REBOOL expect_init = FALSE;
+	REBINT raw_size = -1;
+	REBUPT raw_addr = 0;
+//	REBCNT alignment = 0;
 
-		VAL_STRUCT_DATA_BIN(out) = Make_Series(max_fields << 2, 1, FALSE);
-		BARE_SERIES(VAL_STRUCT_DATA_BIN(out));
-		VAL_STRUCT_OFFSET(out) = 0;
+	VAL_STRUCT_SPEC(out) = Copy_Series(VAL_SERIES(data));
+	VAL_STRUCT_DATA(out) = Make_Series(1, sizeof(struct Struct_Data), FALSE);
+	EXPAND_SERIES_TAIL(VAL_STRUCT_DATA(out), 1);
+	BARE_SERIES(VAL_STRUCT_DATA(out));
 
-		/* set type early such that GC will handle it correctly, i.e, not collect series in the struct */
-		SET_TYPE(out, REB_STRUCT);
+	VAL_STRUCT_DATA_BIN(out) = Make_Series(max_fields << 2, 1, FALSE);
+	BARE_SERIES(VAL_STRUCT_DATA_BIN(out));
+	VAL_STRUCT_OFFSET(out) = 0;
 
-		if (IS_BLOCK(blk)) {
-			parse_attr(blk, &raw_size, &raw_addr);
-			++ blk;
-		}
+	/* set type early such that GC will handle it correctly, i.e, not collect series in the struct */
+	SET_TYPE(out, REB_STRUCT);
 
-		while (NOT_END(blk)) {
-			REBVAL *inner;
-			struct Struct_Field *field = NULL;
-			u64 step = 0;
+	if (IS_BLOCK(blk)) {
+		parse_attr(blk, &raw_size, &raw_addr);
+		++ blk;
+	}
 
-			EXPAND_SERIES_TAIL(VAL_STRUCT_FIELDS(out), 1);
+	while (NOT_END(blk)) {
+		REBVAL *inner;
+		struct Struct_Field *field = NULL;
+		u64 step = 0;
+
+		EXPAND_SERIES_TAIL(VAL_STRUCT_FIELDS(out), 1);
 			
-			DS_PUSH_NONE;
-			inner = DS_TOP; /* save in stack so that it won't be GC'ed when MT_Struct is recursively called */
+		DS_PUSH_NONE;
+		inner = DS_TOP; /* save in stack so that it won't be GC'ed when MT_Struct is recursively called */
 
-			field = (struct Struct_Field *)SERIES_SKIP(VAL_STRUCT_FIELDS(out), field_idx);
-			field->offset = (REBCNT)offset;
-			if (IS_SET_WORD(blk)) {
-				field->sym = VAL_WORD_SYM(blk); 
-				expect_init = TRUE;
-				if (raw_addr) {
-					/* initialization is not allowed for raw memory struct */
-					Trap_Arg(blk);
-				}
-			} else if (IS_WORD(blk)) {
-				field->sym = VAL_WORD_SYM(blk); 
-				expect_init = FALSE;
-			} else {
-				Trap_Type(blk);
-			}
-			++ blk;
-
-			if (!IS_BLOCK(blk)) {
+		field = (struct Struct_Field *)SERIES_SKIP(VAL_STRUCT_FIELDS(out), field_idx);
+		field->offset = (REBCNT)offset;
+		if (IS_SET_WORD(blk)) {
+			field->sym = VAL_WORD_SYM(blk); 
+			expect_init = TRUE;
+			if (raw_addr) {
+				/* initialization is not allowed for raw memory struct */
 				Trap_Arg(blk);
 			}
+		} else if (IS_WORD(blk)) {
+			field->sym = VAL_WORD_SYM(blk); 
+			expect_init = FALSE;
+		} else {
+			Trap_Type(blk);
+		}
+		++ blk;
 
-			if (!parse_field_type(field, blk, inner, &init)) { return FALSE; }
-			++ blk;
+		if (!IS_BLOCK(blk)) {
+			Trap_Arg(blk);
+		}
 
-			STATIC_ASSERT(sizeof(field->size) <= 4);
-			STATIC_ASSERT(sizeof(field->dimension) <= 4);
+		if (!parse_field_type(field, blk, inner, &init)) { return FALSE; }
+		++ blk;
 
-			step = (u64)field->size * (u64)field->dimension;
-			if (step > VAL_STRUCT_LIMIT) {
-				Trap1(RE_SIZE_LIMIT, out);
+		STATIC_ASSERT(sizeof(field->size) <= 4);
+		STATIC_ASSERT(sizeof(field->dimension) <= 4);
+
+		step = (u64)field->size * (u64)field->dimension;
+		if (step > VAL_STRUCT_LIMIT) {
+			Trap1(RE_SIZE_LIMIT, out);
+		}
+
+		EXPAND_SERIES_TAIL(VAL_STRUCT_DATA_BIN(out), step);
+
+		if (expect_init) {
+			if (IS_END(blk)) {
+				Trap_Types(RE_EXPECT_VAL, REB_STRUCT, REB_END);
 			}
-
-			EXPAND_SERIES_TAIL(VAL_STRUCT_DATA_BIN(out), step);
-
-			if (expect_init) {
-				if (IS_END(blk)) {
-					Trap_Types(RE_EXPECT_VAL, REB_STRUCT, REB_END);
-				}
 #ifdef ALLOW_CODE_EVALUATION_INSIDE_STRUCT_CONSTRUCTION_SPEC 
-				else if (IS_BLOCK(blk)) {
-					Reduce_Block(VAL_SERIES(blk), 0, NULL); //result is on stack
-					init = DS_POP;
-					++ blk;
-				} else {
-					eval_idx = blk - VAL_BLK_DATA(data);
+			else if (IS_BLOCK(blk)) {
+				Reduce_Block(VAL_SERIES(blk), 0, NULL); //result is on stack
+				init = DS_POP;
+				++ blk;
+			} else {
+				eval_idx = blk - VAL_BLK_DATA(data);
 
-					eval_idx = Do_Next(VAL_SERIES(data), eval_idx, 0);
+				eval_idx = Do_Next(VAL_SERIES(data), eval_idx, 0);
 
-					blk = VAL_BLK_SKIP(data, eval_idx);
-					init = DS_POP; //Do_Next saves result on stack
-				}
+				blk = VAL_BLK_SKIP(data, eval_idx);
+				init = DS_POP; //Do_Next saves result on stack
+			}
 #else
-				init = blk++;
+			init = blk++;
 #endif
-				if (field->array) {
+			if (field->array) {
 // O: It is probably not a good idea to let access to C pointers!
 //    https://github.com/Oldes/Rebol-issues/issues/2567
-//					if (IS_INTEGER(init)) { /* interpreted as a C pointer */
-//						void *ptr = (void *)VAL_INT64(init);
+//				if (IS_INTEGER(init)) { /* interpreted as a C pointer */
+//					void *ptr = (void *)VAL_INT64(init);
 //
-//						/* assuming it's an valid pointer and holding enough space */
-//						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), (REBCNT)offset), ptr, field->size * field->dimension);
-//					} else 
-					if (IS_BLOCK(init)) {
-						REBCNT n = 0;
+//					/* assuming it's an valid pointer and holding enough space */
+//					memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), (REBCNT)offset), ptr, field->size * field->dimension);
+//				} else 
+				if (IS_BLOCK(init)) {
+					REBCNT n = 0;
 
-						if (VAL_LEN(init) != field->dimension) {
-							Trap_Arg(init);
-						}
-						/* assign */
-						for (n = 0; n < field->dimension; n ++) {
-							if (!assign_scalar(&VAL_STRUCT(out), field, n, VAL_BLK_SKIP(init, n))) {
-								//RL_Print("Failed to assign element value\n");
-								goto failed;
-							}
-						}
-					} else {
-						Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(blk));
+					if (VAL_LEN(init) != field->dimension) {
+						Trap_Arg(init);
 					}
-				} else {
-					/* scalar */
-					if (!assign_scalar(&VAL_STRUCT(out), field, 0, init)) {
-						//RL_Print("Failed to assign scalar value\n");
-						goto failed;
-					}
-				}
-			} else if (raw_addr == 0) {
-				if (field->type == STRUCT_TYPE_STRUCT) {
-					REBCNT n = 0;
+					/* assign */
 					for (n = 0; n < field->dimension; n ++) {
-						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), ((REBCNT)offset) + n * field->size), SERIES_DATA(VAL_STRUCT_DATA_BIN(init)), field->size);
-					}
-				}
-				else if (field->type == STRUCT_TYPE_WORD) {
-					// use word `none` as a default value
-					REBCNT n = 0;
-					REBCNT sym = SYM_NONE;
-					for (n = 0; n < field->dimension; n++) {
-						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), ((REBCNT)offset) + n * field->size), &sym, field->size);
-					}
-				}
-				else if (field->type == STRUCT_TYPE_REBVAL) {
-#ifdef unused
-					REBVAL unset;
-					REBCNT n = 0;
-					SET_UNSET(&unset);
-					for (n = 0; n < field->dimension; n ++) {
-						if (!assign_scalar(&VAL_STRUCT(out), field, n, &unset)) {
+						if (!assign_scalar(&VAL_STRUCT(out), field, n, VAL_BLK_SKIP(init, n))) {
 							//RL_Print("Failed to assign element value\n");
 							goto failed;
 						}
 					}
-#endif
 				} else {
-					memset(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), (REBCNT)offset), 0, field->size * field->dimension);
+					Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(blk));
+				}
+			} else {
+				/* scalar */
+				if (!assign_scalar(&VAL_STRUCT(out), field, 0, init)) {
+					//RL_Print("Failed to assign scalar value\n");
+					goto failed;
 				}
 			}
-
-			offset +=  step;
-			/* 
-			if (alignment != 0) {
-				offset = ((offset + alignment - 1) / alignment) * alignment;
+		} else if (raw_addr == 0) {
+			if (field->type == STRUCT_TYPE_STRUCT) {
+				REBCNT n = 0;
+				for (n = 0; n < field->dimension; n ++) {
+					memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), ((REBCNT)offset) + n * field->size), SERIES_DATA(VAL_STRUCT_DATA_BIN(init)), field->size);
+				}
 			}
-			*/
-			if (offset > VAL_STRUCT_LIMIT) {
-				Trap1(RE_SIZE_LIMIT, out);
+			else if (field->type == STRUCT_TYPE_WORD) {
+				// use word `none` as a default value
+				REBCNT n = 0;
+				REBCNT sym = SYM_NONE;
+				for (n = 0; n < field->dimension; n++) {
+					memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), ((REBCNT)offset) + n * field->size), &sym, field->size);
+				}
 			}
-
-			field->done = TRUE;
-
-			++ field_idx;
-
-			DS_POP; /* pop up the inner struct*/
+			else if (field->type == STRUCT_TYPE_REBVAL) {
+#ifdef unused
+				REBVAL unset;
+				REBCNT n = 0;
+				SET_UNSET(&unset);
+				for (n = 0; n < field->dimension; n ++) {
+					if (!assign_scalar(&VAL_STRUCT(out), field, n, &unset)) {
+						//RL_Print("Failed to assign element value\n");
+						goto failed;
+					}
+				}
+#endif
+			} else {
+				memset(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), (REBCNT)offset), 0, field->size * field->dimension);
+			}
 		}
 
-		VAL_STRUCT_LEN(out) = (REBCNT)offset;
-
-		if (raw_addr) {
-			set_ext_storage(out, raw_size, raw_addr);
+		offset +=  step;
+		/* 
+		if (alignment != 0) {
+			offset = ((offset + alignment - 1) / alignment) * alignment;
+		}
+		*/
+		if (offset > VAL_STRUCT_LIMIT) {
+			Trap1(RE_SIZE_LIMIT, out);
 		}
 
-		return TRUE;
+		field->done = TRUE;
+
+		++ field_idx;
+
+		DS_POP; /* pop up the inner struct*/
 	}
+
+	VAL_STRUCT_LEN(out) = (REBCNT)offset;
+
+	if (raw_addr) {
+		set_ext_storage(out, raw_size, raw_addr);
+	}
+
+	return TRUE;
+
 
 failed:
 	Free_Series(VAL_STRUCT_FIELDS(out));
