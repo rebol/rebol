@@ -186,6 +186,7 @@ static REBFLG get_scalar(REBSTU *stu,
 		val = Append_Value(ser);
 		Init_Word(val, field->sym);
 		SET_TYPE(val, REB_SET_WORD);
+		VAL_SET_LINE(val);
 
 		/* required type */
 		type_blk = Append_Value(ser);
@@ -257,7 +258,12 @@ static void Get_Struct_Reflect(REBVAL* ret, REBSTU* stu, REBCNT type) {
 		if (type != SYM_VALUES) {
 			val = Append_Value(out);
 			Init_Word(val, field->sym);
-			SET_TYPE(val, (type==SYM_WORDS?REB_WORD:REB_SET_WORD));
+			if (type == SYM_WORDS) {
+				SET_TYPE(val, REB_WORD);
+			} else {
+				SET_TYPE(val, REB_SET_WORD);
+				VAL_SET_LINE(val);
+			}
 		}
 		if (type != SYM_WORDS) {
 			val = Append_Value(out);

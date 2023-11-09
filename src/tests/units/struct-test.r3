@@ -34,17 +34,19 @@ Rebol [
 	--assert 4 = length? f32
 	--assert 8 = length? f64
 	--assert 4 = length? w
-	--assert (mold i8 ) = "make struct! [a: [int8!] 0]"
-	--assert (mold i16) = "make struct! [a: [int16!] 0]"
-	--assert (mold i32) = "make struct! [a: [int32!] 0]"
-	--assert (mold i64) = "make struct! [a: [int64!] 0]"
-	--assert (mold u8 ) = "make struct! [a: [uint8!] 0]"
-	--assert (mold u16) = "make struct! [a: [uint16!] 0]"
-	--assert (mold u32) = "make struct! [a: [uint32!] 0]"
-	--assert (mold u64) = "make struct! [a: [uint64!] 0]"
-	--assert (mold f32) = "make struct! [a: [float!] 0.0]"
-	--assert (mold f64) = "make struct! [a: [double!] 0.0]"
-	--assert (mold w)   = "make struct! [a: [word!] none]"
+	;; default mold is using line breaks in the molded struct block
+	--assert (mold i8) = {make struct! [^/    a: [int8!] 23^/    b: [int8!] 0^/]}
+	--assert (mold/flat i8 ) = "make struct! [a: [int8!] 0]"
+	--assert (mold/flat i16) = "make struct! [a: [int16!] 0]"
+	--assert (mold/flat i32) = "make struct! [a: [int32!] 0]"
+	--assert (mold/flat i64) = "make struct! [a: [int64!] 0]"
+	--assert (mold/flat u8 ) = "make struct! [a: [uint8!] 0]"
+	--assert (mold/flat u16) = "make struct! [a: [uint16!] 0]"
+	--assert (mold/flat u32) = "make struct! [a: [uint32!] 0]"
+	--assert (mold/flat u64) = "make struct! [a: [uint64!] 0]"
+	--assert (mold/flat f32) = "make struct! [a: [float!] 0.0]"
+	--assert (mold/flat f64) = "make struct! [a: [double!] 0.0]"
+	--assert (mold/flat w)   = "make struct! [a: [word!] none]"
 
 
 --test-- "Struct single value (dimensional) construction"
@@ -84,17 +86,17 @@ Rebol [
 	--assert 8  = length? f32x2
 	--assert 16 = length? f64x2
 	--assert 8  = length? wx2
-	--assert (mold i8x2 ) = "make struct! [a: [int8! [2]] [0 0]]"
-	--assert (mold i16x2) = "make struct! [a: [int16! [2]] [0 0]]"
-	--assert (mold i32x2) = "make struct! [a: [int32! [2]] [0 0]]"
-	--assert (mold i64x2) = "make struct! [a: [int64! [2]] [0 0]]"
-	--assert (mold u8x2 ) = "make struct! [a: [uint8! [2]] [0 0]]"
-	--assert (mold u16x2) = "make struct! [a: [uint16! [2]] [0 0]]"
-	--assert (mold u32x2) = "make struct! [a: [uint32! [2]] [0 0]]"
-	--assert (mold u64x2) = "make struct! [a: [uint64! [2]] [0 0]]"
-	--assert (mold f32x2) = "make struct! [a: [float! [2]] [0.0 0.0]]"
-	--assert (mold f64x2) = "make struct! [a: [double! [2]] [0.0 0.0]]"
-	--assert (mold wx2)   = "make struct! [a: [word! [2]] [none none]]"
+	--assert (mold/flat i8x2 ) = "make struct! [a: [int8! [2]] [0 0]]"
+	--assert (mold/flat i16x2) = "make struct! [a: [int16! [2]] [0 0]]"
+	--assert (mold/flat i32x2) = "make struct! [a: [int32! [2]] [0 0]]"
+	--assert (mold/flat i64x2) = "make struct! [a: [int64! [2]] [0 0]]"
+	--assert (mold/flat u8x2 ) = "make struct! [a: [uint8! [2]] [0 0]]"
+	--assert (mold/flat u16x2) = "make struct! [a: [uint16! [2]] [0 0]]"
+	--assert (mold/flat u32x2) = "make struct! [a: [uint32! [2]] [0 0]]"
+	--assert (mold/flat u64x2) = "make struct! [a: [uint64! [2]] [0 0]]"
+	--assert (mold/flat f32x2) = "make struct! [a: [float! [2]] [0.0 0.0]]"
+	--assert (mold/flat f64x2) = "make struct! [a: [double! [2]] [0.0 0.0]]"
+	--assert (mold/flat wx2)   = "make struct! [a: [word! [2]] [none none]]"
 
 --test-- "Struct construction with initial value"
 	--assert all [struct? i8:  make struct! [a: [int8!]   23 b [int8!]]  i8/a  = 23  i8/b  = 0 ]
@@ -109,17 +111,17 @@ Rebol [
 	--assert all [struct? f64: make struct! [a: [double!] 23 b [int8!]]  f64/a = 23  f64/b = 0 ]
 	--assert all [struct? w:   make struct! [a: [word!]  foo b [int8!]]  w/a = 'foo  w/b   = 0 ]
 
-	--assert (mold i8 ) = "make struct! [a: [int8!] 23 b: [int8!] 0]"
-	--assert (mold i16) = "make struct! [a: [int16!] 23 b: [int8!] 0]"
-	--assert (mold i32) = "make struct! [a: [int32!] 23 b: [int8!] 0]"
-	--assert (mold i64) = "make struct! [a: [int64!] 23 b: [int8!] 0]"
-	--assert (mold u8 ) = "make struct! [a: [uint8!] 23 b: [int8!] 0]"
-	--assert (mold u16) = "make struct! [a: [uint16!] 23 b: [int8!] 0]"
-	--assert (mold u32) = "make struct! [a: [uint32!] 23 b: [int8!] 0]"
-	--assert (mold u64) = "make struct! [a: [uint64!] 23 b: [int8!] 0]"
-	--assert (mold f32) = "make struct! [a: [float!] 23.0 b: [int8!] 0]"
-	--assert (mold f64) = "make struct! [a: [double!] 23.0 b: [int8!] 0]"
-	--assert (mold w)   = "make struct! [a: [word!] foo b: [int8!] 0]"
+	--assert (mold/flat i8 ) = "make struct! [a: [int8!] 23 b: [int8!] 0]"
+	--assert (mold/flat i16) = "make struct! [a: [int16!] 23 b: [int8!] 0]"
+	--assert (mold/flat i32) = "make struct! [a: [int32!] 23 b: [int8!] 0]"
+	--assert (mold/flat i64) = "make struct! [a: [int64!] 23 b: [int8!] 0]"
+	--assert (mold/flat u8 ) = "make struct! [a: [uint8!] 23 b: [int8!] 0]"
+	--assert (mold/flat u16) = "make struct! [a: [uint16!] 23 b: [int8!] 0]"
+	--assert (mold/flat u32) = "make struct! [a: [uint32!] 23 b: [int8!] 0]"
+	--assert (mold/flat u64) = "make struct! [a: [uint64!] 23 b: [int8!] 0]"
+	--assert (mold/flat f32) = "make struct! [a: [float!] 23.0 b: [int8!] 0]"
+	--assert (mold/flat f64) = "make struct! [a: [double!] 23.0 b: [int8!] 0]"
+	--assert (mold/flat w)   = "make struct! [a: [word!] foo b: [int8!] 0]"
 
 --test-- "Construction from struct prototype"
 	proto!: make struct! [a: [uint8!] 1 b: [uint8!] 2]
