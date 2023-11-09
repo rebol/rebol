@@ -133,6 +133,15 @@ Rebol [
 	--assert all [s2/a = 1  s2/b = 20]
 	--assert all [s3/a = 10 s3/b = 20]
 
+--test-- "Struct with many fields"
+	blk: copy []
+	repeat i 32 [repend blk [to word! join 'a i [int8!]]]
+	--assert all [
+		not error? try [s: make struct! blk]
+		[a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20 a21 a22 a23 a24 a25 a26 a27 a28 a29 a30 a31 a32] = words-of s
+		[0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0] = values-of s
+	]
+
 ===end-group===
 
 
@@ -176,6 +185,24 @@ s: make struct! spec: [a: [uint16!] 1 b: [int32!] -1 c: [word!] foo d [uint8! [2
 	--assert all [
 		error? e: try [ make struct! [a: [int8! [2]] 1] ] ;- No crash!
 		e/id = 'expect-val
+	]
+
+--test-- "Empty struct not allowed"
+	--assert all [
+		error? e: try [make struct! []]
+		e/id = 'invalid-arg
+	]
+	--assert all [
+		error? e: try [make struct! [a]]
+		e/id = 'invalid-arg
+	]
+	--assert all [
+		error? e: try [make struct! [[]]]
+		e/id = 'invalid-arg
+	]
+	--assert all [
+		error? e: try [make struct! [[] a]]
+		e/id = 'invalid-arg
 	]
 ===end-group===
 

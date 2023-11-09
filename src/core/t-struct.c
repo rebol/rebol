@@ -686,7 +686,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 /*
  * Format:
  * make struct! [
- *     field1 [type1]
+ *     field1  [type1]
  *     field2: [type2] field2-init-value
  * 	   field3: [struct [field1 [type1]]] field3-init-struct-value
  * 	   field4: [type1[3]] field4-init-block-value
@@ -695,10 +695,17 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 ***********************************************************************/
 {
 	//RL_Print("%s\n", __func__);
-	REBINT max_fields = 16;
+	
 	if (!IS_BLOCK(data)) return FALSE; // validate early!
-
-	VAL_STRUCT_FIELDS(out) = Make_Series(max_fields, sizeof(struct Struct_Field), FALSE);
+	
+	/* Using spec block length as a prediction of fields number
+	   (each field requires at least 2 spec values)	*/
+	REBCNT num_spec_values = VAL_TAIL(data) - VAL_INDEX(data);
+	REBCNT min_fileds = num_spec_values >> 1;
+	/* Don't allow empty struct! */
+	if (min_fileds == 0) Trap_Arg(data);
+	
+	VAL_STRUCT_FIELDS(out) = Make_Series(min_fileds, sizeof(struct Struct_Field), FALSE);
 	BARE_SERIES(VAL_STRUCT_FIELDS(out));
 
 	//Reduce_Block_No_Set(VAL_SERIES(data), 0, NULL);
@@ -718,7 +725,8 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 	EXPAND_SERIES_TAIL(VAL_STRUCT_DATA(out), 1);
 	BARE_SERIES(VAL_STRUCT_DATA(out));
 
-	VAL_STRUCT_DATA_BIN(out) = Make_Series(max_fields << 2, 1, FALSE);
+	/* one byte per field as a minimum (expands when needed) */
+	VAL_STRUCT_DATA_BIN(out) = Make_Series(min_fileds, 1, FALSE);
 	BARE_SERIES(VAL_STRUCT_DATA_BIN(out));
 	VAL_STRUCT_OFFSET(out) = 0;
 
