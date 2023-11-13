@@ -361,8 +361,8 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 		// Try to load the DLL file:
 		if (!(dll = OS_OPEN_LIBRARY((REBCHR*)SERIES_DATA(path), &error))) {
-			//printf("error: %i\n", error);
-			Trap1(RE_NO_EXTENSION, val);
+			DS_PUSH_INTEGER(error);
+			Trap2(RE_NO_EXTENSION, val, DS_TOP);
 		}
 
 		// Call its info() function for header and code body:

@@ -190,7 +190,7 @@ Access: [
 ;   would-block:        [{operation on port} :arg1 {would block}]
 ;   no-action:          [{this type of port does not support the} :arg1 {action}]
 ;   serial-timeout:     {serial port timeout}
-	no-extension:       [{cannot open extension:} :arg1]
+	no-extension:       [{cannot open extension:} :arg1 {reason:} :arg2]
 	bad-extension:      [{invalid extension format:} :arg1]
 	extension-init:     [{extension cannot be initialized (check version):} :arg1]
 

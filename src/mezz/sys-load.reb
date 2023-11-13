@@ -489,7 +489,10 @@ load-module: function [
 				not tmp [unless attempt [data: read source] [return none]]
 				tmp = 'extension [ ; special processing for extensions
 					; load-extension also fails for url!
-					unless attempt [ext: load-extension source] [return none]
+					try/with [ext: load-extension source] [
+						log/error 'REBOL system/state/last-error
+						return none
+					]
 					data: ext/lib-boot ; save for checksum before it's unset
 					case [
 						import [set [hdr: code:] load-ext-module ext]
