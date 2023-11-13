@@ -236,12 +236,12 @@ log: func [
 	/local level
 ][
 	if error [
-		msg: form either block? msg [reduce msg][msg]
+		msg: trim/head/tail form either block? msg [reduce msg][msg]
 		foreach line split-lines msg [
 			print ajoin [
 				" ^[[35m[" id "] ^[[1m"
 				either line/1 = #"*" []["** Error: "]
-				copy/part line 100
+				copy/part line 200 ;@@ I am not sure with this line length limit
 				"^[[0m"
 			]
 		]
