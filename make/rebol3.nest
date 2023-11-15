@@ -27,6 +27,7 @@ version: 3.14.1
 #if OpenBSD? [ defines: TO_OPENBSD ]
 #if FreeBSD? [ defines: TO_FREEBSD ]
 #if (system/platform = 'NetBSD)  [ defines: TO_NETBSD  ]
+#if (system/platform = 'Turris)  [ defines: TO_LINUX   ]
 
 #if Posix? [ clfag: -Wno-pointer-sign ] ;@@ Review these warnings and fix them!
 
@@ -84,6 +85,13 @@ target-haiku: [
 
 	library: [%network %iconv]
 	defines: [ENDIAN_LITTLE USE_OLD_PIPE]
+]
+target-turris: [
+	os:       turris
+	sys:      linux
+	platform: Turris
+	vendor:   pc
+	compiler: gcc
 ]
 
 #if Linux? [
@@ -462,7 +470,7 @@ include-image-codecs: [
 	#if MacOS? [
 		:include-image-os-codec
 	]
-	#if (find [Linux OpenBSD FreeBSD NetBSD] system/platform) [
+	#if (find [Linux OpenBSD FreeBSD NetBSD Turris] system/platform) [
 		:include-native-bmp-codec
 		:include-native-png-codec
 		:include-native-jpg-codec
@@ -1017,7 +1025,7 @@ common: [
 		flag:    -mmacosx-version-min=10.9
 		entitlements: %make/Entitlements.plist
 	]
-	#if (find [Linux OpenBSD FreeBSD NetBSD] system/platform) [
+	#if (find [Linux OpenBSD FreeBSD NetBSD Turris] system/platform) [
 		library: %m
 		defines: ENDIAN_LITTLE
 	]
@@ -1032,7 +1040,7 @@ common-host: [
 		resource: %make/r3.rc
 	]
 	;#if Posix []
-	#if (find [Linux OpenBSD FreeBSD NetBSD Haiku] system/platform) [
+	#if (find [Linux OpenBSD FreeBSD NetBSD Haiku Turris] system/platform) [
 		flag: -fPIC ; position independent (used for libs)
 	]
 ]
@@ -1040,12 +1048,10 @@ common-host: [
 common-64bit: [
 	define: _FILE_OFFSET_BITS=64
 
-	#if Windows? [
+	#either Windows? [
 		defines: _WIN32
 		defines: __LLP64__ ; 64-bit, long (integer) has 32 bits and 'void *' is sizeof(long long)
-	]
-
-	#if (find [Linux OpenBSD FreeBSD macOS Haiku] system/platform) [
+	][
 		;has long (integer) 64 bits
 		defines: __LP64__ ; same like LLP64, but long (integer) has 64 bits instead of 32
 	]
@@ -1187,6 +1193,10 @@ make-ext-test: [
 	#if ('NetBSD = system/platform) [
 		flag: -fPIC
 		:target-netbsd
+	]
+	#if ('Turris = system/platform) [
+		flag: -fPIC
+		:target-turris
 	]
 ]
 
@@ -1713,6 +1723,25 @@ eggs: [
 			:target-haiku
 			:include-rebol-bulk
 			:make-x64-exe
+		]
+	]
+	#if (system/platform = 'turris) [
+		"Rebol/Base turris-armv7" [
+			name:   %rebol3-base-turris-armv7
+			:target-turris
+			:make-armv7-exe
+		]
+		"Rebol/Core turris-armv7" [
+			name:   %rebol3-core-turris-armv7
+			:target-turris
+			:include-rebol-core
+			:make-armv7-exe
+		]
+		"Rebol/Bulk turris-armv7" [
+			name:   %rebol3-bulk-turris-armv7
+			:target-turris
+			:include-rebol-bulk
+			:make-armv7-exe
 		]
 	]
 	"Test extension 32bit" [
