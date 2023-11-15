@@ -691,6 +691,21 @@ Rebol [
 		--assert #{E188B4} = head change #{00} "^(1234)"
 		--assert #{E188B4} = head change #{0000} "^(1234)"
 		--assert #{E188B403} = head change/part #{010203} "^(1234)" 2
+
+	--test-- "CHANGE binary! tuple!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2576
+		--assert all [
+			#{00} = change b: #{00000000} 1.2.3
+			b = #{01020300}
+		]
+		--assert all [
+			tail? change b: #{00000000} 1.2.3.4.5.6
+			b = #{010203040506}
+		]
+		--assert all [
+			#{CCDD} = change/part b: #{AABBCCDD} 1.2.3.4 2
+			b = #{01020304CCDD}
+		]
 ===end-group===
 
 ===start-group=== "TAKE"

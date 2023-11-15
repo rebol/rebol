@@ -36,7 +36,8 @@
 /*
 ***********************************************************************/
 {
-	ASSERT(sizeof(REBCNT) == 4, RP_BAD_SIZE);
+	STATIC_ASSERT(sizeof(REBCNT) == 4); // RP_BAD_SIZE
+
 	out[0] = (REBYTE) in;
 	out[1] = (REBYTE)(in >> 8);
 	out[2] = (REBYTE)(in >> 16);
@@ -49,7 +50,7 @@
 /*
 ***********************************************************************/
 {
-	ASSERT(sizeof(REBCNT) == 4, RP_BAD_SIZE);
+	STATIC_ASSERT(sizeof(REBCNT) == 4); // RP_BAD_SIZE
 	return (REBCNT) in[0]          // & 0xFF
 		| (REBCNT)  in[1] <<  8    // & 0xFF00;
 		| (REBCNT)  in[2] << 16    // & 0xFF0000;

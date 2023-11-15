@@ -251,6 +251,11 @@ typedef void(*CFUNC)(void *);
 
 #define UNUSED(x) (void)x;
 
+// Check a condition e at compile time. If the condition is false, it will
+// result in a compilation error because it attempts to create an array 
+// with a negative size, which is not allowed in C.
+#define STATIC_ASSERT(e) do {(void)sizeof(char[1 - 2*!(e)]);} while(0)
+
 #define FLAGIT(f)           (1<<(f))
 #define GET_FLAG(v,f)       (((v) & (1<<(f))) != 0)
 #define GET_FLAGS(v,f,g)    (((v) & ((1<<(f)) | (1<<(g)))) != 0)

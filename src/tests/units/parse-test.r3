@@ -942,6 +942,13 @@ if not error? try [str: to string! #{A032}][
 		e/id = 'parse-rule
 		e/arg1 = quote :pos
 	]
+--test-- "evaluation in optional rule"
+	;@@ https://gitter.im/red/bugs?at=638e27b34cb5585f9666500d
+	x: false 
+	--assert all [
+		not parse [1] [opt (x: true)]
+		x
+	]
 
 --test-- "empty string rule"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1880

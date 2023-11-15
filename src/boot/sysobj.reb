@@ -81,8 +81,8 @@ catalog: object [
 	; Reflectors are used on boot to create *-of functions
 	reflectors: [
 		spec   [any-function! any-object! vector! datatype! struct!]
-		body   [any-function! any-object! map!]
-		words  [any-function! any-object! map! date! handle!]
+		body   [any-function! any-object! map! struct!]
+		words  [any-function! any-object! map! date! handle! struct!]
 		values [any-object! map! struct!]
 		types  [any-function!]
 		title  [any-function! datatype! module!]
@@ -253,6 +253,7 @@ modules: object [
 	httpd:            https://src.rebol.tech/modules/httpd.reb
 	prebol:           https://src.rebol.tech/modules/prebol.reb
 	spotify:          https://src.rebol.tech/modules/spotify.reb
+	unicode-utils:    https://src.rebol.tech/modules/unicode-utils.reb
 	daytime:          https://src.rebol.tech/mezz/prot-daytime.reb
 	mail:             https://src.rebol.tech/mezz/prot-mail.reb
 	mysql:            https://src.rebol.tech/mezz/prot-mysql.reb

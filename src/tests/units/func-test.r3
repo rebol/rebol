@@ -268,6 +268,27 @@ Rebol [
 		clear second b
 		--assert [1 2 3] = second body-of :fun
 
+	--test-- "function/with object and module"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2575
+		o: object [a: 1 test: does [a * 10]]
+		--assert all [
+			function? try [fun: function/with [][test] o]
+			10 = fun
+		]
+		--assert all [
+			closure? try [fun: closure/with [][test] o]
+			10 = fun
+		]
+		m: module [][a: 1 test: does [a * 20]]
+		--assert all [
+			function? try [fun: function/with [][test] m]
+			20 = fun
+		]
+		--assert all [
+			closure? try [fun: closure/with [][test] m]
+			20 = fun
+		]
+
 ===end-group===
 
 

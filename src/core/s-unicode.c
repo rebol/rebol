@@ -392,7 +392,7 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 	const REBYTE *end = str + len;
 	const REBYTE *acc = str - 1;
 #ifdef USE_NEW_UTF8_DECODE
-	REBCNT codepoint;
+	REBCNT codepoint = 0;
 	REBCNT state = UTF8_ACCEPT;
 
 	for (; str < end; ++str) {
@@ -446,6 +446,7 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 	}
 	*str = src;
 	if (state != UTF8_ACCEPT) return 0; //UNI_REPLACEMENT_CHAR;
+	if (codepoint >= UNI_MAX_BMP) return UNI_REPLACEMENT_CHAR;
 	return codepoint;
 #else
 	const UTF8 *source = *str;
