@@ -77,6 +77,7 @@
 		case SYM_SHA224:
 			*ctx = sizeof(mbedtls_sha256_context);
 			*blk = 28;
+			return;
 #ifdef INCLUDE_SHA384
 		case SYM_SHA384:
 			*ctx = sizeof(mbedtls_sha512_context);
