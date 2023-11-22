@@ -743,9 +743,11 @@ include-optional-checksums: [
 	config: INCLUDE_RIPEMD160  ; checksum: RIPE-MD-160 (requires INCLUDE_MBEDTLS)
 	config: INCLUDE_SHA224
 	config: INCLUDE_SHA384
+	config: INCLUDE_SHA3       ; checksum: SHA3-224, SHA3-256, SHA3-384 and SHA3-512
 	core-files: [
 		%core/mbedtls/md4.c
 		%core/mbedtls/ripemd160.c
+		%core/mbedtls/sha3.c
 	]
 ]
 include-base85-encoding: [

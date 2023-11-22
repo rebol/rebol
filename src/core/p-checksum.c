@@ -36,6 +36,7 @@
 
 #ifdef INCLUDE_MBEDTLS
 #include "sys-core.h"
+#include "sys-checksum.h"
 #include "reb-net.h"
 #include "mbedtls/md4.h"
 #include "mbedtls/md5.h"
@@ -43,6 +44,7 @@
 #include "mbedtls/sha1.h"
 #include "mbedtls/sha256.h"
 #include "mbedtls/sha512.h"
+#include "mbedtls/sha3.h"
 #else
 #include "deprecated/sys-sha2.h"
 #include "reb-net.h"
@@ -85,6 +87,24 @@
 			*ctx = sizeof(mbedtls_sha512_context);
 			*blk = 64;
 			return;
+#ifdef INCLUDE_SHA3
+		case SYM_SHA3_224:
+			*ctx = sizeof(mbedtls_sha3_context);
+			*blk = 28;
+			return;
+		case SYM_SHA3_256:
+			*ctx = sizeof(mbedtls_sha3_context);
+			*blk = 32;
+			return;
+		case SYM_SHA3_384:
+			*ctx = sizeof(mbedtls_sha3_context);
+			*blk = 48;
+			return;
+		case SYM_SHA3_512:
+			*ctx = sizeof(mbedtls_sha3_context);
+			*blk = 64;
+			return;
+#endif
 #ifdef INCLUDE_RIPEMD160
 		case SYM_RIPEMD160:
 			*ctx = sizeof(mbedtls_ripemd160_context);
@@ -162,6 +182,20 @@
 	#ifdef INCLUDE_SHA384
 		case SYM_SHA384:
 			mbedtls_sha512_starts((mbedtls_sha512_context*)VAL_BIN(ctx), 1);
+			return TRUE;
+	#endif
+	#ifdef INCLUDE_SHA3
+		case SYM_SHA3_224:
+			SHA3_224_Starts((mbedtls_sha3_context*)VAL_BIN(ctx));
+			return TRUE;
+		case SYM_SHA3_256:
+			SHA3_256_Starts((mbedtls_sha3_context*)VAL_BIN(ctx));
+			return TRUE;
+		case SYM_SHA3_384:
+			SHA3_384_Starts((mbedtls_sha3_context*)VAL_BIN(ctx));
+			return TRUE;
+		case SYM_SHA3_512:
+			SHA3_512_Starts((mbedtls_sha3_context*)VAL_BIN(ctx));
 			return TRUE;
 	#endif
 	#ifdef INCLUDE_RIPEMD160
@@ -279,6 +313,14 @@
 #endif
 				mbedtls_sha512_update((mbedtls_sha512_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
 				break;
+#ifdef INCLUDE_SHA3
+			case SYM_SHA3_224:
+			case SYM_SHA3_256:
+			case SYM_SHA3_384:
+			case SYM_SHA3_512:
+				SHA3_Update((mbedtls_sha3_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				break;
+#endif
 #ifdef INCLUDE_RIPEMD160
 			case SYM_RIPEMD160:
 				mbedtls_ripemd160_update((mbedtls_ripemd160_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
@@ -347,6 +389,20 @@
 #endif
 			mbedtls_sha512_finish((mbedtls_sha512_context*)DS_TOP, VAL_BIN_DATA(data));
 			break;
+#ifdef INCLUDE_SHA3
+		case SYM_SHA3_224:
+			SHA3_224_Finish((mbedtls_sha3_context*)DS_TOP, VAL_BIN_DATA(data));
+			break;
+		case SYM_SHA3_256:
+			SHA3_256_Finish((mbedtls_sha3_context*)DS_TOP, VAL_BIN_DATA(data));
+			break;
+		case SYM_SHA3_384:
+			SHA3_384_Finish((mbedtls_sha3_context*)DS_TOP, VAL_BIN_DATA(data));
+			break;
+		case SYM_SHA3_512:
+			SHA3_512_Finish((mbedtls_sha3_context*)DS_TOP, VAL_BIN_DATA(data));
+			break;
+#endif
 #ifdef INCLUDE_RIPEMD160
 		case SYM_RIPEMD160:
 			mbedtls_ripemd160_finish((mbedtls_ripemd160_context*)DS_TOP, VAL_BIN_DATA(data));

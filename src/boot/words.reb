@@ -212,6 +212,10 @@ sha256
 sha384
 sha512
 ripemd160
+sha3-224
+sha3-256
+sha3-384
+sha3-512
 
 ; Codec actions
 identify

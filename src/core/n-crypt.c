@@ -192,7 +192,38 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 		add_ec_word(SYM_CURVE448)
 		#endif
 	}
-	
+
+
+	blk = Get_System(SYS_CATALOG, CAT_CHECKSUMS);
+	if (blk && IS_BLOCK(blk)) {
+		add_ec_word(SYM_ADLER32)
+		add_ec_word(SYM_CRC24)
+		add_ec_word(SYM_CRC32)
+#ifdef INCLUDE_MD4
+		add_ec_word(SYM_MD4)
+#endif
+		add_ec_word(SYM_MD5)
+#ifdef INCLUDE_RIPEMD160
+			add_ec_word(SYM_RIPEMD160)
+#endif
+		add_ec_word(SYM_SHA1)
+#ifdef INCLUDE_SHA224
+		add_ec_word(SYM_SHA224)
+#endif
+		add_ec_word(SYM_SHA256)
+#ifdef INCLUDE_SHA384
+		add_ec_word(SYM_SHA384)
+#endif
+		add_ec_word(SYM_SHA512)
+#ifdef INCLUDE_SHA3
+		add_ec_word(SYM_SHA3_224)
+		add_ec_word(SYM_SHA3_256)
+		add_ec_word(SYM_SHA3_384)
+		add_ec_word(SYM_SHA3_512)
+#endif
+		add_ec_word(SYM_TCP)
+	}
+
 }
 
 /***********************************************************************
