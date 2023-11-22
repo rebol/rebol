@@ -653,7 +653,7 @@ include-cryptography: [
 	config: INCLUDE_CRYPTOGRAPHY
 
 	#if Windows? [
-		library: %Advapi32 ;; used by mbedtls_platform_entropy_poll
+		library: %Bcrypt ;; used by mbedtls_platform_entropy_poll
 	]
 
 	define: MBEDTLS_ASN1_PARSE_C ; The generic ASN1 parser.

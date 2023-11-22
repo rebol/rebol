@@ -29,19 +29,7 @@
  */
 /*
  *  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0
- *
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may
- *  not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
  */
 
 #ifndef MBEDTLS_CCM_H
@@ -77,7 +65,6 @@ extern "C" {
 typedef struct mbedtls_ccm_context {
     unsigned char MBEDTLS_PRIVATE(y)[16];    /*!< The Y working buffer */
     unsigned char MBEDTLS_PRIVATE(ctr)[16];  /*!< The counter buffer */
-    mbedtls_cipher_context_t MBEDTLS_PRIVATE(cipher_ctx);    /*!< The cipher context used. */
     size_t MBEDTLS_PRIVATE(plaintext_len);   /*!< Total plaintext length */
     size_t MBEDTLS_PRIVATE(add_len);         /*!< Total authentication data length */
     size_t MBEDTLS_PRIVATE(tag_len);         /*!< Total tag length */
@@ -87,15 +74,15 @@ typedef struct mbedtls_ccm_context {
                                                   and plaintext/ciphertext.
                                                   This variable is set to zero after
                                                   auth data input is finished. */
-    unsigned char MBEDTLS_PRIVATE(q);        /*!< The Q working value */
-    unsigned char MBEDTLS_PRIVATE(mode);     /*!< The operation to perform:
+    unsigned int MBEDTLS_PRIVATE(q);         /*!< The Q working value */
+    unsigned int MBEDTLS_PRIVATE(mode);      /*!< The operation to perform:
                                               #MBEDTLS_CCM_ENCRYPT or
                                               #MBEDTLS_CCM_DECRYPT or
                                               #MBEDTLS_CCM_STAR_ENCRYPT or
                                               #MBEDTLS_CCM_STAR_DECRYPT. */
+    mbedtls_cipher_context_t MBEDTLS_PRIVATE(cipher_ctx);    /*!< The cipher context used. */
     int MBEDTLS_PRIVATE(state);              /*!< Working value holding context's
-                                                  state. Used for chunked data
-                                                  input */
+                                                  state. Used for chunked data input */
 }
 mbedtls_ccm_context;
 

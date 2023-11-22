@@ -23,19 +23,7 @@
  */
 /*
  *  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0
- *
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may
- *  not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
  */
 
 #ifndef MBEDTLS_CTR_DRBG_H
@@ -45,6 +33,7 @@
 #include "mbedtls/build_info.h"
 
 #include "mbedtls/aes.h"
+#include "entropy.h"
 
 #if defined(MBEDTLS_THREADING_C)
 #include "mbedtls/threading.h"
@@ -94,17 +83,14 @@
  * \brief The amount of entropy used per seed by default, in bytes.
  */
 #if !defined(MBEDTLS_CTR_DRBG_ENTROPY_LEN)
-#if defined(MBEDTLS_SHA512_C) && !defined(MBEDTLS_ENTROPY_FORCE_SHA256)
-/** This is 48 bytes because the entropy module uses SHA-512
- * (\c MBEDTLS_ENTROPY_FORCE_SHA256 is disabled).
+#if defined(MBEDTLS_ENTROPY_SHA512_ACCUMULATOR)
+/** This is 48 bytes because the entropy module uses SHA-512.
  */
 #define MBEDTLS_CTR_DRBG_ENTROPY_LEN        48
 
-#else /* defined(MBEDTLS_SHA512_C) && !defined(MBEDTLS_ENTROPY_FORCE_SHA256) */
+#else /* MBEDTLS_ENTROPY_SHA512_ACCUMULATOR */
 
-/** This is 32 bytes because the entropy module uses SHA-256
- * (the SHA512 module is disabled or
- * \c MBEDTLS_ENTROPY_FORCE_SHA256 is enabled).
+/** This is 32 bytes because the entropy module uses SHA-256.
  */
 #if !defined(MBEDTLS_CTR_DRBG_USE_128_BIT_KEY)
 /** \warning To achieve a 256-bit security strength, you must pass a nonce
@@ -112,7 +98,7 @@
  */
 #endif /* !defined(MBEDTLS_CTR_DRBG_USE_128_BIT_KEY) */
 #define MBEDTLS_CTR_DRBG_ENTROPY_LEN        32
-#endif /* defined(MBEDTLS_SHA512_C) && !defined(MBEDTLS_ENTROPY_FORCE_SHA256) */
+#endif /* MBEDTLS_ENTROPY_SHA512_ACCUMULATOR */
 #endif /* !defined(MBEDTLS_CTR_DRBG_ENTROPY_LEN) */
 
 #if !defined(MBEDTLS_CTR_DRBG_RESEED_INTERVAL)
