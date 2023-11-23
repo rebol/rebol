@@ -243,7 +243,7 @@ extern inline void mbedtls_put_unaligned_uint64(void *p, uint64_t x);
 #include <time.h>
 #if !defined(_WIN32) && \
     (defined(unix) || defined(__unix) || defined(__unix__) || \
-    (defined(__APPLE__) && defined(__MACH__))) \
+    (defined(__APPLE__) && defined(__MACH__))) || \
      defined(__HAIKU__)
 #include <unistd.h>
 #endif /* !_WIN32 && (unix || __unix || __unix__ || (__APPLE__ && __MACH__)) */
