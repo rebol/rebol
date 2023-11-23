@@ -154,7 +154,7 @@ Rebol [
 
 --test-- "write clipboard:// [a]"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1619
-	--assert value? try [write clipboard:// [a]] ;- no crash
+	--assert to logic! try [write clipboard:// [a]] ;- no crash
 
 --test-- "unset 'self"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1569

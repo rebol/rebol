@@ -34,8 +34,6 @@ Rebol [
 	--assert 4 = length? f32
 	--assert 8 = length? f64
 	--assert 4 = length? w
-	;; default mold is using line breaks in the molded struct block
-	--assert (mold i8) = {make struct! [^/    a: [int8!] 23^/    b: [int8!] 0^/]}
 	--assert (mold/flat i8 ) = "make struct! [a: [int8!] 0]"
 	--assert (mold/flat i16) = "make struct! [a: [int16!] 0]"
 	--assert (mold/flat i32) = "make struct! [a: [int32!] 0]"

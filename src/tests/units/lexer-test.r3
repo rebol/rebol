@@ -528,7 +528,7 @@ Rebol [
 		--assert  "b" = load {#[string! "ab" 2]}
 		--assert %ab  = load {#[file! "ab"]}
 		--assert  %b  = load {#[file! "ab" 2]}
-		--assert struct? load {#[struct! []]}
+		--assert struct? load {#[struct! [a [uint8!]]]}
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1034
 		--assert error? try [load {#[string! "ab" 2 x]}]
 		--assert error? try [load {#[file! "ab" x]}]
