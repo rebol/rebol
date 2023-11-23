@@ -1601,6 +1601,8 @@ TLS-parse-handshake-message: function [
 	data [binary!]
 ][
 	msg: binary data
+	;@@ There may be more fragments in one message!
+	while [4 <= length? msg/buffer][
 	binary/read msg [type: UI8 len: UI24 start: INDEX]
 	ends: start + len
 	log-debug ["R[" ctx/seq-read "] length:" len "start:" start "ends:" ends "type:" type]
@@ -1934,12 +1936,14 @@ TLS-parse-handshake-message: function [
 		log-error ["Unknown state: " ctx/state "-" type]
 		return 'Unexpected_message
 	]
-
+	;; validate fragment's tail..
 	if ends <> i: index? msg/buffer [
 		log-error ["Wrong fragment message tail!" ends "<>" i]
 		log-error ["in/buffer starts:" copy/part msg/buffer 20]
 		return 'Record_overflow
 	]
+	] ;; more messages?
+
 	log-more ["R[" ctx/seq-read "] DONE: handshake^[[1m" ctx/state] log-----
 	false ;= no error
 ]

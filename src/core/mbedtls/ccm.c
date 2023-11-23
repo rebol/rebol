@@ -2,19 +2,7 @@
  *  NIST SP800-38C compliant CCM implementation
  *
  *  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0
- *
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may
- *  not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
  */
 
 /*
@@ -33,6 +21,7 @@
 #include "mbedtls/ccm.h"
 #include "mbedtls/platform_util.h"
 #include "mbedtls/error.h"
+#include "mbedtls/constant_time.h"
 
 #include <string.h>
 
@@ -70,7 +59,7 @@ int mbedtls_ccm_setkey(mbedtls_ccm_context *ctx,
         return MBEDTLS_ERR_CCM_BAD_INPUT;
     }
 
-    if (cipher_info->block_size != 16) {
+    if (mbedtls_cipher_info_get_block_size(cipher_info) != 16) {
         return MBEDTLS_ERR_CCM_BAD_INPUT;
     }
 
@@ -400,7 +389,6 @@ int mbedtls_ccm_update(mbedtls_ccm_context *ctx,
             mbedtls_xor(ctx->y + offset, ctx->y + offset, local_output, use_len);
 
             memcpy(output, local_output, use_len);
-            mbedtls_platform_zeroize(local_output, 16);
 
             if (use_len + offset == 16 || ctx->processed == ctx->plaintext_len) {
                 if ((ret =
@@ -533,13 +521,8 @@ int mbedtls_ccm_compare_tags(const unsigned char *tag1,
                                     const unsigned char *tag2,
                                     size_t tag_len)
 {
-    unsigned char i;
-    int diff;
-
     /* Check tag in "constant-time" */
-    for (diff = 0, i = 0; i < tag_len; i++) {
-        diff |= tag1[i] ^ tag2[i];
-    }
+    int diff = mbedtls_ct_memcmp(tag1, tag2, tag_len);
 
     if (diff != 0) {
         return MBEDTLS_ERR_CCM_AUTH_FAILED;

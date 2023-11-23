@@ -11,19 +11,7 @@
  */
 /*
  *  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0
- *
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may
- *  not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
  */
 #ifndef MBEDTLS_RSA_H
 #define MBEDTLS_RSA_H
@@ -84,6 +72,12 @@ extern "C" {
 #if !defined(MBEDTLS_RSA_ALT)
 // Regular implementation
 //
+
+#if !defined(MBEDTLS_RSA_GEN_KEY_MIN_BITS)
+#define MBEDTLS_RSA_GEN_KEY_MIN_BITS 1024
+#elif MBEDTLS_RSA_GEN_KEY_MIN_BITS < 128
+#error "MBEDTLS_RSA_GEN_KEY_MIN_BITS must be at least 128 bits"
+#endif
 
 /**
  * \brief   The RSA context structure.
@@ -282,15 +276,15 @@ int mbedtls_rsa_import_raw(mbedtls_rsa_context *ctx,
  * \brief          This function completes an RSA context from
  *                 a set of imported core parameters.
  *
- *                 To setup an RSA public key, precisely \p N and \p E
+ *                 To setup an RSA public key, precisely \c N and \c E
  *                 must have been imported.
  *
  *                 To setup an RSA private key, sufficient information must
  *                 be present for the other parameters to be derivable.
  *
  *                 The default implementation supports the following:
- *                 <ul><li>Derive \p P, \p Q from \p N, \p D, \p E.</li>
- *                 <li>Derive \p N, \p D from \p P, \p Q, \p E.</li></ul>
+ *                 <ul><li>Derive \c P, \c Q from \c N, \c D, \c E.</li>
+ *                 <li>Derive \c N, \c D from \c P, \c Q, \c E.</li></ul>
  *                 Alternative implementations need not support these.
  *
  *                 If this function runs successfully, it guarantees that
@@ -547,7 +541,7 @@ int mbedtls_rsa_check_pub_priv(const mbedtls_rsa_context *pub,
  * \note           This function does not handle message padding.
  *
  * \note           Make sure to set \p input[0] = 0 or ensure that
- *                 input is smaller than \p N.
+ *                 input is smaller than \c N.
  *
  * \return         \c 0 on success.
  * \return         An \c MBEDTLS_ERR_RSA_XXX error code on failure.
@@ -984,8 +978,8 @@ int mbedtls_rsa_rsassa_pss_sign(mbedtls_rsa_context *ctx,
  *                 verification.
  *
  * \note           For PKCS#1 v2.1 encoding, see comments on
- *                 mbedtls_rsa_rsassa_pss_verify() about \p md_alg and
- *                 \p hash_id.
+ *                 mbedtls_rsa_rsassa_pss_verify() about \c md_alg and
+ *                 \c hash_id.
  *
  * \param ctx      The initialized RSA public key context to use.
  * \param md_alg   The message-digest algorithm used to hash the original data.

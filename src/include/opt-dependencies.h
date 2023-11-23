@@ -75,6 +75,10 @@
 	#if defined(INCLUDE_SHA384)
 	#define MBEDTLS_SHA384_C
 	#endif
+
+	#if defined(INCLUDE_SHA3)
+	#define MBEDTLS_SHA3_C
+	#endif
 #else
 	// no mbedTLS
 	#if defined(INCLUDE_RIPEMD160)

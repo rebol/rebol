@@ -39,6 +39,7 @@
 #include "mbedtls/sha1.h"
 #include "mbedtls/sha256.h"
 #include "mbedtls/sha512.h"
+#include "mbedtls/sha3.h"
 #ifdef INCLUDE_RIPEMD160
 #include "mbedtls/ripemd160.h"
 #endif
@@ -302,5 +303,83 @@ void RIPEMD160_Finish( mbedtls_ripemd160_context *ctx,
     mbedtls_ripemd160_finish( ctx, output );
 }
 #endif
+
+#ifdef INCLUDE_SHA3
+/***********************************************************************
+**
+*/	REBYTE* SHA3_224(REBYTE* d, REBCNT n, REBYTE* md)
+/*
+***********************************************************************/
+{
+	mbedtls_sha3_context c;
+	static unsigned char m[28];
+
+	if (md == NULL) md = m;
+	mbedtls_sha3_starts(&c, MBEDTLS_SHA3_224);
+	mbedtls_sha3_update(&c, d, n);
+	mbedtls_sha3_finish(&c, md, 28);
+	CLEARS(&c);
+	return(md);
+}
+/***********************************************************************
+**
+*/	REBYTE* SHA3_256(REBYTE* d, REBCNT n, REBYTE* md)
+/*
+***********************************************************************/
+{
+	mbedtls_sha3_context c;
+	static unsigned char m[32];
+
+	if (md == NULL) md = m;
+	mbedtls_sha3_starts(&c, MBEDTLS_SHA3_256);
+	mbedtls_sha3_update(&c, d, n);
+	mbedtls_sha3_finish(&c, md, 32);
+	CLEARS(&c);
+	return(md);
+}
+/***********************************************************************
+**
+*/	REBYTE* SHA3_384(REBYTE* d, REBCNT n, REBYTE* md)
+/*
+***********************************************************************/
+{
+	mbedtls_sha3_context c;
+	static unsigned char m[48];
+
+	if (md == NULL) md = m;
+	mbedtls_sha3_starts(&c, MBEDTLS_SHA3_384);
+	mbedtls_sha3_update(&c, d, n);
+	mbedtls_sha3_finish(&c, md, 48);
+	CLEARS(&c);
+	return(md);
+}
+/***********************************************************************
+**
+*/	REBYTE* SHA3_512(REBYTE* d, REBCNT n, REBYTE* md)
+/*
+***********************************************************************/
+{
+	mbedtls_sha3_context c;
+	static unsigned char m[64];
+
+	if (md == NULL) md = m;
+	mbedtls_sha3_starts(&c, MBEDTLS_SHA3_512);
+	mbedtls_sha3_update(&c, d, n);
+	mbedtls_sha3_finish(&c, md, 64);
+	CLEARS(&c);
+	return(md);
+}
+int  SHA3_CtxSize(void) { return sizeof(mbedtls_sha3_context); }
+void SHA3_224_Starts(mbedtls_sha3_context* ctx) { mbedtls_sha3_starts(ctx, MBEDTLS_SHA3_224); }
+void SHA3_256_Starts(mbedtls_sha3_context* ctx) { mbedtls_sha3_starts(ctx, MBEDTLS_SHA3_256); }
+void SHA3_384_Starts(mbedtls_sha3_context* ctx) { mbedtls_sha3_starts(ctx, MBEDTLS_SHA3_384); }
+void SHA3_512_Starts(mbedtls_sha3_context* ctx) { mbedtls_sha3_starts(ctx, MBEDTLS_SHA3_512); }
+void SHA3_Update(mbedtls_sha3_context* ctx,	const unsigned char* input,	size_t ilen) { mbedtls_sha3_update(ctx, input, ilen); }
+void SHA3_224_Finish(mbedtls_sha3_context* ctx, unsigned char output[28]) { mbedtls_sha3_finish(ctx, output, 28);}
+void SHA3_256_Finish(mbedtls_sha3_context* ctx, unsigned char output[32]) { mbedtls_sha3_finish(ctx, output, 32); }
+void SHA3_384_Finish(mbedtls_sha3_context* ctx, unsigned char output[48]) { mbedtls_sha3_finish(ctx, output, 48); }
+void SHA3_512_Finish(mbedtls_sha3_context* ctx, unsigned char output[64]) { mbedtls_sha3_finish(ctx, output, 64); }
+#endif //INCLUDE_SHA3
+
 #endif //INCLUDE_MBEDTLS
 

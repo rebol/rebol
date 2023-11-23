@@ -84,3 +84,17 @@ void RIPEMD160_Update(void *c, REBYTE *data, REBCNT len);
 void RIPEMD160_Finish(void *c, REBYTE *md);
 int  RIPEMD160_CtxSize(void);
 #endif
+
+#ifdef INCLUDE_SHA3
+void SHA3_Update(void* c, REBYTE* data, REBCNT len);
+int  SHA3_CtxSize(void);
+REBYTE* SHA3_224(REBYTE*, REBCNT, REBYTE*);
+void SHA3_224_Starts(void* c);
+void SHA3_256_Starts(void* c);
+void SHA3_384_Starts(void* c);
+void SHA3_512_Starts(void* c);
+void SHA3_224_Finish(void* c, REBYTE* md);
+void SHA3_256_Finish(void* c, REBYTE* md);
+void SHA3_384_Finish(void* c, REBYTE* md);
+void SHA3_512_Finish(void* c, REBYTE* md);
+#endif

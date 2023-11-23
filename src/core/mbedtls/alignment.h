@@ -5,19 +5,7 @@
  */
 /*
  *  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0
- *
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may
- *  not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
  */
 
 #ifndef MBEDTLS_LIBRARY_ALIGNMENT_H
@@ -26,8 +14,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-
-#include "mbedtls/build_info.h"
 
 /*
  * Define MBEDTLS_EFFICIENT_UNALIGNED_ACCESS for architectures where unaligned memory
@@ -183,6 +169,9 @@ inline void mbedtls_put_unaligned_uint64(void *p, uint64_t x)
 
 /* Detect armcc built-in byteswap routine */
 #if defined(__ARMCC_VERSION) && (__ARMCC_VERSION >= 410000) && !defined(MBEDTLS_BSWAP32)
+#if defined(__ARM_ACLE)  /* ARM Compiler 6 - earlier versions don't need a header */
+#include <arm_acle.h>
+#endif
 #define MBEDTLS_BSWAP32 __rev
 #endif
 

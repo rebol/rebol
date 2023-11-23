@@ -182,7 +182,7 @@ system/options/modules: join what-dir %units/files/
 ===start-group=== "module import"
 	--test-- "import"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/923
-	write %mymodule.reb {
+	write system/options/modules/mymodule.reb {
 Rebol [
     type: 'module
     name: 'mymodule
@@ -191,13 +191,13 @@ Rebol [
 print "mymodule imported"
 myfunc: func [arg [string!]][reverse arg]
 }
-	import 'mymodule
+	import mymodule ;; does not have to be lit-word!
 	--assert "cba" = myfunc "abc"
 	import 'mymodule     ;-- this works... the file isn't reloaded... and indeed the console doesn't print another "mymodule imported"
 	--assert "cba" = myfunc "abc"
-	import %mymodule.reb ;-- no crash
+	import (system/options/modules/mymodule.reb) ;-- no crash (but must be in parens, because it is expression!)
 	--assert "cba" = myfunc "abc"
-	delete %mymodule.reb
+	delete system/options/modules/mymodule.reb
 
 ;;; This test would fail as the module needs itself! It should be detected, but it isn't yet.
 ;;	write %mymodule2.reb {

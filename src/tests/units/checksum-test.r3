@@ -73,10 +73,11 @@ Rebol [
 
 ===start-group=== "Checksum port"
 	bin: #{0BAD}
+	bin2: join bin bin
 	--test-- "checksum-port-md5"
 		port: open checksum://
 		sum1: checksum bin 'md5
-		sum2: checksum join bin bin 'md5
+		sum2: checksum bin2 'md5
 		--assert port? port
 		--assert open? port
 		--assert 'md5 = port/spec/method
@@ -96,7 +97,7 @@ Rebol [
 	--test-- "checksum-port-sha1"
 		port: open checksum:sha1
 		sum1: checksum bin 'sha1
-		sum2: checksum join bin bin 'sha1
+		sum2: checksum bin2 'sha1
 		--assert #{ED53B6E608B8E821640F4AC1278EE402E5EA0ED5} = sum1
 		--assert port? port
 		--assert open? port
@@ -111,12 +112,34 @@ Rebol [
 		--assert port? update port
 		--assert sum1 = port/data
 		close port
-
+if find system/catalog/checksums 'sha224 [
+	--test-- "checksum-port-sha224"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2580
+		port: open checksum:sha224
+		sum1: checksum bin 'sha224
+		sum2: checksum bin2 'sha224
+		--assert sum1 = #{2CFF14B122C25DF72902A59A877E82A80CF637056A51AD5A343755B4}
+		--assert sum2 = #{0D32498E6CAACAE9CAC68626A65ABE97690F6BB1BEF02868A97F46BB}
+		--assert port? port
+		--assert open? port
+		--assert 'sha224 = port/spec/method
+		--assert port? write port bin
+		--assert sum1 = read port
+		--assert port? write port bin
+		--assert sum2 = read port
+		--assert sum2 = read port
+		--assert not open? close port
+		--assert port? write open port bin
+		--assert port? update port
+		--assert sum1 = port/data
+		close port
+]
 	--test-- "checksum-port-sha256"
 		port: open checksum:sha256
 		sum1: checksum bin 'sha256
-		sum2: checksum join bin bin 'sha256
-		--assert #{183559C9230A3361110FF397037E53E998B6166002BF0FC0603C8939CC89539A} = sum1
+		sum2: checksum bin2 'sha256
+		--assert sum1 = #{183559C9230A3361110FF397037E53E998B6166002BF0FC0603C8939CC89539A}
+		--assert sum2 = #{5AC1B5FC2664C14E58969DAA340D7C180D64072E72FCD13B82CD89DCEC44CA14}
 		--assert port? port
 		--assert open? port
 		--assert 'sha256 = port/spec/method
@@ -134,10 +157,13 @@ Rebol [
 	--test-- "checksum-port-sha384"
 		port: open checksum:sha384
 		sum1: checksum bin 'sha384
-		sum2: checksum join bin bin 'sha384
-		--assert #{
+		sum2: checksum bin2 'sha384
+		--assert sum1 = #{
 B0C9ADA83C89485563049E5CF212911F334A788D47C97CC9A1D952C9E9EB8B5D
-40FC4DAE76AF7024712A5BFC7DFA7BF4} = sum1
+40FC4DAE76AF7024712A5BFC7DFA7BF4}
+		--assert sum2 = #{
+198C40C38637BF68323D005261066112ECD25FE90ABF491B458883D80A436C95
+B9B8B9F1CEC9EFE43153694B5D1EDFD2}
 		--assert port? port
 		--assert open? port
 		--assert 'sha384 = port/spec/method
@@ -155,10 +181,13 @@ B0C9ADA83C89485563049E5CF212911F334A788D47C97CC9A1D952C9E9EB8B5D
 	--test-- "checksum-port-sha512"
 		port: open checksum:sha512
 		sum1: checksum bin 'sha512
-		sum2: checksum join bin bin 'sha512
-		--assert #{
+		sum2: checksum bin2 'sha512
+		--assert sum1 = #{
 D2079D59D6984814DAC71CDEB38097DB52F77810391FD7B6F92FFBD64EA93DF8
-7783EF1E4FEF4ABA834FF3C186A17B2E8DF7B08AF35A96E3802D280AB35BFE1B} = sum1
+7783EF1E4FEF4ABA834FF3C186A17B2E8DF7B08AF35A96E3802D280AB35BFE1B}
+		--assert sum2 = #{
+37195CDD26E210FAAE2684FF60526EF6163D1656158CA3534D32895C981D49AC
+378ACE3B6EADA57F6A072CC95094EC09E1AD2A5F4BBA5B84B5969F5D418DED56}
 		--assert port? port
 		--assert open? port
 		--assert 'sha512 = port/spec/method
@@ -177,11 +206,104 @@ if find system/catalog/checksums 'ripemd160 [
 	--test-- "checksum-port-ripemd160"
 		port: open checksum:ripemd160
 		sum1: checksum bin 'ripemd160
-		sum2: checksum join bin bin 'ripemd160
-		--assert #{595FEC4966B173C6CD00ECCAF1A007F3C6C5B938} = sum1
+		sum2: checksum bin2 'ripemd160
+		--assert sum1 = #{595FEC4966B173C6CD00ECCAF1A007F3C6C5B938}
+		--assert sum2 = #{F39EF68D81BFC2956AE08FB8BBA0347B3AC7A06A}
 		--assert port? port
 		--assert open? port
 		--assert 'ripemd160 = port/spec/method
+		--assert port? write port bin
+		--assert sum1 = read port
+		--assert port? write port bin
+		--assert sum2 = read port
+		--assert sum2 = read port
+		--assert not open? close port
+		--assert port? write open port bin
+		--assert port? update port
+		--assert sum1 = port/data
+		close port
+]
+if find system/catalog/checksums 'sha3-224 [
+	--test-- "checksum-port-sha3-224"
+		port: open checksum:sha3-224
+		sum1: checksum bin 'sha3-224
+		sum2: checksum bin2 'sha3-224
+		--assert sum1 = #{4989EDA57367DA7AD56223D5D3CDB6B872D69E109D33453AA1E20BF4}
+		--assert sum2 = #{2F21452C77B2E8C48B6EAD9AEF305DB9508D85E79B8E20CC177FA482}
+		--assert port? port
+		--assert open? port
+		--assert 'sha3-224 = port/spec/method
+		--assert port? write port bin
+		--assert sum1 = read port
+		--assert port? write port bin
+		--assert sum2 = read port
+		--assert sum2 = read port
+		--assert not open? close port
+		--assert port? write open port bin
+		--assert port? update port
+		--assert sum1 = port/data
+		close port
+]
+if find system/catalog/checksums 'sha3-256 [
+	--test-- "checksum-port-sha3-256"
+		port: open checksum:sha3-256
+		sum1: checksum bin 'sha3-256
+		sum2: checksum bin2 'sha3-256
+		--assert sum1 = #{05A60FB439A3A289A3F6CA061F008CC921109AEB22D3DCDC89FDF061AF5053A4}
+		--assert sum2 = #{AD98A5CE91DCC6151A3D2E40D538D145BB6BB20F2E0AD0148FD0B353E95E9044}
+		--assert port? port
+		--assert open? port
+		--assert 'sha3-256 = port/spec/method
+		--assert port? write port bin
+		--assert sum1 = read port
+		--assert port? write port bin
+		--assert sum2 = read port
+		--assert sum2 = read port
+		--assert not open? close port
+		--assert port? write open port bin
+		--assert port? update port
+		--assert sum1 = port/data
+		close port
+]
+if find system/catalog/checksums 'sha3-384 [
+	--test-- "checksum-port-sha3-384"
+		port: open checksum:sha3-384
+		sum1: checksum bin 'sha3-384
+		sum2: checksum bin2 'sha3-384
+		--assert sum1 = #{
+8508DCBB087FF43A43F2EDFCBFF613C8DA960922B920C7C49D65497B91714439
+1CE6D5883737C1314E2939F009791616}
+		--assert sum2 = #{
+4EB270CF5530457330B251397F7FC1BE807F20D52A2E28EE4B8C1B5006FA1CB7
+D62559A7BA788A602559715B0939F675}
+		--assert port? port
+		--assert open? port
+		--assert 'sha3-384 = port/spec/method
+		--assert port? write port bin
+		--assert sum1 = read port
+		--assert port? write port bin
+		--assert sum2 = read port
+		--assert sum2 = read port
+		--assert not open? close port
+		--assert port? write open port bin
+		--assert port? update port
+		--assert sum1 = port/data
+		close port
+]
+if find system/catalog/checksums 'sha3-512 [
+	--test-- "checksum-port-sha3-512"
+		port: open checksum:sha3-512
+		sum1: checksum bin 'sha3-512
+		sum2: checksum bin2 'sha3-512
+		--assert sum1 = #{
+C71260D0C2961CA303BAFB0F55EA436AF32FD635FD9D427DF0930B641797B033
+9DBB60135BE90F0711B8A37A26CF2A0BF6FB3FC4AA57946901E4BCC78E54FDB6}
+		--assert sum2 = #{
+19AA22168178EC03C82E45ABB89971A645D2918C3BF043F15EF544C879EED740
+C4294CF5AD661A4551844E9EEA3A1074188503B24349912BFAA21BD5FB4ACFBE}
+		--assert port? port
+		--assert open? port
+		--assert 'sha3-512 = port/spec/method
 		--assert port? write port bin
 		--assert sum1 = read port
 		--assert port? write port bin

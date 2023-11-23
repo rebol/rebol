@@ -2,10 +2,55 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+## 2023 November
+
+### Features:
+
+* [`1ff2d9`](https://github.com/Oldes/Rebol3/commit/1ff2d94d69bce3dfb6a55091b246689b8c8e987a) Optional support for SHA3 family checksums (included in Bulk)
+* [`3dc6f6`](https://github.com/Oldes/Rebol3/commit/3dc6f6aa27408ef814cc90897dedb751eacda703) New platform for TurrisOS
+* [`feaaef`](https://github.com/Oldes/Rebol3/commit/feaaef940490166984aaff4c9a654324703fbc4b) Better info when native extension fails to load its library
+* [`a1b79b`](https://github.com/Oldes/Rebol3/commit/a1b79b72cff7b1e0707aae080a22736111899bcf) `wait-for-key` which waits for a single key press
+* [`855adc`](https://github.com/Oldes/Rebol3/commit/855adc457744f140311c45dca0bbfa54f2593578) Struct reflection code reduction
+* [`4332e1`](https://github.com/Oldes/Rebol3/commit/4332e1b614327cfd3908e94a5a69048b9fc827b4) Implemented `body-of` struct reflection (returning struct's key/value pairs)
+* [`8c111a`](https://github.com/Oldes/Rebol3/commit/8c111aafe1460b4e071bd8c4f9a414ca819b04a2) Implemented `values-of` and `words-of` struct reflections
+* [`b6640e`](https://github.com/Oldes/Rebol3/commit/b6640ecb6b6f61d7735b862bb61b054270079b8e) Allow changing binary series with tuple values
+
+### Changes:
+
+* [`35c1b6`](https://github.com/Oldes/Rebol3/commit/35c1b610e7d1a6df74437ee3a2918ff96577a3b0) Updated Mbed-TLS sources to version 3.5.1
+* [`4dc546`](https://github.com/Oldes/Rebol3/commit/4dc546e52076f3e88064ccf99039f1a0c00d7cd1) Using line breaks in molded `struct!` values for better readability
+* [`68bf82`](https://github.com/Oldes/Rebol3/commit/68bf82e5d71403b5345611219c40b5293573557e) Moved `STATIC_ASSERT` macro to `reb-c.h` file and used it in a few more cases
+* [`ad12a6`](https://github.com/Oldes/Rebol3/commit/ad12a68069d13953f9fb11c9eb68611a3caf7b43) Don't try to validate baud rate for a serial port
+
+### Fixes:
+
+* [`0be75d`](https://github.com/Oldes/Rebol3/commit/0be75dc3a360f2eaab92debb06605f1a2287ef76) Timeout when reading some HTTPS URLs
+* [`b63745`](https://github.com/Oldes/Rebol3/commit/b63745d321ba99b8d9392341e909c9ec47b8a9e2) Invalid length of `checksum:sha224` port result
+* [`a87e66`](https://github.com/Oldes/Rebol3/commit/a87e667ab9e195a7d4becf4df14a411ef16ed551) Redundant message when logging an error value
+* [`821a5a`](https://github.com/Oldes/Rebol3/commit/821a5a96c22b909c4500391795e73fc255bc78d9) Better `struct!` initialization; empty struct not allowed
+* [`7aaa05`](https://github.com/Oldes/Rebol3/commit/7aaa058af6f72f311c103c5e208391db850907ae) Early validate input data type (else there could be free before alloc call)
+* [`76c8c0`](https://github.com/Oldes/Rebol3/commit/76c8c09cdc12e96aa1dbf12d1375299603ddacab) Signed/unsigned mismatch warning
+* [`96ece9`](https://github.com/Oldes/Rebol3/commit/96ece90bb5518c5e85fc6a9df47664394b419d65) Not using `NZ` macro
+
+## 2023 October
+
+### Features:
+
+* [`455f04`](https://github.com/Oldes/Rebol3/commit/455f0458184bda051a4ef0ecb3b3fd98cca5d432) `function` and `closure` accepting also `module!` for its `object` argument
+* [`bee8e0`](https://github.com/Oldes/Rebol3/commit/bee8e09beea85d95a82d58a4db7d14b409693781) Unicode utils module with `decode-utf8` function
+
+### Fixes:
+
+* [`45749f`](https://github.com/Oldes/Rebol3/commit/45749f7b3b837dd1fd7e2888b5ab1380cc080cba) Not initialized local variable
+* [`1871d9`](https://github.com/Oldes/Rebol3/commit/1871d95412a9b2defa54c0b20609ff4b311bcae5) Only using paren char escaping for chars in range `0x7F - 0x9F`
+* [`3a7282`](https://github.com/Oldes/Rebol3/commit/3a72825a8313d7c4dadbf24fa323ad2b68a7a512) Using replacement char for all chars outside the Basic Multilingual Plane
+* [`0976da`](https://github.com/Oldes/Rebol3/commit/0976daf110bd35f8c506c3320465ed7097a47112) Formed/molded output with ASCII chars using always a special char escaping
+
 ## 2023 September
 
 ### Features:
 
+* [`3b731a`](https://github.com/Oldes/Rebol3/commit/3b731af5cc2a02e21b9a7ac5c0ccee337c7757ad) Extension library API for conversion of Rebol file to OS file and back
 * [`ca45cf`](https://github.com/Oldes/Rebol3/commit/ca45cf2ca598c61f5e3470cb406275f18bec8a13) Allow extension to mark handle's context on free call and so prevent it from releasing
 * [`a0ff1b`](https://github.com/Oldes/Rebol3/commit/a0ff1bb7e35b269ce0b0ad8488d34e463fef6923) Allow `write` action on the console port
 * [`be97ce`](https://github.com/Oldes/Rebol3/commit/be97ceed342043230fe8b0a4f7fd6a3393103b0f) Included link to Rebol/MiniAudio extension version 1.0.0
@@ -25,6 +70,9 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`e1cc08`](https://github.com/Oldes/Rebol3/commit/e1cc08c101b7c493c5c35344aa16034f6048b734) Correctly terminate truncated series
+* [`af865e`](https://github.com/Oldes/Rebol3/commit/af865e2f3eb742c44375924d1e8a2e21482eae18) Included support for some rare codepages in `iconv`
+* [`ea71e7`](https://github.com/Oldes/Rebol3/commit/ea71e78ac989cbf99036d577f8db84b2ba0c8694) Unreferenced local variable warnings
 * [`f29b6b`](https://github.com/Oldes/Rebol3/commit/f29b6ba37a0c62248cbadd5e784b5f66f4f54ed2) Using correct module name (not using arch and `.rebx` extension) in case, that url to module contains file name
 * [`c7d328`](https://github.com/Oldes/Rebol3/commit/c7d3281ca88865369012b6a8a1d32240f8783e9a) Crash when trying to initialise multi-dimension struct value
 * [`9fffc0`](https://github.com/Oldes/Rebol3/commit/9fffc0b4c32892b66a3a790f2ceb03404764b3f5) Invalid function name when used help on function using a path

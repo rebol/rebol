@@ -192,7 +192,38 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 		add_ec_word(SYM_CURVE448)
 		#endif
 	}
-	
+
+
+	blk = Get_System(SYS_CATALOG, CAT_CHECKSUMS);
+	if (blk && IS_BLOCK(blk)) {
+		add_ec_word(SYM_ADLER32)
+		add_ec_word(SYM_CRC24)
+		add_ec_word(SYM_CRC32)
+#ifdef INCLUDE_MD4
+		add_ec_word(SYM_MD4)
+#endif
+		add_ec_word(SYM_MD5)
+#ifdef INCLUDE_RIPEMD160
+			add_ec_word(SYM_RIPEMD160)
+#endif
+		add_ec_word(SYM_SHA1)
+#ifdef INCLUDE_SHA224
+		add_ec_word(SYM_SHA224)
+#endif
+		add_ec_word(SYM_SHA256)
+#ifdef INCLUDE_SHA384
+		add_ec_word(SYM_SHA384)
+#endif
+		add_ec_word(SYM_SHA512)
+#ifdef INCLUDE_SHA3
+		add_ec_word(SYM_SHA3_224)
+		add_ec_word(SYM_SHA3_256)
+		add_ec_word(SYM_SHA3_384)
+		add_ec_word(SYM_SHA3_512)
+#endif
+		add_ec_word(SYM_TCP)
+	}
+
 }
 
 /***********************************************************************
@@ -329,6 +360,21 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 }
 #endif
 
+/* This table is used to convert Rebol symbol values (words) to MbedTLS (3.5.1) MD types */
+static const REBYTE Map_Sym_to_MD_type[] = {
+	0x03, /* SYM_MD5        The MD5 message digest.        */
+	0x05, /* SYM_SHA1       The SHA-1 message digest.      */
+	0x08, /* SYM_SHA224     The SHA-224 message digest.    */
+	0x09, /* SYM_SHA256     The SHA-256 message digest.    */
+	0x0a, /* SYM_SHA384     The SHA-384 message digest.    */
+	0x0b, /* SYM_SHA512     The SHA-512 message digest.    */
+	0x04, /* SYM_RIPEMD-160 The RIPEMD-160 message digest. */
+	// Unused in Rebol yet:
+//	0x10, /* SYM_ The SHA3-224 message digest. */
+//	0x11, /* SYM_ The SHA3-256 message digest. */
+//	0x12, /* SYM_ The SHA3-384 message digest. */
+//	0x13  /* SYM_ The SHA3-512 message digest. */
+};
 /***********************************************************************
 **
 */	REBNATIVE(rsa)
@@ -406,9 +452,9 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
 			hashSym = IS_NONE(val_hash) ? SYM_SHA256 : VAL_WORD_CANON(val_hash);
 			// count message digest off the input data
 			if (Message_Digest(hash, inBinary, inBytes, hashSym, &inBytes)) {
-				// map Rebol word to mbedtls_md_type_t (expets that have same order!)
+				// map Rebol word to mbedtls_md_type_t
 				// no need to test a range as only known will pass above run
-				md_alg = hashSym - SYM_MD5 + 1;
+				md_alg = Map_Sym_to_MD_type[hashSym - SYM_MD5];
 				inBinary = hash;
 			}
 			else {

@@ -65,6 +65,12 @@ static struct digest {
 #ifdef INCLUDE_MD4
 	{MD4, MD4_Starts, MD4_Update, MD4_Finish, MD4_CtxSize, SYM_MD4, 16, 64},
 #endif
+#ifdef INCLUDE_SHA3
+	{SHA3_224, SHA3_224_Starts,   SHA3_Update,   SHA3_224_Finish,   SHA3_CtxSize, SYM_SHA3_224, 28, 64},
+	{SHA3_256, SHA3_256_Starts,   SHA3_Update,   SHA3_256_Finish,   SHA3_CtxSize, SYM_SHA3_256, 32, 64},
+	{SHA3_384, SHA3_384_Starts,   SHA3_Update,   SHA3_384_Finish,   SHA3_CtxSize, SYM_SHA3_384, 48, 128},
+	{SHA3_512, SHA3_512_Starts,   SHA3_Update,   SHA3_512_Finish,   SHA3_CtxSize, SYM_SHA3_512, 64, 128},
+#endif
 	{0}
 
 };
@@ -101,6 +107,24 @@ static struct digest {
 	case SYM_SHA384:
 		SHA384(input, length, output);
 		*olen = 48;
+		break;
+#endif
+#ifdef INCLUDE_SHA3
+	case SYM_SHA3_224:
+		SHA3_224(input, length, output);
+		*olen = 28;
+		break;
+	case SYM_SHA3_256:
+		SHA3_256(input, length, output);
+		*olen = 32;
+		break;
+	case SYM_SHA3_384:
+		SHA3_384(input, length, output);
+		*olen = 48;
+		break;
+	case SYM_SHA3_512:
+		SHA3_512(input, length, output);
+		*olen = 64;
 		break;
 #endif
 #ifdef INCLUDE_RIPEMD160
@@ -237,7 +261,7 @@ static struct digest {
 		return R_NONE; // some compilers don't understand, that we stop evaluation here:/
 	}
 	
-	if (sym > SYM_CRC32 && sym <= SYM_RIPEMD160) {
+	if (sym > SYM_CRC32 && sym <= SYM_SHA3_512) {
 		// O: could be optimized using index computed from `sym`
 		// find matching digest:
 		for (i = 0; i < sizeof(digests) / sizeof(digests[0]); i++) {
