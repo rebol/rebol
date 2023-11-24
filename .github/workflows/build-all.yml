@@ -302,7 +302,8 @@ jobs:
           /usr/bin/codesign --force -s $MACOS_IDENTITY_ID ./build/rebol3-base-macos-arm64 -v
           /usr/bin/codesign --force -s $MACOS_IDENTITY_ID ./build/rebol3-core-macos-arm64 -v
           /usr/bin/codesign --force -s $MACOS_IDENTITY_ID ./build/rebol3-bulk-macos-arm64 -v
-          
+        continue-on-error: true
+        
       - name: Test x64 macOS versions
         run: |
           ./build/rebol3-base-macos-x64 -v
