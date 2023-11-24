@@ -332,14 +332,14 @@ static void PrintMidiDevices()
 
 	if(!device_in && !device_out) {
 		LOG("No devices!\n");
-        req->error = 1;
+        req->error = MMSYSERR_BADDEVICEID;
         return DR_ERROR;
     }
 
 	port_num = Get_New_Midi_Port(&midi_port);
 	if (port_num < 0) {
 		LOG("Failed to get new empty MIDI port!\n");
-		req->error = 2;
+		req->error = MMSYSERR_ERROR;
 		return DR_ERROR;
 	}
 
@@ -354,7 +354,7 @@ static void PrintMidiDevices()
 		|| (device_out && device_out > midiOutGetNumDevs())
 	) {
 		LOG("Some of the requested MIDI device IDs are out of range!\n");
-		req->error = 3;
+		req->error = MMSYSERR_BADDEVICEID;
 		return DR_ERROR;
 	}
 
@@ -365,7 +365,7 @@ static void PrintMidiDevices()
 		rv = midiInOpen(&midi_port->inp_device, device_in - 1, (DWORD_PTR)MidiInProc, (DWORD_PTR)port_num, CALLBACK_FUNCTION);
 		if (rv != MMSYSERR_NOERROR) {
 			LOG("midiInOpen() failed...rv=%d\n", rv);
-			req->error = 4;
+			req->error = rv;
 			return DR_ERROR;
 		}
 		midiInStart(midi_port->inp_device);
@@ -388,7 +388,7 @@ static void PrintMidiDevices()
 				midiInClose(midi_port->inp_device);
 				midi_port->inp_device = NULL;
 			}
-			req->error = 5;
+			req->error = rv;
 			return DR_ERROR;
 		}
 	}
