@@ -41,6 +41,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <errno.h>
@@ -318,6 +319,45 @@ static REBOOL Set_Serial_Settings(int ttyfd, REBREQ *req)
 	return DR_DONE;
 }
 
+/***********************************************************************
+**
+*/	DEVICE_CMD Modify_Serial(REBREQ *req)
+/*
+***********************************************************************/
+{
+	REBOOL value = req->modify.value;
+	int status;
+	int mode = req->modify.mode;
+
+	if (!req->id) {
+		req->error = -RFE_NO_HANDLE;
+		return DR_ERROR;
+	}
+
+	if (mode == 1) {
+		ioctl(req->id, value ? TIOCSBRK : TIOCCBRK);
+		return DR_DONE;
+	}
+	if (ioctl(req->id, TIOCMGET, &status) == -1) return DR_ERROR;
+	if (mode == 2) {
+		// (request-to-send) signal
+		if (value) {
+			status |= TIOCM_RTS;
+		} else {
+			status &= ~TIOCM_RTS;
+		}
+	} else {
+		// (data-terminal-ready) signal
+		if (value) {
+			status |= TIOCM_DTR;
+		} else {
+			status &= ~TIOCM_DTR;
+		}
+	}
+	if (ioctl(req->id, TIOCMSET, &status) == -1) return DR_ERROR;
+	return DR_DONE;
+}
+
 
 /***********************************************************************
 **
@@ -335,7 +375,7 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] = {
 	0,  // poll
 	0,	// connect
 	Query_Serial,
-	0,	// modify
+	Modify_Serial,
 	0,	// create
 	0,	// delete
 	0	// rename
