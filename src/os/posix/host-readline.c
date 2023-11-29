@@ -49,6 +49,8 @@
 #include <errno.h>
 #include <wchar.h>
 
+int wcwidth(wchar_t wc);
+
 #include "reb-c.h"
 
 //#define TEST_MODE  // teset as stand-alone program
