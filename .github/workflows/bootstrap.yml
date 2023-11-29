@@ -6,13 +6,13 @@ on:
     paths:
       - make/**
       - src/**
-      - .github/workflows/main.yml
+      - .github/workflows/bootstrap.yml
 
   pull_request:
     branches: [ bootstrap ]
 
   # Allows you to run this workflow manually from the Actions tab
-  #workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   linux:
