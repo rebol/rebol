@@ -504,7 +504,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 		return len + 1;
 	}
 
-	COPY_STR(envval, value, len);
+	COPY_STR(envval, value, valsize);
 	return len;
 }
 
