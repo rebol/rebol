@@ -362,12 +362,13 @@ static void Close_StdIO_Local(void)
 			if (c[0] == '\e') {
 				evt.type = EVT_CONTROL;
 				// Escape sequences... is there really some system in it?!
+				// This may be helpful: https://stackoverflow.com/a/71659748
 				if (poll(&poller, 1, 0) <= 0) {
 					// no any other char
 					evt.data = EVK_ESCAPE;
 					goto throw_event;
 				}
-				read(Std_Inp, &c, 2);
+				if (2 != read(Std_Inp, &c, 2)) break;
 				//printf(" %s ", c);
 				if (c[0] == '[') {
 					switch(c[1]){
@@ -379,9 +380,10 @@ static void Close_StdIO_Local(void)
 					case 'H': evt.data = EVK_HOME;  goto throw_event;
 					}
 					if (c[1] == '1') {
-						read(Std_Inp, &c[2], 2);
+						if (2 != read(Std_Inp, &c[2], 2)) break;
 						//printf("%s ", c);
-						if(c[3] == '~') {
+						if(c[3] == '~' || c[3] == '^') {
+							if (c[3] == '^') SET_FLAG(evt.flags, EVF_CONTROL);
 							switch(c[2]){
 							case '1': evt.data = EVK_F1; goto throw_event; //== "\e[11~"
 							case '2': evt.data = EVK_F2; goto throw_event; //== "\e[12~"
@@ -395,7 +397,7 @@ static void Close_StdIO_Local(void)
 						}
 						else if(c[2] == ';' && c[3] == '2') {
 							SET_FLAG(evt.flags, EVF_SHIFT);
-							read(Std_Inp, &c[4], 1);
+							if (1 != read(Std_Inp, &c[4], 1)) break;
 							switch(c[4]){
 							case 'C': evt.data = EVK_RIGHT; goto throw_event; //== "\e[1;2C"
 							case 'D': evt.data = EVK_LEFT;  goto throw_event; //== "\e[1;2D"
@@ -403,12 +405,12 @@ static void Close_StdIO_Local(void)
 						}
 					}
 					else if (c[1] == '2') {
-						read(Std_Inp, &c[2], 1);
+						if (1 != read(Std_Inp, &c[2], 1)) break;
 						//printf("%s ", c);
 						if (c[2] == '~') {
 							evt.data = EVK_INSERT; goto throw_event; //== "\e[2~"
 						}
-						read(Std_Inp, &c[3], 1);
+						if (1 != read(Std_Inp, &c[3], 1)) break;
 						//printf("%s ", c);
 						if (c[3] == '~') {
 							switch(c[2]){
@@ -425,8 +427,24 @@ static void Close_StdIO_Local(void)
 							case '9': evt.data = EVK_F8;  goto throw_event;
 							}
 						}
+						if (c[3] == '^') {
+							SET_FLAG(evt.flags, EVF_CONTROL);
+							switch(c[2]){
+							case '0': evt.data = EVK_F9;  goto throw_event; //== "\e[20^"
+							case '1': evt.data = EVK_F10; goto throw_event;
+							case '3': evt.data = EVK_F11; goto throw_event;
+							case '4': evt.data = EVK_F12; goto throw_event;
+							}
+							SET_FLAG(evt.flags, EVF_SHIFT);
+							switch(c[2]){
+							case '5': evt.data = EVK_F5;  goto throw_event; //== "\e[25^"
+							case '6': evt.data = EVK_F6;  goto throw_event;
+							case '8': evt.data = EVK_F7;  goto throw_event;
+							case '9': evt.data = EVK_F8;  goto throw_event;
+							}
+						}
 						else {
-							read(Std_Inp, &c[4], 1);
+							if (1 != read(Std_Inp, &c[4], 1)) break;
 							if (c[4] == '~' && c[2] == '0') {
 								switch(c[3]){
 								case '0': evt.data = EVK_PASTE_START; goto throw_event; //== "\e[200~"
@@ -436,7 +454,7 @@ static void Close_StdIO_Local(void)
 						}
 					}
 					else if (c[1] > '2' && c[1] <= '8') {
-						read(Std_Inp, &c[2], 1);
+						if (1 != read(Std_Inp, &c[2], 1)) break;
 						//printf("%s ", c);
 						if (c[2] == '~') {
 							switch(c[1]){
@@ -449,7 +467,7 @@ static void Close_StdIO_Local(void)
 							}
 						}
 						else if (c[1] == '3') {
-							read(Std_Inp, &c[3], 1);
+							if (1 != read(Std_Inp, &c[3], 1)) break;
 							//printf("%s ", c);
 							if (c[3] == '~') {
 								SET_FLAG(evt.flags, EVF_SHIFT);
@@ -483,7 +501,7 @@ static void Close_StdIO_Local(void)
 				     if ((c[0] & 0xE0) == 0xC0) len = 1; // `len` as a number of missing bytes!
 				else if ((c[0] & 0xF0) == 0xE0) len = 2;
 				else if ((c[0] & 0xF8) == 0xF0) len = 3;
-				read(Std_Inp, &c[1], len);
+				if (len != read(Std_Inp, &c[1], len)) break;
 				evt.data = RL_Decode_UTF8_Char(c, &len);
 			}
 throw_event:
