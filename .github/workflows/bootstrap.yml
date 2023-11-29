@@ -31,15 +31,19 @@ jobs:
         run: |
           cd make/
           make -f rebol-linux-bootstrap-64bit.mk
-          mv ./rebol-linux-bootstrap-64bit ./rebol
+          mv ./rebol-linux-bootstrap-64bit ../rebol-stage0
 
       - name: Test 64bit Rebol bootstrap
-        run: ./make/rebol-linux-bootstrap-64bit -v
+        run: ./rebol-stage0 -v
 
       - name: Compile real Rebol/Bulk using the Siskin Builder
         run: |
           git clone https://github.com/Siskin-Framework/Builder --depth 1
           cd Builder/
-          ../rebol siskin.r3 rebol rebol3-bulk-linux-x64
-          ./build/rebol3-bulk-linux-x64 -v
+          ../rebol-stage0 siskin.r3 rebol rebol3-bulk-linux-x64
+          
+      - name: Test 64bit Rebol/Bulk
+        run: |
+          mv Builder/tree/rebol/Rebol/build/rebol3-bulk-linux-x64 ./rebol3
+          ./rebol3 -v
 
