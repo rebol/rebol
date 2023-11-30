@@ -18,7 +18,7 @@ rebol-cmd: func[cmd][
 	call/shell/wait/output/error cmd out-buffer err-buffer
 ] 
 
-===start-group=== "Command-Line Interface"
+===start-group=== "Command-Line Interface (/shell)"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2228
 	--test-- "--do"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2467
@@ -72,6 +72,19 @@ rebol-cmd: func[cmd][
 			--assert 0 = rebol-cmd {--do "print system/options/args quit" `seq 1 1000`}
 			--assert #{17900469C3C78A614B60FEE4E3851EF6BAF9D876} =  checksum out-buffer 'sha1
 		]
+===end-group===
+
+
+===start-group=== "Command-Line Interface"
+	--test-- "Block input"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2582
+	--assert all [
+		file? try [write %issue-2582.r3 {Rebol [] print now}]
+		tmp: clear ""
+		0 = call/wait/output reduce [system/options/boot %issue-2582.r3] tmp
+		date? transcode/one tmp
+	]
+	delete %issue-2582.r3
 ===end-group===
 
 

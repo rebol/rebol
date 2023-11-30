@@ -1007,7 +1007,18 @@ void Dispose_Windows(void);
 
 	if (call == NULL) {
 		/* command in argv */
-		goto cleanup; /* NOT IMPLEMENTED*/
+		// count the length of the full command line...
+		size_t len = 1; // termination byte
+		for (int n = 0; n < argc; n++) {
+			len += wcslen(argv[n]) + 1;
+		}
+		cmd = cast(wchar_t*, malloc(len * sizeof(wchar_t)));
+		cmd[0] = L'\0';
+		// construct the command line
+		for (int n = 0; n < argc; n++) {
+			wcscat(cmd, argv[n]);
+			wcscat(cmd, L" ");
+		}
 	} else {
 		if (flag_shell) {
 			// command to cmd.exe needs to be surrounded by quotes to preserve the inner quotes
