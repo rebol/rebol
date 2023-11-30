@@ -819,6 +819,7 @@ chk_neg:
 		argv = (REBCHR**)SERIES_DATA(ser);
 		for (i = 0; i < argc; i ++) {
 			REBVAL *param = VAL_BLK_SKIP(arg, i);
+			// to avoid call to reduce, resolve get-word! or get-path! values if used
 			if (IS_GET_WORD(param)) {
 				param = Get_Var(param);
 			}
