@@ -819,11 +819,21 @@ chk_neg:
 		argv = (REBCHR**)SERIES_DATA(ser);
 		for (i = 0; i < argc; i ++) {
 			REBVAL *param = VAL_BLK_SKIP(arg, i);
+			if (IS_GET_WORD(param)) {
+				param = Get_Var(param);
+			}
+			else if (IS_GET_PATH(param)) {
+				Do_Path(&param, NULL);
+				param = DS_POP; // volatile stack reference
+			}
 			if (IS_FILE(param)) {
 				REBSER* path = Value_To_OS_Path(param, FALSE);
 				argv[i] = (REBCHR*)SERIES_DATA(path);
 			} else if (ANY_STR(param)) {
 				argv[i] = Val_Str_To_OS(param);
+			} else if (IS_WORD(param)) {
+				Set_Series(REB_STRING, D_RET, Copy_Form_Value(param, TRUE));
+				argv[i] = Val_Str_To_OS(D_RET);
 			} else {
 				Trap_Arg(param);
 			}

@@ -85,6 +85,17 @@ rebol-cmd: func[cmd][
 		date? transcode/one tmp
 	]
 	delete %issue-2582.r3
+	--test-- "Block input with word!, get-word! and get-path!"
+	--assert all [
+		file? try [write %probe-args.r3 {Rebol [] probe system/options/args}]
+		tmp: clear ""
+		url: http://example.org
+		;; not using reduce in this test...
+		0 = call/wait/output [:system/options/boot %probe-args.r3 :url foo] tmp
+		["http://example.org" "foo"] = transcode/one tmp
+	]
+	delete %probe-args.r3
+
 ===end-group===
 
 
