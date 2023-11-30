@@ -127,6 +127,15 @@ rebol-cmd: func[cmd][
 		--assert 0:0:2 < delta-time [do %units/files/launch-wait.r3] ;; should wait
 		--assert 6 = try [length? read/lines %units/files/launched.txt] ;; 6 because 3x launched!
 
+	--test-- "do launch/with"
+		--assert all [
+			file? write %args.r3 {Rebol[] args: system/options/args forall args [args/1: transcode/one args/1] save %temp args}
+			0 == launch/with/wait %args.r3 args: [2 {a "b" c} %"foo space"]
+			args == load %temp
+		]
+		delete %temp
+		delete %args.r3
+
 	try [delete %units/files/launched.txt]
 ===end-group===
 

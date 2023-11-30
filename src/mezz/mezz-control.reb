@@ -11,20 +11,29 @@ REBOL [
 	}
 ]
 
-launch: func [
+launch: function/with [
 	{Runs a script as a separate process; return immediately.}
-	script [file! string! none!] "The name of the script"
-	/args arg [string! block! none!] "Arguments to the script"
+	script [file! string!] "The name of the script"
+	/with args [string! block! none!] "Arguments to the script"
 	/wait "Wait for the process to terminate"
-	/local exe
 ][
-	if file? script [script: to-local-file any [to-real-file script script]]
-	exe: to-local-file system/options/boot
-
-	; Quote everything, just in case it has spaces:
-	args: to-string reduce [{"} exe {" "} script {" }]
-	if arg [append args arg]
-	either wait [call/wait/shell args] [call/shell args]
+	command: reduce [system/options/boot script]
+	if args [
+		unless block? args [args: reduce [:args]]
+		foreach arg args [
+			;; arguments are expected to be strings...
+			append command escape-arg mold/flat arg
+		]
+	]
+	sys/log/info 'REBOL ["Launch:" as-green reform next command]
+	call/:wait command
+][
+	;-- just a simple argument escaping function
+	;@@ needs test on other platforms... Linux seems to be ok without any escaping.
+	escape-arg: func[arg] either/only system/platform = 'Windows [
+		replace/all arg #"^"" {\"}
+		append insert arg #"^"" #"^"" 
+	][ arg ]
 ]
 
 wrap: func [
