@@ -405,7 +405,7 @@ REBINT Mode_Syms[] = {
 		len += cnt;
 		SET_FLAG(file->modes, RFM_RESEEK);
 	}
-	// Originaly, when the requested part was larger then the reported file's size,
+	// Originaly, when the requested part was larger than the reported file's size,
 	// then the reported file size was used instead. But on Posix there are virtual files,
 	// where the size is reported as 0. In this case we keep the user's requested length.
 	// See: https://github.com/Oldes/Rebol-issues/issues/2303
