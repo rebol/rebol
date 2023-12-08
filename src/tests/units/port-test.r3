@@ -524,6 +524,27 @@ if system/platform = 'Windows [
 		--assert all [error? e: try [append/only p "aa"]  e/id = 'bad-refines]
 		try [delete %issue-1894]
 
+if exists? %/proc/cpuinfo [
+	--test-- "Reading from /proc files on Linux"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2303
+		--assert all [
+			not error? info: try [read/string %/proc/cpuinfo]
+			empty? info ;; empty, because to read this type of file, the size must be specified!
+		]
+		--assert all [
+			not error? info: try [read/string/part %/proc/cpuinfo 10000]
+			print info
+			0 < length? info
+		]
+]
+	--test-- "Reading an empty file"
+		--assert all [
+			file? write %empty ""
+			0 = length? read %empty
+			0 = length? read/part %empty 1000
+			port? delete %empty
+		]
+
 ===end-group===
 
 if system/platform = 'Windows [
