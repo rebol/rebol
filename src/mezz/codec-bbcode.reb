@@ -2,7 +2,7 @@ REBOL [
 	Name:    bbcode
 	Type:    module
 	Options: [delay]
-	Version: 0.3.0
+	Version: 0.3.1
 	Title:   "Codec: BBcode"
 	Purpose: {Basic BBCode implementation. For more info about BBCode check http://en.wikipedia.org/wiki/BBCode}
 	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-bbcode.reb
@@ -13,6 +13,7 @@ REBOL [
 		0.2.0 19-Feb-2012 "review"
 		0.2.1 22-Aug-2012 "added [hr] and [anchor]"
 		0.3.0 24-Apr-2020 "ported to Rebol3"
+		0.3.1 11-Dec-2023 "FIX: `bbcode` must accept only string input"
 	]
 ]
 
@@ -195,7 +196,7 @@ enabled-tags: [
 	
 bbcode: func [
 	"Converts BBCode markup into HTML"
-	code [string! binary!] "Input with BBCode tags"
+	code [string!] "Input with BBCode tags"
 	/local tag err
 ][
 	err: try [
@@ -438,8 +439,10 @@ register-codec [
 		/local result
 		return: [string!]
 	][
-		if any [file? code url? code][code: read code]
+		switch type?/word code [
+			binary!    [code: to string! code]
+			file! url! [code: read/string code]
+		] 
 		result: bbcode code
-
 	]
 ]

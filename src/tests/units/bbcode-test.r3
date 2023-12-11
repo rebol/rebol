@@ -88,6 +88,9 @@ if find codecs 'BBCode [
 			print "---"
 		]
 	]
+--test-- "bbcode with binary input"
+	src: {text [b]bold[/b] abc}
+	--assert (decode 'bbcode srt) = (decode 'bbcode to binary! src)
 
 ===end-group===
 ]
