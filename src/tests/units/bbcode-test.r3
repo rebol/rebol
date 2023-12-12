@@ -77,6 +77,25 @@ if find codecs 'BBCode [
 		{[hr10%]}                          {<p><hr style="width:10%"></p>}
 		{[anchor]foo[/anchor]}             {<p><a name="foo"></a></p>}
 		{[class=underline]foo}             {<p><span class="underline">foo</span></p>}
+		{[csv class=vysledky]
+name	number	position
+foo	1	2
+boo	2	1
+[/csv]} {<table class="vysledky">
+<tr><th>name</th><th>number</th><th>position</th></tr>
+<tr><td>foo</td><td>1</td><td>2</td></tr>
+<tr><td>boo</td><td>2</td><td>1</td></tr>
+</table>}
+
+		{[csv divider=';' align='center' coltype='lcr' widths='100 20 *']
+name;number;position
+[/csv]}
+{<table align="center">
+<col align="left">
+<col align="center">
+<col align="right">
+<tr><th width=100>name</th><th width=20>number</th><th>position</th></tr>
+</table>}
 	]
 	bbcode: :codecs/bbcode/decode
 	foreach [src result] test-cases [
@@ -90,7 +109,7 @@ if find codecs 'BBCode [
 	]
 --test-- "bbcode with binary input"
 	src: {text [b]bold[/b] abc}
-	--assert (decode 'bbcode srt) = (decode 'bbcode to binary! src)
+	--assert (decode 'bbcode src) = (decode 'bbcode to binary! src)
 
 ===end-group===
 ]

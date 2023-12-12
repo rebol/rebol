@@ -2,7 +2,7 @@ REBOL [
 	Name:    bbcode
 	Type:    module
 	Options: [delay]
-	Version: 0.3.1
+	Version: 0.3.2
 	Title:   "Codec: BBcode"
 	Purpose: {Basic BBCode implementation. For more info about BBCode check http://en.wikipedia.org/wiki/BBCode}
 	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-bbcode.reb
@@ -13,7 +13,8 @@ REBOL [
 		0.2.0 19-Feb-2012 "review"
 		0.2.1 22-Aug-2012 "added [hr] and [anchor]"
 		0.3.0 24-Apr-2020 "ported to Rebol3"
-		0.3.1 11-Dec-2023 "FIX: `bbcode` must accept only string input"
+		0.3.1 11-Dec-2023 "FIX: `bbcode` must accept only string input"\
+		0.3.2 12-Dec-2023 "FEAT: csv table emitter"
 	]
 ]
 
@@ -39,6 +40,7 @@ ch_digits: charset [#"0" - #"9"]
 ch_hexa:   charset [#"a" - #"f" #"A" - #"F" #"0" - #"9"]
 ch_name:   charset [#"a" - #"z" #"A" - #"Z" #"*" #"0" - #"9"]
 ch_url:    charset [#"a" - #"z" #"A" - #"Z" #"0" - #"9" "./:~+-%#\_=&?@"]
+ch_crlf:   charset CRLF
 ch_safe-value-chars: complement charset {'"}
 
 rl_newline: [CRLF | LF]
@@ -186,6 +188,69 @@ emit-tag-p: does [
 ]
 emit-tag: func[tag][
 	insert tail html either block? tag [rejoin tag][tag]
+]
+
+emit-tag-csv: function/with [spec [string!]][
+	row: "" ;; no copy, it is cleared each time
+	trim/head/tail spec
+	
+	close-p-if-possible
+	close-tags
+	emit-tag [{<table} form-attribute "class" form-attribute "align" form-attribute "style" {>^/}]
+	all [
+		widths: get-attribute "widths"
+		widths: transcode widths
+	]
+	if align: get-attribute "coltype" [
+		parse align [
+			some [
+				  #"c" (emit-tag {<col align="center">^/})
+				| #"l" (emit-tag {<col align="left">^/}) 
+				| #"r" (emit-tag {<col align="right">^/})
+				| #"j" (emit-tag {<col align="justify">^/})
+			]
+		]
+	]
+	ch_divider: charset get-attribute/default "divider" TAB
+	ch_notDivider: complement union ch_divider ch_crlf
+	rl_data: [copy data any ch_notDivider]
+	
+	data: align: none
+	row-num: col-num: col-width: 0
+	datatag: "th" ;; first row is always used for headers!
+	parse spec [
+		some [
+			(
+				clear row
+				++ row-num
+			)
+			any ch_space
+			some [
+				rl_data
+				1 ch_divider
+				(
+					append row ajoin [{<} datatag get-col-width {>} data {</} datatag {>}]
+				)
+			]
+			rl_data	[rl_newline | end] (
+				append row ajoin [{<} datatag get-col-width {>} data {</} datatag {>}]
+				datatag: "td"
+				emit-tag ["<tr>" row "</tr>^/"]
+			)
+		]
+	]
+	emit-tag "</table>"
+] [
+	data: widths: align: row-num: col-num: col-width: none
+	get-col-width: does [
+		++ col-num
+		either all [
+			row-num = 1
+			block? widths
+			col-width: pick widths col-num
+			integer? col-width
+		][ ajoin [" width=" col-width] ][ "" ]
+	]
 ]
 
 enabled-tags: [
@@ -414,8 +479,8 @@ bbcode: func [
 		]
 		unless empty? opened-tags [	close-tags ]
 		html
-	]
-	if error? err [
+	][
+		err: system/state/last-error
 		; send possible trimmed error in the result instead of throwing it!
 		append html ajoin ["^/#[ERROR! [code: " err/code " type: " err/type " id: " err/id #"]"]
 	]
