@@ -283,7 +283,7 @@ emit-tag-images: function/with [][
 			]
 		][continue]
 
-		img: load dir/:file
+		img: load path: to-relative-file dir/:file
 		size: img/size
 		w: size/x
 		h: size/y
@@ -302,10 +302,10 @@ emit-tag-images: function/with [][
 			emit-row
 			row-width: rw
 			columns: 1
-			append temp reduce [file size size-scaled bgimg title]
+			append temp reduce [path size size-scaled bgimg title]
 		][
 			++ columns
-			append temp reduce [file size size-scaled bgimg title]
+			append temp reduce [path size size-scaled bgimg title]
 		]
 	]
 	if columns > 0 [emit-row]
