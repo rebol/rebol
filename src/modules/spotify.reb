@@ -162,28 +162,28 @@ authorize: function [
 	; Result from the server is returned as a redirect, so let's start simple server
 	; listening on specified port (limited to accept only local requests, as the redirect is
 	; going from the browser actually.. it automaticaly close itself once data are received
-	result: system/modules/httpd/http-server/config/actor ctx/port [
-		root:       #[false] ; we are not serving any content!
-		keep-alive: #[false]
-	] [
-		On-Accept: func [info [object!]][
-			; allow only connections from localhost
-			; TRUE = accepted, FALSE = refuse
-			find [ 127.0.0.1 ] info/remote-ip 
-		]
-		On-Header: func [ctx [object!]][
-			either ctx/inp/target/file == %/spotify-callback/ [
-				ctx/out/status: 200
-				ctx/out/content: ajoin [
-					"<h1>OAuth2 Spotify Callback</h1>"
-					"<br/>Request header:<pre>" mold ctx/inp/header </pre>
-					"<br/>Values:<pre>" mold ctx/inp/target/values </pre>
-					"<h2>You can close this window and return back to Rebol</h2>"
+	result: serve-http [
+		port: ctx/port
+		actor: [
+			On-Accept: func [info [object!]][
+				; allow only connections from localhost
+				; TRUE = accepted, FALSE = refuse
+				find [ 127.0.0.1 ] info/remote-ip 
+			]
+			On-Header: func [ctx [object!]][
+				either ctx/inp/target/file == %/spotify-callback/ [
+					ctx/out/status: 200
+					ctx/out/content: ajoin [
+						"<h1>OAuth2 Spotify Callback</h1>"
+						"<br/>Request header:<pre>" mold ctx/inp/header </pre>
+						"<br/>Values:<pre>" mold ctx/inp/target/values </pre>
+						"<h2>You can close this window and return back to Rebol</h2>"
+					]
+					ctx/done?: ctx/inp/target/values
+				][
+					ctx/out/status: 405
+					ctx/done?: true
 				]
-				ctx/done?: ctx/inp/target/values
-			][
-				ctx/out/status: 405
-				ctx/done?: true
 			]
 		]
 	]

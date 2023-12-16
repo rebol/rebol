@@ -1,9 +1,9 @@
 Rebol [
 	Title: "Test HTTPD Scheme"
-	Date: 02-Jul-2020
+	Date: 14-Dec-2023
 	Author: "Oldes"
 	File: %test-httpd.r3
-	Version: 0.6.0
+	Version: 0.9.0
 	Note: {
 		To test POST method from Rebol console, try this:
 		```
@@ -16,7 +16,7 @@ Rebol [
 secure [%../modules/ allow]
 do %../modules/httpd.reb
 
-system/options/log/httpd: 1 ; for verbose output
+system/schemes/httpd/set-verbose 1 ; for verbose output
 system/options/quiet: false
 
 ; make sure that there is the directory for logs
@@ -32,19 +32,17 @@ humans.txt: {
   \____________/~~~> http://github.com/oldes/
 }
 
-http-server/config/actor 8081 [
+serve-http [
+	port: 8081
 	;- Main server configuration
-	
 	root: %httpd-root/
 	server-name: "nginx"  ;= it's possible to hide real server name
 	keep-alive: [30 100] ;= [timeout max-requests] or FALSE to turn it off
 	log-access: %httpd-root/logs/test-access.log
 	log-errors: %httpd-root/logs/test-errors.log
 	list-dir?:  #[true]
-
-] [
 	;- Server's actor functions
-
+	actor: [
 	On-Accept: func [info [object!]][
 		; allow only connections from localhost
 		; TRUE = accepted, FALSE = refuse
@@ -53,24 +51,7 @@ http-server/config/actor 8081 [
 	On-Header: func [ctx [object!] /local path key][
 		path: ctx/inp/target/file
 		;- detect some of common hacking attempts...
-		unless parse path [
-			some [
-				;; common scripts, which we don't use
-				  #"." [
-				  	  %php
-				  	| %aspx
-				  	| %cgi
-				][end | #"?" | #"#"] reject
-				; common hacking attempts to root folders...
-				| #"/" [
-					  %ecp/      ; we are not an exchange server
-					| %mifs/     ; either not MobileIron (https://stackoverflow.com/questions/67901776/what-does-the-line-mifs-services-logservice-mean)
-					| %GponForm/ ; nor Gpon router (https://www.vpnmentor.com/blog/critical-vulnerability-gpon-router/)
-					| %.env end  ; https://stackoverflow.com/questions/64109005/do-these-env-get-requests-from-localhost-indicate-an-attack
-				] reject
-				| 1 skip
-			]
-		][
+		unless parse path anti-hacking-rules [
 			ctx/out/status: 418 ;= I'm a teapot
 			ctx/out/header/Content-Type: "text/plain; charset=UTF-8"
 			ctx/out/content: "Your silly hacking attempt was detected!"
@@ -123,7 +104,7 @@ http-server/config/actor 8081 [
 			]
 		]
 	]
-	On-Post-Received: func [ctx [object!]][
+	On-Post: func [ctx [object!]][
 		ctx/out/content: ajoin [
 			"<br/>Request header:<pre>" mold ctx/inp/header </pre>
 			"Received <code>" ctx/inp/header/Content-Type/1 
@@ -139,28 +120,7 @@ http-server/config/actor 8081 [
 			? ctx/inp/content
 		]
 	]
-	On-Close-Websocket: func[ctx code /local reason][
-		reason: any [
-			select [
-				1000 "the purpose for which the connection was established has been fulfilled."
-				1001 "a browser navigated away from a page."
-				1002 "a protocol error."
-				1003 "it has received a type of data it cannot accept."
-				1007 "it has received data within a message that was not consistent with the type of the message."
-				1008 "it has received a message that violates its policy."
-				1009 "it has received a message that is too big for it to process."
-				1010 "it has expected the server to negotiate one or more extension, but the server didn't return them in the response message of the WebSocket handshake."
-				1011 "it encountered an unexpected condition that prevented it from fulfilling the request."
-			] code
-			ajoin ["an unknown reason (" code ")"]
-		]
-		print ["WS connection is closing because" reason]
-		unless empty? reason: ctx/inp/content [
-			;; optional client's reason
-			print ["Client's reason:" as-red to string! reason]
-		]
-	]
-
+	] ;end of actor
 ]
 
 
