@@ -103,6 +103,9 @@ Rebol [
 			e/near = "(line 4) 4line"
 		]
 
+	--test-- "loading an unset value"
+		--assert unset? try [load "#[unset]"] ;- no error
+
 ===end-group===
 
 ===start-group=== "find-script native"

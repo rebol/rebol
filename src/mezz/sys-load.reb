@@ -354,7 +354,7 @@ load: function [
 			header
 			empty? data
 			1 < length? data
-		][data: first data]
+		][set/any 'data first data]
 	]
 	:data
 ]
