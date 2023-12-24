@@ -446,13 +446,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	ser->tail = len;  // !!! another way to do it?
 
 	// Store info about the vector (could be moved to flags if necessary):
-	switch (bits) {
-	case  8: bits = 0; break;
-	case 16: bits = 1; break;
-	case 32: bits = 2; break;
-	case 64: bits = 3; break;
-	}
-	ser->size = (dims << 8) | (type << 3) | (sign << 2) | bits;
+	ser->size = (dims << 8) | (type << 3) | (sign << 2) | (bits >> 4);
 
 	return ser;
 }
