@@ -489,6 +489,7 @@ format: function [
 ]
 
 format-date-time: function/with [
+	"replaces a subset of ISO 8601 abbreviations such as yyyy-MM-dd hh:mm:ss"
 	value [date! time!]
 	rule  [string! tag!]
 ][
