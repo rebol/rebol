@@ -7,14 +7,13 @@
 
 # Rebol [R3] Source Code Distribution
 
-Purpose of this **Rebol fork** is to push the origial [Carl's source](https://github.com/rebol/rebol) to be usable at least like Rebol 2,
-but keep the source code clean and project easy to build. Use [CHANGES.md](https://github.com/Oldes/Rebol3/blob/master/CHANGES.md) file to see changes made in this branch.
+Purpose of this **Rebol fork** is to push [Carl's original source](https://github.com/rebol/rebol) to be at least as usable as Rebol 2 while keeping the source code clean and project easy to build. Use [CHANGES.md](https://github.com/Oldes/Rebol3/blob/master/CHANGES.md) file to see changes made in this branch.
 
-### Issues reporting
+### Issue Reporting
 
-Preferred way for issue reporting is using [dedicated issue repository](https://github.com/Oldes/Rebol-issues/issues). It's a fork of the original Rebol issue repository, which was filled with issues from [CureCode issue tracker](https://www.curecode.org/rebol3/view-tickets.rsp), which was used before Rebol was on Github. I'm not using the original Rebol issue repository, because I was not allowed to even add labels to my own issues. It was later moved under Metaeducation account and is used for Ren-C development anyway.
+Preferred way to report issues is using the [dedicated issue repository](https://github.com/Oldes/Rebol-issues/issues). It's a fork of the original Rebol issue repository, which was filled with issues from the [CureCode issue tracker](https://www.curecode.org/rebol3/view-tickets.rsp), which was used before Rebol was on Github. I'm not using the original Rebol issue repository, because I was not allowed to even add labels to my own issues. It was later moved under Metaeducation account and is used for Ren-C development anyway.
 
-### Precompiled binaries
+### Precompiled Binaries
 
 There are available precompiled binaries for each [release](https://github.com/Oldes/Rebol3/releases). So far there are 3 main build types:
 1. **Base** is a build with minimal additions (not much useful)
