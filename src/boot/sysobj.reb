@@ -271,6 +271,8 @@ modules: object [
 	mime-field:       https://src.rebol.tech/mezz/codec-mime-field.reb
 	mime-types:       https://src.rebol.tech/mezz/codec-mime-types.reb
 	quoted-printable: https://src.rebol.tech/mezz/codec-quoted-printable.reb
+	webdriver:        https://src.rebol.tech/modules/webdriver.reb
+	websocket:        https://src.rebol.tech/modules/websocket.reb
 	;; and..
 	window: none ;- internal extension for gui (on Windows so far!)
 ]

@@ -45,6 +45,8 @@ It is possible to extend Rebol functionality using external modules (native and 
 * [Rebol/OpenCV](https://github.com/Oldes/Rebol-OpenCV) - Computer Vision Library
 * [Rebol/SQLite](https://github.com/Siskin-framework/Rebol-SQLite) - SQL database engine
 * [Rebol/Triangulate](https://github.com/Siskin-framework/Rebol-Triangulate) - Two-Dimensional Quality Mesh Generator and Delaunay Triangulator
+* [Rebol/WebDriver](https://github.com/Oldes/Rebol-WebDriver) - WebDriver scheme for automating Chromium based browser sessions
+* [Rebol/WebSocket](https://github.com/Oldes/Rebol-WebSocket) - WebSocket scheme and codec
 
 It should be noted that on macOS it may be required to resign _downloaded native extensions_ using command like:
 ```
