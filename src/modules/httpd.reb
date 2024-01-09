@@ -2,8 +2,8 @@ Rebol [
 	Title:  "HTTPd Scheme"
 	Type:    module
 	Name:    httpd
-	Date:    14-Dec-2023
-	Version: 0.9.0
+	Date:    10-Jan-2024
+	Version: 0.9.1
 	Author: ["Andreas Bolka" "Christopher Ross-Gill" "Oldes"]
 	Exports: [serve-http http-server decode-target to-CLF-idate]
 	Home:    https://github.com/Oldes/Rebol-HTTPd
@@ -917,7 +917,7 @@ sys/make-scheme [
 			;try [remove find clients port]
 		]
 		log-debug ["Ports open:" length? clients]
-		if all [ctx/done? zero? length? clients][
+		if ctx/done? [
 			log-more "Server's job done, closing initiated"
 			ctx/parent/data: ctx/done?
 			Awake-Server make event! [type: 'CLOSE port: ctx/parent]
