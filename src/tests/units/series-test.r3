@@ -2825,4 +2825,20 @@ Rebol [
 	]
 ===end-group===
 
+
+===start-group=== "SUM & AVERAGE"
+--test-- "sum"
+	--assert 0 = sum []
+	--assert 6 = sum [1 2 3]
+	--assert 6.0 = sum [1.0 2 3]
+	--assert 6 = sum #[uint8! [1 2 3]]
+--test-- "average"
+	--assert none? average []
+	--assert 2 = average [1 2 3]
+	--assert 2.0 = average [1.0 2 3]
+	--assert 2 = average #[uint8! [1 2 3]]
+	--assert 17.5 = average #[uint8! [10 25]]  
+
+===end-group===
+
 ~~~end-file~~~

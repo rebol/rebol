@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Mezzanine: Math"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2024 Rebol Open Source Developers
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -93,3 +94,22 @@ find-max: func [
 	]
 	spot
 ]
+
+sum: func [
+	"Returns the sum of all values in a block"
+	values [block! vector! paren!]
+	/local result value
+][
+	result: make any [values/1 0] 0
+	foreach value values [result: result + value]
+	result
+]
+
+average: func [
+	"Returns the average of all values in a block"
+	block [block! vector! paren!]
+][
+	if empty? block [return none]
+	divide sum block length? block
+]
+
