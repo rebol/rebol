@@ -140,6 +140,14 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2099
 	 	--assert 302961000000 = to integer! "3.02961E+11"
 
+	--test-- "make/to integer! 1.#NaN and 1.#INF"
+		--assert error? try [to integer! 1.#NaN]
+		--assert error? try [to integer! 1.#INF]
+		--assert error? try [to integer! -1.#INF]
+		--assert error? try [make integer! 1.#NaN]
+		--assert error? try [make integer! 1.#INF]
+		--assert error? try [make integer! -1.#INF]
+
 ===end-group===
 
 ===start-group=== "make/to decimal!"

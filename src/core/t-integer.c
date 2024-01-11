@@ -274,7 +274,7 @@
 	case A_TO:
 		val = D_ARG(2);
 		if (IS_DECIMAL(val) || IS_PERCENT(val)) {
-			if (VAL_DECIMAL(val) < MIN_D64 || VAL_DECIMAL(val) >= MAX_D64)
+			if (VAL_DECIMAL(val) < MIN_D64 || VAL_DECIMAL(val) >= MAX_D64 || isnan(VAL_DECIMAL(val)))
 				Trap0(RE_OVERFLOW);
 			num = (REBI64)VAL_DECIMAL(val);
 		}
