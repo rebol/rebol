@@ -2149,6 +2149,7 @@ exit_block:
 				|| LEX_SPECIAL_PLUS   == c
 				|| LEX_SPECIAL_MINUS  == c
 				|| LEX_SPECIAL_TILDE  == c
+				|| LEX_SPECIAL_POUND  == c
 			))
 			return 0;
 

@@ -496,6 +496,16 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "Issue"
+	--test-- {###}
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2583
+		--assert "###" = try [mold transcode/one {###}]
+		--assert "#a#" = try [mold transcode/one {#a#}]
+		--assert "#ab" = try [mold transcode/one {#ab}]
+
+===end-group===
+
+
 ===start-group=== "Char"
 	--test-- {#"^(1)"}
 		--assert #"^A" = load {#"^(1)"} ;@@ https://github.com/Oldes/Rebol-issues/issues/52
