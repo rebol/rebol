@@ -26,7 +26,19 @@ secure [%/ allow]
 	url: http://www.rebol.com page: %/test.html
 	--assert url/test  = http://www.rebol.com/test
 	--assert url/:page = http://www.rebol.com/test.html
-
+--test-- "issue-2585"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2585
+	url: http://www/
+	dir: %path/
+	file: next %a/bc ;== %/bc
+	--assert dir/:file = %path/bc
+	--assert url/:file = http://www/bc
+	file: next file  ;== %bc
+	--assert dir/:file = %path/bc
+	--assert url/:file = http://www/bc
+	file: next file  ;== %c
+	--assert dir/:file = %path/c
+	--assert url/:file = http://www/c
 ===end-group===
 
 ===start-group=== "UN/DIRIZE"

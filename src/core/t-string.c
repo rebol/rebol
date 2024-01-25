@@ -539,16 +539,18 @@ static struct {
 	if (n > 0) c = GET_ANY_CHAR(ser, n-1);
 	if (n == 0 || c != '/') Append_Byte(ser, '/');
 
-	if (ANY_STR(pvs->select))
+	if (ANY_STR(pvs->select)) {
 		arg = VAL_SERIES(pvs->select);
+		n = VAL_INDEX(pvs->select);
+	}
 	else {
 		Reset_Mold(&mo);
 		Mold_Value(&mo, pvs->select, 0);
 		arg = mo.series;
+		n = 0;
 	}
-
-	c = GET_ANY_CHAR(arg, 0);
-	n = (c == '/' || c == '\\') ? 1 : 0;
+	c = GET_ANY_CHAR(arg, n);
+	n += (c == '/' || c == '\\') ? 1 : 0;
 	Append_String(ser, arg, n, arg->tail-n);
 
 	Set_Series(VAL_TYPE(pvs->value), pvs->store, ser);
