@@ -9,7 +9,7 @@ See included LICENSE file for details
 Credits for Non-REBOL orginated C files and modules
 ---------------------------------------------------
 
-* MbedTLS parts (version 3.5.1):
+* MbedTLS parts (version 3.5.2):
   Copyright The Mbed TLS Contributors
   Apache-2.0 - https://github.com/Mbed-TLS/mbedtls/releases
 
