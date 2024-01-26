@@ -340,7 +340,8 @@ REBINT Mode_Syms[] = {
 	}
 	else if (IS_STRING(data)) {
 		// Auto convert string to UTF-8
-		ser = Encode_UTF8_Value(data, len, ENCF_OS_CRLF);
+		// Using LF to CRLF conversion on Windows if not used /binary refinement!
+		ser = Encode_UTF8_Value(data, len, (args & AM_WRITE_BINARY) ? 0 : ENCF_OS_CRLF);
 		file->data = ser? BIN_HEAD(ser) : VAL_BIN_DATA(data); // No encoding may be needed
 		len = SERIES_TAIL(ser);
 	}

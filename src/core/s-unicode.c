@@ -800,47 +800,96 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 	REBINT n;
 	REBYTE buf[8];
 	REBYTE *bs = dst; // save start
-	REBYTE *bp = (REBYTE*)src;
-	REBUNI *up = (REBUNI*)src;
+	REBYTE *bp;
+	REBUNI *up;
 	REBLEN cnt;
 
 	if (len) cnt = *len;
-	else {
-		if (uni) {
+	if (uni) {
+		up = (REBUNI*)src;
+		if (!len) {
 			// not using wcslen, because on some systems wchar_t has 4 bytes!
 			cnt = 0;
 			while (*up++ != 0 && cnt < (REBLEN)max) cnt++;
 			up = (REBUNI*)src;
-		} else
-			cnt = LEN_BYTES(bp);
-	}
-
-	for (; max > 0 && cnt > 0; cnt--) {
-		c = uni ? *up++ : *bp++;
-		if (c < 0x80) {
+		}
+		for (; max > 0 && cnt > 0; cnt--) {
+			c = *up++;
+			if (c < 0x80) {
 #if defined(TO_WINDOWS)
-			if (ccr && c == LF) {
-				// If there's not room, don't try to output CRLF
-				if (2 > max) {up--; break;}
-				*dst++ = CR;
-				max--;
-				c = LF;
-			}
+				if (ccr) {
+					if (c == CR && up[0] == LF) {
+						*dst++ = CR;
+						*dst++ = LF;
+						up++;
+						cnt--;
+						max -= 2;
+						continue;
+					}
+					if (c == LF) {
+						// If there's not room, don't try to output CRLF
+						if (2 > max) { up--; break; }
+						*dst++ = CR;
+						max--;
+						c = LF;
+					}
+				}
 #endif
-			*dst++ = (REBYTE)c;
-			max--;
+				*dst++ = (REBYTE)c;
+				max--;
+			}
+			else {
+				n = Encode_UTF8_Char(buf, c);
+				if (n > max) { up--; break; }
+				memcpy(dst, buf, n);
+				dst += n;
+				max -= n;
+			}
 		}
-		else {
-			n = Encode_UTF8_Char(buf, c);
-			if (n > max) {up--; break;}
-			memcpy(dst, buf, n);
-			dst += n;
-			max -= n;
+		if (len) *len = dst - bs;
+		return up - (REBUNI*)src;
+	}
+	else {
+		bp = (REBYTE*)src;
+		if (!len) cnt = LEN_BYTES(bp);
+		for (; max > 0 && cnt > 0; cnt--) {
+			c = *bp++;
+			if (c < 0x80) {
+#if defined(TO_WINDOWS)
+				if (ccr) {
+					if (c == CR && bp[0] == LF) {
+						*dst++ = CR;
+						*dst++ = LF;
+						bp++;
+						cnt--;
+						max -= 2;
+						continue;
+					}
+					if (c == LF) {
+						// If there's not room, don't try to output CRLF
+						if (2 > max) { bp--; break; }
+						*dst++ = CR;
+						max--;
+						c = LF;
+					}
+				}
+#endif
+				*dst++ = (REBYTE)c;
+				max--;
+			}
+			else {
+				n = Encode_UTF8_Char(buf, c);
+				if (n > max) { bp--; break; }
+				memcpy(dst, buf, n);
+				dst += n;
+				max -= n;
+			}
 		}
+		if (len) *len = dst - bs;
+		return bp - (REBYTE*)src;
 	}
 
-	if (len) *len = dst - bs;
-	return uni ? up - (REBUNI*)src : bp - (REBYTE*)src;
+
 }
 
 
@@ -928,7 +977,7 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 	else {
 		REBYTE *bp = (REBYTE*)src;
 
-		if (Is_Not_ASCII(bp, len)) {
+		if (ccr || Is_Not_ASCII(bp, len)) {
 			size = Length_As_UTF8((REBUNI*)bp, len, FALSE, (REBOOL)ccr);
 			cp = Reset_Buffer(ser, size + (GET_FLAG(opts, ENC_OPT_BOM) ? 3 : 0));
 			Encode_UTF8(cp, size, bp, &len, FALSE, ccr);
