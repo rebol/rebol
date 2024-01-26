@@ -298,10 +298,10 @@ if system/platform = 'Windows [
 		--assert "a^M^/^/" = to string! read write/binary %tmp "a^M^/^/"
 		--assert "á^M^/^/" = to string! read write/binary %tmp "á^M^/^/"
 		either system/platform = 'Windows [
-			;; on Windows by default write converts LF to CRLF (if the input is string!)
+			;; on Windows `write` converts LF to CRLF by default (if the input is string!)
 			--assert     #{0D0A} = read write %tmp next "a^/"
 			--assert     #{0D0A} = read write %tmp next "á^/"
-			;; when there is already CRLF, if does not write it like CRCRLF!
+			;; when there is already CRLF, it does not write it like CRCRLF!
 			--assert     #{0D0A} = read write %tmp next "a^M^/"
 			--assert     #{0D0A} = read write %tmp next "á^M^/"
 			--assert   #{0D0D0A} = read write %tmp next "a^M^M^/"
@@ -309,7 +309,7 @@ if system/platform = 'Windows [
 			--assert #{0D0A0D0A} = read write %tmp next "a^M^/^/"
 			--assert #{0D0A0D0A} = read write %tmp next "á^M^/^/"
 		][
-			;; on all other platforms it does no modifications!
+			;; on all other platforms it doesn't modify!
 			--assert     #{0A} = read write %tmp next "a^/"
 			--assert     #{0A} = read write %tmp next "á^/"
 			--assert   #{0D0A} = read write %tmp next "a^M^/"
