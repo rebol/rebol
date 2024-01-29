@@ -80,7 +80,7 @@ CODECS_API int DecodeImageFromFile(PCWSTR *uri, UINT frame, REBCDI *codi)
 				(LPCWSTR)uri
 				, NULL
 				, GENERIC_READ
-				, WICDecodeMetadataCacheOnLoad
+				, WICDecodeMetadataCacheOnDemand
 				, &pDecoder
 			);
 			ASSERT_HR("CreateDecoderFromFilename");
@@ -110,7 +110,7 @@ CODECS_API int DecodeImageFromFile(PCWSTR *uri, UINT frame, REBCDI *codi)
 			hr = pIWICFactory->CreateDecoderFromStream(
 				pStream
 				, NULL
-				, WICDecodeMetadataCacheOnLoad
+				, WICDecodeMetadataCacheOnDemand
 				, &pDecoder
 			);
 			ASSERT_HR("CreateDecoderFromStream");

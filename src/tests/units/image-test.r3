@@ -488,6 +488,15 @@ if value? 'blur [
 				#{0A00000A0A00000A0A00000A0A00000A} ;; premultiplied on macOS :/
 			] to binary! img2
 	]
+
+	if find codecs 'jpeg [
+		--test-- "loading JPEG file with an unexpected property type"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2587
+		--assert all [
+			img: image? try [load %units/files/issue-2587.jpg] ;; no error!
+			img/size = 105x150
+		]
+	]
 ===end-group===
 
 ===start-group=== "Image as a series"
