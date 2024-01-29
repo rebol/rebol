@@ -2,7 +2,7 @@ REBOL [
 	Name:    bbcode
 	Type:    module
 	Options: [delay]
-	Version: 0.3.3
+	Version: 0.3.4
 	Title:   "Codec: BBcode"
 	Purpose: {Basic BBCode implementation. For more info about BBCode check http://en.wikipedia.org/wiki/BBCode}
 	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-bbcode.reb
@@ -267,7 +267,7 @@ emit-tag-images: function/with [][
 	alt:    get-attribute/default "alt" ""
 	unless empty? alt [insert alt SP]
 
-	columns: num: 0
+	row-width: columns: num: 0
 	temp: clear []
 	files: none
 	dir: to-rebol-file get-attribute "dir"
