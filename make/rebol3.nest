@@ -131,6 +131,14 @@ target-turris: [
 		:arch-x64
 		arch: arm64
 	]
+	cross-linux-riscv64: [
+		;- requires: sudo apt-get install gcc-riscv64-linux-gnu
+		compiler: %/usr/bin/riscv64-linux-gnu-gcc
+		library:  %/usr/riscv64-linux-gnu/lib/
+		:target-linux
+		:arch-x64
+		arch: riscv64
+	]
 ]
 
 core-files: [
@@ -1092,6 +1100,10 @@ arch-mips64le: [
 	:common-64bit
 	arch: mips64le
 ]
+arch-riscv64: [
+	:common-64bit
+	arch: riscv64
+]
 
 
 ;-------------------------------------------------------------------------------
@@ -1142,6 +1154,7 @@ make-armv6-exe: [:arch-armv6 :make-exe ]
 make-armv7-exe: [:arch-armv7 :make-exe ]
 make-arm64-exe: [:arch-arm64 :make-exe ]
 make-mips64le-exe: [:arch-mips64le :make-exe ]
+make-riscv64-exe:  [:arch-riscv64  :make-exe ]
 
 ; for making Rebol as a shared library
 make-dll: [
@@ -1277,127 +1290,154 @@ eggs: [
 		]
 	]
 	#if Linux? [
-		"Rebol/Base linux-x86" [
-			name:     %rebol3-base-linux-x86
-			:target-linux
-			:make-x86-exe
+		#if (system/build/arch = 'x86) [
+			"Rebol/Base linux-x86" [
+				name:     %rebol3-base-linux-x86
+				:target-linux
+				:make-x86-exe
+			]
+			"Rebol/Core linux-x86" [
+				name:     %rebol3-core-linux-x86
+				:target-linux
+				:include-rebol-core
+				:make-x86-exe
+			]
+			"Rebol/Bulk linux-x86" [
+				name:     %rebol3-bulk-linux-x86
+				:target-linux
+				:include-rebol-bulk
+				:make-x86-exe
+			]
 		]
-		"Rebol/Core linux-x86" [
-			name:     %rebol3-core-linux-x86
-			:target-linux
-			:include-rebol-core
-			:make-x86-exe
+		#if (system/build/arch = 'x64) [
+			"Rebol/Base linux-x64" [
+				name:     %rebol3-base-linux-x64
+				:target-linux
+				:make-x64-exe
+			]
+			"Rebol/Core linux-x64" [
+				name:     %rebol3-core-linux-x64
+				:target-linux
+				:include-rebol-core
+				:make-x64-exe
+			]
+			"Rebol/Bulk linux-x64" [
+				name:     %rebol3-bulk-linux-x64
+				:target-linux
+				:include-rebol-bulk
+				:make-x64-exe
+			]
 		]
-		"Rebol/Bulk linux-x86" [
-			name:     %rebol3-bulk-linux-x86
-			:target-linux
-			:include-rebol-bulk
-			:make-x86-exe
+		#if (system/build/arch = 'armv6) [
+			"Rebol/Base linux-armv6" [
+				name:     %rebol3-base-linux-armv6
+				:target-linux
+				:make-armv6-exe
+			]
+			"Rebol/Core linux-armv6" [
+				name:     %rebol3-core-linux-armv6
+				:target-linux
+				:include-rebol-core
+				:make-armv6-exe
+			]
+			"Rebol/Bulk linux-armv6" [
+				name:     %rebol3-bulk-linux-armv6
+				:target-linux
+				:include-rebol-bulk
+				:make-armv6-exe
+			]
 		]
-
-		"Rebol/Base linux-x64" [
-			name:     %rebol3-base-linux-x64
-			:target-linux
-			:make-x64-exe
+		#if (system/build/arch = 'armv7) [
+			"Rebol/Base linux-armv7" [
+				name:     %rebol3-base-linux-armv7
+				:target-linux
+				:make-armv7-exe
+			]
+			"Rebol/Core linux-armv7" [
+				name:     %rebol3-core-linux-armv7
+				:target-linux
+				:include-rebol-core
+				:make-armv7-exe
+			]
+			"Rebol/Bulk linux-armv7" [
+				name:     %rebol3-bulk-linux-armv7
+				:target-linux
+				:include-rebol-bulk
+				:make-armv7-exe
+			]
 		]
-		"Rebol/Core linux-x64" [
-			name:     %rebol3-core-linux-x64
-			:target-linux
-			:include-rebol-core
-			:make-x64-exe
+		#if (system/build/arch = 'arm64) [
+			"Rebol/Base linux-arm64" [
+				name:     %rebol3-base-linux-arm64
+				:target-linux
+				:make-arm64-exe
+			]
+			"Rebol/Core linux-arm64" [
+				name:     %rebol3-core-linux-arm64
+				:target-linux
+				:include-rebol-core
+				:make-arm64-exe
+			]
+			"Rebol/Bulk linux-arm64" [
+				name:     %rebol3-bulk-linux-arm64
+				:target-linux
+				:include-rebol-bulk
+				:make-arm64-exe
+			]
 		]
-		"Rebol/Bulk linux-x64" [
-			name:     %rebol3-bulk-linux-x64
-			:target-linux
-			:include-rebol-bulk
-			:make-x64-exe
+		#if (system/build/arch = 'mips64le) [
+			"Rebol/Base linux-mips64le" [
+				name:     %rebol3-base-linux-mips64le
+				:target-linux
+				:make-mips64le-exe
+			]
+			"Rebol/Core linux-mips64le" [
+				name:     %rebol3-core-linux-mips64le
+				:target-linux
+				:include-rebol-core
+				:make-mips64le-exe
+			]
+			"Rebol/Bulk linux-mips64le" [
+				name:     %rebol3-bulk-linux-mips64le
+				:target-linux
+				:include-rebol-bulk
+				:make-mips64le-exe
+			]
 		]
-
-		"Rebol/Base linux-armv6" [
-			name:     %rebol3-base-linux-armv6
-			:target-linux
-			:make-armv6-exe
+		#if (system/build/arch = 'riscv64) [
+			"Rebol/Base linux-riscv64" [
+				name:     %rebol3-base-linux-riscv64
+				:target-linux
+				:make-riscv64-exe
+			]
+			"Rebol/Core linux-riscv64" [
+				name:     %rebol3-core-linux-riscv64
+				:target-linux
+				:include-rebol-core
+				:make-riscv64-exe
+			]
+			"Rebol/Bulk linux-riscv64" [
+				name:     %rebol3-bulk-linux-riscv64
+				:target-linux
+				:include-rebol-bulk
+				:make-riscv64-exe
+			]
 		]
-		"Rebol/Core linux-armv6" [
-			name:     %rebol3-core-linux-armv6
-			:target-linux
-			:include-rebol-core
-			:make-armv6-exe
-		]
-		"Rebol/Bulk linux-armv6" [
-			name:     %rebol3-bulk-linux-armv6
-			:target-linux
-			:include-rebol-bulk
-			:make-armv6-exe
-		]
-
-		"Rebol/Base linux-armv7" [
-			name:     %rebol3-base-linux-armv7
-			:target-linux
-			:make-armv7-exe
-		]
-		"Rebol/Core linux-armv7" [
-			name:     %rebol3-core-linux-armv7
-			:target-linux
-			:include-rebol-core
-			:make-armv7-exe
-		]
-		"Rebol/Bulk linux-armv7" [
-			name:     %rebol3-bulk-linux-armv7
-			:target-linux
-			:include-rebol-bulk
-			:make-armv7-exe
-		]
-
-		"Rebol/Base linux-arm64" [
-			name:     %rebol3-base-linux-arm64
-			:target-linux
-			:make-arm64-exe
-		]
-		"Rebol/Core linux-arm64" [
-			name:     %rebol3-core-linux-arm64
-			:target-linux
-			:include-rebol-core
-			:make-arm64-exe
-		]
-		"Rebol/Bulk linux-arm64" [
-			name:     %rebol3-bulk-linux-arm64
-			:target-linux
-			:include-rebol-bulk
-			:make-arm64-exe
-		]
-
-		"Rebol/Base linux-mips64le" [
-			name:     %rebol3-base-linux-mips64le
-			:target-linux
-			:make-mips64le-exe
-		]
-		"Rebol/Core linux-mips64le" [
-			name:     %rebol3-core-linux-mips64le
-			:target-linux
-			:include-rebol-core
-			:make-mips64le-exe
-		]
-		"Rebol/Bulk linux-mips64le" [
-			name:     %rebol3-bulk-linux-mips64le
-			:target-linux
-			:include-rebol-bulk
-			:make-mips64le-exe
-		]
-
-		"Rebol/Core linux-x64 shared library" [
-			name:     %librebol3-core-linux-x64
-			;lflag:    "-Wl,-install_name,'/usr/local/lib/librebol-core.3.so'"
-			:target-linux
-			:include-rebol-core
-			:make-x64-dll
-		]
-		"Rebol/Core linux-x64 host application" [
-			name:     %host-core-linux-x64
-			shared:   %librebol3-core-linux-x64
-			:target-linux
-			:include-rebol-core
-			:make-x64-host
+		#if (system/build/arch = 'x64) [
+			"Rebol/Core linux-x64 shared library" [
+				name:     %librebol3-core-linux-x64
+				;lflag:    "-Wl,-install_name,'/usr/local/lib/librebol-core.3.so'"
+				:target-linux
+				:include-rebol-core
+				:make-x64-dll
+			]
+			"Rebol/Core linux-x64 host application" [
+				name:     %host-core-linux-x64
+				shared:   %librebol3-core-linux-x64
+				:target-linux
+				:include-rebol-core
+				:make-x64-host
+			]
 		]
 
 
@@ -1488,6 +1528,24 @@ eggs: [
 			name:     %rebol3-bulk-linux-aarch64
 			:include-rebol-bulk
 			:cross-linux-aarch64
+			:make-exe
+		]
+		;@@ sudo apt-get install gcc-riscv64-linux-gnu
+		"Cross-compile Rebol/Base (riscv64)" [
+			name:     %rebol3-base-linux-riscv64
+			:cross-linux-riscv64
+			:make-exe
+		]
+		"Cross-compile Rebol/Core (riscv64)" [
+			name:     %rebol3-core-linux-riscv64
+			:include-rebol-core
+			:cross-linux-riscv64
+			:make-exe
+		]
+		"Cross-compile Rebol/Bulk (riscv64)" [
+			name:     %rebol3-bulk-linux-riscv64
+			:include-rebol-bulk
+			:cross-linux-riscv64
 			:make-exe
 		]
 	]
