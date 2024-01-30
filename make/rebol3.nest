@@ -1290,7 +1290,7 @@ eggs: [
 		]
 	]
 	#if Linux? [
-		#if (system/build/arch = 'x86) [
+		#if (find [x86 x64] system/build/arch) [
 			"Rebol/Base linux-x86" [
 				name:     %rebol3-base-linux-x86
 				:target-linux
@@ -1308,8 +1308,6 @@ eggs: [
 				:include-rebol-bulk
 				:make-x86-exe
 			]
-		]
-		#if (system/build/arch = 'x64) [
 			"Rebol/Base linux-x64" [
 				name:     %rebol3-base-linux-x64
 				:target-linux
