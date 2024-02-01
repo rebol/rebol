@@ -308,6 +308,31 @@ if find codecs 'zip [
 			--assert block? select data %ico/icon_128.png
 			delete %ico.zip
 
+		--test-- "Saving file to zip"
+			;@@ https://github.com/Oldes/Rebol-issues/issues/2588
+			write %temp.txt "Ahoj!"
+			--assert all [
+				not error? try [save %temp.zip %temp.txt]
+				block? data: load %temp.zip
+				data/1 = %temp.txt
+				data/2/2 = #{41686F6A21}
+			]
+			delete %temp.zip
+			delete %temp.txt
+
+			make-dir %temp/
+			write %temp/temp.txt "Ahoj!"
+			--assert all [
+				not error? try [save %temp.zip %temp/]
+				block? data: load %temp.zip
+				data/1 = %temp/
+				none? data/2/2
+				data/3 = %temp/temp.txt
+				data/4/2 = #{41686F6A21}
+			]
+			delete-dir %temp/
+
+
 		--test-- "Encode ZIP using wildcard"
 			--assert not error? try [save %temp.zip %units/files/issue-2186*.txt]
 			data: load %temp.zip

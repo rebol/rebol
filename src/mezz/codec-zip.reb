@@ -166,7 +166,7 @@ register-codec [
 			try/with [
 				spec: query/mode file [type: date:]
 				either spec [
-					file-name: find/tail file root
+					file-name: any [find/tail file root file]
 					either spec/type = 'dir [
 						dir: file
 						add-data file-name spec
