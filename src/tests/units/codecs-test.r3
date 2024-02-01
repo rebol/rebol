@@ -330,6 +330,7 @@ if find codecs 'zip [
 				data/3 = %temp/temp.txt
 				data/4/2 = #{41686F6A21}
 			]
+			delete %temp.zip
 			delete-dir %temp/
 
 
