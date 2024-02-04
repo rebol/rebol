@@ -198,6 +198,55 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 	}
 }
 
+/***********************************************************************
+**
+*/	REBCNT Find_Block_Key(REBSER* series, REBVAL* key, REBCNT skip, REBOOL cased)
+/*
+**		Try to find the key value in the block.
+**
+**		RETURNS: the index to the KEY or NOT_FOUND if there is none.
+**
+***********************************************************************/
+{
+	REBSER* hser = series->series; // can be null
+	REBCNT* hashes = NULL;
+	REBCNT hash;
+	REBCNT n;
+	REBVAL* val;
+
+	val = BLK_HEAD(series);
+	if (ANY_WORD(key)) {
+		for (n = 0; n < series->tail; n += skip, val += skip) {
+			if (
+				ANY_WORD(val) && (
+					VAL_WORD_SYM(key) == VAL_BIND_SYM(val) ||
+					(!cased && VAL_WORD_CANON(key) == VAL_BIND_CANON(val))
+				)
+			) {
+				return n;
+			}
+		}
+	}
+	else if (ANY_BINSTR(key)) {
+		for (n = 0; n < series->tail; n += skip, val += skip) {
+			if (
+				VAL_TYPE(val) == VAL_TYPE(key)
+				&& 0 == Compare_String_Vals(key, val, (REBOOL)(!IS_BINARY(key) && !cased))
+			) {
+				return n;
+			}
+		}
+	}
+	else {
+		for (n = 0; n < series->tail; n += skip, val += skip) {
+			if (VAL_TYPE(val) == VAL_TYPE(key) && 0 == Cmp_Value(key, val, cased)) {
+				return n;
+			}
+		}
+	}
+	return NOT_FOUND;
+}
+
 
 /***********************************************************************
 **

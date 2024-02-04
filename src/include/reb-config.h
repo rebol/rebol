@@ -77,6 +77,7 @@ These are now obsolete (as of A107) and should be removed:
 #include REBOL_OPTIONS_FILE
 #endif
 
+#define MIN_DICT 16 // Maximum number of keys in a map withouth hashing
 
 //* Common *************************************************************
 

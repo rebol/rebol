@@ -90,11 +90,8 @@ enum {
 		if (GET_FLAG(flags, SOP_BOTH)) i += VAL_LEN(val2);
 		retser = BUF_EMIT;			// use preallocated shared block
 		Resize_Series(retser, i);
-		hret = Make_Hash_Array(i);	// allocated
-
-		// Optimization note: !!
-		// This code could be optimized for small blocks by not hashing them
-		// and extending Find_Key to do a FIND on the value itself w/o the hash.
+		// don't hash small blocks...
+		hret = (i <= MIN_DICT) ? NULL : Make_Hash_Array(i);	// allocated
 
 		do {
 			// Check what is in first series/map but not in second series/map:

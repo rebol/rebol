@@ -93,7 +93,8 @@
 	REBSER *blk = Make_Block(size*2);
 	REBSER *ser = 0;
 
-	ser = Make_Hash_Array(size);
+	// Use hashing only when there is more then MIN_DICT keys.
+	if (size > MIN_DICT) ser = Make_Hash_Array(size);
 
 	blk->series = ser;
 
@@ -123,6 +124,19 @@
 	REBCNT len;
 	REBCNT n;
 	REBVAL *val;
+
+	if (!hser) {
+		// If there are no hashes for the keys, use plain linear search...
+		hash = Find_Block_Key(series, key, wide, cased);
+		if (hash == NOT_FOUND) {
+			if (mode > 1) {
+				// Append new value the target series:
+				Append_Series(series, (REBYTE*)key, wide);
+			}
+			return -1;
+		}
+		return hash;
+	}
 
 	// Compute hash for value:
 	len = hser->tail;
@@ -214,18 +228,43 @@
 **		and val is SET, create the entry and store the key and
 **		val.
 **
-**		RETURNS: the index to the VALUE or zero if there is none.
+**		RETURNS: the index to the VALUE or NOT_FOUND if there is none.
 **
 ***********************************************************************/
 {
 	REBSER *hser = series->series; // can be null
-	REBCNT *hashes;
+	REBCNT *hashes = NULL;
 	REBCNT hash;
 	REBCNT n;
 	REBVAL *set;
 
-	if (IS_NONE(key) || hser == NULL) return 0;
+	if (IS_NONE(key)) return NOT_FOUND;
 
+	// We may not be large enough yet for the hash table to
+	// be worthwhile, so just do a linear search:
+	if (!hser) {
+		if (series->tail <= MIN_DICT * 2) {
+			hash = Find_Block_Key(series, key, 2, cased);
+			if (hash != NOT_FOUND) {
+				hash++; // position of the value
+				// Key already exists so update the value, if needed...
+				if (val) {
+					set = BLK_SKIP(series, hash);
+					*set = *val;
+				}
+				// Return 
+				return hash;
+			}
+			if (!val) return NOT_FOUND;
+			hash /= 2;
+			goto new_entry;
+		}
+
+		// Add hash table:
+		//Print("hash added %d", series->tail);
+		series->series = hser = Make_Hash_Array(series->tail);
+		Rehash_Hash(series);
+	}
 	// Get hash table, expand it if needed:
 	if (series->tail > hser->tail/2) {
 		Expand_Hash(hser); // modifies size value
@@ -237,16 +276,17 @@
 	n = hashes[hash];
 
 	// Just a GET of value:
-	if (!val) return n;
+	if (!val) return ((n-1)*2)+1;
 
 	// Must set the value:
 	if (n) {  // re-set it:
-		set = BLK_SKIP(series, ((n-1)*2)); // find the key
-		VAL_CLR_OPT(set++, OPTS_HIDE);     // clear HIDE flag in case it was removed key; change to value position
-		*set = *val;                       // set the value
-		return n;
+		n = (n-1)*2;                    // index of the key
+		set = BLK_SKIP(series, n);      // find the key
+		VAL_CLR_OPT(set++, OPTS_HIDE);  // clear HIDE flag in case it was removed key; change to value position
+		*set = *val;                    // set the value
+		return n+1;                     // index of the value
 	}
-
+new_entry:
 	// Create new entry:
 #ifndef DO_NOT_NORMALIZE_MAP_KEYS
 	// append key
@@ -275,8 +315,8 @@
 #endif
 	// append value
 	Append_Val(series, val);  // no Copy_Series_Value(val) on strings
-
-	return (hashes[hash] = series->tail/2);
+	if (hashes) hashes[hash] = series->tail / 2; // Hash index is not a real index position of the value!
+	return series->tail;      // Index of the new value.
 }
 
 
@@ -320,9 +360,9 @@
 
 	n = Find_Entry(VAL_SERIES(data), pvs->select, val, FALSE);
 
-	if (!n) return PE_NONE;
+	if (n == NOT_FOUND) return PE_NONE;
 
-	pvs->value = VAL_BLK_SKIP(data, ((n-1)*2)+1);
+	pvs->value = VAL_BLK_SKIP(data, n);
 	return PE_OK;
 }
 
@@ -507,8 +547,8 @@
 	case A_SELECT:
 	case A_FIND:
 		n = Find_Entry(series, arg, 0, Find_Refines(ds, AM_SELECT_CASE) ? AM_FIND_CASE : 0);
-		if (!n) return R_NONE;
-		*D_RET = *VAL_BLK_SKIP(val, ((n-1)*2)+((action == A_FIND)?0:1));
+		if (n == NOT_FOUND) return R_NONE;
+		*D_RET = *VAL_BLK_SKIP(val, n - ((action == A_FIND)?1:0)); // `find` returns the key
 		break;
 
 	case A_INSERT:
@@ -534,10 +574,9 @@
 	case A_REMOVE:
 		//O: throw an error if /part is used?
 		n = Find_Entry(series, D_ARG(ARG_REMOVE_KEY_ARG), 0, TRUE);
-		if (n) {
-			n = (n-1)*2;
-			VAL_SET_OPT(VAL_BLK_SKIP(val, n), OPTS_HIDE);
-			VAL_SET(VAL_BLK_SKIP(val, n+1), REB_NONE); // set value to none (so the old one may be GCed)
+		if (n != NOT_FOUND) {
+			VAL_SET_OPT(VAL_BLK_SKIP(val, n-1), OPTS_HIDE); // hide the key
+			VAL_SET(VAL_BLK_SKIP(val, n), REB_NONE); // set value to none (so the old one may be GCed)
 		}
 		return R_ARG1;
 
