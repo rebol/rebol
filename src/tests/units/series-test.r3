@@ -2524,6 +2524,11 @@ Rebol [
 	--assert [1 2 3 4] = deduplicate/skip b: [1 2 1 2 3 4] 2
 	--assert [1 2 3 4] = b
 
+--test-- "unique on block of blocks"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1075
+	--assert [[ ]] =  unique [[] []]
+	--assert [[1]] =  unique [[1] [1]]
+
 --test-- "unique with unset and none"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1124
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1592
