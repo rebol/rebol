@@ -414,6 +414,8 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1283
 		bits: make bitset!  [1]
 		--assert find bits [1] ;- no crash
+		--assert not find bits [2]
+		--assert not find bits [1 2]
 
 	--test-- "to-binary bitset"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2436
