@@ -210,7 +210,6 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 {
 	REBSER* hser = series->series; // can be null
 	REBCNT* hashes = NULL;
-	REBCNT hash;
 	REBCNT n;
 	REBVAL* val;
 
@@ -228,10 +227,11 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 		}
 	}
 	else if (ANY_BINSTR(key)) {
+		cased = !(IS_BINARY(key) || cased);
 		for (n = 0; n < series->tail; n += skip, val += skip) {
 			if (
 				VAL_TYPE(val) == VAL_TYPE(key)
-				&& 0 == Compare_String_Vals(key, val, (REBOOL)(!IS_BINARY(key) && !cased))
+				&& 0 == Compare_String_Vals(key, val, cased)
 			) {
 				return n;
 			}

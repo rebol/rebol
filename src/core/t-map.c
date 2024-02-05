@@ -165,11 +165,12 @@
 		}
 	}
 	else if (ANY_BINSTR(key)) {
+		cased = !(IS_BINARY(key) || cased);
 		while (NZ(n = hashes[hash])) {
 			val = BLK_SKIP(series, (n-1) * wide);
 			if (
 				VAL_TYPE(val) == VAL_TYPE(key)
-				&& 0 == Compare_String_Vals(key, val, (REBOOL)(!IS_BINARY(key) && !cased))
+				&& 0 == Compare_String_Vals(key, val, cased)
 			) return hash;
 			hash += skip;
 			if (hash >= len) hash -= len;
