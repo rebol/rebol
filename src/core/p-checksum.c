@@ -34,9 +34,9 @@
 #include REBOL_OPTIONS_FILE
 #endif
 
-#ifdef INCLUDE_MBEDTLS
 #include "sys-core.h"
 #include "sys-checksum.h"
+#ifdef INCLUDE_MBEDTLS
 #include "reb-net.h"
 #include "mbedtls/md4.h"
 #include "mbedtls/md5.h"
@@ -141,6 +141,24 @@
 			*blk = SHA512_DIGEST_LENGTH;
 			return;
 #endif
+#ifdef INCLUDE_XXHASH
+		case SYM_XXH3:
+			*ctx = sizeof(XXH3_CTX);
+			*blk = 8;
+			break;
+		case SYM_XXH32:
+			*ctx = sizeof(XXH32_CTX);
+			*blk = 4;
+			break;
+		case SYM_XXH64:
+			*ctx = sizeof(XXH64_CTX);
+			*blk = 8;
+			break;
+		case SYM_XXH128:
+			*ctx = sizeof(XXH128_CTX);
+			*blk = 16;
+			break;
+#endif
 		default:
 			*ctx = *blk = 0;
 			break;
@@ -224,6 +242,20 @@
 			return TRUE;
 		case SYM_SHA512:
 			SHA512_Starts((SHA512_CTX*)VAL_BIN(ctx));
+			return TRUE;
+#endif
+#ifdef INCLUDE_XXHASH
+		case SYM_XXH3:
+			XXH3_Starts((XXH3_CTX*)VAL_BIN(ctx));
+			return TRUE;
+		case SYM_XXH32:
+			XXH32_Starts((XXH32_CTX*)VAL_BIN(ctx));
+			return TRUE;
+		case SYM_XXH64:
+			XXH64_Starts((XXH64_CTX*)VAL_BIN(ctx));
+			return TRUE;
+		case SYM_XXH128:
+			XXH128_Starts((XXH128_CTX*)VAL_BIN(ctx));
 			return TRUE;
 #endif
 	}
@@ -349,6 +381,20 @@
 				SHA512_Update((SHA512_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
 				break;
 #endif
+#ifdef INCLUDE_XXHASH
+			case SYM_XXH3:
+				XXH3_Update((XXH3_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				break;
+			case SYM_XXH32:
+				XXH32_Update((XXH32_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				break;
+			case SYM_XXH64:
+				XXH64_Update((XXH64_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				break;
+			case SYM_XXH128:
+				XXH128_Update((XXH128_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				break;
+#endif
 			}
 		break;
 	case A_READ:
@@ -429,6 +475,20 @@
 			break;
 		case SYM_SHA512:
 			SHA512_Finish((SHA512_CTX*)DS_TOP, VAL_BIN_DATA(data));
+			break;
+#endif
+#ifdef INCLUDE_XXHASH
+		case SYM_XXH3:
+			XXH3_Finish((XXH3_CTX*)DS_TOP, VAL_BIN_DATA(data));
+			break;
+		case SYM_XXH32:
+			XXH32_Finish((XXH32_CTX*)DS_TOP, VAL_BIN_DATA(data));
+			break;
+		case SYM_XXH64:
+			XXH64_Finish((XXH64_CTX*)DS_TOP, VAL_BIN_DATA(data));
+			break;
+		case SYM_XXH128:
+			XXH128_Finish((XXH128_CTX*)DS_TOP, VAL_BIN_DATA(data));
 			break;
 #endif
 		}

@@ -766,6 +766,11 @@ include-base36-encoding: [
 	config: INCLUDE_BASE36
 ]
 
+include-xxhash: [
+	config: INCLUDE_XXHASH
+	file: %core/u-xxhash.c
+]
+
 ;- native additional compressions:                                              
 include-lzma-compression: [
 	config: INCLUDE_LZMA
@@ -930,6 +935,7 @@ include-rebol-core: [
 	:include-cryptography
 	:include-bincode
 	:include-iconv
+	:include-xxhash
 	:include-mail
 	:include-prot-https
 

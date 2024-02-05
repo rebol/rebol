@@ -98,3 +98,38 @@ void SHA3_256_Finish(void* c, REBYTE* md);
 void SHA3_384_Finish(void* c, REBYTE* md);
 void SHA3_512_Finish(void* c, REBYTE* md);
 #endif
+
+#ifdef INCLUDE_XXHASH
+#define XXH_STATIC_LINKING_ONLY 
+#include "sys-xxhash.h"
+
+#define XXH3_CTX     XXH3_state_t
+#define XXH32_CTX    XXH32_state_t
+#define XXH64_CTX    XXH64_state_t
+#define XXH128_CTX   XXH3_state_t
+REBYTE* HashXXH3(REBYTE*, REBCNT, REBYTE*);
+REBYTE* HashXXH32(REBYTE*, REBCNT, REBYTE*);
+REBYTE* HashXXH64(REBYTE*, REBCNT, REBYTE*);
+REBYTE* HashXXH128(REBYTE*, REBCNT, REBYTE*);
+
+void XXH3_Starts(void* c);
+void XXH3_Update(void* c, REBYTE* data, REBCNT len);
+void XXH3_Finish(void* c, REBYTE* md);
+int  XXH3_CtxSize(void);
+
+void XXH32_Starts(void* c);
+void XXH32_Update(void* c, REBYTE* data, REBCNT len);
+void XXH32_Finish(void* c, REBYTE* md);
+int  XXH32_CtxSize(void);
+
+void XXH64_Starts(void* c);
+void XXH64_Update(void* c, REBYTE* data, REBCNT len);
+void XXH64_Finish(void* c, REBYTE* md);
+int  XXH64_CtxSize(void);
+
+void XXH128_Starts(void* c);
+void XXH128_Update(void* c, REBYTE* data, REBCNT len);
+void XXH128_Finish(void* c, REBYTE* md);
+int  XXH128_CtxSize(void);
+
+#endif

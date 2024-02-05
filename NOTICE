@@ -58,6 +58,9 @@ Credits for Non-REBOL orginated C files and modules
   Copyright (c) 2021, Dominic Szablewski https://phoboslab.org
   The MIT License(MIT) - https://github.com/phoboslab/qoi
 
+* xxHash (optional):
+  Copyright (C) 2012-2023 Yann Collet - https://github.com/Cyan4973/xxHash
+  BSD 2-Clause License
 
 Credits for currently deprecated and or unused code
 ---------------------------------------------------

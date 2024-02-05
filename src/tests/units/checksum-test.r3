@@ -315,6 +315,93 @@ C4294CF5AD661A4551844E9EEA3A1074188503B24349912BFAA21BD5FB4ACFBE}
 		--assert sum1 = port/data
 		close port
 ]
+
+if find system/catalog/checksums 'xxh3 [
+	--test-- "checksum-port-xxh3"
+		port: open checksum:xxh3
+		sum1: checksum bin 'xxh3
+		sum2: checksum bin2 'xxh3
+		--assert sum1 = #{9FEF7E6F59EC717A}
+		--assert sum2 = #{078967DE7F525BA5}
+		--assert port? port
+		--assert open? port
+		--assert 'xxh3 = port/spec/method
+		--assert port? write port bin
+		--assert sum1 = read port
+		--assert port? write port bin
+		--assert sum2 = read port
+		--assert sum2 = read port
+		--assert not open? close port
+		--assert port? write open port bin
+		--assert port? update port
+		--assert sum1 = port/data
+		close port
+]
+if find system/catalog/checksums 'xxh32 [
+	--test-- "checksum-port-xxh32"
+		port: open checksum:xxh32
+		sum1: checksum bin 'xxh32
+		sum2: checksum bin2 'xxh32
+		--assert sum1 = #{7E793E85}
+		--assert sum2 = #{E0F8511E}
+		--assert port? port
+		--assert open? port
+		--assert 'xxh32 = port/spec/method
+		--assert port? write port bin
+		--assert sum1 = read port
+		--assert port? write port bin
+		--assert sum2 = read port
+		--assert sum2 = read port
+		--assert not open? close port
+		--assert port? write open port bin
+		--assert port? update port
+		--assert sum1 = port/data
+		close port
+]
+if find system/catalog/checksums 'xxh64 [
+	--test-- "checksum-port-xxh64"
+		port: open checksum:xxh64
+		sum1: checksum bin 'xxh64
+		sum2: checksum bin2 'xxh64
+		--assert sum1 = #{1850B5D77D6C60CF}
+		--assert sum2 = #{3FCEF9F54F46787C}
+		--assert port? port
+		--assert open? port
+		--assert 'xxh64 = port/spec/method
+		--assert port? write port bin
+		--assert sum1 = read port
+		--assert port? write port bin
+		--assert sum2 = read port
+		--assert sum2 = read port
+		--assert not open? close port
+		--assert port? write open port bin
+		--assert port? update port
+		--assert sum1 = port/data
+		close port
+]
+if find system/catalog/checksums 'xxh128 [
+	--test-- "checksum-port-xxh128"
+		port: open checksum:xxh128
+		sum1: checksum bin 'xxh128
+		sum2: checksum bin2 'xxh128
+		--assert sum1 = #{55E28E62BBDB8B2D9FEF7E6F59EC717A}
+		--assert sum2 = #{EB7A7F7736C45EEB1379AF60CEAB7F2A}
+		--assert port? port
+		--assert open? port
+		--assert 'xxh128 = port/spec/method
+		--assert port? write port bin
+		--assert sum1 = read port
+		--assert port? write port bin
+		--assert sum2 = read port
+		--assert sum2 = read port
+		--assert not open? close port
+		--assert port? write open port bin
+		--assert port? update port
+		--assert sum1 = port/data
+		close port
+]
+
+
 	--test-- "checksum-write-refinements"
 		port: open checksum://
 		write/part port bin 1

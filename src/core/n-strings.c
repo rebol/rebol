@@ -71,6 +71,12 @@ static struct digest {
 	{SHA3_384, SHA3_384_Starts,   SHA3_Update,   SHA3_384_Finish,   SHA3_CtxSize, SYM_SHA3_384, 48, 128},
 	{SHA3_512, SHA3_512_Starts,   SHA3_Update,   SHA3_512_Finish,   SHA3_CtxSize, SYM_SHA3_512, 64, 128},
 #endif
+#ifdef INCLUDE_MD4
+	{HashXXH3,   XXH3_Starts,   XXH3_Update,   XXH3_Finish,   XXH3_CtxSize,   SYM_XXH3,    8, 64},
+	{HashXXH32,  XXH32_Starts,  XXH32_Update,  XXH32_Finish,  XXH32_CtxSize,  SYM_XXH32,   4, 64},
+	{HashXXH64,  XXH64_Starts,  XXH64_Update,  XXH64_Finish,  XXH64_CtxSize,  SYM_XXH64,   8, 64},
+	{HashXXH128, XXH128_Starts, XXH128_Update, XXH128_Finish, XXH128_CtxSize, SYM_XXH128, 16, 64},
+#endif
 	{0}
 
 };
@@ -136,6 +142,24 @@ static struct digest {
 #ifdef INCLUDE_MD4
 	case SYM_MD4:
 		MD4(input, length, output);
+		*olen = 16;
+		break;
+#endif
+#ifdef INCLUDE_XXHASH
+	case SYM_XXH3:
+		HashXXH3(input, length, output);
+		*olen = 8;
+		break;
+	case SYM_XXH32:
+		HashXXH32(input, length, output);
+		*olen = 4;
+		break;
+	case SYM_XXH64:
+		HashXXH64(input, length, output);
+		*olen = 8;
+		break;
+	case SYM_XXH128:
+		HashXXH128(input, length, output);
 		*olen = 16;
 		break;
 #endif

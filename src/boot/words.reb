@@ -212,6 +212,10 @@ sha256
 sha384
 sha512
 ripemd160
+xxh3
+xxh32
+xxh64
+xxh128
 sha3-224
 sha3-256
 sha3-384

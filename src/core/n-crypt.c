@@ -221,6 +221,12 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 		add_ec_word(SYM_SHA3_384)
 		add_ec_word(SYM_SHA3_512)
 #endif
+#ifdef INCLUDE_XXHASH
+		add_ec_word(SYM_XXH3)
+		add_ec_word(SYM_XXH32)
+		add_ec_word(SYM_XXH64)
+		add_ec_word(SYM_XXH128)
+#endif
 		add_ec_word(SYM_TCP)
 	}
 
