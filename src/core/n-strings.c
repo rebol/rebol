@@ -264,7 +264,7 @@ static struct digest {
 	else {
 		// Dispatch file to file-checksum function...
 		REBVAL *func = Find_Word_Value(Lib_Context, SYM_FILE_CHECKSUM);
-		if (func && IS_FUNCTION(func) && sym > SYM_CRC32 && sym <= SYM_RIPEMD160) {
+		if (func && IS_FUNCTION(func) && sym > SYM_CRC32 && sym <= SYM_SHA3_512) {
 			if (D_REF(ARG_CHECKSUM_WITH) || D_REF(ARG_CHECKSUM_PART))
 				Trap0(RE_BAD_REFINES);
 
