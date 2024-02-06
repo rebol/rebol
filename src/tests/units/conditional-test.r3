@@ -25,13 +25,15 @@ Rebol [
 			all [true  x: 2 ()]
 		][ x: 2 * x]
 		--assert x = 4
+	--test-- "unset value transparency in any and all"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/850
 		;@@ https://github.com/Oldes/Rebol3/discussions/88
 		--assert  none? any []
 		--assert  none? any [()]
 		--assert    1 = any [() 1]
 		--assert    1 = all [1 ()]
-		--assert #[true] = all []
-		--assert #[true] = all [()]
+		--assert unset? all []
+		--assert unset? all [()]
 ===end-group===
 
 ===start-group=== "SWITCH"
