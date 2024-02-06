@@ -307,12 +307,19 @@ enum {
 	ds = 0;
 	while (index < SERIES_TAIL(block)) {
 		index = Do_Next(block, index, 0); // stack volatile
+		// ignore unset result
+		if (IS_UNSET(DS_TOP)) {
+			DS_DROP;
+			continue;
+		}
 		ds = DS_POP;  // volatile stack reference
 		if (IS_FALSE(ds)) return R_NONE;
+		// store the value as a potencial result
+		DS_RET_VALUE(ds);
+		// stop precessing if the value was thrown
 		if (THROWN(ds)) break;
 	}
-	if (ds == 0) return R_TRUE;
-	return R_TOS1;
+	return R_RET;
 }
 
 
@@ -328,6 +335,7 @@ enum {
 	while (index < SERIES_TAIL(block)) {
 		index = Do_Next(block, index, 0); // stack volatile
 		ds = DS_POP;  // volatile stack reference
+		if (IS_UNSET(ds)) continue; // ignore unset result
 		if (!IS_FALSE(ds)) return R_TOS1;
 	}
 	return R_NONE;

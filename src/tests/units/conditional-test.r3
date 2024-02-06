@@ -10,13 +10,13 @@ Rebol [
 
 ===start-group=== "Dealing with unset! value in conditions"
 	--test-- "any"
-		--assert unset? any [() 2]
+		--assert 2 = any [() 2]
 		--assert true?  any [() 2]
 	--test-- "all"
 		--assert true? all []
 		--assert true? all [()]
 		--assert 3 = all [() 1 2 3]
-		--assert unset? all [1 ()]
+		--assert 1 = all [1 ()]
 		--assert 1 = if all [1 ()][1]
 		--assert 1 = either all [()][1][2]
 	--test-- "any and all"
@@ -25,6 +25,13 @@ Rebol [
 			all [true  x: 2 ()]
 		][ x: 2 * x]
 		--assert x = 4
+		;@@ https://github.com/Oldes/Rebol3/discussions/88
+		--assert  none? any []
+		--assert  none? any [()]
+		--assert    1 = any [() 1]
+		--assert    1 = all [1 ()]
+		--assert #[true] = all []
+		--assert #[true] = all [()]
 ===end-group===
 
 ===start-group=== "SWITCH"
