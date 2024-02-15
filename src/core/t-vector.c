@@ -446,7 +446,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	ser->tail = len;  // !!! another way to do it?
 
 	// Store info about the vector (could be moved to flags if necessary):
-	ser->size = (dims << 8) | (type << 3) | (sign << 2) | (bits >> 4)-1; // bits are zero based value!
+	ser->size = (dims << 8) | (type << 3) | (sign << 2) | (bits == 64 ? 3 : bits >> 4); // there are only 2 bits to store the info
 
 	return ser;
 }
