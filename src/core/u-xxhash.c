@@ -52,7 +52,7 @@
 {
 	// d is data, n is length
     XXH64_hash_t const hash = XXH3_64bits(d, n);
-	XXH64_canonicalFromHash(md, hash);
+	XXH64_canonicalFromHash((XXH64_canonical_t *)md, hash);
     return md;
 }
 /***********************************************************************
@@ -62,7 +62,7 @@
 ***********************************************************************/
 {
     XXH32_hash_t const hash = XXH32(d, n, 0);
-	XXH32_canonicalFromHash(md, hash);
+	XXH32_canonicalFromHash((XXH32_canonical_t *)md, hash);
     return md;
 }
 /***********************************************************************
@@ -73,7 +73,7 @@
 {
 	// d is data, n is length
     XXH64_hash_t const hash = XXH64(d, n, 0);
-	XXH64_canonicalFromHash(md, hash);
+	XXH64_canonicalFromHash((XXH64_canonical_t *)md, hash);
     return md;
 }
 /***********************************************************************
@@ -84,7 +84,7 @@
 {
 	// d is data, n is length
 	XXH128_hash_t const hash = XXH128(d, n, 0);
-	XXH128_canonicalFromHash(md, hash);
+	XXH128_canonicalFromHash((XXH128_canonical_t *)md, hash);
 	return md;
 }
 int  XXH3_CtxSize(void) { return sizeof(XXH3_state_t); }
@@ -103,10 +103,10 @@ void XXH3_Update( XXH3_state_t *ctx,
     XXH3_64bits_update( ctx, input, ilen );
 }
 void XXH3_Finish(XXH3_state_t*ctx,
-                         unsigned char output[64] )
+                         unsigned char output[8] )
 {
 	XXH64_hash_t const hash = XXH3_64bits_digest(ctx);
-	XXH64_canonicalFromHash(output, hash);
+	XXH64_canonicalFromHash((XXH64_canonical_t *)output, hash);
 }
 
 void XXH32_Starts( XXH32_state_t *ctx )
@@ -121,10 +121,10 @@ void XXH32_Update( XXH32_state_t *ctx,
     XXH32_update( ctx, input, ilen );
 }
 void XXH32_Finish(XXH32_state_t*ctx,
-                         unsigned char output[64] )
+                         unsigned char output[4] )
 {
 	XXH32_hash_t const hash = XXH32_digest(ctx);
-    XXH32_canonicalFromHash(output, hash);
+    XXH32_canonicalFromHash((XXH32_canonical_t *)output, hash);
 }
 
 void XXH64_Starts( XXH64_state_t *ctx )
@@ -139,10 +139,10 @@ void XXH64_Update( XXH64_state_t *ctx,
     XXH64_update( ctx, input, ilen );
 }
 void XXH64_Finish(XXH64_state_t*ctx,
-                         unsigned char output[64] )
+                         unsigned char output[8] )
 {
 	XXH64_hash_t const hash = XXH64_digest(ctx);
-    XXH64_canonicalFromHash(output, hash);
+    XXH64_canonicalFromHash((XXH64_canonical_t *)output, hash);
 }
 
 void XXH128_Starts( XXH3_state_t *ctx )
