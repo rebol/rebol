@@ -58,7 +58,7 @@ register-codec [
 		to data output
 	][
 		ch-crlf:  system/catalog/bitsets/crlf
-		ch-crlf=: #[bitset! #{0024000000000004}] ;charset "^/^M="
+		ch-crlf=: #(bitset! #{0024000000000004}) ;charset "^/^M="
 		ch-space: system/catalog/bitsets/space
 		qp-decode: :codecs/quoted-printable/decode
 	]
@@ -93,7 +93,7 @@ register-codec [
 		take/part/last out 3 ; removed the last CRLFSP chars
 		to data out
 	][
-		safe-chars: #[bitset! #{004000008000FFC07FFFFFE07FFFFFE0}] ;= alpha-numeric + space
-		key-chars:  #[bitset! #{000000000004FFC07FFFFFE17FFFFFE0}]
+		safe-chars: #(bitset! #{004000008000FFC07FFFFFE07FFFFFE0}) ;= alpha-numeric + space
+		key-chars:  #(bitset! #{000000000004FFC07FFFFFE17FFFFFE0})
 	]
 ]

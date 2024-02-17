@@ -25,7 +25,7 @@ REBOL [
 ;		Mold      - mold format: - self, + type, * typeclass
 ;		Form      - form format: above, and f* for special form functions
 ;		Path      - it supports various path forms (* for same as typeclass)
-;		Make      - It can be made with #[datatype] method
+;		Make      - It can be made with #(datatype) method
 
 ;   Datatype    Evaluator   Typeclass   Mold     Form    Path   Make Typesets
 ;------------------------------------------------------------------------------

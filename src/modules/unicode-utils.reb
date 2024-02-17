@@ -42,7 +42,7 @@ decode-utf8: closure/with [
 	]
 	str
 ][
-	utf8d: #[u8! [
+	utf8d: make vector! [unsigned integer! 8 [
 		;; The first part of the table maps bytes to character classes that
 		;; to reduce the size of the transition table and create bitmasks.
 		 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
@@ -61,7 +61,7 @@ decode-utf8: closure/with [
 		12 12 12 12 12 12 12 24 12 12 12 12  12 24 12 12 12 12 12 12 12 24 12 12 
 		12 12 12 12 12 12 12 36 12 36 12 12  12 36 12 12 12 12 12 36 12 36 12 12 
 		12 36 12 12 12 12 12 12 12 12 12 12  
-	]]
+	]
 
 	UTF8_ACCEPT: 0
 	UTF8_REJECT: 12

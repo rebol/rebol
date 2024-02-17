@@ -55,7 +55,7 @@ sys/boot-banner: make-banner [
 	["REBOL/" system/product #" " system/version " (Oldes branch)"]
 	-
 	= Copyright: "2012 REBOL Technologies"
-	= "" "2012-2023 Rebol Open Source Contributors"
+	= "" "2012-2024 Rebol Open Source Contributors"
 	= "" "Apache 2.0 License, see LICENSE."
 	= Website:  "https://github.com/Oldes/Rebol3"
 	-
@@ -90,7 +90,8 @@ append sys/boot-banner
   * Direct access to TCP HTTP required (no proxies).
   * Use at your own risk.
   * ^[[1;32mTry/except^[[1;31m is deprecated and will be removed!^[[0m Use ^[[1;32mtry/with^[[0m instead.
-
+  * This Rebol version has switched map and construction syntax!
+    See: https://github.com/Oldes/Rebol-issues/issues/2589
 
 ^[[1;33mSpecial functions^[[0m:
 

@@ -12,7 +12,7 @@ Rebol [
 		03-Jan-2024 "Oldes" {Initial version}
 	]
 	Needs: [
-		3.11.0 ;; Minimal Rebol version required by WebScocket module
+		3.16.0 ;; new map and construction syntax since 3.16.0
 		websocket
 		json
 	]
@@ -91,7 +91,7 @@ sys/make-scheme [
 				browser: none
 				counter: 0
 				pending: 0 ;; increments when a new method is sent, decremented when response is received
-				req: #(id: 0 method: none params: #[none]) ;; used to send a command (to avoid cerating a new map)
+				req: #[id: 0 method: none params: #(none)] ;; used to send a command (to avoid cerating a new map)
 				page-info: none ;; holds resolved info from an attached page
 				page-conn: none ;; webscocket connection to an attached page
 			]

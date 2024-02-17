@@ -26,10 +26,10 @@ C79E915C3277361FBFA587C6DC06FEDE0B7E57FEC0B68F96B3AD651D54264357
 	;- Boban and Alice both have G and P values and generates DH keys...
 
 	--assert handle? k-Alice: dh-init g p
-	--assert "#[handle! dhm]" = mold k-Alice
+	--assert "#(handle! dhm)" = mold k-Alice
 	
 	--assert handle? k-Boban: dh-init g p
-	--assert "#[handle! dhm]" = mold k-Boban
+	--assert "#(handle! dhm)" = mold k-Boban
 
 --test-- "DH public key exportation"	
 

@@ -151,7 +151,7 @@ system/options/modules: join what-dir %units/files/
 	--test-- "make module! map!" ; not allowed
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1551
 		--assert all [
-			error? err: try [make module! #(a: 1)]
+			error? err: try [make module! #[a: 1]]
 			err/id = 'bad-make-arg
 		]
 	--test-- "make module! object!" ; not allowed
@@ -394,13 +394,13 @@ probe all [
 	--test-- "issue-1005"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1005
 		m: module [] [a: 1 2]
-		--assert [lib-local: #[object![]] a: 1] = body-of m
+		--assert [lib-local: #(object![]) a: 1] = body-of m
 		--assert [lib-local a] = keys-of m
-		--assert [#[object![]] 1] = values-of m
+		--assert [#(object![]) 1] = values-of m
 		m: module [exports: [a]] [a: 1 2]
-		--assert [lib-local: #[object![]] a: 1] = body-of m
+		--assert [lib-local: #(object![]) a: 1] = body-of m
 		--assert [lib-local a] = keys-of m
-		--assert [#[object![]] 1] = values-of m
+		--assert [#(object![]) 1] = values-of m
 
 	--test-- "issue-1708"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1708

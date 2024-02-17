@@ -164,7 +164,7 @@ sys/make-scheme [
 					][	:value ]
 				]
 				set:  func[key [word!] val [any-type!]][put data :key :val]
-				rem:  func[key][remove/key data :key #[unset!]]
+				rem:  func[key][remove/key data :key #(unset!)]
 				load: does [
 					date: modified? file
 					data: system/codecs/safe/decode/key :file :pass

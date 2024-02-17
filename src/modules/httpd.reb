@@ -37,7 +37,7 @@ Rebol [
 		09-May-2023 "Oldes" {Root-less configuration possibility (default)}
 		14-Dec-2023 "Oldes" {Deprecated the `http-server` function in favor of `serve-http` with a different configuration input}
 	]
-	Needs: [3.11.0 mime-types]
+	Needs: [3.16.0 mime-types] ;; new construction syntax since 3.16.0
 ]
 
 append system/options/log [httpd: 1]
@@ -217,10 +217,10 @@ sys/make-scheme [
 				]
 				subport/extra/config:
 				config: make map! [
-					root:       #[none]
+					root:       #(none)
 					index:       [%index.html %index.htm]
-					keep-alive: #[true]
-					list-dir?:  #[true]
+					keep-alive: #(true)
+					list-dir?:  #(true)
 					server-name: "Rebol3-HTTPd"
 				]
 			]
@@ -618,7 +618,7 @@ sys/make-scheme [
 	]
 
 	Awake-Client: wrap [
-		chars-method: #[bitset! #{00000000000000007FFFFFE0}] ; #"A" - #"Z"
+		chars-method: #(bitset! #{00000000000000007FFFFFE0}) ; #"A" - #"Z"
 		;from-method: ["GET" | "POST" | "HEAD" | "PUT" | "DELETE" | "TRACE" | "CONNECT" | "OPTIONS"]
 		chars: complement union space: charset " " charset [#"^@" - #"^_"]
 		CRLF2BIN: #{0D0A0D0A}

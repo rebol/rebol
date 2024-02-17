@@ -29,45 +29,45 @@ if find codecs 'pdf [
 
 	--test-- "Minimal PDF file"
 		empty-pdf: object [
-			trailer: #(
+			trailer: #[
 				Info: 1x0
 				Root: 2x0
-			)
-			objects: #(
+			]
+			objects: #[
 				;- Document Information Dictionary
-				1x0 #(
+				1x0 #[
 					Producer: "Rebol"
-				)
+				]
 				;- Document Catalog
-				2x0 #(
+				2x0 #[
 					Type: Catalog
 					Pages: 3x0
-				)
+				]
 				;- Root of the document's page tree
-				3x0 #(
+				3x0 #[
 					Type: Pages
 					Kids: [5x0]
 					Count: 1
-				)
+				]
 				;- Procedure Sets
 				4x0 [
 					PDF    ; Painting and graphics state
 				]
 				;- First page
-				5x0 #(
+				5x0 #[
 					Type: Page
 					Parent: 3x0
 					MediaBox: [0 0 612 792]
 					Contents: 6x0
-					Resources: #(
+					Resources: #[
 						ProcSet: 4x0
-					)
-				)
+					]
+				]
 				;- Empty content
-				6x0 #[object! [
+				6x0 #(object! [
 					data: ""
-				]]
-			)
+				])
+			]
 		]
 		--assert not error? try [save %tmp-empty.pdf empty-pdf]
 		--assert object?    try [p2: load %tmp-empty.pdf]
@@ -79,14 +79,14 @@ if find codecs 'pdf [
 		; include text processing..
 		append pdf/objects/4x0 'Text
 		; include font
-		put pdf/objects 7x0 #(
+		put pdf/objects 7x0 #[
 			Type:     Font
 			Subtype:  Type1
 			Name:     F1
 			BaseFont: Helvetica
 			Encoding: MacRomanEncoding
-		)
-		pdf/objects/5x0/Resources/Font: #(F1: 7x0)
+		]
+		pdf/objects/5x0/Resources/Font: #[F1: 7x0]
 		; make some content
 		pdf/objects/6x0/Data: {
 			BT

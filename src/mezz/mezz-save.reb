@@ -87,7 +87,7 @@ save: function [
 		]
 
 		if length [
-			append header-data [length: #[true]] ; any true? value will work
+			append header-data [length: #(true)] ; any true? value will work
 		]
 
 		unless compress: true? find select header-data 'options 'compress [method: none]

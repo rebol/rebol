@@ -1118,7 +1118,7 @@ base16:
 **		in unevaluated source code format. The format of the datatype
 **		constructor is:
 **
-**			#[datatype! | keyword spec]
+**			#(datatype! | keyword spec)
 **
 **		The first item is a datatype word or NONE, FALSE or TRUE. The
 **		second part is a specification for the datatype, as a basic

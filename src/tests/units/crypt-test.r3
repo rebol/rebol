@@ -155,7 +155,7 @@ YYFw8pfGesIFoEuVth4HKyF8k1y4mRUnYHP1XNMNMJl1JcEArC2asV8sHf6zSPVffozZ
 
 	--assert block? Load-PKIX pkix
 	--assert binary? Load-PKIX/binary pkix
-	--assert "#[handle! rsa]" = mold key: decode 'ssh-key pkix
+	--assert "#(handle! rsa)" = mold key: decode 'ssh-key pkix
 	release key ; don't wait on GC, release it now
 
 --test-- "SSH-public-key-2"	

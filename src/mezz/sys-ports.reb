@@ -102,15 +102,15 @@ url-parser: make object! [
 
 	;-- URL Character Sets
 	;URIs include components and subcomponents that are delimited by characters in the "reserved" set.
-	gen-delims:  #[bitset! #{000000001001002180000014}]         ;= charset ":/?#[]@"
-	sub-delims:  #[bitset! #{000000004BF80014}]                 ;= charset "!$&'()*+,;="
-	reserved:    #[bitset! #{000000005BF9003580000014}]         ;= [gen-delims | sub-delims]
+	gen-delims:  #(bitset! #{000000001001002180000014})         ;= charset ":/?#[]@"
+	sub-delims:  #(bitset! #{000000004BF80014})                 ;= charset "!$&'()*+,;="
+	reserved:    #(bitset! #{000000005BF9003580000014})         ;= [gen-delims | sub-delims]
 	;The purpose of reserved characters is to provide a set of delimiting
 	;characters that are distinguishable from other data within a URI.
 
 	;Characters that are allowed in a URI but do not have a reserved purpose are "unreserved"
-	unreserved:  #[bitset! #{000000000006FFC07FFFFFE17FFFFFE2}] ;= compose [alpha | digit | (charset "-._~")]
-	scheme-char: #[bitset! #{000000000016FFC07FFFFFE07FFFFFE0}] ;= union alpha-num "+-."
+	unreserved:  #(bitset! #{000000000006FFC07FFFFFE17FFFFFE2}) ;= compose [alpha | digit | (charset "-._~")]
+	scheme-char: #(bitset! #{000000000016FFC07FFFFFE07FFFFFE0}) ;= union alpha-num "+-."
 	
 	;-- URL Grammar
 	url-rules:   [

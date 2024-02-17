@@ -117,9 +117,9 @@ Rebol [
 		]
 		--assert assert/type [x [integer! string!]]
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1364
-		--assert assert/type [x #[typeset! [char! string!]]]
+		--assert assert/type [x #(typeset! [char! string!])]
 		--assert assert/type [x any-string!]
-		--assert assert/type [x #[string!]]
+		--assert assert/type [x #(string!)]
 
 	--test-- "invalid assert"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1363

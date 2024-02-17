@@ -33,9 +33,9 @@ if find lib 'delect [
 		inp: delect dialect inp out
 		--assert out = [cmd a@b 3]
 		inp: delect dialect inp out
-		--assert out = [cmd http:// #[none]]
+		--assert out = [cmd http:// #(none)]
 		inp: delect dialect inp out
-		--assert out = [cmd #[none] 5]
+		--assert out = [cmd #(none) 5]
 
 		;-- should be extended with more tests...
 ]

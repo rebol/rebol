@@ -331,7 +331,7 @@ parse-write-dialect: func [port block /local spec][
 	]
 ]
 
-put system/catalog 'http-status-codes http-status-codes: #(
+put system/catalog 'http-status-codes http-status-codes: #[
 	200 "OK"
 	201 "Created"
 	202 "Accepted"
@@ -384,7 +384,7 @@ put system/catalog 'http-status-codes http-status-codes: #(
 	508 "Loop Detected "
 	510 "Not Extended"
 	511 "Network Authentication Required"
-)
+]
 check-response: func [port /local conn res headers d1 d2 line info state awake spec date code][
 	state:   port/state
 	spec:    port/spec
@@ -543,7 +543,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 	]
 	new-uri: construct/with new-uri port/scheme/spec
 	new-uri/method: spec/method
-	new-uri/ref: as url! ajoin either find [#[none] 80 443] new-uri/port [
+	new-uri/ref: as url! ajoin either find [#(none) 80 443] new-uri/port [
 		[new-uri/scheme "://" new-uri/host new-uri/path]
 	][	[new-uri/scheme "://" new-uri/host #":" new-uri/port new-uri/path]]
 

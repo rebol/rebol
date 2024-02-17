@@ -211,7 +211,7 @@ Rebol [
 
 	--test-- "decimal construction"
 	;@@  https://github.com/Oldes/Rebol-issues/issues/1034
-		--assert 1.0 = #[decimal! 1]
+		--assert 1.0 = #(decimal! 1)
 		--assert error? try [load {#[decimal! 1 2]}]
 
 	--test-- "decimal pick"

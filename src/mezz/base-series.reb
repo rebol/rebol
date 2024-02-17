@@ -54,7 +54,7 @@ ellipsize: func [
 	/local chars
 ][
 	if one-line [
-		chars: #[bitset! [not bits #{0024}]]
+		chars: #(bitset! [not bits #{0024}])
 		parse str [
 			any [
 				some chars

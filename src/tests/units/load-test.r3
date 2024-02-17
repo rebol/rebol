@@ -104,7 +104,7 @@ Rebol [
 		]
 
 	--test-- "loading an unset value"
-		--assert unset? try [load "#[unset]"] ;- no error
+		--assert unset? try [load "#(unset)"] ;- no error
 
 ===end-group===
 

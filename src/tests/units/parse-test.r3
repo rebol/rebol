@@ -222,9 +222,9 @@ Rebol [
 	--assert [3 "A"] = parse [1][collect [integer! keep (1 + 2) keep ("A")]]
 
 --test-- "block collect set"
-	a: none --assert all [#[true]  = parse [ ]   [collect set a []] a = []]
-	a: none --assert all [#[true]  = parse [1]   [collect set a [keep skip]] a = [1]]
-	a: none --assert all [#[false] = parse [1 2] [collect set a [keep skip]] a = [1]]
+	a: none --assert all [#(true)  = parse [ ]   [collect set a []] a = []]
+	a: none --assert all [#(true)  = parse [1]   [collect set a [keep skip]] a = [1]]
+	a: none --assert all [#(false) = parse [1 2] [collect set a [keep skip]] a = [1]]
 	a: none --assert all [
 		[] = parse [1] [collect [collect set a keep skip]]
 		a = [1]
@@ -238,11 +238,11 @@ Rebol [
 		a = 1
 	]
 	a: none --assert all [
-		#[true] = parse [1] [collect set a [collect set a keep skip]]
+		#(true) = parse [1] [collect set a [collect set a keep skip]]
 		a = [1]
 	]
 	a: b: none --assert all [
-		#[true] = parse [1] [collect set a [collect set b keep skip]]
+		#(true) = parse [1] [collect set a [collect set b keep skip]]
 		a = []
 		b = [1]
 	]
@@ -308,9 +308,9 @@ Rebol [
 	--assert [1 2] = parse #{0102} [collect [keep pick 2 skip]]
 
 --test-- "string collect set"
-	a: none --assert all [#[true]  = parse ""   [collect set a []] a = []]
-	a: none --assert all [#[true]  = parse "1"  [collect set a [keep skip]] a = [#"1"]]
-	a: none --assert all [#[false] = parse "12" [collect set a [keep skip]] a = [#"1"]]
+	a: none --assert all [#(true)  = parse ""   [collect set a []] a = []]
+	a: none --assert all [#(true)  = parse "1"  [collect set a [keep skip]] a = [#"1"]]
+	a: none --assert all [#(false) = parse "12" [collect set a [keep skip]] a = [#"1"]]
 	a: none --assert all [
 		[] = parse "1" [collect [collect set a keep skip]]
 		a = [#"1"]
@@ -324,11 +324,11 @@ Rebol [
 		a = #"1"
 	]
 	a: none --assert all [
-		#[true] = parse "1" [collect set a [collect set a keep skip]]
+		#(true) = parse "1" [collect set a [collect set a keep skip]]
 		a = [#"1"]
 	]
 	a: b: none --assert all [
-		#[true] = parse "1" [collect set a [collect set b keep skip]]
+		#(true) = parse "1" [collect set a [collect set b keep skip]]
 		a = []
 		b = [#"1"]
 	]
@@ -404,7 +404,7 @@ Rebol [
 	--assert all [
 		alpha: system/catalog/bitsets/alpha
 		numer: system/catalog/bitsets/numeric
-		#[true] = parse "11ab2c33" [
+		#(true) = parse "11ab2c33" [
 			collect set res [
 				  keep (quote alpha:  ) collect [some [keep some alpha | skip] fail]
 				| keep (quote numeric:) collect [some [keep some numer | skip]]

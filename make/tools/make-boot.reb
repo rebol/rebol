@@ -3,7 +3,7 @@ REBOL [
 	Title: "Make primary boot files"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2023 Rebol Open Source Contributors
+		Copyright 2012-2024 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -38,7 +38,7 @@ src: root-dir/src/core
 Title:
 {REBOL
 Copyright 2012 REBOL Technologies
-Copyright 2012-2021 Rebol Open Source Contributors
+Copyright 2012-2024 Rebol Open Source Contributors
 REBOL is a trademark of REBOL Technologies
 Licensed under the Apache License, Version 2.0
 }
@@ -924,7 +924,7 @@ foreach section [boot-base boot-sys boot-mezz] [
 				compose [
 					sys/load-module/delay (
 						append
-						mold/only compose/deep/only [
+						map-conv-if-needed mold/only compose/deep/only [
 							Rebol [
 								Version: (any [select hdr 'version 0.0.0])
 								Title:   (select hdr 'title)
@@ -935,7 +935,7 @@ foreach section [boot-base boot-sys boot-mezz] [
 								Needs:   (select hdr 'needs)
 							]
 						]
-						mold/only code
+						map-conv-if-needed mold/only code
 					)
 				]
 			][
@@ -976,7 +976,7 @@ foreach file first mezz-files [
 			compose [
 				sys/load-module/delay (
 					append
-					mold/only compose/deep/only [
+					map-conv-if-needed mold/only compose/deep/only [
 						Rebol [
 							Version: (any [select hdr 'version 0.0.0])
 							Title:   (select hdr 'title)
@@ -987,7 +987,7 @@ foreach file first mezz-files [
 							Needs:   (select hdr 'needs)
 						]
 					]
-					mold/only code
+					map-conv-if-needed mold/only code
 				)
 			]
 		][ 
@@ -1093,13 +1093,13 @@ boot-task: load-boot %task.reb
 boot-ops:  load-boot %ops.reb
 ;boot-script: load-boot %script.reb
 
-write-generated gen-dir/gen-boot-code.reb mold reduce sections
+write-generated gen-dir/gen-boot-code.reb entab mold reduce sections
 
 data: mold reduce sections
 insert data reduce ["; Copyright (C) REBOL Technologies " now newline]
 insert tail data make char! 0 ; scanner requires zero termination
 
-data: to binary! data
+data: to binary! map-conv-if-needed data
 comp-data: compress/level data 'zlib 9
 
 emit [

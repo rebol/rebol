@@ -32,20 +32,20 @@ sec-pad: #{28BF4E5E4E758A4164004E56FFFA01082E2E00B6D0683E802F0CA9FE6453697A}
 
 ;- Rules
 rl_newline: [CRLF | LF | CR]
-ch_number:        #[bitset! #{000000000000FFC0}]                    ;charset "0123456789"
-ch_delimiter:     #[bitset! #{0000000004C1000A0000001400000014}]    ;charset "()<>[]{}/%"
-ch_str-valid:     #[bitset! [not bits #{00EC000000C0000000000008}]] ;complement charset "^/^M^-^H^L()\"
-ch_sp:            #[bitset! #{0040000080}]                          ;charset " ^-"
-ch_newline:       #[bitset! #{0024}]                                ;charset CRLF
-ch_spnl:          #[bitset! #{0064000080}]                          ;charset " ^-^/^L^M"
-ch_hex:           #[bitset! #{000000000000FFC07FFFFFE07FFFFFE0}]    ;charset [#"0" - #"9" #"a" - #"z" #"A" - #"Z"]
-ch_hex-str:       #[bitset! #{006400008000FFC07FFFFFE07FFFFFE0}]    ;union union ch_hex sp ch_newline
-ch_str:           #[bitset! [not bits #{0000000000C0000000000008}]] ;complement charset "\()"
-ch_str-esc:       #[bitset! #{0000000000C0000000000008220228}]      ;charset "nrtbf()\"
-ch_not-hash:      #[bitset! [not bits #{0000000010}]]               ;complement charset "#"
-ch_not-newline:   #[bitset! [not bits #{0024}]]                     ;complement ch_newline
-ch_not-delimiter: #[bitset! [not bits #{0000000004C1000A0000001400000014}]] ;complement ch_delimiter
-ch_name:          #[bitset! [not bits #{0064000084C1000A0000001400000014}]] ;complement union ch_delimiter ch_spnl
+ch_number:        #(bitset! #{000000000000FFC0})                    ;charset "0123456789"
+ch_delimiter:     #(bitset! #{0000000004C1000A0000001400000014})    ;charset "()<>[]{}/%"
+ch_str-valid:     #(bitset! [not bits #{00EC000000C0000000000008}]) ;complement charset "^/^M^-^H^L()\"
+ch_sp:            #(bitset! #{0040000080})                          ;charset " ^-"
+ch_newline:       #(bitset! #{0024})                                ;charset CRLF
+ch_spnl:          #(bitset! #{0064000080})                          ;charset " ^-^/^L^M"
+ch_hex:           #(bitset! #{000000000000FFC07FFFFFE07FFFFFE0})    ;charset [#"0" - #"9" #"a" - #"z" #"A" - #"Z"]
+ch_hex-str:       #(bitset! #{006400008000FFC07FFFFFE07FFFFFE0})    ;union union ch_hex sp ch_newline
+ch_str:           #(bitset! [not bits #{0000000000C0000000000008}]) ;complement charset "\()"
+ch_str-esc:       #(bitset! #{0000000000C0000000000008220228})      ;charset "nrtbf()\"
+ch_not-hash:      #(bitset! [not bits #{0000000010}])               ;complement charset "#"
+ch_not-newline:   #(bitset! [not bits #{0024}])                     ;complement ch_newline
+ch_not-delimiter: #(bitset! [not bits #{0000000004C1000A0000001400000014}]) ;complement ch_delimiter
+ch_name:          #(bitset! [not bits #{0064000084C1000A0000001400000014}]) ;complement union ch_delimiter ch_spnl
 
 rl_comment: [#"%" not #"%" copy value some ch_not-newline rl_newline]
 rl_boolean: ["true" (value: true) | "false" (value: false)]
@@ -354,7 +354,7 @@ emit-string: func[val [any-string!]][
 		any [
 			  s: some ch_str-valid e: (out: insert/part out s e)
 			| 1 skip s: ( 
-				out: insert out select #(
+				out: insert out select #[
 					#"^/" "\n"
 					#"^M" "\r"
 					#"^-" "\t"
@@ -363,7 +363,7 @@ emit-string: func[val [any-string!]][
 					#"("  "\("
 					#")"  "\)"
 					#"\"  "\\"
-				) s/-1
+				] s/-1
 			)
 		]
 	]
@@ -425,7 +425,7 @@ get-xref-count: function[xrefs n][
 
 emit-stream: func[obj [object!] /local data][
 	unless find obj 'spec [
-		put obj 'spec #(Length: 0)
+		put obj 'spec #[Length: 0]
 	]
 	data: any [obj/data #{}]
 	unless any [           ; don't use compression 
@@ -532,7 +532,7 @@ register-codec [
 			version:     none
 			file-size:   length? data
 			trailer:     none
-			objects:     copy #()
+			objects:     copy #[]
 			referencies: copy  []
 			startxref:   none
 		]
@@ -643,7 +643,7 @@ register-codec [
 		]
 		trailer: select pdf 'trailer
 		unless trailer [
-			put pdf 'trailer trailer: #(Info: #[none] Root: #[none])
+			put pdf 'trailer trailer: #[Info: #(none) Root: #(none)]
 		]
 		unless root: trailer/Root [
 			sys/log/debug 'PDF "Trying to locate `Catalog` in PDF objects."

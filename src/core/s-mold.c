@@ -125,8 +125,8 @@ enum {
 			break;
 		case '+':	// Add #[ if mold/all
 			if (GET_MOPT(mold, MOPT_MOLD_ALL)) {
-				Append_Bytes(series, "#[");
-				ender = ']';
+				Append_Bytes(series, "#(");
+				ender = ')';
 			}
 			break;
 		case 'D':	// Datatype symbol: #[type
@@ -206,7 +206,7 @@ enum {
 **
 ***********************************************************************/
 {
-	Emit(mold, GET_MOPT(mold, MOPT_MOLD_ALL) ? "#[T " : "make T ", value);
+	Emit(mold, GET_MOPT(mold, MOPT_MOLD_ALL) ? "#(T " : "make T ", value);
 }
 
 
@@ -218,7 +218,7 @@ enum {
 **
 ***********************************************************************/
 {
-	if (GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Byte(mold->series, ']');
+	if (GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Byte(mold->series, ')');
 }
 
 
@@ -235,7 +235,7 @@ enum {
 		Append_Byte(mold->series, ' ');
 		Append_Int(mold->series, VAL_INDEX(value)+1);
 	}
-	if (GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Byte(mold->series, ']');
+	if (GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Byte(mold->series, ')');
 }
 
 
@@ -550,7 +550,7 @@ STOID Mold_Handle(REBVAL *value, REB_MOLD *mold)
 {
 	const REBYTE *name = VAL_HANDLE_NAME(value);
 	if (name != NULL) {
-		Append_Bytes(mold->series, "#[handle! ");
+		Append_Bytes(mold->series, "#(handle! ");
 		Append_Bytes(mold->series, cs_cast(name));
 		if (IS_CONTEXT_HANDLE(value)) {
 			if (!IS_USED_HOB(VAL_HANDLE_CTX(value)))
@@ -568,7 +568,7 @@ STOID Mold_Handle(REBVAL *value, REB_MOLD *mold)
 				}
 			}
 		}
-		Append_Byte(mold->series, ']');
+		Append_Byte(mold->series, ')');
 	}
 	else {
 		Emit(mold, "+T", value);
@@ -629,7 +629,7 @@ STOID Mold_All_Constr_String(REBVAL *value, REB_MOLD *mold)
 	// The string that is molded for /all option:
 	REBVAL val;
 	// prep...
-	Emit(mold, "#[T ", value); // #[file! part
+	Emit(mold, "#(T ", value); // #(file! part
 	// string...
 	val = *value;
 	VAL_INDEX(&val) = 0;
@@ -640,7 +640,7 @@ STOID Mold_All_Constr_String(REBVAL *value, REB_MOLD *mold)
 		Append_Byte(mold->series, ' ');
 		Append_Int(mold->series, VAL_INDEX(value)+1);
 	}
-	Append_Byte(mold->series, ']');
+	Append_Byte(mold->series, ')');
 }
 
 STOID Mold_Ref(REBVAL *value, REB_MOLD *mold)
@@ -758,7 +758,7 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	if (all || (over && !IS_BLOCK(value) && !IS_PAREN(value))) {
 		SET_FLAG(mold->opts, MOPT_MOLD_ALL);
-		Pre_Mold(value, mold); // #[block! part
+		Pre_Mold(value, mold); // #(block! part
 		//if (over) Append_Bytes(mold->series, "[]");
 		//else
 		Mold_Block_Series(mold, VAL_SERIES(value), 0, 0);
@@ -889,7 +889,7 @@ STOID Mold_Typeset(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	REBINT n;
 
 	if (molded) {
-		Pre_Mold(value, mold);	// #[typeset! or make typeset!
+		Pre_Mold(value, mold);	// #(typeset! or make typeset!
 		Append_Byte(mold->series, '[');
 	}
 
@@ -933,16 +933,16 @@ STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	// Prevent endless mold loop:
 	if (Find_Same_Block(MOLD_LOOP, value) > 0) {
-		Append_Bytes(mold->series, "#(...)");
+		Append_Bytes(mold->series, "#[...]");
 		return;
 	}
 	Append_Val(MOLD_LOOP, value);
 
 	if (molded) {
 		if (all) {
-			Emit(mold, "#[T [", value);
+			Emit(mold, "#(T [", value);
 		} else {
-			Append_Bytes(mold->series, "#(");
+			Append_Bytes(mold->series, "#[");
 		}
 	}
 
@@ -967,7 +967,7 @@ STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	if (molded) {
 		if(indented && count>0) New_Indented_Line(mold);
-		Append_Byte(mold->series, all ? ']' : ')');
+		Append_Byte(mold->series, ']');
 	}
 
 	End_Mold(mold);
@@ -1235,7 +1235,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	case REB_EMAIL:
 	case REB_URL:
 		if (VAL_LEN(value) == 0) {
-			Append_Bytes(ser, VAL_TYPE(value) == REB_EMAIL ? "#[email! \"\"]" : "#[url! \"\"]");
+			Append_Bytes(ser, VAL_TYPE(value) == REB_EMAIL ? "#(email! \"\")" : "#(url! \"\")");
 			break;
 		}
 		Mold_Url(value, mold);
@@ -1254,9 +1254,9 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_BITSET:
 		// // uses always construction syntax
-		// Emit(mold, "#[T ", value);
+		// Emit(mold, "#(T ", value);
 		// Mold_Bitset(value, mold);
-		// Append_Byte(mold->series, ']');
+		// Append_Byte(mold->series, ')');
 		// break;
 		// Above code makes some problem when preprocessing Rebol source!
 		// So reverting back to the old result...
@@ -1423,10 +1423,10 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		break;
 
 	case REB_UNSET:
-		if(molded) Append_Bytes(ser,"#[unset]");
+		if(molded) Append_Bytes(ser,"#(unset)");
 		break;
 	case REB_END:
-		if(molded) Append_Bytes(ser,"#[end]");
+		if(molded) Append_Bytes(ser,"#(end)");
 		break;
 	default:
 		Crash(RP_DATATYPE+5, VAL_TYPE(value));

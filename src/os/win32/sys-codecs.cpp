@@ -91,14 +91,23 @@ CODECS_API int DecodeImageFromFile(PCWSTR *uri, UINT frame, REBCDI *codi)
 			// Global memory for stream will be released with the stream automaticaly
 			HGLOBAL	hMem = ::GlobalAlloc(GMEM_MOVEABLE, codi->len);
 			if (!hMem) {
-				TRACE_ERR("GlobalAlloc");
 				hr = GetLastError();
-				break;
+				ASSERT_HR("GlobalAlloc");
 			}
 
 			hr = CreateStreamOnHGlobal(hMem, TRUE, &pStream);
 			ASSERT_HR("CreateStreamOnHGlobal");
 
+#define use_memcpy
+#ifdef  use_memcpy 
+			LPVOID tmp = GlobalLock(hMem);
+			if (!tmp) {
+				hr = GetLastError();
+				ASSERT_HR("GlobalLock");
+			}
+			memcpy(tmp, codi->data, codi->len);
+			GlobalUnlock(hMem);
+#else
 			ULONG written;
 			hr = pStream->Write(codi->data, codi->len, &written);
 			ASSERT_HR("pStream->Write");
@@ -106,7 +115,7 @@ CODECS_API int DecodeImageFromFile(PCWSTR *uri, UINT frame, REBCDI *codi)
 			// WIC JPEG decoder needs the stream to seek to head manually!
 			// https://stackoverflow.com/a/12928336/494472
 			pStream->Seek(zero, STREAM_SEEK_SET, NULL);
-
+#endif
 			hr = pIWICFactory->CreateDecoderFromStream(
 				pStream
 				, NULL

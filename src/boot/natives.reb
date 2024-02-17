@@ -3,7 +3,7 @@ REBOL [
 	Title: "Native function specs"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2021 Rebol Open Source Developers
+		Copyright 2012-2024 Rebol Open Source Developers
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {

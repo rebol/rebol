@@ -31,7 +31,7 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1329
 		--assert all [error? e: try[transcode/one ""] e/id = 'past-end]
 		--assert all [error? e: transcode/one/error "" e/id = 'past-end]
-		--assert unset?  transcode/one "#[unset]"
+		--assert unset?  transcode/one "#(unset)"
 		--assert []    = transcode/one "[]"
 		--assert 1     = transcode/one "1 2"
 		--assert [1 2] = transcode/one "[1 2]"
@@ -59,15 +59,15 @@ Rebol [
 		]
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1857
 		--assert all [
-			error? e: transcode/one/error "#[block! 1]"
+			error? e: transcode/one/error "#(block! 1)"
 			e/id = 'malconstruct
 		]
 		--assert all [
-			error? e: transcode/one/error "#[block! [1d]"
+			error? e: transcode/one/error "#(block! [1d)"
 			e/id = 'malconstruct
 		]
 		--assert all [
-			error? e: transcode/one/error "#["
+			error? e: transcode/one/error "#("
 			e/id = 'missing
 			e/arg1 = "end-of-script"
 		]
@@ -77,10 +77,10 @@ Rebol [
 
 ===start-group=== "Invalid construction"
 	--test-- "Invalid MAP"
-		--assert error? err: try [load {#(x)}]
+		--assert error? err: try [load {#[x]}]
 		--assert err/id = 'invalid-arg
-		--assert error? err: try [load {#(x}]
-		--assert all [err/id = 'missing err/arg1 = "end-of-script" err/arg2 = ")"]
+		--assert error? err: try [load {#[x}]
+		--assert all [err/id = 'missing err/arg1 = "end-of-script" err/arg2 = "]"]
 
 	--test-- "Invalid word"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/22
@@ -91,7 +91,7 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/122
 		--assert error? try [load "1234#"]
 	;@@ https://github.com/oldes/rebol-issues/issues/2297
-		--assert error? try [load {#}] ; originally (in R3-alpha) it was same like #[none]
+		--assert error? try [load {#}] ; originally (in R3-alpha) it was same like #(none)
 
 	--test-- "Multiple leading / in refinement!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1855
@@ -136,15 +136,15 @@ Rebol [
 
 	--test-- "Invalid serialized value"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1429
-		--assert all [error? e: try [load {1#[logic! 1]}] e/id = 'invalid]
-		--assert all [error? e: try [load {a#[logic! 1]}] e/id = 'invalid]
+		--assert all [error? e: try [load {1#(logic! 1)}] e/id = 'invalid]
+		--assert all [error? e: try [load {a#(logic! 1)}] e/id = 'invalid]
 
 	--test-- "Invalid char"
 		--assert all [error? e: try [load {2#"a"}] e/id = 'invalid]
 
 	--test-- "Invalid path construction"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/863
-		--assert all [error? e: try [load {#[path! [0]]}] e/id = 'malconstruct]
+		--assert all [error? e: try [load {#(path! [0])}] e/id = 'malconstruct]
 
 	--test-- "Invalid file"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1415
@@ -519,7 +519,7 @@ Rebol [
 	--test-- "sign-before-pound-1"	--assert  [- #"a"] = (load {-#"a"})
 	--test-- "sign-before-pound-2"	--assert  [+ #"a"] = (load {+#"a"})
 	--test-- "sign-before-pound-3"	--assert  [- #{00}]   = try [load {-#{00}}]
-	--test-- "sign-before-pound-4"	--assert  [- #[none]] = try [load {-#[none]}]
+	--test-- "sign-before-pound-4"	--assert  [- #(none)] = try [load {-#(none)}]
 	--test-- "sign-before-pound-5"	--assert  word! = try [type? first load {+#"a"}]
 	--test-- "sign-before-pound-6"	--assert  [- #hhh] = try [load {-#hhh}]
 	;above is now consistent with:
@@ -534,91 +534,91 @@ Rebol [
 
 ===start-group=== "Construction syntax"
 	--test-- {any-string!}
-		--assert "ab" = load {#[string! "ab"]}
-		--assert  "b" = load {#[string! "ab" 2]}
-		--assert %ab  = load {#[file! "ab"]}
-		--assert  %b  = load {#[file! "ab" 2]}
-		--assert struct? load {#[struct! [a [uint8!]]]}
+		--assert "ab"  = load {#(string! "ab")}
+		--assert  "b"  = load {#(string! "ab" 2)}
+		--assert %ab   = load {#(file! "ab")}
+		--assert  %b   = load {#(file! "ab" 2)}
+		--assert struct? load {#(struct! [a [uint8!]])}
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1034
-		--assert error? try [load {#[string! "ab" 2 x]}]
-		--assert error? try [load {#[file! "ab" x]}]
-		--assert error? try [load {#[file! "ab" 2 x]}]
-		--assert error? try [load {#[string! "ab" x]}]
-		--assert error? try [load {#[string! "ab" 2 x]}]
-		--assert error? try [load {#[file! "ab" x]}]
-		--assert error? try [load {#[file! "ab" 2 x]}]
+		--assert error? try [load {#(string! "ab" 2 x)}]
+		--assert error? try [load {#(file! "ab" x)}]
+		--assert error? try [load {#(file! "ab" 2 x)}]
+		--assert error? try [load {#(string! "ab" x)}]
+		--assert error? try [load {#(string! "ab" 2 x)}]
+		--assert error? try [load {#(file! "ab" x)}]
+		--assert error? try [load {#(file! "ab" 2 x)}]
 	--test-- {object!}
 		;@@ https://github.com/Oldes/Rebol-issues/issues/864
-		--assert block?  try [transcode      "#[object! [a: 1 b: 2]]"]
-		--assert block?  try [transcode/only "#[object! [a: 1 b: 2]]"]
-		--assert object? try [transcode/one  "#[object! [a: 1 b: 2]]"]
+		--assert block?  try [transcode      "#(object! [a: 1 b: 2])"]
+		--assert block?  try [transcode/only "#(object! [a: 1 b: 2])"]
+		--assert object? try [transcode/one  "#(object! [a: 1 b: 2])"]
 	--test-- {function!}
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1114
-		--assert function? transcode/one {#[function! [[a [series!]][print a]]]}
+		--assert function? transcode/one {#(function! [[a [series!]][print a]])}
 
 	--test-- {datatype!}
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2508
-		--assert datatype? transcode/one {#[unset!]}
-		--assert datatype? transcode/one {#[none!]}
-		--assert datatype? transcode/one {#[logic!]}
-		--assert datatype? transcode/one {#[integer!]}
-		--assert datatype? transcode/one {#[decimal!]}
-		--assert datatype? transcode/one {#[percent!]}
-		--assert datatype? transcode/one {#[money!]}
-		--assert datatype? transcode/one {#[char!]}
-		--assert datatype? transcode/one {#[pair!]}
-		--assert datatype? transcode/one {#[tuple!]}
-		--assert datatype? transcode/one {#[time!]}
-		--assert datatype? transcode/one {#[date!]}
-		--assert datatype? transcode/one {#[binary!]}
-		--assert datatype? transcode/one {#[string!]}
-		--assert datatype? transcode/one {#[file!]}
-		--assert datatype? transcode/one {#[email!]}
-		--assert datatype? transcode/one {#[ref!]}
-		--assert datatype? transcode/one {#[url!]}
-		--assert datatype? transcode/one {#[tag!]}
-		--assert datatype? transcode/one {#[bitset!]}
-		--assert datatype? transcode/one {#[image!]}
-		--assert datatype? transcode/one {#[vector!]}
-		--assert datatype? transcode/one {#[block!]}
-		--assert datatype? transcode/one {#[paren!]}
-		--assert datatype? transcode/one {#[path!]}
-		--assert datatype? transcode/one {#[set-path!]}
-		--assert datatype? transcode/one {#[get-path!]}
-		--assert datatype? transcode/one {#[lit-path!]}
-		--assert datatype? transcode/one {#[map!]}
-		--assert datatype? transcode/one {#[datatype!]}
-		--assert datatype? transcode/one {#[typeset!]}
-		--assert datatype? transcode/one {#[word!]}
-		--assert datatype? transcode/one {#[set-word!]}
-		--assert datatype? transcode/one {#[get-word!]}
-		--assert datatype? transcode/one {#[lit-word!]}
-		--assert datatype? transcode/one {#[refinement!]}
-		--assert datatype? transcode/one {#[issue!]}
-		--assert datatype? transcode/one {#[native!]}
-		--assert datatype? transcode/one {#[action!]}
-		--assert datatype? transcode/one {#[rebcode!]}
-		--assert datatype? transcode/one {#[command!]}
-		--assert datatype? transcode/one {#[op!]}
-		--assert datatype? transcode/one {#[closure!]}
-		--assert datatype? transcode/one {#[function!]}
-		--assert datatype? transcode/one {#[frame!]}
-		--assert datatype? transcode/one {#[object!]}
-		--assert datatype? transcode/one {#[module!]}
-		--assert datatype? transcode/one {#[error!]}
-		--assert datatype? transcode/one {#[task!]}
-		--assert datatype? transcode/one {#[port!]}
-		--assert datatype? transcode/one {#[gob!]}
-		--assert datatype? transcode/one {#[event!]}
-		--assert datatype? transcode/one {#[handle!]}
-		--assert datatype? transcode/one {#[struct!]}
-		--assert datatype? transcode/one {#[library!]}
-		--assert datatype? transcode/one {#[utype!]}
+		--assert datatype? transcode/one {#(unset!)}
+		--assert datatype? transcode/one {#(none!)}
+		--assert datatype? transcode/one {#(logic!)}
+		--assert datatype? transcode/one {#(integer!)}
+		--assert datatype? transcode/one {#(decimal!)}
+		--assert datatype? transcode/one {#(percent!)}
+		--assert datatype? transcode/one {#(money!)}
+		--assert datatype? transcode/one {#(char!)}
+		--assert datatype? transcode/one {#(pair!)}
+		--assert datatype? transcode/one {#(tuple!)}
+		--assert datatype? transcode/one {#(time!)}
+		--assert datatype? transcode/one {#(date!)}
+		--assert datatype? transcode/one {#(binary!)}
+		--assert datatype? transcode/one {#(string!)}
+		--assert datatype? transcode/one {#(file!)}
+		--assert datatype? transcode/one {#(email!)}
+		--assert datatype? transcode/one {#(ref!)}
+		--assert datatype? transcode/one {#(url!)}
+		--assert datatype? transcode/one {#(tag!)}
+		--assert datatype? transcode/one {#(bitset!)}
+		--assert datatype? transcode/one {#(image!)}
+		--assert datatype? transcode/one {#(vector!)}
+		--assert datatype? transcode/one {#(block!)}
+		--assert datatype? transcode/one {#(paren!)}
+		--assert datatype? transcode/one {#(path!)}
+		--assert datatype? transcode/one {#(set-path!)}
+		--assert datatype? transcode/one {#(get-path!)}
+		--assert datatype? transcode/one {#(lit-path!)}
+		--assert datatype? transcode/one {#(map!)}
+		--assert datatype? transcode/one {#(datatype!)}
+		--assert datatype? transcode/one {#(typeset!)}
+		--assert datatype? transcode/one {#(word!)}
+		--assert datatype? transcode/one {#(set-word!)}
+		--assert datatype? transcode/one {#(get-word!)}
+		--assert datatype? transcode/one {#(lit-word!)}
+		--assert datatype? transcode/one {#(refinement!)}
+		--assert datatype? transcode/one {#(issue!)}
+		--assert datatype? transcode/one {#(native!)}
+		--assert datatype? transcode/one {#(action!)}
+		--assert datatype? transcode/one {#(rebcode!)}
+		--assert datatype? transcode/one {#(command!)}
+		--assert datatype? transcode/one {#(op!)}
+		--assert datatype? transcode/one {#(closure!)}
+		--assert datatype? transcode/one {#(function!)}
+		--assert datatype? transcode/one {#(frame!)}
+		--assert datatype? transcode/one {#(object!)}
+		--assert datatype? transcode/one {#(module!)}
+		--assert datatype? transcode/one {#(error!)}
+		--assert datatype? transcode/one {#(task!)}
+		--assert datatype? transcode/one {#(port!)}
+		--assert datatype? transcode/one {#(gob!)}
+		--assert datatype? transcode/one {#(event!)}
+		--assert datatype? transcode/one {#(handle!)}
+		--assert datatype? transcode/one {#(struct!)}
+		--assert datatype? transcode/one {#(library!)}
+		--assert datatype? transcode/one {#(utype!)}
  	--test-- {direct values}
- 		--assert logic? transcode/one {#[true]}
- 		--assert logic? transcode/one {#[false]}
- 		--assert none?  transcode/one {#[none]}
- 		--assert unset? transcode/one {#[unset]}
+ 		--assert logic? transcode/one {#(true)}
+ 		--assert logic? transcode/one {#(false)}
+ 		--assert none?  transcode/one {#(none)}
+ 		--assert unset? transcode/one {#(unset)}
 
 ===end-group===
 

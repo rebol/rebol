@@ -25,11 +25,11 @@ copyable-data: make object! [
 	set-path: quote a/b:
 	get-path: quote :a/b
 	lit-path: quote 'a/b
-	map:      #(a: 1)
-	object:   #[object! [a: 1]]
-	image:    #[image! 1x1 #{FFFFFF}]
-	bitset:   #[bitset! #{FF}]
-	vector:   #[u32! 3]
+	map:      #[a: 1]
+	object:   #(object! [a: 1])
+	image:    #(image! 1x1 #{FFFFFF})
+	bitset:   #(bitset! #{FF})
+	vector:   #(u32! 3)
 	error:    try [1 / 0]
 	;TODO: struct,
 ]
@@ -42,14 +42,14 @@ not-copyable-data: make object! [
 	tuple:    1.1.1
 	date:     1-1-2000
 	time:     1:1:1
-	logic:    #[true]
-	none:     #[none]
-	gob:      #[gob![size: 20x20]]
+	logic:    #(true)
+	none:     #(none)
+	gob:      #(gob![size: 20x20])
 	word:     'foo
 	lit-word: quote 'foo
 	set-word: quote foo:
 	get-word: quote :foo
-	typeset:  #[typeset! [integer! percent!]]
+	typeset:  #(typeset! [integer! percent!])
 	module:   system/modules/help ;@@ or should it be copyable?
 	event:    make event! []      ;@@ or should it be copyable?
 	;handle
@@ -95,12 +95,12 @@ not-copyable-data: make object! [
 
 ===start-group=== "Copy map!"
 	--test-- "copy/deep map!"
-		m1: #()
-		m1/b: copy [1 2 s: "" u: http://foo b: [3 4] o: #[object! []]]
+		m1: #[]
+		m1/b: copy [1 2 s: "" u: http://foo b: [3 4] o: #(object! [])]
 		m1/s: copy ""
 		m1/u: http://
-		m1/o: #[object! [ s: "" o: #[object![]] ]]
-		m1/m: #(s: "" u: http://foo b: [3 4] o: #[object! []])
+		m1/o: #(object! [ s: "" o: #(object![]) ])
+		m1/m: #[s: "" u: http://foo b: [3 4] o: #(object! [])]
 		m2: copy/deep m1
 		--assert not same? m1/b   m2/b
 		--assert not same? m1/s   m2/s
@@ -153,7 +153,7 @@ not-copyable-data: make object! [
 		--assert not same? m1/o/o m5/o/o ; because /deep is used
 
 	--test-- "copy/deep/types map! (only maps and strings)"
-		m6: copy/deep/types m1 #[typeset! [string! map!]]
+		m6: copy/deep/types m1 #(typeset! [string! map!])
 		--assert     same? m1/b   m6/b
 		--assert not same? m1/s   m6/s
 		--assert     same? m1/u   m6/u
@@ -165,7 +165,7 @@ not-copyable-data: make object! [
 		--assert     same? m1/m/o m6/m/o
 
 	--test-- "copy/deep/types map! (only maps and strings)"
-		m7: copy/deep/types m1 #[typeset! [string! map!]]
+		m7: copy/deep/types m1 #(typeset! [string! map!])
 		--assert     same? m1/b   m7/b
 		--assert not same? m1/s   m7/s
 		--assert     same? m1/u   m7/u
@@ -199,11 +199,11 @@ not-copyable-data: make object! [
 ===start-group=== "Copy object!"
 	--test-- "copy/deep object!"
 		o1: make object! [
-			b: copy [1 2 s: "" u: http://foo b: [3 4] o: #[object! []]]
+			b: copy [1 2 s: "" u: http://foo b: [3 4] o: #(object! [])]
 			s: copy ""
 			u: http://
-			o: #[object! [ s: "" u: http://foo b: [3 4] o: #[object![]] ]]
-			m: #(s: "" u: http://foo b: [3 4] o: #[object! []])
+			o: #(object! [ s: "" u: http://foo b: [3 4] o: #(object![]) ])
+			m: #[s: "" u: http://foo b: [3 4] o: #(object! [])]
 		]
 		o2: copy/deep o1
 		--assert not same? o1/b   o2/b
@@ -253,7 +253,7 @@ not-copyable-data: make object! [
 		--assert not same? o1/o/o o5/o/o ; because /deep is used
 
 	--test-- "copy/deep/types object! (only maps and strings)"
-		o6: copy/deep/types o1 #[typeset! [string! map!]]
+		o6: copy/deep/types o1 #(typeset! [string! map!])
 		--assert     same? o1/b   o6/b
 		--assert not same? o1/s   o6/s
 		--assert     same? o1/u   o6/u
@@ -265,7 +265,7 @@ not-copyable-data: make object! [
 		--assert     same? o1/m/o o6/m/o
 
 	--test-- "copy/deep/types object! (only objects and strings)"
-		o7: copy/deep/types o1 #[typeset! [string! object!]]
+		o7: copy/deep/types o1 #(typeset! [string! object!])
 		--assert     same? o1/b   o7/b
 		--assert not same? o1/s   o7/s
 		--assert     same? o1/u   o7/u
@@ -299,11 +299,11 @@ not-copyable-data: make object! [
 ===start-group=== "Copy block!"
 	--test-- "copy/deep block!"
 		b1: reduce [
-			quote b: copy [1 2 s: "" u: http://foo b: [3 4] o: #[object! []]]
+			quote b: copy [1 2 s: "" u: http://foo b: [3 4] o: #(object! [])]
 			quote s: copy ""
 			quote u: http://
-			quote o: #[object! [ s: "" u: http:// b: [] o: #[object![]] ]]
-			quote m: #(s: "" u: http://foo b: [3 4] o: #[object! []])
+			quote o: #(object! [ s: "" u: http:// b: [] o: #(object![]) ])
+			quote m: #[s: "" u: http://foo b: [3 4] o: #(object! [])]
 		]
 		b2: copy/deep b1
 		--assert not same? b1/b   b2/b
@@ -371,7 +371,7 @@ not-copyable-data: make object! [
 		--assert not same? b1/o/o b5/o/o ; because /deep is used
 
 	--test-- "copy/deep/types block! (only block and strings)"
-		b6: copy/deep/types b1 #[typeset! [block! string!]]
+		b6: copy/deep/types b1 #(typeset! [block! string!])
 		--assert not same? b1/b   b6/b
 		--assert not same? b1/s   b6/s
 		--assert     same? b1/u   b6/u
@@ -383,7 +383,7 @@ not-copyable-data: make object! [
 		--assert     same? b1/b/o b6/b/o
 
 	--test-- "copy/deep/types block! (only objects, blocks and strings)"
-		b7: copy/deep/types b1 #[typeset! [string! block! object!]]
+		b7: copy/deep/types b1 #(typeset! [string! block! object!])
 		--assert not same? b1/b   b7/b
 		--assert not same? b1/s   b7/s
 		--assert     same? b1/u   b7/u

@@ -1,4 +1,4 @@
-﻿Rebol [
+Rebol [
 	Title:   "Rebol3 bitset test script"
 	Author:  "Oldes, Peter W A Wood"
 	File: 	 %bitset-test.r3
@@ -53,26 +53,26 @@
 
 	--test-- "make bitset! from bitset!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2420
-		--assert #[bitset! #{}] = b1: charset ""
-		--assert #[bitset! #{}] = b2: make bitset! b1
+		--assert #(bitset! #{}) = b1: charset ""
+		--assert #(bitset! #{}) = b2: make bitset! b1
 		b2/1: true
-		--assert #[bitset! #{}]   = b1
-		--assert #[bitset! #{40}] = b2
+		--assert #(bitset! #{})   = b1
+		--assert #(bitset! #{40}) = b2
 
 	--test-- "charset"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1092
-		--assert #[bitset! #{80}] = charset #"^@"
-		--assert #[bitset! #{8000}] = charset/length #"^@" 16
+		--assert #(bitset! #{80}) = charset #"^@"
+		--assert #(bitset! #{8000}) = charset/length #"^@" 16
 
 	--test-- "make bitset! from block"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1335
-		--assert #[bitset! #{6000}] = make bitset! [#{0102}]
-		--assert #[bitset! #{60}] = make bitset! [1 2]
-		--assert #[bitset! #{700000}] = make bitset! [#{010203}]
-		--assert #[bitset! #{00008000800080}] = make bitset! [#{102030}]
-		--assert #[bitset! #{7C00800080008000}] = make bitset! [#{0102030405102030}]
+		--assert #(bitset! #{6000}) = make bitset! [#{0102}]
+		--assert #(bitset! #{60}) = make bitset! [1 2]
+		--assert #(bitset! #{700000}) = make bitset! [#{010203}]
+		--assert #(bitset! #{00008000800080}) = make bitset! [#{102030}]
+		--assert #(bitset! #{7C00800080008000}) = make bitset! [#{0102030405102030}]
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1226
-		--assert #[bitset! #{FFFE}] = make bitset! [#"^(00)" - #"^(0E)"]
+		--assert #(bitset! #{FFFE}) = make bitset! [#"^(00)" - #"^(0E)"]
 
 ===end-group===
 
@@ -180,7 +180,7 @@
 ===start-group=== "modify"
 	--test-- "alter"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/422
-		bs: #[bitset! #{00}]
+		bs: #(bitset! #{00})
 		--assert true  = alter bs 1
 		--assert #{40} = to binary! bs
 		--assert false = alter bs 1
@@ -369,7 +369,7 @@
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1541
 		b: charset " "
 		b/48: true
-		--assert b = #[bitset! #{00000000800080}]
+		--assert b = #(bitset! #{00000000800080})
 		b: complement charset " "
 		b/48: none
 		--assert b = make bitset! [not bits #{00000000800080}]

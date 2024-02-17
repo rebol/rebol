@@ -1675,7 +1675,7 @@ decrypt-tests: [
     #{9a04c241}
     #{3796cf51b87266}
     #{}
-    4 #[none]
+    4 #(none)
 
     #{4bb3c4a4f893ad8c9bdc833c325d62b3}
     #{75d582db43ce9b13ab4b6f7f14341330}
@@ -1687,7 +1687,7 @@ decrypt-tests: [
     #{3a65e03af37b81d05acc7ec1bc39deb0}
     #{3796cf51b87266}
     #{}
-    16 #[none]
+    16 #(none)
 
     #{4bb3c4a4f893ad8c9bdc833c325d62b3}
     #{90156f3f}
@@ -1699,7 +1699,7 @@ decrypt-tests: [
     #{88909016}
     #{a16a2e741f1cd9717285b6d882}
     #{}
-    4 #[none]
+    4 #(none)
 
     #{19ebfde2d5468ba0a3031bde629b11fd}
     #{fb04dc5a44c6bb000f2440f5154364b4}
@@ -1711,7 +1711,7 @@ decrypt-tests: [
     #{5447075bf42a59b91f08064738b015ab}
     #{a16a2e741f1cd9717285b6d882}
     #{}
-    16 #[none]
+    16 #(none)
 
     #{19ebfde2d5468ba0a3031bde629b11fd}
     #{a90e8ea44085ced791b2fdb7fd44b5cf0bd7d27718029bb703e1fa6b}
@@ -1723,7 +1723,7 @@ decrypt-tests: [
     #{50aafe0578c115c4a8e126ff7b3ccb64dce8ccaa8ceda69f23e5d81c}
     #{31f8fa25827d48}
     #{}
-    4 #[none]
+    4 #(none)
 
     #{197afb02ffbd8f699dacae87094d5243}
     #{24ab9eeb0e5508cae80074f1070ee188a637171860881f1f2d9a3fbc210595b7b8b1b41523111a8e}
@@ -1735,7 +1735,7 @@ decrypt-tests: [
     #{7ebfda6fa5da1dbffd82dc29b875798fbcef8ba0084fbd2463af747cc88a001fa94e060290f209c4}
     #{31f8fa25827d48}
     #{}
-    16 #[none]
+    16 #(none)
 
     #{197afb02ffbd8f699dacae87094d5243}
     #{4a550134f94455979ec4bf89ad2bd80d25a77ae94e456134a3e138b9}
@@ -1747,7 +1747,7 @@ decrypt-tests: [
     #{118ec53dd1bfbe52d5b9fe5dfebecf2ee674ec983eada654091a5ae9}
     #{49004912fdd7269279b1f06a89}
     #{}
-    4 #[none]
+    4 #(none)
 
     #{90929a4b0ac65b350ad1591611fe4829}
     #{4bfe4e35784f0a65b545477e5e2f4bae0e1e6fa717eaf2cb6a9a970b9beb2ac1bd4fd62168f8378a}
@@ -1759,7 +1759,7 @@ decrypt-tests: [
     #{0c56a503aa2c12e87450d45a7b714db980fd348f327c0065a65666144994bad0c8195bcb4ade1337}
     #{49004912fdd7269279b1f06a89}
     #{}
-    16 #[none]
+    16 #(none)
 
     #{90929a4b0ac65b350ad1591611fe4829}
     #{782e4318}
@@ -1771,7 +1771,7 @@ decrypt-tests: [
     #{a04f270a}
     #{a265480ca88d5f}
     #{a2248a882ecbf850daf91933a389e78e81623d233dfd47bf8321361a38f138fe}
-    4 #[none]
+    4 #(none)
 
     #{6a798d7c5e1a72b43e20ad5c7b08567b}
     #{41b476013f45e4a781f253a6f3b1e530}
@@ -1783,7 +1783,7 @@ decrypt-tests: [
     #{f9f018fcd125822616083fffebc4c8e6}
     #{a265480ca88d5f}
     #{a2248a882ecbf850daf91933a389e78e81623d233dfd47bf8321361a38f138fe}
-    16 #[none]
+    16 #(none)
 
     #{6a798d7c5e1a72b43e20ad5c7b08567b}
     #{9f69f24f}
@@ -1795,7 +1795,7 @@ decrypt-tests: [
     #{e17afaa4}
     #{8739b4bea1a099fe547499cbc6}
     #{f6107696edb332b2ea059d8860fee26be42e5e12e1a4f79a8d0eafce1b2278a7}
-    4 #[none]
+    4 #(none)
 
     #{f9fdca4ac64fe7f014de0f43039c7571}
     #{1859ac36a40a6b28b34266253627797a}
@@ -1807,7 +1807,7 @@ decrypt-tests: [
     #{edf8b46eb69ac0044116019dec183072}
     #{8739b4bea1a099fe547499cbc6}
     #{f6107696edb332b2ea059d8860fee26be42e5e12e1a4f79a8d0eafce1b2278a7}
-    16 #[none]
+    16 #(none)
 
     #{f9fdca4ac64fe7f014de0f43039c7571}
     #{6be31860ca271ef448de8f8d8b39346daf4b81d7e92d65b338f125fa}
@@ -1819,7 +1819,7 @@ decrypt-tests: [
     #{4cc57a9927a6bc401441870d3193bf89ebd163f5c01501c728a66b69}
     #{fdd2d6f503c915}
     #{5b92394f21ddc3ad49d9b0881b829a5935cb3a4d23e292a62fb66b5e7ab7020e}
-    4 #[none]
+    4 #(none)
 
     #{a7aa635ea51b0bb20a092bd5573e728c}
     #{b351ab96b2e45515254558d5212673ee6c776d42dbca3b512cf3a20b7fd7c49e6e79bef475c2906f}
@@ -1831,7 +1831,7 @@ decrypt-tests: [
     #{df1a5285caa41b4bb47f6e5ceceba4e82721828d68427a3081d18ca149d6766bfaccec88f194eb5b}
     #{fdd2d6f503c915}
     #{5b92394f21ddc3ad49d9b0881b829a5935cb3a4d23e292a62fb66b5e7ab7020e}
-    16 #[none]
+    16 #(none)
 
     #{a7aa635ea51b0bb20a092bd5573e728c}
     #{934f893824e880f743d196b22d1f340a52608155087bd28ac25e5329}
@@ -1843,7 +1843,7 @@ decrypt-tests: [
     #{f43ba9d834ad85dfab3f1c0c27c3441fe4e411a38a261a6559b3b3ee}
     #{0812757ad0cc4d17c4cfe7a642}
     #{ec6c44a7e94e51a3ca6dee229098391575ec7213c85267fbf7492fdbeee61b10}
-    4 #[none]
+    4 #(none)
 
     #{26511fb51fcfa75cb4b44da75a6e5a0e}
     #{50038b5fdd364ee747b70d00bd36840ece4ea19998123375c0a458bfcafa3b2609afe0f825cbf503}
@@ -1855,7 +1855,7 @@ decrypt-tests: [
     #{78ed8ff6b5a1255d0fbd0a719a9c27b059ff5f83d0c4962c390042ba8bb5f6798dab01c5afad7306}
     #{0812757ad0cc4d17c4cfe7a642}
     #{ec6c44a7e94e51a3ca6dee229098391575ec7213c85267fbf7492fdbeee61b10}
-    16 #[none]
+    16 #(none)
     ]
 
     DVPT AES-192-CCM "CCM auth decrypt tag NIST DVPT AES-192"
@@ -1870,7 +1870,7 @@ decrypt-tests: [
     #{80745de9}
     #{3796cf51b87266}
     #{}
-    4 #[none]
+    4 #(none)
 
     #{4bb3c4a4f893ad8c9bdc833c325d62b3d3ad1bccf9282a65}
     #{17223038fa99d53681ca1beabe78d1b4}
@@ -1882,7 +1882,7 @@ decrypt-tests: [
     #{d0e1eeef4d2a264536bb1c2c1bde7c35}
     #{3796cf51b87266}
     #{}
-    16 #[none]
+    16 #(none)
 
     #{4bb3c4a4f893ad8c9bdc833c325d62b3d3ad1bccf9282a65}
     #{fe69ed84}
@@ -1894,7 +1894,7 @@ decrypt-tests: [
     #{db7ffc82}
     #{a16a2e741f1cd9717285b6d882}
     #{}
-    4 #[none]
+    4 #(none)
 
     #{19ebfde2d5468ba0a3031bde629b11fd4094afcb205393fa}
     #{0c66a8e547ed4f8c2c9a9a1eb5d455b9}
@@ -1906,7 +1906,7 @@ decrypt-tests: [
     #{38757b3a61a4dc97ca3ab88bf1240695}
     #{a16a2e741f1cd9717285b6d882}
     #{}
-    16 #[none]
+    16 #(none)
 
     #{19ebfde2d5468ba0a3031bde629b11fd4094afcb205393fa}
     #{411986d04d6463100bff03f7d0bde7ea2c3488784378138cddc93a54}
@@ -1918,7 +1918,7 @@ decrypt-tests: [
     #{32b649ab56162e55d4148a1292d6a225a988eb1308298273b6889036}
     #{31f8fa25827d48}
     #{}
-    4 #[none]
+    4 #(none)
 
     #{197afb02ffbd8f699dacae87094d524324576b99844f75e1}
     #{cba4b4aeb85f0492fd8d905c4a6d8233139833373ef188a8c5a5ebecf7ac8607fe412189e83d9d20}
@@ -1930,7 +1930,7 @@ decrypt-tests: [
     #{ca62713728b5c9d652504b0ae8fd4fee5d297ee6a8d19cb6e699f15f14d34dcaf9ba8ed4b877c97d}
     #{31f8fa25827d48}
     #{}
-    16 #[none]
+    16 #(none)
 
     #{197afb02ffbd8f699dacae87094d524324576b99844f75e1}
     #{042653c674ef2a90f7fb11d30848e530ae59478f1051633a34fad277}
@@ -1942,7 +1942,7 @@ decrypt-tests: [
     #{1902d9769a7ba3d3268e1257395c8c2e5f98eef295dcbfa5a35df775}
     #{49004912fdd7269279b1f06a89}
     #{}
-    4 #[none]
+    4 #(none)
 
     #{90929a4b0ac65b350ad1591611fe48297e03956f6083e451}
     #{a5b7d8cca2069908d1ed88e6a9fe2c9bede3131dad54671ea7ade30a07d185692ab0ebdf4c78cf7a}
@@ -1954,7 +1954,7 @@ decrypt-tests: [
     #{9a98617fb97a0dfe466be692272dcdaec1c5443a3b51312ef042c86363cc05afb98c66e16be8a445}
     #{49004912fdd7269279b1f06a89}
     #{}
-    16 #[none]
+    16 #(none)
 
     #{90929a4b0ac65b350ad1591611fe48297e03956f6083e451}
     #{1d089a5f}
@@ -1966,7 +1966,7 @@ decrypt-tests: [
     #{2f46022a}
     #{a265480ca88d5f}
     #{a2248a882ecbf850daf91933a389e78e81623d233dfd47bf8321361a38f138fe}
-    4 #[none]
+    4 #(none)
 
     #{6a798d7c5e1a72b43e20ad5c7b08567b12ab744b61c070e2}
     #{5280a2137fee3deefcfe9b63a1199fb3}
@@ -1978,7 +1978,7 @@ decrypt-tests: [
     #{d40a7318c5f2d82f838c0beeefe0d598}
     #{a265480ca88d5f}
     #{a2248a882ecbf850daf91933a389e78e81623d233dfd47bf8321361a38f138fe}
-    16 #[none]
+    16 #(none)
 
     #{6a798d7c5e1a72b43e20ad5c7b08567b12ab744b61c070e2}
     #{5e0eaebd}
@@ -1990,7 +1990,7 @@ decrypt-tests: [
     #{71b7fc33}
     #{8739b4bea1a099fe547499cbc6}
     #{f6107696edb332b2ea059d8860fee26be42e5e12e1a4f79a8d0eafce1b2278a7}
-    4 #[none]
+    4 #(none)
 
     #{f9fdca4ac64fe7f014de0f43039c757194d544ce5d15eed4}
     #{d07ccf9fdc3d33aa94cda3d230da707c}
@@ -2002,7 +2002,7 @@ decrypt-tests: [
     #{65fe32b649dc328c9f531584897e85b3}
     #{8739b4bea1a099fe547499cbc6}
     #{f6107696edb332b2ea059d8860fee26be42e5e12e1a4f79a8d0eafce1b2278a7}
-    16 #[none]
+    16 #(none)
 
     #{f9fdca4ac64fe7f014de0f43039c757194d544ce5d15eed4}
     #{9f6ca4af9b159148c889a6584d1183ea26e2614874b0504575dea8d1}
@@ -2014,7 +2014,7 @@ decrypt-tests: [
     #{84d8212e9cfc2121252baa3b065b1edcf50497b9594db1ebd7965825}
     #{fdd2d6f503c915}
     #{5b92394f21ddc3ad49d9b0881b829a5935cb3a4d23e292a62fb66b5e7ab7020e}
-    4 #[none]
+    4 #(none)
 
     #{a7aa635ea51b0bb20a092bd5573e728ccd4b3e8cdd2ab33d}
     #{6aab64c4787599d8f213446beadb16e08dba60e97f56dbd14d1d980d6fe0fb44b421992662b97975}
@@ -2026,7 +2026,7 @@ decrypt-tests: [
     #{4980b2ee49b1aaf393175f5ab9bae95ec7904557dfa206603c51d36c826f01384100886198a7f6a3}
     #{fdd2d6f503c915}
     #{5b92394f21ddc3ad49d9b0881b829a5935cb3a4d23e292a62fb66b5e7ab7020e}
-    16 #[none]
+    16 #(none)
 
     #{a7aa635ea51b0bb20a092bd5573e728ccd4b3e8cdd2ab33d}
     #{16e543d0e20615ff0df15acd9927ddfe40668a54bb854cccc25e9fce}
@@ -2038,7 +2038,7 @@ decrypt-tests: [
     #{df35b109caf690656ae278bbd8f8bba687a2ce11b105dae98ecedb3e}
     #{0812757ad0cc4d17c4cfe7a642}
     #{ec6c44a7e94e51a3ca6dee229098391575ec7213c85267fbf7492fdbeee61b10}
-    4 #[none]
+    4 #(none)
 
     #{26511fb51fcfa75cb4b44da75a6e5a0eb8d9c8f3b906f886}
     #{c5b0b2ef17498c5570eb335df4588032958ba3d69bf6f3178464a6f7fa2b76744e8e8d95691cecb8}
@@ -2050,7 +2050,7 @@ decrypt-tests: [
     #{d1f0518929f4ae2f0543de2a7dfe4bb0110bb3057e524a1c06bd6dc2e6bcc3436cffb969ae900388}
     #{0812757ad0cc4d17c4cfe7a642}
     #{ec6c44a7e94e51a3ca6dee229098391575ec7213c85267fbf7492fdbeee61b10}
-    16 #[none]
+    16 #(none)
     ]
 
     DVPT AES-256-CCM "CCM auth decrypt tag NIST DVPT AES-256"
@@ -2065,7 +2065,7 @@ decrypt-tests: [
     #{46a908ed}
     #{d3d5424e20fbec}
     #{}
-    4 #[none]
+    4 #(none)
 
     #{e1b8a927a95efe94656677b692662000278b441c79e879dd5c0ddc758bdc9ee8}
     #{8207eb14d33855a52acceed17dbcbf6e}
@@ -2077,7 +2077,7 @@ decrypt-tests: [
     #{60f8e127cb4d30db6df0622158cd931d}
     #{d3d5424e20fbec}
     #{}
-    16 #[none]
+    16 #(none)
 
     #{e1b8a927a95efe94656677b692662000278b441c79e879dd5c0ddc758bdc9ee8}
     #{8a19a133}
@@ -2089,7 +2089,7 @@ decrypt-tests: [
     #{2e317f1b}
     #{3c0e2815d37d844f7ac240ba9d}
     #{}
-    4 #[none]
+    4 #(none)
 
     #{af063639e66c284083c5cf72b70d8bc277f5978e80d9322d99f2fdc718cda569}
     #{97e1a8dd4259ccd2e431e057b0397fcf}
@@ -2101,7 +2101,7 @@ decrypt-tests: [
     #{5a9596c511ea6a8671adefc4f2157d8b}
     #{3c0e2815d37d844f7ac240ba9d}
     #{}
-    16 #[none]
+    16 #(none)
 
     #{af063639e66c284083c5cf72b70d8bc277f5978e80d9322d99f2fdc718cda569}
     #{64a1341679972dc5869fcf69b19d5c5ea50aa0b5e985f5b722aa8d59}
@@ -2113,7 +2113,7 @@ decrypt-tests: [
     #{c5b7f802bffc498c1626e3774f1d9f94045dfd8e1a10a20277d00a75}
     #{bfcda8b5a2d0d2}
     #{}
-    4 #[none]
+    4 #(none)
 
     #{f7079dfa3b5c7b056347d7e437bcded683abd6e2c9e069d333284082cbb5d453}
     #{bc51c3925a960e7732533e4ef3a4f69ee6826de952bcb0fd374f3bb6db8377ebfc79674858c4f305}
@@ -2125,7 +2125,7 @@ decrypt-tests: [
     #{afa1fa8e8a70e26b02161150556d604101fdf423f332c3363275f2a4907d51b734fe7238cebbd48f}
     #{bfcda8b5a2d0d2}
     #{}
-    16 #[none]
+    16 #(none)
 
     #{f7079dfa3b5c7b056347d7e437bcded683abd6e2c9e069d333284082cbb5d453}
     #{63e00d30e4b08fd2a1cc8d70fab327b2368e77a93be4f4123d14fb3f}
@@ -2137,7 +2137,7 @@ decrypt-tests: [
     #{bb5425b3869b76856ec58e39886fb6f6f2ac13fe44cb132d8d0c0099}
     #{894dcaa61008eb8fb052c60d41}
     #{}
-    4 #[none]
+    4 #(none)
 
     #{1b0e8df63c57f05d9ac457575ea764524b8610ae5164e6215f426f5a7ae6ede4}
     #{f0050ad16392021a3f40207bed3521fb1e9f808f49830c423a578d179902f912f9ea1afbce1120b3}
@@ -2149,7 +2149,7 @@ decrypt-tests: [
     #{c408190d0fbf5034f83b24a8ed9657331a7ce141de4fae769084607b83bd06e6442eac8dacf583cc}
     #{894dcaa61008eb8fb052c60d41}
     #{}
-    16 #[none]
+    16 #(none)
 
     #{1b0e8df63c57f05d9ac457575ea764524b8610ae5164e6215f426f5a7ae6ede4}
     #{92d00fbe}
@@ -2161,7 +2161,7 @@ decrypt-tests: [
     #{9143e5c4}
     #{78c46e3249ca28}
     #{232e957c65ffa11988e830d4617d500f1c4a35c1221f396c41ab214f074ca2dc}
-    4 #[none]
+    4 #(none)
 
     #{a4bc10b1a62c96d459fbaf3a5aa3face7313bb9e1253e696f96a7a8e36801088}
     #{93af11a08379eb37a16aa2837f09d69d}
@@ -2173,7 +2173,7 @@ decrypt-tests: [
     #{d19b0c14ec686a7961ca7c386d125a65}
     #{78c46e3249ca28}
     #{232e957c65ffa11988e830d4617d500f1c4a35c1221f396c41ab214f074ca2dc}
-    16 #[none]
+    16 #(none)
 
     #{a4bc10b1a62c96d459fbaf3a5aa3face7313bb9e1253e696f96a7a8e36801088}
     #{866d4227}
@@ -2185,7 +2185,7 @@ decrypt-tests: [
     #{94cb1127}
     #{e8de970f6ee8e80ede933581b5}
     #{89f8b068d34f56bc49d839d8e47b347e6dae737b903b278632447e6c0485d26a}
-    4 #[none]
+    4 #(none)
 
     #{8c5cf3457ff22228c39c051c4e05ed4093657eb303f859a9d4b0f8be0127d88a}
     #{867b0d87cf6e0f718200a97b4f6d5ad5}
@@ -2197,7 +2197,7 @@ decrypt-tests: [
     #{677a040d46ee3f2b7838273bdad14f16}
     #{e8de970f6ee8e80ede933581b5}
     #{89f8b068d34f56bc49d839d8e47b347e6dae737b903b278632447e6c0485d26a}
-    16 #[none]
+    16 #(none)
 
     #{8c5cf3457ff22228c39c051c4e05ed4093657eb303f859a9d4b0f8be0127d88a}
     #{c2fe12658139f5d0dd22cadf2e901695b579302a72fc56083ebc7720}
@@ -2209,7 +2209,7 @@ decrypt-tests: [
     #{94748ba81229e53c38583a8564b23ebbafc6f6efdf4c2a81c44db2c9}
     #{6ba004fd176791}
     #{5a053b2a1bb87e85d56527bfcdcd3ecafb991bb10e4c862bb0751c700a29f54b}
-    4 #[none]
+    4 #(none)
 
     #{705334e30f53dd2f92d190d2c1437c8772f940c55aa35e562214ed45bd458ffe}
     #{3341168eb8c48468c414347fb08f71d2086f7c2d1bd581ce1ac68bd42f5ec7fa7e068cc0ecd79c2a}
@@ -2221,7 +2221,7 @@ decrypt-tests: [
     #{d543acda712b898cbb27b8f598b2e4438ce587a836e2785147c3338a2400809e739b63ba8227d2f9}
     #{6ba004fd176791}
     #{5a053b2a1bb87e85d56527bfcdcd3ecafb991bb10e4c862bb0751c700a29f54b}
-    16 #[none]
+    16 #(none)
 
     #{705334e30f53dd2f92d190d2c1437c8772f940c55aa35e562214ed45bd458ffe}
     #{c0ea400b599561e7905b99262b4565d5c3dc49fad84d7c69ef891339}
@@ -2233,7 +2233,7 @@ decrypt-tests: [
     #{60871e03ea0eb968536c99f926ea24ef43d41272ad9fb7f63d488623}
     #{8fa501c5dd9ac9b868144c9fa5}
     #{5bb40e3bb72b4509324a7edc852f72535f1f6283156e63f6959ffaf39dcde800}
-    4 #[none]
+    4 #(none)
 
     #{314a202f836f9f257e22d8c11757832ae5131d357a72df88f3eff0ffcee0da4e}
     #{8d34cdca37ce77be68f65baf3382e31efa693e63f914a781367f30f2eaad8c063ca50795acd90203}
@@ -2245,7 +2245,7 @@ decrypt-tests: [
     #{516c0095cc3d85fd55e48da17c592e0c7014b9daafb82bdc4b41096dfdbe9cc1ab610f8f3e038d16}
     #{8fa501c5dd9ac9b868144c9fa5}
     #{5bb40e3bb72b4509324a7edc852f72535f1f6283156e63f6959ffaf39dcde800}
-    16 #[none]
+    16 #(none)
     ]
 ]
 

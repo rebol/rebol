@@ -18,7 +18,7 @@ Rebol [
 	}
 ]
 
-html-entities: #[map! [
+html-entities: #[
 	;@@ https://eastmanreference.com/list-of-html-entity-names-and-numbers
 	;-- Punctuation, programming, and other common symbols
 	"lt"       #"^(3C)"     ; 60    Open tag
@@ -272,7 +272,7 @@ html-entities: #[map! [
 	"zwj"      #"^(200D)"   ; 8205  Zero width joiner
 	"lrm"      #"^(200E)"   ; 8206  Left-to-right mark
 	"rlm"      #"^(200F)"   ; 8207  Right-to-left mark
-]]
+]
 
 any-except-&: complement charset "&"
 alphanum:  charset [#"0" - #"9" #"a" - #"z" #"A" - #"Z"]

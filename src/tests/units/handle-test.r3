@@ -64,7 +64,7 @@ h4: aes/key #{00000000000000000000000000000000} none
 	--assert {[#[handle! rc4] #[handle! rc4] #[handle! aes] #[handle! aes]]} = mold try [sort/reverse blk]
 
 --test-- "handle as a key in map"
-	m: #()
+	m: #[]
 	--assert not error? try [m/(h1): 1]
 	--assert not error? try [repend m [h2 2 h3 3]]
 	--assert 1 = try [pick m h1]

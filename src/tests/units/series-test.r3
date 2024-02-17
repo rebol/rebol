@@ -23,9 +23,9 @@ Rebol [
 	--assert "anone"  == join  "a" none
 	--assert %anone   == join  %a  none
 	--assert "anone"  == join #"a" none
-	--assert error? try [join  "a" #[unset]]
-	--assert error? try [join  %a  #[unset]]
-	--assert error? try [join #"a" #[unset]]
+	--assert error? try [join  "a" #(unset)]
+	--assert error? try [join  %a  #(unset)]
+	--assert error? try [join #"a" #(unset)]
 
 ;@@ https://github.com/Oldes/Rebol-issues/issues/2558
 --test-- "AJOIN"
@@ -34,16 +34,16 @@ Rebol [
 	--assert %ab3     == ajoin [ %a  "b" 3]
 	--assert "ab3"    == ajoin [#"a" "b" 3]
 	--assert "<a>b3"  == ajoin [ <a> "b" 3] ;; by design not a tag!
-	--assert "a3"     == ajoin [ "a" #[none]  3]
-	--assert %a3      == ajoin [ %a  #[none]  3]
-	--assert "a3"     == ajoin [#"a" #[none]  3]
-	--assert "a3"     == ajoin [ "a" #[unset] 3]
-	--assert %a3      == ajoin [ %a  #[unset] 3]
-	--assert "a3"     == ajoin [#"a" #[unset] 3]
+	--assert "a3"     == ajoin [ "a" #(none)  3]
+	--assert %a3      == ajoin [ %a  #(none)  3]
+	--assert "a3"     == ajoin [#"a" #(none)  3]
+	--assert "a3"     == ajoin [ "a" #(unset) 3]
+	--assert %a3      == ajoin [ %a  #(unset) 3]
+	--assert "a3"     == ajoin [#"a" #(unset) 3]
 	;; when first value is not a string, result is always string
-	--assert "a3"     == ajoin [#[none]  "a"  3]
-	--assert "a3"     == ajoin [#[none]  %a   3]
-	--assert "a3"     == ajoin [#[none] #"a"  3]
+	--assert "a3"     == ajoin [#(none)  "a"  3]
+	--assert "a3"     == ajoin [#(none)  %a   3]
+	--assert "a3"     == ajoin [#(none) #"a"  3]
 	;; nested ajoin
 	--assert "1234"   == ajoin [1 2 ajoin [3 4]]
 
@@ -52,16 +52,16 @@ Rebol [
 	--assert "ab3"     == ajoin/all [ "a" "b"  3]
 	--assert %ab3      == ajoin/all [ %a  "b"  3]
 	--assert "ab3"     == ajoin/all [#"a" "b"  3]
-	--assert "anone3"  == ajoin/all [ "a" #[none]  3]
-	--assert %anone3   == ajoin/all [ %a  #[none]  3]
-	--assert "anone3"  == ajoin/all [#"a" #[none]  3]
-	--assert "a3"      == ajoin/all [ "a" #[unset] 3]
-	--assert %a3       == ajoin/all [ %a  #[unset] 3]
-	--assert "a3"      == ajoin/all [#"a" #[unset] 3]
+	--assert "anone3"  == ajoin/all [ "a" #(none)  3]
+	--assert %anone3   == ajoin/all [ %a  #(none)  3]
+	--assert "anone3"  == ajoin/all [#"a" #(none)  3]
+	--assert "a3"      == ajoin/all [ "a" #(unset) 3]
+	--assert %a3       == ajoin/all [ %a  #(unset) 3]
+	--assert "a3"      == ajoin/all [#"a" #(unset) 3]
 	;; when first value is not a string, result is always string
-	--assert "nonea3"  == ajoin/all [#[none]  "a"  3]
-	--assert "nonea3"  == ajoin/all [#[none]  %a   3]
-	--assert "nonea3"  == ajoin/all [#[none] #"a"  3]
+	--assert "nonea3"  == ajoin/all [#(none)  "a"  3]
+	--assert "nonea3"  == ajoin/all [#(none)  %a   3]
+	--assert "nonea3"  == ajoin/all [#(none) #"a"  3]
 
 --test-- "AJOIN/with"
 	--assert "a/b/3"   == ajoin/with [ 'a  'b       3] #"/"
@@ -69,24 +69,24 @@ Rebol [
 	--assert %a/b/3    == ajoin/with [ %a  "b"      3] #"/"
 	--assert "a/b/3"   == ajoin/with [#"a" "b"      3] #"/"
 	--assert "<a>/b/3" == ajoin/with [ <a> "b"      3] #"/" ;; by design not a tag!
-	--assert "a/3"     == ajoin/with [ "a" #[none]  3] #"/"
-	--assert %a/3      == ajoin/with [ %a  #[none]  3] #"/"
-	--assert "a/3"     == ajoin/with [#"a" #[none]  3] #"/"
-	--assert "a/3"     == ajoin/with [ "a" #[unset] 3] #"/"
-	--assert %a/3      == ajoin/with [ %a  #[unset] 3] #"/"
-	--assert "a/3"     == ajoin/with [#"a" #[unset] 3] #"/"
+	--assert "a/3"     == ajoin/with [ "a" #(none)  3] #"/"
+	--assert %a/3      == ajoin/with [ %a  #(none)  3] #"/"
+	--assert "a/3"     == ajoin/with [#"a" #(none)  3] #"/"
+	--assert "a/3"     == ajoin/with [ "a" #(unset) 3] #"/"
+	--assert %a/3      == ajoin/with [ %a  #(unset) 3] #"/"
+	--assert "a/3"     == ajoin/with [#"a" #(unset) 3] #"/"
 
 --test-- "AJOIN/all/with"
 	--assert "a/b/3"    == ajoin/all/with [ 'a  'b       3] #"/"
 	--assert "a/b/3"    == ajoin/all/with [ "a" "b"      3] #"/"
 	--assert %a/b/3     == ajoin/all/with [ %a  "b"      3] #"/"
 	--assert "a/b/3"    == ajoin/all/with [#"a" "b"      3] #"/"
-	--assert "a/none/3" == ajoin/all/with [ "a" #[none]  3] #"/"
-	--assert %a/none/3  == ajoin/all/with [ %a  #[none]  3] #"/"
-	--assert "a/none/3" == ajoin/all/with [#"a" #[none]  3] #"/"
-	--assert "a//3"     == ajoin/all/with [ "a" #[unset] 3] #"/"
-	--assert %a//3      == ajoin/all/with [ %a  #[unset] 3] #"/"
-	--assert "a//3"     == ajoin/all/with [#"a" #[unset] 3] #"/"
+	--assert "a/none/3" == ajoin/all/with [ "a" #(none)  3] #"/"
+	--assert %a/none/3  == ajoin/all/with [ %a  #(none)  3] #"/"
+	--assert "a/none/3" == ajoin/all/with [#"a" #(none)  3] #"/"
+	--assert "a//3"     == ajoin/all/with [ "a" #(unset) 3] #"/"
+	--assert %a//3      == ajoin/all/with [ %a  #(unset) 3] #"/"
+	--assert "a//3"     == ajoin/all/with [#"a" #(unset) 3] #"/"
 
 --test-- "FORM"
 	--assert "a b 3"    == form [ 'a  'b       3]
@@ -94,15 +94,15 @@ Rebol [
 	--assert "a b 3"    == form [ %a  "b"      3]
 	--assert "a b 3"    == form [#"a" "b"      3]
 	--assert "<a> b 3"  == form [ <a> "b"      3]
-	--assert "a none 3" == form [ "a" #[none]  3]
-	--assert "a none 3" == form [ %a  #[none]  3]
-	--assert "a none 3" == form [#"a" #[none]  3]
-	--assert "a  3"     == form [ "a" #[unset] 3]
-	--assert "a  3"     == form [ %a  #[unset] 3]
-	--assert "a  3"     == form [#"a" #[unset] 3]
+	--assert "a none 3" == form [ "a" #(none)  3]
+	--assert "a none 3" == form [ %a  #(none)  3]
+	--assert "a none 3" == form [#"a" #(none)  3]
+	--assert "a  3"     == form [ "a" #(unset) 3]
+	--assert "a  3"     == form [ %a  #(unset) 3]
+	--assert "a  3"     == form [#"a" #(unset) 3]
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2560
 	--assert "  1  2"   == form ["" "" 1 "" 2]
-	--assert "  1  2"   == form [#[unset] #[unset] 1 #[unset] 2]
+	--assert "  1  2"   == form [#(unset) #(unset) 1 #(unset) 2]
 ===end-group===
 
 
@@ -494,12 +494,12 @@ Rebol [
 		--assert #{00110000} = head trim/head at copy bin 2
 		--assert #{0011}     = head trim/all  at copy bin 2
 	--test-- "trim block!"
-		blk: [#[none] 1 #[none] 2 #[none]]
+		blk: [#(none) 1 #(none) 2 #(none)]
 		;@@ https://github.com/Oldes/Rebol-issues/issues/825
-		--assert [1 #[none] 2 #[none]] = trim/head copy blk
-		--assert [#[none] 1 #[none] 2] = trim/tail copy blk
+		--assert [1 #(none) 2 #(none)] = trim/head copy blk
+		--assert [#(none) 1 #(none) 2] = trim/tail copy blk
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2482
-		--assert [1 #[none] 2] = trim     copy blk
+		--assert [1 #(none) 2] = trim     copy blk
 		--assert [1 2]         = trim/all copy blk
 		--assert all [error? e: try [trim/head/all []] e/id = 'bad-refines]
 		--assert all [error? e: try [trim/tail/all []] e/id = 'bad-refines]
@@ -875,13 +875,13 @@ Rebol [
 
 ===start-group=== "EXTEND"
 	--test-- "extend object!"
-		--assert all [1 == extend  o: object[] 'a 1  o = #[object! [a: 1]]]
+		--assert all [1 == extend  o: object[] 'a 1  o = #(object! [a: 1])]
 	--test-- "extend block!"
 		--assert all [1 == extend  b: [] 'a 1  b = [a: 1]]
 	--test-- "extend paren!"
 		--assert all [1 == extend  b: quote () 'a 1  b = quote (a: 1)]
 	--test-- "extend map!"
-		--assert all [1 == extend  m: #() 'a 1  m = #(a: 1)]
+		--assert all [1 == extend  m: #[] 'a 1  m = #[a: 1]]
 ===end-group===
 
 
@@ -998,7 +998,7 @@ Rebol [
 			3 = indexz? atz s 6
 		]
 	--test-- "indexz? on vector"
-		s: #[u16! 3]
+		s: #(u16! 3)
 		--assert all [
 			0 = indexz? s
 			1 = indexz? next s
@@ -1140,7 +1140,7 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1815
 		--assert all [
 			b: [1 2 3] 
-			not error? try [poke b 2 #[unset]]
+			not error? try [poke b 2 #(unset)]
 			unset? pick b 2
 			unset? b/2
 		]
@@ -1590,11 +1590,11 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1766
 	--assert error? try [sort/compare [1 2 3]  func [/local loc-1 loc-2][local < loc-1] ]
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1516
-	--assert error? try [sort/compare [1 2 #[unset]] :>]
+	--assert error? try [sort/compare [1 2 #(unset)] :>]
 
 --test-- "SORT with unset!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1124
-	--assert [#[unset] 2 3] = sort reduce [2 #[unset] 3 ]
+	--assert [#(unset) 2 3] = sort reduce [2 #(unset) 3 ]
 
 --test-- "SORT/reverse"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/128
@@ -1804,7 +1804,7 @@ Rebol [
 
 	;@@ https://github.com/Oldes/Rebol-issues/issues/806
 	--assert #{0303} = remove-each v #{03010203} [v < 3]
-	--assert [3 3] = to block! remove-each v #[u16! [3 1 2 3]] [v < 3]
+	--assert [3 3] = to block! remove-each v #(u16! [3 1 2 3]) [v < 3]
 
 --test-- "remove-each/count result"
 	b: [a 1 b 2]
@@ -2163,7 +2163,7 @@ Rebol [
 	append s #"o"
 	--assert f = %hello
 	--assert e = to-email %hello
-	--assert u = #[url! "hello"]
+	--assert u = #(url! "hello")
 	--assert t = <hello>
 	--assert r = @hello
 
@@ -2185,7 +2185,7 @@ Rebol [
 	s: "hell"
 	--assert file?  f: as %file  s
 	--assert email? e: as e@mail s
-	--assert url?   u: as #[url! ""] s
+	--assert url?   u: as #(url! "") s
 	--assert tag?   t: as <tag>  s
 	--assert ref?   r: as @ref   s
 
@@ -2459,7 +2459,7 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/400
 	--assert "123" = union "12" "13"
 --test-- "union with none and unset"
-	--assert [#[none] #[unset]] = union [#[none]] [#[unset]]
+	--assert [#(none) #(unset)] = union [#(none)] [#(unset)]
 
 --test-- "union/skip"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2520
@@ -2532,21 +2532,21 @@ Rebol [
 --test-- "unique with unset and none"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1124
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1592
-	--assert [#[unset] #[none]] = unique reduce [unset 'a unset 'a none none]
+	--assert [#(unset) #(none)] = unique reduce [unset 'a unset 'a none none]
 
 ===end-group===
 
 ===start-group=== "INTERSECT"
 --test-- "intersect"
-	--assert [#[none] 1 #[unset]] = intersect [#[none] 1 #[unset]] [#[none] #[unset] 1]
-	--assert [] = intersect [#[none]] [1 #[unset]]
+	--assert [#(none) 1 #(unset)] = intersect [#(none) 1 #(unset)] [#(none) #(unset) 1]
+	--assert [] = intersect [#(none)] [1 #(unset)]
 
 ===end-group===
 
 ===start-group=== "EXTRACT"
 --test-- "extract with unset"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1540
-	--assert [5 1 #[unset]] = extract [5 3 1 #[unset] #[unset] #[unset]] 2
+	--assert [5 1 #(unset)] = extract [5 3 1 #(unset) #(unset) #(unset)] 2
 
 ===end-group===
 
@@ -2603,7 +2603,7 @@ Rebol [
 	--assert (mold to-path [1 2 3]) = "1/2/3"
 	--assert (mold to-path [1 none 3]) = "1/none/3"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/477
-	--assert path? p: try [to-path b: [1 #[none] #[true] [] () #{}]]
+	--assert path? p: try [to-path b: [1 #(none) #(true) [] () #{}]]
 	--assert integer? p/1
 	--assert none?    p/2
 	--assert true?    p/3
@@ -2646,7 +2646,7 @@ Rebol [
 
 ===start-group=== "ARRAY"
 --test-- "array"
-	--assert [#[none] #[none]] = array 2
+	--assert [#(none) #(none)] = array 2
 --test-- "array/initial"
 	--assert [0 0] = array/initial 2 0
 	;@@ https://github.com/Oldes/Rebol-issues/issues/360
@@ -2722,8 +2722,8 @@ Rebol [
 ;@@ https://github.com/Oldes/Rebol-wishes/issues/19
 --test-- "combine to string"
 	--assert "abc" = combine [a b c]
-	--assert "abc" = combine [a #[none] b () c #[unset]]
-	--assert "a|b|c" = combine/with [a #[none] b () c #[unset]] #"|"
+	--assert "abc" = combine [a #(none) b () c #(unset)]
+	--assert "a|b|c" = combine/with [a #(none) b () c #(unset)] #"|"
 	--assert "abcghi" = combine [{abc} (if false {def}) {ghi}]
 	--assert "abcghi" = combine reduce [{abc} if false {def} {ghi}]
 	--assert "a, b, c" = combine/with [a b c] ", "
@@ -2739,7 +2739,7 @@ Rebol [
 	--assert %a/1/c = combine/into/with [#"a" 1 "c"] %"" #"/"
 
 --test-- "combine to path"
-	--assert 'a/b/c = combine/into [a b #[none] c] make path! 3
+	--assert 'a/b/c = combine/into [a b #(none) c] make path! 3
 
 --test-- "combine to tag"
 	url: http://rebol.com
@@ -2766,8 +2766,8 @@ Rebol [
 ===start-group=== "COLLECT"
 --test-- "collect unset"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/880
-	--assert unset? first collect [keep #[unset]]
-	--assert unset? first head insert copy [] #[unset]
+	--assert unset? first collect [keep #(unset)]
+	--assert unset? first head insert copy [] #(unset)
 
 ===end-group===
 
@@ -2836,13 +2836,13 @@ Rebol [
 	--assert 0 = sum []
 	--assert 6 = sum [1 2 3]
 	--assert 6.0 = sum [1.0 2 3]
-	--assert 6 = sum #[uint8! [1 2 3]]
+	--assert 6 = sum #(uint8! [1 2 3])
 --test-- "average"
 	--assert none? average []
 	--assert 2 = average [1 2 3]
 	--assert 2.0 = average [1.0 2 3]
-	--assert 2 = average #[uint8! [1 2 3]]
-	--assert 17.5 = average #[uint8! [10 25]]  
+	--assert 2 = average #(uint8! [1 2 3])
+	--assert 17.5 = average #(uint8! [10 25])  
 
 ===end-group===
 

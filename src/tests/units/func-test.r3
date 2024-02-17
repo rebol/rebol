@@ -15,33 +15,33 @@ Rebol [
 	--test-- "no refinements"
 	--assert all [error? e: try [fce  ] e/id = 'no-arg]
 	--assert all [error? e: try [fce 1] e/id = 'expect-arg]
-	--assert (fce "a") == ["a" #[none] #[none] #[none] #[none] #[none]]
+	--assert (fce "a") == ["a" #(none) #(none) #(none) #(none) #(none)]
 
 	--test-- "simple refinements"
 	--assert all [error? e: try [fce/ref1 "a"   ] e/id = 'no-arg]
 	--assert all [error? e: try [fce/ref1 "a" ""] e/id = 'expect-arg]
-	--assert (fce/ref1 "a" 1)     == ["a" #[true] 1 #[none] #[none] #[none]]
-	--assert (fce/ref1 "a" 1 + 1) == ["a" #[true] 2 #[none] #[none] #[none]]
-	--assert (fce/ref1/ref2 "a" 1 x y)     == ["a" #[true] 1 #[true] x y]
-	--assert (fce/ref2/ref1 "a" x y 1 + 1) == ["a" #[true] 2 #[true] x y]
+	--assert (fce/ref1 "a" 1)     == ["a" #(true) 1 #(none) #(none) #(none)]
+	--assert (fce/ref1 "a" 1 + 1) == ["a" #(true) 2 #(none) #(none) #(none)]
+	--assert (fce/ref1/ref2 "a" 1 x y)     == ["a" #(true) 1 #(true) x y]
+	--assert (fce/ref2/ref1 "a" x y 1 + 1) == ["a" #(true) 2 #(true) x y]
 
 	--test-- "dynamic refinements"
 	ref1: yes --assert all [error? e: try [fce/:ref1 "a"   ] e/id = 'no-arg]
 	ref1: off --assert all [error? e: try [fce/:ref1 "a"   ] e/id = 'no-arg]
 	ref1: yes --assert all [error? e: try [fce/:ref1 "a" ""] e/id = 'expect-arg]
-	ref1: off --assert (fce/:ref1 "a" "")    == ["a" #[none] #[none] #[none] #[none] #[none]]
-	ref1: yes --assert (fce/:ref1 "a" 1)     == ["a" #[true]  1      #[none] #[none] #[none]]
-	ref1: off --assert (fce/:ref1 "a" 1)     == ["a" #[none] #[none] #[none] #[none] #[none]]
-	ref1: yes --assert all [(fce/:ref1 "a" x: 1 + 1) == ["a" #[true]  2      #[none] #[none] #[none]] x == 2]
-	ref1: off --assert all [(fce/:ref1 "a" x: 1 + 1) == ["a" #[none] #[none] #[none] #[none] #[none]] x == 2]
-	ref1: yes ref2: yes --assert (fce/:ref1/:ref2 "a" 1 + 1 x y) == ["a" #[true] 2 #[true] x y]
-	ref1: yes ref2: yes --assert (fce/:ref2/:ref1 "a" x y 1 + 1) == ["a" #[true] 2 #[true] x y]
-	ref1: yes ref2: off --assert (fce/:ref1/:ref2 "a" 1 + 1 x y) == ["a" #[true] 2 #[none] #[none] #[none]]
-	ref1: yes ref2: off --assert (fce/:ref2/:ref1 "a" x y 1 + 1) == ["a" #[true] 2 #[none] #[none] #[none]]
-	ref1: off ref2: yes --assert (fce/:ref1/:ref2 "a" 1 + 1 x y) == ["a" #[none] #[none] #[true] x y]
-	ref1: off ref2: yes --assert (fce/:ref2/:ref1 "a" x y 1 + 1) == ["a" #[none] #[none] #[true] x y]
-	ref1: off ref2: off --assert (fce/:ref1/:ref2 "a" 1 + 1 x y) == ["a" #[none] #[none] #[none] #[none] #[none]]
-	ref1: off ref2: off --assert (fce/:ref2/:ref1 "a" x y 1 + 1) == ["a" #[none] #[none] #[none] #[none] #[none]]
+	ref1: off --assert (fce/:ref1 "a" "")    == ["a" #(none) #(none) #(none) #(none) #(none)]
+	ref1: yes --assert (fce/:ref1 "a" 1)     == ["a" #(true)  1      #(none) #(none) #(none)]
+	ref1: off --assert (fce/:ref1 "a" 1)     == ["a" #(none) #(none) #(none) #(none) #(none)]
+	ref1: yes --assert all [(fce/:ref1 "a" x: 1 + 1) == ["a" #(true)  2      #(none) #(none) #(none)] x == 2]
+	ref1: off --assert all [(fce/:ref1 "a" x: 1 + 1) == ["a" #(none) #(none) #(none) #(none) #(none)] x == 2]
+	ref1: yes ref2: yes --assert (fce/:ref1/:ref2 "a" 1 + 1 x y) == ["a" #(true) 2 #(true) x y]
+	ref1: yes ref2: yes --assert (fce/:ref2/:ref1 "a" x y 1 + 1) == ["a" #(true) 2 #(true) x y]
+	ref1: yes ref2: off --assert (fce/:ref1/:ref2 "a" 1 + 1 x y) == ["a" #(true) 2 #(none) #(none) #(none)]
+	ref1: yes ref2: off --assert (fce/:ref2/:ref1 "a" x y 1 + 1) == ["a" #(true) 2 #(none) #(none) #(none)]
+	ref1: off ref2: yes --assert (fce/:ref1/:ref2 "a" 1 + 1 x y) == ["a" #(none) #(none) #(true) x y]
+	ref1: off ref2: yes --assert (fce/:ref2/:ref1 "a" x y 1 + 1) == ["a" #(none) #(none) #(true) x y]
+	ref1: off ref2: off --assert (fce/:ref1/:ref2 "a" 1 + 1 x y) == ["a" #(none) #(none) #(none) #(none) #(none)]
+	ref1: off ref2: off --assert (fce/:ref2/:ref1 "a" x y 1 + 1) == ["a" #(none) #(none) #(none) #(none) #(none)]
 
 ===end-group===
 
@@ -60,7 +60,7 @@ Rebol [
 --test-- "apply with refinements"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/167
 	f: func [a /b c] [reduce [a b c]]
-	--assert [1 #[true] 3] = apply :f [1 2 3]
+	--assert [1 #(true) 3] = apply :f [1 2 3]
 
 --test-- "apply/only"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/105
@@ -147,8 +147,8 @@ Rebol [
 	f: func[/a b [integer!]][]
 	--assert all [
 		block? b: types-of :f
-		b/1 = #[typeset! [none! logic!]]
-		b/2 = #[typeset! [integer!]]
+		b/1 = #(typeset! [none! logic!])
+		b/2 = #(typeset! [integer!])
 	]
 
 ===end-group===
@@ -363,7 +363,7 @@ Rebol [
  	f3: make :f1 [[b /local a][reduce [b a]]]
  	--assert 2 = f1 1
  	--assert [2 "foo"] = f2 2
- 	--assert [3 #[none]] = f3 3
+ 	--assert [3 #(none)] = f3 3
 
  --test-- "unset as a function argument"
  ;@@ https://github.com/Oldes/Rebol-issues/issues/293
@@ -372,7 +372,7 @@ Rebol [
 	f: func [v [any-type!]] [type? get/any 'v]
 	--assert unset! = f make unset! none
 	f: func [v [unset!]] [type? get/any 'v]
-	--assert unset! = f #[unset]
+	--assert unset! = f #(unset)
 
 --test-- "issue-196"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/196

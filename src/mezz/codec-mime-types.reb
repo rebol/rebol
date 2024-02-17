@@ -15,7 +15,7 @@ REBOL [
 ; temporary function used just for the initialization...
 mime-type?: func[/local types type files][
 	unless find system/options 'mime-types [
-		put system/options 'mime-types #[none]
+		put system/options 'mime-types #(none)
 	]
 	types: any [system/options/mime-types make map! 110]
 	parse [

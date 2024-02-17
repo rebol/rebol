@@ -40,7 +40,7 @@ serve-http [
 	keep-alive: [30 100] ;= [timeout max-requests] or FALSE to turn it off
 	log-access: %httpd-root/logs/test-access.log
 	log-errors: %httpd-root/logs/test-errors.log
-	list-dir?:  #[true]
+	list-dir?:  #(true)
 	;- Server's actor functions
 	actor: [
 	On-Accept: func [info [object!]][

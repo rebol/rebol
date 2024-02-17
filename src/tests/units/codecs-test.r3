@@ -175,7 +175,7 @@ if find codecs 'wav [
 			bin: none
 			
 		--test-- "Encode WAV"
-			samples: #[i16! [0 -1000 -2000 -1000 0 1000 2000 1000 0]]
+			samples: #(i16! [0 -1000 -2000 -1000 0 1000 2000 1000 0])
 			--assert binary? bin: encode 'wav :samples
 			--assert object? snd: decode 'wav :bin
 			--assert   'wave = snd/type
@@ -430,7 +430,7 @@ try [import 'json]
 if find codecs 'JSON [
 	===start-group=== "JSON codec"
 	--test-- "JSON encode/decode"
-		data: #(a: 1 b: #(c: 2.0) d: "^/^-")
+		data: #[a: 1 b: #[c: 2.0] d: "^/^-"]
 		str: encode 'JSON data
 		--assert data = decode 'JSON str
 		; Github is using "+1" and "-1" keys in the `reactions` data now
@@ -791,7 +791,7 @@ if find codecs 'safe [
 	===start-group=== "SAFE codec"		
 		--test-- "Save/Load SAFE file"
 			foreach data [
-				#(key: "Hello")
+				#[key: "Hello"]
 				43
 				#{DEADBEEF}
 				[key: "aaa" value: 12]
@@ -812,7 +812,7 @@ if find codecs 'safe [
 			--assert none? system/user/name
 			--assert not error? try [set-user/p temp-user "passw"]
 			--assert "hello" = user's key               ;; resolve the data
-			--assert not error? try [su #[none]]        ;; release user using none value
+			--assert not error? try [su #(none)]        ;; release user using none value
 			--assert none? system/user/name
 
 			try [delete system/user/data/spec/ref]

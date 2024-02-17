@@ -712,7 +712,7 @@ download-extension: function[
 		]
 		log/info 'REBOL ["Downloading:^[[m" url]
 		;; temporary turn off any logs
-		so/log: #[map! [http: 0 tls: 0]]
+		so/log: #(map! [http: 0 tls: 0])
 		bin: read url
 		if %.gz = suffix? url [bin: decompress bin 'gzip]
 		log/info 'REBOL ["Saving file:^[[m" file]

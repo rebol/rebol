@@ -3,7 +3,7 @@ REBOL [
 	Title: "Canonical words"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2022 Rebol Open Source Contributors
+		Copyright 2012-2024 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -28,7 +28,7 @@ any-object!
 any-block!
 
 ;- numeric types (used for "short" vector! construction)
-;- like: #[u8! 4] which is same like: make vector! [unsigned integer! 8 4]
+;- like: #(u8! 4) which is same like: make vector! [unsigned integer! 8 4]
 ;  these numeric files are used in l-types.c and t-vector.c sources
 ;  and can be used for future struct! and routine! implementations
 i8!

@@ -14,7 +14,7 @@ Rebol [
 		https://developer.spotify.com/documentation/general/guides/authorization-guide/
 		https://aaronparecki.com/oauth-2-simplified/
 	}
-	Needs: 3.11.0 ;; using try/with instead of deprecated try/except
+	Needs: 3.16.0 ;; new construction syntax since 3.16.0
 ]
 
 default-scopes: [
@@ -70,7 +70,7 @@ config: function[
 		ctx/client-secret: ask/hide "Client Secret: "
 	][	;; when user hits ESC...
 		sys/log/error 'spotify "Missing credentials!"
-		return #()
+		return #[]
 	]
 	if empty? ctx/client-secret [ctx/client-secret: none] ;optional
 
@@ -124,7 +124,7 @@ authorize: function [
 	unless string? client-id [ client-id: form client-id ]
 
 	unless string? scopes: any [ctx/scopes default-scopes] [ scopes: form scopes ]
-	parse scopes [any [change some #[bitset! #{0064000080}] #"+" | skip]] ; url-encode spaces in scopes
+	parse scopes [any [change some #(bitset! #{0064000080}) #"+" | skip]] ; url-encode spaces in scopes
 
 	unless integer? ctx/port [ ctx/port: 8989 ]
 	;@@ The value of redirect_uri here must exactly match one of the values
@@ -285,7 +285,7 @@ request: func [
 	data   [any-type!]
 	/local ctx header result
 ][
-	header: clear #()
+	header: clear #[]
 
 	try/with [
 		ctx: config

@@ -118,12 +118,12 @@ ws:       system/catalog/bitsets/whitespace
 ws*: [any ws]
 ws+: [some ws]
 sep: [ws* #"," ws*]							   ; JSON value separator
-non-zero-digit: #[bitset! #{0000000000007FC0}] ;= charset "123456789"
+non-zero-digit: #(bitset! #{0000000000007FC0}) ;= charset "123456789"
 ; Unescaped chars (NOT creates a virtual bitset)
-chars: #[bitset! [not bits #{FFFFFFFF2000000000000008}]] ;=charset [not {\"} #"^@"-#"^_"]
+chars: #(bitset! [not bits #{FFFFFFFF2000000000000008}]) ;=charset [not {\"} #"^@"-#"^_"]
 
 ; chars allowed in Rebol word! values - note that we don't allow < and > at all even though they are somewhat valid in word!
-not-word-char: #[bitset! #{00640000BCC9003A8000001E000000140000000080}] ;=charset {/\^^,[](){}"#%$@:;^/^(00A0) ^-^M<>}
+not-word-char: #(bitset! #{00640000BCC9003A8000001E000000140000000080}) ;=charset {/\^^,[](){}"#%$@:;^/^(00A0) ^-^M<>}
 word-1st:  complement append union not-word-char digit #"'"
 word-char: complement not-word-char
 
@@ -291,7 +291,7 @@ load-json: func [
 indent: none
 indent-level: 0
 normal-chars: none
-escapes: #[map! [
+escapes: #[
 	#"^"" {\"}
 	#"\"  "\\"
 	#"^H" "\b"
@@ -299,7 +299,7 @@ escapes: #[map! [
 	#"^/" "\n"
 	#"^M" "\r"
 	#"^-" "\t"
-]]
+]
 
 init-state: func [ind ascii?][
 	indent: ind
@@ -307,10 +307,10 @@ init-state: func [ind ascii?][
 	; 34 is double quote "
 	; 92 is backslash \
 	normal-chars: either ascii? [
-		#[bitset! #{00000000DFFFFFFFFFFFFFF7FFFFFFFF}]
+		#(bitset! #{00000000DFFFFFFFFFFFFFF7FFFFFFFF})
 		;= charset [32 33 35 - 91 93 - 127]
 	][
-		#[bitset! [not bits #{FFFFFFFF2000000000000008}]]
+		#(bitset! [not bits #{FFFFFFFF2000000000000008}])
 		;= complement charset [0 - 31 34 92]
 	]
 ]

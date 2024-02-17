@@ -64,27 +64,27 @@ Rebol [
 
 ===end-group===
 
-===start-group=== "#[date! ...]"
+===start-group=== "#(date! ...)"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1034
-	--test-- "#[date! ...] valid"
-		--assert 1-Feb-0003 = #[date! 1 2 3]
-		--assert 1-Feb-0003/4:00 = #[date! 1 2 3 4:0]
-		--assert 1-Feb-0003/4:00+5:00 = #[date! 1 2 3 4:0 5:0]
+	--test-- "#(date! ...) valid"
+		--assert 1-Feb-0003 = #(date! 1 2 3)
+		--assert 1-Feb-0003/4:00 = #(date! 1 2 3 4:0)
+		--assert 1-Feb-0003/4:00+5:00 = #(date! 1 2 3 4:0 5:0)
 		;@@ https://github.com/Oldes/Rebol-wishes/issues/1
 		;@@ https://github.com/Oldes/Rebol-issues/issues/991
-		--assert 1-Jan-2000 = #[date! 1-1-2000]
-		--assert 1-Jan-2000/10:00 = #[date! 1-1-2000 10:0]
-		--assert 1-Jan-2000/10:00+2:00 = #[date! 1-1-2000 10:0 2:0]
-		--assert 5-Jan-2000/4:00 = #[date! 1-1-2000 100:0]
+		--assert 1-Jan-2000 = #(date! 1-1-2000)
+		--assert 1-Jan-2000/10:00 = #(date! 1-1-2000 10:0)
+		--assert 1-Jan-2000/10:00+2:00 = #(date! 1-1-2000 10:0 2:0)
+		--assert 5-Jan-2000/4:00 = #(date! 1-1-2000 100:0)
 
-	--test-- "#[date! ...] invalid"
-		--assert error? try [load {#[date! 1]}]
-		--assert error? try [load {#[date! 1 2]}]
-		--assert error? try [load {#[date! 1 2 3 x]}]
-		--assert error? try [load {#[date! 1 2 3 4:0 x]}]
-		--assert error? try [load {#[date! 1 2 3 4:0 5:0 3]}]
+	--test-- "#(date! ...) invalid"
+		--assert error? try [load {#(date! 1)}]
+		--assert error? try [load {#(date! 1 2)}]
+		--assert error? try [load {#(date! 1 2 3 x)}]
+		--assert error? try [load {#(date! 1 2 3 4:0 x)}]
+		--assert error? try [load {#(date! 1 2 3 4:0 5:0 3)}]
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2508
-		--assert datatype? try [load {#[date!]}] 
+		--assert datatype? try [load {#(date!)}] 
 
 ===end-group===
 
@@ -364,7 +364,7 @@ Rebol [
 	
 	--test-- "query/mode date"
 		date: 8-Apr-2020 ; no time!
-		--assert equal? query/mode date all-date-words [2020 4 8 #[none] 2020-04-08 #[none] #[none] #[none] #[none] 3 99 #[none] 2020-04-08 2458948.0]
+		--assert equal? query/mode date all-date-words [2020 4 8 #(none) 2020-04-08 #(none) #(none) #(none) #(none) 3 99 #(none) 2020-04-08 2458948.0]
 
 ===end-group===
 

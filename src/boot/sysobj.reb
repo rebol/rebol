@@ -3,7 +3,7 @@ REBOL [
 	Title: "System object"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2023 Rebol Open Source Contributors
+		Copyright 2012-2024 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -26,7 +26,7 @@ build:    object [os: os-version: abi: sys: arch: libc: vendor: target: compiler
 
 user: construct [
 	name: none
-	data: #()
+	data: #[]
 ]
 
 options: object [  ; Options supplied to REBOL during startup
@@ -61,13 +61,13 @@ options: object [  ; Options supplied to REBOL during startup
 
 	; verbosity of logs per service (codecs, schemes)
 	; 0 = nothing; 1 = info; 2 = more; 3 = debug
-	log: #[map! [
+	log: #[
 		rebol: 1
 		http: 1
 		tls:  1
 		zip:  1
 		tar:  1
-	]]
+	]
 	domain-name: none ; Specifies system's domain name (used in SMTP scheme so far)
 ]
 
@@ -95,18 +95,18 @@ catalog: object [
 		secure-min secure-max trace halt cgi boot-level no-window
 	]
 	bitsets: object [
-		crlf:          #[bitset! #{0024}]                             ;charset "^/^M"
-		space:         #[bitset! #{0040000080}]                       ;charset " ^-"
-		whitespace:    #[bitset! #{0064000080}]                       ;charset "^/^M^- "
-		numeric:       #[bitset! #{000000000000FFC0}]                 ;0-9
-		alpha:         #[bitset! #{00000000000000007FFFFFE07FFFFFE0}] ;A-Z a-z
-		alpha-numeric: #[bitset! #{000000000000FFC07FFFFFE07FFFFFE0}] ;A-Z a-z 0-9
-		hex-digits:    #[bitset! #{000000000000FFC07E0000007E}]       ;A-F a-f 0-9
-		plus-minus:    #[bitset! #{000000000014}]                     ;charset "+-"
+		crlf:          #(bitset! #{0024})                             ;charset "^/^M"
+		space:         #(bitset! #{0040000080})                       ;charset " ^-"
+		whitespace:    #(bitset! #{0064000080})                       ;charset "^/^M^- "
+		numeric:       #(bitset! #{000000000000FFC0})                 ;0-9
+		alpha:         #(bitset! #{00000000000000007FFFFFE07FFFFFE0}) ;A-Z a-z
+		alpha-numeric: #(bitset! #{000000000000FFC07FFFFFE07FFFFFE0}) ;A-Z a-z 0-9
+		hex-digits:    #(bitset! #{000000000000FFC07E0000007E})       ;A-F a-f 0-9
+		plus-minus:    #(bitset! #{000000000014})                     ;charset "+-"
 		; chars which does not have to be url-encoded:
-		uri:           #[bitset! #{000000005BFFFFF5FFFFFFE17FFFFFE2}] ;A-Z a-z 0-9 !#$&'()*+,-./:;=?@_~
-		uri-component: #[bitset! #{0000000041E6FFC07FFFFFE17FFFFFE2}] ;A-Z a-z 0-9 !'()*-._~
-		quoted-printable: #[bitset! #{FFFFFFFFFFFFFFFBFFFFFFFFFFFFFFFF}]
+		uri:           #(bitset! #{000000005BFFFFF5FFFFFFE17FFFFFE2}) ;A-Z a-z 0-9 !#$&'()*+,-./:;=?@_~
+		uri-component: #(bitset! #{0000000041E6FFC07FFFFFE17FFFFFE2}) ;A-Z a-z 0-9 !'()*-._~
+		quoted-printable: #(bitset! #{FFFFFFFFFFFFFFFBFFFFFFFFFFFFFFFF})
 	]
 	checksums: [
 		; will be filled on boot from `Init_Crypt` in `n-crypt.c

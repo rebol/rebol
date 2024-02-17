@@ -208,7 +208,7 @@ get-id: func[base [integer!] /func n t][
 counter: 0 ;- used when generating message ids
 
 ;; To make sure, that the latter case is correct (although it does not have to be)!
-field-names: #(
+field-names: #[
 	From:         "From: "
 	To:           "To:   "
 	Cc:           "Cc:   "
@@ -218,10 +218,10 @@ field-names: #(
 	Organization: "Organization: "
 	;In-Reply-To:  "In-Reply-To: "
 	;References:   "References: "
-)
+]
 
-atext:    #[bitset! #{000000005F35FFC57FFFFFE3FFFFFFFE}] ;= charset [#"a"-#"z" #"A"-#"Z" #"0"-#"9" "!#$%&'*+-/=?^^_`{}|~"]
-atext-sp: #[bitset! #{00400000DF35FFC57FFFFFE3FFFFFFFE}] ;= including sp and tab 
+atext:    #(bitset! #{000000005F35FFC57FFFFFE3FFFFFFFE}) ;= charset [#"a"-#"z" #"A"-#"Z" #"0"-#"9" "!#$%&'*+-/=?^^_`{}|~"]
+atext-sp: #(bitset! #{00400000DF35FFC57FFFFFE3FFFFFFFE}) ;= including sp and tab 
 
 ;------------------------------------------------------------------
 ;; This is for now just a placeholder, because only `write` action

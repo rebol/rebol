@@ -474,13 +474,13 @@ is-protected-error?: func[code][
 		--assert binary/read b #{0bad}
 		--assert binary/read b #{Cafe}
 		--assert tail? b/buffer
-		--assert [#[true] #[false] #[true]] = binary/read b [
+		--assert [#(true) #(false) #(true)] = binary/read b [
 			ATz 0   ; reset position to head
 			#{0bad} ; true and advance
 			#{F00D} ; false, no advance
 			#{Cafe} ; true and advance
 		]
-		--assert [#[true] #{CAFE}] = binary/read b [ATz 0 #{0bad} BYTES 2]
+		--assert [#(true) #{CAFE}] = binary/read b [ATz 0 #{0bad} BYTES 2]
 
 ===end-group===
 

@@ -137,9 +137,9 @@ Rebol [
 	m: [a 1]
 	--assert error? try [m/a:]
 
---test-- {#[map! 0]}
+--test-- {#(map! 0)}
 	;@@ https://github.com/Oldes/Rebol-issues/issues/940
-	--assert error? try [load {#[map! 0]}] ;- no crash
+	--assert error? try [load {#(map! 0)}] ;- no crash
 
 --test-- {reduce reduce [:self]}
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1756

@@ -50,17 +50,17 @@ Rebol [
 		--assert 2 = obj/a
 		--assert 3 = put obj 'b 3
 		--assert 3 = obj/b
-		--assert unset? put obj 'b #[unset]
+		--assert unset? put obj 'b #(unset)
 		--assert unset? obj/b
 		
 	--test-- "compare extended objects"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2507
-		--assert equal? #[object! [a: 1]] #[object! [a: 1]]
-		--assert equal? #[object! [a: 1]] make object! [a: 1]
-		put obj: #[object! []] 'a 1
-		--assert equal? obj #[object! [a: 1]]
-		append obj: #[object! []] [a 1]
-		--assert equal? obj #[object! [a: 1]]
+		--assert equal? #(object! [a: 1]) #(object! [a: 1])
+		--assert equal? #(object! [a: 1]) make object! [a: 1]
+		put obj: #(object! []) 'a 1
+		--assert equal? obj #(object! [a: 1])
+		append obj: #(object! []) [a 1]
+		--assert equal? obj #(object! [a: 1])
 
 	--test-- "extend object"
 		obj: object []
@@ -317,10 +317,10 @@ Rebol [
 	--test-- "empty?"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1669
 	--assert empty? object []
-	--assert empty? #[object! []]
+	--assert empty? #(object! [])
 	--test-- "length?"
 	--assert 0 = length? object []
-	--assert 0 = length? #[object! []]
+	--assert 0 = length? #(object! [])
 
 ===end-group===
 

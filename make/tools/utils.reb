@@ -3,9 +3,14 @@ REBOL [
 	Title: "Common make-* code"
 ]
 
-
+do %map-conv.reb
 ;-- UTILITIES ----------------------------------------------------------
 
+needs-map-syntax-swap?: map? transcode/one/error "#()"
+map-conv-if-needed: func[data][
+	if needs-map-syntax-swap? [map-conv data]
+	data
+]
 
 print-title: func[msg][if block? msg [msg: reform msg] print rejoin ["^/ [pre-make.r3] ^[[1;35m" msg "^[[m"]]
 print-info:  func[msg][if block? msg [msg: reform msg] print rejoin [  " [pre-make.r3] ^[[0;32m" msg "^[[m"]]
@@ -19,6 +24,7 @@ read-file: func[file [file!]][
 load-file: func[file [file!] /header][
 	the-file: find/tail file root-dir ; shortened version
 	print rejoin [" [pre-make.r3] ^[[0;36mProcessing: ^[[0;31m" the-file "^[[m"]
+	if needs-map-syntax-swap? [ file: map-conv read file]
 	try/except [either header [load/header/all file][ load file ]][
 		sys/log/error 'pre-make.r3 system/state/last-error
 		quit/return 3
@@ -29,12 +35,17 @@ load-file: func[file [file!] /header][
 write-generated: func[file data][
 	write file data
 	print-more ["Generated:^[[33m" to-local-file file]
+	if all [
+		needs-map-syntax-swap?
+		find [%.reb %.r3] suffix? file
+	][	map-conv file ]
 ]
 save-generated: func[file data /header hdr][
 	either header [
 		save/header file data hdr
 	][	save file data ]
 	print-more ["Generated:^[[33m" to-local-file file]
+	if needs-map-syntax-swap? [ map-conv file]
 ]
 
 

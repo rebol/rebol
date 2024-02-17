@@ -105,6 +105,7 @@ Rebol [
 		write-dsv			Write block(s) of values to a delimited text file.
 		write-excel			Write block(s) of values to an Excel file.
 	}
+	needs: 3.16.0 ;; new construction syntax
 ]
 
 
@@ -298,7 +299,7 @@ ctx-munge: context [
 		remove-each row sort data [
 			any [
 				all [
-					find ["" #[none]] row/1
+					find ["" #(none)] row/1
 					1 = length? unique row
 				]
 				either row = old-row [true] [old-row: row false]

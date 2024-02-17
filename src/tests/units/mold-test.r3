@@ -266,25 +266,25 @@ Rebol [
 	
 	--test-- "mold-true" --assert "true" = mold true
 
-	--test-- "mold-all-true" --assert "#[true]" = mold/all true
+	--test-- "mold-all-true" --assert "#(true)" = mold/all true
 
 	--test-- "mold-false" --assert "false" = mold false
 
-	--test-- "mold-all-false" --assert "#[false]" = mold/all false
+	--test-- "mold-all-false" --assert "#(false)" = mold/all false
 
 	--test-- "mold-none" --assert "none" = mold none
 
-	--test-- "mold-all-none" --assert "#[none]" = mold/all none
+	--test-- "mold-all-none" --assert "#(none)" = mold/all none
 
-	--test-- "mold-block" --assert "[true false none]" = mold [#[true] #[false] #[none]]
+	--test-- "mold-block" --assert "[true false none]" = mold [#(true) #(false) #(none)]
 
 	--test-- "mold-all-block"
-		--assert "[#[true] #[false] #[none]]" = mold/all [#[true] #[false] #[none]]
+		--assert "[#(true) #(false) #(none)]" = mold/all [#(true) #(false) #(none)]
 
 	--test-- "mold/all block at tail"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1192
-		--assert "#[path! [p p] 3]" = mold/all next next 'p/p
-		--assert "#[block! [a b] 3]" = mold/all next next [a b]
+		--assert "#(path! [p p] 3)" = mold/all next next 'p/p
+		--assert "#(block! [a b] 3)" = mold/all next next [a b]
 
 ===end-group=== 
 
@@ -348,7 +348,7 @@ Rebol [
 
 	--test-- "mold/flat/all block!"
 		--assert (mold/flat/all c) = {["A" [1 2 3 4]]}
-		--assert (mold/flat/all next c) = {#[block! ["A" [1 2 3 4]] 2]}
+		--assert (mold/flat/all next c) = {#(block! ["A" [1 2 3 4]] 2)}
 
 	--test-- "mold/only"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/732
@@ -384,27 +384,27 @@ Rebol [
 			]
 		]
 
-		--assert (mold m) = {#(
+		--assert (mold m) = {#[
     a: 1
     b: 2
     c: [
         3 4
     ]
-)}
+]}
 
 	--test-- "mold/flat map!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2401
-		--assert       "#(a: 1 b: 2 c: [3 4])"  = mold/flat m
-		--assert "#[map! [a: 1 b: 2 c: [3 4]]]" = mold/flat/all m
+		--assert       "#[a: 1 b: 2 c: [3 4]]"  = mold/flat m
+		--assert "#(map! [a: 1 b: 2 c: [3 4]])" = mold/flat/all m
 
 	--test-- "mold with recursive value"
 		m/c: m
-		--assert "#(a: 1 b: 2 c: #(...))" = mold/flat m
+		--assert "#[a: 1 b: 2 c: #[...]]" = mold/flat m
 
-	--test-- "mold #()"
+	--test-- "mold #[]"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/725
-		--assert "#()" = mold #()
-		--assert "#[map! []]" = mold/all #()
+		--assert "#[]" = mold #[]
+		--assert "#(map! [])" = mold/all #[]
 
 ===end-group===
 
@@ -461,8 +461,8 @@ Rebol [
 		--assert "@name"  = mold @name
 		--assert "@ame"   = mold next @name
 		--assert "@šiška" = mold @šiška
-		--assert {#[ref! "a@"]} = mold to ref! "a@"
-		--assert {#[ref! "a^^/b"]} = mold append @a "^/b"
+		--assert {#(ref! "a@")} = mold to ref! "a@"
+		--assert {#(ref! "a^^/b")} = mold append @a "^/b"
 	--test-- "form ref"
 		--assert "name"  = form @name
 		--assert "ame"   = form next @name
@@ -490,13 +490,13 @@ Rebol [
 		--assert (mold/flat make image! [1x1 0.0.0.66]) = {make image! [1x1 #{000000} #{42}]}
 
 	--test-- "mold/flat/all image!"
-		--assert (mold/all/flat make image! 8x1) = {#[image! 8x1 #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}]}
-		--assert (mold/all/flat next make image! 8x1) = {#[image! 8x1 #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF} 2]}
+		--assert (mold/all/flat make image! 8x1) = {#(image! 8x1 #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF})}
+		--assert (mold/all/flat next make image! 8x1) = {#(image! 8x1 #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF} 2)}
 
 	--test-- "mold/part image!"
 		img: make image! 2 * 1920x1080
 		--assert "make image! [3840x2160 #{FFFFF" = mold/part img 30
-		--assert "#[image! 3840x2160 #{FFFFFFFFF" = mold/part/all img 30
+		--assert "#(image! 3840x2160 #{FFFFFFFFF" = mold/part/all img 30
 
 ===end-group===
 
@@ -516,7 +516,7 @@ Rebol [
 
 	--test-- "mold/all gob!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/989
-		--assert "#[gob! [offset: 0x0 size: 100x100]]" = mold/all make gob! []
+		--assert "#(gob! [offset: 0x0 size: 100x100])" = mold/all make gob! []
 
 ===end-group===
 
@@ -524,10 +524,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/567
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2508
 	--test-- "mold unset!"
-		--assert "#[unset]" = mold ()
-		--assert "#[unset]" = mold/all ()
+		--assert "#(unset)" = mold ()
+		--assert "#(unset)" = mold/all ()
 		--assert   "unset!" = mold type? () 
-		--assert "#[unset!]" = mold/all type? () 
+		--assert "#(unset!)" = mold/all type? () 
 	--test-- "form unset!"
 		--assert "" = form ()
 
@@ -537,10 +537,10 @@ Rebol [
 	--test-- "mold path"
 		--assert "a/b" = mold 'a/b
 		--assert "b" = mold next 'a/b
-		--assert "#[path! [a b] 2]" = mold/all next 'a/b
+		--assert "#(path! [a b] 2)" = mold/all next 'a/b
 	--test-- "mold empty path"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/868
-		--assert "#[path! []]" = mold make path! []
+		--assert "#(path! [])" = mold make path! []
 
 ===end-group===
 
@@ -548,7 +548,7 @@ Rebol [
 ===start-group=== "mold/all"
 	--test-- "mold/all datatype!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/219
-		--assert "#[integer!]" = mold/all integer!
+		--assert "#(integer!)" = mold/all integer!
 
 	--test-- "mold/all decimal!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1633
@@ -558,7 +558,7 @@ Rebol [
 	--test-- "mold/all typeset!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2510
 		--assert "make typeset! [integer! decimal! percent!]" = mold number!
-		--assert "#[typeset! [integer! decimal! percent!]]" = mold/all number!
+		--assert "#(typeset! [integer! decimal! percent!])" = mold/all number!
 
 ===end-group===
 
@@ -577,8 +577,8 @@ Rebol [
 	--test-- "mold error!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1003
 		--assert {make error! [code: 101 type: 'Note id: 'exited arg1: none arg2: none arg3: none near: none where: none]} = mold/flat make error! [type: 'Note id: 'exited]
-		--assert {#[error! [code: 101 type: Note id: exited arg1: #[none] arg2: #[none] arg3: #[none] near: #[none] where: #[none]]]} = mold/all/flat make error! [type: 'Note id: 'exited]
-		--assert {#[error! [code: 401 type: Math id: overflow arg1: #[none] arg2: #[none] arg3: #[none] near: #[none] where: #[none]]]} = mold/all/flat make error! [type: 'Math id: 'overflow]
+		--assert {#(error! [code: 101 type: Note id: exited arg1: #(none) arg2: #(none) arg3: #(none) near: #(none) where: #(none)])} = mold/all/flat make error! [type: 'Note id: 'exited]
+		--assert {#(error! [code: 401 type: Math id: overflow arg1: #(none) arg2: #(none) arg3: #(none) near: #(none) where: #(none)])} = mold/all/flat make error! [type: 'Math id: 'overflow]
 ===end-group===
 
 

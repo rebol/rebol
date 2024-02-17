@@ -1203,7 +1203,7 @@ new_line:
                         | LEX_FLAG(LEX_SPECIAL_TICK) | LEX_FLAG(LEX_SPECIAL_WORD)))) return -TOKEN_INTEGER;
 */
 /*        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_PERIOD)) return TOKEN_BYTES; */
-			if (*cp == '[') {
+			if (*cp == '(') {
 				scan_state->end = ++cp;
 				return TOKEN_CONSTRUCT;
 			}
@@ -1238,7 +1238,7 @@ new_line:
 					return -TOKEN_BINARY;
 				}
 			}
-			if (*cp == '(') {
+			if (*cp == '[') {
 				scan_state->end = ++cp;
 				return TOKEN_MAP;
 			}
@@ -1799,9 +1799,9 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 			break;
 
 		case TOKEN_CONSTRUCT:
-			block = Scan_Full_Block(scan_state, ']');
+			block = Scan_Full_Block(scan_state, ')');
 			value = BLK_TAIL(emitbuf);
-			// make sure that there was not an error... transcode "#["
+			// make sure that there was not an error... transcode "#("
 			if (!IS_ERROR(value)){
 				emitbuf->tail++; // Protect the block from GC
 				if (!Construct_Value(value, block)) {
@@ -1818,7 +1818,7 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 			break;
 
 		case TOKEN_MAP:
-			block = Scan_Block(scan_state, ')');
+			block = Scan_Block(scan_state, ']');
 			// (above line could have realloced emitbuf)
 			ep = scan_state->end;
 			value = BLK_TAIL(emitbuf);

@@ -12,7 +12,7 @@ Rebol [
 	--test-- "system/catalog/datatypes"
 		--assert block? system/catalog/datatypes
 		--assert datatype? first system/catalog/datatypes
-		--assert #[end!] = first system/catalog/datatypes
+		--assert #(end!) = first system/catalog/datatypes
 
 	--test-- "reflect datatype!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1534
@@ -30,12 +30,12 @@ Rebol [
 	--test-- "find datatype!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/256
 		--assert none? find reduce [string! binary!] binary!
-		--assert none? find [#[string!] #[binary!]] #[binary!]
-		--assert none? find [#[string!] #[binary!]] binary!	
+		--assert none? find [#(string!) #(binary!)] #(binary!)
+		--assert none? find [#(string!) #(binary!)] binary!	
 
 		--assert not none? find/only reduce [string! binary!] binary!
-		--assert not none? find/only [#[string!] #[binary!]] #[binary!]
-		--assert not none? find/only [#[string!] #[binary!]] binary!
+		--assert not none? find/only [#(string!) #(binary!)] #(binary!)
+		--assert not none? find/only [#(string!) #(binary!)] binary!
 
 		--assert not none? find ["test"] string!
 		--assert not none? find ["test"] series!
@@ -43,8 +43,8 @@ Rebol [
 		--assert ["aha"] = find reduce [integer! "aha"] series!
 		--assert not none? find any-string! ref!
 
-		--assert 1 = index? find [#{00}  #[string!] #[binary!]] #[binary!]
-		--assert 3 = index? find/only [#{00}  #[string!] #[binary!]] #[binary!]
+		--assert 1 = index? find [#{00}  #(string!) #(binary!)] #(binary!)
+		--assert 3 = index? find/only [#{00}  #(string!) #(binary!)] #(binary!)
 
 		--assert 2 = index? find/only reduce ["" string! any-string! binary!] string!
 		--assert 3 = index? find/only reduce ["" string! any-string! binary!] any-string!
@@ -53,10 +53,10 @@ Rebol [
 		--assert      none? find reduce [%a string! any-string! binary!] string!
 
 		;; using old construction syntax
-		--assert none? find [#[datatype! string!] #[datatype! binary!]] #[datatype! binary!]
-		--assert none? find [#[datatype! string!] #[datatype! binary!]] binary!
-		--assert not none? find/only [#[datatype! string!] #[datatype! binary!]] #[datatype! binary!]
-		--assert not none? find/only [#[datatype! string!] #[datatype! binary!]] binary!
+		--assert none? find [#(datatype! string!) #(datatype! binary!)] #(datatype! binary!)
+		--assert none? find [#(datatype! string!) #(datatype! binary!)] binary!
+		--assert not none? find/only [#(datatype! string!) #(datatype! binary!)] #(datatype! binary!)
+		--assert not none? find/only [#(datatype! string!) #(datatype! binary!)] binary!
 
 ===end-group===
 
