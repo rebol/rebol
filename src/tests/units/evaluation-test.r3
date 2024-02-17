@@ -806,8 +806,8 @@ Rebol [
 		--assert a == 1
 		--assert 100 = catch/quit [++ a quit/return 100 ++ a]
 		--assert a == 2
-		--assert   0 = call/shell/wait join system/options/boot { --do "quit"}
-		--assert 100 = call/shell/wait join system/options/boot { --do "quit/return 100"}
+		--assert   0 = call/shell/wait append to-local-file system/options/boot { --do "quit"}
+		--assert 100 = call/shell/wait append to-local-file system/options/boot { --do "quit/return 100"}
 	--test-- "nested catch"
 		a: 0
 		--assert 'x = catch [++ a catch/quit [++ a quit a: 0] a: a * 2 throw 'x a: a * 100]
