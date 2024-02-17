@@ -2,10 +2,84 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+
+## 2024 February
+
+### Features:
+
+* [`f25ddf`](https://github.com/Oldes/Rebol3/commit/f25ddfa9239befaab611b209d5b64146b61b75a1) Implemented optional `XXH3`, `XXH32`, `XXH64` and `XXH128` checksums
+* [`ab42ca`](https://github.com/Oldes/Rebol3/commit/ab42ca5231abdbc73f11ece0bc8b0dd6953f553b) Tiny optimization
+* [`da4718`](https://github.com/Oldes/Rebol3/commit/da4718b39c376b323799ecabe1491fae899ad036) Not using hashing for small enough maps (reduces memory usage)
+
+### Changes:
+
+* [`3c2b93`](https://github.com/Oldes/Rebol3/commit/3c2b93afa872334effe9c840813ed789ce1dbd0c) **Switching map and construction syntax**
+
+  `map!` values now use syntax like: `#[key: value]`
+  construction syntax now looks like: `#(true)` or `#(i32! [1 2 3])`
+  
+  The included [`map-conv.reb` script](https://github.com/Oldes/Rebol3/blob/master/make/tools/map-conv.reb) can be used for converting existing code.
+
+* [`2ba01e`](https://github.com/Oldes/Rebol3/commit/2ba01ead3b5da1ab609fa25a0c675b30e96bb163) `unset` value in `any` and `all` is transparent now
+
+
+### Fixes:
+
+* [`01a68c`](https://github.com/Oldes/Rebol3/commit/01a68cfbedebd86fda68ce287efba85a0f199660) Compiler warnings
+* [`695636`](https://github.com/Oldes/Rebol3/commit/695636065bb7876478dbf70e7f5f4560eb986370) Correct fix of regression when creating 64 bit vectors
+* [`238ecb`](https://github.com/Oldes/Rebol3/commit/238ecbcedda7b583ce0d96d4c111dc5d6d1bd330) Regression when creating 64 bit vectors
+* [`820687`](https://github.com/Oldes/Rebol3/commit/8206872e89a080622b1d6dc15abfd746aa4d1de8) `checksum` with `file!` argument not supporting all available methods
+* [`d4364d`](https://github.com/Oldes/Rebol3/commit/d4364df0e4f48944cb36beba1fdbc32d6d109e9f) Saving a file into a zip archive
+
+## 2024 January
+
+### Features:
+
+* [`e401ed`](https://github.com/Oldes/Rebol3/commit/e401eddfb87ed47243984392bb445409b6fc390a) Added `sum` and `average` functions
+* [`27611e`](https://github.com/Oldes/Rebol3/commit/27611e9d02764593484a1c8c9aac151c907145cc) Including source of `webdriver` and `websocket` modules
+
+### Changes:
+
+* [`da1905`](https://github.com/Oldes/Rebol3/commit/da1905820e0091c4e27a7746e66f3ca5877a4ca7) Updated Mbed-TLS sources to version 3.5.2
+* [`52efc0`](https://github.com/Oldes/Rebol3/commit/52efc0caca758dfa9fc74256ee26757738c4c115) Register `.swc` file extension with `zip` codec
+* [`7c84b6`](https://github.com/Oldes/Rebol3/commit/7c84b60c8a2ba2cbd9c57fb416d87a563ad82713) Allow issues like `###` or `#a#` (Rebol2/Red compatibility)
+* [`9bb910`](https://github.com/Oldes/Rebol3/commit/9bb91086c266e190121c075b0b412c29e9c06651) Zlib source updated to version 1.3.0.1
+
+### Fixes:
+
+* [`1bfcbb`](https://github.com/Oldes/Rebol3/commit/1bfcbbcf83827b846ef7f3fa508bd1afc0796de6) Bbcode codec - reset row-width of an image gallery tag
+* [`307b24`](https://github.com/Oldes/Rebol3/commit/307b24a9012fdbb37d1d3e29031e7e96ca7dca2d) Windows JPEG codec unexpected property type error
+* [`592454`](https://github.com/Oldes/Rebol3/commit/592454e4090018accedbc4730dc79b7cc7320992) LF to CRLF conversion when using `write` with `string` input
+* [`fbad12`](https://github.com/Oldes/Rebol3/commit/fbad12f1a426e2802ac16898a88cff287270101b) Joining path/url using path notation not respecting index position
+* [`aa7aa4`](https://github.com/Oldes/Rebol3/commit/aa7aa41114ba158d9e55fd3e291099229e3d15fb) Throw an error when converting `1.#NaN` value to integer
+* [`45b358`](https://github.com/Oldes/Rebol3/commit/45b358f075215b19490104891c2d8f64a578628e) Close `httpd` server on request even when there are pending client connections
+
+## 2023 December
+
+### Features:
+
+* [`ffa41e`](https://github.com/Oldes/Rebol3/commit/ffa41e0b0d48cc5371e32215c35b3a2d73d47149) `bbcode` image gallery emitter
+* [`e39581`](https://github.com/Oldes/Rebol3/commit/e39581578b98b3eeb121f47e99224e8dda2be424) `bbcode` csv table emitter
+
+### Changes:
+
+* [`7a9e11`](https://github.com/Oldes/Rebol3/commit/7a9e11000d4275e95940116593ec0a731289d5e0) Updated `httpd` scheme to version 0.9.0
+
+### Fixes:
+
+* [`9715d1`](https://github.com/Oldes/Rebol3/commit/9715d1205bc45b0c195f4ab95f1cdd8c151abe43) Code simplified
+* [`aa227f`](https://github.com/Oldes/Rebol3/commit/aa227fc7f8a5571ca3307255a93f0804a174c5b1) Avoid an error when loading an unset value
+* [`051670`](https://github.com/Oldes/Rebol3/commit/051670ad6e5b2ec6cee6e95c002a43a06f128a97) Using correct path to images in the generated `bbcode` image gallery
+* [`8ee972`](https://github.com/Oldes/Rebol3/commit/8ee972c64ef81df1f58e42e31d7876c6635a8c2a) `bbcode` codec must convert binary input to string before decoding
+* [`b0f684`](https://github.com/Oldes/Rebol3/commit/b0f6840ceb23f0f7752f9f7edae25edaced34bbe) Reading from virtual `/proc` files on Linux using `read/part`
+
 ## 2023 November
 
 ### Features:
 
+* [`963d08`](https://github.com/Oldes/Rebol3/commit/963d083a5e7fbf2c96ef9a60be386af7ff4402c0) Allow `word!`, `get-word!` and `get-path!` values inside a `call` argument
+* [`39c7e2`](https://github.com/Oldes/Rebol3/commit/39c7e22efb9237a1e86e72973ebf0582d3d5e981) Allow any-string value as a `call` argument
+* [`a38e2a`](https://github.com/Oldes/Rebol3/commit/a38e2a5c5622641df7ca291a396d4937f871e589) Added possibility to set/clear BRK, RTS and DTR serial port flags on Posix
 * [`1ff2d9`](https://github.com/Oldes/Rebol3/commit/1ff2d94d69bce3dfb6a55091b246689b8c8e987a) Optional support for SHA3 family checksums (included in Bulk)
 * [`3dc6f6`](https://github.com/Oldes/Rebol3/commit/3dc6f6aa27408ef814cc90897dedb751eacda703) New platform for TurrisOS
 * [`feaaef`](https://github.com/Oldes/Rebol3/commit/feaaef940490166984aaff4c9a654324703fbc4b) Better info when native extension fails to load its library
@@ -17,6 +91,8 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Changes:
 
+* [`bf4999`](https://github.com/Oldes/Rebol3/commit/bf49996cccaec38302cd6481856bc63dd0ed6bb4) Modified `launch` function not to use shell and to handle all optional script arguments
+* [`abc6ec`](https://github.com/Oldes/Rebol3/commit/abc6ecc0b2f6a52a5fdc8724d9c5483f7d9a0757) Using system error codes when opening a MIDI device on Windows
 * [`35c1b6`](https://github.com/Oldes/Rebol3/commit/35c1b610e7d1a6df74437ee3a2918ff96577a3b0) Updated Mbed-TLS sources to version 3.5.1
 * [`4dc546`](https://github.com/Oldes/Rebol3/commit/4dc546e52076f3e88064ccf99039f1a0c00d7cd1) Using line breaks in molded `struct!` values for better readability
 * [`68bf82`](https://github.com/Oldes/Rebol3/commit/68bf82e5d71403b5345611219c40b5293573557e) Moved `STATIC_ASSERT` macro to `reb-c.h` file and used it in a few more cases
@@ -24,6 +100,14 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`a73014`](https://github.com/Oldes/Rebol3/commit/a730144ae9cb4d607d6725c5ea0044760e335c08) Accept block input to `call` function on Windows
+* [`56a39e`](https://github.com/Oldes/Rebol3/commit/56a39e6267e828add4be1e5d2d1741a452b45128) Warning: implicit declaration of function ‘wcwidth’
+* [`2ea23b`](https://github.com/Oldes/Rebol3/commit/2ea23b1a25f076acaa3f0bdd662ffed58c869de6) Ignore warning: ‘__builtin___strncpy_chk’ specified bound depends on the length of the source argument
+* [`a84671`](https://github.com/Oldes/Rebol3/commit/a84671a2d4477e51649884020e4e0993b438a003) Warning: ignoring return value of ‘read’, declared with attribute warn_unused_result
+* [`98c54f`](https://github.com/Oldes/Rebol3/commit/98c54fc5eac64ce2b717c39660faca77f90a1a9a) Warning: specified bound depends on the length of the source argument
+* [`45832b`](https://github.com/Oldes/Rebol3/commit/45832b91fbf9c82907ecb6806ebeee7a42e00e17) Trying to fix build for Haiku OS
+* [`da13e8`](https://github.com/Oldes/Rebol3/commit/da13e819a8cf94f79dd40a26523ecb5b219295d4) Trying to fix build for Haiku OS
+* [`7f8108`](https://github.com/Oldes/Rebol3/commit/7f81085e563a65e2e71e0ee326e56c081ef98d66) Trying to fix build for Haiku OS
 * [`0be75d`](https://github.com/Oldes/Rebol3/commit/0be75dc3a360f2eaab92debb06605f1a2287ef76) Timeout when reading some HTTPS URLs
 * [`b63745`](https://github.com/Oldes/Rebol3/commit/b63745d321ba99b8d9392341e909c9ec47b8a9e2) Invalid length of `checksum:sha224` port result
 * [`a87e66`](https://github.com/Oldes/Rebol3/commit/a87e667ab9e195a7d4becf4df14a411ef16ed551) Redundant message when logging an error value
