@@ -493,7 +493,7 @@ if value? 'blur [
 		--test-- "loading JPEG file with an unexpected property type"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2587
 		--assert all [
-			img: image? try [load %units/files/issue-2587.jpg] ;; no error!
+			image? try [img: load %units/files/issue-2587.jpg] ;; no error!
 			img/size = 105x150
 		]
 	]
