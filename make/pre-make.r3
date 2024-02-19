@@ -154,30 +154,30 @@ os-info: get-os-info
 os:  any [
 	select os-info 'ID
 	all [word? spec/os spec/os]
-	select #(
+	select make map! [
 		Macintosh: macos
 		Windows:   windows
 		Linux:     linux
 		OpenBSD:   openbsd
-	) platform	
+	] platform	
 ]
 syst: any [
 	; none, linux, win32, darwin, cuda, etc.
 	spec/sys
 	spec/kernel
-	select #(
+	select make map! [
 		macos:   darwin
 		ios:     darwin
 		windows: win32
 		linux:   linux
 		openbsd: openbsd
-	) os	
+	] os	
 ]
 abi: any [
 	; eabi, gnu, android, macho, elf, musl etc.
 	spec/target-abi
 	spec/abi
-	select #(
+	select make map! [
 		macos:   macho
 		ios:     macho
 		windows: pe
@@ -185,7 +185,7 @@ abi: any [
 		beos:    pe
 		linux:   elf
 		;alpine:  musl
-	) spec/os
+	] spec/os
 ]
 
 product:  any [spec/product 'Core]

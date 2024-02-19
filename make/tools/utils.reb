@@ -157,7 +157,7 @@ get-os-info: function[
 ][
 	tmp: copy  ""
 	err: copy  ""
-	out: copy #()
+	out: make map! 10
 	key: charset [#"A"-#"Z" #"_"]
 	enl: system/catalog/bitsets/crlf
 	whs: system/catalog/bitsets/whitespace
