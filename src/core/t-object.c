@@ -269,7 +269,7 @@ static REBSER *Trim_Object(REBSER *obj)
 /*
 ***********************************************************************/
 {
-	REBINT n = 0;
+	REBCNT n = 0;
 
 	if (!VAL_OBJ_FRAME(pvs->value)) {
 		return PE_NONE; // Error objects may not have a frame.
@@ -278,12 +278,7 @@ static REBSER *Trim_Object(REBSER *obj)
 	if (IS_WORD(pvs->select)) {
 		n = Find_Word_Index(VAL_OBJ_FRAME(pvs->value), VAL_WORD_SYM(pvs->select), FALSE);
 	}
-//	else if (IS_INTEGER(pvs->select)) {
-//		n = Int32s(pvs->select, 1);
-//	}
-	else return PE_BAD_SELECT;
-
-	if (n <= 0 || (REBCNT)n >= SERIES_TAIL(VAL_OBJ_FRAME(pvs->value)))
+	if (n == 0)
 		return PE_BAD_SELECT;
 
 	if (pvs->setval && IS_END(pvs->path+1) && VAL_PROTECTED(VAL_FRM_WORD(pvs->value, n)))
