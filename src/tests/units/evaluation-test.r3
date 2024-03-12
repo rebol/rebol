@@ -882,6 +882,18 @@ Rebol [
 			"b3" = catch/all/with [a: 1 throw/name 3 'foo a: 2] :on-catch 
 			a = 1
 		]
+	--test-- "catch/with function! argument validation"
+		--assert all [
+			error? e: try [catch/with [throw 1] func[v [word!]][]]
+			e/id = 'expect-arg
+		]
+		--assert all [
+			error? e: try [catch/all/with [throw/name 1 'foo] func[v n [integer!]][]]
+			e/id = 'expect-arg
+		]
+		--assert [1 #(none)] == try [catch/with [throw 1] func[v [integer!] n][reduce [v n]]]
+		--assert [1 foo] == try [catch/all/with [throw/name 1 'foo] func[v [integer!] n [word!]][reduce [v n]]]
+		--assert [1 #(none) #(none)] == catch/with [throw 1] func[a b c][reduce [a b c]]
 
 	--test-- "catch/quit/name"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2549

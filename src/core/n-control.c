@@ -478,28 +478,41 @@ caught:     // Thrown is being caught.
 			*DS_RETURN = *(VAL_ERR_VALUE(ret));
 callback:	// ...and the last result.
 			*last_result = *DS_RETURN;
-			// If there is a callback code, then evaluate it.
-			if (IS_FUNCTION(&callback)) {
-				// catch [throw 1] func[value name][value]
-				// Return result of the callback function
-				REBVAL name = *DS_NEXT;
-				if(sym) {
-					Set_Word(&name, sym, 0, 0);
-					VAL_SET(&name, REB_WORD);
-				} else {
-					SET_NONE(&name);
-				}
-				Apply_Func(0, &callback, last_result, &name, 0);
+			
+			if (IS_NONE(&callback)) {
+				// (catch [throw 1]) == 1
+				// Return the thrown value.
+				return R_RET;
 			}
-			else if (IS_BLOCK(&callback)) {
+			// If there is a callback code, then evaluate it.
+			if (IS_BLOCK(&callback)) {
 				// (catch/with [throw 1][2]) == 2
 				// Return result of the callback block evaluation.
 				*last_result = *DO_BLK(&callback);
 			}
 			else {
-				// (catch [throw 1]) == 1
-				// Return the thrown value.
-				return R_RET; 
+				// catch/with [throw 1] func[value name][value]
+				// Return result of the callback function
+				REBVAL name = *DS_NEXT;
+				if (sym) {
+					Set_Word(&name, sym, 0, 0);
+					VAL_SET(&name, REB_WORD);
+				} else {
+					SET_NONE(&name);
+				}
+				// Validate function argument types
+				REBVAL* args = BLK_SKIP(VAL_FUNC_ARGS(&callback), 1);
+				if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(last_result))) {
+					Trap3(RE_EXPECT_ARG, Of_Type(&callback), args, Of_Type(last_result));
+				}
+				if (NOT_END(args)) {
+					args++;
+					if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(&name))) {
+						Trap3(RE_EXPECT_ARG, Of_Type(&callback), args, Of_Type(&name));
+					}
+				}
+				// Call the function
+				Apply_Func(0, &callback, last_result, &name, 0);
 			}
 			// Return the result of the callback code evaluation.
 			return R_TOS1;
