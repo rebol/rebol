@@ -71,7 +71,7 @@ static struct digest {
 	{SHA3_384, SHA3_384_Starts,   SHA3_Update,   SHA3_384_Finish,   SHA3_CtxSize, SYM_SHA3_384, 48, 128},
 	{SHA3_512, SHA3_512_Starts,   SHA3_Update,   SHA3_512_Finish,   SHA3_CtxSize, SYM_SHA3_512, 64, 128},
 #endif
-#ifdef INCLUDE_MD4
+#ifdef INCLUDE_XXHASH
 	{HashXXH3,   XXH3_Starts,   XXH3_Update,   XXH3_Finish,   XXH3_CtxSize,   SYM_XXH3,    8, 64},
 	{HashXXH32,  XXH32_Starts,  XXH32_Update,  XXH32_Finish,  XXH32_CtxSize,  SYM_XXH32,   4, 64},
 	{HashXXH64,  XXH64_Starts,  XXH64_Update,  XXH64_Finish,  XXH64_CtxSize,  SYM_XXH64,   8, 64},
