@@ -237,6 +237,15 @@ Rebol [
 		--assert not (m !== m)
 		--assert "" !== m
 
+	--test-- "select from cleared map"
+		m: make map! 50
+		--assert none? select m 'a
+		m/a: 1
+		--assert 1 == select m 'a
+		clear m
+		--assert none? select m 'a
+
+
 ===end-group===
 
 
