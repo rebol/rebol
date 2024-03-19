@@ -248,11 +248,12 @@ static REBCNT *CRC32_Table = 0;
 			// as it is:
 			// 1. Odd number (Otherwise we may lose the highest bit.)
 			// 2. Has no long streaks of ones or zeros.
-			ret = ((REBCNT)VAL_INT32(val) * 2654435761L) >> 26;
+			ret = (REBCNT)(((REBU64)VAL_UNT32(val) * 2654435761L) >> 26);
 			// The higher bits contain more mixture from the multiplication,
 			// so the shift is not 32, but just 26.
 
 			// In Brotli compressor the constant is 506832829L and the shift is 18.
+			//ret = (REBCNT)(((REBU64)VAL_UNT32(val) * 506832829L) >> 18);
 		} else {
 			ret = Hash_String(VAL_TUPLE(val), VAL_TUPLE_LEN(val));
 		}
@@ -397,6 +398,7 @@ static void Make_CRC32_Table(void) {
 	int n,k;
 
 	CRC32_Table = Make_Mem(256 * sizeof(u32));
+	ASSERT(CRC32_Table != NULL, RP_NO_MEMORY);
 
 	for(n=0;n<256;n++) {
 		c=(u32)n;
