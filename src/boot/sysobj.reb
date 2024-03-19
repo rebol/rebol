@@ -529,6 +529,7 @@ standard: object [
 		made-blocks:
 		made-objects:
 		recycles:
+		collisions:
 	]
 
 	type-spec: construct [

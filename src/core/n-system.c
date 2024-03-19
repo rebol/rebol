@@ -173,6 +173,10 @@
 
 			stats++;
 			SET_INTEGER(stats, PG_Reb_Stats->Recycle_Counter);
+#ifdef DEBUG_HASH_COLLISIONS
+			stats++;
+			SET_INTEGER(stats, Eval_Collisions);
+#endif
 		}
 		return R_RET;
 	}

@@ -162,6 +162,9 @@
 			) return hash;
 			hash += skip;
 			if (hash >= len) hash -= len;
+#ifdef DEBUG_HASH_COLLISIONS
+			++ Eval_Collisions;
+#endif
 		}
 	}
 	else if (ANY_BINSTR(key)) {
@@ -174,6 +177,9 @@
 			) return hash;
 			hash += skip;
 			if (hash >= len) hash -= len;
+#ifdef DEBUG_HASH_COLLISIONS
+			++ Eval_Collisions;
+#endif
 		}
 	} else {
 		while (NZ(n = hashes[hash])) {
@@ -181,6 +187,9 @@
 			if (VAL_TYPE(val) == VAL_TYPE(key) && 0 == Cmp_Value(key, val, cased)) return hash;
 			hash += skip;
 			if (hash >= len) hash -= len;
+#ifdef DEBUG_HASH_COLLISIONS
+			++ Eval_Collisions;
+#endif
 		}
 	}
 
