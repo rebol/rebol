@@ -142,10 +142,10 @@
 {
 	REBCNT *hashes;
 	REBVAL *word;
-	REBINT hash;
+	REBCNT key;
+	REBCNT hash=0;
 	REBCNT size;
-	REBINT skip;
-	REBCNT n;
+	REBCNT n, i;
 
 	// Allocate a new hash table:
 	Expand_Hash(PG_Word_Table.hashes);
@@ -156,13 +156,10 @@
 	hashes = (REBCNT *)PG_Word_Table.hashes->data;
 	size = PG_Word_Table.hashes->tail;
 	for (n = 1; n < PG_Word_Table.series->tail; n++, word++) {
-		hash = Hash_Word(VAL_SYM_NAME(word), -1);
-		skip  = (hash & 0x0000FFFF) % size;
-		if (skip == 0) skip = 1;
-		hash = (hash & 0x00FFFF00) % size;
-		while (hashes[hash]) {
-			hash += skip;
-			if (hash >= (REBINT)size) hash -= size;
+		key = CRC_Word(VAL_SYM_NAME(word), UNKNOWN);
+		for (i = 0; i < size; i++) {
+			hash = Hash_Probe(key, i, size);
+			if (!hashes[hash]) break;
 		}
 		hashes[hash] = n;
 	}
@@ -196,11 +193,11 @@
 **
 ***********************************************************************/
 {
-	REBINT	hash;
-	REBINT	size;
-	REBINT	skip;
+	REBCNT	key;
+	REBCNT  hash = 0;
+	REBLEN	size;
 	REBINT	n;
-	REBCNT	h;
+	REBCNT	h=0, i;
 	REBCNT	*hashes;
 	REBVAL  *words;
 	REBVAL  *w;
@@ -225,28 +222,22 @@
 		CLEAR_SERIES(Bind_Table);
 	}
 
-	size   = (REBINT)PG_Word_Table.hashes->tail;
+	size   = PG_Word_Table.hashes->tail;
 	words  = BLK_HEAD(PG_Word_Table.series);
 	hashes = (REBCNT *)PG_Word_Table.hashes->data;
 
 	// Hash the word, including a skip factor for lookup:
-	hash  = Hash_Word(str, len);
-	skip  = (hash & 0x0000FFFF) % size;
-	if (skip == 0) skip = 1;
-	hash = (hash & 0x00FFFF00) % size;
-	//Debug_Fmt("%s hash %d skip %d", str, hash, skip);
-
+	key  = CRC_Word(str, len);
 	// Search hash table for word match:
-	while (NZ(h = hashes[hash])) {
-		while ((n = Compare_UTF8(VAL_SYM_NAME(words+h), str, len)) >= 0) {
-			//if (Match_String("script", str, len))
-			//	Debug_Fmt("---- %s %d %d\n", VAL_SYM_NAME(&words[h]), n, h);
+	for (i = 0; i < size; i++) {
+		hash = Hash_Probe(key, i, size);
+		h = hashes[hash];
+		if (!h) break;
+		while ((n = Compare_UTF8(VAL_SYM_NAME(words + h), str, len)) >= 0) {
 			if (n == 0) return h; // direct hit
-			if (VAL_SYM_ALIAS(words+h)) h = VAL_SYM_ALIAS(words+h);
+			if (VAL_SYM_ALIAS(words + h)) h = VAL_SYM_ALIAS(words + h);
 			else goto make_sym; // Create new alias for word
 		}
-		hash += skip;
-		if (hash >= size) hash -= size;
 	}
 
 make_sym:
@@ -337,7 +328,8 @@ make_sym:
 /*
 ***********************************************************************/
 {
-	if (num == 0 || num >= PG_Word_Table.series->tail) return (REBYTE*)"???";
+	if (num == 0 || num >= PG_Word_Table.series->tail)
+		return (REBYTE*)"???";
 	return VAL_SYM_NAME(BLK_SKIP(PG_Word_Table.series, num));
 }
 

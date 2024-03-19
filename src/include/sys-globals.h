@@ -115,5 +115,9 @@ TVAR REBSER *Trace_Buffer;	// Holds backtrace lines
 TVAR REBI64 Eval_Natives;
 TVAR REBI64 Eval_Functions;
 
+#ifdef DEBUG_HASH_COLLISIONS
+TVAR REBI64 Eval_Collisions; // Hash collisions
+#endif
+
 //-- Other per thread globals:
 TVAR REBSER *Bind_Table;	// Used to quickly bind words to contexts
