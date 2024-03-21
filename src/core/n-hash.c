@@ -138,31 +138,20 @@ REBCNT MurmurHash3_x86_32(const void* key, int len, REBCNT seed)
 **
 */	REBCNT Hash_Value(REBVAL* val)
 /*
-**		Return a case insensitive hash value for any value.
+**		Return a case insensitive hash value for any Rebol value.
 **
 **
 ***********************************************************************/
 {
 	REBCNT ret;
+	if (ANY_WORD(val))
+		return VAL_WORD_CANON(val); //plain value seems to be faster than: fmix32(VAL_WORD_CANON(val));
+	if (ANY_STR(val))
+		return CRC_String(VAL_BIN_DATA(val), Val_Byte_Len(val)) ^ VAL_TYPE(val);
+	if (ANY_BLOCK(val))
+		return Hash_Block_Value(val);
 
 	switch (VAL_TYPE(val)) {
-
-	case REB_WORD:
-	case REB_SET_WORD:
-	case REB_GET_WORD:
-	case REB_LIT_WORD:
-	case REB_REFINEMENT:
-	case REB_ISSUE:
-		return VAL_WORD_CANON(val);  //fmix32(VAL_WORD_CANON(val));
-
-	case REB_STRING:
-	case REB_FILE:
-	case REB_EMAIL:
-	case REB_REF:
-	case REB_URL:
-	case REB_TAG:
-		return CRC_String(VAL_BIN_DATA(val), Val_Byte_Len(val));
-
 	case REB_BINARY:
 		return Hash_Binary(VAL_BIN_DATA(val), VAL_BIN_LEN(val));
 
@@ -173,10 +162,9 @@ REBCNT MurmurHash3_x86_32(const void* key, int len, REBCNT seed)
 	case REB_DECIMAL: // depends on INT64 sharing the DEC64 bits
 		return fmix32((REBCNT)(VAL_INT64(val) >> 32) ^ ((REBCNT)VAL_INT64(val)));
 
-	case REB_CHAR:
-		ret = VAL_CHAR(val);
-		if (ret < UNICODE_CASES) ret = LO_CASE(ret);
-		return ret = (((REBCNT)ret * 506832829L) >> 18); //fmix32(ret << 15); // avoid running into WORD hashes
+	case REB_CHAR: // hashed always as lowercased
+		if ((ret = VAL_CHAR(val)) < UNICODE_CASES) ret = LO_CASE(ret);
+		return ret = (((REBCNT)ret * 506832829L) >> 18);
 
 	case REB_MONEY:
 		return VAL_ALL_BITS(val)[0] ^ VAL_ALL_BITS(val)[1] ^ VAL_ALL_BITS(val)[2];
@@ -188,30 +176,58 @@ REBCNT MurmurHash3_x86_32(const void* key, int len, REBCNT seed)
 		return ret;
 
 	case REB_TUPLE:
-		if (VAL_TUPLE_LEN(val) <= 4) {
+		if (VAL_TUPLE_LEN(val) <= 4)
 			return fmix32(VAL_UNT32(val));
-		}
 		// else..
 		return Hash_Binary(VAL_TUPLE(val), VAL_TUPLE_LEN(val));
 
 	case REB_PAIR:
 		return VAL_ALL_BITS(val)[0] ^ VAL_ALL_BITS(val)[1];
 
-	case REB_OBJECT:
-		return (REBCNT)((REBUPT)VAL_OBJ_FRAME(val) >> 4);
-
 	case REB_DATATYPE:
 		return CRC_Word(Get_Sym_Name(VAL_DATATYPE(val) + 1), UNKNOWN);
 
-	case REB_NONE:
-		return 1;
-	case REB_UNSET:
-		return 0;
-
-	case REB_HANDLE:
-		return (REBCNT)VAL_HANDLE_I32(val);
+//	case REB_HANDLE:
+//		return (REBCNT)VAL_HANDLE_I32(val); //TODO: this is not valid for context handles!
 	}
-	return 0;
+	// all other types... 
+	return fmix32(VAL_TYPE(val));
+}
+
+/***********************************************************************
+**
+*/	REBCNT Hash_Block_Value(REBVAL *block)
+/*
+**		Return a case sensitive hash value for the block.
+**
+***********************************************************************/
+{
+	REBCNT k1, h1 = 0;
+	REBCNT n;
+	REBVAL *data = VAL_BLK_DATA(block);
+	REBLEN len = VAL_LEN(block);
+
+	k1 = VAL_TYPE(block);
+	k1 *= MURMUR_HASH_3_X86_32_C1;
+	k1 = ROTL32(k1, 15);
+	k1 *= MURMUR_HASH_3_X86_32_C2;
+	h1 ^= k1;
+	h1 = ROTL32(h1, 13);
+	h1 = h1 * 5 + 0xe6546b64;
+
+	while (NZ(VAL_TYPE(data))) {
+		k1 = Hash_Value(data++);
+		k1 *= MURMUR_HASH_3_X86_32_C1;
+		k1 = ROTL32(k1, 15);
+		k1 *= MURMUR_HASH_3_X86_32_C2;
+		h1 ^= k1;
+		h1 = ROTL32(h1, 13);
+		h1 = h1 * 5 + 0xe6546b64;
+	}
+	h1 ^= len;
+	h1 = fmix32(h1);
+
+	return h1;
 }
 
 /***********************************************************************
