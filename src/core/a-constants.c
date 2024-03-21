@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +35,7 @@
 
 #define BP (REBYTE*)
 
-const REBYTE Str_Banner[] = "REBOL 3 %d.%d.%d.%d.%d";
+const REBYTE Str_Banner[] = "%s";
 
 const char Str_REBOL[] = "REBOL";
 
@@ -49,11 +50,11 @@ const REBYTE * const Crash_Msgs[] = {
 	BP"assertion failed",
 	BP"invalid datatype %d",
 	BP"unspecific",
-	BP"\n\nProgram terminated abnormally.\nThis should never happen.\nPlease contact www.REBOL.com with details."
+	BP"\n\nProgram terminated abnormally.\nThis should never happen.\nPlease contact www.github.com/Oldes/Rebol3 with details."
 };
 
 const REBYTE * const Str_Dump[] = {
-	BP"%s Series %x \"%s\": wide: %2d size: %6d bias: %d tail: %d rest: %d flags: %x"
+	BP"%s Series %x: wide: %2d size: %6d bias: %d tail: %d rest: %d flags: %x \"%s\""
 };
 
 const REBYTE * Hex_Digits = BP"0123456789ABCDEF";
@@ -88,7 +89,7 @@ const REBYTE Month_Lengths[12] = {
 	31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 
-const REBYTE * const Month_Names[12] = {
+const REBYTE * Month_Names[12] = {
 	BP"January",	BP"February", BP"March",
 	BP"April",	BP"May",		 BP"June",
 	BP"July",	BP"August",	 BP"September",

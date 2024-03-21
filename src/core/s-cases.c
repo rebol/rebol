@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +30,7 @@
 #include "sys-core.h"
 
 // Unicode 5.0 case folding table:
-static short const Char_Cases[] = {
+static const REBUNI Char_Cases[] = {
 	0x0041, 0x0061, // LATIN CAPITAL LETTER A
 	0x0042, 0x0062, // LATIN CAPITAL LETTER B
 	0x0043, 0x0063, // LATIN CAPITAL LETTER C
@@ -901,6 +902,22 @@ static short const Char_Cases[] = {
 	0, 0
 };
 
+#ifdef _DEBUG
+/*
+ * Debug helpers to easily find location of issues like
+ * https://github.com/Oldes/Rebol-issues/issues/2476
+ */
+REBCNT _To_Upper_Case(REBCNT c) {
+	if (c >= UNICODE_CASES)
+		abort();
+	return Upper_Cases[c];
+}
+REBCNT _To_Lower_Case(REBCNT c) {
+	if (c >= UNICODE_CASES)
+		abort();
+	return Lower_Cases[c];
+}
+#endif
 
 /***********************************************************************
 **
@@ -920,21 +937,35 @@ static short const Char_Cases[] = {
 	White_Chars[' ']  = 3;	// space
 	White_Chars['\t'] = 3;	// space
 	White_Chars[0]    = 0;	// special
+	White_Chars[27]   = 0;	// special (ANSI escape)
 
 	// Casing tables:
 	Upper_Cases = Make_Mem(UNICODE_CASES * sizeof(REBUNI));
 	Lower_Cases = Make_Mem(UNICODE_CASES * sizeof(REBUNI));
 
 	for (n = 0; n < UNICODE_CASES; n++) {
-		UP_CASE(n) = n;
-		LO_CASE(n) = n;
+		Upper_Cases[n] = n;
+		Lower_Cases[n] = n;
 	}
 
 	for (up = &Char_Cases[0]; *up; up += 2) {
 		//ASSERT2(UP_CASE(up[1]) == up[1], 910);
 		// Only map if not already set (multiple mappings exist):
-		if (UP_CASE(up[1]) == up[1]) UP_CASE(up[1]) = up[0];
-		if (LO_CASE(up[1]) == up[1]) LO_CASE(up[0]) = up[1];
+		if (Upper_Cases[up[1]] == up[1]) Upper_Cases[up[1]] = up[0];
+		if (Lower_Cases[up[1]] == up[1]) Lower_Cases[up[0]] = up[1];
 	}
 }
 
+/***********************************************************************
+**
+*/	void Dispose_Char_Cases(void)
+/*
+***********************************************************************/
+{
+	Free_Mem(White_Chars, 0);
+	Free_Mem(Upper_Cases, 0);
+	Free_Mem(Lower_Cases, 0);
+	White_Chars = NULL;
+	Upper_Cases = NULL;
+	Lower_Cases = NULL;
+}

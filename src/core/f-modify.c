@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -125,22 +126,55 @@
 	if (dups < 0) return (action == A_APPEND) ? 0 : dst_idx;
 	if (action == A_APPEND || dst_idx > tail) dst_idx = tail;
 
-	// If the src_val is not a string, then we need to create a string:
+	// If the src_val is not same type like trg_val, we must convert it
 	if (GET_FLAG(flags, AN_SERIES)) { // used to indicate a BINARY series
-		if (IS_INTEGER(src_val)) {
-			src_ser = Append_Byte(0, Int8u(src_val)); // creates a binary
+		if (IS_BINARY(src_val)) {
+			// use as it is
+		}
+		else if (IS_INTEGER(src_val)) {
+			src_ser = BUF_FORM;
+			SERIES_DATA(src_ser)[0] = Int8u(src_val);
+			SERIES_TAIL(src_ser) = 1;
 		}
 		else if (IS_BLOCK(src_val)) {
 			src_ser = Join_Binary(src_val); // NOTE: it's the shared FORM buffer!
 		}
 		else if (IS_CHAR(src_val)) {
-			src_ser = Make_Binary(6); // (I hate unicode)
+			src_ser = BUF_FORM;
 			src_ser->tail = Encode_UTF8_Char(BIN_HEAD(src_ser), VAL_CHAR(src_val));
 		}
-		else if (!ANY_BINSTR(src_val)) Trap_Arg(src_val);
+		else if (ANY_STR(src_val)) {
+			// here is used temporary src_len, used to limit conversion of the string to binary
+			// If /part is used, not complete src is converted to binary (UTF8).
+			// This src_len is modified by purpose later so the result may be shorter.
+			// Like in this case: #{E1} == append/part #{} "^(1234)" 1
+			if (action != A_CHANGE && GET_FLAG(flags, AN_PART)) {
+				src_len = dst_len;
+			} else {
+				src_len = VAL_LEN(src_val);
+			}
+			src_ser = Encode_UTF8_Value(src_val, src_len, FALSE); // NOTE: uses shared FORM buffer!
+		}
+		else if (IS_TUPLE(src_val)) {
+			src_ser = BUF_FORM;
+			src_len = VAL_TUPLE_LEN(src_val);
+			for (uint i = 0; i < src_len; i++) {
+				SERIES_DATA(src_ser)[i] = VAL_TUPLE(src_val)[i];
+			}
+			SERIES_TAIL(src_ser) = src_len;
+		}
+		else Trap_Arg(src_val);
 	}
 	else if (IS_CHAR(src_val)) {
-		src_ser = Append_Byte(0, VAL_CHAR(src_val)); // unicode ok too
+		if (VAL_CHAR(src_val) < 128) {
+			src_ser = BUF_FORM;
+			*SERIES_DATA(src_ser) = (REBYTE)VAL_CHAR(src_val);
+		}
+		else {
+			src_ser = BUF_UTF8;
+			*(REBUNI*)SERIES_DATA(src_ser) = (REBUNI)VAL_CHAR(src_val);
+		}
+		SERIES_TAIL(src_ser) = 1;
 	}
 	else if (IS_BLOCK(src_val)) {
 		src_ser = Form_Tight_Block(src_val);

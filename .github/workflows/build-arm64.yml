@@ -1,0 +1,62 @@
+name: 'Build Rebol for Apple M1'
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  #push:
+  #  branches: [ master ]
+  #pull_request:
+  #  branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  macos:
+    runs-on: macos-12
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Siskin Builder
+        uses: oldes/install-siskin@v0.13.0
+
+      - name: List some directories
+        run: |
+          ls -la /Library/Developer/CommandLineTools/SDKs/
+          ls -la /Applications/
+          ls -la /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs 
+
+#     - name: Setup MacOSX SDK
+#       run: |
+#         curl -L -S https://github.com/Siskin-framework/MacOSX-SDK/releases/download/11.3/MacOSX.sdk.zip --output MacOSX.sdk.zip
+#         unzip -q MacOSX.sdk.zip
+#         export SDKROOT="$PWD/MacOSX.sdk"
+#         echo $SDKROOT
+
+#      - name: Build 64bit Rebol/Bulk using clang
+#        run: |
+#          export SDKROOT="$PWD/MacOSX.sdk"
+#          ./siskin make/rebol3.nest %rebol3-bulk-macos-arm64
+
+      - name: Build 64bit Rebol/Bulk using clang
+        run: |
+          ./siskin make/rebol3.nest %rebol3-bulk-macos-x64
+          file ./build/rebol3-bulk-macos-x64
+
+      - name: Build 64bit Rebol/Bulk using clang
+        run: |
+          ./siskin make/rebol3.nest %rebol3-bulk-macos-arm64
+          file ./build/rebol3-bulk-macos-arm64
+
+      - name: Test 64bit Rebol/Bulk
+        run: ./build/rebol3-bulk-macos-x64 -s ./src/tests/run-tests.r3
+
+      - name: Prepare 64bit Rebol/Bulk for upload
+        run: |
+          mv ./build/rebol3-bulk-macos-arm64 ./rebol3-bulk-macos-arm64
+          file ./rebol3-bulk-macos-arm64
+          gzip -9 ./rebol3-bulk-macos-arm64
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Rebol-arm64-osx-${{github.run_id}}
+          path: ./*.gz

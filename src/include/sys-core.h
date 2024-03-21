@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +40,9 @@
 //#define MUNGWALL				// memory allocation bounds checking
 #define STACK_MIN   4000		// data stack increment size
 #define STACK_LIMIT 400000		// data stack max (6.4MB)
+#ifndef STACK_SIZE
+#define STACK_SIZE (1 * 1024 * 1024) // Default MSVS stack size is 1MiB
+#endif
 #define MIN_COMMON 10000		// min size of common buffer
 #define MAX_COMMON 100000		// max size of common buffer (shrink trigger)
 #define	MAX_NUM_LEN 64			// As many numeric digits we will accept on input
@@ -46,8 +50,7 @@
 #define MAX_EXPAND_LIST 5		// number of series-1 in Prior_Expand list
 #define USE_UNICODE 1			// scanner uses unicode
 #define UNICODE_CASES 0x2E00	// size of unicode folding table
-#define HAS_SHA1				// allow it
-#define HAS_MD5					// allow it
+//#define INCLUDE_TASK
 
 // External system includes:
 #include <stdlib.h>
@@ -58,7 +61,7 @@
 
 // Special OS-specific definitions:
 #ifdef OS_DEFS
-	#ifdef TO_WIN32
+	#ifdef TO_WINDOWS
 	#include <windows.h>
 	#undef IS_ERROR
 	#endif
@@ -74,18 +77,18 @@
 #include "reb-c.h"
 #include "reb-defs.h"
 #include "reb-args.h"
-#include "tmp-bootdefs.h"
+#include "gen-bootdefs.h"
 #define PORT_ACTIONS A_CREATE  // port actions begin here
 
 #include "reb-device.h"
 #include "reb-types.h"
 #include "reb-event.h"
 
-#include "sys-deci.h"
-
 #include "sys-value.h"
-#include "tmp-strings.h"
-#include "tmp-funcargs.h"
+#include "gen-strings.h"
+#include "gen-funcargs.h"
+
+#include "reb-struct.h"
 
 //-- Port actions (for native port schemes):
 typedef struct rebol_port_action_map {
@@ -101,6 +104,7 @@ typedef struct rebol_mold {
 	REBYTE period;		// for decimal point
 	REBYTE dash;		// for date fields
 	REBYTE digits;		// decimal digits
+	REBCNT limit;       // optional length limit of the result (-1 = no limit)
 } REB_MOLD;
 
 #include "reb-file.h"
@@ -108,16 +112,18 @@ typedef struct rebol_mold {
 #include "reb-math.h"
 #include "reb-codec.h"
 
-#include "tmp-sysobj.h"
-#include "tmp-sysctx.h"
+#include "gen-sysobj.h"
+#include "gen-sysctx.h"
 
 //#include "reb-net.h"
 #include "sys-panics.h"
-#include "tmp-boot.h"
+#include "gen-boot.h"
 #include "sys-mem.h"
-#include "tmp-errnums.h"
+#include "gen-errnums.h"
 #include "host-lib.h"
 #include "sys-stack.h"
+#include "sys-state.h"
+#include "gen-portmodes.h"
 
 /***********************************************************************
 **
@@ -127,6 +133,7 @@ typedef struct rebol_mold {
 
 enum Boot_Phases {
 	BOOT_START = 0,
+	BOOT_STARTED,
 	BOOT_LOADED,
 	BOOT_ERRORS,
 	BOOT_MEZZ,
@@ -157,6 +164,7 @@ enum {
 #define TS_STD_SERIES (TS_SERIES & ~TS_NOT_COPIED)
 #define TS_SERIES_OBJ ((TS_SERIES | TS_OBJECT) & ~TS_NOT_COPIED)
 #define TS_BLOCKS_OBJ ((TS_BLOCK | TS_OBJECT) & ~TS_NOT_COPIED)
+#define TS_DEEP_COPIED ((TS_SERIES | TYPESET(REB_MAP)) & ~TS_NOT_COPIED)
 
 #define TS_CODE ((CP_DEEP | TS_SERIES) & ~TS_NOT_COPIED)
 
@@ -203,8 +211,6 @@ enum REB_Mold_Opts {
 #define DEC_MOLD_PERCENT 1  // follow num with %
 #define DEC_MOLD_MINIMAL 2  // allow decimal to be integer
 
-// Temporary:
-#define MOPT_ANSI_ONLY	MOPT_MOLD_ALL	// Non ANSI chars are ^() escaped
 
 // Reflector words (words-of, body-of, etc.)
 enum Reb_Reflectors {
@@ -213,6 +219,7 @@ enum Reb_Reflectors {
 	OF_BODY,
 	OF_SPEC,
 	OF_VALUES,
+	OF_TYPE,
 	OF_TYPES,
 	OF_TITLE,
 };
@@ -227,8 +234,8 @@ enum {
 };
 
 // General constants:
-#define NOT_FOUND ((REBCNT)-1)
-#define UNKNOWN   ((REBCNT)-1)
+#define NOT_FOUND ((REBLEN)-1)
+#define UNKNOWN   ((REBLEN)-1)
 #define LF 10
 #define CR 13
 #define TAB '\t'
@@ -267,24 +274,6 @@ enum {
 	POL_EXEC,
 };
 
-// Encoding options:
-enum encoding_opts {
-	ENC_OPT_BIG,		// big endian (not little)
-	ENC_OPT_UTF8,		// UTF-8
-	ENC_OPT_UTF16,		// UTF-16
-	ENC_OPT_UTF32,		// UTF-32
-	ENC_OPT_BOM,		// byte order marker
-	ENC_OPT_CRLF,		// CR line termination
-	ENC_OPT_NO_COPY,	// do not copy if ASCII
-};
-
-#define ENCF_NO_COPY (1<<ENC_OPT_NO_COPY)
-#if OS_CRLF
-#define ENCF_OS_CRLF (1<<ENC_OPT_CRLF)
-#else
-#define ENCF_OS_CRLF 0
-#endif
-
 /***********************************************************************
 **
 **	Macros
@@ -297,15 +286,23 @@ enum encoding_opts {
 #define FREE(m, s)  free(m)
 #define ALIGN(s, a) (((s) + (a)-1) & ~((a)-1))
 
-#define ALEVEL 2
+#ifndef ALEVEL
+#define ALEVEL 1
+#endif
 
 #define ASSERT(c,m) if (!(c)) Crash(m);		// (breakpoint in Crash() to see why)
 #if (ALEVEL>0)
-#define ASSERT1(c,m) if (!(c)) Crash(m);	// Not in beta releases
-#if (ALEVEL>1)
-#define ASSERT2(c,m) if (!(c)) Crash(m);	// Not in any releases
+#	define ASSERT1(c,m) if (!(c)) Crash(m);	// Not in beta releases
+#	if (ALEVEL>1)
+#		define ASSERT2(c,m) if (!(c)) Crash(m);	// Not in any releases
+#	else
+#		define ASSERT2(c,m)
+#	endif
+#else
+#	define ASSERT1(c,m)
+#	define ASSERT2(c,m)
 #endif
-#endif
+
 #define MEM_CARE 5				// Lower number for more frequent checks
 
 
@@ -314,8 +311,14 @@ enum encoding_opts {
 #define	FOR_BLK(b, v, t) for (v = VAL_BLK_DATA(b), t = VAL_BLK_TAIL(b); v != t; v++)
 #define	FOR_SER(b, v, i, s) for (; v = BLK_SKIP(b, i), i < SERIES_TAIL(b); i += skip)
 
+//#ifdef _DEBUG
+//#define UP_CASE(c) _To_Upper_Case(c)
+//#define LO_CASE(c) _To_Lower_Case(c)
+//#else
 #define UP_CASE(c) Upper_Cases[c]
 #define LO_CASE(c) Lower_Cases[c]
+//#endif
+
 #define IS_WHITE(c) ((c) <= 32 && (White_Chars[c]&1) != 0)
 #define IS_SPACE(c) ((c) <= 32 && (White_Chars[c]&2) != 0)
 
@@ -366,12 +369,13 @@ enum encoding_opts {
 #endif
 
 #ifdef OS_STACK_GROWS_UP
-#define CHECK_STACK(v) if ((REBCNT)(v) >= Stack_Limit) Trap_Stack();
+#define CHECK_STACK(v) if ((REBUPT)(v) >= Stack_Limit) Trap_Stack();
 #else
-#define CHECK_STACK(v) if ((REBCNT)(v) <= Stack_Limit) Trap_Stack();
+#define CHECK_STACK(v) if ((REBUPT)(v) <= Stack_Limit) Trap_Stack();
 #endif
-#define STACK_BOUNDS (4*1024*1000) // note: need a better way to set it !!
-// Also: made somewhat smaller than linker setting to allow trapping it
+#define STACK_BOUNDS (STACK_SIZE - (24 * 1024)) // made somewhat smaller than linker setting to allow trapping it
+//NOTE: in VS Debug build the stack overflow is detected before trying to expand the data stack!
+//      So use Relase build to test the stack expansion.
 
 
 /***********************************************************************
@@ -433,7 +437,7 @@ extern const REBACT Value_Dispatch[];
 //extern const REBYTE Lower_Case[];
 
 
-#include "tmp-funcs.h"
+#include "gen-funcs.h"
 
 
 /***********************************************************************

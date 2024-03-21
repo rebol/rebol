@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -471,7 +472,7 @@ again:
 	if (Delect_Debug > 0) {
 		Total_Missed += dia.missed;
 		// !!!! debug
-		if (dia.missed) Debug_Fmt(Dia_Fmt, Get_Field_Name(dia.dialect, dia.cmd), dia.out->tail, dia.missed, Total_Missed);
+		if (dia.missed) Debug_Fmt(cb_cast(Dia_Fmt), Get_Field_Name(dia.dialect, dia.cmd), dia.out->tail, dia.missed, Total_Missed);
 	}
 
 	if (n < 0) return n; //error
@@ -487,6 +488,15 @@ again:
 **
 */	REBNATIVE(delect)
 /*
+//	delect: native [
+//		"Parses a common form of dialects. Returns updated input block."
+//		 dialect [object!] "Describes the words and datatypes of the dialect"
+//		 input [block!]    "Input stream to parse"
+//		 output [block!]   "Resulting values, ordered as defined (modified)"
+//		 /in               "Search for var words in specific objects (contexts)"
+//		 where [block!]    "Block of objects to search (non objects ignored)"
+//		 /all              "Parse entire block, not just one command at a time"
+//	]
 ***********************************************************************/
 {
 	REBDIA dia;
@@ -500,6 +510,8 @@ again:
 	dia.argi = VAL_INDEX(D_ARG(2));
 	dia.out = VAL_SERIES(D_ARG(3));	
 	dia.outi = VAL_INDEX(D_ARG(3));
+
+	if (IS_PROTECT_SERIES(dia.out)) Trap0(RE_PROTECTED);
 
 	if (dia.argi >= SERIES_TAIL(dia.args)) return R_NONE; // end of block
 
@@ -529,7 +541,7 @@ again:
 
 	if (Delect_Debug > 0) {
 		Total_Missed += dia.missed;
-		if (dia.missed) Debug_Fmt(Dia_Fmt, Get_Field_Name(dia.dialect, dia.cmd), dia.out->tail, dia.missed, Total_Missed);
+		if (dia.missed) Debug_Fmt(cb_cast(Dia_Fmt), Get_Field_Name(dia.dialect, dia.cmd), dia.out->tail, dia.missed, Total_Missed);
 	}
 
 	if (err < 0) Trap_Arg(D_ARG(2)); // !!! needs better error

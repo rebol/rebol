@@ -75,7 +75,7 @@ enum {
 
 /***********************************************************************
 **
-*/  REBSER *Emit(REB_MOLD *mold, REBYTE *fmt, ...)
+*/  REBSER *Emit(REB_MOLD *mold, char *fmt, ...)
 /*
 ***********************************************************************/
 {
@@ -96,7 +96,7 @@ enum {
 			Mold_Value(mold, va_arg(args, REBVAL*), TRUE);
 			break;
 		case 'S':	// String of bytes
-			Append_Bytes(series, va_arg(args, REBYTE*));
+			Append_Bytes(series, va_arg(args, const char*));
 			break;
 		case 'C':	// Char
 			Append_Byte(series, va_arg(args, REBCNT));
@@ -125,8 +125,8 @@ enum {
 			break;
 		case '+':	// Add #[ if mold/all
 			if (GET_MOPT(mold, MOPT_MOLD_ALL)) {
-				Append_Bytes(series, "#[");
-				ender = ']';
+				Append_Bytes(series, "#(");
+				ender = ')';
 			}
 			break;
 		case 'D':	// Datatype symbol: #[type
@@ -206,7 +206,7 @@ enum {
 **
 ***********************************************************************/
 {
-	Emit(mold, GET_MOPT(mold, MOPT_MOLD_ALL) ? "#[T " : "make T ", value);
+	Emit(mold, GET_MOPT(mold, MOPT_MOLD_ALL) ? "#(T " : "make T ", value);
 }
 
 
@@ -218,7 +218,7 @@ enum {
 **
 ***********************************************************************/
 {
-	if (GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Byte(mold->series, ']');
+	if (GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Byte(mold->series, ')');
 }
 
 
@@ -235,7 +235,7 @@ enum {
 		Append_Byte(mold->series, ' ');
 		Append_Int(mold->series, VAL_INDEX(value)+1);
 	}
-	if (GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Byte(mold->series, ']');
+	if (GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Byte(mold->series, ')');
 }
 
 
@@ -315,18 +315,16 @@ STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 		default:
 			if (c == 0x1e) sf->chr1e += 4; // special case of ^(1e)
 			else if (IS_CHR_ESC(c)) sf->escape++;
-			else if (c >= 0x1000) sf->paren += 6; // ^(1234)
-			else if (c >= 0x100)  sf->paren += 5; // ^(123)
-			else if (c >= 0x80)   sf->paren += 4; // ^(12)
+			else if (c >= 0x7f && c < 0xA0) sf->paren += 4; // ^(12)
 		}
 	}
 	if (sf->brace_in != sf->brace_out) sf->malign++;
 }
 
-static REBUNI *Emit_Uni_Char(REBUNI *up, REBUNI chr, REBOOL parened)
+static REBUNI *Emit_Uni_Char(REBUNI *up, REBUNI chr)
 {
 	if (chr >= 0x7f || chr == 0x1e) {  // non ASCII or ^ must be (00) escaped
-		if (parened || chr == 0x1e) { // do not AND with above
+		if (chr < 0xA0 || chr == 0x1e) { // do not AND with above
 			*up++ = '^';
 			*up++ = '(';
 			up = Form_Uni_Hex(up, chr);
@@ -344,7 +342,7 @@ static REBUNI *Emit_Uni_Char(REBUNI *up, REBUNI chr, REBOOL parened)
 	return up;
 }
 
-STOID Mold_Uni_Char(REBSER *dst, REBUNI chr, REBOOL molded, REBOOL parened)
+STOID Mold_Uni_Char(REBSER *dst, REBUNI chr, REBOOL molded)
 {
 	REBCNT tail = SERIES_TAIL(dst);
 	REBUNI *up;
@@ -358,7 +356,7 @@ STOID Mold_Uni_Char(REBSER *dst, REBUNI chr, REBOOL molded, REBOOL parened)
 		up = UNI_SKIP(dst, tail);
 		*up++ = '#';
 		*up++ = '"';
-		up = Emit_Uni_Char(up, chr, parened);
+		up = Emit_Uni_Char(up, chr);
 		*up++ = '"';
 		dst->tail = up - UNI_HEAD(dst);
 	}
@@ -371,8 +369,8 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 	REBSER *ser = VAL_SERIES(value);
 	REBCNT idx = VAL_INDEX(value);
 	REB_STRF sf = {0};
-	REBYTE *bp;
-	REBUNI *up;
+	REBYTE *bp = NULL;
+	REBUNI *up = NULL;
 	REBUNI *dp;
 	REBOOL uni = !BYTE_SIZE(ser);
 	REBCNT n;
@@ -384,8 +382,9 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 		return;
 	}
 
+	CHECK_MOLD_LIMIT(mold, len);
+
 	Sniff_String(ser, idx, &sf);
-	if (!GET_MOPT(mold, MOPT_ANSI_ONLY)) sf.paren = 0;
 
 	// Source can be 8 or 16 bits:
 	if (uni) up = UNI_HEAD(ser);
@@ -400,7 +399,7 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 
 		for (n = idx; n < VAL_TAIL(value); n++) {
 			c = uni ? up[n] : (REBUNI)(bp[n]);
-			dp = Emit_Uni_Char(dp, c, (REBOOL)GET_MOPT(mold, MOPT_ANSI_ONLY)); // parened
+			dp = Emit_Uni_Char(dp, c);
 		}
 
 		*dp++ = '"';
@@ -415,7 +414,7 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 
 	*dp++ = '{';
 
-	for (n = idx; n < VAL_TAIL(value); n++) {
+	for (n = idx; n < (len + idx); n++) {
 
 		c = uni ? up[n] : (REBUNI)(bp[n]);
 		switch (c) {
@@ -431,7 +430,7 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 			*dp++ = c;
 			break;
 		default:
-			dp = Emit_Uni_Char(dp, c, (REBOOL)GET_MOPT(mold, MOPT_ANSI_ONLY)); // parened
+			dp = Emit_Uni_Char(dp, c);
 		}
 	}
 
@@ -472,15 +471,23 @@ STOID Mold_Issue(REBVAL *value, REB_MOLD *mold)
 STOID Mold_Url(REBVAL *value, REB_MOLD *mold)
 {
 	REBUNI *dp;
-	REBCNT n;
+	REBCNT n, i;
 	REBUNI c;
 	REBCNT len = VAL_LEN(value);
 	REBSER *ser = VAL_SERIES(value);
+	REBYTE buf[10];
+	REBCNT ulen;
 
 	// Compute extra space needed for hex encoded characters:
 	for (n = VAL_INDEX(value); n < VAL_TAIL(value); n++) {
 		c = GET_ANY_CHAR(ser, n);
 		if (IS_URL_ESC(c)) len += 2;
+		// unicode chars must be also encoded...
+		else if (c <  (REBCNT)0x80) continue;
+		//else if (c >= (REBCNT)0x0010FFFF) len += 14; // REBUNI is just 16bit, so this is useless now!
+		//else if (c >= (REBCNT)0x10000) len += 11;
+		else if (c >= (REBCNT)0x800) len += 8;
+		else if (c >= (REBCNT)0x80) len += 5;
 	}
 
 	dp = Prep_Uni_Series(mold, len);
@@ -488,6 +495,14 @@ STOID Mold_Url(REBVAL *value, REB_MOLD *mold)
 	for (n = VAL_INDEX(value); n < VAL_TAIL(value); n++) {
 		c = GET_ANY_CHAR(ser, n);
 		if (IS_URL_ESC(c)) dp = Form_Hex_Esc_Uni(dp, c);  // c => %xx
+		else if (c >= 0x80) {
+			// to avoid need to first convert whole url to utf8,
+			// use the temp buffer for any unicode char...
+			ulen = Encode_UTF8_Char((REBYTE*)&buf, c);
+			for (i = 0; i < ulen; i++) {
+				dp = Form_Hex_Esc_Uni(dp, (REBUNI)buf[i]);
+			}
+		}
 		else *dp++ = c;
 	}
 
@@ -531,6 +546,35 @@ STOID Mold_Tag(REBVAL *value, REB_MOLD *mold)
 
 }
 
+STOID Mold_Handle(REBVAL *value, REB_MOLD *mold)
+{
+	const REBYTE *name = VAL_HANDLE_NAME(value);
+	if (name != NULL) {
+		Append_Bytes(mold->series, "#(handle! ");
+		Append_Bytes(mold->series, cs_cast(name));
+		if (IS_CONTEXT_HANDLE(value)) {
+			if (!IS_USED_HOB(VAL_HANDLE_CTX(value)))
+				Append_Bytes(mold->series, " unset!");
+			else {
+				REBCNT idx = VAL_HANDLE_CTX(value)->index;
+				REBHSP spec = PG_Handles[idx];
+				REBINT len;
+				if (spec.mold) {
+					len = spec.mold(VAL_HANDLE_CTX(value), BUF_PRINT);
+					if (len > 0) {
+						Append_Byte(mold->series, ' ');
+						Append_Bytes_Len(mold->series, STR_HEAD(BUF_PRINT), len);
+					}
+				}
+			}
+		}
+		Append_Byte(mold->series, ')');
+	}
+	else {
+		Emit(mold, "+T", value);
+	}
+}
+
 /***********************************************************************
 **
 */	void Mold_Binary(REBVAL *value, REB_MOLD *mold)
@@ -539,19 +583,22 @@ STOID Mold_Tag(REBVAL *value, REB_MOLD *mold)
 {
 	REBCNT len = VAL_LEN(value);
 	REBSER *out;
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
+
+	CHECK_MOLD_LIMIT(mold, len);
 
 	switch (Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16)) {
 	default:
 	case 16:
-		out = Encode_Base16(value, 0, len > 32);
+		out = Encode_Base16(value, 0, len, indented && len > 32);
 		break;
 	case 64:
 		Append_Bytes(mold->series, "64");
-		out = Encode_Base64(value, 0, len > 64);
+		out = Encode_Base64(value, 0, len, indented && len > 64, FALSE);
 		break;
 	case 2:
 		Append_Byte(mold->series, '2');
-		out = Encode_Base2(value, 0, len > 8);
+		out = Encode_Base2(value, 0, len, indented && len > 8);
 		break;
 	}
 
@@ -576,6 +623,50 @@ STOID Mold_All_String(REBVAL *value, REB_MOLD *mold)
 	Post_Mold(value, mold);
 }
 
+// Same as Mold_All_String, but forcing contruction syntax like #[file ...]
+STOID Mold_All_Constr_String(REBVAL *value, REB_MOLD *mold)
+{
+	// The string that is molded for /all option:
+	REBVAL val;
+	// prep...
+	Emit(mold, "#(T ", value); // #(file! part
+	// string...
+	val = *value;
+	VAL_INDEX(&val) = 0;
+	VAL_SET(&val, REB_STRING);
+	Mold_String_Series(&val, mold);
+	// post...
+	if (VAL_INDEX(value)) {
+		Append_Byte(mold->series, ' ');
+		Append_Int(mold->series, VAL_INDEX(value)+1);
+	}
+	Append_Byte(mold->series, ')');
+}
+
+STOID Mold_Ref(REBVAL *value, REB_MOLD *mold)
+{
+	if (GET_MOPT(mold, MOPT_MOLD_ALL)) goto mold_ref_all;
+
+	// Scan to find out what special chars the string contains?
+	REBYTE *bp = VAL_BIN(value);
+	REBUNI *up = (REBUNI*)bp;
+	REBUNI c;
+	REBCNT n;
+
+	for (n = VAL_INDEX(value); n < VAL_TAIL(value); n++) {
+		c = (BYTE_SIZE(VAL_SERIES(value))) ? (REBUNI)(bp[n]) : up[n];
+		if (c == '@') goto mold_ref_all;
+		if (IS_LEX_WORD(c) || IS_LEX_NUMBER(c)) continue;
+		if (c < 21 || IS_LEX_ANY_SPACE(c) || IS_LEX_DELIMIT(c)) goto mold_ref_all;
+	}
+
+	Append_Byte(mold->series, '@');
+	Insert_String(mold->series, AT_TAIL, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
+	return;
+mold_ref_all:
+	Mold_All_Constr_String(value, mold);
+}
+
 
 /***********************************************************************
 ************************************************************************
@@ -591,11 +682,12 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 	REBOOL line_flag = FALSE; // newline was part of block
 	REBOOL had_lines = FALSE;
 	REBVAL *value = BLK_SKIP(series, index);
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
 
-	if (!sep) sep = "[]";
+	if (!sep) sep = b_cast("[]");
 
 	if (IS_END(value)) {
-		Append_Bytes(out, sep);
+		Append_Bytes(out, cs_cast(sep));
 		return;
 	}
 
@@ -611,15 +703,22 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 
 	if (sep[1]) {
 		Append_Byte(out, sep[0]);
-		mold->indent++;
 	}
 //	else out->tail--;  // why?????
 
 	value = BLK_SKIP(series, index);
 	while (NOT_END(value)) {
+		// check if we can end sooner with molding..
+		if (MOLD_HAS_LIMIT(mold) && MOLD_OVER_LIMIT(mold)) return;
 		if (VAL_GET_LINE(value)) {
-			if (sep[1] || line_flag) New_Indented_Line(mold);
-			had_lines = TRUE;
+			if (indented && (sep[1] || line_flag)) {
+				if(!had_lines && !line_flag) {
+					had_lines = TRUE;
+					mold->indent++;
+				}
+				New_Indented_Line(mold);
+			}
+			
 		}
 		line_flag = TRUE;
 		Mold_Value(mold, value, TRUE);
@@ -629,20 +728,23 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 	}
 
 	if (sep[1]) {
-		mold->indent--;
-		if (VAL_GET_LINE(value) || had_lines) New_Indented_Line(mold);
+		if (indented && (VAL_GET_LINE(value) || had_lines)) {
+			if (had_lines) mold->indent--;
+			New_Indented_Line(mold);
+		}
 		Append_Byte(out, sep[1]);
 	}
 
 	Remove_Last(MOLD_LOOP);
 }
 
-STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
+STOID Mold_Block(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 {
-	REBYTE *sep;
+	REBYTE *sep = NULL;
 	REBOOL all = GET_MOPT(mold, MOPT_MOLD_ALL);
 	REBSER *series = mold->series;
 	REBFLG over = FALSE;
+
 
 	if (SERIES_WIDE(VAL_SERIES(value)) == 0)
 		Crash(RP_BAD_WIDTH, sizeof(REBVAL), 0, VAL_TYPE(value));
@@ -656,7 +758,7 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 
 	if (all || (over && !IS_BLOCK(value) && !IS_PAREN(value))) {
 		SET_FLAG(mold->opts, MOPT_MOLD_ALL);
-		Pre_Mold(value, mold); // #[block! part
+		Pre_Mold(value, mold); // #(block! part
 		//if (over) Append_Bytes(mold->series, "[]");
 		//else
 		Mold_Block_Series(mold, VAL_SERIES(value), 0, 0);
@@ -673,34 +775,34 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 		case REB_BLOCK:
 			if (GET_MOPT(mold, MOPT_ONLY)) {
 				CLR_FLAG(mold->opts, MOPT_ONLY); // only top level
-				sep = "\000\000";
+				sep = b_cast("\000\000");
 			}
 			else sep = 0;
 			break;
 
 		case REB_PAREN:
-			sep = "()";
+			sep = b_cast("()");
 			break;
 
 		case REB_GET_PATH:
-			series = Append_Byte(series, ':');
-			sep = "/";
+			if (molded) series = Append_Byte(series, ':');
+			sep = b_cast("/");
 			break;
 
 		case REB_LIT_PATH:
-			series = Append_Byte(series, '\'');
+			if (molded) series = Append_Byte(series, '\'');
 			/* fall through */
 		case REB_PATH:
 		case REB_SET_PATH:
-			sep = "/";
+			sep = b_cast("/");
 			break;
 		}
 
-		if (over) Append_Bytes(mold->series, sep ? sep : (REBYTE*)("[]"));
+		if (over) Append_Bytes(mold->series, sep ? cs_cast(sep) : "[]");
 		else Mold_Block_Series(mold, VAL_SERIES(value), VAL_INDEX(value), sep);
 
 		if (VAL_TYPE(value) == REB_SET_PATH)
-			Append_Byte(series, ':');
+			if (molded) Append_Byte(series, ':');
 	}
 }
 
@@ -748,8 +850,8 @@ STOID Form_Block_Series(REBSER *blk, REBCNT index, REB_MOLD *mold, REBSER *frame
 		}
 		else {
 			// Add a space if needed:
-			if (n < len && mold->series->tail
-				&& *UNI_LAST(mold->series) != LF
+			if (n < len 
+				&& (!mold->series->tail || *UNI_LAST(mold->series) != LF)
 				&& !GET_MOPT(mold, MOPT_TIGHT)
 			)
 				Append_Byte(mold->series, ' ');
@@ -787,14 +889,14 @@ STOID Mold_Typeset(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	REBINT n;
 
 	if (molded) {
-		Pre_Mold(value, mold);	// #[typeset! or make typeset!
+		Pre_Mold(value, mold);	// #(typeset! or make typeset!
 		Append_Byte(mold->series, '[');
 	}
 
 	// Convert bits to types (we can make this more efficient !!)
 	for (n = 0; n < REB_MAX; n++) {
 		if (TYPE_CHECK(value, n)) {
-			Emit(mold, "+DN ", SYM_DATATYPE_TYPE, n + 1);
+			Emit(mold, "N ", n + 1);
 		}
 	}
 	Trim_Tail(mold->series, ' ');
@@ -825,32 +927,46 @@ STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 {
 	REBSER *mapser = VAL_SERIES(value);
 	REBVAL *val;
+	REBOOL all = GET_MOPT(mold, MOPT_MOLD_ALL);
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
+	REBCNT count = 0;
 
 	// Prevent endless mold loop:
 	if (Find_Same_Block(MOLD_LOOP, value) > 0) {
-		Append_Bytes(mold->series, "...]");
+		Append_Bytes(mold->series, "#[...]");
 		return;
 	}
 	Append_Val(MOLD_LOOP, value);
 
 	if (molded) {
-		Pre_Mold(value, mold);
-		Append_Byte(mold->series, '[');
+		if (all) {
+			Emit(mold, "#(T [", value);
+		} else {
+			Append_Bytes(mold->series, "#[");
+		}
 	}
 
-	// Mold all non-none entries
+	// Mold all not removed entries
 	mold->indent++;
 	for (val = BLK_HEAD(mapser); NOT_END(val) && NOT_END(val+1); val += 2) {
-		if (!IS_NONE(val+1)) {
-			if (molded) New_Indented_Line(mold);
+		if (!VAL_MAP_REMOVED(val)) {
+			count++;
+			if (molded) {
+				if(indented) 
+					New_Indented_Line(mold);
+				else if (val > BLK_HEAD(mapser))
+					Append_Byte(mold->series, ' ');
+			}
+			else if (count > 1) {
+				Append_Byte(mold->series, '\n');
+			}
 			Emit(mold, "V V", val, val+1);
-			if (!molded) Append_Byte(mold->series, '\n');
 		}
 	}
 	mold->indent--;
 
 	if (molded) {
-		New_Indented_Line(mold);
+		if(indented && count>0) New_Indented_Line(mold);
 		Append_Byte(mold->series, ']');
 	}
 
@@ -887,6 +1003,7 @@ STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
 	REBVAL *words;
 	REBVAL *vals; // first value is context
 	REBCNT n;
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
 
 	ASSERT(VAL_OBJ_FRAME(value), RP_NO_OBJECT_FRAME);
 
@@ -914,18 +1031,26 @@ STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
 			!VAL_GET_OPT(words+n, OPTS_HIDE) &&
 			((VAL_TYPE(vals+n) > REB_NONE) || !GET_MOPT(mold, MOPT_NO_NONE))
 		){
-			New_Indented_Line(mold);
+			if(indented)
+				New_Indented_Line(mold);
+			else if (n > 1)
+				Append_Byte(mold->series, ' ');
+
 			Append_UTF8(mold->series, Get_Sym_Name(VAL_WORD_SYM(words+n)), -1);
 			//Print("Slot: %s", Get_Sym_Name(VAL_WORD_SYM(words+n)));
 			Append_Bytes(mold->series, ": ");
 			if (IS_WORD(vals+n) && !GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Byte(mold->series, '\'');
 			Mold_Value(mold, vals+n, TRUE);
+			if (MOLD_HAS_LIMIT(mold) && MOLD_OVER_LIMIT(mold)) {
+				// early escape
+				Remove_Last(MOLD_LOOP);
+				return;
+			}
 		}
 	}
 	mold->indent--;
-	New_Indented_Line(mold);
+	if (indented) New_Indented_Line(mold);
 	Append_Byte(mold->series, ']');
-
 	End_Mold(mold);
 	Remove_Last(MOLD_LOOP);
 }
@@ -937,27 +1062,19 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	// Protect against recursion. !!!!
 
+	if (VAL_ERR_NUM(value) < RE_THROW_MAX) {
+		Disarm_Throw_Error(value);
+	}
+
 	if (molded) {
-		if (VAL_OBJ_FRAME(value) && VAL_ERR_NUM(value) >= RE_NOTE && VAL_ERR_OBJECT(value))
-			Mold_Object(value, mold);
-		else {
-			// Happens if throw or return is molded.
-			// make error! 0-3
-			Pre_Mold(value, mold);
-			Append_Int(mold->series, VAL_ERR_NUM(value));
-			End_Mold(mold);
-		}
+		Mold_Object(value, mold);
 		return;
 	}
 
-	// If it is an unprocessed BREAK, THROW, CONTINUE, RETURN:
-	if (VAL_ERR_NUM(value) < RE_NOTE || !VAL_ERR_OBJECT(value)) {
-		VAL_ERR_OBJECT(value) = Make_Error(VAL_ERR_NUM(value), value, 0, 0); // spoofs field
-	}
 	err = VAL_ERR_VALUES(value);
 
 	// Form: ** <type> Error:
-	Emit(mold, "** WB", &err->type, RS_ERRS+0);
+	Emit(mold, "\n** WB", &err->type, RS_ERRS+0);
 
 	// Append: error message ARG1, ARG2, etc.
 	msg = Find_Error_Info(err, 0);
@@ -1026,7 +1143,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 		// Forming a string:
 		if (!molded) {
-			Insert_String(ser, -1, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
+			Insert_String(ser, NO_LIMIT, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
 			return;
 		}
 
@@ -1064,7 +1181,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		goto append;
 
 	case REB_CHAR:
-		Mold_Uni_Char(ser, VAL_CHAR(value), (REBOOL)molded, (REBOOL)GET_MOPT(mold, MOPT_MOLD_ALL));
+		Mold_Uni_Char(ser, VAL_CHAR(value), (REBOOL)molded);
 		break;
 
 	case REB_PAIR:
@@ -1082,7 +1199,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_TIME:
 		//len = Emit_Time(value, buf, Punctuation[GET_MOPT(mold, MOPT_COMMA_PT) ? PUNCT_COMMA : PUNCT_DOT]);
-		Emit_Time(mold, value);
+		Emit_Time(mold, value, FALSE);
 		break;
 
 	case REB_DATE:
@@ -1095,11 +1212,16 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		break;
 
 	case REB_BINARY:
-		if (GET_MOPT(mold, MOPT_MOLD_ALL) && VAL_INDEX(value) != 0) {
-			Mold_All_String(value, mold);
-			return;
+		if (molded) {
+			if (GET_MOPT(mold, MOPT_MOLD_ALL) && VAL_INDEX(value) != 0) {
+				Mold_All_String(value, mold);
+				return;
+			}
+			Mold_Binary(value, mold);
 		}
-		Mold_Binary(value, mold);
+		else {
+			Emit(mold, "E",  Encode_Base16(value, 0, NO_LIMIT, FALSE));
+		}
 		break;
 
 	case REB_FILE:
@@ -1112,6 +1234,10 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_EMAIL:
 	case REB_URL:
+		if (VAL_LEN(value) == 0) {
+			Append_Bytes(ser, VAL_TYPE(value) == REB_EMAIL ? "#(email! \"\")" : "#(url! \"\")");
+			break;
+		}
 		Mold_Url(value, mold);
 		break;
 
@@ -1127,6 +1253,13 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 //		break;
 
 	case REB_BITSET:
+		// // uses always construction syntax
+		// Emit(mold, "#(T ", value);
+		// Mold_Bitset(value, mold);
+		// Append_Byte(mold->series, ')');
+		// break;
+		// Above code makes some problem when preprocessing Rebol source!
+		// So reverting back to the old result...
 		Pre_Mold(value, mold); // #[bitset! or make bitset!
 		Mold_Bitset(value, mold);
 		End_Mold(mold);
@@ -1150,17 +1283,17 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_BLOCK:
 	case REB_PAREN:
-		if (!molded)
-			Form_Block_Series(VAL_SERIES(value), VAL_INDEX(value), mold, 0);
+		if (molded)
+			Mold_Block(value, mold, molded);
 		else
-			Mold_Block(value, mold);
+			Form_Block_Series(VAL_SERIES(value), VAL_INDEX(value), mold, 0);
 		break;
 
 	case REB_PATH:
 	case REB_SET_PATH:
 	case REB_GET_PATH:
 	case REB_LIT_PATH:
-		Mold_Block(value, mold);
+		Mold_Block(value, mold, molded);
 		break;
 
 	case REB_VECTOR:
@@ -1171,7 +1304,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		if (!molded)
 			Emit(mold, "N", VAL_DATATYPE(value) + 1);
 		else
-			Emit(mold, "+DN", SYM_DATATYPE_TYPE, VAL_DATATYPE(value) + 1);
+			Emit(mold, "+N", VAL_DATATYPE(value) + 1);
 		break;
 
 	case REB_TYPESET:
@@ -1184,23 +1317,43 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		break;
 
 	case REB_SET_WORD:
-		Emit(mold, "W:", value);
+		if(molded)
+			Emit(mold, "W:", value);
+		else
+			Append_UTF8(ser, Get_Sym_Name(VAL_WORD_SYM(value)), -1);
 		break;
 
 	case REB_GET_WORD:
-		Emit(mold, ":W", value);
+		if(molded)
+			Emit(mold, ":W", value);
+		else
+			Append_UTF8(ser, Get_Sym_Name(VAL_WORD_SYM(value)), -1);
 		break;
 
 	case REB_LIT_WORD:
-		Emit(mold, "\'W", value);
+		if(molded)
+			Emit(mold, "\'W", value);
+		else
+			Append_UTF8(ser, Get_Sym_Name(VAL_WORD_SYM(value)), -1);
+		break;
+
+	case REB_REF:
+		// FORM happens in top section.
+		Mold_Ref(value, mold);
 		break;
 
 	case REB_REFINEMENT:
-		Emit(mold, "/W", value);
+		if(molded)
+			Emit(mold, "/W", value);
+		else
+			Append_UTF8(ser, Get_Sym_Name(VAL_WORD_SYM(value)), -1);
 		break;
 
 	case REB_ISSUE:
-		Emit(mold, "#W", value);
+		if(molded)
+			Emit(mold, "#W", value);
+		else
+			Append_UTF8(ser, Get_Sym_Name(VAL_WORD_SYM(value)), -1);
 		break;
 
 	case REB_CLOSURE:
@@ -1245,11 +1398,23 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		Mold_Event(value, mold);
 		break;
 
+	case REB_STRUCT:
+	{
+		REBSER *blk;
+		Pre_Mold(value, mold);
+		blk = Struct_To_Block(&VAL_STRUCT(value));
+		Mold_Block_Series(mold, blk, 0, 0);
+		End_Mold(mold);
+	}
+		break;
+
+	case REB_HANDLE:
+		Mold_Handle(value, mold);
+		break;
+
 	case REB_REBCODE:
 	case REB_OP:
 	case REB_FRAME:
-	case REB_HANDLE:
-	case REB_STRUCT:
 	case REB_LIBRARY:
 	case REB_UTYPE:
 		// Value has no printable form, so just print its name.
@@ -1257,11 +1422,12 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		else Emit(mold, "+T", value);
 		break;
 
-	case REB_END:
 	case REB_UNSET:
-		if (molded) Emit(mold, "+T", value);
+		if(molded) Append_Bytes(ser,"#(unset)");
 		break;
-
+	case REB_END:
+		if(molded) Append_Bytes(ser,"#(end)");
+		break;
 	default:
 		Crash(RP_DATATYPE+5, VAL_TYPE(value));
 	}
@@ -1309,7 +1475,7 @@ append:
 
 /***********************************************************************
 **
-*/	REBSER *Form_Reduce(REBSER *block, REBCNT index)
+*/	REBSER *Form_Reduce(REBSER *block, REBCNT index, REBVAL *delimiter, REBOOL all)
 /*
 **		Reduce a block and then form each value into a string. Return the
 **		string or NULL if an unwind triggered while reducing.
@@ -1319,13 +1485,31 @@ append:
 	REBINT start = DSP + 1;
 	REBINT n;
 	REB_MOLD mo = {0};
-
-	while (index < BLK_LEN(block)) {
-		index = Do_Next(block, index, 0);
-		if (THROWN(DS_TOP)) {
-			*DS_VALUE(start) = *DS_TOP;
-			DSP = start;
-			return NULL;
+	if (delimiter) {
+		while (index < BLK_LEN(block)) {
+			index = Do_Next(block, index, 0);
+			if (VAL_TYPE(DS_TOP) <= REB_NONE && !all) {
+				DS_DROP;
+				continue;
+			}
+			if (THROWN(DS_TOP)) {
+				*DS_VALUE(start) = *DS_TOP;
+				DSP = start;
+				return NULL;
+			}
+			DS_PUSH(delimiter);
+		}
+		if (DSP >= start) DS_DROP;
+	}
+	else {
+		while (index < BLK_LEN(block)) {
+			index = Do_Next(block, index, 0);
+			if (VAL_TYPE(DS_TOP) <= REB_NONE && !all) DS_DROP;
+			else if (THROWN(DS_TOP)) {
+				*DS_VALUE(start) = *DS_TOP;
+				DSP = start;
+				return NULL;
+			}
 		}
 	}
 
@@ -1383,12 +1567,13 @@ append:
 		else if (len < 0) len = 0;
 	}
 	mold->digits = len;
+	mold->limit = NO_LIMIT;
 }
 
 
 /***********************************************************************
 **
-*/	REBSER *Mold_Print_Value(REBVAL *value, REBCNT limit, REBFLG mold)
+*/	REBSER *Mold_Print_Value(REBVAL *value, REBCNT limit, REBFLG mold, REBOOL flat)
 /*
 **		Basis function for print.  Can do a form or a mold based
 **		on the mold flag setting.  Can limit string output to a
@@ -1399,6 +1584,8 @@ append:
 	REB_MOLD mo = {0};
 
 	Reset_Mold(&mo);
+	if(flat) SET_FLAG(mo.opts, MOPT_INDENT);
+	mo.limit = limit;
 
 	Mold_Value(&mo, value, mold);
 
@@ -1421,8 +1608,8 @@ append:
 	REBYTE c;
 	REBYTE *dc;
 
-	Set_Root_Series(TASK_MOLD_LOOP, Make_Block(size/10), "mold loop");
-	Set_Root_Series(TASK_BUF_MOLD, Make_Unicode(size), "mold buffer");
+	Set_Root_Series(TASK_MOLD_LOOP, Make_Block(size/10), cb_cast("mold loop"));
+	Set_Root_Series(TASK_BUF_MOLD, Make_Unicode(size), cb_cast("mold buffer"));
 
 	// Create quoted char escape table:
 	Char_Escapes = cp = Make_Mem(MAX_ESC_CHAR+1); // cleared
@@ -1431,10 +1618,32 @@ append:
 	Char_Escapes[LF]  = '/';
 	Char_Escapes['"'] = '"';
 	Char_Escapes['^'] = '^';
-
+	
 	URL_Escapes = cp = Make_Mem(MAX_URL_CHAR+1); // cleared
-	//for (c = 0; c <= MAX_URL_CHAR; c++) if (IS_LEX_DELIMIT(c)) cp[c] = ESC_URL;
+	// escape all chars from #"^(00)" to #"^(20)"
 	for (c = 0; c <= ' '; c++) cp[c] = ESC_URL | ESC_FILE;
-	dc = ";%\"()[]{}<>";
-	for (c = LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
+	// and also all chars which are a lexer delimiters + 3 common extra chars
+	dc = b_cast(";%\"()[]{}<>\x5C\x5E\x7F");
+	for (c = (REBYTE)LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
+	// RFC3986 allows unescaped only: ALPHA, DIGIT and "-._~:/?#[]@!$&'()*+,;="
+	// so include also folowing chars for url escaping...
+	URL_Escapes['\x60'] |= ESC_URL;
+	URL_Escapes['\x7C'] |= ESC_URL;
+	// required file escaping... https://github.com/Oldes/Rebol-issues/issues/2491
+	URL_Escapes['\x3A'] |= ESC_FILE;
+	URL_Escapes['\x40'] |= ESC_FILE;
+}
+
+
+/***********************************************************************
+**
+*/  void Dispose_Mold(void)
+/*
+***********************************************************************/
+{
+	// TASK_MOLD_LOOP and TASK_BUF_MOLD are released in Dispose_Core
+	Free_Mem(Char_Escapes, 0);
+	Free_Mem( URL_Escapes, 0);
+	Char_Escapes = NULL;
+	URL_Escapes = NULL;
 }

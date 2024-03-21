@@ -89,23 +89,14 @@
 **
 ***********************************************************************/
 {
-	REBSER *block;
-	REBSER *words = VAL_FUNC_WORDS(func);
-	REBCNT n;
-	REBVAL *value;
-	REBVAL *word;
+	REBVAL *val;
+	REBSER *types = VAL_FUNC_ARGS(func);
 
-	block = Make_Block(SERIES_TAIL(words));
-	word = BLK_SKIP(words, 1);
-
-	for (n = 1; n < SERIES_TAIL(words); word++, n++) {
-		value = Append_Value(block);
-		VAL_SET(value, VAL_TYPE(word));
-		VAL_WORD_SYM(value) = VAL_BIND_SYM(word);
-		UNBIND(value);
+	types = Copy_Block(types, 1);
+	for (val = BLK_HEAD(types); NOT_END(val); val++) {
+		SET_TYPE(val, REB_TYPESET);
 	}
-
-	return block;
+	return types;
 }
 
 
@@ -125,6 +116,7 @@
 	REBSER *words;
 	REBINT n = 0;
 	REBVAL *value;
+	REBOOL return_defined = FALSE;
 
 	blk = BLK_HEAD(block);
 	words = Collect_Frame(BIND_ALL | BIND_NO_DUP | BIND_NO_SELF, 0, blk);
@@ -151,6 +143,14 @@
 			VAL_TYPESET(value) = (TYPESET(REB_LOGIC) | TYPESET(REB_NONE));
 			break;
 		case REB_SET_WORD:
+			// Allow one `return: [type(s)]` specification, so one can use Red function definition.
+			// It will be ignored while evaluating.
+			if (!return_defined && VAL_WORD_SYM(blk) == SYM_RETURN && IS_BLOCK(blk+1)) {
+				return_defined = TRUE;
+				blk++; // skips the return's specification
+				continue;
+			}
+			// fall thru...
 		default:
 			Trap1(RE_BAD_FUNC_DEF, blk);
 		}
@@ -184,27 +184,46 @@
 	REBVAL *body;
 	REBCNT len;
 
-	if (
-		!IS_BLOCK(def)
-		|| (len = VAL_LEN(def)) < 2
-		|| !IS_BLOCK(spec = VAL_BLK(def))
-	) return FALSE;
+	if (type == REB_ACTION || type == REB_NATIVE) //@@ https://github.com/rebol/rebol-issues/issues/1051
+		return FALSE;
 
-	body = VAL_BLK_SKIP(def, 1);
+	if (IS_BLOCK(def)) {
+		if ((len = VAL_LEN(def)) < 2 || !IS_BLOCK(spec = VAL_BLK(def)))
+			return FALSE;
+		body = VAL_BLK_SKIP(def, 1);
+		VAL_FUNC_SPEC(value) = VAL_SERIES(spec);
+		VAL_FUNC_ARGS(value) = Check_Func_Spec(VAL_SERIES(spec));
 
-	VAL_FUNC_SPEC(value) = VAL_SERIES(spec);
-	VAL_FUNC_ARGS(value) = Check_Func_Spec(VAL_SERIES(spec));
-
-	if (type != REB_COMMAND) {
-		if (len != 2 || !IS_BLOCK(body)) return FALSE;
-		VAL_FUNC_BODY(value) = VAL_SERIES(body);
+		if (type != REB_COMMAND) {
+			if (len != 2 || !IS_BLOCK(body)) return FALSE;
+			VAL_FUNC_BODY(value) = VAL_SERIES(body);
+		}
+		else
+			Make_Command(value, def);
 	}
-	else
-		Make_Command(value, def);
+	else if (type == REB_OP && (IS_FUNCTION(def) || IS_ACTION(def))) {
+		VAL_FUNC_SPEC(value) = VAL_FUNC_SPEC(def);
+		VAL_FUNC_BODY(value) = VAL_FUNC_BODY(def);
+		VAL_FUNC_ARGS(value) = VAL_FUNC_ARGS(def);
+	}
+	else return FALSE;
 
 	VAL_SET(value, type);
 
-	if (type == REB_FUNCTION || type == REB_CLOSURE)
+	if (type == REB_OP) {
+		// make sure that there are exactly 2 args
+		REBVAL *args = BLK_HEAD(VAL_FUNC_ARGS(value))+1;
+		REBCNT w = 0;
+		for (; NOT_END(args); args++) {
+			if(IS_REFINEMENT(args) && VAL_WORD_CANON(args) == SYM_LOCAL) break;
+			else if(IS_WORD(args))
+				w++;
+		}
+		if (w != 2) return FALSE;
+		VAL_SET_EXT(value, IS_ACTION(def)?REB_ACTION:REB_FUNCTION);
+	}
+
+	if ((type == REB_FUNCTION || type == REB_CLOSURE || type == REB_OP) && !IS_ACTION(def))
 		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value));
 
 	return TRUE;

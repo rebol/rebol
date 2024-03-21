@@ -1,0 +1,49 @@
+name: 'Rebol Boostrap CI'
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ bootstrap ]
+    paths:
+      - make/**
+      - src/**
+      - .github/workflows/bootstrap.yml
+
+  pull_request:
+    branches: [ bootstrap ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  linux:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-20.04]
+        #os: [ubuntu-20.04, ubuntu-18.04]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build 64bit Rebol bootstrap using gcc
+        run: |
+          cd make/
+          make -f rebol-linux-bootstrap-64bit.mk
+          mv ./rebol-linux-bootstrap-64bit ../rebol-stage0
+
+      - name: Test 64bit Rebol bootstrap
+        run: ./rebol-stage0 -v
+
+      - name: Compile real Rebol/Bulk using the Siskin Builder
+        run: |
+          git clone https://github.com/Siskin-Framework/Builder --depth 1
+          cd Builder/
+          ../rebol-stage0 siskin.r3 rebol rebol3-bulk-linux-x64
+          
+      - name: Test 64bit Rebol/Bulk
+        run: |
+          mv Builder/tree/rebol/Rebol/build/rebol3-bulk-linux-x64 ./rebol3
+          ./rebol3 -v
+

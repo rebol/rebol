@@ -81,7 +81,7 @@
 
 	case SYM_TYPE:
 		if (!IS_WORD(val) && !IS_LIT_WORD(val)) return FALSE;
-		arg = Get_System(SYS_VIEW, VIEW_EVENT_TYPES);
+		arg = Get_System(SYS_CATALOG, CAT_EVENT_TYPES);
 		if (IS_BLOCK(arg)) {
 			w = VAL_WORD_CANON(val);
 			for (n = 0, arg = VAL_BLK(arg); NOT_END(arg); arg++, n++) {
@@ -120,18 +120,28 @@
 	case SYM_OFFSET:
 		if (IS_PAIR(val)) {
 			SET_EVENT_XY(value, Float_Int16(VAL_PAIR_X(val)), Float_Int16(VAL_PAIR_Y(val)));
+			CLR_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_CODE);
+			SET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY);
+			break;
 		}
-		else return FALSE;
-		break;
+		//O: should it be possible to remove offset value from event?
+		//else if (IS_NONE(val)) {
+		//	CLR_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY);
+		//}
+		return FALSE;
 
 	case SYM_KEY:
 		//VAL_EVENT_TYPE(value) != EVT_KEY && VAL_EVENT_TYPE(value) != EVT_KEY_UP)
 		VAL_EVENT_MODEL(value) = EVM_GUI;
+		if(!VAL_EVENT_TYPE(value)) VAL_EVENT_TYPE(value) = EVT_KEY;
 		if (IS_CHAR(val)) {
 			VAL_EVENT_DATA(value) = VAL_CHAR(val);
+			CLR_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY);
+			SET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_CODE);
+			break;
 		}
 		else if (IS_LIT_WORD(val) || IS_WORD(val)) {
-			arg = Get_System(SYS_VIEW, VIEW_EVENT_KEYS);
+			arg = Get_System(SYS_CATALOG, CAT_EVENT_KEYS);
 			if (IS_BLOCK(arg)) {
 				arg = VAL_BLK_DATA(arg);
 				for (n = VAL_INDEX(arg); NOT_END(arg); n++, arg++) {
@@ -143,20 +153,21 @@
 				if (IS_END(arg)) return FALSE;
 				break;
 			}
-			return FALSE;
 		}
-		else return FALSE;
-		break;
+		return FALSE;
 
 	case SYM_CODE:
+		//if (GET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY)) return FALSE;
 		if (IS_INTEGER(val)) {
-			VAL_EVENT_DATA(value) = VAL_INT32(val);
+			VAL_EVENT_DATA(value) = VAL_INT64(val);
+			CLR_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY);
+			SET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_CODE);
+			break;
 		}
-		else return FALSE;
-		break;
+		return FALSE;
 
 	default:
-			return FALSE;
+		return FALSE;
 	}
 
 	return TRUE;
@@ -197,7 +208,7 @@
 
 	case SYM_TYPE:
 		if (VAL_EVENT_TYPE(value) == 0) goto is_none;
-		arg = Get_System(SYS_VIEW, VIEW_EVENT_TYPES);
+		arg = Get_System(SYS_CATALOG, CAT_EVENT_TYPES);
 		if (IS_BLOCK(arg) && VAL_TAIL(arg) >= EVT_MAX) {
 			*val = *VAL_BLK_SKIP(arg, VAL_EVENT_TYPE(value));
 			break;
@@ -207,10 +218,10 @@
 	case SYM_PORT:
 		// Most events are for the GUI:
 		if (IS_EVENT_MODEL(value, EVM_GUI)) {
-			*val = *Get_System(SYS_VIEW, VIEW_EVENT_PORT);
+			*val = *Get_System(SYS_PORTS, PORTS_EVENT);
 		}
 		// Event holds a port:
-		else if (IS_EVENT_MODEL(value, EVM_PORT)) {
+		else if (IS_EVENT_MODEL(value, EVM_PORT) || IS_EVENT_MODEL(value, EVM_MIDI)) {
 			SET_PORT(val, VAL_EVENT_SER(value));
 		}
 		// Event holds an object:
@@ -219,6 +230,9 @@
 		}
 		else if (IS_EVENT_MODEL(value, EVM_CALLBACK)) {
 			*val = *Get_System(SYS_PORTS, PORTS_CALLBACK);
+		}
+		else if (IS_EVENT_MODEL(value, EVM_CONSOLE)) {
+			*val = *Get_System(SYS_PORTS, PORTS_INPUT);
 		}
 		else {
 			// assumes EVM_DEVICE
@@ -232,36 +246,38 @@
 	case SYM_WINDOW:
 	case SYM_GOB:
 		if (IS_EVENT_MODEL(value, EVM_GUI)) {
+			if (GET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_DATA))
+				goto is_none;
 			if (VAL_EVENT_SER(value)) {
 				SET_GOB(val, VAL_EVENT_SER(value));
 				break;
 			}
 		}
-		return FALSE;
+		goto is_none;
 
 	case SYM_OFFSET:
-		if (VAL_EVENT_TYPE(value) == EVT_KEY || VAL_EVENT_TYPE(value) == EVT_KEY_UP)
-			goto is_none;
-		VAL_SET(val, REB_PAIR);
-		VAL_PAIR_X(val) = (REBD32)VAL_EVENT_X(value);
-		VAL_PAIR_Y(val) = (REBD32)VAL_EVENT_Y(value);
-		break;
+		if (GET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_XY)) {
+			VAL_SET(val, REB_PAIR);
+			VAL_PAIR_X(val) = (REBD32)VAL_EVENT_X(value);
+			VAL_PAIR_Y(val) = (REBD32)VAL_EVENT_Y(value);
+			break;
+		}
+		goto is_none;
 
 	case SYM_KEY:
-		if (VAL_EVENT_TYPE(value) != EVT_KEY && VAL_EVENT_TYPE(value) != EVT_KEY_UP)
-			goto is_none;
-		n = VAL_EVENT_DATA(value); // key-words in top 16, chars in lower 16
-		if (n & 0xffff0000) {
-			arg = Get_System(SYS_VIEW, VIEW_EVENT_KEYS);
-			n = (n >> 16) - 1;
-			if (IS_BLOCK(arg) && n < (REBINT)VAL_TAIL(arg)) {
-				*val = *VAL_BLK_SKIP(arg, n);
+		n = VAL_EVENT_DATA(value);
+		if (VAL_EVENT_TYPE(value) == EVT_KEY || VAL_EVENT_TYPE(value) == EVT_KEY_UP) {
+			SET_CHAR(val, n);
+			break;
+		}
+		else if (VAL_EVENT_TYPE(value) == EVT_CONTROL || VAL_EVENT_TYPE(value) == EVT_CONTROL_UP) {
+			arg = Get_System(SYS_CATALOG, CAT_EVENT_KEYS);
+			if (IS_BLOCK(arg) && n <= (REBINT)VAL_TAIL(arg)) {
+				*val = *VAL_BLK_SKIP(arg, n-1);
 				break;
 			}
-			return FALSE;
 		}
-		SET_CHAR(val, n);
-		break;
+		goto is_none;
 
 	case SYM_FLAGS:
 		if (VAL_EVENT_FLAGS(value) & (1<<EVF_DOUBLE | 1<<EVF_CONTROL | 1<<EVF_SHIFT)) {
@@ -279,18 +295,19 @@
 				Init_Word(arg, SYM_SHIFT);
 			}
 			Set_Block(val, ser);
-		} else SET_NONE(val);
+		} else goto is_none;
 		break;
 
 	case SYM_CODE:
-		if (VAL_EVENT_TYPE(value) != EVT_KEY && VAL_EVENT_TYPE(value) != EVT_KEY_UP)
-			goto is_none;
-		n = VAL_EVENT_DATA(value); // key-words in top 16, chars in lower 16
-		SET_INTEGER(val, n);
-		break;
+		if (GET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_CODE)) {
+			SET_INTEGER(val, VAL_EVENT_DATA(value)); // key-words in top 16, chars in lower 16
+			break;
+		}
+		goto is_none;
 
 	case SYM_DATA:
 		// Event holds a file string:
+		if (!GET_FLAG(VAL_EVENT_FLAGS(value), EVF_HAS_DATA)) goto is_none;
 		if (VAL_EVENT_TYPE(value) != EVT_DROP_FILE) goto is_none;
 		if (!GET_FLAG(VAL_EVENT_FLAGS(value), EVF_COPIED)) {
 			void *str = VAL_EVENT_SER(value);
@@ -361,10 +378,8 @@ is_none:
 	value = D_ARG(1);
 	arg = D_ARG(2);
 
-	if (action == A_MAKE) {
-		// Clone an existing event?
-		if (IS_EVENT(value)) return R_ARG1;
-		else if (IS_DATATYPE(value)) {
+	if (action == A_MAKE || action == A_TO) {
+		if (IS_EVENT(value) || IS_DATATYPE(value)) {
 			if (IS_EVENT(arg)) return R_ARG2;
 			//Trap_Make(REB_EVENT, value);
 			VAL_SET(D_RET, REB_EVENT);
@@ -374,7 +389,7 @@ is_none:
 is_arg_error:
 			Trap_Types(RE_EXPECT_VAL, REB_EVENT, VAL_TYPE(arg));
 
-		// Initialize GOB from block:
+		// Initialize event from block:
 		if (IS_BLOCK(arg)) Set_Event_Vars(D_RET, VAL_BLK_DATA(arg));
 		else goto is_arg_error;
 	}
@@ -427,7 +442,7 @@ pick_it:
 		case EF_PORT:
 			// Most events are for the GUI:
 			if (GET_FLAG(VAL_EVENT_FLAGS(value), EVF_NO_REQ))
-				*D_RET = *Get_System(SYS_VIEW, VIEW_EVENT_PORT);
+				*D_RET = *Get_System(SYS_PORTS, PORTS_EVENT);
 			else {
 				req = VAL_EVENT_REQ(value);
 				if (!req || !req->port) goto is_none;
@@ -510,15 +525,18 @@ enum rebol_event_fields {
 		SYM_TYPE, SYM_PORT, SYM_GOB, SYM_OFFSET, SYM_KEY,
 		SYM_FLAGS, SYM_CODE, SYM_DATA, 0
 	};
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
 
 	Pre_Mold(value, mold);
 	Append_Byte(mold->series, '[');
 	mold->indent++;
 
 	for (field = 0; fields[field]; field++) {
-		Get_Event_Var(value, fields[field], &val);
-		if (!IS_NONE(&val)) {
-			New_Indented_Line(mold);
+		if (Get_Event_Var(value, fields[field], &val) && !IS_NONE(&val)) {
+			if(indented)
+				New_Indented_Line(mold);
+			else if (field > 0)
+				Append_Byte(mold->series, ' ');
 			Append_UTF8(mold->series, Get_Sym_Name(fields[field]), -1);
 			Append_Bytes(mold->series, ": ");
 			if (IS_WORD(&val)) Append_Byte(mold->series, '\'');
@@ -527,7 +545,7 @@ enum rebol_event_fields {
 	}
 
 	mold->indent--;
-	New_Indented_Line(mold);
+	if (indented) New_Indented_Line(mold);
 	Append_Byte(mold->series, ']');
 
 	End_Mold(mold);

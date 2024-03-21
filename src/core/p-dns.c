@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,10 +34,11 @@
 
 /***********************************************************************
 **
-*/	static int DNS_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int DNS_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 ***********************************************************************/
 {
+	REBSER *port;
 	REBVAL *spec;
 	REBREQ *sock;
 	REBINT result;
@@ -45,14 +47,13 @@
 	REBOOL sync = FALSE; // act synchronously
 	REBVAL tmp;
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 
 	arg = D_ARG(2);
 	*D_RET = *D_ARG(1);
 
 	sock = Use_Port_State(port, RDI_DNS, sizeof(*sock));
 	spec = OFV(port, STD_PORT_SPEC);
-	if (!IS_OBJECT(spec)) Trap0(RE_INVALID_PORT);
 
 	sock->timeout = 4000; // where does this go? !!!
 
@@ -65,13 +66,22 @@
 		}
 
 		arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
-
-		if (IS_TUPLE(arg) && Scan_Tuple(VAL_BIN(arg), strlen(VAL_BIN(arg)), &tmp)) {
+		if (IS_NONE(arg)) {
+			// case: read dns://
+			sock->data = NULL;
+		}
+		else if (IS_TUPLE(arg)) {
 			SET_FLAG(sock->modes, RST_REVERSE);
-			memcpy(&sock->net.remote_ip, VAL_TUPLE(&tmp), 4);
+			memcpy(&sock->net.remote_ip, VAL_TUPLE(arg), 4);
 		}
 		else if (IS_STRING(arg)) {
-			sock->data = VAL_BIN(arg);
+			if (Scan_Tuple(VAL_BIN(arg), (REBCNT)LEN_BYTES(VAL_BIN(arg)), &tmp)) {
+				SET_FLAG(sock->modes, RST_REVERSE);
+				memcpy(&sock->net.remote_ip, VAL_TUPLE(&tmp), 4);
+			}
+			else {
+				sock->data = VAL_BIN(arg);
+			}
 		}
 		else Trap_Port(RE_INVALID_SPEC, port, -10);
 
@@ -127,7 +137,7 @@ pick:
 		return R_NONE;
 
 	default:
-		Trap_Action(REB_PORT, action);
+		Trap1(RE_NO_PORT_ACTION, Get_Action_Word(action));
 	}
 
 	return R_RET;

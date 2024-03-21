@@ -28,11 +28,13 @@
 ***********************************************************************/
 
 #include "sys-core.h"
-#include "tmp-comptypes.h"
+#include "gen-comptypes.h"
 #include "sys-deci-funcs.h"
 
 #include <math.h>
 #include <float.h>
+
+REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff); // in t-decimal.c
 
 #define	LOG2	0.6931471805599453
 #define	EPS		2.718281828459045235360287471
@@ -43,8 +45,6 @@ const double pi2 = 2.0 * 3.14159265358979323846;
 #ifndef DBL_EPSILON
 #define DBL_EPSILON	2.2204460492503131E-16
 #endif
-
-#define	AS_DECIMAL(n) (IS_INTEGER(n) ? (REBDEC)VAL_INT64(n) : VAL_DECIMAL(n))
 
 enum {SINE, COSINE, TANGENT};
 
@@ -91,7 +91,9 @@ enum {SINE, COSINE, TANGENT};
 	REBDEC	dval;
 
 	dval = AS_DECIMAL(D_ARG(1));
+#ifdef USE_NO_INFINITY
 	if (kind != TANGENT && (dval < -1 || dval > 1)) Trap0(RE_OVERFLOW);
+#endif
 
 	if (kind == SINE) dval = asin(dval);
 	else if (kind == COSINE) dval = acos(dval);
@@ -136,7 +138,14 @@ enum {SINE, COSINE, TANGENT};
 ***********************************************************************/
 {
 	REBDEC dval = Trig_Value(ds, TANGENT);
-	if (Eq_Decimal(fabs(dval), pi1 / 2.0)) Trap0(RE_OVERFLOW);
+	if (Eq_Decimal(fabs(dval), pi1 / 2.0)) {
+#ifdef USE_NO_INFINITY
+		Trap0(RE_OVERFLOW);
+#else
+		SET_DECIMAL(D_RET, (dval < 0) ? -INFINITY : INFINITY);
+		return R_RET;
+#endif
+	}
 	SET_DECIMAL(D_RET, tan(dval));
 	return R_RET;
 }
@@ -174,6 +183,167 @@ enum {SINE, COSINE, TANGENT};
 	return R_RET;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(arctangent2)
+/*
+//	arctangent2: native [
+//		{Returns the angle of the point, when measured counterclockwise from a circle's X axis (where 0x0 represents the center of the circle). The return value is in interval -180 to 180 degrees.}
+//		point [pair!] "X/Y coordinate in space"
+//		/radians "Result is in radians instead of degrees"
+//	]
+***********************************************************************/
+{
+	REBDEC dval = atan2(VAL_PAIR_Y(D_ARG(1)), VAL_PAIR_X(D_ARG(1)));
+	if(!D_REF(2)) dval *= 180.0 / pi1; //to degrees
+	SET_DECIMAL(D_RET, dval);
+	return R_RET;
+}
+
+
+// Follows faster trigonometric functions (without conversions and bounds checks)
+#ifndef USE_NO_INFINITY //use these functions only with INFINITY support (cos/sin may return 1.#NaN value)!
+
+/***********************************************************************
+**
+*/	REBNATIVE(cos)
+/*
+//	cos: native [
+//		{Returns the trigonometric cosine.}
+//		value [decimal!] "In radians"
+//	]
+***********************************************************************/
+{
+	SET_DECIMAL(D_RET, cos(VAL_DECIMAL(D_ARG(1))));
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(sin)
+/*
+//	sin: native [
+//		{Returns the trigonometric sine.}
+//		value [decimal!] "In radians"
+//	]
+***********************************************************************/
+{
+	SET_DECIMAL(D_RET, sin(VAL_DECIMAL(D_ARG(1))));
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(tan)
+/*
+//	tan: native [
+//		{Returns the trigonometric tangent.}
+//		value [decimal!] "In radians"
+//	]
+***********************************************************************/
+{
+	SET_DECIMAL(D_RET, tan(VAL_DECIMAL(D_ARG(1))));
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(atan)
+/*
+//	atan: native [
+//		{Returns the trigonometric arctangent.}
+//		value [decimal!] "In radians"
+//	]
+***********************************************************************/
+{
+	SET_DECIMAL(D_RET, atan(VAL_DECIMAL(D_ARG(1))));
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(asin)
+/*
+//	asin: native [
+//		{Returns the trigonometric arcsine.}
+//		value [decimal!] "In radians"
+//	]
+***********************************************************************/
+{
+	SET_DECIMAL(D_RET, asin(VAL_DECIMAL(D_ARG(1))));
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(acos)
+/*
+//	acos: native [
+//		{Returns the trigonometric arccosine.}
+//		value [decimal!] "In radians"
+//	]
+***********************************************************************/
+{
+	SET_DECIMAL(D_RET, acos(VAL_DECIMAL(D_ARG(1))));
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(atan2)
+/*
+//	atan2: native [
+//		{Returns the angle of the point y/x in the interval [-pi,+pi] radians.}
+//		y [decimal!] "The proportion of the Y-coordinate"
+//		x [decimal!] "The proportion of the X-coordinate"
+//	]
+***********************************************************************/
+{
+	SET_DECIMAL(D_RET, atan2(VAL_DECIMAL(D_ARG(1)), VAL_DECIMAL(D_ARG(2))));
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(sqrt)
+/*
+//	sqrt: native [
+//		{Returns the square root of a number.}
+//		value [decimal!]
+//	]
+***********************************************************************/
+{
+	SET_DECIMAL(D_RET, sqrt(VAL_DECIMAL(D_ARG(1))));
+	return R_RET;
+}
+
+#endif //!USE_NO_INFINITY
+
+/***********************************************************************
+**
+*/	REBNATIVE(numberq)
+/*
+//	number?: native [
+//		{Returns TRUE if the value is any type of number and not a NaN. }
+//		value
+//	]
+***********************************************************************/
+{
+	BOOL result = FALSE;
+	switch(VAL_TYPE(D_ARG(1))) {
+		case REB_DECIMAL:
+			if (!isnan(VAL_DECIMAL(D_ARG(1)))) result = TRUE;
+			break;
+		case REB_INTEGER:
+		case REB_MONEY:
+		case REB_PERCENT:
+			result = TRUE;
+			break;
+	}
+	SET_LOGIC(D_RET, result);
+	return R_RET;
+}
+
 
 /***********************************************************************
 **
@@ -193,12 +363,85 @@ enum {SINE, COSINE, TANGENT};
 
 /***********************************************************************
 **
+*/	void modulus(REBVAL *ret, REBVAL *val1, REBVAL *val2, REBOOL round)
+/*
+**  Based on: https://stackoverflow.com/a/66777048/494472
+**
+***********************************************************************/
+{
+	double a, b, m;
+	if (IS_INTEGER(val1) && IS_INTEGER(val2)) {
+		REBI64 ia = VAL_INT64(val1);
+		REBI64 ib = VAL_INT64(val2);
+		if (ib == 0) Trap0(RE_ZERO_DIVIDE);
+		SET_INTEGER(ret, ((ia % ib) + ib) % ib);
+		return;
+	}
+
+	a = Number_To_Dec(val1);
+	b = Number_To_Dec(val2);
+
+	if (b == 0.0) Trap0(RE_ZERO_DIVIDE);
+
+	if (round && b < 0.0) b = fabs(b);
+
+	m = fmod(fmod(a, b) + b, b);
+
+	if (round && (almost_equal(a, a - m, 10) || almost_equal(b, b + m, 10))) {
+		m = 0.0;
+	}
+	switch (VAL_TYPE(val1)) {
+	case REB_DECIMAL:
+	case REB_PERCENT: SET_DECIMAL(ret, m); break;
+	case REB_INTEGER: SET_INTEGER(ret, (REBI64)m); break;
+	case REB_TIME:    VAL_TIME(ret) = DEC_TO_SECS(m); break;
+	case REB_MONEY:   VAL_DECI(ret) = decimal_to_deci(m); break;
+	case REB_CHAR:    SET_CHAR(ret, (REBINT)m); break;
+	}
+	SET_TYPE(ret, VAL_TYPE(val1));
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(mod)
+/*
+//	mod: native [
+//		{Compute a nonnegative remainder of A divided by B.}
+//		a [number! money! char! time!]
+//		b [number! money! char! time!] "Must be nonzero."
+//	]
+***********************************************************************/
+{
+	modulus(D_RET, D_ARG(1), D_ARG(2), FALSE);
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(modulo)
+/*
+//	modulo: native [
+//		{Wrapper for MOD that handles errors like REMAINDER. Negligible values (compared to A and B) are rounded to zero.}
+//		a [number! money! char! time!]
+//		b [number! money! char! time!] "Absolute value will be used."
+//	]
+***********************************************************************/
+{
+	modulus(D_RET, D_ARG(1), D_ARG(2), TRUE);
+	return R_RET;
+}
+
+
+/***********************************************************************
+**
 */	REBNATIVE(log_10)
 /*
 ***********************************************************************/
 {
 	REBDEC dval = AS_DECIMAL(D_ARG(1));
+#ifdef USE_NO_INFINITY
 	if (dval <= 0) Trap0(RE_POSITIVE);
+#endif
 	SET_DECIMAL(D_RET, log10(dval));
 	return R_RET;
 }
@@ -211,7 +454,9 @@ enum {SINE, COSINE, TANGENT};
 ***********************************************************************/
 {
 	REBDEC dval = AS_DECIMAL(D_ARG(1));
+#ifdef USE_NO_INFINITY
 	if (dval <= 0) Trap0(RE_POSITIVE);
+#endif
 	SET_DECIMAL(D_RET, log(dval) / LOG2);
 	return R_RET;
 }
@@ -224,7 +469,9 @@ enum {SINE, COSINE, TANGENT};
 ***********************************************************************/
 {
 	REBDEC dval = AS_DECIMAL(D_ARG(1));
+#ifdef USE_NO_INFINITY
 	if (dval <= 0) Trap0(RE_POSITIVE);
+#endif
 	SET_DECIMAL(D_RET, log(dval));
 	return R_RET;
 }
@@ -237,10 +484,16 @@ enum {SINE, COSINE, TANGENT};
 ***********************************************************************/
 {
 	REBDEC dval = AS_DECIMAL(D_ARG(1));
+#ifdef USE_NO_INFINITY
 	if (dval < 0) Trap0(RE_POSITIVE);
+#endif
 	SET_DECIMAL(D_RET, sqrt(dval));
 	return R_RET;
 }
+
+#if defined(_MSC_VER) && _MSC_VER > 1800
+#pragma warning (disable : 4146)
+#endif
 
 
 /***********************************************************************
@@ -284,6 +537,81 @@ enum {SINE, COSINE, TANGENT};
 	return R_ARG1;
 }
 
+// See above for the temporary disablement and reasoning.
+//
+#if defined(_MSC_VER) && _MSC_VER > 1800
+#pragma warning (default : 4146)
+#endif
+
+/***********************************************************************
+**
+*/	REBNATIVE(shift_left)
+/*
+//  shift-left: native [
+//		"Shift bits to the left (unsigned)."
+//		data [integer!]
+//		bits [integer!]
+//  ]
+***********************************************************************/
+{
+	REBVAL *a = D_ARG(1);
+	REBVAL *b = D_ARG(2);
+
+	if (!IS_INTEGER(a)) Trap2(RE_EXPECT_VAL, Get_Type_Word(REB_INTEGER), a);
+	if (!IS_INTEGER(b)) Trap2(RE_EXPECT_VAL, Get_Type_Word(REB_INTEGER), b);
+	if (VAL_INT64(b) > (uint)0L) VAL_INT64(a) <<= VAL_INT64(b);
+	return R_ARG1;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(shift_right)
+/*
+//  shift-right: native [
+//		"Shift bits to the right (unsigned)."
+//		data [integer!]
+//		bits [integer!]
+//  ]
+***********************************************************************/
+{
+	REBVAL *a = D_ARG(1);
+	REBVAL *b = D_ARG(2);
+	
+	if (!IS_INTEGER(a)) Trap2(RE_EXPECT_VAL, Get_Type_Word(REB_INTEGER), a);
+	if (!IS_INTEGER(b)) Trap2(RE_EXPECT_VAL, Get_Type_Word(REB_INTEGER), b);
+	if (VAL_INT64(b) > (uint)0L) VAL_INT64(a) >>= VAL_INT64(b);
+	return R_ARG1;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(to_radians)
+/*
+//	to-radians: native [
+//		"Converts degrees to radians"
+//		degrees [integer! decimal!] "Degrees to convert"
+//	]
+***********************************************************************/
+{
+	REBDEC degrees = AS_DECIMAL(D_ARG(1));
+	SET_DECIMAL(D_RET, degrees * pi1 / 180.0 );
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(to_degrees)
+/*
+//	to-degrees: native [
+//		"Converts radians to degrees"
+//		radians [integer! decimal!] "Radians to convert"
+//	]
+***********************************************************************/
+{
+	REBDEC radians = AS_DECIMAL(D_ARG(1));
+	SET_DECIMAL(D_RET, radians * 180.0 / pi1 );
+	return R_RET;
+}
 
 /***********************************************************************
 **
@@ -321,8 +649,13 @@ enum {SINE, COSINE, TANGENT};
 				SET_MONEY(a, int_to_deci(VAL_INT64(a)));
 				goto compare;
 			}
-			else if (tb == REB_INTEGER) // special negative?, zero?, ...
+			else if (tb == REB_INTEGER || tb == REB_CHAR) // special negative?, zero?, ...
 				goto compare;
+			else if (tb == REB_TIME) {
+				SET_DECIMAL(a, (REBDEC)VAL_INT64(a));
+				SET_DECIMAL(b, (REBDEC)VAL_TIME(b) * NANO);
+				goto compare;
+			}
 			break;
 
 		case REB_DECIMAL:
@@ -337,6 +670,10 @@ enum {SINE, COSINE, TANGENT};
 			}
 			else if (tb == REB_DECIMAL || tb == REB_PERCENT) // equivalent types
 				goto compare;
+			else if (tb == REB_TIME) {
+				SET_DECIMAL(b, (REBDEC)VAL_TIME(b) * NANO);
+				goto compare;
+			}
 			break;
 
 		case REB_MONEY:
@@ -366,8 +703,24 @@ enum {SINE, COSINE, TANGENT};
 		case REB_TAG:
 			if (ANY_STR(b)) goto compare;
 			break;
-		}
 
+		case REB_CHAR:
+			//o: using sepparated case as I don't want to allow comparison
+			//o: with not integer numbers (money, decimal, percent)
+			if (tb == REB_INTEGER)
+				goto compare;
+			break;
+		case REB_TIME:
+			SET_DECIMAL(a, (REBDEC)VAL_TIME(a) * NANO);
+			if (tb == REB_INTEGER) {
+				SET_DECIMAL(b, (REBDEC)VAL_INT64(b));
+				goto compare;
+			}
+			else if (tb == REB_DECIMAL || tb == REB_PERCENT) {
+				goto compare;
+			}
+			break;
+		}
 		if (strictness == 0 || strictness == 1) return FALSE;
 		//if (strictness >= 2)
 		Trap2(RE_INVALID_COMPARE, Of_Type(a), Of_Type(b));
@@ -568,5 +921,40 @@ compare:
 		VAL_SET(val, type);
 		if (Compare_Values(D_ARG(1), D_ARG(2), 1)) return R_TRUE;
 	}
+	else if (type == REB_BITSET && Is_Zero_Bitset(VAL_SERIES(D_ARG(1)))) {
+		return R_TRUE;
+	}
+		
 	return R_FALSE;
 }
+
+/***********************************************************************
+**
+*/	REBNATIVE(gcd)
+/*
+//	gcd: native [
+//		{Returns the greatest common divisor}
+//		a [integer!]
+//		b [integer!]
+//	]
+***********************************************************************/
+{
+	SET_INTEGER(D_RET, Gcd(VAL_INT64(D_ARG(1)), VAL_INT64(D_ARG(2))));
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(lcm)
+/*
+//	lcm: native [
+//		{Returns the least common multiple}
+//		a [integer!]
+//		b [integer!]
+//	]
+***********************************************************************/
+{
+	SET_INTEGER(D_RET, Lcm(VAL_INT64(D_ARG(1)), VAL_INT64(D_ARG(2))));
+	return R_RET;
+}
+

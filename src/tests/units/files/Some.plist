@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>AppIDName</key>
+	<string>Test Application</string>
+	<key>ApplicationIdentifierPrefix</key>
+	<array>
+	<string>XXXXXXXXXX</string>
+	</array>
+	<key>CreationDate</key>
+	<date>2022-03-25T11:00:04Z</date>
+	<key>Platform</key>
+	<array>
+			<string>OSX</string>
+	</array>
+	<key>IsXcodeManaged</key>
+	<true/>
+	<key>DeveloperCertificates</key>
+	<array>
+		<data>UGxhY2Vob2xkZXI=</data>
+		<data>Q2VydGlmaWNhdGU=</data>
+	</array>
+
+	<key>DER-Encoded-Profile</key>
+	<data>UGxhY2Vob2xkZXI=</data>
+												
+	<key>Entitlements</key>
+	<dict>
+				
+				<key>com.apple.developer.arcade-operations</key>
+		<true/>
+				
+				<key>com.apple.application-identifier</key>
+		<string>XXXXXXXXXX.application.test</string>
+				
+				<key>keychain-access-groups</key>
+		<array>
+				<string>XXXXXXXXXX.*</string>
+		</array>
+				
+				<key>com.apple.developer.team-identifier</key>
+		<string>XXXXXXXXXX</string>
+				
+				<key>com.apple.developer.ubiquity-kvstore-identifier</key>
+		<string>XXXXXXXXXX.*</string>
+				
+				<key>com.apple.developer.ubiquity-container-identifiers</key>
+		<array>
+				<string>XXXXXXXXXX.*</string>
+		</array>
+
+	</dict>
+	<key>ExpirationDate</key>
+	<date>2023-03-25T11:00:04Z</date>
+	<key>Name</key>
+	<string>Mac Team Provisioning Profile: application.test</string>
+	<key>ProvisionedDevices</key>
+	<array>
+		<string>DA3279C7-4CA2-5F13-AD90-7FC271175118</string>
+		<string>94FAF6E4-BE34-5B0B-9533-78B245EF4174</string>
+	</array>
+	<key>TeamIdentifier</key>
+	<array>
+		<string>XXXXXXXXXX</string>
+	</array>
+	<key>TeamName</key>
+	<string>Some Company s.r.o.</string>
+	<key>TimeToLive</key>
+	<integer>365</integer>
+	<key>UUID</key>
+	<string>bba91992-3a72-46b3-bc5f-f7b59aa49236</string>
+	<key>Version</key>
+	<integer>1</integer>
+</dict>
+</plist>

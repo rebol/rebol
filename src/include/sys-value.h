@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,6 +58,8 @@ typedef struct Reb_Header {
 struct Reb_Value;
 typedef struct Reb_Value REBVAL;
 typedef struct Reb_Series REBSER;
+typedef struct Reb_Handle_Context REBHOB;
+typedef union rxi_arg_val RXIARG;
 
 // Value type identifier (generally, should be handled as integer):
 
@@ -88,6 +91,7 @@ enum {
 #define VAL_CLR_LINE(v)		VAL_CLR_OPT((v), OPTS_LINE)
 
 #define VAL_PROTECTED(v)	VAL_GET_OPT((v), OPTS_LOCK)
+#define VAL_HIDDEN(v)	    VAL_GET_OPT((v), OPTS_HIDE)
 
 // Used for datatype-dependent data (e.g. op! stores action!)
 #define VAL_GET_EXT(v)		((v)->flags.flags.exts)
@@ -95,6 +99,9 @@ enum {
 
 #define	IS_SET(v)			(VAL_TYPE(v) > REB_UNSET)
 #define IS_SCALAR(v)		(VAL_TYPE(v) <= REB_DATE)
+
+// When key is removed from map, it has OPTS_HIDE flag
+#define VAL_MAP_REMOVED(val) (VAL_GET_OPT(val, OPTS_HIDE)) 
 
 
 /***********************************************************************
@@ -131,7 +138,8 @@ typedef struct Reb_Type {
 #define NONE_VALUE		ROOT_NONEVAL
 
 #define VAL_INT32(v)	(REBINT)((v)->data.integer)
-#define VAL_INT64(v)	((v)->data.integer)
+#define VAL_INT64(v)    ((v)->data.integer)
+#define VAL_UNT32(v)    (REBCNT)((v)->data.integer)
 #define VAL_UNT64(v)	((v)->data.unteger)
 #define	SET_INTEGER(v,n) VAL_SET(v, REB_INTEGER), ((v)->data.integer) = (n)
 #define	SET_INT32(v,n)  ((v)->data.integer) = (REBINT)(n)
@@ -141,6 +149,8 @@ typedef struct Reb_Type {
 #define	SET_CHAR(v,n)	VAL_SET(v, REB_CHAR), VAL_CHAR(v) = (REBUNI)(n)
 
 #define IS_NUMBER(v)	(VAL_TYPE(v) == REB_INTEGER || VAL_TYPE(v) == REB_DECIMAL)
+#define	AS_INT32(v)     (IS_INTEGER(v) ? VAL_INT32(v) : (REBINT)VAL_DECIMAL(v))
+#define	AS_INT64(v)     (IS_INTEGER(v) ? VAL_INT64(v) : (REBI64)VAL_DECIMAL(v))
 
 
 /***********************************************************************
@@ -149,8 +159,14 @@ typedef struct Reb_Type {
 **
 ***********************************************************************/
 
+#pragma pack()
+#include "sys-deci.h"
+#pragma pack(4)
+
 #define VAL_DECIMAL(v)	((v)->data.decimal)
 #define	SET_DECIMAL(v,n) VAL_SET(v, REB_DECIMAL), VAL_DECIMAL(v) = (n)
+#define	SET_PERCENT(v,n) VAL_SET(v, REB_PERCENT), VAL_DECIMAL(v) = (n)
+#define	AS_DECIMAL(v) (IS_INTEGER(v) ? (REBDEC)VAL_INT64(v) : VAL_DECIMAL(v))
 
 typedef deci REBDCI;
 #define VAL_DECI(v)		((v)->data.deci)
@@ -246,9 +262,9 @@ typedef struct Reb_Tuple {
 	REBYTE tuple[12];
 } REBTUP;
 
-#define	VAL_TUPLE(v)	((v)->data.tuple.tuple+1)
-#define	VAL_TUPLE_LEN(v) ((v)->data.tuple.tuple[0])
-#define MAX_TUPLE 10
+#define	VAL_TUPLE(v)	((v)->data.tuple.tuple)
+#define	VAL_TUPLE_LEN(v) (VAL_GET_EXT(v))
+#define MAX_TUPLE 12
 
 
 /***********************************************************************
@@ -256,6 +272,20 @@ typedef struct Reb_Tuple {
 **	PAIR
 **
 ***********************************************************************/
+
+// X/Y coordinate pair as floats:
+typedef struct rebol_xy_float {
+	float x;
+	float y;
+} REBXYF;
+
+// X/Y coordinate pair as integers:
+typedef struct rebol_xy_int {
+	int x;
+	int y;
+} REBXYI;
+
+#define REBPAR REBXYI  // temporary until all sources are converted
 
 #define	VAL_PAIR(v)		((v)->data.pair)
 #define	VAL_PAIR_X(v)	((v)->data.pair.x)
@@ -270,6 +300,10 @@ typedef struct Reb_Tuple {
 **	EVENT
 **
 ***********************************************************************/
+
+#pragma pack()
+#include "reb-event.h"
+#pragma pack(4)
 
 #define	VAL_EVENT_TYPE(v)	((v)->data.event.type)  //(VAL_EVENT_INFO(v) & 0xff)
 #define	VAL_EVENT_FLAGS(v)	((v)->data.event.flags) //((VAL_EVENT_INFO(v) >> 16) & 0xff)
@@ -304,6 +338,45 @@ typedef struct Reb_Tuple {
 									(((c)&0xff)<<16)|(((w)&0xff)<<24))))
 #endif
 
+/***********************************************************************
+**
+**	VECTOR
+**
+***********************************************************************/
+
+#define	SET_VECTOR(v,s) VAL_SERIES(v)=(s), VAL_INDEX(v)=0, VAL_SET(v, REB_VECTOR)
+
+// Encoding Format:
+//		stored in series->size for now
+//		[d d d d   d d d d   0 0 0 0   t s b b]
+
+// Encoding identifiers:
+enum {
+	VTSI08 = 0,
+	VTSI16,
+	VTSI32,
+	VTSI64,
+
+	VTUI08,
+	VTUI16,
+	VTUI32,
+	VTUI64,
+
+	VTSF08,		// not used
+	VTSF16,		// not used
+	VTSF32,
+	VTSF64,
+};
+
+static REBCNT bit_sizes[4] = { 8, 16, 32, 64 };
+static REBCNT byte_sizes[4] = { 1, 2, 4, 8 };
+
+#define VECT_TYPE(s) ((s)->size & 0xff)
+#define VECT_BIT_SIZE(bits) (bit_sizes[bits & 3])
+#define VECT_BYTE_SIZE(bits) (byte_sizes[bits & 3])
+#define VAL_VEC_WIDTH(v) VECT_BYTE_SIZE(VECT_TYPE(VAL_SERIES(v)))
+
+
 
 /***********************************************************************
 **
@@ -317,9 +390,10 @@ typedef struct Reb_Tuple {
 ***********************************************************************/
 {
 	REBYTE	*data;		// series data head
-	REBCNT	tail;		// one past end of useful data
-	REBCNT	rest;		// total number of units from bias to end
-	REBINT	info;		// holds width and flags
+	REBLEN	tail;		// one past end of useful data
+	REBLEN	rest;		// total number of units from bias to end
+	REBINT  sizes;      // 16 bits bias, 8 bits reserved, 8 bits wide!
+	REBCNT  flags;
 	union {
 		REBCNT size;	// used for vectors and bitsets
 		REBSER *series;	// MAP datatype uses this
@@ -327,6 +401,7 @@ typedef struct Reb_Tuple {
 			REBCNT wide:16;
 			REBCNT high:16;
 		} area;
+		REBUPT all; /* for copying, must have the same size as the union */
 	};
 #ifdef SERIES_LABELS
 	REBYTE  *label;		// identify the series
@@ -336,10 +411,11 @@ typedef struct Reb_Tuple {
 #define SERIES_TAIL(s)	 ((s)->tail)
 #define SERIES_REST(s)	 ((s)->rest)
 #define	SERIES_LEN(s)    ((s)->tail + 1) // Includes terminator
-#define	SERIES_FLAGS(s)	 ((s)->info)
-#define	SERIES_WIDE(s)	 (((s)->info) & 0xff)
+#define	SERIES_SIZES(s)  ((s)->sizes)
+#define	SERIES_FLAGS(s)	 ((s)->flags)
+#define	SERIES_WIDE(s)	 (((s)->sizes) & 0xff)
 #define SERIES_DATA(s)   ((s)->data)
-#define	SERIES_SKIP(s,i) (SERIES_DATA(s) + (SERIES_WIDE(s) * i))
+#define	SERIES_SKIP(s,i) (SERIES_DATA(s) + (SERIES_WIDE(s) * (i)))
 
 #define END_FLAG 0x80000000  // Indicates end of block as an index (from DO_NEXT)
 
@@ -353,6 +429,13 @@ typedef struct Reb_Tuple {
 
 // Flag: If wide field is not set, series is free (not used):
 #define	SERIES_FREED(s)  (!SERIES_WIDE(s))
+
+// Bias is empty space in front of head:
+#define	SERIES_BIAS(s)	   (REBCNT)((SERIES_SIZES(s) >> 16) & 0xffff)
+#define MAX_SERIES_BIAS    0x1000
+#define SERIES_SET_BIAS(s,b) (SERIES_SIZES(s) = (SERIES_SIZES(s) & 0xffff) | (b << 16))
+#define SERIES_ADD_BIAS(s,b) (SERIES_SIZES(s) += (b << 16))
+#define SERIES_SUB_BIAS(s,b) (SERIES_SIZES(s) -= (b << 16))
 
 // Size in bytes of memory allocated (including bias area):
 #define SERIES_TOTAL(s) ((SERIES_REST(s) + SERIES_BIAS(s)) * (REBCNT)SERIES_WIDE(s))
@@ -381,39 +464,36 @@ typedef struct Reb_Tuple {
 #define	AT_TAIL	((REBCNT)(~0))	// Extend series at tail
 
 // Is it a byte-sized series? (this works because no other odd size allowed)
-#define BYTE_SIZE(s) (((s)->info) & 1)
+#define BYTE_SIZE(s) (SERIES_SIZES(s) & 1)
 #define VAL_BYTE_SIZE(v) (BYTE_SIZE(VAL_SERIES(v)))
 #define VAL_STR_IS_ASCII(v) (VAL_BYTE_SIZE(v) && !Is_Not_ASCII(VAL_BIN_DATA(v), VAL_LEN(v)))
 
-// Bias is empty space in front of head:
-#define	SERIES_BIAS(s)	   (REBCNT)(SERIES_FLAGS(s) >> 16)
-#define MAX_SERIES_BIAS    0x1000
-#define SERIES_SET_BIAS(s,b) (SERIES_FLAGS(s) = (SERIES_FLAGS(s) & 0xffff) | (b << 16))
-#define SERIES_ADD_BIAS(s,b) (SERIES_FLAGS(s) += (b << 16))
-#define SERIES_SUB_BIAS(s,b) (SERIES_FLAGS(s) -= (b << 16))
-
-// Series Flags:
+// Series Flags (max32):
 enum {
 	SER_MARK = 1,		// Series was found during GC mark scan.
 	SER_KEEP = 1<<1,	// Series is permanent, do not GC it.
 	SER_LOCK = 1<<2,	// Series is locked, do not expand it
-	SER_EXT  = 1<<3,	// Series is external (library), do not GC it.
+	SER_EXT  = 1<<3,	// Series data is external (library), do not GC it.
 	SER_FREE = 1<<4,	// mark series as removed
 	SER_BARE = 1<<5,	// Series has no links to GC-able values
 	SER_PROT = 1<<6,	// Series is protected from modification
 	SER_MON  = 1<<7,	// Monitoring
+	SER_INT  = 1<<8,	// Series data is internal (loop frames) and should not be accessed by users
 };
 
-#define SERIES_SET_FLAG(s, f) (SERIES_FLAGS(s) |= ((f) << 8))
-#define SERIES_CLR_FLAG(s, f) (SERIES_FLAGS(s) &= ~((f) << 8))
-#define SERIES_GET_FLAG(s, f) (SERIES_FLAGS(s) &  ((f) << 8))
+#define SERIES_SET_FLAG(s, f) (SERIES_FLAGS(s) |=  (f))
+#define SERIES_CLR_FLAG(s, f) (SERIES_FLAGS(s) &= ~(f))
+#define SERIES_GET_FLAG(s, f) (SERIES_FLAGS(s) &   (f))
 
-#define	IS_FREEABLE(s)    !SERIES_GET_FLAG(s, SER_MARK|SER_KEEP|SER_EXT|SER_FREE)
+#define	IS_FREEABLE(s)    !SERIES_GET_FLAG(s, SER_MARK|SER_KEEP|SER_FREE)
 #define MARK_SERIES(s)    SERIES_SET_FLAG(s, SER_MARK)
 #define UNMARK_SERIES(s)  SERIES_CLR_FLAG(s, SER_MARK)
 #define IS_MARK_SERIES(s) SERIES_GET_FLAG(s, SER_MARK)
 #define KEEP_SERIES(s,l)  do {SERIES_SET_FLAG(s, SER_KEEP); LABEL_SERIES(s,l);} while(0)
+#define EXT_SERIES(s)     SERIES_SET_FLAG(s, SER_EXT)
 #define IS_EXT_SERIES(s)  SERIES_GET_FLAG(s, SER_EXT)
+#define INT_SERIES(s)     SERIES_SET_FLAG(s, SER_INT)
+#define IS_INT_SERIES(s)  SERIES_GET_FLAG(s, SER_INT)
 #define LOCK_SERIES(s)    SERIES_SET_FLAG(s, SER_LOCK)
 #define IS_LOCK_SERIES(s) SERIES_GET_FLAG(s, SER_LOCK)
 #define BARE_SERIES(s)    SERIES_SET_FLAG(s, SER_BARE)
@@ -473,6 +553,7 @@ typedef struct Reb_Series_Ref
 #define VAL_SERIES(v)	    ((v)->data.series.series)
 #define VAL_INDEX(v)	    ((v)->data.series.index)
 #define	VAL_TAIL(v)		    (VAL_SERIES(v)->tail)
+#define	VAL_REST(v)		    (VAL_SERIES(v)->rest)
 #define VAL_LEN(v)			(Val_Series_Len(v))
 
 #define VAL_DATA(s)			(VAL_BIN_HEAD(s) + (VAL_INDEX(s) * VAL_SERIES_WIDTH(s)))
@@ -504,6 +585,7 @@ typedef struct Reb_Series_Ref
 #define	BIN_TAIL(s)		(REBYTE*)STR_TAIL(s)
 #define BIN_SKIP(s, n)	(((REBYTE *)((s)->data))+(n))
 #define	BIN_LEN(s)		(SERIES_TAIL(s))
+#define VAL_BIN_AT(v)   ((REBYTE*)(BIN_DATA(VAL_SERIES(v))+VAL_INDEX(v)))
 
 // Arg is a unicode series:
 #define UNI_HEAD(s)		((REBUNI *)((s)->data))
@@ -534,6 +616,7 @@ typedef struct Reb_Series_Ref
 // Arg is a unicode value:
 #define VAL_UNI(v)		UNI_HEAD(VAL_SERIES(v))
 #define VAL_UNI_HEAD(v) UNI_HEAD(VAL_SERIES(v))
+#define VAL_UNI_TAIL(v)	UNI_SKIP(VAL_SERIES(v), VAL_SERIES(v)->tail)
 #define VAL_UNI_DATA(v) UNI_SKIP(VAL_SERIES(v), VAL_INDEX(v))
 
 // Get a char, from either byte or unicode string:
@@ -546,6 +629,16 @@ typedef struct Reb_Series_Ref
 //#define VAL_STR_LAST(v)	STR_LAST(VAL_SERIES(v))
 //#define	VAL_MEM_LEN(v)	(VAL_TAIL(v) * VAL_SERIES_WIDTH(v))
 
+// `mold` limit related defines
+#define NO_LIMIT (REBCNT)-1
+#define MOLD_HAS_LIMIT(mold)  (mold->limit != NO_LIMIT)
+#define MOLD_OVER_LIMIT(mold) (mold->series->tail >= mold->limit)
+#define MOLD_REST(mold) (mold->limit - mold->series->tail)
+#define CHECK_MOLD_LIMIT(mold, len)                           \
+		if (MOLD_HAS_LIMIT(mold)) {                           \
+			if (MOLD_OVER_LIMIT(mold)) return;                \
+			if (MOLD_REST(mold) < len) len = MOLD_REST(mold); \
+		}
 
 /***********************************************************************
 **
@@ -561,7 +654,7 @@ typedef struct Reb_Series_Ref
 //} REBIMI;
 
 #define QUAD_HEAD(s)	((REBYTE *)((s)->data))
-#define QUAD_SKIP(s,n)	(((REBYTE *)((s)->data))+(n * 4))
+#define QUAD_SKIP(s,n)	(((REBYTE *)((s)->data))+((n) * 4))
 #define QUAD_TAIL(s)	(((REBYTE *)((s)->data))+((s)->tail * 4))
 #define	QUAD_LEN(s)		(SERIES_TAIL(s))
 
@@ -590,24 +683,13 @@ typedef struct Reb_Series_Ref
 //#define VAL_IMAGE_TYPE(v)		((VAL_IMAGE_INFO(v)>>30)&3)
 
 // New Image Datatype defines:
-#define TO_COLOR(r,g,b,a) (REBCNT)((a)<<24 | (r)<<16 | (g)<<8 |  (b))
 
-#define TO_COLOR_TUPLE(t) TO_COLOR(VAL_TUPLE(t)[0], VAL_TUPLE(t)[1], VAL_TUPLE(t)[2], \
-							VAL_TUPLE_LEN(t) > 3 ? VAL_TUPLE(t)[3] : 0)
-
-// Maps color components to correct byte positions for RGBA:
-#ifdef ENDIAN_BIG
-#define C_A 0
-#define C_R 1
-#define C_G 2
-#define C_B 3
-#else
-#define C_B 0
-#define C_G 1
-#define C_R 2
-#define C_A 3
-#endif
-
+//tuple to image! pixel order bytes
+#define TO_PIXEL_TUPLE(t) TO_PIXEL_COLOR(VAL_TUPLE(t)[0], VAL_TUPLE(t)[1], VAL_TUPLE(t)[2], \
+							VAL_TUPLE_LEN(t) > 3 ? VAL_TUPLE(t)[3] : 0xff)
+//tuple to RGBA bytes
+#define TO_COLOR_TUPLE(t) TO_RGBA_COLOR(VAL_TUPLE(t)[0], VAL_TUPLE(t)[1], VAL_TUPLE(t)[2], \
+							VAL_TUPLE_LEN(t) > 3 ? VAL_TUPLE(t)[3] : 0xff)
 
 /***********************************************************************
 **
@@ -630,7 +712,9 @@ typedef struct Reb_Series_Ref
 **
 ***********************************************************************/
 
-#define	VAL_BITSET(v)	VAL_SERIES(v)
+#define BITS_NOT(s)        ((s)->size)
+#define	VAL_BITSET(v)      VAL_SERIES(v)
+#define	VAL_BITSET_NOT(v)  BITS_NOT(VAL_SERIES(v))
 
 #define	VAL_BIT_DATA(v)	VAL_BIN(v)
 
@@ -659,6 +743,7 @@ typedef struct Reb_Series_Ref
 // Arg is a value:
 #define VAL_BLK(v)		BLK_HEAD(VAL_SERIES(v))
 #define VAL_BLK_DATA(v)	BLK_SKIP(VAL_SERIES(v), VAL_INDEX(v))
+#define VAL_BLK_DATA_SAFE(v)	BLK_SKIP(VAL_SERIES(v), MIN(VAL_INDEX(v),VAL_TAIL(v))) // don't go behind tail
 #define VAL_BLK_SKIP(v,n)	BLK_SKIP(VAL_SERIES(v), (n))
 #define VAL_BLK_TAIL(v)	BLK_SKIP(VAL_SERIES(v), VAL_SERIES(v)->tail)
 #define	VAL_BLK_LEN(v)	VAL_LEN(v)
@@ -712,6 +797,8 @@ typedef struct Reb_Symbol {
 #define SYMBOL_TO_CANON(sym) (VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, sym)))
 // Return the CANON value for a word value:
 #define WORD_TO_CANON(w) (VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, VAL_WORD_SYM(w))))
+
+#define SYMBOL_TO_NAME(sym) VAL_SYM_NAME(BLK_SKIP(PG_Word_Table.series, sym))
 
 #define IS_STAR(v) (IS_WORD(v) && VAL_WORD_CANON(v) == SYM__P)
 
@@ -830,8 +917,6 @@ typedef struct Reb_Object {
 #define VAL_MOD_BODY(v)		((v)->data.object.body)
 #define VAL_MOD_SPEC(v)		VAL_FRM_SPEC(VAL_OBJ_VALUES(v))
 
-#define SET_HANDLE(v,h)		VAL_SET(v, REB_HANDLE), VAL_HANDLE(v) = (void*)(h) // a place to put it.
-
 /***********************************************************************
 **
 **	PORTS - External series interface
@@ -869,6 +954,8 @@ typedef struct Reb_Error {
 #define	IS_CONTINUE(v)		(VAL_ERR_NUM(v) == RE_CONTINUE)
 #define THROWN(v)			(IS_ERROR(v) && IS_THROW(v))
 
+#define THROWN_DISARM_OFFSET 100000 // used to disarm thrown errors (converted to complete error object)
+
 #define	SET_ERROR(v,n,a)	VAL_SET(v, REB_ERROR), VAL_ERR_NUM(v)=n, VAL_ERR_OBJECT(v)=a, VAL_ERR_SYM(v)=0
 #define	SET_THROW(v,n,a)	VAL_SET(v, REB_ERROR), VAL_ERR_NUM(v)=n, VAL_ERR_VALUE(v)=a, VAL_ERR_SYM(v)=0
 
@@ -896,6 +983,7 @@ typedef struct Reb_Gob {
 #define	VAL_GOB_INDEX(v)	((v)->data.gob.index)
 #define SET_GOB(v,g)		VAL_SET(v, REB_GOB), VAL_GOB(v)=g, VAL_GOB_INDEX(v)=0
 
+typedef struct rebol_compositor_ctx REBCMP; // Rebol compositor context
 
 /***********************************************************************
 **
@@ -906,7 +994,11 @@ typedef struct Reb_Gob {
 typedef int  (*REBFUN)(REBVAL *ds);				// Native function
 typedef int  (*REBACT)(REBVAL *ds, REBCNT a);	// Action function
 typedef void (*REBDOF)(REBVAL *ds);				// DO evaltype dispatch function
-typedef int  (*REBPAF)(REBVAL *ds, REBSER *p, REBCNT a); // Port action func
+typedef int  (*REBPAF)(REBVAL *ds, REBVAL *p, REBCNT a); // Port action func
+
+typedef int     (*REB_HANDLE_FREE_FUNC)(void *hnd);
+typedef int     (*REB_HANDLE_MOLD_FUNC)(REBHOB *hob, REBSER *ser);
+typedef int     (*REB_HANDLE_EVAL_PATH)(REBHOB *hob, REBCNT word, REBCNT *type, RXIARG *arg);
 
 typedef void (*ANYFUNC)(void *);
 typedef void (*TRYFUNC)(void *);
@@ -940,6 +1032,7 @@ typedef struct Reb_Path_Value {
 	REBVAL *select;	// modified
 	REBVAL *path;	// modified
 	REBVAL *store;  // modified (holds constructed values)
+	REBSER *setfrm; // modified
 	REBVAL *setval;	// static
 	REBVAL *orig;	// static
 } REBPVS;
@@ -952,7 +1045,8 @@ enum Path_Eval_Result {
 	PE_BAD_SELECT,
 	PE_BAD_SET,
 	PE_BAD_RANGE,
-	PE_BAD_SET_TYPE
+	PE_BAD_SET_TYPE,
+	PE_BAD_ARGUMENT
 };
 
 typedef REBINT (*REBPEF)(REBPVS *pvs); // Path evaluator function
@@ -964,12 +1058,107 @@ typedef REBINT (*REBCTF)(REBVAL *a, REBVAL *b, REBINT s);
 **	HANDLE
 **
 ***********************************************************************/
+// Initially there was just HANDLE_FUNCTION type, where there was stored
+// pointer or index directly in the REB_HANDLE value.
+//
+// That was later extended to HANDLE_SERIES, where data is holding pointer
+// to Rebol managed `series` allocated using `Make_Series`.
+// These series had to be locked so the series was not GCed...
+// To free such a handle was possible by setting HANDLE_RELEASABLE flag...
+//
+// Now it's possible to use `HANDLE_CONTEXT` handles registered in system using
+// `Register_Handle` function in c-handle.c file.
+// Registered handle tracks info, how much bytes is needed when creating a new
+// handle of given type. And it also allows to define custom `free` callback function.
+//
+// Ideally in the future there should be also `mold` and `query` callbacks,
+// so it `handle!` value should not be transparent anymore and it would be possible
+// to check it's internall data. This new handle can be used as a pseudo-object type.
+//
+// It's now possible to list all registered handle types using `system/catalog/handles`.
+//
+// It's quite possible that HANDLE_SERIES/HANDLE_RELEASABLE combo will be removed in
+// the future and there will be only HANDLE_FUNCTION (better name?) with HANDLE_CONTEXT
+// (but these are still in use so far).
+
+enum Handle_Flags {
+	HANDLE_FUNCTION       = 0     ,  // handle has pointer to function (or holds an index) so GC don't mark it
+	HANDLE_SERIES         = 1 << 0,  // handle has pointer to REB series, GC will mark it, if not set as releasable 
+	HANDLE_RELEASABLE     = 1 << 1,  // GC will not try to mark it, if it is SERIES handle type
+	HANDLE_CONTEXT        = 1 << 2,
+	HANDLE_CONTEXT_MARKED = 1 << 3,  // used in handle's context (HOB)
+	HANDLE_CONTEXT_USED   = 1 << 4,  // --//--
+	HANDLE_CONTEXT_LOCKED = 1 << 5,  // so Rebol will not GC the handle if C side still depends on it
+};
+
+enum Handle_Spec_Flags {
+	HANDLE_REQUIRES_HOB_ON_FREE = 1 << 0
+};
+
+typedef struct Reb_Handle_Spec {
+	REBCNT size;
+	REBFLG flags;
+	REB_HANDLE_FREE_FUNC free;
+	REB_HANDLE_EVAL_PATH get_path;
+	REB_HANDLE_EVAL_PATH set_path;
+	REB_HANDLE_MOLD_FUNC mold;
+} REBHSP;
+
+typedef struct Reb_Handle_Context {
+	union {
+		REBYTE *data; // Pointer to raw data
+		void *handle; // Unspecified pointer (external handle)
+	};
+	REBCNT  sym;      // Index of the word's symbol. Used as a handle's type!
+	REBFLG  flags:16; // Handle_Flags (HANDLE_CONTEXT_MARKED and HANDLE_CONTEXT_USED)
+	REBCNT  index:16; // Index into Reb_Handle_Spec value
+	REBSER *series;   // Optional pointer to Rebol series, which may be marked by GC
+} REBHOB;
 
 typedef struct Reb_Handle {
-	ANYFUNC	code;
+	union {
+		ANYFUNC	code;
+		REBHOB *ctx;
+		REBSER *data;
+		REBINT  index;
+	};
+	REBCNT	sym;    // Index of the word's symbol. Used as a handle's type! TODO: remove and use REBHOB
+	REBFLG  flags;  // Handle_Flags
 } REBHAN;
 
 #define VAL_HANDLE(v)		((v)->data.handle.code)
+#define VAL_HANDLE_DATA(v)  ((v)->data.handle.data)
+#define VAL_HANDLE_CTX(v)   ((v)->data.handle.ctx)
+#define VAL_HANDLE_I32(v)   ((v)->data.handle.index) // for handles which are storing just index in the data field
+#define VAL_HANDLE_TYPE(v)  ((v)->data.handle.sym)
+#define VAL_HANDLE_SYM(v)   ((v)->data.handle.sym)
+#define VAL_HANDLE_FLAGS(v) ((v)->data.handle.flags)
+#define VAL_HANDLE_CONTEXT_FLAGS(v) (VAL_HANDLE_CTX(v)->flags)
+#define VAL_HANDLE_CONTEXT_DATA(v)  (VAL_HANDLE_CTX(v)->data)
+#define VAL_HANDLE_NAME(v)  VAL_SYM_NAME(BLK_SKIP(PG_Word_Table.series, VAL_HANDLE_SYM(v)))  // used in MOLD as an info about handle's type
+
+#define HANDLE_SET_FLAG(v, f) (VAL_HANDLE_FLAGS(v) |=  (f))
+#define HANDLE_CLR_FLAG(v, f) (VAL_HANDLE_FLAGS(v) &= ~(f))
+#define HANDLE_GET_FLAG(v, f) (VAL_HANDLE_FLAGS(v) &   (f))
+
+#define IS_SERIES_HANDLE(v)     HANDLE_GET_FLAG(v, HANDLE_SERIES)
+#define IS_CONTEXT_HANDLE(v)    HANDLE_GET_FLAG(v, HANDLE_CONTEXT)
+#define IS_FUNCTION_HANDLE(v)  !HANDLE_GET_FLAG(v, HANDLE_SERIES)
+
+#define  IS_VALID_CONTEXT_HANDLE(v, t) (VAL_HANDLE_TYPE(v)==(t) &&  IS_USED_HOB(VAL_HANDLE_CTX(v)))
+#define NOT_VALID_CONTEXT_HANDLE(v, t) (VAL_HANDLE_TYPE(v)!=(t) || !IS_USED_HOB(VAL_HANDLE_CTX(v)))
+
+#define SET_HANDLE(v,h,t,f)	VAL_SET(v, REB_HANDLE), VAL_HANDLE(v) = (void*)(h), VAL_HANDLE_TYPE(v) = t, HANDLE_SET_FLAG(v,f)
+
+#define MAKE_HANDLE(v, t) SET_HANDLE(v, Make_Handle_Context(t), t, HANDLE_CONTEXT)
+
+#define IS_USED_HOB(h)         ((h)->flags &   HANDLE_CONTEXT_USED)   // used to detect if handle's context is still valid
+#define     USE_HOB(h)         ((h)->flags |=  HANDLE_CONTEXT_USED | HANDLE_CONTEXT_MARKED)
+#define   UNUSE_HOB(h)         ((h)->flags &= ~HANDLE_CONTEXT_USED)
+#define IS_MARK_HOB(h)         ((h)->flags &  (HANDLE_CONTEXT_MARKED | HANDLE_CONTEXT_LOCKED)) // GC marks still used handles, so these are not released
+#define    MARK_HOB(h)         ((h)->flags |=  HANDLE_CONTEXT_MARKED)
+#define  UNMARK_HOB(h)         ((h)->flags &= ~HANDLE_CONTEXT_MARKED)
+#define MARK_HANDLE_CONTEXT(v) (MARK_HOB(VAL_HANDLE_CTX(v)))
 
 /***********************************************************************
 **
@@ -1039,16 +1228,15 @@ typedef struct Reb_Typeset {
 
 typedef struct Reb_Struct {
 	REBSER	*spec;
-	REBSER	*vals;
+	REBSER  *fields;	// fields definition
 	REBSER	*data;
 } REBSTU;
 
 #define VAL_STRUCT(v)       (v->data.structure)
 #define VAL_STRUCT_SPEC(v)  (v->data.structure.spec)
-#define VAL_STRUCT_VALS(v)  (v->data.structure.vals)
+#define VAL_STRUCT_FIELDS(v) ((v)->data.structure.fields)
 #define VAL_STRUCT_DATA(v)  (v->data.structure.data)
 #define VAL_STRUCT_DP(v)    (STR_HEAD(VAL_STRUCT_DATA(v)))
-#define VAL_STRUCT_LEN(v)   (SERIES_TAIL(VAL_STRUCT_DATA(v)))
 
 /***********************************************************************
 **
@@ -1085,6 +1273,9 @@ typedef struct Reb_All {
 		REBHED flags;
 		REBCNT header;
 	} flags;
+#if defined(__LP64__) || defined(__LLP64__)
+	REBINT	padding; //make it 32-bit
+#endif
 	union Reb_Val_Data {
 		REBWRD	word;
 		REBSRI	series;
@@ -1125,6 +1316,9 @@ typedef struct Reb_All {
 #define ANY_FUNC(v)			(VAL_TYPE(v) >= REB_NATIVE && VAL_TYPE(v) <= REB_FUNCTION)
 #define ANY_EVAL_BLOCK(v)	(VAL_TYPE(v) >= REB_BLOCK  && VAL_TYPE(v) <= REB_PAREN)
 #define ANY_OBJECT(v)		(VAL_TYPE(v) >= REB_OBJECT && VAL_TYPE(v) <= REB_PORT)
+
+#define ANY_BLOCK_TYPE(t)   (t >= REB_BLOCK   && t <= REB_LIT_PATH)
+#define ANY_STR_TYPE(t)     (t >= REB_STRING  && t <= REB_TAG)
 
 #pragma pack()
 

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,13 +23,12 @@
 **  Module:  u-parse.c
 **  Summary: parse dialect interpreter
 **  Section: utility
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Oldes
 **  Notes:
 **
 ***********************************************************************/
 
 #include "sys-core.h"
-#include "sys-state.h"
 
 // Parser flags:
 enum Parse_Flags {
@@ -37,12 +37,21 @@ enum Parse_Flags {
 	PF_CASED = 4, // was set as initial option
 };
 
+#define BLOCK_COLLECT 1
+typedef struct reb_parse_collect {
+	REBVAL *value;
+	REBSER *block;
+	REBCNT  mode;  // BLOCK_COLLECT, SYM_SET, SYM_INTO and SYM_AFTER
+	REBINT  depth; // needed to detect error in: parse [1] [collect integer! keep (1)]
+} REB_PARSE_COLLECT;
+
 typedef struct reb_parse {
 	REBSER *series;
 	REBCNT type;
 	REBCNT flags;
 	REBINT result;
-	REBVAL retval;
+//	REBVAL *retval;
+	REB_PARSE_COLLECT *collect;
 } REBPARSE;
 
 enum parse_flags {
@@ -57,6 +66,10 @@ enum parse_flags {
 	PF_CHANGE,
 	PF_RETURN,
 	PF_WHILE,
+	PF_ADVANCE, // used to report that although index was not changed, rule is suppose to advance
+	PF_COLLECT,
+	PF_KEEP,
+	PF_PICK,
 };
 
 #define MAX_PARSE_DEPTH 512
@@ -76,13 +89,14 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	REBVAL val;
 	Set_Series(type, &val, series);
 	VAL_INDEX(&val) = index;
-	Debug_Fmt("%r: %r", rules, &val);
+	//TODO: use console line width?
+	Debug_Fmt_Limited(76, cb_cast("%r: %r"), rules, &val);
 }
 
 
 /***********************************************************************
 **
-*/	static REBCNT Parse_Series(REBVAL *val, REBVAL *rules, REBCNT flags, REBCNT depth)
+*/	static REBCNT Parse_Series(REBVAL *val, REBVAL *rules, REBCNT flags, REBCNT depth, REB_PARSE_COLLECT *collect)
 /*
 ***********************************************************************/
 {
@@ -92,6 +106,8 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	parse.type = VAL_TYPE(val);
 	parse.flags = flags;
 	parse.result = 0;
+	//parse.retval = NULL;
+	parse.collect = collect;
 
 	return Parse_Rules_Loop(&parse, VAL_INDEX(val), rules, depth);
 }
@@ -182,9 +198,9 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 {
 	// !!! THIS CODE NEEDS CLEANUP AND REWRITE BASED ON OTHER CHANGES
 	REBSER *series = parse->series;
-	REBSER *ser;
 	REBCNT flags = parse->flags | AM_FIND_MATCH | AM_FIND_TAIL;
-	int rewrite_needed;
+	REBUNI ch1, ch2;
+//	int rewrite_needed;
 
 	if (Trace_Level) {
 		Trace_Value(7, item);
@@ -201,13 +217,21 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	case REB_CHAR:
 		if (HAS_CASE(parse))
 			index = (VAL_CHAR(item) == GET_ANY_CHAR(series, index)) ? index+1 : NOT_FOUND;
-		else
-			index = (UP_CASE(VAL_CHAR(item)) == UP_CASE(GET_ANY_CHAR(series, index))) ? index+1 : NOT_FOUND;
+		else {
+			ch1 = VAL_CHAR(item);
+			ch2 = GET_ANY_CHAR(series, index);
+			if (ch1 < UNICODE_CASES) ch1 = UP_CASE(ch1);
+			if (ch2 < UNICODE_CASES) ch2 = UP_CASE(ch2);
+			index = (ch1 == ch2) ? index + 1 : NOT_FOUND;
+		}
 		break;
 
-	case REB_EMAIL:
 	case REB_STRING:
 	case REB_BINARY: 
+	case REB_FILE:
+	case REB_URL:
+	case REB_EMAIL:
+	case REB_REF:
 		index = Find_Str_Str(series, 0, index, SERIES_TAIL(series), 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), flags);
 		break;
 
@@ -226,11 +250,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 		break;
 */
 	case REB_TAG:
-	case REB_FILE:
-//	case REB_ISSUE:
-		// !! Can be optimized (w/o COPY)
-		ser = Copy_Form_Value(item, 0);
-		index = Find_Str_Str(series, 0, index, SERIES_TAIL(series), 1, ser, 0, ser->tail, flags);
+		index = Find_Str_Tag(series, 0, index, SERIES_TAIL(series), 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), flags);
 		break;
 
 	case REB_NONE:
@@ -244,6 +264,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	// Do an expression:
 	case REB_PAREN:
 		item = Do_Block_Value_Throw(item); // might GC
+        UNUSED(item);
 		// old: if (IS_ERROR(item)) Throw_Error(VAL_ERR_OBJECT(item));
         index = MIN(index, series->tail); // may affect tail
 		break;
@@ -291,12 +312,12 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	// 'word
 	case REB_LIT_WORD:
 		index++;
-		if (IS_WORD(blk) && (VAL_WORD_CANON(blk) == VAL_WORD_CANON(item))) break;
+		if (IS_WORD(blk) && !Compare_Word(blk, item, HAS_CASE(parse))) break;
 		goto no_result;
 
 	case REB_LIT_PATH:
 		index++;
-		if (IS_PATH(blk) && !Cmp_Block(blk, item, 0)) break;
+		if (IS_PATH(blk) && !Cmp_Block(blk, item, HAS_CASE(parse))) break;
 		goto no_result;
 
 	case REB_NONE:
@@ -310,7 +331,8 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	// Do an expression:
 	case REB_PAREN:
 		item = Do_Block_Value_Throw(item); // might GC
-		// old: if (IS_ERROR(item)) Throw_Error(VAL_ERR_OBJECT(item));
+        UNUSED(item);
+        // old: if (IS_ERROR(item)) Throw_Error(VAL_ERR_OBJECT(item));
         index = MIN(index, series->tail); // may affect tail
 		break;
 
@@ -329,7 +351,7 @@ no_result:
 
 /***********************************************************************
 **
-*/	static To_Thru(REBPARSE *parse, REBCNT index, REBVAL *block, REBFLG is_thru)
+*/	static REBCNT To_Thru(REBPARSE *parse, REBCNT index, REBVAL *block, REBFLG is_thru)
 /*
 ***********************************************************************/
 {
@@ -349,7 +371,7 @@ no_result:
 
 			// Deal with words and commands
 			if (IS_WORD(item)) {
-				if (cmd = VAL_CMD(item)) {
+				if ((cmd = VAL_CMD(item))) {
 					if (cmd == SYM_END) {
 						if (index >= series->tail) {
 							index = series->tail;
@@ -410,20 +432,35 @@ no_result:
 				else goto bad_target;
 			}
 			else { // String
-				REBCNT ch1 = GET_ANY_CHAR(series, index);
-				REBCNT ch2;
+				REBUNI ch1 = GET_ANY_CHAR(series, index);
+				REBUNI ch2;
 
-				if (!HAS_CASE(parse)) ch1 = UP_CASE(ch1);
+				if (!HAS_CASE(parse) && ch1 < UNICODE_CASES) ch1 = UP_CASE(ch1);
 
 				// Handle special string types:
 				if (IS_CHAR(item)) {
 					ch2 = VAL_CHAR(item);
-					if (!HAS_CASE(parse)) ch2 = UP_CASE(ch2);
+					if (!HAS_CASE(parse) && ch2 < UNICODE_CASES) ch2 = UP_CASE(ch2);
 					if (ch1 == ch2) goto found1;
+				}
+				else if (IS_TAG(item)) {
+					if (ch1 == '<') {
+						i = Find_Str_Tag(series, 0, index, series->tail, 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item),  AM_FIND_MATCH | parse->flags);
+						if (i != NOT_FOUND) {
+							if (is_thru) i += VAL_LEN(item) + 2;
+							index = i;
+							goto found;
+						}
+					}
+				}
+				// bitset
+				else if (IS_BITSET(item)) {
+					if (Check_Bit(VAL_SERIES(item), ch1, !HAS_CASE(parse)))
+						goto found1;
 				}
 				else if (ANY_STR(item)) {
 					ch2 = VAL_ANY_CHAR(item);
-					if (!HAS_CASE(parse)) ch2 = UP_CASE(ch2);
+					if (!HAS_CASE(parse) && ch2 < UNICODE_CASES) ch2 = UP_CASE(ch2);
 					if (ch1 == ch2) {
 						len = VAL_LEN(item);
 						if (len == 1) goto found1;
@@ -481,8 +518,7 @@ bad_target:
 ***********************************************************************/
 {
 	REBSER *series = parse->series;
-	REBCNT i;
-	REBSER *ser;
+	REBCNT i = 0;
 
 	// TO a specific index position.
 	if (IS_INTEGER(item)) {
@@ -510,17 +546,10 @@ bad_target:
 		}
 		else {
 			// "str"
-			if (ANY_BINSTR(item)) {
-				if (!IS_STRING(item) && !IS_BINARY(item)) {
-					// !!! Can this be optimized not to use COPY?
-					ser = Copy_Form_Value(item, 0);
-					i = Find_Str_Str(series, 0, index, series->tail, 1, ser, 0, ser->tail, HAS_CASE(parse));
-					if (i != NOT_FOUND && is_thru) i += ser->tail;
-				}
-				else {
-					i = Find_Str_Str(series, 0, index, series->tail, 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), HAS_CASE(parse));
-					if (i != NOT_FOUND && is_thru) i += VAL_LEN(item);
-				}
+			//O: not using ANY_BINSTR as TAG is now handled separately
+			if (VAL_TYPE(item) >= REB_BINARY && VAL_TYPE(item) < REB_TAG) {
+				i = Find_Str_Str(series, 0, index, series->tail, 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), HAS_CASE(parse));
+				if (i != NOT_FOUND && is_thru) i += VAL_LEN(item);
 			}
 			// #"A"
 			else if (IS_CHAR(item)) {
@@ -532,13 +561,20 @@ bad_target:
 				i = Find_Str_Bitset(series, 0, index, series->tail, 1, VAL_BITSET(item), HAS_CASE(parse));
 				if (i != NOT_FOUND && is_thru) i++;
 			}
+			else if (IS_TAG(item)) {
+				i = Find_Str_Tag(series, 0, index, series->tail, 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), HAS_CASE(parse));
+				if (i != NOT_FOUND && is_thru) i += VAL_LEN(item) + 2;
+			}
+			else
+				Trap1(RE_PARSE_RULE, item - 1);
 		}
 	}
 
 	return i;
 }
 
-
+#ifdef USE_DO_PARSE_RULE
+//@@ https://github.com/Oldes/Rebol-issues/issues/2083
 /***********************************************************************
 **
 */	static REBCNT Do_Eval_Rule(REBPARSE *parse, REBCNT index, REBVAL **rule)
@@ -632,6 +668,200 @@ bad_target:
 	UNSAVE_SERIES(newparse.series);
 	return n;
 }
+#endif // USE_DO_PARSE_RULE
+
+/***********************************************************************
+**
+*/	static void Parse_Collect_End(REB_PARSE_COLLECT *collect)
+/*
+***********************************************************************/
+{
+	// COLLECT ends
+	// get the previous target block from the stack and use it
+	//printf("collect ends %u dsp: %i blk: %x\n", collect->depth, DSP, collect->block);
+	collect->mode = VAL_INT32(DS_POP);
+	if (collect->mode == SYM_INTO) {
+		VAL_INDEX(collect->value) = VAL_INT32(DS_POP);
+	}
+	collect->value = DS_POP;
+	collect->block = VAL_SERIES(collect->value);
+	collect->depth--;
+}
+
+/***********************************************************************
+**
+*/	static void Parse_Keep(REBPARSE *parse, REBSER *series, REBCNT begin, REBCNT count, REBOOL pick)
+/*
+***********************************************************************/
+{
+	REBVAL *val;
+	REBINT i, e;
+	REBSER *ser;
+	REBSER *block = parse->collect->block; // Parse_Collect_Block(parse);
+	REBCNT index;
+
+	if (parse->collect->depth == 0)
+		Trap0(RE_PARSE_NO_COLLECT);
+
+	ASSERT2(block, RP_MISC); // should never happen
+
+	//printf("Keep from %i count: %i to: %x\n", begin, count, block);
+
+	if (parse->collect->mode == BLOCK_COLLECT || parse->collect->mode == SYM_SET) {
+		// Collects into a new block (noname or named (set)).
+		// Always appends to tail, so may use faster code...
+		if (count > 1) {
+			if (IS_BLOCK_INPUT(parse)) {
+				if (pick) {
+					Insert_Series(block, AT_TAIL, SERIES_SKIP(series, begin), count);
+				}
+				else {
+					val = Append_Value(block);
+					Set_Block(val, Copy_Block_Len(series, begin, count));
+				}
+			}
+			else {
+				if (pick) {
+					e = begin + count;
+					if (parse->type == REB_BINARY) {
+						for (i = begin; i < e; i++) {
+							val = Append_Value(block);
+							SET_INTEGER(val, BIN_HEAD(series)[i]);
+						}
+					}
+					else {
+						for (i = begin; i < e; i++) {
+							val = Append_Value(block);
+							SET_CHAR(val, GET_ANY_CHAR(series, i));
+						}
+					}
+				}
+				else {
+					val = Append_Value(block);
+					VAL_SERIES(val) = Copy_String(series, begin, count);
+					VAL_INDEX(val) = 0;
+					VAL_SET(val, parse->type);
+				}
+			}
+		}
+		else if (count == 1) {
+			val = Append_Value(block);
+			if (IS_BLOCK_INPUT(parse)) {
+				*val = *BLK_SKIP(series, begin);
+			}
+			else if (parse->type == REB_BINARY) {
+				SET_INTEGER(val, BIN_HEAD(series)[begin]);
+			}
+			else {
+				SET_CHAR(val, GET_ANY_CHAR(series, begin));
+			}
+		}
+	}
+	else {
+		// `collect into` and `collect after` keeps at any index, 
+		// so we must take care of it!
+		index = VAL_INDEX(parse->collect->value);
+		//printf("series %x index: %u\n", parse->collect->value, index);
+		if (count > 1) {
+			if (IS_BLOCK_INPUT(parse)) {
+				if (pick) {
+					Insert_Series(block, index, SERIES_SKIP(series, begin), count);
+				}
+				else {
+					ser = Copy_Block_Len(series, begin, count);
+					Expand_Series(block, index, 1);
+					val = BLK_SKIP(block, index);
+					VAL_SERIES(val) = ser;
+					VAL_INDEX(val) = 0;
+					VAL_SET(val, parse->type);
+				}
+			}
+			else {
+				Expand_Series(block, index, count);
+				if (ANY_BLOCK(parse->collect->value)) {
+					if (pick) {
+						e = begin + count;
+						if (parse->type == REB_BINARY) {
+							for (i = begin; i < e; i++) {
+								val = Append_Value(block);
+								SET_INTEGER(val, BIN_HEAD(series)[i]);
+							}
+						}
+						else {
+							for (i = begin; i < e; i++) {
+								val = Append_Value(block);
+								SET_CHAR(val, GET_ANY_CHAR(series, i));
+							}
+						}
+					}
+					else {
+						val = BLK_SKIP(block, index);
+						VAL_SERIES(val) = Copy_String(series, begin, count);
+						VAL_INDEX(val) = 0;
+						VAL_SET(val, parse->type);
+					}
+				}
+				else {
+					// string like parse input into string value
+					Insert_String(block, index, series, begin, count, TRUE);
+					VAL_INDEX(parse->collect->value) += count;
+				}
+			}
+		}
+		else if (count == 1) {
+			Expand_Series(block, index, 1);
+			if (ANY_BLOCK(parse->collect->value)) {
+				// string like parse intput into block value
+				
+				val = BLK_SKIP(block, index);
+
+				if (IS_BLOCK_INPUT(parse)) {
+					*val = *BLK_SKIP(series, begin);
+				}
+				else if (parse->type == REB_BINARY) {
+					SET_INTEGER(val, BIN_HEAD(series)[begin]);
+				}
+				else {
+					SET_CHAR(val, GET_ANY_CHAR(series, begin));
+				}
+			}
+			else {
+				// string like parse input into string value
+				Insert_String(block, index, series, begin, 1, TRUE);
+			}
+			VAL_INDEX(parse->collect->value)++;
+		}
+	}
+}
+
+/***********************************************************************
+**
+*/	static void Parse_Keep_Expression(REBPARSE *parse, REBVAL *expr)
+/*
+***********************************************************************/
+{
+	REBVAL *value;
+	REBSER *block;
+	REBVAL *item;
+	REBINT index;
+
+	if (parse->collect->depth == 0)
+		Trap0(RE_PARSE_NO_COLLECT);
+
+	block = parse->collect->block;
+	ASSERT2(block, RP_MISC); // should never happen
+
+	item = Do_Block_Value_Throw(expr); // might GC
+	value = parse->collect->value;
+	if (ANY_BLOCK(value)) {
+		Append_Val(block, item);
+	}
+	else {
+		index = VAL_INDEX(value);
+		index = Modify_String(A_INSERT, VAL_SERIES(value), index, item, 0, 1, 1);
+		VAL_INDEX(value) = index;
+	}
+}
 
 
 /***********************************************************************
@@ -654,8 +884,9 @@ bad_target:
 	REBCNT rulen;
 	REBSER *ser;
 	REBFLG flags;
-	REBCNT cmd;
-	REBVAL *rule_head = rules;
+	REBCNT cmd, wrd;
+	REB_PARSE_COLLECT *collect = parse->collect;
+	//REBVAL *rule_head = rules;
 
 	CHECK_STACK(&flags);
 	//if (depth > MAX_PARSE_DEPTH) Trap_Word(RE_LIMIT_HIT, SYM_PARSE, 0);
@@ -685,7 +916,7 @@ bad_target:
 		if (VAL_TYPE(item) >= REB_WORD && VAL_TYPE(item) <= REB_GET_WORD) {
 
 			// Is it a command word?
-			if (cmd = VAL_CMD(item)) {
+			if ((cmd = VAL_CMD(item))) {
 
 				if (!IS_WORD(item)) Trap1(RE_PARSE_COMMAND, item); // SET or GET not allowed
 
@@ -725,6 +956,7 @@ bad_target:
 						continue;
 	
 					case SYM_AND:
+					case SYM_AHEAD:
 						SET_FLAG(flags, PF_AND);
 						continue;
 
@@ -734,6 +966,23 @@ bad_target:
 
 					case SYM_REMOVE:
 						SET_FLAG(flags, PF_REMOVE);
+						if (IS_WORD(rules)) {
+							// optionally using stored index as a counter
+							// https://github.com/Oldes/Rebol-issues/issues/2541
+							item = Get_Var(rules);
+							if (VAL_SERIES(item) == parse->series) {
+								rules++;
+								if (VAL_INDEX(item) < index) {
+									begin = VAL_INDEX(item);
+									count = index - VAL_INDEX(item);
+								}
+								else {
+									begin = index;
+									count = VAL_INDEX(item) - index;
+								}
+								goto do_remove;
+							}
+						}
 						continue;
 					
 					case SYM_INSERT:
@@ -742,6 +991,103 @@ bad_target:
 					
 					case SYM_CHANGE:
 						SET_FLAG(flags, PF_CHANGE);
+						continue;
+
+					case SYM_COLLECT:
+						if (IS_END(rules))
+							Trap1(RE_PARSE_END, rules - 1);
+						//printf("COLLECT start %i\n", collect->depth);
+						SET_FLAG(flags, PF_COLLECT);
+						wrd = IS_WORD(rules) ? VAL_SYM_CANON(rules) : 0;
+						if (wrd == SYM_SET) {
+							// COLLECT INTO A NEW VAR
+							rules++;
+							
+							if (!(IS_WORD(rules) || IS_SET_WORD(rules)))
+								Trap1(RE_PARSE_VARIABLE, rules);
+
+							collect->block = Make_Block(2);
+							Set_Var_Series(rules, REB_BLOCK, collect->block, 0);
+						
+							val = Get_Var(rules);
+							collect->value = val;
+							collect->mode = SYM_SET;
+							DS_PUSH(val);
+							DS_PUSH_INTEGER(SYM_SET); // store mode
+							rules++;
+						}
+						else if (wrd == SYM_INTO || wrd == SYM_AFTER) {
+							// COLLECT INTO EXISTING VAR
+							rules++;
+
+							if (!(IS_WORD(rules) || IS_GET_WORD(rules)))
+								Trap1(RE_PARSE_VARIABLE, rules);
+
+							val = Get_Var(rules);
+							
+							if (!(
+								ANY_BLOCK(val) ||
+								(ANY_STR(val) && ANY_STR_TYPE(parse->type)) ||
+								(IS_BINARY(val) && parse->type == REB_BINARY)
+								)
+							) {
+								Trap0(RE_PARSE_INTO_TYPE);
+							}
+
+							collect->value = val;
+							collect->block = VAL_SERIES(val);
+							collect->mode = wrd;
+							DS_PUSH(val);
+							if (wrd == SYM_INTO)
+								DS_PUSH_INTEGER(VAL_INDEX(val)); // store current index (will be restored)
+							DS_PUSH_INTEGER(wrd); // store mode (into or after)
+							rules++;
+						}
+						else {
+							// NON-WORD COLLECT
+							// reserve a new value on stack
+							DS_PUSH_NONE;
+							collect->value = DS_TOP;
+							if (collect->block == NULL) { //don't use collect->result! (first collect may fail)
+								// --- FIRST collect -------------------------
+								// allocate the resulting block on the stack, so it is GC safe
+								Set_Series(REB_BLOCK, DS_TOP, Make_Block(2));
+								//collect->result = DS_TOP;
+								collect->block = VAL_SERIES(DS_TOP);
+							}
+							else {
+								// --- SUBSEQUENT collect ---------------------
+								// store current block on stack
+								Set_Series(REB_BLOCK, DS_TOP, collect->block);
+								// make a new block on its tail for the new collections
+								val = Append_Value(collect->block);
+								collect->block = Make_Block(2);
+								Set_Series(REB_BLOCK, val, collect->block);
+							}
+							collect->mode = BLOCK_COLLECT;
+							DS_PUSH_INTEGER(BLOCK_COLLECT); // no special mode (block collect)
+						}
+						collect->depth++;
+						//printf("collect started %u dsp: %i blk: %x\n", collect->depth, DSP, collect->block);
+						continue;
+
+					case SYM_KEEP:
+						if (IS_END(rules)) {
+							Trap1(RE_PARSE_END, rules - 1);
+						}
+						if (IS_WORD(rules) && VAL_SYM_CANON(rules) == SYM_PICK) {
+							SET_FLAG(flags, PF_PICK);
+							rules++;
+							if (IS_END(rules))
+								Trap1(RE_PARSE_END, rules - 2);
+						}
+						if (IS_PAREN(rules)) {
+							Parse_Keep_Expression(parse, rules);
+							rules++;
+							continue;
+						}
+						SET_FLAG(flags, PF_KEEP);
+
 						continue;
 
 					case SYM_RETURN:
@@ -758,8 +1104,8 @@ bad_target:
 						return index;
 
 					case SYM_REJECT:
-						parse->result = -1;
-						return index;
+						parse->result = 0;
+						return NOT_FOUND;
 
 					case SYM_FAIL:
 						index = NOT_FOUND;
@@ -788,17 +1134,21 @@ bad_target:
 					case SYM_QQ:
 						Print_Parse_Index(parse->type, rules, series, index);
 						continue;
+
+					case SYM_CASE:
+						parse->flags |= AM_FIND_CASE;
+						continue;
+					case SYM_NO_CASE:
+						parse->flags &= ~AM_FIND_CASE;
+						continue;
 					}
 				}
 				// Any other cmd must be a match command, so proceed...
 
 			} else { // It's not a PARSE command, get or set it:
 			
-				// word: - if not the target of a COPY or SET operation, this will
-				// default to setting a variable to the series at current index
-				if (IS_SET_WORD(item) &&
-					!(GET_FLAG(flags, PF_SET_OR_COPY) || GET_FLAG(flags, PF_COPY)))
-				{
+				// word: - set a variable to the series at current index
+				if (IS_SET_WORD(item)) {
 					Set_Var_Series(item, parse->type, series, index);
 					continue;
 				}
@@ -812,6 +1162,12 @@ bad_target:
 					if (!ANY_SERIES(item)) Trap1(RE_PARSE_SERIES, rules-1);
 					index = Set_Parse_Series(parse, item);
 					series = parse->series;
+
+					// #2269 - reset the position if we are not in the middle of any rule
+					// don't allow code like: [copy x :pos integer!]
+					if (flags != 0) Trap1(RE_PARSE_RULE, rules-1); 
+					begin = index;
+					SET_FLAG(parse->flags, PF_ADVANCE);
 					continue;
 				}
 
@@ -907,16 +1263,16 @@ bad_target:
 					val = BLK_SKIP(series, index);
 					i = (
 						(ANY_BINSTR(val) || ANY_BLOCK(val))
-						&& (Parse_Series(val, VAL_BLK_DATA(item), parse->flags, depth+1) == VAL_TAIL(val))
+						&& (Parse_Series(val, VAL_BLK_DATA(item), parse->flags, depth+1, collect) == VAL_TAIL(val))
 					) ? index+1 : NOT_FOUND;
 					break;
-
+#ifdef USE_DO_PARSE_RULE
 				case SYM_DO:
 					if (!IS_BLOCK_INPUT(parse)) goto bad_rule;
 					i = Do_Eval_Rule(parse, index, &rules);
 					rulen = 1;
 					break;
-
+#endif
 				default:
 					goto bad_rule;
 				}
@@ -949,15 +1305,31 @@ bad_target:
 			if (i != NOT_FOUND) {
 				count++; // may overflow to negative
 				if (count < 0) count = MAX_I32; // the forever case
+
 				// If input did not advance:
-				if (i == index && !GET_FLAG(flags, PF_WHILE)) {
-					if (count < mincount) index = NOT_FOUND; // was not enough
-					break;
+				if (i == index) {
+					// check if there was processed some _modifying_ rule, which should advance
+					// even if index was not changed (https://github.com/Oldes/Rebol-issues/issues/2452)
+					if (GET_FLAG(parse->flags, PF_ADVANCE)) {
+						// clear the state in case, that there are other rules to be processed
+						// keep it in case that we were at the last one
+						if(count < maxcount) CLR_FLAG(parse->flags, PF_ADVANCE);
+					}
+					else if (!GET_FLAG(flags, PF_WHILE)) {
+						if (count < mincount) index = NOT_FOUND; // was not enough
+						break;
+					}
 				}
 			}
 			//if (i >= series->tail) {     // OLD check: no more input
 			else {
-				if (count < mincount) index = NOT_FOUND; // was not enough
+				if (count < mincount) {
+					index = NOT_FOUND; // was not enough
+				// Uncomment bellow code, to have result:
+				// [? []] = parse ["a"][collect some [keep ('?) collect keep integer!]]
+				//	if (GET_FLAG(flags, PF_KEEP))
+				//		Parse_Collect_Block(parse);
+				} 
 				else if (i != NOT_FOUND) index = i;
 				// else keep index as is.
 				break;
@@ -990,9 +1362,13 @@ post:
 					SKIP_TO_BAR(rules);
 					if (!IS_END(rules)) rules++;
 				}
+				if (GET_FLAG(flags, PF_COLLECT)) {
+					Parse_Collect_End(collect);
+				}
 			}
 			else {  // Success actions:
 				count = (begin > index) ? 0 : index - begin; // how much we advanced the input
+				ser = NULL;
 				if (GET_FLAG(flags, PF_COPY)) {
 					ser = (IS_BLOCK_INPUT(parse))
 						? Copy_Block_Len(series, begin, count)
@@ -1018,6 +1394,29 @@ post:
 						}
 					}
 				}
+				if (GET_FLAG(flags, PF_KEEP)) {
+					if (ser && GET_FLAG(flags, PF_COPY)) {
+						val = Append_Value(collect->block);
+						if (IS_BLOCK_INPUT(parse)) {
+							Set_Block(val, ser);
+						}
+						else if (parse->type == REB_BINARY) {
+							Set_Binary(val, ser);
+						}
+						else {
+							VAL_SET(val, parse->type);
+							VAL_SERIES(val) = ser;
+							VAL_INDEX(val) = 0;
+							VAL_SERIES_SIDE(val) = 0;
+						}
+					}
+					else {
+						Parse_Keep(parse, series, begin, count, GET_FLAG(flags, PF_PICK));
+					}
+				}
+				if (GET_FLAG(flags, PF_COLLECT)) {
+					Parse_Collect_End(collect);
+				}
 				if (GET_FLAG(flags, PF_RETURN)) {
 					ser = (IS_BLOCK_INPUT(parse))
 						? Copy_Block_Len(series, begin, count)
@@ -1025,7 +1424,12 @@ post:
 					Throw_Return_Series(parse->type, ser);
 				}
 				if (GET_FLAG(flags, PF_REMOVE)) {
-					if (count) Remove_Series(series, begin, count);
+do_remove:
+					if (count) {
+						if (IS_PROTECT_SERIES(series)) Trap0(RE_PROTECTED);
+						Remove_Series(series, begin, count);
+					}
+					SET_FLAG(parse->flags, PF_ADVANCE);
 					index = begin;
 				}
 				if (flags & (1<<PF_INSERT | 1<<PF_CHANGE)) {
@@ -1034,15 +1438,20 @@ post:
 					item = rules++;
 					if (IS_END(item)) goto bad_end;
 					// Check for ONLY flag:
-					if (IS_WORD(item) && NZ(cmd = VAL_CMD(item))) {
-						if (cmd != SYM_ONLY) goto bad_rule;
+					if (IS_WORD(item) && NZ(VAL_CMD(item))) {
+						if (VAL_CMD(item) != SYM_ONLY) goto bad_rule;
 						cmd |= (1<<AN_ONLY);
 						item = rules++;
 					}
 					// CHECK FOR QUOTE!!
-					item = Get_Parse_Value(item); // new value
+					if (IS_PAREN(item)) {
+						item = Do_Block_Value_Throw(item); // might GC
+					} else {
+						item = Get_Parse_Value(item); // new value
+					}
 					if (IS_UNSET(item)) Trap1(RE_NO_VALUE, rules-1);
 					if (IS_END(item)) goto bad_end;
+					if (IS_PROTECT_SERIES(series)) Trap0(RE_PROTECTED);
 					if (IS_BLOCK_INPUT(parse)) {
 						index = Modify_Block(GET_FLAG(flags, PF_CHANGE) ? A_CHANGE : A_INSERT,
 								series, begin, item, cmd, count, 1);
@@ -1053,6 +1462,7 @@ post:
 						index = Modify_String(GET_FLAG(flags, PF_CHANGE) ? A_CHANGE : A_INSERT,
 								series, begin, item, cmd, count, 1);
 					}
+					SET_FLAG(parse->flags, PF_ADVANCE);
 				}
 				if (GET_FLAG(flags, PF_AND)) index = begin;
 			}
@@ -1073,6 +1483,9 @@ post:
 		mincount = maxcount = 1;
 
 	}
+	
+	if (--Eval_Count <= 0 || Eval_Signals) Do_Signals();
+
 	return index;
 
 bad_rule:
@@ -1082,12 +1495,11 @@ bad_end:
 	return 0;
 }
 
-
+#ifdef INCLUDE_PARSE_SERIES_SPLITTING
 /***********************************************************************
 **
 */	REBSER *Parse_String(REBSER *series, REBCNT index, REBVAL *rules, REBCNT flags)
-/*
-***********************************************************************/
+/************************************************************************/
 {
 	REBCNT tail = series->tail;
 	REBSER *blk;
@@ -1174,7 +1586,7 @@ bad_end:
 
 	return Copy_Block(blk, 0);
 }
-
+#endif
 
 /***********************************************************************
 **
@@ -1232,11 +1644,15 @@ bad_end:
 	REBVAL *arg = D_ARG(2);
 	REBCNT opts = 0;
 
-	if (D_REF(3)) opts |= PF_ALL;
-	if (D_REF(4)) opts |= PF_CASE;
+	if (D_REF(3)) opts |= PF_CASE;
+	if (IS_BINARY(val)) opts |= PF_CASE;
 
-	if (IS_BINARY(val)) opts |= PF_ALL | PF_CASE;
+// There was originally also /all
+//	if (D_REF(3)) opts |= PF_ALL;
+//	if (D_REF(4)) opts |= PF_CASE;
+//	if (IS_BINARY(val)) opts |= PF_ALL | PF_CASE;
 
+#ifdef INCLUDE_PARSE_SERIES_SPLITTING
 	// Is it a simple string?
 	if (IS_NONE(arg) || IS_STRING(arg) || IS_CHAR(arg)) {
 		REBSER *ser;
@@ -1248,8 +1664,10 @@ bad_end:
 		Set_Block(DS_RETURN, Parse_Lines(VAL_SERIES(val)));
 	}
 	else {
+#endif
 		REBCNT n;
 		REBOL_STATE state;
+		REB_PARSE_COLLECT collect;
 		// Let user RETURN and THROW out of the PARSE. All other errors should relay.
 		PUSH_STATE(state, Saved_State);
 		if (SET_JUMP(state)) {
@@ -1269,10 +1687,19 @@ bad_end:
 			Throw_Error(VAL_ERR_OBJECT(DS_RETURN));
 		}
 		SET_STATE(state, Saved_State);
-		n = Parse_Series(val, VAL_BLK_DATA(arg), (opts & PF_CASE) ? AM_FIND_CASE : 0, 0);
-		SET_LOGIC(DS_RETURN, n >= VAL_TAIL(val) && n != NOT_FOUND);
+		CLEARS(&collect);
+
+		n = Parse_Series(val, VAL_BLK_DATA(arg), (opts & PF_CASE) ? AM_FIND_CASE : 0, 0, &collect);
+		if (collect.mode == BLOCK_COLLECT) {
+			*D_RET = *collect.value;
+		}
+		else {
+			SET_LOGIC(DS_RETURN, n >= VAL_TAIL(val) && n != NOT_FOUND);
+		}
 		POP_STATE(state, Saved_State);
+#ifdef INCLUDE_PARSE_SERIES_SPLITTING
 	}
+#endif
 
 	return R_RET;
 }

@@ -19,7 +19,7 @@
 **
 ************************************************************************
 **
-**  Title: Device: Event handler for Win32
+**  Title: Device: Event handler for Posix
 **  Author: Carl Sassenrath
 **  Purpose:
 **      Processes events to pass to REBOL. Note that events are
@@ -41,9 +41,21 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <errno.h>
+#include <poll.h>
 
 #include "reb-host.h"
 #include "host-lib.h"
+
+#ifdef REB_VIEW
+#include <gtk/gtk.h>
+extern GMainContext *GTKCtx;
+extern REBINT exit_loop;
+#else
+REBINT exit_loop = 0;
+#endif
+
+extern struct pollfd poller; // currently in dev-stdio.c
 
 void Done_Device(int handle, int error);
 
@@ -71,15 +83,20 @@ void Done_Device(int handle, int error);
 **		Poll for events and process them.
 **		Returns 1 if event found, else 0.
 **
-**	MS Notes:
-**
-**		"The PeekMessage function normally does not remove WM_PAINT
-**		messages from the queue. WM_PAINT messages remain in the queue
-**		until they are processed."
-**
 ***********************************************************************/
 {
 	int flag = DR_DONE;
+#ifdef REB_VIEW
+	//X_Event_Loop(-1);
+	//puts("Poll_Events");
+	if (exit_loop > 0) {
+		while(g_main_context_pending(GTKCtx)) {
+			flag = DR_PEND;
+			//printf(".");
+			g_main_context_iteration(GTKCtx, FALSE);
+		}
+	}
+#endif
 	return flag;	// different meaning compared to most commands
 }
 
@@ -94,19 +111,39 @@ void Done_Device(int handle, int error);
 **
 ***********************************************************************/
 {
-	struct timeval tv;
-	int result;
+	poll(&poller, 1, req->length);
 
-	tv.tv_sec = 0;
-	tv.tv_usec = req->length * 1000;
-	//printf("usec %d\n", tv.tv_usec);
-	
-	result = select(0, 0, 0, 0, &tv);
-	if (result < 0) {
-		// !!! set error code
-		printf("ERROR!!!!\n");
-		return DR_ERROR;
-	}
+//	struct timeval tv;
+
+//#ifdef REB_VIEW
+	//int max_priority;
+	//GPollFD poll_fds[10];
+	//gint timeout = tv.tv_usec;
+
+	//if (g_main_context_acquire(GTKCtx)) {
+	//	if (g_main_context_prepare(GTKCtx, &max_priority)) {
+	//		result = g_main_context_query (GTKCtx, max_priority, &timeout, poll_fds, 10);
+	//		//printf("g_main_context_query: %i timeout: %i\n", result, timeout);
+	//	}
+	//	g_main_context_release(GTKCtx);
+	//	if (result >= 0) return DR_DONE;
+	//}
+//#endif	
+
+//	int result = select(STDIN_FILENO+1, &readfds, 0, 0, &tv);
+//	if (result < 0) {
+//		//
+//		// !!! In R3-Alpha this had a TBD that said "set error code" and had a
+//		// printf that said "ERROR!!!!".  However this can happen when a
+//		// Ctrl-C interrupts a timer on a WAIT.  As a patch this is tolerant
+//		// of EINTR, but still returns the error code.  :-/
+//		//
+//		if (errno == EINTR)
+//			return DR_ERROR;
+//
+//		printf("select() returned -1 in dev-event.c (I/O error!)\n");
+//		return DR_ERROR;
+//	}
 
 	return DR_DONE;
 }

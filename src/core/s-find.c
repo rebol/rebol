@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,7 +60,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Compare_Bytes(REBYTE *b1, REBYTE *b2, REBCNT len, REBOOL uncase)
+*/	REBINT Compare_Bytes(const REBYTE *b1, const REBYTE *b2, REBCNT len, REBOOL uncase)
 /*
 **		Compare two byte-wide strings. Return lexical difference.
 **
@@ -85,7 +86,7 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Match_Bytes(REBYTE *src, REBYTE *pat)
+*/	const REBYTE *Match_Bytes(const REBYTE *src, const REBYTE *pat)
 /*
 **		Compare two binary strings. Return where the first differed.
 **		Case insensitive.
@@ -246,7 +247,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Compare_UTF8(REBYTE *s1, REBYTE *s2, REBCNT l2)
+*/	REBINT Compare_UTF8(const REBYTE *s1, const REBYTE *s2, REBCNT l2)
 /*
 **		Compare two UTF8 strings.
 **
@@ -268,7 +269,7 @@
 ***********************************************************************/
 {
 	REBINT c1, c2;
-	REBCNT l1 = LEN_BYTES(s1);
+	REBCNT l1 = (REBCNT)LEN_BYTES(s1);
 	REBINT result = 0;
 
 	for (; l1 > 0 && l2 > 0; s1++, s2++, l1--, l2--) {
@@ -279,7 +280,7 @@
 		if (c1 != c2) {
 			if (c1 >= UNICODE_CASES || c2 >= UNICODE_CASES ||
 				LO_CASE(c1) != LO_CASE(c2)) {
-				return (c1 > c2) ? -1 : -3;
+				return (LO_CASE(c1) > LO_CASE(c2)) ? -1 : -3;
 			}
 			if (!result) result = (c1 > c2) ? 3 : 1;
 		}
@@ -402,6 +403,164 @@
 	return NOT_FOUND;
 }
 
+/***********************************************************************
+**
+*/	REBCNT Find_Str_Tag(REBSER *ser1, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBSER *ser2, REBCNT index2, REBCNT len, REBCNT flags)
+/*
+**		General purpose find a tag in a string.
+**
+**		Supports: forward/reverse with skip, cased/uncase, Unicode/byte.
+**
+**		Skip can be set positive or negative (for reverse).
+**
+**		Flags are set according to ALL_FIND_REFS
+**
+***********************************************************************/
+{
+	REBUNI c1;
+	REBUNI c2;
+	REBCNT n = 0;
+	REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
+
+	for (; index >= head && index < tail; index += skip) {
+		c1 = GET_ANY_CHAR(ser1, index);
+		if (c1 == '<') {
+			index++;
+			for (n = 0; n < len; n++) {
+				c1 = GET_ANY_CHAR(ser1, index + n);
+				c2 = GET_ANY_CHAR(ser2, index2 + n);
+				if (uncase && c1 < UNICODE_CASES && c2 < UNICODE_CASES) {
+					if (LO_CASE(c1) != LO_CASE(c2)) break;
+				}
+				else {
+					if (c1 != c2) break;
+				}
+			}
+			if (n == len) {
+				c1 = GET_ANY_CHAR(ser1, index + n);
+				if (c1 == '>') {
+					if (flags & AM_FIND_TAIL) return index + len + 1;
+					return index-1;
+				}
+			}
+		}
+		if (flags & AM_FIND_MATCH) break;
+	}
+
+	return NOT_FOUND;
+}
+
+
+/***********************************************************************
+**
+*/	REBCNT Find_Str_Str_Any(REBSER *ser1, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBSER *ser2, REBCNT index2, REBCNT len, REBCNT flags, REBVAL *wild)
+/*
+**		General purpose find a substring with wildcards.
+**
+**		Supports: forward/reverse with skip, cased/uncase, Unicode/byte.
+**
+**		Skip can be set positive or negative (for reverse).
+**
+**		Flags are set according to ALL_FIND_REFS
+**
+***********************************************************************/
+{
+	REBUNI c1;
+	REBUNI c2;
+	REBUNI c3 = 0;
+	REBCNT n = 0, start = 0, pos = 0;
+	REBCNT sn = 0;
+	REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
+	REBUNI c_some = '*';
+	REBUNI c_one  = '?';
+
+	if (IS_STRING(wild)) {
+		if (VAL_INDEX(wild)   < VAL_TAIL(wild)) c_some = GET_ANY_CHAR(VAL_SERIES(wild), VAL_INDEX(wild));
+		if (VAL_INDEX(wild)+1 < VAL_TAIL(wild)) c_one  = GET_ANY_CHAR(VAL_SERIES(wild), VAL_INDEX(wild)+1);
+	}
+
+	c2 = GET_ANY_CHAR(ser2, index2); // starting char
+	if (uncase && c2 < UNICODE_CASES) c2 = LO_CASE(c2);
+
+	for (; index >= head && index < tail; index += skip) {
+		n = 1;
+		pos = index;
+		if (c2 == c_some) {
+			n = 0;
+			goto some_loop;
+		}
+		start = pos;
+		if (c2 == c_one) {
+			c1 = c2;
+		} else {
+			c1 = GET_ANY_CHAR(ser1, index);
+			if (uncase && c1 < UNICODE_CASES) c1 = LO_CASE(c1);
+		}
+		if (c1 == c2) { // found first needle's char
+			pos++;
+			while (n < len && pos < tail) {
+				c1 = GET_ANY_CHAR(ser1, pos);
+				c3 = GET_ANY_CHAR(ser2, index2 + n);
+				if (c3 == c_some) {
+				some_loop:
+					while (n < len) {
+						// skip all * and ? chars in needle
+						c3 = GET_ANY_CHAR(ser2, index2 + n);
+						if (c3 != c_some && c3 != c_one) break;
+						n++;
+					}
+					if (n == len) {
+						// * was at tail, so we can resolve it as found
+						pos = (skip > 0) ? tail: start;
+						goto found;
+					}
+					sn = n; // store a new needle's start (thru the last found *)
+					// skip in 'hay' all chars until found next needle's char
+					while (1) {
+						if (pos < head || pos >= tail) return NOT_FOUND;
+						c1 = GET_ANY_CHAR(ser1, pos);
+						// printf("? %c == %c\n", c1, c3);
+						if (c1 == c3) goto next_char;
+						if (uncase && c1 < UNICODE_CASES && c3 < UNICODE_CASES) {
+							if (LO_CASE(c1) == LO_CASE(c3)) goto next_char;
+						}
+						index++;
+						pos++;
+					}
+				} else if (c3 == c_one) {
+					goto next_char;
+				}
+				if (uncase && c1 < UNICODE_CASES && c3 < UNICODE_CASES) {
+					if (LO_CASE(c1) != LO_CASE(c3)) {
+						if (sn) {
+							n = sn; // reset needles position to the last know * char
+							goto next_char;
+						}
+						else break;
+					}
+				}
+				else {
+					if (c1 != c3) {
+						if (sn) { n = sn; goto next_char; }
+						else break;
+					}
+				}
+			next_char:
+				pos++;
+				n++;
+			}
+			if (n == len) {
+			found:
+				if (flags & AM_FIND_TAIL)
+					return pos;
+				return start ;
+			}
+		}
+		if (flags & AM_FIND_MATCH) break;
+	}
+
+	return NOT_FOUND;
+}
 
 /***********************************************************************
 **
@@ -427,8 +586,10 @@
 		c1 = GET_ANY_CHAR(ser, index);
 		if (uncase && c1 < UNICODE_CASES) c1 = LO_CASE(c1);
 
-		if (c1 == c2) return index;
-
+		if (c1 == c2) {
+			if GET_FLAG(flags, ARG_FIND_TAIL - 1) index++;
+			return index;
+		}
 		if GET_FLAG(flags, ARG_FIND_MATCH-1) break;
 	}
 
@@ -467,6 +628,24 @@
 		if (flags & AM_FIND_MATCH) break;
 	}
 
+	return NOT_FOUND;
+}
+
+
+/***********************************************************************
+**
+*/	REBCNT Find_Str_Wild(REBSER *ser, REBCNT index, REBCNT tail)
+/*
+**		Returns index of first * or ? chars in series 
+**
+***********************************************************************/
+{
+	REBUNI ch;
+
+	for (; index < tail; index++) {
+		ch = GET_ANY_CHAR(ser, index);
+		if (ch == '*' || ch == '?') return index;
+	}
 	return NOT_FOUND;
 }
 

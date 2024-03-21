@@ -29,6 +29,11 @@
 
 #include "sys-core.h"
 
+// these are used in TIME * MONEY action
+deci deci_multiply(const deci a, const deci b);
+deci deci_divide(const deci a, const deci b);
+deci decimal_to_deci(REBDEC a);
+
 /***********************************************************************
 **
 */	void Split_Time(REBI64 t, REB_TIMEF *tf)
@@ -68,19 +73,19 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Scan_Time(REBYTE *cp, REBCNT len, REBVAL *value)
+*/	const REBYTE *Scan_Time(const REBYTE *cp, REBCNT len, REBVAL *value)
 /*
 **		Scan string and convert to time.  Return zero if error.
 **
 ***********************************************************************/
 {
-	REBYTE  *sp;
+	const REBYTE  *sp;
 	REBYTE	merid = FALSE;
 	REBOOL	neg = FALSE;
 	REBINT	part1, part2, part3 = -1;
 	REBINT	part4 = -1;
 
-	if (*cp == '-') cp++, neg = TRUE;
+	if (*cp == '-') {cp++; neg = TRUE;}
 	else if (*cp == '+') cp++;
 
 	if (*cp == '-' || *cp == '+') return 0; // small hole: --1:23
@@ -135,17 +140,24 @@
 
 /***********************************************************************
 **
-*/  void Emit_Time(REB_MOLD *mold, REBVAL *value)
+*/  void Emit_Time(REB_MOLD *mold, REBVAL *value, REBOOL iso)
 /*
+**	NOTE: 'iso' arg is padding hour to two digits.
+**	      It is used only when MOLDing datetime with /ALL refinement.
+**	      In this datetime case hour should not be over 24.
 ***********************************************************************/
 {
 	REB_TIMEF tf;
-	REBYTE *fmt;
+	char *fmt;
 
 	Split_Time(VAL_TIME(value), &tf); // loses sign
 
-	if (tf.s == 0 && tf.n == 0) fmt = "I:2";
-	else fmt = "I:2:2";
+	if(iso) {
+		fmt = "2:2:2";
+	} else {
+		if (tf.s == 0 && tf.n == 0) fmt = "I:2";
+		else fmt = "I:2:2";
+	}
 
 	if (VAL_TIME(value) < (REBI64)0) Append_Byte(mold->series, '-');
 	Emit(mold, fmt, tf.h, tf.m, tf.s, 0);
@@ -199,7 +211,7 @@
 	}
 	else if (ANY_BLOCK(val) && VAL_BLK_LEN(val) <= 3) {
 		REBFLG neg = FALSE;
-		REBINT i;
+		REBI64 i;
 
 		val = VAL_BLK_DATA(val);
 		if (!IS_INTEGER(val)) goto no_time;
@@ -364,8 +376,9 @@
 {
 	REBI64	secs;
 	REBVAL	*val;
-	REBVAL	*arg;
+	REBVAL	*arg = NULL;
 	REBI64	num;
+	deci    hours; // used with money type math
 
 	val = D_ARG(1);
 
@@ -376,11 +389,12 @@
 	if (IS_BINARY_ACT(action)) {
 		REBINT	type = VAL_TYPE(arg);
 
+		ASSERT2(arg != NULL, RP_MISC);
+
 		if (type == REB_TIME) {		// handle TIME - TIME cases
 			REBI64	secs2 = VAL_TIME(arg);
-			REBINT	diff;
-
-			diff = Cmp_Time(val, arg);
+			//REBINT	diff;
+			//diff = Cmp_Time(val, arg);
 			switch (action) {
 
 			case A_ADD:
@@ -469,6 +483,27 @@
 			T_Date(ds, action);
 			return R_RET;
 		}
+		else if (type == REB_PERCENT && action == A_MULTIPLY) { // handle TIME * PERCENT case
+			// https://github.com/Oldes/Rebol-issues/issues/1391
+			//O: this could be handled like REB_DECIMAL above, but I think that support
+			//O: for actions like A_ADD does not make sense, so only MULTIPLY is supported!
+			secs = (REBI64)(secs * VAL_DECIMAL(arg));
+			goto setTime;
+		}
+		else if (type == REB_MONEY && (action == A_MULTIPLY || action == A_DIVIDE)) {
+			// https://github.com/Oldes/Rebol-issues/issues/2497
+			hours = decimal_to_deci(secs * NANO / 3600.0);
+			if (action == A_MULTIPLY) {
+				// handle TIME * MONEY case
+				VAL_DECI(D_RET) = deci_multiply(hours, VAL_DECI(arg));
+			}
+			else {
+				// handle TIME / MONEY case (an horly money rate)
+				VAL_DECI(D_RET) = deci_divide(VAL_DECI(arg), hours);
+			}
+			SET_TYPE(D_RET, REB_MONEY);
+			return R_RET;
+		}
 		Trap_Math_Args(REB_TIME, action);
 	}
 	else {
@@ -517,10 +552,12 @@
 				Set_Random(secs);
 				return R_UNSET;
 			}
-			secs = Random_Range(secs / SEC_SEC, D_REF(3)) * SEC_SEC;
+			secs = Random_Range(secs, D_REF(3));
 			goto fixTime;
 
 		case A_PICK:
+			ASSERT2(arg != NULL, RP_MISC);
+
 			Pick_Path(val, arg, 0);
 			return R_TOS;
 
@@ -530,6 +567,8 @@
 
 		case A_MAKE:
 		case A_TO:
+			ASSERT2(arg != NULL, RP_MISC);
+
 			secs = Make_Time(arg);
 			if (secs == NO_TIME) Trap_Make(REB_TIME, arg);
 			goto setTime;

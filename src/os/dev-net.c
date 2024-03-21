@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,11 +54,14 @@
 #define WATCH4(s,a,b,c,d)
 #endif
 
-void Signal_Device(REBREQ *req, REBINT type);
 DEVICE_CMD Listen_Socket(REBREQ *sock);
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
+typedef int socklen_t;
 extern HWND Event_Handle; // For WSAAsync API
+#ifndef in_addr_t
+#define in_addr_t ULONG
+#endif
 #endif
 
 
@@ -67,9 +71,10 @@ extern HWND Event_Handle; // For WSAAsync API
 **
 ***********************************************************************/
 
-static void Set_Addr(SOCKAI *sa, long ip, int port)
+static void Set_Addr(SOCKAI *sa, in_addr_t ip, int port)
 {
 	// Set the IP address and port number in a socket_addr struct.
+	memset(sa, 0, sizeof(*sa));
 	sa->sin_family = AF_INET;
 	sa->sin_addr.s_addr = ip;  //htonl(ip); NOTE: REBOL stays in network byte order
 	sa->sin_port = htons((unsigned short)port);
@@ -80,7 +85,7 @@ static void Get_Local_IP(REBREQ *sock)
 	// Get the local IP address and port number.
 	// This code should be fast and never fail.
 	SOCKAI sa;
-	int len = sizeof(sa);
+	unsigned int len = sizeof(sa);
 
 	getsockname(sock->socket, (struct sockaddr *)&sa, &len);
 	sock->net.local_ip = sa.sin_addr.s_addr; //htonl(ip); NOTE: REBOL stays in network byte order
@@ -98,8 +103,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	flags = fcntl(sock, F_GETFL, 0);
 	flags |= O_NONBLOCK;
 	//else flags &= ~O_NONBLOCK;
-	fcntl(sock, F_SETFL, flags);
-	return TRUE;
+	return fcntl(sock, F_SETFL, flags) >= 0;
 #endif
 }
 
@@ -114,11 +118,11 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 ***********************************************************************/
 {
 	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 	WSADATA wsaData;
 	// Initialize Windows Socket API with given VERSION.
 	// It is ok to call twice, as long as WSACleanup twice.
-	if (WSAStartup(0x0101, &wsaData)) return DR_ERROR;
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData)) return DR_ERROR;
 #endif
 	SET_FLAG(dev->flags, RDF_INIT);
 	return DR_DONE;
@@ -134,7 +138,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 ***********************************************************************/
 {
 	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 	if (GET_FLAG(dev->flags, RDF_INIT)) WSACleanup();
 #endif
 	CLR_FLAG(dev->flags, RDF_INIT);
@@ -187,7 +191,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 ***********************************************************************/
 {
 	int type;
-    int	protocol;
+	int	protocol;
 	long result;
 
 	sock->error = 0;
@@ -209,17 +213,28 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	// Failed, get error code (os local):
 	if (result == BAD_SOCKET) {
 		sock->error = GET_ERROR;
+		OS_Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
 
-	sock->socket = result;
+	sock->socket = (int)result;
 	SET_FLAG(sock->state, RSM_OPEN);
 
 	// Set socket to non-blocking async mode:
 	if (!Nonblocking_Mode(sock->socket)) {
 		sock->error = GET_ERROR;
+		CLOSE_SOCKET(sock->socket);
+		OS_Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
+
+#ifdef SO_NOSIGPIPE
+	{
+		// prevent SIGPIPE https://stackoverflow.com/q/108183/494472
+		int val = 1; /* Set NOSIGPIPE to ON */
+		setsockopt(sock->socket, SOL_SOCKET, SO_NOSIGPIPE, &val, sizeof(val));
+	}
+#endif
 
 	return DR_DONE;
 }
@@ -248,11 +263,13 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 			if (sock->handle) WSACancelAsyncRequest(sock->handle);
 #endif
 			OS_Free(sock->net.host_info);
+			sock->net.host_info = NULL;
 			sock->socket = sock->length; // Restore TCP socket (see Lookup)
 		}
 
 		if (CLOSE_SOCKET(sock->socket)) {
 			sock->error = GET_ERROR;
+			OS_Signal_Device(sock, EVT_ERROR);
 			return DR_ERROR;
 		}
 	}
@@ -274,24 +291,24 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 **
 ***********************************************************************/
 {
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 	HANDLE handle;
 #endif
 	HOSTENT *host;
 
 #ifdef HAS_ASYNC_DNS
 	// Check if we are polling for completion:
-	if (host = (HOSTENT*)(sock->net.host_info)) {
+	if ((host = (HOSTENT*)(sock->net.host_info))) {
 		// The windows main event handler will change this when it gets WM_DNS event:
 		if (!GET_FLAG(sock->flags, RRF_DONE)) return DR_PEND; // still waiting
 		CLR_FLAG(sock->flags, RRF_DONE);
 		if (!sock->error) { // Success!
 			host = (HOSTENT*)sock->net.host_info;
 			COPY_MEM((char*)&(sock->net.remote_ip), (char *)(*host->h_addr_list), 4); //he->h_length);
-			Signal_Device(sock, EVT_LOOKUP);
+			OS_Signal_Device(sock, EVT_LOOKUP);
 		}
 		else
-			Signal_Device(sock, EVT_ERROR);
+			OS_Signal_Device(sock, EVT_ERROR);
 		OS_Free(host);	// free what we allocated earlier
 		sock->socket = sock->length; // Restore TCP socket saved below
 		sock->net.host_info = 0;
@@ -310,20 +327,20 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	OS_Free(host);
 #else
 	// Use old-style blocking DNS (mainly for testing purposes):
-	host = gethostbyname(sock->data);
+	host = gethostbyname((const char*)sock->data);
 	sock->net.host_info = 0; // no allocated data
 
 	if (host) {
 		COPY_MEM((char*)&(sock->net.remote_ip), (char *)(*host->h_addr_list), 4); //he->h_length);
 		CLR_FLAG(sock->flags, RRF_DONE);
-		Signal_Device(sock, EVT_LOOKUP);
+		OS_Signal_Device(sock, EVT_LOOKUP);
 		return DR_DONE;
 	}
 #endif
 
 	sock->error = GET_ERROR;
-	//Signal_Device(sock, EVT_ERROR);
-	return DR_ERROR; // Remove it from pending list
+	OS_Signal_Device(sock, EVT_ERROR);
+	return DR_DONE; // Using DONE instead of ERROR -> https://github.com/Oldes/Rebol-issues/issues/2441
 }
 
 
@@ -356,6 +373,14 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 
 	if (GET_FLAG(sock->state, RSM_CONNECT)) return DR_DONE; // already connected
 
+	if (GET_FLAG(sock->modes, RST_UDP)) {
+		CLR_FLAG(sock->state, RSM_ATTEMPT);
+		SET_FLAG(sock->state, RSM_CONNECT);
+		Get_Local_IP(sock);
+		OS_Signal_Device(sock, EVT_CONNECT);
+		return DR_DONE; // done
+	}
+
 	Set_Addr(&sa, sock->net.remote_ip, sock->net.remote_port);
 	result = connect(sock->socket, (struct sockaddr *)&sa, sizeof(sa));
 
@@ -371,10 +396,10 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 		CLR_FLAG(sock->state, RSM_ATTEMPT);
 		SET_FLAG(sock->state, RSM_CONNECT);
 		Get_Local_IP(sock);
-		Signal_Device(sock, EVT_CONNECT);
+		OS_Signal_Device(sock, EVT_CONNECT);
 		return DR_DONE; // done
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 	case NE_INVALID:	// Corrects for Microsoft bug
 #endif
 	case NE_WOULDBLOCK:
@@ -388,7 +413,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 		// An error happened:
 		CLR_FLAG(sock->state, RSM_ATTEMPT);
 		sock->error = result;
-		//Signal_Device(sock, EVT_ERROR);
+		OS_Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
 }
@@ -420,49 +445,78 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 **
 ***********************************************************************/
 {
-	int result;
+	long result;
 	long len;
+	SOCKAI remote_addr;
+	socklen_t addr_len = sizeof(remote_addr);
 	int mode = (sock->command == RDC_READ ? RSM_RECEIVE : RSM_SEND);
 
-	if (!GET_FLAG(sock->state, RSM_CONNECT)) {
+	if (!GET_FLAG(sock->state, RSM_CONNECT)
+			&& !GET_FLAG(sock->modes, RST_UDP)) {
 		sock->error = -18;
+		OS_Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
 
 	SET_FLAG(sock->state, mode);
 
 	// Limit size of transfer:
-	len = MIN(sock->length, MAX_TRANSFER);
+	len = MIN(sock->length - sock->actual, MAX_TRANSFER);
 
 	if (mode == RSM_SEND) {
 		// If host is no longer connected:
-		result = send(sock->socket, sock->data, len, 0);
-		WATCH2("send() len: %d actual: %d\n", len, result);
+		int flags = 0;
+#ifdef MSG_NOSIGNAL
+		// prevent SIGPIPE https://stackoverflow.com/q/108183/494472
+		flags |= MSG_NOSIGNAL;
+#endif
+		//i64 tm = OS_Delta_Time(0, 0);
+
+		//WATCH1("sendto data: %x\n", sock->data);
+		if (GET_FLAG(sock->modes, RST_UDP)) {
+			Set_Addr(&remote_addr, sock->net.remote_ip, sock->net.remote_port);
+			result = sendto(sock->socket, sock->data, len, flags,
+				(struct sockaddr*)&remote_addr, addr_len);
+		}
+		else {
+			// Expects that the socket is already connected and
+			// there is no need to specify the remote address again
+			result = send(sock->socket, sock->data, len, flags);
+		}
+
+		//printf("sento time: %d\n", OS_Delta_Time(tm,  0));
+		//WATCH2("send() len: %d actual: %d\n", len, result);
 
 		if (result >= 0) {
 			sock->data += result;
 			sock->actual += result;
 			if (sock->actual >= sock->length) {
-				Signal_Device(sock, EVT_WROTE);
+				OS_Signal_Device(sock, EVT_WROTE);
 				return DR_DONE;
 			}
+			SET_FLAG(sock->flags, RRF_ACTIVE); /* notify OS_WAIT of activity */
 			return DR_PEND;
 		}
 		// if (result < 0) ...
 	}
 	else {
-		result = recv(sock->socket, sock->data, len, 0);
+		result = recvfrom(sock->socket, sock->data, len, 0,
+						  (struct sockaddr*)&remote_addr, &addr_len);
 		WATCH2("recv() len: %d result: %d\n", len, result);
 
 		if (result > 0) {
-			sock->actual = result;
-			Signal_Device(sock, EVT_READ);
+			if (GET_FLAG(sock->modes, RST_UDP)) {
+				sock->net.remote_ip = remote_addr.sin_addr.s_addr;
+				sock->net.remote_port = ntohs(remote_addr.sin_port);
+			}
+			sock->actual = (u32)result;
+			OS_Signal_Device(sock, EVT_READ);
 			return DR_DONE;
 		}
 		if (result == 0) {		// The socket gracefully closed.
 			sock->actual = 0;
 			CLR_FLAG(sock->state, RSM_CONNECT); // But, keep RRF_OPEN true
-			Signal_Device(sock, EVT_CLOSE);
+			OS_Signal_Device(sock, EVT_CLOSE);
 			return DR_DONE;
 		}
 		// if (result < 0) ...
@@ -470,13 +524,15 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 
 	// Check error code:
 	result = GET_ERROR;
-	WATCH2("get error: %d %s\n", result, strerror(result));
-	if (result == NE_WOULDBLOCK) return DR_PEND; // still waiting
-
+	//WATCH2("get error: %d %s\n", result, strerror(result));
+	if (result == NE_WOULDBLOCK) {
+		//printf("timeout: %d\n", sock->timeout);
+		return DR_PEND; // still waiting
+	}
 	WATCH4("ERROR: recv(%d %x) len: %d error: %d\n", sock->socket, sock->data, len, result);
 	// A nasty error happened:
-	sock->error = result;
-	//Signal_Device(sock, EVT_ERROR);
+	sock->error = (u32)result;
+	OS_Signal_Device(sock, EVT_ERROR);
 	return DR_ERROR;
 }
 
@@ -507,6 +563,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	if (result) {
 lserr:
 		sock->error = GET_ERROR;
+		OS_Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
 
@@ -550,7 +607,7 @@ lserr:
 {
 	SOCKAI sa;
 	REBREQ *news;
-	int len = sizeof(sa);
+	unsigned int len = sizeof(sa);
 	int result;
 	extern void Attach_Request(REBREQ **prior, REBREQ *req);
 
@@ -561,7 +618,7 @@ lserr:
 		result = GET_ERROR;
 		if (result == NE_WOULDBLOCK) return DR_PEND;
 		sock->error = result;
-		//Signal_Device(sock, EVT_ERROR);
+		OS_Signal_Device(sock, EVT_ERROR);
 		return DR_ERROR;
 	}
 
@@ -570,6 +627,7 @@ lserr:
 	// the new values for IP and ports and links this request to the
 	// original via the sock->data.
 	news = MAKE_NEW(*news);	// Be sure to deallocate it
+	if (!news) return DR_ERROR;
 	CLEARS(news);
 //	*news = *sock;
 	news->device = sock->device;
@@ -583,16 +641,15 @@ lserr:
 	news->net.remote_port = ntohs(sa.sin_port);
 	Get_Local_IP(news);
 
-	//Nonblocking_Mode(news->socket);  ???Needed?
+	Nonblocking_Mode(news->socket);
 
 	Attach_Request((REBREQ**)&sock->data, news);
-	Signal_Device(sock, EVT_ACCEPT);
+	OS_Signal_Device(sock, EVT_ACCEPT);
 
 	// Even though we signalled, we keep the listen pending to
 	// accept additional connections.
 	return DR_PEND;
 }
-
 
 /***********************************************************************
 **

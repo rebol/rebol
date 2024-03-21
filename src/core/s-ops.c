@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +23,7 @@
 **  Module:  s-ops.c
 **  Summary: string handling utilities
 **  Section: strings
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Oldes
 **  Notes:
 **
 ***********************************************************************/
@@ -163,7 +164,12 @@
 	REBCNT len;
 	REBSER *ser = 0;
 
-	len = (length && *length) ? *length : VAL_LEN(val);
+	if (length && *length) {
+		len = *length;
+		if (len > VAL_LEN(val)) len = VAL_LEN(val);
+	} else {
+		len = VAL_LEN(val);
+	}
 
 	// Is it binary? If so, then no conversion needed.
 	if (IS_BINARY(val) || len == 0)
@@ -183,9 +189,9 @@
 
 /***********************************************************************
 **
-*/  REBSER *Xandor_Binary(REBCNT action, REBVAL *value, REBVAL *arg)
+*/  REBSER *Xandor_Bitset(REBCNT action, REBVAL *value, REBVAL *arg)
 /*
-**		Only valid for BINARY data.
+**		Only valid for Bitsets data.
 **
 ***********************************************************************/
 {
@@ -200,10 +206,6 @@
 		t1 = VAL_LEN(arg);
 
 		mt = MIN(t0, t1); // smaller array size
-		// For AND - result is size of shortest input:
-//		if (action == A_AND || (action == 0 && t1 >= t0))
-//			t2 = mt;
-//		else
 		t2 = MAX(t0, t1);
 
 		series = Make_Binary(t2);
@@ -233,6 +235,59 @@
 		return series;
 }
 
+/***********************************************************************
+**
+*/  REBSER *Xandor_Binary(REBCNT action, REBVAL *value, REBVAL *arg)
+/*
+**		Only valid for BINARY data.
+**
+***********************************************************************/
+{
+	REBSER *series;
+	REBYTE *p0, *p1, *p2;
+	REBCNT i, j, mt, t1, t0, t2;
+
+	t0 = VAL_LEN(value);
+	t1 = VAL_LEN(arg);
+
+	if (t0 >= t1) {
+		mt = t1;
+		t2 = t0;
+		p0 = VAL_BIN_DATA(value);
+		p1 = VAL_BIN_DATA(arg);
+	}
+	else {
+		mt = t0;
+		t2 = t1;
+		p1 = VAL_BIN_DATA(value);
+		p0 = VAL_BIN_DATA(arg);
+	}
+	series = Make_Binary(t2);
+	SERIES_TAIL(series) = t2;
+	p2 = BIN_HEAD(series);
+
+	switch (action) {
+	case A_AND:
+		for (i = 0, j = 0; j <= t2; i++, j++) {
+			if (i == mt) i = 0;
+			p2[j] = p0[j] & p1[i];
+		}
+		break;
+	case A_OR:
+		for (i = 0, j = 0; j <= t2; i++, j++) {
+			if (i == mt) i = 0;
+			p2[j] = p0[j] | p1[i];
+		}
+		break;
+	case A_XOR:
+		for (i = 0, j = 0; j <= t2; i++, j++) {
+			if (i == mt) i = 0;
+			p2[j] = p0[j] ^ p1[i];
+		}
+		break;
+	}
+	return series;
+}
 
 /***********************************************************************
 **
@@ -324,7 +379,7 @@ static REBYTE seed_str[SEED_LEN] = {
 			break;
 		case REB_INTEGER:
 			INT_TO_STR(VAL_INT64(val), dst);
-			klen = LEN_BYTES(dst);
+			klen = (REBCNT)LEN_BYTES(dst);
 			as_is = FALSE;
 			break;
 		}
@@ -377,7 +432,7 @@ static REBYTE seed_str[SEED_LEN] = {
 
 /***********************************************************************
 **
-*/	REBCNT Deline_Bytes(REBYTE *buf, REBCNT len)
+*/	REBCNT Replace_CRLF_to_LF_Bytes(REBYTE *buf, REBCNT len)
 /*
 **		This function converts any combination of CR and
 **		LF line endings to the internal REBOL line ending.
@@ -406,7 +461,7 @@ static REBYTE seed_str[SEED_LEN] = {
 
 /***********************************************************************
 **
-*/	REBCNT Deline_Uni(REBUNI *buf, REBCNT len)
+*/	REBCNT Replace_CRLF_to_LF_Uni(REBUNI *buf, REBCNT len)
 /*
 ***********************************************************************/
 {
@@ -428,10 +483,26 @@ static REBYTE seed_str[SEED_LEN] = {
 	return (REBCNT)(tp - buf);
 }
 
+/***********************************************************************
+**
+*/	void Replace_CRLF_to_LF(REBVAL *val, REBCNT len)
+/*
+***********************************************************************/
+{
+	REBINT n;
+	if (VAL_BYTE_SIZE(val)) {
+		REBYTE *bp = VAL_BIN_DATA(val);
+		n = Replace_CRLF_to_LF_Bytes(bp, len);
+	} else {
+		REBUNI *up = VAL_UNI_DATA(val);
+		n = Replace_CRLF_to_LF_Uni(up, len);
+	}
+	VAL_TAIL(val) -= (len - n);
+}
 
 /***********************************************************************
 **
-*/	void Enline_Bytes(REBSER *ser, REBCNT idx, REBCNT len)
+*/	void Replace_LF_To_CRLF_Bytes(REBSER *ser, REBCNT idx, REBCNT len)
 /*
 ***********************************************************************/
 {
@@ -453,22 +524,23 @@ static REBYTE seed_str[SEED_LEN] = {
 	len = SERIES_TAIL(ser); // before expansion
 	EXPAND_SERIES_TAIL(ser, cnt);
 	tail = SERIES_TAIL(ser); // after expansion
-	bp = BIN_HEAD(ser); // expand may change it
+	bp = BIN_SKIP(ser, idx); // expand may change it
 
 	// Add missing CRs:
 	while (cnt > 0) {
 		bp[tail--] = bp[len]; // Copy src to dst.
-		if (bp[len--] == LF && bp[len] != CR) {
+		if (bp[len] == LF && (len == 0 || bp[len - 1] != CR)) {
 			bp[tail--] = CR;
 			cnt--;
 		}
+		len--;
 	}
 }
 
 
 /***********************************************************************
 **
-*/	void Enline_Uni(REBSER *ser, REBCNT idx, REBCNT len)
+*/	void Replace_LF_To_CRLF_Uni(REBSER *ser, REBCNT idx, REBCNT len)
 /*
 ***********************************************************************/
 {
@@ -490,15 +562,16 @@ static REBYTE seed_str[SEED_LEN] = {
 	len = SERIES_TAIL(ser); // before expansion
 	EXPAND_SERIES_TAIL(ser, cnt);
 	tail = SERIES_TAIL(ser); // after expansion
-	bp = UNI_HEAD(ser); // expand may change it
+	bp = UNI_SKIP(ser, idx); // expand may change it
 
 	// Add missing CRs:
 	while (cnt > 0) {
 		bp[tail--] = bp[len]; // Copy src to dst.
-		if (bp[len--] == LF && bp[len] != CR) {
+		if (bp[len] == LF && (len == 0 || bp[len - 1] != CR)) {
 			bp[tail--] = CR;
 			cnt--;
 		}
+		len--;
 	}
 }
 
@@ -541,7 +614,10 @@ static REBYTE seed_str[SEED_LEN] = {
 
 			// Copy chars thru end-of-line (or end of buffer):
 			while (index < len) {
-				if ((*dp++ = bp[index++]) == '\n') break;
+				if ((*dp++ = bp[index++]) == '\n') {
+					index--;
+					break;
+				}
 			}
 		}
 	}
@@ -588,7 +664,10 @@ static REBYTE seed_str[SEED_LEN] = {
 
 			// Copy chars thru end-of-line (or end of buffer):
 			while (index < len) {
-				if ((*dp++ = bp[index++]) == '\n') break;
+				if ((*dp++ = bp[index++]) == '\n') {
+					index--;
+					break;
+				}
 			}
 		}
 	}
@@ -747,7 +826,7 @@ static REBYTE seed_str[SEED_LEN] = {
 	REBCNT idx = VAL_INDEX(val);
 	REBCNT start = idx;
 	REBSER *out;
-	REBCHR c;
+	REBUNI c; // don't use REBCHR!!! it is only for OS strings! see issue#1794 
 
 	BLK_RESET(ser);
 

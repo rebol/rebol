@@ -1,0 +1,32 @@
+101 ICON "icon/r3.ico"
+
+1 VERSIONINFO
+FILEVERSION     3,16,0,0
+PRODUCTVERSION  3,16,0,0
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904E4"
+    BEGIN
+      VALUE "FileDescription", "Rebol Console"
+      VALUE "FileVersion", "3.16"
+      VALUE "InternalName", "Rebol 3 (Oldes branch)"
+      VALUE "LegalCopyright", "2012 REBOL Technologies"
+      VALUE "OriginalFilename", "Rebol.exe"
+      VALUE "ProductName", "Rebol/View"
+      VALUE "ProductVersion", "3.16"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1252
+  END
+END
+
+STRINGTABLE
+BEGIN
+    101  "Rebol 3 (Oldes branch)"
+END
+
+1 MANIFEST "r3-view.manifest"
+

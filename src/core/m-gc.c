@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -80,6 +81,7 @@
 
 #include "sys-core.h"
 #include "reb-evtypes.h"
+//#include "stdio.h"
 
 #ifdef REB_API
 extern REBOL_HOST_LIB *Host_Lib;
@@ -110,7 +112,7 @@ REBVAL *N_watch(REBFRM *frame, REBVAL **inter_block)
 #endif
 
 static void Mark_Series(REBSER *series, REBCNT depth);
-
+//static void Mark_Value(REBVAL *val, REBCNT depth);
 
 /***********************************************************************
 **
@@ -148,6 +150,70 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	}
 }
 
+/***********************************************************************
+**
+*/	static void Mark_Struct_Field(REBSTU *stu, struct Struct_Field *field, REBCNT depth)
+/*
+***********************************************************************/
+{
+	if (field->type == STRUCT_TYPE_STRUCT) {
+		REBCNT len = 0;
+		REBSER *series = NULL;
+
+		CHECK_MARK(field->fields, depth);
+		CHECK_MARK(field->spec, depth);
+
+		series = field->fields;
+		for (len = 0; len < series->tail; len++) {
+			Mark_Struct_Field(stu, (struct Struct_Field *)SERIES_SKIP(series, len), depth + 1);
+		}
+	}
+#ifdef unused
+	else if (field->type == STRUCT_TYPE_REBVAL) {
+		REBCNT i;
+		ASSERT2(field->size == sizeof(REBVAL), RP_BAD_SIZE);
+		for (i = 0; i < field->dimension; i++) {
+			REBVAL *data = (REBVAL *)SERIES_SKIP(STRUCT_DATA_BIN(stu),
+				STRUCT_OFFSET(stu) + field->offset + i * field->size);
+			if (field->done) {
+				Mark_Value(data, depth);
+			}
+		}
+	}
+#endif
+	/* ignore primitive datatypes */
+}
+
+/***********************************************************************
+**
+*/	static void Mark_Struct(REBSTU *stu, REBCNT depth)
+/*
+***********************************************************************/
+{
+	REBCNT len = 0;
+	REBSER *series = NULL;
+	if (IS_MARK_SERIES(STRUCT_DATA_BIN(stu))) return;
+
+	CHECK_MARK(stu->spec, depth);
+	CHECK_MARK(stu->fields, depth);
+	CHECK_MARK(STRUCT_DATA_BIN(stu), depth);
+
+	//Debug_Num("mark spec:  ", (int)stu->spec);
+	//Debug_Num("mark fields:", (int)stu->fields);
+	//Debug_Num("mark bin:   ", (int)STRUCT_DATA_BIN(stu));
+
+	ASSERT2(IS_BARE_SERIES(stu->data), RP_BAD_SERIES);
+	ASSERT2(!IS_EXT_SERIES(stu->data), RP_BAD_SERIES);
+	ASSERT2(SERIES_TAIL(stu->data) == 1, RP_BAD_SERIES);
+	CHECK_MARK(stu->data, depth);
+
+	series = stu->fields;
+	for (len = 0; len < series->tail; len++) {
+		struct Struct_Field *field = (struct Struct_Field *)SERIES_SKIP(series, len);
+		Mark_Struct_Field(stu, field, depth + 1);
+	}
+}
+
 
 /***********************************************************************
 **
@@ -165,7 +231,11 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 		// The ->ser field of the REBEVT is void*, so we must cast
 		// Comment says it is a "port or object"
 		CHECK_MARK((REBSER*)VAL_EVENT_SER(value), depth);
-	} 
+	}
+
+	if (IS_EVENT_MODEL(value, EVM_GUI)) {
+		Mark_Gob(VAL_EVENT_SER(value), depth);
+	}
 
 	if (IS_EVENT_MODEL(value, EVM_DEVICE)) {
 		// In the case of being an EVM_DEVICE event type, the port! will
@@ -215,6 +285,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	REBCNT len;
 	REBSER *ser;
 	REBVAL *val;
+	REBHOB *hob;
 
 	ASSERT(series != 0, RP_NULL_MARK_SERIES);
 
@@ -223,7 +294,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	MARK_SERIES(series);
 
 	// If not a block, go no further
-	if (SERIES_WIDE(series) != sizeof(REBVAL)) return;
+	if (SERIES_WIDE(series) != sizeof(REBVAL) || IS_BARE_SERIES(series)) return;
 
 	ASSERT2(RP_SERIES_OVERFLOW, SERIES_TAIL(series) < SERIES_REST(series));
 
@@ -246,12 +317,25 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 
 		case REB_UNSET:
 		case REB_TYPESET:
+			break;
 		case REB_HANDLE:
+			if (IS_CONTEXT_HANDLE(val)) {
+				hob = VAL_HANDLE_CTX(val);
+				//printf("marked hob: %p %p\n", hob, val);
+				MARK_HANDLE_CONTEXT(val);
+				if (hob->series) {
+					Mark_Series(hob->series, depth);
+				}
+			}	
+			else if (IS_SERIES_HANDLE(val) && !HANDLE_GET_FLAG(val, HANDLE_RELEASABLE)) {
+				//printf("markserhandle %0xh val: %0xh %s \n", (void*)val, VAL_HANDLE(val), VAL_HANDLE_NAME(val));
+				Mark_Series(VAL_HANDLE_DATA(val), depth);
+			}
 			break;
 
 		case REB_DATATYPE:
 			if (VAL_TYPE_SPEC(val)) {	// allow it to be zero
-				CHECK_MARK(VAL_TYPE_SPEC(val), depth); // check typespec.r file
+				CHECK_MARK(VAL_TYPE_SPEC(val), depth); // check typespec.reb file
 			}
 			break;
 
@@ -298,6 +382,7 @@ mark_obj:
 		case REB_CLOSURE:
 		case REB_REBCODE:
 			CHECK_MARK(VAL_FUNC_BODY(val), depth);
+			/* no break */
 		case REB_NATIVE:
 		case REB_ACTION:
 		case REB_OP:
@@ -347,6 +432,7 @@ mark_obj:
 		case REB_URL:
 		case REB_TAG:
 		case REB_BITSET:
+		case REB_REF:
 			ser = VAL_SERIES(val);
 			if (SERIES_WIDE(ser) > sizeof(REBUNI))
 				Crash(RP_BAD_WIDTH, sizeof(REBUNI), SERIES_WIDE(ser), VAL_TYPE(val));
@@ -410,9 +496,7 @@ mark_obj:
 			break;
 
 		case REB_STRUCT:
-			CHECK_MARK(VAL_STRUCT_SPEC(val), depth);  // is a block
-			CHECK_MARK(VAL_STRUCT_VALS(val), depth);  // "    "
-			MARK_SERIES(VAL_STRUCT_DATA(val));
+			Mark_Struct(&VAL_STRUCT(val), depth);
 			break;
 
 		case REB_GOB:
@@ -458,6 +542,7 @@ mark_obj:
 			MUNG_CHECK(SERIES_POOL, series, sizeof(*series));
 			if (!SERIES_FREED(series)) {
 				if (IS_FREEABLE(series)) {
+					//printf("free: %0xh %s\n", (int)series, series->label);
 					Free_Series(series);
 					count++;
 				} else
@@ -491,10 +576,8 @@ mark_obj:
 	for (seg = Mem_Pools[GOB_POOL].segs; seg; seg = seg->next) {
 		gob = (REBGOB *) (seg + 1);
 		for (n = Mem_Pools[GOB_POOL].units; n > 0; n--) {
-#ifdef MUNGWALL
-			gob = (gob *) (((REBYTE *)s)+MUNG_SIZE);
+			SKIP_WALL_TYPE(gob, REBGOB);
 			MUNG_CHECK(GOB_POOL, gob, sizeof(*gob));
-#endif
 			if (IS_GOB_USED(gob)) {
 				if (IS_GOB_MARK(gob))
 					UNMARK_GOB(gob);
@@ -504,9 +587,7 @@ mark_obj:
 				}
 			}
 			gob++;
-#ifdef MUNGWALL
-			gob = (gob *) (((REBYTE *)s)+MUNG_SIZE);
-#endif
+			SKIP_WALL_TYPE(gob, REBGOB);
 		}
 	}
 
@@ -516,9 +597,49 @@ mark_obj:
 
 /***********************************************************************
 **
-*/	REBCNT Recycle(void)
+*/	static REBCNT Sweep_Handles(void)
+/*
+**		Free all unmarked handles.
+**
+**		Scans all hobs in all segments that are part of the
+**		HOB_POOL. Free hobs that have not been marked.
+**
+***********************************************************************/
+{
+	REBSEG	*seg;
+	REBHOB	*hob;
+	REBCNT  n;
+	REBCNT	count = 0;
+
+	for (seg = Mem_Pools[HOB_POOL].segs; seg; seg = seg->next) {
+		hob = (REBHOB *) (seg + 1);
+		for (n = Mem_Pools[HOB_POOL].units; n > 0; n--) {
+			SKIP_WALL_TYPE(hob, REBHOB);
+			MUNG_CHECK(HOB_POOL, hob, sizeof(*hob));
+			if (IS_USED_HOB(hob)) {
+				//printf("sweep hob: %p\n", hob);
+				if (IS_MARK_HOB(hob))
+					UNMARK_HOB(hob);
+				else {
+					count += Free_Hob(hob);
+				}
+			}
+			hob++;
+			SKIP_WALL_TYPE(hob, REBHOB);
+		}
+	}
+
+	return count;
+}
+
+
+/***********************************************************************
+**
+*/	REBCNT Recycle(REBOOL all)
 /*
 **		Recycle memory no longer needed.
+**
+**      When all is TRUE, then infant series are not protected!
 **
 ***********************************************************************/
 {
@@ -535,7 +656,7 @@ mark_obj:
 		return 0;
 	}
 
-	if (Reb_Opts->watch_recycle) Debug_Str(BOOT_STR(RS_WATCH, 0));
+	if (Reb_Opts->watch_recycle) Debug_Str(cs_cast(BOOT_STR(RS_WATCH, 0)));
 
 	GC_Disabled = 1;
 
@@ -568,12 +689,15 @@ mark_obj:
 	// Mark the last MAX_SAFE "infant" series that were created.
 	// We must assume that infant blocks are valid - that they contain
 	// no partially valid datatypes (that are under construction).
-	for (n = 0; n < MAX_SAFE_SERIES; n++) {
-		REBSER *ser;
-		if (NZ(ser = GC_Infants[n])) {
-			//Dump_Series(ser, "Safe Series");
-			Mark_Series(ser, 0);
-		} else break;
+	if (!all) {
+		for (n = 0; n < MAX_SAFE_SERIES; n++) {
+			REBSER *ser;
+			if (NZ(ser = GC_Infants[n])) {
+				//Dump_Series(ser, "Safe Series");
+				Mark_Series(ser, 0);
+			}
+			else break;
+		}
 	}
 
 	// Mark all root series:
@@ -585,6 +709,7 @@ mark_obj:
 	
 	count = Sweep_Series();
 	count += Sweep_Gobs();
+	count += Sweep_Handles();
 
 	CHECK_MEMORY(4);
 
@@ -644,7 +769,7 @@ mark_obj:
 	sp = (REBSER **)GC_Series->data;
 	for (n = 0; n < SERIES_TAIL(GC_Series); n++) {
 		if (sp[n] == series) {
-			Remove_Series(GC_Series, n, sizeof(REBSER *));
+			Remove_Series(GC_Series, n, 1);
 			break;
 		}
 	}
@@ -676,4 +801,29 @@ mark_obj:
 
 	GC_Series = Make_Series(60, sizeof(REBSER *), FALSE);
 	KEEP_SERIES(GC_Series, "gc guarded");
+}
+
+/***********************************************************************
+**
+*/	void Dispose_Memory(void)
+/*
+**		Dispose memory system when application quits.
+**
+***********************************************************************/
+{
+	REBCNT n;
+	GC_Disabled = 0;
+	// Dispose context handles first, because they may depend on other series!
+	Dispose_Hobs();
+	/* remove everything from GC_Infants (GC protection) */
+	for (n = 0; n < MAX_SAFE_SERIES; n++) {
+		GC_Infants[n] = NULL;
+	}
+	Free_Series(GC_Protect);
+	Free_Series(GC_Series);
+	Sweep_Series();
+	Sweep_Gobs();
+	Free_Mem(GC_Infants, 0);
+	Free_Mem(Prior_Expand, 0);
+	Dispose_Pools();
 }

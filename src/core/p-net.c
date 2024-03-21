@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,24 +35,106 @@
 
 #define NET_BUF_SIZE 32*1024
 
+enum Transport_Types {
+	TRANSPORT_TCP,
+	TRANSPORT_UDP
+};
+
 /***********************************************************************
 **
-*/	static void Ret_Query_Net(REBSER *port, REBREQ *sock, REBVAL *ret)
+*/	static REBOOL Set_Net_Mode_Value(REBREQ *sock, REBCNT mode, REBVAL *ret)
+/*
+**		Set a value with net data according specified mode
+**
+***********************************************************************/
+{
+	switch (mode) {
+	case SYM_REMOTE_IP:
+		Set_Tuple(ret, (REBYTE *)&sock->net.remote_ip, 4);
+		break;
+	case SYM_REMOTE_PORT:
+		SET_INTEGER(ret, sock->net.remote_port);
+		break;
+	case SYM_LOCAL_IP:
+		Set_Tuple(ret, (REBYTE *)&sock->net.local_ip, 4);
+		break;
+	case SYM_LOCAL_PORT:
+		SET_INTEGER(ret, sock->net.local_port);
+		break;
+	default:
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/***********************************************************************
+**
+*/	static void Ret_Query_Net(REBSER *port, REBREQ *sock, REBVAL *ret, REBVAL *info)
 /*
 ***********************************************************************/
 {
-	REBVAL *info = In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0);
 	REBSER *obj;
+	REBVAL *val;
+	
+	if (IS_WORD(info)) {
+		if (!Set_Net_Mode_Value(sock, VAL_WORD_CANON(info), ret))
+			Trap1(RE_INVALID_ARG, info);
+	}
+	else if (IS_BLOCK(info)) {
+		// example:
+		//	query/mode port [remote-ip remote-port] ;== [127.0.0.1 1234]
+		// or:
+		//	 query/mode port [remote-ip: remote-port:] ;== [remote-ip: 127.0.0.1 remote-port: 1234]
+		// or combined:
+		//	 query/mode file [remote-ip: remote-port] ;== [remote-ip: 127.0.0.1 1234]
+		// When not supported word is used, if will throw an error
 
-	if (!info || !IS_OBJECT(info)) Trap_Port(RE_INVALID_SPEC, port, -10);
+		REBSER *values = Make_Block(2 * BLK_LEN(VAL_SERIES(info)));
+		REBVAL *word = VAL_BLK_DATA(info);
+		for (; NOT_END(word); word++) {
+			if (ANY_WORD(word)) {
+				if (IS_SET_WORD(word)) {
+					// keep the set-word in result
+					val = Append_Value(values);
+					*val = *word;
+					VAL_SET_LINE(val);
+				}
+				val = Append_Value(values);
+				if (!Set_Net_Mode_Value(sock, VAL_WORD_CANON(word), val))
+					Trap1(RE_INVALID_ARG, word);
+			}
+			else  Trap1(RE_INVALID_ARG, word);
+		}
+		Set_Series(REB_BLOCK, ret, values);
+	}
+	else {
+		//@@ oldes: is returning object really still needed?
+		info = In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0);
 
-	obj = CLONE_OBJECT(VAL_OBJ_FRAME(info));
+		if (!info || !IS_OBJECT(info)) {
+			Trap_Port(RE_INVALID_SPEC, port, -10);
+			return; // prevents compiler's warning
+		}
 
-	SET_OBJECT(ret, obj);
-	Set_Tuple(OFV(obj, STD_NET_INFO_LOCAL_IP), (REBYTE*)&sock->net.local_ip, 4);
-	Set_Tuple(OFV(obj, STD_NET_INFO_REMOTE_IP), (REBYTE*)&sock->net.remote_ip, 4);
-	SET_INTEGER(OFV(obj, STD_NET_INFO_LOCAL_PORT), sock->net.local_port);
-	SET_INTEGER(OFV(obj, STD_NET_INFO_REMOTE_PORT), sock->net.remote_port);
+		obj = CLONE_OBJECT(VAL_OBJ_FRAME(info));
+
+		SET_OBJECT(ret, obj);
+		Set_Tuple(OFV(obj, STD_NET_INFO_LOCAL_IP), (REBYTE *)&sock->net.local_ip, 4);
+		Set_Tuple(OFV(obj, STD_NET_INFO_REMOTE_IP), (REBYTE *)&sock->net.remote_ip, 4);
+		SET_INTEGER(OFV(obj, STD_NET_INFO_LOCAL_PORT), sock->net.local_port);
+		SET_INTEGER(OFV(obj, STD_NET_INFO_REMOTE_PORT), sock->net.remote_port);
+	}
+}
+
+/***********************************************************************
+**
+*/	void Ret_Net_Modes(REBSER *port, REBVAL *ret)
+/*
+**		Sets value with block of possible net mode names
+**
+***********************************************************************/
+{
+	Set_Block(ret, Get_Object_Words(In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0)));
 }
 
 
@@ -86,13 +169,13 @@
 	OS_FREE(nsock); // allocated by dev_net.c (MT issues?)
 }
 
-
 /***********************************************************************
 **
-*/	static int TCP_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int Transport_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action, enum Transport_Types proto)
 /*
 ***********************************************************************/
 {
+	REBSER *port;
 	REBREQ *sock;	// IO request
 	REBVAL *spec;	// port spec
 	REBVAL *arg;	// action argument value
@@ -102,13 +185,16 @@
 	REBCNT len;		// generic length
 	REBSER *ser;	// simplifier
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 
 	*D_RET = *D_ARG(1);
 	arg = D_ARG(2);
-	refs = 0;
+	//refs = 0;
 
 	sock = Use_Port_State(port, RDI_NET, sizeof(*sock));
+	if (proto == TRANSPORT_UDP) {
+		SET_FLAG(sock->modes, RST_UDP);
+	}
 	//Debug_Fmt("Sock: %x", sock);
 	spec = OFV(port, STD_PORT_SPEC);
 	if (!IS_OBJECT(spec)) Trap0(RE_INVALID_PORT);
@@ -126,7 +212,7 @@
 		case A_OPEN:
 
 			arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
-			val = Obj_Value(spec, STD_PORT_SPEC_NET_PORT_ID);
+			val = Obj_Value(spec, STD_PORT_SPEC_NET_PORT);
 
 			if (OS_DO_DEVICE(sock, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, -12);
 			SET_OPEN(sock);
@@ -188,8 +274,10 @@
 	case A_READ:
 		// Read data into a buffer, expanding the buffer if needed.
 		// If no length is given, program must stop it at some point.
-		refs = Find_Refines(ds, ALL_READ_REFS);
-		if (!GET_FLAG(sock->state, RSM_CONNECT)) Trap_Port(RE_NOT_CONNECTED, port, -15);
+		//refs = Find_Refines(ds, ALL_READ_REFS);
+		if (!GET_FLAG(sock->modes, RST_UDP)
+				&& !GET_FLAG(sock->state, RSM_CONNECT))
+			Trap_Port(RE_NOT_CONNECTED, port, -15);
 
 		// Setup the read buffer (allocate a buffer if needed):
 		arg = OFV(port, STD_PORT_DATA);
@@ -206,7 +294,11 @@
 
 		//Print("(max read length %d)", sock->length);
 		result = OS_DO_DEVICE(sock, RDC_READ); // recv can happen immediately
-		if (result < 0) Trap_Port(RE_READ_ERROR, port, sock->error);
+		if (GET_FLAG(sock->modes, RST_UDP && result == 0))
+			VAL_TAIL(arg) += sock->actual;
+		if (result < 0)
+			Trap_Port(RE_READ_ERROR, port, sock->error);
+		
 		break;
 
 	case A_WRITE:
@@ -214,7 +306,9 @@
 		// The lower level write code continues until done.
 
 		refs = Find_Refines(ds, ALL_WRITE_REFS);
-		if (!GET_FLAG(sock->state, RSM_CONNECT)) Trap_Port(RE_NOT_CONNECTED, port, -15);
+		if (!GET_FLAG(sock->modes, RST_UDP)
+				&& !GET_FLAG(sock->state, RSM_CONNECT))
+			Trap_Port(RE_NOT_CONNECTED, port, -15);
 
 		// Determine length. Clip /PART to size of string if needed.
 		spec = D_ARG(2);
@@ -248,7 +342,12 @@
 	case A_QUERY:
 		// Get specific information - the scheme's info object.
 		// Special notation allows just getting part of the info.
-		Ret_Query_Net(port, sock, D_RET);
+		refs = Find_Refines(ds, ALL_QUERY_REFS);
+		if ((refs & AM_QUERY_MODE) && IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
+			Ret_Net_Modes(port, D_RET);
+			return R_RET;
+		}
+		Ret_Query_Net(port, sock, D_RET, D_ARG(ARG_QUERY_FIELD));
 		break;
 
 	case A_OPENQ:
@@ -258,10 +357,11 @@
 
 	case A_CLOSE:
 		if (IS_OPEN(sock)) {
-			OS_DO_DEVICE(sock, RDC_CLOSE);
+            if (OS_DO_DEVICE(sock, RDC_CLOSE) < 0) {
+                Trap_Port(RE_CANNOT_CLOSE, port, sock->error);
+            }
 			SET_CLOSED(sock);
 		}
-		Free_Port_State(port);
 		break;
 
 	case A_LENGTHQ:
@@ -287,12 +387,29 @@
 		break;
 
 	default:
-		Trap_Action(REB_PORT, action);
+		Trap1(RE_NO_PORT_ACTION, Get_Action_Word(action));
 	}
 
 	return R_RET;
 }
 
+/***********************************************************************
+**
+*/	static int TCP_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
+/*
+***********************************************************************/
+{
+	return Transport_Actor(ds, port_value, action, TRANSPORT_TCP);
+}
+
+/***********************************************************************
+**
+*/	static int UDP_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
+/*
+***********************************************************************/
+{
+	return Transport_Actor(ds, port_value, action, TRANSPORT_UDP);
+}
 
 /***********************************************************************
 **
@@ -301,4 +418,12 @@
 ***********************************************************************/
 {
 	Register_Scheme(SYM_TCP, 0, TCP_Actor);
+}
+/***********************************************************************
+**
+*/	void Init_UDP_Scheme(void)
+/*
+***********************************************************************/
+{
+	Register_Scheme(SYM_UDP, 0, UDP_Actor);
 }

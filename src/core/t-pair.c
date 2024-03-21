@@ -146,9 +146,14 @@
 	if (IS_WORD(sel = pvs->select)) {
 		if (VAL_WORD_CANON(sel) == SYM_X) n = 1;
 		else if (VAL_WORD_CANON(sel) == SYM_Y) n = 2;
+		else if (VAL_WORD_CANON(sel) == SYM_AREA) {
+			if (pvs->setval) return PE_BAD_SET;
+			SET_DECIMAL(pvs->store, fabsf(VAL_PAIR_X(pvs->value) * VAL_PAIR_Y(pvs->value)));
+			return PE_USE;
+		}
 		else return PE_BAD_SELECT;
 	}
-	else if (IS_INTEGER(sel)) {
+	else if (IS_INTEGER(sel) || IS_DECIMAL(sel)) {
 		n = Int32(sel);
 		if (n != 1 && n !=2) return PE_BAD_SELECT;
 	}
@@ -177,10 +182,11 @@
 ***********************************************************************/
 {
 	REBVAL *val;
-	REBVAL *arg;
-	REBINT n;
-	REBD32 x1, x2;
-	REBD32 y1, y2;
+	REBVAL *arg = NULL;
+	REBINT n = 0;
+	REBD32 x1, x2 = 0.0;
+	REBD32 y1, y2 = 0.0;
+	REBINT x, y;
 
 	val = D_ARG(1);
 	x1 = VAL_PAIR_X(val);
@@ -239,13 +245,6 @@
 	else {
 		switch(action) {
 
-#ifdef temp
-		case A_ODDQ:
-			DECIDE((x1 & 1) && (y1 & 1));
-
-		case A_EVENQ:
-			DECIDE((x1 & 1) == 0 && (y1 & 1) == 0);
-#endif
 		case A_NEGATE:
 			x1 = -x1;
 			y1 = -y1;
@@ -329,7 +328,7 @@
 				REBYTE *bp;
 				REBCNT len;
 				// -1234567890x-1234567890
-				bp = Qualify_String(val, 24, &len, FALSE);
+				bp = Qualify_String(val, VAL_LEN(val), &len, FALSE);
 				if (Scan_Pair(bp, len, DS_RETURN)) return R_RET;
 			}
 			if (IS_INTEGER(val)) {
@@ -345,6 +344,16 @@
 					return R_RET;
 			}
 			Trap_Make(REB_PAIR, val);
+
+		case A_ODDQ:
+		case A_EVENQ:
+			x = VAL_PAIR_X_INT(val) & 1;
+			y = VAL_PAIR_Y_INT(val) & 1;
+			if (action == A_ODDQ)
+				DECIDE(x && y);
+			else	
+				DECIDE(x == 0 && y == 0);
+
 		}
 	}
 	Trap_Action(REB_PAIR, action);
@@ -355,10 +364,10 @@ setPair:
 	VAL_PAIR_Y(DS_RETURN) = y1;
 	return R_RET;
 
-//is_false:
-//	return R_FALSE;
+is_false:
+	return R_FALSE;
 
-//is_true:
-//	return R_TRUE;
+is_true:
+	return R_TRUE;
 }
 

@@ -31,7 +31,6 @@
 typedef struct rebol_args {
 	REBCNT options;
 	REBCHR *script;
-	REBCHR *args;
 	REBCHR *do_arg;
 	REBCHR *version;
 	REBCHR *debug;
@@ -39,7 +38,10 @@ typedef struct rebol_args {
 	REBCHR *secure;
 	REBCHR *boot;
 	REBCHR *exe_path;
-	REBCHR *home_dir;
+	REBCHR *current_dir;
+	REBCHR *args;         // value for the --args option
+	REBCNT  argc;         // unprocessed argument count
+	REBCHR **argv;        // unprocessed arguments
 } REBARGS;
 
 // REBOL arg option flags:

@@ -96,8 +96,6 @@
 
 #include "sys-core.h"
 
-#include "sys-state.h"
-
 // Globals or Threaded???
 static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
@@ -141,7 +139,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	if (!Saved_State) Crash(RP_NO_SAVED_STATE);
 	SET_ERROR(TASK_THIS_ERROR, ERR_NUM(err), err);
 	if (Trace_Level) Trace_Error(TASK_THIS_ERROR);
-	longjmp(*Saved_State, 1);
+	LONG_JUMP(*Saved_State, 1);
 }
 
 
@@ -156,7 +154,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 {
 	if (!Saved_State) Crash(RP_NO_SAVED_STATE);
 	*TASK_THIS_ERROR = *val;
-	longjmp(*Saved_State, 1);
+	LONG_JUMP(*Saved_State, 1);
 }
 
 
@@ -206,7 +204,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 /***********************************************************************
 **
-*/	void Trap_Stack()
+*/	void Trap_Stack(void)
 /*
 ***********************************************************************/
 {
@@ -216,17 +214,17 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 	*TASK_THIS_ERROR = *TASK_STACK_ERROR; // pre-allocated
 
-	longjmp(*Saved_State, 1);
+	LONG_JUMP(*Saved_State, 1);
 }
 
 
 /***********************************************************************
 **
-*/	REBCNT Stack_Depth()
+*/	REBCNT Stack_Depth(void)
 /*
 ***********************************************************************/
 {
-	REBCNT dsf = DSF;
+	REBCNT dsf;
 	REBCNT count = 0;
 
 	for (dsf = DSF; dsf > 0; dsf = PRIOR_DSF(dsf)) {
@@ -272,7 +270,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	REBSER *cats;		// Error catalog object
 	REBSER *cat;		// Error category object
 	REBCNT n;		// Word symbol number
-	REBCNT code;
+	REBINT code;
 
 	code = VAL_INT32(&error->code);
 
@@ -304,32 +302,44 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 **		to be bound to the error catalog context.
 **		If the message is not found, return null.
 **
+**	NOTE: throws invalid-arg error if id or type are not found
+**	      throws invalid-error if id or type are not words
+**
 ***********************************************************************/
 {
 	REBSER *frame;
 	REBVAL *obj1;
 	REBVAL *obj2;
 
-	if (!IS_WORD(&error->type) || !IS_WORD(&error->id)) return 0;
+	if (IS_NONE(&error->type) || IS_NONE(&error->id)) 
+		Trap0(RE_INVALID_ERROR);
 
 	// Find the correct error type object in the catalog:
+	if (!IS_WORD(&error->type)) goto invalid_type;
 	frame = VAL_OBJ_FRAME(Get_System(SYS_CATALOG, CAT_ERRORS));
 	obj1 = Find_Word_Value(frame, VAL_WORD_SYM(&error->type));
-	if (!obj1) return 0;
+	if (!obj1) goto invalid_type;
 
 	// Now find the correct error message for that type:
+	if (!IS_WORD(&error->id)) goto invalid_id;
 	frame = VAL_OBJ_FRAME(obj1);
 	obj2 = Find_Word_Value(frame, VAL_WORD_SYM(&error->id));
-	if (!obj2) return 0;
+	if (!obj2) goto invalid_id;
 
 	if (num) {
 		obj1 = Find_Word_Value(frame, SYM_CODE);
+		if (!obj1) return 0;
 		*num = VAL_INT32(obj1)
 			+ Find_Word_Index(frame, VAL_WORD_SYM(&error->id), FALSE)
 			- Find_Word_Index(frame, SYM_TYPE, FALSE) - 1;
 	}
 
 	return obj2;
+invalid_type:
+	Trap1(RE_INVALID_ARG, &error->type);
+invalid_id:
+	Trap1(RE_INVALID_ARG, &error->id);
+	return 0; // just for compiler
 }
 
 
@@ -346,6 +356,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	REBSER *err;		// Error object
 	ERROR_OBJ *error;	// Error object values
 	REBINT code = 0;
+	REBVAL *tmp;
 
 	// Create a new error object from another object, including any non-standard fields:
 	if (IS_ERROR(arg) || IS_OBJECT(arg)) {
@@ -370,21 +381,28 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	// If user set error code, use it to setup type and id fields.
 	if (IS_BLOCK(arg)) {
 		DISABLE_GC;
-		Do_Bind_Block(err, arg); // GC-OK (disabled)
+		tmp = Do_Bind_Block(err, arg); // GC-OK (disabled)
 		ENABLE_GC;
-		if (IS_INTEGER(&error->code) && VAL_INT64(&error->code)) {
-			Set_Error_Type(error);
-		} else {
-			if (Find_Error_Info(error, &code)) {
-				SET_INTEGER(&error->code, code);
-			}
+		if (THROWN(tmp)) { 
+			*value = *tmp;
+			return; 
 		}
+		
+		
+		//It was possible to set error using code, but that's now ignored!
+		//@@ https://github.com/Oldes/Rebol-issues/issues/1593
+		//if (IS_INTEGER(&error->code) && VAL_INT64(&error->code)) {
+		//	Set_Error_Type(error);
+		//} else {
+			if (!Find_Error_Info(error, &code)) code = RE_INVALID_ERROR;
+			SET_INTEGER(&error->code, code);
+
+		//}
 		// The error code is not valid:
-		if (IS_NONE(&error->id)) {
-			SET_INTEGER(&error->code, RE_INVALID_ERROR);
+		if (VAL_INT64(&error->code) == RE_INVALID_ERROR) {
 			Set_Error_Type(error);
 		}
-		if (VAL_INT64(&error->code) < 100 || VAL_INT64(&error->code) > 1000)
+		if (VAL_INT64(&error->code) < 100) // || VAL_INT64(&error->code) > 1000) 
 			Trap_Arg(arg);
 	}
 
@@ -425,6 +443,9 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	// Make a copy of the error object template:
 	err = CLONE_OBJECT(VAL_OBJ_FRAME(ROOT_ERROBJ));
 	error = ERR_VALUES(err);
+	
+	if (code >= THROWN_DISARM_OFFSET)
+		code -= THROWN_DISARM_OFFSET;
 
 	// Set error number:
 	SET_INTEGER(&error->code, (REBINT)code);
@@ -444,6 +465,40 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	}
 
 	return err;
+}
+
+
+/***********************************************************************
+**
+*/	void Disarm_Throw_Error(REBVAL *err)
+/*
+**		Creates real error object from an internal thrown one
+**
+***********************************************************************/
+{
+	REBINT code;
+	REBCNT sym;
+	REBSER *obj;
+	REBVAL *arg1 = NULL;
+	REBVAL word = {0};
+
+	code = VAL_ERR_NUM(err);
+	if (code > RE_THROW_MAX) return;
+
+	sym  = VAL_ERR_SYM(err);
+	arg1 = VAL_ERR_VALUE(err);
+	
+	if (sym) {
+		Set_Word(&word, sym, 0, 0);
+		VAL_SET(&word, REB_WORD);
+		VAL_ERR_SYM(err) = 0;
+	}
+
+	code += THROWN_DISARM_OFFSET;
+	
+	obj = Make_Error(code, arg1, sym ? &word : 0, 0);
+	VAL_ERR_OBJECT(err) = obj;
+	VAL_ERR_NUM(err) = code;
 }
 
 
@@ -604,7 +659,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 /*
 ***********************************************************************/
 {
-	Trap_Arg(arg);
+	Trap2(RE_CANNOT_USE, arg, Get_Type(type));
 }
 
 
@@ -622,7 +677,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	val = Get_Object(spec, STD_PORT_SPEC_HEAD_REF); // most informative
 	if (IS_NONE(val)) val = Get_Object(spec, STD_PORT_SPEC_HEAD_TITLE);
 
-	DS_PUSH_INTEGER(err_code);
+	DS_PUSH_INTEGER(-err_code);
 	Trap2(errnum, val, DS_TOP);
 }
 
@@ -680,7 +735,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	errs = Construct_Object(0, VAL_BLK(errors), 0);
 	Set_Object(Get_System(SYS_CATALOG, CAT_ERRORS), errs);
 
-	Set_Root_Series(TASK_ERR_TEMPS, Make_Block(3), "task errors");
+	Set_Root_Series(TASK_ERR_TEMPS, Make_Block(3), cb_cast("task errors"));
 
 	// Create objects for all error types:
 	for (val = BLK_SKIP(errs, 1); NOT_END(val); val++) {
@@ -694,7 +749,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 		POP_STATE(Top_State, Saved_State);
 		DSP++; // Room for return value
 		Catch_Error(DS_TOP); // Stores error value here
-		Print_Value(DS_TOP, 0, FALSE);
+		Print_Value(DS_TOP, 0, FALSE, TRUE);
 		Crash(RP_NO_CATCH);
 	}
 	SET_STATE(Top_State, Saved_State);
@@ -737,7 +792,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 ***********************************************************************/
 {
 	REBVAL *policy = Get_System(SYS_STATE, STATE_POLICIES);
-	REBYTE *flags;
+	REBYTE *flags = NULL;
 	REBCNT len;
 	REBCNT errcode = RE_SECURITY_ERROR;
 

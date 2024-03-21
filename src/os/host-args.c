@@ -45,9 +45,8 @@
 #include "reb-c.h"
 #include "reb-args.h"
 
-#define ARG_BUF_SIZE 1024
-
 extern int OS_Get_Current_Dir(REBCHR **lp);
+extern REBOOL OS_Get_Boot_Path(REBCHR **path);
 
 // REBOL Option --Words:
 
@@ -199,19 +198,36 @@ const struct arg_chr arg_chars2[] = {
 **		Parse REBOL's command line arguments, setting options
 **		and values in the provided args structure.
 **
+**		If RAW_MAIN_ARGS is used, the arguments list is not being
+**		parsed in this function, but instead will be converted to
+**		block of strings and leaved on interpreter to process it.
+**
 ***********************************************************************/
 {
+#ifdef RAW_MAIN_ARGS
+	CLEARS(rargs);
+	rargs->argc = argc;
+	rargs->argv = argv;
+	if (0 == OS_Get_Boot_Path(&rargs->exe_path)) {
+		// First arg is path to executable (on most systems):
+		if (argc > 0) rargs->exe_path = *argv;
+	}
+	OS_Get_Current_Dir(&rargs->current_dir);
+
+#else
+
 	REBCHR *arg;
-	REBCHR *args = 0; // holds trailing args
-	int flag;
-	int i;
+	int flag, i;
 
 	CLEARS(rargs);
 
-	// First arg is path to execuable (on most systems):
-	if (argc > 0) rargs->exe_path = *argv;
+	if (!OS_Get_Boot_Path(&rargs->exe_path)) {
+		// In case of fail...
+		// First arg is path to executable (on most systems):
+		if (argc > 0) rargs->exe_path = *argv;
+	}
 
-	OS_Get_Current_Dir(&rargs->home_dir);
+	OS_Get_Current_Dir(&rargs->current_dir);
 
 	// Parse each argument:
 	for (i = 1; i < argc ; i++) {
@@ -219,6 +235,10 @@ const struct arg_chr arg_chars2[] = {
 		if (arg == 0) continue; // shell bug
 		if (*arg == '-') {
 			if (arg[1] == '-') {
+				if (arg[2] == 0) {
+					// --  stops options parsing for the interpreter
+					break;
+				}
 				// --option words
 				flag = find_option_word(arg+2);
 				if (flag & RO_EXT) {
@@ -258,25 +278,25 @@ const struct arg_chr arg_chars2[] = {
 		}
 		else {
 			// script filename
-			if (!rargs->script)
-				rargs->script = arg;
-			else {
-				int len;
-				if (!args) {
-					args = MAKE_STR(ARG_BUF_SIZE);
-					args[0] = 0;
-				}
-				len = ARG_BUF_SIZE - LEN_STR(args) - 2; // space remaining
-				JOIN_STR(args, arg, len);
-				JOIN_STR(args, TXT(" "), 1);
+			if (rargs->script) {
+				// we already have the script from --script option
+				// so this should be first arg instead.
+				--i; // revert the counter so this value is collected later
 			}
+			else {
+				rargs->script = arg;
+				// after having processed a command-line argument as scriptname,
+				// all remaining arguments are passed as-is to the script (via system/options/args)
+			}
+			break;
 		}
 	}
-
-	if (args) {
-		args[LEN_STR(args)-1] = 0; // remove trailing space
-		Get_Ext_Arg(RO_ARGS, rargs, args);
+	// if there are still unprocessed args, pass them as a block (converted later in b-init.c)
+	if (argc > i++) {
+		rargs->argc = argc - i;
+		rargs->argv = argv + i;
 	}
+#endif
 }
 
 

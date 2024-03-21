@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,14 +23,18 @@
 **  Module:  t-integer.c
 **  Summary: integer datatype
 **  Section: datatypes
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Ladislav Mecir, Oldes
 **  Notes:
 **
 ***********************************************************************/
 
 #include "sys-core.h"
 #include "sys-deci-funcs.h"
+#include "sys-int-funcs.h"
 
+#ifdef _MSC_VER
+#pragma warning(disable: 4146) // unary minus operator applied to unsigned type, result still unsigned
+#endif
 
 /***********************************************************************
 **
@@ -42,6 +47,31 @@
 	return (VAL_INT64(a) > VAL_INT64(b));
 }
 
+/***********************************************************************
+**
+*/	REBINT Gcd(REBINT a, REBINT b)
+/*
+**	Greatest common divisor (Euclid's algorithm)
+**
+***********************************************************************/
+{
+	if (a < 0) a = -a;
+	if (b < 0) b = -b;
+	if (b) while ((a %= b) && (b %= a));
+	return a + b;
+}
+
+/***********************************************************************
+**
+*/	REBINT Lcm(REBINT a, REBINT b)
+/*
+**	Least common multiple
+***********************************************************************/
+{
+	if (a == 0 && b == 0) return 0;
+	return a / Gcd(a, b) * b;
+}
+
 
 /***********************************************************************
 **
@@ -52,13 +82,11 @@
 	REBVAL *val = D_ARG(1);
 	REBVAL *val2 = D_ARG(2);
 	REBI64 num;
-	REBI64 arg;
+	REBI64 arg = 0;
 	REBINT n;
 
-	REBU64 p, a, b; // for overflow detection
-	REBCNT a1, a0, b1, b0;
+	REBU64 a1, a0, b1, b0;
 	REBFLG sgn;
-	REBI64 anum;
 
 	num = VAL_INT64(val);
 
@@ -110,46 +138,66 @@
 	switch (action) {
 
 	case A_ADD:
-		anum = (REBU64)num + (REBU64)arg;
-		if (
-			((num < 0) == (arg < 0)) && ((num < 0) != (anum < 0))
-		) Trap0(RE_OVERFLOW);
-		num = anum;
+		if(num >= 0) {
+			if(arg > MAX_I64 - num)
+				Trap0(RE_OVERFLOW);
+		} else {
+			if(arg < MIN_I64 - num)
+				Trap0(RE_OVERFLOW);
+		}
+		num += arg;
 		break;
 
 	case A_SUBTRACT:
-		anum = (REBU64)num - (REBU64)arg;
-		if (
-			((num < 0) != (arg < 0)) && ((num < 0) != (anum < 0))
-		) Trap0(RE_OVERFLOW);
-		num = anum;
+		if(arg >= 0) {
+			if(num < MIN_I64 + arg)
+				Trap0(RE_OVERFLOW);
+		} else {
+			if(num > MAX_I64 + arg)
+				Trap0(RE_OVERFLOW);
+		}
+		num -= arg;
 		break;
 
 	case A_MULTIPLY:
-		a = num;
-		sgn = (num < 0);
-		if (sgn) a = -a;
-		b = arg;
-		if (arg < 0) {
+		// handle signs
+		sgn = num < 0;
+		if(sgn)
+			num = -(REBU64) num;
+		if(arg < 0) {
 			sgn = !sgn;
-			b = -b;
+			arg = -(REBU64) arg;
 		}
-		p = a * b;
-		a1 = a>>32;
-		a0 = a;
-		b1 = b>>32;
-		b0 = b;
-		if (
-			(a1 && b1)
-			|| ((REBU64)a0 * b1 + (REBU64)a1 * b0 > p >> 32)
-			|| ((p > (REBU64)MAX_I64) && (!sgn || (p > -(REBU64)MIN_I64)))
-		) Trap0(RE_OVERFLOW);
-		num = sgn ? -p : p;
+		// subdivide the factors
+		a1 = (REBU64) num >> 32;
+		b1 = (REBU64) arg >> 32;
+		a0 = (REBU64) num & 0xFFFFFFFFu;
+		b0 = (REBU64) arg & 0xFFFFFFFFu;
+		// multiply the parts
+		if(!a1)
+			num = b1 * a0;
+		else if(!b1)
+			num = a1 * b0;
+		else
+			Trap0(RE_OVERFLOW);
+		if((REBU64) num > (REBU64) MIN_I64 >> 32)
+			Trap0(RE_OVERFLOW);
+		num = ((REBU64) num << 32) + a0 * b0;
+		if(sgn) {
+			if((REBU64) num > (REBU64) MIN_I64)
+				Trap0(RE_OVERFLOW);
+			num = -(REBU64) num;
+		} else if((REBU64) num > (REBU64) MAX_I64)
+			Trap0(RE_OVERFLOW);
 		break;
 
 	case A_DIVIDE:
 		if (arg == 0) Trap0(RE_ZERO_DIVIDE);
-		if (num == MIN_I64 && arg == -1) Trap0(RE_OVERFLOW);
+		if(arg == -1) {
+			if(num < - MAX_I64) Trap0(RE_OVERFLOW);
+			num = - num;
+			break;
+		}
 		if (num % arg == 0) {
 			num = num / arg;
 			break;
@@ -171,15 +219,18 @@
 	case A_XOR: num ^= arg; break;
 
 	case A_NEGATE:
-		if (num == MIN_I64) Trap0(RE_OVERFLOW);
+		if (num < - MAX_I64) Trap0(RE_OVERFLOW);
 		num = -num;
 		break;
 
 	case A_COMPLEMENT: num = ~num; break;
 
-	case A_ABSOLUTE: 
-		if (num == MIN_I64) Trap0(RE_OVERFLOW);
-		if (num < 0) num = -num;
+	case A_ABSOLUTE:
+		if(num < 0) {
+			if (num < - MAX_I64)
+				Trap0(RE_OVERFLOW);
+			num = -num;
+		}
 		break;
 
 	case A_EVENQ: num = ~num;
@@ -223,7 +274,7 @@
 	case A_TO:
 		val = D_ARG(2);
 		if (IS_DECIMAL(val) || IS_PERCENT(val)) {
-			if (VAL_DECIMAL(val) < MIN_D64 || VAL_DECIMAL(val) >= MAX_D64)
+			if (VAL_DECIMAL(val) < MIN_D64 || VAL_DECIMAL(val) >= MAX_D64 || isnan(VAL_DECIMAL(val)))
 				Trap0(RE_OVERFLOW);
 			num = (REBI64)VAL_DECIMAL(val);
 		}
@@ -232,10 +283,8 @@
 		else if (IS_MONEY(val))
 			num = deci_to_int(VAL_DECI(val));
 		else if (IS_ISSUE(val)) {
-			REBYTE *bp;
-			REBCNT len;
-			bp = Get_Word_Name(val);
-			len = strlen(bp);
+			const REBYTE *bp = Get_Word_Name(val);
+			REBCNT len = LEN_BYTES(bp);
 			n = MIN(MAX_HEX_LEN, len);
 			if (Scan_Hex(bp, &num, n, n) == 0) goto is_bad;
 		}
@@ -271,6 +320,7 @@
 		else if (IS_CHAR(val))
 			num = VAL_CHAR(val);
 		// else if (IS_NONE(val)) num = 0;
+		else if (IS_DATE(val)) num = Date_To_Timestamp(val);
 		else if (IS_TIME (val)) num = SECS_IN(VAL_TIME(val));
 		else goto is_bad;
 		break;

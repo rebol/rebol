@@ -62,6 +62,8 @@ static REBOOL Equal_Object(REBVAL *val, REBVAL *arg)
 
 	// Compare each entry:
 	for (n = 1; n < (REBINT)(f1->tail); n++) {
+		if (VAL_HIDDEN(BLK_SKIP(w1, n))) return VAL_HIDDEN(BLK_SKIP(w2, n));
+		if (VAL_HIDDEN(BLK_SKIP(w2, n))) return VAL_HIDDEN(BLK_SKIP(w1, n));
 		if (Cmp_Value(BLK_SKIP(w1, n), BLK_SKIP(w2, n), FALSE)) return FALSE;
 		// Use Compare_Values();
 		if (Cmp_Value(BLK_SKIP(f1, n), BLK_SKIP(f2, n), FALSE)) return FALSE;
@@ -70,68 +72,121 @@ static REBOOL Equal_Object(REBVAL *val, REBVAL *arg)
 	return TRUE;
 }
 
-static void Append_Obj(REBSER *obj, REBVAL *arg)
+static void Extend_Obj(REBSER *obj, REBVAL *key, REBVAL *value)
 {
-	REBCNT i;
-	REBCNT len = 0;
+	REBCNT index;
 	REBVAL *val;
-	REBVAL *start = arg;
+
+	// Key must be a word only!
+	if (ANY_WORD(key)) {
+		// bug fix, 'self is protected only in selfish frames
+		if ((VAL_WORD_CANON(key) == SYM_SELF) && !IS_SELFLESS(obj))
+			Trap0(RE_SELF_PROTECTED);
+		index = Find_Word_Index(obj, VAL_WORD_SYM(key), TRUE);
+		if (index) {
+			if (!value) return;
+			val = FRM_VALUE(obj, index);
+			if (GET_FLAGS(VAL_OPTS(FRM_WORD(obj, index)), OPTS_HIDE, OPTS_LOCK)) {
+				if (VAL_PROTECTED(val)) Trap1(RE_LOCKED_WORD, val);
+				Trap0(RE_HIDDEN);
+			}
+		} else {
+			Expand_Frame(obj, 1, 1); // copy word table also
+			val = Append_Frame(obj, 0, VAL_WORD_SYM(key));
+		}
+		if (value)
+			*val = *value;
+		else
+			SET_UNSET(val);
+		return;
+	}
+	else {
+		Trap_Arg(key);
+	}
+}
+static void Append_Obj(REBSER *obj, REBVAL *arg, REBCNT part)
+{
+	REBCNT i, n, len;
+	REBVAL *word, *val;
+	REBINT *binds; // for binding table
 
 	// Can be a word:
 	if (ANY_WORD(arg)) {
-		if (!Find_Word_Index(obj, VAL_WORD_SYM(arg), TRUE)) {
-			if (VAL_WORD_CANON(arg) == SYM_SELF) Trap0(RE_SELF_PROTECTED);
-			Expand_Frame(obj, 1, 1); // copy word table also
-			Append_Frame(obj, 0, VAL_WORD_SYM(arg));
-			// val is UNSET
-		}
+		Extend_Obj(obj, arg, NULL);
 		return;
 	}
 
 	if (!IS_BLOCK(arg)) Trap_Arg(arg);
 
-	// Verify word/value argument block:
-	for (arg = VAL_BLK_DATA(arg); NOT_END(arg); arg += 2) {
+	// Process word/value argument block:
+	arg = VAL_BLK_DATA(arg);
 
-		if (!IS_WORD(arg) && !IS_SET_WORD(arg)) Trap_Arg(arg);
+	// Use binding table
+	binds = WORDS_HEAD(Bind_Table);
+	// Handle selfless
+	Collect_Start(IS_SELFLESS(obj) ? BIND_NO_SELF | BIND_ALL : BIND_ALL);
+	// Setup binding table with obj words:
+	Collect_Object(obj);
 
-		if (NZ(i = Find_Word_Index(obj, VAL_WORD_SYM(arg), TRUE))) {
-			// Just change the value, do not append it.
-			val = FRM_VALUE(obj, i);
-			if (GET_FLAGS(VAL_OPTS(FRM_WORD(obj, i)), OPTS_HIDE, OPTS_LOCK)) { 
-				// Back out... reset any prior flags:
-				for (; arg != VAL_BLK_DATA(start); arg -= 2) VAL_CLR_OPT(arg, OPTS_TEMP);
-				if (VAL_PROTECTED(FRM_WORD(obj, i))) Trap1(RE_LOCKED_WORD, FRM_WORD(obj, i));
-				Trap0(RE_HIDDEN);
+	part >>= 1; // part must be number of key/value pairs
+
+	// Examine word/value argument block
+	for (word = arg, n = 0; n < part && NOT_END(word); word += 2, n++) {
+
+		if (!IS_WORD(word) && !IS_SET_WORD(word)) {
+			// release binding table
+			BLK_TERM(BUF_WORDS);
+			Collect_End(obj);
+			Trap_Arg(word);
+		}
+
+		if (NZ(i = binds[VAL_WORD_CANON(word)])) {
+			// bug fix, 'self is protected only in selfish frames:
+			if ((VAL_WORD_CANON(word) == SYM_SELF) && !IS_SELFLESS(obj)) {
+				// release binding table
+				BLK_TERM(BUF_WORDS);
+				Collect_End(obj);
+				Trap0(RE_SELF_PROTECTED);
 			}
-			// Problem above: what about prior OPTS_FLAGS? Ok to leave them as is?
-			if (IS_END(arg+1)) SET_NONE(val);
-			else *val = arg[1];
-			VAL_SET_OPT(arg, OPTS_TEMP);
 		} else {
-			if (VAL_WORD_CANON(arg) == SYM_SELF) Trap0(RE_SELF_PROTECTED);
-			len++;
-			// was: Trap1(RE_DUP_VARS, arg);
+			// collect the word
+			binds[VAL_WORD_CANON(word)] = SERIES_TAIL(BUF_WORDS);
+			EXPAND_SERIES_TAIL(BUF_WORDS, 1);
+			val = BLK_LAST(BUF_WORDS);
+			*val = *word;
 		}
-	
-		if (IS_END(arg+1)) break; // fix bug#708
+		if (IS_END(word + 1)) break; // fix bug#708
 	}
 
-	// Append new values to end of frame (if necessary):
-	if (len > 0) {
-		Expand_Frame(obj, len, 1); // copy word table also
-		for (arg = VAL_BLK_DATA(start); NOT_END(arg); arg += 2) {
-			if (VAL_GET_OPT(arg, OPTS_TEMP)) VAL_CLR_OPT(arg, OPTS_TEMP);
-			else {
-				val = Append_Frame(obj, 0, VAL_WORD_SYM(arg));
-				if (IS_END(arg+1)) {
-					SET_NONE(val);
-					break;
-				}
-				else *val = arg[1];
-			}
+	BLK_TERM(BUF_WORDS);
+
+	// Append new words to obj
+	len = SERIES_TAIL(obj);
+	Expand_Frame(obj, SERIES_TAIL(BUF_WORDS) - len, 1);
+	for (word = BLK_SKIP(BUF_WORDS, len); NOT_END(word); word++)
+		Append_Frame(obj, 0, VAL_WORD_SYM(word));
+
+	// Set new values to obj words
+	for (word = arg, n = 0; n < part && NOT_END(word); word += 2, n++) {
+
+		i = binds[VAL_WORD_CANON(word)];
+		val = FRM_VALUE(obj, i);
+		if (GET_FLAGS(VAL_OPTS(FRM_WORD(obj, i)), OPTS_HIDE, OPTS_LOCK)) { 
+			// release binding table
+			Collect_End(obj);
+			if (VAL_PROTECTED(FRM_WORD(obj, i)))
+				Trap1(RE_LOCKED_WORD, FRM_WORD(obj, i));
+			Trap0(RE_HIDDEN);
 		}
+
+		if (IS_END(word + 1)) SET_UNSET(val);
+		else *val = word[1];
+
+		if (IS_END(word + 1)) break; // fix bug#708
 	}
+
+	// release binding table
+	Collect_End(obj);
 }
 
 static REBSER *Trim_Object(REBSER *obj)
@@ -214,7 +269,7 @@ static REBSER *Trim_Object(REBSER *obj)
 /*
 ***********************************************************************/
 {
-	REBINT n = 0;
+	REBCNT n = 0;
 
 	if (!VAL_OBJ_FRAME(pvs->value)) {
 		return PE_NONE; // Error objects may not have a frame.
@@ -223,12 +278,7 @@ static REBSER *Trim_Object(REBSER *obj)
 	if (IS_WORD(pvs->select)) {
 		n = Find_Word_Index(VAL_OBJ_FRAME(pvs->value), VAL_WORD_SYM(pvs->select), FALSE);
 	}
-//	else if (IS_INTEGER(pvs->select)) {
-//		n = Int32s(pvs->select, 1);
-//	}
-	else return PE_BAD_SELECT;
-
-	if (n <= 0 || (REBCNT)n >= SERIES_TAIL(VAL_OBJ_FRAME(pvs->value)))
+	if (n == 0)
 		return PE_BAD_SELECT;
 
 	if (pvs->setval && IS_END(pvs->path+1) && VAL_PROTECTED(VAL_FRM_WORD(pvs->value, n)))
@@ -253,7 +303,7 @@ static REBSER *Trim_Object(REBSER *obj)
 	REBVAL *arg = D_ARG(2);
 	REBINT n;
 	REBVAL *val;
-	REBSER *obj, *src_obj;
+	REBSER *obj = NULL, *src_obj;
 	REBCNT type = 0;
 
 	switch (action) {
@@ -289,7 +339,9 @@ static REBSER *Trim_Object(REBSER *obj)
 
 				// make task! [init]
 				if (type == REB_TASK) {
+#ifdef INCLUDE_TASK
 					// Does it include a spec?
+					VAL_SET(value, REB_TASK);
 					if (IS_BLOCK(VAL_BLK(arg))) {
 						arg = VAL_BLK(arg);
 						if (!IS_BLOCK(arg+1)) Trap_Make(REB_TASK, value);
@@ -299,7 +351,12 @@ static REBSER *Trim_Object(REBSER *obj)
 						obj = Make_Module_Spec(0);
 						VAL_MOD_BODY(value) = VAL_SERIES(arg);
 					}
-					break; // returns obj
+					VAL_MOD_FRAME(value) = obj;
+					DS_RET_VALUE(value);
+#else
+					Trap0(RE_FEATURE_NA);
+#endif
+					return R_RET;
 				}
 			}
 
@@ -310,20 +367,24 @@ static REBSER *Trim_Object(REBSER *obj)
 				break; // returns value
 			}
 
-			// make object! 10
-			if (IS_NUMBER(arg)) {
-				n = Int32s(arg, 0);
-				obj = Make_Frame(n);
-				break; // returns obj
+			// Allow only object! to be made from from map! or number! spec
+			if (type == REB_OBJECT) {
+
+				// make object! 10
+				if (IS_NUMBER(arg)) {
+					n = Int32s(arg, 0);
+					obj = Make_Frame(n);
+					break; // returns obj
+				}
+
+				// make object! map!
+				if (IS_MAP(arg)) {
+					obj = Map_To_Object(VAL_SERIES(arg));
+					break; // returns obj
+				}
 			}
 
-			// make object! map!
-			if (IS_MAP(arg)) {
-				obj = Map_To_Object(VAL_SERIES(arg));
-				break; // returns obj
-			}
-
-			//if (IS_NONE(arg)) {obj = Make_Frame(0); break;}
+			//if (IS_NONE(arg)) {obj = Make_Frame(0); break;} // removed by design!
 
 			Trap_Make(type, arg);
 		}
@@ -358,6 +419,11 @@ static REBSER *Trim_Object(REBSER *obj)
 				obj = Merge_Frames(src_obj, VAL_OBJ_FRAME(arg));
 				break; // returns obj
 			}
+		}
+		else if (IS_ERROR(value)) {
+			Make_Error_Object(arg, value); // arg is block/string, returns value
+			type = 0;
+			break; // returns value
 		}
 		Trap_Make(VAL_TYPE(value), value);
 
@@ -395,10 +461,24 @@ static REBSER *Trim_Object(REBSER *obj)
 		Trap_Make(type, arg);
 
 	case A_APPEND:
+	case A_INSERT:
 		TRAP_PROTECT(VAL_SERIES(value));
 		if (IS_OBJECT(value)) {
-			Append_Obj(VAL_OBJ_FRAME(value), arg);
+			if (DS_REF(AN_DUP)) {
+				n = Int32(DS_ARG(AN_COUNT));
+				if (n <= 0) break;
+			}
+			Append_Obj(VAL_OBJ_FRAME(value), arg, Partial1(arg, D_ARG(AN_LENGTH)));
 			return R_ARG1;
+		}
+		else
+			Trap_Action(VAL_TYPE(value), action); // !!! needs better error
+
+	case A_PUT:
+		TRAP_PROTECT(VAL_SERIES(value));
+		if (IS_OBJECT(value)) {
+			Extend_Obj(VAL_OBJ_FRAME(value), arg, D_ARG(3));
+			return R_ARG3;
 		}
 		else
 			Trap_Action(VAL_TYPE(value), action); // !!! needs better error
@@ -416,14 +496,15 @@ static REBSER *Trim_Object(REBSER *obj)
 		REBU64 types = 0;
 		if (D_REF(ARG_COPY_PART)) Trap0(RE_BAD_REFINES);
 		if (D_REF(ARG_COPY_DEEP)) {
-			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? 0 : TS_STD_SERIES);
+			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? 0 : TS_DEEP_COPIED);
 		}
 		if D_REF(ARG_COPY_TYPES) {
 			arg = D_ARG(ARG_COPY_KINDS);
 			if (IS_DATATYPE(arg)) types |= TYPESET(VAL_DATATYPE(arg));
 			else types |= VAL_TYPESET(arg);
 		}
-		VAL_OBJ_FRAME(value) = obj = Copy_Block(VAL_OBJ_FRAME(value), 0);
+		obj = Copy_Block(VAL_OBJ_FRAME(value), 0);
+		VAL_OBJ_FRAME(value) = obj;
 		if (types != 0) Copy_Deep_Values(obj, 1, SERIES_TAIL(obj), types);
 		break; // returns value
 	}
@@ -443,10 +524,15 @@ static REBSER *Trim_Object(REBSER *obj)
 
 	case A_REFLECT:
 		action = What_Reflector(arg); // zero on error
-		if (action == OF_SPEC) {
+		if (action == OF_SPEC || action == OF_TITLE) {
 			if (!VAL_MOD_SPEC(value)) return R_NONE;
 			VAL_OBJ_FRAME(value) = VAL_MOD_SPEC(value);
 			VAL_SET(value, REB_OBJECT);
+			if (action == OF_TITLE) {
+				REBCNT n = Find_Word_Index(VAL_OBJ_FRAME(value), SYM_TITLE, FALSE);
+				if(!n) return R_NONE;
+				value = VAL_OBJ_VALUE(value, n);
+			}
 			break;
 		}
 		// Adjust for compatibility with PICK:
@@ -484,6 +570,7 @@ reflect:
 	}
 
 	if (type) {
+		memset(&VAL_ALL_BITS(value), 0, sizeof(VAL_ALL_BITS(value)));
 		VAL_SET(value, type);
 		VAL_OBJ_FRAME(value) = obj;
 	}

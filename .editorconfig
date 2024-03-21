@@ -1,0 +1,23 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+[*]
+indent_size = 4
+
+[*.{r,r3,reb,c,h,cpp}]
+indent_style = tab
+
+[*.{r,r3,reb}]
+charset = utf-8
+
+[*.{bat,vcproj,vcxproj,sln,vbs,rc}]
+end_of_line = crlf
+
+[*.{yml}]
+indent_style = space
+indent_size = 2
+
+[LICENSE]
+end_of_line = crlf

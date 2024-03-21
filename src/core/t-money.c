@@ -42,7 +42,7 @@
 	if (mode >= 3) e = deci_is_same(VAL_DECI(a), VAL_DECI(b));
 	else {
 		e = deci_is_equal(VAL_DECI(a), VAL_DECI(b));
-		g = 0;
+		//g = 0;
 		if (mode < 0) {
 			g = deci_is_lesser_or_equal(VAL_DECI(b), VAL_DECI(a));
 			if (mode == -1) e |= g;
@@ -69,7 +69,7 @@
 /*
 ***********************************************************************/
 {
-	REBCNT len;
+	REBCNT len=0;
 	REBYTE buf[MAX_HEX_LEN+4] = {0}; // binary to convert
 
 	if (IS_BINARY(val)) {
@@ -95,7 +95,7 @@
 		}
 	}
 #endif
-	memcpy(buf + 12 - len, buf, len); // shift to right side
+	memmove(buf + 12 - len, buf, len); // shift to right side
 	memset(buf, 0, 12 - len);
 	VAL_DECI(result) = binary_to_deci(buf);
 	return TRUE;
@@ -110,7 +110,7 @@
 {
 	REBVAL *val = D_ARG(1);
 	REBVAL *arg;
-	REBYTE *str;
+	const REBYTE *str;
 	REBINT equal = 1;
 
 	if (IS_BINARY_ACT(action)) {
@@ -124,6 +124,10 @@
 		}
 		else if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
 			VAL_DECI(D_RET) = decimal_to_deci(VAL_DECIMAL(arg));
+			arg = D_RET;
+		}
+		else if (IS_TIME(arg) && action == A_MULTIPLY) {
+			VAL_DECI(D_RET) = decimal_to_deci(VAL_TIME(arg) * NANO / 3600.0);
 			arg = D_RET;
 		}
 		else Trap_Math_Args(REB_MONEY, action);
@@ -215,21 +219,22 @@
 
 		case REB_STRING:
 		{
-			REBYTE *end;
+			const REBYTE *end;
 			str = Qualify_String(arg, 36, 0, FALSE);
 			VAL_DECI(D_RET) = string_to_deci(str, &end);
-			if (end == str || *end != 0) Trap_Make(REB_MONEY, arg);
+			if (end == str || *end != 0)  goto err;
 			break;
 		}
 
-//		case REB_ISSUE:
+//		case REB_ISSUE: // removed support -> https://github.com/Oldes/Rebol-issues/issues/1130
 		case REB_BINARY:
 			if (!Bin_To_Money(D_RET, arg)) goto err;
 			break;
 
 		case REB_LOGIC:
+			if(action != A_MAKE)  goto err;
 			equal = !VAL_LOGIC(arg);
-//		case REB_NONE: // 'equal defaults to 1
+//		case REB_NONE: // 'equal defaults to 1 // removed by design
 			VAL_DECI(D_RET) = int_to_deci(equal ? 0 : 1);
 			break;
 
