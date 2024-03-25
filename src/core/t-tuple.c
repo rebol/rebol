@@ -274,7 +274,10 @@
 		goto ret_value;
 	}
 	if (action == A_RANDOM) {
-		if (D_REF(2)) Trap0(RE_BAD_REFINES); // seed
+		if (D_REF(2)) { // seed
+			Set_Random(Compute_CRC24(vp, len));
+			return R_UNSET;
+		}
 		for (;len > 0; len--, vp++) {
 			if (*vp)
 				*vp = (REBYTE)(Random_Int(D_REF(3)) % (1+*vp));

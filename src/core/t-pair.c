@@ -282,7 +282,10 @@
 			goto setPair;
 
 		case A_RANDOM:
-			if (D_REF(2)) Trap0(RE_BAD_REFINES); // seed
+			if (D_REF(2)) { // seed
+				Set_Random(VAL_INT64(val));
+				return R_UNSET;
+			}
 			x1 = (REBD32)Random_Range((REBINT)x1, (REBOOL)D_REF(3));
 			y1 = (REBD32)Random_Range((REBINT)y1, (REBOOL)D_REF(3));
 			goto setPair;
