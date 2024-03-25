@@ -44,6 +44,18 @@
 FORCE_INLINE REBCNT getblock32(const REBCNT* p, int i) {
 	return p[i];
 }
+/*-----------------------------------------------------------------------------
+// Block mix - mix the key block, combine with hash block, mix the hash block,
+// repeat. */
+
+FORCE_INLINE void bmix(REBCNT* h1, REBCNT* k1)
+{
+	*k1 *= MURMUR_HASH_3_X86_32_C1;
+	*k1 = ROTL32(*k1, 15);
+	*k1 *= MURMUR_HASH_3_X86_32_C2;
+	*h1 ^= *k1;
+	*h1 = ROTL32(*h1, 13); *h1 = *h1 * 5 + 0xe6546b64;
+}
 //-----------------------------------------------------------------------------
 // Finalization mix - force all bits of a hash block to avalanche
 FORCE_INLINE REBCNT fmix32(REBCNT h) {
@@ -69,14 +81,7 @@ REBCNT MurmurHash3_x86_32(const void* key, int len, REBCNT seed)
 	for (int i = -nblocks; i; i++)
 	{
 		REBCNT k1 = getblock32(blocks, i);
-
-		k1 *= MURMUR_HASH_3_X86_32_C1;
-		k1 = ROTL32(k1, 15);
-		k1 *= MURMUR_HASH_3_X86_32_C2;
-
-		h1 ^= k1;
-		h1 = ROTL32(h1, 13);
-		h1 = h1 * 5 + 0xe6546b64;
+		bmix(&h1, &k1);
 	}
 
 	//----------
@@ -90,7 +95,7 @@ REBCNT MurmurHash3_x86_32(const void* key, int len, REBCNT seed)
 	case 2: k1 ^= tail[1] << 8;
 	case 1: k1 ^= tail[0];
 		k1 *= MURMUR_HASH_3_X86_32_C1;
-		k1  = ROTL32(k1, 15);
+		k1  = ROTL32(k1, 16);
 		k1 *= MURMUR_HASH_3_X86_32_C2;
 		h1 ^= k1;
 	};
@@ -101,8 +106,6 @@ REBCNT MurmurHash3_x86_32(const void* key, int len, REBCNT seed)
 	h1 = fmix32(h1);
 
 	return h1;
-
-	//*(REBCNT*)out = h1;
 }
 
 
@@ -120,9 +123,10 @@ REBCNT MurmurHash3_x86_32(const void* key, int len, REBCNT seed)
 	return R_RET;
 }
 
+FORCE_INLINE
 /***********************************************************************
 **
-*/	FORCE_INLINE REBCNT Hash_Probe(REBCNT hash, REBCNT idx, REBCNT len)
+*/	REBCNT Hash_Probe(REBCNT hash, REBCNT idx, REBCNT len)
 /*
 **		Calculates the index based on a quadratic probing approach.
 **
@@ -147,7 +151,7 @@ REBCNT MurmurHash3_x86_32(const void* key, int len, REBCNT seed)
 	if (ANY_WORD(val))
 		return VAL_WORD_CANON(val); //plain value seems to be faster than: fmix32(VAL_WORD_CANON(val));
 	if (ANY_STR(val))
-		return CRC_String(VAL_BIN_DATA(val), Val_Byte_Len(val)) ^ VAL_TYPE(val);
+		return Hash_String_Value(val) ^ VAL_TYPE(val);
 	if (ANY_BLOCK(val))
 		return Hash_Block_Value(val);
 
@@ -203,26 +207,15 @@ REBCNT MurmurHash3_x86_32(const void* key, int len, REBCNT seed)
 ***********************************************************************/
 {
 	REBCNT k1, h1 = 0;
-	REBCNT n;
 	REBVAL *data = VAL_BLK_DATA(block);
 	REBLEN len = VAL_LEN(block);
 
 	k1 = VAL_TYPE(block);
-	k1 *= MURMUR_HASH_3_X86_32_C1;
-	k1 = ROTL32(k1, 15);
-	k1 *= MURMUR_HASH_3_X86_32_C2;
-	h1 ^= k1;
-	h1 = ROTL32(h1, 13);
-	h1 = h1 * 5 + 0xe6546b64;
+	bmix(&h1, &k1);
 
 	while (NZ(VAL_TYPE(data))) {
 		k1 = Hash_Value(data++);
-		k1 *= MURMUR_HASH_3_X86_32_C1;
-		k1 = ROTL32(k1, 15);
-		k1 *= MURMUR_HASH_3_X86_32_C2;
-		h1 ^= k1;
-		h1 = ROTL32(h1, 13);
-		h1 = h1 * 5 + 0xe6546b64;
+		bmix(&h1, &k1);
 	}
 	h1 ^= len;
 	h1 = fmix32(h1);
@@ -232,7 +225,45 @@ REBCNT MurmurHash3_x86_32(const void* key, int len, REBCNT seed)
 
 /***********************************************************************
 **
-*/	FORCE_INLINE REBCNT Hash_Binary(const REBYTE* bin, REBCNT len)
+*/	REBCNT Hash_String_Value(REBVAL* val)
+/*
+**		Return a case insensitive hash value for the string value.
+**
+***********************************************************************/
+{
+	REBYTE* bin;
+	REBUNI* uni;
+	REBLEN  len;
+	REBCNT  n, ch;
+	REBCNT  hash = 0;
+
+	if (BYTE_SIZE(VAL_SERIES(val))) {
+		bin = VAL_BIN_DATA(val);
+		len = VAL_TAIL(val) - VAL_INDEX(val);
+		for (n = 0; n < len; n++) {
+			ch = (REBCNT)LO_CASE(*bin++);
+			bmix(&hash, &ch);
+		}
+	}
+	else {
+		uni = VAL_UNI_DATA(val);
+		len = Val_Series_Len(val);
+		for (n = 0; n < len; n++) {
+			ch = (REBCNT)(*uni++);
+			if (ch < UNICODE_CASES)
+				ch = (REBCNT)LO_CASE(ch);
+			bmix(&hash, &ch);
+		}
+	}
+	hash ^= len;
+	hash = fmix32(hash);
+	return hash;
+}
+
+FORCE_INLINE
+/***********************************************************************
+**
+*/	REBCNT Hash_Binary(const REBYTE* bin, REBCNT len)
 /*
 **		Return a case sensitive hash value for the binary.
 **
@@ -241,40 +272,6 @@ REBCNT MurmurHash3_x86_32(const void* key, int len, REBCNT seed)
 	return MurmurHash3_x86_32(bin, len, 0);
 	//return XXH64(bin, len, 0);
 
-}
-
-/***********************************************************************
-**
-*/	REBCNT Hash_String(REBVAL* val)
-/*
-**		Return a case insensitive hash value for the string.  The
-**		string does not have to be zero terminated and UTF8 is ok.
-**
-***********************************************************************/
-{
-	REBSER* ser = VAL_SERIES(val);
-	REBCNT	pos = VAL_INDEX(val);
-	REBCNT  tail = VAL_TAIL(val);
-	REBLEN  len = VAL_TAIL(val) - pos;
-	REBUNI  ch;
-	REBCNT  hash=0;
-
-	for (; pos < tail; pos++) {
-		ch = GET_ANY_CHAR(ser, pos);
-		if (ch < UNICODE_CASES)
-			ch = LO_CASE(ch);
-
-		ch *= MURMUR_HASH_3_X86_32_C1;
-		ch  = ROTL32(ch, 15);
-		ch *= MURMUR_HASH_3_X86_32_C2;
-
-		hash ^= ch;
-		hash  = ROTL32(hash, 13);
-		hash  = hash * 5 + 0xe6546b64;
-	}
-	hash ^= len;
-	hash = fmix32(hash);
-	return hash;
 }
 
 
@@ -298,13 +295,7 @@ REBCNT MurmurHash3_x86_32(const void* key, int len, REBCNT seed)
 			if (!ch) Trap0(RE_INVALID_CHARS);
 		}
 		if (ch < UNICODE_CASES) ch = LO_CASE(ch);
-		ch *= MURMUR_HASH_3_X86_32_C1;
-		ch  = ROTL32(ch, 15);
-		ch *= MURMUR_HASH_3_X86_32_C2;
-
-		hash ^= ch;
-		hash = ROTL32(hash, 13);
-		hash = hash * 5 + 0xe6546b64;
+		bmix(&hash, &ch);
 	}
 	hash ^= len;
 	hash = fmix32(hash);

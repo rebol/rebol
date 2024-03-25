@@ -150,9 +150,10 @@ static REBCNT *CRC32_Table = 0;
 	Free_Mem(CRC32_Table, 0);
 }
 
+#ifdef unused
 /***********************************************************************
 **
-*/	REBINT CRC_String(REBYTE* str, REBCNT len)
+X*/	REBINT CRC_String(REBVAL *val)
 /*
 **		Return a case insensitive hash value for the string.  The
 **		string does not have to be zero terminated and UTF8 is ok.
@@ -160,15 +161,33 @@ static REBCNT *CRC32_Table = 0;
 ***********************************************************************/
 {
 	REBYTE	n;
-	REBINT hash = (REBINT)len + (REBINT)((REBYTE)LO_CASE(*str));
+	REBINT hash;
+	REBYTE* bin;
+	REBUNI* uni;
+	REBLEN  len;
 
-	for (; len > 0; len--) {
-		n = (REBYTE)((hash >> CRCSHIFTS) ^ (REBYTE)LO_CASE(*str++));
-		hash = MASK_CRC(hash << 8) ^ (REBINT)CRC24_Table[n];
+	if (BYTE_SIZE(VAL_SERIES(val))) {
+		bin = VAL_BIN_DATA(val);
+		len = Val_Byte_Len(val);
+		hash = (REBINT)len + (REBINT)((REBYTE)LO_CASE(*bin));
+		for (; len > 0; len--) {
+			n = (REBYTE)((hash >> CRCSHIFTS) ^ (REBYTE)LO_CASE(*bin++));
+			hash = MASK_CRC(hash << 8) ^ (REBINT)CRC24_Table[n];
+		}
+	}
+	else {
+		uni = VAL_UNI_DATA(val);
+		len = Val_Series_Len(val);
+		hash = (REBINT)len + (REBINT)((REBYTE)LO_CASE(*uni));
+		for (; len > 0; len--) {
+			n = (REBYTE)((hash >> CRCSHIFTS) ^ (REBYTE)LO_CASE(*uni++));
+			hash = MASK_CRC(hash << 8) ^ (REBINT)CRC24_Table[n];
+		}
 	}
 
 	return hash;
 }
+#endif
 
 /***********************************************************************
 **
