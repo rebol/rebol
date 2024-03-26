@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Contributors
+**  Copyright 2012-2024 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -131,219 +131,6 @@ static REBCNT *CRC32_Table = 0;
 
 /***********************************************************************
 **
-*/	REBINT Hash_String(REBYTE *str, REBCNT len)
-/*
-**		Return a case insensitive hash value for the string.  The
-**		string does not have to be zero terminated and UTF8 is ok.
-**
-***********************************************************************/
-{
-	REBYTE	n;
-	REBINT hash = (REBINT)len + (REBINT)((REBYTE)LO_CASE(*str));
-
-	for (; len > 0; len--) {
-		n = (REBYTE)((hash >> CRCSHIFTS) ^ (REBYTE)LO_CASE(*str++));
-		hash = MASK_CRC(hash << 8) ^ (REBINT)CRC24_Table[n];
-	}
-
-	return hash;
-}
-
-
-/***********************************************************************
-**
-*/	REBINT Hash_Word(const REBYTE *str, REBINT len)
-/*
-**		Return a case insensitive hash value for the string.
-**
-***********************************************************************/
-{
-	REBINT m, n;
-	REBINT hash;
-	REBCNT ulen;
-
-	if (len < 0) len = (REBINT)LEN_BYTES(str);
-
-	hash = (REBINT)len + (REBINT)((REBYTE)LO_CASE(*str));
-
-	ulen = (REBCNT)len; // so the & operation later isn't for the wrong type
-
-	for (; ulen > 0; str++, ulen--) {
-		n = *str;
-		if (n > 127) {
-			m = Decode_UTF8_Char(&str, &ulen); // mods str, ulen
-			if (!m) Trap0(RE_INVALID_CHARS);
-			n = m; 
-		}
-		if (n < UNICODE_CASES) n = LO_CASE(n);
-		n = (REBYTE)((hash >> CRCSHIFTS) ^ (REBYTE)n); // drop upper 8 bits
-		hash = MASK_CRC(hash << 8) ^ (REBINT)CRC24_Table[n];
-	}
-
-	return hash;
-}
-
-
-/***********************************************************************
-**
-*/	REBINT Hash_Value(REBVAL *val, REBCNT hash_size)
-/*
-**		Return a case insensitive hash value for any value.
-**
-**		Result will be > 0 and < hash_size, except if
-**		datatype cannot be hashed, a 0 is returned.
-**
-***********************************************************************/
-{
-	REBCNT ret;
-
-	switch(VAL_TYPE(val)) {
-
-	case REB_WORD:
-	case REB_SET_WORD:
-	case REB_GET_WORD:
-	case REB_LIT_WORD:
-	case REB_REFINEMENT:
-	case REB_ISSUE:
-		ret = VAL_WORD_CANON(val);
-		break;
-
-	case REB_BINARY:
-	case REB_STRING:
-	case REB_FILE:
-	case REB_EMAIL:
-	case REB_URL:
-	case REB_TAG:
-	case REB_REF:
-		ret = Hash_String(VAL_BIN_DATA(val), Val_Byte_Len(val));
-		break;
-
-	case REB_LOGIC:
-		ret = VAL_LOGIC(val) ? (hash_size/5) : (2*hash_size/5);
-		break;
-
-	case REB_INTEGER:
-	case REB_DECIMAL: // depends on INT64 sharing the DEC64 bits
-		ret = (REBCNT)(VAL_INT64(val) >> 32) ^ ((REBCNT)VAL_INT64(val));
-		break;
-
-	case REB_CHAR:
-		ret = VAL_CHAR(val) << 15; // avoid running into WORD hashes
-		break;
-
-	case REB_MONEY:
-		ret = VAL_ALL_BITS(val)[0] ^ VAL_ALL_BITS(val)[1] ^ VAL_ALL_BITS(val)[2];
-		break;
-
-	case REB_TIME:
-	case REB_DATE:
-		ret = (REBCNT)(VAL_TIME(val) ^ (VAL_TIME(val) / SEC_SEC));
-		if (IS_DATE(val)) ret ^= VAL_DATE(val).bits;
-		break;
-
-	case REB_TUPLE:
-		if (VAL_TUPLE_LEN(val) <= 4) {
-			// For colors (tuple of size 4) there may be used Knuth's multiplicative hash.
-			// Knuth's multiplication constant is 2654435761L, but it may be different as long
-			// as it is:
-			// 1. Odd number (Otherwise we may lose the highest bit.)
-			// 2. Has no long streaks of ones or zeros.
-			ret = (REBCNT)(((REBU64)VAL_UNT32(val) * 2654435761L) >> 26);
-			// The higher bits contain more mixture from the multiplication,
-			// so the shift is not 32, but just 26.
-
-			// In Brotli compressor the constant is 506832829L and the shift is 18.
-			//ret = (REBCNT)(((REBU64)VAL_UNT32(val) * 506832829L) >> 18);
-		} else {
-			ret = Hash_String(VAL_TUPLE(val), VAL_TUPLE_LEN(val));
-		}
-		break;
-
-	case REB_PAIR:
-		ret = VAL_ALL_BITS(val)[0] ^ VAL_ALL_BITS(val)[1];
-		break;
-
-	case REB_OBJECT:
-		ret = (REBCNT)((REBUPT)VAL_OBJ_FRAME(val) >> 4);
-		break;
-
-	case REB_DATATYPE:
-		ret = Hash_Word(Get_Sym_Name(VAL_DATATYPE(val)+1), -1);
-		break;
-
-	case REB_NONE:
-		ret = 1;
-		break;
-
-	case REB_UNSET:
-		ret = 0;
-		break;
-
-	case REB_HANDLE:
-		ret = (REBCNT)VAL_HANDLE_I32(val);
-		break;
-
-	default:
-		return 0;  //ret = 3 * (hash_size/5);
-	}
-
-	return 1 + ((hash_size-1) & ret);
-}
-
-
-/***********************************************************************
-**
-*/	REBSER *Make_Hash_Array(REBCNT len)
-/*
-***********************************************************************/
-{
-	REBCNT n;
-	REBSER *ser;
-
-	n = Get_Hash_Prime(len * 2); // best when 2X # of keys
-	if (!n) Trap_Num(RE_SIZE_LIMIT, len);
-
-	ser = Make_Series(n + 1, sizeof(REBCNT), FALSE);
-	LABEL_SERIES(ser, "make hash array");
-	Clear_Series(ser);
-	ser->tail = n;
-
-	return ser;
-}
-
-
-/***********************************************************************
-**
-*/	REBSER *Hash_Block(REBVAL *block, REBCNT cased)
-/*
-**		Hash ALL values of a block. Return hash array series.
-**		Used for SET logic (unique, union, etc.)
-**
-**		Note: hash array contents (indexes) are 1-based!
-**
-***********************************************************************/
-{
-	REBCNT n;
-	REBCNT key;
-	REBSER *hser;
-	REBCNT *hashes;
-	REBSER *series = VAL_SERIES(block);
-
-	// Create the hash array (integer indexes):
-	hser = Make_Hash_Array(VAL_LEN(block));
-	hashes = (REBCNT*)hser->data;
-
-	for (n = VAL_INDEX(block); n < series->tail; n++) {
-		key = Find_Key(series, hser, BLK_SKIP(series, n), 1, cased, 0);
-		hashes[key] = n + 1;
-	}
-
-	return hser;
-}
-
-
-/***********************************************************************
-**
 */	void Init_CRC(void)
 /*
 ***********************************************************************/
@@ -361,6 +148,75 @@ static REBCNT *CRC32_Table = 0;
 {
 	Free_Mem(CRC24_Table, 0);
 	Free_Mem(CRC32_Table, 0);
+}
+
+#ifdef unused
+/***********************************************************************
+**
+X*/	REBINT CRC_String(REBVAL *val)
+/*
+**		Return a case insensitive hash value for the string.  The
+**		string does not have to be zero terminated and UTF8 is ok.
+**
+***********************************************************************/
+{
+	REBYTE	n;
+	REBINT hash;
+	REBYTE* bin;
+	REBUNI* uni;
+	REBLEN  len;
+
+	if (BYTE_SIZE(VAL_SERIES(val))) {
+		bin = VAL_BIN_DATA(val);
+		len = Val_Byte_Len(val);
+		hash = (REBINT)len + (REBINT)((REBYTE)LO_CASE(*bin));
+		for (; len > 0; len--) {
+			n = (REBYTE)((hash >> CRCSHIFTS) ^ (REBYTE)LO_CASE(*bin++));
+			hash = MASK_CRC(hash << 8) ^ (REBINT)CRC24_Table[n];
+		}
+	}
+	else {
+		uni = VAL_UNI_DATA(val);
+		len = Val_Series_Len(val);
+		hash = (REBINT)len + (REBINT)((REBYTE)LO_CASE(*uni));
+		for (; len > 0; len--) {
+			n = (REBYTE)((hash >> CRCSHIFTS) ^ (REBYTE)LO_CASE(*uni++));
+			hash = MASK_CRC(hash << 8) ^ (REBINT)CRC24_Table[n];
+		}
+	}
+
+	return hash;
+}
+#endif
+
+/***********************************************************************
+**
+*/	REBCNT CRC_Word(const REBYTE* str, REBCNT len)
+/*
+**		Return a case insensitive hash value for the string.
+**
+***********************************************************************/
+{
+	REBINT m, n;
+	REBINT hash;
+
+	if (len == UNKNOWN) len = (REBINT)LEN_BYTES(str);
+
+	hash = len + (REBYTE)LO_CASE(*str);
+
+	for (; len > 0; str++, len--) {
+		n = *str;
+		if (n > 127) {
+			m = Decode_UTF8_Char(&str, &len); // mods str, ulen
+			if (!m) Trap0(RE_INVALID_CHARS);
+			n = m;
+		}
+		if (n < UNICODE_CASES) n = LO_CASE(n);
+		n = (REBYTE)((hash >> CRCSHIFTS) ^ (REBYTE)n); // drop upper 8 bits
+		hash = MASK_CRC(hash << 8) ^ CRC24_Table[n];
+	}
+
+	return hash;
 }
 
 

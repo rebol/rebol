@@ -1,10 +1,10 @@
 Rebol [
 	Title:    "MAP hashing performance tests"
 	Purpose:  "Counts multiple histograms with different key types to count map key insert/select performance"
-	Date:     19-Mar-2024
+	Date:     21-Mar-2024
 	Author:   "Oldes"
 	File:     %test-map.r3
-	Version:  1.0.0
+	Version:  1.1.0
 ]
 
 if system/version < 3.16.1 [
@@ -136,6 +136,29 @@ test-word-map: function [text][
 	print-result n time coll
 	data
 ]
+test-block-map: function [text][
+	recycle
+	print as-yellow "^/Testing map with block keys..."
+	print "Probably useless, but why not to test it too."
+	print "With old hashing this takes REALLY LONG TIME!"
+	data: make map! 30000
+	char: system/catalog/bitsets/alpha
+	time: 0:0:0
+	coll: init-collisions
+	n: 0
+	parse text [any [
+		to char copy word: some char (
+			blk: reduce [to word! word]
+			start: stats/timer
+			data/:blk: 1 + any [data/:blk 0]
+			end: stats/timer
+			time: time + end - start
+			++ n
+		)
+	]]
+	print-result n time coll
+	data
+]
 test-char-map: function [text][
 	recycle
 	print as-yellow "^/Testing map with char keys..."
@@ -153,6 +176,29 @@ test-char-map: function [text][
 			++ n
 		)
 	]]
+	print-result n time coll
+	data
+]
+
+test-char-map-2: function [text][
+	recycle
+	print as-yellow "^/Testing map with char keys (group words by first letter)"
+	data: make map! 100
+	char: system/catalog/bitsets/alpha
+	time: 0:0:0
+	coll: init-collisions
+	n: 0
+	parse text [any [
+		to char copy word: some char (
+			ch: word/1
+			start: stats/timer
+			append data/:ch: any [data/:ch copy []] word
+			end: stats/timer
+			time: time + end - start
+			++ n
+		)
+	]]
+	foreach [k v] data [deduplicate v]
 	print-result n time coll
 	data
 ]
@@ -177,10 +223,14 @@ unless exists? text [
 img:  load img
 text: load text
 
-test-tuple-map   img
-test-integer-map img
-test-binary-map text
-test-string-map text
-test-word-map   text
-test-char-map   text
+profile/times [[test-tuple-map   img]] 3
+profile/times [[test-integer-map img]] 3
+profile/times [[test-binary-map text]] 3
+profile/times [[test-string-map text]] 3
+profile/times [[test-word-map   text]] 3
+profile/times [[test-block-map  copy/part text 100000]] 3 ;limit size of the text as it is really slow with old hashing
+profile/times [[test-char-map   text]] 3
+profile/times [[test-char-map-2 text]] 3
+
+
 ()

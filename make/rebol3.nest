@@ -182,6 +182,7 @@ core-files: [
 	%core/n-data.c
 ;	%core/n-draw.c          ;old source
 ;	%core/n-graphics.c      ;old source
+	%core/n-hash.c
 ;	%core/n-image.c         ;optional, use: include-image-natives
 	%core/n-io.c
 	%core/n-loop.c
@@ -396,7 +397,7 @@ boot-host-files: [] ; may be used for custom boot script
 config: [ ;- this is list of configuration (optional) defines
 	INCLUDE_MBEDTLS ;- replaced original checksum implementations
 	COLOR_CONSOLE   ;- use ANSI escape sequences in prompt and results
-	;DEBUG_HASH_COLLISIONS
+	DEBUG_HASH_COLLISIONS
 
 	;*** Unfinished features **************************************************/
 	;INCLUDE_TASK    ;- tasks are not implemented yet, so include it only on demand

@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -104,7 +104,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Find_Key(REBSER *series, REBSER *hser, REBVAL *key, REBINT wide, REBCNT cased, REBYTE mode)
+*/	REBCNT Find_Key(REBSER *series, REBSER *hser, REBVAL *key, REBINT wide, REBCNT cased, REBYTE mode)
 /*
 **		Returns hash index (either the match or the new one).
 **		A return of zero is valid (as a hash index);
@@ -119,11 +119,12 @@
 ***********************************************************************/
 {
 	REBCNT *hashes;
-	REBCNT skip;
-	REBCNT hash;
+	REBCNT hash = 0;
+	REBCNT hashed = 0;
 	REBCNT len;
 	REBCNT n;
 	REBVAL *val;
+	REBCNT i;
 
 	if (!hser) {
 		// If there are no hashes for the keys, use plain linear search...
@@ -140,56 +141,54 @@
 
 	// Compute hash for value:
 	len = hser->tail;
-	hash = Hash_Value(key, len);
-	//o: use fallback hash value, if key is not a hashable type, instead of an error
-	//o: https://github.com/Oldes/Rebol-issues/issues/1765
-	if (!hash) hash = 3 * (len/5); //Trap_Type(key);
-
-	// Determine skip and first index:
-	skip  = (len == 0) ? 0 : (hash & 0x0000FFFF) % len;
-	if (skip == 0) skip = 1;
-	hash = (len == 0) ? 0 : (hash & 0x00FFFF00) % len;
-
-	// Scan hash table for match:
 	hashes = (REBCNT*)hser->data;
-	if (ANY_WORD(key)) {
-		while (NZ(n = hashes[hash])) {
-			val = BLK_SKIP(series, (n-1) * wide);
-			if (
-				ANY_WORD(val) &&
-				(VAL_WORD_SYM(key) == VAL_BIND_SYM(val) ||
-				(!cased && VAL_WORD_CANON(key) == VAL_BIND_CANON(val)))
-			) return hash;
-			hash += skip;
-			if (hash >= len) hash -= len;
+
+	if (len > 0) {
+		hashed = Hash_Value(key);
+
+		if (ANY_WORD(key)) {
+			for(i = 0; i < len; i++) {
+				hash = Hash_Probe(hashed, i, len);
+				n = hashes[hash];
+				if (!n) break;
+				val = BLK_SKIP(series, (n - 1) * wide);
+				if (ANY_WORD(val)
+					&& (
+						VAL_WORD_SYM(key) == VAL_BIND_SYM(val)
+						|| (!cased && VAL_WORD_CANON(key) == VAL_BIND_CANON(val))
+					)
+				) return hash;
 #ifdef DEBUG_HASH_COLLISIONS
-			++ Eval_Collisions;
+				++ Eval_Collisions;
 #endif
+			}
 		}
-	}
-	else if (ANY_BINSTR(key)) {
-		cased = !(IS_BINARY(key) || cased);
-		while (NZ(n = hashes[hash])) {
-			val = BLK_SKIP(series, (n-1) * wide);
-			if (
-				VAL_TYPE(val) == VAL_TYPE(key)
-				&& 0 == Compare_String_Vals(key, val, cased)
-			) return hash;
-			hash += skip;
-			if (hash >= len) hash -= len;
+		else if (ANY_BINSTR(key)) {
+			cased = !(IS_BINARY(key) || cased);
+			for (i = 0; i < len; i++) {
+				hash = Hash_Probe(hashed, i, len);
+				n = hashes[hash];
+				if (!n) break;
+				val = BLK_SKIP(series, (n - 1) * wide);
+				if (VAL_TYPE(val) == VAL_TYPE(key) && 0 == Compare_String_Vals(key, val, cased))
+					return hash;
 #ifdef DEBUG_HASH_COLLISIONS
-			++ Eval_Collisions;
+				++ Eval_Collisions;
 #endif
+			}
 		}
-	} else {
-		while (NZ(n = hashes[hash])) {
-			val = BLK_SKIP(series, (n-1) * wide);
-			if (VAL_TYPE(val) == VAL_TYPE(key) && 0 == Cmp_Value(key, val, cased)) return hash;
-			hash += skip;
-			if (hash >= len) hash -= len;
+		else {
+			for (i = 0; i < len; i++) {
+				hash = Hash_Probe(hashed, i, len);
+				n = hashes[hash];
+				if (!n) break;
+				val = BLK_SKIP(series, (n - 1) * wide);
+				if (VAL_TYPE(val) == VAL_TYPE(key) && 0 == Cmp_Value(key, val, cased))
+					return hash;
 #ifdef DEBUG_HASH_COLLISIONS
-			++ Eval_Collisions;
+				++ Eval_Collisions;
 #endif
+			}
 		}
 	}
 
@@ -201,7 +200,7 @@
 		//Dump_Series(series, "hash");
 	}
 
-	return (mode > 0) ? -1 : hash;
+	return (mode > 0) ? NOT_FOUND : hash;
 }
 
 

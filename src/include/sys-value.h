@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Contributors
+**  Copyright 2012-2024 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -586,6 +586,7 @@ typedef struct Reb_Series_Ref
 #define BIN_SKIP(s, n)	(((REBYTE *)((s)->data))+(n))
 #define	BIN_LEN(s)		(SERIES_TAIL(s))
 #define VAL_BIN_AT(v)   ((REBYTE*)(BIN_DATA(VAL_SERIES(v))+VAL_INDEX(v)))
+#define VAL_BIN_LEN(v)  ((SERIES_TAIL(VAL_SERIES(v)) - VAL_INDEX(v)))
 
 // Arg is a unicode series:
 #define UNI_HEAD(s)		((REBUNI *)((s)->data))

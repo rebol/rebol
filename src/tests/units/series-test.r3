@@ -2518,6 +2518,12 @@ Rebol [
 	--assert b = [1 2 2 1]                   ;- unique does not modify its input
 	--assert [1 2] = deduplicate b: [1 2 2 1]
 	--assert [1 2] = b                       ;- while deduplicate does
+	;; unique block with block values...
+	--assert [1 [1] [2]] = unique reduce [1 [1] [2] [1] next [1 1]]
+	--assert [1 [1] [2]] = unique reduce [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 [1] [2] [1] next [1 1]]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2591
+	--assert [1 "a"] = unique reduce [1 1 "a" remove "ša"]
+	--assert [1 "a"] = unique reduce [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "a" remove "ša"]
 --test-- "unique/skip on block"
 	--assert [1 2 3 4] = unique/skip b: [1 2 1 2 3 4] 2
 	--assert b = [1 2 1 2 3 4]
