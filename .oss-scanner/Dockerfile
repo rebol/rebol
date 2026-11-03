@@ -4,7 +4,7 @@
 FROM ubuntu:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG SISKIN_VERSION=0.22.5
+ARG SISKIN_VERSION=0.23.2
 ARG REBOL_REPO=https://github.com/Oldes/Rebol3.git
 ARG REBOL_BRANCH=matrix
 
@@ -24,8 +24,8 @@ RUN curl -fsSL "https://github.com/Siskin-framework/Builder/releases/download/${
 COPY . /src
 WORKDIR /src
 
-# Build
-RUN siskin make/rebol3.nest -o r3 rebol3-bulk-linux-x64
+# Build a debug version
+RUN siskin make/rebol3.nest --cflags "-g -fsanitize=address,undefined" -o r3 rebol3-bulk-linux-x64
 
 # Put the binary on PATH, wherever Siskin wrote it
 RUN R3="$(find . -type f -name r3 -perm -u+x | head -n 1)" \
