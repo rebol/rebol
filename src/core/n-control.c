@@ -902,6 +902,7 @@ callback:	// ...and the last result.
 ***********************************************************************/
 {
 	REBFLG   with = D_REF(ARG_TRY_WITH);
+	REBFLG   all  = D_REF(ARG_TRY_ALL);
 	REBVAL   handler;
 	REBVAL  *error = Get_System(SYS_STATE, STATE_LAST_ERROR);
 	SET_NONE(error); // reset the last error
@@ -932,7 +933,7 @@ callback:	// ...and the last result.
 			}
 		}
 	}
-	else if (D_REF(ARG_TRY_ALL) && THROWN(DS_NEXT)) {
+	else if (all && THROWN(DS_NEXT)) {
 		Disarm_Throw_Error(DS_NEXT);
 		goto on_error;
 	}

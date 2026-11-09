@@ -714,6 +714,14 @@ Rebol [
 		--assert 'stack = first b
 		--assert 'stack = stack/word 0
 
+	--test-- "try with data stack expansion"
+		--assert 1 = try [
+			reduce append/dup make block! 0 1 100 + stack/limit 0
+			loop 200 [make binary! 300000 make string! 100000]
+			recycle
+			1
+		]
+
 ===end-group===
 
 
