@@ -346,6 +346,7 @@ cont_utf8:
 	REBVAL *words;
 	REBSER *frame;
 	REBVAL *value;
+	REBVAL series_val;
 	REBSER *series;
 	REBSER *out = NULL;	// output block (for LM_MAP, mode = 2)
 
@@ -361,7 +362,10 @@ cont_utf8:
 
 	ASSERT2(mode >= 0 && mode < 4, RP_MISC);
 
-	value = D_ARG(2); // series
+	// The body may expand (move) the data stack, so do not keep
+	// a pointer to the series argument; use a local copy.
+	series_val = *D_ARG(2);
+	value = &series_val;
 	if (IS_NONE(value)) return R_NONE;
 
 	body = Init_Loop(D_ARG(1), D_ARG(3), &frame); // vars, body

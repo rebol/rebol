@@ -2275,6 +2275,21 @@ try/with [
 	--assert none? foreach [x x x] [1 2 3] [context? 'x]
 	--assert  3 == foreach [x x x] [1 2 3] [x]
 
+--test-- "FOREACH with data stack expansion in body"
+	;; the body expands (moves) the data stack, then reuses the freed memory
+	blk: [a b c d e]
+	out: copy []
+	foreach w blk [
+		append out w
+		if w = 'b [
+			reduce append/dup make block! 0 1 100 + stack/limit 0
+			loop 200 [make binary! 300000 make string! 100000]
+			recycle
+		]
+	]
+	--assert out = blk
+	unset [blk out]
+
 ===end-group===
 
 ===start-group=== "MAP-EACH"
