@@ -721,7 +721,13 @@ Rebol [
 			recycle
 			1
 		]
-
+	--test-- "attempt with data stack expansion"
+		--assert none? attempt [
+			reduce append/dup make block! 0 1 100 + stack/limit 0
+			loop 200 [make binary! 300000 make string! 100000]
+			recycle
+			1 / 0
+		]
 ===end-group===
 
 

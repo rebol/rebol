@@ -349,8 +349,9 @@
 /*
 ***********************************************************************/
 {
+	REBFLG all = D_REF(2); // read before the stack may move
 	Try_Block(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
-	if (IS_ERROR(DS_NEXT) && (D_REF(2) || !IS_THROW(DS_NEXT))) return R_NONE;
+	if (IS_ERROR(DS_NEXT) && (all || !IS_THROW(DS_NEXT))) return R_NONE;
 	return R_TOS1;
 }
 
