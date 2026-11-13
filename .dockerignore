@@ -1,0 +1,26 @@
+# Only source and build recipes belong in the context (including legacy Docker).
+**
+!src/
+!src/**
+!make/
+!make/**
+make/tmp
+make/objs
+make/Rebol3.xcworkspace
+make/*.xcodeproj
+src/generated
+src/boot/boot-code.reb
+src/boot/host-init.reb
+src/boot/gen-natives.reb
+src/boot/gen-symbols.reb
+src/core/b-boot.c
+src/include/ext-types.h
+src/include/host-*
+src/include/reb-dialect.h
+src/include/reb-evtypes.h
+src/include/reb-lib-lib.h
+src/include/reb-lib.h
+src/include/reb-types.h
+src/include/gen-*
+src/mezz/base-collected.reb
+src/tests/test-x64.rebx
