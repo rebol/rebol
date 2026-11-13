@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2013-2025 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +28,9 @@
 **
 ***********************************************************************/
 
+#ifndef DEVICE_H
+#define DEVICE_H
+
 // REBOL Device Identifiers:
 // Critical: Must be in same order as Device table in host-device.c
 enum {
@@ -37,7 +41,12 @@ enum {
 	RDI_EVENT,
 	RDI_NET,
 	RDI_DNS,
+	RDI_CHECKSUM,
 	RDI_CLIPBOARD,
+	RDI_MIDI,
+	RDI_CRYPT,
+	RDI_SERIAL,
+	RDI_AUDIO,
 	RDI_MAX,
 	RDI_LIMIT = 32
 };
@@ -64,6 +73,8 @@ enum {
 	RDC_DELETE,		// delete unit target
 	RDC_RENAME,
 	RDC_LOOKUP,
+
+	RDC_FLUSH,
 	RDC_MAX,
 
 	RDC_CUSTOM=32	// start of custom commands
@@ -73,6 +84,7 @@ enum {
 #define DR_PEND   1	// request is still pending
 #define DR_DONE   0	// request is complete w/o errors
 #define DR_ERROR -1	// request had an error
+#define DR_IGNORE -2 // unrecognized escape sequence
 
 // REBOL Device Flags and Options (bitnums):
 enum {
@@ -93,6 +105,8 @@ enum {
 	RRF_PENDING,	// Request is attached to pending list
 	RRF_ALLOC,		// Request is allocated, not a temp on stack
 	RRF_WIDE,		// Wide char IO
+	RRF_ACTIVE,		// Port is active, even no new events yet
+	RRF_ERROR,      // WRITE to std_err
 };
 
 // REBOL Device Errors:
@@ -105,13 +119,38 @@ enum {
 
 enum {
 	RDM_NULL,		// Null device
+	RDM_READ_LINE,	// Read line mode
+	RDM_CGI
 };
+
+// Serial Parity
+enum {
+	SERIAL_PARITY_NONE,
+	SERIAL_PARITY_ODD,
+	SERIAL_PARITY_EVEN
+};
+
+// Serial Flow Control
+enum {
+	SERIAL_FLOW_CONTROL_NONE,
+	SERIAL_FLOW_CONTROL_HARDWARE,
+	SERIAL_FLOW_CONTROL_SOFTWARE
+};
+
+typedef struct {
+	REBU32 uchar;
+	REBU16 virtu;
+	REBU16 flags;
+} REBKEY;
+
 
 #pragma pack(4)
 
 // Forward references:
+#ifndef REB_EVENT_H
 typedef struct rebol_device REBDEV;
 typedef struct rebol_devreq REBREQ;
+#endif
 
 // Commands:
 typedef i32 (*DEVICE_CMD_FUNC)(REBREQ *req);
@@ -124,15 +163,23 @@ struct rebol_device {
 	u32 date;				// year, month, day, hour
 	DEVICE_CMD_FUNC *commands;	// command dispatch table
 	u32 max_command;		// keep commands in bounds
-	REBREQ *pending;		// pending requests
 	u32 flags;				// state: open, signal
+	REBREQ *pending;		// pending requests
 	i32 req_size;			// size of request struct
 };
-
-// Inializer (keep ordered same as above)
-#define DEFINE_DEV(w,t,v,c,m,s) REBDEV w = {t, v, 0, c, m, 0, 0, s}
+#define DEFINE_DEV(w,t,v,c,m,s) REBDEV w = { \
+	.title = t, \
+	.version = v, \
+	.date = 0, \
+	.commands = c, \
+	.max_command = m, \
+	.flags = 0, \
+	.pending = 0, \
+	.req_size = s \
+}
 
 // Request structure:		// Allowed to be extended by some devices
+// NOTE: when size of this struct is modified, reflect it in the make-reb-lib.reb file! (CHECK_STRUCT_ALIGN)
 struct rebol_devreq {
 	u32 clen;				// size of extended structure
 
@@ -153,12 +200,16 @@ struct rebol_devreq {
 	u16  flags;				// request flags
 	u16  state;				// device process flags
 	i32  timeout;			// request timeout
+#if defined(__LP64__) || defined(__LLP64__)
+	i32 _pad;
+#endif
 //	int (*prewake)(void *);	// callback before awake
 
 	// Common fields:
 	union {
 		REBYTE *data;		// data to transfer
 		REBREQ *sock;		// temp link to related socket
+		const REBYTE *cdata;
 	};
 	u32  length;			// length to transfer
 	u32  actual;			// length actually transferred
@@ -169,7 +220,9 @@ struct rebol_devreq {
 			REBCHR *path;			// file string (in OS local format)
 			i64  size;				// file size
 			i64  index;				// file index position
-			I64  time;				// file modification time (struct)
+			I64  modified_time;     // file modification time (struct)
+			I64  accessed_time;     // file access time (struct)
+			I64  created_time;      // file creartion time (struct)
 		} file;
 		struct {
 			u32  local_ip;			// local address used
@@ -178,6 +231,41 @@ struct rebol_devreq {
 			u32  remote_port;		// remote port
 			void *host_info;		// for DNS usage
 		} net;
+		struct {
+			u32  buffer_rows;
+			u32  buffer_cols;
+			u32  window_rows;
+			u32  window_cols;
+			i32  length;            // number of bytes already available to read (from stdio) 
+		} console;
+		struct {
+			u32 device_in;  // requested device ID (1-based; 0 = none)
+			u32 device_out;
+		} midi;
+		struct {
+			u8  type;
+			u8  channels;
+			u16 bits;
+			u32 rate;
+			u32 loop_count;
+		} audio;
+		struct {
+			u32 mode;
+			u32 value;
+		} modify;
+
+		struct {
+			REBCHR *path;			// device path string (in OS local format)
+			void *prior_attr;		// termios: retain previous settings to revert on close
+			i32 baud;				// baud rate of serial port
+			u8	data_bits;			// 5, 6, 7 or 8
+			u8	parity;				// odd, even, mark or space
+			u8	stop_bits;			// 1 or 2
+			u8	flow_control;		// hardware or software
+		} serial;
+
+		REBKEY key;
+
 	};
 };
 #pragma pack()
@@ -186,3 +274,5 @@ struct rebol_devreq {
 #define SET_OPEN(r)		SET_FLAG(((REBREQ*)(r))->flags, RRF_OPEN)
 #define SET_CLOSED(r)	CLR_FLAG(((REBREQ*)(r))->flags, RRF_OPEN)
 #define IS_OPEN(r)		GET_FLAG(((REBREQ*)(r))->flags, RRF_OPEN)
+
+#endif //DEVICE_H

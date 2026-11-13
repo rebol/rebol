@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,19 +55,19 @@
 {
 	REBVAL *val = D_ARG(2);
 
-	if (D_REF(3)) {
-		REBINT n = 0;
-		if (D_REF(1)) {
-			if (IS_INTEGER(val)) n = Int32(val);
-			else if (IS_TRUE(val)) n = 100;
-		}
-		OS_EXIT(n);
-	}
+	/* not using quit/now anymore... see https://github.com/Oldes/Rebol-issues/issues/1743 */
+	//if (D_REF(3)) {
+	//	REBINT n = 0;
+	//	if (D_REF(1)) {
+	//		if (IS_INTEGER(val)) n = Int32(val);
+	//		else if (IS_TRUE(val)) n = 100;
+	//	}
+	//	OS_EXIT(n);
+	//}
 
 	Halt_Code(RE_QUIT, val); // NONE if /return not set
 	DEAD_END;
 }
-
 
 /***********************************************************************
 **
@@ -74,7 +75,7 @@
 /*
 ***********************************************************************/
 {
-	REBCNT count;
+	REBI64 released_bytes;
 
 	if (D_REF(1)) { // /off
 		GC_Active = FALSE;
@@ -96,12 +97,37 @@
 		SET_INT32(TASK_BALLAST, 0);
 	}
 
-	count = Recycle();
+	// If auto-recycling was disabled, activate GC for this manual request.
+	if (!GC_Active) {
+		SET_TRUE(D_ARG(1));
+		GC_Active = TRUE;
+	}
 
-	DS_Ret_Int(count);
+	released_bytes = Recycle(TRUE, D_REF(6));
+
+
+	// Disable auto-recycling if it was disabled.
+	if (D_REF(1))
+		GC_Active = FALSE;
+
+	DS_Ret_Int(released_bytes);
 	return R_RET;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(release)
+/*
+***********************************************************************/
+{
+	REBVAL *val = D_ARG(1);
+
+	if (IS_CONTEXT_HANDLE(val)) {
+		Free_Hob(VAL_HANDLE_CTX(val));
+		return R_TRUE;
+	}
+	return R_FALSE;
+}
 
 /***********************************************************************
 **
@@ -114,7 +140,7 @@
 	REBVAL *stats;
 
 	if (D_REF(3)) {
-		VAL_TIME(ds) = OS_DELTA_TIME(PG_Boot_Time, 0) * 1000;
+		VAL_TIME(ds) = OS_Delta_Time(PG_Boot_Time, 0) * 1000;
 		VAL_SET(ds, REB_TIME);
 		return R_RET;
 	}
@@ -131,7 +157,7 @@
 		if (IS_OBJECT(stats)) {
 			stats = Get_Object(stats, 1);
 
-			VAL_TIME(stats) = OS_DELTA_TIME(PG_Boot_Time, 0) * 1000;
+			VAL_TIME(stats) = OS_Delta_Time(PG_Boot_Time, 0) * 1000;
 			VAL_SET(stats, REB_TIME);
 			stats++;
 			SET_INTEGER(stats, Eval_Cycles + Eval_Dose - Eval_Count);
@@ -158,8 +184,18 @@
 
 			stats++;
 			SET_INTEGER(stats, PG_Reb_Stats->Recycle_Counter);
+#ifdef DEBUG_HASH_COLLISIONS
+			stats++;
+			SET_INTEGER(stats, Eval_Collisions);
+#endif
 		}
 		return R_RET;
+	}
+
+	if (D_REF(5)) {
+		REBVAL *pool_id = D_ARG(6);
+		Dump_Series_In_Pool(VAL_INT32(pool_id));
+		return R_NONE;
 	}
 
 	if (D_REF(1)) flags = 3;
@@ -170,12 +206,16 @@
 	return R_RET;
 }
 
-REBYTE *evoke_help = "Evoke values:\n"
-	"[stack-size n] crash-dump delect\n"
-	"watch-recycle watch-obj-copy crash\n"
-	"1: watch expand\n"
-	"2: check memory pools\n"
-	"3: check bind table\n"
+char *evoke_help = "Evoke values:\n"
+	"[stack-size n]\n"
+#ifdef INCLUDE_DELECT
+	" delect"
+#endif
+#ifdef DEBUG
+	" watch-recycle watch-alloc watch-obj-copy watch-expand crash-dump crash"
+#endif
+	"\n1: check memory pools\n"
+	"2: check bind table\n"
 ;
 
 /***********************************************************************
@@ -199,26 +239,45 @@ REBYTE *evoke_help = "Evoke values:\n"
 		if (IS_WORD(arg)) {
 			switch (VAL_WORD_CANON(arg)) {
 			case SYM_DELECT:
+#ifdef INCLUDE_DELECT
 				Trace_Delect(1);
+#endif
 				break;
+#ifdef DEBUG
 			case SYM_CRASH_DUMP:
 				Reb_Opts->crash_dump = TRUE;
 				break;
 			case SYM_WATCH_RECYCLE:
 				Reb_Opts->watch_recycle = !Reb_Opts->watch_recycle;
 				break;
+			case SYM_WATCH_ALLOC:
+				Reb_Opts->watch_alloc = !Reb_Opts->watch_alloc;
+				break;
 			case SYM_WATCH_OBJ_COPY:
 				Reb_Opts->watch_obj_copy = !Reb_Opts->watch_obj_copy;
 				break;
-			case SYM_STACK_SIZE:
-				arg++;
-				Expand_Stack(Int32s(arg, 1));
+			case SYM_WATCH_EXPAND:
+				Reb_Opts->watch_expand = !Reb_Opts->watch_expand;
 				break;
 			case SYM_CRASH:
 				Crash(9999);
 				break;
+#else
+			case SYM_CRASH_DUMP:
+			case SYM_WATCH_RECYCLE:
+			case SYM_WATCH_ALLOC:
+			case SYM_WATCH_OBJ_COPY:
+			case SYM_WATCH_EXPAND:
+			case SYM_CRASH:
+				Trap0(RE_FEATURE_NA);
+				break;
+#endif
+			case SYM_STACK_SIZE:
+				arg++;
+				Expand_Stack(Int32s(arg, 1));
+				break;
 			default:
-				Out_Str(evoke_help, 1);
+				Out_Str(cb_cast(evoke_help), 1, FALSE);
 			}
 		}
 		if (IS_INTEGER(arg)) {
@@ -228,16 +287,13 @@ REBYTE *evoke_help = "Evoke values:\n"
 				Check_Bind_Table();
 				break;
 			case 1:
-				Reb_Opts->watch_expand = TRUE;
-				break;
-			case 2:
 				Check_Memory();
 				break;
-			case 3:
+			case 2:
 				Check_Bind_Table();
 				break;
 			default:
-				Out_Str(evoke_help, 1);
+				Out_Str(cb_cast(evoke_help), 1, FALSE);
 			}
 		}
 	}
@@ -396,9 +452,11 @@ err:
 	REBVAL *val;
 	REBINT result;
 	REBSER *ser;
+	REBVAL *hnd = D_ARG(1); //codec's handle
+
+	if (VAL_HANDLE_TYPE(hnd) != SYM_CODEC) Trap0(RE_INVALID_HANDLE);
 
 	CLEAR(&codi, sizeof(codi));
-
 	codi.action = CODI_DECODE;
 
 	val = D_ARG(3);
@@ -430,8 +488,7 @@ err:
 	}
 
 	// Nasty alias, but it must be done:
-	// !!! add a check to validate the handle as a codec!!!!
-	result = ((codo) (VAL_HANDLE(D_ARG(1))))(&codi);
+	result = ((codo)(VAL_HANDLE(hnd)))(&codi);
 
 	if (codi.error != 0) {
 		if (result == CODI_CHECK) return R_FALSE;
@@ -469,6 +526,9 @@ err:
 	case CODI_BLOCK:
 		Set_Block(D_RET, codi.other);
 		break;
+	case CODI_STRING:
+		Set_String(D_RET, codi.other);
+		break;
 
 	default:
 		Trap0(RE_BAD_MEDIA); // need better!!!
@@ -495,4 +555,42 @@ err:
 	else frm = VAL_OBJ_FRAME(D_ARG(1));
 
 	return IS_SELFLESS(frm) ? R_TRUE : R_FALSE;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(register)
+/*
+//  register: native [
+//		"Register value in a system/catalog"
+//		'name [word! set-word! lit-word!]  "Unique ID for the value in the catalog"
+//		value [struct!] "Value to be registered (so far only structs)"
+//  ]
+***********************************************************************/
+{
+	REBVAL *name = D_ARG(1);
+	REBVAL *val  = D_ARG(2);
+	REBCNT n;
+	if (IS_SET_WORD(name)) {
+		Set_Var(name, val);
+	}
+	if (IS_STRUCT(val)) {
+		SET_TYPE(name, REB_WORD);
+		REBVAL *struct_specs = Get_System(SYS_CATALOG, CAT_STRUCTS);
+		n = Find_Entry(VAL_SERIES(struct_specs), name, 0, TRUE);
+		if (n != NOT_FOUND) {
+			// Struct already registered... check if it is same spec...
+			D_RET = VAL_BLK_SKIP(struct_specs, n);
+			if (VAL_STRUCT_SPEC(D_RET) == VAL_STRUCT_SPEC(val)) {
+				return R_ARG2;
+			}
+			Trap1(RE_ALREADY_USED, name);
+		}
+		Set_Block(D_RET, VAL_STRUCT_SPEC(val));
+		REBSTI *inf = (REBSTI*)BIN_HEAD(VAL_SERIES(D_RET)->series);
+		inf->name = VAL_SYM_CANON(name);
+		n = Find_Entry(VAL_SERIES(struct_specs), name, D_RET, TRUE);
+		return R_ARG2;
+	}
+	return R_RET;
 }

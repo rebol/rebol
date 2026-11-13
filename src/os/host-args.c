@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,9 +46,9 @@
 #include "reb-c.h"
 #include "reb-args.h"
 
-#define ARG_BUF_SIZE 1024
-
-extern int OS_Get_Current_Dir(REBCHR **lp);
+extern int OS_Get_Current_Dir(REBYTE **lp);
+extern REBOOL OS_Get_Boot_Path(REBYTE **path);
+extern REBLEN OS_Wide_To_Multibyte(const REBU16 *wide, REBYTE **utf8, REBLEN len);
 
 // REBOL Option --Words:
 
@@ -61,6 +62,8 @@ const struct {const char *word; const int flag;} arg_words[] = {
 	{"halt",		RO_HALT},
 	{"help",		RO_HELP},
 	{"import",		RO_IMPORT | RO_EXT},
+	{"legacy-repl", RO_LEGACY_REPL},
+	{"no-color",    RO_NO_COLOR},
 	{"quiet",		RO_QUIET},
 	{"script",		RO_SCRIPT | RO_EXT},
 	{"secure",		RO_SECURE | RO_EXT},
@@ -145,46 +148,55 @@ const struct arg_chr arg_chars2[] = {
 **
 */	static int Get_Ext_Arg(int flag, REBARGS *rargs, REBCHR *arg)
 /*
-**		Get extended argument field.
+**		Get extended argument field. Always UTF-8 encoded!
 **
 ***********************************************************************/
 {
-	if (arg && arg[1] == (REBCHR)'-') return flag;
+	if (arg == NULL) return 0;
+	if (arg[1] == (REBCHR)'-') return flag;
 
 	flag &= ~RO_EXT;
+
+	REBYTE *value = NULL;
+
+#ifdef OS_WIDE_CHAR
+	OS_Wide_To_Multibyte(arg, &value, (REBLEN)-1);
+#else
+	value = arg;
+#endif
 
 	switch (flag) {
 
 	case RO_VERSION:
-		rargs->version = arg;
+		rargs->version = value;
 		break;
 
 	case RO_SCRIPT:
-		rargs->script = arg;
+		rargs->script = value;
 		break;
 
 	case RO_ARGS:
-		rargs->args = arg;
+		rargs->args = value;
 		break;
 
 	case RO_DO:
-		rargs->do_arg = arg;
+		rargs->do_arg = value;
 		break;
 
 	case RO_DEBUG:
-		rargs->debug = arg;
+		rargs->debug = value;
 		break;
 
 	case RO_SECURE:
-		rargs->secure = arg;
+		rargs->secure = value;
 		break;
 
 	case RO_IMPORT:
-		rargs->import = arg;
+		rargs->import = value;
 		break;
 
 	case RO_BOOT:
-		rargs->boot = arg;
+		rargs->boot = value;
 		break;
 	}
 
@@ -194,24 +206,51 @@ const struct arg_chr arg_chars2[] = {
 
 /***********************************************************************
 **
-*/	void Parse_Args(int argc, REBCHR **argv, REBARGS *rargs)
+*/	OS_API void OS_Parse_Args(int argc, REBCHR **argv, REBARGS *rargs)
 /*
 **		Parse REBOL's command line arguments, setting options
 **		and values in the provided args structure.
 **
+**		If RAW_MAIN_ARGS is used, the arguments list is not being
+**		parsed in this function, but instead will be converted to
+**		block of strings and leaved on interpreter to process it.
+**
 ***********************************************************************/
 {
+#ifdef RAW_MAIN_ARGS
+	CLEARS(rargs);
+	rargs->argc = argc;
+	rargs->argv = argv;
+	if (0 == OS_Get_Boot_Path(&rargs->exe_path)) {
+		// First arg is path to executable (on most systems):
+#ifdef OS_WIDE_CHAR
+		OS_Wide_To_Multibyte(*argv, &rargs->exe_path, -1);
+#else
+		rargs->exe_path = *argv;
+#endif
+	}
+	OS_Get_Current_Dir(&rargs->current_dir);
+
+#else
+
 	REBCHR *arg;
-	REBCHR *args = 0; // holds trailing args
-	int flag;
-	int i;
+	int flag, i;
 
 	CLEARS(rargs);
 
-	// First arg is path to execuable (on most systems):
-	if (argc > 0) rargs->exe_path = *argv;
+	if (!OS_Get_Boot_Path(&rargs->exe_path)) {
+		// In case of fail...
+		// First arg is path to executable (on most systems):
+		if (argc > 0) {
+#ifdef OS_WIDE_CHAR
+			OS_Wide_To_Multibyte(*argv, &rargs->exe_path, -1);
+#else
+			rargs->exe_path = *argv;
+#endif
+		}
+	}
 
-	OS_Get_Current_Dir(&rargs->home_dir);
+	OS_Get_Current_Dir(&rargs->current_dir);
 
 	// Parse each argument:
 	for (i = 1; i < argc ; i++) {
@@ -219,6 +258,10 @@ const struct arg_chr arg_chars2[] = {
 		if (arg == 0) continue; // shell bug
 		if (*arg == '-') {
 			if (arg[1] == '-') {
+				if (arg[2] == 0) {
+					// --  stops options parsing for the interpreter
+					break;
+				}
 				// --option words
 				flag = find_option_word(arg+2);
 				if (flag & RO_EXT) {
@@ -258,25 +301,29 @@ const struct arg_chr arg_chars2[] = {
 		}
 		else {
 			// script filename
-			if (!rargs->script)
-				rargs->script = arg;
-			else {
-				int len;
-				if (!args) {
-					args = MAKE_STR(ARG_BUF_SIZE);
-					args[0] = 0;
-				}
-				len = ARG_BUF_SIZE - LEN_STR(args) - 2; // space remaining
-				JOIN_STR(args, arg, len);
-				JOIN_STR(args, TXT(" "), 1);
+			if (rargs->script) {
+				// we already have the script from --script option
+				// so this should be first arg instead.
+				--i; // revert the counter so this value is collected later
 			}
+			else {
+#ifdef OS_WIDE_CHAR
+				OS_Wide_To_Multibyte(arg, &rargs->script, -1);
+#else
+				rargs->script = arg;
+#endif
+				// after having processed a command-line argument as scriptname,
+				// all remaining arguments are passed as-is to the script (via system/options/args)
+			}
+			break;
 		}
 	}
-
-	if (args) {
-		args[LEN_STR(args)-1] = 0; // remove trailing space
-		Get_Ext_Arg(RO_ARGS, rargs, args);
+	// if there are still unprocessed args, pass them as a block (converted later in b-init.c)
+	if (argc > i++) {
+		rargs->argc = argc - i;
+		rargs->argv = argv + i;
 	}
+#endif
 }
 
 

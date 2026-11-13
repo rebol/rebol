@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +34,7 @@
 
 The primary target system is defined by:
 
-	TO_target		- for example TO_WIN32 or TO_LINUX
+	TO_target		- for example TO_WINDOWS or TO_LINUX
 
 The default config builds an R3 HOST executable program.
 
@@ -57,36 +58,48 @@ Special internal defines used by RT, not Host-Kit developers:
 
 	REB_DEF			- special includes, symbols, and tables
 
-These are now obsolete (as of A107) and should be removed:
-
-	REB_LIB
-	CORE_ONLY
-	REBOL_ONLY
-	FULL_DEFS
-	AS_LIB
-
 */
+
+
+//* Options ************************************************************
+
+#if !defined(REBOL_OPTIONS_FILE)
+#include "opt-config.h"
+#else
+#include REBOL_OPTIONS_FILE
+#endif
+
+#define MIN_DICT 16 // Maximum number of keys in a map withouth hashing
 
 //* Common *************************************************************
 
 #define THREADED				// enable threads
 
+#define OS_API
+
 #ifdef REB_EXE					// standalone exe from RT
 #define RL_API
+
 #else
-#ifdef REB_API					// r3lib dll from RT
+#if defined(REB_API) || defined(REB_LIB)	// r3lib dll from RT
 #define RL_API API_EXPORT
+//#define OS_API API_EXPORT
 #else
 #define RL_API API_IMPORT		// for host exe (not used for extension dlls)
 #endif
 #endif
 
-//* MS Windows 32 ******************************************************
 
-#ifdef TO_WIN32					// Win32/Intel
+
+#define HAS_LL_CONSTS // compiler allows 1234LL constants;
+                      // undef bellow for targets where not supported
+
+
+//* MS Windows *********************************************************
+
+#ifdef TO_WINDOWS				// Win32/Intel
 
 #define	WIN32_LEAN_AND_MEAN		// trim down the Win32 headers
-#define ENDIAN_LITTLE			// uses little endian byte order
 #define OS_WIDE_CHAR			// OS uses WIDE_CHAR API
 #define OS_CRLF TRUE			// uses CRLF as line terminator
 #define OS_DIR_SEP '\\'			// file path separator (Thanks Bill.)
@@ -97,6 +110,18 @@ These are now obsolete (as of A107) and should be removed:
 #define NO_TTY_ATTRIBUTES		// used in read-line.c
 #define FINITE _finite			// name used for it
 #define INLINE __inline			// name used for it
+
+#ifdef REB_VIEW
+#define HAS_WIDGET_GOB			// supports it
+// use native image codecs only in VIEW version so far
+#if !defined(INCLUDE_IMAGE_OS_CODEC)
+#define INCLUDE_IMAGE_OS_CODEC
+#undef	INCLUDE_BMP_CODEC
+#undef	INCLUDE_PNG_CODEC
+#undef	INCLUDE_GIF_CODEC
+#undef	INCLUDE_JPG_CODEC
+#endif
+#endif
 
 #ifdef THREADED
 #ifndef __MINGW32__
@@ -111,8 +136,7 @@ These are now obsolete (as of A107) and should be removed:
 // Use non-standard int64 declarations:
 #if (defined(_MSC_VER) && (_MSC_VER <= 1200))
 #define ODD_INT_64
-#else
-#define HAS_LL_CONSTS
+#undef HAS_LL_CONSTS
 #endif
 
 // Disable various warnings
@@ -124,15 +148,21 @@ These are now obsolete (as of A107) and should be removed:
 //#pragma warning(disable : 4701)
 
 #define AGG_WIN32_FONTS //use WIN32 api for font handling
-#else
+
+#else //end of Windows section
 
 //* Non Windows ********************************************************
 
 #define MIN_OS					// not all devices are working
 #define NO_GRAPHICS				// no graphics yet
 #define AGG_FREETYPE            //use freetype2 library for fonts by default
-#define FINITE finite
 #define INLINE
+
+#ifdef TO_MACOS
+#define FINITE isfinite
+#else
+#define FINITE finite
+#endif
 
 #ifndef TO_HAIKU
 // Unsupported by gcc 2.95.3-haiku-121101
@@ -145,65 +175,47 @@ These are now obsolete (as of A107) and should be removed:
 #define API_IMPORT
 #endif
 
-#ifdef TO_LINUX					// Linux/Intel
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
+
+#ifdef TO_LINUX
+#undef INCLUDE_MIDI_DEVICE      // Not implemented!
+#define USE_SETENV 
 #endif
 
-#ifdef TO_LINUX_PPC				// Linux/PPC
-#define ENDIAN_BIG
-#define HAS_LL_CONSTS
-#endif
-
-#ifdef TO_LINUX_ARM				// Linux/ARM
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
-#endif
-
-#ifdef TO_LINUX_MIPS
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
-#endif
-
-#ifdef TO_HAIKU					// same as Linux/Intel seems to work
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
-#endif
-
-#ifdef TO_OSXI					// OSX/Intel
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
+#ifdef TO_MACOS					// macOS
+#define USE_SETENV 
 #endif
 
 #ifdef TO_OSX					// OSX/PPC
-#define ENDIAN_BIG
-#define HAS_LL_CONSTS
 #define OLD_COMPILER
+#define USE_SETENV 
 #endif
 
-#ifdef TO_FREEBSD
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
+#ifdef TO_OPENBSD				// OpenBSD
+#undef INCLUDE_MIDI_DEVICE      // Not implemented!
+#define USE_SETENV 
 #endif
 
-#ifdef TO_OPENBSD
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
+#ifdef TO_FREEBSD				// FreeBSD
+#undef INCLUDE_MIDI_DEVICE      // Not implemented!
+#define USE_SETENV 
 #endif
 
-#ifdef TO_OBSD					// OpenBSD
-#define COPY_STR(d,s,m) strlcpy(d,s,m)
-#define JOIN_STR(d,s,m) strlcat(d,s,m)
+#ifdef TO_NETBSD				// NetBSD
+#undef INCLUDE_MIDI_DEVICE      // Not implemented!
+#define USE_SETENV 
+#endif
+
+#ifdef TO_DRAGONFLYBSD			// DragonFlyBSD
+#undef INCLUDE_MIDI_DEVICE      // Not implemented!
+#define USE_SETENV 
 #endif
 
 #ifdef TO_AMIGA					// Target for OS4
-#define ENDIAN_BIG
+#undef INCLUDE_MIDI_DEVICE      // Not implemented!
 #define HAS_BOOL
-#define HAS_LL_CONSTS
 #define HAS_SMART_CONSOLE
 #define NO_DL_LIB
 #endif
-
 
 //* Defaults ***********************************************************
 
@@ -217,4 +229,26 @@ These are now obsolete (as of A107) and should be removed:
 
 #ifndef OS_CRLF
 #define OS_CRLF FALSE
+#endif
+
+//* ZLIB ***************************************************************
+
+/* Maximum value for memLevel in deflateInit2 */
+#ifndef MAX_MEM_LEVEL
+#  ifdef SYS16BIT
+#    define MAX_MEM_LEVEL 8
+#  else
+#    define MAX_MEM_LEVEL 9
+#  endif
+#endif
+
+/* Maximum value for windowBits in deflateInit2 and inflateInit2. */
+#ifndef MAX_WBITS
+#  define MAX_WBITS   15 /* 32K LZ77 window */
+#endif
+
+//* Endianess **********************************************************
+
+#if !defined(ENDIAN_LITTLE) && !defined(ENDIAN_BIG)
+    #define ENDIAN_LITTLE  // it's usually what anyone wants these days
 #endif

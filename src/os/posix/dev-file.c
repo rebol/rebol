@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,16 +39,64 @@
 ***********************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <errno.h>
+#include <glob.h>
 
 #include "reb-host.h"
 #include "host-lib.h"
+
+#if defined(__linux__) && !defined(__HAIKU__) && !defined(STATIC_MUSL)
+#include <linux/stat.h>
+//#include <linux/fcntl.h>
+#include <fcntl.h>
+#define statx foo
+#define statx_timestamp foo_timestamp
+struct statx;
+struct statx_timestamp;
+#include <sys/stat.h>
+#undef statx
+#undef statx_timestamp
+
+#define AT_STATX_SYNC_TYPE	  0x6000
+#define AT_STATX_SYNC_AS_STAT 0x0000
+#define AT_STATX_FORCE_SYNC   0x2000
+#define AT_STATX_DONT_SYNC    0x4000
+
+// Manually define SYS_statx if not present in the system headers
+#  ifndef SYS_statx
+#    if defined __aarch64__ || defined __arm__
+#      define SYS_statx 397
+#    elif defined __alpha__
+#      define SYS_statx 522
+#    elif defined __i386__ || defined __powerpc64__
+#      define SYS_statx 383
+#    elif defined __sparc__
+#      define SYS_statx 360
+#    elif defined __x86_64__
+#      define SYS_statx 332
+#    elif defined __riscv && __riscv_xlen == 64 // riscv64
+#      define SYS_statx 291
+#    else
+#      warning "SYS_statx not defined for your architecture"
+#    endif
+#  endif
+
+static __attribute__((unused))
+ssize_t statx(int dfd, const char *filename, unsigned flags, unsigned int mask, struct statx *buffer)
+{
+	return syscall(SYS_statx, dfd, filename, flags, mask, buffer);
+}
+#else
+// stat on non Linux systems
+#include <sys/stat.h>
+#endif
+
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -60,6 +109,7 @@
 #ifndef S_IWRITE
 #define S_IWRITE S_IWUSR
 #endif
+
 
 // NOTE: the code below assumes a file id will never by zero. This should
 // be safe. In posix, zero is stdin, which is handled by dev-stdio.c.
@@ -124,7 +174,34 @@ static REBOOL Seek_File_64(REBREQ *file)
 static int Get_File_Info(REBREQ *file)
 {
 	struct stat info;
+#ifdef SYS_statx
+	struct statx infox;
+	if (statx(AT_FDCWD | AT_STATX_FORCE_SYNC, file->file.path, 0, STATX_BASIC_STATS | STATX_BTIME, &infox) == -1) {
+		goto use_stat;
+	}
 
+	if (S_ISDIR(infox.stx_mode)) {
+		SET_FLAG(file->modes, RFM_DIR);
+		file->file.size = MIN_I64; // using MIN_I64 to notify, that size should be reported as NONE
+	}
+	else {
+		CLR_FLAG(file->modes, RFM_DIR);
+		file->file.size = infox.stx_size;
+	}
+	file->file.modified_time.l = (i32)(infox.stx_mtime.tv_sec);
+	file->file.accessed_time.l = (i32)(infox.stx_atime.tv_sec);
+	file->file.modified_time.h = (i32)(infox.stx_mtime.tv_nsec);
+	file->file.accessed_time.h = (i32)(infox.stx_atime.tv_nsec);
+
+	if (infox.stx_btime.tv_sec) {
+		file->file.created_time.l  = (i32)(infox.stx_btime.tv_sec);
+		file->file.created_time.h  = (i32)(infox.stx_btime.tv_nsec);
+	} else {
+		file->file.created_time = file->file.modified_time;
+	}
+	return DR_DONE;
+#endif
+use_stat:
 	if (stat(file->file.path, &info)) {
 		file->error = errno;
 		return DR_ERROR;
@@ -132,13 +209,27 @@ static int Get_File_Info(REBREQ *file)
 
 	if (S_ISDIR(info.st_mode)) {
 		SET_FLAG(file->modes, RFM_DIR);
-		file->file.size = 0; // in order to be consistent on all systems
+		file->file.size = MIN_I64; // using MIN_I64 to notify, that size should be reported as NONE
 	}
 	else {
 		CLR_FLAG(file->modes, RFM_DIR);
 		file->file.size = info.st_size;
 	}
-	file->file.time.l = (long)(info.st_mtime);
+#ifdef TO_MACOS
+	file->file.modified_time.l = (i32)(info.st_mtimespec.tv_sec);
+	file->file.accessed_time.l = (i32)(info.st_atimespec.tv_sec);
+	file->file.created_time.l  = (i32)(info.st_birthtimespec.tv_sec);
+	file->file.modified_time.h = (i32)(info.st_mtimespec.tv_nsec);
+	file->file.accessed_time.h = (i32)(info.st_atimespec.tv_nsec);
+	file->file.created_time.h  = (i32)(info.st_birthtimespec.tv_nsec);
+#else
+	file->file.modified_time.l = (i32)(info.st_mtim.tv_sec);
+	file->file.accessed_time.l = (i32)(info.st_atim.tv_sec);
+	file->file.modified_time.h = (i32)(info.st_mtim.tv_nsec);
+	file->file.accessed_time.h = (i32)(info.st_atim.tv_nsec);
+	// creation time is not available, so use the modification time...
+	file->file.created_time = file->file.modified_time;
+#endif
 
 	return DR_DONE;
 }
@@ -191,21 +282,25 @@ static int Get_File_Info(REBREQ *file)
 **
 ***********************************************************************/
 {
-	struct stat info;
 	struct dirent *d;
 	char *cp;
 	DIR *h;
-	int n;
-
-	// Remove * from tail, if present. (Allowed because the
-	// path was copied into to-local-path first).
-	n = strlen(cp = dir->file.path);
-	if (n > 0 && cp[n-1] == '*') cp[n-1] = 0;
+	int len, n = 0;
 
 	// If no dir handle, open the dir:
 	if (!(h = dir->handle)) {
+		// Remove * from tail, if present. (Allowed because the
+		// path was copied into to-local-path first).
+		len = strlen((cp = dir->file.path));
+		if (len > 0 && cp[len-1] == '*') {
+			// keep track that we removed *
+			n = len-1;
+			cp[n] = 0;
+		}
 		h = opendir(dir->file.path);
 		if (!h) {
+			// revert back the * char as it may be part of pattern matching
+			if (n > 0) cp[n] = '*';
 			dir->error = errno;
 			return DR_ERROR;
 		}
@@ -237,6 +332,8 @@ static int Get_File_Info(REBREQ *file)
 	// most efficient, because it does not require a separate
 	// file system call for determining directories.
 	if (d->d_type == DT_DIR) SET_FLAG(file->modes, RFM_DIR);
+	// NOTE: DT_DIR may be enabled using _BSD_SOURCE define
+	// https://stackoverflow.com/a/9241608/494472
 #else
 	if (Is_Dir(dir->file.path, file->file.path)) SET_FLAG(file->modes, RFM_DIR);
 #endif
@@ -247,6 +344,85 @@ static int Get_File_Info(REBREQ *file)
 	return DR_DONE;
 }
 
+
+/***********************************************************************
+**
+*/	static int Read_Pattern(REBREQ *dir, REBREQ *file)
+/*
+**		This function will read a file with wildcards, one file entry
+**		at a time, then close when no more files are found.
+**
+**		Although GLOB allows to pass patterns which match content
+**		thru multiple directories, that is intentionally disabled,
+**		because such a functionality would not be easy to implement
+**		and because result would have to be full path, which also
+**		may not be the best choice from user's view.
+**
+**		Actually the result is truncated so only files are returned and
+**		not complete paths.
+**
+***********************************************************************/
+{
+	char *cp;
+	glob_t *g;
+	int n, p, end = 0;
+	int wld = -1;
+
+	if (!(g = dir->handle)) {
+		//printf("init pattern: %s\n", dir->file.path);
+
+		n = strlen((cp = dir->file.path));
+		for (p = 0; p < n; p++) {
+			if (cp[p] == '/') {
+				// store position of the directory separator
+				end = p;
+				if (wld > 0) {
+					// don't support wildcards thru multiple directories
+					// like: %../?/?.png
+					// as this is not available on Windows
+
+					//puts("Not supported pattern!");
+					dir->error = -GLOB_NOMATCH; // result will be []
+					return DR_ERROR;
+				}
+			}
+			else if (cp[p] == '*' || cp[p] == '?') wld = p;
+		}
+		// keep position of the last directory separator so it can be used
+		// to limit result into just a file and not a full path
+		dir->clen = end + 1;
+
+		g = MAKE_NEW(glob_t); // deallocate once done!		
+		n = glob(dir->file.path, GLOB_MARK, NULL, g);
+		if (n) {
+			//printf("glob: %s err: %i errno: %i\n", dir->file.path, n, errno);
+			globfree(g);
+			OS_Free(g);
+			dir->error = -n; // using negative number as on Windows
+			return DR_ERROR;
+		}
+		//printf("found patterns: %li\n", g->gl_pathc);
+		// all patterns are already in the glob buffer,
+		// but we will not report them all at once
+		dir->handle = g;
+		dir->actual = 0;
+		dir->length = g->gl_pathc;
+		dir->modes  = 1 << RFM_PATTERN; // changing mode from RFM_DIR to RFM_PATTERN
+		CLR_FLAG(dir->flags, RRF_DONE);
+	}
+	if(dir->actual >= g->gl_pathc) {
+		globfree(g);
+		OS_Free(g);
+		SET_FLAG(dir->flags, RRF_DONE); // no more files
+		return DR_DONE;
+	}
+	//printf("path[%i]: %s\n", dir->actual, g->gl_pathv[dir->actual]);
+	file->modes = 0;
+	//TODO: assert if: 0 <= dir->clen <= MAX_FILE_NAME ???
+	// only file part is returned...
+	COPY_BYTES(file->file.path, g->gl_pathv[dir->actual++] + dir->clen, MAX_FILE_NAME - dir->clen);
+	return DR_DONE;
+}
 
 /***********************************************************************
 **
@@ -277,7 +453,7 @@ static int Get_File_Info(REBREQ *file)
 	}
 
 	// Set the modes:
-	modes = O_BINARY | GET_FLAG(file->modes, RFM_READ) ? O_RDONLY : O_RDWR;
+	modes = (O_BINARY | GET_FLAG(file->modes, RFM_READ)) ? O_RDONLY : O_RDWR;
 
 	if (GET_FLAGS(file->modes, RFM_WRITE, RFM_APPEND)) {
 		modes = O_BINARY | O_RDWR | O_CREAT;
@@ -318,7 +494,9 @@ static int Get_File_Info(REBREQ *file)
 	// Fetch file size (if fails, then size is assumed zero):
 	if (fstat(h, &info) == 0) {
 		file->file.size = info.st_size;
-		file->file.time.l = (long)(info.st_mtime);
+		file->file.modified_time.l = (i32)(info.st_mtime);
+		file->file.accessed_time.l = (i32)(info.st_atime);
+		file->file.created_time.l = (i32)(info.st_ctime);
 	}
 
 	file->id = h;
@@ -345,15 +523,42 @@ fail:
 	return DR_DONE;
 }
 
-
+// Resolves real size of virtual files (like /proc/cpuinfo)
+// NOTE: always use read/part with files like /dev/urandom
+static size_t get_virtual_file_size(const char *filepath) {
+	#define BUFFER_SIZE 4096
+	#define READ_LIMIT 0x80000000 // Rebol has limit 2GB for series
+	char buffer[BUFFER_SIZE];
+	size_t size = 0;
+	int file = open(filepath, O_RDONLY, S_IREAD);
+	if (file) {
+		while (size < READ_LIMIT) {
+			size_t bytesRead = read(file, buffer, BUFFER_SIZE);
+			if (bytesRead == 0) break;
+			size += bytesRead;
+		}
+		close(file);
+	}
+	return size;
+}
 /***********************************************************************
 **
 */	DEVICE_CMD Read_File(REBREQ *file)
 /*
 ***********************************************************************/
 {
+	ssize_t num_bytes;
+
 	if (GET_FLAG(file->modes, RFM_DIR)) {
-		return Read_Directory(file, (REBREQ*)file->data);
+		int ret = Read_Directory(file, (REBREQ*)file->data);
+		// If there is no id yet and reading failed, we will
+		// try to use file as a pattern...
+		if (ret == DR_ERROR && !file->id) goto init_pattern;
+		return ret;
+	}
+	else if (GET_FLAG(file->modes, RFM_PATTERN)) {
+init_pattern:
+		return Read_Pattern(file, (REBREQ*)file->data);
 	}
 
 	if (!file->id) {
@@ -366,15 +571,31 @@ fail:
 		if (!Seek_File_64(file)) return DR_ERROR;
 	}
 
-	// printf("read %d len %d\n", file->id, file->length);
-	file->actual = read(file->id, file->data, file->length);
-	if (file->actual < 0) {
-		file->error = -RFE_BAD_READ;
-		return DR_ERROR;
-	} else {
-		file->file.index += file->actual;
+	// virtual files on Posix report its size as 0, so try to resolve the real one
+	// but only in case, when user did not set /part
+	if (file->file.size == 0 && file->length == 0) {
+		file->file.size = get_virtual_file_size(file->file.path);
+		if (file->file.size > 0 && file->length < file->file.size) {
+			file->error = -RFE_RESIZE_SERIES;
+			return DR_ERROR;
+		}
 	}
 
+	// printf("read %d len %d\n", file->id, file->length);
+	file->actual = 0;
+	// Using the loop, because the reading may be done in chunks!
+	while (1) {
+		num_bytes = read(file->id, file->data + file->actual, file->length - file->actual);
+		if (num_bytes == 0) break;
+		if (num_bytes < 0) {
+			file->error = -RFE_BAD_READ;
+			return DR_ERROR;
+		}
+		file->actual += num_bytes;
+		// stop in case that we have enough data (requested just part of it)
+		if (file->actual >= file->length) break;
+	}
+	file->file.index += file->actual;
 	return DR_DONE;
 }
 
@@ -387,6 +608,10 @@ fail:
 **
 ***********************************************************************/
 {
+	ssize_t num_bytes;
+	struct stat info;
+	file->actual = 0;
+	
 	if (!file->id) {
 		file->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
@@ -404,13 +629,22 @@ fail:
 			if (ftruncate(file->id, file->file.index)) return DR_ERROR;
 	}
 
-	if (file->length == 0) return DR_DONE;
-
-	file->actual = write(file->id, file->data, file->length);
-	if (file->actual < 0) {
-		if (errno == ENOSPC) file->error = -RFE_DISK_FULL;
-		else file->error = -RFE_BAD_WRITE;
-		return DR_ERROR;
+	if (file->length > 0) {
+		num_bytes = write(file->id, file->data, file->length);
+		if (num_bytes < 0) {
+			if (errno == ENOSPC) file->error = -RFE_DISK_FULL;
+			else file->error = -RFE_BAD_WRITE;
+			return DR_ERROR;
+		} else {
+			file->actual = (u32)num_bytes;
+		}
+	}
+	// update new file info
+	if (fstat(file->id, &info) == 0) {
+		file->file.size = info.st_size;
+		file->file.modified_time.l = (i32)(info.st_mtime);
+		file->file.accessed_time.l = (i32)(info.st_atime);
+		file->file.created_time.l = (i32)(info.st_ctime);
 	}
 
 	return DR_DONE;
@@ -466,8 +700,6 @@ fail:
 
 	file->error = errno;
 	return DR_ERROR;
-
-	return 0;
 }
 
 

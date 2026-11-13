@@ -27,7 +27,7 @@
 ***********************************************************************/
 
 /*
-**  Tokens returned by the scanner.  Keep in sync with boot.r strings area.
+**  Tokens returned by the scanner.  Keep in sync with boot.reb strings area.
 */
 enum Value_Types {
 	TOKEN_EOF = 0,
@@ -59,11 +59,51 @@ enum Value_Types {
 	TOKEN_ISSUE,
 	TOKEN_TAG,
 	TOKEN_PATH,
+	TOKEN_REF,
 	TOKEN_REFINE,
 	TOKEN_CONSTRUCT,
+	TOKEN_MAP,
+	TOKEN_INTEGER_SPEC,
 	TOKEN_MAX
 };
 
+#ifdef TEST_SCAN
+const char *Token_Names[TOKEN_MAX] = {
+ "EOF",
+ "LINE",
+ "BLOCK_END",
+ "PAREN_END",
+ "WORD",
+ "SET",
+ "GET",
+ "LIT",
+ "NONE",
+ "LOGIC",
+ "INTEGER",
+ "DECIMAL",
+ "PERCENT",
+ "MONEY",
+ "TIME",
+ "DATE",
+ "CHAR",
+ "BLOCK",
+ "PAREN",
+ "STRING",
+ "BINARY",
+ "PAIR",
+ "TUPLE",
+ "FILE",
+ "EMAIL",
+ "URL",
+ "ISSUE",
+ "TAG",
+ "PATH",
+ "REFINE",
+ "CONSTRUCT",
+ "MAP",
+ "INTEGER_SPEC"
+};
+#endif
 
 /*
 **  Lexical Table Entry Encoding
@@ -142,6 +182,7 @@ enum LEX_SPECIAL_ENUM {             /* The order is important! */
 	LEX_SPECIAL_TICK,               /* 27 ' - literal */
 	LEX_SPECIAL_LESSER,				/* 3C < - compare or tag */
 	LEX_SPECIAL_GREATER,			/* 3E > - compare or end tag */
+	LEX_SPECIAL_UNDERSCORE,         /* 5F _ - none */
 	LEX_SPECIAL_PLUS,               /* 2B + - positive number */
 	LEX_SPECIAL_MINUS,              /* 2D - - date, negative number */
 	LEX_SPECIAL_TILDE,              /* 7E ~ - complement number */
@@ -189,14 +230,15 @@ enum rebol_esc_codes {
 */
 
 typedef struct rebol_scan_state {
-    REBYTE *begin;
-    REBYTE *end;
-    REBYTE const *limit;    /* no chars after this point */
+    const REBYTE *begin;
+    const REBYTE *end;
+    const REBYTE *limit;    /* no chars after this point */
 //    REBYTE const *error_id; /* id string for errors (file name or URL path) */
     REBCNT line_count;
-	REBYTE *head_line;		// head of current line (used for errors)
+	const REBYTE *head_line;		// head of current line (used for errors)
 	REBCNT opts;
 	REBCNT errors;
+	const REBYTE *invalid_utf;
 } SCAN_STATE;
 
 #define ACCEPT_TOKEN(s) ((s)->begin = (s)->end)
@@ -216,7 +258,7 @@ extern const REBYTE Lex_Map[256];
 
 /***********************************************************************
 **
-*/  static INLINE REBYTE *Skip_To_Char(REBYTE *cp, REBYTE *ep, REBYTE chr)
+*/  static INLINE const REBYTE *Skip_To_Char(const REBYTE *cp, const REBYTE *ep, REBYTE chr)
 /*
 **		Skip to the specified character but not past the end
 **		of the string.  Return zero if the char is not found.

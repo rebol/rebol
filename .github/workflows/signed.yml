@@ -1,0 +1,54 @@
+#########################################################
+# This file is generated using make-workflow.r3 script! #
+#########################################################
+
+name: 'Rebol SignPath test'
+on: 
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  windows:
+    strategy:
+      fail-fast: true
+    runs-on: windows-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+    - name: Install Siskin Builder
+      uses: oldes/install-siskin@v0.23.1
+    - name: Set env var using workspace path
+      run: |
+        echo "SISKIN_INSTALL=$GITHUB_WORKSPACE/install" >> $GITHUB_ENV
+        echo "SISKIN_TEMP=$GITHUB_WORKSPACE/temp" >> $GITHUB_ENV
+    
+    - name: "[BUILD] Rebol/Base x64"
+      run: ./siskin make/rebol3.nest -o ./ --msvc --arch x64 rebol3-base-windows-x64
+
+    - name: Upload unsigned artifact
+      id: upload-unsigned
+      uses: actions/upload-artifact@v6
+      with:
+        name: Rebol CI-${{github.run_id}}-windows-unsigned
+        path: ./rebol3-*.exe
+
+    - name: Sign with SignPath
+      if: github.event_name != 'pull_request'
+      uses: signpath/github-action-submit-signing-request@v2
+      with:
+        api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+        organization-id: '${{ vars.SIGNPATH_ORGANIZATION_ID }}'
+        project-slug: '${{ vars.SIGNPATH_PROJECT_SLUG }}'
+        signing-policy-slug: 'test-signing'
+        #signing-policy-slug: ${{ github.event_name == 'workflow_dispatch' && 'release-signing' || 'test-signing' }}
+        artifact-configuration-slug: 'windows-exe'
+        github-artifact-id: '${{ steps.upload-unsigned.outputs.artifact-id }}'
+        wait-for-completion: true
+        output-artifact-directory: './signed'
+
+    - name: Upload signed artifact
+      if: github.event_name != 'pull_request'
+      uses: actions/upload-artifact@v6
+      with:
+        name: Rebol CI-${{github.run_id}}-windows
+        path: ./signed/rebol3-*.exe

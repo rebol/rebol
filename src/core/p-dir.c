@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +33,8 @@
 // Special policy: Win32 does not wanting tail slash for dir info
 #define REMOVE_TAIL_SLASH (1<<10)
 
+#define WILD_PATH(p) (Find_Str_Wild(VAL_SERIES(p), VAL_INDEX(p), VAL_TAIL(p)) != NOT_FOUND)
+
 
 /***********************************************************************
 **
@@ -60,86 +63,26 @@
 
 	dir->data = (REBYTE*)(&file);
 
-	while ((result = OS_DO_DEVICE(dir, RDC_READ)) == 0 && !GET_FLAG(dir->flags, RRF_DONE)) {
-		len = LEN_STR(file.file.path);
+#ifdef TO_WINDOWS
+	if (dir->file.path[0] == 0) {
+		// special case: reading drive letters -> read %/
+		// https://github.com/Oldes/Rebol-issues/issues/2031
+		SET_FLAG(dir->modes, RFM_DRIVES);
+	}
+#endif
+
+	while ((result = OS_Do_Device(dir, RDC_READ)) == 0 && !GET_FLAG(dir->flags, RRF_DONE)) {
+		len = (REBCNT)LEN_STR(file.file.path);
 		if (GET_FLAG(file.modes, RFM_DIR)) len++;
 		name = Copy_OS_Str(file.file.path, len);
-		if (GET_FLAG(file.modes, RFM_DIR))
+		if (GET_FLAG(file.modes, RFM_DIR)) {
 			SET_ANY_CHAR(name, name->tail-1, '/');
+		}
 		Set_Series(REB_FILE, Append_Value(files), name);
 	}
 
-	if (result < 0 && dir->error != -RFE_OPEN_FAIL
-		&& (FIND_CHR(dir->file.path, '*') || FIND_CHR(dir->file.path, '?')))
-		result = 0;  // no matches found, but not an error
-
 	return result;
 }
-
-
-#ifdef REMOVED
-// It's problematic. See blog. Moved to mezz.
-
-/***********************************************************************
-**
-*/	REBNATIVE(dirq)
-/*
-**	Refinements:
-**		/any -- allow * and ? wildcards
-**
-**	Patterns:
-**		abc/ is true
-**		abc/*.r is true
-**		abc/?.r is true
-**		abc - ask the file system
-**
-***********************************************************************/
-{
-	REBVAL *path = D_ARG(1);
-	REBINT len;
-	REBINT i;
-	REBCNT dot;
-	REBUNI c;
-	REBSER *ser = VAL_SERIES(path);
-
-	if (!ANY_STR(path)) return R_FALSE;
-
-	len = (REBINT)VAL_LEN(path);
-	if (len == 0) return R_FALSE;
-
-	// We cannot tell from above, so we must check it (if file):
-	if (IS_FILE(path)) {
-		REBSER *ser;
-		REBREQ file;
-
-		CLEARS(&file); 
-		ser = Value_To_OS_Path(path);
-		file.file.path = (REBCHR*)(ser->data);
-		file.device = RDI_FILE;
-		len = OS_DO_DEVICE(&file, RDC_QUERY);
-		FREE_SERIES(ser);
-		if (len == DR_DONE && GET_FLAG(file.modes, RFM_DIR)) return R_TRUE;
-	}
-
-	// Search backward for abc/, abc/def, abc/*, etc:
-	len = (REBINT)VAL_LEN(path);
-	dot = 0;
-	for (i = 0; i < len; i++) {
-		c = GET_ANY_CHAR(ser, VAL_TAIL(path)-1-i);
-		if (c == '/' || c == '\\') {
-			if (i == 0 || dot) return R_TRUE;
-			break;
-		}
-		if (c == '.') {
-			if (i == 0 || dot) dot = 1;
-		}
-		else dot = 0;
-		if ((c == '*' || c == '?') && D_REF(2)) return R_TRUE;
-	}
-
-	return R_FALSE;
-}
-#endif
 
 
 /***********************************************************************
@@ -158,18 +101,36 @@
 ***********************************************************************/
 {
 	REBINT len;
+	REBSER *os_path;
 	REBSER *ser;
+	REBVAL val = { 0 };
 	//REBYTE *flags;
 
 	SET_FLAG(dir->modes, RFM_DIR);
+	SET_FLAG(dir->modes, policy);
 
 	// We depend on To_Local_Path giving us 2 extra chars for / and *
-	ser = Value_To_OS_Path(path);
-	len = ser->tail;
-	dir->file.path = (REBCHR*)(ser->data);
+	os_path = Value_To_OS_Path(path, TRUE);
+	len = SERIES_TAIL(os_path);
+	dir->file.path = (REBCHR*)(os_path->data);
 
-	Secure_Port(SYM_FILE, dir, path, ser);
+	// Convert full OS path back to Rebol format.
+	ser = To_REBOL_Path(BIN_HEAD(os_path), BIN_LEN(os_path), OS_WIDE, !wild);
+	if (wild) {
+		for (REBLEN i = 0; i < ser->tail; i++) {
+			if (ser->data[i] == '*') {
+				ser->tail = i;
+				ser->data[0];
+				break;
+			}
+		}
+	}
 
+	SET_FILE(&val, ser);
+
+	Secure_Port(SYM_FILE, dir, &val);
+
+	if (len == 0) return;
 	if (len == 1 && dir->file.path[0] == '.') {
 		if (wild > 0) {
 			dir->file.path[0] = '*';
@@ -211,142 +172,141 @@
 
 /***********************************************************************
 **
-*/	static int Dir_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int Dir_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 **		Internal port handler for file directories.
 **
+**		Note: as Read_Dir is currently using static buffer for the path
+**		there is no need to free dir.file.path
+**
+**		Using port/data to store intermediate file names.
+**
 ***********************************************************************/
 {
+	REBSER *port;
+	REBSER *target;
 	REBVAL *spec;
 	REBVAL *path;
-	REBVAL *state;
-	REBREQ dir;
-	REBCNT args = 0;
+	REBVAL *data;
+	REBREQ *dir;
 	REBINT result;
-	REBCNT len;
-	//REBYTE *flags;
 
-	Validate_Port(port, action);
+	//Debug_Fmt_("DIR ACTION: %r\n", Get_Action_Word(action));
 
-	*D_RET = *D_ARG(1);
-	CLEARS(&dir);
+	port = Validate_Port_With_Request(port_value, RDI_FILE, &dir);
 
-	// Validate and fetch relevant PORT fields:
-	spec  = BLK_SKIP(port, STD_PORT_SPEC);
-	if (!IS_OBJECT(spec)) Trap1(RE_INVALID_SPEC, spec);
+	// Validate PORT fields:
+	spec = OFV(port, STD_PORT_SPEC);
 	path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
 	if (!path) Trap1(RE_INVALID_SPEC, spec);
-
-	if (IS_URL(path)) path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
+	if (IS_URL(path)) path = Obj_Value(spec, STD_PORT_SPEC_FILE_PATH);
 	else if (!IS_FILE(path)) Trap1(RE_INVALID_SPEC, path);
-	
-	state = BLK_SKIP(port, STD_PORT_STATE); // if block, then port is open.
 
-	//flags = Security_Policy(SYM_FILE, path);
+	*D_RET = *D_ARG(1);
 
-	// Get or setup internal state data:
-	dir.port = port;
-	dir.device = RDI_FILE;
+	data = BLK_SKIP(port, STD_PORT_DATA);
 
 	switch (action) {
 
 	case A_READ:
-		//Trap_Security(flags[POL_READ], POL_READ, path);
-		args = Find_Refines(ds, ALL_READ_REFS);
-		if (!IS_BLOCK(state)) {		// !!! ignores /SKIP and /PART, for now
-			Init_Dir_Path(&dir, path, 1, POL_READ);
-			Set_Block(state, Make_Block(7)); // initial guess
-			result = Read_Dir(&dir, VAL_SERIES(state));
-			///OS_FREE(dir.file.path);
-			if (result < 0) Trap_Port(RE_CANNOT_OPEN, port, dir.error);
-			*D_RET = *state;
-			SET_NONE(state);
-		} else {
-			len = VAL_BLK_LEN(state);
-			// !!? Why does this need to copy the block??
-			Set_Block(D_RET, Copy_Block_Values(VAL_SERIES(state), 0, len, TS_STRING));
+		// !!! ignores /SKIP and /PART, for now !!!
+		if (!IS_BLOCK(data)) {
+			Init_Dir_Path(dir, path, 1, POL_READ);
+			Set_Block(data, Make_Block(7)); // initial guess
+			result = Read_Dir(dir, VAL_SERIES(data));
+
+			// don't throw an error if the original path contains wildcard chars * or ?
+			if (result < 0 && !(result == -RFE_OPEN_FAIL && WILD_PATH(path)) ) {
+				Trap_Port(RE_CANNOT_OPEN, port, dir->error);
+			}
 		}
+		*D_RET = *data;
+		SET_NONE(data);
 		break;
 
 	case A_CREATE:
-		//Trap_Security(flags[POL_WRITE], POL_WRITE, path);
-		if (IS_BLOCK(state)) Trap1(RE_ALREADY_OPEN, path); // already open
 create:
-		Init_Dir_Path(&dir, path, 0, POL_WRITE | REMOVE_TAIL_SLASH); // Sets RFM_DIR too
-		result = OS_DO_DEVICE(&dir, RDC_CREATE);
-		///OS_FREE(dir.file.path);
+		if (IS_OPEN(dir)) Trap1(RE_ALREADY_OPEN, path); // already open
+		Init_Dir_Path(dir, path, 0, POL_WRITE | REMOVE_TAIL_SLASH); // Sets RFM_DIR too
+		SET_NONE(data);
+		result = OS_Do_Device(dir, RDC_CREATE);
 		if (result < 0) Trap1(RE_NO_CREATE, path);
+		SET_OPEN(dir);
 		if (action == A_CREATE) return R_ARG2;
-		SET_NONE(state);
 		break;
 
 	case A_RENAME:
-		if (IS_BLOCK(state)) Trap1(RE_ALREADY_OPEN, path); // already open
-		else {
-			REBSER *target;
-
-			Init_Dir_Path(&dir, path, 0, POL_WRITE | REMOVE_TAIL_SLASH); // Sets RFM_DIR too
-			// Convert file name to OS format:
-			if (!(target = Value_To_OS_Path(D_ARG(2)))) Trap1(RE_BAD_FILE_PATH, D_ARG(2));
-			dir.data = BIN_DATA(target);
-			OS_DO_DEVICE(&dir, RDC_RENAME);
-			Free_Series(target);
-			if (dir.error) Trap1(RE_NO_RENAME, path);
-		}
+		Init_Dir_Path(dir, path, 0, POL_WRITE | REMOVE_TAIL_SLASH); // Sets RFM_DIR too
+		// Convert file name to OS format:
+		if (!(target = Value_To_OS_Path(D_ARG(2), TRUE))) Trap1(RE_BAD_FILE_PATH, D_ARG(2));
+		dir->data = BIN_DATA(target);
+		OS_Do_Device(dir, RDC_RENAME);
+		Free_Series(target);
+		if (dir->error) Trap1(RE_NO_RENAME, path);
 		break;
 
 	case A_DELETE:
-		//Trap_Security(flags[POL_WRITE], POL_WRITE, path);
-		SET_NONE(state);
-		Init_Dir_Path(&dir, path, 0, POL_WRITE);
-		// !!! add *.r deletion
-		// !!! add recursive delete (?)
-		result = OS_DO_DEVICE(&dir, RDC_DELETE);
-		///OS_FREE(dir.file.path);
-		if (result < 0) Trap1(RE_NO_DELETE, path);
-		return R_ARG2;
+		SET_NONE(data);
+		Init_Dir_Path(dir, path, 0, POL_WRITE);
+		result = OS_Do_Device(dir, RDC_DELETE);
+		SET_CLOSED(dir);
+		if (result >=  0) return R_ARG2;
+		if (result == -2) return R_FALSE;
+		// else...
+		Trap1(RE_NO_DELETE, path);
+		break;
 
 	case A_OPEN:
-		// !! If open fails, what if user does a READ w/o checking for error?
-		if (IS_BLOCK(state)) Trap1(RE_ALREADY_OPEN, path); // already open
-		//Trap_Security(flags[POL_READ], POL_READ, path);
-		args = Find_Refines(ds, ALL_OPEN_REFS);
-		if (args & AM_OPEN_NEW) goto create;
-		//if (args & ~AM_OPEN_READ) Trap1(RE_INVALID_SPEC, path);
-		Set_Block(state, Make_Block(7));
-		Init_Dir_Path(&dir, path, 1, POL_READ);
-		result = Read_Dir(&dir, VAL_SERIES(state));
-		///OS_FREE(dir.file.path);
-		if (result < 0) Trap_Port(RE_CANNOT_OPEN, port, dir.error);
+		if (D_REF(ARG_OPEN_NEW)) goto create;
+		// If port is already open, just ignore it. 
+		Init_Dir_Path(dir, path, 1, POL_READ);
+		Set_Block(data, Make_Block(7));
+		result = Read_Dir(dir, VAL_SERIES(data));
+		if (result < 0) Trap_Port(RE_CANNOT_OPEN, port, dir->error);
+		SET_OPEN(dir);
 		break;
 
 	case A_OPENQ:
-		if (IS_BLOCK(state)) return R_TRUE;
+		// as read reopens ports, does it make sense to return false here?
+		if (IS_OPEN(dir)) return R_TRUE;
 		return R_FALSE;
 
 	case A_CLOSE:
-		SET_NONE(state);
+		if (IS_OPEN(dir)) {
+			if (dir->handle) OS_Do_Device(dir, RDC_CLOSE);
+			SET_NONE(data);
+			SET_CLOSED(dir);
+		}
 		break;
 
 	case A_QUERY:
-		//Trap_Security(flags[POL_READ], POL_READ, path);
-		SET_NONE(state);
-		Init_Dir_Path(&dir, path, -1, REMOVE_TAIL_SLASH | POL_READ);
-		if (OS_DO_DEVICE(&dir, RDC_QUERY) < 0) return R_NONE;
-		Ret_Query_File(port, &dir, D_RET);
-		///OS_FREE(dir.file.path);
+		if (IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
+			Ret_File_Modes(port, D_RET);
+			return R_RET;
+		}
+		SET_NONE(data);
+		Init_Dir_Path(dir, path, -1, POL_READ);
+		if (OS_Do_Device(dir, RDC_QUERY) < 0) return R_NONE;
+		Ret_Query_File(port, dir, D_RET, D_ARG(ARG_QUERY_FIELD));
 		break;
 
 	//-- Port Series Actions (only called if opened as a port)
 
 	case A_LENGTHQ:
-		len = IS_BLOCK(state) ? VAL_BLK_LEN(state) : 0;
-		SET_INTEGER(D_RET, len);
+		SET_INTEGER(D_RET, IS_BLOCK(data) ? VAL_BLK_LEN(data) : 0);
 		break;
 
+	case A_TAILQ:
+		if(IS_BLOCK(data)) {
+			return (VAL_BLK_LEN(data) > 0) ? R_FALSE : R_TRUE;
+		}
+		Trap_Port(RE_NOT_OPEN, port, 0);
+
 	default:
-		Trap_Action(REB_PORT, action);
+		Trap1(RE_NO_PORT_ACTION, Get_Action_Word(action));
 	}
+
+	if (!IS_OPEN(dir)) Release_Port_State(port);
 
 	return R_RET;
 }

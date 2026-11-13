@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +50,7 @@ static REBSER *Read_All_File(char *fname)
 
 	SET_FLAG(file.modes, RFM_READ);
 
-	OS_DO_DEVICE(&file, RDC_OPEN);
+	OS_Do_Device(&file, RDC_OPEN);
 
 	if (file.error) return 0;
 
@@ -58,7 +59,7 @@ static REBSER *Read_All_File(char *fname)
 	file.data = BIN_DATA(ser);
 	file.length = (REBCNT)(file.file.size);
 
-	OS_DO_DEVICE(&file, RDC_READ);
+	OS_Do_Device(&file, RDC_READ);
 
 	if (file.error) {
 		ser = 0;
@@ -68,7 +69,7 @@ static REBSER *Read_All_File(char *fname)
 		STR_TERM(ser);
 	}
 
-	OS_DO_DEVICE(&file, RDC_CLOSE);
+	OS_Do_Device(&file, RDC_CLOSE);
 	return ser;
 }
 #endif
@@ -82,16 +83,21 @@ static REBSER *Read_All_File(char *fname)
 {
 	REBVAL *val = D_ARG(1);
 	REBSER *ser = 0;
+	REBINT err;
 
 	Echo_File(0);
 
 	if (IS_FILE(val))
-		ser = Value_To_OS_Path(val);
+		ser = Value_To_OS_Path(val, TRUE);
 	else if (IS_LOGIC(val) && IS_TRUE(val))
-		ser = To_Local_Path("output.txt", 10, FALSE, TRUE);
+		ser = To_Local_Path("output.txt", 10, OS_WIDE, TRUE);
 
 	if (ser) {
-		if (!Echo_File((REBCHR*)(ser->data))) Trap1(RE_CANNOT_OPEN, val);
+		err = Echo_File((REBCHR *)(ser->data));
+		if (err != DR_DONE) {
+			SET_INTEGER(D_RET, -err);
+			Trap2(RE_CANNOT_OPEN, val, D_RET);
+		}
 	}
 
 	return R_RET;
@@ -110,7 +116,7 @@ static REBSER *Read_All_File(char *fname)
 **
 ***********************************************************************/
 {
-	Set_String(D_RET, Copy_Form_Value(D_ARG(1), 0));
+	Set_String(D_RET, Form_Value(D_ARG(1), 0, TRUE));
 	return R_RET;
 }
 
@@ -124,22 +130,37 @@ static REBSER *Read_All_File(char *fname)
 **		/only   "For a block value, give only contents, no outer [ ]"
 **		/all	"Mold in serialized format"
 **		/flat	"No line indentation"
+**		/part	"Limit the length of the result"
+**		 limit [integer!]
 **
 ***********************************************************************/
 {
 	REBVAL *val = D_ARG(1);
 	REB_MOLD mo = {0};
+	REBCNT  len;
 
 	if (D_REF(3)) SET_FLAG(mo.opts, MOPT_MOLD_ALL);
 	if (D_REF(4)) SET_FLAG(mo.opts, MOPT_INDENT);
+	if (D_REF(5)) {
+		if (VAL_INT64(D_ARG(6)) > (i64)MAX_U32)
+			len = MAX_U32;
+		else if (VAL_INT64(D_ARG(6)) <= 0)
+			len = 0;
+		else
+			len = VAL_UNT32(D_ARG(6));
+	}
+	else {
+		len = NO_LIMIT;
+	}
 
 	Reset_Mold(&mo);
+	mo.limit = len;
 
 	if (D_REF(2) && IS_BLOCK(val)) SET_FLAG(mo.opts, MOPT_ONLY);
 
 	Mold_Value(&mo, val, TRUE);
-
-	Set_String(D_RET, Copy_String(mo.series, 0, -1));
+	if (mo.limit > mo.series->tail) mo.limit = mo.series->tail;
+	Set_String(D_RET, Copy_String(mo.series, 0, mo.limit));
 
 	return R_RET;
 }
@@ -154,7 +175,7 @@ static REBSER *Read_All_File(char *fname)
 	REBVAL *value = D_ARG(1);
 
 	if (IS_BLOCK(value)) Reduce_Block(VAL_SERIES(value), VAL_INDEX(value), 0);
-	Print_Value(DS_TOP, 0, 0);
+	Print_Value(DS_TOP, NO_LIMIT, 0, FALSE);
 	return R_UNSET; // reloads ds
 }
 
@@ -168,7 +189,7 @@ static REBSER *Read_All_File(char *fname)
 	REBVAL *value = D_ARG(1);
 
 	if (IS_BLOCK(value)) Reduce_Block(VAL_SERIES(value), VAL_INDEX(value), 0);
-	Prin_Value(DS_TOP, 0, 0);
+	Prin_Value(DS_TOP, 0, 0, FALSE);
 	return R_UNSET; // reloads ds
 }
 
@@ -237,7 +258,9 @@ static REBSER *Read_All_File(char *fname)
 	REBINT n = -1;
 	REBVAL *ret = D_RET;
 
-	OS_GET_TIME(&dat);
+	Assert_Max_Refines(ds, D_REF(9) ? 2 : 1); // prevent too many refines like: now/year/month
+
+	OS_Get_Time(&dat);
 	if (!D_REF(9)) dat.nano = 0; // Not /precise
 	Set_Date(ret, &dat);
 	Current_Year = dat.year;
@@ -329,7 +352,7 @@ static REBSER *Read_All_File(char *fname)
 		DS_RELOAD(ds);
 		for (val = BLK_HEAD(ports); NOT_END(val); val++) { // find timeout
 			if (Pending_Port(val)) n++;
-			if (IS_INTEGER(val) || IS_DECIMAL(val)) break;
+			if (IS_INTEGER(val) || IS_DECIMAL(val) || IS_TIME(val)) break;
 		}
 		if (IS_END(val)) {
 			if (n == 0) return R_NONE; // has no pending ports!
@@ -349,7 +372,7 @@ static REBSER *Read_All_File(char *fname)
 	case REB_TIME:
 		timeout = (REBINT) (VAL_TIME(val) / (SEC_SEC / 1000));
 chk_neg:
-		if (timeout < 0) Trap_Range(val);
+		if (timeout < 0) timeout = 0; //Trap_Range(val);
 		break;
 
 	case REB_PORT:
@@ -371,7 +394,10 @@ chk_neg:
 	if (ports) Set_Block(D_RET, ports);
 
 	// Process port events [stack-move]:
-	if (!Wait_Ports(ports, timeout)) return R_NONE;
+	if (!Wait_Ports(ports, timeout, D_REF(3))) {
+		Sieve_Ports(NULL); /* just reset the waked list */
+		return R_NONE;
+	}
 	if (!ports) return R_NONE;
 	DS_RELOAD(ds);
 
@@ -404,11 +430,13 @@ chk_neg:
 
 	val = OFV(port, STD_PORT_ACTOR);
 	if (IS_NATIVE(val)) {
-		Do_Port_Action(port, A_UPDATE); // uses current stack frame
+		//  Makes the port object fully consistent with internal native structures (e.g. the actual length of data read).
+		Do_Port_Action(D_ARG(1), A_UPDATE); // uses current stack frame
 	}
 
 	val = OFV(port, STD_PORT_AWAKE);
 	if (ANY_FUNC(val)) {
+		// Calls the port's awake function with the event as an argument.
 		val = Apply_Func(0, val, D_ARG(2), 0);
 		if (!(IS_LOGIC(val) && VAL_LOGIC(val))) return R_FALSE;
 	}
@@ -425,7 +453,7 @@ chk_neg:
 	REBVAL *arg = D_ARG(1);
 	REBSER *ser;
 
-	ser = Value_To_REBOL_Path(arg, 0);
+	ser = To_REBOL_Path(VAL_DATA(arg), VAL_LEN(arg), FALSE, FALSE);
 	if (!ser) Trap_Arg(arg);
 	Set_Series(REB_FILE, D_RET, ser);
 
@@ -442,13 +470,104 @@ chk_neg:
 	REBVAL *arg = D_ARG(1);
 	REBSER *ser;
 
-	ser = Value_To_Local_Path(arg, D_REF(2));
+	ser = To_Local_Path(VAL_DATA(arg), VAL_LEN(arg), FALSE, D_REF(2));
 	if (!ser) Trap_Arg(arg);
 	Set_Series(REB_STRING, D_RET, ser);
-
 	return R_RET;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(to_real_file)
+/*
+//	to-real-file: native [
+//		"Returns canonicalized absolute pathname. On Posix resolves symbolic links and returns NONE if file does not exists!"
+//		path [file! string!]
+//	]
+***********************************************************************/
+{
+	REBVAL *path = D_ARG(1);
+	REBSER *ser = NULL;
+	REBYTE *tmp;
+
+	// First normalize to OS native wide string
+	ser = Value_To_OS_Path(path, FALSE); // returns wide series on Windows!
+	// Above function does . and .. pre-processing, which does also the OS_REAL_PATH.
+	// So it could be replaced with version, which just prepares the input to required OS wide! 
+	if (!ser) {
+		return R_NONE;
+	}
+	// Try to call realpath on posix or _fullpath on Windows
+	tmp = OS_Real_Path((const REBCHR *)SERIES_DATA(ser)); // returns UTF-8 encoded data
+	Free_Series(ser);
+	if (!tmp) return R_NONE;
+
+	// Convert OS native utf8 string back to Rebol file type
+	REBLEN len = LEN_BYTES(tmp);
+	ser = To_REBOL_Path(tmp, len, 0, FALSE);
+#ifdef TO_WINDOWS
+	free(tmp);
+#endif
+	if (!ser) return R_NONE;
+	
+	Set_Series(REB_FILE, D_RET, ser);
+	return R_RET;
+}
+
+// Blog: http://www.rebol.net/cgi-bin/r3blog.r?view=0319
+/***********************************************************************
+**
+*/	REBNATIVE(dirq)
+/*
+//	dir?: native [
+//		"Returns TRUE if the value looks like a directory spec (ends with a slash (or backslash))."
+//		target [file! url! none!]
+//		/check "If the file is a directory on local storage (don't have to end with a slash)"
+//	]
+***********************************************************************/
+{
+	REBVAL *path = D_ARG(1);
+	REBINT len;
+	REBSER *ser;
+	REBREQ file;
+	REBUNI ch;
+
+	if (!ANY_STR(path) || VAL_LEN(path) == 0) return R_FALSE;
+
+	if (D_REF(2)) {
+	// use OS check if path really exists and is a directory
+		if (IS_FILE(path)) {
+			CLEARS(&file); 
+			ser = Value_To_OS_Path(path, TRUE);
+			file.file.path = (REBCHR*)(ser->data);
+			file.device = RDI_FILE;
+			len = OS_Do_Device(&file, RDC_QUERY);
+			Free_Series(ser);
+			if (len == DR_DONE && GET_FLAG(file.modes, RFM_DIR)) return R_TRUE;
+			// can still report FALSE, if it does not ends with / or \ char...
+		}
+	}
+	// without OS check
+	ch = GET_ANY_CHAR(VAL_SERIES(path), VAL_TAIL(path)-1);
+	if (ch == '/' || ch == '\\') return R_TRUE;
+
+	return R_FALSE;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(wildcardq)
+/*
+//	wildcard?: native [
+//		"Return true if file contains wildcard chars (* or ?)"
+//		path [file!]
+//	]
+***********************************************************************/
+{
+	REBVAL *path = D_ARG(1);
+	REBCNT index = Find_Str_Wild(VAL_SERIES(path), VAL_INDEX(path), VAL_TAIL(path));
+	return index == NOT_FOUND ? R_FALSE : R_TRUE;
+}
 
 /***********************************************************************
 **
@@ -457,13 +576,14 @@ chk_neg:
 ***********************************************************************/
 {
 	REBSER *ser;
-	REBCHR *lpath;
+	REBYTE *lpath;
 	REBINT len;
 
-	len = OS_GET_CURRENT_DIR(&lpath);
-	ser = To_REBOL_Path(lpath, len, OS_WIDE, TRUE); // allocates extra for end /
+	len = OS_Get_Current_Dir(&lpath);
+	ser = To_REBOL_Path(lpath, len, 0, TRUE); // allocates extra for end /
+
 	ASSERT1(ser, RP_MISC); // should never happen
-	OS_FREE(lpath);
+	OS_Free(lpath);
 	Set_Series(REB_FILE, D_RET, ser);
 
 	return R_RET;
@@ -478,18 +598,29 @@ chk_neg:
 {
 	REBVAL *arg = D_ARG(1);
 	REBSER *ser;
+	REBSER *os_path;
 	REBINT n;
-	REBVAL val;
 
-	ser = Value_To_OS_Path(arg);
-	if (!ser) Trap_Arg(arg); // !!! ERROR MSG
+	// Convert to absolute native OS path.
+	os_path = Value_To_OS_Path(arg, TRUE);
+	// it should be safe not to check result from Value_To_OS_Path (it always succeeds)
+	//if (!os_path) Trap_Arg(arg); // !!! ERROR MSG
 
-	Set_String(&val, ser); // may be unicode or utf-8
-	Check_Security(SYM_FILE, POL_EXEC, &val);
+	// Convert full OS path back to Rebol format.
+	ser = To_REBOL_Path(BIN_HEAD(os_path), BIN_LEN(os_path), OS_WIDE, TRUE);
+	SET_FILE(arg, ser);
 
-	n = OS_SET_CURRENT_DIR((void*)ser->data);  // use len for bool
-	if (!n) Trap_Arg(arg); // !!! ERROR MSG
+	// Check if access to this directory is allowed?
+	// O: I think that it should be possible to enter protected directory.
+	// O: The check is performed only when a real action is requested.
+	///Check_Security(SYM_FILE, POL_EXEC, arg);
 
+	// Change the current directory.
+	n = OS_Set_Current_Dir((REBCHR*)BIN_HEAD(os_path));
+	if (NZ(n)) {
+		SET_INTEGER(D_RET, -n);
+		Trap2(RE_CANNOT_OPEN, arg, D_RET);
+	}
 	return R_ARG1;
 }
 
@@ -509,11 +640,16 @@ chk_neg:
 	if (IS_NONE(arg))
 		return R_UNSET;
 
-	url = Val_Str_To_OS(arg);
+	if(IS_FILE(arg)) {
+		// Convert file to full local os path
+		url = (REBCHR*)SERIES_DATA(Value_To_OS_Path(arg, TRUE));
+	} else {
+		url = Val_Str_To_OS(arg);
+	}
 
-	r = OS_BROWSE(url, 0);
+	r = OS_Browse(url, 0);
 
-	if (r == 0) Trap1(RE_CALL_FAIL, Make_OS_Error());
+	if (r == 0) Trap1(RE_CALL_FAIL, Make_OS_Error(r));
 
 	return R_UNSET;
 }
@@ -523,24 +659,238 @@ chk_neg:
 **
 */	REBNATIVE(call)
 /*
+ *
+	/wait "Wait for command to terminate before returning"
+    /console "Runs command with I/O redirected to console"
+    /shell "Forces command to be run from shell"
+	/info "Return process information object"
+    /input in [string! file! none] "Redirects stdin to in"
+    /output out [string! file! none] "Redirects stdout to out"
+    /error err [string! file! none] "Redirects stderr to err"
 ***********************************************************************/
 {
+#define INHERIT_TYPE 0
+#define NONE_TYPE 1
+#define STRING_TYPE 2
+#define FILE_TYPE 3
+#define BINARY_TYPE 4
+
+#define FLAG_WAIT 1
+#define FLAG_CONSOLE 2
+#define FLAG_SHELL 4
+#define FLAG_INFO 8
+
 	REBINT r;
-	REBCHR *cmd;
+	REBCHR *cmd = NULL;
 	REBVAL *arg = D_ARG(1);
+	REBU64 pid = 0;
+	u32 flags = 0;
+	int argc = 1;
+	REBCHR ** argv = NULL;
+	REBVAL *input = NULL;
+	REBVAL *output = NULL;
+	REBVAL *err = NULL;
+	void *os_input = NULL;
+	void *os_output = NULL;
+	void *os_err = NULL;
+	int input_type = INHERIT_TYPE;
+	int output_type = INHERIT_TYPE;
+	int err_type = INHERIT_TYPE;
+	REBCNT input_len = 0;
+	REBCNT output_len = 0;
+	REBCNT err_len = 0;
+	REBOOL flag_wait = FALSE;
+	REBOOL flag_console = FALSE;
+	REBOOL flag_shell = FALSE;
+	REBOOL flag_info = FALSE;
+	int exit_code = 0;
 
 	Check_Security(SYM_CALL, POL_EXEC, arg);
 
-	cmd = Val_Str_To_OS(arg);
-	r = OS_CREATE_PROCESS(cmd, D_REF(2) ? 1 : 0);
+	if (D_REF(2)) flag_wait = TRUE;
+	if (D_REF(3)) flag_console = TRUE;
+	if (D_REF(4)) flag_shell = TRUE;
+	if (D_REF(5)) flag_info = TRUE;
+	if (D_REF(6)) { /* input */
+		input = D_ARG(7);
+		if (IS_STRING(input)) {
+			input_type = STRING_TYPE;
+			os_input = Val_Str_To_OS(input);
+			input_len = VAL_LEN(input);
+		} else if (IS_BINARY(input)) {
+			input_type = BINARY_TYPE;
+			os_input = VAL_BIN_DATA(input);
+			input_len = VAL_LEN(input);
+		} else if (IS_FILE(input)) {
+			REBSER *path = Value_To_OS_Path(input, FALSE);
+			input_type = FILE_TYPE;
+			os_input = SERIES_DATA(path);
+			input_len = SERIES_TAIL(path);
+		} else if (IS_NONE(input)) {
+			input_type = NONE_TYPE;
+		} else {
+			Trap_Arg(input);
+		}
+	}
 
-	if (D_REF(2)) {
-		SET_INTEGER(D_RET, r);
+	if (D_REF(8)) { /* output */
+		output = D_ARG(9);
+		if (IS_STRING(output)) {
+			output_type = STRING_TYPE;
+		} else if (IS_BINARY(output)) {
+			output_type = BINARY_TYPE;
+		} else if (IS_FILE(output)) {
+			REBSER *path = Value_To_OS_Path(output, FALSE);
+			output_type = FILE_TYPE;
+			os_output = SERIES_DATA(path);
+			output_len = SERIES_TAIL(path);
+		} else if (IS_NONE(output)) {
+			output_type = NONE_TYPE;
+		} else {
+			Trap_Arg(output);
+		}
+	}
+
+	if (D_REF(10)) { /* err */
+		err = D_ARG(11);
+		if (IS_STRING(err)) {
+			err_type = STRING_TYPE;
+		} else if (IS_BINARY(err)) {
+			err_type = BINARY_TYPE;
+		} else if (IS_FILE(err)) {
+			REBSER *path = Value_To_OS_Path(err, FALSE);
+			err_type = FILE_TYPE;
+			os_err = SERIES_DATA(path);
+			err_len = SERIES_TAIL(path);
+		} else if (IS_NONE(err)) {
+			err_type = NONE_TYPE;
+		} else {
+			Trap_Arg(err);
+		}
+	}
+
+	/* I/O redirection implies /wait */
+	if (input_type == STRING_TYPE
+		|| input_type == BINARY_TYPE
+		|| output_type == STRING_TYPE
+		|| output_type == BINARY_TYPE
+		|| err_type == STRING_TYPE
+		|| err_type == BINARY_TYPE) {
+		flag_wait = TRUE;
+	}
+
+	if (flag_wait) flags |= FLAG_WAIT;
+	if (flag_console) flags |= FLAG_CONSOLE;
+	if (flag_shell) flags |= FLAG_SHELL;
+	if (flag_info) flags |= FLAG_INFO;
+
+	if (IS_FILE(arg)) {
+		REBSER* ser = NULL;
+		REBSER* path = Value_To_OS_Path(arg, FALSE);
+		argc = 1;
+		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
+		argv = (REBCHR**)SERIES_DATA(ser);
+		argv[0] = (REBCHR*)SERIES_DATA(path);
+		argv[argc] = NULL;
+		cmd = NULL;
+	} else if (ANY_STR(arg)) {
+		REBSER * ser = NULL;
+		cmd = Val_Str_To_OS(arg);
+		argc = 1;
+		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
+		argv = (REBCHR**)SERIES_DATA(ser);
+		argv[0] = cmd;
+		argv[argc] = NULL;
+	} else if (IS_BLOCK(arg)) {
+		int i = 0;
+		REBSER * ser = NULL;
+		argc = VAL_LEN(arg);
+		if (argc <= 0) {
+			Trap0(RE_TOO_SHORT);
+		}
+		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
+		argv = (REBCHR**)SERIES_DATA(ser);
+		for (i = 0; i < argc; i ++) {
+			REBVAL *param = VAL_BLK_SKIP(arg, i);
+			// to avoid call to reduce, resolve get-word! or get-path! values if used
+			if (IS_GET_WORD(param)) {
+				param = Get_Var(param);
+			}
+			else if (IS_GET_PATH(param)) {
+				Do_Path(&param, NULL);
+				param = DS_POP; // volatile stack reference
+			}
+			if (IS_FILE(param)) {
+				REBSER* path = Value_To_OS_Path(param, FALSE);
+				argv[i] = (REBCHR*)SERIES_DATA(path);
+			} else if (ANY_STR(param)) {
+				argv[i] = Val_Str_To_OS(param);
+			} else if (IS_WORD(param)) {
+				Set_Series(REB_STRING, D_RET, Form_Value(param, TRUE, TRUE));
+				argv[i] = Val_Str_To_OS(D_RET);
+			} else {
+				Trap_Arg(param);
+			}
+		}
+		argv[argc] = NULL;
+		cmd = NULL;
+	} else {
+		Trap_Arg(arg);
+	}
+
+	r = OS_Create_Process(cmd, argc, argv, flags, &pid, &exit_code,
+						  input_type, os_input, input_len,
+						  output_type, &os_output, &output_len,
+						  err_type, &os_err, &err_len);
+
+	if (output_type == STRING_TYPE || output_type == BINARY_TYPE) {
+		if (output != NULL && output_len > 0) {
+			Append_Bytes_Len(VAL_SERIES(output), os_output, output_len);
+			if (output_type == STRING_TYPE && !IS_UTF8_STRING(output) && !Is_ASCII(os_output, output_len))
+				UTF8_SERIES(VAL_SERIES(output));
+			OS_Free(os_output);
+		}
+	}
+
+	if (err_type == STRING_TYPE || err_type == BINARY_TYPE) {
+		if (err != NULL	&& err_len > 0) {
+			Append_Bytes_Len(VAL_SERIES(err), os_err, err_len);
+			if (err_type == STRING_TYPE && !IS_UTF8_STRING(err) && !Is_ASCII(os_err, err_len))
+				UTF8_SERIES(VAL_SERIES(err));
+			OS_Free(os_err);
+		}
+	}
+
+	if (flag_info) {
+		REBSER *obj = Make_Frame(2);
+		REBVAL *val = Append_Frame(obj, NULL, SYM_ID);
+		SET_INTEGER(val, pid);
+
+		if (flag_wait) {
+			val = Append_Frame(obj, NULL, SYM_EXIT_CODE);
+			SET_INTEGER(val, exit_code);
+		}
+
+		// based on f-stubs Make_OS_Error()
+		if (r != 0) {
+			REBCHR str[100];
+			OS_Form_Error(r, str, 100);
+
+			val = Append_Frame(obj, NULL, SYM_ERROR);
+			SET_STRING(val, Copy_OS_Str(str, (REBINT)LEN_STR(str)));
+		}
+
+		SET_OBJECT(D_RET, obj);
 		return R_RET;
 	}
-	
-	if (r < 0) Trap1(RE_CALL_FAIL, Make_OS_Error());
-	return R_NONE;
+
+	if (r == 0) {
+		SET_INTEGER(D_RET, flag_wait ? exit_code : pid);
+		return R_RET;
+	} else {
+		Trap1(RE_CALL_FAIL, Make_OS_Error(r));
+		return R_NONE;
+	}
 }
 
 
@@ -573,7 +923,7 @@ chk_neg:
 		}
 		Print("Launching: %s", STR_HEAD(cmd));
 		r = OS_CREATE_PROCESS(STR_HEAD(cmd), 0);
-		if (r < 0) Trap1(RE_CALL_FAIL, Make_OS_Error());
+		if (r < 0) Trap1(RE_CALL_FAIL, Make_OS_Error(r));
 	}
 	return R_NONE;
 }
@@ -595,7 +945,7 @@ chk_neg:
 	REBCHR *eq;
 	REBSER *blk;
 
-	while (n = LEN_STR(str)) {
+	while ((n = (REBCNT)LEN_STR(str))) {
 		len++;
 		str += n + 1; // next
 	}
@@ -603,7 +953,7 @@ chk_neg:
 	blk = Make_Block(len*2);
 
 	str = start;
-	while (NZ(eq = FIND_CHR(str+1, '=')) && NZ(n = LEN_STR(str))) {
+	while (NZ(n = (REBCNT)LEN_STR(str)) && NZ(eq = FIND_CHR(str+1, '='))) {
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(str, eq-str));
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(eq+1, n-(eq-str)-1));
 		str += n + 1; // next
@@ -615,7 +965,7 @@ chk_neg:
 }
 
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 /***********************************************************************
 **
 */	REBSER *Block_To_String_List(REBVAL *blk)
@@ -629,6 +979,9 @@ chk_neg:
 	REB_MOLD mo = {0};
 	REBVAL *value;
 
+	// It is expected to have pairs of NAME and FILTER
+	if (VAL_BLK_LEN(blk) % 2 != 0) return NULL;
+
 	Reset_Mold(&mo);
 
 	for (value = VAL_BLK_DATA(blk); NOT_END(value); value++) {
@@ -637,7 +990,7 @@ chk_neg:
 	}
 	Append_Byte(mo.series, 0);
 
-	return Copy_Series(mo.series); // Unicode
+	return UTF8_To_UTF16(BUF_SCAN, BIN_HEAD(mo.series), SERIES_TAIL(mo.series), OS_LITTLE_ENDIAN);
 }
 
 
@@ -655,7 +1008,7 @@ chk_neg:
 	REBSER *blk;
 	REBSER *dir;
 
-	while (n = LEN_STR(str)) {
+	while ((n = (REBLEN)LEN_STR(str))) {
 		len++;
 		str += n + 1; // next
 	}
@@ -664,19 +1017,22 @@ chk_neg:
 
 	// First is a dir path or full file path:
 	str = start;
-	n = LEN_STR(str);
+	n = (REBLEN)LEN_STR(str);
 
 	if (len == 1) {  // First is full file path
-		dir = To_REBOL_Path(str, n, -1, 0);
+		dir = To_REBOL_Path((REBYTE*)str, n, OS_WIDE, 0);
 		Set_Series(REB_FILE, Append_Value(blk), dir);
 	}
 	else {  // First is dir path for the rest of the files
-		dir = To_REBOL_Path(str, n, -1, TRUE);
+		dir = To_REBOL_Path((REBYTE*)str, n, OS_WIDE, TRUE);
 		str += n + 1; // next
 		len = dir->tail;
-		while (n = LEN_STR(str)) {
+		while ((n = (REBCNT)LEN_STR(str))) {
+			const REBYTE *utf8 = 0;
+			REBLEN sz = OS_Wide_To_Multibyte((const REBUNI*)str, &utf8, n);
 			dir->tail = len;
-			Append_Uni_Uni(dir, str, n);
+			Append_Bytes_Len(dir, utf8, sz);
+			OS_Free((void*)utf8);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
 			str += n + 1; // next
 		}
@@ -693,12 +1049,12 @@ chk_neg:
 /*
 ***********************************************************************/
 {
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 	REBRFR fr = {0};
 	REBSER *ser;
 	REBINT n;
 
-	fr.files = OS_MAKE(MAX_FILE_REQ_BUF);
+	fr.files = OS_Make(MAX_FILE_REQ_BUF);
 	fr.len = MAX_FILE_REQ_BUF/sizeof(REBCHR) - 2;  
 	fr.files[0] = 0;
 
@@ -708,7 +1064,7 @@ chk_neg:
 	if (D_REF(ARG_REQUEST_FILE_MULTI)) SET_FLAG(fr.flags, FRF_MULTI);
 
 	if (D_REF(ARG_REQUEST_FILE_FILE)) {
-		ser = Value_To_OS_Path(D_ARG(ARG_REQUEST_FILE_NAME));
+		ser = Value_To_OS_Path(D_ARG(ARG_REQUEST_FILE_NAME), TRUE);
 		fr.dir = (REBCHR*)(ser->data);
 		n = ser->tail;
 		if (fr.dir[n-1] != OS_DIR_SEP) {
@@ -720,31 +1076,113 @@ chk_neg:
 
 	if (D_REF(ARG_REQUEST_FILE_FILTER)) {
 		ser = Block_To_String_List(D_ARG(ARG_REQUEST_FILE_LIST));
+		if (!ser) Trap_Arg(D_ARG(ARG_REQUEST_FILE_LIST));
 		fr.filter = (REBCHR*)(ser->data);
 	}
 
 	if (D_REF(ARG_REQUEST_FILE_TITLE))
 		fr.title = Val_Str_To_OS(D_ARG(ARG_REQUEST_FILE_TEXT));
 
-	if (OS_REQUEST_FILE(&fr)) {
+	if (OS_Request_File(&fr)) {
 		if (GET_FLAG(fr.flags, FRF_MULTI)) {
 			ser = File_List_To_Block(fr.files);
 			Set_Block(D_RET, ser);
 		}
 		else {
-			ser = To_REBOL_Path(fr.files, LEN_STR(fr.files), OS_WIDE, 0);
+			ser = To_REBOL_Path((REBYTE*)fr.files, (REBCNT)LEN_STR(fr.files), OS_WIDE, 0);
 			Set_Series(REB_FILE, D_RET, ser);
 		}
 	} else
 		ser = 0;
 
 	ENABLE_GC;
-	OS_FREE(fr.files);
+	OS_Free(fr.files);
 
 	return ser ? R_RET : R_NONE;
 #else
+	Trap0(RE_FEATURE_NA);
 	return R_NONE;
 #endif
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(request_dir)
+/*
+***********************************************************************/
+{
+#ifdef TO_WINDOWS
+	REBRFR fr = {0};
+	REBSER *ser;
+	REBINT n;
+
+	fr.files = OS_Make(MAX_DIR_REQ_BUF);
+	fr.len = MAX_DIR_REQ_BUF/sizeof(REBCHR) - 4; // reserve for trailing slash and null 
+	fr.files[0] = 0;
+
+	DISABLE_GC;
+
+	if (D_REF(ARG_REQUEST_DIR_DIR)) {
+		ser = Value_To_OS_Path(D_ARG(ARG_REQUEST_DIR_NAME), TRUE);
+		fr.dir = (REBCHR*)(ser->data);
+		n = ser->tail;
+		if (fr.dir[n-1] != OS_DIR_SEP) {
+			if (n+2 > fr.len) n = fr.len - 2;
+			COPY_STR(fr.files, (REBCHR*)(ser->data), n);
+			fr.files[n] = 0;
+		}
+	}
+
+	if (D_REF(ARG_REQUEST_DIR_TITLE))
+		fr.title = Val_Str_To_OS(D_ARG(ARG_REQUEST_DIR_TEXT));
+	else
+		fr.title = L"Select Folder";
+
+	if (D_REF(ARG_REQUEST_DIR_KEEP)) SET_FLAG(fr.flags, FRF_KEEP);
+
+	if (OS_Request_Dir(&fr)) {
+		REBCNT len = (REBCNT)LEN_STR(fr.files);
+		// Windows may return path without trailing slash, so just add it if missing
+		if (fr.files[len-1] != '\\') {
+			fr.files[len++]  = '\\';
+			fr.files[len  ]  = 0;
+		}
+		ser = To_REBOL_Path((REBYTE *)fr.files, len, OS_WIDE, 0);
+		Set_Series(REB_FILE, D_RET, ser);
+	} else
+		ser = 0;
+
+	ENABLE_GC;
+	OS_Free(fr.files);
+
+	return ser ? R_RET : R_NONE;
+#else
+	Trap0(RE_FEATURE_NA);
+	return R_NONE;
+#endif
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(request_password)
+/*
+***********************************************************************/
+{
+	REBREQ  req = {0};
+	REBSER *str;
+
+	OS_Request_Password(&req);
+
+	if (req.data == NULL) return R_NONE;
+
+	//str = Copy_OS_Str(req.data, req.actual);
+	str = Copy_Bytes(req.data, req.actual);
+
+	FREE_MEM(req.data);
+	SET_STRING(D_RET, str);
+	return R_RET;
 }
 
 
@@ -761,16 +1199,16 @@ chk_neg:
 
 	Check_Security(SYM_ENVR, POL_READ, arg);
 
-	if (ANY_WORD(arg)) Set_String(arg, Copy_Form_Value(arg, 0));
+	if (ANY_WORD(arg)) Set_String(arg, Form_Value(arg, 0, FALSE));
 	cmd = Val_Str_To_OS(arg);
 
-	lenplus = OS_GET_ENV(cmd, (REBCHR*)0, 0);
+	lenplus = OS_Get_Env(cmd, (REBCHR*)0, 0);
 	if (lenplus == 0) return R_NONE;
 	if (lenplus < 0) return R_UNSET;
 
 	// Two copies...is there a better way?
 	buf = MAKE_STR(lenplus);
-	OS_GET_ENV(cmd, buf, lenplus);
+	OS_Get_Env(cmd, buf, lenplus);
 	Set_String(D_RET, Copy_OS_Str(buf, lenplus - 1));
 	FREE_MEM(buf);
 
@@ -791,22 +1229,22 @@ chk_neg:
 
 	Check_Security(SYM_ENVR, POL_WRITE, arg1);
 
-	if (ANY_WORD(arg1)) Set_String(arg1, Copy_Form_Value(arg1, 0));
+	if (ANY_WORD(arg1)) Set_String(arg1, Form_Value(arg1, 0, FALSE));
 	cmd = Val_Str_To_OS(arg1);
 	
 	if (ANY_STR(arg2)) {
 		REBCHR *value = Val_Str_To_OS(arg2);
-		success = OS_SET_ENV(cmd, value);
+		success = OS_Set_Env(cmd, value);
 		if (success) {
 			// What function could reuse arg2 as-is?
-			Set_String(D_RET, Copy_OS_Str(value, LEN_STR(value)));
+			Set_String(D_RET, Copy_OS_Str(value, (REBCNT)LEN_STR(value)));
 			return R_RET;
 		}
 		return R_UNSET;
 	}
 
 	if (IS_NONE(arg2)) {
-		success = OS_SET_ENV(cmd, 0);
+		success = OS_Set_Env(cmd, 0);
 		if (success)
 			return R_NONE;
 		return R_UNSET;
@@ -825,9 +1263,182 @@ chk_neg:
 /*
 ***********************************************************************/
 {
-	REBCHR *result = OS_LIST_ENV();
+	REBCHR *result = OS_List_Env();
+
+	if(result == NULL) Trap0(RE_NO_MEMORY);
 
 	Set_Series(REB_MAP, D_RET, String_List_To_Block(result));
+	FREE_MEM(result);
+	return R_RET;
+}
 
+/***********************************************************************
+**
+*/	REBNATIVE(access_os)
+/*
+//	access-os: native [
+//		{Access to various operating system functions (getuid, setuid, getpid, kill, etc.)}
+//		field [word!] "Valid words: uid, euid, gid, egid, pid"
+//		/set          "To set or kill pid (sig 15)"
+//		value [integer! block!] "Argument, such as uid, gid, or pid (in which case, it could be a block with the signal no)"
+//	]
+//	
+***********************************************************************/
+{
+	REBVAL *field = D_ARG(1);
+	REBOOL set = D_REF(2);
+	REBVAL *val = D_ARG(3);
+	REBINT ret = 0;
+	REBVAL *pid = 0;
+
+	switch (VAL_WORD_CANON(field)) {
+		case SYM_UID:
+			if (set) {
+				if (IS_INTEGER(val)) {
+					ret = OS_Set_UID(VAL_INT32(val));
+				} else {
+					Trap_Arg(val);
+				}
+			} else {
+				ret = OS_Get_UID();
+			}
+			break;
+		case SYM_GID:
+			if (set) {
+				if (IS_INTEGER(val)) {
+					ret = OS_Set_GID(VAL_INT32(val));
+				} else {
+					Trap_Arg(val);
+				}
+			} else {
+				ret = OS_Get_GID();
+			}
+			break;
+		case SYM_EUID:
+			if (set) {
+				if (IS_INTEGER(val)) {
+					ret = OS_Set_EUID(VAL_INT32(val));
+				} else {
+					Trap_Arg(val);
+				}
+			} else {
+				ret = OS_Get_EUID();
+			}
+			break;
+		case SYM_EGID:
+			if (set) {
+				if (IS_INTEGER(val)) {
+					ret = OS_Set_EGID(VAL_INT32(val));
+				} else {
+					Trap_Arg(val);
+				}
+			} else {
+				ret = OS_Get_EGID();
+			}
+			break;
+		case SYM_PID:
+			if (set) {
+				pid = val;
+				//REBVAL *arg = val;
+				if (IS_INTEGER(val)) {
+					ret = OS_Kill(VAL_INT32(pid));
+				} else if (IS_BLOCK(val)) {
+					REBVAL *sig = NULL;
+
+					if (VAL_LEN(val) != 2) {
+						Trap_Arg(val);
+					}
+					pid = VAL_BLK_SKIP(val, 0);
+					sig = VAL_BLK_SKIP(val, 1);
+					if (!IS_INTEGER(pid)) {
+						Trap_Arg(pid);
+					}
+					if (!IS_INTEGER(sig)) {
+						Trap_Arg(sig);
+					}
+					ret = OS_Send_Signal(VAL_INT32(pid), VAL_INT32(sig));
+					//arg = sig;
+				} else {
+					Trap_Arg(val);
+				}
+			} else {
+				ret = OS_Get_PID();
+			}
+			break;
+		default:
+			Trap_Arg(field);
+	}
+
+	if(ret > 0) {
+		SET_INTEGER(D_RET, ret);
+		return R_RET;
+	}
+
+	if (ret == 0) {
+		SET_TRUE(D_RET);
+		return R_RET;
+	}
+
+	switch (ret) {
+		case OS_ENA:
+			Trap1(RE_NOT_HERE, field);
+			break;
+		case OS_EPERM:
+			Trap0(RE_PERMISSION_DENIED);
+			break;
+		case OS_EINVAL:
+			Trap_Arg(val);
+			break;
+		case OS_ESRCH:
+			Trap1(RE_PROCESS_NOT_FOUND, pid);
+			break;
+		default:
+			Trap_Arg(val);
+			break;
+	}
+	// should not happen, but VS compiler wants to return value in all cases
+	SET_FALSE(D_RET);
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(ttyq)
+/*
+//  tty?: native [
+//		"Returns TRUE if standard input is connected to a terminal."
+//  ]
+***********************************************************************/
+{
+	return OS_Is_TTY() ? R_TRUE : R_FALSE;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(read_key)
+/*
+//  read-key: native [
+//		"Reads a single keypress from the console without echoing it."
+//  ]
+***********************************************************************/
+{
+	REBKEY key = { 0 };
+	SET_NONE(D_RET);
+	if (OS_Read_Key(&key)) {
+		// On CTRL+C, clear the signal (it has been handled).
+		if (key.uchar == 0x03) CLR_SIGNAL(SIG_ESCAPE);
+		// Update the states of special keys.
+		SET_LOGIC(Get_System(SYS_STATE, STATE_CONTROLQ), GET_FLAG(key.flags, EVF_CONTROL));
+		SET_LOGIC(Get_System(SYS_STATE, STATE_SHIFTQ), GET_FLAG(key.flags, EVF_SHIFT));
+		SET_LOGIC(Get_System(SYS_STATE, STATE_ALTQ), GET_FLAG(key.flags, EVF_ALT));
+		if (key.uchar) SET_CHAR(D_RET, key.uchar); // Return a char...
+		else if (key.virtu) {
+			// ... or a word.
+			REBVAL* arg = Get_System(SYS_CATALOG, CAT_EVENT_KEYS);
+			if (IS_BLOCK(arg) && key.virtu <= (REBINT)VAL_TAIL(arg)) {
+				*D_RET = *VAL_BLK_SKIP(arg, key.virtu - 1);
+			}
+		}
+	}
 	return R_RET;
 }

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,12 +38,12 @@
 /*
 **		Make a binary string series. For byte, C, and UTF8 strings.
 **		Add 1 extra for terminator.
+**		Memory is cleared.
 **
 ***********************************************************************/
 {
 	REBSER *series = Make_Series(length + 1, sizeof(REBYTE), FALSE);
 	LABEL_SERIES(series, "make binary");
-	BIN_DATA(series)[length] = 0;
 	return series;
 }
 
@@ -53,19 +54,19 @@
 /*
 **		Make a unicode string series. Used for internal strings.
 **		Add 1 extra for terminator.
+**		Memory is cleared.
 **
 ***********************************************************************/
 {
 	REBSER *series = Make_Series(length + 1, sizeof(REBUNI), FALSE);
 	LABEL_SERIES(series, "make unicode");
-	UNI_HEAD(series)[length] = 0;
 	return series;
 }
 
 
 /***********************************************************************
 **
-*/	REBSER *Copy_Bytes(REBYTE *src, REBINT len)
+*/	REBSER *Copy_Bytes(const REBYTE *src, REBLEN len)
 /*
 **		Create a string series from the given bytes.
 **		Source is always latin-1 valid. Result is always 8bit.
@@ -74,16 +75,15 @@
 {
 	REBSER *dst;
 
-	if (len < 0) len = LEN_BYTES(src);
+	if (len == UNKNOWN) len = LEN_BYTES(src);
 
 	dst = Make_Binary(len);
-	memcpy(STR_DATA(dst), src, len);
+	COPY_MEM(STR_DATA(dst), src, len);
 	SERIES_TAIL(dst) = len;
 	STR_TERM(dst);
 
 	return dst;
 }
-
 
 /***********************************************************************
 **
@@ -110,24 +110,17 @@
 	return series;
 }
 
-
+#ifdef unused
 /***********************************************************************
 **
-*/	REBSER *Copy_OS_Str(void *src, REBINT len)
+*/	REBSER *Copy_Wide_Str(void *src, REBINT len)
 /*
-**		Create a REBOL string series from an OS native string.
-**
-**		For example, in Win32 with the wide char interface, we must
-**		convert wide char strings, minimizing to bytes if possible.
-**
-**		For Linux the char string could be UTF-8, so that must be
-**		converted to REBOL Unicode or Latin byte strings.
-**
-***********************************************************************/
+**		Create a REBOL string series from a wide char string.
+**		Minimize to bytes if possible
+*/
 {
-#ifdef OS_WIDE_CHAR
 	REBSER *dst;
-	REBUNI *str = (REBUNI*)src;	
+	REBUNI *str = (REBUNI*)src;
 	if (Is_Wide(str, len)) {
 		REBUNI *up;
 		dst = Make_Unicode(len);
@@ -145,9 +138,42 @@
 		*bp = 0;
 	}
 	return dst;
-#else
-	return Decode_UTF_String((REBYTE*)src, len, 8);
+}
 #endif
+
+/***********************************************************************
+**
+*/	REBSER *Copy_OS_Str(void *src, REBINT len)
+/*
+**		Create a REBOL string series from an OS native string.
+**
+**		Converts wide char string using UTF8 encoding.
+**		Else just copy the string.
+**		Marks series if not ASCII.
+**
+***********************************************************************/
+{
+#ifdef OS_WIDE_CHAR
+	REBSER *ser = Encode_UTF8_String(src, len, TRUE, 0);
+#else
+	REBSER *ser = Copy_Bytes((REBYTE*)src, len);
+#endif
+	if (!Is_ASCII(BIN_HEAD(ser), BIN_LEN(ser))) UTF8_SERIES(ser);
+	return ser;
+}
+
+/***********************************************************************
+**
+*/	REBSER *Copy_Str(const REBYTE *src, REBLEN len)
+/*
+**		Create a string series from the given UTF-8 encoded input.
+**		Marks series if not ASCII.
+**
+***********************************************************************/
+{
+	REBSER *dst = Copy_Bytes(src, len);
+	if (!Is_ASCII(src, len)) UTF8_SERIES(dst);
+	return dst;
 }
 
 
@@ -189,10 +215,13 @@
 **
 ***********************************************************************/
 {
+	ASSERT1(BYTE_SIZE(dst), RP_BAD_SIZE);
+
+	REBCNT len = UTF8_Codepoint_Size(chr);
+
 	if (index > dst->tail) index = dst->tail;
-	if (chr > 0xFF && BYTE_SIZE(dst)) Widen_String(dst);
-	Expand_Series(dst, index, 1);
-	SET_ANY_CHAR(dst, index, chr);
+	Expand_Series(dst, index, len);
+	Encode_UTF8_Char(STR_SKIP(dst, index), chr);
 }
 
 
@@ -200,51 +229,20 @@
 **
 */	void Insert_String(REBSER *dst, REBCNT idx, REBSER *src, REBCNT pos, REBCNT len, REBFLG no_expand)
 /*
-**		Insert a non-encoded string into a series at given index.
-**		Source and/or destination can be 1 or 2 bytes wide.
-**		If destination is not wide enough, it will be widened.
+**		Insert a UTF8 encoded string into a series at given index.
+**		Source and destination are UTF8 encoded (BYTE_SIZE).
 **
 ***********************************************************************/
 {
-	REBUNI *up;
-	REBYTE *bp;
-	REBCNT n;
-
 	if (idx > dst->tail) idx = dst->tail;
 	if (!no_expand) Expand_Series(dst, idx, len); // tail changed too
 
-	// Src and dst have same width (8 or 16):
-	if (SERIES_WIDE(dst) == SERIES_WIDE(src)) {
-cp_same:
-		if (BYTE_SIZE(dst))
-			memcpy(BIN_SKIP(dst, idx), BIN_SKIP(src, pos), len);
-		else
-			memcpy(UNI_SKIP(dst, idx), UNI_SKIP(src, pos), sizeof(REBUNI) * len);
-		return;
-	}
+	ASSERT1(BYTE_SIZE(src), RP_BAD_SIZE);
+	ASSERT1(BYTE_SIZE(dst), RP_BAD_SIZE);
 
-	// Src is 8 and dst is 16:
-	if (!BYTE_SIZE(dst)) {
-		bp = BIN_SKIP(src, pos);
-		up = UNI_SKIP(dst, idx);
-		for (n = 0; n < len; n++) up[n] = (REBUNI)bp[n];
-		return;
-	}
-
-	// Src is 16 and dst is 8:
-	bp = BIN_SKIP(dst, idx);
-	up = UNI_SKIP(src, pos);
-	for (n = 0; n < len; n++) {
-		if (up[n] > 0xFF) {
-			//Debug_Num("##Widen-series because char value is:", up[n]);
-			// Expand dst and restart:
-			idx += n;
-			pos += n;
-			len -= n;
-			Widen_String(dst);
-			goto cp_same;
-		}
-		bp[n] = (REBYTE)up[n];
+	COPY_MEM(BIN_SKIP(dst, idx), BIN_SKIP(src, pos), len);
+	if (IS_UTF8_SERIES(src) && !IS_UTF8_SERIES(dst) && !Is_ASCII(BIN_SKIP(src, pos), len)) {
+		UTF8_SERIES(dst);
 	}
 }
 
@@ -299,7 +297,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 
 /***********************************************************************
 **
-*/	REBSER *Copy_String(REBSER *src, REBCNT index, REBINT length)
+*/	REBSER *Copy_String(REBSER *src, REBCNT index, REBLEN length)
 /*
 **		Copies a portion of any string (byte or unicode).
 **		Will slim the string, if needed.
@@ -308,25 +306,24 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 **
 ***********************************************************************/
 {
-	REBUNI *up;
-	REBINT wide = 1;
 	REBSER *dst;
-	REBINT n;
 
-	if (length < 0) length = src->tail;
+	if (length == NO_LIMIT) length = src->tail;
 
-	// Can it be slimmed down?
-	if (!BYTE_SIZE(src)) {
-		up = UNI_SKIP(src, index);
-		for (n = 0; n < length; n++)
-			if (up[n] > 0xff) break;
-		if (n < length) wide = sizeof(REBUNI);
-	}
+	ASSERT1(BYTE_SIZE(src), RP_BAD_SIZE);
 
-	dst = Make_Series(length + 1, wide, FALSE);
+	dst = Make_Series(length + 1, 1, FALSE);
 	Insert_String(dst, 0, src, index, length, TRUE);
 	SERIES_TAIL(dst) = length;
-	TERM_SERIES(dst);
+	//No need to terminate the series, because Make_Series guarantees completely cleared memory.
+	//TERM_SERIES(dst);
+
+	if ((IS_UTF8_SERIES(src) || src == BUF_SCAN) && !Is_ASCII(BIN_DATA(dst), length)) {
+		// Validate that the string ends with a valid UTF-8 byte.
+		dst->tail = UTF8_Validate_Index(BIN_DATA(dst), dst->tail+1);
+		STR_TERM(dst);
+		UTF8_SERIES(dst);
+	}
 
 	return dst;
 }
@@ -350,12 +347,21 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 {
 #ifdef OS_WIDE_CHAR
 	if (VAL_BYTE_SIZE(val)) {
+		REBSER *up;
 		// On windows, we need to convert byte to wide:
-		REBINT n = VAL_LEN(val);
-		REBSER *up = Make_Unicode(n);  // will be GC'd ok
-		n = Decode_UTF8(UNI_HEAD(up), VAL_BIN_DATA(val), n, FALSE);
-		SERIES_TAIL(up) = abs(n);
-		UNI_TERM(up);
+		if (IS_UTF8_STRING(val)) {
+			REBYTE *wide = NULL;
+			REBLEN len = OS_Multibyte_To_Wide(VAL_BIN_DATA(val), &wide);
+			if (!wide) return NULL;
+			up = Make_Unicode(len);  // will be GC'd ok
+			COPY_MEM(BIN_HEAD(up), wide, len * sizeof(REBUNI));
+			OS_Free(wide);
+			SERIES_TAIL(up) = len;
+			UNI_TERM(up);
+		}
+		else {
+			up = Copy_Bytes_To_Unicode(VAL_BIN_DATA(val), VAL_LEN(val));
+		}
 		return UNI_HEAD(up);
 	}
 	else {
@@ -364,60 +370,39 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 		return VAL_UNI_DATA(val);
 	}
 #else
-	if (VAL_STR_IS_ASCII(val)) {
-		// On Linux/Unix we can use ASCII directly (it is valid UTF-8):
-		return VAL_BIN_DATA(val);
-	}
-	else {
-		REBINT n = VAL_LEN(val);
-		REBSER *ser = Prep_Bin_Str(val, 0, &n);
-		// NOTE: may return a shared buffer!
-		return BIN_HEAD(ser); // (actually, it's a byte pointer)
-	}
+	// On Linux/Unix we can use UTF-8 directly:
+	TERM_SERIES(VAL_SERIES(val)); // Make sure that it's null terminated
+	return VAL_BIN_DATA(val);
 #endif
 }
 
 
 /***********************************************************************
 **
-*/	REBSER *Append_Bytes_Len(REBSER *dst, REBYTE *src, REBCNT len)
+*/	REBSER *Append_Bytes_Len(REBSER *dst, const REBYTE *src, REBCNT len)
 /*
 **		Optimized function to append a non-encoded byte string.
 **
 **		If dst is null, it will be created and returned.
 **		Such src strings normally come from C code or tables.
-**		Destination can be 1 or 2 bytes wide.
+**		Destination is always 1 byte wide.
 **
 ***********************************************************************/
 {
-	REBUNI *up;
 	REBCNT tail;
 
-	if (!dst) {
-		dst = Make_Binary(len);
-		tail = 0;
-	} else {
-		tail = SERIES_TAIL(dst);
-		EXPAND_SERIES_TAIL(dst, len);
-	}
-
-	if (BYTE_SIZE(dst)) {
-		memcpy(STR_SKIP(dst, tail), src, len);
-		STR_TERM(dst);
-	}
-	else {
-		up = UNI_SKIP(dst, tail);
-		for (; len > 0; len--) *up++ = (REBUNI)*src++;
-		*up = 0;
-	}
-
+	ASSERT1(dst, RP_NULL_SERIES);
+	//if (!dst) dst = Make_Binary(len);
+	tail = SERIES_TAIL(dst);
+	EXPAND_SERIES_TAIL(dst, len); // sets the final tail!
+	COPY_MEM(BIN_SKIP(dst, tail), src, len);
 	return dst;
 }
 
 
 /***********************************************************************
 **
-*/	REBSER *Append_Bytes(REBSER *dst, REBYTE *src)
+*/	REBSER *Append_Bytes(REBSER *dst, const char *src)
 /*
 **		Optimized function to append a non-encoded byte string.
 **		If dst is null, it will be created and returned.
@@ -426,7 +411,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 **
 ***********************************************************************/
 {
-	return Append_Bytes_Len(dst, src, LEN_BYTES(src));
+	return Append_Bytes_Len(dst, cb_cast(src), (REBCNT)LEN_BYTES(cb_cast(src)));
 }
 
 
@@ -434,34 +419,22 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 **
 */	REBSER *Append_Byte(REBSER *dst, REBCNT chr)
 /*
-**		Optimized function to append a non-encoded character.
+**		Optimized function to append a character.
 **		If dst is null, it will be created and returned and the
 **		chr will be used to determine the width.
 **
-**		Destination can be 1 or 2 bytes wide, but DOES NOT WIDEN.
+**		Destination must be 1 byte wide!
 **
 ***********************************************************************/
 {
 	REBCNT tail;
+	REBCNT len = UTF8_Codepoint_Size(chr);
 
-	if (!dst) {
-		dst = (chr > 255) ? Make_Unicode(3) : Make_Binary(3);
-		tail = 0;
-		SERIES_TAIL(dst) = 1;
-	} else {
-		tail = SERIES_TAIL(dst);
-		EXPAND_SERIES_TAIL(dst, 1);
-	}
-
-	if (BYTE_SIZE(dst)) {
-		*STR_SKIP(dst, tail) = (REBYTE)chr;
-		STR_TERM(dst);
-	}
-	else {
-		*UNI_SKIP(dst, tail) = (REBUNI)chr;
-		UNI_TERM(dst);
-	}
-
+	if (!dst) dst = Make_Binary(len);
+	ASSERT1(BYTE_SIZE(dst), RP_BAD_SIZE);
+	tail = SERIES_TAIL(dst);
+	EXPAND_SERIES_TAIL(dst, len);
+	Encode_UTF8_Char(STR_SKIP(dst, tail), chr);
 	return dst;
 }
 
@@ -470,7 +443,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 **
 */	void Append_Uni_Bytes(REBSER *dst, REBUNI *src, REBCNT len)
 /*
-**		Append a unicode string to a byte string. OPTIMZED.
+**		Append a unicode (wide) string to a byte string. OPTIMZED.
 **
 ***********************************************************************/
 {
@@ -528,7 +501,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 /*
 ***********************************************************************/
 {
-	Append_Bytes(dst, PG_Boot_Strs[num]);
+	Append_Bytes(dst, cs_cast(PG_Boot_Strs[num]));
 }
 
 
@@ -543,7 +516,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 	REBYTE buf[32];
 	
 	Form_Int(buf, num);
-	Append_Bytes(dst, buf);
+	Append_Bytes(dst, cs_cast(buf));
 }
 
 
@@ -561,44 +534,32 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 	else
 		Form_Int_Pad(buf, num, -digs, digs, '0');
 
-	Append_Bytes(dst, buf);
+	Append_Bytes(dst, cs_cast(buf));
 }
 
 
 
 /***********************************************************************
 **
-*/	REBSER *Append_UTF8(REBSER *dst, REBYTE *src, REBINT len)
+*/	REBSER *Append_UTF8(REBSER *dst, const REBYTE *src, REBLEN len)
 /*
-**		Append (or create) decoded UTF8 to a string. OPTIMIZED.
+**		Appends bytes to a string.
 **
-**		Result can be 8 bits (latin-1 optimized) or 16 bits wide.
+**		Result is always 8 bits wide (UTF8 encoded).
 **
 **		dst = null means make a new string.
 **
 ***********************************************************************/
 {
-	REBSER *ser = BUF_UTF8;	// buffer is Unicode width
-
-	if (len < 0) len = LEN_BYTES(src);
-
-	Resize_Series(ser, len+1); // needs at most this much
-
-	len = Decode_UTF8(UNI_HEAD(ser), src, len, FALSE);
-
-	if (len < 0) {
-		len = -len;
-		if (!dst) dst = Make_Binary(len);
-		if (BYTE_SIZE(dst)) {
-			Append_Uni_Bytes(dst, UNI_HEAD(ser), len);
-			return dst;
-		}
-	} else {
-		if (!dst) dst = Make_Unicode(len);
+	if (len == NO_LIMIT) {
+		len = LEN_BYTES(src);
 	}
-
-	Append_Uni_Uni(dst, UNI_HEAD(ser), len);
-
+	if (!dst) dst = Make_Binary(len);
+	REBCNT tail = SERIES_TAIL(dst);
+	EXPAND_SERIES_TAIL(dst, len); // sets the final tail!
+	COPY_MEM(BIN_SKIP(dst, tail), src, len);
+	if (!IS_UTF8_SERIES(dst) && !Is_ASCII(src, len))
+		UTF8_SERIES(dst);
 	return dst;
 }
 
@@ -614,11 +575,10 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 **
 ***********************************************************************/
 {
-	REBSER *series = BUF_FORM;
+	REBSER *series = BUF_SCAN;
 	REBVAL *val;
 	REBCNT tail = 0;
 	REBCNT len;
-	void *bp;
 
 	RESET_TAIL(series);
 
@@ -632,22 +592,14 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 			break;
 
 		case REB_BINARY:
-			len = VAL_LEN(val);
-			EXPAND_SERIES_TAIL(series, len);
-			memcpy(BIN_SKIP(series, tail), VAL_BIN_DATA(val), len);
-			break;
-
 		case REB_STRING:
 		case REB_FILE:
 		case REB_EMAIL:
 		case REB_URL:
 		case REB_TAG:
 			len = VAL_LEN(val);
-			bp = VAL_BYTE_SIZE(val) ? VAL_BIN_DATA(val) : (REBYTE*)VAL_UNI_DATA(val);
-			len = Length_As_UTF8(bp, len, (REBOOL)!VAL_BYTE_SIZE(val), 0);
 			EXPAND_SERIES_TAIL(series, len);
-			Encode_UTF8(BIN_SKIP(series, tail), len, bp, &len, !VAL_BYTE_SIZE(val), 0);
-			series->tail = tail + len;
+			memcpy(BIN_SKIP(series, tail), VAL_BIN_DATA(val), len);
 			break;
 
 		case REB_CHAR:

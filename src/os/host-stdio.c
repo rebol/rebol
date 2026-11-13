@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,18 +47,21 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
-void Host_Crash(REBYTE *reason);
+// Special access:
+extern REBDEV* Devices[];
 
 // Temporary globals: (either move or remove?!)
-REBREQ Std_IO_Req;
+// O: where it should be moved?
+// O: as the Std_IO_Req is shared with lib (DLL), I'm now storing it also in Host_Lib struct
+static REBREQ Std_IO_Req;
 static REBYTE *inbuf;
 static REBCNT inbuf_len = 32*1024;
 
-static REBYTE *Get_Next_Line()
+static REBYTE *Get_Next_Line(void)
 {
 	REBYTE *bp = inbuf;
 	REBYTE *out;
-	REBCNT len;
+	size_t len;
 
 	// Scan for line terminator or end:
 	for (bp = inbuf; *bp != CR && *bp != LF && *bp != 0; bp++);
@@ -69,16 +73,16 @@ static REBYTE *Get_Next_Line()
 		out = OS_Make(len + 2);
 		COPY_BYTES(out, inbuf, len+1);
 		out[len+1] = 0;
-		MOVE_MEM(inbuf, bp+1, 1+strlen(bp+1));
+		MOVE_MEM(inbuf, bp+1, 1+strlen(cs_cast(bp)+1));
 		return out;
 	}
 
 	return 0; // more input needed
 }
 
-static int Fetch_Buf()
+static int Fetch_Buf(void)
 {
-	REBCNT len = strlen(inbuf);
+	REBCNT len = (REBCNT)strlen(cs_cast(inbuf));
 
 	Std_IO_Req.data   = inbuf + len;
 	Std_IO_Req.length = inbuf_len - len - 1;
@@ -105,7 +109,7 @@ static int Fetch_Buf()
 
 /***********************************************************************
 **
-*/	void Open_StdIO(void)
+*/	OS_API REBREQ *OS_Open_StdIO(REBOOL cgi)
 /*
 **		Open REBOL's standard IO device. This same device is used
 **		by both the host code and the R3 DLL itself.
@@ -125,12 +129,27 @@ static int Fetch_Buf()
 
 	inbuf = OS_Make(inbuf_len);
 	inbuf[0] = 0;
+	if (cgi)
+		SET_FLAG(Std_IO_Req.modes, RDM_CGI);
+	else
+		SET_FLAG(Std_IO_Req.modes, RDM_READ_LINE);
+	return &Std_IO_Req;
 }
-
 
 /***********************************************************************
 **
-*/	REBYTE *Get_Str()
+*/	OS_API void OS_Close_StdIO(void)
+/*
+**		Frees REBOL's standard IO device resources.
+**
+***********************************************************************/
+{
+	OS_Free(inbuf);
+}
+
+/***********************************************************************
+**
+*/	RL_API REBYTE *OS_Read_Line(void)
 /*
 **		Get input of a null terminated UTF-8 string.
 **		Divides the input into lines.
@@ -141,6 +160,13 @@ static int Fetch_Buf()
 {
 	REBYTE *line;
 
+	// make sure that we are in LINE reading mode!
+	if (!GET_FLAG(Std_IO_Req.modes, RDM_READ_LINE)) {
+		// if not, set it back
+		Std_IO_Req.modify.mode = RDM_READ_LINE;
+		Std_IO_Req.modify.value = TRUE;
+		OS_Do_Device(&Std_IO_Req, RDC_MODIFY);
+	}
 	if ((line = Get_Next_Line())) return line;
 
 	if (Fetch_Buf()) return Get_Next_Line();
@@ -151,7 +177,7 @@ static int Fetch_Buf()
 
 /***********************************************************************
 **
-*/	void Put_Str(REBYTE *buf)
+*/	RL_API void OS_Put_Str(REBYTE *buf)
 /*
 **		Outputs a null terminated UTF-8 string.
 **		If buf is larger than StdIO Device allows, error out.
@@ -159,11 +185,35 @@ static int Fetch_Buf()
 **
 ***********************************************************************/
 {
-	Std_IO_Req.length = strlen(buf);
-	Std_IO_Req.data = (REBYTE*)buf;
+	Std_IO_Req.length = LEN_BYTES(buf);
+	Std_IO_Req.data = buf;
 	Std_IO_Req.actual = 0;
 
 	OS_Do_Device(&Std_IO_Req, RDC_WRITE);
 
 	if (Std_IO_Req.error) Host_Crash("stdio write");
+}
+
+
+/***********************************************************************
+**
+*/	RL_API int OS_Read_Key(REBKEY *key)
+/*
+***********************************************************************/
+{
+	// Turn off readline mode, if active.
+	if (GET_FLAG(Std_IO_Req.modes, RDM_READ_LINE)) {
+		Std_IO_Req.modify.mode = MODE_CONSOLE_LINE;
+		Std_IO_Req.modify.value = FALSE;
+		OS_Do_Device(&Std_IO_Req, RDC_MODIFY);
+	}
+	// Turn off automatic events polling.
+	CLR_FLAG(Std_IO_Req.flags, RRF_PENDING);
+	CLR_FLAG(Devices[Std_IO_Req.device]->flags, RDO_AUTO_POLL);
+	// Read one key.
+	int err = OS_Do_Device(&Std_IO_Req, RDC_READ);
+
+	if (err != 0) return FALSE;
+	*key = Std_IO_Req.key;
+	return TRUE;
 }

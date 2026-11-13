@@ -32,6 +32,10 @@
 **		are accounted for by the standard garbage collector.
 **
 ***********************************************************************/
+#ifndef REB_GOB_H
+#define REB_GOB_H
+
+#include "reb-view.h"
 
 enum GOB_FLAGS {		// GOB attribute and option flags
 	GOBF_TOP = 0,		// Top level (window or output image)
@@ -47,6 +51,11 @@ enum GOB_FLAGS {		// GOB attribute and option flags
 	GOBF_POPUP,			// Window is a popup (with owner window)
 	GOBF_MODAL,			// Modal event filtering
 	GOBF_ON_TOP,		// The window is always on top
+	GOBF_ACTIVE,		// Window is active
+	GOBF_MINIMIZE,		// Window is minimized
+	GOBF_MAXIMIZE,		// Window is maximized
+	GOBF_RESTORE,		// Window is restored
+	GOBF_FULLSCREEN,	// Window is fullscreen
 };
 
 enum GOB_STATE {		// GOB state flags
@@ -59,6 +68,7 @@ enum GOB_TYPES {		// Types of content
 	GOBT_NONE = 0,
 	GOBT_COLOR,
 	GOBT_IMAGE,
+	GOBT_WIDGET,       // must be between IMAGE and STRING so GC can mark its content!
 	GOBT_STRING,
 	GOBT_DRAW,
 	GOBT_TEXT,
@@ -75,7 +85,6 @@ enum GOB_DTYPES {		// Userdata types
 	GOBD_RESV,			// unicode
 	GOBD_INTEGER
 };
-
 
 #pragma pack(4)
 
@@ -107,15 +116,31 @@ struct rebol_gob {		// size: 64 bytes!
 };
 #pragma pack()
 
+typedef struct gob_window {				// Maps gob to window
+	REBGOB *gob;
+	void* win;
+	void* compositor;
+} REBGOBWINDOWS;
+
 #define GOB_X(g)		((g)->offset.x)
 #define GOB_Y(g)		((g)->offset.y)
 #define GOB_W(g)		((g)->size.x)
 #define GOB_H(g)		((g)->size.y)
 
+#define GOB_LOG_X(g)		(LOG_COORD_X((g)->offset.x))
+#define GOB_LOG_Y(g)		(LOG_COORD_Y((g)->offset.y))
+#define GOB_LOG_W(g)		(LOG_COORD_X((g)->size.x))
+#define GOB_LOG_H(g)		(LOG_COORD_Y((g)->size.y))
+
 #define GOB_X_INT(g)	ROUND_TO_INT((g)->offset.x)
 #define GOB_Y_INT(g)	ROUND_TO_INT((g)->offset.y)
 #define GOB_W_INT(g)	ROUND_TO_INT((g)->size.x)
 #define GOB_H_INT(g)	ROUND_TO_INT((g)->size.y)
+
+#define GOB_LOG_X_INT(g)	ROUND_TO_INT(LOG_COORD_X((g)->offset.x))
+#define GOB_LOG_Y_INT(g)	ROUND_TO_INT(LOG_COORD_Y((g)->offset.y))
+#define GOB_LOG_W_INT(g)	ROUND_TO_INT(LOG_COORD_X((g)->size.x))
+#define GOB_LOG_H_INT(g)	ROUND_TO_INT(LOG_COORD_Y((g)->size.y))
 
 #define GOB_XO(g)		((g)->old_offset.x)
 #define GOB_YO(g)		((g)->old_offset.y)
@@ -128,12 +153,14 @@ struct rebol_gob {		// size: 64 bytes!
 
 #define CLEAR_GOB_STATE(g) ((g)->state = 0)
 
-#define SET_GOB_FLAG(g,f)  SET_FLAG((g)->flags, f)
-#define GET_GOB_FLAG(g,f)  GET_FLAG((g)->flags, f)
-#define CLR_GOB_FLAG(g,f)  CLR_FLAG((g)->flags, f)
-#define SET_GOB_STATE(g,f) SET_FLAG((g)->state, f)
-#define GET_GOB_STATE(g,f) GET_FLAG((g)->state, f)
-#define CLR_GOB_STATE(g,f) CLR_FLAG((g)->state, f)
+#define SET_GOB_FLAG(g,f)       SET_FLAG((g)->flags, f)
+#define GET_GOB_FLAG(g,f)       GET_FLAG((g)->flags, f)
+#define CLR_GOB_FLAG(g,f)       CLR_FLAG((g)->flags, f)
+#define CLR_GOB_FLAGS(g,f,h)    CLR_FLAGS((g)->flags, f, h)
+#define SET_GOB_STATE(g,f)      SET_FLAG((g)->state, f)
+#define GET_GOB_STATE(g,f)      GET_FLAG((g)->state, f)
+#define CLR_GOB_STATE(g,f)      CLR_FLAG((g)->state, f)
+#define CLR_GOB_STATES(g,f,h)   CLR_FLAGS((g)->state, f, h)
 
 #define GOB_ALPHA(g)		((g)->alpha)
 #define GOB_TYPE(g)			((g)->ctype)
@@ -151,6 +178,11 @@ struct rebol_gob {		// size: 64 bytes!
 #define GOB_PANE(g)		((g)->pane)
 #define GOB_PARENT(g)	((g)->parent)
 #define GOB_CONTENT(g)	((g)->content)
+
+#define GOB_WIDGET_HANDLE(g) (BLK_HEAD(GOB_CONTENT(g)))
+#define GOB_WIDGET_TYPE(g) (BLK_SKIP(GOB_CONTENT(g), 1))
+#define GOB_WIDGET_SPEC(g) (BLK_SKIP(GOB_CONTENT(g), 2))
+#define GOB_WIDGET_DATA(g) (BLK_SKIP(GOB_CONTENT(g), 3))
 
 // Control dependencies on series structures:
 #ifdef REB_DEF
@@ -188,3 +220,5 @@ enum {
 #define FREE_GOB(g)		((g)->resv &= ~GOB_USED)
 
 extern REBGOB *Gob_Root; // Top level GOB (the screen)
+
+#endif

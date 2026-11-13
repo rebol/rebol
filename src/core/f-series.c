@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,6 +44,8 @@
 	REBINT	tail;
 	REBINT	len = 0;
 
+	//ASSERT1(VAL_BYTE_SIZE(value), RP_BAD_SIZE);
+
 	// Common setup code for all actions:
 	if (action != A_MAKE && action != A_TO) {
 		index = (REBINT)VAL_INDEX(value);
@@ -71,60 +74,119 @@
 		DECIDE(index > tail);
 
 	case A_NEXT:
-		if (index < tail) VAL_INDEX(value)++;
+		if (index < tail) {
+			if (IS_UTF8_STRING(value))
+				VAL_INDEX(value) += UTF8_Next_Char_Size(VAL_BIN(value), VAL_INDEX(value));
+			else
+				VAL_INDEX(value)++;
+				
+		}
 		break;
 
 	case A_BACK:
-		if (index > 0) VAL_INDEX(value)--;
+		if (index > 0) {
+			if (IS_UTF8_STRING(value))
+				VAL_INDEX(value) = UTF8_Prev_Char_Position(VAL_BIN(value), index);
+			else
+				VAL_INDEX(value)--;
+		}
 		break;
 
 	case A_SKIP:
 	case A_AT:
-		len = Get_Num_Arg(arg);
-		{
-			REBI64 i = (REBI64)index + (REBI64)len;
-			if (action == A_SKIP) {
-				if (IS_LOGIC(arg)) i--;
-			} else { // A_AT
-				if (len > 0) i--;
-			}
-			if (i > (REBI64)tail) i = (REBI64)tail;
-			else if (i < 0) i = 0;
-			VAL_INDEX(value) = (REBCNT)i;
-		}
-		break;
-/*
 	case A_ATZ:
 		len = Get_Num_Arg(arg);
 		{
-			REBI64 idx = Add_Max(0, index, len, MAX_I32);
-			if (idx < 0) idx = 0;
-			VAL_INDEX(value) = (REBCNT)idx;
+			if (IS_UTF8_STRING(value)) {
+				if (action == A_SKIP) {
+					if (IS_LOGIC(arg)) len--;
+				}
+				else if (action == A_AT) {
+					if (len > 0) len--;
+				}
+				if (len > 0) {
+					while (len-- > 0 ) {
+						index += UTF8_Next_Char_Size(VAL_BIN(value), index);
+						if (index > tail) {
+							index = tail;
+							break;
+						}
+					}
+				}
+				else {
+					while (len++ < 0) {
+						index = UTF8_Prev_Char_Position(VAL_BIN(value), index);
+						if (index < 0) {
+							index = 0;
+							break;
+						}
+					}
+				}
+				VAL_INDEX(value) = (REBCNT)index;
+			}
+			else {
+				REBI64 i = (REBI64)index + (REBI64)len;
+				if (action == A_SKIP) {
+					if (IS_LOGIC(arg)) i--;
+				}
+				else if (action == A_AT) {
+					if (len > 0) i--;
+				}
+				if (i > (REBI64)tail) i = (REBI64)tail;
+				else if (i < 0) i = 0;
+				VAL_INDEX(value) = (REBCNT)i;
+			}
 		}
 		break;
-*/
+
+	
+	case A_INDEXZQ:
 	case A_INDEXQ:
-		SET_INTEGER(DS_RETURN, ((REBI64)index) + 1);
+		if (IS_UTF8_STRING(value))
+			index = (REBI64)UTF8_Index_To_Position(VAL_BIN(value), index);
+		if (action == A_INDEXQ) index++;
+		SET_INTEGER(DS_RETURN, ((REBI64)index));
 		return R_RET;
 
 	case A_LENGTHQ:
-		SET_INTEGER(DS_RETURN, tail > index ? tail - index : 0);
+		if (IS_UTF8_STRING(value)) {
+			SET_INTEGER(DS_RETURN, tail > index ? Length_As_UTF8_Code_Points(VAL_BIN_DATA(value)) : 0);
+		}
+		else {
+			SET_INTEGER(DS_RETURN, tail > index ? tail - index : 0);
+		}
 		return R_RET;
 
 	case A_REMOVE:
 		// /PART length
 		TRAP_PROTECT(VAL_SERIES(value));
-		len = DS_REF(2) ? Partial(value, 0, DS_ARG(3), 0) : 1;
-		index = (REBINT)VAL_INDEX(value);
+		if (DS_REF(ARG_REMOVE_KEY)) {
+			if (ANY_BLOCK(value)) {
+				len = 2;
+				index = Find_Block(VAL_SERIES(value), VAL_INDEX(value), VAL_TAIL(value), DS_ARG(ARG_REMOVE_KEY_ARG), VAL_LEN(value), AM_FIND_CASE, 2);
+			}
+			else Trap0(RE_FEATURE_NA);
+		} else {
+			if (DS_REF(2)) {
+				len = Partial(value, 0, DS_ARG(3), 0);
+			}
+			else {
+				len = (IS_UTF8_STRING(value))
+					? UTF8_Next_Char_Size(VAL_BIN_HEAD(value), VAL_INDEX(value))
+					: 1;
+			}
+			index = (REBINT)VAL_INDEX(value);
+		}
 		if (index < tail && len != 0)
-			Remove_Series(VAL_SERIES(value), VAL_INDEX(value), len);
+			Remove_Series(VAL_SERIES(value), (REBCNT)index, len);
 		break;
 
 	case A_ADD:			// Join_Strings(value, arg);
 	case A_SUBTRACT:	// "test this" - 10
 	case A_MULTIPLY:	// "t" * 4 = "tttt"
 	case A_DIVIDE:
-	case A_REMAINDER:
+		if (IS_VECTOR(value)) return -1; // allow vector for actions above
+		//continue...
 	case A_POWER:
 	case A_ODDQ:
 	case A_EVENQ:
@@ -155,18 +217,22 @@ is_true:
 **
 ***********************************************************************/
 {
-	REBVAL	*s = VAL_BLK_DATA(sval);
-	REBVAL	*t = VAL_BLK_DATA(tval);
+	REBVAL	*s;
+	REBVAL	*t;
 	REBINT	diff;
-
-	CHECK_STACK(&s);
 
 	if ((VAL_SERIES(sval)==VAL_SERIES(tval))&&
 	 (VAL_INDEX(sval)==VAL_INDEX(tval)))
 		 return 0;
 
-	while (!IS_END(s) && (VAL_TYPE(s) == VAL_TYPE(t) ||
-					(IS_NUMBER(s) && IS_NUMBER(t)))) {
+	// make sure that none of block is past tail
+	// https://github.com/Oldes/Rebol-issues/issues/2439
+	s = VAL_BLK_DATA_SAFE(sval);
+	t = VAL_BLK_DATA_SAFE(tval);
+
+	CHECK_STACK(&s);
+
+	while (!IS_END(s)) {
 		if ((diff = Cmp_Value(s, t, is_case)) != 0)
 			return diff;
 		s++, t++;
@@ -187,13 +253,18 @@ is_true:
 {
 	REBDEC	d1, d2;
 
-	if (VAL_TYPE(t) != VAL_TYPE(s) && !(IS_NUMBER(s) && IS_NUMBER(t)))
+	if ((ANY_NUMBER(s) && ANY_NUMBER(t)) || (ANY_WORD(s) && ANY_WORD(t))) {
+		//https://github.com/Oldes/Rebol-issues/issues/2501
+		if (is_case && VAL_TYPE(t) != VAL_TYPE(s))
+			return VAL_TYPE(s) - VAL_TYPE(t);
+	} else if (VAL_TYPE(t) != VAL_TYPE(s)) {
 		return VAL_TYPE(s) - VAL_TYPE(t);
+	}
 
 	switch(VAL_TYPE(s)) {
 
 	case REB_INTEGER:
-		if (IS_DECIMAL(t)) {
+		if (IS_DECIMAL(t) || IS_PERCENT(t)) {
 			d1 = (REBDEC)VAL_INT64(s);
 			d2 = VAL_DECIMAL(t);
 			goto chkDecimal;
@@ -205,10 +276,16 @@ is_true:
 
 	case REB_CHAR:
 		if (is_case) return THE_SIGN(VAL_CHAR(s) - VAL_CHAR(t));
-		return THE_SIGN((REBINT)(UP_CASE(VAL_CHAR(s)) - UP_CASE(VAL_CHAR(t))));
+		REBUNI ch1, ch2;
+		ch1 = VAL_CHAR(s);
+		ch2 = VAL_CHAR(t);
+		if (ch1 < UNICODE_CASES) ch1 = UP_CASE(ch1);
+		if (ch2 < UNICODE_CASES) ch2 = UP_CASE(ch2);
+		return THE_SIGN((REBINT)(ch1 - ch2));
 
 	case REB_DECIMAL:
-	case REB_MONEY:
+	case REB_PERCENT:
+		if (IS_MONEY(t)) goto chkMoney;
 			d1 = VAL_DECIMAL(s);
 		if (IS_INTEGER(t))
 			d2 = (REBDEC)VAL_INT64(t);
@@ -217,9 +294,17 @@ is_true:
 chkDecimal:
 		if (Eq_Decimal(d1, d2))
 			return 0;
-		if (d1 < d2)
+		if (d1 < d2
+#ifndef USE_NO_INFINITY
+			|| isnan(d2)
+#endif
+		)
 			return -1;
 		return 1;
+	
+	case REB_MONEY:
+chkMoney:
+		return Cmp_Money(s, t);
 
 	case REB_PAIR:
 		return Cmp_Pair(s, t);
@@ -253,6 +338,7 @@ chkDecimal:
 	case REB_EMAIL:
 	case REB_URL:
 	case REB_TAG:
+	case REB_REF:
 		return Compare_String_Vals(s, t, (REBOOL)!is_case);
 
 	case REB_BITSET:
@@ -280,16 +366,23 @@ chkDecimal:
 	case REB_OBJECT:
 	case REB_MODULE:
 	case REB_PORT:
-		return VAL_OBJ_FRAME(s) - VAL_OBJ_FRAME(t);
+		//return VAL_OBJ_FRAME(s) - VAL_OBJ_FRAME(t); // strict variant
+		return !CT_Object(s, t, 1); // equality used
 
 	case REB_NATIVE:
-		return &VAL_FUNC_CODE(s) - &VAL_FUNC_CODE(t);
+		return THE_SIGN(&VAL_FUNC_CODE(s) - &VAL_FUNC_CODE(t));
 
 	case REB_ACTION:
 	case REB_COMMAND:
 	case REB_OP:
 	case REB_FUNCTION:
-		return VAL_FUNC_BODY(s) - VAL_FUNC_BODY(t);
+		return THE_SIGN(VAL_FUNC_BODY(s) - VAL_FUNC_BODY(t));
+
+	case REB_STRUCT:
+		return Cmp_Struct(s, t);
+
+	case REB_HANDLE:
+		return Cmp_Handle(s, t);
 
 	case REB_NONE:
 	case REB_UNSET:
@@ -318,4 +411,105 @@ chkDecimal:
 	}
 
 	return SERIES_TAIL(series);
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(pickz)
+/*
+//	pickz: native [
+//		{Returns the value at the specified position. (0-based wrapper over PICK action)}
+//		aggregate [series! bitset! tuple!]
+//		index [integer!] "Zero based"
+]
+***********************************************************************/
+{
+	if(VAL_INT64(D_ARG(2))>=0 && !IS_BITSET(D_ARG(1))) VAL_INT64(D_ARG(2)) += 1;
+	Do_Act(D_RET, VAL_TYPE(D_ARG(1)), A_PICK);
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(pokez)
+/*
+//	pokez: native [
+//		{Replaces an element at a given position. (0-based wrapper over POKE action)}
+//		series [series! bitset! tuple!] "(modified)"
+//		index  [integer!]  "Zero based"
+//		value  [any-type!] "The new value (returned)"
+]
+***********************************************************************/
+{
+	if (VAL_INT64(D_ARG(2)) >= 0 && !IS_BITSET(D_ARG(1))) VAL_INT64(D_ARG(2)) += 1;
+	Do_Act(D_RET, VAL_TYPE(D_ARG(1)), A_POKE);
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(swap_endian)
+/*
+//	swap-endian: native [
+//		{Swaps byte order (endianness)}
+//		value [binary!] "At position (modified)"
+//		/width bytes [integer!] "2, 4 or 8 (default is 2)"
+//		/part "Limits to a given length or position"
+//		 range [number! series!]
+]
+***********************************************************************/
+{
+	REBCNT i;
+	REBCNT width = 2;
+	REBVAL *val = D_ARG(1);
+	REBYTE *bin = VAL_BIN_DATA(D_ARG(1));
+	if (D_REF(2)) width = VAL_INT32(D_ARG(3));
+
+	REBCNT len = D_REF(4) ? Partial(val, 0, D_ARG(5), 0) : VAL_LEN(val);
+	if (len <= 0) return R_ARG1;
+
+	switch(width) {
+		case 2: {
+			u16 *bp = (u16 *)bin;
+			u16  num;
+			len >>= 1;
+			for (i = 0; i < len; i++) {
+				num = bp[i];
+				bp[i] = (((num & 0x00FF) << 8) |
+				         ((num & 0xFF00) >> 8));
+			}
+			break;
+		}
+		case 4: {
+			u32 *bp = (u32 *)bin;
+			u32  num;
+			len >>= 2;
+			for (i = 0; i < len; i++) {
+				num = bp[i];
+				bp[i] = (((num & 0x000000FF) << 24) |
+				         ((num & 0x0000FF00) <<  8) |
+				         ((num & 0x00FF0000) >>  8) |
+				         ((num & 0xFF000000) >> 24));
+			}
+			break;
+		}
+		case 8: {
+			u64 *bp = (u64 *)bin;
+			u64  num;
+			len >>= 3;
+			for (i = 0; i < len; i++) {
+				num = bp[i];
+				num =  ((num <<  8) & 0xFF00FF00FF00FF00ULL) |
+				       ((num >>  8) & 0x00FF00FF00FF00FFULL);
+				num =  ((num << 16) & 0xFFFF0000FFFF0000ULL) |
+				       ((num >> 16) & 0x0000FFFF0000FFFFULL);
+    			bp[i] = (num << 32) | (num >> 32);
+			}
+			break;
+		}
+		default:
+			Trap1(RE_INVALID_ARG, D_ARG(3));
+	}
+
+	return R_ARG1;
 }

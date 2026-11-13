@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -117,7 +118,7 @@ static int find_word(REBVAL *val, REBVAL *word)
 ***********************************************************************/
 {
 	REBCNT val1 = VAL_LOGIC(D_ARG(1));
-	REBCNT val2;
+	REBCNT val2 = 0;
 	REBVAL *arg = D_ARG(2);
 
 	if (IS_BINARY_ACT(action)) {
@@ -136,7 +137,7 @@ static int find_word(REBVAL *val, REBVAL *word)
 	case A_RANDOM:
 		if (D_REF(2)) { // /seed
 			// random/seed false restarts; true randomizes
-			Set_Random(val1 ? (REBINT)OS_DELTA_TIME(0, 0) : 1);
+			Set_Random(val1 ? (REBINT)OS_Delta_Time(0, 0) : 1);
 			return R_UNSET;
 		}
 		DECIDE(Random_Int(D_REF(3)) & 1);  // /secure

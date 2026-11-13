@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>WebSocket Test Page</title>
+<script>
+    var socket = null;
+    var msg = "Thank you for accepting this Web Socket request.";
+    var timerID = 0;
+    const timeout = 20000;
+
+    var log = function(s) {
+        if (document.readyState !== "complete") {
+            log.buffer.push(s);
+        } else {
+            document.getElementById("output").innerHTML += (s + "\n")
+        }
+    }
+    log.buffer = [];
+
+    function connect() {
+        url = "ws://localhost:8081/echo";
+        socket = new WebSocket(url);
+        socket.onopen = function() {
+            log("open");
+            socket.send(msg);
+        }
+        socket.onmessage = function(e) {
+            if(e.data != '') log(e.data);
+        }
+        socket.onclose = function(e) {
+            cancelKeepAlive();
+            log("closed");
+        }
+        keepAlive();
+    }
+    
+    function keepAlive() { 
+        // sends empty message each 20s to keep the connection open
+        if (socket.readyState == socket.OPEN) {
+            socket.send('');
+        }  
+        timerId = setTimeout(keepAlive, timeout);
+    }  
+    function cancelKeepAlive() {
+        if (timerId) {
+            clearTimeout(timerId);
+            timerId = 0;
+        }  
+    }
+    function resetKeepAlive() {
+        if (timerId) { clearTimeout(timerId); }
+        timerId = setTimeout(keepAlive, timeout);
+    }
+
+    window.onload = function() {
+        log(log.buffer.join("\n"));
+        connect();
+        document.getElementById("sendButton").onclick = function() {
+            const value = document.getElementById("inputMessage").value;
+            if(socket == null || socket.readyState >= socket.CLOSING) {
+                msg = value;
+                connect();
+            } 
+            else if (socket.readyState == socket.CONNECTING) {
+                msg = value;
+            } else {
+                socket.send(value);
+            }
+            resetKeepAlive();
+        }
+        document.getElementById("closeButton").onclick = function() {
+            socket.close(1000, "I'm done!");
+        }
+        document.getElementById("inputMessage").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                document.getElementById("sendButton").click();
+            }
+        });
+    }
+</script>
+</head>
+<body>
+    <input type="text" id="inputMessage" value="Hello, Web Socket!">
+    <button id="sendButton">Send</button>
+    <button id="closeButton">Close</button>
+    <pre id="output"></pre>
+</body>
+</html>
+
+
+

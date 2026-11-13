@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,7 +61,8 @@ enum {
 	REBCNT i;
 	REBINT h = TRUE;
 	REBCNT skip = 1;	// record size
-	REBCNT cased = 0;	// case sensitive when TRUE
+	REBFLG cased = 0;	// case sensitive when TRUE
+	REBFLG utf8 = 0;    // if any of series contains Unicode chars
 
 	SET_NONE(D_RET);
 	val1 = D_ARG(1);
@@ -80,35 +82,37 @@ enum {
 
 	switch (VAL_TYPE(val1)) {
 
+	case REB_MAP:
+		skip = 2; // key/value
+		// fall thru...
 	case REB_BLOCK:
 		i = VAL_LEN(val1);
 		// Setup result block:
 		if (GET_FLAG(flags, SOP_BOTH)) i += VAL_LEN(val2);
 		retser = BUF_EMIT;			// use preallocated shared block
 		Resize_Series(retser, i);
-		hret = Make_Hash_Array(i);	// allocated
-
-		// Optimization note: !!
-		// This code could be optimized for small blocks by not hashing them
-		// and extending Find_Key to do a FIND on the value itself w/o the hash.
+		// don't hash small blocks...
+		hret = (i <= MIN_DICT) ? NULL : Make_Hash_Array(i);	// allocated
 
 		do {
-			// Check what is in series1 but not in series2:
-			if (GET_FLAG(flags, SOP_CHECK))
-				hser = Hash_Block(val2, cased);
-
-			// Iterate over first series:
+			// Check what is in first series/map but not in second series/map:
+			if (GET_FLAG(flags, SOP_CHECK)) {
+				hser = IS_MAP(val1)
+					? VAL_SERIES(val2)->series // use existing map's hash table
+					: Hash_Block(val2, cased);
+			}
+			// Iterate over first series/map:
 			ser = VAL_SERIES(val1);
 			i = VAL_INDEX(val1);
 			FOR_SER(ser, val, i, skip) {
 				if (GET_FLAG(flags, SOP_CHECK)) {
-					h = Find_Key(VAL_SERIES(val2), hser, val, skip, cased, 1) >= 0;
+					h = Find_Key(VAL_SERIES(val2), hser, val, skip, cased, 1) != NOT_FOUND;
 					if (GET_FLAG(flags, SOP_INVERT)) h = !h;
 				}
 				if (h) Find_Key(retser, hret, val, skip, cased, 2);
 			}
 
-			// Iterate over second series?
+			// Iterate over second series/map?
 			if (NZ(i = GET_FLAG(flags, SOP_BOTH))) {
 				val = val1;
 				val1 = val2;
@@ -117,14 +121,22 @@ enum {
 			}
 		} while (i);
 
-		Set_Block(D_RET, Copy_Series(retser));
+		if IS_MAP(val1) {
+			Set_Series(REB_MAP, D_RET, Copy_Block(retser, 0));
+			VAL_SERIES(D_RET)->series = hret;
+		}
+		else {
+			Set_Block(D_RET, Copy_Series(retser));
+		}
+		
 		RESET_TAIL(retser); // required - allow reuse
-
 		break;
 
-	case REB_BINARY:
-		cased = TRUE;
-		SET_TYPE(D_RET, REB_BINARY);
+	//case REB_BINARY:
+	//!! Binary  input is broken, so better to turn it of for now! !!//
+	//!! https://github.com/Oldes/Rebol-issues/issues/1978         !!//
+	//	cased = TRUE;
+	//	SET_TYPE(D_RET, REB_BINARY);
 	case REB_STRING:
 		i = VAL_LEN(val1);
 		// Setup result block:
@@ -134,22 +146,39 @@ enum {
 		Reset_Buffer(retser, i);
 		RESET_TAIL(retser);
 
-		do {
-			REBUNI uc;
+		cased = cased ? AM_FIND_CASE : 0;
+		utf8 = IS_UTF8_STRING(val1) || (val2 && IS_UTF8_STRING(val2));
 
-			cased = cased ? AM_FIND_CASE : 0;
+		do {
+			REBU32 chr;
 
 			// Iterate over first series:
 			ser = VAL_SERIES(val1);
 			i = VAL_INDEX(val1);
-			FOR_SER(ser, val, i, skip) {
-				uc = GET_ANY_CHAR(ser, i);
-				if (GET_FLAG(flags, SOP_CHECK)) {
-					h = Find_Str_Char(VAL_SERIES(val2), 0, VAL_INDEX(val2), VAL_TAIL(val2), skip, uc, cased) != NOT_FOUND;
-					if (GET_FLAG(flags, SOP_INVERT)) h = !h;
+			if (utf8) {
+				REBLEN bytes = skip;
+				for (; i < SERIES_TAIL(ser); i += bytes) {
+					chr = UTF8_Get_Codepoint(BIN_SKIP(ser, i));
+					bytes = UTF8_Skip(ser, i, skip) - i;
+					if (GET_FLAG(flags, SOP_CHECK)) {
+						h = Find_Str_Char(VAL_SERIES(val2), 0, VAL_INDEX(val2), VAL_TAIL(val2), skip, chr, cased) != NOT_FOUND;
+						if (GET_FLAG(flags, SOP_INVERT)) h = !h;
+					}
+					if (h && (Find_Str_Char(retser, 0, 0, SERIES_TAIL(retser), skip, chr, cased) == NOT_FOUND)) {
+						Append_String(retser, ser, i, bytes);
+					}
 				}
-				if (h && (Find_Str_Char(retser, 0, 0, SERIES_TAIL(retser), skip, uc, cased) == NOT_FOUND)) {
-					Append_String(retser, ser, i, skip);
+			}
+			else {
+				for (; i < SERIES_TAIL(ser); i += skip) {
+					chr = BIN_HEAD(ser)[i];
+					if (GET_FLAG(flags, SOP_CHECK)) {
+						h = Find_Str_Char(VAL_SERIES(val2), 0, VAL_INDEX(val2), VAL_TAIL(val2), skip, chr, cased) != NOT_FOUND;
+						if (GET_FLAG(flags, SOP_INVERT)) h = !h;
+					}
+					if (h && (Find_Str_Char(retser, 0, 0, SERIES_TAIL(retser), skip, chr, cased) == NOT_FOUND)) {
+						Append_String(retser, ser, i, skip);
+					}
 				}
 			}
 
@@ -186,7 +215,7 @@ enum {
 			i = 0; // special case
 			break;
 		}
-		ser = Xandor_Binary(i, val1, val2);
+		ser = Xandor_Bitset(i, val1, val2);
 		Set_Series(REB_BITSET, D_RET, ser);
 		break;
 

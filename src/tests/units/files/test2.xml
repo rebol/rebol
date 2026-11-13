@@ -1,0 +1,13 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+  "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+<HEAD>
+<TITLE>A typical HTML file</TITLE>
+</HEAD>
+<BODY>
+  This is the typical structure of an HTML file. It follows
+  the notation of the HTML 4.0 specification, including tags
+  that have been deprecated (hence the "transitional" label).
+</BODY>
+</HTML>

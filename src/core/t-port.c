@@ -89,10 +89,11 @@
 	case A_CREATE:
 	case A_DELETE:
 	case A_RENAME:
+	case A_MODIFY:
 		value = As_Port(value);
 	case A_UPDATE:
 	default:
-		return Do_Port_Action(VAL_PORT(value), action); // Result on stack
+		return Do_Port_Action(value, action); // Result on stack
 
 	case A_REFLECT:
 		return T_Object(ds, action);

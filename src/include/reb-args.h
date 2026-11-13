@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,16 +31,18 @@
 // REBOL startup option structure:
 typedef struct rebol_args {
 	REBCNT options;
-	REBCHR *script;
-	REBCHR *args;
-	REBCHR *do_arg;
-	REBCHR *version;
-	REBCHR *debug;
-	REBCHR *import;
-	REBCHR *secure;
-	REBCHR *boot;
-	REBCHR *exe_path;
-	REBCHR *home_dir;
+	REBYTE *script;
+	REBYTE *do_arg;
+	REBYTE *version;
+	REBYTE *debug;
+	REBYTE *import;
+	REBYTE *secure;
+	REBYTE *boot;
+	REBYTE *exe_path;
+	REBYTE *current_dir;
+	REBYTE *args;         // value for the --args option
+	REBCNT  argc;         // unprocessed argument count
+	REBCHR **argv;        // unprocessed arguments
 } REBARGS;
 
 // REBOL arg option flags:
@@ -66,6 +69,8 @@ enum arg_opts {
 	ROF_CGI,
 	ROF_BOOT,
 	ROF_NO_WINDOW,
+	ROF_NO_COLOR,
+	ROF_LEGACY_REPL,
 
 	ROF_IGNORE, // not an option
 };
@@ -89,7 +94,8 @@ enum arg_opts {
 #define RO_HALT        (1<<ROF_HALT)
 #define RO_BOOT        (1<<ROF_BOOT)
 #define RO_NO_WINDOW   (1<<ROF_NO_WINDOW)
+#define RO_NO_COLOR    (1<<ROF_NO_COLOR)
+#define RO_LEGACY_REPL (1<<ROF_LEGACY_REPL)
 
 #define RO_IGNORE      (1<<ROF_IGNORE)
 
-void Parse_Args(int argc, REBCHR **argv, REBARGS *rargs);

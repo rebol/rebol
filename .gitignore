@@ -1,11 +1,17 @@
 #################
 ## REBOL R3
 #################
-
-make/r3*
+msvc
 make/objs/
-src/boot/boot-code.r
-src/boot/host-init.r
+make/host.exe
+make/libr3.so
+make/libr3.dll
+make/Rebol3.xcworkspace/
+make/*.xcodeproj
+src/boot/boot-code.reb
+src/boot/host-init.reb
+src/boot/gen-natives.reb
+src/boot/gen-symbols.reb
 src/core/b-boot.c
 src/include/ext-types.h
 src/include/host-*
@@ -14,9 +20,13 @@ src/include/reb-evtypes.h
 src/include/reb-lib-lib.h
 src/include/reb-lib.h
 src/include/reb-types.h
-src/include/tmp-*
+src/include/gen-*
 src/tools/reb-lib-doc.txt
-src/reb-lib-doc.txt
+reb-lib-doc.txt
+src/mezz/base-collected.reb
+src/generated/
+
+src/tests/httpd-root/logs/
 
 #################
 ## Eclipse
@@ -135,10 +145,11 @@ Backup*/
 UpgradeLog*.XML
 
 
-
 ############
 ## Windows
 ############
+
+* - Copy*
 
 # Windows image file caches
 Thumbs.db

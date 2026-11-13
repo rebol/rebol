@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -96,8 +97,6 @@
 
 #include "sys-core.h"
 
-#include "sys-state.h"
-
 // Globals or Threaded???
 static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
@@ -141,7 +140,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	if (!Saved_State) Crash(RP_NO_SAVED_STATE);
 	SET_ERROR(TASK_THIS_ERROR, ERR_NUM(err), err);
 	if (Trace_Level) Trace_Error(TASK_THIS_ERROR);
-	longjmp(*Saved_State, 1);
+	LONG_JUMP(*Saved_State, 1);
 }
 
 
@@ -156,7 +155,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 {
 	if (!Saved_State) Crash(RP_NO_SAVED_STATE);
 	*TASK_THIS_ERROR = *val;
-	longjmp(*Saved_State, 1);
+	LONG_JUMP(*Saved_State, 1);
 }
 
 
@@ -206,7 +205,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 /***********************************************************************
 **
-*/	void Trap_Stack()
+*/	void Trap_Stack(void)
 /*
 ***********************************************************************/
 {
@@ -216,17 +215,17 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 	*TASK_THIS_ERROR = *TASK_STACK_ERROR; // pre-allocated
 
-	longjmp(*Saved_State, 1);
+	LONG_JUMP(*Saved_State, 1);
 }
 
 
 /***********************************************************************
 **
-*/	REBCNT Stack_Depth()
+*/	REBCNT Stack_Depth(void)
 /*
 ***********************************************************************/
 {
-	REBCNT dsf = DSF;
+	REBCNT dsf;
 	REBCNT count = 0;
 
 	for (dsf = DSF; dsf > 0; dsf = PRIOR_DSF(dsf)) {
@@ -272,7 +271,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	REBSER *cats;		// Error catalog object
 	REBSER *cat;		// Error category object
 	REBCNT n;		// Word symbol number
-	REBCNT code;
+	REBINT code;
 
 	code = VAL_INT32(&error->code);
 
@@ -304,32 +303,44 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 **		to be bound to the error catalog context.
 **		If the message is not found, return null.
 **
+**	NOTE: throws invalid-arg error if id or type are not found
+**	      throws invalid-error if id or type are not words
+**
 ***********************************************************************/
 {
 	REBSER *frame;
 	REBVAL *obj1;
 	REBVAL *obj2;
 
-	if (!IS_WORD(&error->type) || !IS_WORD(&error->id)) return 0;
+	if (IS_NONE(&error->type) || IS_NONE(&error->id)) 
+		Trap0(RE_INVALID_ERROR);
 
 	// Find the correct error type object in the catalog:
+	if (!IS_WORD(&error->type)) goto invalid_type;
 	frame = VAL_OBJ_FRAME(Get_System(SYS_CATALOG, CAT_ERRORS));
 	obj1 = Find_Word_Value(frame, VAL_WORD_SYM(&error->type));
-	if (!obj1) return 0;
+	if (!obj1) goto invalid_type;
 
 	// Now find the correct error message for that type:
+	if (!IS_WORD(&error->id)) goto invalid_id;
 	frame = VAL_OBJ_FRAME(obj1);
 	obj2 = Find_Word_Value(frame, VAL_WORD_SYM(&error->id));
-	if (!obj2) return 0;
+	if (!obj2) goto invalid_id;
 
 	if (num) {
 		obj1 = Find_Word_Value(frame, SYM_CODE);
+		if (!obj1) return 0;
 		*num = VAL_INT32(obj1)
 			+ Find_Word_Index(frame, VAL_WORD_SYM(&error->id), FALSE)
 			- Find_Word_Index(frame, SYM_TYPE, FALSE) - 1;
 	}
 
 	return obj2;
+invalid_type:
+	Trap1(RE_INVALID_ARG, &error->type);
+invalid_id:
+	Trap1(RE_INVALID_ARG, &error->id);
+	return 0; // just for compiler
 }
 
 
@@ -346,6 +357,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	REBSER *err;		// Error object
 	ERROR_OBJ *error;	// Error object values
 	REBINT code = 0;
+	REBVAL *tmp;
 
 	// Create a new error object from another object, including any non-standard fields:
 	if (IS_ERROR(arg) || IS_OBJECT(arg)) {
@@ -370,21 +382,28 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	// If user set error code, use it to setup type and id fields.
 	if (IS_BLOCK(arg)) {
 		DISABLE_GC;
-		Do_Bind_Block(err, arg); // GC-OK (disabled)
+		tmp = Do_Bind_Block(err, arg); // GC-OK (disabled)
 		ENABLE_GC;
-		if (IS_INTEGER(&error->code) && VAL_INT64(&error->code)) {
-			Set_Error_Type(error);
-		} else {
-			if (Find_Error_Info(error, &code)) {
-				SET_INTEGER(&error->code, code);
-			}
+		if (THROWN(tmp)) { 
+			*value = *tmp;
+			return; 
 		}
+		
+		
+		//It was possible to set error using code, but that's now ignored!
+		//@@ https://github.com/Oldes/Rebol-issues/issues/1593
+		//if (IS_INTEGER(&error->code) && VAL_INT64(&error->code)) {
+		//	Set_Error_Type(error);
+		//} else {
+			if (!Find_Error_Info(error, &code)) code = RE_INVALID_ERROR;
+			SET_INTEGER(&error->code, code);
+
+		//}
 		// The error code is not valid:
-		if (IS_NONE(&error->id)) {
-			SET_INTEGER(&error->code, RE_INVALID_ERROR);
+		if (VAL_INT64(&error->code) == RE_INVALID_ERROR) {
 			Set_Error_Type(error);
 		}
-		if (VAL_INT64(&error->code) < 100 || VAL_INT64(&error->code) > 1000)
+		if (VAL_INT64(&error->code) < 100) // || VAL_INT64(&error->code) > 1000) 
 			Trap_Arg(arg);
 	}
 
@@ -425,6 +444,9 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	// Make a copy of the error object template:
 	err = CLONE_OBJECT(VAL_OBJ_FRAME(ROOT_ERROBJ));
 	error = ERR_VALUES(err);
+	
+	if (code >= THROWN_DISARM_OFFSET)
+		code -= THROWN_DISARM_OFFSET;
 
 	// Set error number:
 	SET_INTEGER(&error->code, (REBINT)code);
@@ -449,124 +471,169 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 /***********************************************************************
 **
-*/	void Trap0(REBCNT num)
+*/	void Disarm_Throw_Error(REBVAL *err)
+/*
+**		Creates real error object from an internal thrown one
+**
+***********************************************************************/
+{
+	REBINT code;
+	REBCNT sym;
+	REBSER *obj;
+	REBVAL *arg1 = NULL;
+	REBVAL word = {0};
+
+	code = VAL_ERR_NUM(err);
+	if (code > RE_THROW_MAX) return;
+
+	sym  = VAL_ERR_SYM(err);
+	arg1 = VAL_ERR_VALUE(err);
+	
+	if (sym) {
+		Set_Word(&word, sym, 0, 0);
+		VAL_SET(&word, REB_WORD);
+		VAL_ERR_SYM(err) = 0;
+	}
+
+	code += THROWN_DISARM_OFFSET;
+	
+	obj = Make_Error(code, arg1, sym ? &word : 0, 0);
+	VAL_ERR_OBJECT(err) = obj;
+	VAL_ERR_NUM(err) = code;
+}
+
+
+/***********************************************************************
+**
+*/	REB_NORETURN void Trap0(REBCNT num)
 /*
 ***********************************************************************/
 {
 	Throw_Error(Make_Error(num, 0, 0, 0));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap1(REBCNT num, REBVAL *arg1)
+*/	REB_NORETURN void Trap1(REBCNT num, REBVAL *arg1)
 /*
 ***********************************************************************/
 {
 	Throw_Error(Make_Error(num, arg1, 0, 0));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap2(REBCNT num, REBVAL *arg1, REBVAL *arg2)
+*/	REB_NORETURN void Trap2(REBCNT num, REBVAL *arg1, REBVAL *arg2)
 /*
 ***********************************************************************/
 {
 	Throw_Error(Make_Error(num, arg1, arg2, 0));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap3(REBCNT num, REBVAL *arg1, REBVAL *arg2, REBVAL *arg3)
+*/	REB_NORETURN void Trap3(REBCNT num, REBVAL *arg1, REBVAL *arg2, REBVAL *arg3)
 /*
 ***********************************************************************/
 {
 	Throw_Error(Make_Error(num, arg1, arg2, arg3));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Arg(REBVAL *arg)
+*/	REB_NORETURN void Trap_Arg(REBVAL *arg)
 /*
 ***********************************************************************/
 {
 	Trap1(RE_INVALID_ARG, arg);
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Type(REBVAL *arg)
+*/	REB_NORETURN void Trap_Type(REBVAL *arg)
 /*
 **		<type> type is not allowed here
 **
 ***********************************************************************/
 {
 	Trap1(RE_INVALID_TYPE, Of_Type(arg));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Range(REBVAL *arg)
+*/	REB_NORETURN void Trap_Range(REBVAL *arg)
 /*
 **		value out of range: <value>
 **
 ***********************************************************************/
 {
 	Trap1(RE_OUT_OF_RANGE, arg);
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Word(REBCNT num, REBCNT sym, REBVAL *arg)
+*/	REB_NORETURN void Trap_Word(REBCNT num, REBCNT sym, REBVAL *arg)
 /*
 ***********************************************************************/
 {
 	Init_Word(DS_TOP, sym);
 	if (arg) Trap2(num, DS_TOP, arg);
 	else Trap1(num, DS_TOP);
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Action(REBCNT type, REBCNT action)
+*/	REB_NORETURN void Trap_Action(REBCNT type, REBCNT action)
 /*
 ***********************************************************************/
 {
 	Trap2(RE_CANNOT_USE, Get_Action_Word(action), Get_Type(type));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Math_Args(REBCNT type, REBCNT action)
+*/	REB_NORETURN void Trap_Math_Args(REBCNT type, REBCNT action)
 /*
 ***********************************************************************/
 {
 	Trap2(RE_NOT_RELATED, Get_Action_Word(action), Get_Type(type));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Types(REBCNT errnum, REBCNT type1, REBCNT type2)
+*/	REB_NORETURN void Trap_Types(REBCNT errnum, REBCNT type1, REBCNT type2)
 /*
 ***********************************************************************/
 {
 	if (type2 != 0) Trap2(errnum, Get_Type(type1), Get_Type(type2));
 	Trap1(errnum, Get_Type(type1));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Expect(REBVAL *object, REBCNT index, REBCNT type)
+*/	REB_NORETURN void Trap_Expect(REBVAL *object, REBCNT index, REBCNT type)
 /*
 **		Object field is not of expected type.
 **		PORT expected SCHEME of OBJECT type
@@ -574,43 +641,47 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 ***********************************************************************/
 {
 	Trap3(RE_EXPECT_TYPE, Of_Type(object), Obj_Word(object, index), Get_Type(type));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Make(REBCNT type, REBVAL *spec)
+*/	REB_NORETURN void Trap_Make(REBCNT type, REBVAL *spec)
 /*
 ***********************************************************************/
 {
 	Trap2(RE_BAD_MAKE_ARG, Get_Type(type), spec);
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Num(REBCNT err, REBCNT num)
+*/	REB_NORETURN void Trap_Num(REBCNT err, REBCNT num)
 /*
 ***********************************************************************/
 {
 	DS_PUSH_INTEGER(num);
 	Trap1(err, DS_TOP);
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Reflect(REBCNT type, REBVAL *arg)
+*/	REB_NORETURN void Trap_Reflect(REBCNT type, REBVAL *arg)
 /*
 ***********************************************************************/
 {
-	Trap_Arg(arg);
+	Trap2(RE_CANNOT_USE, arg, Get_Type(type));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Port(REBCNT errnum, REBSER *port, REBINT err_code)
+*/	REB_NORETURN void Trap_Port(REBCNT errnum, REBSER *port, REBINT err_code)
 /*
 ***********************************************************************/
 {
@@ -622,8 +693,9 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	val = Get_Object(spec, STD_PORT_SPEC_HEAD_REF); // most informative
 	if (IS_NONE(val)) val = Get_Object(spec, STD_PORT_SPEC_HEAD_TITLE);
 
-	DS_PUSH_INTEGER(err_code);
+	DS_PUSH_INTEGER(-err_code);
 	Trap2(errnum, val, DS_TOP);
+	DEAD_END;
 }
 
 
@@ -680,7 +752,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	errs = Construct_Object(0, VAL_BLK(errors), 0);
 	Set_Object(Get_System(SYS_CATALOG, CAT_ERRORS), errs);
 
-	Set_Root_Series(TASK_ERR_TEMPS, Make_Block(3), "task errors");
+	Set_Root_Series(TASK_ERR_TEMPS, Make_Block(3), cb_cast("task errors"));
 
 	// Create objects for all error types:
 	for (val = BLK_SKIP(errs, 1); NOT_END(val); val++) {
@@ -694,7 +766,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 		POP_STATE(Top_State, Saved_State);
 		DSP++; // Room for return value
 		Catch_Error(DS_TOP); // Stores error value here
-		Print_Value(DS_TOP, 0, FALSE);
+		Print_Value(DS_TOP, 0, FALSE, TRUE);
 		Crash(RP_NO_CATCH);
 	}
 	SET_STATE(Top_State, Saved_State);
@@ -737,7 +809,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 ***********************************************************************/
 {
 	REBVAL *policy = Get_System(SYS_STATE, STATE_POLICIES);
-	REBYTE *flags;
+	REBYTE *flags = NULL;
 	REBCNT len;
 	REBCNT errcode = RE_SECURITY_ERROR;
 
@@ -771,13 +843,15 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 		// Is it a string (file or URL):
 		else if (ANY_BINSTR(policy) && name) {
+#ifdef TO_WINDOWS
+			REBFLG uncase = TRUE;
+#else
+			REBFLG uncase = !IS_FILE(policy);
+#endif
 			//Debug_Fmt("sec: %r %r", policy, name);
-			if (Match_Sub_Path(VAL_SERIES(policy), VAL_SERIES(name))) {
-				// Is the match adequate?
-				if (VAL_TAIL(name) >= len) {
-					len = VAL_TAIL(name);
-					flags = VAL_TUPLE(policy+1); // non-aligned
-				}
+			if (Match_Sub_Path(VAL_SERIES(policy), VAL_SERIES(name), uncase)) {
+				// records are sorted using length, so first match is the right one
+				return VAL_TUPLE(policy + 1);
 			}
 		}
 		else goto error;
@@ -800,13 +874,25 @@ error:
 
 /***********************************************************************
 **
-*/	void Trap_Security(REBCNT flag, REBCNT sym, REBVAL *value)
+*/	void Trap_Security(REBYTE *flags, REBCNT sym, REBVAL *value, REBCNT policy)
 /*
-**		Take action on the policy flags provided. The sym and value
+**		Take action on the policy flags provided. The sym (e.g. SYM_FILE) and value
 **		are provided for error message purposes only.
 **
 ***********************************************************************/
 {
+	REBCNT flag = flags[policy];
+	if (flag == SEC_ASK) {
+		flag = SEC_THROW;
+		REBVAL word, type;
+		Init_Word(&word, sym);
+		SET_INTEGER(&type, 1 + policy);
+		REBVAL* func = Get_System(SYS_STATE, STATE_CONFIRM_POLICY);
+		REBVAL* result = Apply_Func(NULL, func, &word, &type, value, 0);
+		if (IS_LOGIC(result) && VAL_LOGIC(result)) {
+			flag = SEC_ALLOW;
+		}
+	}
 	if (flag == SEC_THROW) {
 		if (!value) {
 			Init_Word(DS_TOP, sym);
@@ -814,7 +900,7 @@ error:
 		}
 		Trap1(RE_SECURITY, value);
 	}
-	else if (flag == SEC_QUIT) OS_EXIT(101);
+	else if (flag == SEC_QUIT) OS_Exit(101, 0);
 }
 
 
@@ -829,7 +915,6 @@ error:
 ***********************************************************************/
 {
 	REBYTE *flags;
-	
 	flags = Security_Policy(sym, value);
-	Trap_Security(flags[policy], sym, value);
+	Trap_Security(flags, sym, value, policy);
 }

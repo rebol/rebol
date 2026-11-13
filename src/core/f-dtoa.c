@@ -2289,7 +2289,7 @@ bigcomp
 #endif
 {
 	Bigint *b, *d;
-	int b2, bbits, d2, dd, dig, dsign, i, j, nd, nd0, p2, p5, speccase;
+	int b2, bbits, d2, dd = 0, dig, dsign, i, j, nd, nd0, p2, p5, speccase;
 
 	dsign = bc->dsign;
 	nd = bc->nd;
@@ -2504,7 +2504,7 @@ strtod
 	U aadj2, adj, rv, rv0;
 	ULong y, z;
 	BCinfo bc;
-	Bigint *bb, *bb1, *bd, *bd0, *bs, *delta;
+	Bigint *bb = 0, *bb1, *bd = 0, *bd0, *bs = 0, *delta = 0;
 #ifdef Avoid_Underflow
 	ULong Lsb, Lsb1;
 #endif
@@ -3576,7 +3576,7 @@ rv_alloc(int i)
 
 	j = sizeof(ULong);
 	for(k = 0;
-		sizeof(Bigint) - sizeof(ULong) - sizeof(int) + j <= i;
+		sizeof(Bigint) - sizeof(ULong) - sizeof(int) + j <= (unsigned int)i;
 		j <<= 1)
 			k++;
 	r = (int*)Balloc(k);
@@ -3704,14 +3704,14 @@ dtoa
 	*/
 
 	int bbits, b2, b5, be, dig, i, ieps, ilim, ilim0, ilim1,
-		j, j1, k, k0, k_check, leftright, m2, m5, s2, s5,
+	j, j1 = 0, k, k0, k_check, leftright, m2, m5, s2, s5,
 		spec_case, try_quick;
 	Long L;
 #ifndef Sudden_Underflow
 	int denorm;
 	ULong x;
 #endif
-	Bigint *b, *b1, *delta, *mlo, *mhi, *S;
+	Bigint *b, *b1, *delta, *mlo = 0, *mhi, *S;
 	U d2, eps, u;
 	double ds;
 	char *s, *s0;
@@ -3761,12 +3761,13 @@ dtoa
 #endif
 		{
 		/* Infinity or NaN */
-		*decpt = 9999;
+		*decpt = 1;
 #ifdef IEEE_Arith
 		if (!word1(&u) && !(word0(&u) & 0xfffff))
-			return nrv_alloc("Infinity", rve, 8);
+			return nrv_alloc("1#INF", rve, 5);
 #endif
-		return nrv_alloc("NaN", rve, 3);
+		*sign = 0; //pretend that all NaNs are positive
+		return nrv_alloc("1#NaN", rve, 5);
 		}
 #endif
 #ifdef IBM

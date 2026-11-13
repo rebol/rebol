@@ -3,6 +3,7 @@
 **  REBOL Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +28,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include "sys-int-funcs.h"
 
 
 /***********************************************************************
@@ -37,7 +39,7 @@
 **		number of units specified by delta.
 **
 **			index - where space is expanded (but not cleared)
-**			delta - number of UNITS to expand (keeping terminator)
+**			delta - number of UNITS to expand from TAIL (keeping terminator)
 **			tail  - will be updated
 **
 **			        |<---rest--->|
@@ -60,11 +62,11 @@
 ***********************************************************************/
 {
 	REBCNT start;
-	REBCNT size;
+	REBCNT size, new_size;
 	REBCNT extra;
 	REBCNT wide;
 	REBSER *newser, swap;
-	REBCNT n;
+	REBUPT n;
 	REBCNT x;
 
 	if (delta == 0) return;
@@ -93,29 +95,35 @@
 	if ((size + extra) > SERIES_SPACE(series)) {
 		if (IS_LOCK_SERIES(series)) Crash(RP_LOCKED_SERIES);
 		//DISABLE_GC; // Don't let GC occur just for an expansion.
-
+#ifdef DEBUG
 		if (Reb_Opts->watch_expand) {
-			Debug_Fmt("Expand %x wide: %d tail: %d delta: %d", series, wide, series->tail, delta);
+			Debug_Fmt(cb_cast("Expand %x wide: %d tail: %d delta: %d"), series, wide, series->tail, delta);
 		}
-
+#endif
 		// Create a new series that is bigger.
 		// Have we recently expanded the same series?
 		x = 1;
-		n = (REBCNT)(Prior_Expand[0]);
+		n = (REBUPT)(Prior_Expand[0]);
 		do {
 			if (Prior_Expand[n] == series) {
 				x = series->tail + delta + 1; // Double the size
 				break;
 			}
 			if (++n >= MAX_EXPAND_LIST) n = 1;
-		} while (n != (REBCNT)(Prior_Expand[0]));
+		} while (n != (REBUPT)(Prior_Expand[0]));
 #ifdef DEBUGGING
 		Print_Num("Expand:", series->tail + delta + 1);
 #endif
-		newser = Make_Series(series->tail + delta + x, wide, TRUE);
+		/* new_size = series->tail + delta + x with overflow checking */
+		if (REB_U32_ADD_OF(series->tail, delta, &new_size)
+			|| REB_U32_ADD_OF(new_size, x, &new_size)) {
+			Trap0(RE_PAST_END);
+		}
+
+		newser = Make_Series(new_size, wide, new_size < 512*1024);
 		// If necessary, add series to the recently expanded list:
 		if (Prior_Expand[n] != series) {
-			n = (REBCNT)(Prior_Expand[0]) + 1;
+			n = (REBUPT)(Prior_Expand[0]) + 1;
 			if (n >= MAX_EXPAND_LIST) n = 1;
 			Prior_Expand[n] = series;
 		}
@@ -124,11 +132,11 @@
 		//ENABLE_GC;
 
 		// Copy the series up to the expansion point:
-		memcpy(newser->data, series->data, start);
+		COPY_MEM(newser->data, series->data, start);
 
 		// Copy the series after the expansion point:
 		// In AT_TAIL cases, this just moves the terminator to the new tail.
-		memcpy(newser->data + start + extra, series->data + start, size - start);
+		COPY_MEM(newser->data + start + extra, series->data + start, size - start);
 
 		newser->tail = series->tail + delta;
 
@@ -196,7 +204,7 @@
 
 /***********************************************************************
 **
-*/	void Append_Series(REBSER *series, REBYTE *data, REBCNT len)
+*/	void Append_Series(REBSER *series, const REBYTE *data, REBCNT len)
 /*
 **		Append value(s) onto the tail of a series.  The len is
 **		the number of units (bytes, REBVALS, etc.) of the data,
@@ -217,7 +225,7 @@
 
 /***********************************************************************
 **
-*/	void Append_Mem_Extra(REBSER *series, REBYTE *data, REBCNT len, REBCNT extra)
+*/	void Append_Mem_Extra(REBSER *series, const REBYTE *data, REBCNT len, REBCNT extra)
 /*
 **		An optimized function for appending raw memory bytes to
 **		a byte-sized series. The series will be expanded if room
@@ -253,7 +261,8 @@
 	REBCNT len = source->tail + 1;
 	REBSER *series = Make_Series(len, SERIES_WIDE(source), FALSE);
 
-	memcpy(series->data, source->data, len * SERIES_WIDE(source));
+	COPY_MEM(series->data, source->data, len * SERIES_WIDE(source));
+	if (IS_UTF8_SERIES(source)) UTF8_SERIES(series);
 	series->tail = source->tail;
 	return series;
 }
@@ -269,8 +278,12 @@
 {
 	REBSER *series = Make_Series(length+1, SERIES_WIDE(source), FALSE);
 
-	memcpy(series->data, source->data + index * SERIES_WIDE(source), (length+1) * SERIES_WIDE(source));
+	COPY_MEM(series->data, source->data + index * SERIES_WIDE(source), (length+1) * SERIES_WIDE(source));
 	series->tail = length;
+	if (IS_UTF8_SERIES(source)) {
+
+		UTF8_SERIES(series);
+	}
 	return series;
 }
 
@@ -344,13 +357,28 @@
 			CLEAR(series->data, SERIES_WIDE(series)); // terminate
 		} else {
 			// Add bias to head:
-			SERIES_ADD_BIAS(series, len);
-			SERIES_REST(series) -= len;
-			series->data += SERIES_WIDE(series) * len;
-			if (NZ(start = SERIES_BIAS(series))) {
-				// If more than half biased:
-				if (start >= MAX_SERIES_BIAS || start > SERIES_REST(series))
-					Reset_Bias(series);
+			REBCNT bias = SERIES_BIAS(series);
+			if (REB_U32_ADD_OF(bias, len, &bias)) {
+				Trap0(RE_OVERFLOW);
+			}
+			if (bias > 0xffff) { //bias is 16-bit, so a simple SERIES_ADD_BIAS could overflow it
+				REBYTE *data = series->data;
+
+				data += SERIES_WIDE(series) * len;
+				series->data -= SERIES_WIDE(series) * SERIES_BIAS(series);
+				SERIES_REST(series) += SERIES_BIAS(series);
+				SERIES_SET_BIAS(series, 0);
+
+				memmove(series->data, data, SERIES_USED(series));
+			} else {
+				SERIES_SET_BIAS(series, bias);
+				SERIES_REST(series) -= len;
+				series->data += SERIES_WIDE(series) * len;
+				if (NZ(start = SERIES_BIAS(series))) {
+					// If more than half biased:
+					if (start >= MAX_SERIES_BIAS || start > SERIES_REST(series))
+						Reset_Bias(series);
+				}
 			}
 		}
 		return;
@@ -526,7 +554,7 @@
 
 	ser = Make_Series(len+1, SERIES_WIDE(buf), FALSE);
 
-	memcpy(ser->data, buf->data, SERIES_WIDE(buf) * len);
+	COPY_MEM(ser->data, buf->data, SERIES_WIDE(buf) * len);
 	ser->tail = len;
 	TERM_SERIES(ser);
 

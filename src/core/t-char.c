@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,6 +52,29 @@
 	return (num > 0);
 }
 
+/***********************************************************************
+**
+*/	REBINT PD_Char(REBPVS* pvs)
+/*
+***********************************************************************/
+{
+	if (pvs->setval) return PE_BAD_SET;
+	if (IS_WORD(pvs->select)) {
+		REBU32 len;
+		switch (VAL_WORD_CANON(pvs->select)) {
+		case SYM_WIDTH: len = UTF8_Width(VAL_CHAR(pvs->value)); break;
+		case SYM_SIZE:  len = UTF8_Codepoint_Size(VAL_CHAR(pvs->value)); break;
+		default: return PE_BAD_SELECT;
+		}
+		SET_INTEGER(pvs->store, len);
+		return PE_USE;
+	}
+	else
+		return PE_BAD_SELECT;
+
+	return PE_OK;
+}
+
 
 /***********************************************************************
 **
@@ -58,8 +82,8 @@
 /*
 ***********************************************************************/
 {
-	REBINT	chr = VAL_CHAR(D_ARG(1));
-	REBINT	arg;
+	REBU32	chr = VAL_CHAR(D_ARG(1));
+	REBCNT	arg = 0;
 	REBVAL	*val;
 
 	if (IS_BINARY_ACT(action)) {
@@ -70,15 +94,16 @@
 			arg = VAL_INT32(val);
 		else if (IS_DECIMAL(val))
 			arg = (REBINT)VAL_DECIMAL(val);
-		else
+        else {
 			Trap_Math_Args(REB_CHAR, action);
+        }
 	}
 
 	switch (action) {
 
-	case A_ADD: chr += (REBUNI)arg; break;
+	case A_ADD: chr += arg; break;
 	case A_SUBTRACT:
-		chr -= (REBUNI)arg;
+		chr -= arg;
 		if (IS_CHAR(D_ARG(2))) {
 			DS_RET_INT(chr);
 			return R_RET;
@@ -87,20 +112,20 @@
 	case A_MULTIPLY: chr *= arg; break;
 	case A_DIVIDE:
 		if (arg == 0) Trap0(RE_ZERO_DIVIDE);
-		chr /= arg;
+		else chr /= arg;
 		break;
 	case A_REMAINDER:
 		if (arg == 0) Trap0(RE_ZERO_DIVIDE);
-		chr %= arg;
+		else chr %= arg;
 		break;
 
-	case A_AND: chr &= (REBUNI)arg; break;
-	case A_OR:  chr |= (REBUNI)arg; break;
-	case A_XOR: chr ^= (REBUNI)arg; break;
+	case A_AND: chr &= arg; break;
+	case A_OR:  chr |= arg; break;
+	case A_XOR: chr ^= arg; break;
 
-	case A_NEGATE: chr = (REBUNI)-chr; break;
-	case A_COMPLEMENT: chr = (REBUNI)~chr; break;
-	case A_EVENQ: chr = (REBUNI)~chr;
+	//case A_NEGATE: chr = -chr; break;
+	case A_COMPLEMENT: chr = ~chr; break;
+	case A_EVENQ: chr = ~chr;
 	case A_ODDQ: DECIDE(chr & 1);
 
 	case A_RANDOM:	//!!! needs further definition ?  random/zero
@@ -109,7 +134,9 @@
 			return R_UNSET;
 		}
 		if (chr == 0) break;
-		chr = (REBUNI)(1 + ((REBCNT)Random_Int(D_REF(3)) % chr)); // /secure
+		do {
+			chr = (REBINT)(1 + ((REBCNT)Random_Int(D_REF(3)) % chr)); // /secure
+		} while (IS_INVALID_CHAR(chr));
 		break;
 
 	case A_MAKE:
@@ -124,38 +151,41 @@
 		case REB_INTEGER:
 		case REB_DECIMAL:
 			arg = Int32(val);
-			if (arg > MAX_UNI || arg < 0) goto bad_make;
+			if (arg < 0) goto bad_make;
 			chr = arg;
 			break;
 	
 		case REB_BINARY:
 		{
-			REBYTE *bp = VAL_BIN(val);
+			const REBYTE *bp = VAL_BIN(val);
 			arg = VAL_LEN(val);
 			if (arg == 0) goto bad_make;
 			if (*bp > 0x80) {
-				if (!Legal_UTF8_Char(bp, arg)) goto bad_make;
-				chr = Decode_UTF8_Char(&bp, 0); // zero on error
-				if (!chr) goto bad_make;
+				chr = UTF8_Decode_Codepoint(&bp, &arg);
+				if (chr == UNI_ERROR) goto bad_make;
 			}
 			else
 				chr = *bp;
 		}
 			break;
 
-#ifdef removed
-//		case REB_ISSUE:
-			// Scan 8 or 16 bit hex str, will throw on error...
-			arg = Scan_Hex_Value(VAL_DATA(val), VAL_LEN(val), (REBOOL)!VAL_BYTE_SIZE(val));
-			if (arg > MAX_UNI || arg < 0) goto bad_make;
-			chr = arg;
-			break;
-#endif
-
 		case REB_STRING:
 			if (VAL_INDEX(val) >= VAL_TAIL(val)) Trap_Make(REB_CHAR, val);
 			chr = GET_ANY_CHAR(VAL_SERIES(val), VAL_INDEX(val));
 			break;
+
+		case REB_ISSUE:
+		{
+			const REBYTE* bp = Get_Word_Name(val);
+			REBCNT len = LEN_BYTES(bp);
+			REBINT n = MIN(MAX_HEX_LEN, len);
+			REBI64 num;
+			// Scan 8 or 16 bit hex str, will throw on error...
+			if (Scan_Hex(bp, &num, n, n) == 0) goto bad_make;
+			if (num > MAX_UNI || num < 0) goto bad_make;
+			chr = (REBU32)num;
+			break;
+		}
 
 		default:
 bad_make:
@@ -166,8 +196,10 @@ bad_make:
 	default:
 		Trap_Action(REB_CHAR, action);
 	}
-
-	if ((chr >> 16) != 0 && (chr >> 16) != 0xffff) Trap1(RE_TYPE_LIMIT, Get_Type(REB_CHAR)); 
+	if (IS_INVALID_CHAR(chr)) {
+		SET_INTEGER(DS_RETURN, chr);
+		Trap1(RE_INVALID_CHAR, DS_RETURN);
+	}
 	SET_CHAR(DS_RETURN, chr);
 	return R_RET;
 

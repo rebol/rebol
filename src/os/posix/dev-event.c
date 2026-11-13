@@ -19,7 +19,7 @@
 **
 ************************************************************************
 **
-**  Title: Device: Event handler for Win32
+**  Title: Device: Event handler for Posix
 **  Author: Carl Sassenrath
 **  Purpose:
 **      Processes events to pass to REBOL. Note that events are
@@ -41,9 +41,21 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <errno.h>
+#include <poll.h>
 
 #include "reb-host.h"
 #include "host-lib.h"
+
+#ifdef REB_VIEW
+#include <gtk/gtk.h>
+extern GMainContext *GTKCtx;
+extern REBINT exit_loop;
+#else
+REBINT exit_loop = 0;
+#endif
+
+extern struct pollfd poller; // currently in dev-stdio.c
 
 void Done_Device(int handle, int error);
 
@@ -71,15 +83,20 @@ void Done_Device(int handle, int error);
 **		Poll for events and process them.
 **		Returns 1 if event found, else 0.
 **
-**	MS Notes:
-**
-**		"The PeekMessage function normally does not remove WM_PAINT
-**		messages from the queue. WM_PAINT messages remain in the queue
-**		until they are processed."
-**
 ***********************************************************************/
 {
 	int flag = DR_DONE;
+#ifdef REB_VIEW
+	//X_Event_Loop(-1);
+	//puts("Poll_Events");
+	if (exit_loop > 0) {
+		while(g_main_context_pending(GTKCtx)) {
+			flag = DR_PEND;
+			//printf(".");
+			g_main_context_iteration(GTKCtx, FALSE);
+		}
+	}
+#endif
 	return flag;	// different meaning compared to most commands
 }
 
@@ -94,20 +111,21 @@ void Done_Device(int handle, int error);
 **
 ***********************************************************************/
 {
-	struct timeval tv;
-	int result;
+	struct timeval tv = {0,0};
 
-	tv.tv_sec = 0;
-	tv.tv_usec = req->length * 1000;
-	//printf("usec %d\n", tv.tv_usec);
-	
-	result = select(0, 0, 0, 0, &tv);
-	if (result < 0) {
-		// !!! set error code
-		printf("ERROR!!!!\n");
+#ifdef REB_VIEW
+	//TODO: process GUI events!!!
+#endif
+
+	tv.tv_usec = req->length * 1000; // converts ms to us
+	if (select(0, 0, 0, 0, &tv) < 0) {
+		if (errno == EINTR) return DR_DONE; // Ctrl-C interrupts a timer on a WAIT
+		req->error = errno; // report the error code
+		#ifdef DEBUG
+			printf("select() returned -1 in dev-event.c (I/O error!)\n");
+		#endif
 		return DR_ERROR;
 	}
-
 	return DR_DONE;
 }
 

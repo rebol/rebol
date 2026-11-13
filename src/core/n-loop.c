@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +30,14 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include "sys-int-funcs.h" //REB_I64_ADD_OF
 
+enum loop_each_mode {
+	LM_FOR = 0,
+	LM_REMOVE,
+	LM_REMOVE_COUNT,
+	LM_MAP
+};
 
 /***********************************************************************
 **
@@ -56,6 +64,10 @@
 	SET_SELFLESS(frame);
 	SERIES_TAIL(frame) = len+1;
 	SERIES_TAIL(FRM_WORD_SERIES(frame)) = len+1;
+	
+	// Mark the frame as internal series so it is not accessible!
+	// See: https://github.com/Oldes/Rebol-issues/issues/2531
+	INT_SERIES(frame);
 
 	// Setup for loop:
 	word = FRM_WORD(frame, 1); // skip SELF
@@ -105,12 +117,28 @@
 	if (ei >= (REBINT)VAL_TAIL(start)) ei = (REBINT)VAL_TAIL(start);
 	if (ei < 0) ei = 0;
 
-	for (; (ii > 0) ? si <= ei : si >= ei; si += ii) {
-		VAL_INDEX(var) = si;
-		result = Do_Blk(body, 0);
-		if (THROWN(result) && Check_Error(result) >= 0) break;
-		if (VAL_TYPE(var) != type) Trap1(RE_INVALID_TYPE, var);
-		si = VAL_INDEX(var);
+	if (IS_UTF8_STRING(var)) {
+		// Using number of codepoints, not byte indexes
+		REBI64 sp = (REBI64)UTF8_Index_To_Position(VAL_BIN(start),si);
+		REBI64 ep = (REBI64)UTF8_Index_To_Position(VAL_BIN(start),ei);
+
+		for (; (ii > 0) ? sp <= ep : sp >= ep; sp += ii) {
+			VAL_INDEX(var) = si;
+			result = Do_Blk(body, 0);
+			if (THROWN(result) && Check_Error(result) >= 0) break;
+			if (VAL_TYPE(var) != type) Trap1(RE_INVALID_TYPE, var);
+			si = VAL_INDEX(var);
+			si = UTF8_Skip(VAL_SERIES(var),si,ii);
+		}
+	}
+	else {
+		for (; (ii > 0) ? si <= ei : si >= ei; si += ii) {
+			VAL_INDEX(var) = si;
+			result = Do_Blk(body, 0);
+			if (THROWN(result) && Check_Error(result) >= 0) break;
+			if (VAL_TYPE(var) != type) Trap1(RE_INVALID_TYPE, var);
+			si = VAL_INDEX(var);
+		}
 	}
 }
 
@@ -125,12 +153,41 @@
 
 	VAL_SET(var, REB_INTEGER);
 	
-	for (; (incr > 0) ? start <= end : start >= end; start += incr) {
+	while ((incr > 0) ? start <= end : start >= end) {
 		VAL_INT64(var) = start;
 		result = Do_Blk(body, 0);
 		if (THROWN(result) && Check_Error(result) >= 0) break;
 		if (!IS_INTEGER(var)) Trap_Type(var);
 		start = VAL_INT64(var);
+		
+		if (REB_I64_ADD_OF(start, incr, &start)) {
+			Trap0(RE_OVERFLOW);
+		}
+	}
+}
+
+
+/***********************************************************************
+**
+*/	static void Loop_Pair(REBVAL *var, REBSER* body, REBD32 xstart, REBD32 ystart, REBD32 xend, REBD32 yend, REBD32 xincr, REBD32 yincr)
+/*
+***********************************************************************/
+{
+	REBD32 xi;
+	REBD32 yi;
+	REBVAL *result;
+
+	VAL_SET(var, REB_PAIR);
+	for (yi = ystart; (yincr > 0.) ? yi <= yend : yi >= yend; yi += yincr) {
+		for (xi = xstart; (xincr > 0.) ? xi <= xend : xi >= xend; xi += xincr) {
+			VAL_PAIR_X(var) = xi;
+			VAL_PAIR_Y(var) = yi;
+			result = Do_Blk(body, 0);
+			if (THROWN(result) && Check_Error(result) >= 0) return;
+			if (!IS_PAIR(var)) Trap_Type(var);
+			xi = VAL_PAIR_X(var);
+			yi = VAL_PAIR_Y(var);
+		}
 	}
 }
 
@@ -142,9 +199,9 @@
 ***********************************************************************/
 {
 	REBVAL *result;
-	REBDEC s;
-	REBDEC e;
-	REBDEC i;
+	REBDEC s=0;
+	REBDEC e=0;
+	REBDEC i=0;
 
 	if (IS_INTEGER(start)) s = (REBDEC)VAL_INT64(start);
 	else if (IS_DECIMAL(start) || IS_PERCENT(start)) s = VAL_DECIMAL(start);
@@ -177,6 +234,7 @@
 **		0: forall
 **		1: forskip
 **
+**	NOTE: This math only works for index in positive ranges!
 ***********************************************************************/
 {
 	REBVAL *var;
@@ -189,6 +247,7 @@
 
 	var = Get_Var(D_ARG(1));
 	if (IS_NONE(var)) return R_NONE;
+	if (!ANY_SERIES(var)) Trap_Arg(var);
 
 	// Save the starting var value:
 	*D_ARG(1) = *var;
@@ -201,14 +260,41 @@
 	body = VAL_SERIES(D_ARG(mode+2));
 	bodi = VAL_INDEX(D_ARG(mode+2));
 
-	// Starting location when past end with negative skip:
-	if (inc < 0 && VAL_INDEX(var) >= (REBINT)VAL_TAIL(var)) {
-		VAL_INDEX(var) = (REBINT)VAL_TAIL(var) + inc;
-	}
-
-	// NOTE: This math only works for index in positive ranges!
-
-	if (ANY_SERIES(var)) {
+	if (IS_UTF8_STRING(var)) {
+		// Starting location when past end with negative skip:
+		if (inc < 0 && VAL_INDEX(var) >= VAL_TAIL(var)) {
+			VAL_INDEX(var) = idx = UTF8_Skip(VAL_SERIES(var), VAL_TAIL(var), inc);
+		}
+		while (TRUE) {
+			dat = VAL_SERIES(var);
+			idx = (REBINT)VAL_INDEX(var);
+			if (idx < 0) break;
+			if (idx >= (REBINT)SERIES_TAIL(dat)) {
+				if (inc >= 0) break;
+				idx = UTF8_Skip(dat, SERIES_TAIL(dat), inc);
+				if (idx < 0) break;
+				VAL_INDEX(var) = idx;
+			}
+			//----------------------------------------------------
+			ds = Do_Blk(body, bodi); // (may move stack)
+			if (THROWN(ds)) {	// Break, throw, continue, error.
+				if (Check_Error(ds) >= 0) {
+					*DS_RETURN = *DS_NEXT; // use thrown result as a return
+					return R_RET; // does not resets series position
+				}
+			}
+			*DS_RETURN = *ds;
+			// Evaluation may swap the var series...
+			if (VAL_TYPE(var) != type) Trap_Arg(var);
+			//----------------------------------------------------
+cont_utf8:
+			VAL_INDEX(var) = UTF8_Skip(dat, VAL_INDEX(var), inc);
+		}
+	} else {
+		// Starting location when past end with negative skip:
+		if (inc < 0 && VAL_INDEX(var) >= VAL_TAIL(var)) {
+			VAL_INDEX(var) = (REBINT)VAL_TAIL(var) + inc;
+		}
 		while (TRUE) {
 			dat = VAL_SERIES(var);
 			idx = (REBINT)VAL_INDEX(var);
@@ -219,30 +305,29 @@
 				if (idx < 0) break;
 				VAL_INDEX(var) = idx;
 			}
-
+			//----------------------------------------------------
 			ds = Do_Blk(body, bodi); // (may move stack)
-
 			if (THROWN(ds)) {	// Break, throw, continue, error.
 				if (Check_Error(ds) >= 0) {
-					*DS_RETURN = *DS_NEXT;
-					break;
+					*DS_RETURN = *DS_NEXT; // use thrown result as a return
+					return R_RET; // does not resets series position
 				}
 			}
 			*DS_RETURN = *ds;
-
+			// Evaluation may swap the var series...
 			if (VAL_TYPE(var) != type) Trap_Arg(var);
+			//----------------------------------------------------
+			// ... or convert the series to the Unicode one!
+			if (IS_UTF8_STRING(var))
+				goto cont_utf8;
 
 			VAL_INDEX(var) += inc;
 		}
 	}
-	else Trap_Arg(var);
 
-	// !!!!! ???? allowed to write VAR????
-	*var = *DS_ARG(1);
-
+	*var = *DS_ARG(1); // restores starting value position
 	return R_RET;
 }
-
 
 /***********************************************************************
 **
@@ -251,7 +336,8 @@
 **		Supports these natives (modes):
 **			0: foreach
 **			1: remove-each
-**			2: map
+**			2: remove-each/count
+**			3: map-each
 **
 ***********************************************************************/
 {
@@ -260,18 +346,26 @@
 	REBVAL *words;
 	REBSER *frame;
 	REBVAL *value;
+	REBVAL series_val;
 	REBSER *series;
-	REBSER *out;	// output block (for MAP, mode = 2)
+	REBSER *out = NULL;	// output block (for LM_MAP, mode = 2)
 
-	REBINT index;	// !!!! should these be REBCNT?
-	REBINT tail;
-	REBINT windex;	// write
-	REBINT rindex;	// read
-	REBINT err;
+	REBLEN index;
+	REBLEN tail;
+	REBLEN windex;	// write
+	REBLEN rindex;	// read
+	REBLEN err = 0;
 	REBCNT i;
 	REBCNT j;
+	REBOOL return_count = FALSE;
+	REBLEN removed_uni = 0;
 
-	value = D_ARG(2); // series
+	ASSERT2(mode >= 0 && mode < 4, RP_MISC);
+
+	// The body may expand (move) the data stack, so do not keep
+	// a pointer to the series argument; use a local copy.
+	series_val = *D_ARG(2);
+	value = &series_val;
 	if (IS_NONE(value)) return R_NONE;
 
 	body = Init_Loop(D_ARG(1), D_ARG(3), &frame); // vars, body
@@ -281,10 +375,14 @@
 	SET_NONE(D_RET);
 	SET_NONE(DS_NEXT);
 
-	// If it's MAP, create result block:
-	if (mode == 2) {
+	// If it's `map-each`, create result block:
+	if (mode == LM_MAP) {
 		out = Make_Block(VAL_LEN(value));
 		Set_Block(D_RET, out);
+	}
+	else if (mode == LM_REMOVE_COUNT) {
+		mode = LM_REMOVE;
+		return_count = TRUE;
 	}
 
 	// Get series info:
@@ -302,15 +400,23 @@
 	else {
 		series = VAL_SERIES(value);
 		index  = VAL_INDEX(value);
-		if (index >= (REBINT)SERIES_TAIL(series)) {
-			if (mode == 1) {
-				SET_INTEGER(D_RET, 0);
+		if (index >= SERIES_TAIL(series)) {
+			if (mode == LM_REMOVE) {
+				if(return_count)
+					SET_INTEGER(D_RET, 0);
+				else return R_ARG2;
 			}
 			return R_RET;
 		}
 	}
 
+	if (mode==LM_REMOVE && IS_PROTECT_SERIES(series)) 
+		Trap0(RE_PROTECTED);
+	
 	windex = index;
+
+	//TODO:
+	//Optimized by not using index and all these *_SKIP(series, index) calls.
 
 	// Iterate over each value in the series block:
 	while (index < (tail = SERIES_TAIL(series))) {
@@ -354,14 +460,16 @@
 					}
 
 					else if (IS_VECTOR(value)) {
-						Set_Vector_Value(vars, series, index);
+						Get_Vector_Value(vars, series, index);
 					}
 
 					else if (IS_MAP(value)) {
-						REBVAL *val = BLK_SKIP(series, index | 1);
-						if (!IS_NONE(val)) {
+						if (!VAL_GET_OPT(BLK_SKIP(series, index), OPTS_HIDE)) {
 							if (j == 0) {
 								*vars = *BLK_SKIP(series, index & ~1);
+#ifndef DO_NOT_NORMALIZE_MAP_KEYS
+								if (IS_SET_WORD(vars)) SET_TYPE(vars, REB_WORD);
+#endif
 								if (IS_END(vars+1)) index++; // only words
 							}
 							else if (j == 1)
@@ -381,11 +489,18 @@
 							SET_INTEGER(vars, (REBI64)(BIN_HEAD(series)[index]));
 						}
 						else if (IS_IMAGE(value)) {
-							Set_Tuple_Pixel(BIN_SKIP(series, index), vars);
+							ASSERT1(index <= (MAX_REBLEN >> 2), RP_BAD_SIZE);
+							Set_Tuple_Pixel(BIN_SKIP(series, index<<2), vars);
 						}
 						else {
 							VAL_SET(vars, REB_CHAR);
-							VAL_CHAR(vars) = GET_ANY_CHAR(series, index);
+							if (IS_UTF8_SERIES(series)) {
+								VAL_CHAR(vars) = UTF8_Get_Codepoint(BIN_SKIP(series, index));
+								index += UTF8_Next_Char_Size(BIN_HEAD(series), index) - 1;
+							}
+							else {
+								VAL_CHAR(vars) = BIN_HEAD(series)[index];
+							}
 						}
 					}
 					index++;
@@ -393,12 +508,12 @@
 				else SET_NONE(vars);
 			}
 
-			// var spec is WORD:
+			// var spec is SET_WORD:
 			else if (IS_SET_WORD(words)) {
 				if (ANY_OBJECT(value) || IS_MAP(value)) {
 					*vars = *value;
 				} else {
-					VAL_SET(vars, REB_BLOCK);
+					VAL_SET(vars, VAL_TYPE(value));
 					VAL_SERIES(vars) = series;
 					VAL_INDEX(vars) = index;
 				}
@@ -406,22 +521,26 @@
 			}
 			else Trap_Arg(words);
 		}
+		if (index == rindex) index++; //the word block has only set-words: foreach [a:] [1 2 3][]
 
 		ds = Do_Blk(body, 0);
 
 		if (THROWN(ds)) {
-			if ((err = Check_Error(ds)) >= 0) break;
+			if ((err = Check_Error(ds)) != NOT_FOUND) {
+				index = rindex;
+				break;
+			}
 			// else CONTINUE:
-			if (mode == 1) SET_FALSE(ds); // keep the value (for mode == 1)
+			if (mode == LM_REMOVE) SET_FALSE(ds); // keep the value (for mode == LM_REMOVE)
 		} else {
 			err = 0; // prevent later test against uninitialized value
 		}
 
-		if (mode > 0) {
+		if (mode > LM_FOR) {
 			//if (ANY_OBJECT(value)) Trap_Types(words, REB_BLOCK, VAL_TYPE(value)); //check not needed
 
 			// If FALSE return, copy values to the write location:
-			if (mode == 1) {  // remove-each
+			if (mode == LM_REMOVE) {  // remove-each
 				if (IS_FALSE(ds)) {
 					REBCNT wide = SERIES_WIDE(series);
 					// memory areas may overlap, so use memmove and not memcpy!
@@ -429,25 +548,38 @@
 					windex += index - rindex;
 					// old: while (rindex < index) *BLK_SKIP(series, windex++) = *BLK_SKIP(series, rindex++);
 				}
+				else if (IS_UTF8_SERIES(series)) {
+					removed_uni++;
+				}
 			}
 			else
-				if (!IS_UNSET(ds)) Append_Val(out, ds); // (mode == 2)
+				if (!IS_UNSET(ds)) Append_Val(out, ds); // (mode == LM_MAP)
 		}
 skip_hidden: ;
 	}
 
 	// Finish up:
-	if (mode == 1) {
+	if (mode == LM_REMOVE) {
 		// Remove hole (updates tail):
 		if (windex < index) Remove_Series(series, windex, index - windex);
-		SET_INTEGER(DS_RETURN, index - windex);
-		return R_RET;
+		if (err == 2) return R_TOS1;  // If BREAK/RETURN
+		if (return_count) {
+			if (IS_UTF8_SERIES(series)) {
+				SET_INTEGER(DS_RETURN, removed_uni);
+			}
+			else {
+				index -= windex;
+				SET_INTEGER(DS_RETURN, IS_MAP(value) ? index / 2 : index);
+			}
+			return R_RET;
+		}
+		return R_ARG2;
 	}
 
-	// If MAP and not BREAK/RETURN:
-	if (mode == 2 && err != 2) return R_RET;
+	// If map-each and not BREAK/RETURN:
+	if (mode == LM_MAP && err != 2) return R_RET;
 
-	return R_TOS1;
+	return R_TOS1; // foreach
 }
 
 
@@ -478,13 +610,18 @@ skip_hidden: ;
 	// values must not be absolute.
 
 	if (IS_INTEGER(start) && IS_INTEGER(end) && IS_INTEGER(incr)) {
-		Loop_Integer(var, body, VAL_INT64(start), 
-			IS_DECIMAL(end) ? (REBI64)VAL_DECIMAL(end) : VAL_INT64(end), VAL_INT64(incr));
+		Loop_Integer(var, body, VAL_INT64(start), VAL_INT64(end), VAL_INT64(incr));
 	}
 	else if (ANY_SERIES(start)) {
 		// Check that start and end are same type and series:
 		//if (ANY_SERIES(end) && VAL_SERIES(start) != VAL_SERIES(end)) Trap_Arg(end);
 		Loop_Series(var, body, start, ANY_SERIES(end) ? VAL_INDEX(end) : (Int32s(end, 1) - 1), Int32(incr));
+	}
+	else if (IS_PAIR(start) && IS_PAIR(end) && IS_PAIR(incr)) {
+		Loop_Pair(var, body,
+			VAL_PAIR_X(start), VAL_PAIR_Y(start),
+			VAL_PAIR_X(end), VAL_PAIR_Y(end),
+			VAL_PAIR_X(incr), VAL_PAIR_Y(incr));
 	}
 	else
 		Loop_Number(var, body, start, end, incr);
@@ -543,7 +680,7 @@ skip_hidden: ;
 **
 ***********************************************************************/
 {
-	return Loop_Each(ds, 0);
+	return Loop_Each(ds, LM_FOR);
 }
 
 
@@ -554,10 +691,11 @@ skip_hidden: ;
 **		'word [get-word! word! block!] {Word or block of words}
 **		data [series!] {The series to traverse}
 **		body [block!] {Block to evaluate each time}
+**		/count
 **
 ***********************************************************************/
 {
-	return Loop_Each(ds, 1);
+	return Loop_Each(ds, D_REF(4) ? LM_REMOVE_COUNT : LM_REMOVE);
 }
 
 
@@ -571,7 +709,7 @@ skip_hidden: ;
 **
 ***********************************************************************/
 {
-	return Loop_Each(ds, 2);
+	return Loop_Each(ds, LM_MAP);
 }
 
 
@@ -625,10 +763,16 @@ skip_hidden: ;
 	SET_NONE(DS_NEXT); // in case nothing below happens
 
 	if (ANY_SERIES(count)) {
-		Loop_Series(var, body, count, VAL_TAIL(count)-1, 1);
+		REBLEN end = (IS_UTF8_STRING(count))
+			? UTF8_Skip(VAL_SERIES(count), VAL_TAIL(count), -1)
+			: VAL_TAIL(count) - 1;
+		Loop_Series(var, body, count, end, 1);
 	}
 	else if (IS_INTEGER(count)) {
 		Loop_Integer(var, body, 1, VAL_INT64(count), 1);
+	}
+	else if (IS_PAIR(count)) {
+		Loop_Pair(var, body, 1., 1., VAL_PAIR_X(count), VAL_PAIR_Y(count), 1., 1.);
 	}
 
 	return R_TOS1;

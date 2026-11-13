@@ -47,8 +47,8 @@ deci deci_mod (deci a, deci b);
 /* conversion to deci */
 deci int_to_deci (REBI64 a);
 deci decimal_to_deci (REBDEC a);
-deci string_to_deci (REBYTE *s, REBYTE **endptr);
-deci binary_to_deci(REBYTE *s);
+deci string_to_deci (const REBYTE *s, const REBYTE **endptr);
+deci binary_to_deci(const REBYTE *s);
 
 /* conversion to other datatypes */
 REBI64 deci_to_int (const deci a);

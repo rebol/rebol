@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,6 +43,12 @@
 **
 ***********************************************************************/
 
+#if !defined(REBOL_OPTIONS_FILE)
+#include "opt-config.h"
+#else
+#include REBOL_OPTIONS_FILE
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -53,7 +60,7 @@
 #define OS_LIB_TABLE		// include the host-lib dispatch table
 
 #include "reb-host.h"		// standard host include files
-#include "host-lib.h"		// OS host library (dispatch table)
+//#include "host-lib.h"		// OS host library (dispatch table)
 
 #ifdef CUSTOM_STARTUP
 #include "host-init.h"
@@ -61,32 +68,212 @@
 
 /**********************************************************************/
 
-#define PROMPT_STR ">> "
-#define RESULT_STR "== "
-
-REBARGS Main_Args;
-
-#ifdef TO_WIN32
-HINSTANCE App_Instance = 0;
+#ifdef COLOR_CONSOLE
+#define PROMPT_STR (REBYTE*)"\x1B[1;31m>>\x1B[1;33m "
+#define RESULT_STR (REBYTE*)"\x1B[32m==\x1B[1;32m "
+#define CONTIN_STR "\x1B[1;31;49m  \x1B[1;33;49m "
+#define CONTIN_POS 11
+#define RESET_COLOR OS_Put_Str(b_cast("\x1B[0m"))
+#else
+#define PROMPT_STR (REBYTE*)">> "
+#define RESULT_STR (REBYTE*)"== "
+#define CONTIN_STR "  "
+#define CONTIN_POS 0
+#define RESET_COLOR
 #endif
 
-#ifndef REB_CORE
-extern void Init_Windows(void);
-extern void Init_Graphics(void);
+#ifdef TO_WINDOWS
+#define MAX_TITLE_LENGTH  1024
+#ifdef REB_VIEW
+extern HWND      Focused_Window;
+#endif
+WCHAR     App_Title[MAX_TITLE_LENGTH]; //will be filled later from the resources file
 #endif
 
-//#define TEST_EXTENSIONS
-#ifdef TEST_EXTENSIONS
-extern void Init_Ext_Test(void);	// see: host-ext-test.c
+
+#ifdef REB_VIEW
+//extern void Init_Graphics(void);
 #endif
 
-// Host bare-bones stdio functs:
-extern void Open_StdIO(void);
-extern void Put_Str(char *buf);
-extern REBYTE *Get_Str();
+void Host_Repl(void) {
+//	REBOOL why_alert = TRUE;
 
-void Host_Crash(REBYTE *reason) {
-	OS_Crash("REBOL Host Failure", reason);
+#define MAX_CONT_LEVEL 1024
+#define INPUT_NO_STRING 0
+#define INPUT_SINGLE_LINE_STRING 1
+#define INPUT_MULTI_LINE_STRING 2
+#define INPUT_RAW_STRING 3
+
+	REBYTE cont_str[] = CONTIN_STR;
+	REBCNT cont_level = 0;
+	REBYTE cont_stack[MAX_CONT_LEVEL] = { 0 };
+
+	REBCNT input_max = 32768;
+	REBLEN input_len = 0;
+	REBYTE *input = OS_Make(input_max);
+
+	REBYTE *tmp;
+	REBYTE *line;
+	REBLEN line_len;
+
+	REBYTE *utf8byte;
+	int raw_str_level = 0;
+	int long_str_level = 0;
+	int n = 0;
+	int state = INPUT_NO_STRING;
+
+	while (TRUE) {
+		if (cont_level > 0) {
+			cont_str[CONTIN_POS] = cont_level <= MAX_CONT_LEVEL ? cont_stack[cont_level - 1] : '-';
+			OS_Put_Str(cont_str);
+		} else {
+			OS_Put_Str(PROMPT_STR);
+		}
+
+		line = OS_Read_Line();
+
+		if (!line) {
+			// "end of stream" - for example on CTRL+C
+			if(cont_level > 0) {
+				// we were in multiline editing, so escape from it only
+				cont_level = 0;
+				input_len = 0;
+				input[0] = 0;
+				raw_str_level = 0;
+				continue;
+			}
+			RESET_COLOR;
+			goto cleanup_and_return;
+		}
+		line_len = 0;
+		for (utf8byte = line; *utf8byte; utf8byte++) {
+			line_len++;
+			if (state == INPUT_NO_STRING)
+			{
+				switch (*utf8byte) {
+				case '"':
+					state = INPUT_SINGLE_LINE_STRING;
+					break;
+				case '[':
+				case '(':
+					if (cont_level < MAX_CONT_LEVEL) cont_stack[cont_level] = *utf8byte;
+					cont_level++;
+					break;
+				case ']':
+				case ')':
+					if (cont_level > 0) cont_level--;
+					break;
+				case '{':
+					if (cont_level < MAX_CONT_LEVEL) cont_stack[cont_level] = *utf8byte;
+					cont_level++;
+					long_str_level++;
+					state = INPUT_MULTI_LINE_STRING;
+					break;
+				case '%':
+					if (utf8byte[1] == '"') continue;
+					n = 1;
+					while (utf8byte[n] == '%') n++;
+					if (utf8byte[n] == '{') {
+						raw_str_level = n;
+						if (cont_level < MAX_CONT_LEVEL) cont_stack[cont_level] = '{';
+						cont_level++;
+						state = INPUT_RAW_STRING;
+						line_len += n;
+						utf8byte += n;
+					}
+					break;
+				case ';':
+					// skip comment to the end of line;
+					line_len += AS_REBLEN(strlen(utf8byte)) - 1;
+					goto end_line;
+				}
+			}
+
+			else if (state == INPUT_SINGLE_LINE_STRING)
+			{
+				if (*utf8byte == '^' && utf8byte[1]) {
+					line_len++;
+					utf8byte++;
+				}
+				else if (*utf8byte == '"') {
+					state = INPUT_NO_STRING;
+				}
+			}
+
+			else if (state == INPUT_MULTI_LINE_STRING)
+			{
+				if (*utf8byte == '^' && utf8byte[1]) {
+					line_len++;
+					utf8byte++;
+				}
+				else if (*utf8byte == '{') {
+					if (cont_level < MAX_CONT_LEVEL) cont_stack[cont_level] = *utf8byte;
+					cont_level++;
+					long_str_level++;
+				}
+				else if (*utf8byte == '}') {
+					cont_level--;
+					long_str_level--;
+					if (long_str_level == 0) state = INPUT_NO_STRING;
+				}
+			}
+
+			else if (state == INPUT_RAW_STRING)
+			{
+				if (*utf8byte == '}' && utf8byte[1] == '%') {
+					n = 1;
+					while (utf8byte[n] == '%') n++;
+					if (raw_str_level < n) {
+						raw_str_level = 0;
+						line_len += n;
+						utf8byte += n;
+						cont_level--;
+						state = INPUT_NO_STRING;
+					}
+				}
+			}
+		}
+end_line:
+		if (state == INPUT_SINGLE_LINE_STRING) state = INPUT_NO_STRING;
+
+		if (input_len + line_len > input_max) {
+			// limit maximum input size to 2GB (it should be more than enough)
+			if (input_max >= 0x80000000) goto crash_buffer;
+			input_max *= 2;
+			tmp = OS_Make(input_max);
+			if (!tmp) {
+				crash_buffer:
+				RESET_COLOR;
+				Host_Crash("Growing console input buffer failed!");
+				return; // make VS compiler happy
+			}
+			memcpy(tmp, input, input_len);
+			OS_Free(input);
+			input = tmp;
+		}
+
+		memcpy(&input[input_len], line, line_len);
+		input_len += line_len;
+		input[input_len] = 0;
+
+		OS_Free(line);
+
+		if (cont_level > 0)
+			continue;
+
+		input_len = 0;
+		cont_level = 0;
+		raw_str_level = 0;
+
+		RESET_COLOR;
+
+		RL_Do_String(input, 0, 0);
+		RL_Print_TOS(TRUE, RESULT_STR);
+	}
+
+cleanup_and_return:
+	OS_Free(input);
+	return;
 }
 
 
@@ -111,51 +298,56 @@ void Host_Crash(REBYTE *reason) {
 **
 ***********************************************************************/
 
-#ifdef TO_WIN32
-int WINAPI WinMain(HINSTANCE inst, HINSTANCE prior, LPSTR cmd, int show)
-#else
-int main(int argc, char **argv)
-#endif
-{
-	REBYTE vers[8];
-	REBYTE *line;
-	REBINT n;
+#ifdef TO_WINDOWS
 
-#ifdef TO_WIN32  // In Win32 get args manually:
+#ifdef _WINDOWS //use this define with Windows subsystem, by default use console subsystem
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE prior, LPSTR cmd, int show) {
 	int argc;
-	REBCHR **argv;
+	char **argv;
+#else
+int main(int argc, char **argv) {
+	// Retrieves the window handle used by the console associated with the calling process
+	HWND hwndC = GetConsoleWindow();
+	// Then we could just get the HINSTANCE:
+	HINSTANCE hInstance = GetModuleHandle(0); // HMODULE=HINSTANCE
+#endif
 	// Fetch the win32 unicoded program arguments:
-	argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-	App_Instance = inst;
+	argv = (char**)CommandLineToArgvW(GetCommandLineW(), &argc);
+	// Use title string as defined in resources file (.rc) with hardcoded ID 101
+	LoadStringW(hInstance, 101, App_Title, MAX_TITLE_LENGTH);
+#if defined(INCLUDE_IMAGE_OS_CODEC) || defined(INCLUDE_AUDIO_DEVICE) 
+	//CoInitialize(0);
+	HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
 #endif
 
-	Host_Lib = &Host_Lib_Init;
-
-	Parse_Args(argc, (REBCHR **)argv, &Main_Args);
+#else //non Windows platforms
+int main(int argc, char **argv) {
+#endif
+	REBYTE vers[8];
+	REBINT n;
+	REBARGS *args;
 
 	vers[0] = 5; // len
 	RL_Version(&vers[0]);
 
-	// Must be done before an console I/O can occur. Does not use reb-lib,
-	// so this device should open even if there are other problems.
-	Open_StdIO();  // also sets up interrupt handler
-
 	// Initialize the REBOL library (reb-lib):
-	if (!CHECK_STRUCT_ALIGN) Host_Crash("Incompatible struct alignment");
-	if (!Host_Lib) Host_Crash("Missing host lib");
 	// !!! Second part will become vers[2] < RL_REV on release!!!
 	if (vers[1] != RL_VER || vers[2] != RL_REV) Host_Crash("Incompatible reb-lib DLL");
-	n = RL_Init(&Main_Args, Host_Lib);
-	if (n == 1) Host_Crash("Host-lib wrong size");
-	if (n == 2) Host_Crash("Host-lib wrong version/checksum");
+	args = RL_Init(argc, argv);
+	if (!args) Host_Crash("Failed to initialize Rebol library");
 
-#ifndef REB_CORE
-	Init_Windows();
-	Init_Graphics();
+#ifdef TO_WINDOWS
+	// Setting title after Open_StdIO, because with Windows subsystem the console is not by default opened.
+	SetConsoleTitle((LPWSTR)App_Title);
+#endif
+
+#ifdef REB_VIEW
+	OS_Init_Windows(hInstance);
+	//Init_Graphics();
 #endif
 
 #ifdef TEST_EXTENSIONS
-	Init_Ext_Test();
+	OS_Init_Ext_Test();
 #endif
 
 // Call sys/start function. If a compressed script is provided, it will be 
@@ -168,31 +360,27 @@ int main(int argc, char **argv)
 	n = RL_Start(0, 0, 0);
 #endif
 
-	// Console line input loop (just an example, can be improved):
 	if (
-		!(Main_Args.options & RO_CGI)
+		!(args->options & RO_CGI)
 		&& (
-			!Main_Args.script // no script was provided
+			!args->script // no script was provided
 			|| n  < 0         // script halted or had error
-			|| Main_Args.options & RO_HALT  // --halt option
+			|| (args->options & RO_HALT)  // --halt option
 		)
 	){
-		n = 0;  // reset error code (but should be able to set it below too!)
-		while (TRUE) {
-			Put_Str(PROMPT_STR);
-			if ((line = Get_Str())) {
-				RL_Do_String(line, 0, 0);
-				RL_Print_TOS(0, RESULT_STR);
-				OS_Free(line);
-			}
-			else break; // EOS
+		if (n < 0 && !(args->options & RO_HALT)) {
+			RL_Do_String(b_cast("unless system/options/quiet [print {^[[mClosing in 3s!} wait 3]"), 0, 0);
+			OS_Exit(-n, 0);
 		}
+#ifdef HAS_NEW_CONSOLE
+		if (args->options & RO_LEGACY_REPL)
+			Host_Repl();
+		else RL_Do_String(b_cast("rebol-console"), 0, 0);
+#else
+		Host_Repl();
+#endif
 	}
-
-	//OS_Call_Device(RDI_STDIO, RDC_CLOSE);
-	OS_Quit_Devices(0);
-
-	// A QUIT does not exit this way, so the only valid return code is zero.
+	OS_Exit(0, 0);
 	return 0;
 }
 

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,7 +55,7 @@ static REBARGS Main_Args;	// Not multi-threaded
 	char *cmd;
 
 	// Parse command line arguments. Done early. May affect REBOL boot.
-	Parse_Args(argc, argv, &Main_Args);
+	OS_Parse_Args(argc, argv, &Main_Args);
 
 	Print_Str("REBOL 3.0\n");
 

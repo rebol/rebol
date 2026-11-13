@@ -20,3 +20,23 @@
 *.PDF	 diff=astextplain
 *.rtf	 diff=astextplain
 *.RTF	 diff=astextplain
+
+# Normalized and converts to 
+# native line endings on checkout.
+*.c text
+*.h text
+*.r text
+*.r3  text
+*.reb text
+
+# Convert to CRLF line endings on checkout.
+*.sln text eol=crlf
+
+# Convert to LF line endings on checkout.
+*.sh text eol=lf
+
+# Binary files.
+*.png binary
+*.jpg binary
+*.png binary
+*.bin binary

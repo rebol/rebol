@@ -50,7 +50,6 @@ typedef struct rebol_word {
 } REBWRD;
 
 struct rebol_value {
-	REBINT flags;
 	union REBOL_Val_Data {
 		REBI64	integer;
 		REBINT	int32;
@@ -61,6 +60,7 @@ struct rebol_value {
 		REBWRD	word;
 		REBSRI	series;
 	} data;
+	REBINT flags;
 };
 
 #define VAL_TYPE(v)			((REBYTE)((v)->flags))	// get only the type, not flags

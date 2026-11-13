@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +38,7 @@
 */
 
 #include "sys-core.h"
+#include <wchar.h>
 
 static REBREQ *Req_SIO;
 
@@ -54,28 +56,44 @@ static REBREQ *Req_SIO;
 ***********************************************************************/
 {
 	//OS_CALL_DEVICE(RDI_STDIO, RDC_INIT);
-	Req_SIO = OS_MAKE_DEVREQ(RDI_STDIO);
+	Req_SIO = OS_Make_Devreq(RDI_STDIO);
 	if (!Req_SIO) Crash(RP_IO_ERROR);
 
 	// The device is already open, so this call will just setup
 	// the request fields properly.
-	OS_DO_DEVICE(Req_SIO, RDC_OPEN);
+	OS_Do_Device(Req_SIO, RDC_OPEN);
+}
+
+/***********************************************************************
+**
+*/	void Dispose_StdIO(void)
+/*
+***********************************************************************/
+{
+	OS_Free(Req_SIO);
+	Req_SIO = NULL;
 }
 
 
 /***********************************************************************
 **
-*/	static void Print_OS_Line(void)
+*/	static void Print_Line(REBOOL err)
 /*
 **		Print a new line.
 **
 ***********************************************************************/
 {
-	Req_SIO->data = BYTES("\n");
+	// !!! Don't put const literal directly into mutable Req_SIO->data
+	static REBYTE newline[] = "\n";
+
+	Req_SIO->data = newline;
 	Req_SIO->length = 1;
 	Req_SIO->actual = 0;
 
-	OS_DO_DEVICE(Req_SIO, RDC_WRITE);
+	if (err)
+		SET_FLAG(Req_SIO->flags, RRF_ERROR);
+
+	OS_Do_Device(Req_SIO, RDC_WRITE);
 
 	if (Req_SIO->error) Crash(RP_IO_ERROR);
 }
@@ -83,70 +101,43 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	static void Prin_OS_String(REBYTE *bp, REBINT len, REBOOL uni)
+*/	static void Prin_String(const REBYTE *bp, REBLEN len, REBOOL err)
 /*
 **		Print a string, but no line terminator or space.
 **
-**		The width of the input is specified by UNI.
+**		Expects UTF-8 encoded string!
 **
 ***********************************************************************/
 {
-	#define BUF_SIZE 1024
-	REBYTE buffer[BUF_SIZE]; // on stack
-	REBYTE *buf = &buffer[0];
-	REBINT n;
-	REBCNT len2;
-	REBUNI *up = (REBUNI*)bp;
-
-	if (!bp) Crash(RP_NO_PRINT_PTR);
-
-	// Determine length if not provided:
-	if (len == UNKNOWN) len = uni ? wcslen(up) : LEN_BYTES(bp);
-
-	SET_FLAG(Req_SIO->flags, RRF_FLUSH);
-
 	Req_SIO->actual = 0;
-	Req_SIO->data = buf;
-	buf[0] = 0; // for debug tracing
-
-	while ((len2 = len) > 0) {
-
-		Do_Signals();
-
-		// returns # of chars, size returns buf bytes output
-		n = Encode_UTF8(buf, BUF_SIZE-4, uni ? (void*)up : (void*)bp, &len2, uni, OS_CRLF);
-		if (n == 0) break;
-
-		Req_SIO->length = len2; // byte size of buffer
-
-		if (uni) up += n; else bp += n;
-		len -= n;
-
-		OS_DO_DEVICE(Req_SIO, RDC_WRITE);
-		if (Req_SIO->error) Crash(RP_IO_ERROR);
-	}
+	Req_SIO->cdata = bp;
+	Req_SIO->length = (len == UNKNOWN) ? LEN_BYTES(bp) : len; // byte size of buffer
+	if (err)
+		SET_FLAG(Req_SIO->flags, RRF_ERROR);
+	OS_Do_Device(Req_SIO, RDC_WRITE);
+	if (Req_SIO->error) Crash(RP_IO_ERROR);
 }
 
 
 /***********************************************************************
 **
-*/  void Out_Value(REBVAL *value, REBCNT limit, REBOOL mold, REBINT lines)
+*/  void Out_Value(REBVAL *value, REBCNT limit, REBOOL mold, REBINT lines, REBOOL err)
 /*
 ***********************************************************************/
 {
-	Print_Value(value, limit, mold); // higher level!
-	for (; lines > 0; lines--) Print_OS_Line();
+	Print_Value(value, limit, mold, err); // higher level!
+	for (; lines > 0; lines--) Print_Line(err);
 }
 
 
 /***********************************************************************
 **
-*/	void Out_Str(REBYTE *bp, REBINT lines)
+*/	void Out_Str(const REBYTE *bp, REBINT lines, REBOOL err)
 /*
 ***********************************************************************/
 {
-	Prin_OS_String(bp, UNKNOWN, 0);
-	for (; lines > 0; lines--) Print_OS_Line();
+	Prin_String(bp, UNKNOWN, err);
+	for (; lines > 0; lines--) Print_Line(err);
 }
 
 
@@ -202,28 +193,28 @@ static REBREQ *Req_SIO;
 		}
 
 		if (lines == 0) i += 2; // start of next line
-		Prin_OS_String(BIN_SKIP(Trace_Buffer, i), tail-i, 0);
+		Prin_String(BIN_SKIP(Trace_Buffer, i), tail-i, TRUE);
 		//RESET_SERIES(Trace_Buffer);
 	}
 	else {
-		Out_Str("backtrace not enabled", 1);
+		Out_Str(cb_cast("backtrace not enabled"), 1, TRUE);
 	}
 }
 
 
 /***********************************************************************
 **
-*/	void Debug_String(REBYTE *bp, REBINT len, REBOOL uni, REBINT lines)
+*/	void Debug_String(const REBYTE *bp, REBINT len, REBOOL uni, REBINT lines)
 /*
 ***********************************************************************/
 {
-	REBUNI *up = (REBUNI*)bp;
+	const REBUNI *up = cast(const REBUNI*, bp);
 	REBUNI uc;
 
 	if (Trace_Limit > 0) {
 		if (Trace_Buffer->tail >= Trace_Limit)
 			Remove_Series(Trace_Buffer, 0, 2000);
-		if (len == UNKNOWN) len = uni ? wcslen(up) : LEN_BYTES(bp);
+		if (len == UNKNOWN) len = (REBINT)(uni ? wcslen((const wchar_t*)up) : LEN_BYTES(bp));
 		// !!! account for unicode!
 		for (; len > 0; len--) {
 			uc = uni ? *up++ : *bp++;
@@ -233,8 +224,8 @@ static REBREQ *Req_SIO;
 		for (; lines > 0; lines--) Append_Byte(Trace_Buffer, LF);
 	}
 	else {
-		Prin_OS_String(bp, len, uni);
-		for (; lines > 0; lines--) Print_OS_Line();
+		Prin_String(bp, len, TRUE);
+		for (; lines > 0; lines--) Print_Line(TRUE);
 	}
 }
 
@@ -245,19 +236,19 @@ static REBREQ *Req_SIO;
 /*
 ***********************************************************************/
 {
-	Debug_String("", UNKNOWN, 0, 1);
+	Debug_String(cb_cast(""), UNKNOWN, 0, 1);
 }
 
 
 /***********************************************************************
 **
-*/	void Debug_Str(REBYTE *str)
+*/	void Debug_Str(const char *str)
 /*
 **		Print a string followed by a newline.
 **
 ***********************************************************************/
 {
-	Debug_String(str, UNKNOWN, 0, 1);
+	Debug_String(cb_cast(str), UNKNOWN, 0, 1);
 }
 
 
@@ -270,9 +261,9 @@ static REBREQ *Req_SIO;
 ***********************************************************************/
 {
 	REBCNT ul;
-	REBCNT bl;
 	REBYTE buf[1024];
 	REBUNI *up = UNI_HEAD(ser);
+	REBCNT bl = UNI_LEN(ser);
 	REBINT size = Length_As_UTF8(up, SERIES_TAIL(ser), TRUE, OS_CRLF);
 
 	while (size > 0) {
@@ -292,7 +283,7 @@ static REBREQ *Req_SIO;
 /*
 ***********************************************************************/
 {
-	if (BYTE_SIZE(ser)) Debug_Str(BIN_HEAD(ser));
+	if (BYTE_SIZE(ser)) Debug_Str(s_cast(BIN_HEAD(ser)));
 	else Debug_Uni(ser);
 }
 
@@ -308,9 +299,9 @@ static REBREQ *Req_SIO;
 	REBYTE buf[40];
 
 	Debug_String(str, UNKNOWN, 0, 0);
-	Debug_String(" ", 1, 0, 0);
+	Debug_String(cb_cast(" "), 1, 0, 0);
 	Form_Hex_Pad(buf, num, 8);
-	Debug_Str(buf);
+	Debug_Str(s_cast(buf));
 }
 
 
@@ -350,7 +341,7 @@ static REBREQ *Req_SIO;
 **
 ***********************************************************************/
 {
-	Debug_Str(Get_Word_Name(word));
+	Debug_Str(cs_cast(Get_Word_Name(word)));
 }
 
 
@@ -362,7 +353,7 @@ static REBREQ *Req_SIO;
 **
 ***********************************************************************/
 {
-	if (VAL_TYPE(value) < REB_MAX) Debug_Str(Get_Type_Name(value));
+	if (VAL_TYPE(value) < REB_MAX) Debug_Str(cs_cast(Get_Type_Name(value)));
 	else Debug_Str("TYPE?!");
 }
 
@@ -373,7 +364,7 @@ static REBREQ *Req_SIO;
 /*
 ***********************************************************************/
 {
-	Print_Value(value, limit, mold); // higher level!
+	Print_Value(value, limit, mold, TRUE); // higher level!
 }
 
 
@@ -393,11 +384,11 @@ static REBREQ *Req_SIO;
 		Debug_Space(1);
 		if (n > 0 && VAL_TYPE(value) <= REB_NONE) Debug_Chars('.', 1);
 		else {
-			out = Mold_Print_Value(value, limit, TRUE); // shared mold buffer
+			out = Mold_Print_Value(value, limit, TRUE, TRUE); // shared mold buffer
 			for (i1 = i2 = 0; i1 < out->tail; i1++) {
 				uc = GET_ANY_CHAR(out, i1);
 				if (uc < ' ') uc = ' ';
-				if (uc > ' ' || pc > ' ') SET_ANY_CHAR(out, i2++, uc);
+				if (uc > ' ' || pc > ' ') { SET_ANY_CHAR(out, i2++, uc); }
 				pc = uc;
 			}
 			SET_ANY_CHAR(out, i2, 0);
@@ -410,7 +401,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	void Debug_Buf(const REBYTE *fmt, va_list args)
+*/	void Debug_Buf(REBCNT limit, const REBYTE *fmt, va_list args)
 /*
 **		Lower level formatted print for debugging purposes.
 **
@@ -438,12 +429,16 @@ static REBREQ *Req_SIO;
 
 	RESET_SERIES(buf);
 
+	if (limit > SERIES_REST(buf) - 1) {
+		limit = SERIES_REST(buf) - 1;
+	}
+
 	// Limits output to size of buffer, will not expand it:
-	bp = Form_Var_Args(STR_HEAD(buf), SERIES_REST(buf)-1, fmt, args);
+	bp = Form_Var_Args(STR_HEAD(buf), limit, fmt, args);
 	tail = bp - STR_HEAD(buf);
 
 	for (n = 0; n < tail; n += len) {
-		len = LEN_BYTES(STR_SKIP(buf, n));
+		len = (REBCNT)LEN_BYTES(STR_SKIP(buf, n));
 		if (len > 1024) len = 1024;
 		Debug_String(STR_SKIP(buf, n), len, 0, 0);
 	}
@@ -452,12 +447,12 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	void Debug_Fmt_(REBYTE *fmt, ...)
+*/	void Debug_Fmt_(const REBYTE *fmt, ...)
 /*
-**		Print using a format string and variable number
+**		Print using a formatted string and variable number
 **		of arguments.  All args must be long word aligned
 **		(no short or char sized values unless recast to long).
-**		Output will be held in series print buffer and
+**		Output will be held in a series print buffer and
 **		will not exceed its max size.  No line termination
 **		is supplied after the print.
 **
@@ -465,7 +460,7 @@ static REBREQ *Req_SIO;
 {
 	va_list args;
 	va_start(args, fmt);
-	Debug_Buf(fmt, args);
+	Debug_Buf(NO_LIMIT, fmt, args);
 	va_end(args);
 }
 
@@ -485,7 +480,21 @@ static REBREQ *Req_SIO;
 {
 	va_list args;
 	va_start(args, fmt);
-	Debug_Buf(fmt, args);
+	Debug_Buf(NO_LIMIT, fmt, args);
+	Debug_Line();
+	va_end(args);
+}
+/***********************************************************************
+**
+*/	void Debug_Fmt_Limited(REBCNT limit, const REBYTE *fmt, ...)
+/*
+**		Same like Debug_Fmt, but limits length of the output.
+**
+***********************************************************************/
+{
+	va_list args;
+	va_start(args, fmt);
+	Debug_Buf(limit, fmt, args);
 	Debug_Line();
 	va_end(args);
 }
@@ -493,12 +502,12 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	REBFLG Echo_File(REBCHR *file)
+*/	REBINT Echo_File(REBCHR *file)
 /*
 ***********************************************************************/
 {
 	Req_SIO->file.path = file;
-	return (DR_ERROR != OS_DO_DEVICE(Req_SIO, RDC_CREATE));
+	return OS_Do_Device(Req_SIO, RDC_CREATE);
 }
 
 
@@ -541,9 +550,7 @@ static REBREQ *Req_SIO;
 {
 	REBYTE buffer[MAX_HEX_LEN+4];
 	REBYTE *bp = (REBYTE*)(buffer + MAX_HEX_LEN + 1);
-	REBU64 sgn;
-
-	sgn = (val < 0) ? -1 : 0;
+	REBU64 sgn = 0; // was: sgn = (val < 0) ? -1 : 0;
 
 	len = MIN(len, MAX_HEX_LEN);
 	*bp-- = 0;
@@ -573,7 +580,7 @@ static REBREQ *Req_SIO;
 	return bp+2;
 }
 
-
+#ifdef unused
 /***********************************************************************
 **
 */	REBUNI *Form_Hex2_Uni(REBUNI *up, REBCNT val)
@@ -587,40 +594,50 @@ static REBREQ *Req_SIO;
 	up[2] = 0;
 	return up+2;
 }
-
+#endif
 
 /***********************************************************************
 **
-*/	REBUNI *Form_Hex_Esc_Uni(REBUNI *up, REBUNI c)
+*/	REBYTE *Form_Hex_Esc(REBYTE *bp, REBINT c)
 /*
 **		Convert byte int to %xx format (in unicode destination)
 **
 ***********************************************************************/
 {
-	up[0] = '%';
-	up[1] = Hex_Digits[(c & 0xf0) >> 4];
-	up[2] = Hex_Digits[c & 0xf];
-	up[3] = 0;
-	return up+3;
+	bp[0] = '%';
+	bp[1] = Hex_Digits[(c & 0xf0) >> 4];
+	bp[2] = Hex_Digits[c & 0xf];
+	bp[3] = 0;
+	return bp+3;
 }
 
 
 /***********************************************************************
 **
-*/	REBUNI *Form_RGB_Uni(REBUNI *up, REBCNT val)
+*/	REBYTE *Form_RGB(REBYTE *bp, REBCNT val)
 /*
 **		Convert 24 bit RGB to xxxxxx format.
 **
 ***********************************************************************/
 {
-	up[0] = Hex_Digits[(val >> 20) & 0xf];
-	up[1] = Hex_Digits[(val >> 16) & 0xf];
-	up[2] = Hex_Digits[(val >> 12) & 0xf];
-	up[3] = Hex_Digits[(val >>  8) & 0xf];
-	up[4] = Hex_Digits[(val >>  4) & 0xf];
-	up[5] = Hex_Digits[val & 0xf];
-	up[6] = 0;
-	return up+6;
+#ifdef ENDIAN_LITTLE
+	bp[0] = Hex_Digits[(val >>  4) & 0xf];
+	bp[1] = Hex_Digits[val & 0xf];
+	bp[2] = Hex_Digits[(val >> 12) & 0xf];
+	bp[3] = Hex_Digits[(val >>  8) & 0xf];
+	bp[4] = Hex_Digits[(val >> 20) & 0xf];
+	bp[5] = Hex_Digits[(val >> 16) & 0xf];
+#else
+	bp[0] = Hex_Digits[(val >>  28) & 0xf];
+	bp[1] = Hex_Digits[(val >> 24) & 0xf];
+	bp[2] = Hex_Digits[(val >> 20) & 0xf];
+	bp[3] = Hex_Digits[(val >> 16) & 0xf];
+	bp[4] = Hex_Digits[(val >> 12) & 0xf];
+	bp[5] = Hex_Digits[(val >>  8) & 0xf];
+#endif
+	bp[6] = 0;
+
+	return bp+6;
 }
 
 
@@ -706,11 +723,11 @@ pick:
 
 		case 's':
 			cp = va_arg(args, REBYTE *);
-			if ((REBCNT)cp < 100) cp = (REBYTE*)Bad_Ptr;
-			if (pad == 1) pad = LEN_BYTES(cp);
+			if ((REBUPT)cp < 100) cp = (REBYTE*)Bad_Ptr;
+			if (pad == 1) pad = (REBINT)LEN_BYTES(cp);
 			if (pad < 0) {
 				pad = -pad;
-				pad -= LEN_BYTES(cp);
+				pad -= (REBINT)LEN_BYTES(cp);
 				for (; pad > 0 && len < max; len++, pad--) *bp++ = ' ';
 			}
 			for (; *cp && len < max && pad > 0; pad--, len++) *bp++ = *cp++;
@@ -722,14 +739,13 @@ pick:
 			vp = va_arg(args, REBVAL *);
 mold_value:
 			// Form the REBOL value into a reused buffer:
-			ser = Mold_Print_Value(vp, 0, desc != 'v');
+			ser = Mold_Print_Value(vp, max, desc != 'v', TRUE);
 
-			l = Length_As_UTF8(UNI_HEAD(ser), SERIES_TAIL(ser), TRUE, OS_CRLF);
+			l = SERIES_TAIL(ser);
 			if (pad != 1 && l > pad) l = pad;
 			if (l+len >= max) l = max-len-1;
 
-			Encode_UTF8(bp, l, UNI_HEAD(ser), 0, TRUE, OS_CRLF);
-
+			COPY_MEM(bp, BIN_HEAD(ser), SERIES_TAIL(ser));
 			// Filter out CTRL chars:
 			for (; l > 0; l--, bp++) if (*bp < ' ') *bp = ' ';
 			break;
@@ -751,7 +767,7 @@ mold_value:
 			if (len + MAX_HEX_LEN + 1 < max) { // A cheat, but it is safe.
 				*bp++ = '#';
 				if (pad == 1) pad = 8;
-				cp = Form_Hex_Pad(bp, (REBCNT)(va_arg(args, REBYTE*)), pad);
+				cp = Form_Hex_Pad(bp, (REBU64)(REBUPT)(va_arg(args, REBYTE*)), pad);
 				len += 1 + (REBCNT)(cp - bp);
 				bp = cp;
 			}
@@ -775,29 +791,29 @@ mold_value:
 
 /***********************************************************************
 **
-*/  void Prin_Value(REBVAL *value, REBCNT limit, REBOOL mold)
+*/  void Prin_Value(REBVAL *value, REBCNT limit, REBOOL mold, REBOOL err)
 /*
 **		Print a value or block's contents for user viewing.
 **		Can limit output to a given size. Set limit to 0 for full size.
 **
 ***********************************************************************/
 {
-	REBSER *out = Mold_Print_Value(value, limit, mold);
-	Prin_OS_String(out->data, out->tail, TRUE);
+	REBSER *out = Mold_Print_Value(value, limit, mold, FALSE);
+	Prin_String(out->data, out->tail, err);
 }
 
 
 /***********************************************************************
 **
-*/  void Print_Value(REBVAL *value, REBCNT limit, REBOOL mold)
+*/  void Print_Value(REBVAL *value, REBCNT limit, REBOOL mold, REBOOL err)
 /*
 **		Print a value or block's contents for user viewing.
 **		Can limit output to a given size. Set limit to 0 for full size.
 **
 ***********************************************************************/
 {
-	Prin_Value(value, limit, mold);
-	Print_OS_Line();
+	Prin_Value(value, limit, mold, err);
+	Print_Line(err);
 }
 
 
@@ -868,6 +884,6 @@ mold_value:
 **
 ***********************************************************************/
 {
-	Set_Root_Series(TASK_BUF_PRINT, Make_Binary(1000), "print buffer");
-	Set_Root_Series(TASK_BUF_FORM,  Make_Binary(64), "form buffer");
+	Set_Root_Series(TASK_BUF_PRINT, Make_Binary(1000), cb_cast("print buffer"));
+	//Set_Root_Series(TASK_BUF_FORM,  Make_Binary(64), cb_cast("form buffer"));
 }

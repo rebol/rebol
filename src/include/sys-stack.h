@@ -62,6 +62,7 @@
 #define DS_PUSH(v)		(DS_Base[++DSP]=*(v))		// atomic
 #define DS_PUSH_UNSET	SET_UNSET(&DS_Base[++DSP])	// atomic
 #define DS_PUSH_NONE	SET_NONE(&DS_Base[++DSP])	// atomic
+#define DS_PUSH_END		SET_END(&DS_Base[++DSP])	// atomic
 #define DS_PUSH_TRUE	VAL_SET(&DS_Base[++DSP], REB_LOGIC), \
 						VAL_LOGIC(&DS_Base[DSP]) = TRUE // not atomic
 #define DS_PUSH_INTEGER(n)	VAL_SET(&DS_Base[++DSP], REB_INTEGER), \

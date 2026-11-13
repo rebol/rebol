@@ -59,9 +59,7 @@ static REBI64 ran_x[KK];					/* the generator state */
 #ifdef __STDC__
 void ran_array(REBI64 aa[], int n)
 #else
-void ran_array(aa,n)	/* put n new random numbers in aa */
-	REBI64 *aa;			/* destination */
-	int n;				/* array length (must be at least KK) */
+void ran_array(REBI64* aa, int n)	/* put n new random numbers in aa */
 #endif
 {
 	register int i,j;
@@ -115,7 +113,7 @@ static REBI64 *ran_arr_ptr=&ran_arr_dummy;	/* the next random number, or -1 */
 }
 
 #define ran_arr_next() (*ran_arr_ptr>=0? *ran_arr_ptr++: ran_arr_cycle())
-static REBI64 ran_arr_cycle()
+static REBI64 ran_arr_cycle(void)
 {
 	if (ran_arr_ptr==&ran_arr_dummy)
 		Set_Random(314159L); /* the user forgot to initialize */
@@ -149,7 +147,7 @@ static REBI64 ran_arr_cycle()
 	return tmp;
 }
 
-#define MAX_U64 ((REBU64)(REBI64)-1)
+//#define MAX_U64 ((REBU64)(REBI64)-1) //defined in reb-c.h
 /***********************************************************************
 **
 */	REBI64 Random_Range(REBI64 r, REBFLG secure)
@@ -178,4 +176,36 @@ static REBI64 ran_arr_cycle()
 	s = (REBDEC)Random_Int(secure);
 	if (s < 0.0) s += 1.8446744073709552e19;
 	return (s * t) * r;
+}
+
+/***********************************************************************
+**
+*/	void Random_Bytes(REBYTE* dest, REBCNT length, REBOOL	no_zeros)
+/*
+**		Fills destination buffer with random bytes.
+**
+***********************************************************************/
+{
+	REBI64 rnd;
+	REBCNT k = length / 8;
+	REBCNT r = length % 8;
+	REBYTE *cp = dest;
+	REBCNT i;
+
+	for (i = 0; i < k; i++) {
+		rnd = Random_Int(TRUE);
+		memcpy(cp, (REBYTE*)&rnd, 8);
+		cp += 8;
+	}
+	if (r > 0) {
+		rnd = Random_Int(TRUE);
+		memcpy(cp, (REBYTE*)&rnd, r);
+	}
+	if(no_zeros) {
+		// make result without null bytes
+		for (i = 0; i < length; i++) {
+			while (dest[i] == 0) 
+				dest[i] = (u8)(rand());
+		}
+	}
 }

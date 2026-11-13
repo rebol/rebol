@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,8 +37,9 @@
 /*
 ***********************************************************************/
 {
-	if (mode >= 0) return (VAL_DATATYPE(a) == VAL_DATATYPE(b));
-	return -1;
+	if (mode >= 0)  return (VAL_DATATYPE(a) == VAL_DATATYPE(b));
+	if (mode == -1) return (VAL_DATATYPE(a) >= VAL_DATATYPE(b));
+	return (VAL_DATATYPE(a) > VAL_DATATYPE(b));
 }
 
 
@@ -80,7 +82,10 @@
 			SET_OBJECT(D_RET, obj);
 		}
 		else if (n == OF_TITLE) {
-			Set_String(D_RET, Copy_Series(VAL_SERIES(BLK_HEAD(VAL_TYPE_SPEC(BLK_SKIP(Lib_Context, type+1))))));
+			Set_String(D_RET, Copy_Series(VAL_SERIES(BLK_HEAD( VAL_TYPE_SPEC(BLK_SKIP(Lib_Context, type+1)) ))));
+		}
+		else if (n == OF_TYPE) {
+			Init_Word(D_RET, VAL_WORD_CANON(BLK_SKIP( VAL_TYPE_SPEC(BLK_SKIP(Lib_Context, type+1)), 1)));
 		}
 		else Trap_Reflect(VAL_TYPE(value), arg);
 		break;

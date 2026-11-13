@@ -56,7 +56,12 @@
 		e = VAL_WORD_CANON(a) == VAL_WORD_CANON(b);
 		if (mode == 1) e &= VAL_WORD_INDEX(a) == VAL_WORD_INDEX(b)
 			&& VAL_WORD_FRAME(a) == VAL_WORD_FRAME(b);
-		else if (mode >= 2) {
+		else if (mode == 2) {
+			// Strict equality compares the exact spelling (alias),
+			// not the binding - that is what `same?` is for!
+			e = VAL_WORD_SYM(a) == VAL_WORD_SYM(b);
+		}
+		else if (mode >= 3) {
 			e = (VAL_WORD_SYM(a) == VAL_WORD_SYM(b) &&
 				VAL_WORD_INDEX(a) == VAL_WORD_INDEX(b) &&
 				VAL_WORD_FRAME(a) == VAL_WORD_FRAME(b));
@@ -80,12 +85,12 @@
 	REBVAL *arg = D_ARG(2);
 	REBCNT type = VAL_TYPE(val);
 	REBINT diff;
-	REBCNT sym;
+	REBCNT sym = 0;
 
 	switch (action) {
 	case A_LENGTHQ:
-		diff = LEN_BYTES(Get_Sym_Name(VAL_WORD_SYM(val)));
-		if (type != REB_WORD) diff++;
+		diff = (REBINT)Length_As_UTF8_Code_Points(Get_Sym_Name(VAL_WORD_SYM(val)));
+		//if (type != REB_WORD) diff++; // in case that the _decoration_ should be also counted (#abc :abc abc: 'abc)
 		DS_Ret_Int(diff);
 		break;
 
@@ -98,17 +103,18 @@
 			return R_ARG2;
 		}
 		else {
-			if (IS_STRING(arg)) {
+			if (ANY_STR(arg)) {
 				REBYTE *bp;
 				REBCNT len;
 				// Set sym. Rest is set below.
 				bp = Qualify_String(arg, 255, &len, TRUE);
 				if (type == REB_ISSUE) sym = Scan_Issue(bp, len);
 				else sym = Scan_Word(bp, len);
-				if (!sym) Trap1(RE_BAD_CHAR, arg);
+				if (!sym) 
+					Trap0(RE_INVALID_CHARS);
 			}
 			else if (IS_CHAR(arg)) {
-				REBYTE buf[8];
+				REBYTE buf[8] = {0};
 				sym = Encode_UTF8_Char(&buf[0], VAL_CHAR(arg)); //returns length
 				sym = Scan_Word(&buf[0], sym);
 				if (!sym) Trap1(RE_BAD_CHAR, arg);
@@ -124,6 +130,14 @@
 			VAL_SET(D_RET, type);
 		}
 		break;
+
+	case A_OPEN:
+	case A_READ:
+	case A_WRITE:
+	case A_QUERY:
+		// Support for port: OPEN 'console, READ 'clipboard etc..
+		// The word is used as a name of the scheme
+		return T_Port(ds, action);
 
 	default:
 		Trap_Action(type, action);

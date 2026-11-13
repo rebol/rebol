@@ -27,6 +27,7 @@
 ***********************************************************************/
 
 #define MAX_FILE_REQ_BUF (16*1024)
+#define MAX_DIR_REQ_BUF  ( 1*1024) // windows has path limit 260 chars by default
 
 #pragma pack(4)
 typedef struct Reb_File_Requestor {
